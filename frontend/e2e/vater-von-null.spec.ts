@@ -112,7 +112,6 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(vater.getByRole("heading", { name: CHILD.name })).toBeVisible();
   await vater.locator("#kd-grade").fill("6");
   await vater.locator("#kd-interests").fill("Fußball, Minecraft");
-  // `exact`, weil daneben „Interessen speichern" steht (die gewichteten Tags sind ein eigener Editor).
   await vater.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(vater.getByText("Gespeichert.", { exact: true })).toBeVisible();
   // Gegenprobe über den Server, nicht über das Formular: neu laden und den Wert lesen.
@@ -275,14 +274,16 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await expect(vater.locator('select[aria-label="Unit"]')).toContainText(`${CHAPTER} korrigiert`);
 
   // ---------- 5d. Kind-Hub: Betreuung und Stundenplan ----------
-  await vater.goto(`/vater/kind/${childId}`);
+  await vater.goto(`/vater/kind/${childId}?bereich=betreuer`);
   // Beim Anlegen wird der Vater als Betreuer verknüpft. Der **letzte** Betreuer lässt sich nicht entziehen –
   // das Kind wäre für niemanden mehr erreichbar –, darum steht in seiner Zeile kein Entfernen-Knopf.
   const supervisorRow = vater.getByRole("row", { name: new RegExp(FATHER.name) });
   await expect(supervisorRow).toContainText("Vater");
   await expect(supervisorRow.getByRole("button", { name: /Entfernen/ })).toHaveCount(0);
 
-  // Der Stundenplan ist Profilwissen, kein Lehrplan: er sagt, worauf heute der Schwerpunkt liegt.
+  // Der Stundenplan ist Profilwissen, kein Lehrplan: er sagt, worauf heute der Schwerpunkt liegt. Reiter „Schule";
+  // noch leer, darum steht das Formular offen.
+  await vater.goto(`/vater/kind/${childId}?bereich=schule`);
   await vater.locator("#tt-subject").selectOption({ label: SUBJECT });
   await vater.locator("#tt-day").selectOption("Tuesday");
   await vater.locator("#tt-time").fill("1. Stunde");

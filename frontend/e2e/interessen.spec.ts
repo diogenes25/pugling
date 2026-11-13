@@ -77,11 +77,12 @@ test("Das Kind beschreibt sich selbst, und der Vater sieht es", async ({ browser
   await expect(sohn.getByRole("link", { name: /Los geht's/ })).toHaveCount(0);
 
   // ---------- VATER: dieselbe Angabe an der gewohnten Stelle ----------
-  await vater.goto(`/vater/kind/${childId}`);
+  await vater.goto(`/vater/kind/${childId}?bereich=interessen`);
   await expect(vater.getByRole("heading", { name: "Interessen", exact: true })).toBeVisible();
   // Der Wert des Auswahlfelds trägt die Aussage: 3 = Lieblingsthema, gesetzt vom Kind.
   await expect(vater.getByRole("combobox", { name: `Gewichtung für ${thema}` })).toHaveValue("3");
   // Und der Freitext-Wunsch landet sichtbar im Kind-Profil – kein geheimer Kanal. Es ist dasselbe Feld,
-  // das der Vater ohnehin pflegt (`Child.Interests`), kein eigener Ablageort.
+  // das der Vater ohnehin pflegt (`Child.Interests`), kein eigener Ablageort. Es steht im Reiter „Profil" (B-534).
+  await vater.goto(`/vater/kind/${childId}?bereich=profil`);
   await expect(vater.locator("#kd-interests")).toHaveValue(/Wellensittiche/);
 });

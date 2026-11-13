@@ -12,15 +12,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (37)
+### Offen (41)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-544](B-544-abschlusstest-zeigt-den-tipp.md) | Der Abschlusstest liefert und zeigt den Tipp | Defekt | `geschaetzt` | P2 | XS | beides | Vertrag |
+| [B-534](B-534-vater-ui-aufraeumen.md) | Das Vater-Web zeigt je Fläche höchstens ein Speichern | Wunsch | `in-arbeit` | P1 | M | frontend | — |
+| [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) | Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht | Wunsch | `geschaetzt` | P1 | M | beides | Migration + Vertrag |
+| [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `ausformuliert` | P1 | — | beides | — |
+| [B-544](B-544-abschlusstest-zeigt-den-tipp.md) | Der Abschlusstest liefert und zeigt den Tipp | Defekt | `in-arbeit` | P2 | XS | beides | Vertrag |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `idee` | P2 | — | beides | — |
+| [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `in-arbeit` | P2 | S | beides | — |
 | [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
-| [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `geschaetzt` | P2 | S | beides | — |
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | Wunsch | `ausformuliert` | P2 | M | frontend | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
@@ -31,11 +34,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-545](B-545-bonus-runde-wertet-gegen-aktuelle-items.md) | Eine Bonus-Runde wird gegen die aktuellen Items gewertet, nicht gegen die beim Start | Defekt | `idee` | P3 | S | backend | Migration |
 | [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `geschaetzt` | P3 | S | beides | — |
 | [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md) | Soll eine Übungsrunde des Vaters überhaupt in Verlauf und Lernstand des Kindes schreiben? | Frage | `idee` | P3 | — | backend | — |
+| [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Wochenvergleich gegen die eigene Vorwoche (statt einer Liga) | Wunsch | `in-arbeit` | P3 | S | beides | — |
+| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | „▶ Üben" nach einem verpatzten Test landet bei Leitner-Positionen oft in „Nichts fällig 🎉" | Wunsch | `in-arbeit` | P3 | S | beides | — |
+| [B-528](B-528-missionen-als-eigener-tab.md) | Missionen mit Restzeit (statt eines eigenen Tabs) | Wunsch | `in-arbeit` | P3 | XS | beides | — |
+| [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `in-arbeit` | P3 | S | beides | Migration |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
-| [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Wochenvergleich gegen die eigene Vorwoche (statt einer Liga) | Wunsch | `geschaetzt` | P3 | S | beides | — |
-| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | „▶ Üben" nach einem verpatzten Test landet bei Leitner-Positionen oft in „Nichts fällig 🎉" | Wunsch | `geschaetzt` | P3 | S | beides | — |
-| [B-528](B-528-missionen-als-eigener-tab.md) | Missionen mit Restzeit (statt eines eigenen Tabs) | Wunsch | `geschaetzt` | P3 | XS | beides | — |
-| [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `geschaetzt` | P3 | S | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
@@ -53,6 +56,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-527](B-527-belohnungsbox-als-truhe-zum-oeffnen.md) | Belohnungsbox als Truhe auf dem Pfad, die das Kind selbst öffnet | Wunsch | `idee` | P3 | — | beides | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
+| [B-546](B-546-ef-migration-crlf-in-check-constraints.md) | `migrations add` unter Windows schreibt `\r\n` in Check-Constraint-Strings | Aufräumen | `idee` | P3 | XS | backend | — |
 
 <details>
 <summary>Abgenommen (467)</summary>
@@ -919,10 +923,13 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-533](B-533-bonus-training-extra-muenzen.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-534](B-534-vater-ui-aufraeumen.md) | `in-arbeit` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-536](B-536-aufbau-uebungen-statt-versagen.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md) | `idee` | `unverifiziert: true` |
 | [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md) | `idee` | `unverifiziert: true` |
-| [B-544](B-544-abschlusstest-zeigt-den-tipp.md) | `geschaetzt` | Abschnitt „Schätzung" |
+| [B-544](B-544-abschlusstest-zeigt-den-tipp.md) | `in-arbeit` | Abschnitt „Schätzung" |
 | [B-545](B-545-bonus-runde-wertet-gegen-aktuelle-items.md) | `idee` | `unverifiziert: true` |
+| [B-546](B-546-ef-migration-crlf-in-check-constraints.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (34)</summary>

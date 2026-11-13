@@ -10,10 +10,10 @@ import { vaterLogin } from "./helpers";
  * Komponententest tragen kann, und zwar als **Kreis**: einkleiden → Löschen wird verweigert → ausziehen →
  * Löschen geht. Nur so ist belegt, dass der Riegel eine Tür hat und nicht bloß eine Wand ist.
  *
- * Der Typ ist **Grammatik** und nicht Vokabel, und das ist tragend: nur ein inhaltsbearbeitbarer Typ hat
- * den zweiten Speicher-Knopf („Inhalt speichern"). Der baute seine Nutzlast früher aus dem geladenen Stand
- * und drehte damit jede Metadaten-Änderung still zurück — mit einer Vokabel-Übung wäre die Spec dafür
- * strukturell blind gewesen.
+ * Der Typ ist **Grammatik** und nicht Vokabel: nur ein inhaltsbearbeitbarer Typ schickt mit demselben Knopf
+ * auch eine neu gebaute Config. Früher hatte er dafür einen zweiten Knopf, der jede Metadaten-Änderung still
+ * zurückdrehte; seit B-534 trägt **ein** Speichern beides, und die Spec prüft, dass die Einkleidung das
+ * Neuöffnen überlebt.
  *
  * Das ist zugleich der Rollengang aus der Creator-Rolle.
  */
@@ -48,7 +48,7 @@ async function katalogVorbereiten(page: Page) {
  * Der kürzeste Weg ohne Datei-Upload ist der Interessen-Editor am Kind (create-if-missing).
  */
 async function stichwortAnlegen(page: Page) {
-  await page.goto("/vater/kind/1");
+  await page.goto("/vater/kind/1?bereich=interessen");
   await expect(page.getByRole("heading", { name: "Interessen", exact: true })).toBeVisible();
   await page.locator("#int-label").fill(TAG);
   // `exact`, sonst trifft der Teilstring den Knopf „Betreuer hinzufügen" derselben Seite.
@@ -115,16 +115,8 @@ test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres 
   await page.locator("#ed-dressing").selectOption({ label: TAG });
   await page.getByRole("button", { name: "Einkleidung hinzufügen" }).click();
   await expect(page.getByText(/Nicht eingekleidet/)).toHaveCount(0);
-  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
   await expect(page.getByText("Gespeichert.")).toBeVisible();
-
-  /*
-   * Und jetzt der zweite Speicher-Knopf desselben Dialogs. Er schickt denselben Vollersatz-PUT; baute er
-   * seine Nutzlast weiter aus dem geladenen Stand, drehte er die gerade gespeicherte Einkleidung still
-   * zurück — eine gespeicherte Änderung, die ein Klick daneben rückgängig macht.
-   */
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
-  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
 
   // ---- AK 1: nach dem Neuöffnen steht der NAME da, nicht die Id ----
   await page.reload();
@@ -150,7 +142,7 @@ test("Die Einkleidung ist sichtbar, änderbar — und sperrt das Löschen ihres 
   await dialogOeffnen(page);
   await page.getByRole("button", { name: `Einkleidung „${TAG}" entfernen` }).click();
   await expect(page.getByText(/Nicht eingekleidet/)).toBeVisible();
-  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
   await expect(page.getByText("Gespeichert.")).toBeVisible();
 
   page.removeAllListeners("dialog");

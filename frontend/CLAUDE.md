@@ -118,8 +118,12 @@ macht es auf. Ohne Schlüssel an der Zeile (Suchtreffer) sagt `x.stale` es (B-16
 Übungen sind über `/vater/exercises` **bearbeitbar**: Metadaten per PUT — den geladenen
 `config`/`suggestedBonus`/`executePublic` **mitschicken**, sonst löscht der Vollersatz sie; Vokabelpaare
 einzeln über `…/vocabulary/{id}/items`, sonst brechen Item-Ids und Lernstand des Kindes weg.
-**Zwei Knöpfe, ein Vollersatz** ([B-210](../docs/backlog/B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md)):
-Der Dialog muss den geladenen Stand nach **jedem** Teil-Speichern nachziehen (merken, was man geschickt
-hat, reicht nicht – der Server normalisiert), und der Riegel gehört an **beide** Knöpfe in **einen** Ort:
-`useAction` sperrt je Instanz, zwei Editoren haben zwei davon. Wer einen neuen
-Typ ergänzt, braucht beide Wege: das Formular auf `/vater/exercises/neu`, den Rückweg im Dialog.
+**Ein Knopf, ein Vollersatz** ([B-534](../docs/backlog/B-534-vater-ui-aufraeumen.md), vorher B-210):
+„Übung speichern" schickt Inhalt und Metadaten in **einem** PUT; der Dialog zieht danach den geladenen
+Stand nach (der Server normalisiert die Config). Wer einen neuen Typ ergänzt, braucht beide Wege: das
+Formular auf `/vater/exercises/neu`, den Rückweg im Dialog.
+
+**Je sichtbarer Fläche höchstens ein Speichern** (B-534): Eine Seite mit mehreren unabhängigen Themen
+teilt sich in Reiter (`SectionTabs`, `?bereich=`, Vorbild Kind-Hub); ein Hinzufügen-Formular neben einem
+Bestand steht zugeklappt in `AddPanel` (Leerfall: offen). Der Knopf des Panels darf nicht so heißen wie
+der Absende-Knopf darin – sonst trifft ein Name zwei Knöpfe.

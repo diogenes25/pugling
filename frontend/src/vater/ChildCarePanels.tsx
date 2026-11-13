@@ -6,6 +6,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type { SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday } from "../lib/types";
+import { AddPanel } from "../components/AddPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { formatDate } from "../lib/datum";
 
@@ -82,28 +83,30 @@ export function SupervisorsSection({ childId, childName }: { childId: number; ch
         </table>
       )}
 
-      <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginTop: 10 }} onSubmit={add}>
-        <div className="field" style={{ maxWidth: 160 }}>
-          <label htmlFor="sup-id">Id des Betreuers</label>
-          <input id="sup-id" inputMode="numeric" autoComplete="off" value={supervisorId}
-            onChange={(e) => setSupervisorId(e.target.value.replace(/\D/g, ""))} placeholder="z. B. 4" />
-        </div>
-        <div className="field" style={{ maxWidth: 160 }}>
-          <label htmlFor="sup-rel">Rolle</label>
-          <select id="sup-rel" value={relation} onChange={(e) => setRelation(e.target.value as SupervisorRelation)}>
-            {SUPERVISOR_RELATIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </select>
-        </div>
-        {/* Sprechendes Label, nicht bloß „Hinzufügen": auf dieser Seite gibt es mehrere Hinzufügen-Knöpfe
-            (Interessen, Stundenplan), und ein Screenreader liest nur die Beschriftung vor. */}
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
-          Betreuer hinzufügen
-        </button>
-      </form>
-      <p className="sub" style={{ marginTop: 6 }}>
-        Der andere Betreuer braucht ein <strong>eigenes Konto</strong>: er registriert sich unter
-        <code> /vater</code> und nennt dir seine Id.
-      </p>
+      <AddPanel label="Weiteren Betreuer">
+        <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", }} onSubmit={add}>
+          <div className="field" style={{ maxWidth: 160 }}>
+            <label htmlFor="sup-id">Id des Betreuers</label>
+            <input id="sup-id" inputMode="numeric" autoComplete="off" value={supervisorId}
+              onChange={(e) => setSupervisorId(e.target.value.replace(/\D/g, ""))} placeholder="z. B. 4" />
+          </div>
+          <div className="field" style={{ maxWidth: 160 }}>
+            <label htmlFor="sup-rel">Rolle</label>
+            <select id="sup-rel" value={relation} onChange={(e) => setRelation(e.target.value as SupervisorRelation)}>
+              {SUPERVISOR_RELATIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+          {/* Sprechendes Label, nicht bloß „Hinzufügen": auf dieser Seite gibt es mehrere Hinzufügen-Knöpfe
+              (Interessen, Stundenplan), und ein Screenreader liest nur die Beschriftung vor. */}
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+            Betreuer hinzufügen
+          </button>
+        </form>
+        <p className="sub" style={{ marginTop: 6 }}>
+          Der andere Betreuer braucht ein <strong>eigenes Konto</strong>: er registriert sich unter
+          <code> /vater</code> und nennt dir seine Id.
+        </p>
+      </AddPanel>
       <StatusBanner message={action.message} />
     </section>
   );
@@ -164,30 +167,35 @@ export function TimetableSection({ childId, subjects }: { childId: number; subje
           </div>
         ))}
 
-      <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginTop: 10 }} onSubmit={add}>
-        <div className="field" style={{ maxWidth: 200 }}>
-          <label htmlFor="tt-subject">Fach</label>
-          <select id="tt-subject" value={subjectId}
-            onChange={(e) => setSubjectId(e.target.value === "" ? "" : Number(e.target.value))}>
-            <option value="">– wählen –</option>
-            {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-        <div className="field" style={{ maxWidth: 160 }}>
-          <label htmlFor="tt-day">Wochentag</label>
-          <select id="tt-day" value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value as Weekday)}>
-            {WEEKDAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-          </select>
-        </div>
-        <div className="field" style={{ maxWidth: 140 }}>
-          <label htmlFor="tt-time">Uhrzeit <span className="muted">(optional)</span></label>
-          <input id="tt-time" autoComplete="off" value={timeOfDay}
-            onChange={(e) => setTimeOfDay(e.target.value)} placeholder="z. B. 1./2. Stunde" />
-        </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
-          Eintragen
-        </button>
-      </form>
+      {/* Erst mit geladenem Bestand: der Leerfall öffnet das Formular gleich (AddPanel liest `defaultOpen` nur einmal). */}
+      {entries.data && (
+        <AddPanel label="Neuer Stundenplan-Eintrag" defaultOpen={entries.data.length === 0}>
+          <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", }} onSubmit={add}>
+            <div className="field" style={{ maxWidth: 200 }}>
+              <label htmlFor="tt-subject">Fach</label>
+              <select id="tt-subject" value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value === "" ? "" : Number(e.target.value))}>
+                <option value="">– wählen –</option>
+                {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 160 }}>
+              <label htmlFor="tt-day">Wochentag</label>
+              <select id="tt-day" value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value as Weekday)}>
+                {WEEKDAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 140 }}>
+              <label htmlFor="tt-time">Uhrzeit <span className="muted">(optional)</span></label>
+              <input id="tt-time" autoComplete="off" value={timeOfDay}
+                onChange={(e) => setTimeOfDay(e.target.value)} placeholder="z. B. 1./2. Stunde" />
+            </div>
+            <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+              Eintragen
+            </button>
+          </form>
+        </AddPanel>
+      )}
       <StatusBanner message={action.message} />
     </section>
   );

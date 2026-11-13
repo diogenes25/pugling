@@ -16,6 +16,19 @@ import type {
   InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
+
+/**
+ * Die Reiter des Kind-Hubs. Gruppiert nach der Frage, die der Vater gerade hat – nicht nach dem Endpunkt:
+ * „Schule" bündelt Buch, Fachlehrer und Stundenplan, weil sie gemeinsam beschreiben, was gerade dran ist.
+ */
+export const CHILD_TABS = [
+  { key: "profil", label: "👤 Profil" },
+  { key: "schule", label: "🎒 Schule" },
+  { key: "interessen", label: "❤️ Interessen" },
+  { key: "einstellungen", label: "⚙️ Einstellungen" },
+  { key: "betreuer", label: "👥 Betreuer" },
+] as const satisfies readonly SectionTab[];
 
 /**
  * Das Profil eines Kindes – bis hierher nur über die API pflegbar, obwohl es die Grundlage der
@@ -37,6 +50,7 @@ export function VaterKind() {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
 
   const me = child.data;
+  const tab = useActiveSection(CHILD_TABS);
 
   /*
    * Auf `data` prüfen, nicht auf `loading` – aus demselben Grund wie beim Interessen-Editor weiter unten:
@@ -62,49 +76,59 @@ export function VaterKind() {
 
       <ChildNav child={me} />
 
-      <CoreDataSection child={me} onSaved={child.reload} />
-
       {/*
-        Direkt hinter den Stammdaten: Klasse und Schulart von oben entscheiden mit, welcher Fachlehrer
-        zu diesem Kind passt – die Wirkung soll auf demselben Blick sichtbar sein.
+        Reiter statt einer langen Seite (B-534): vorher standen neun Abschnitte mit drei verschiedenen
+        „Speichern" untereinander, und welcher Knopf welche Eingabe sichert, musste der Vater erraten. Jetzt ist
+        je Reiter höchstens ein Speichern sichtbar.
       */}
-      {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
-          der Abruf, fehlt dort die Auswahl. Hier und nicht am Seitenkopf: auf einem 393-px-Viewport wäre
-          der Kopf weit außerhalb des Blicks, in dem das leere Pulldown steht. Der Stundenplan liegt
-          zwei Abschnitte tiefer und teilt sich diese Meldung – das ist die kleinere Ungenauigkeit. */}
-      <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
-      <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
+      <SectionTabs tabs={CHILD_TABS} active={tab} label={`Profil von ${me.name}`} />
 
-      {/* Wer betreut das Kind (gemeinsames Wallet) und wann welches Fach ansteht – beides Profilwissen. */}
-      <SupervisorsSection childId={childId} childName={me.name} />
-      <TimetableSection childId={childId} subjects={subjects.data ?? []} />
+      {tab === "profil" && <CoreDataSection child={me} onSaved={child.reload} />}
 
-      <RatingSection child={me} onSaved={child.reload} />
+      {tab === "schule" && (
+        <>
+          {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
+              der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
+          <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+          <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
+          <TimetableSection childId={childId} subjects={subjects.data ?? []} />
+        </>
+      )}
 
-      {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
-      <BonusSection key={me.id} child={me} onSaved={child.reload} />
+      {tab === "interessen" && (
+        <section>
+          <h3 className="h-section">Interessen</h3>
+          <p className="sub">
+            Steuern, welches Bild dein Kind zu einer Vokabel sieht. <strong>Minus-Werte sind Abneigungen</strong> –
+            passende Bilder werden dann gar nicht erst gezeigt.
+          </p>
+          <ListenAusfall was="Die Interessen des Kindes" fehler={interests.error} laedt={interests.loading} onRetry={interests.reload} schluessel={childId} />
+          {/*
+            Auf `data` prüfen, nicht auf `loading`: nach dem Speichern lädt die Liste neu, und ein
+            Platzhalter würde den Editor kurz aus dem DOM nehmen. Er verlöre dabei seinen Zustand –
+            samt der Bestätigung, die der Nutzer gerade lesen soll.
+          */}
+          {interests.showPlaceholder ? <div className="loading">Lade…</div> : interests.data === null ? null : (
+            <InterestEditor
+              childId={childId}
+              current={interests.data}
+              known={tags.data ?? []}
+              onSaved={() => { interests.reload(); tags.reload(); }}
+            />
+          )}
+        </section>
+      )}
 
-      <section>
-        <h3 className="h-section">Interessen</h3>
-        <p className="sub">
-          Steuern, welches Bild dein Kind zu einer Vokabel sieht. <strong>Minus-Werte sind Abneigungen</strong> –
-          passende Bilder werden dann gar nicht erst gezeigt.
-        </p>
-        <ListenAusfall was="Die Interessen des Kindes" fehler={interests.error} laedt={interests.loading} onRetry={interests.reload} schluessel={childId} />
-        {/*
-          Auf `data` prüfen, nicht auf `loading`: nach dem Speichern lädt die Liste neu, und ein
-          Platzhalter würde den Editor kurz aus dem DOM nehmen. Er verlöre dabei seinen Zustand –
-          samt der Bestätigung, die der Nutzer gerade lesen soll.
-        */}
-        {interests.showPlaceholder ? <div className="loading">Lade…</div> : interests.data === null ? null : (
-          <InterestEditor
-            childId={childId}
-            current={interests.data}
-            known={tags.data ?? []}
-            onSaved={() => { interests.reload(); tags.reload(); }}
-          />
-        )}
-      </section>
+      {tab === "einstellungen" && (
+        <>
+          <RatingSection child={me} onSaved={child.reload} />
+          {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
+          <BonusSection key={me.id} child={me} onSaved={child.reload} />
+        </>
+      )}
+
+      {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}
+      {tab === "betreuer" && <SupervisorsSection childId={childId} childName={me.name} />}
     </>
   );
 }
@@ -125,9 +149,12 @@ function ChildNav({ child }: { child: ChildResponse }) {
     [`/vater/konto?childId=${child.id}`, "💰 Kontostand"],
   ];
   return (
-    <nav className="row" style={{ gap: 8, flexWrap: "wrap", marginBottom: 14 }} aria-label={`Bereiche für ${child.name}`}>
+    // Leise Links statt einer Knopfreihe (B-534): darunter liegen die Reiter, und zwei gleich laute Leisten
+    // übereinander ließen offen, welche die Seite wechselt und welche nur den Reiter.
+    <nav className="child-links" aria-label={`Bereiche für ${child.name}`}>
+      <span className="muted" aria-hidden="true">Für {child.name}:</span>
       {links.map(([to, label]) => (
-        <Link key={to} to={to} className="btn ghost small" style={{ width: "auto", textDecoration: "none" }}>{label}</Link>
+        <Link key={to} to={to}>{label}</Link>
       ))}
     </nav>
   );
@@ -251,7 +278,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
           <label htmlFor="kd-interests">Interessen als Freitext <span className="muted">(kommagetrennt)</span></label>
           <input id="kd-interests" value={form.interests} onChange={(e) => up("interests", e.target.value)}
             placeholder="Fußball, Minecraft, Hunde" />
-          <span className="sub">Damit kleidet der KI-Creator Aufgaben ein. Für die Bildauswahl zählen die gewichteten Interessen unten.</span>
+          <span className="sub">Damit kleidet der KI-Creator Aufgaben ein. Für die Bildauswahl zählen die gewichteten Interessen im Reiter „Interessen".</span>
         </div>
         <div className="field">
           <label htmlFor="kd-notes">Notizen zum Kind <span className="muted">(optional)</span></label>
@@ -260,12 +287,17 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
         </div>
         <div className="row" style={{ gap: 8 }}>
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Speichere…" : "Speichern"}</button>
-          <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto" }} disabled={action.busy} onClick={remove}>
-            Kind löschen
-          </button>
         </div>
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
+      {/* Abgesetzt statt neben „Speichern": ein Fehlgriff zwischen den beiden kostet sonst das ganze Kind. */}
+      <div className="danger-zone">
+        <span className="sub" style={{ margin: 0 }}>Löscht Pläne, Fortschritt und Punktekonto dieses Kindes.</span>
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto", marginLeft: "auto", color: "var(--mag, #c0392b)" }}
+          disabled={action.busy} onClick={remove}>
+          Kind löschen
+        </button>
+      </div>
     </section>
   );
 }

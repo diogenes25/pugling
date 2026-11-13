@@ -16,6 +16,7 @@ import type {
   CreateTextbookDto, CreatorProfileMatch, SeriesUnitResponse, SubjectResponse, TextbookResponse,
   TextbookSeriesResponse,
 } from "../lib/types";
+import { AddPanel } from "../components/AddPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
 
 /**
@@ -112,16 +113,18 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
         </table>
       )}
 
-      <div style={{ marginTop: 12 }}>
-        <h4 className="h-section" style={{ fontSize: "1rem" }}>Buch hinzufügen</h4>
-        {/* Auch das Anlege-Formular räumt (B-197): Es schließt sich NICHT, kann eine alte Meldung
-            also überleben lassen – „Gespeichert." von einer Bearbeitung stünde dann neben dem roten
-            Fehler eines gescheiterten Anlegens. */}
-        <TextbookForm
-          childId={childId} series={series.data ?? []} subjects={subjects}
-          onDone={books.reload} onMeldung={setMeldung} onSeriesCreated={series.reload}
-        />
-      </div>
+      {/* Zugeklappt, solange schon Bücher da sind (B-534); ohne Buch ist das Formular der Inhalt der Fläche. */}
+      {books.data && (
+        <AddPanel label="Weiteres Buch" defaultOpen={books.data.length === 0}>
+          {/* Auch das Anlege-Formular räumt (B-197): Es schließt sich NICHT, kann eine alte Meldung
+              also überleben lassen – „Gespeichert." von einer Bearbeitung stünde dann neben dem roten
+              Fehler eines gescheiterten Anlegens. */}
+          <TextbookForm
+            childId={childId} series={series.data ?? []} subjects={subjects}
+            onDone={books.reload} onMeldung={setMeldung} onSeriesCreated={series.reload}
+          />
+        </AddPanel>
+      )}
 
       <StatusBanner message={meldung} />
 

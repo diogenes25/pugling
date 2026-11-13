@@ -2,25 +2,18 @@ import { test, expect, type Page } from "@playwright/test";
 import { vaterLogin } from "./helpers";
 
 /*
- * B-210. Der Bearbeiten-Dialog einer Übung hat **zwei** Speicher-Knöpfe, und beide schicken denselben
- * Vollersatz-PUT. Solange der Metadaten-Knopf seine `config` aus dem geladenen Stand nahm, trug er den
- * Inhalt **vom Öffnen** zurück: Inhalt speichern → Titel ändern → „Beschreibung speichern", und die
- * gerade gespeicherten Zeilen waren weg. Ohne Fehler, ohne Meldung, und der Zeilen-Editor zeigte weiter
- * die neue Fassung — es gab nicht einmal einen sichtbaren Widerspruch.
+ * Der Bearbeiten-Dialog einer Übung hat seit B-534 **einen** Speichern-Knopf für Inhalt und Beschreibung.
+ * Vorher waren es zwei, und beide schickten denselben Vollersatz-PUT – B-210 war der Fall, in dem der eine
+ * den Inhalt des anderen still zurückdrehte. Mit einem Knopf gibt es diese Reihenfolge nicht mehr; was
+ * bleibt, ist die Aussage dahinter: **eine** Speicherung trägt Inhalt **und** Metadaten, und keins von
+ * beiden geht verloren.
  *
  * Warum E2E und kein Komponententest: `frontend/CLAUDE.md` zieht die Grenze bei „kein nachgebauter
- * Bildschirm mit gefälschtem `fetch`". Der Defekt lebt genau dort, wo zwei Formulare, ein geladener Stand
- * und zwei echte PUTs zusammenkommen — die Reihenfolge IST der Fall.
+ * Bildschirm mit gefälschtem `fetch`". Der Defekt lebt dort, wo Formular, geladener Stand und echter PUT
+ * zusammenkommen.
  *
- * Der Typ ist **Grammatik**: nur ein inhaltsbearbeitbarer Typ hat den zweiten Knopf. Mit einer
- * Vokabel-Übung wäre die Spec strukturell blind (ihre Wortpaare gehen über `/items`, nicht über die
- * Config).
- *
- * Abgrenzung zu `einkleidung.spec.ts`: die fährt dieselben zwei Knöpfe in der **anderen** Reihenfolge
- * (erst Metadaten, dann Inhalt) und deckt damit die Gegenrichtung ab. Diese hier ist die Richtung, die
- * dabei offen blieb.
- *
- * Das ist zugleich der Rollengang aus der Creator-Rolle.
+ * Der Typ ist **Grammatik**: nur ein inhaltsbearbeitbarer Typ trägt den Inhalt in der Config. Mit einer
+ * Vokabel-Übung wäre die Spec strukturell blind (ihre Wortpaare gehen über `/items`).
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -70,21 +63,16 @@ async function dialogOeffnen(page: Page, name: string) {
   await expect(page.locator("#ed-title")).toBeVisible();
 }
 
-test("Der gespeicherte Inhalt überlebt ein anschließendes „Beschreibung speichern“", async ({ page }) => {
+test("Ein Speichern sichert Inhalt und Titel zusammen", async ({ page }) => {
   await vaterLogin(page, FATHER);
   const name = await creatorMitUebung(page, "Teilspeichern");
   await dialogOeffnen(page, name);
 
-  // ---- Schritt 1: den Inhalt ändern und speichern ----
+  // Rot, sobald einer der beiden Teile nicht in der Nutzlast des einen Knopfs landet.
   await page.getByLabel("Aufgabe", { exact: true }).fill("They ___ (go) to school.");
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
-  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
-
-  // ---- Schritt 2: im SELBEN Dialog den Titel ändern und speichern ----
   await page.locator("#ed-title").fill(`${name} v2`);
-  await page.getByRole("button", { name: "Beschreibung speichern" }).click();
-  // `exact`: der Kasten des Inhalts-Knopfs steht noch daneben, und „Inhalt gespeichert.“ enthält
-  // diesen Text als Teilstring — ohne das treffen zwei Elemente.
+  await expect(page.getByRole("button", { name: /speichern/i })).toHaveCount(1);
+  await page.getByRole("button", { name: "Übung speichern" }).click();
   await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   // Die Kopfzeile liest den GELADENEN Stand, nicht die Listenzeile: sonst stünde oben weiter der alte
   // Name neben dem neuen im Feld — und der vorgelesene Dialogname wäre falsch.
@@ -102,18 +90,16 @@ test("Der gespeicherte Inhalt überlebt ein anschließendes „Beschreibung spei
   await expect(page.locator("#ed-title")).toHaveValue(`${name} v2`);
 });
 
-test("„Inhalt speichern“ prüft den Titel selbst, statt sich einen 400 zu holen", async ({ page }) => {
+test("Speichern prüft den Titel selbst, statt sich einen 400 zu holen", async ({ page }) => {
   await vaterLogin(page, FATHER);
   const name = await creatorMitUebung(page, "Titelpruefung");
   await dialogOeffnen(page, name);
 
-  // Seit das Metadaten-Formular über beiden Editoren liegt (B-206), kann der Inhalts-Knopf einen
-  // leergeräumten Titel mitschicken — der Metadaten-Knopf prüft ihn, dieser prüfte ihn nicht.
   let puts = 0;
   page.on("request", (r) => { if (r.method() === "PUT") puts += 1; });
 
   await page.locator("#ed-title").fill("");
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
 
   await expect(page.getByText("Bitte einen Titel angeben.")).toBeVisible();
   // Die Aussage ist „der Server wurde gar nicht erst gefragt", nicht „es kam eine Meldung": ein
@@ -121,7 +107,7 @@ test("„Inhalt speichern“ prüft den Titel selbst, statt sich einen 400 zu ho
   expect(puts).toBe(0);
 });
 
-test("Scheitert das Nachziehen, sagt der Dialog es — und sperrt beide Speicher-Knöpfe", async ({ page }) => {
+test("Scheitert das Nachziehen, sagt der Dialog es — und sperrt das Speichern", async ({ page }) => {
   await vaterLogin(page, FATHER);
   const name = await creatorMitUebung(page, "Nachladen");
   await dialogOeffnen(page, name);
@@ -136,10 +122,10 @@ test("Scheitert das Nachziehen, sagt der Dialog es — und sperrt beide Speicher
   await page.route(abruf, (route) => route.abort("failed"));
 
   await page.getByLabel("Aufgabe", { exact: true }).fill("They ___ (go) to school.");
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
 
   // Beides steht da, und beides stimmt: der PUT war erfolgreich, das Nachziehen nicht.
-  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
   await expect(page.getByRole("alert")).toContainText("Weiteres Speichern ist gesperrt");
   /*
    * Der Fokus muss mitkommen. Er liegt nach dem Klick auf dem Speichern-Knopf, der gerade `disabled`
@@ -147,47 +133,11 @@ test("Scheitert das Nachziehen, sagt der Dialog es — und sperrt beide Speicher
    * liefe in die Seite dahinter. Im Fehlerfall bliebe das dauerhaft.
    */
   await expect(page.getByRole("button", { name: "Erneut laden" })).toBeFocused();
-
-  await expect(page.getByRole("button", { name: "Beschreibung speichern" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Inhalt speichern" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Übung speichern" })).toBeDisabled();
 
   // Der Riegel hat eine Tür: geht der Abruf wieder, führt „Erneut laden" zurück in den Betrieb.
   await page.unroute(abruf);
   await page.getByRole("button", { name: "Erneut laden" }).click();
   await expect(page.getByRole("alert")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Beschreibung speichern" })).toBeEnabled();
-  await expect(page.getByRole("button", { name: "Inhalt speichern" })).toBeEnabled();
-});
-
-test("Während der eine Knopf speichert, ist der andere gesperrt", async ({ page }) => {
-  await vaterLogin(page, FATHER);
-  const name = await creatorMitUebung(page, "Zweitklick");
-  await dialogOeffnen(page, name);
-
-  /*
-   * Der PUT wird künstlich verzögert, damit der Zustand „speichert gerade" lange genug steht, um ihn zu
-   * befragen. Ohne das ist er ein paar Millisekunden lang und die Zusicherung würde ihn verpassen.
-   */
-  await page.route("**/api/v1/creator/textbook-series/**", async (route) => {
-    if (route.request().method() === "PUT") await new Promise((r) => setTimeout(r, 3000));
-    await route.continue();
-  });
-
-  await page.getByLabel("Aufgabe", { exact: true }).fill("They ___ (go) to school.");
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
-
-  /*
-   * Der Kern: Die beiden Editoren halten je eine eigene `useAction`-Instanz, und deren Sperre gilt nur
-   * für den eigenen Knopf. Ohne den gemeinsamen Riegel im Dialog wäre dieser hier klickbar — und sein
-   * Vollersatz-PUT ginge mit der `config` von VOR dem laufenden Speichern raus. Ohne ETag am Server
-   * gewinnt der letzte Schreiber, der Inhalt wäre also wieder weg.
-   *
-   * Enge Frist mit Absicht: Nach dem Speichern ist der Knopf ohnehin kurz gesperrt (Nachladen). Eine
-   * Zusicherung ohne Frist würde einfach so lange warten und träfe damit den falschen Zustand.
-   */
-  await expect(page.getByRole("button", { name: "Beschreibung speichern" })).toBeDisabled({ timeout: 1000 });
-
-  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
-  // Und die Gegenprobe: Ist alles durch, geht er wieder auf. Ein dauerhaft toter Knopf wäre kein Fix.
-  await expect(page.getByRole("button", { name: "Beschreibung speichern" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Übung speichern" })).toBeEnabled();
 });

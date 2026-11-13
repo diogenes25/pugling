@@ -69,7 +69,7 @@ test("B-151: Das Lehrbuch-Formular schließt beim Speichern – die Bestätigung
   const childId = await createChild(page, KIND, "4321");
 
   const BUCH = `Prüfbuch ${STAMP}`;
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   await page.locator("#tbnew-title").fill(BUCH);
   await page.locator("#tbnew-chapter").fill("Unit 1");
   await page.getByRole("button", { name: "Buch hinterlegen" }).click();

@@ -73,8 +73,8 @@ test("Ein Wechsel der Ausgangssprache bindet das Paar im neuen Sprachpaar", asyn
 
   // Nur die Ausgangssprache ändern – Satz und Übersetzung bleiben stehen.
   await page.locator("#cfg-tr-src").selectOption("fr");
-  await page.getByRole("button", { name: "Inhalt speichern" }).click();
-  await expect(page.getByText("Inhalt gespeichert.")).toBeVisible();
+  await page.getByRole("button", { name: "Übung speichern" }).click();
+  await expect(page.getByText("Gespeichert.", { exact: true })).toBeVisible();
 
   expect(await eintraege(page, satz)).toEqual(["en→de", "fr→de"]);
 });

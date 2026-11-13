@@ -48,7 +48,7 @@ test("Katalog zuerst: Reihe inline anlegen, Verlag und Klasse aus dem Katalog, F
 
   // ---- AK 3: ein Buch ganz ohne Katalog bleibt eintragbar ----
   const titel = `Freitextbuch ${STAMP}`;
-  await page.goto(`/vater/kind/${childId}`);
+  await page.goto(`/vater/kind/${childId}?bereich=schule`);
   // AK 1: der Katalog ist die erste Gruppe des Formulars, der Freitext steht benannt dahinter.
   const anlegen = page.locator("form").filter({ has: page.locator("#tbnew-series") });
   await expect(anlegen.getByRole("group", { name: /Aus dem Katalog/ })).toBeVisible();

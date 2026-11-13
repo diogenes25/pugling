@@ -89,7 +89,7 @@ export function VaterDashboard() {
                   <td className="muted">
                     {c.interests.length > 0
                       ? c.interests.join(", ")
-                      : <Link to={`/vater/kind/${c.id}`}>Interessen pflegen →</Link>}
+                      : <Link to={`/vater/kind/${c.id}?bereich=interessen`}>Interessen pflegen →</Link>}
                   </td>
                   <td className="num">{c.coins}</td>
                   <td className="num">{c.gems}</td>

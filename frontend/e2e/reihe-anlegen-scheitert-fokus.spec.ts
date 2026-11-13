@@ -19,7 +19,9 @@ test("scheitert „Reihe anlegen & wählen“, steht der Fokus im Namensfeld sta
       ? route.fulfill({ status: 500, contentType: "application/problem+json",
         body: JSON.stringify({ title: "Server error", status: 500, detail: "Probe", code: "internal_error" }) })
       : route.continue());
-  await page.goto("/vater/kind/1");
+  await page.goto("/vater/kind/1?bereich=schule");
+  // Kind 1 trägt schon ein Buch aus dem Seed – das Anlege-Formular ist darum zugeklappt (B-534).
+  await page.getByRole("button", { name: "Weiteres Buch" }).click();
 
   const formular = page.locator("form").filter({ has: page.locator("#tbnew-series") });
   await formular.getByRole("button", { name: "+ Neue Reihe" }).click();
