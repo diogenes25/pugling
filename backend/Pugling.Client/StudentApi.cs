@@ -97,6 +97,10 @@ public sealed class StudentApi(HttpClient http)
     public Task<MyInterestProfileResponse> GetMyInterestsAsync(CancellationToken ct = default) =>
         Http.GetAsync<MyInterestProfileResponse>($"{Root}/me/interests", ct);
 
+    /// <summary>The child's earned coins this week against its own previous week up to now (B-253).</summary>
+    public Task<WeekCoinsResponse> GetWeekCoinsAsync(CancellationToken ct = default) =>
+        Http.GetAsync<WeekCoinsResponse>($"{Root}/me/points/week", ct);
+
     /// <summary>
     /// Replaces the child's own interests entirely. Resolves against <b>existing</b> tags only - an unknown
     /// id yields <c>invalid_reference</c> rather than quietly creating taxonomy.

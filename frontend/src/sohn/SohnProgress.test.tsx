@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
@@ -12,6 +12,7 @@ const setPlanId = vi.fn();
 const plans = vi.fn();
 const overview = vi.fn();
 const overviewProgress = vi.fn();
+const weekCoins = vi.fn();
 const STALE = 99;
 
 vi.mock("./SohnApp", () => ({ useSohn: () => ({ planId: STALE, setPlanId, childId: 7, celebrate: () => {} }) }));
@@ -26,6 +27,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       plans: (...a: unknown[]) => plans(...a),
       overview: (...a: unknown[]) => overview(...a),
       overviewProgress: (...a: unknown[]) => overviewProgress(...a),
+      weekCoins: () => weekCoins(),
     },
   };
 });
@@ -45,6 +47,7 @@ beforeEach(() => {
     ? Promise.reject(new ApiError(404, "Study plan not found.", "trace-1"))
     : Promise.resolve({ title: `Plan ${id}`, today: { goalsMet: 0, goalsTotal: 0, positions: [] }, currentStreak: 0 }));
   overviewProgress.mockReset().mockResolvedValue({ days: [], totalPoints: 0, daysComplete: 0, totalDays: 7, currentStreak: 0 });
+  weekCoins.mockReset().mockResolvedValue({ weekStart: "2026-11-09", thisWeek: 0, lastWeekSoFar: 0, lastWeekTotal: 0 });
 });
 
 const renderProgress = () => render(<MemoryRouter><SohnProgress /></MemoryRouter>);
@@ -100,5 +103,43 @@ describe("Erfolge", () => {
 
     expect(await screen.findByText("Missionen-Panel")).toBeTruthy();
     expect(screen.queryByText("Pflicht erledigt")).toBeNull();
+  });
+});
+
+/** B-253 (G-6): die eigene Woche gegen die eigene Vorwoche bis jetzt – neutral, ohne Tadel. */
+describe("Erfolge, Wochenvergleich", () => {
+  // AK 5. Rot, wenn die Zeile fehlt oder die Zahlen nicht vom Server kommen.
+  it("zeigt diese Woche neben der Vorwoche bis jetzt", async () => {
+    plans.mockResolvedValue([plan(5, true)]);
+    weekCoins.mockResolvedValue({ weekStart: "2026-11-09", thisWeek: 50, lastWeekSoFar: 50, lastWeekTotal: 77 });
+    renderProgress();
+
+    expect(await screen.findByText(/Diese Woche 50 🪙 · letzte Woche bis jetzt 50/)).toBeTruthy();
+    expect(screen.getByText(/ganze letzte Woche: 77/)).toBeTruthy();
+  });
+
+  // AK 5, weniger als letzte Woche: neutral. Rot, wenn die Zeile dann ein Urteil fällte („schlechter“) oder rot färbte.
+  it("bleibt bei weniger als letzte Woche neutral", async () => {
+    plans.mockResolvedValue([plan(5, true)]);
+    weekCoins.mockResolvedValue({ weekStart: "2026-11-09", thisWeek: 10, lastWeekSoFar: 50, lastWeekTotal: 77 });
+    renderProgress();
+
+    const zeile = (await screen.findByText(/Diese Woche 10 🪙/)).closest("p")!;
+    expect(zeile.textContent).not.toMatch(/schlechter/i);
+    expect(zeile.innerHTML).not.toMatch(/red|danger|err/i);
+  });
+
+  // AK 5, 0/0: nichts zu vergleichen. Rot, wenn die Zeile auch dann erscheint.
+  it("lässt die Zeile weg, wenn beide Wochen 0 sind", async () => {
+    plans.mockResolvedValue([plan(5, true)]);
+    weekCoins.mockResolvedValue({ weekStart: "2026-11-09", thisWeek: 0, lastWeekSoFar: 0, lastWeekTotal: 30 });
+    renderProgress();
+
+    await screen.findByText("Missionen-Panel");
+    await screen.findByText(/Plan 5/);
+    expect(weekCoins).toHaveBeenCalled();
+    // Die Antwort erst ankommen lassen – sonst prüfte die Zeile den Stand davor und bliebe immer grün.
+    await act(async () => {});
+    expect(screen.queryByText(/Diese Woche/)).toBeNull();
   });
 });

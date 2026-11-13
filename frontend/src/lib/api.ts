@@ -14,7 +14,7 @@ import type {
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
   ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
@@ -666,6 +666,9 @@ export const api = {
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome | undefined>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
+  // B-530: „die nächste Karte ist jetzt sichtbar" – der Server stempelt mit seiner Uhr; der Client meldet nur das Wann.
+  cardShown: (planId: number, positionId: number, sessionId: number) =>
+    http<void>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/shown`, "POST"),
   endSession: (planId: number, positionId: number, sessionId: number) =>
     http<PositionSession>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
@@ -694,6 +697,7 @@ export const api = {
   // ---- Sohn: Wallet ----
   // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.
   wallet: () => http<WalletBalance>(`${V1}/student/me/points`),
+  weekCoins: () => http<WeekCoins>(`${V1}/student/me/points/week`),
   walletEntries: (opts: { skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     appendPaging(q, opts);

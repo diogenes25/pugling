@@ -21,9 +21,14 @@ public record SeriesUnitProgressResponse(int SeriesUnitId, string Name, int Orde
 /// <summary>Progress of a single vocabulary exercise. <paramref name="Active"/> = currently assigned via an active plan.</summary>
 public record ExerciseProgressResponse(int ExerciseId, string Title, int OrderIndex, bool Active, MasteryRollup Progress);
 
-/// <summary>Status of a mission from the child's perspective: target, current value, completed?</summary>
+/// <summary>
+/// Status of a mission from the child's perspective: target, current value, completed?
+/// <paramref name="DaysLeft"/> (B-528) counts the days after today until the period ends on the UTC calendar - 0 on
+/// its last day, <c>null</c> for a one-off mission, which has no period. The server computes it because the day
+/// boundary is UTC; a client counting on its local clock would say "today only" on the wrong side of midnight.
+/// </summary>
 public record MissionStatus(int Id, string Title, ProgressMetric Metric, MissionPeriod Period,
-    int Target, int Current, bool Completed, int RewardPoints);
+    int Target, int Current, bool Completed, int RewardPoints, int? DaysLeft);
 
 /// <summary>Status of an award from the child's perspective: threshold, current value, earned?</summary>
 public record AchievementStatus(int Id, string Title, string? Icon, ProgressMetric Metric,

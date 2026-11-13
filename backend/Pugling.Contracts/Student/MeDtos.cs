@@ -10,6 +10,14 @@ public record MyPointsEntryResponse(int Id, int Amount, PointKind Kind, string R
 /// <summary>Account balance (wallet) of the child per currency. The ledger entries are under <c>points/entries</c>.</summary>
 public record WalletResponse(int ChildId, int Coins, int Gems);
 
+/// <summary>
+/// The child's earned coins this week against its own previous week (B-253). <paramref name="WeekStart"/> is the
+/// Monday of the running week (UTC); <paramref name="LastWeekSoFar"/> cuts the previous week at the same moment,
+/// <paramref name="LastWeekTotal"/> is all of it. "Earned" = positive coin entries except the parent's gift - shop
+/// purchases, fines and gems stay out.
+/// </summary>
+public record WeekCoinsResponse(DateOnly WeekStart, int ThisWeek, int LastWeekSoFar, int LastWeekTotal);
+
 /// <summary>Skin state of the child: current gem balance, equipped and unlocked skins.</summary>
 public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
 

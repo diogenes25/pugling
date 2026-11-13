@@ -71,6 +71,39 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
 
     /// <summary>
+    /// How many test attempts the child gets per <b>day</b>. A second chance is pedagogically right, the
+    /// fifth is grade farming: without a cap the child can restart until the result is good and silently drop
+    /// every bad run (an abandoned attempt writes nothing – see <c>PositionTestsController.Answer</c>).
+    ///
+    /// Per day and deliberately <em>not</em> per goal period: what the cap defends against is the immediate
+    /// restart, and a fresh day is fresh learning rather than farming. Tied to the period, a weekly position
+    /// would grant two attempts for the entire week – two Monday failures would lock the child out of its own
+    /// duty until Sunday and then fine it (<see cref="PlanPosition.PenaltyCoins"/>) for missing it.
+    ///
+    /// It also holds for positions without a duty (<see cref="GoalCadence.None"/>): a test always writes item
+    /// progress and feeds the metric missions, so unlimited restarts are farming there too.
+    ///
+    /// Deliberately a constant and not a field on the position: a per-position cap would be a schema change.
+    /// If the cap ever needs to be configurable, this is the one place to replace.
+    /// </summary>
+    public const int MaxTestAttemptsPerDay = 2;
+
+    /// <summary>
+    /// The exam attempts still startable for the child on <paramref name="day"/> - the single count behind the
+    /// start's cap, the submission's <c>AttemptsRemaining</c> and the practice session's <c>TestAttemptsLeft</c>
+    /// (B-522), so the offer on screen and the lock on the server cannot drift apart. An open attempt is resumed
+    /// rather than restarted, so it keeps at least one. Supervisor attempts belong to a different actor and are
+    /// not counted; the supervisor himself is exempt from the cap and gets <see cref="MaxTestAttemptsPerDay"/>.
+    /// </summary>
+    public async Task<int> TestAttemptsLeftAsync(int positionId, DateOnly day, bool forSupervisor, CancellationToken ct)
+    {
+        if (forSupervisor) return MaxTestAttemptsPerDay;
+        var childAttempts = db.TestAttempts.Where(t => t.PlanPositionId == positionId && t.Day == day && !t.BySupervisor);
+        var left = Math.Max(0, MaxTestAttemptsPerDay - await childAttempts.CountAsync(ct));
+        return left == 0 && await childAttempts.AnyAsync(t => t.CompletedAt == null, ct) ? 1 : left;
+    }
+
+    /// <summary>
     /// Minimum practice seconds an <b>empty</b> round must carry when the exercise has no content atoms at
     /// all. Deliberately weak – seconds are producible by leaving a tab open – but it is the only evidence
     /// that exists there, and it is strictly more than "a POST happened". See <see cref="IsGoalMetAsync"/>.

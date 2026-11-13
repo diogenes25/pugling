@@ -687,6 +687,9 @@ export type ChildPointsEntry = S["PointsEntryResponse"];
 /** Reiner Kontostand des Sohns (GET me/points). Die Buchungen liegen unter me/points/entries. */
 export type WalletBalance = S["WalletResponse"];
 
+/** Wochenvergleich des Sohns gegen die eigene Vorwoche (GET me/points/week, B-253). */
+export type WeekCoins = S["WeekCoinsResponse"];
+
 /** Kombinierte Konto-Sicht des Vaters (GET children/{id}/points): Salden + eingebettete Buchungen. */
 export type Wallet = S["ChildPointsResponse"];
 

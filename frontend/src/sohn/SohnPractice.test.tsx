@@ -15,6 +15,7 @@ const startSession = vi.fn();
 const cards = vi.fn();
 const endSession = vi.fn();
 const heartbeat = vi.fn();
+const cardShown = vi.fn();
 
 vi.mock("./SohnApp", () => ({
   // `skin`: die Aufgabe steht seit B-526 in der Sprechblase am Maskottchen.
@@ -30,6 +31,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       review: (...a: unknown[]) => review(...a),
       heartbeat: (...a: unknown[]) => heartbeat(...a),
       endSession: (...a: unknown[]) => endSession(...a),
+      cardShown: (...a: unknown[]) => cardShown(...a),
       overview: () => Promise.resolve({ currentStreak: 0 }),
     },
   };
@@ -47,6 +49,7 @@ beforeEach(() => {
   startSession.mockReset().mockResolvedValue({ id: 11, testable: true });
   endSession.mockReset().mockResolvedValue(undefined);
   heartbeat.mockReset().mockResolvedValue(undefined);
+  cardShown.mockReset().mockResolvedValue(undefined);
   cards.mockReset().mockImplementation(() => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))));
 });
 
@@ -508,6 +511,54 @@ describe("SohnPractice, falsche Antwort", () => {
   });
 
   // B-422, AK 4, zweiter Teil. Rot, wenn das Etikett auch ohne Kennzeichen erscheint.
+  // B-529 AK 5: die Erklärung der Bewertung landet auf dem Blatt. Rot, wenn SohnPractice `explanation` nicht ins Blatt
+  // reicht – bei falsch wie bei richtig.
+  it("reicht die Erklärung des Servers ins Blatt", async () => {
+    cards.mockImplementation(() => Promise.resolve([card(0, "eins"), card(1, "zwei")]));
+    review.mockResolvedValueOnce({ ...outcome(false, "au"), explanation: "à + le wird zu au" })
+      .mockResolvedValueOnce({ ...outcome(true, "des"), explanation: "de + les wird zu des" });
+    renderPractice();
+    await answerTyped("à le");
+    expect(document.querySelector(".lektion-blatt")!.textContent).toContain("💡 Regel: à + le wird zu au");
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+    await screen.findByText("zwei");
+    await answerTyped("des");
+    expect(document.querySelector(".lektion-blatt")!.textContent).toContain("💡 Regel: de + les wird zu des");
+  });
+
+  // B-530 AK 7: „Weiter" auf dem Blatt meldet die nächste Karte als sichtbar – genau einmal. Rot, wenn `next()` den
+  // Aufruf nicht macht oder ihn doppelt schickt.
+  it("meldet mit Weiter die nächste Karte genau einmal als sichtbar", async () => {
+    review.mockResolvedValueOnce(outcome(false, "one"));
+    renderPractice();
+    await answerTyped("falsch");
+    expect(cardShown).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(cardShown).toHaveBeenCalledTimes(1);
+    expect(cardShown).toHaveBeenCalledWith(3, 5, 11);
+  });
+
+  // B-530 AK 7: die Meldung ist fire-and-forget. Rot, wenn `next()` auf sie wartet (dann stünde „zwei" erst nach der
+  // Antwort da – hier nie) oder ihr Fehlschlag die Runde anhält.
+  it("schaltet weiter, ohne auf die Meldung zu warten, auch wenn sie scheitert", async () => {
+    let fail!: (e: unknown) => void;
+    cardShown.mockReturnValueOnce(new Promise((_, rej) => { fail = rej; }));
+    review.mockResolvedValueOnce(outcome(false, "one"));
+    renderPractice();
+    await answerTyped("falsch");
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    await act(async () => { fail(new Error("offline")); });
+
+    expect(screen.getByText("zwei")).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("bleibt ohne Kennzeichen bei der gewohnten Absage", async () => {
     review.mockResolvedValueOnce({ ...outcome(false, "clinic"), misspelled: false });
     renderPractice();
@@ -797,5 +848,89 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
     expect(screen.getByText("+10")).toBeTruthy();
     expect(screen.queryByLabelText(/Genauigkeit/)).toBeNull();
+  });
+});
+
+/**
+ * B-522: der Übungsbildschirm kennt die Restversuche des Tests (`testAttemptsLeft`) und weiß, ob das Kind vom verpatzten
+ * Test kommt. Er bietet keinen Test an, den der Server heute ablehnen würde, und feiert nach einer Niederlage nicht.
+ */
+describe("SohnPractice nach dem Test", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  function renderFrom(state?: { nachTest: boolean }) {
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/sohn/practice/5", state }]}>
+        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  // AK 4. Rot, wenn der Knopf nur an `testable` hängt oder der Leerbildschirm die aufgebrauchten Versuche verschweigt.
+  it("bietet bei aufgebrauchten Versuchen keinen Test an und sagt, wann es weitergeht", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 0 });
+    cards.mockImplementation(() => Promise.resolve([]));
+    renderFrom({ nachTest: true });
+
+    expect(await screen.findByText(de.sohn.practice.nothingDueAfterTest)).toBeTruthy();
+    expect(screen.getByText(de.sohn.practice.attemptsUsedUp)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.toTest })).toBeNull();
+  });
+
+  // AK 4 von der Startseite: dieselbe Lage ohne Herkunft. Rot, wenn der Titel nur am Navigation-State hinge.
+  it("feiert auch von der Startseite nicht, wenn die Versuche aufgebraucht sind", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 0 });
+    cards.mockImplementation(() => Promise.resolve([]));
+    renderFrom();
+
+    expect(await screen.findByText(de.sohn.practice.nothingDueAfterTest)).toBeTruthy();
+    expect(screen.queryByText(de.sohn.practice.nothingDue)).toBeNull();
+  });
+
+  // AK 5. Rot, wenn das Rundenende nur `testable` prüft.
+  it("zeigt am Rundenende kein Weiter zum Test, wenn keine Versuche übrig sind", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 0 });
+    cards.mockImplementation(() => Promise.resolve([card(0, "eins")]));
+    review.mockResolvedValueOnce(outcome(true, "eins"));
+    renderFrom();
+    await answerTyped("eins");
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+
+    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.onToTest })).toBeNull();
+  });
+
+  // Gegenprobe zu AK 5 – sonst bliebe der Fall oben auch grün, wenn der Knopf nie erschiene. Rot, wenn das Gate auch bei
+  // übrigen Versuchen sperrt.
+  it("zeigt am Rundenende Weiter zum Test, solange Versuche übrig sind", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 1 });
+    cards.mockImplementation(() => Promise.resolve([card(0, "eins")]));
+    review.mockResolvedValueOnce(outcome(true, "eins"));
+    renderFrom();
+    await answerTyped("eins");
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
+
+    expect(await screen.findByRole("button", { name: de.sohn.practice.onToTest })).toBeTruthy();
+  });
+
+  // AK 6. Rot, wenn der Titel den State nicht liest (dann stünde wieder „Nichts fällig 🎉“) oder der Knopf fehlt.
+  it("feiert nach dem Test nicht, bietet ihn aber an, solange Versuche übrig sind", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 1 });
+    cards.mockImplementation(() => Promise.resolve([]));
+    renderFrom({ nachTest: true });
+
+    expect(await screen.findByText(de.sohn.practice.nothingDueAfterTest)).toBeTruthy();
+    expect(screen.queryByText(de.sohn.practice.nothingDue)).toBeNull();
+    expect(screen.getByRole("button", { name: de.sohn.practice.toTest })).toBeTruthy();
+  });
+
+  // AK 7. Rot, wenn der neue Titel auch ohne Herkunft und mit übrigen Versuchen erscheint.
+  it("bleibt von der Startseite mit übrigen Versuchen beim gewohnten Nichts fällig", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 2 });
+    cards.mockImplementation(() => Promise.resolve([]));
+    renderFrom();
+
+    expect(await screen.findByText(de.sohn.practice.nothingDue)).toBeTruthy();
+    expect(screen.getByRole("button", { name: de.sohn.practice.toTest })).toBeTruthy();
   });
 });

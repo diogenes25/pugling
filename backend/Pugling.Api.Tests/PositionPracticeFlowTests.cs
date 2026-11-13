@@ -327,4 +327,144 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(HttpStatusCode.NotFound,
             (await child.GetAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId + 999}")).StatusCode);
     }
+
+    /// <summary>
+    /// B-522 AK 1 and AK 3: the practice session reports the exam attempts still startable today, by the same
+    /// count that locks the exam start. Red when the field is missing, when an open attempt counts as used up
+    /// (the second, still open attempt must leave 1), or when the start's lock got lost in the move.
+    /// </summary>
+    [Fact]
+    public async Task Sitzung_Nennt_Die_Restversuche_Des_Tests()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionUrl = $"{TestApi.PracticeBase(planId, positionId)}/{await TestApi.StartPositionSessionAsync(child, planId, positionId)}";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        async Task<int> LeftAsync() => (await child.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32();
+        async Task SubmitAsync(int attemptId) => (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
+        {
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+        })).EnsureSuccessStatusCode();
+
+        Assert.Equal(2, await LeftAsync());
+
+        var first = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        Assert.Equal(1, await LeftAsync());
+        await SubmitAsync(first);
+        Assert.Equal(1, await LeftAsync());
+
+        // The second attempt is started but still open: it is resumed, not lost, so one stays startable.
+        var second = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        Assert.Equal(1, await LeftAsync());
+        await SubmitAsync(second);
+        Assert.Equal(0, await LeftAsync());
+
+        var third = await child.PostAsJsonAsync(testsUrl, new { });
+        Assert.Equal(HttpStatusCode.Conflict, third.StatusCode);
+        Assert.Equal("test_attempts_exhausted", (await third.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    /// <summary>
+    /// B-522 AK 2: the supervisor is exempt from the cap, so his view of the session shows the daily maximum even
+    /// after the child used both attempts. Red when the exemption is missing (he would see 0).
+    /// </summary>
+    [Fact]
+    public async Task Sitzung_Zeigt_Dem_Supervisor_Die_Volle_Versuchszahl()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionUrl = $"{TestApi.PracticeBase(planId, positionId)}/{await TestApi.StartPositionSessionAsync(child, planId, positionId)}";
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        for (var i = 0; i < 2; i++)
+        {
+            var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+            (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
+            {
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            })).EnsureSuccessStatusCode();
+        }
+
+        Assert.Equal(0, (await child.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32());
+        Assert.Equal(2, (await father.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32());
+    }
+
+    /// <summary>
+    /// B-529 AK 1 and AK 2: a rule task's hint comes back after the answer as its explanation - on a wrong answer
+    /// and on a right one. Red when <c>ReviewOutcome</c> carries no explanation, or only misses get one.
+    /// </summary>
+    [Fact]
+    public async Task Regelaufgabe_Erklaert_Nach_Der_Antwort_Die_Regel()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Regel-Fach") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/grammar", new
+            {
+                title = TestApi.UniqueName("Regelaufgaben"),
+                orderIndex = 1,
+                rewardPoints = 5,
+                config = new
+                {
+                    instruction = "Setze ein.",
+                    tasks = new[]
+                    {
+                        new { prompt = "Je vais ___ (à + le) cinéma.", answer = "au", ruleHint = "à + le wird zu au" },
+                        new { prompt = "Il parle ___ (de + les) amis.", answer = "des", ruleHint = "de + les wird zu des" },
+                    },
+                },
+            }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+
+        var wrong = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "à le"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.False(wrong, "wasCorrect");
+        Assert.Equal("à + le wird zu au", wrong.GetProperty("explanation").GetString());
+
+        var right = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "des"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.True(right, "wasCorrect");
+        Assert.Equal("de + les wird zu des", right.GetProperty("explanation").GetString());
+    }
+
+    /// <summary>
+    /// B-529 AK 3: a vocabulary hint is help before the answer ("beginnt mit h"), not an explanation, so the review
+    /// of a vocabulary card names none. Red when the outcome hands out <c>ContentItem.Hint</c> instead of
+    /// <c>Explanation</c>.
+    /// </summary>
+    [Fact]
+    public async Task Vokabel_Hat_Keine_Erklaerung_Auch_Mit_Tipp()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Tipp-Fach") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
+            {
+                title = "Mit Tipp",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = "hello", back = "hallo", hint = "beginnt mit h" } },
+                },
+            }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+
+        var wrong = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "falsch"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.False(wrong, "wasCorrect");
+        Assert.Equal(JsonValueKind.Null, wrong.GetProperty("explanation").ValueKind);
+    }
 }

@@ -8,10 +8,15 @@ namespace Pugling.Contracts.Student;
 /// <c>PositionStatus.Testable</c> (B-114) for this session's day: false on a free display stage, so a
 /// client offering "continue to the test" after the round (or when nothing is due) can gate on it instead
 /// of sending the child into the exam's <c>stage_not_testable</c> dead end.
+///
+/// <paramref name="TestAttemptsLeft"/> (B-522) is the number of exam attempts still startable on the session's
+/// day - the same count that locks the exam start with <c>test_attempts_exhausted</c>; an open attempt counts as
+/// startable (it is resumed). <c>Testable</c> says whether the day's stage has a test at all, this says whether
+/// the child may still take it today. The supervisor is exempt from the cap and always gets the daily maximum.
 /// </summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
     DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-    PlayMode Mode, int Cursor, int Total, bool Testable);
+    PlayMode Mode, int Cursor, int Total, bool Testable, int TestAttemptsLeft);
 
 /// <summary>
 /// Start payload of a practice session. <paramref name="Mode"/> selects the playback mode (default
@@ -103,6 +108,12 @@ public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// measure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -
 /// so practice prepares for the strict test; the mark only tells the child it knew the word.
 /// </para>
+/// <para>
+/// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - today the rule hint of a rule task, on a
+/// right and on a wrong answer alike. It follows the rule of <see cref="Expected"/>: given only after the answer, and
+/// <c>null</c> where no atom was hit; <c>null</c> as well for content that has no explanation (vocabulary).
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
-    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false);
+    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
+    string? Explanation = null);

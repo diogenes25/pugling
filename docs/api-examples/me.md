@@ -92,7 +92,8 @@ Response — `HTTP 200`:
     "target": 10,
     "current": 0,
     "completed": false,
-    "rewardPoints": 15
+    "rewardPoints": 15,
+    "daysLeft": "<days-left>"
   },
   {
     "id": 2,
@@ -102,7 +103,8 @@ Response — `HTTP 200`:
     "target": 15,
     "current": 0,
     "completed": false,
-    "rewardPoints": 10
+    "rewardPoints": 10,
+    "daysLeft": "<days-left>"
   },
   {
     "id": 3,
@@ -112,7 +114,8 @@ Response — `HTTP 200`:
     "target": 3,
     "current": 0,
     "completed": false,
-    "rewardPoints": 30
+    "rewardPoints": 30,
+    "daysLeft": "<days-left>"
   },
   {
     "id": 4,
@@ -122,7 +125,8 @@ Response — `HTTP 200`:
     "target": 25,
     "current": 2,
     "completed": false,
-    "rewardPoints": 40
+    "rewardPoints": 40,
+    "daysLeft": "<days-left>"
   }
 ]
 ```
@@ -144,7 +148,8 @@ Response — `HTTP 200`:
   "target": 10,
   "current": 0,
   "completed": false,
-  "rewardPoints": 15
+  "rewardPoints": 15,
+  "daysLeft": "<days-left>"
 }
 ```
 

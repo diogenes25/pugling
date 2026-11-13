@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../lib/api";
 import { useErrorMessage } from "../lib/chromeText";
@@ -56,6 +56,8 @@ export function SohnPractice() {
   const { positionId: positionIdRaw } = useParams();
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
+  // B-522: kommt das Kind vom verpatzten Test, feiert der Leerbildschirm nicht. Ein Neuladen verliert den State – hinnehmbar.
+  const nachTest = (useLocation().state as { nachTest?: boolean } | null)?.nachTest === true;
 
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
@@ -251,7 +253,7 @@ export function SohnPractice() {
             setBlatt({
               richtig: true, gegeben: payload.givenAnswer!, loesung: null, muenzen: feedback.awarded,
               comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
-              faelligAm: outcome?.dueOn ?? null,
+              faelligAm: outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
             });
             // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
             setToast(feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
@@ -266,6 +268,7 @@ export function SohnPractice() {
           setBlatt({
             richtig: false, gegeben: payload.givenAnswer!, loesung: feedback.expected, muenzen: 0, comboBonus: 0,
             tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled,
+            erklaerung: outcome?.explanation ?? null,
           });
           const absage = feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong");
           setToast(feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
@@ -309,6 +312,9 @@ export function SohnPractice() {
     } else {
       setIdx((i) => i + 1);
       setPhase("front");
+      // B-530: ab jetzt ist die nächste Karte sichtbar – die Lesezeit auf dem Blatt zählt nicht in ihre Antwortzeit. Der
+      // Server stempelt mit seiner Uhr. Fire-and-forget: ein Fehlschlag kostet höchstens den Tempo-Bonus, nie die Runde.
+      if (planId && session.current) api.cardShown(planId, positionId, session.current.id).catch(() => {});
     }
   }
 
@@ -334,13 +340,19 @@ export function SohnPractice() {
   // B-117: eine Anzeigestufe (ShowBoth, B-96) kennt keinen Test - die Klausur antwortet dort mit
   // `stage_not_testable`. Ohne dieses Gate bot der Bildschirm den Knopf trotzdem an und schickte in die
   // rohe Fehlerseite, die exakt dieselbe Fehlerklasse ist, die B-114 an der Tageskarte schon behoben hat.
-  const testable = session.current?.testable ?? true;
+  // B-522: `testable` heißt Tag/Stufe, nicht Restversuche – den Test bietet der Knopf nur an, wenn heute noch einer startbar
+  // ist (dieselbe Zählung, mit der der Server den Start sperrt). Ein älterer Server ohne das Feld sperrt nichts.
+  const versucheUebrig = (session.current?.testAttemptsLeft ?? 1) > 0;
+  const testable = (session.current?.testable ?? true) && versucheUebrig;
+  const ohneFeier = nachTest || !versucheUebrig;
 
   if (phase === "empty") return (
     <div className="sohn-body">
       <div className="card" style={{ textAlign: "center" }}>
-        <div className="screen-title" ref={landingRef} tabIndex={-1}>{t("practice.nothingDue")}</div>
-        <p className="sub">{testable
+        <div className="screen-title" ref={landingRef} tabIndex={-1}>{t(ohneFeier ? "practice.nothingDueAfterTest" : "practice.nothingDue")}</div>
+        <p className="sub">{!versucheUebrig
+          ? t("practice.attemptsUsedUp")
+          : testable
           ? t("practice.nothingDueTest")
           : t("practice.nothingDueLater")}</p>
       </div>

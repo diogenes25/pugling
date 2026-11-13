@@ -204,6 +204,21 @@ describe("Blatt", () => {
     expect(blatt.textContent).not.toContain("Lösung");
   });
 
+  // B-529 AK 5 (Blatt): die Regel steht nach der Antwort da – bei falsch und bei richtig. Rot, wenn das Blatt die
+  // Erklärung nicht zeigt oder nur bei einem der beiden Urteile.
+  it("zeigt die Erklärung bei falsch und bei richtig", () => {
+    expect(zeige(r({ richtig: false, gegeben: "à le", loesung: "au", erklaerung: "à + le wird zu au" })).textContent)
+      .toContain("💡 Regel: à + le wird zu au");
+    expect(zeige(r({ erklaerung: "de + les wird zu des" })).textContent).toContain("💡 Regel: de + les wird zu des");
+  });
+
+  // B-529 AK 5: ohne Erklärung keine leere Zeile. Rot, wenn die Zeile auch ohne Inhalt gerendert würde.
+  it("zeigt ohne Erklärung keine Regelzeile", () => {
+    const blatt = zeige(r({ richtig: false, gegeben: "x", loesung: "y", erklaerung: null }));
+    expect(blatt.querySelector(".lektion-erklaerung")).toBeNull();
+    expect(blatt.textContent).not.toContain("💡");
+  });
+
   it("ist selbst keine Live-Region und führt mit Weiter weiter", () => {
     // Rot, wenn das Blatt `role="status"` trüge: es entsteht zusammen mit seinem Text und bliebe stumm (B-134) –
     // angesagt wird über die Region des Bildschirms.

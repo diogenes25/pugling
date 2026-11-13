@@ -161,7 +161,8 @@ Response — `HTTP 201`:
   "mode": "Lern",
   "cursor": 0,
   "total": 2,
-  "testable": true
+  "testable": true,
+  "testAttemptsLeft": 2
 }
 ```
 
@@ -255,7 +256,8 @@ Response — `HTTP 200`:
     "cueBox": null
   },
   "done": false,
-  "misspelled": false
+  "misspelled": false,
+  "explanation": null
 }
 ```
 
@@ -288,7 +290,8 @@ Response — `HTTP 201`:
   "mode": "Info",
   "cursor": 0,
   "total": 2,
-  "testable": true
+  "testable": true,
+  "testAttemptsLeft": 2
 }
 ```
 
@@ -413,7 +416,6 @@ Response — `HTTP 200`:
     "stage": 6,
     "reveal": null,
     "answerLength": null,
-    "hint": null,
     "choices": [
       "hallo",
       "tsch\u00FCss"

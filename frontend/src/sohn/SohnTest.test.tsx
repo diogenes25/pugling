@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
 import { setLanguage } from "../lib/i18n";
@@ -110,6 +110,19 @@ describe("SohnTest, Stufe je Frage (B-476)", () => {
     expect(document.querySelector(".lektion-blatt")).toBeNull();
   });
 
+  // B-544 AK 3: der Test misst, er zeigt keinen Tipp – auch nicht, wenn ein älterer Server noch einen mitschickte.
+  // Rot, wenn die Zeile `hinweis={item.hint && typed && …💡…}` in SohnTest zurückkehrt.
+  it("zeigt auf einer getippten Stufe keinen Tipp", async () => {
+    await setLanguage("de");
+    const mitTipp = { itemIndex: 0, prompt: "the horse", stage: 4, reveal: null, hint: "beginnt mit P" } as TestItem;
+    nextTest.mockResolvedValue({ item: mitTipp, done: false, cursor: 0, total: 2 });
+    renderTest();
+
+    await screen.findByRole("textbox");
+    expect(screen.queryByText(/beginnt mit P/)).toBeNull();
+    expect(screen.queryByText(/💡/)).toBeNull();
+  });
+
   // B-35 / Review B-526: beim Aufdecken dreht sich die Karte – und die Lösung erscheint IN ihr. Rot, wenn die Lösung
   // wieder unten bei den Knöpfen stünde (die Karte drehte sich dann leer) oder schon vor dem Aufdecken irgendwo.
   it("zeigt die Lösung einer Selbsteinschätzung erst nach dem Aufdecken, und zwar in der Karte", async () => {
@@ -123,6 +136,34 @@ describe("SohnTest, Stufe je Frage (B-476)", () => {
     const karte = document.querySelector(".fcard.flipped")!;
     expect(karte.textContent).toContain("→ das Pferd");
     expect(document.querySelector(".lektion-fuss")!.textContent).not.toContain("das Pferd");
+  });
+});
+
+/** Liest den Navigation-State, mit dem der Test ins Üben schickt. */
+function UebenZiel() {
+  const state = useLocation().state as { nachTest?: boolean } | null;
+  return <p>Üben, nachTest={String(state?.nachTest === true)}</p>;
+}
+
+describe("SohnTest, Weg ins Üben (B-522)", () => {
+  // AK 6, Hälfte des Tests: „▶ Üben" nach einem verpatzten Test nimmt die Herkunft mit, damit das Üben nicht feiert.
+  // Rot, wenn `onPractice` ohne State navigiert.
+  it("gibt dem Üben mit, dass das Kind vom Test kommt", async () => {
+    await setLanguage("de");
+    nextTest.mockReset().mockResolvedValueOnce({ item: null, done: true, cursor: 0, total: 0 });
+    submitTest.mockResolvedValueOnce({ passed: false, scorePercent: 0, passPercent: 80, correctItems: 0, totalItems: 0, stage: 3, items: [], attemptsRemaining: 0 });
+    render(
+      <MemoryRouter initialEntries={["/sohn/test/5"]}>
+        <Routes>
+          <Route path="/sohn/test/:positionId" element={<SohnTest />} />
+          <Route path="/sohn/practice/:positionId" element={<UebenZiel />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "▶ Üben" }));
+
+    expect(await screen.findByText("Üben, nachTest=true")).toBeTruthy();
   });
 });
 

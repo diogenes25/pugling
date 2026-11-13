@@ -30,8 +30,11 @@ namespace Pugling.Contracts.Student;
 /// the exam must not show less material than practice, or it would be the harder task with less to go on.
 ///
 /// <c>LetterTiles</c> (B-05) are the scrambled letters, same as on <see cref="PracticeCard"/>, shuffled once per attempt.
+///
+/// Unlike <see cref="PracticeCard"/> there is deliberately no hint (B-544): the exam measures, so a field that
+/// could carry help is not part of its contract.
 /// </summary>
-public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength, string? Hint,
+public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
     string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
@@ -88,7 +91,7 @@ public record ItemOutcome(int ItemIndex, string Prompt, string Expected, string?
 ///
 /// <see cref="AttemptsRemaining"/> is the daily test attempts left after this one (never negative) - lets
 /// the result screen decide on its own whether to offer "try again" instead of the child hitting a
-/// rejection after an already-spent click. For a supervisor attempt this is always <c>MaxAttemptsPerDay</c>:
+/// rejection after an already-spent click. For a supervisor attempt this is always <c>MaxTestAttemptsPerDay</c>:
 /// the daily cap never applies to them, so the value is filler here, not a statement about attempts
 /// actually left.
 /// </summary>

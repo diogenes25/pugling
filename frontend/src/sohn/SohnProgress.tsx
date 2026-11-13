@@ -6,7 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { useChosenPlan } from "./useChosenPlan";
 import { BadgesGallery, MissionsPanel } from "./GamificationPanels";
 import { MyObjectives } from "./MyObjectives";
-import type { OverviewResponse, ProgressResponse } from "../lib/types";
+import type { OverviewResponse, ProgressResponse, WeekCoins } from "../lib/types";
 
 export function SohnProgress() {
   const { t } = useTranslation();
@@ -20,6 +20,24 @@ export function SohnProgress() {
   // Eine eigene Komponente, erst mit der Wahl gemountet: ihr Laden beginnt mit `loading`, statt einen Render lang die
   // Antwort für „kein Plan“ als fehlende Daten zu lesen und den Fehlerkasten aufblitzen zu lassen.
   return <ProgressForPlan planId={chosen.id} />;
+}
+
+/**
+ * B-253 (G-6): die eigene Woche gegen die eigene Vorwoche bis zum selben Zeitpunkt – neutral, ohne Rot und ohne
+ * „schlechter"; Lob ja, Tadel nein. Sind beide Zahlen 0, gibt es nichts zu vergleichen, und die Zeile entfällt. Ein
+ * Fehler beim Laden lässt sie still weg: sie ist Beiwerk, kein Grund für einen Fehlerkasten auf der Erfolge-Seite.
+ */
+function WeekComparison() {
+  const { t } = useTranslation();
+  const week = useAsync<WeekCoins>(() => api.weekCoins(), []);
+  const w = week.data;
+  if (!w || (w.thisWeek === 0 && w.lastWeekSoFar === 0)) return null;
+  return (
+    <p className="sub week-comparison">
+      {t("progress.week", { thisWeek: w.thisWeek, lastWeekSoFar: w.lastWeekSoFar })}{" "}
+      <span style={{ fontSize: 11 }}>{t("progress.weekTotal", { total: w.lastWeekTotal })}</span>
+    </p>
+  );
 }
 
 function ProgressForPlan({ planId }: { planId: number }) {
@@ -41,6 +59,7 @@ function ProgressForPlan({ planId }: { planId: number }) {
         <span className="chip" style={{ marginLeft: "auto" }}>🏆<b className="tabnum">{pr.totalPoints}</b></span>
       </div>
       <p className="sub">{t("progress.summary", { title: o.title, done: pr.daysComplete, total: pr.totalDays, streak: pr.currentStreak })}</p>
+      <WeekComparison />
 
       {/* Die Positionen stehen nicht mehr hier: sie sind der Pfad auf der Startseite (B-525). Die Missionen sind
           von dort hierher gezogen – der Pfad soll ohne Scrollen bis zum nächsten Knoten reichen. */}

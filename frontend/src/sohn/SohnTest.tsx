@@ -207,7 +207,8 @@ export function SohnTest() {
   if (result) return (
     <TestResult result={result} stageName={stageName} skin={skin} titleRef={resultTitleRef} onHome={() => nav("/sohn")}
       onRetry={() => { focusIntent.current = true; void start(); }}
-      onPractice={() => nav(`/sohn/practice/${positionId}`)} />
+      // B-522: die Herkunft reist mit – nach einer Niederlage feiert der Leerbildschirm des Übens nicht.
+      onPractice={() => nav(`/sohn/practice/${positionId}`, { state: { nachTest: true } })} />
   );
 
   // B-350: hängt der Start oder die nächste Frage, ist das Bild sonst eine Sackgasse – nur der Browser führte zurück.
@@ -237,7 +238,7 @@ export function SohnTest() {
       {/* Aufdecken dreht die Karte um wie beim Üben (B-35); getippte Stufen decken nichts auf. */}
       <Aufgabe
         karte={item} form={form} skin={skin} gedreht={!typed && revealed}
-        hinweis={item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
+        /* Kein Tipp im Test (B-544): er misst. Der Server schickt keinen mehr – hier steht auch kein Platz dafür. */
         /* Die Lösung erscheint IN der Karte, die sich dreht – sonst drehte sich eine leere Geste (Review B-526).
            `revealed` bleibt die einzige Bedingung: vor dem Aufdecken steht sie nirgends. */
         aufloesung={!typed && revealed && (

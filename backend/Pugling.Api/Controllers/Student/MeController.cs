@@ -35,6 +35,21 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         return new WalletResponse(cid.Value, coins, gems);
     }
 
+    /// <summary>
+    /// Own earned coins this week against the own previous week up to the same moment (B-253). Only the child's own
+    /// week - no siblings, no ranks (user decision G-6).
+    /// </summary>
+    [HttpGet("points/week")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<WeekCoinsResponse>> PointsWeek(CancellationToken ct = default)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+
+        return await wallet.WeekCoinsAsync(cid.Value, time.GetUtcNow().UtcDateTime, ct);
+    }
+
     /// <summary>Own point ledger entries (newest first), paged.</summary>
     /// <param name="skip">Number of ledger entries to skip (paging).</param>
     /// <param name="take">Maximum number of ledger entries (1..500). Total count in the <c>X-Total-Count</c> header.</param>

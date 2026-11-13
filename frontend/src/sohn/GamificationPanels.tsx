@@ -20,6 +20,10 @@ const PERIOD_KEY = {
  */
 export function MissionsPanel() {
   const { t } = useTranslation();
+  // B-528: die Frist rechnet der Server (UTC-Periode); ohne sie (einmalig, älterer Server) bleibt der Zeitraum stehen.
+  const frist = (m: MissionStatus) => m.daysLeft == null
+    ? t(PERIOD_KEY[m.period])
+    : m.daysLeft <= 0 ? t("missions.lastDay") : t("missions.daysLeft", { count: m.daysLeft });
   const { childId, celebrate } = useSohn();
   const missions = useAsync<MissionStatus[]>(() => api.missions(), []);
 
@@ -55,7 +59,7 @@ export function MissionsPanel() {
               <span className="sub" style={{ marginLeft: "auto" }}>
                 {m.completed
                   ? <span className="pill lime">+{m.rewardPoints}</span>
-                  : `${m.current}/${m.target} · ${t(PERIOD_KEY[m.period])}`}
+                  : `${m.current}/${m.target} · ${frist(m)}`}
               </span>
             </div>
             <div className={`bar ${m.completed ? "" : "cyan"}`}><i style={{ width: `${pct}%` }} /></div>

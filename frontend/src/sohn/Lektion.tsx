@@ -197,6 +197,11 @@ export interface Rueckmeldung {
    * Wertung bleibt falsch; das Kind soll sehen, dass es das Wort wusste und nur die Schreibweise fehlte.
    */
   falschGeschrieben?: boolean;
+  /**
+   * B-529: warum die Antwort richtig oder falsch war (heute der Regel-Hinweis einer Regelaufgabe). Der Server schickt
+   * sie erst mit der Bewertung; `null`, wo der Inhalt keine kennt – dann steht auch keine leere Zeile da.
+   */
+  erklaerung?: string | null;
 }
 
 const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
@@ -241,6 +246,9 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
           <div className="rev">{r.loesung ? t("practice.solution", { expected: r.loesung }) : t("practice.wrong")}</div>
         </>
       )}
+      {/* Bei richtig UND falsch (B-529, Entscheidung 5): richtig bestätigt sie, warum. Der Inhalt ist Nutzerdaten und
+          reist als Platzhalter. */}
+      {r.erklaerung && <div className="sub lektion-erklaerung">{t("lektion.rule", { text: r.erklaerung })}</div>}
       <button type="button" ref={weiterRef} className={`btn ${r.richtig ? "lime" : "red"}`} onClick={onWeiter}>{t("practice.next")}</button>
     </div>
   );

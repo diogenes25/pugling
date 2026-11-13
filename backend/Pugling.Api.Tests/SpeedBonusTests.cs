@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Pugling.Api.Models;
@@ -104,6 +105,108 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
         await ReviewAsync(child, planId, positionId, sid, 0);
         _factory.Clock.Advance(TimeSpan.FromSeconds(11));
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
+        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    // ---- B-530: the answer time counts from the visible card, not from the previous answer ----
+
+    private Task<HttpResponseMessage> ShownAsync(HttpClient client, int planId, int positionId, int sid) =>
+        client.PostAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/shown", null);
+
+    /// <summary>
+    /// B-530 AK 1: ten seconds of reading the sheet, then "Weiter" stamps the card as shown, then a two-second answer
+    /// earns the bonus (threshold 5 s). Red when the review still measures from the previous answer (12 s).
+    /// </summary>
+    [Fact]
+    public async Task Antwortzeit_Zaehlt_Ab_Der_Sichtbaren_Karte()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(10));
+        Assert.Equal(HttpStatusCode.NoContent, (await ShownAsync(child, planId, positionId, sid)).StatusCode);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2));
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+
+        Assert.Equal(4, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// B-530 AK 2: the anti-farming floor of one second also holds after the stamp - half a second from the visible
+    /// card pays nothing. Red when the floor no longer applies to the stamped measurement.
+    /// </summary>
+    [Fact]
+    public async Task Untergrenze_Gilt_Auch_Ab_Dem_Stempel()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2));
+        await ShownAsync(child, planId, positionId, sid);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(0.5));
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+
+        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// B-530 AK 3: one stamp per card. A second "shown" five seconds later must not restart the clock - measured from
+    /// the first stamp the answer took 7 s, over the threshold. Red when a later stamp overwrites the earlier one
+    /// (then it would be 2 s and pay).
+    /// </summary>
+    [Fact]
+    public async Task Zweiter_Stempel_Aendert_Nichts()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(10));
+        await ShownAsync(child, planId, positionId, sid);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(5));
+        await ShownAsync(child, planId, positionId, sid);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2));
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+
+        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// B-530 AK 4: without a stamp (old client, lost call) the old rule holds - three seconds after the previous answer
+    /// pay. Red when the missing stamp changes the measurement.
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Stempel_Misst_Ab_Der_Vorigen_Antwort()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(3));
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+
+        Assert.Equal(4, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// B-530 AK 5: the supervisor does not stamp (a preview pays nothing, and his click must not shape the child's
+    /// measurement). Red when the role check is missing: the stamp would turn the child's 12 s into 2 s and pay.
+    /// </summary>
+    [Fact]
+    public async Task Supervisor_Stempelt_Nicht()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+        var father = await TestApi.AdultAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(10));
+        Assert.Equal(HttpStatusCode.NoContent, (await ShownAsync(father, planId, positionId, sid)).StatusCode);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2));
+        var second = await ReviewAsync(child, planId, positionId, sid, 1);
+
         Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
     }
 }

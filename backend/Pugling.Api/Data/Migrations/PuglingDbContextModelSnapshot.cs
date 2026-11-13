@@ -1827,6 +1827,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ActiveSeconds")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("CardShownAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Cursor")
                         .HasColumnType("INTEGER");
 
