@@ -33,9 +33,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) | `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen | Wunsch | `idee` | P2 | — | .claude/skills/lehrwerk-aufbereiten | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `ausformuliert` | P2 | — | backend | — |
+| [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `ausformuliert` | P3 | — | — | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `ausformuliert` | P3 | — | backend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `idee` | P3 | — | — | — |
-| [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `idee` | P3 | — | — | — |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | Frage | `idee` | P3 | — | frontend | — |
 | [B-404](B-404-fach-loeschen-laesst-reihe-mit-uebungen-fachlos.md) | Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück | Frage | `idee` | P3 | — | backend | — |
 | [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `idee` | P3 | — | backend | — |
@@ -771,6 +771,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-236](B-236-checkbox-gruppe-ohne-zugaenglichen-gruppennamen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-253](B-253-wochenvergleich-familie-statt-liga.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
