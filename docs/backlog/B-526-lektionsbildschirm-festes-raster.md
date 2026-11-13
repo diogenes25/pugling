@@ -1,10 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
 aliases: [Lektionsraster, Rückmeldung als Blatt, Abschlussbild]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
+groesse: L
 wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: "docs/duolingo-snipwise-vergleich-plan.md#entscheidung-am-prototyp (Lektionsbildschirm des Prototyps, Nutzer im Chat 2026-11-13)"
 grund: ""
 ersetzt_durch: []
@@ -206,6 +209,80 @@ Grill-Runde mit dem Nutzer am 2026-11-13, eine Frage je Entscheidung.
 14. Alle neuen Texte laufen über `t()` in Deutsch und Englisch.
 15. Der Vater→Sohn-Durchstich und die Specs, die heute nach Klassen dieses Bildschirms greifen, sind grün.
 
+## Schätzung
+
+**Größe: L, am oberen Rand.** Kein Backend, kein Vertrag – aber die Story baut die beiden dichtesten Bildschirme
+der Arcade um (`SohnPractice.tsx` 527 Zeilen, `SohnTest.tsx` 426 Zeilen), an denen 63 Vitest-Fälle und 15
+E2E-Specs hängen. Das ist mehr als der Frontend-Teil von B-525 (ebenfalls L). XL wird sie nicht, weil sie sich in
+zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nach Etappe 1 kann man anhalten.
+
+- **`migration: nein`** – nachgesehen: keine Schemaänderung, die Story fasst kein Backend an.
+- **`vertragsbruch: nein`** – nachgesehen: alles, was das Blatt zeigt, liefert `ReviewOutcome` schon
+  (`PracticeDtos.cs:102-103`: Lösung, Münzen, Box, Fälligkeit, Combo- und Tempo-Bonus).
+
+**Risiken**
+
+1. **Der Tempo-Bonus wird schwerer – eine Folge von Entscheidung 3, die beim Grillen nicht auf dem Tisch lag.**
+   Der Server misst die Antwortzeit als Abstand zur **vorigen** Antwort (`PositionPracticeController.cs:420`),
+   nicht ab dem Erscheinen der Karte. Wartet das Blatt auf „Weiter", zählt die Zeit, die das Kind dort liest,
+   in die nächste Karte hinein. Heute sind es feste 1,1 Sekunden. Ohne Gegenmaßnahme gibt es den Schnell-Bonus
+   praktisch nur noch für den, der das Blatt wegdrückt, ohne es zu lesen. Die saubere Abhilfe (der Client meldet
+   den Zeitpunkt, an dem die Karte sichtbar wurde) wäre Backend und Vertrag und damit eine eigene Story – **vor
+   dem Bau zu entscheiden**, ob B-526 den Bonus so in Kauf nimmt.
+2. **Fokus und Ansage sind hier mehrfach repariert worden** (B-134, B-286, B-420, B-439, B-443, B-515). Zwei
+   Regeln beißen direkt: Eine Live-Region muss **vor** ihrem Text im DOM stehen (`liveRegions.test.ts` – der
+   Prototyp ist genau daran gescheitert), das Blatt darf also nicht selbst die Region sein, die mit ihm
+   erscheint; und nach jedem Phasenwechsel muss der Fokus ein Ziel haben, sonst fällt er auf `body`.
+3. **Zwei Schritte bei der Auswahl ändern, was die Sperre schützt.** Heute verhindert `useAction`, dass zwei
+   schnelle Tipper zwei Bewertungen schicken (B-49, B-73, B-284). Künftig markiert der Tipp nur; die Sperre
+   gehört an den Hauptknopf, und ein Doppel-Enter darf keine Karte überspringen.
+4. **Die Vater-Vorschau teilt die Bausteine** (`ExercisePreviewModal.tsx`). Die neue geteilte Antwortfläche ist
+   ein Baustein der Arcade; rutscht sie in die Vorschau, hat der Vater dort plötzlich zwei Schritte und kein
+   Ergebnis.
+5. **15 Specs und ein Helfer** (`introduceAndQuiz`, `e2e/helpers.ts:65`) greifen nach dem Zähler `.pill.cyan`,
+   nach `.fcard`, `.card.mistake` und den Knopfnamen. Die Dreh-Animation prüft `karten-umdrehen.spec.ts:53-58`
+   am Element `.fcard` – die Selbsteinschätzung muss also weiter eine Karte sein, die sich dreht, auch wenn die
+   Frage in einer Sprechblase steht.
+6. **Der Test darf über die geteilte Antwortfläche nichts verraten.** Markierung ja, Färbung nach richtig und
+   falsch nie; der Baustein bekommt die Wertung nur im Üben überhaupt gereicht.
+7. **Handyhöhe mit Bildschirmtastatur.** Ein Knopf am unteren Rand und ein Freitextfeld darüber: mit offener
+   Tastatur muss beides sichtbar bleiben (`lueckentext-am-handy.spec.ts` fährt genau diesen Fall).
+
+**Angriffsplan**
+
+*Etappe 1 – ein Aufbau, eine Antwortfläche (Entscheidungen 1, 2, 5, 6, 7):*
+
+1. Reine Funktion „Aufgabenform einer Karte": Anweisung, Darstellung (Blase oder Karte) und Antwortart aus den
+   Feldern der Karte. Vitest je Zeile der Tabelle aus Entscheidung 5, bevor eine Komponente sie benutzt.
+2. Geteilte Antwortfläche der Arcade mit Zwei-Schritt-Auswahl; zuerst in den Test (keine Rückmeldung, also der
+   kleinere Umbau), dann ins Üben.
+3. Rahmen-Komponente (Kopf mit ✕, Balken, Zähler, Combo; Anweisung; Frage; Antwort; Fuß mit Hauptknopf) und
+   Umzug beider Bildschirme hinein. Rückmeldung bleibt in dieser Etappe, wie sie ist.
+4. Specs und Komponententests nachziehen; Commit.
+
+*Etappe 2 – Blatt und Abschluss (Entscheidungen 3, 4, 8, 9):*
+
+5. Blatt statt Toast und statt des angehaltenen Kastens, gespeist aus einer Region, die schon vor ihm steht;
+   Fokus auf „Weiter".
+6. Abschlussbild mit Münzen und Genauigkeit aus servergeprüften Antworten.
+7. `docs/sohn-app-funktionsbeschreibung.md` (Abschnitte 2.8, 4.3, 4.4) nachziehen; Commit.
+
+**Testweg**
+
+- **Vitest, neu:** die Aufgabenform-Funktion (jede Antwortform, je mit dem Fall, der sie rot macht); die
+  Antwortfläche (Markieren ändert nichts am Server, Hauptknopf gesperrt ohne Markierung, Doppelklick wertet
+  einmal; im Test keine Färbung).
+- **Vitest, umgestellt:** `SohnPractice.test.tsx` (Blatt nach servergeprüfter Antwort, **kein** Blatt nach
+  Selbsteinschätzung und Kennenlernen, „Leider nicht" ohne Lösung, Genauigkeit zählt nur Servergeprüftes),
+  `SohnTest.test.tsx` (kein Blatt, Knopf „Weiter"), `arcadeSpielweg.test.tsx`. Unverändert grün bleiben müssen
+  `SelfAssessAnswer.test.tsx`, `TestResult.test.tsx`, `liveRegions.test.ts` und die Tests der Vater-Vorschau.
+- **E2E (zugleich der Rollengang):** `full-flow.spec.ts` durch Üben und Test; `erstbegegnung.spec.ts` (aus dem
+  angehaltenen Kasten wird das Blatt); `karten-umdrehen.spec.ts`; `lueckentext-am-handy.spec.ts`;
+  `sprache.spec.ts`; dazu eine neue Spec für den Lektionsbildschirm (Zwei-Schritt-Auswahl, Blatt, Abschluss).
+  Gemessen an „N passed" im ganzen Lauf.
+- **Reviewer:** `frontend-reviewer` je Etappe.
+- **Bleibt beim Menschen:** ob sich die langsameren Runden für die Kinder richtig anfühlen – und Risiko 1.
+
 ## Verlauf
 
 - 2026-11-13 · `idee` – aufgenommen nach der Variantenwahl am Prototyp; Prio P1 ist ein Vorschlag.
@@ -214,3 +291,6 @@ Grill-Runde mit dem Nutzer am 2026-11-13, eine Frage je Entscheidung.
   ist schon der Vorläufer des Blatts. Reine Frontend-Arbeit, zwölf offene Punkte.
 - 2026-11-13 · `gegrillt` – zehn Entscheidungen im Dialog mit dem Nutzer, alle gemäß Empfehlung; das Erklärfeld nach
   der Antwort als B-529 abgespalten, Anweisung nach Übungstyp und Vorschau im Raster zurückgestellt.
+- 2026-11-13 · `geschaetzt` – L am oberen Rand, in zwei Etappen; keine Migration, kein Vertragsbruch (beides
+  nachgesehen). Beim Nachsehen gefunden: der Tempo-Bonus misst ab der vorigen Antwort, das wartende Blatt macht
+  ihn schwerer (Risiko 1) – vor dem Bau zu entscheiden.
