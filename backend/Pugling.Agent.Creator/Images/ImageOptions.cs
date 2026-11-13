@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.AI;
 
 namespace Pugling.Agent.Creator.Images;
 
@@ -22,6 +23,13 @@ public sealed class ImageOptions
     /// with the same API – or at a local stand-in that answers in OpenAI's format, to walk the whole path without cost.
     /// </summary>
     public string? Endpoint { get; set; }
+
+    /// <summary>
+    /// How the service returns the picture; empty means "not sent". OpenAI's GPT image models reject the parameter and
+    /// return bytes anyway, while local OpenAI-compatible servers (LocalAI) default to a URL the run cannot use – those
+    /// need <c>Data</c>.
+    /// </summary>
+    public ImageGenerationResponseFormat? ResponseFormat { get; set; }
 
     /// <summary>Image model (decision 7 of B-485: small and cheap is enough for card-sized pictures).</summary>
     [Required]

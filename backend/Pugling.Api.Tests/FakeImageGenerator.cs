@@ -12,6 +12,9 @@ public sealed class FakeImageGenerator : IImageGenerator
     /// <summary>Every prompt in call order.</summary>
     public List<string> Prompts { get; } = [];
 
+    /// <summary>The requested response format of every call, in call order (null = not sent).</summary>
+    public List<ImageGenerationResponseFormat?> ResponseFormats { get; } = [];
+
     /// <summary>Prompts containing this text fail – to show that one failed image does not stop the run.</summary>
     public string? FailWhenPromptContains { get; init; }
 
@@ -20,6 +23,7 @@ public sealed class FakeImageGenerator : IImageGenerator
     {
         var prompt = request.Prompt ?? "";
         Prompts.Add(prompt);
+        ResponseFormats.Add(options?.ResponseFormat);
         if (FailWhenPromptContains is { } marker && prompt.Contains(marker, StringComparison.Ordinal))
             throw new InvalidOperationException("Bild-Dienst nicht erreichbar (Testfall).");
 

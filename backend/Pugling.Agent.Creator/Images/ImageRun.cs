@@ -168,6 +168,7 @@ public sealed class ImageRun(CreatorApi creator, MotifPlanner motifs, Lazy<IImag
             // No MediaType: the adapter may turn it into a format parameter the GPT image models reject; they return PNG
             // by default, and the server decodes whatever arrives.
             ModelId = settings.Model,
+            ResponseFormat = settings.ResponseFormat,
         }, ct);
         return response.Contents.OfType<DataContent>().FirstOrDefault()?.Data
                ?? throw new AgentException("Der Bild-Dienst lieferte kein Bild zurück.");

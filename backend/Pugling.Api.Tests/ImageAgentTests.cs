@@ -19,9 +19,11 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     private const int ShowBoth = 1;
 
     /// <summary>The run as the host wires it, with the fakes in place of Ollama and the image service.</summary>
-    internal static ImageRun Run(CreatorApi creator, IChatClient chat, IImageGenerator generator) =>
+    internal static ImageRun Run(CreatorApi creator, IChatClient chat, IImageGenerator generator,
+        ImageOptions? options = null) =>
         new(creator, new MotifPlanner(chat, NullLogger<MotifPlanner>.Instance),
-            new Lazy<IImageGenerator>(() => generator), Options.Create(new ImageOptions()), NullLogger<ImageRun>.Instance);
+            new Lazy<IImageGenerator>(() => generator), Options.Create(options ?? new ImageOptions()),
+            NullLogger<ImageRun>.Instance);
 
     private HttpClient Authenticated() =>
         factory.CreateDefaultClient(AuthHandler.Standalone(new PuglingClientOptions
@@ -211,6 +213,28 @@ public class ImageAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         Assert.NotNull(neutral.AssetId);
         var failed = Assert.Single(outcome.Jobs, j => j.TagSlug == s.Soccer);
         Assert.NotNull(failed.Error);
+    }
+
+    /// <summary>
+    /// The response format reaches the service only when configured. Red if the setting is not passed on (a local
+    /// server answers with a URL and every image fails with "no image"), or if it is sent by default (OpenAI's GPT image
+    /// models reject the parameter).
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData(ImageGenerationResponseFormat.Data)]
+    public async Task Das_Antwortformat_geht_nur_eingestellt_an_den_Dienst(ImageGenerationResponseFormat? format)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var s = await ScenarioAsync(father, format is null ? "img6" : "img7");
+        var generator = new FakeImageGenerator();
+
+        await Run(new CreatorApi(Authenticated()), new FakeChatClient(Motif), generator,
+                new ImageOptions { ResponseFormat = format })
+            .RunAsync(new ImageRunRequest(s.ChildIds[0], null, null, 50, DryRun: false), default);
+
+        Assert.NotEmpty(generator.ResponseFormats);
+        Assert.All(generator.ResponseFormats, f => Assert.Equal(format, f));
     }
 
     /// <summary>Red if the motif check lets through what the prompt must not carry: nothing, a paragraph, a line break.</summary>

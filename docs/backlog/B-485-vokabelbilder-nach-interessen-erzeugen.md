@@ -9,7 +9,7 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: Auftrag des Nutzers 2026-11-12 („kleine Bilder je Vokabel, nach den Interessen des Kindes")
-wartet_auf: "erster echter Lauf mit OpenAI-Schlüssel (images --child 1 --max 1)"
+wartet_auf: "LocalAI mit dreamshaper beim Nutzer installiert, dann erster echter Lauf (images --child 1 --max 1)"
 grund: ""
 ersetzt_durch: []
 ---
@@ -143,6 +143,16 @@ zeigen keins. Erst gegen eine Kopie der `pugling.db`, dann auf der echten (Migra
 8. **Stufe „Bild → Wort" bleibt draußen.** Begründung: Sie bräuchte eine Ausnahme von der Anti-Cheat-Regel
    (`VocabularyExerciseType.cs:121`), die bei B-03 bewusst nicht gelockert wurde. Kosten: Bilder bleiben reine
    Merkhilfe auf ungetippten Stufen.
+9. **Revision von 1 und 7 (2026-11-13, Nutzer): Der erste echte Bild-Dienst ist lokal, LocalAI `v4.12.1` mit dem
+   Modell `dreamshaper` (Stable Diffusion 1.5) auf der RTX 4050.** Begründung: Der Nutzer hat keinen OpenAI-Schlüssel,
+   und lokal braucht es kein Konto, kostet nichts und schickt kein Wort aus dem Haus. Die Anbindung bleibt
+   dieselbe: LocalAI spricht das OpenAI-Format, der Wechsel ist Konfiguration (`Images:Endpoint`, `Images:Model`,
+   `Images:Size` 512, ein Platzhalter als `Images:ApiKey`). Die Adresse lässt sich jederzeit auf OpenAI
+   zurückstellen. Kosten: LocalAI liefert ohne Angabe eine URL statt der Bilddaten, deshalb die neue Einstellung
+   `Images:ResponseFormat` (`Data`; leer = nicht senden, weil OpenAIs GPT-Bildmodelle den Parameter ablehnen).
+   Das Risiko aus Entscheidung 1 gilt weiter: SD 1.5 malt öfter Schrift und gibt das Motiv weniger treu wieder.
+   Außerdem teilen sich LocalAI und Ollama die 6 GB, also laufen beide nicht gleichzeitig. Die Quote wird nach
+   dem ersten Lauf im Verlauf notiert.
 
 ## Akzeptanzkriterien
 
@@ -312,3 +322,9 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
        (ohne Schlagwort = neutrales Grundbild für jedes Kind); Text und Kopfkommentar korrigiert.
   - Belege danach: `dotnet test` 1380/1380, Exit 0, Abdeckung 276/276; Vitest 752/752; `tsc -b` sauber;
     `bild-prompt.spec.ts` 2/2. Wegwerf-DB und Ersatz-Server danach beendet.
+- 2026-11-13 · Entscheidung 9 (lokal statt OpenAI, der Nutzer hat keinen Schlüssel). Dafür gebaut:
+  `Images:ResponseFormat` (`ImageOptions`, durchgereicht in `ImageRun.GenerateAsync`), dazu der Test
+  `Das_Antwortformat_geht_nur_eingestellt_an_den_Dienst` (null und `Data`). Rote Proben: ohne das Durchreichen fällt
+  der Fall `Data`, mit `Data` als Vorgabe fällt der Fall `null`. Danach ist der Code zurückgespielt und grün.
+  Volle Suite 1485/1485. LocalAI ist noch nicht installiert, darum der neue `wartet_auf`.
+
