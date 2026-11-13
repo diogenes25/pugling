@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/katalog, rolle/creator, rolle/student]
+tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, rolle/student]
 aliases: [KI-Cloze Qualität, Übung 28]
-status: idee
+status: ausformuliert
 prio: P2
 art: Defekt
 groesse: ""
@@ -33,6 +33,26 @@ ganzes Wort in einer späteren Klammer; Titel nennt ein Grammatik-Thema, das nic
 und was bleibt Prüfung durch den Vater im Testmodus? Gehört in die Abnahme von
 [B-460](B-460-ki-aufgaben-programm-entscheidet.md) (AK 6, Live-Lauf).
 
+## Ist-Stand am Code (2026-11-13, gelesen in `ClozeStrategy.cs`)
+
+- **Mangel 2 (Auswahlliste hinter der Lücke)** ist inzwischen eine Regel: `ClozeStrategy.cs:79-82` verwirft eine runde
+  Klammer hinter einer Lücke, die `,` `/` `;` oder „ or " enthält – „{{4}} (Pokémon, friend, match, game)" fiele heute.
+- **Mangel 3 (Lösung in einer späteren Klammer)**: dieselbe Regel fängt „(excited, surprised, worried, scared)" als
+  Auswahl; eine Lösung in einer *einzelnen* Grundform-Klammer an anderer Stelle bliebe unbemerkt, weil `ReadableText`
+  die Grundform-Hinweise vor der Verrats-Prüfung (`:84-90`) herausnimmt.
+- **Mangel 1 (Titel ≠ Schwerpunkt)** und **Mangel 4 (mehrdeutige Zeitform)**: keine Regel; beides ist Sprachurteil.
+- **Befund 2026-11-11 (Verrats-Regel zu streng)**: `:87-90` verwirft jede Lösung, die als eigenes Wort sonst im Text
+  steht – bei Hilfsverben des past progressive (`was`, `were`) fast jeder Text. Das ist die eigentliche Folge für den
+  Sohn: der Plan bekam keine Grammatik-Position.
+
+## Offene Punkte (für das Grillen, `art: Defekt` – darf ich allein grillen)
+
+1. Verrats-Regel: nur Lösungen **mit mehr als einem Wort** oder nur **Inhaltswörter** prüfen (Hilfsverben/Artikel
+   ausnehmen) – oder ein mehrteiliges `was running` nur als Ganzes verraten lassen?
+2. Mangel 4: Alternativen (`felt` neben `was feeling`) vom Modell verlangen und als `alternatives` speichern, oder bleibt
+   das die Testmodus-Prüfung des Vaters?
+3. Mangel 1: nicht als Regel (Sprachurteil) – Titel aus dem Grammatik-Thema der Unit vorgeben (C# entscheidet, B-460)?
+
 ## Verlauf
 
 - **2026-11-10** — angelegt (Prüfgang am Access-Lehrwerk: Übungen, Vater-Sicht, Handy).
@@ -41,3 +61,4 @@ und was bleibt Prüfung durch den Vater im Testmodus? Gehört in die Abnahme von
   Klammern im Text“ – für `were`, `was`, `went`, `had`. Diese Formen kommen in einem Text über das past progressive
   zwangsläufig mehrfach vor; die Regel verwirft damit fast jeden Text zu diesem Grammatikthema. Ein Entwurf hatte
   zusätzlich keine Ablenker. Folge: Der Plan bekam keine Grammatik-Position.
+- **2026-11-13** — ausformuliert (Tageslauf, Restzeit): Mängel 2/3 sind inzwischen großteils Regel, 1/4 Sprachurteil; der wirksame Defekt ist die zu strenge Verrats-Regel (Befund 2026-11-11). Drei offene Punkte.
