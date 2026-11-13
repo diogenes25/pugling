@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben in raw/english/real_tests/2026-11-11-friedrich-vokabeltest.md (gitignored); Nutzer im Chat 2026-11-13: „Solche Tests soll Friedrich entsprechend öfter erhalten. Die Art des Tests ist mir wichtig.“"
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Merge von refs/heads/b-524-schul-vokabeltest und Rollengang in der Arcade (Klick)"
+wartet_auf: "Rollengang in der Arcade (Klick)"
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
@@ -340,3 +340,7 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   fachlich eher ein Formfehler.
 - **2026-11-13** — Nicht `abgenommen`: Die Commits liegen auf `b-524-schul-vokabeltest`, noch nicht auf
   `auto/fertigstellung`, und der Rollengang per Klick fehlt (`wartet_auf`).
+- **2026-11-13** — Gemergt in `auto/fertigstellung` (`8872b06`, nach B-485). Einziger Konflikt: der generierte
+  `INDEX.md`, neu erzeugt. Auf dem gemergten Stand `dotnet test Pugling.sln -c Release` **1525/1525**, Vitest
+  **868/868**, `tsc -b` grün. Worktree und Branch entfernt. Offen bleibt nur der Klick-Rollengang (`b524-api` und
+  `b524-web` in `.claude/launch.json`, Ports 5390/5191, Wegwerf-DB `pugling_b524.db`).
