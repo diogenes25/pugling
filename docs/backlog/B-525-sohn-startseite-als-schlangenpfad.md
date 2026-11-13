@@ -206,9 +206,9 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
 1. **Sieben Specs, nicht fünf.** Zu den fünf, die nach den Kachel-Knöpfen greifen, kommen
    `sprache.spec.ts:19,24,76` (Tab „Basis") und `vater-von-null.spec.ts:448` (Tab „Weg"). Jede fährt einen
    anderen Weg; das Umstellen ist der größte Einzelposten und der, an dem am ehesten etwas flackert.
-2. **Laufende Arbeit im selben Checkout.** Im Index liegen die gestagten Änderungen von B-524, darunter
-   `SohnPractice.tsx`, `de.ts`, `en.ts` und das OpenAPI-Dokument. B-525 fasst `de.ts`/`en.ts` und das
-   Dokument ebenfalls an. Gebaut wird erst, wenn B-524 committet ist.
+2. ~~**Laufende Arbeit im selben Checkout.**~~ Gegenstandslos: B-524 war bei der Schätzung schon gemergt
+   (`8872b06`); die Annahme „liegt gestagt im Index“ stammte aus einem veralteten Stand. Was bleibt: `de.ts`,
+   `en.ts` und das OpenAPI-Dokument sind vielbefahrene Dateien – vor dem Bau den Arbeitsbaum ansehen.
 3. **`ComputeDayAsync` läuft einmal je Tag der Historie** (Kommentar `PositionProgressService.cs:180`). Der
    Unit-Titel muss über **einen** zusätzlichen `Include` in `LoadPositionsAsync` kommen, nicht über eine
    Abfrage je Position – sonst multipliziert er sich mit Tagen und Positionen.
@@ -262,3 +262,4 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
 - 2026-11-13 · `gegrillt` – zehn Entscheidungen im Dialog mit dem Nutzer, alle gemäß Empfehlung; Truhe und
   Missionen-Tab als B-527 und B-528 abgespalten, Reihenfolge-Sperre zurückgestellt.
 - 2026-11-13 · `geschaetzt` – L, keine Migration, kein Vertragsbruch (beides nachgesehen); sieben betroffene E2E-Specs statt fünf; Bau erst nach dem Commit von B-524.
+- 2026-11-13 · Risiko 2 der Schätzung berichtigt: B-524 ist seit `8872b06` gemergt und mit `d116065` abgenommen.
