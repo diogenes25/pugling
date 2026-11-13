@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (51)
+### Offen (50)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -65,11 +65,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | Fotos echter Buchseiten brauchen ein stärkeres Vision-Modell als gemma4:e2b | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
-| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `ausformuliert` | P3 | — | .claude/scripts | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (443)</summary>
+<summary>Abgenommen (444)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -446,6 +445,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | Eine Wortbank aus leeren Einträgen wird zum Pool aus reinen Lösungen | Defekt | `abgenommen` | P2 | S | backend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-492](B-492-lader-test-in-ci.md) | Der Lehrwerk-Lader bekommt einen automatischen Test in CI | Aufräumen | `abgenommen` | P2 | S | .claude/skills/lehrwerk-aufbereiten, .github/workflows | — |
 | [B-493](B-493-fallliste-antwortvergleich.md) | Eine Fallliste für den Antwortvergleich, gelesen von Server, Frontend und Lader | Aufräumen | `abgenommen` | P2 | S | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `abgenommen` | P3 | — | .claude/scripts | — |
 | [B-495](B-495-profil-an-reihe-gebunden-fach-falsch-zirkulaere-meldung.md) | Ein an eine Reihe gebundenes Profil mit fremdem Fach schickt den Creator im Kreis | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-496](B-496-reste-review-sprint-41.md) | Zwei Nachbarn derselben Fehlerform außerhalb von Sprint 41 | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-497](B-497-nachschau-reste-sprint-40.md) | Nachschau-Reste Sprint 40: die angehängte Lösung ist ungetrimmt, und NBSP macht zwei gleiche Knöpfe | Defekt | `abgenommen` | P3 | S | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
@@ -534,7 +534,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (175)
 
-**Nachgeschaut: 425 von 443 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 18 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 425 von 444 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 19 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -715,7 +715,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (18) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (19) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -738,6 +738,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
 | [B-486](B-486-testmodus-lueckentext-eine-luecke-nach-der-anderen.md) | Testmodus: Lückentext eine Lücke nach der anderen |
 | [B-489](B-489-sohn-wortbank-am-handy.md) | Sohn-App: Lückentext mit Wortbank am Handy kaum bedienbar |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 
@@ -863,7 +864,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-492](B-492-lader-test-in-ci.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-493](B-493-fallliste-antwortvergleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
-| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `migration`, Feld `vertragsbruch` |
 | [B-495](B-495-profil-an-reihe-gebunden-fach-falsch-zirkulaere-meldung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-496](B-496-reste-review-sprint-41.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-497](B-497-nachschau-reste-sprint-40.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Abschnitt „Verlauf" |

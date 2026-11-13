@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/werkzeug]
+tags: [typ/story, status/abgenommen, bereich/werkzeug]
 aliases: [mutant-probe misst je Zusicherung, Vorschlag CP]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: ""
@@ -44,3 +44,4 @@ Zusicherungsmeldung, sofern der Runner sie nur beim Fehlschlag druckt" reicht �
 
 - **2026-11-12** — angelegt nach der Entscheidung des Nutzers über die Retro-Vorschläge des Backlog-Laufs.
 - **2026-11-13** — ausformuliert (Tageslauf, Restzeit): am Code gefunden, dass `fails` schon jeden Teilstring der Ausgabe nimmt; die Lücke ist vermutlich nur der Docstring. Entscheidung „später" des Nutzers bleibt – nichts gebaut.
+- **2026-11-13** — abgenommen (Tageslauf, stellvertretend): die Lücke war nur Doku – der Docstring von `mutant-probe.py` nennt jetzt Zusicherungsmeldungen als gültige `fails`-Einträge samt Grenze (nur Text, den der Runner allein beim Fehlschlag druckt). Kein Code geändert, darum keine Mutante; geprüft: `python -c ast.parse` grün.

@@ -17,7 +17,11 @@ Eingabe: JSONL, ein Objekt je Mutante (Zeilen mit # sind Kommentare):
                                        # in cmd.exe, das `NAME=wert befehl` nicht kennt (E2E auf Ausweichports)
    "expect": "red" | "green",          # Vorgabe: red
    "fails": ["<Testname-Teil>", ...]}  # optional: diese Namen MÜSSEN in der Ausgabe als
-                                       # gefallen stehen – die Probe muss am richtigen Ort fallen
+                                       # gefallen stehen – die Probe muss am richtigen Ort fallen.
+                                       # Verglichen wird als Teilstring der ganzen Ausgabe: auch die
+                                       # Meldung einer Zusicherung zählt, wenn der Runner sie nur beim
+                                       # Fehlschlag druckt (Playwright/Vitest `expect(…, "…")`, xUnit
+                                       # `Assert.True(x, warum)`); nie ein Text aus Logzeilen (B-494)
 Ein Objekt nur mit "build"/"test" (ohne "f") setzt die Vorgaben für alle folgenden Zeilen.
 
 Ablauf:
