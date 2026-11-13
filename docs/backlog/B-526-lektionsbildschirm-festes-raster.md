@@ -177,6 +177,12 @@ Grill-Runde mit dem Nutzer am 2026-11-13, eine Frage je Entscheidung.
 10. **Die Vater-Vorschau bleibt, wie sie ist.** Das Raster ist ein Rahmen der Arcade um die Bausteine; die
     geteilte Antwortfläche darf die Vorschau nicht mitreißen (dort bleibt die Auswahl ein Tipp). Begründung: die
     Vorschau prüft den Stoff, nicht das Spielgefühl. Kosten: der Vater sieht nicht genau, was das Kind sieht.
+11. **Der schwerere Tempo-Bonus wird in Kauf genommen** (Nutzer, 2026-11-13, nach der Schätzung). Der Server
+    misst die Antwortzeit ab der vorigen Antwort (`PositionPracticeController.cs:420`); die Lesezeit am Blatt zählt
+    damit in die nächste Karte. Begründung: B-526 bleibt reine Frontend-Arbeit, und betroffen sind nur Positionen
+    mit eingestelltem Schnell-Bonus. Kosten: den Bonus bekommt fast nur noch, wer das Blatt wegdrückt, ohne es zu
+    lesen – ein Anreiz gegen genau das, wofür das Blatt da ist. Die saubere Messung ist
+    [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md).
 
 ## Akzeptanzkriterien
 
@@ -228,7 +234,7 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
    in die nächste Karte hinein. Heute sind es feste 1,1 Sekunden. Ohne Gegenmaßnahme gibt es den Schnell-Bonus
    praktisch nur noch für den, der das Blatt wegdrückt, ohne es zu lesen. Die saubere Abhilfe (der Client meldet
    den Zeitpunkt, an dem die Karte sichtbar wurde) wäre Backend und Vertrag und damit eine eigene Story – **vor
-   dem Bau zu entscheiden**, ob B-526 den Bonus so in Kauf nimmt.
+   dem Bau zu entscheiden**, ob B-526 den Bonus so in Kauf nimmt. → Entscheidung 11: in Kauf genommen.
 2. **Fokus und Ansage sind hier mehrfach repariert worden** (B-134, B-286, B-420, B-439, B-443, B-515). Zwei
    Regeln beißen direkt: Eine Live-Region muss **vor** ihrem Text im DOM stehen (`liveRegions.test.ts` – der
    Prototyp ist genau daran gescheitert), das Blatt darf also nicht selbst die Region sein, die mit ihm
@@ -294,3 +300,4 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
 - 2026-11-13 · `geschaetzt` – L am oberen Rand, in zwei Etappen; keine Migration, kein Vertragsbruch (beides
   nachgesehen). Beim Nachsehen gefunden: der Tempo-Bonus misst ab der vorigen Antwort, das wartende Blatt macht
   ihn schwerer (Risiko 1) – vor dem Bau zu entscheiden.
+- 2026-11-13 · Entscheidung 11 nachgetragen (Tempo-Bonus in Kauf genommen), saubere Messung als B-530 abgespalten.
