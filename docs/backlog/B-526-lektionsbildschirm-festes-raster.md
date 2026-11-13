@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
 aliases: [Lektionsraster, Rückmeldung als Blatt, Abschlussbild]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -301,3 +301,21 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
   nachgesehen). Beim Nachsehen gefunden: der Tempo-Bonus misst ab der vorigen Antwort, das wartende Blatt macht
   ihn schwerer (Risiko 1) – vor dem Bau zu entscheiden.
 - 2026-11-13 · Entscheidung 11 nachgetragen (Tempo-Bonus in Kauf genommen), saubere Messung als B-530 abgespalten.
+- 2026-11-13 · `in-arbeit` – **Etappe 1 gebaut**: `aufgabenform.ts` (Anweisung, Darstellung, Antwortart aus den Feldern
+  der Karte), `Lektion.tsx` (Rahmen, Aufgabe, geteilte Antwortfläche mit Zwei-Schritt-Auswahl); `SohnPractice` und
+  `SohnTest` rendern ihre Karte darüber. Die Rückmeldung ist unverändert (Toast und angehaltene Karte) – das Blatt
+  und das Abschlussbild sind Etappe 2.
+- 2026-11-13 · Review Etappe 1 (`frontend-reviewer`, kein Blocker). Übernommen: **Regression im Hauptweg** – ein `key`
+  je Karte hängte die Antwortfläche neu ein, das Eingabefeld verlor nach jeder Antwort den Fokus (am Handy klappt
+  die Tastatur zu); jetzt setzt `kartenId` nur die Markierung zurück, belegt durch einen Test mit roter Probe. Im
+  Test erscheint die Lösung nach „Aufdecken“ wieder **in** der Karte, die sich dreht. Die Combo steht in der Zeile
+  unter dem Kopf (bei 360 px stünde er sonst über), ein Hörtext mit Frage ist eine Karte, lange Wörter brechen in der
+  Blase um. „Getippt“ entscheidet nur noch die Aufgabenform. Drei Zusicherungen, die nie fallen konnten, sind
+  ersetzt oder als Absichtserklärung beschriftet.
+- 2026-11-13 · Abweichungen und offene Reste, bewusst: (a) Entscheidung 5 verfeinert – eine offene Karte heißt nur
+  „Neu – präg es dir ein“, wenn der Server sie als Erstkontakt meldet, sonst „Schau es dir noch mal an“ (eine
+  Anzeigestufe des Tages zeigt auch bekannte Wörter). (b) AK 11 nur teilweise: die getippten Formen sind ein Baustein,
+  Selbsteinschätzung und Kennenlernen sind weiter je Bildschirm geschrieben (Üben: eigene Knöpfe „Nochmal/Gewusst!“,
+  Test: `SelfAssessAnswer`) – offen für Etappe 2. (c) Der Knopf des Übens heißt schon jetzt „Aufdecken“
+  (Entscheidung 4 vorgezogen). (d) Nicht gemessen: das Layout bei 360 px im Browser; Enter auf einer markierten Option
+  nimmt die Markierung zurück, statt zu werten.

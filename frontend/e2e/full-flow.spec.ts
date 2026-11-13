@@ -78,7 +78,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Genug Karten, damit der Combo-Meilenstein ×5 sicher fällt (bewusste Coverage, kein stiller Skip).
   expect(total).toBeGreaterThanOrEqual(5);
   for (let i = 0; i < total; i++) {
-    await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
+    await sohn.getByRole("button", { name: "Aufdecken 🔄" }).click();
     if (i === 0) {
       // B-49: `useAction`s Ref-Gate muss den Doppelklick abfangen - genau die Sperre, die vorher an
       // diesem Knopf (anders als bei den Multiple-Choice-Knöpfen daneben) noch fehlte.

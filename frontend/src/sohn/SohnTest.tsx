@@ -6,16 +6,10 @@ import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
-import { LetterBoxes } from "../components/LetterBoxes";
-import { LetterTiles } from "../components/LetterTiles";
-import { AudioButton } from "../components/AudioButton";
 import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
-import { choicesClass } from "../lib/choices";
-import { ListRule } from "../components/ListRule";
-import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
-import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
-import { CueBox } from "../components/CueBox";
+import { aufgabenform } from "./aufgabenform";
+import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 7 Ordnen.
@@ -196,99 +190,61 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
-  const typed = item.reveal === null;
+  const form = aufgabenform(item);
+  const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
   const submitTyped = () => { if (typedAnswer.trim()) answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: typedAnswer }); };
 
   return (
-    <div className="sohn-body">
-      <div className="row play-head">
-        <span className="screen-title" style={{ margin: 0 }}>{t("test.title")}</span>
-        <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
-          <span className="pill cyan">{t("test.questionOf", { n: Math.min(cursor + 1, total), total })}</span>
-          {/* Die Stufe DIESER Frage (B-476): ein Wort auf Fach 1/2 kommt als Auswahl, auch wenn der Test „Tippen“ heißt. */}
-          <span className="pill mag">{stageLabel(item.stage, item.type, !!item.cueBox)}</span>
-          {/*
-            „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten
-            Start fortgesetzt (der Server gibt den laufenden Versuch zurück, statt einen neuen anzulegen).
-            Deshalb kein Server-Aufruf und keine Rückfrage – es geht nichts verloren, und ein versehentliches
-            Verlassen verbraucht keinen der begrenzten Versuche.
-          */}
-          <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
-            {t("test.later")}
-          </button>
-        </span>
-      </div>
-      <p className="sub">{typed ? t("test.typedHint") : t("test.selfHint")}</p>
-
+    <LektionsRahmen
+      test
+      /*
+        „Später weiter" statt „Abbrechen": der Versuch bleibt am Cursor stehen und wird beim nächsten Start
+        fortgesetzt (der Server gibt den laufenden Versuch zurück, statt einen neuen anzulegen). Deshalb kein
+        Server-Aufruf und keine Rückfrage – es geht nichts verloren, und ein versehentliches Verlassen verbraucht
+        keinen der begrenzten Versuche.
+      */
+      schliessenName={t("test.later")} onSchliessen={() => nav("/sohn")}
+      zaehler={t("test.questionOf", { n: Math.min(cursor + 1, total), total })} anteil={total > 0 ? cursor / total : 0}
+      // Das Wort „Test" steht in der Anweisung: der Aufbau ist derselbe wie beim Üben, die Klausur muss erkennbar bleiben.
+      anweisung={t("lektion.inTest", { task: t(form.anweisung) })}
+      hinweis={typed ? t("test.typedHint") : t("test.selfHint")}
+    >
       {/* Aufdecken dreht die Karte um wie beim Üben (B-35); getippte Stufen decken nichts auf. */}
-      <div className={!typed && revealed ? "card flipped" : "card"}>
-        {/* Der Stoff, auf den sich die Frage bezieht – wie beim Üben, sonst wäre die Klausur die härtere
-            Aufgabe bei weniger Material. */}
-        <Passage text={item.passage} />
-        {/* Aufnahme und Frage nebeneinander; ob das Wort verschwiegen wird, entscheidet der Server.
-            Bedienelemente, wo die Aufnahme Material neben einer Frage ist (siehe SohnPractice). */}
-        {item.audioUrl && (
-          <AudioButton url={item.audioUrl} autoPlay={!item.prompt} withControls={!!item.prompt} />
+      <Aufgabe
+        karte={item} form={form} skin={skin} gedreht={!typed && revealed}
+        hinweis={item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
+        /* Die Lösung erscheint IN der Karte, die sich dreht – sonst drehte sich eine leere Geste (Review B-526).
+           `revealed` bleibt die einzige Bedingung: vor dem Aufdecken steht sie nirgends. */
+        aufloesung={!typed && revealed && (
+          <>
+            <div className="rev">→ {item.reveal ?? t("test.revealedFallback")}</div>
+            <RevealAlternatives alternatives={item.revealAlternatives} />
+          </>
         )}
-        <ClozePrompt text={item.prompt} gapIndex={item.gapIndex} className="test-prompt" fitAsked />
-        {/* Auf der VORDERSEITE, direkt unter dem Satz, wie beim Üben (B-93): die Klausur darf nicht weniger
-            Stoff zeigen als die Übung, sonst wäre sie die härtere Aufgabe bei weniger Material. */}
-        <BirkenbihlDecoding decoding={item.decoding} />
-        <ListRule type={item.type} anyOrder={item.anyOrder} itemIndex={item.itemIndex} />
-        {item.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {item.hint}</div>}
-        {/* B-524: Auf der Wortkasten-Stufe steht statt des Hinweises der Kasten aller Bedeutungen. */}
-        <CueBox words={item.cueBox} label={t("test.cueBox")} />
-
+      />
+      <div className="lektion-antwort">
         {typed ? (
-          item.choices ? (
-            <div className={choicesClass(item.choices)} style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}
-              role="group" aria-label={t("practice.choices")}>
-              {item.choices.map((c, i) => (
-                <button type="button" key={`${i}-${c}`} className="btn ghost small" disabled={action.busy}
-                  onClick={() => answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: c })}>{c}</button>
-              ))}
-            </div>
-          ) : item.letterTiles ? (
-            <div style={{ marginTop: 10 }}>
-              <LetterTiles tiles={item.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
-            </div>
-          ) : item.answerLength ? (
-            <div style={{ marginTop: 10 }}>
-              <LetterBoxes length={item.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={item.answerPattern ?? undefined} />
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
-            </div>
-          ) : (
-            <div>
-              <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
-                <input
-                  aria-label={t("test.solution")}
-                  name={`answer-${item.itemIndex}`}
-                  autoComplete="off"
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  style={{ marginTop: 10, width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 16 }}
-                  placeholder={t("test.solutionPlaceholder")}
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                />
-              </form>
-              <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.next")}</button>
-            </div>
-          )
-        ) : (
-          <SelfAssessAnswer
-            reveal={item.reveal}
-            alternatives={item.revealAlternatives}
-            revealed={revealed}
-            busy={action.busy}
-            onReveal={() => setRevealed(true)}
-            onJudge={(wasKnown) => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown })}
+          // Dieselbe Antwortfläche wie beim Üben – sie weiß nichts von richtig und falsch, und hier bleibt das so.
+          <Antwortflaeche
+            kartenId={item.itemIndex} karte={item} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy}
+            knopf={t("practice.next")} feldName={t("test.solution")} platzhalter={t("test.solutionPlaceholder")}
+            onAbschicken={submitTyped}
           />
+        ) : (
+          <div className="lektion-fuss">
+            <SelfAssessAnswer
+              reveal={item.reveal}
+              alternatives={item.revealAlternatives}
+              revealed={revealed}
+              loesungInDerKarte
+              busy={action.busy}
+              onReveal={() => setRevealed(true)}
+              onJudge={(wasKnown) => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown })}
+            />
+          </div>
         )}
       </div>
-    </div>
+    </LektionsRahmen>
   );
   }
 }
@@ -304,12 +260,14 @@ export function SohnTest() {
  * **Exportiert, damit die Reihenfolge prüfbar ist** (Muster `TestResult`): eine reine Props-Komponente, kein
  * Laden, kein `fetch` – der Fehler war unsichtbar, weil ihn niemand ohne den Server ansehen konnte.
  */
-export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onReveal, onJudge }: {
+export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesungInDerKarte = false, onReveal, onJudge }: {
   // Wie `alternatives` optional: ein nullable Feld darf im Vertrag auch fehlen (siehe `?? null` in `start`).
   reveal?: string | null;
   alternatives?: readonly string[] | null;
   revealed: boolean;
   busy: boolean;
+  /** Der Aufrufer zeigt die Lösung selbst in der Karte darüber (B-526) – hier bleiben nur die Urteils-Knöpfe. */
+  loesungInDerKarte?: boolean;
   onReveal: () => void;
   onJudge: (wasKnown: boolean) => void;
 }) {
@@ -321,8 +279,12 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onRevea
   );
   return (
     <div style={{ marginTop: 10 }}>
-      <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {reveal ?? t("test.revealedFallback")}</div>
-      <RevealAlternatives alternatives={alternatives} />
+      {!loesungInDerKarte && (
+        <>
+          <div className="rev" style={{ color: "var(--cyan)", fontWeight: 800, marginBottom: 8 }}>→ {reveal ?? t("test.revealedFallback")}</div>
+          <RevealAlternatives alternatives={alternatives} />
+        </>
+      )}
       <div className="judge" style={{ marginTop: 8 }}>
         <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>{t("test.notKnown")}</button>
         <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>{t("test.known")}</button>

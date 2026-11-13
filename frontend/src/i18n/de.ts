@@ -259,6 +259,19 @@ export const de = {
       passage: "Text zur Aufgabe",
       alsoRight: "auch richtig: {{list}}",
     },
+    // Der Lektionsbildschirm (B-526): die Arbeitsanweisung je Antwortform.
+    lektion: {
+      choose: "Wähle die richtige Antwort",
+      order: "Ordne die Buchstaben",
+      boxes: "Fülle die Kästchen",
+      cueBox: "Schreibe das passende Wort",
+      listen: "Hör zu und schreibe",
+      write: "Schreibe die Antwort",
+      self: "Weißt du es?",
+      intro: "Neu – präg es dir ein",
+      look: "Schau es dir noch mal an",
+      inTest: "Test · {{task}}",
+    },
     practice: {
       loading: "Runde wird geladen…",
       nothingDue: "Nichts fällig 🎉",
@@ -287,7 +300,7 @@ export const de = {
       answerPlaceholder: "Antwort…",
       check: "Prüfen",
       next: "Weiter →",
-      flip: "Umdrehen 🔄",
+      flip: "Aufdecken 🔄",
       again: "Nochmal",
       knewIt: "Gewusst!",
       nextDue: "Nächste Fälligkeit: {{date}}",

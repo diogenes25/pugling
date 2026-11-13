@@ -130,16 +130,23 @@ für alle diese Modi bereitstellen:
 
 | Kartentyp | Woran erkennbar | Was das Kind tut |
 |---|---|---|
-| **Umdrehen / Selbsteinschätzung** | Lösung wird mitgeliefert (`reveal`) | Aufgabe lesen → **Umdrehen** → selbst bewerten: „Gewusst" / „Nicht gewusst" |
+| **Aufdecken / Selbsteinschätzung** | Lösung wird mitgeliefert (`reveal`) | Aufgabe lesen → **Aufdecken** → selbst bewerten: „Gewusst" / „Nicht gewusst" |
 | **Tippen (Freitext)** | keine Lösung, Antwortlänge unbekannt | Antwort in ein Textfeld eingeben → **Prüfen** |
 | **Buchstabenkästchen** | keine Lösung, Antwortlänge bekannt | pro Buchstabe ein Kästchen ausfüllen → **Prüfen** |
 | **Buchstaben ordnen** | gemischte Buchstaben mitgeliefert (`letterTiles`) | Kacheln in die richtige Reihenfolge tippen oder klicken → **Prüfen**; ein mehrteiliges oder langes Wort kommt als Buchstabenkästchen |
-| **Auswahl (Multiple Choice)** | Auswahlmöglichkeiten mitgeliefert (`choices`) | eine Option antippen → **Prüfen** |
+| **Auswahl (Multiple Choice)** | Auswahlmöglichkeiten mitgeliefert (`choices`) | eine Option antippen (nur **markiert**, änderbar) → **Prüfen** bzw. im Test **Weiter** |
 | **Hören** | Audio mitgeliefert (`audioUrl`) | Audio abspielen (statt/zusätzlich zum Text), dann antworten wie oben |
 
 Jede Karte kann zusätzlich einen **optionalen Tipp/Hinweis** (💡) tragen, der erst auf Wunsch
-aufgedeckt wird. Jede Karte/Frage trägt eine **Stufen-Kennzeichnung** (z. B. „Zeigen", „Selbstcheck",
-„Buchstaben", „Tippen", „Hören", „Auswahl", „Ordnen") — als kleines Label anzeigen.
+aufgedeckt wird.
+
+**Ein Aufbau für Üben und Test** ([B-526](backlog/B-526-lektionsbildschirm-festes-raster.md)): Kopf mit ✕,
+Fortschrittsbalken und Zähler · **Arbeitsanweisung** als Überschrift · die Frage · die Antwortfläche · **ein**
+Hauptknopf am unteren Rand. Die Arbeitsanweisung sagt, was zu tun ist („Wähle die richtige Antwort", „Ordne
+die Buchstaben", „Schreibe das passende Wort", „Weißt du es?", „Neu – präg es dir ein" …); die App leitet sie
+aus den Feldern der Karte ab, nicht aus einer Stufennummer. Ein Wort oder Satz steht in einer **Sprechblase**
+am Maskottchen; sobald Lesetext, Bild, Wortkasten oder Dekodierung dabei sind, als volle Karte ohne
+Maskottchen.
 
 ### 2.9 Feedback- und Motivationssystem (durchgängig)
 
@@ -272,19 +279,19 @@ zu Üben/Test. Wichtigster Screen. Entschieden in
 
 **Angezeigte Daten pro Karte:**
 
-- Fortschritt „Karte i / n".
-- Die Aufgabe (Text oder Audio-Abspielknopf bei Hör-Karten).
+- Kopf: ✕ (beendet die Runde), Fortschrittsbalken, Zähler „Karte i / n", laufende Combo.
+- Die Arbeitsanweisung und die Aufgabe (Text oder Audio-Abspielknopf bei Hör-Karten), siehe 2.8.
 - Je nach Antwortmodus (siehe 2.8): Umdreh-Fläche, Textfeld, Buchstabenkästchen oder Auswahl-Optionen.
 - Optionaler Tipp (💡), erst auf Antippen sichtbar.
 - Optionaler **Tempo-Modus**: eine Countdown-Leiste als Ansporn (schnellere Antwort → Bonus).
 
 **Aktionen:**
 
-- **Umdrehen** und danach selbst bewerten (**Gewusst / Nicht gewusst**) — bei Selbsteinschätzungs-Karten.
-- **Antwort eingeben/auswählen** und **Prüfen** — bei getippten/Auswahl-Karten.
+- **Aufdecken** und danach selbst bewerten (**Nochmal / Gewusst**) — bei Selbsteinschätzungs-Karten.
+- **Antwort eingeben** bzw. eine Option **markieren** und dann **Prüfen** — bei getippten und Auswahl-Karten.
 - **Tipp aufdecken**.
 - **Tempo-Modus an/aus** (wird gemerkt).
-- **Runde beenden / Zum Pfad**.
+- **Runde beenden** über das ✕ im Kopf.
 
 **Feedback nach jeder Antwort:**
 
@@ -315,13 +322,15 @@ zu Üben/Test. Wichtigster Screen. Entschieden in
 
 **Angezeigte Daten pro Frage:**
 
-- „Tagestest", Fortschritt „Frage i / n", Stufen-Label.
+- Derselbe Aufbau wie beim Üben (siehe 2.8), mit eigener Kopffarbe und dem Wort „Test" vor der
+  Arbeitsanweisung; Zähler „Frage i / n". Eine Stufen-Kennzeichnung gibt es nicht mehr.
 - Die Aufgabe (Text oder Audio) + optionaler Tipp.
 - Eingabe je nach Antwortmodus (siehe 2.8).
 
 **Aktionen:**
 
-- Antworten (tippen / auswählen / aufdecken + selbst bewerten) und **Weiter**.
+- Antworten (tippen / Option markieren / aufdecken + selbst bewerten) und **Weiter**.
+- **Später weiter** über das ✕ im Kopf: der Versuch bleibt stehen und wird fortgesetzt.
 
 **Ergebnis-Screen:**
 

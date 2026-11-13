@@ -56,18 +56,50 @@ function renderTest() {
   );
 }
 
+/** B-526: eine Auswahl wird nur markiert; gewertet wird mit dem Hauptknopf. */
+async function antworte() {
+  fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+  fireEvent.click(screen.getByRole("button", { name: /^(Weiter|Next) →$/ }));
+}
+
 describe("SohnTest, Stufe je Frage (B-476)", () => {
   afterEach(async () => { await setLanguage("de"); });
 
-  // Der Test heißt „Tippen“, diese Frage kommt aber als Auswahl. Rot, wenn das Etikett die Stufe des Versuchs zeigt.
+  // Der Test heißt „Tippen“, diese Frage kommt aber als Auswahl. Rot, wenn die Anweisung der Stufe des Versuchs folgt
+  // statt den Feldern der Karte (seit B-526 trägt die Arbeitsanweisung, was vorher die Stufen-Pille sagte).
   it("benennt die Stufe der Frage, nicht die des Versuchs", async () => {
     await setLanguage("de");
     startTest.mockResolvedValue({ attemptId: 9, stage: 4, totalItems: 2 });
     nextTest.mockResolvedValue({ item: { ...item, stage: 6 }, done: false, cursor: 0, total: 2 });
     renderTest();
 
-    expect(await screen.findByText("Auswahl")).toBeTruthy();
-    expect(screen.queryByText("Tippen")).toBeNull();
+    expect(await screen.findByRole("heading", { name: "Test · Wähle die richtige Antwort" })).toBeTruthy();
+  });
+
+  // B-526, Entscheidung 1: derselbe Aufbau wie beim Üben, aber als Klausur erkennbar. Rot, wenn der Test seine eigene
+  // Kopffarbe verlöre (`.lektion.test`) oder den Tempo-Schalter des Übens zeigte.
+  it("trägt die Kopffarbe des Tests und keinen Tempo-Schalter", async () => {
+    await setLanguage("de");
+    renderTest();
+
+    await screen.findByRole("heading", { name: /^Test · / });
+    expect(document.querySelector(".lektion.test")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /Tempo/ })).toBeNull();
+  });
+
+  // B-35 / Review B-526: beim Aufdecken dreht sich die Karte – und die Lösung erscheint IN ihr. Rot, wenn die Lösung
+  // wieder unten bei den Knöpfen stünde (die Karte drehte sich dann leer) oder schon vor dem Aufdecken irgendwo.
+  it("zeigt die Lösung einer Selbsteinschätzung erst nach dem Aufdecken, und zwar in der Karte", async () => {
+    await setLanguage("de");
+    nextTest.mockResolvedValue({ item: { itemIndex: 0, prompt: "the horse", stage: 2, reveal: "das Pferd" }, done: false, cursor: 0, total: 2 });
+    renderTest();
+
+    const aufdecken = await screen.findByRole("button", { name: "Aufdecken 🔄" });
+    expect(screen.queryByText(/das Pferd/)).toBeNull();
+    fireEvent.click(aufdecken);
+    const karte = document.querySelector(".fcard.flipped")!;
+    expect(karte.textContent).toContain("→ das Pferd");
+    expect(document.querySelector(".lektion-fuss")!.textContent).not.toContain("das Pferd");
   });
 });
 
@@ -80,7 +112,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
     renderTest();
 
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
 
     expect(await screen.findByText("Server kaputt. (Ref: trace-1)")).toBeTruthy();
     // Gegenstück zum Fall darunter: ein vorübergehender Fehler lässt sich fortsetzen.
@@ -111,7 +143,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     await setLanguage("de");
     answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
     renderTest();
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
     const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
 
     nextTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-8", "plan_inactive"));
@@ -150,7 +182,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     answerTest.mockRejectedValueOnce(new ApiError(403, "This study plan is not currently active. Ask your parent.", "trace-6", "plan_inactive"));
     renderTest();
 
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
 
     expect(await screen.findByText("Dieser Lernplan ist gerade nicht dran. Frag deine Eltern, welcher Plan jetzt gilt.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Weiter versuchen" })).toBeNull();
@@ -163,7 +195,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     answerTest.mockRejectedValueOnce(new ApiError(429, "No attempts left.", "trace-2", "test_attempts_exhausted"));
     renderTest();
 
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
 
     expect(await screen.findByText("You've used up your tries for today. You can have another go tomorrow.")).toBeTruthy();
   });
@@ -176,7 +208,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
       .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
     renderTest();
 
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
 
     expect(await screen.findByText("the sheep")).toBeTruthy();
   });
@@ -193,7 +225,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
     nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
       .mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 });
     renderTest();
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
     const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
     const region = taskRegion();
     expect(region.textContent).toBe("");
@@ -219,7 +251,7 @@ describe("SohnTest, Fehler beim Beantworten", () => {
       .mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-2"))
       .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
     renderTest();
-    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    await antworte();
     const resume = await screen.findByRole("button", { name: "Weiter versuchen" });
     const region = taskRegion();
 
@@ -255,7 +287,8 @@ describe("SohnTest, Fehler beim Beantworten", () => {
       .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
     renderTest();
 
-    const button = await screen.findByRole("button", { name: "das Pferd" });
+    fireEvent.click(await screen.findByRole("button", { name: "das Pferd" }));
+    const button = screen.getByRole("button", { name: "Weiter →" });
     // Beide Klicks in EINEM `act`: dazwischen rendert React nicht, `disabled={action.busy}` steht also noch nicht am Knopf –
     // nur so trifft der zweite Klick die Ref-Sperre selbst (gemessen: mit zwei einzelnen `fireEvent` fing `disabled` ihn ab,
     // und die Mutante „Ref-Prüfung weg“ blieb grün).

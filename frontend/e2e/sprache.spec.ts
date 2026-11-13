@@ -114,7 +114,8 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   await page.locator(".pfad-zeile", { hasText: EXERCISE }).locator(".pfad-knoten").click();
   await page.getByRole("dialog").getByRole("link", { name: "▶ GO", exact: true }).click();
   await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
-  await expect(page.locator(".fcard .lang")).toHaveText("Task");
+  // Die Arbeitsanweisung ist Chrome: die erste Karte eines neuen Plans ist eine Kennenlern-Karte.
+  await expect(page.getByRole("heading", { name: "New – remember this" })).toBeVisible();
   await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Weiter)/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Next →" }).click();

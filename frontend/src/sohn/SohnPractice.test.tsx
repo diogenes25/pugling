@@ -17,7 +17,8 @@ const endSession = vi.fn();
 const heartbeat = vi.fn();
 
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, celebrate: () => {} }),
+  // `skin`: die Aufgabe steht seit B-526 in der Sprechblase am Maskottchen.
+  useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, celebrate: () => {}, skin: { id: "pug", name: "Pug", emoji: "🐶", gradient: "", cost: 0, blurb: "" } }),
 }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
@@ -230,6 +231,53 @@ async function answerTyped(text: string) {
   fireEvent.submit(input.closest("form")!);
   await act(async () => {});
 }
+
+/** B-526: die Auswahl wertet erst mit „Prüfen“, und das Eingabefeld überlebt den Kartenwechsel. */
+describe("SohnPractice, Antwortfläche im Raster", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  // AK 3 im Üben. Rot, wenn ein Tipp auf eine Option wieder sofort wertet, oder wenn „Prüfen“ nicht die markierte
+  // Option schickt.
+  it("wertet eine Auswahl erst mit Prüfen", async () => {
+    cards.mockImplementation(() => Promise.resolve([
+      { itemIndex: 0, prompt: "la gare", reveal: null, choices: ["der Bahnhof", "die Brücke"] },
+      { itemIndex: 1, prompt: "le pont", reveal: null, choices: ["der Bahnhof", "die Brücke"] },
+    ] as PracticeCard[]));
+    review.mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+
+    fireEvent.click(await screen.findByRole("button", { name: "der Bahnhof" }));
+    await act(async () => {});
+    expect(review).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Wähle die richtige Antwort" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.check }));
+    await act(async () => {});
+    expect(review).toHaveBeenCalledTimes(1);
+    expect(review.mock.calls[0][3]).toEqual({ itemIndex: 0, givenAnswer: "der Bahnhof" });
+
+    // Die nächste Karte trägt dieselben Optionen – keine davon darf noch markiert sein, und „Prüfen“ ist wieder gesperrt.
+    expect(await screen.findByText("le pont")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "der Bahnhof" }).getAttribute("aria-pressed")).toBe("false");
+    expect((screen.getByRole("button", { name: de.sohn.practice.check }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // Rot, wenn die Antwortfläche je Karte neu eingehängt wird: nach einer richtigen Antwort stünde der Fokus auf `body`,
+  // und am Handy klappte die Tastatur nach jeder Karte zu (Review B-526).
+  it("lässt den Fokus nach einer richtigen Antwort im Eingabefeld", async () => {
+    review.mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    const feld = await screen.findByRole("textbox");
+    feld.focus();
+    fireEvent.change(feld, { target: { value: "one" } });
+    fireEvent.submit(feld.closest("form")!);
+    await act(async () => {});
+
+    expect(await screen.findByText("zwei")).toBeTruthy();
+    expect(screen.getByRole("textbox")).toBe(feld);
+    expect(document.activeElement).toBe(feld);
+  });
+});
 
 /** B-420: eine falsch getippte Antwort hält die Karte an, bis das Kind „Weiter" drückt. */
 describe("SohnPractice, falsche Antwort", () => {

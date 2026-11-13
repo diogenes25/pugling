@@ -199,10 +199,8 @@ a { color: var(--cyan); }
 .dots i.f { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 
 /* Leitner-Karte */
-.flash { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
 .combo { align-self: center; font-family: var(--font-display); font-size: 13px; color: var(--gold); letter-spacing: .05em; min-height: 16px; }
 .fcard { background: linear-gradient(165deg, #2f367e, #191d4d); border: 2px solid var(--stroke); border-radius: 22px; padding: 30px 18px; text-align: center; box-shadow: 0 18px 30px -18px var(--shadow); position: relative; min-height: 190px; display: flex; flex-direction: column; justify-content: center; }
-.fcard .lang { font: 800 10px/1 var(--font-body); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
 .fcard .word { font-family: var(--font-display); font-size: 30px; margin: 10px 0 4px; text-wrap: balance; }
 .fcard .rev { color: var(--cyan); font-size: 20px; font-weight: 800; }
 
@@ -518,17 +516,6 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 @keyframes tempo-shrink { from { width: 100%; } to { width: 0%; } }
 .toggle-pill { cursor: pointer; border: none; font: inherit; }
 
-/* Der Ausweg aus einer laufenden Runde (B-37/E5). Eigene Klasse, weil eine nackte `.pill` zwei Dinge
-   gleichzeitig verfehlt: sie misst nur ~20 px (unter dem 24-px-Ziel der WCAG 2.2, in einer Arcade für
-   Daumen) und steht ohne Akzent neben rein dekorativen Pillen – dem primären Ausgang sieht man dann
-   nicht an, dass er ein Knopf ist. */
-.exit-pill {
-  padding: 8px 12px; background: rgba(38, 217, 255, .12); color: var(--cyan);
-  border: 1.5px solid var(--stroke);
-}
-.exit-pill:hover { border-color: var(--cyan); }
-.exit-pill:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-
 /* =========================================================================
    Landing / Produktseite – erklärt Pugling und führt in Vater- bzw. Sohn-Rolle.
    Dark-committed wie die Sohn-App, aber mit weiten, ruhigen Sektionen.
@@ -596,3 +583,35 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
   .lp-orb { max-width: 300px; margin: 0 auto; width: 100%; }
   .lp-grid2, .lp-grid3, .lp-loop { grid-template-columns: 1fr; }
 }
+
+/* ---------- Lektionsbildschirm: ein Aufbau für Üben und Test (B-526) ---------- */
+.lektion { gap: 12px; }
+.lektion-kopf.play-head { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+.lektion-x {
+  flex: 0 0 auto; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #171a44; color: var(--ink);
+  font-size: 16px; cursor: pointer; box-shadow: inset 0 0 0 1.5px var(--stroke);
+}
+.lektion-x:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.lektion-balken { flex: 1; min-width: 40px; }
+.lektion-unterkopf { min-height: 22px; }
+.lektion-anweisung { font-size: 20px; margin: 0; text-wrap: balance; }
+/* Der Test teilt den Aufbau mit dem Üben und muss trotzdem als Klausur erkennbar bleiben: eigene Kopffarbe. */
+.lektion.test .lektion-balken > i { background: linear-gradient(90deg, #c97bff, var(--magenta)); }
+.lektion.test .lektion-x { box-shadow: inset 0 0 0 1.5px var(--magenta); }
+.lektion.test .lektion-anweisung { color: #e3c6ff; }
+/* Die Sprechblase ist dieselbe Karte in schmalerem Gewand – so dreht sie sich beim Aufdecken wie bisher (B-35),
+   und jeder Baustein darin behält die Farben, für die er gebaut ist. */
+.lektion-frage { display: flex; align-items: center; gap: 12px; }
+.lektion-begleiter { flex: 0 0 auto; }
+.fcard.blase { flex: 1; min-width: 0; min-height: 96px; padding: 18px 14px; border-radius: 18px; overflow-wrap: anywhere; }
+/* Die Blase ist schmaler als die Karte: ein langes Kompositum darf sie nicht sprengen. */
+.fcard.blase .cloze-prompt { font-size: 20px; }
+.fcard.blase::before {
+  content: ""; position: absolute; left: -8px; top: 50%; width: 14px; height: 14px; background: #262b68;
+  border-left: 2px solid var(--stroke); border-bottom: 2px solid var(--stroke); transform: translateY(-50%) rotate(45deg);
+}
+.lektion-antwort { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+/* Der Hauptknopf sitzt am unteren Rand, auch wenn darüber wenig steht. */
+.lektion-fuss { margin-top: auto; padding-top: 6px; }
+.lektion-option.gewaehlt { color: #04122a; background: linear-gradient(180deg, var(--cyan), var(--cyan-2)); box-shadow: 0 6px 0 0 #1550b8; }
+.lektion-feld { width: 100%; background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 16px; }

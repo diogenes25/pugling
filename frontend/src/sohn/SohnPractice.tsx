@@ -7,16 +7,10 @@ import { useErrorMessage } from "../lib/chromeText";
 import { useOncePerKey } from "../lib/useOncePerKey";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
-import { LetterBoxes } from "../components/LetterBoxes";
-import { LetterTiles } from "../components/LetterTiles";
-import { AudioButton } from "../components/AudioButton";
-import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
-import { choicesClass } from "../lib/choices";
-import { ListRule } from "../components/ListRule";
-import { Passage } from "../components/Passage";
+import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
-import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
-import { CueBox } from "../components/CueBox";
+import { aufgabenform } from "./aufgabenform";
+import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
@@ -50,7 +44,7 @@ export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displa
 }
 
 export function SohnPractice() {
-  const { planId, refreshWallet, setStreak, celebrate } = useSohn();
+  const { planId, refreshWallet, setStreak, celebrate, skin } = useSohn();
   const { positionId: positionIdRaw } = useParams();
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
@@ -158,7 +152,7 @@ export function SohnPractice() {
   // B-443: „Jetzt abfragen" nimmt sich selbst aus dem DOM (Rundenende → Laden → Karte) – der Fokus ginge auf `body`.
   // Nur nach dieser Taste, nicht beim ersten Laden der Seite: dort soll keine Tastatur ungefragt aufspringen.
   const focusAfterLoad = useRef(false);
-  // Die erste Taste einer Karte ohne Eingabefeld (Umdrehen, Kennenlernen-„Weiter"): welche Stufe kommt, entscheidet der
+  // Die erste Taste einer Karte ohne Eingabefeld (Aufdecken, Kennenlernen-„Weiter"): welche Stufe kommt, entscheidet der
   // Server – auch sie muss den Fokus bekommen können (Review-Fund).
   const cardActionRef = useRef<HTMLButtonElement>(null);
   const landingRef = useRef<HTMLDivElement>(null);
@@ -327,7 +321,10 @@ export function SohnPractice() {
   );
 
   const card = cards[idx];
-  const typed = card.reveal === null; // getippte Stufe → Eingabe; sonst Flip-Karte (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil)
+  // Eine Quelle für „getippt“: dieselbe Form, die Anweisung und Darstellung wählt. Sonst Flip-Karte
+  // (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil).
+  const form = aufgabenform(card);
+  const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
   const submitTyped = () => { if (typedAnswer.trim()) judge(card, { givenAnswer: typedAnswer }); };
 
   /**
@@ -351,85 +348,65 @@ export function SohnPractice() {
     });
   }
   return (
-    <div className="sohn-body">
-      <div className="row play-head">
-        <span className="pill cyan">{t("practice.cardOf", { n: idx + 1, total: cards.length })}</span>
-        <span className="row" style={{ marginLeft: "auto", gap: 8 }}>
-          {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
-          <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} onClick={toggleTempo} aria-pressed={tempo}>
-            {t("practice.tempo")}
-          </button>
-          {/*
-            Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil eine Rückfrage über eine
-            Aktion, deren Wort schon die Wahrheit sagt, zum Wegklicken erzieht. Der Server-Aufruf (`end`)
-            gehört bewusst NICHT hierher – das Cleanup des Heartbeat-Effekts oben schickt die Rest-Sekunden
-            und beendet die Sitzung; ein zweiter Aufruf hier wäre eine Doppelquelle für dieselbe Sache.
-            Folgenlos ist das Verlassen nur beim Leitner-Üben (jede gespielte Karte ist schon gebucht):
-            bei einer Übung ohne automatische Prüfung misst die Pflicht EINE Sitzung gegen die Schwelle,
-            und die nächste Runde beginnt wieder bei null.
-          */}
-          <button type="button" className="pill toggle-pill exit-pill" onClick={() => nav("/sohn")}>
-            {t("practice.endRound")}
-          </button>
-        </span>
-      </div>
+    <LektionsRahmen
+      /*
+        Sichtbarer Ausweg aus der laufenden Runde. Ohne Rückfrage, weil eine Rückfrage über eine Aktion, deren
+        Wort schon die Wahrheit sagt, zum Wegklicken erzieht. Der Server-Aufruf (`end`) gehört bewusst NICHT
+        hierher – das Cleanup des Heartbeat-Effekts oben schickt die Rest-Sekunden und beendet die Sitzung; ein
+        zweiter Aufruf hier wäre eine Doppelquelle für dieselbe Sache. Folgenlos ist das Verlassen nur beim
+        Leitner-Üben (jede gespielte Karte ist schon gebucht): bei einer Übung ohne automatische Prüfung misst
+        die Pflicht EINE Sitzung gegen die Schwelle, und die nächste Runde beginnt wieder bei null.
+      */
+      schliessenName={t("practice.endRound")} onSchliessen={() => nav("/sohn")}
+      zaehler={t("practice.cardOf", { n: idx + 1, total: cards.length })} anteil={idx / cards.length}
+      unterKopf={
+        <>
+          {/* Combo und Tempo in einer eigenen Zeile: im Kopf neben Balken und Zähler stünde er bei 360 Pixeln über. */}
+          <div className="row lektion-unterkopf">
+            {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
+            <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} style={{ marginLeft: "auto" }} onClick={toggleTempo} aria-pressed={tempo}>
+              {t("practice.tempo")}
+            </button>
+          </div>
+          {/* Tempo-Modus: Countdown-Leiste je Karte (rein visueller Ansporn; der Schnell-Bonus zählt serverseitig). */}
+          {tempo && typed && phase === "front" && <div className="tempo-bar" key={idx}><i /></div>}
+        </>
+      }
+      anweisung={t(form.anweisung)}
+    >
+      {/* Nur die Selbsteinschätzung kommt auf „back" – ShowBoth ist von Anfang an offen und dreht nichts (B-35). */}
+      <Aufgabe
+        karte={card} form={form} skin={skin} gedreht={phase === "back"}
+        /*
+          Das Bild kommt nur auf Stufen, auf denen es die Lösung nicht verraten kann – der Server entscheidet das,
+          das Frontend rendert nur, was da ist.
+        */
+        bild={card.imageUrl && (
+          <CardImage
+            key={card.imageUrl}
+            url={card.imageUrl}
+            alt={card.imageAlt ?? ""}
+            // Auf der angehaltenen Karte liefe die Meldung eines 409 in die stumme Region (sr-only) – dort kein Wechsel.
+            busy={action.busy || phase === "wrong"}
+            onReshuffle={reshuffleImage}
+          />
+        )}
+        hinweis={card.hint && typed && (
+          hintShown
+            ? <div className="sub">💡 {card.hint}</div>
+            : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
+        )}
+        /* ShowBoth (B-96): eine freie Anzeigestufe zeigt beide Seiten sofort – der Server meldet das über
+           `displayOnly`, anders als die Selbsteinschätzung, die erst nach „Aufdecken" auflöst. */
+        aufloesung={(phase === "back" || card.displayOnly) && card.reveal && (
+          <>
+            <div className="rev">→ {card.reveal}</div>
+            <RevealAlternatives alternatives={card.revealAlternatives} />
+          </>
+        )}
+      />
 
-      {/* Tempo-Modus: Countdown-Leiste je Karte (rein visueller Ansporn; der Schnell-Bonus zählt serverseitig). */}
-      {tempo && typed && phase === "front" && <div className="tempo-bar" key={idx}><i /></div>}
-
-      <div className="flash">
-        {/* Nur die Selbsteinschätzung kommt auf „back" – ShowBoth ist von Anfang an offen und dreht nichts (B-35). */}
-        <div className={phase === "back" ? "fcard flipped" : "fcard"}>
-          <div className="lang">{t("practice.task")}</div>
-          {/*
-            Das Bild kommt nur auf Stufen, auf denen es die Lösung nicht verraten kann – der Server
-            entscheidet das, das Frontend rendert nur, was da ist. Es steht über dem Wort, weil es beim
-            Einprägen hilft (Bild + Wort zusammen), nicht als Dekoration darunter.
-          */}
-          {card.imageUrl && (
-            <CardImage
-              key={card.imageUrl}
-              url={card.imageUrl}
-              alt={card.imageAlt ?? ""}
-              // Auf der angehaltenen Karte liefe die Meldung eines 409 in die stumme Region (sr-only) – dort kein Wechsel.
-              busy={action.busy || phase === "wrong"}
-              onReshuffle={reshuffleImage}
-            />
-          )}
-          <Passage text={card.passage} />
-          {/*
-            Aufnahme und Frage nebeneinander, nicht entweder-oder: Beim Hörverstehen braucht das Kind
-            beides. Dass die Vokabel-Hörstufe ihr Wort verschweigt, entscheidet der Server – er schickt
-            dort keinen `prompt`. Eine Regel, die hier stünde, müsste jeder neue Audio-Typ nachtragen.
-
-            Fehlt der Text, IST die Aufnahme die Aufgabe: kurz, also anspielen und der Knopf genügt. Steht
-            eine Frage daneben, ist sie das Material und kann lang sein – dann die Bedienelemente, sonst
-            könnte das Kind sie nicht anhalten. Die Unterscheidung liest sich aus den gelieferten Feldern,
-            nicht aus dem Übungstyp.
-          */}
-          {card.audioUrl && (
-            <AudioButton url={card.audioUrl} autoPlay={!card.prompt} withControls={!!card.prompt} />
-          )}
-          <ClozePrompt text={card.prompt} gapIndex={card.gapIndex} fitAsked />
-          {/* Die Dekodierung steht auf der VORDERSEITE, direkt unter dem Satz: sie ist die Methode, nicht die
-              Lösung – man liest den Satz und seine Entschlüsselung zusammen (B-78). */}
-          <BirkenbihlDecoding decoding={card.decoding} />
-          <ListRule type={card.type} anyOrder={card.anyOrder} itemIndex={card.itemIndex} />
-          {card.hint && typed && (
-            hintShown
-              ? <div className="sub">💡 {card.hint}</div>
-              : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
-          )}
-          {/* B-524: Der Wortkasten ist die Aufgabe, keine Hilfe – darum offen, nicht hinter einem Tipp-Knopf. */}
-          <CueBox words={card.cueBox} label={t("test.cueBox")} />
-          {/* ShowBoth (B-96): a free display stage shows both sides at once, no flip needed - the server
-              flags this via `displayOnly`, distinct from self-assessment which reveals only after "Umdrehen". */}
-          {(phase === "back" || card.displayOnly) && card.reveal && <div className="rev">→ {card.reveal}</div>}
-          {(phase === "back" || card.displayOnly) && card.reveal && <RevealAlternatives alternatives={card.revealAlternatives} />}
-        </div>
-
-        {/* Gruppe statt loser Knöpfe: ein Screenreader liest sonst „Leeds, Schaltfläche" ohne Bezug zur
-            Frage. Der Key trägt den Index mit – der Autor darf dieselbe Option zweimal eintragen. */}
+      <div className="lektion-antwort" ref={answerRef}>
         {phase === "wrong" && mistake ? (
           // B-420: die Karte bleibt stehen – Frage oben, darunter die eigene Antwort und die Lösung, bis „Weiter".
           <div className="card mistake">
@@ -437,49 +414,27 @@ export function SohnPractice() {
             <div className="rev">{mistake.expected ? t("practice.solution", { expected: mistake.expected }) : t("practice.wrong")}</div>
             <button type="button" ref={continueRef} className="btn lime" style={{ marginTop: 10 }} onClick={next}>{t("practice.next")}</button>
           </div>
-        ) : typed && card.choices ? (
-          <div ref={answerRef} className={choicesClass(card.choices)} style={{ gap: 8, flexWrap: "wrap" }} role="group" aria-label={t("practice.choices")}>
-            {card.choices.map((c, i) => (
-              <button type="button" key={`${i}-${c}`} className="btn ghost" disabled={action.busy}
-                onClick={() => judge(card, { givenAnswer: c })}>{c}</button>
-            ))}
-          </div>
         ) : typed ? (
-          <div ref={answerRef}>
-            {card.letterTiles ? (
-              <LetterTiles tiles={card.letterTiles} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} />
-            ) : card.answerLength ? (
-              <LetterBoxes length={card.answerLength} value={typedAnswer} onChange={setTypedAnswer} onSubmit={submitTyped} pattern={card.answerPattern ?? undefined} />
-            ) : (
-              <form onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
-                <input
-                  aria-label={t("practice.yourAnswer")}
-                  name="answer"
-                  autoComplete="off"
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  style={{ width: "100%", background: "#0c0e2c", border: "1.5px solid var(--stroke)", borderRadius: 12, color: "var(--ink)", padding: 12, fontSize: 16 }}
-                  placeholder={t("practice.answerPlaceholder")}
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                />
-              </form>
-            )}
-            <button type="button" className="btn lime" style={{ marginTop: 10 }} disabled={action.busy || !typedAnswer.trim()} onClick={submitTyped}>{t("practice.check")}</button>
-          </div>
-        ) : card.displayOnly ? (
-          // Kennenlernen: no judgment to make, so no "Gewusst?" buttons - just move on.
-          <button type="button" ref={cardActionRef} className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
-        ) : phase === "front" ? (
-          <button type="button" ref={cardActionRef} className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
+          // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
+          <Antwortflaeche
+            kartenId={`${round}-${idx}`} karte={card} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy}
+            knopf={t("practice.check")} feldName={t("practice.yourAnswer")} platzhalter={t("practice.answerPlaceholder")}
+            onAbschicken={submitTyped}
+          />
         ) : (
-          <div className="judge">
-            {/* B-49: vorher ohne `disabled` - ein Doppelklick konnte zwei `review` auf denselben `itemIndex`
-                auslösen (dieselbe Lücke, die die Choice-Knöpfe oben schon durch `useAction` geschlossen
-                hatten). */}
-            <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>{t("practice.again")}</button>
-            <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>{t("practice.knewIt")}</button>
+          <div className="lektion-fuss">
+            {card.displayOnly ? (
+              // Kennenlernen: kein Urteil zu fällen, also kein „Gewusst?" – nur weiter.
+              <button type="button" ref={cardActionRef} className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
+            ) : phase === "front" ? (
+              <button type="button" ref={cardActionRef} className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
+            ) : (
+              <div className="judge">
+                {/* B-49: ohne `disabled` konnte ein Doppelklick zwei `review` auf denselben `itemIndex` auslösen. */}
+                <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>{t("practice.again")}</button>
+                <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>{t("practice.knewIt")}</button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -489,7 +444,7 @@ export function SohnPractice() {
       {lastOutcome?.dueOn && phase === "front" && (
         <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: arcadeDatum(lastOutcome.dueOn, i18n.language) })}</p>
       )}
-    </div>
+    </LektionsRahmen>
   );
   }
 }

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createChild, introduceAndQuiz, sohnLogin, vaterLogin, pfadStart } from "./helpers";
 
-// B-35: beim Aufdecken dreht sich die Karte um – in der Übung („Umdrehen") und in der Klausur („Aufdecken").
+// B-35: beim Aufdecken dreht sich die Karte um – in der Übung und in der Klausur (beide „Aufdecken").
 // Eine eigene Spec statt eines Blocks im Durchstich (frontend/CLAUDE.md, „Eine Fläche je E2E-Spec"): eine
 // rein optische Zusicherung darf den Vater→Sohn-Weg nicht mitreißen.
 // Eigenes Kind, weil je Kind genau ein aktiver Plan spielbar ist und `full-flow` Kind #1 belegt.
@@ -43,7 +43,7 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   await expect(counter).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
   expect(total, "zwei Karten: eine mit, eine ohne Bewegung").toBeGreaterThanOrEqual(2);
-  // B-419: der Plan ist neu – erst das Kennenlernen (ohne Umdrehen), dann dreht die Abfrage-Runde die Karten.
+  // B-419: der Plan ist neu – erst das Kennenlernen (ohne Aufdecken), dann dreht die Abfrage-Runde die Karten.
   await introduceAndQuiz(sohn, total);
 
   for (let i = 0; i < total; i++) {
@@ -51,7 +51,7 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
     // AK 3: bei „Bewegung reduzieren" dreht sich nichts – das globale Gate in index.css nimmt die Animation.
     if (i === 1) await sohn.emulateMedia({ reducedMotion: "reduce" });
     await expect(sohn.locator(".fcard")).not.toHaveClass(/\bflipped\b/);
-    await sohn.getByRole("button", { name: "Umdrehen 🔄" }).click();
+    await sohn.getByRole("button", { name: "Aufdecken 🔄" }).click();
     if (i < 2) {
       // Am Element selbst, nicht an einem neu gemounteten (B-109): dieselbe `.fcard` trägt die Wende.
       await expect(sohn.locator(".fcard")).toHaveClass(/\bflipped\b/);
@@ -66,10 +66,10 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   await sohn.getByRole("button", { name: /Weiter zum Test/ }).click();
   await expect(sohn.locator(".pill.cyan", { hasText: /Frage 1 \/ \d+/ })).toBeVisible();
   // Kein `if (count)`: fehlte das Aufdecken, prüfte diese Spec in der Klausur sonst still nichts.
-  await expect(sohn.locator(".card.flipped")).toHaveCount(0);
+  await expect(sohn.locator(".fcard.flipped")).toHaveCount(0);
   await sohn.getByRole("button", { name: "Aufdecken 🔄" }).click();
-  await expect(sohn.locator(".card.flipped")).toHaveCount(1);
-  expect(await animationOf(sohn, ".card.flipped")).toBe("card-flip");
+  await expect(sohn.locator(".fcard.flipped")).toHaveCount(1);
+  expect(await animationOf(sohn, ".fcard.flipped")).toBe("card-flip");
   // Die Bewertung bleibt erreichbar, während die Karte sich dreht (Entscheidung 5).
   await expect(sohn.getByRole("button", { name: "Gewusst", exact: true })).toBeEnabled();
 });

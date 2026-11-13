@@ -80,7 +80,7 @@ test("Sohn lernt neue Wörter erst kennen und dreht sie dann als Karteikarte um"
     // Kein Antwortfeld und keine Lösung, bevor das Kind umdreht.
     await expect(page.getByRole("textbox")).toHaveCount(0);
     await expect(page.getByText(`→ ${back}`)).toHaveCount(0);
-    await page.getByRole("button", { name: /Umdrehen/ }).click();
+    await page.getByRole("button", { name: /Aufdecken/ }).click();
     await expect(page.getByText(`→ ${back}`)).toBeVisible();
     // Das zweite Wort weiß er nicht – „Nochmal" ist eine Antwort wie „Gewusst!".
     await page.getByRole("button", { name: i === 1 ? "Nochmal" : "Gewusst!" }).click();

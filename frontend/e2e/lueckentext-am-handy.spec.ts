@@ -91,10 +91,11 @@ test("Lückentext im Tagestest am Handy: eine Zeile je Satz, kein Zoom-Feld", as
 });
 
 /*
- * Fall 2 im schlechtesten Fall: das längste Stufen-Etikett („Selbstcheck“, Vokabel-Stufe 2) neben „Frage 1 / 10“.
- * Rot, sobald die Kopfzeile nicht umbricht und „Später weiter“ rechts aus dem Bild schiebt.
+ * Fall 2: der Kopf mit zweistelligem Zähler („Frage 1 / 10“). Seit B-526 trägt er keine Stufen-Pille mehr – das
+ * ✕ („Später weiter“) steht links, der Balken gibt nach. Rot, sobald der Kopf seitlich übersteht oder das ✕
+ * aus dem Bild gerät.
  */
-test("Kopfzeile des Tagestests am Handy: auch mit „Selbstcheck“ und zehn Fragen bleibt „Später weiter“ im Bild", async ({ page, request }) => {
+test("Kopfzeile des Tagestests am Handy: auch mit zehn Fragen bleibt „Später weiter“ im Bild", async ({ page, request }) => {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
   const headers = { Authorization: `Bearer ${(await login.json()).token}` };
@@ -122,12 +123,15 @@ test("Kopfzeile des Tagestests am Handy: auch mit „Selbstcheck“ und zehn Fra
   await pfadStart(page, "test");
   await expect(page).toHaveURL(new RegExp(`/sohn/test/${positionId}$`));
 
-  await expect(page.locator(".pill.mag", { hasText: "Selbstcheck" })).toBeVisible();
+  // Was die Pille sagte, steht jetzt in der Arbeitsanweisung – mit dem Wort „Test“ davor.
+  await expect(page.getByRole("heading", { name: "Test · Weißt du es?" })).toBeVisible();
   await expect(page.locator(".pill.cyan", { hasText: /10/ })).toBeVisible();
-  const later = page.getByRole("button", { name: "Später weiter" });
-  const box = await later.boundingBox();
-  expect(box, "„Später weiter“ hat eine Fläche").not.toBeNull();
-  expect(box!.x + box!.width, "rechter Rand im Fenster").toBeLessThanOrEqual(375);
+  await expect(page.getByRole("button", { name: "Später weiter" })).toBeVisible();
+  // Gemessen am LETZTEN Element des Kopfs: das ✕ steht vorn und bliebe auch in einem zu breiten Kopf im Bild – der
+  // Zähler ist es, der rechts hinausgeschoben würde.
+  const box = await page.locator(".lektion-kopf .pill.cyan").boundingBox();
+  expect(box, "der Zähler hat eine Fläche").not.toBeNull();
+  expect(box!.x + box!.width, "rechter Rand des Zählers im Fenster").toBeLessThanOrEqual(375);
   // B-479: gemessen am Scroller, der wirklich scrollt. `.sohn-body` hat `overflow-y: auto` und damit auch seitlich `auto`
   // – ein zu breiter Kopf scrollt IN ihm, die Seite (`documentElement`) bliebe dabei immer schmal.
   const body = page.locator(".sohn-body");
