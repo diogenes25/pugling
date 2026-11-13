@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
 aliases: [Lektionsraster, Rückmeldung als Blatt, Abschlussbild]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
 wo: frontend
@@ -99,63 +99,112 @@ hinter der Glühbirne (Punkt 9).
 
 ## Offene Punkte
 
-1. **Gilt das Raster für Üben und Test?** Empfehlung: ja für die **Geometrie** (derselbe Rahmen, dieselbe
-   Antwortfläche), nein für die **Rückmeldung**: der Test zeigt weiter kein Blatt, sein Knopf heißt
-   „Weiter". Sonst wäre die Klausur keine mehr.
-2. **Auswahl: wählen und dann „Prüfen", oder weiter ein Tipp?** Empfehlung: zwei Schritte, wie in beiden
-   Vorbildern – ein Vertipper ist korrigierbar, und im Test ist er sonst endgültig. Kosten: ein Tipp mehr je
-   Karte; der Tempo-Bonus misst dann bis „Prüfen".
-3. **Richtige Antwort: Blatt mit „Weiter", oder wie heute von selbst weiter?** Empfehlung: Blatt mit
-   „Weiter" (Fokus darauf, Enter genügt) – eine Stelle, ein Verhalten, und die Münzen sind lesbar statt
-   nach 1,1 Sekunden weg. Kosten: ein Tipp mehr je richtiger Karte, die Runde wird spürbar langsamer.
-4. **Selbsteinschätzung im Raster.** Sie hat kein „Prüfen". Empfehlung: der eine Knopf heißt „Aufdecken";
-   danach stehen an seiner Stelle „Nochmal" und „Gewusst", und es geht ohne Blatt weiter – die Lösung stand
-   ja schon da. Die Münzen zeigt der Zähler im Kopf.
-5. **Kennenlern-Karte im Raster.** Empfehlung: Anweisung „Neu – präg es dir ein", Lösung offen, Knopf
-   „Weiter", kein Blatt.
-6. **Woher kommt die Arbeitsanweisung?** Empfehlung: aus den Feldern der Karte, so wie die Antwortfläche
-   schon gewählt wird (Auswahl da → „Wähle die Übersetzung", gemischte Buchstaben → „Ordne die Buchstaben",
-   Wortkasten → „Schreibe das passende Wort", nur Aufnahme → „Hör zu und schreibe" …). Kein neues
-   Server-Feld und keine Stufennamen im Client. Kosten: eine Abbildung, die bei einer neuen Antwortform
-   nachgezogen werden muss.
-7. **Maskottchen und Sprechblase bei langem Material.** Eine Vokabel passt in eine Blase, ein Lesetext oder
-   ein Bild nicht. Empfehlung: kurze Aufgaben (ein Wort, ein Satz) in der Blase neben einem kleinen
-   Maskottchen; sobald die Karte Passage, Bild oder Wortkasten trägt, steht das Material als Karte ohne
-   Maskottchen. Alternative: Maskottchen nur im Blatt und im Abschlussbild.
-8. **Kopfzeile.** Empfehlung: ✕ links (Üben: „Runde beenden", Test: „Später weiter"), Fortschrittsbalken,
-   Combo rechts; der Zähler „Karte i / n" bleibt als kleiner Text am Balken, Tempo als Schalter darunter.
-   Der Zähler bleibt, weil zehn Specs und der Screenreader an ihm hängen.
-9. **Glühbirne im Blatt.** Es gibt nur den `Hint` der Karte, keinen Erklärtext nach der Antwort.
-   Empfehlung: die Glühbirne zeigt den vorhandenen Hinweis, wenn die Karte einen trägt, sonst fehlt sie. Ein
-   eigenes Erklärfeld wäre eine Vertrags- und Creator-Story und wird zurückgestellt.
-10. **Abschlussbild des Übens.** Empfehlung: Münzen, Genauigkeit und Zeit, im Client aus der gerade
-    gespielten Runde gezählt – es ist Anzeige, keine Wertung; die Münzen kommen weiter vom Server. Eine
-    reine Kennenlern-Runde zeigt keine Genauigkeit. Das Testergebnis bleibt, wie es ist.
-11. **Vater-Vorschau.** Sie teilt die Bausteine. Empfehlung: bleibt unverändert; das Raster ist ein Rahmen
-    der Arcade um die Bausteine, kein Umbau der Bausteine.
-12. **Was aus dem Blatt wird, wenn die Lösung keine ist.** Bei einer Menge nennt der Server keine Lösung
-    (`null`). Empfehlung: das Blatt zeigt dann nur „Leider nicht" – wie heute der Kasten.
+1. ~~Gilt das Raster für Üben und Test?~~ → Entscheidung 1.
+2. ~~Auswahl: wählen und dann „Prüfen", oder weiter ein Tipp?~~ → Entscheidung 2.
+3. ~~Richtige Antwort: Blatt mit „Weiter", oder von selbst weiter?~~ → Entscheidung 3.
+4. ~~Selbsteinschätzung im Raster~~ → Entscheidung 4.
+5. ~~Kennenlern-Karte im Raster~~ → Entscheidung 4.
+6. ~~Woher kommt die Arbeitsanweisung?~~ → Entscheidung 5.
+7. ~~Maskottchen und Sprechblase bei langem Material~~ → Entscheidung 6.
+8. ~~Kopfzeile~~ → Entscheidung 7.
+9. ~~Glühbirne im Blatt~~ → Entscheidung 8; das Erklärfeld nach der Antwort ist
+   [B-529](B-529-erklaerung-nach-der-antwort.md).
+10. ~~Abschlussbild des Übens~~ → Entscheidung 9.
+11. ~~Vater-Vorschau~~ → Entscheidung 10.
+12. ~~Was aus dem Blatt wird, wenn die Lösung keine ist~~ → Entscheidung 8.
+
+**Ausdrücklich zurückgestellt:** die Verfeinerung der Arbeitsanweisung nach Übungstyp (Entscheidung 5) und eine
+Vater-Vorschau im Raster (Entscheidung 10) – für beide ist keine Story angelegt, weil niemand sie bisher vermisst.
+
+## Entscheidungen
+
+Grill-Runde mit dem Nutzer am 2026-11-13, eine Frage je Entscheidung.
+
+1. **Ein Aufbau für Üben und Test, Rückmeldung nur im Üben.** Beide Bildschirme teilen den Rahmen (Kopf,
+   Anweisung, Frage, Antwortfläche, ein Knopf unten) und die Antwortfläche. Im Test heißt der Knopf „Weiter",
+   und es erscheint kein Blatt; der Test ist an einer eigenen Kopffarbe und dem Wort „Test" in der Anweisung
+   erkennbar. Begründung: die Klausur bleibt eine Klausur, aber das Kind lernt die Bedienung nur einmal. Kosten:
+   der Test sieht dem Üben sehr ähnlich, und ein Kind kann auf ein Blatt warten, das nicht kommt.
+2. **Auswahl in zwei Schritten, im Üben wie im Test.** Antippen markiert (änderbar), „Prüfen" bzw. „Weiter"
+   wertet. Begründung: die Form der Vorbilder, der eine Knopf hat immer dieselbe Aufgabe, und ein Vertipper im
+   Test ist nicht mehr endgültig. Kosten: ein Tipp mehr je Auswahlkarte – gerade auf der leichtesten Stufe, die
+   bei neuen Wörtern oft kommt; der Tempo-Bonus misst bis „Prüfen".
+3. **Im Üben erscheint nach jeder vom Server geprüften Antwort das Blatt und wartet auf „Weiter".** Grün bei
+   richtig, rot bei falsch; der Fokus liegt auf „Weiter", Enter genügt. Begründung: ein Blatt, das sich immer
+   gleich verhält, ist der Kern der Story, und Münzen und Fälligkeit sind lesbar statt nach 1,1 Sekunden weg.
+   Kosten: ein Tipp mehr je richtiger Karte; mit Entscheidung 2 sind es bei einer Auswahlkarte drei Tipps statt
+   einem. Die Runden werden spürbar langsamer – hingenommen, weil die Tagesdosis die Kartenzahl begrenzt.
+4. **Selbsteinschätzung und Kennenlernen ohne Blatt.** Selbsteinschätzung: der Knopf heißt „Aufdecken", danach
+   stehen an seiner Stelle „Nochmal" und „Gewusst", und es geht direkt weiter; die Münzen zeigt der Zähler im
+   Kopf. Kennenlernen: Lösung offen, Knopf „Weiter". Begründung: das Blatt wiederholte dort nur, was das Kind
+   gerade gesehen oder selbst gedrückt hat. Kosten: die Regel „jede gewertete Karte endet gleich" gilt nur für
+   servergeprüfte Antworten; der Münzgewinn einer Selbsteinschätzung ist nur am Zähler abzulesen.
+5. **Die Arbeitsanweisung leitet das Frontend aus den Feldern der Karte ab**, mit allgemeinen Formulierungen:
+   Auswahl → „Wähle die richtige Antwort"; gemischte Buchstaben → „Ordne die Buchstaben"; Buchstabenkästchen →
+   „Fülle die Kästchen"; Wortkasten → „Schreibe das passende Wort"; nur eine Aufnahme → „Hör zu und schreibe";
+   sonst getippt → „Schreibe die Antwort"; aufdeckbare Lösung → „Weißt du es?"; offene Lösung → „Neu – präg es
+   dir ein". Begründung: dieselbe Unterscheidung wählt heute schon die Antwortfläche; kein Server-Feld. Kosten:
+   die Anweisung weiß nicht, was gefragt ist („die Übersetzung"), und eine neue Antwortform muss die Abbildung
+   nachziehen. Die Verfeinerung nach Übungstyp ist zurückgestellt.
+6. **Sprechblase für Kurzes, Karte für Langes.** Trägt die Aufgabe nur Wort oder Satz, steht sie in der Blase
+   neben einem kleinen Maskottchen. Sobald Lesetext, Bild, Wortkasten oder Dekodierung dabei sind, steht das
+   Material als volle Karte ohne Maskottchen. Die Grenze hängt an den **Feldern** der Karte, nicht an der
+   Textlänge. Zusätzlich reagiert das Maskottchen im Blatt. Begründung: die Vokabelkarte ist der häufigste Fall
+   und der, den die Kinder kennen. Kosten: zwei Erscheinungsbilder; der Schulvokabeltest aus B-524 hat nie ein
+   Maskottchen an der Aufgabe.
+7. **Kopfzeile:** links ein ✕ (Üben: Runde beenden; Test: „Später weiter"; ohne Wort, mit sprechendem
+   Vorlesenamen, ohne Rückfrage wie heute), daneben der Fortschrittsbalken mit dem Zähler „3 / 8" als kleinem
+   Text, rechts die Combo. Der Tempo-Schalter zieht in eine Zeile darunter, nur im Üben. Die Stufen-Pille des
+   Tests entfällt. Begründung: die Form der Vorbilder; der Zähler bleibt für das Kind, den Screenreader und die
+   Specs. Kosten: ein Kind sieht dem ✕ nicht an, dass es im Test nichts verwirft, und die Stufe des Tests steht
+   nur noch indirekt in der Anweisung.
+8. **Inhalt des Blatts, keine Glühbirne.** Richtig: ein Lobwort, die Münzen samt Bonus und, wo der Karteikasten
+   es meldet, „wieder fällig am …". Falsch: die eigene Antwort durchgestrichen und die Lösung; nennt der Server
+   keine (Menge), nur „Leider nicht". Der Hinweis der Karte bleibt **vor** der Antwort und bekommt dort das
+   Glühbirnen-Symbol. Begründung: ein Hinweis ist als Hilfe vor der Antwort geschrieben und liest sich danach
+   seltsam. Kosten: das Blatt erklärt nichts – der eigentliche Lernwert des Vorbilds fehlt, bis
+   [B-529](B-529-erklaerung-nach-der-antwort.md) gebaut ist.
+9. **Abschlussbild mit Münzen und Genauigkeit, ohne Zeit.** Münzen vom Server; die Genauigkeit zählt das
+   Frontend aus der gespielten Runde, und zwar **nur aus servergeprüften Antworten** – gab es keine, entfällt die
+   Kachel. Eine reine Kennenlern-Runde zeigt wie heute „n neue Wörter kennengelernt". Die Knöpfe („Jetzt
+   abfragen", „Weiter zum Test", „Zum Pfad") und das Testergebnis bleiben unverändert. Begründung: eine sichtbare
+   Zeit lädt zum Hetzen ein und ist für ein Kind mit LRS Druck; selbst vergebene 100 % wären keine Genauigkeit.
+   Kosten: das einzige Element des Vorbilds, das bewusst fehlt; eine Runde nur aus Selbsteinschätzung zeigt eine
+   einzige Kachel.
+10. **Die Vater-Vorschau bleibt, wie sie ist.** Das Raster ist ein Rahmen der Arcade um die Bausteine; die
+    geteilte Antwortfläche darf die Vorschau nicht mitreißen (dort bleibt die Auswahl ein Tipp). Begründung: die
+    Vorschau prüft den Stoff, nicht das Spielgefühl. Kosten: der Vater sieht nicht genau, was das Kind sieht.
 
 ## Akzeptanzkriterien
 
-Entwurf, final nach dem Grillen.
-
-1. Üben und Test haben denselben Aufbau: Kopf mit Schließen und Fortschritt, Arbeitsanweisung, Frage,
-   Antwortfläche, ein Hauptknopf am unteren Rand.
-2. Jede Antwortform des Servers ist im Raster spielbar: Auswahl, Buchstaben ordnen, Buchstabenkästchen,
-   Freitext, Freitext mit Wortkasten, Hören, Selbsteinschätzung, Kennenlernen.
-3. Im Üben erscheint nach einer gewerteten Antwort die Rückmeldung als Blatt an fester Stelle: richtig oder
-   falsch, bei falsch die Lösung (sofern der Server eine nennt) und die eigene Antwort, verdiente Münzen,
-   „Weiter".
-4. Im Test erscheint kein Blatt und kein Hinweis auf richtig oder falsch.
-5. Die Antwortfläche ist ein Baustein für Üben und Test, nicht zweimal ausgeschrieben.
-6. Das Ende einer Übungsrunde zeigt Münzen, Genauigkeit und Zeit; eine reine Kennenlern-Runde zeigt keine
-   Genauigkeit.
-7. Die Vater-Vorschau verhält sich wie vorher.
-8. Tastatur und Screenreader: Fokus liegt nach „Prüfen" auf „Weiter", die Aufgabe wird wie heute angesagt
-   (eine Live-Region über allen Ansichten), „Bewegung reduzieren" schaltet die Animationen ab.
-9. Alle neuen Texte laufen über `t()` in Deutsch und Englisch.
-10. Der Vater→Sohn-Durchstich und die Specs, die heute nach Klassen dieses Bildschirms greifen, sind grün.
+1. Üben und Test haben denselben Aufbau: Kopf mit ✕, Fortschrittsbalken und Zähler; Arbeitsanweisung; Frage;
+   Antwortfläche; ein Hauptknopf am unteren Rand. Der Test trägt eine eigene Kopffarbe und das Wort „Test" in
+   der Anweisung und zeigt keine Stufen-Pille.
+2. Jede Antwortform des Servers ist im Raster spielbar und trägt die Anweisung aus Entscheidung 5: Auswahl,
+   Buchstaben ordnen, Buchstabenkästchen, Freitext, Freitext mit Wortkasten, Hören, Selbsteinschätzung,
+   Kennenlernen.
+3. Eine Auswahl wird durch Antippen nur markiert und ist änderbar; gewertet wird erst mit dem Hauptknopf. Ohne
+   Markierung ist der Hauptknopf gesperrt. Das gilt in Üben und Test.
+4. Im Üben erscheint nach jeder vom Server geprüften Antwort das Blatt und bleibt bis „Weiter": bei richtig ein
+   Lobwort, Münzen samt Bonus und – wenn gemeldet – die nächste Fälligkeit; bei falsch die eigene Antwort und die
+   Lösung, ohne Lösung vom Server nur „Leider nicht". Der Fokus liegt auf „Weiter".
+5. Nach einer Selbsteinschätzung und nach einer Kennenlern-Karte erscheint kein Blatt.
+6. Im Test erscheint kein Blatt und kein Hinweis auf richtig oder falsch; der Hauptknopf heißt „Weiter".
+7. Eine Aufgabe nur aus Wort oder Satz steht in der Sprechblase neben dem Maskottchen; trägt die Karte Lesetext,
+   Bild, Wortkasten oder Dekodierung, steht sie als Karte ohne Maskottchen.
+8. Der Hinweis einer Karte ist vor der Antwort über ein Glühbirnen-Symbol aufdeckbar; im Blatt gibt es keine
+   Glühbirne.
+9. Das ✕ beendet im Üben die Runde und verlässt den Test, ohne den Versuch zu verwerfen; sein Vorlesename sagt,
+   was es jeweils tut. Der Tempo-Schalter steht nur im Üben.
+10. Das Ende einer Übungsrunde zeigt Münzen und – wenn es servergeprüfte Antworten gab – die Genauigkeit daraus;
+    keine Zeit. Eine reine Kennenlern-Runde zeigt „n neue Wörter kennengelernt" statt der Kacheln. Die Knöpfe des
+    Rundenendes und das Testergebnis sind unverändert.
+11. Die Antwortfläche ist ein Baustein für Üben und Test, nicht zweimal ausgeschrieben.
+12. Die Vater-Vorschau verhält sich wie vorher, einschließlich Auswahl mit einem Tipp.
+13. Tastatur und Screenreader: die Aufgabe wird wie heute angesagt (eine Live-Region über allen Ansichten), das
+    Blatt wird angesagt, „Bewegung reduzieren" schaltet die Animationen ab.
+14. Alle neuen Texte laufen über `t()` in Deutsch und Englisch.
+15. Der Vater→Sohn-Durchstich und die Specs, die heute nach Klassen dieses Bildschirms greifen, sind grün.
 
 ## Verlauf
 
@@ -163,3 +212,5 @@ Entwurf, final nach dem Grillen.
 - 2026-11-13 · `ausformuliert` – gegen den Code belegt: Üben und Test sind zwei Geometrien mit doppelt
   ausgeschriebener Antwortfläche, die Rückmeldung sitzt an drei Stellen, und der angehaltene Kasten aus B-420
   ist schon der Vorläufer des Blatts. Reine Frontend-Arbeit, zwölf offene Punkte.
+- 2026-11-13 · `gegrillt` – zehn Entscheidungen im Dialog mit dem Nutzer, alle gemäß Empfehlung; das Erklärfeld nach
+  der Antwort als B-529 abgespalten, Anweisung nach Übungstyp und Vorschau im Raster zurückgestellt.
