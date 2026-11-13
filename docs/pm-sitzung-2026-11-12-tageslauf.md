@@ -437,3 +437,8 @@ echten DB; französischer Seed mit ausdrücklichem deutschen Artikel. Mutanten V
 echten DB: alle sechs betroffenen Zeilen von der Wache gedeckt. Review: 🟡 (Seed-Ableitung) und drei 🟢 behoben.
 **Retro:** Escape-Fallstrick erneut (`\u2019` im Python-Heredoc wurde zum Zeichen) – im C#-Test unschädlich, im Probe-
 Generator per `chr()` umgangen; die Lehre steht schon in `nachtlauf-werkzeug-lehren`. Kein neuer Mechanismus.
+
+## Sprint 66 — B-523 Werkzeug: Mutantenprobe mit `env` und unittest
+
+Die zwei Hand-Messungen des Laufs (R2, U4) laufen jetzt durch `mutant-probe.py`: Schlüssel `env` für build/test, Muster für
+Pythons `unittest`. Belegt durch genau diese beiden Probes → rot, Grundlinie danach grün.

@@ -13,6 +13,8 @@ Eingabe: JSONL, ein Objekt je Mutante (Zeilen mit # sind Kommentare):
   {"id": "M1", "f": "<pfad>", "l": <zeile 1-basiert>,
    "old": "<alte Zeile, zeichengenau>", "new": "<mutierte Zeile>",
    "build": "<befehl>", "test": "<befehl>",
+   "env": {"NAME": "wert"},            # optional: Umgebung für build und test. Unter Windows läuft der Befehl
+                                       # in cmd.exe, das `NAME=wert befehl` nicht kennt (E2E auf Ausweichports)
    "expect": "red" | "green",          # Vorgabe: red
    "fails": ["<Testname-Teil>", ...]}  # optional: diese Namen MÜSSEN in der Ausgabe als
                                        # gefallen stehen – die Probe muss am richtigen Ort fallen
@@ -31,7 +33,8 @@ Ausgabe: eine Markdown-Tabelle zum Einfügen in `## Verlauf`, mit dem Stand (Com
 oder `abweichend` ist kein Beleg (Regel in pm-loop Step 5).
 
 Rot heißt: Testbefehl endet != 0 UND die Ausgabe nennt mindestens einen gefallenen Test
-(`Failed:`/`Fehler:` > 0 bei dotnet, `failed` bei vitest/playwright). Ein Exit-Code allein
+(`Failed:`/`Fehler:` > 0 bei dotnet, `failed` bei vitest/playwright, `FAILED (failures=N)` bei
+Pythons unittest). Ein Exit-Code allein
 zählt nicht – Playwright endet auch mit 0, wenn null Tests liefen.
 """
 import json
@@ -45,19 +48,21 @@ FAILED_PATTERNS = [
     re.compile(r"(?:Failed|Fehler):\s*([1-9]\d*)"),           # dotnet test
     re.compile(r"Tests?\s+([1-9]\d*)\s+failed", re.I),       # vitest
     re.compile(r"^\s*([1-9]\d*)\s+failed", re.I | re.M),     # playwright
+    re.compile(r"^FAILED \((?:failures|errors)=([1-9]\d*)", re.M),  # python unittest
 ]
 PASSED_PATTERNS = [
     re.compile(r"(?:Passed|Bestanden):\s*([1-9]\d*)"),
     re.compile(r"Tests?\s+([1-9]\d*)\s+passed", re.I),
     re.compile(r"^\s*([1-9]\d*)\s+passed", re.I | re.M),
+    re.compile(r"^Ran ([1-9]\d*) tests? in [^\n]*\n+OK\b", re.M),  # python unittest
 ]
 
 
-def run(cmd):
+def run(cmd, env=None):
     if not cmd:
         return 0, ""
     p = subprocess.run(cmd, shell=True, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace")
+                       encoding="utf-8", errors="replace", env={**os.environ, **(env or {})})
     return p.returncode, p.stdout + p.stderr
 
 
@@ -129,13 +134,15 @@ def main():
                      f"  erwartet: {m['old']!r}\n  gefunden: {actual!r}")
 
     # One baseline per distinct (build, test) pair: a list mixing dotnet, vitest and playwright needs each one green.
-    baselines = list(dict.fromkeys((m["build"], m["test"]) for m in mutants))
-    for build, test in baselines:
+    baselines = list(dict.fromkeys((m["build"], m["test"], json.dumps(m.get("env") or {}, sort_keys=True))
+                                   for m in mutants))
+    for build, test, env in baselines:
+        env = json.loads(env)
         print(f"Grundlinie: {test}", file=sys.stderr)
-        code, out = run(build)
+        code, out = run(build, env)
         if code != 0:
             sys.exit("Grundlinie kompiliert nicht – Abbruch.\n" + out[-3000:])
-        if verdict(*run(test)) != "green":
+        if verdict(*run(test, env)) != "green":
             sys.exit(f"Grundlinie ist nicht grün ({test}) – keine Probe misst dann etwas. Abbruch.")
 
     measured_at = stand()
@@ -150,11 +157,11 @@ def main():
         print(f"{m['id']}: {m['f']}:{m['l']}", file=sys.stderr)
         try:
             open(m["f"], "wb").write(mutated)
-            code, out = run(m["build"])
+            code, out = run(m["build"], m.get("env"))
             if code != 0:
                 got, note = "ungemessen", "kompiliert nicht"
             else:
-                code, out = run(m["test"])
+                code, out = run(m["test"], m.get("env"))
                 got = verdict(code, out)
                 note = ""
                 missing = [t for t in m.get("fails", []) if t not in out]
@@ -171,9 +178,10 @@ def main():
                      note))
 
     final = "green"
-    for build, test in baselines:
-        code, out = run(build)
-        got = verdict(*run(test)) if code == 0 else "kompiliert nicht"
+    for build, test, env in baselines:
+        env = json.loads(env)
+        code, out = run(build, env)
+        got = verdict(*run(test, env)) if code == 0 else "kompiliert nicht"
         if got != "green":
             final = f"{got} ({test})"
     print(f"\nGemessen an `{measured_at}`, {time.strftime('%Y-%m-%d %H:%M')}.\n")
