@@ -304,6 +304,7 @@ export const en = {
       notNamed: "not named",
       didNotCount: "This didn't count:",
       tryAgain: "Try again",
+      practice: "▶ Practise",
     },
     problem: {
       test_attempts_exhausted: "You've used up your tries for today. You can have another go tomorrow.",

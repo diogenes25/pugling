@@ -1,8 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/training, rolle/student]
 aliases: [Nach dem Test üben, Diese Wörter üben]
-status: ausformuliert
-wartet_auf: Entscheidung des Nutzers (Offener Punkt 3)
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: XS
@@ -49,7 +48,7 @@ Ein Knopf.
 
 1. ~~Knopf oder Übergabe der Fehlerliste?~~ → Entscheidungen 1 und 2.
 2. ~~Reihenfolge der Knöpfe?~~ → Entscheidung 1.
-3. **Neu (2026-11-08, Lauf AE):** Wohin führt der Knopf, wenn die Fehler des Tests in der Position nicht fällig sind?
+3. ~~Wohin führt der Knopf …?~~ → Entscheidung 3. **Ursprünglich (2026-11-08, Lauf AE):** Wohin führt der Knopf, wenn die Fehler des Tests in der Position nicht fällig sind?
    Drei Wege, keiner ohne Produktfolge: (a) die Übung aus dem Ergebnis im Info-Modus öffnen (alle Wörter, aber ohne
    Rückmeldung – die Arcade spielt den Info-Modus heute gar nicht); (b) eine falsche Test-Antwort setzt die
    Positions-Karte zurück in Kasten 1, fällig heute (ändert die Leitner-Regel: der Test steuerte dann die Übung);
@@ -67,15 +66,24 @@ nachtlauffähig zu machen ([Protokoll](../pm-sitzung-2026-11-08-rollengang.md)).
    Position „Zufällig" oder „Reihenfolge" sortiert, kommen die Fehler nicht zuerst – akzeptiert; der Knopf heißt
    dann weiter „üben", nicht „genau diese".
 
+3. **Offener Punkt 3 → (c)** (2026-11-13, stellvertretend für den Nutzer im Tageslauf, Begründung im Verlauf): Knopf
+   „▶ Üben" ohne das Versprechen „diese Wörter", ohne Eingriff in die Leitner-Regel; er steht bei jedem nicht
+   bestandenen Test, auch ohne Restversuch – dann ist er der einzige Weg nach vorn. (b) bleibt eine eigene Story,
+   falls der Vater den Test die Übung steuern lassen will (braucht Markierung + Migration, siehe Verlauf).
+
 ## Akzeptanzkriterien
 
-1. Ergebnis nicht bestanden → Knopf „Diese Wörter üben" sichtbar, führt zu `/sohn/practice/:positionId`.
+Nach Entscheidung 3 gilt die Beschriftung „▶ Üben" statt „Diese Wörter üben".
+
+
+1. Ergebnis nicht bestanden → Knopf „▶ Üben" sichtbar (unabhängig von den Restversuchen), führt zu
+   `/sohn/practice/:positionId`; kein Versprechen „diese Wörter", kein Leitner-Eingriff.
 2. Ergebnis bestanden → Knopf fehlt.
 3. Vitest `SohnTest.test.tsx`/`TestResult.test.tsx`: beide Fälle; Mutante „Bedingung umdrehen" → rot.
 
 ## Schätzung
 
-**Größe: XS** — ein Knopf mit Link, zwei i18n-Schlüssel, zwei Vitest-Fälle. **Testweg:** `TestResult.test.tsx`;
+**Größe: XS** — ein Knopf mit Link, ein i18n-Schlüssel je Sprache, drei Vitest-Fälle und eine E2E-Spec. **Testweg:** `TestResult.test.tsx`;
 Rollengang Sohn als Fall in `full-flow.spec.ts` oder `erstbegegnung.spec.ts` (B-419).
 
 ## Verlauf
@@ -106,4 +114,25 @@ Rollengang Sohn als Fall in `full-flow.spec.ts` oder `erstbegegnung.spec.ts` (B-
     Tages nicht unter die des ersten Versuchs fallen lässt. Alternativ (c): Knopf „▶ Üben" ohne Versprechen, ohne
     Leitner-Eingriff. Empfehlung des PM: (c) jetzt, (b) mit Markierung als eigene Story, falls der Vater den Test die
     Übung steuern lassen will. Stufe bleibt `ausformuliert`.
-
+- **2026-11-13** — Tageslauf (Sprint 64), **Entscheidung 3 stellvertretend: (c)**. Begründung: (b) trägt nur mit Migration
+  auf der echten DB und einer neuen Teststufen-Regel – beides Produktentscheidungen mit Anti-Cheat-Folgen; (c) ist ehrlich,
+  ändert keine Ökonomie und schließt die Sackgasse „nur Nochmal versuchen / Zur Basis". Gebaut: `TestResult` nimmt
+  `onPractice`, der Knopf steht bei `!result.passed` (vor „Nochmal versuchen"), `SohnTest` führt nach
+  `/sohn/practice/:positionId`; i18n de/en.
+  - AK 1, nicht bestanden → Knopf, Klick ruft `onPractice` → `TestResult.test.tsx` („bietet nach nicht bestandenem Test"),
+    Mutante U1 `onClick={onRetry}` → rot.
+  - AK 2, bestanden → kein Knopf → `TestResult.test.tsx` („lässt … weg, wenn der Test bestanden ist"), U2 Bedingung `true` → rot.
+  - Entscheidung 3, ohne Restversuch → Knopf steht → `TestResult.test.tsx` („auch …, wenn für heute kein Versuch mehr
+    übrig ist"), U3 an `attemptsRemaining > 0` gekoppelt → rot.
+  - Verdrahtung → `e2e/test-durchgefallen-ueben.spec.ts` (Selbstcheck „Nicht gewusst", Klick, URL), U4 Route
+    `/sohn/test/` → rot an `toHaveURL` (von Hand gemessen; das Probe-Skript setzt keine Umgebungsvariablen vor `cd`).
+  - Vitest 862/862, `tsc -b` grün, E2E-Spec 1/1.
+  - `frontend-reviewer` (frisch): kein 🔴. 🟡 Leitner-Positionen landen nach dem Test oft in „Nichts fällig 🎉" mit
+    „Zum Test" (bei 0 Restversuchen in `test_attempts_exhausted`) – **stellvertretend als bekannte Grenze von (c)
+    angenommen**: genau das stand in Offener Punkt 3 („führt aber weiter ins Leere"); der Knopf öffnet wenigstens die
+    Runde, statt keinen Weg zu bieten. Die Verbesserung (Knopf nur bei fälliger Arbeit bzw. ehrlicher Leertext nach einer
+    Niederlage) liegt als [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md). 🟢 behoben: Kommentar-Reihenfolge
+    (B-62-Satz stand über dem falschen Knopf), „▶ Practise" britisch wie `home.practice`, AK und Schätzung auf (c).
+  - Rollengang Sohn nach der letzten Änderung: `test-durchgefallen-ueben.spec.ts` + `lueckentext-am-handy.spec.ts` 3/3
+    (Ausweichports, frischer Server). Vater/Creator Regressionszeugen: kein Pfad von ihnen im Diff, Vitest 862/862.
+    **abgenommen** (Entscheidung 3 stellvertretend, Veto beim Nutzer).

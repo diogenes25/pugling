@@ -417,3 +417,13 @@ braucht einen Live-Lauf am Modell und eine Entscheidung, welche Mängel Regel un
 Index: 52 offen, 440 abgenommen, nachgeschaut 425. **Beim Nutzer:** B-430 (Empfehlung (c)), B-446 (welche Seite
 `NounInfo` beschreibt), B-480 Punkt 3, B-501 Punkte 2/4; Heimnetz-Server neu starten, damit die Söhne die
 Änderungen bekommen; nichts gepusht (Branch `auto/fertigstellung`).
+
+## Sprint 64 — B-430 (c) stellvertretend (nach dem Stop-Hook: Restzeit genutzt)
+
+**Sprint-Ziel (Sohn):** Nach einem verpatzten Test gibt es einen Weg nach vorn, auch ohne Restversuch.
+**Entscheidung (stellvertretend):** B-430 Offener Punkt 3 → (c), Knopf „▶ Üben" ohne Versprechen und ohne Leitner-Eingriff;
+(b) bleibt wegen Münzen-Farmen ausgeschlossen. Mutanten U1–U4 rot (U4 von Hand an `toHaveURL`), Vitest 862/862, tsc grün,
+E2E 3/3 nach der letzten Änderung. Review: kein 🔴; 🟡 Leitner-Leerrunde als Grenze von (c) angenommen →
+[B-522](backlog/B-522-ueben-nach-test-landet-in-nichts-faellig.md); drei 🟢 behoben.
+**Retro:** Das Probe-Skript misst eine Testzeile mit `VAR=… cmd` nicht (Grundlinie „nicht grün") – U4 von Hand gemessen.
+Kein neues Tor; Lehre in `nachtlauf-werkzeug-lehren`.

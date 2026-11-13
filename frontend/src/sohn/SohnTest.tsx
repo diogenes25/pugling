@@ -172,7 +172,8 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
-    <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={start} />
+    <TestResult result={result} skin={skin} onHome={() => nav("/sohn")} onRetry={start}
+      onPractice={() => nav(`/sohn/practice/${positionId}`)} />
   );
 
   // B-350: hängt der Start oder die nächste Frage, ist das Bild sonst eine Sackgasse – nur der Browser führte zurück.
@@ -318,8 +319,8 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, onRevea
  * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
  * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
  */
-export function TestResult({ result, skin, onHome, onRetry }: {
-  result: TestSubmitResponse; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void;
+export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
+  result: TestSubmitResponse; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
 }) {
   const { t } = useTranslation();
   const stageLabel = useStageLabel();
@@ -385,6 +386,10 @@ export function TestResult({ result, skin, onHome, onRetry }: {
           </div>
         )}
 
+        {/* B-430 (c): Der Knopf verspricht Üben, nicht „diese Wörter" – der Test macht seine Fehler in der Position
+            nicht fällig, die Runde kann also andere Karten bringen oder keine (dann bietet sie den Test wieder an). */}
+        {!result.passed &&
+          <button type="button" className="btn" onClick={onPractice}>{t("test.practice")}</button>}
         {/* Ohne attemptsRemaining bot der Knopf einen Versuch an, den der Server längst abgewiesen hätte
             (ApiErrors.TestAttemptsExhausted, B-62) - ein Klick danach landete nur in der Fehlerbox. */}
         {!result.passed && result.attemptsRemaining > 0 &&

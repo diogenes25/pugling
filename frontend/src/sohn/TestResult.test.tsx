@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { TestResult } from "./SohnTest";
 import { DEFAULT_SKIN } from "../lib/skins";
 import type { ItemOutcome, TestSubmitResponse } from "../lib/types";
@@ -18,7 +18,7 @@ describe("TestResult", () => {
     passed: false, passPercent: 90, attemptsRemaining: 1,
   };
   const view = (result: TestSubmitResponse) =>
-    render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} />);
+    render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
 
   const listItems: ItemOutcome[] = [
     { itemIndex: 0, prompt: "Nenne alle 16 Bundesländer.", expected: "Bayern", givenAnswer: "Bayern", wasCorrect: true, gapIndex: null },
@@ -81,5 +81,28 @@ describe("TestResult", () => {
   it("zeigt den Retry-Knopf bei verbleibenden Versuchen weiter an", () => {
     view({ ...base, items: listItems, attemptsRemaining: 1 });
     expect(screen.getByRole("button", { name: "Nochmal versuchen" })).toBeTruthy();
+  });
+
+  /**
+   * B-430 (c): Nach einem verpatzten Test führt ein Knopf zum Üben – ohne „diese Wörter“ zu versprechen, weil der
+   * Test seine Fehler in der Position nicht fällig macht. Je Fall die Änderung, die ihn rot macht: Bedingung
+   * umgedreht oder entfernt (Fall 2), an die Restversuche gekoppelt (Fall 3), falscher Rückruf (Fall 1).
+   */
+  it("bietet nach nicht bestandenem Test „Üben“ an und ruft dafür onPractice", () => {
+    const onPractice = vi.fn(); const onRetry = vi.fn();
+    render(<TestResult result={{ ...base, items: listItems }} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={onRetry} onPractice={onPractice} />);
+    fireEvent.click(screen.getByRole("button", { name: "▶ Üben" }));
+    expect(onPractice).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it("lässt „Üben“ weg, wenn der Test bestanden ist", () => {
+    view({ ...base, items: listItems, passed: true, correctItems: 3, scorePercent: 100 });
+    expect(screen.queryByRole("button", { name: "▶ Üben" })).toBeNull();
+  });
+
+  it("bietet „Üben“ auch an, wenn für heute kein Versuch mehr übrig ist – gerade dann bleibt nur das", () => {
+    view({ ...base, items: listItems, attemptsRemaining: 0 });
+    expect(screen.getByRole("button", { name: "▶ Üben" })).toBeTruthy();
   });
 });

@@ -315,6 +315,7 @@ export const de = {
       notNamed: "nicht genannt",
       didNotCount: "Das zählte nicht:",
       tryAgain: "Nochmal versuchen",
+      practice: "▶ Üben",
     },
     // Fachliche Fehler, die ein Kind in der Arcade erreichen (`useErrorMessage`). Deutsch wortgleich mit
     // `errorMessage` – das hält `arcadeSpielweg.test.tsx`.
