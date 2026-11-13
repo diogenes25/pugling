@@ -65,8 +65,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | Fotos echter Buchseiten brauchen ein stärkeres Vision-Modell als gemma4:e2b | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `ausformuliert` | P3 | — | .claude/scripts | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
-| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test | Aufräumen | `idee` | P3 | — | .claude/scripts | — |
 
 <details>
 <summary>Abgenommen (443)</summary>
@@ -862,7 +862,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-492](B-492-lader-test-in-ci.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-493](B-493-fallliste-antwortvergleich.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
-| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `idee` | `unverifiziert: true` |
+| [B-494](B-494-mutantenprobe-je-zusicherung.md) | `ausformuliert` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-495](B-495-profil-an-reihe-gebunden-fach-falsch-zirkulaere-meldung.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-496](B-496-reste-review-sprint-41.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-497](B-497-nachschau-reste-sprint-40.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung", Abschnitt „Verlauf" |

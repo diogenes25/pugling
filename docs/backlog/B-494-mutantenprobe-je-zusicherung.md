@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/werkzeug]
+tags: [typ/story, status/ausformuliert, bereich/werkzeug]
 aliases: [mutant-probe misst je Zusicherung, Vorschlag CP]
-status: idee
+status: ausformuliert
 prio: P3
 art: Aufräumen
 groesse: ""
@@ -25,6 +25,22 @@ Playwright-Specs mit eigener Meldung je `expect`; xUnit-Zusicherungen ohne Meldu
 
 **Entscheidung des Nutzers (2026-11-12):** später – kein Durchrutscher des Backlog-Laufs hätte sich damit gefangen.
 
+## Ist-Stand am Code (2026-11-13)
+
+- `mutant-probe.py` prüft `fails` als **Teilstring der ganzen Testausgabe** (`missing = [t for t in m.get("fails", []) if t
+  not in out]`), nicht als Testnamen. Eine Zusicherungsmeldung als `fails`-Eintrag wirkt also schon heute – *wenn* der
+  Runner sie nur beim Fehlschlag ausgibt. Playwright (`--reporter=line`) und Vitest drucken die Meldung eines `expect`
+  nur, wenn es fällt; dort trägt die Idee ohne Code-Änderung.
+- Grenze: xUnit-`Assert.True(x, warum)` druckt `warum` ebenfalls nur beim Fehlschlag, `Assert.Equal` ohne Meldung hat
+  keinen Text – dort bleibt nur der Testname. Und ein Teilstring, der zufällig auch in anderer Ausgabe steht (Logzeilen
+  des `WebServer`), träfe falsch.
+
+## Die echte Lücke
+
+Vermutlich nur Doku: der Docstring nennt `fails` „Testname-Teil". Zu klären beim Grillen, ob ein Hinweis „auch eine
+Zusicherungsmeldung, sofern der Runner sie nur beim Fehlschlag druckt" reicht – oder ob die Story damit `verworfen` ist.
+
 ## Verlauf
 
 - **2026-11-12** — angelegt nach der Entscheidung des Nutzers über die Retro-Vorschläge des Backlog-Laufs.
+- **2026-11-13** — ausformuliert (Tageslauf, Restzeit): am Code gefunden, dass `fails` schon jeden Teilstring der Ausgabe nimmt; die Lücke ist vermutlich nur der Docstring. Entscheidung „später" des Nutzers bleibt – nichts gebaut.
