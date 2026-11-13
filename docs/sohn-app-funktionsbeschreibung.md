@@ -152,7 +152,9 @@ Maskottchen.
 
 - **Feiern in drei Stufen** (klein / mittel / groß): Konfetti/Banner, Emoji, optional ein „Fighter"-
   Emoji, jeweils mit **Ton** und **Vibration**.
-- **Toasts**: kurze Einblendungen für Punktgewinn, Lösung, Kauf-Bestätigung.
+- **Blatt** (Üben): Rückmeldung nach jeder vom Server geprüften Antwort an fester Stelle – Punktgewinn bzw. Lösung,
+  bis „Weiter" (siehe 4.3).
+- **Toasts**: kurze Einblendungen, etwa für eine Kauf-Bestätigung oder die Meldung beim Bildwechsel.
 - **Combos**: aufeinanderfolgende richtige Antworten; ab einer Schwelle eigene Feier.
 - **Stimmungs-Maskottchen**: schläfrig / fröhlich / begeistert je nach Fortschritt.
 - **Barrierefreiheit-Schalter**: „Bewegung reduzieren" (dämpft Animationen) und **Ton an/aus** werden
@@ -293,19 +295,27 @@ zu Üben/Test. Wichtigster Screen. Entschieden in
 - **Tempo-Modus an/aus** (wird gemerkt).
 - **Runde beenden** über das ✕ im Kopf.
 
-**Feedback nach jeder Antwort:**
+**Rückmeldung nach der Antwort** ([B-526](backlog/B-526-lektionsbildschirm-festes-raster.md)):
 
-- Richtig: Punkt-Toast („+n 🪙 · Box x"), Combo-Zähler, ggf. Combo-/Tempo-Bonus, kleine Feier;
-  Anzeige der nächsten Fälligkeit der Karte.
-- Falsch: Lösung wird gezeigt („Lösung: …").
-- Nicht wertbar (nicht fällig / heute schon gewertet): still protokolliert, keine Punkte — das UI
-  darf hier keinen Punktgewinn vortäuschen.
+- **Nach jeder Antwort, die der Server prüft** (Auswahl, Buchstaben, Freitext): ein **Blatt** an fester Stelle am
+  unteren Rand, das bis **Weiter** stehen bleibt.
+  - Richtig (grün): ein Lobwort, die verdienten Münzen, ggf. Combo- und Tempo-Bonus, die nächste Fälligkeit der
+    Karte; das Maskottchen jubelt.
+  - Falsch (rot): die eigene Antwort durchgestrichen und die Lösung. Nennt der Server keine Lösung (ungeordnete
+    Liste), steht dort nur „Leider nicht.“
+- **Nach einer Selbsteinschätzung und nach einer Kennenlern-Karte:** kein Blatt – es geht direkt weiter; die
+  Münzen zeigt der Zähler im Kopf.
+- Nicht wertbar (nicht fällig / heute schon gewertet): das Blatt zeigt **keine** Münzen — das UI darf hier
+  keinen Punktgewinn vortäuschen.
+- Combos werden weiter als Feier eingeblendet.
 
 **Zustände & Übergänge:**
 
-- **Fertig:** „Runde fertig!" mit verdienten Münzen + Kartenzahl; Knöpfe „Weiter zum Test" und
-  „Zum Pfad".
-- **Nichts fällig:** „Nichts fällig 🎉" mit denselben Weiter-Knöpfen.
+- **Fertig:** jubelndes Maskottchen, „Runde fertig!“, die verdienten **Münzen** und die **Genauigkeit**. Die
+  Genauigkeit zählt nur Antworten, die der Server geprüft hat; gab es keine (nur Selbsteinschätzung), fehlt sie.
+  Eine Zeit wird bewusst nicht gezeigt. Eine reine Kennenlern-Runde nennt stattdessen die neu kennengelernten Wörter
+  und bietet „Jetzt abfragen“. Knöpfe: „Weiter zum Test“ und „Zum Pfad“.
+- **Nichts fällig:** „Nichts fällig 🎉“ mit denselben Weiter-Knöpfen.
 - **Laden / Fehler**.
 
 ### 4.4 Test (Tagestest / Klausur)

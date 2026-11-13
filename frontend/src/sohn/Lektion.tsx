@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, type Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
@@ -10,6 +10,7 @@ import { Passage } from "../components/Passage";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { CueBox } from "../components/CueBox";
 import { choicesClass } from "../lib/choices";
+import { arcadeDatum } from "../lib/datum";
 import type { PracticeCard } from "../lib/types";
 import type { Skin } from "../lib/skins";
 import type { Aufgabenform } from "./aufgabenform";
@@ -170,5 +171,68 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
         <button type="button" className="btn lime" disabled={gesperrt || !wert.trim()} onClick={abschicken}>{knopf}</button>
       </div>
     </>
+  );
+}
+
+/** Was das Blatt nach einer vom Server geprüften Antwort zeigt. */
+export interface Rueckmeldung {
+  richtig: boolean;
+  /** Die eigene Antwort – bei falsch durchgestrichen neben der Lösung. */
+  gegeben: string;
+  /** `null`, wenn der Server keine nennt: in einer Menge wäre sie willkürlich und verriete einen offenen Eintrag. */
+  loesung: string | null;
+  muenzen: number;
+  comboBonus: number;
+  tempoBonus: number;
+  /** Nächste Fälligkeit, wie der Server sie meldet (ISO-Tag); `null`, wo der Karteikasten nichts meldet. */
+  faelligAm: string | null;
+  /** Wählt das Lobwort; der Combo-Stand, damit es wechselt, ohne zu würfeln. */
+  lob: number;
+}
+
+const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
+
+/**
+ * Das Blatt (B-526, Entscheidungen 3 und 8): die Rückmeldung des Übens an **einer** Stelle, grün oder rot, bis
+ * „Weiter". Es ersetzt den Toast und die angehaltene Karte aus B-420, deren Regel es erbt: die Karte bleibt stehen,
+ * bis das Kind gelesen hat. Der Test zeigt es nie.
+ *
+ * Das Blatt ist bewusst **keine** Live-Region: eine Region, die zusammen mit ihrem Text entsteht, bleibt stumm
+ * (B-134). Die Ansage läuft über die Region des Bildschirms, die schon vorher dasteht.
+ *
+ * Verdiente Münzen stehen nur da, wenn es welche gab – eine nicht wertbare Karte (nicht fällig, heute schon
+ * gewertet) darf keinen Gewinn vortäuschen.
+ */
+export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
+  r: Rueckmeldung;
+  skin: Skin;
+  weiterRef?: Ref<HTMLButtonElement>;
+  onWeiter: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const boni = [
+    r.comboBonus > 0 ? t("lektion.comboPlus", { count: r.comboBonus }) : null,
+    r.tempoBonus > 0 ? t("lektion.speedPlus", { count: r.tempoBonus }) : null,
+  ].filter(Boolean).join(" · ");
+  return (
+    <div className={`lektion-blatt ${r.richtig ? "richtig" : "falsch"}`}>
+      <div className="row">
+        <div className="lektion-begleiter" aria-hidden="true"><Mascot skin={skin} mood={r.richtig ? "hyped" : "happy"} size={48} /></div>
+        <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : t("lektion.almost")}</b>
+        {r.richtig && r.muenzen > 0 && <span className="pill gold" style={{ marginLeft: "auto" }}>+{r.muenzen} 🪙</span>}
+      </div>
+      {r.richtig ? (
+        <>
+          {boni && <div className="sub">{boni}</div>}
+          {r.faelligAm && <div className="sub">{t("practice.nextDue", { date: arcadeDatum(r.faelligAm, i18n.language) })}</div>}
+        </>
+      ) : (
+        <>
+          <div className="sub">{t("practice.yourAnswerWas")} <s>{r.gegeben}</s></div>
+          <div className="rev">{r.loesung ? t("practice.solution", { expected: r.loesung }) : t("practice.wrong")}</div>
+        </>
+      )}
+      <button type="button" ref={weiterRef} className={`btn ${r.richtig ? "lime" : "red"}`} onClick={onWeiter}>{t("practice.next")}</button>
+    </div>
   );
 }

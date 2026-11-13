@@ -35,7 +35,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { SohnPractice } = await import("./SohnPractice");
+const { SohnPractice, NACH_BLATT_MS } = await import("./SohnPractice");
 
 /** Eine getippte Karte (`reveal: null`) ohne Auswahl und ohne Kästchen – also mit dem freien Textfeld. */
 function card(itemIndex: number, prompt: string): PracticeCard {
@@ -199,11 +199,23 @@ function taskRegion(): HTMLElement {
   return region;
 }
 
-/** B-439: die angehaltene Karte (B-420) – Zusicherungen auf ihren Inhalt, nicht auf irgendeinen Text der Seite. */
+/** B-439: das rote Blatt (B-420, B-526) – Zusicherungen auf seinen Inhalt, nicht auf irgendeinen Text der Seite. */
 function mistakeCard(): HTMLElement {
-  const held = document.querySelector<HTMLElement>(".card.mistake");
-  if (!held) throw new Error("keine angehaltene Karte");
+  const held = document.querySelector<HTMLElement>(".lektion-blatt.falsch");
+  if (!held) throw new Error("kein rotes Blatt");
   return held;
+}
+
+/** B-526: das grüne Blatt nach einer vom Server geprüften, richtigen Antwort. */
+function praiseSheet(): HTMLElement {
+  const sheet = document.querySelector<HTMLElement>(".lektion-blatt.richtig");
+  if (!sheet) throw new Error("kein grünes Blatt");
+  return sheet;
+}
+
+/** „Weiter" auf dem Blatt. */
+function weiter() {
+  fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
 }
 
 /** Die Toast-/Live-Region (das `div`), nicht die Ansage-Region der Aufgabe. */
@@ -255,6 +267,7 @@ describe("SohnPractice, Antwortfläche im Raster", () => {
     await act(async () => {});
     expect(review).toHaveBeenCalledTimes(1);
     expect(review.mock.calls[0][3]).toEqual({ itemIndex: 0, givenAnswer: "der Bahnhof" });
+    weiter();
 
     // Die nächste Karte trägt dieselben Optionen – keine davon darf noch markiert sein, und „Prüfen“ ist wieder gesperrt.
     expect(await screen.findByText("le pont")).toBeTruthy();
@@ -262,21 +275,6 @@ describe("SohnPractice, Antwortfläche im Raster", () => {
     expect((screen.getByRole("button", { name: de.sohn.practice.check }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  // Rot, wenn die Antwortfläche je Karte neu eingehängt wird: nach einer richtigen Antwort stünde der Fokus auf `body`,
-  // und am Handy klappte die Tastatur nach jeder Karte zu (Review B-526).
-  it("lässt den Fokus nach einer richtigen Antwort im Eingabefeld", async () => {
-    review.mockResolvedValueOnce(outcome(true, null));
-    renderPractice();
-    const feld = await screen.findByRole("textbox");
-    feld.focus();
-    fireEvent.change(feld, { target: { value: "one" } });
-    fireEvent.submit(feld.closest("form")!);
-    await act(async () => {});
-
-    expect(await screen.findByText("zwei")).toBeTruthy();
-    expect(screen.getByRole("textbox")).toBe(feld);
-    expect(document.activeElement).toBe(feld);
-  });
 });
 
 /** B-420: eine falsch getippte Antwort hält die Karte an, bis das Kind „Weiter" drückt. */
@@ -308,14 +306,76 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(document.activeElement).toBe(screen.getByRole("textbox"));
   });
 
-  // AK 2. Rot, wenn auch der Treffer anhält.
-  it("rückt nach einer richtigen Antwort sofort weiter", async () => {
+  // B-526, Entscheidung 3 (kehrt AK 2 von B-420 um). Rot, wenn ein Treffer wieder von selbst weiterspringt (dann steht
+  // „zwei" da) – die Rückmeldung säße dann wieder an zwei Stellen und die Münzen wären nach einer Sekunde weg.
+  it("hält auch nach einer richtigen Antwort mit dem Blatt an, bis Weiter gedrückt wird", async () => {
     review.mockResolvedValueOnce(outcome(true, "die Stadt"));
     renderPractice();
     await answerTyped("die Stadt");
 
+    expect(screen.getByText("eins")).toBeTruthy();
+    expect(screen.queryByText("zwei")).toBeNull();
+    expect(praiseSheet().textContent).toContain("+10 🪙");
+    // Die Ansage läuft über die Region, die schon dastand – das Blatt selbst ist keine (B-134).
+    expect(toastRegion().classList.contains("sr-only")).toBe(true);
+    expect(toastRegion().textContent).toBe("Richtig. +10 🪙");
+    const knopf = screen.getByRole("button", { name: de.sohn.practice.next });
+    expect(document.activeElement).toBe(knopf);
+
+    fireEvent.click(knopf);
     expect(await screen.findByText("zwei")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: de.sohn.practice.next })).toBeNull();
+    expect(document.querySelector(".lektion-blatt")).toBeNull();
+    // Zurück ins Antwortfeld der nächsten Karte – sonst müsste das Kind nach jeder Karte erst hineintippen.
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // Entscheidung 8. Rot, wenn der Tipp-Knopf unter dem Blatt weiter bedienbar ist – ein Tipp gehört vor die Antwort.
+  it("nimmt den Tipp-Knopf weg, solange das Blatt steht", async () => {
+    cards.mockImplementation(() => Promise.resolve([{ ...card(0, "eins"), hint: "beginnt mit o" }, card(1, "zwei")]));
+    review.mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    expect(await screen.findByRole("button", { name: de.sohn.practice.hint })).toBeTruthy();
+    await answerTyped("one");
+
+    expect(praiseSheet()).toBeTruthy();
+    expect(screen.queryByRole("button", { name: de.sohn.practice.hint })).toBeNull();
+  });
+
+  // Review B-526. Rot, wenn ein Doppeltipp auf „Weiter" die nächste Karte trifft: die Kennenlern-Karte wäre gebucht
+  // (ein zweites `review`), ohne dass das Kind sie gesehen hat. Nach der Ruhezeit nimmt derselbe Knopf wieder an –
+  // rot auch, wenn die Sperre nie endet.
+  it("lässt einen Doppeltipp auf Weiter nicht auf die nächste Karte durchschlagen", async () => {
+    cards.mockImplementation(() => Promise.resolve([
+      card(0, "eins"), { itemIndex: 1, prompt: "la ville", reveal: "die Stadt", displayOnly: true } as PracticeCard, card(2, "drei"),
+    ]));
+    review.mockResolvedValue(outcome(true, null));
+    renderPractice();
+    await answerTyped("one");
+    expect(review).toHaveBeenCalledTimes(1);
+
+    weiter();
+    // Derselbe Platz, derselbe Name: der zweite Tipp landet auf dem „Weiter" der Kennenlern-Karte.
+    weiter();
+    await act(async () => {});
+    expect(review).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("la ville")).toBeTruthy();
+
+    await act(async () => { await new Promise((r) => setTimeout(r, NACH_BLATT_MS + 30)); });
+    weiter();
+    await act(async () => {});
+    expect(review).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText("drei")).toBeTruthy();
+  });
+
+  // Rot, wenn das Blatt Münzen zeigt, die es nicht gab: eine nicht wertbare Karte (nicht fällig, heute schon gewertet)
+  // darf keinen Gewinn vortäuschen.
+  it("zeigt auf dem Blatt keine Münzen, wenn die Antwort richtig, aber nichts wert war", async () => {
+    review.mockResolvedValueOnce({ ...outcome(true, null), awarded: 0 });
+    renderPractice();
+    await answerTyped("die Stadt");
+
+    expect(praiseSheet().textContent).not.toContain("🪙");
+    expect(toastRegion().textContent).toBe("Richtig.");
   });
 
   // AK 3. Rot, wenn der Halt an einer gelieferten Lösung hängt statt an der falschen Antwort.
@@ -344,12 +404,14 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(document.activeElement).toBe(heading);
   });
 
-  // B-439. Rot, wenn nur der Halt das Rundenende fokussiert: auch ein Treffer auf der letzten Karte nimmt das Feld weg.
+  // B-439. Rot, wenn „Weiter" auf dem Blatt der letzten Karte den Fokus nicht an die Überschrift des Rundenendes gibt –
+  // das Blatt verschwindet samt seinem fokussierten Knopf.
   it("fokussiert das Rundenende auch nach einem Treffer auf der letzten Karte", async () => {
     cards.mockImplementation(() => Promise.resolve([card(0, "eins")]));
     review.mockResolvedValueOnce(outcome(true, "one"));
     renderPractice();
     await answerTyped("one");
+    weiter();
 
     const heading = await screen.findByText(de.sohn.practice.roundDone);
     expect(document.activeElement).toBe(heading);
@@ -483,7 +545,9 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
 
     expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
     expect(screen.queryByRole("button", { name: de.sohn.practice.quizNow })).toBeNull();
-    expect(screen.getByText("1 Karte")).toBeTruthy();
+    // Die Münz-Kachel steht (der heutige Bildschirm), aber keine Genauigkeit: nichts wurde vom Server geprüft.
+    expect(screen.getByText("+0")).toBeTruthy();
+    expect(screen.queryByLabelText(/Genauigkeit/)).toBeNull();
   });
 
   // Review-Fund: eine Runde mischt neue und schon bekannte Karten – was die abgefragten verdient haben, bleibt stehen.
@@ -493,9 +557,46 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     renderPractice();
     fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
     await answerTyped("die Straße");
+    weiter();
 
     expect(await screen.findByText("1 neues Wort kennengelernt")).toBeTruthy();
     expect(screen.getByText("+10")).toBeTruthy();
-    expect(screen.getByText("1 Karte")).toBeTruthy();
+    // Die Kennenlern-Karte zählt nicht in die Genauigkeit – eine geprüfte Antwort, eine richtige.
+    expect(screen.getByLabelText("Genauigkeit 100 %")).toBeTruthy();
+  });
+
+  // B-526, Entscheidung 9. Rot, wenn die Genauigkeit falsche Antworten nicht zählt (dann stünde 100 %) oder ein selbst
+  // vergebenes „Gewusst!" mitzählt (dann stünden 67 %): geprüft sind hier zwei getippte Antworten, eine davon richtig.
+  it("rechnet die Genauigkeit nur aus Antworten, die der Server geprüft hat", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([
+      card(0, "la rue"), card(1, "le pont"), { itemIndex: 2, prompt: "la gare", reveal: "der Bahnhof" } as PracticeCard,
+    ]));
+    review.mockResolvedValueOnce(outcome(true, null)).mockResolvedValueOnce(outcome(false, "die Brücke"))
+      .mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    await answerTyped("die Straße");
+    weiter();
+    await answerTyped("der Fluss");
+    weiter();
+    // Die Ruhezeit nach dem Blatt abwarten – sonst schluckte sie das „Aufdecken" (siehe den Doppeltipp-Fall).
+    await act(async () => { await new Promise((r) => setTimeout(r, NACH_BLATT_MS + 30)); });
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.knewIt }));
+
+    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+    expect(screen.getByLabelText("Genauigkeit 50 %")).toBeTruthy();
+  });
+
+  // Rot, wenn eine Runde nur aus Selbsteinschätzung eine Genauigkeit zeigte – sie wäre selbst vergeben.
+  it("zeigt nach einer Runde nur aus Selbsteinschätzung keine Genauigkeit", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([{ itemIndex: 0, prompt: "la gare", reveal: "der Bahnhof" } as PracticeCard]));
+    review.mockResolvedValueOnce(outcome(true, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.knewIt }));
+
+    expect(await screen.findByText(de.sohn.practice.roundDone)).toBeTruthy();
+    expect(screen.getByText("+10")).toBeTruthy();
+    expect(screen.queryByLabelText(/Genauigkeit/)).toBeNull();
   });
 });

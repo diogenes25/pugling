@@ -95,17 +95,20 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await expect(page.getByText(WORDS[0][0], { exact: true })).toBeVisible();
   await expect(page.getByText(`→ ${WORDS[0][1]}`)).toHaveCount(0);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
-  // B-421 (NP-25): ohne Artikel getippt – das Wort zählt, die Karte rückt weiter statt anzuhalten.
+  // B-421 (NP-25): ohne Artikel getippt – das Wort zählt. Seit B-526 zeigt das grüne Blatt den Treffer, bis „Weiter“.
   await answer.fill("Stadt");
   await answer.press("Enter");
+  await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Weiter →" })).toBeFocused();
+  await page.keyboard.press("Enter");
 
   // ---------- B-420: ein Fehler hält die Karte an ----------
   await expect(counter).toHaveText("Karte 2 / 3");
   await answer.fill("die Strasse");
   await answer.press("Enter");
-  // B-439: in der angehaltenen Karte, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only),
-  // die Playwright ebenfalls als sichtbar zählt.
-  const held = page.locator(".card.mistake");
+  // B-439: im roten Blatt, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only), die Playwright
+  // ebenfalls als sichtbar zählt.
+  const held = page.locator(".lektion-blatt.falsch");
   await expect(held.getByText("Lösung: die Straße", { exact: true })).toBeVisible();
   await expect(held.locator("s", { hasText: "die Strasse" })).toBeVisible();
   // Die nächste Karte kommt NICHT von selbst – auch nach der Zeit, die der alte Toast stand (1,6 s).
@@ -119,5 +122,9 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await expect(answer).toBeFocused();
   await answer.fill(WORDS[2][1]);
   await answer.press("Enter");
+  await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
+  await page.keyboard.press("Enter");
   await expect(page.getByText("RUNDE FERTIG!")).toBeVisible();
+  // B-526: zwei von drei getippten Antworten stimmten – die Genauigkeit zählt, was der Server geprüft hat.
+  await expect(page.getByLabel("Genauigkeit 67 %")).toBeVisible();
 });

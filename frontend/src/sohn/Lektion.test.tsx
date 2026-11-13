@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import "../lib/i18n";
 import { DEFAULT_SKIN } from "../lib/skins";
 import { aufgabenform } from "./aufgabenform";
-import { Antwortflaeche, Aufgabe, LektionsRahmen, type LektionsKarte } from "./Lektion";
+import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type LektionsKarte, type Rueckmeldung } from "./Lektion";
 
 /*
  * B-526 – der gemeinsame Aufbau von Üben und Test. Je Fall steht dabei, welche Änderung ihn rot macht.
@@ -167,5 +167,51 @@ describe("Rahmen", () => {
     expect(schliessen).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Frage 2 / 4")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Test · Schreibe die Antwort" })).toBeTruthy();
+  });
+});
+
+describe("Blatt", () => {
+  const r = (over: Partial<Rueckmeldung>): Rueckmeldung => ({
+    richtig: true, gegeben: "der Bahnhof", loesung: null, muenzen: 2, comboBonus: 0, tempoBonus: 0, faelligAm: null, lob: 0, ...over,
+  });
+  const zeige = (rueck: Rueckmeldung, onWeiter = () => {}) =>
+    render(<RueckmeldungsBlatt r={rueck} skin={DEFAULT_SKIN} onWeiter={onWeiter} />).container.querySelector(".lektion-blatt")!;
+
+  it("zeigt bei richtig Münzen, Boni und die nächste Fälligkeit", () => {
+    // Rot, wenn ein Bonus oder die Fälligkeit im Blatt fehlte – beides stand vorher im Toast bzw. unter der Karte.
+    const blatt = zeige(r({ comboBonus: 1, tempoBonus: 3, faelligAm: "2026-11-16" }));
+    expect(blatt.className).toContain("richtig");
+    expect(blatt.textContent).toContain("+2 🪙");
+    expect(blatt.textContent).toContain("Combo +1 🪙 · Tempo +3 🪙");
+    expect(blatt.textContent).toContain("Nächste Fälligkeit: 16.11.2026");
+  });
+
+  it("zeigt bei falsch die eigene Antwort durchgestrichen und die Lösung, aber keine Münzen", () => {
+    // Rot, wenn die eigene Antwort oder die Lösung fehlte – das ist die Lehre der Karte (B-420).
+    // `muenzen: 2` mit Absicht: nur so trägt die Zusicherung „keine Münzen“ etwas – sie fällt, wenn ein falsches Blatt
+    // einen Betrag zeigte, den der Server (aus welchem Grund auch immer) mitlieferte.
+    const blatt = zeige(r({ richtig: false, gegeben: "die Strasse", loesung: "die Straße", muenzen: 2 }));
+    expect(blatt.className).toContain("falsch");
+    expect(blatt.querySelector("s")!.textContent).toBe("die Strasse");
+    expect(blatt.textContent).toContain("Lösung: die Straße");
+    expect(blatt.textContent).not.toContain("🪙");
+  });
+
+  it("sagt ohne Lösung vom Server nur ab", () => {
+    // Rot, wenn das Blatt eine Lösung erfände: in einer Menge wäre sie willkürlich und verriete einen offenen Eintrag.
+    const blatt = zeige(r({ richtig: false, gegeben: "Hamburg", loesung: null, muenzen: 0 }));
+    expect(blatt.textContent).toContain("Leider nicht.");
+    expect(blatt.textContent).not.toContain("Lösung");
+  });
+
+  it("ist selbst keine Live-Region und führt mit Weiter weiter", () => {
+    // Rot, wenn das Blatt `role="status"` trüge: es entsteht zusammen mit seinem Text und bliebe stumm (B-134) –
+    // angesagt wird über die Region des Bildschirms.
+    const weiter = vi.fn();
+    const blatt = zeige(r({}), weiter);
+    expect(blatt.getAttribute("role")).toBeNull();
+    expect(blatt.querySelector("[role=status], [aria-live]")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Weiter →" }));
+    expect(weiter).toHaveBeenCalledTimes(1);
   });
 });

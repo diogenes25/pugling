@@ -306,7 +306,7 @@ button.cloze-gap.asked { border-bottom-color: var(--gold); }
 .skin .face { width: 60px; height: 60px; border-radius: 16px; margin: 0 auto 8px; display: grid; place-items: center; font-size: 30px; border: 2px solid rgba(255,255,255,.2); }
 .skin .nm { font-family: var(--font-display); font-size: 14px; }
 
-/* Toast (Punkte-Feedback) */
+/* Toast – kurze Meldung über der Navigation (im Üben nur noch für den Bildwechsel, B-526) */
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 60; background: #0c0e2c; border: 1.5px solid var(--gold); color: var(--gold); font-family: var(--font-display); padding: 10px 16px; border-radius: 999px; box-shadow: 0 10px 24px -8px #000; animation: pop .2s ease; }
 @keyframes pop { from { opacity: 0; transform: translateX(-50%) scale(.9); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 
@@ -615,3 +615,16 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .lektion-fuss { margin-top: auto; padding-top: 6px; }
 .lektion-option.gewaehlt { color: #04122a; background: linear-gradient(180deg, var(--cyan), var(--cyan-2)); box-shadow: 0 6px 0 0 #1550b8; }
 .lektion-feld { width: 100%; background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 16px; }
+/* Das Blatt: die Rückmeldung des Übens an einer Stelle, am unteren Rand der Antwortzone (B-526). */
+.lektion-blatt {
+  margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px;
+  border: 2px solid var(--stroke); animation: lektion-blatt-hoch .18s ease-out;
+}
+@keyframes lektion-blatt-hoch { from { transform: translateY(24px); opacity: 0; } }
+.lektion-blatt.richtig { background: #123a26; border-color: var(--lime); }
+.lektion-blatt.falsch { background: #40152a; border-color: var(--red); }
+.lektion-blatt-titel { font-family: var(--font-display); font-size: 20px; }
+.lektion-blatt.richtig .lektion-blatt-titel { color: var(--lime); }
+.lektion-blatt.falsch .lektion-blatt-titel { color: #ff96aa; }
+.lektion-blatt .rev { font-size: 18px; font-weight: 800; }
+.lektion-blatt .sub { color: var(--ink); opacity: .85; }

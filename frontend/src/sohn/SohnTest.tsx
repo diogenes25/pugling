@@ -250,7 +250,8 @@ export function SohnTest() {
 }
 
 /**
- * Die Selbsteinschätzung einer Klausurfrage: erst denken, dann aufdecken, dann ehrlich urteilen.
+ * Die Selbsteinschätzung – in der Klausur und, seit B-526, auch im Üben: erst denken, dann aufdecken, dann ehrlich
+ * urteilen.
  *
  * **Die Reihenfolge IST die Prüfung.** Stünde die Lösung sofort neben „Gewusst / Nicht gewusst", läse das Kind
  * sie und trüge sich „Gewusst" ein – der Test wäre ein Formular, keine Prüfung. Der Zustand `revealed` ist
@@ -260,7 +261,7 @@ export function SohnTest() {
  * **Exportiert, damit die Reihenfolge prüfbar ist** (Muster `TestResult`): eine reine Props-Komponente, kein
  * Laden, kein `fetch` – der Fehler war unsichtbar, weil ihn niemand ohne den Server ansehen konnte.
  */
-export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesungInDerKarte = false, onReveal, onJudge }: {
+export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesungInDerKarte = false, texte, onReveal, onJudge }: {
   // Wie `alternatives` optional: ein nullable Feld darf im Vertrag auch fehlen (siehe `?? null` in `start`).
   reveal?: string | null;
   alternatives?: readonly string[] | null;
@@ -268,13 +269,16 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesung
   busy: boolean;
   /** Der Aufrufer zeigt die Lösung selbst in der Karte darüber (B-526) – hier bleiben nur die Urteils-Knöpfe. */
   loesungInDerKarte?: boolean;
+  /** Beschriftungen des Übens („Nochmal" / „Gewusst!"); ohne Angabe die der Klausur. */
+  texte?: { aufdecken: string; nein: string; ja: string };
   onReveal: () => void;
   onJudge: (wasKnown: boolean) => void;
 }) {
   const { t } = useTranslation();
   if (!revealed) return (
     <div style={{ marginTop: 10 }}>
-      <button type="button" className="btn ghost small" onClick={onReveal}>{t("test.reveal")}</button>
+      {/* Der Hauptknopf der Karte – derselbe im Üben und im Test (B-526). */}
+      <button type="button" className="btn" onClick={onReveal}>{texte?.aufdecken ?? t("test.reveal")}</button>
     </div>
   );
   return (
@@ -286,8 +290,8 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesung
         </>
       )}
       <div className="judge" style={{ marginTop: 8 }}>
-        <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>{t("test.notKnown")}</button>
-        <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>{t("test.known")}</button>
+        <button type="button" className="btn red small" disabled={busy} onClick={() => onJudge(false)}>{texte?.nein ?? t("test.notKnown")}</button>
+        <button type="button" className="btn lime small" disabled={busy} onClick={() => onJudge(true)}>{texte?.ja ?? t("test.known")}</button>
       </div>
     </div>
   );

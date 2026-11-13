@@ -9,10 +9,9 @@ import { introduceAndQuiz, sohnLogin, pfadStart } from "./helpers";
  * Mehrwort-Antwort kommt als Buchstabenkästchen (AK 3).
  *
  * Der Fokus muss nach JEDEM Übergang auf der ersten Kachel der neuen Karte stehen (Review Lauf D, Fund 6), sonst
- * landen getippte Buchstaben auf `body`. Die drei Übergänge, die die App erzeugt, stehen hier in dieser Reihenfolge:
- * 1. Kästchen → Kacheln (das `<input>` verschwindet, der Fokus fällt auf `body`),
- * 2. Kacheln per Enter → Kacheln (der Fokus stand im Block),
- * 3. Kacheln per Klick auf „Prüfen“ → Kacheln (der gesperrte Knopf gibt den Fokus ab, gemessen in Chromium).
+ * landen getippte Buchstaben auf `body`. Seit B-526 liegt zwischen zwei Karten das Blatt: nach der Antwort steht der
+ * Fokus auf „Weiter“ (Enter trägt weiter), danach auf der ersten Kachel. Drei Wege führen zum Blatt:
+ * 1. aus den Kästchen per Enter, 2. aus den Kacheln per Enter, 3. aus den Kacheln per Klick auf „Prüfen“.
  * Die Tastatur-Karten werden darum OHNE erneutes Fokussieren getippt.
  *
  * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar, und `full-flow` belegt Kind #1.
@@ -71,6 +70,10 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
       ausloesen(),
     ]);
     expect((await res.json()).wasCorrect, "der Server wertet die Antwort als richtig").toBe(true);
+    // B-526: das grüne Blatt hält die Karte an; der Fokus steht auf „Weiter“, Enter trägt zur nächsten.
+    await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Weiter →" })).toBeFocused();
+    await page.keyboard.press("Enter");
   }
 
   for (const [i, [prompt, answer, bedienung]] of CARDS.entries()) {

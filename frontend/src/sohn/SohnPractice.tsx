@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { arcadeDatum } from "../lib/datum";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../lib/api";
@@ -10,14 +9,22 @@ import { useSohn } from "./SohnApp";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform } from "./aufgabenform";
-import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
+import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
+import { SelfAssessAnswer } from "./SohnTest";
+import { Mascot } from "../components/Mascot";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
+
+/** So lange nimmt die nächste Karte nach „Weiter" auf dem Blatt keinen Knopfdruck an (Doppeltipp, gehaltenes Enter). */
+export const NACH_BLATT_MS = 350;
 
 // Kleine Anerkennung bei jedem Treffer – Variation sorgt für Abwechslung (Daumen, Stern, Feuer, Muskel).
 const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
 
-/** `wrong` (B-420): eine falsch getippte Antwort hält die Karte an, bis das Kind die Lösung gelesen hat und weiterdrückt. */
-type Phase = "loading" | "front" | "back" | "wrong" | "done" | "empty" | "error";
+/**
+ * `blatt` (B-420, B-526): nach einer vom Server geprüften Antwort bleibt die Karte stehen und zeigt das Blatt, bis das
+ * Kind „Weiter" drückt – bei falsch, um die Lösung zu lesen, bei richtig, weil die Rückmeldung an einer Stelle sitzt.
+ */
+type Phase = "loading" | "front" | "back" | "blatt" | "done" | "empty" | "error";
 
 /**
  * Wie eine Review-Antwort dargestellt wird – als reine Regel statt inline in `judge()`, damit sie ohne
@@ -49,7 +56,7 @@ export function SohnPractice() {
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
 
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -59,9 +66,11 @@ export function SohnPractice() {
   const [combo, setCombo] = useState(0);
   const [earned, setEarned] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
-  const [lastOutcome, setLastOutcome] = useState<ReviewOutcome | null>(null);
-  // B-420: was auf der angehaltenen Karte steht – die eigene Antwort und die Lösung (null in einer Menge).
-  const [mistake, setMistake] = useState<{ given: string; expected: string | null } | null>(null);
+  // Was das Blatt zeigt (B-526); `null`, solange keine geprüfte Antwort ansteht.
+  const [blatt, setBlatt] = useState<Rueckmeldung | null>(null);
+  // Genauigkeit des Rundenendes: nur Antworten, die der Server geprüft hat – ein selbst vergebenes „Gewusst" ist
+  // keine Genauigkeit (Entscheidung 9).
+  const [geprueft, setGeprueft] = useState({ richtig: 0, gesamt: 0 });
   const continueRef = useRef<HTMLButtonElement>(null);
   // B-419: „Jetzt abfragen" startet eine neue Runde derselben Position – eine neue Sitzung, darum ein neuer Schlüssel
   // für den Start und ein neuer Lauf des Heartbeat-Effekts, der die alte Sitzung schließt.
@@ -139,9 +148,9 @@ export function SohnPractice() {
     };
   }, [planId, positionId, round]);
 
-  // B-420: auf der angehaltenen Karte gehört der Fokus dem „Weiter" – so trägt Enter das Kind weiter, und die Ansage der
+  // B-420: solange das Blatt steht, gehört der Fokus dem „Weiter" – so trägt Enter das Kind weiter, und die Ansage der
   // Lösung (Live-Region) wird nicht von einem Feld übertönt, das nichts mehr annimmt.
-  useEffect(() => { if (phase === "wrong") continueRef.current?.focus(); }, [phase]);
+  useEffect(() => { if (phase === "blatt") continueRef.current?.focus(); }, [phase]);
   // Und danach zurück in die Antwort der nächsten Karte: vor dem Halt blieb das Feld von Karte zu Karte stehen, jetzt
   // ersetzt der Knopf es, und ohne diesen Schritt fiele der Fokus auf `body` (Review-Fund).
   const answerRef = useRef<HTMLDivElement>(null);
@@ -152,15 +161,14 @@ export function SohnPractice() {
   // B-443: „Jetzt abfragen" nimmt sich selbst aus dem DOM (Rundenende → Laden → Karte) – der Fokus ginge auf `body`.
   // Nur nach dieser Taste, nicht beim ersten Laden der Seite: dort soll keine Tastatur ungefragt aufspringen.
   const focusAfterLoad = useRef(false);
-  // Die erste Taste einer Karte ohne Eingabefeld (Aufdecken, Kennenlernen-„Weiter"): welche Stufe kommt, entscheidet der
-  // Server – auch sie muss den Fokus bekommen können (Review-Fund).
-  const cardActionRef = useRef<HTMLButtonElement>(null);
   const landingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const toCard = phase === "front"
-      && (prevPhase.current === "wrong" || (prevPhase.current === "loading" && focusAfterLoad.current));
+      && (prevPhase.current === "blatt" || (prevPhase.current === "loading" && focusAfterLoad.current));
     if (toCard)
-      (answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])") ?? cardActionRef.current)?.focus();
+      // Das erste Bedienbare der Antwortzone – Feld, erste Option oder, bei einer Karte ohne Eingabe, „Aufdecken" bzw.
+      // „Weiter": welche Stufe kommt, entscheidet der Server.
+      answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
     // Endet die neue Runde leer oder im Fehler, verschwindet „Jetzt abfragen" ebenso – der Fokus geht an die Überschrift
     // bzw. die Meldung (B-515). Jedes Ende des Ladens verbraucht die Absicht, nicht nur der Weg zur Karte.
     if (prevPhase.current === "loading" && focusAfterLoad.current && (phase === "empty" || phase === "error"))
@@ -179,7 +187,7 @@ export function SohnPractice() {
     setIdx(0);
     setEarned(0);
     setCombo(0);
-    setLastOutcome(null);
+    setGeprueft({ richtig: 0, gesamt: 0 });
     setRound((r) => r + 1);
   }
 
@@ -198,15 +206,15 @@ export function SohnPractice() {
     // gehört das Weiterschalten dem laufenden Aufruf, sonst überspränge ein doppeltes Enter eine Karte (B-284).
     // Ausnahme `plan_inactive` (B-330): dann zählt keine Karte mehr, und die Runde endet mit dem Satz der Arcade.
     let planStopped = false;
-    // B-420: eine falsch GETIPPTE Antwort hält an. Die Selbsteinschätzung nicht – dort stand die Lösung schon auf der
-    // Rückseite, bevor das Kind „Nochmal" drückte.
+    // B-420/B-526: eine vom Server GEPRÜFTE Antwort hält an und zeigt das Blatt. Die Selbsteinschätzung nicht – dort stand
+    // die Lösung schon auf der Rückseite, bevor das Kind urteilte, und das Blatt wiederholte nur seinen eigenen Tipp.
     let halted = false;
     const ran = await action.run(async () => {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
-        setLastOutcome(outcome ?? null);
         setCombo(outcome?.combo ?? 0);
         const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
+        const getippt = payload.givenAnswer !== undefined;
         if (feedback.kind === "correct") {
           setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
           if (feedback.comboBonus > 0) {
@@ -215,25 +223,33 @@ export function SohnPractice() {
           } else {
             celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
           }
-          if (feedback.awarded > 0) {
-            setToast(`+${feedback.awarded} 🪙${feedback.box ? ` · ${t("practice.box", { box: feedback.box })}` : ""}`);
-            setTimeout(() => setToast(null), 1100);
-          }
           refreshWallet();
-        } else if (feedback.kind === "wrong") {
+          if (getippt) {
+            halted = true;
+            setGeprueft((g) => ({ richtig: g.richtig + 1, gesamt: g.gesamt + 1 }));
+            setBlatt({
+              richtig: true, gegeben: payload.givenAnswer!, loesung: null, muenzen: feedback.awarded,
+              comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
+              faelligAm: outcome?.dueOn ?? null,
+            });
+            // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
+            setToast(feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
+            setPhase("blatt");
+          }
+        } else if (feedback.kind === "wrong" && getippt) {
           // Ohne getroffenen Eintrag gibt es keine Lösung zu nennen: bei einer Menge (ungeordnete Liste) wäre
           // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
-          // gefragt wird. Der Server liefert dann `null`, und hier bleibt es bei der schlichten Absage.
+          // gefragt wird. Der Server liefert dann `null`, und es bleibt bei der schlichten Absage.
+          halted = true;
+          setGeprueft((g) => ({ ...g, gesamt: g.gesamt + 1 }));
+          setBlatt({
+            richtig: false, gegeben: payload.givenAnswer!, loesung: feedback.expected, muenzen: 0, comboBonus: 0,
+            tempoBonus: 0, lob: 0, faelligAm: null,
+          });
           setToast(feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong"));
-          if (payload.givenAnswer !== undefined) {
-            halted = true;
-            setMistake({ given: payload.givenAnswer, expected: feedback.expected });
-            setPhase("wrong");
-          } else {
-            setTimeout(() => setToast(null), 1600);
-          }
+          setPhase("blatt");
         }
-        // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Toast.
+        // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Blatt.
       } catch (e) {
         // Sonst ist die Bewertung idempotent genug, und die Runde läuft weiter.
         if (e instanceof ApiError && e.code === "plan_inactive") {
@@ -245,10 +261,20 @@ export function SohnPractice() {
     if (ran && !planStopped && !halted) next();
   }
 
+  /*
+   * Nach dem Blatt steht der erste Knopf der nächsten Karte dort, wo eben „Weiter" stand. Ein Doppeltipp (oder ein
+   * gehaltenes Enter) träfe ihn: eine Kennenlern-Karte wäre gebucht, ohne gesehen zu sein, eine Selbsteinschätzung
+   * aufgedeckt, bevor die Frage gelesen ist (Review B-526). Für einen Augenblick nehmen diese beiden Knöpfe darum
+   * nichts an. Getippte Karten brauchen das nicht – ihr Hauptknopf ist gesperrt, solange nichts eingegeben ist.
+   */
+  const ruheBis = useRef(0);
+  const zuFrueh = () => performance.now() < ruheBis.current;
+
   function next() {
+    if (phase === "blatt") ruheBis.current = performance.now() + NACH_BLATT_MS;
     setTypedAnswer("");
     setHintShown(false);
-    setMistake(null);
+    setBlatt(null);
     setToast(null);
     if (idx + 1 >= cards.length) {
       if (planId) api.overview(planId).then((o) => setStreak(o.currentStreak)).catch(() => {});
@@ -265,7 +291,7 @@ export function SohnPractice() {
    * und die nach einem Fehler fortgesetzte; eine Region in der Karte entstünde dort zusammen mit ihrem Text und bliebe
    * stumm.
    */
-  const asked = phase === "front" || phase === "back" || phase === "wrong" ? cards[idx] : null;
+  const asked = phase === "front" || phase === "back" || phase === "blatt" ? cards[idx] : null;
   return (
     <>
       <TaskAnnouncer text={asked?.prompt} gapIndex={asked?.gapIndex} />
@@ -303,6 +329,7 @@ export function SohnPractice() {
   if (phase === "done") return (
     <div className="sohn-body">
       <div className="victory">
+        <div aria-hidden="true"><Mascot skin={skin} mood="hyped" size={96} /></div>
         <div className="vtitle win" role="heading" aria-level={1} ref={doneRef} tabIndex={-1}>{t("practice.roundDone")}</div>
         {introduced > 0 && <p className="sub" style={{ textAlign: "center" }}>{t("practice.introduced", { count: introduced })}</p>}
         {/* Eine Runde kann neue und schon bekannte Karten mischen (die Einführung gilt je Karte): was die
@@ -310,7 +337,13 @@ export function SohnPractice() {
         {cards.length > introduced && (
           <div className="reward">
             <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
-            <div className="card">🃏<span>{t("practice.cards", { count: cards.length - introduced })}</span></div>
+            {/* Genauigkeit nur aus Antworten, die der Server geprüft hat; gab es keine, fehlt die Kachel. Keine Zeit:
+                eine Stoppuhr am Ende lädt zum Hetzen ein (Entscheidung 9). */}
+            {geprueft.gesamt > 0 && (
+              <div className="card" role="img" aria-label={t("practice.accuracy", { pct: Math.round((geprueft.richtig / geprueft.gesamt) * 100) })}>
+                <span aria-hidden="true">🎯</span><span aria-hidden="true">{Math.round((geprueft.richtig / geprueft.gesamt) * 100)} %</span>
+              </div>
+            )}
           </div>
         )}
         {introduced > 0 && <button type="button" className="btn lime" onClick={startNextRound} style={{ marginTop: 10 }}>{t("practice.quizNow")}</button>}
@@ -386,15 +419,17 @@ export function SohnPractice() {
             key={card.imageUrl}
             url={card.imageUrl}
             alt={card.imageAlt ?? ""}
-            // Auf der angehaltenen Karte liefe die Meldung eines 409 in die stumme Region (sr-only) – dort kein Wechsel.
-            busy={action.busy || phase === "wrong"}
+            // Solange das Blatt steht, liefe die Meldung eines 409 in die stumme Region (sr-only) – dort kein Wechsel.
+            busy={action.busy || phase === "blatt"}
             onReshuffle={reshuffleImage}
           />
         )}
+        /* Der Tipp gehört VOR die Antwort (Entscheidung 8): unter dem Blatt gibt es den Knopf nicht mehr – ein schon
+           aufgedeckter Tipp bleibt als Text stehen. */
         hinweis={card.hint && typed && (
           hintShown
             ? <div className="sub">💡 {card.hint}</div>
-            : <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
+            : phase !== "blatt" && <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>
         )}
         /* ShowBoth (B-96): eine freie Anzeigestufe zeigt beide Seiten sofort – der Server meldet das über
            `displayOnly`, anders als die Selbsteinschätzung, die erst nach „Aufdecken" auflöst. */
@@ -407,13 +442,9 @@ export function SohnPractice() {
       />
 
       <div className="lektion-antwort" ref={answerRef}>
-        {phase === "wrong" && mistake ? (
-          // B-420: die Karte bleibt stehen – Frage oben, darunter die eigene Antwort und die Lösung, bis „Weiter".
-          <div className="card mistake">
-            <div className="sub">{t("practice.yourAnswerWas")} <s>{mistake.given}</s></div>
-            <div className="rev">{mistake.expected ? t("practice.solution", { expected: mistake.expected }) : t("practice.wrong")}</div>
-            <button type="button" ref={continueRef} className="btn lime" style={{ marginTop: 10 }} onClick={next}>{t("practice.next")}</button>
-          </div>
+        {phase === "blatt" && blatt ? (
+          // B-420/B-526: die Karte bleibt stehen – Frage oben, darunter das Blatt mit der Rückmeldung, bis „Weiter".
+          <RueckmeldungsBlatt r={blatt} skin={skin} weiterRef={continueRef} onWeiter={next} />
         ) : typed ? (
           // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
           <Antwortflaeche
@@ -425,25 +456,23 @@ export function SohnPractice() {
           <div className="lektion-fuss">
             {card.displayOnly ? (
               // Kennenlernen: kein Urteil zu fällen, also kein „Gewusst?" – nur weiter.
-              <button type="button" ref={cardActionRef} className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
-            ) : phase === "front" ? (
-              <button type="button" ref={cardActionRef} className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
+              <button type="button" className="btn lime" disabled={action.busy} onClick={() => { if (!zuFrueh()) judge(card, {}); }}>{t("practice.next")}</button>
             ) : (
-              <div className="judge">
-                {/* B-49: ohne `disabled` konnte ein Doppelklick zwei `review` auf denselben `itemIndex` auslösen. */}
-                <button type="button" className="btn red small" disabled={action.busy} onClick={() => judge(card, { wasKnown: false })}>{t("practice.again")}</button>
-                <button type="button" className="btn lime small" disabled={action.busy} onClick={() => judge(card, { wasKnown: true })}>{t("practice.knewIt")}</button>
-              </div>
+              // Dieselbe Selbsteinschätzung wie im Test: erst aufdecken, dann urteilen. Die Lösung steht in der Karte
+              // darüber. B-49: die Urteils-Knöpfe sind während einer Bewertung gesperrt.
+              <SelfAssessAnswer
+                reveal={card.reveal} alternatives={card.revealAlternatives} revealed={phase === "back"} loesungInDerKarte
+                busy={action.busy} texte={{ aufdecken: t("practice.flip"), nein: t("practice.again"), ja: t("practice.knewIt") }}
+                onReveal={() => { if (!zuFrueh()) setPhase("back"); }} onJudge={(wasKnown) => judge(card, { wasKnown })}
+              />
             )}
           </div>
         )}
       </div>
 
-      {/* Auf der angehaltenen Karte (B-420) steht die Lösung schon sichtbar in der Karte – die Region sagt sie nur an. */}
-      <div className={`live-region${toast ? (phase === "wrong" ? " sr-only" : " toast") : ""}`} role="status" aria-live="polite">{toast}</div>
-      {lastOutcome?.dueOn && phase === "front" && (
-        <p className="sub" style={{ textAlign: "center" }}>{t("practice.nextDue", { date: arcadeDatum(lastOutcome.dueOn, i18n.language) })}</p>
-      )}
+      {/* Solange das Blatt steht, sagt die Region nur an, was dort schon zu lesen ist; sichtbar wird sie allein für
+          die Meldung des Bildwechsels. Sie steht immer da – eine Region, die erst mit ihrem Text entsteht, bleibt stumm. */}
+      <div className={`live-region${toast ? (phase === "blatt" ? " sr-only" : " toast") : ""}`} role="status" aria-live="polite">{toast}</div>
     </LektionsRahmen>
   );
   }

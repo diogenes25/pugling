@@ -87,6 +87,29 @@ describe("SohnTest, Stufe je Frage (B-476)", () => {
     expect(screen.queryByRole("button", { name: /Tempo/ })).toBeNull();
   });
 
+  // Review B-526. Rot, wenn die Antwortfläche je Frage neu eingehängt wird (ein `key` von außen): das Feld wäre ein neuer
+  // Knoten, der Fokus fiele auf `body`, und am Handy klappte die Tastatur nach jeder Frage zu. Im Test gibt es kein
+  // Blatt dazwischen – hier muss derselbe Knoten überleben.
+  it("lässt den Fokus beim Wechsel der Frage im Eingabefeld und zeigt kein Blatt", async () => {
+    await setLanguage("de");
+    const frei = { itemIndex: 0, prompt: "the horse", stage: 4, reveal: null };
+    answerTest.mockResolvedValueOnce({ done: false });
+    nextTest.mockResolvedValueOnce({ item: frei, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item: { ...frei, itemIndex: 1, prompt: "the sheep" }, done: false, cursor: 1, total: 2 });
+    renderTest();
+
+    const feld = await screen.findByRole("textbox");
+    feld.focus();
+    fireEvent.change(feld, { target: { value: "das Pferd" } });
+    fireEvent.submit(feld.closest("form")!);
+
+    expect(await screen.findByText("the sheep")).toBeTruthy();
+    expect(screen.getByRole("textbox")).toBe(feld);
+    expect(document.activeElement).toBe(feld);
+    // Entscheidung 1: der Test meldet nichts zurück.
+    expect(document.querySelector(".lektion-blatt")).toBeNull();
+  });
+
   // B-35 / Review B-526: beim Aufdecken dreht sich die Karte – und die Lösung erscheint IN ihr. Rot, wenn die Lösung
   // wieder unten bei den Knöpfen stünde (die Karte drehte sich dann leer) oder schon vor dem Aufdecken irgendwo.
   it("zeigt die Lösung einer Selbsteinschätzung erst nach dem Aufdecken, und zwar in der Karte", async () => {
