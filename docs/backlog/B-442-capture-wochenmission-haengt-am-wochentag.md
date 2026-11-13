@@ -26,3 +26,9 @@ neutralisieren). Lauf AF hat die beiden Dateien zurückgesetzt, nicht neu commit
 ## Verlauf
 
 - **2026-11-09** — angelegt in Lauf AF (Sprint 25) beim Blick auf `git status` nach dem vollen Testlauf; außerhalb des Sprint-Diffs, darum nicht gezählt und nicht in diesem Sprint gebaut.
+- **2026-11-13** — Zwischenstand (Tageslauf): die Vermutung „Seed datiert mit `DateTime.UtcNow`" trägt nicht – der Seed setzt
+  kein `IntroducedAt` (`grep` über `Data/`). `ProgressMetric.NewWords` zählt `PositionItemProgress.IntroducedAt` im
+  Wochenzeitraum (`MetricsService.cs:25`); die Einführungen entstehen also in den Capture-Schritten selbst. Nächster
+  Schritt: nachsehen, welcher Schritt vor `me/missions` Wörter mit einem Tag **vor** dem Wochenbeginn einführt (Uhr
+  vorgestellt? Tag einer Sitzung?), dann die Uhr der Factory für die Capture auf einen Mittwoch festsetzen.
+
