@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/werkzeug, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/werkzeug, rolle/student]
 aliases: [gemeinsame Fälle für Normalize, Vorschlag CO]
-status: idee
+status: abgenommen
 prio: P2
 art: Aufräumen
-groesse: ""
+groesse: "S"
 wo: "backend, frontend, .claude/skills/lehrwerk-aufbereiten"
 migration: ""
 vertragsbruch: ""
@@ -33,6 +33,29 @@ Server nur am Leerzeichen).
   eine Seite, fällt der Test der anderen.
 - Nicht gedeckt: Zwillinge anderer Regeln (z. B. `gapProblem` im Editor) – beim Grillen auflisten.
 
+## Entscheidungen
+
+1. **Ort:** `docs/fallliste-antwortvergleich.json` (`a`, `b`, `gleich`, `warum`), mit ASCII-Escapes für unsichtbare
+   Zeichen (NBSP, U+FEFF, Tab) – als Literal überleben sie keinen Editor und kein Werkzeug.
+2. **Drei Leser:** `FalllisteAntwortvergleichTests` (xUnit, `StageMechanics.Normalize` – die Wahrheit),
+   `answerNormalize.test.ts` (Vitest, `normalizeAnswer`), `test_laden.py` (Python, `graded()`).
+3. **Gleich beim Bau gefunden:** der Lader und das Vater-Web behandelten U+FEFF anders als der Server seit B-501 (heute) –
+   genau die Drift, für die die Liste da ist. Beide nachgezogen.
+4. Nicht gedeckt: die Artikel-Toleranz (eigene Regel, `ArticleOptionalIn`) und `gapProblem` im Editor.
+
+## Akzeptanzkriterien
+
+1. Alle drei Leser lesen dieselbe Datei. 2. Eine Abweichung einer Seite macht deren Test rot (gemessen: U+FEFF im Wort).
+
 ## Verlauf
 
 - **2026-11-12** — angelegt nach der Entscheidung des Nutzers über die Retro-Vorschläge des Backlog-Laufs.
+- **2026-11-13** — ausformuliert und geschätzt S (Tageslauf, Sprint 62; Freigabe des Nutzers vom 2026-11-12 liegt vor).
+- **2026-11-13** — gebaut (Sprint 62). `docs/fallliste-antwortvergleich.json` (17 Fälle), drei Leser. Erster Lauf: Lader
+  (2 rot) und Vater-Web (1 rot) wichen beim U+FEFF vom Server ab – beide nachgezogen. R1 (Vater-Web), R2 (Lader), R5
+  (Server) → je rot an ihrem Leser.
+  - Verifikation: `dotnet test Pugling.sln -c Release` 1462/1462, Vitest 854/854, `tsc -b` sauber, Python-unittest grün,
+    Playwright 140/140 auf 5201/5174 (vor den letzten Beschriftungs- und U+FEFF-Nachzügen, die Komponententests tragen);
+    Mutanten nach der letzten Änderung rot (Tabellen im Protokoll, Sprints 60–62).
+  - Rollengang: Vater (Plan-Seite, Assistent, Ziel-Wähler) per E2E und Komponententests; Creator (Konsole) gegen den
+    In-Process-Server; Sohn Regressionszeuge. Abgenommen.

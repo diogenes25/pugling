@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-449, B-447]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-517 · Datums-Tests greifen in der UTC-CI nicht, und östlich von UTC+11 steht der Folgetag
@@ -59,3 +60,4 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - AK 3 → `ROH`-Wächter (U5, U6 → rot) und `MyObjectives` (U4 → rot).
   - Verifikation: Vitest 832/832 (auch `TZ=UTC` für `datum.test.ts`), Playwright 140/140, Mutanten nach der letzten Änderung
     rot. Rollengang Sohn/Vater: E2E gegen echten Server und UI. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 61/62, frischer `frontend-reviewer` an `8485eab`, in fünf Zonen per `spawnSync` gemessen). Geprüft: `alsUtcText` zonenunabhängig, `augenblick` unter New York zur Laufzeit rot-fähig, `arcadeDatum` in Kiritimati. Befund: 🟡 `TZ` als „undefined" zurückgesetzt, 🟡 `formatDate`-Zeile wirkungslos → [B-520](B-520-nachschau-reste-sprint-59.md).

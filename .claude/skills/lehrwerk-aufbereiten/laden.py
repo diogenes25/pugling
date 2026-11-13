@@ -103,8 +103,9 @@ def parse_cloze(markup):
 
 def graded(word):
     """What the server's answer comparison sees of a word (StageMechanics.Normalize): case, a closing . ? ! …, the
-    apostrophe spelling and repeated spaces do not count. Two tiles alike here are one tile to the child."""
-    s = word
+    apostrophe spelling, any whitespace and an invisible U+FEFF do not count. Two tiles alike here are one tile to the
+    child. The cases are shared with the server and the father's web (docs/fallliste-antwortvergleich.json, B-493)."""
+    s = word.replace(chr(0xFEFF), "")
     for c in "’‘ʼ´`":
         s = s.replace(c, "'")
     s = s.strip()

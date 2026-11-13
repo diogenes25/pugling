@@ -37,12 +37,12 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         types.ByKey(exercise.Type)?.StoreResolution == StoreResolution.ItemTable
         && !await db.ExerciseItems.AnyAsync(i => i.ExerciseId == exercise.Id, ct);
 
-    private static PositionResponse Map(PlanPosition p) =>
+    private PositionResponse Map(PlanPosition p) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
-            p.NewItemsPerDay);
+            p.NewItemsPerDay, PositionPlayService.DailyDose(p, types));
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]

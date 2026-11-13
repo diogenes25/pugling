@@ -64,8 +64,9 @@ public static partial class AnswerVariants
         return !Abbreviations.TryGetValue(lastWord, out _);
     }
 
+    // Any whitespace around the slash (char.IsWhiteSpace - a U+FEFF does not count, unlike in Normalize): "Aha!" + NBSP + "/ Verstehe." is two meanings too (B-501).
     private static bool IsSegmentSeparator(string s, int i) =>
-        s[i] == ';' || (s[i] == '/' && i > 0 && i < s.Length - 1 && s[i - 1] == ' ' && s[i + 1] == ' ');
+        s[i] == ';' || (s[i] == '/' && i > 0 && i < s.Length - 1 && char.IsWhiteSpace(s[i - 1]) && char.IsWhiteSpace(s[i + 1]));
 
     // A separator inside brackets belongs to the bracket: "an sein (Radio, Licht usw.)" is one meaning.
     private static List<string> SplitOutsideBrackets(string s, Func<string, int, bool> isSeparator)

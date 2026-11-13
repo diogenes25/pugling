@@ -126,5 +126,9 @@ test("Kopfzeile des Tagestests am Handy: auch mit „Selbstcheck“ und zehn Fra
   const box = await later.boundingBox();
   expect(box, "„Später weiter“ hat eine Fläche").not.toBeNull();
   expect(box!.x + box!.width, "rechter Rand im Fenster").toBeLessThanOrEqual(375);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth), "die Seite scrollt nicht seitlich").toBeLessThanOrEqual(375);
+  // B-479: gemessen am Scroller, der wirklich scrollt. `.sohn-body` hat `overflow-y: auto` und damit auch seitlich `auto`
+  // – ein zu breiter Kopf scrollt IN ihm, die Seite (`documentElement`) bliebe dabei immer schmal.
+  const body = page.locator(".sohn-body");
+  const [weit, sichtbar] = await body.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+  expect(weit, "der Inhalt scrollt nicht seitlich").toBeLessThanOrEqual(sichtbar);
 });

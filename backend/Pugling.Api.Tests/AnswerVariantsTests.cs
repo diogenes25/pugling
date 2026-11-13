@@ -118,4 +118,15 @@ public class AnswerVariantsTests
         Assert.Contains("b d f h", variants);
         Assert.DoesNotContain("a b d f h", variants);
     }
+
+    // B-501: a slash between meanings separates with any whitespace around it, as Normalize sees whitespace - a pasted
+    // no-break space must not glue two meanings into one. Red if only the plain space counts.
+    [Fact]
+    public void Schraegstrich_Trennt_Auch_Mit_Geschuetztem_Leerzeichen() =>
+        Assert.True(_grader.Matches("Aha", Entry("Aha!\u00A0/ Verstehe.")));
+
+    // B-501: an invisible U+FEFF (a pasted BOM) is no difference - red if Normalize keeps it.
+    [Fact]
+    public void Unsichtbares_FEFF_Ist_Kein_Unterschied() =>
+        Assert.Equal(StageMechanics.Normalize("Hund"), StageMechanics.Normalize("\uFEFFHund"));
 }

@@ -497,7 +497,9 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         // any other the briefing refuses the profile. Said once, before --series sends the user through the second lock.
         if (writes && profileId is not null && profile?.SeriesId is int boundTo
             && await GetSeriesOrUsageErrorAsync(boundTo, ct) is { SubjectId: null } boundSeries)
-            throw new AgentUsageException(ProfileFit.NoSubject(boundSeries));
+            // The series came from the profile's binding, not from the command line - the message says so (B-519).
+            throw new AgentUsageException(
+                $"Creator-Profil {profile.Id} ({profile.Name}) ist an Reihe {boundSeries.Id} gebunden: " + ProfileFit.NoSubject(boundSeries));
         // A child and no place named: the exercise belongs in the child's book, not in the first series of the catalog
         // (B-473). The best profile for the child (no subject filter - the place is what is unknown) gives the series.
         if (profile is null && childId is int forChild && command.Value("series") is null && command.Value("series-unit") is null)
@@ -623,7 +625,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
         }
         // Only a series without a subject would have fitted: its own lock says more than "no book" (B-510).
         if (series.Count == 0 && withoutSubject is not null)
-            throw new AgentUsageException(ProfileFit.NoSubject(withoutSubject));
+            throw new AgentUsageException(
+                $"Das Lehrbuch von Kind {childId} steht auf Reihe {withoutSubject.Id}: " + ProfileFit.NoSubject(withoutSubject));
         return series.Count switch
         {
             1 => series[0],

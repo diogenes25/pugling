@@ -138,7 +138,8 @@ function ScopePicker({ value, onChange, subjects }: {
       : api.searchExercises({
         subjectId: Number(value.subjectId),
         seriesUnitId: value.seriesUnitId === "" ? undefined : Number(value.seriesUnitId),
-        // B-513: „ganze Reihe" zeigt die Übungen der Reihe, nicht die des ganzen Fachs.
+        // B-513/B-518: mit gewählter Reihe zeigt die Liste deren Übungen – gespeichert wird ohne Unit aber das Fach, darum
+        // heißt die leere Wahl „alle Übungen des Fachs" (leerOptionen).
         seriesId: reiheFilter(value.seriesId === "" ? "" : Number(value.seriesId), value.seriesUnitId === "" ? "" : Number(value.seriesUnitId)),
         type: "Vocabulary", take: 100,
       })),
@@ -166,7 +167,7 @@ function ScopePicker({ value, onChange, subjects }: {
         <label htmlFor={`${uid}-unit`}>Unit <span className="muted">(optional)</span></label>
         <select id={`${uid}-unit`} value={value.seriesUnitId} disabled={value.seriesId === ""}
           onChange={(e) => onChange({ ...value, seriesUnitId: e.target.value === "" ? "" : Number(e.target.value), exerciseId: "" })}>
-          <option value="">ganze Reihe</option>
+          <option value="">{leerOptionen(value).unit}</option>
           {units.data?.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
         </select>
       </div>
@@ -174,7 +175,7 @@ function ScopePicker({ value, onChange, subjects }: {
         <label htmlFor={`${uid}-exercise`}>Übung <span className="muted">(optional)</span></label>
         <select id={`${uid}-exercise`} value={value.exerciseId} disabled={value.subjectId === ""}
           onChange={(e) => onChange({ ...value, exerciseId: e.target.value === "" ? "" : Number(e.target.value) })}>
-          <option value="">alle Übungen</option>
+          <option value="">{leerOptionen(value).exercise}</option>
           {exercises.data?.items.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
         </select>
       </div>
@@ -506,3 +507,17 @@ function NewObjective({ childId, subjects, action, onCreated }: {
     </div>
   );
 }
+
+/**
+ * Die Beschriftung der leeren Wahl in Unit und Übung – nach dem, was gespeichert wird (B-518). Die Reihe geht nicht in den
+ * Scope (`scopeToDto` kennt Fach, Unit, Übung): ohne Unit zählt das Ziel das ganze Fach, auch wenn oben eine Reihe gewählt
+ * ist. „ganze Reihe" versprach einen Bereich, den der Server nicht kennt.
+ */
+export function leerOptionen(scope: { seriesUnitId: number | ""; exerciseId: number | "" }): { unit: string; exercise: string } {
+  return {
+    // Mit gewählter Übung zählt nur sie (Review): die leere Unit verspricht dann kein ganzes Fach.
+    unit: scope.exerciseId === "" ? "keine – das Ziel zählt das ganze Fach" : "keine",
+    exercise: scope.seriesUnitId === "" ? "alle Übungen des Fachs" : "alle Übungen der Unit",
+  };
+}
+

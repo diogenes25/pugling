@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-514]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-516 · Die Meldung „Reihe ohne Fach" nennt nur die Sperre und ihre Aufhebung
@@ -56,3 +57,4 @@ Autonom gegrillt (`art: Defekt`, Tageslauf, Nutzerrolle übertragen):
     (Release, gefiltert).
   - Rollengang Creator: Konsolenaufrufe gegen den echten In-Process-Server (Modell gefälscht); Vater, Sohn
     Regressionszeugen. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 59/60, frischer Reviewer, gelesen; Filter-Wege, Render-Phasen-Zustand bzw. NEU-Erkennung gegen die echten Unit-Notizen nachgerechnet). Befund: 🟡 Herkunft der Reihe fehlt in der Meldung; 🟢 AK 1 nur in einem Zweig rot → [B-519](B-519-nachschau-reste-sprint-58.md).

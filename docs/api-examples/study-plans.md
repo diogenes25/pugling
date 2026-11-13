@@ -81,7 +81,8 @@ Response — `HTTP 201`:
   "speedThresholdSeconds": 0,
   "speedBonusPoints": 0,
   "timeSlots": null,
-  "newItemsPerDay": 0
+  "newItemsPerDay": 0,
+  "dailyDoseInForce": 0
 }
 ```
 

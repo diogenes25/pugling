@@ -14,7 +14,7 @@ import { ListenAusfall } from "../components/ListenAusfall";
 import { authorText } from "./ExerciseAttribution";
 import { VOCAB_FORMS } from "./exerciseConfig";
 import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
-import { newWizardProgress, runWizardFinish } from "./wizardFinish";
+import { dosisZeile, newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import { radioGroupKeys } from "../lib/ui";
 import { formatDate } from "../lib/datum";
@@ -651,7 +651,7 @@ export function VaterWizard() {
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
           <SummaryRow label="Zeitraum" value={`${formatDate(startDate)} · ${durationDays} Tage`} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
-          <SummaryRow label="Tagesdosis" value={useLeitner && newItemsPerDay > 0 ? `höchstens ${newItemsPerDay} neue Inhalte je Tag und Übung (außer Listen)` : "keine – alle Inhalte ab dem ersten Tag"} />
+          <SummaryRow label="Tagesdosis" value={dosisZeile(useLeitner, newItemsPerDay, selected.map((id) => gesehen.current.get(id)?.type ?? ""))} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
           <p className="sub">Danach erscheint der Plan unter „Zuweisen"; der Sohn sieht ihn sofort in seiner App.</p>

@@ -81,12 +81,20 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             $"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily", useLeitner = true, newItemsPerDay = 2, stage = (int)TestStage.FreeText }));
 
+        // B-480: on the ordered list the dose is in force.
+        Assert.Equal(2, (await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}"))
+            .GetProperty("dailyDoseInForce").GetInt32());
+
         // The creator switches the assigned list to any order - the position keeps its stored dose.
         (await father.PutAsJsonAsync($"{basePath}/{exerciseId}", Body(ordered: false))).EnsureSuccessStatusCode();
 
         // The father can still edit the position as his form sends it (the stored dose along); only setting a new dose
         // on the set-graded list is refused.
         var positionUrl = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        // B-480: the father reads the dose that rests - stored 2, in force 0 - and not a dose the play ignores.
+        var position = await father.GetFromJsonAsync<JsonElement>(positionUrl);
+        Assert.Equal(2, position.GetProperty("newItemsPerDay").GetInt32());
+        Assert.Equal(0, position.GetProperty("dailyDoseInForce").GetInt32());
         (await father.PatchAsJsonAsync(positionUrl, new { penaltyCoins = 3, newItemsPerDay = 2 })).EnsureSuccessStatusCode();
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, (await father.PatchAsJsonAsync(positionUrl, new { newItemsPerDay = 3 })).StatusCode);
 

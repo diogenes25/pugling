@@ -17,7 +17,8 @@ describe("formatDate", () => {
 
   // Rot, wenn ein Zeitstempel roh oder im Browser-Format erscheint.
   it("zeigt einen Zeitstempel als Kalendertag", () => {
-    expect(formatDate("2026-11-08T12:00:00Z")).toBe("08.11.2026");
+    // 06:00 UTC: derselbe Tag in jeder bewohnten Zone (−12 bis +14) – 12:00 war östlich von UTC+12 schon der Folgetag (B-520).
+    expect(formatDate("2026-11-08T06:00:00Z")).toBe("08.11.2026");
   });
 
   // Rot, wenn ein unlesbarer Wert „Invalid Date" wird.
@@ -27,13 +28,8 @@ describe("formatDate", () => {
   // wenn sie als Ortszeit gelesen werden. In einer UTC-Umgebung (der CI) ist „als Ortszeit" derselbe Augenblick – darum
   // läuft dieser Fall in New York (B-517, Review): die Zone wird für ihn gesetzt, Node liest `TZ` zur Laufzeit.
   it("liest einen Zeitstempel ohne Offset als UTC", () => {
-    const vorher = process.env.TZ;
-    process.env.TZ = "America/New_York";
-    try {
-      expect(augenblick("2026-11-08T23:30:00").toISOString()).toBe("2026-11-08T23:30:00.000Z");
-    } finally {
-      process.env.TZ = vorher;
-    }
+    inZone("America/New_York", () =>
+      expect(augenblick("2026-11-08T23:30:00").toISOString()).toBe("2026-11-08T23:30:00.000Z"));
     expect(augenblick("2026-11-08T23:30:00").toISOString()).toBe("2026-11-08T23:30:00.000Z");
     expect(augenblick("2026-11-08T23:30:00.1234567").toISOString()).toBe("2026-11-08T23:30:00.123Z");
     expect(augenblick("2026-11-08T23:30").toISOString()).toBe("2026-11-08T23:30:00.000Z");
@@ -52,7 +48,7 @@ describe("formatDate", () => {
   });
 
   it("zeigt einen Zeitpunkt mit Uhrzeit", () => {
-    expect(formatDateTime("2026-11-08T12:00:00Z")).toMatch(/^08\.11\.2026, \d{2}:\d{2}$/);
+    expect(formatDateTime("2026-11-08T06:00:00Z")).toMatch(/^08\.11\.2026, \d{2}:\d{2}$/);
   });
 
   // AK 2. Rot, wenn der Zeitraum ISO bleibt.
@@ -111,14 +107,9 @@ describe("arcadeDatum", () => {
     // B-517 (Review): auch östlich von UTC+11 derselbe Tag – rot, wenn ein DateOnly in der übergebenen Zone formatiert wird.
     expect(arcadeDatum("2026-11-08", "de", "Pacific/Kiritimati")).toBe("8.11.2026");
     // … und auf einem Gerät dort (Zone zur Laufzeit gesetzt): rot, wenn ein DateOnly in der Gerätezone formatiert wird.
-    const vorher = process.env.TZ;
-    process.env.TZ = "Pacific/Kiritimati";
-    try {
-      expect(arcadeDatum("2026-11-08", "de")).toBe("8.11.2026");
-      expect(formatDate("2026-11-08")).toBe("08.11.2026");
-    } finally {
-      process.env.TZ = vorher;
-    }
+    // (`formatDate` gehört nicht hierher: sein Formatierer ist beim Import gebaut und hält dessen Zone – B-520; die Regel
+    // für das Vater-Web hält `formatDateIn(…, "Pacific/Kiritimati")` oben.)
+    inZone("Pacific/Kiritimati", () => expect(arcadeDatum("2026-11-08", "de")).toBe("8.11.2026"));
   });
 
   // Die Lese-Hälfte teilt sich die Arcade mit dem Vater-Web (`lies` → `augenblick`): ob ein Zeitstempel ohne Offset als
@@ -166,3 +157,19 @@ describe("Die Arcade formatiert Daten nur über arcadeDatum (B-447)", () => {
     expect(funde).toEqual([]);
   });
 });
+
+/**
+ * Führt `fn` in einer Zone aus und stellt die vorige wieder her (B-520): war `TZ` vorher nicht gesetzt, wird es gelöscht –
+ * eine Zuweisung von `undefined` schriebe den Text „undefined", und Node rechnete den Rest der Datei in `Etc/Unknown`.
+ */
+function inZone(zone: string, fn: () => void): void {
+  const vorher = process.env.TZ;
+  process.env.TZ = zone;
+  try {
+    fn();
+  } finally {
+    if (vorher === undefined) delete process.env.TZ;
+    else process.env.TZ = vorher;
+  }
+}
+

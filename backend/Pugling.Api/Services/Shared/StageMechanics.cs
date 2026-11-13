@@ -34,8 +34,10 @@ public static class StageMechanics
     /// its own ("l’école"), and which key the device picked is not what the child is asked for (B-440). A closing
     /// <c>. ? ! …</c> is dropped as well: a right translation without its full stop is a right translation (B-457).
     /// </summary>
+    // U+FEFF (zero width no-break space, a pasted BOM) is no whitespace for .NET and invisible to the reader - the
+    // editor strips it, so the comparison drops it too, or two buttons that look alike would differ (B-501).
     public static string Normalize(string? s) =>
-        string.Join(' ', WithoutClosingMarks(FoldApostrophes(s ?? "").Trim()).ToLowerInvariant()
+        string.Join(' ', WithoutClosingMarks(FoldApostrophes((s ?? "").Replace("\uFEFF", "")).Trim()).ToLowerInvariant()
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
     private static readonly char[] ClosingMarks = ['.', '?', '!', '…'];

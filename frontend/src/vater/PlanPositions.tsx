@@ -459,15 +459,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
    * am Ende ist also dieselbe Suche mit derselben Antwort — er darf weder eine Abfrage auslösen noch die
    * Auswahl verwerfen.
    */
-  const kriterien = [
-    filter.subjectId, filter.seriesId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
-    filter.type || undefined, filter.search?.trim() || undefined,
-    // Die achte Facette (B-155) – genau das Feld, das der Absatz oben als Vergessens-Kandidat benennt: ohne
-    // diese Zeile wechselte der Filter, ohne dass die Abfrage neu liefe (in der E2E-Spec gemessen).
-    filter.grammarTopicId,
-    // Die Reihenfolge gehört dazu: die Liste ist eine Seite, und eine andere Sortierung zeigt andere Zeilen (B-270).
-    besteZuerst,
-  ];
+  const kriterien = planbauKriterien(filter, besteZuerst);
   const exercises = useAsync<Paged<ExerciseSummary>>(
     () => api.searchExercises(besteZuerst ? { ...filter, sort: "rating", dir: "desc" } : filter), kriterien);
   const [exerciseId, setExerciseId] = useState<number | "">("");
@@ -745,7 +737,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
             {CADENCE_LABEL[pos.cadence]}
             {pos.goalThreshold != null && <span className="muted"> · bestehen ab {pos.goalThreshold}%</span>}
             {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
-            {pos.newItemsPerDay > 0 && <span className="muted"> · {pos.newItemsPerDay} neue je Tag</span>}
+            {dosisText(pos) !== null && <span className="muted"> · {dosisText(pos)}</span>}
             <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
             {pos.requireTypedTest && <span className="muted"> · getippt</span>}
           </td>
@@ -826,3 +818,30 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
     </div>
   );
 }
+
+/**
+ * Was die Positionszeile zur Tagesdosis sagt – die Dosis, die das Spiel anwendet (`dailyDoseInForce`), nicht die
+ * gespeicherte. Wertet die Liste als Menge, ruht die Dosis; die Zeile sagt das, statt „2 neue je Tag" zu versprechen
+ * (B-480).
+ */
+export function dosisText(pos: { newItemsPerDay: number; dailyDoseInForce: number }): string | null {
+  if (pos.dailyDoseInForce > 0) return `${pos.dailyDoseInForce} neue je Tag`;
+  // Der Grund kommt vom Server (die Übung wertet als Menge, `GradesAsSet`) – der Satz nennt ihn so, nicht über einen Typ.
+  return pos.newItemsPerDay > 0 ? "Tagesdosis ruht (die Übung wertet als Menge)" : null;
+}
+
+/**
+ * Die Abhängigkeiten der Übungssuche im Planbau – jede Facette des Filters und die Reihenfolge. Eigene Funktion, damit ein
+ * Test prüft, dass **jedes** Feld von `ExerciseFilter` darin steht: ein vergessenes ließe den Filter wechseln, ohne dass
+ * die Abfrage neu liefe – so geschehen mit dem Grammatik-Thema (B-155) und beinahe mit der Reihe (B-518).
+ */
+export function planbauKriterien(filter: ExerciseFilter, besteZuerst: boolean): unknown[] {
+  return [
+    filter.subjectId, filter.seriesId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
+    filter.type || undefined, filter.search?.trim() || undefined,
+    filter.grammarTopicId,
+    // Die Reihenfolge gehört dazu: die Liste ist eine Seite, und eine andere Sortierung zeigt andere Zeilen (B-270).
+    besteZuerst,
+  ];
+}
+

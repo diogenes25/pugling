@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: [B-443, B-456]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-515 · Nachschau-Reste Sprint 52: Fokus bei leerer Runde, eine Zahl, die beim Blättern verschwindet
@@ -37,3 +38,4 @@ Nachschau von Sprint 52 (frischer `frontend-reviewer` an `59fc0a8`, gelesen, Vit
     auf 5201/5174; Mutanten X1–X4, Y1, Y2, Z1, Z2 8/8 rot nach der letzten Änderung.
   - Rollengang Vater: E2E-Suite (Planbau, Übungsliste) gegen echten Server und UI; Sohn (B-515): Komponententests,
     E2E-Suite grün; Creator Regressionszeuge. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 59/60, frischer Reviewer, gelesen; Filter-Wege, Render-Phasen-Zustand bzw. NEU-Erkennung gegen die echten Unit-Notizen nachgerechnet). Befund: 🟡 Fokus nach Fehler ohne Test → [B-518](B-518-nachschau-reste-sprint-57.md).

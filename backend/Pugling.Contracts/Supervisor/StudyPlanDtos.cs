@@ -86,12 +86,16 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// Daily dose: how many never-shown contents a learn round brings per day; <c>0</c> = no cap. With a dose the
 /// final test checks the day's portion (introduced, reviewed or due today) instead of everything introduced.
 /// </param>
+/// <param name="DailyDoseInForce">
+/// The dose the play actually applies: <paramref name="NewItemsPerDay"/>, but 0 while the exercise grades as a set (an
+/// unordered list) - the stored dose then rests and comes back when the list is ordered again (B-478, B-480).
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
-    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay);
+    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce);
 
 /// <summary>
 /// Creating a position. Empty override fields inherit the exercise's suggestion (hybrid principle):

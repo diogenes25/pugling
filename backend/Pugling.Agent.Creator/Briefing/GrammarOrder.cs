@@ -12,7 +12,7 @@ public static class GrammarOrder
     // revised topics are mentioned in the same notes, and a mention alone says nothing about what is new. Between the
     // marker and the label a colon, a dash or an opening quote may stand ("NEU – question tags", "NEU „question tags"),
     // as people write it - before B-482 those markers silently did nothing.
-    private static readonly Regex NewMarker = new(@"\bNEU\b[:\s\-–—„“""'«»‹›]*", RegexOptions.CultureInvariant);
+    private static readonly Regex NewMarker = new(@"\bNEU\b[:\s\-–—„“""'‚‘«»‹›]*", RegexOptions.CultureInvariant);
 
     /// <summary>
     /// The topics the notes mark as new first, in the order the notes name them, then the rest in their given order.

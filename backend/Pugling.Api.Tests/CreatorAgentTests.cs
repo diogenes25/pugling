@@ -2561,6 +2561,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         string[] twins = ["Adverbs", "Question tags", "Question tags"];
         Assert.Equal(["Question tags", "Adverbs", "Question tags"], GrammarOrder.NewMaterialFirst(twins, "NEU question tags"));
         // B-482 (review): a label that starts with a separator itself - red if the marker swallows its first character.
+        // B-519: single typographic quotes open a label too.
+        Assert.Equal(["Question tags", "Past progressive", "Present progressive", "Simple past"],
+            GrammarOrder.NewMaterialFirst(labels, "NEU ‚question tags‘ und NEU ‘past progressive’."));
         string[] forms = ["Adverbs", "-ing form"];
         Assert.Equal(["-ing form", "Adverbs"], GrammarOrder.NewMaterialFirst(forms, "NEU -ing form: swimming, reading"));
     }
@@ -3415,8 +3418,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var error = await Assert.ThrowsAsync<AgentUsageException>(() => Commands(creator, pipeline)
             .RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
 
-        Assert.Contains("nicht diesem Konto; ein Fach setzt nur ihr Eigentümer", error.Message);
+        Assert.Contains("nicht diesem Konto; ein Fach setzt nur ihr Eigentümer.", error.Message);
         Assert.DoesNotContain("Vater-Web", error.Message);
+        Assert.DoesNotContain("--series", error.Message);
+        Assert.DoesNotContain("--profile", error.Message);
         Assert.Equal(0, chat.Calls);
     }
 
@@ -3433,6 +3438,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var message = ProfileFit.NoSubject(stock);
 
         Assert.Contains("Grundbestand, niemand kann ihr ein Fach geben", message);
+        Assert.DoesNotContain("--series", message);
+        Assert.DoesNotContain("--profile", message);
         Assert.DoesNotContain("Eigentümer", message);
         Assert.DoesNotContain("Vater-Web", message);
     }
@@ -3488,6 +3495,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Contains("hat kein Fach", error.Message);
         Assert.DoesNotContain("kein Lehrbuch", error.Message);
+        // B-519: the series comes from the child's book.
+        Assert.Contains($"Das Lehrbuch von Kind {child.Id} steht auf Reihe", error.Message);
     }
 
     /// <summary>
@@ -3543,6 +3552,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             ["create", "--profile", bound.Id.ToString(), "--type", "Vocabulary"]), default));
 
         Assert.Contains("hat kein Fach", error.Message);
+        // B-519: where the series comes from - the profile's binding, not the command line.
+        Assert.Contains($"Creator-Profil {bound.Id} ({bound.Name}) ist an Reihe {seriesId} gebunden", error.Message);
         // B-516: the lock and the step that lifts it, no other advice.
         Assert.DoesNotContain("--series", error.Message);
         Assert.DoesNotContain("--profile", error.Message);
@@ -3676,4 +3687,12 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
 
         Assert.Equal(0, await Commands(creator, pipeline).RunAsync(OnSeries("create", teacher, seriesId, unitId), default));
     }
+
+    /// <summary>
+    /// B-501: an answer of two words is revealed by the text even when a no-break space stands between them. Red if only the
+    /// plain space of the answer matches.
+    /// </summary>
+    [Fact]
+    public void Loesung_mit_geschuetztem_Leerzeichen_im_Text_gilt_als_verraten() =>
+        Assert.True(ClozeMarkup.ContainsWord("Yesterday I was\u00A0playing football.", "was playing"));
 }

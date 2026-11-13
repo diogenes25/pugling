@@ -13,6 +13,7 @@ unverifiziert: true
 entgangen_bei: []
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-482 · Nachschau-Reste Sprint 33: Kleinigkeiten an Ablage und NEU-Marker
@@ -56,3 +57,4 @@ Reihe bei Unit 1 und 2: Fehlbedienung, mit `--series-unit` läuft es.
     (Release, gefiltert).
   - Rollengang Creator: Konsolenaufrufe gegen den echten In-Process-Server (Modell gefälscht); Vater, Sohn
     Regressionszeugen. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 59/60, frischer Reviewer, gelesen; Filter-Wege, Render-Phasen-Zustand bzw. NEU-Erkennung gegen die echten Unit-Notizen nachgerechnet). Befund: 🟢 einfache typografische Anführungszeichen → [B-519](B-519-nachschau-reste-sprint-58.md).

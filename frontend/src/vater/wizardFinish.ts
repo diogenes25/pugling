@@ -136,3 +136,15 @@ export async function runWizardFinish(
     progress.running = false;
   }
 }
+
+/**
+ * Die Zeile „Tagesdosis" im Überblick des Assistenten – aus derselben Regel wie das Anlegen oben: eine Liste bekommt keine
+ * Dosis. Sind alle gewählten Übungen Listen, bekommt keine Position eine, und „höchstens 10 … (außer Listen)" wäre eine
+ * Zusage über nichts (B-480).
+ */
+export function dosisZeile(useLeitner: boolean, newItemsPerDay: number, types: string[]): string {
+  if (!useLeitner || newItemsPerDay <= 0) return "keine – alle Inhalte ab dem ersten Tag";
+  if (types.length > 0 && types.every((t) => t === "List"))
+    return "keine – Listen bekommen keine Tagesdosis, alle Einträge ab dem ersten Tag";
+  return `höchstens ${newItemsPerDay} neue Inhalte je Tag und Übung (außer Listen)`;
+}

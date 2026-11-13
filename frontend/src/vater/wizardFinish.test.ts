@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newWizardProgress, runWizardFinish } from "./wizardFinish";
+import { dosisZeile, newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardFinishInput, WizardWriter } from "./wizardFinish";
 import type { CreateChildDto, CreatePlanDto, CreatePositionDto } from "../lib/types";
 
@@ -196,5 +196,16 @@ describe("runWizardFinish – der Auftrag", () => {
     expect(s.positionen[1].dto.newItemsPerDay).toBe(0);
     // Gefiltert wird nur die Dosis: der Kasten bleibt, wie der Feinschliff ihn setzt.
     expect(s.positionen[1].dto.useLeitner).toBe(true);
+  });
+});
+
+// B-480: der Überblick nennt eine Tagesdosis nur, wo sie eine Position bekommt. Rot, wenn „höchstens 10 … (außer Listen)"
+// stehen bleibt, obwohl jede gewählte Übung eine Liste ist (keine Position bekommt dann eine Dosis).
+describe("Überblick – Tagesdosis", () => {
+  it("nennt die Dosis nur, wenn eine Nicht-Liste sie bekommt", () => {
+    expect(dosisZeile(true, 10, ["Vocabulary", "List"])).toMatch(/^höchstens 10/);
+    expect(dosisZeile(true, 10, ["List", "List"])).toMatch(/^keine – Listen bekommen keine Tagesdosis/);
+    expect(dosisZeile(false, 10, ["Vocabulary"])).toBe("keine – alle Inhalte ab dem ersten Tag");
+    expect(dosisZeile(true, 0, ["Vocabulary"])).toBe("keine – alle Inhalte ab dem ersten Tag");
   });
 });

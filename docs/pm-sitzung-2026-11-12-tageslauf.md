@@ -313,3 +313,88 @@ Zeichen unter U+0020 außer Tab/LF/CR (Selbsttest, rote Probe C1). Ein neues Tor
 
 **Bewusst ungedeckt:** Backend-Quellen und `e2e/*.ts` prüft das Tor nicht; die Falle (Python-Heredoc) bleibt eine
 Werkzeug-Lehre im Gedächtnis.
+
+## Sprint 59 — Ziel & Umfang
+
+**Sprint-Ziel:** Jedes Datum, das Vater und Sohn sehen, ist der Tag, den der Server meint – in jeder Zone – und die Tests
+dazu greifen in der UTC-CI genauso wie in Berlin.
+**Umfang:** [B-517](backlog/B-517-datum-tests-in-utc-und-folgetag.md) (Durchrutscher aus Sprint 54).
+**Ergebnis:** `alsUtcText` als Text geprüft, DateOnly überall in UTC, Zone zur Laufzeit gesetzt, wo ein Fehler nur
+außerhalb von UTC sichtbar ist; Arcade-Wächter gegen rohes ISO. Beim Bau entdeckt: der committete Wächter aus Sprint 54
+trug zwei Backspace-Zeichen. Vitest 832/832, Playwright 140/140, Mutanten rot. Commit `8485eab`, Doku-Nachzug `acb7898`.
+
+## Sprint 60 — Ziel & Umfang
+
+**Sprint-Ziel:** Was der Vater über die Tagesdosis liest, ist die Dosis, die das Spiel anwendet; und was der Server als
+„dieselbe Antwort" sieht, sieht er an jeder Stelle gleich.
+**Umfang:** [B-480](backlog/B-480-nachschau-reste-sprint-32.md), [B-501](backlog/B-501-nachschau-reste-sprint-43.md).
+**Ergebnis:** `PositionResponse.DailyDoseInForce` (additiv, API-First) aus der einen Regel; Plan-Zeile und Assistent sagen
+die wirksame Dosis; Bedeutungs-Trenner an jedem Leerraum, U+FEFF im Vergleich, NBSP in `ContainsWord`, Feldhilfe-Text.
+Reviews: Frontend 🟡 Klammertext nannte einen Typ statt der Server-Regel (behoben, Zähler 1); Backend nur 🟢.
+
+## Sprint 61 — Ziel & Umfang
+
+**Sprint-Ziel:** Nachschau-Reste von Sprint 57/58 und eine E2E-Zusicherung, die fallen kann.
+**Umfang:** [B-518](backlog/B-518-nachschau-reste-sprint-57.md), [B-519](backlog/B-519-nachschau-reste-sprint-58.md),
+[B-479](backlog/B-479-nachschau-reste-sprint-31.md) (Punkt 1).
+**Ergebnis:** Ziel-Wähler sagt, was gespeichert wird; `planbauKriterien` mit erschöpfendem Test; Fokus-Test im
+Fehlerfall; Meldung nennt die Herkunft der Reihe; ‚‘ als Trenner; E2E misst den echten Scroller (rot gemessen).
+
+## Retrospektive (Sprint 59–61)
+
+**Nachschau:** Sprint 57 (`9553854`, frischer `frontend-reviewer`): drei 🟡 → [B-518](backlog/B-518-nachschau-reste-sprint-57.md).
+Sprint 58 (`022dfcf`, frischer `pugling-reviewer`): ein 🟡 → [B-519](backlog/B-519-nachschau-reste-sprint-58.md).
+`nachgeschaut` an B-513, B-515, B-482, B-516.
+
+**Was die eigenen Tore durchgelassen haben:** zweimal eine Verdrahtung, deren reine Funktion getestet war, die Stelle des
+Aufrufs aber nicht (Planbau-Kriterien, Ziel-Wähler) – das Muster `artenPending` trägt nur, solange die Funktion den
+ganzen Zustand umfasst. Und: das Werkzeug verarbeitet Escapes in Bash-Aufrufen eine Stufe vorher (`\b` → Backspace,
+`\u00A0` → NBSP) – zweimal heute, einmal schon in Sprint 45 (B-499). Das Steuerzeichen-Tor fängt Steuerzeichen,
+nicht unsichtbare Leerzeichen.
+
+**Gelandet:** kein weiterer Mechanismus in dieser Retro (ein Tor kam in Sprint 58). Die Werkzeug-Lehre steht im
+Gedächtnis (`nachtlauf-werkzeug-lehren`): Muster und Escapes nur per Write-Werkzeug-Datei oder `sed` mit Byte-Mustern.
+
+**Bewusst ungedeckt:** NBSP/U+FEFF als Literal im Quelltext prüft kein Tor (in Testdaten sind sie gewollt).
+
+## Sprint 62 — Ziel & Umfang (zwei vom Nutzer freigegebene Tore)
+
+**Sprint-Ziel:** Ob zwei Antworten gleich sind, entscheiden Server, Vater-Web und Lehrwerk-Lader nach derselben,
+einmal aufgeschriebenen Fallliste – und der Lader hat überhaupt einen Test, der in CI läuft.
+**Umfang:** [B-492](backlog/B-492-lader-test-in-ci.md), [B-493](backlog/B-493-fallliste-antwortvergleich.md) (Freigabe des
+Nutzers vom 2026-11-12: „Ja, in CI", „Ja, mit drei Lesern").
+**Ergebnis:** `docs/fallliste-antwortvergleich.json` (17 Fälle), drei Leser (xUnit, Vitest, Python), CI-Schritt
+„Lehrwerk-Lader (Python)". **Beim ersten Lauf rot:** Lader und Vater-Web behandelten U+FEFF anders als der Server seit
+B-501 von heute früh – die Drift, für die die Liste gebaut wurde, nachgewiesen im selben Sprint. Beide nachgezogen.
+Zwei neue Tore → nach `README` Halt; der Lauf endet ohnehin hier (6-Stunden-Rahmen).
+
+## Retrospektive (Sprint 61/62) und Abschluss des Laufs
+
+**Nachschau:** Sprint 59 (`8485eab`, frischer `frontend-reviewer`, in fünf Zonen per `spawnSync` gemessen – Git Bash
+reicht `TZ=America/…` nicht an Node durch): zwei 🟡 → [B-520](backlog/B-520-nachschau-reste-sprint-59.md), im Sprint 62
+behoben (`inZone` stellt eine leere Zone per `delete` wieder her; eine Zusicherung ohne Wirkung entfernt). Sprint 60
+wird mit diesem Lauf nicht mehr nachgeschaut – erste Pflichthandlung des nächsten Laufs.
+
+**Was die eigenen Tore durchgelassen haben:** die Zeitzone ist die wiederkehrende Falle des Tages (B-449 → B-517 →
+B-520): jedes Mal eine Messung, die nur auf dieser Maschine trug. Gelernt: Zonen nur im Prozess setzen (`inZone`), nie
+über die Shell auf Windows; ein beim Import gebauter Formatierer hält die Zone seines Imports.
+
+**Gelandet:** die Fallliste (B-493) ist selbst der Mechanismus dieser Retro – ein Tor über drei Leser einer Regel, das im
+selben Sprint eine echte Drift fand. Zwei neue Tore → Halt nach `README`; der 6-Stunden-Lauf endet hier.
+
+## Offene Roadmap nach dem Tageslauf
+
+Durable Liste: [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag:
+1. **Nachschau Sprint 60** (B-480, B-501) und Sprint 61/62 – erste Pflichthandlung.
+2. **B-430 im Dialog:** (b) widerlegt (Münzen-Farmen, leichterer zweiter Versuch); Empfehlung (c) „▶ Üben" ohne Eingriff in
+   den Karteikasten.
+3. **B-442** (Doku-Capture am Wochentag – Seed datiert mit `DateTime.UtcNow`), **B-446** (Tipp = Artikel des Frageworts?
+   am Datenstand klären).
+4. Retro-Vorschlag ohne Entscheidung: (DA) Tor gegen „du" in Supervisor-Codes – weiter aufgeschoben.
+
+## Konkreter Änderungsstand (für Review)
+
+Commits des Laufs auf `auto/fertigstellung` (nichts gepusht): `7c17e07`, `60750a4`, `8a5f20a`, `68328e6`, `2917449`,
+`82fdc4c`, `f982ae0`, `59fc0a8`, `14be0fa`, `edaceab`, `f8ed922`, `637d868`, `9553854`, `022dfcf`, `8485eab`, `acb7898` und
+der Abschluss-Commit der Sprints 60–62. **Die Änderungen wirken bei den Kindern erst nach einem Neustart des
+Heimnetz-Servers** (`scripts/heimnetz.ps1`); keine neue Migration in diesem Lauf.

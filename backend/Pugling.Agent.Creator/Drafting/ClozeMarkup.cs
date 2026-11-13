@@ -83,7 +83,12 @@ public static partial class ClozeMarkup
     /// reported "is" as revealed by "This", and every false report costs a repair round.
     /// </summary>
     public static bool ContainsWord(string text, string answer) =>
-        Regex.IsMatch(text, $@"(?<!\w){Regex.Escape(answer.Trim())}(?!\w)", RegexOptions.IgnoreCase);
+        Regex.IsMatch(text, $@"(?<!\w){AnyWhitespace(answer)}(?!\w)", RegexOptions.IgnoreCase);
+
+    // A space in the answer matches any whitespace in the text: "was playing" is revealed by "was" + NBSP + "playing"
+    // just as well (B-501).
+    private static string AnyWhitespace(string answer) =>
+        string.Join(@"\s+", answer.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(Regex.Escape));
 
     /// <summary>
     /// Does a word in <paramref name="text"/> begin with <paramref name="word"/>? For hints, where an inflected form

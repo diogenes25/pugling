@@ -410,6 +410,22 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: de.sohn.practice.next }));
   });
 
+  // B-518. Rot, wenn eine gescheiterte neue Runde den Fokus auf `body` fallen lässt: die Meldung (role="alert") bekommt ihn.
+  it("setzt den Fokus nach Jetzt abfragen auf die Meldung, wenn die Runde scheitert", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true)]));
+    review.mockResolvedValue(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await act(async () => {});
+    startSession.mockRejectedValueOnce(new Error("Verbindung weg"));
+
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.quizNow }));
+    const meldung = await screen.findByRole("alert");
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(meldung);
+  });
+
   // AK 5, zweiter Teil. Rot, wenn das Ende an `displayOnly` statt an `introduction` hängt.
   it("behält nach einer Kennenlern-Stufe des Tages den heutigen Bildschirm", async () => {
     cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", false)]));

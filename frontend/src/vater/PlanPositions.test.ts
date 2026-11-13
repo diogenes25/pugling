@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
+import type { ExerciseFilter } from "./ExerciseFilterBar";
+import { planbauKriterien, dosisText,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
   type PositionSettings,
 } from "./PlanPositions";
@@ -263,3 +264,40 @@ describe("Position entfernen", () => {
     expect(REMOVE_POSITION_QUESTION).toMatch(/Übung bleibt im Katalog/);
   });
 });
+
+// B-480: die Positionszeile nennt die wirksame Dosis. Rot, wenn sie „2 neue je Tag" für eine ruhende Dosis verspricht oder
+// die ruhende verschweigt.
+describe("Positionszeile – Tagesdosis", () => {
+  it("nennt die wirksame Dosis und sagt, wenn sie ruht", () => {
+    expect(dosisText({ newItemsPerDay: 2, dailyDoseInForce: 2 })).toBe("2 neue je Tag");
+    expect(dosisText({ newItemsPerDay: 2, dailyDoseInForce: 0 })).toMatch(/ruht/);
+    expect(dosisText({ newItemsPerDay: 0, dailyDoseInForce: 0 })).toBeNull();
+  });
+});
+
+// B-518: jedes Feld des Filters steuert die Abfrage. Rot, wenn eines in den Abhängigkeiten fehlt (die Liste bliebe beim
+// Wechsel stehen). Die Feldliste kommt aus einem vollständig belegten Filter – ein neues Feld ohne Eintrag hier macht den
+// Typprüfer rot (`satisfies Required<ExerciseFilter>`).
+describe("Planbau – Abhängigkeiten der Suche", () => {
+  it("ändert sich mit jedem Feld des Filters", () => {
+    const voll = {
+      subjectId: 1, seriesId: 2, seriesUnitId: 3, grade: 7, schoolType: "Gymnasium", categoryId: 4, type: "Vocabulary",
+      search: "x", grammarTopicId: 5,
+    } satisfies Required<ExerciseFilter>;
+    const basis = JSON.stringify(planbauKriterien(voll, false));
+    for (const feld of Object.keys(voll) as (keyof ExerciseFilter)[])
+      expect(JSON.stringify(planbauKriterien({ ...voll, [feld]: undefined }, false)), feld).not.toBe(basis);
+    // Die Reihenfolge gehört dazu (B-270).
+    expect(JSON.stringify(planbauKriterien(voll, true))).not.toBe(basis);
+  });
+
+  // Review B-518: dieselbe Suche löst keine neue Abfrage aus. Rot, wenn die Freitextsuche nicht getrimmt oder ein leerer
+  // Typ nicht wie „kein Typ" behandelt wird.
+  it("normalisiert, was dieselbe Suche ist", () => {
+    const voll = { subjectId: 1, search: "x", type: "Vocabulary" } satisfies ExerciseFilter;
+    expect(planbauKriterien({ ...voll, search: " x " }, false)).toEqual(planbauKriterien(voll, false));
+    expect(planbauKriterien({ ...voll, type: "", search: "  " }, false))
+      .toEqual(planbauKriterien({ ...voll, type: undefined, search: undefined }, false));
+  });
+});
+

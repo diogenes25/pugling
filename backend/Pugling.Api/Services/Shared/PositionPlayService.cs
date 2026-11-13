@@ -29,8 +29,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// a right answer outside the day's portion would count as wrong. Assigning rejects the combination; this covers the
     /// list a creator switches to any order after it was assigned (B-478).
     /// </summary>
-    public int DailyDose(PlanPosition pos) =>
-        pos.NewItemsPerDay > 0 && pos.Exercise is { } exercise && TypeOf(exercise)?.GradesAsSet(ConfigOf(exercise)) == true
+    public int DailyDose(PlanPosition pos) => DailyDose(pos, registry);
+
+    /// <summary>
+    /// <see cref="DailyDose(PlanPosition)"/> for callers without the service (the position response, B-480) - the one place
+    /// the rule lives, so what the father reads and what the play applies cannot drift apart. Needs the exercise loaded.
+    /// </summary>
+    public static int DailyDose(PlanPosition pos, ExerciseTypeRegistry types) =>
+        pos.NewItemsPerDay > 0 && pos.Exercise is { } exercise && types.ByKey(exercise.Type)?.GradesAsSet(ConfigOf(exercise)) == true
             ? 0
             : pos.NewItemsPerDay;
 

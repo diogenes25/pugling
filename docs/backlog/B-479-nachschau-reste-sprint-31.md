@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [Nachschau-Reste Sprint 31, scrollWidth kann nicht fallen]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: "XS"
 wo: "beides"
 migration: ""
 vertragsbruch: ""
@@ -34,6 +34,21 @@ Gefunden in der Nachschau von Sprint 31 (frischer `frontend-reviewer`, gelesen, 
    über, ein vierter Pill bliebe unbemerkt.
 6. **🟢 Rückfall-Zweig von `ClozePrompt`** ohne `pre-line` (umnummerierter Altbestand) – in B-466 bewusst offen gelassen.
 
+## Entscheidungen
+
+Autonom gegrillt (`art: Defekt`, Tageslauf): nur Punkt 1 (🟡) – die Zusicherung misst den echten Scroller (`.sohn-body`:
+`scrollWidth <= clientWidth`), rot gemessen mit einem zu breiten Kopf. Punkte 2–6 (🟢) bleiben offen: `...`/`…` und
+Anführungszeichen um Schlusszeichen sind Produktfragen am Vergleich, `¿`/`¡` ohne Spanisch im Katalog, die übrigen ohne
+gemessenen Fall.
+
 ## Verlauf
 
 - **2026-11-12** — angelegt (Nachschau Sprint 31 im Backlog-Lauf).
+- **2026-11-13** — ausformuliert, autonom gegrillt (Defekt), geschätzt XS (Tageslauf, Sprint 61).
+- **2026-11-13** — gebaut (Sprint 61), Punkt 1: die Zusicherung misst `.sohn-body`; H1 (Kopf 520 px breit) → rot
+  (Playwright). Review: robust (Element vor dem Messen da, ein `.sohn-body` auf dem Testbildschirm).
+  - Verifikation: `dotnet test Pugling.sln -c Release` 1462/1462, Vitest 854/854, `tsc -b` sauber, Python-unittest grün,
+    Playwright 140/140 auf 5201/5174 (vor den letzten Beschriftungs- und U+FEFF-Nachzügen, die Komponententests tragen);
+    Mutanten nach der letzten Änderung rot (Tabellen im Protokoll, Sprints 60–62).
+  - Rollengang: Vater (Plan-Seite, Assistent, Ziel-Wähler) per E2E und Komponententests; Creator (Konsole) gegen den
+    In-Process-Server; Sohn Regressionszeuge. Abgenommen.

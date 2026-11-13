@@ -135,7 +135,8 @@ const strList = (l: unknown): string[] => (Array.isArray(l) ? l.map((x) => Strin
  * Antwort besteht nur daraus (B-457), dann trimmen, klein, Mehrfach-Leerzeichen zusammen.
  */
 export const normalizeAnswer = (s: string) => {
-  const folded = s.replace(/[’‘ʼ´`]/g, "'").trim();
+  // U+FEFF fällt weg, bevor `\s` es als Trenner sähe – der Server entfernt es (B-501, Fallliste B-493).
+  const folded = s.split(String.fromCharCode(0xfeff)).join("").replace(/[’‘ʼ´`]/g, "'").trim();
   const stripped = folded.replace(/[\s.?!…]+$/, "");
   return (stripped || folded).toLowerCase().split(/\s+/).filter(Boolean).join(" ");
 };

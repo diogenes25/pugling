@@ -1,0 +1,107 @@
+{
+  "_zweck": "B-493: wann zwei Antworten gleich sind. Eine Liste, drei Leser: StageMechanics.Normalize (xUnit), normalizeAnswer im Vater-Web (Vitest), graded() im Lehrwerk-Lader (Python-unittest, B-492). \u00c4ndert jemand die Regel an einer Stelle, f\u00e4llt der Test der anderen. Wahr ist der Server.",
+  "faelle": [
+    {
+      "a": "Hund",
+      "b": "hund",
+      "gleich": true,
+      "warum": "Gro\u00df/Klein"
+    },
+    {
+      "a": " Hund ",
+      "b": "Hund",
+      "gleich": true,
+      "warum": "Rand-Leerraum"
+    },
+    {
+      "a": "Hund.",
+      "b": "Hund",
+      "gleich": true,
+      "warum": "Schlusszeichen"
+    },
+    {
+      "a": "Wirklich?!",
+      "b": "wirklich",
+      "gleich": true,
+      "warum": "mehrere Schlusszeichen"
+    },
+    {
+      "a": "Warte \u2026",
+      "b": "warte",
+      "gleich": true,
+      "warum": "Auslassungszeichen mit Leerraum davor"
+    },
+    {
+      "a": "don\u2019t",
+      "b": "don't",
+      "gleich": true,
+      "warum": "typografischer Apostroph"
+    },
+    {
+      "a": "don\u00b4t",
+      "b": "don't",
+      "gleich": true,
+      "warum": "Akut als Apostroph"
+    },
+    {
+      "a": "ice  cream",
+      "b": "ice cream",
+      "gleich": true,
+      "warum": "doppeltes Leerzeichen"
+    },
+    {
+      "a": "ice\u00a0cream",
+      "b": "ice cream",
+      "gleich": true,
+      "warum": "gesch\u00fctztes Leerzeichen"
+    },
+    {
+      "a": "ice\tcream",
+      "b": "ice cream",
+      "gleich": true,
+      "warum": "Tab"
+    },
+    {
+      "a": "\ufeffHund",
+      "b": "Hund",
+      "gleich": true,
+      "warum": "U+FEFF am Anfang (B-501)"
+    },
+    {
+      "a": "Hu\ufeffnd",
+      "b": "Hund",
+      "gleich": true,
+      "warum": "U+FEFF im Wort ist kein Trenner (B-501)"
+    },
+    {
+      "a": "?",
+      "b": "?",
+      "gleich": true,
+      "warum": "nur Schlusszeichen bleibt stehen"
+    },
+    {
+      "a": "?",
+      "b": "",
+      "gleich": false,
+      "warum": "nur Schlusszeichen ist nicht leer"
+    },
+    {
+      "a": "Hund",
+      "b": "Hunde",
+      "gleich": false,
+      "warum": "anderes Wort"
+    },
+    {
+      "a": "Hund,",
+      "b": "Hund",
+      "gleich": false,
+      "warum": "Komma ist kein Schlusszeichen"
+    },
+    {
+      "a": "die Stadt",
+      "b": "Stadt",
+      "gleich": false,
+      "warum": "Artikel z\u00e4hlt hier (Artikel-Toleranz ist eine eigene Regel)"
+    }
+  ]
+}

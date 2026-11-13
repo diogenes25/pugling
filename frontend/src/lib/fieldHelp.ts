@@ -248,7 +248,8 @@ export const FIELD_HELP = {
     title: "Auswahl",
     text: "Antwortmöglichkeiten zur Frage, die richtige eingeschlossen — anders als bei „Auch richtig“ "
       + "stehen hier also auch die falschen. Das Kind bekommt sie in dieser Reihenfolge zur Auswahl "
-      + "(Multiple-Choice); Einträge, die sich nur in Groß/Klein oder Satzzeichen am Ende unterscheiden, "
+      + "(Multiple-Choice); Einträge, die sich nur in Groß/Klein, in Schlusszeichen (. ? ! …), der Schreibweise "
+      + "des Apostrophs oder im Leerraum unterscheiden, "
       + "werden ein Knopf, und fehlt die Antwort, kommt sie als letzter Knopf dazu. Bleibt das Feld leer, "
       + "wird die Frage frei beantwortet.",
   },
