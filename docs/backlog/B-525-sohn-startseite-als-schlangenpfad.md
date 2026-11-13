@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/gamification, rolle/student]
 aliases: [Schlangenpfad, Lernpfad-Startseite, Pfad statt Kachelliste]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -278,3 +278,12 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
 - 2026-11-13 · Präzisierung zu Entscheidung 5, am Code entschieden: Eine prüfbare Position **ohne** Karteikasten
   führt mit „Los“ immer zuerst ins Üben, auch wenn alles kennengelernt ist – ohne Kasten gibt es kein „nichts
   fällig“, und B-454 verlangt den Weg zum Üben vor dem Test.
+- 2026-11-13 · `abgenommen` (`20087d0`). Verifikation: `dotnet test Pugling.sln -c Release` **1526/1526**, Vitest
+  **890/890**, `tsc -b` grün, Playwright **142 passed** (ganzer Lauf, Release-Build auf :5201/:5174). Der Lauf davor
+  stand bei 141/142: die neue `pfad.spec.ts` suchte das Missionen-Panel bei einem Kind ohne Mission – die Zusicherung
+  konnte so nie tragen und bekam eine echte Mission. Rollengang zusätzlich per Klick im Handyformat (375×812, eigene
+  Wegwerf-DB): Plan mit zwei Units und vier Positionen; zwei Abschnitts-Banner, START am ersten Tagesziel, „noch
+  12 Std. · sonst −5 Münzen“, „bis Sonntag · sonst −10 Münzen“ am Wochenziel, freie Position ohne Frist; Blatt mit
+  „0 von 4 schon kennengelernt · 2 fällig“ (Tagesdosis 2), „Los“ führt in die Übungsrunde. Dabei gefunden und behoben:
+  ein goldener Punkt am leeren Ring. **Nicht geprüft:** ein echtes Handy und das Urteil der Kinder; keine rote Probe
+  je Testfall von Hand gefahren.

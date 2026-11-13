@@ -12,12 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (52)
+### Offen (51)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-525](B-525-sohn-startseite-als-schlangenpfad.md) | Sohn-Startseite als Schlangenpfad | Wunsch | `geschaetzt` | P1 | L | beides | — |
-| [B-526](B-526-lektionsbildschirm-festes-raster.md) | Lektionsbildschirm nach festem Raster | Wunsch | `idee` | P1 | — | frontend | — |
+| [B-526](B-526-lektionsbildschirm-festes-raster.md) | Lektionsbildschirm nach festem Raster | Wunsch | `ausformuliert` | P1 | — | frontend | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `ausformuliert` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
@@ -70,7 +69,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (447)</summary>
+<summary>Abgenommen (448)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -481,6 +480,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest | Aufräumen | `abgenommen` | P3 | XS | .claude/scripts | — |
 | [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben | Wunsch | `abgenommen` | P1 | L | beides | — |
+| [B-525](B-525-sohn-startseite-als-schlangenpfad.md) | Sohn-Startseite als Schlangenpfad | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
@@ -537,7 +537,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (175)
 
-**Nachgeschaut: 425 von 447 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 22 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 425 von 448 abgenommenen** — und in 168 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 23 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -718,7 +718,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (22) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (23) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -747,6 +747,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 | [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben |
+| [B-525](B-525-sohn-startseite-als-schlangenpfad.md) | Sohn-Startseite als Schlangenpfad |
 
 </details>
 
