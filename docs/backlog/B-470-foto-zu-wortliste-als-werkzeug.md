@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [Foto zu Wortliste, Vokabelseiten einlesen, Lehrwerk-Import, lehrwerk-aufbereiten]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -9,7 +9,8 @@ wo: "doku"
 migration: nein
 vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
-wartet_auf: erster Lauf an einem neuen Buch in frischer Sitzung (Découvertes Série bleue 2)
+wartet_auf: ""
+nachgeschaut: ""
 grund: ""
 ersetzt_durch: []
 ---
@@ -86,3 +87,21 @@ auf Port 5280 (frischer Seed), Access und ein synthetisches französisches Testb
     [B-473](B-473-ki-creator-ablage-ignoriert-buch-des-kindes.md).
   - `kacheln.ps1` an einem Access-Foto: zwei aufrechte Kacheln (1800 × 1392, 1800 × 1296), EXIF-Drehung beachtet.
   - Offen ist AK 5, deshalb `wartet_auf`.
+- **2026-11-13** — **abgenommen.** AK 5 belegt:
+  - **Der Lauf:** Am 2026-11-11 (14:34–14:52, laut Zeitstempel der Dateien) hat eine eigene Sitzung *Découvertes Série
+    bleue 2* aus 56 Fotos aufbereitet. Ergebnis in `raw/france/decouvertes-serie-bleue-2-pugling/`: 9 Units, 127 Wörter
+    in 3 Listen, 28 Start-Übungen. Die Funde am Werkzeug sind
+    [B-474](B-474-kacheln-ohne-drehung-und-uebersicht.md) (Drehen, Übersichtsbogen, Ausschnitt; ausformuliert) und
+    [B-475](B-475-laden-abbruch-laesst-uebungen-ungetestet.md) (abgenommen, `c53291c`). Dass die Sitzung genau
+    `PROMPT.md` benutzt hat, ist nicht protokolliert. Belegt sind nur der Lauf, sein Ergebnis und seine Funde.
+  - **Nachmessung mit dem heutigen Werkzeug** (nach B-475/B-483): `--pruefen` bestanden. Gegen einen
+    Wegwerf-Server auf Port 5280 mit frischer DB (nicht 5200, nicht die echte DB) war Lauf 1 grün, alle Übungen 100 %
+    im Selbsttest. In Lauf 2 und Lauf 3 standen alle 34 Übungen schon da (34 × 100 %), nichts wurde neu angelegt.
+    Das Briefing `--profile 1 --series-unit 8 --unit 8` zeigt Unité 1 mit der Wortliste der Unit und den vorhandenen
+    Übungen. Der Wächter `LadenFieldListTests` ist grün (3/3). Danach wurden der Server beendet und die DB gelöscht.
+  - **Rollengang (Creator):** die drei Ladeläufe gegen die laufende Wegwerf-App plus das Briefing. Einen Rollengang
+    als Sohn gab es nicht, weil die Story kein Produktcode ist. Reviewer: keiner (`wo: doku`).
+  - **Commits:** `fa97950` (Skill), `85eab19` (Bytecode-Cache).
+  - **Nicht Teil dieser Story und nicht geprüft:** ob das Buch schon in der echten Instanz steht (der Lauf hält davor
+    an und fragt). Außerdem tragen Profil und Kind im Lauf „Klasse 9“, während `PROMPT.md` als Beispiel „Klasse 7“
+    nennt (ob das Absicht war, steht so in `buch.json`: Band 2, in Klasse 9 eingesetzt).
