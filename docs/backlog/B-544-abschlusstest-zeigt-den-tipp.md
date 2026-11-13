@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
 aliases: [Abschlusstest zeigt den Tipp, Hinweis im Test]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: XS
@@ -79,3 +79,14 @@ Mutanten-Probe je AK, volle Suite; Rollengang über die E2E-Specs des Tests (`te
 - **2026-11-13** — angelegt aus dem Ausformulieren von B-223 und im selben Zug bis `geschaetzt` gebracht: die
   Produktentscheidung liegt seit 2026-11-05 vor, die Lücke ist am Code belegt (`PositionTestsController.cs:72`,
   `SohnTest.tsx:215`).
+- **2026-11-13** — `in-arbeit` (Sprint 72): `Hint` aus `TestItem` und `PositionTestsController.ToItem` entfernt (Vertragsbruch, gewollt), `contract.ts` neu erzeugt; `SohnTest` rendert keinen 💡-Tipp mehr. Tests: `PositionTestFlowTests.Abschlusstest_Liefert_Keinen_Tipp_Das_Ueben_Schon` (AK 1, AK 2), `SohnTest.test.tsx` „zeigt auf einer getippten Stufe keinen Tipp" (AK 3). Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:22.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Contracts/Student/TestDtos.cs:41 | red | red | Feld `Hint` zurück im Vertrag (AK 1) |
+  | M2 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:328 | red | red | Tipp auch im Üben weg (AK 2) |
+  | M3 | frontend/src/sohn/SohnTest.tsx:240 | red | red | 💡-Zeile zurück (AK 3) |
+
+  Grundlinie nach dem Zurückspielen: green.

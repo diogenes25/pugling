@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/gamification, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/api, bereich/gamification, rolle/student]
 aliases: [Tempo-Bonus-Messung, Antwortzeit je Karte]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -118,3 +118,17 @@ oder im Bonus-Training.
 - **2026-11-13** — `ausformuliert`: Messstelle neu belegt (jetzt `PositionPracticeController.cs:430-437`); der Server kennt den Moment „Karte sichtbar" nicht, weil die Arcade alle Karten vorab lädt.
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–4 (Zeitpunkt statt Dauer melden, Server-Uhr stempelt, ein Stempel je Karte, ohne Stempel alte Regel); beantwortet auch die Frage aus B-434. Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — `geschaetzt`: S, beides, Migration ja (nullable Spalte), kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 72): nullable Spalte `PracticeSession.CardShownAt`, Migration `20261113224441_CardShownAt` hängt die Kette an (nur `AddColumn … nullable: true`, Snapshot-Diff genau diese Spalte; die von EF auf Windows erzeugten `\r\n` in drei Check-Constraint-Strings auf das `\n` der Kette zurückgesetzt). Neuer Endpunkt `POST …/practice-sessions/{sessionId}/shown` (204): stempelt mit der Server-Uhr, nur für den Studenten, nur nach mindestens einer Antwort und nur, solange kein Stempel später als die letzte Antwort steht; `Review` misst ab `max(lastAt, CardShownAt)`, ohne Stempel wie bisher, Untergrenze unverändert. Arcade: `api.cardShown` fire-and-forget in `next()`, sobald die nächste Karte sichtbar wird (auch beim Überspringen). Die Grenze hält an beiden Enden: der Client meldet nur das Wann (Server-Uhr), ein Stempel je Karte, nie vor der vorigen Antwort, 1-s-Untergrenze bleibt. Tests: `SpeedBonusTests` (AK 1–5), `SchemaGuardTests` grün (AK 6), `SohnPractice.test.tsx` „meldet mit Weiter die nächste Karte genau einmal als sichtbar"/„schaltet weiter, ohne auf die Meldung zu warten, auch wenn sie scheitert" (AK 7; das Nicht-Warten ist ohne einzeiligen Mutanten, der zweite Fall darum Absichtserklärung für „hält die Runde nicht an"). Rote Probe (M4 im zweiten Lauf, im ersten kompilierte er nicht):
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:49 / 23:50.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:467 | red | red | misst weiter ab `lastAt` (AK 1) |
+  | M2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:468 | red | red | Untergrenze nach dem Stempel ausgehebelt (AK 2) |
+  | M3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:151 | red | red | späterer Stempel überschreibt (AK 3) |
+  | M4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:467 | red | red | ohne Stempel keine Messung (AK 4) |
+  | M5 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:148 | red | red | Supervisor stempelt (AK 5) |
+  | M6 | frontend/src/sohn/SohnPractice.tsx:317 | red | red | `next()` meldet nichts (AK 7) |
+
+  Grundlinie nach dem Zurückspielen: green (beide Läufe).

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/frontend, rolle/student]
 aliases: [Missionen-Tab, Missionen mit Restzeit]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: XS
@@ -100,3 +100,18 @@ der eingefrorenen Test-Uhr laufen oder maskiert werden. Sonst keine.
 - **2026-11-13** — `ausformuliert`: am Code belegt – das Periodenende kennt der Server schon (`PeriodWindow`), es fehlt nur im Vertrag; Titel auf den Kern geschnitten.
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–4 (kein sechster Tab, keine Monatsperiode, `DaysLeft` vom Server); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — `geschaetzt`: XS, beides, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 72): additives `MissionStatus.DaysLeft` aus `PeriodWindow(...).To − today` in `GamificationService.MapMissionAsync` (0 = letzter Tag, `null` bei `OneOff`); `DocsCaptureTests.Redact` maskiert `daysLeft` (hängt am Wochentag des Laufs). `MissionsPanel` zeigt bei offenen Missionen „noch N Tage"/„noch 1 Tag"/„nur noch heute" statt des Zeitraums, erledigte weiter die Belohnung (de/en). Tests: neue Klasse `MissionFristTests` (AK 1–3) statt `GamificationTests` – sie friert die Uhr ihrer Factory auf feste Wochentage ein, das soll nicht in die übrigen Gamification-Fälle durchschlagen; neue `frontend/src/sohn/GamificationPanels.test.tsx` (AK 4) statt `SohnProgress.test.tsx`, das das Panel wegmockt. Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:34.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/GamificationService.cs:165 | red | red | Tag zählt die Woche (AK 1) |
+  | M2 | backend/Pugling.Api/Services/Shared/GamificationService.cs:167 | red | red | Woche So–Sa (AK 2) |
+  | M3 | backend/Pugling.Api/Services/Shared/GamificationService.cs:102 | red | red | `OneOff` bekommt 0 (AK 3) |
+  | M4 | frontend/src/sohn/GamificationPanels.tsx:62 | red | red | Frist fehlt im Panel (AK 4) |
+  | M5 | frontend/src/sohn/GamificationPanels.tsx:26 | red | red | 0 als „noch 0 Tage" (AK 4) |
+  | M6 | frontend/src/sohn/GamificationPanels.tsx:61 | red | red | Frist auch bei erledigter Mission (AK 4) |
+  | M7 | frontend/src/sohn/GamificationPanels.tsx:24 | red | red | `null` als Zahl formatiert |
+
+  Grundlinie nach dem Zurückspielen: green.

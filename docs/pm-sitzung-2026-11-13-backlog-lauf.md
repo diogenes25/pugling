@@ -191,6 +191,17 @@ englische `problem.*`-Schlüssel, weil `PROBLEM_KEYS` von Hand gepflegt wird.
 darum hier **nicht** gebaut, sondern als Vorschlag an den Menschen: `PROBLEM_KEYS` exportieren und in
 `arcadeSpielweg.test.tsx` gegen `Object.keys(en.sohn.problem)` prüfen (~10 Zeilen). Bewusst ungedeckt bis dahin.
 
+## Sprint 72 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn bekommt ehrliche Rückmeldung – der Test misst ohne Tipp, nach dem Test landet „Üben“ nicht im
+Nichts, Missionen sagen ihre Frist, eine Regelaufgabe erklärt sich nach der Antwort, die Woche zählt gegen die
+eigene Vorwoche, und der Tempo-Bonus misst ab der sichtbaren Karte.
+**Umfang:** B-544, B-522, B-528, B-529, B-253, B-530. Nicht dabei: **B-223** (M, Migration und Vertragsbruch; die
+Auslegung von G-5 soll der Nutzer sehen, bevor gebaut wird).
+**Entwickler-Brief:** ein Entwickler nacheinander (alle berühren den Student-Vertrag); B-530 als letzte, weil sie die
+Migrationskette verlängert (nullable Spalte, nur angehängt). Anti-Cheat: der Sichtbar-Stempel setzt die Server-Uhr,
+der Client meldet nur das Ereignis.
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede

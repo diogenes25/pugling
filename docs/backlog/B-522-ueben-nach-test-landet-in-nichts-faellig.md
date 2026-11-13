@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
 aliases: [Üben nach dem Test landet in „Nichts fällig"]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -131,3 +131,19 @@ in `SubmitResponse`; erst bauen, wenn der Rollengang zeigt, dass der eine leere 
 - **2026-11-13** — Ist-Stand nach Sprint 69 neu gelesen (Zeilen verschoben: Leeransicht jetzt `SohnPractice.tsx:336-346`, Texte `de.ts:320-323`).
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–4 (ehrlicher Übungsbildschirm statt versteckter Knopf, Restversuche als additives Sitzungsfeld aus einer geteilten Zählung, kein 🎉 nach dem Test); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch; Variante (1) ausdrücklich nicht in dieser Story.
+- **2026-11-13** — `in-arbeit` (Sprint 72): die Tageszählung zieht als `PositionProgressService.TestAttemptsLeftAsync` (samt `MaxTestAttemptsPerDay`) aus dem Test-Controller in den Service; `Start`, `Submit` und `PositionPracticeController.MapAsync` teilen sie. Additives Feld `SessionResponse.TestAttemptsLeft`; `SohnPractice` sperrt „🎯 Zum Test"/„🎯 Weiter zum Test" auch an den Restversuchen, Leertext „Heute nichts mehr fällig" nach dem Test (State `{ nachTest: true }` aus `SohnTest`) oder bei aufgebrauchten Versuchen, dazu „Deine Testversuche für heute sind aufgebraucht. Morgen geht's weiter." (de/en). Tests: `PositionPracticeFlowTests.Sitzung_Nennt_Die_Restversuche_Des_Tests` (AK 1, AK 3), `…Sitzung_Zeigt_Dem_Supervisor_Die_Volle_Versuchszahl` (AK 2); `SohnPractice.test.tsx` „SohnPractice nach dem Test" (AK 4–7, mit Gegenprobe zu AK 5); `SohnTest.test.tsx` „gibt dem Üben mit, dass das Kind vom Test kommt" (AK 6). Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:29.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:103 | red | red | offener Versuch zählt als verbraucht (AK 1) |
+  | M2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:100 | red | red | Supervisor-Ausnahme fehlt (AK 2) |
+  | M3 | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:144 | red | red | Sperre beim Start verloren (AK 3) |
+  | M4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:41 | red | red | Sitzung zählt nicht selbst (AK 1) |
+  | M5 | frontend/src/sohn/SohnPractice.tsx:341 | red | red | Knopf nur an `testable` (AK 4, AK 5) |
+  | M6 | frontend/src/sohn/SohnPractice.tsx:343 | red | red | Titel liest den State nicht (AK 6) |
+  | M7 | frontend/src/sohn/SohnPractice.tsx:343 | red | red | neuer Titel ohne Herkunft (AK 7) |
+  | M8 | frontend/src/sohn/SohnTest.tsx:211 | red | red | `onPractice` ohne State (AK 6) |
+
+  Grundlinie nach dem Zurückspielen: green. Abweichung vom Angriffsplan: der Fall „Versuche aufgebraucht, von der Startseite" bekommt ebenfalls den Titel ohne 🎉 (AK 4 verlangt ihn ohne Herkunftsbedingung).

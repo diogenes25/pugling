@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/frontend, rolle/creator, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/api, bereich/frontend, rolle/creator, rolle/student]
 aliases: [Erklärfeld, Erklärung im Blatt, Glühbirne]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -117,3 +117,19 @@ Editor, KI-Creator-Befüllung), Erklärungen in der Testauswertung, Erklärungen
 - **2026-11-13** — `ausformuliert`: am Code belegt – `GrammarTask.RuleHint` ist schon ein Erklärfeld „nach der Antwort", wird aber als Tipp vorher ausgespielt; für Vokabeln fehlt der Inhalt.
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–5 (erste Scheibe über `RuleHint`, Auslieferung nur in `ReviewOutcome`, Tipp bleibt, kein Test); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch; Vokabel-Erklärungen ausdrücklich nicht in dieser Story.
+- **2026-11-13** — `in-arbeit` (Sprint 72): internes `ContentItem.Explanation`, `GrammarExerciseType.ItemsOf` füllt es aus `RuleHint` (der Tipp vor der Antwort bleibt, Entscheidung 3); additives `ReviewOutcome.Explanation`, gesetzt nur über den getroffenen Eintrag (`creditedIndex`, dieselbe Regel wie `Expected`). Arcade: `Rueckmeldung.erklaerung`, Zeile „💡 Regel: …" im `RueckmeldungsBlatt` bei richtig und falsch, `SohnPractice` reicht das Feld in beiden Zweigen durch (de/en `lektion.rule`). Tests: `PositionPracticeFlowTests.Regelaufgabe_Erklaert_Nach_Der_Antwort_Die_Regel` (AK 1, AK 2), `…Vokabel_Hat_Keine_Erklaerung_Auch_Mit_Tipp` (AK 3); `Lektion.test.tsx` „zeigt die Erklärung bei falsch und bei richtig"/„zeigt ohne Erklärung keine Regelzeile", `SohnPractice.test.tsx` „reicht die Erklärung des Servers ins Blatt" (AK 5). AK 4 bleibt Absichtserklärung ohne Fall. Den Bestand an Regelaufgaben in der echten `pugling.db` nicht gezählt (Lauf arbeitet nur im Worktree) – beim Rollengang nachholen. Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:39.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:537 | red | red | Feld bleibt leer (AK 1) |
+  | M2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:537 | red | red | `Hint` statt `Explanation` (AK 3) |
+  | M3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:537 | red | red | nur Fehler bekommen eine Erklärung (AK 2) |
+  | M4 | backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs:121 | red | red | Regelaufgabe ordnet nichts zu (AK 1) |
+  | M5 | frontend/src/sohn/Lektion.tsx:251 | red | red | leere Zeile ohne Erklärung (AK 5) |
+  | M6 | frontend/src/sohn/Lektion.tsx:251 | red | red | Blatt zeigt keine Erklärung (AK 5) |
+  | M7 | frontend/src/sohn/SohnPractice.tsx:256 | red | red | richtig-Zweig reicht nichts durch (AK 5) |
+  | M8 | frontend/src/sohn/SohnPractice.tsx:271 | red | red | falsch-Zweig reicht nichts durch (AK 5) |
+
+  Grundlinie nach dem Zurückspielen: green.

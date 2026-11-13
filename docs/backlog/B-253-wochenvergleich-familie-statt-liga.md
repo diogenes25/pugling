@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Familien-Liga, Wochenvergleich]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -114,3 +114,19 @@ Verlauf über mehrere Wochen.
 - **2026-11-13** — ausformuliert (Tageslauf, Restzeit): Ist-Stand belegt, drei Schnitt-Fragen; die Entscheidung G-6 des Nutzers bleibt die Grundlage.
 - **2026-11-13** — `gegrillt`: Schnitt-Entscheidungen 1–5 (positive Münzen ohne `Manual`, Woche Mo–So UTC, Vergleich bis zum selben Zeitpunkt, Ort „Erfolge", eigener Endpunkt); `art` von `Frage` auf `Wunsch` – die Frage hat G-6 beantwortet, übrig ist eine Fähigkeit. Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)); G-6 unverändert.
 - **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 72): neuer Endpunkt `GET student/me/points/week` (`MeController.PointsWeek`, nur `Roles.Student`) → `WeekCoinsResponse(WeekStart, ThisWeek, LastWeekSoFar, LastWeekTotal)`; Summen in SQL über `WalletService.WeekCoinsAsync` (positive Münzbuchungen ohne `Manual`, Woche Mo–So UTC über das jetzt öffentliche `GamificationService.WeekMonday`, Vorwoche geschnitten bei `now − 7 Tage`, obere Grenze `now` gegen künftig gestempelte Buchungen). Client `StudentApi.GetWeekCoinsAsync`, Frontend `api.weekCoins`, Zeile `WeekComparison` unter der Zusammenfassung im Tab „Erfolge" (neutral, entfällt bei 0/0, still bei Ladefehler; de/en). Tests: neue `WochenvergleichTests` (AK 1–4, jede mit eigener eingefrorener Uhr in einem anderen Jahr), `SohnProgress.test.tsx` „Erfolge, Wochenvergleich" (AK 5). AK 4 ist Absichtserklärung: zwei Wände (Rollen-Gate und fehlender `cid`-Claim) – die Probe misst M5 grün. Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:44.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/WalletService.cs:47 | red | red | `Manual` zählt mit (AK 1) |
+  | M2 | backend/Pugling.Api/Services/Shared/WalletService.cs:62 | red | red | Shop/Malus ziehen ab (AK 1) |
+  | M3 | backend/Pugling.Api/Services/Shared/WalletService.cs:67 | red | red | Vorwoche tagesgenau statt zeitgenau geschnitten (AK 2) |
+  | M4 | backend/Pugling.Api/Services/Shared/GamificationService.cs:172 | red | red | Woche beginnt am Sonntag (AK 3) |
+  | M5 | backend/Pugling.Api/Controllers/Student/MeController.cs:21 | green | green | Rollen-Gate allein nicht tragend (AK 4, Absichtserklärung) |
+  | M6 | backend/Pugling.Api/Services/Shared/WalletService.cs:65 | red | red | diese Woche ab Vorwochen-Montag (AK 1) |
+  | M7 | frontend/src/sohn/SohnProgress.tsx:34 | red | red | Zeile auch bei 0/0 (AK 5) |
+  | M8 | frontend/src/sohn/SohnProgress.tsx:62 | red | red | Zeile fehlt (AK 5) |
+
+  Grundlinie nach dem Zurückspielen: green.
