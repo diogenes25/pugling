@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Nachschau-Reste Sprint 52]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
-groesse: ""
+groesse: "S"
 wo: "frontend"
 migration: ""
 vertragsbruch: ""
@@ -29,3 +29,11 @@ Nachschau von Sprint 52 (frischer `frontend-reviewer` an `59fc0a8`, gelesen, Vit
 ## Verlauf
 
 - **2026-11-13** — angelegt (Nachschau Sprint 52, Retro Sprint 54/55).
+- **2026-11-13** — gebaut (Sprint 57), autonom gegrillt (Defekt): (1) die Zahl der Überschrift hängt an den Filtern
+  (`zahlZumFilter`, Z2 → rot); (2) leere oder gescheiterte Runde nach „Jetzt abfragen" fokussiert Überschrift bzw.
+  Meldung (`role="alert"`), die Absicht verfällt mit jedem Ende des Ladens (Z1 → rot); (3) Fokus-Test prüft das
+  Antwortfeld selbst.
+  - Verifikation: `dotnet test Pugling.sln -c Release` 1439/1439, Vitest 825/825, `tsc -b` sauber, Playwright 140/140
+    auf 5201/5174; Mutanten X1–X4, Y1, Y2, Z1, Z2 8/8 rot nach der letzten Änderung.
+  - Rollengang Vater: E2E-Suite (Planbau, Übungsliste) gegen echten Server und UI; Sohn (B-515): Komponententests,
+    E2E-Suite grün; Creator Regressionszeuge. Abgenommen.

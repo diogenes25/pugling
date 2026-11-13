@@ -287,11 +287,12 @@ public sealed class CreatorApi(HttpClient http)
     public Task<IReadOnlyList<ExerciseSummary>> SearchExercisesAsync(int? subjectId = null, int? seriesUnitId = null,
         int? grade = null, SchoolTypes? schoolType = null, int? categoryId = null, string? type = null,
         string? search = null, string? source = null, bool? mineOnly = null, int skip = 0, int take = 50,
-        int? grammarTopicId = null, CancellationToken ct = default) =>
+        int? grammarTopicId = null, int? seriesId = null, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ExerciseSummary>>($"{Root}/exercises" + PuglingHttp.Query(
             ("subjectId", subjectId), ("seriesUnitId", seriesUnitId), ("grade", grade), ("schoolType", schoolType),
             ("categoryId", categoryId), ("type", type), ("search", search), ("source", source),
-            ("mineOnly", mineOnly), ("grammarTopicId", grammarTopicId), ("skip", skip), ("take", take)), ct);
+            ("mineOnly", mineOnly), ("grammarTopicId", grammarTopicId), ("seriesId", seriesId), ("skip", skip),
+            ("take", take)), ct);
 
     /// <summary>Exercise detail including raw config and own permissions (<c>isOwn</c>/<c>isOwner</c>).</summary>
     public Task<ExerciseDetail> GetExerciseDetailAsync(int exerciseId, CancellationToken ct = default) =>

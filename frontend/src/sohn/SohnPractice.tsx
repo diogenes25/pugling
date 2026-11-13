@@ -160,13 +160,17 @@ export function SohnPractice() {
   // Die erste Taste einer Karte ohne Eingabefeld (Umdrehen, Kennenlernen-„Weiter"): welche Stufe kommt, entscheidet der
   // Server – auch sie muss den Fokus bekommen können (Review-Fund).
   const cardActionRef = useRef<HTMLButtonElement>(null);
+  const landingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const toCard = phase === "front"
       && (prevPhase.current === "wrong" || (prevPhase.current === "loading" && focusAfterLoad.current));
-    if (toCard) {
-      focusAfterLoad.current = false;
+    if (toCard)
       (answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])") ?? cardActionRef.current)?.focus();
-    }
+    // Endet die neue Runde leer oder im Fehler, verschwindet „Jetzt abfragen" ebenso – der Fokus geht an die Überschrift
+    // bzw. die Meldung (B-515). Jedes Ende des Ladens verbraucht die Absicht, nicht nur der Weg zur Karte.
+    if (prevPhase.current === "loading" && focusAfterLoad.current && (phase === "empty" || phase === "error"))
+      landingRef.current?.focus();
+    if (prevPhase.current === "loading" && phase !== "loading") focusAfterLoad.current = false;
     // Der Effekt läuft nur bei einem Phasenwechsel, „done" → „done" gibt es hier nicht.
     if (phase === "done") doneRef.current?.focus();
     prevPhase.current = phase;
@@ -276,7 +280,7 @@ export function SohnPractice() {
 
   function view() {
   if (phase === "loading") return <div className="sohn-body"><div className="loading">{t("practice.loading")}</div></div>;
-  if (phase === "error") return <div className="sohn-body"><div className="error-box">{error}</div>
+  if (phase === "error") return <div className="sohn-body"><div className="error-box" ref={landingRef} tabIndex={-1} role="alert">{error}</div>
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   // B-117: eine Anzeigestufe (ShowBoth, B-96) kennt keinen Test - die Klausur antwortet dort mit
@@ -287,7 +291,7 @@ export function SohnPractice() {
   if (phase === "empty") return (
     <div className="sohn-body">
       <div className="card" style={{ textAlign: "center" }}>
-        <div className="screen-title">{t("practice.nothingDue")}</div>
+        <div className="screen-title" ref={landingRef} tabIndex={-1}>{t("practice.nothingDue")}</div>
         <p className="sub">{testable
           ? t("practice.nothingDueTest")
           : t("practice.nothingDueLater")}</p>

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { SCHOOL_TYPES } from "../lib/labels";
@@ -11,14 +10,15 @@ import type { CategoryResponse, GrammarTopicResponse, SchoolType, SeriesUnitResp
  * Ersetzt das unübersichtliche flache Pulldown beim Zusammenstellen eines Lehrplans. Die Komponente
  * ist zustandslos: der Aufrufer hält den {@link ExerciseFilter} und führt die eigentliche Suche aus.
  *
- * Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel; die Reihe (`series`) ist
- * nur eine Zwischenstufe der Auswahl hier im Browser (Reihe → Unit), sie geht nicht in den Filter selbst.
- * Die Reihen-Auswahl lebt bewusst nur lokal (nicht aus `value.seriesUnitId` rückableitbar) – die Komponente
- * darf darum nur mit einem **leeren** `value.seriesUnitId` gestartet werden; ein vorbelegter Aufruf ließe
- * „Unit" einen Wert zeigen, während „Reihe" auf „– alle –" stünde und das Feld gesperrt bliebe.
+ * Seit B-106 hängt jede Übung an einer Lehrwerk-Unit statt an einem Kapitel. Die Reihe ist seit B-513 selbst ein
+ * Filter (`seriesId`, alle Units der Reihe) – vorher war sie nur Zwischenstufe, und eine Reihe ohne Unit filterte
+ * nichts. Die Komponente darf nur mit einem **leeren** `value.seriesUnitId` gestartet werden; ein vorbelegter Aufruf
+ * ließe „Unit" einen Wert zeigen, während „Reihe" auf „– alle –" stünde und das Feld gesperrt bliebe.
  */
 export interface ExerciseFilter {
   subjectId?: number;
+  /** Lehrwerk-Reihe, alle ihre Units (B-513). */
+  seriesId?: number;
   seriesUnitId?: number;
   grade?: number;
   schoolType?: SchoolType;
@@ -36,8 +36,8 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
   onChange: (next: ExerciseFilter) => void;
   subjects: SubjectResponse[];
 }) {
-  // Reihe ist nur eine lokale Zwischenauswahl (Reihe → Unit); Arten hängen am gewählten Fach.
-  const [seriesId, setSeriesId] = useState<number | "">("");
+  // Die Reihe filtert selbst (B-513) und gibt die Units zur Auswahl vor; Arten hängen am gewählten Fach.
+  const seriesId = value.seriesId ?? "";
   const types = useExerciseTypes();
   const series = useAsync<TextbookSeriesResponse[]>(
     () => api.textbookSeries(value.subjectId ? { subjectId: value.subjectId } : {}), [value.subjectId]);
@@ -51,10 +51,9 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
   const set = (patch: Partial<ExerciseFilter>) => onChange({ ...value, ...patch });
   // Fachwechsel macht die fachabhängigen Facetten (Reihe/Unit, Art) hinfällig → mit zurücksetzen.
   const setSubject = (subjectId?: number) => {
-    setSeriesId("");
-    onChange({ ...value, subjectId, seriesUnitId: undefined, categoryId: undefined, grammarTopicId: undefined });
+    onChange({ ...value, subjectId, seriesId: undefined, seriesUnitId: undefined, categoryId: undefined, grammarTopicId: undefined });
   };
-  const hasFilter = value.subjectId != null || value.seriesUnitId != null || value.grade != null
+  const hasFilter = value.subjectId != null || value.seriesId != null || value.seriesUnitId != null || value.grade != null
     || value.schoolType != null || value.categoryId != null || value.type != null || (value.search ?? "") !== ""
     || value.grammarTopicId != null;
 
@@ -71,7 +70,7 @@ export function ExerciseFilterBar({ value, onChange, subjects }: {
       <div className="field" style={{ minWidth: 150 }}>
         <label>Reihe</label>
         <select aria-label="Reihe-Filter" value={seriesId}
-          onChange={(e) => { const v = e.target.value ? Number(e.target.value) : ""; setSeriesId(v); set({ seriesUnitId: undefined }); }}>
+          onChange={(e) => set({ seriesId: e.target.value ? Number(e.target.value) : undefined, seriesUnitId: undefined })}>
           <option value="">– alle –</option>
           {series.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>

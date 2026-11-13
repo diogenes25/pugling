@@ -460,7 +460,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
    * Auswahl verwerfen.
    */
   const kriterien = [
-    filter.subjectId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
+    filter.subjectId, filter.seriesId, filter.seriesUnitId, filter.grade, filter.schoolType, filter.categoryId,
     filter.type || undefined, filter.search?.trim() || undefined,
     // Die achte Facette (B-155) – genau das Feld, das der Absatz oben als Vergessens-Kandidat benennt: ohne
     // diese Zeile wechselte der Filter, ohne dass die Abfrage neu liefe (in der E2E-Spec gemessen).

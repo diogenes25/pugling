@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DELETE_EXERCISE_QUESTION, fachDerZeile, gemesseneZahl } from "./VaterExercises";
+import { DELETE_EXERCISE_QUESTION, fachDerZeile, gemesseneZahl, reiheFilter, zahlZumFilter } from "./VaterExercises";
 import type { SubjectResponse } from "../lib/types";
 
 /** B-431, Review-Fund: das Fach einer Zeile in der gemischten Liste „Meine Übungen". */
@@ -41,5 +41,24 @@ describe("Überschrift der Übungsliste – gemessene Zahl", () => {
     expect(gemesseneZahl({ data: { total: 7 }, stale: true })).toBeNull();
     expect(gemesseneZahl({ data: { total: 7 }, stale: false })).toBe(7);
     expect(gemesseneZahl({ data: { total: 0 }, stale: false })).toBe(0);
+  });
+});
+
+// B-513, AK 2. Rot, wenn die gewählte Reihe ohne Unit nicht gesendet wird (dann filtert sie nichts) oder neben einer
+// gewählten Unit doch.
+describe("Reihe-Filter der Übungsliste", () => {
+  it("sendet die Reihe nur ohne Unit", () => {
+    expect(reiheFilter(7, "")).toBe(7);
+    expect(reiheFilter(7, 3)).toBeUndefined();
+    expect(reiheFilter("", "")).toBeUndefined();
+  });
+});
+
+// B-515. Rot, wenn die Zahl eines anderen Filters stehen bleibt – oder wenn sie beim Blättern (gleicher Filter) verschwindet.
+describe("Zahl der Überschrift je Filter", () => {
+  it("nennt die Zahl nur zum Filter, zu dem sie gemessen wurde", () => {
+    expect(zahlZumFilter({ key: "1||", total: 42 }, "1||")).toBe(42);
+    expect(zahlZumFilter({ key: "1||", total: 42 }, "2||")).toBeNull();
+    expect(zahlZumFilter(null, "1||")).toBeNull();
   });
 });

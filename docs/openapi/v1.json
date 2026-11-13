@@ -12204,6 +12204,19 @@
             }
           },
           {
+            "name": "seriesId",
+            "in": "query",
+            "description": "Textbook series - all its units (B-513: a series chosen without a unit filtered nothing).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "description": "Sort column: \u0060title\u0060, \u0060type\u0060, \u0060grade\u0060, \u0060source\u0060, \u0060created\u0060,\n\u0060rating\u0060 (average stars; unrated exercises last in both directions).\nShort form \u0060-title\u0060 = descending. Without a value: subject \u2192 series unit \u2192 order.",

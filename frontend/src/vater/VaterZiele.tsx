@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { reiheFilter } from "./VaterExercises";
 import { Link, useParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel } from "../components/InfoHint";
@@ -137,9 +138,11 @@ function ScopePicker({ value, onChange, subjects }: {
       : api.searchExercises({
         subjectId: Number(value.subjectId),
         seriesUnitId: value.seriesUnitId === "" ? undefined : Number(value.seriesUnitId),
+        // B-513: „ganze Reihe" zeigt die Übungen der Reihe, nicht die des ganzen Fachs.
+        seriesId: reiheFilter(value.seriesId === "" ? "" : Number(value.seriesId), value.seriesUnitId === "" ? "" : Number(value.seriesUnitId)),
         type: "Vocabulary", take: 100,
       })),
-    [value.subjectId, value.seriesUnitId]);
+    [value.subjectId, value.seriesId, value.seriesUnitId]);
 
   return (
     <>

@@ -371,8 +371,25 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     await screen.findByText("eins");
     await act(async () => {});
 
-    expect(document.activeElement).not.toBe(document.body);
-    expect(document.activeElement?.tagName).toMatch(/INPUT|BUTTON/);
+    // Das Antwortfeld der neuen Karte, nicht irgendein Knopf (B-515).
+    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+  });
+
+  // B-515. Rot, wenn eine leere neue Runde den Fokus auf `body` fallen lässt („Jetzt abfragen" ist weg, keine Karte da).
+  it("setzt den Fokus nach Jetzt abfragen auf die Überschrift, wenn nichts fällig ist", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true)]))
+      .mockImplementationOnce(() => Promise.resolve([]));
+    review.mockResolvedValue(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await act(async () => {});
+    startSession.mockResolvedValueOnce({ id: 12, testable: true });
+
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.quizNow }));
+    const title = await screen.findByText(de.sohn.practice.nothingDue);
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(title);
   });
 
   // B-443 (Review). Rot, wenn nur Karten mit Eingabefeld den Fokus bekommen: welche Stufe die neue Runde bringt, entscheidet

@@ -488,6 +488,7 @@ export const api = {
     const q = new URLSearchParams();
     if (p.subjectId != null) q.set("subjectId", String(p.subjectId));
     if (p.seriesUnitId != null) q.set("seriesUnitId", String(p.seriesUnitId));
+    if (p.seriesId != null) q.set("seriesId", String(p.seriesId));
     if (p.grade != null) q.set("grade", String(p.grade));
     if (p.schoolType && p.schoolType !== "None") q.set("schoolType", p.schoolType);
     if (p.categoryId != null) q.set("categoryId", String(p.categoryId));

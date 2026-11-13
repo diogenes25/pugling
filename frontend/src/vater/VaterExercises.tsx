@@ -27,7 +27,7 @@ import { ListenAusfall } from "../components/ListenAusfall";
  * Fach und Lehrwerk-Unit sind hier **Filter**, nicht Pflicht: die Liste erscheint, sobald ein Fach gewählt
  * ist – die Unit schränkt weiter ein. (Vorher blieb die Seite leer, bis auch ein Kapitel gewählt war, weil
  * die Auswahl zum Anlegen gehörte, nicht zum Suchen.) Seit B-106 hängt jede Übung an einer Lehrwerk-Unit
- * statt an einem Kapitel; die Reihe ist hier nur die Zwischenstufe der Auswahl (Reihe → Unit).
+ * statt an einem Kapitel; die Reihe filtert seit B-513 selbst (alle ihre Units), die Unit schränkt weiter ein.
  */
 /**
  * Die Frage vor „Löschen". Der Server löscht nur eine unbenutzte Übung (sonst `exercise_in_use`, dessen Text das sagt) –
@@ -111,14 +111,22 @@ export function VaterExercises() {
     () => api.searchExercises({
       subjectId: subjectId !== "" ? Number(subjectId) : undefined,
       seriesUnitId: seriesUnitId !== "" ? Number(seriesUnitId) : undefined,
+      seriesId: reiheFilter(seriesId, seriesUnitId),
       mineOnly: !showShared, sort, dir, skip, take: PAGE_SIZE,
     }),
-    [subjectId, seriesUnitId, showShared, sort, dir, skip]);
+    [subjectId, seriesId, seriesUnitId, showShared, sort, dir, skip]);
   /** Ohne Fach-Filter stehen Übungen aus mehreren Fächern in einer Liste – dann nennt jede Zeile ihr Fach. */
   const subjectNameOf = (id: number | null | undefined) => fachDerZeile(subjectId, id, subjects.data);
   // Filter-/Sortier-Wechsel springt auf Seite 1 zurück (sonst leere Seite jenseits des Bestands). Der Reset
   // geschieht in der Render-Phase (nicht per Effekt), damit die Liste nicht erst mit altem skip nachlädt.
-  const filterKey = `${subjectId}|${seriesUnitId}|${showShared}|${sort}|${dir}`;
+  const filterKey = `${subjectId}|${seriesId}|${seriesUnitId}|${showShared}|${sort}|${dir}`;
+  // Die Zahl der Überschrift gehört zu den Filtern, nicht zu Seite und Sortierung (B-515): beim Blättern bleibt sie stehen,
+  // nach einem Filterwechsel erscheint sie erst mit der Antwort, die zu ihm gehört.
+  const nurFilter = `${subjectId}|${seriesId}|${seriesUnitId}|${showShared}`;
+  const [gemessen, setGemessen] = useState<{ key: string; total: number } | null>(null);
+  const frisch = gemesseneZahl(existing);
+  if (frisch !== null && (gemessen?.key !== nurFilter || gemessen.total !== frisch)) setGemessen({ key: nurFilter, total: frisch });
+  const zahl = zahlZumFilter(gemessen, nurFilter);
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (prevFilterKey !== filterKey) { setPrevFilterKey(filterKey); setSkip(0); }
 
@@ -188,7 +196,7 @@ export function VaterExercises() {
           <h3 style={{ margin: 0 }}>
             {subjectId !== "" ? "Übungen" : showShared ? "Alle Übungen" : "Meine Übungen"}{" "}
             {/* Eine Zahl nur, wenn sie gemessen ist: im ersten Laden und im Ausfall stünde sonst „(0)" neben „Lade…" (B-456). */}
-            {gemesseneZahl(existing) !== null && <span className="muted">({gemesseneZahl(existing)})</span>}
+            {zahl !== null && <span className="muted">({zahl})</span>}
           </h3>
         </div>
         <div className="row" style={{ marginBottom: 8 }}>
@@ -441,4 +449,17 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
  */
 export function gemesseneZahl(q: { data: { total: number } | null; stale: boolean }): number | null {
   return q.data && !q.stale ? q.data.total : null;
+}
+
+/**
+ * B-513: eine Reihe ohne Unit filtert die ganze Reihe – vorher sah die Auswahl wie ein Filter aus und war keiner. Mit
+ * Unit filtert die (engere) Unit allein. Eigene Funktion, damit die Verdrahtung einen Test hat (Vorbild `artenPending`).
+ */
+export function reiheFilter(seriesId: number | "", seriesUnitId: number | ""): number | undefined {
+  return seriesId !== "" && seriesUnitId === "" ? Number(seriesId) : undefined;
+}
+
+/** Die zuletzt gemessene Zahl, wenn sie zu diesen Filtern gehört (B-515), sonst keine. */
+export function zahlZumFilter(gemessen: { key: string; total: number } | null, filter: string): number | null {
+  return gemessen?.key === filter ? gemessen.total : null;
 }

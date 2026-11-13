@@ -61,6 +61,8 @@ export type VocabSortKey = "key" | "word" | "translation" | "pos" | "created";
 export interface ExerciseSearchParams {
   subjectId?: number;
   seriesUnitId?: number;
+  /** Alle Units einer Lehrwerk-Reihe (B-513). */
+  seriesId?: number;
   grade?: number;
   schoolType?: components["schemas"]["SchoolTypes"];
   categoryId?: number;

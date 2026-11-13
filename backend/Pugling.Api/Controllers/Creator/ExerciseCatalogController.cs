@@ -29,6 +29,7 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
     /// </summary>
     /// <param name="subjectId">Subject (reached transitively through the series of the exercise's unit).</param>
     /// <param name="seriesUnitId">Series unit (usually implies a subject).</param>
+    /// <param name="seriesId">Textbook series - all its units (B-513: a series chosen without a unit filtered nothing).</param>
     /// <param name="grade">Grade level of the child; matches if it lies within [GradeMin, GradeMax].</param>
     /// <param name="schoolType">School type; matches if the exercise includes it or applies to all.</param>
     /// <param name="categoryId">Subject-dependent category.</param>
@@ -52,7 +53,7 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
     public async Task<IEnumerable<ExerciseSummary>> Search(
         [FromQuery] int? subjectId, [FromQuery] int? seriesUnitId, [FromQuery] int? grade, [FromQuery] SchoolTypes? schoolType,
         [FromQuery] int? categoryId, [FromQuery] string? type, [FromQuery] string? search,
-        [FromQuery] string? source, [FromQuery] bool? mineOnly, [FromQuery] int? grammarTopicId,
+        [FromQuery] string? source, [FromQuery] bool? mineOnly, [FromQuery] int? grammarTopicId, [FromQuery] int? seriesId,
         [FromQuery] string? sort = null, [FromQuery] string? dir = null,
         [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake, CancellationToken ct = default)
     {
@@ -71,6 +72,9 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
 
         if (seriesUnitId is int uid)
             query = query.Where(e => e.SeriesUnitId == uid);
+
+        if (seriesId is int serid)
+            query = query.Where(e => e.SeriesUnit!.SeriesId == serid);
 
         if (grade is int g)
             query = query.Where(e => (e.GradeMin == null || e.GradeMin <= g)
