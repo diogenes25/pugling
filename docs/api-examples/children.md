@@ -28,7 +28,8 @@ Response — `HTTP 200`:
     "allowedContentRating": "Everyone",
     "createdAt": "<timestamp>",
     "coins": 50,
-    "gems": 300
+    "gems": 300,
+    "bonusDailyCoinCap": null
   }
 ]
 ```
@@ -63,7 +64,8 @@ Response — `HTTP 201`:
   "allowedContentRating": "Everyone",
   "createdAt": "<timestamp>",
   "coins": 0,
-  "gems": 0
+  "gems": 0,
+  "bonusDailyCoinCap": null
 }
 ```
 
@@ -116,7 +118,8 @@ Response — `HTTP 200`:
   "allowedContentRating": "Everyone",
   "createdAt": "<timestamp>",
   "coins": 0,
-  "gems": 0
+  "gems": 0,
+  "bonusDailyCoinCap": null
 }
 ```
 
@@ -149,7 +152,8 @@ Response — `HTTP 200`:
   "allowedContentRating": "Everyone",
   "createdAt": "<timestamp>",
   "coins": 0,
-  "gems": 0
+  "gems": 0,
+  "bonusDailyCoinCap": null
 }
 ```
 

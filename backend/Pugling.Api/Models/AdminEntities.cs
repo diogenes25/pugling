@@ -90,6 +90,12 @@ public class Child
     public string? ProfileNotes { get; set; }
 
     /// <summary>
+    /// Most bonus-training coins this child may earn per day, set by the supervisor; <c>null</c> = the server default
+    /// (<c>Gamification:ExtraTraining:DailyCoinCap</c>), 0 = the bonus training pays nothing.
+    /// </summary>
+    public int? BonusDailyCoinCap { get; set; }
+
+    /// <summary>
     /// Weighted interests from the controlled taxonomy (including dislikes at a negative weight).
     /// Complements the free-form <see cref="Interests"/>, it does not replace it: free text is the language
     /// of the AI creator, referenced tags are the basis of the machine-driven image selection.

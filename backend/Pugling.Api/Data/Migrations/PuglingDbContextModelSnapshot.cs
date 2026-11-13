@@ -251,6 +251,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("BirthYear")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BonusDailyCoinCap")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");

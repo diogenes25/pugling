@@ -293,4 +293,37 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             $"{Base(other)}/runs/{run.GetProperty("runId").GetInt32()}/submit", body)).StatusCode);
         Assert.Equal(0, CoinsBooked(owner.ChildId));
     }
+
+    [Fact]
+    public async Task Der_Vater_Setzt_Den_Tagesdeckel_Je_Kind()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4), ("3 + 3", 6));
+        var child = $"/api/v1/supervisor/children/{s.ChildId}";
+
+        // Out of range is refused rather than clamped: an extra zero must not open the shop wide.
+        Assert.Equal(HttpStatusCode.BadRequest, (await s.Father.PatchAsJsonAsync(child, new { bonusDailyCoinCap = 5000 })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await s.Father.PatchAsJsonAsync(child, new { bonusDailyCoinCap = -1 })).StatusCode);
+
+        var patched = await JsonAsync(await s.Father.PatchAsJsonAsync(child, new { bonusDailyCoinCap = 3 }));
+        Assert.Equal(3, patched.GetProperty("bonusDailyCoinCap").GetInt32());
+        Assert.Equal(3, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
+
+        // Three typed hits would pay 6; the child's own cap of 3 cuts it, not the server default of 30.
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        var answers = run.GetProperty("cards").EnumerateArray().Select(c => new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = (c.GetProperty("prompt").GetString()![0] - '0') * 2 + "",
+        }).ToArray();
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers }));
+        Assert.Equal(3, result.GetProperty("coinsAwarded").GetInt32());
+        JsonAssert.True(result, "capReached");
+
+        // Back to the default.
+        var cleared = await JsonAsync(await s.Father.PatchAsJsonAsync(child, new { clearBonusDailyCoinCap = true }));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("bonusDailyCoinCap").ValueKind);
+        Assert.Equal(30, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
+    }
 }

@@ -50,8 +50,9 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var today = Today;
         var gate = await GateAsync(childId, today, ct);
         var coinsToday = await CoinsTodayAsync(childId, today, ct);
+        var cap = CapOf(await db.Children.AsNoTracking().Where(c => c.Id == childId).Select(c => c.BonusDailyCoinCap).FirstAsync(ct));
         var pool = gate.Plans.Count == 0 ? [] : await PoolAsync(childId, gate.Plans, ct);
-        return new ExtraTrainingOverview(gate.Unlocked, gate.LockReason, gate.Outstanding, coinsToday, opts.DailyCoinCap,
+        return new ExtraTrainingOverview(gate.Unlocked, gate.LockReason, gate.Outstanding, coinsToday, cap,
             [.. pool.Select(p => p.Row)]);
     }
 
@@ -140,7 +141,8 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
         var coinsBefore = await CoinsTodayAsync(childId, today, ct);
         var earned = graded.Correct * CoinsPerHit(run.Form);
-        var left = opts.DailyCoinCap is { } cap ? Math.Max(0, cap - coinsBefore) : int.MaxValue;
+        var dailyCap = CapOf(child.BonusDailyCoinCap);
+        var left = dailyCap is { } cap ? Math.Max(0, cap - coinsBefore) : int.MaxValue;
         var coins = Math.Min(earned, left);
 
         var now = time.GetUtcNow().UtcDateTime;
@@ -171,7 +173,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         }
 
         return new Outcome<ExtraRunResult>(new ExtraRunResult(run.Id, run.Form, graded.Total, graded.Correct, coins,
-            coins < earned, coinsBefore + coins, opts.DailyCoinCap,
+            coins < earned, coinsBefore + coins, dailyCap,
             [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect))]));
     }
 
@@ -195,6 +197,9 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             ? new Gate(true, null, [], plans)
             : new Gate(false, LockDutyOpen, outstanding, plans);
     }
+
+    // The supervisor's cap for this child wins over the server default.
+    private int? CapOf(int? childCap) => childCap ?? opts.DailyCoinCap;
 
     private async Task<int> CoinsTodayAsync(int childId, DateOnly day, CancellationToken ct) =>
         await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0;

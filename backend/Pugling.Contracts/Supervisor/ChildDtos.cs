@@ -7,27 +7,29 @@ namespace Pugling.Contracts.Supervisor;
 /// A supervised child with profile and balance of both currencies. <c>Interests</c> is the <b>free-form</b>
 /// part of the profile (language for the AI creator); the weighted, referenced interests used for
 /// image selection live under <c>children/{id}/interests</c>. <c>AllowedContentRating</c> is the
-/// upper bound of image suitability – only the supervisor may raise it.
+/// upper bound of image suitability – only the supervisor may raise it. <c>BonusDailyCoinCap</c> is the child's own
+/// daily cap of bonus-training coins; <c>null</c> = the server default.
 /// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
-    ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems);
+    ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems, int? BonusDailyCoinCap);
 
 /// <summary>Input for creating a child.</summary>
 public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
-    ContentRating? AllowedContentRating = null);
+    ContentRating? AllowedContentRating = null, int? BonusDailyCoinCap = null);
 
 /// <summary>
 /// Partial change to a child; omitted fields stay unchanged. <c>null</c> means "not specified"
 /// and therefore cannot <b>clear</b> anything – that is what the <c>Clear…</c> switches are for (cf.
 /// <c>ClearGrade</c> on the class test): <c>ClearBirthYear</c> removes the birth year,
-/// <c>ClearGrade</c> the grade level (the child then drops out of grade filters).
+/// <c>ClearGrade</c> the grade level (the child then drops out of grade filters), <c>ClearBonusDailyCoinCap</c> returns
+/// the bonus cap to the server default.
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null,
-    bool ClearBirthYear = false, bool ClearGrade = false);
+    bool ClearBirthYear = false, bool ClearGrade = false, int? BonusDailyCoinCap = null, bool ClearBonusDailyCoinCap = false);
 
 /// <summary>A supervision relationship: which supervisor supervises the student since when.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

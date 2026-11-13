@@ -37,8 +37,8 @@ Gegrillt im Chat am 2026-11-13 (drei Fragen, jeweils die Empfehlung gewählt); d
    (`409 extra_training_locked`). Kosten: ein Kind, das die Pflicht nicht schafft, sieht die Münzen nur.
 2. **Selbsteinschätzung zahlt nichts.** Karteikarten-Runden sind Aufwärmen; Münzen gibt es nur für geprüfte
    Treffer (Auswahl 1, Tippen 2 je Treffer, Konfiguration `Gamification:ExtraTraining`).
-3. **Tagesdeckel**, einstellbar (`DailyCoinCap`, Vorgabe 30, `null` = ohne Deckel). Zurzeit über die
-   Server-Konfiguration, nicht je Kind im Vater-Web.
+3. **Tagesdeckel**, einstellbar: Vorgabe aus der Konfiguration (`DailyCoinCap`, 30, `null` = ohne Deckel), je Kind
+   übersteuerbar auf der Kind-Seite im Vater-Web (`Child.BonusDailyCoinCap`, 0–1000; leer = Vorgabe, 0 = zahlt nichts).
 4. **Eine Übung zahlt einmal.** Eine Übung ohne Vokabeln hat genau einen Durchgang; schon der Start verbraucht
    sie (eine offene Runde wird fortgesetzt, nie ersetzt). Eine Vokabelübung darf wiederholt werden, fragt aber mit
    jedem abgeschlossenen Durchgang schwerer: 2× Karteikarte, 2× Auswahl (ab 4 Wörtern), danach dauerhaft Tippen.
@@ -83,7 +83,7 @@ E2E `e2e/bonus.spec.ts`.
 - Die Einstufung „Wortkasten zahlt als Auswahl“ (Entscheidung aus dem Review) ist ohne eigenen Test.
 - Die Sperre auf dem Pfad rechnet der Client für den gewählten Plan nach (`dutyDone || goalsTotal === 0`); bei
   mehreren spielbaren Plänen könnte sie vom Server abweichen – heute ist genau einer spielbar.
-- Der Deckel und die Raten sind Server-Konfiguration, nicht je Kind im Vater-Web einstellbar.
+- Die Raten je Treffer sind Server-Konfiguration, nicht je Kind einstellbar (der Deckel schon).
 - Bonus-Runden schreiben keinen plan-übergreifenden Item-Lernstand (`ItemProgress`); der Vater sieht sie nur im
   Münz-Verlauf.
 
@@ -100,3 +100,8 @@ E2E `e2e/bonus.spec.ts`.
 - 2026-11-13: **abgenommen** mit Commit `ce9b9a8d`. Rollengang: die E2E `bonus.spec.ts` fährt den Weg des Sohns
   an der laufenden App (Sperre vor der Pflicht, Öffnen danach, Einmal-Übung mit Münzen, Vokabel-Runde mit
   Fortsetzen). Nicht auf der echten DB gespielt: der Heimnetz-Server übernimmt die Migration erst beim nächsten Start.
+- 2026-11-13: Nachtrag auf Wunsch des Nutzers: Tagesdeckel je Kind im Vater-Web (`Child.BonusDailyCoinCap`, Migration
+  `ChildBonusDailyCoinCap`, PATCH mit `clearBonusDailyCoinCap`, Abschnitt „Bonus-Training“ auf der Kind-Seite mit dem
+  heutigen Stand). Test `Der_Vater_Setzt_Den_Tagesdeckel_Je_Kind` (rote Probe: Kind-Deckel ignoriert → rot), E2E
+  `bonus-deckel.spec.ts` (rote Probe: falscher Feldname → rot an „gespeichert“). Review `pugling-reviewer` ohne Blocker,
+  Funde eingearbeitet. Volle Suite 1537/1537, Vitest 923/923; beide Migrationen gegen eine Kopie der echten DB geprobt.

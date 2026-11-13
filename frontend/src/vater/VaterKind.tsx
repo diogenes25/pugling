@@ -12,7 +12,7 @@ import { GENDERS, INTEREST_FACETS, SCHOOL_TYPES, interestFacetLabel } from "../l
 import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
-  ChildInterestResponse, ChildResponse, ContentRating, Gender, InterestFacet,
+  ChildInterestResponse, ChildResponse, ContentRating, ExtraTrainingOverview, Gender, InterestFacet,
   InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
@@ -80,6 +80,9 @@ export function VaterKind() {
       <TimetableSection childId={childId} subjects={subjects.data ?? []} />
 
       <RatingSection child={me} onSaved={child.reload} />
+
+      {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
+      <BonusSection key={me.id} child={me} onSaved={child.reload} />
 
       <section>
         <h3 className="h-section">Interessen</h3>
@@ -298,6 +301,66 @@ function RatingSection({ child, onSaved }: { child: ChildResponse; onSaved: () =
         </select>
       </div>
       <p className="sub">{RATINGS.find((r) => r.value === value)?.hint}</p>
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
+    </section>
+  );
+}
+
+/**
+ * Der Tagesdeckel des Bonus-Trainings (B-533): wie viele Extra-Münzen das Kind am Tag mit zusätzlichen Übungen
+ * verdienen darf. Leer = Vorgabe des Servers. Daneben der heutige Stand aus derselben Sicht, die das Kind hat –
+ * so sieht der Vater die Wirkung, ohne zu rechnen.
+ */
+function BonusSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+  const own = child.bonusDailyCoinCap ?? null;
+  const [value, setValue] = useState(own?.toString() ?? "");
+  // Ein halb getipptes `1e` meldet das Zahlenfeld als leer – und leer heißt hier „Vorgabe“. Ohne diese Marke würde ein
+  // Tippfehler den eigenen Deckel stillschweigend löschen.
+  const [badInput, setBadInput] = useState(false);
+  const today = useAsync<ExtraTrainingOverview>(() => api.extraTraining(child.id), [child.id, own]);
+  const action = useAction();
+  const cap = value.trim() === "" ? null : Number(value);
+  const valid = !badInput && (cap === null || (Number.isInteger(cap) && cap >= 0 && cap <= 1000));
+
+  async function save(next: number | null) {
+    const dto: UpdateChildDto = next === null ? { clearBonusDailyCoinCap: true } : { bonusDailyCoinCap: next };
+    if (await action.run(() => api.updateChild(child.id, dto), next === null ? "Vorgabe gilt wieder." : "Tagesdeckel gespeichert.")) {
+      if (next === null) setValue("");
+      onSaved();
+    }
+  }
+
+  return (
+    <section>
+      <h3 className="h-section">Bonus-Training</h3>
+      <p className="sub">
+        Nach erfüllter Tagespflicht kann {child.name} Extra-Übungen zum aktuellen Thema spielen. Münzen gibt es nur
+        für geprüfte Antworten (Auswahl, Tippen), jede Übung zahlt einmal, Vokabeln werden mit jeder Runde schwerer.
+      </p>
+      <ListenAusfall was="Der heutige Bonus-Stand" fehler={today.error} laedt={today.loading} onRetry={today.reload} schluessel={child.id} />
+      {today.data && (
+        <p className="sub">
+          Heute verdient: <strong>{today.data.coinsToday}</strong>
+          {today.data.dailyCoinCap != null ? <> von {today.data.dailyCoinCap} 🪙</> : <> 🪙 (ohne Deckel)</>}
+          {own === null && " – Vorgabe des Servers"}
+        </p>
+      )}
+      <form className="row" style={{ alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}
+        onSubmit={(e) => { e.preventDefault(); if (valid && cap !== own) void save(cap); }}>
+        <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
+          <FieldLabel htmlFor="bonus-cap" topic="bonusDailyCoinCap">Tagesdeckel (Münzen)</FieldLabel>
+          <input id="bonus-cap" type="number" min={0} max={1000} step={1} inputMode="numeric" placeholder="Vorgabe"
+            value={value} onChange={(e) => { setValue(e.target.value); setBadInput(e.target.validity.badInput); }}
+            aria-invalid={!valid || undefined} />
+        </div>
+        <button type="submit" className="btn small" style={{ width: "auto" }} disabled={action.busy || !valid || cap === own}>Speichern</button>
+        {own !== null && (
+          <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={() => save(null)}>
+            Auf Vorgabe zurück
+          </button>
+        )}
+      </form>
+      {!valid && <p className="sub">Erlaubt sind ganze Zahlen von 0 bis 1000.</p>}
       <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </section>
   );

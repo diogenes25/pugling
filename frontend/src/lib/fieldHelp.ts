@@ -392,6 +392,12 @@ export const FIELD_HELP = {
       + "auf der Kind-Seite nachtragen oder ändern; gespeichert wird nur ein Hash, ablesen kannst du sie "
       + "später nicht mehr.",
   },
+  bonusDailyCoinCap: {
+    title: "Tagesdeckel fürs Bonus-Training",
+    text: "So viele Münzen kann dein Kind am Tag höchstens mit Extra-Übungen verdienen – zusätzlich zu den "
+      + "Münzen aus dem Lernpfad. Leer lassen heißt: die Vorgabe des Servers gilt. 0 heißt: üben ja, Münzen "
+      + "nein. Erlaubt sind 0 bis 1000.",
+  },
   interestFacet: {
     title: "Art des Interesses",
     text: "Ob es um ein Thema geht (Pokémon, Fußball) oder um einen Stil (Comic, Foto). Beides wird bei der "

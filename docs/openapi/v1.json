@@ -30102,9 +30102,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "bonusDailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins; \u0060null\u0060 = the server default."
       },
       "ClassTestUsage": {
         "required": [
@@ -30407,6 +30416,15 @@
                 "$ref": "#/components/schemas/ContentRating"
               }
             ]
+          },
+          "bonusDailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Input for creating a child."
@@ -44652,9 +44670,22 @@
           "clearGrade": {
             "type": "boolean",
             "default": false
+          },
+          "bonusDailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearBonusDailyCoinCap": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters)."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap to the server default."
       },
       "UpdateClassTestDto": {
         "type": "object",
