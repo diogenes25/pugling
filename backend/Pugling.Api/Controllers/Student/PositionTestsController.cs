@@ -441,7 +441,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             // mention as an answer to entry 0.
             var index = r.ItemIndex!.Value;
             var item = items[index];
-            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex));
+            var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, items);
+            outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, r.StageValue,
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }

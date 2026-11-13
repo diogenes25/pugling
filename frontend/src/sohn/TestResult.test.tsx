@@ -55,6 +55,25 @@ describe("TestResult", () => {
   });
 
   /**
+   * B-524: Ein Schreibfehler bleibt falsch gewertet, aber der Schirm sagt, dass das Wort da war und nur die
+   * Schreibweise fehlte – samt dem, was das Kind getippt hat. Rot, wenn `misspelled` nicht mehr gelesen wird.
+   */
+  it("weist einen Schreibfehler als eigene Kategorie aus, mit der getippten Antwort", () => {
+    const items: ItemOutcome[] = [
+      { itemIndex: 0, prompt: "The {{1}} opens at eight. {{2}} is high.", expected: "clinic", givenAnswer: "clinik",
+        wasCorrect: false, gapIndex: 1, misspelled: true },
+      { itemIndex: 1, prompt: "The {{1}} opens at eight. {{2}} is high.", expected: "height", givenAnswer: "dog",
+        wasCorrect: false, gapIndex: 2, misspelled: false },
+    ];
+    const { container } = view({ ...base, totalItems: 2, correctItems: 0, scorePercent: 0, items });
+
+    expect(container.textContent).toContain("du: „clinik“");
+    expect(screen.getAllByText("Falsch geschrieben")).toHaveLength(1);
+    // Das falsche Wort bekommt keine Schreibfehler-Zeile und sein Getipptes nicht als Lehre.
+    expect(container.textContent).not.toContain("„dog“");
+  });
+
+  /**
    * Der Lückentext ist ausgenommen: seine Zeilen teilen den Text zwar auch, unterscheiden sich aber über
    * `gapIndex` – zöge man ihn nach oben, wäre die Reparatur von B-76 auf diesem Schirm wieder weg.
    */

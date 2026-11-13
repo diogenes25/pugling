@@ -302,6 +302,8 @@ export const en = {
       incorrect: "Wrong",
       named: "named",
       notNamed: "not named",
+      misspelled: "Misspelled",
+      youWrote: "you: “{{given}}”",
       didNotCount: "This didn't count:",
       tryAgain: "Try again",
       practice: "▶ Practise",

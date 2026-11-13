@@ -313,6 +313,8 @@ export const de = {
       incorrect: "Falsch",
       named: "genannt",
       notNamed: "nicht genannt",
+      misspelled: "Falsch geschrieben",
+      youWrote: "du: „{{given}}“",
       didNotCount: "Das zählte nicht:",
       tryAgain: "Nochmal versuchen",
       practice: "▶ Üben",

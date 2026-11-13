@@ -352,8 +352,11 @@ export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
               {/* Das Zeichen ist die Optik, das Wort die Bedeutung: allein gelesen heißt „❌ Berlin" für das Kind
                   „Berlin war falsch", während der Server „Berlin hast du nicht genannt" meint – und genau das ist
                   bei einer Menge die Lehre der Übung (B-77/E2). */}
-              <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
-              {!sharedPrompt && <span className="sr-only">{o.wasCorrect ? t("test.correct") : t("test.incorrect")}</span>}
+              {/* B-524: „falsch geschrieben" ist eine eigene Lehre – das Wort war da, die Schreibweise nicht.
+                  Gewertet bleibt es falsch; nur das Zeichen und die Zeile darunter sagen, was zu üben ist. */}
+              <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled ? "✏️" : "❌"}</span>
+              {!sharedPrompt && <span className="sr-only">
+                {o.wasCorrect ? t("test.correct") : o.misspelled ? t("test.misspelled") : t("test.incorrect")}</span>}
               {sharedPrompt
                 // Die Lösung ist hier die Lehre – sie steht groß, wo der Aufgabentext oben schon steht.
                 ? <>
@@ -364,7 +367,10 @@ export function TestResult({ result, skin, onHome, onRetry, onPractice }: {
                     {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
                         ausgerechnet auf dem Bildschirm, auf dem das Kind seine Fehler nachliest. */}
                     <ClozePrompt text={o.prompt} gapIndex={o.gapIndex} className="test-prompt" />
-                    <span className="sub" style={{ marginLeft: "auto" }}>{o.expected}</span>
+                    <span className="sub" style={{ marginLeft: "auto", textAlign: "right" }}>
+                      {o.expected}
+                      {o.misspelled && o.givenAnswer && <><br />{t("test.misspelled")} · {t("test.youWrote", { given: o.givenAnswer })}</>}
+                    </span>
                   </>}
             </div>
           ))}

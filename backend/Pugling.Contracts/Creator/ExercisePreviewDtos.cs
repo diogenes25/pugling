@@ -36,8 +36,13 @@ public record PreviewData(string Type, int Stage, bool Typed, IReadOnlyList<Stag
 /// <summary>An answer from the supervisor: typed (<paramref name="GivenAnswer"/>) or self-assessment (<paramref name="WasKnown"/>).</summary>
 public record PreviewAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 
-/// <summary>Individual evaluation including the expected solution (in test mode the solution is always disclosed).</summary>
-public record PreviewItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
+/// <summary>
+/// Individual evaluation including the expected solution (in test mode the solution is always disclosed).
+/// <c>Misspelled</c> marks a wrong typed answer that is the right word misspelled - display only, as in
+/// <c>ItemOutcome</c> (B-524).
+/// </summary>
+public record PreviewItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
+    bool Misspelled = false);
 
 /// <summary>Overall result of a test-mode run.</summary>
 public record PreviewResult(int Total, int Correct, int ScorePercent, IReadOnlyList<PreviewItemOutcome> Items);

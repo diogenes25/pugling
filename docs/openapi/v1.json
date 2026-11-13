@@ -37878,9 +37878,13 @@
               "string"
             ],
             "format": "int32"
+          },
+          "misspelled": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Evaluation of a single exam question \u2013 here the solution is disclosed. Carries \u0060GapIndex\u0060 for the\nsame reason the question does: without it the review screen lists one identical line per gap, which is\nthe very confusion the exam just resolved."
+        "description": "Evaluation of a single exam question \u2013 here the solution is disclosed. Carries \u0060GapIndex\u0060 for the\nsame reason the question does: without it the review screen lists one identical line per gap, which is\nthe very confusion the exam just resolved.\nMisspelled marks a wrong typed answer that is the right word with a small spelling slip (B-524). It is\ndisplay only - the item stays wrong and counts as wrong in the score."
       },
       "ItemProgressResponse": {
         "required": [
@@ -40768,9 +40772,13 @@
           },
           "wasCorrect": {
             "type": "boolean"
+          },
+          "misspelled": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Individual evaluation including the expected solution (in test mode the solution is always disclosed)."
+        "description": "Individual evaluation including the expected solution (in test mode the solution is always disclosed).\n\u0060Misspelled\u0060 marks a wrong typed answer that is the right word misspelled - display only, as in\n\u0060ItemOutcome\u0060 (B-524)."
       },
       "PreviewResult": {
         "required": [

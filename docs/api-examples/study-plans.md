@@ -483,7 +483,8 @@ Response — `HTTP 200`:
       "expected": "hallo",
       "givenAnswer": "hallo",
       "wasCorrect": true,
-      "gapIndex": null
+      "gapIndex": null,
+      "misspelled": false
     }
   ],
   "attemptsRemaining": 1,

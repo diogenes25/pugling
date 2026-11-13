@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, rolle/student, rolle/supervisor]
 aliases: [Schul-Vokabeltest, Lückensätze mit deutschem Wortkasten]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -296,3 +296,15 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   neue Übung vom KI-Creator.
 - **2026-11-13** — geschaetzt: L als Bündel aus vier lieferbaren Teilen (A Stufe M, B Satzform S, C Schreibfehler
   S, D KI-Creator M); keine Migration, kein Vertragsbruch (alles additiv). Reihenfolge C → B → A → D.
+- **2026-11-13** — in Arbeit, im Worktree `.claude/worktrees/b-524` auf Branch `b-524-schul-vokabeltest` (der
+  Haupt-Checkout war durch die parallele B-485-Sitzung gesperrt: DLL-Sperren, `Pugling.Agent.Creator` kompilierte
+  nicht). Als eine Story gebaut, nicht geteilt (Nutzer).
+- **2026-11-13** — Fund beim Bauen: **keine** Lücke im Bestand trägt einen `VocabKey`. Der KI-Creator legt Lücken
+  inline an (`backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:113`), der Loader ebenso, und der
+  Übungs-Editor reicht `vocabKey` nur durch (`frontend/src/vater/exerciseConfig.tsx:243-246`). Ohne Verweis hat der
+  deutsche Wortkasten (Entscheidung 4) nichts anzuzeigen. Folge für Teil D: Der Format-Schalter muss `VocabKey` aus
+  der Wortliste der Unit setzen, nicht nur Ablenker und Satzform.
+- **2026-11-13** — Teil C gebaut: `AnswerGrader.IsMisspelled`, Kennzeichen `misspelled` an `ItemOutcome` und
+  `PreviewItemOutcome`, Anzeige in Sohn-Testergebnis und Vater-Testmodus. `SchulVokabeltestTests` 15/15 grün; rote
+  Proben: ohne Nachbarvergleich fallen `Nachbarwort_Ist_Kein_Schreibfehler` und der API-Weg, ohne Vertauschung nur
+  `Vertauschte_Buchstaben_Zaehlen_Als_Ein_Fehler`.
