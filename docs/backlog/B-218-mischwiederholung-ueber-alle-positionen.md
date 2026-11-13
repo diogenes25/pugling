@@ -24,8 +24,17 @@ aus den fälligsten Items aller spielbaren Positionen, zeitlich gedeckelt, mit d
 Server-Autorität wie die Positions-Runde. Abzugrenzen von [B-04](B-04-adaptiver-vokabel-pool.md), das
 den Pool **innerhalb** einer Position adaptiv macht.
 
+## Ist-Stand am Code (2026-11-13, Teilbefund)
+
+- Eine Mischwiederholung gibt es nicht (kein Treffer für „Mixed"/„Mischwiederholung" in Controllern, Services, Arcade).
+- Der Baustein für die Auswahl existiert schon: der plan-übergreifende Lernstand je Vokabel-Item
+  (`ChildVocabularyProgressController.cs:24`, Filter `onlyWeak` = Beherrschung unter 50 %, `maxBox`). Gespielt wird
+  aber nur **pro Position** – eine Runde über mehrere Positionen bräuchte eine eigene Sitzung, die Punkte und Leitner
+  der jeweiligen Position bucht (offene Frage für das Ausformulieren).
+
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 1 des Übernahmeplans).
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (alle Student-Routen hängen an `positions/{id}`). Haken: die Anti-Cheat-Sperre „ein aktiver Plan“ (`plan_inactive`) macht daraus faktisch eine plan-weite Runde – „kind-weit“ hieße über inaktive Pläne hinweg. Grundlage: `ItemProgress` (`ItemProgressService.cs:66`). Mit B-04/B-219 zusammen grillen.
 - **2026-10-23** — **Zwei Entscheidungen des Nutzers** in der Grill-Runde G-5 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): (1) Die Mischwiederholung läuft **plan-weit**, also über alle Positionen des aktiven Plans. Das passt zur Anti-Cheat-Sperre „ein aktiver Plan je Kind“ und braucht keine Ausnahme. (2) Sie ist ein **Angebot mit Münzen**: freiwillig, bringt Münzen wie eine Übungsrunde, kein Malus, und sie zählt nicht auf die Positions-Pflichten. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen (Paket NP-18); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.
+- **2026-11-13** — Teilbefund am Code (Tageslauf, letzte Minuten): Auswahl-Baustein vorhanden, Spiel-Sitzung über Positionen fehlt.
