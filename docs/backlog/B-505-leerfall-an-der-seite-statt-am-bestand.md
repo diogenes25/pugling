@@ -13,6 +13,7 @@ unverifiziert: false
 entgangen_bei: []
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-505 · Paged-Listen sagen „noch keine …" für eine leere Seite, nicht für einen leeren Bestand
@@ -75,3 +76,8 @@ Quelltext-Test über die sechs Dateien (kein nachgebauter Bildschirm).
     Ausweichports (5201/5174) – vor den Review-Nachzügen H1–H4, die tragen Komponententests.
   - Rollengang Vater: E2E-Suite gegen echten Server und echtes UI; Creator, Sohn: Regressionszeugen (Suite grün, kein
     Pfad ihrer Ebenen außer `SohnKonto` unverändert). Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 50/51, frischer `frontend-reviewer` an `8a5f20a`, gelesen, Vitest 45/45 der
+  sieben Dateien). Geprüft: Pager-Sprung kann nicht schleifen (`floor((total-1)/take)*take < total`), alle acht Aufrufer
+  übergeben einen stabilen Setter, Hook vor dem frühen `return`; je AK von B-509 und den Review-Nachzügen am Code
+  nachvollzogen, dass der Test im Ausgangszustand rot wäre; neun Leerfälle auf `total` gelesen. Fund →
+  [B-512](B-512-leerfall-waechter-uebersieht-formen.md) (🟡 Wächter übersieht Formen; 🟢 Leerfall-Verlust ungeprüft).

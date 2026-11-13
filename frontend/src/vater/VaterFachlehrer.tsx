@@ -442,7 +442,8 @@ export function ProfileForm({ profile, subjects, series, exerciseTypes = [], onD
             ...types.filter((t) => !exerciseTypes.some((m) => m.type === t)).map((t) => ({ key: t, label: t }))].map(({ key, label }) => (
             <button
               key={key} type="button" className={`pill toggle-pill ${types.includes(key) ? "lime" : ""}`}
-              title={exerciseTypes.some((m) => m.type === key) ? undefined : "Der Server kennt diesen Typ nicht mehr."}
+              title={exerciseTypes.length === 0 || exerciseTypes.some((m) => m.type === key)
+                ? undefined : "Der Server kennt diesen Typ nicht mehr."}
               aria-pressed={types.includes(key)}
               onClick={() => setTypes(types.includes(key) ? types.filter((x) => x !== key) : [...types, key])}
             >{label}</button>

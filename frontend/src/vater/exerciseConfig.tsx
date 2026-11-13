@@ -351,7 +351,8 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return { rows: [], extra: {
         direction: str(c.direction) || "front-to-back",
         sourceLang: str(c.sourceLang), targetLang: str(c.targetLang),
-        articleRequired: false,
+        // Gelesen, nicht gesetzt: ein gespeicherter Haken käme sonst als „aus" zurück (B-441).
+        articleRequired: c.articleRequired === true,
       } satisfies VocabularyExtra };
     case "Arithmetic":
       return fallback(

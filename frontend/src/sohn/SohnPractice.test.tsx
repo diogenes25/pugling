@@ -358,6 +358,41 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     clock.mockRestore();
   });
 
+  // B-443. Rot, wenn der Fokus nach „Jetzt abfragen" auf `body` fällt: der Knopf verschwindet mit dem Rundenende.
+  it("setzt den Fokus nach Jetzt abfragen in die erste Karte", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true)]));
+    review.mockResolvedValue(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await act(async () => {});
+    startSession.mockResolvedValueOnce({ id: 12, testable: true });
+
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.quizNow }));
+    await screen.findByText("eins");
+    await act(async () => {});
+
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement?.tagName).toMatch(/INPUT|BUTTON/);
+  });
+
+  // B-443 (Review). Rot, wenn nur Karten mit Eingabefeld den Fokus bekommen: welche Stufe die neue Runde bringt, entscheidet
+  // der Server, und eine Kennenlern- oder Umdreh-Karte hat keins.
+  it("setzt den Fokus nach Jetzt abfragen auch auf eine Karte ohne Eingabefeld", async () => {
+    cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", true)]))
+      .mockImplementationOnce(() => Promise.resolve([shown(0, "la rue", false)]));
+    review.mockResolvedValue(outcome(false, null));
+    renderPractice();
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
+    await act(async () => {});
+    startSession.mockResolvedValueOnce({ id: 12, testable: true });
+
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.quizNow }));
+    await screen.findByText("la rue");
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: de.sohn.practice.next }));
+  });
+
   // AK 5, zweiter Teil. Rot, wenn das Ende an `displayOnly` statt an `introduction` hängt.
   it("behält nach einer Kennenlern-Stufe des Tages den heutigen Bildschirm", async () => {
     cards.mockImplementationOnce(() => Promise.resolve([shown(0, "la ville", false)]));

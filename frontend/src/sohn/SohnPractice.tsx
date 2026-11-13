@@ -153,15 +153,27 @@ export function SohnPractice() {
   // B-439: endet die Runde, verschwindet die Karte samt fokussiertem Feld bzw. „Weiter" – der Fokus geht an die
   // Überschrift des Rundenendes, sonst fiele er auf `body` und ein Screenreader verlöre die Stelle.
   const doneRef = useRef<HTMLDivElement>(null);
+  // B-443: „Jetzt abfragen" nimmt sich selbst aus dem DOM (Rundenende → Laden → Karte) – der Fokus ginge auf `body`.
+  // Nur nach dieser Taste, nicht beim ersten Laden der Seite: dort soll keine Tastatur ungefragt aufspringen.
+  const focusAfterLoad = useRef(false);
+  // Die erste Taste einer Karte ohne Eingabefeld (Umdrehen, Kennenlernen-„Weiter"): welche Stufe kommt, entscheidet der
+  // Server – auch sie muss den Fokus bekommen können (Review-Fund).
+  const cardActionRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (prevPhase.current === "wrong" && phase === "front")
-      answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
-    if (prevPhase.current !== "done" && phase === "done") doneRef.current?.focus();
+    const toCard = phase === "front"
+      && (prevPhase.current === "wrong" || (prevPhase.current === "loading" && focusAfterLoad.current));
+    if (toCard) {
+      focusAfterLoad.current = false;
+      (answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])") ?? cardActionRef.current)?.focus();
+    }
+    // Der Effekt läuft nur bei einem Phasenwechsel, „done" → „done" gibt es hier nicht.
+    if (phase === "done") doneRef.current?.focus();
     prevPhase.current = phase;
   }, [phase]);
 
   /** B-419: eine neue Runde derselben Position – nach dem Kennenlernen die Abfrage. */
   function startNextRound() {
+    focusAfterLoad.current = true;
     setPhase("loading");
     setCards([]);
     setIdx(0);
@@ -450,9 +462,9 @@ export function SohnPractice() {
           </div>
         ) : card.displayOnly ? (
           // Kennenlernen: no judgment to make, so no "Gewusst?" buttons - just move on.
-          <button type="button" className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
+          <button type="button" ref={cardActionRef} className="btn lime" disabled={action.busy} onClick={() => judge(card, {})}>{t("practice.next")}</button>
         ) : phase === "front" ? (
-          <button type="button" className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
+          <button type="button" ref={cardActionRef} className="btn" onClick={() => setPhase("back")}>{t("practice.flip")}</button>
         ) : (
           <div className="judge">
             {/* B-49: vorher ohne `disabled` - ein Doppelklick konnte zwei `review` auf denselben `itemIndex`

@@ -187,7 +187,8 @@ export function VaterExercises() {
         <div className="row" style={{ alignItems: "center", gap: 8, marginBottom: 4 }}>
           <h3 style={{ margin: 0 }}>
             {subjectId !== "" ? "Übungen" : showShared ? "Alle Übungen" : "Meine Übungen"}{" "}
-            <span className="muted">({existing.data?.total ?? 0})</span>
+            {/* Eine Zahl nur, wenn sie gemessen ist: im ersten Laden und im Ausfall stünde sonst „(0)" neben „Lade…" (B-456). */}
+            {gemesseneZahl(existing) !== null && <span className="muted">({gemesseneZahl(existing)})</span>}
           </h3>
         </div>
         <div className="row" style={{ marginBottom: 8 }}>
@@ -431,4 +432,13 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
       {ratingsOpen && <ExerciseRatingPanel exercise={exercise} onChanged={onChanged} />}
     </div>
   );
+}
+
+/**
+ * Die Zahl in der Überschrift – nur, wenn sie gemessen ist und zu den eingestellten Filtern gehört (B-456). Im ersten
+ * Laden und im Ausfall gibt es keine, und „(0)" neben „Lade…" wäre eine erfundene. Eigene Funktion, damit die
+ * Verdrahtung einen Test hat (Vorbild `artenPending`).
+ */
+export function gemesseneZahl(q: { data: { total: number } | null; stale: boolean }): number | null {
+  return q.data && !q.stale ? q.data.total : null;
 }

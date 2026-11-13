@@ -210,3 +210,20 @@ describe("ProfileForm – Übungstypen aus dem Manifest", () => {
     expect(screen.queryByRole("button", { name: "Altlast" })).toBeNull();
   });
 });
+
+// B-456: fällt das Manifest aus, kennt der Server den Typ sehr wohl – nur die Liste fehlt. Rot, wenn der Tooltip dann jedem
+// gespeicherten Typ „kennt diesen Typ nicht mehr" nachsagt.
+describe("ProfileForm – Manifest fällt aus (B-456)", () => {
+  it("behauptet ohne Manifest nicht, der Server kenne einen Typ nicht mehr", () => {
+    const profil = { id: 1, name: "P", defaultTypes: ["Cloze"], schoolTypes: "None", active: true, isOwn: true } as unknown as CreatorProfileResponse;
+    render(<ProfileForm onMeldung={() => {}} profile={profil} subjects={[ENGLISH]} series={[]} exerciseTypes={[]} onDone={() => {}} />);
+    expect(screen.getByRole("button", { name: "Cloze" }).getAttribute("title")).toBeNull();
+  });
+
+  it("nennt mit Manifest einen wirklich unbekannten Typ weiter", () => {
+    const profil = { id: 1, name: "P", defaultTypes: ["Altlast"], schoolTypes: "None", active: true, isOwn: true } as unknown as CreatorProfileResponse;
+    const manifest = [{ type: "Vocabulary", label: "Vokabelkarten" }] as ExerciseTypeManifest[];
+    render(<ProfileForm onMeldung={() => {}} profile={profil} subjects={[ENGLISH]} series={[]} exerciseTypes={manifest} onDone={() => {}} />);
+    expect(screen.getByRole("button", { name: "Altlast" }).getAttribute("title")).toMatch(/nicht mehr/);
+  });
+});

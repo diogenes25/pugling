@@ -192,3 +192,12 @@ describe("normalizeAnswer folgt dem Server", () => {
     expect(choicesMissAnswer({ answer: "Hello!", choices: ["Goodbye"] })).toBe(true);
   });
 });
+
+// B-441: „Artikel verlangt" kommt aus der gespeicherten Config zurück. Rot, wenn das Rücklesen den Haken fest auf „aus" setzt.
+describe("Rundlauf Vokabel – Artikel verlangt", () => {
+  it("liest den gespeicherten Haken zurück", () => {
+    expect(configToEditorState("Vocabulary", { articleRequired: true }).extra.articleRequired).toBe(true);
+    expect(configToEditorState("Vocabulary", { articleRequired: false }).extra.articleRequired).toBe(false);
+    expect(configToEditorState("Vocabulary", {}).extra.articleRequired).toBe(false);
+  });
+});

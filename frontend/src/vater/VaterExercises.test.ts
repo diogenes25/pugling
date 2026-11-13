@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DELETE_EXERCISE_QUESTION, fachDerZeile } from "./VaterExercises";
+import { DELETE_EXERCISE_QUESTION, fachDerZeile, gemesseneZahl } from "./VaterExercises";
 import type { SubjectResponse } from "../lib/types";
 
 /** B-431, Review-Fund: das Fach einer Zeile in der gemischten Liste „Meine Übungen". */
@@ -31,5 +31,15 @@ describe("Übung löschen", () => {
   // ihren Vokabeln (Cascade `ExerciseItem` → `ItemProgress`). Rot, wenn die Frage das verschweigt.
   it("nennt den Lernstand der Kinder, der mitgeht", () => {
     expect(DELETE_EXERCISE_QUESTION).toMatch(/Lernstand/);
+  });
+});
+
+// B-456: die Zahl der Überschrift. Rot, wenn sie im Laden bzw. Ausfall „0" sagt oder die Zahl eines anderen Filters nennt.
+describe("Überschrift der Übungsliste – gemessene Zahl", () => {
+  it("nennt keine Zahl ohne Daten und keine eines anderen Filters", () => {
+    expect(gemesseneZahl({ data: null, stale: false })).toBeNull();
+    expect(gemesseneZahl({ data: { total: 7 }, stale: true })).toBeNull();
+    expect(gemesseneZahl({ data: { total: 7 }, stale: false })).toBe(7);
+    expect(gemesseneZahl({ data: { total: 0 }, stale: false })).toBe(0);
   });
 });
