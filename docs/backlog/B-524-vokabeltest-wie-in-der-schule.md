@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben in raw/english/real_tests/2026-11-11-friedrich-vokabeltest.md (gitignored); Nutzer im Chat 2026-11-13: „Solche Tests soll Friedrich entsprechend öfter erhalten. Die Art des Tests ist mir wichtig.“"
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Merge von refs/heads/b-524-schul-vokabeltest und Rollengang in der Arcade (Klick)"
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
@@ -322,3 +323,20 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
   „schwache Wörter früherer Units“ fließen noch nicht ein – die Scheibe (`UnitVocabulary.Slice`) nimmt nur schwache
   Wörter **der Unit**. Rote Proben: ohne Regeln → Zurückweisungs-Fall, ohne Satzform und ohne Wortliste im
   Briefing → Erfolgsfall.
+- **2026-11-13** — Reviews: `pugling-reviewer` (ein Blocker: `LadenFieldListTests`, Loader kannte `cueDistractors`/`form`
+  nicht – behoben in `b4cfe19`; dazu Pflichtwörter im Schultest, Artikel-Toleranz in `IsMisspelled`) und
+  `frontend-reviewer` (keine Blocker; Stufe hieß in der Arcade „Hören“, Satzform bei Inline-Lücken unsichtbar,
+  Testmodus nur mit Emoji). Alles eingearbeitet in `4b9e1c4`, je mit Test und roter Probe. Offen gelassen (nur
+  Anzeige, keine Punkte): Schwelle bei sehr kurzen Alternativen und je Phrase statt je Wort; doppelte Listenwörter
+  über mehrere Lücken prüft der Agent nur im Prompt; Listeneinträge mit „/“ oder Klammern sind im Schultest nicht
+  erzeugbar.
+- **2026-11-13** — Verifikation: `dotnet test Pugling.sln -c Release` **1510/1510** grün, Vitest **868/868**, `tsc -b`
+  grün. Rollengang an der laufenden App **über die API** (eigener Server :5390, Wegwerf-DB): Vater legt den Test an,
+  sieht im Testmodus vier Stufen inkl. „Wortkasten + Freitext“ und den Kasten mit sieben Einträgen, weist ihn als
+  Position mit Wochenziel zu; der Sohn bekommt fünf Karten mit demselben Kasten und ohne Hinweis, Antworten wie
+  Friedrich (clinik, heiht → falsch geschrieben; racist für racism → falsch), 2/5 = 40 %, binär. **Der Klick-Rollengang
+  in der Arcade fiel aus**: Die Sitzung war in keinem Fenster offen, Eingaben im versteckten Browser-Pane kamen nicht
+  an. Beobachtung: „patient“ statt „patients“ zählt nach Entscheidung 3 als „falsch geschrieben“ (fehlendes s),
+  fachlich eher ein Formfehler.
+- **2026-11-13** — Nicht `abgenommen`: Die Commits liegen auf `b-524-schul-vokabeltest`, noch nicht auf
+  `auto/fertigstellung`, und der Rollengang per Klick fehlt (`wartet_auf`).

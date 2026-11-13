@@ -16,7 +16,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben | Wunsch | `geschaetzt` | P1 | L | beides | — |
+| [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben | Wunsch | `in-arbeit` | P1 | L | beides | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `ausformuliert` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `gegrillt` | P2 | — | backend | Vertrag? |
@@ -520,7 +520,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (4)
+### Wartet auf Zutun von außen (5)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -531,6 +531,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-423](B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) | Der Assistent „Klassenarbeit vorbereiten" fragt den Termin, legt die Klassenarbeit an und baut die Stufenleiter | `ausformuliert` | Entscheidung des Nutzers (Offener Punkt 5) |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 | [B-485](B-485-vokabelbilder-nach-interessen-erzeugen.md) | Kleine Bilder zu jeder Vokabel – erzeugt nach den Interessen des Kindes | `in-arbeit` | Entscheidung zum Prompt-Bau für Stable Diffusion (Interesse im Motiv, Negativ-Prompt), siehe Verlauf 2026-11-13 |
+| [B-524](B-524-vokabeltest-wie-in-der-schule.md) | Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben | `in-arbeit` | Merge von refs/heads/b-524-schul-vokabeltest und Rollengang in der Arcade (Klick) |
 
 ### Nach der Abnahme entgangen (175)
 
