@@ -23,6 +23,11 @@ export type WizardFilter = {
   source: string;
   /** Grammatik-Thema (B-155) – die achte Facette, einwertig; hängt wie die Art am Fach. */
   grammarTopicId: number | "";
+  /**
+   * „Beste Bewertung zuerst" (B-408) – wie im Planbau (B-270). Eine Reihenfolge, **kein** Suchkriterium: sie reist in
+   * die Abfrage, aber nicht in `wizardFilterKey`.
+   */
+  besteZuerst?: boolean;
 };
 
 /**
@@ -40,6 +45,9 @@ export function wizardSearchParams(f: WizardFilter, take?: number): ExerciseSear
     type: f.type || undefined,
     source: f.source.trim() || undefined,
     grammarTopicId: f.grammarTopicId === "" ? undefined : f.grammarTopicId,
+    // Ohne den Wunsch reist keines von beiden: dann gilt die Katalog-Reihenfolge des Servers.
+    sort: f.besteZuerst ? "rating" : undefined,
+    dir: f.besteZuerst ? "desc" : undefined,
     take,
   };
 }
@@ -52,10 +60,12 @@ export function wizardSearchParams(f: WizardFilter, take?: number): ExerciseSear
  * Rohfelder: dann zählt genau das als Änderung, was der Server auch anders beantwortet — ein Leerschlag am
  * Ende der Inhaltssuche (`"abc "` → `"abc"`) verwirft die Auswahl also nicht.
  *
- * `take` gehört ausdrücklich **nicht** dazu: eine größere Seite ist dieselbe Suche.
+ * `take` gehört ausdrücklich **nicht** dazu: eine größere Seite ist dieselbe Suche. Ebenso wenig `sort`/`dir`
+ * (B-408): umsortiert ist die Treffermenge dieselbe, und „Alle wählen" kann bis 500 gewählt haben – fiele die
+ * Auswahl beim Umsortieren, verlöre der Vater stumm die meisten davon.
  */
 export function wizardFilterKey(f: WizardFilter): string {
-  const { take: _ignoriert, ...kriterien } = wizardSearchParams(f);
+  const { take: _take, sort: _sort, dir: _dir, ...kriterien } = wizardSearchParams(f);
   return JSON.stringify(kriterien);
 }
 
@@ -92,6 +102,28 @@ export function auswahlNachFilterwechsel(vorher: readonly number[], keyAlt: stri
     hinweis: vorher.length > 0
       ? `Auswahl zurückgesetzt (${vorher.length} ${vorher.length === 1 ? "Übung" : "Übungen"}),`
         + " weil sich die Suche geändert hat."
+      : null,
+  };
+}
+
+/**
+ * Was mit einer Auswahl geschieht, nachdem die Trefferliste **umsortiert** neu geladen wurde (B-408, Entscheidung 3).
+ *
+ * Für den Planbau (Einzelauswahl, Umbau in B-540): die Suche ist dieselbe, nur die Seite eine andere. Was in der neu
+ * geladenen Seite steht, bleibt gewählt; was aus ihr gerutscht ist, fällt – die Auswahl darf nie auf eine Übung zeigen,
+ * die der Vater nicht sieht (B-167). Ein Hinweis entsteht nur, wenn wirklich etwas wegfiel (wie `auswahlNachFilterwechsel`).
+ * Der Assistent braucht die Regel nicht: dort zählt „davon N unten nicht sichtbar" die Unsichtbaren, statt sie zu verwerfen.
+ */
+export function auswahlNachUmsortieren(vorher: readonly number[], geladeneIds: readonly number[]):
+{ selected: number[]; hinweis: string | null } {
+  const geladen = new Set(geladeneIds);
+  const selected = vorher.filter((id) => geladen.has(id));
+  const weg = vorher.length - selected.length;
+  return {
+    selected,
+    hinweis: weg > 0
+      ? `Auswahl zurückgesetzt (${weg} ${weg === 1 ? "Übung" : "Übungen"}), weil sie nach dem Umsortieren nicht mehr`
+        + ` in der Liste ${weg === 1 ? "steht" : "stehen"}.`
       : null,
   };
 }

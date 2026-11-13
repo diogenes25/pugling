@@ -12,6 +12,7 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { authorText } from "./ExerciseAttribution";
+import { ratingSummary } from "./ExerciseRatingPanel";
 import { VOCAB_FORMS } from "./exerciseConfig";
 import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
 import { dosisZeile, newWizardProgress, runWizardFinish } from "./wizardFinish";
@@ -86,6 +87,8 @@ export function VaterWizard() {
   const [sourceSearch, setSourceSearch] = useState("");
   // Die achte Facette (B-155): ein Thema des gewählten Fachs; wie die Art fällt sie mit dem Fachwechsel.
   const [grammarTopicId, setGrammarTopicId] = useState<number | "">("");
+  // B-408: „beste Bewertung zuerst" wie im Planbau – eine Reihenfolge, kein Suchkriterium (verwirft die Auswahl nicht).
+  const [besteZuerst, setBesteZuerst] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
   /** Sagt, dass ein Filterwechsel die Auswahl verworfen hat – nur wenn wirklich etwas wegfiel (B-161). */
   const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
@@ -144,9 +147,10 @@ export function VaterWizard() {
     () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 })
       : api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId, besteZuerst,
       }))),
-    [filterKey],
+    // Die Reihenfolge lädt neu, gehört aber nicht in `filterKey` – sonst verwürfe Umsortieren die Auswahl (B-408).
+    [filterKey, besteZuerst],
   );
 
   // Arten des gewählten Fachs; die Liste hängt am Fach, nicht am Katalog insgesamt.
@@ -297,7 +301,7 @@ export function VaterWizard() {
     try {
       const alle = await api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId, besteZuerst,
       }, 500));
       // `merken` darf auch bei veralteter Antwort laufen - ein Metadaten-Vorrat schadet nie.
       merken(alle.items);
@@ -578,6 +582,16 @@ export function VaterWizard() {
             <input aria-label="Quelle" placeholder="Quelle, z. B. Green Line 1…" style={{ maxWidth: 220 }}
               value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
           </div>
+          {/* B-408: dieselbe Wahl wie im Planbau (B-270). Umsortieren lädt neu, die Auswahl bleibt vollständig – was dabei
+              aus der Seite rutscht, zählt „davon N unten nicht sichtbar". */}
+          <div className="row" style={{ gap: 6, alignItems: "center", margin: "4px 0" }}>
+            <label className="muted" htmlFor="wiz-reihenfolge" style={{ fontSize: 12 }}>Trefferliste sortieren</label>
+            <select id="wiz-reihenfolge" value={besteZuerst ? "rating" : "catalog"}
+              onChange={(e) => setBesteZuerst(e.target.value === "rating")}>
+              <option value="catalog">wie im Katalog</option>
+              <option value="rating">beste Bewertung zuerst</option>
+            </select>
+          </div>
 
           {/* `platzhalter` ist hier heute wirkungslos: ohne gewähltes Fach liefert die Suche sofort
               `{items:[],total:0}`, `data` ist danach nie wieder `null`. Sobald der Assistent ein Fach
@@ -791,7 +805,7 @@ export function WizardTrefferbereich({
                     einem Bildschirm. Der Rückfall auf den Schlüssel greift, solange das Manifest lädt – und
                     wenn sein Abruf scheiterte: Im Assistenten bleibt der Ausfall bewusst stumm (B-215,
                     Entscheidung 2), die Zeile liest sich dann als Schlüssel. */}
-                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""} · {ratingSummary(e.averageRating, e.ratingCount)}</span></span>
               </label>
               {/* Gesperrt wie das Kästchen (B-169): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={zeilenVeraltet}

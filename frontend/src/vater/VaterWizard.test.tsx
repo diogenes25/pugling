@@ -160,3 +160,12 @@ describe("WizardTrefferbereich – Umfang und Ausprobieren", () => {
     expect((screen.getByRole("button", { name: "„Unit 1 Wörter\" ausprobieren" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+/** B-408: die Zeile zeigt die Bewertung wie ihr Zwilling im Planbau (B-270). */
+describe("WizardTrefferbereich – Bewertung je Zeile", () => {
+  // Rot, wenn die Zeile ohne `ratingSummary` gerendert wird (dann fehlt der Stern-Text).
+  it("zeigt die Bewertung einer bewerteten Übung", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung({ averageRating: 4.5, ratingCount: 2 })]} fehler={null} geladen={1} gesamt={1} />);
+    expect(screen.getByText(/★ 4,5 \(2 Bewertungen\)/)).toBeTruthy();
+  });
+});

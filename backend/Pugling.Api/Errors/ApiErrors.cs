@@ -213,6 +213,11 @@ public static class ApiErrors
     public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise already played.");
     /// <summary>The bonus run has already been submitted (409).</summary>
     public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
+    /// <summary>
+    /// Today's bonus coin cap is reached and the exercise pays only once: it is neither started nor graded, so it is
+    /// not used up for nothing and can be played once coins are left again (409).
+    /// </summary>
+    public static readonly ApiError ExtraCapReached = new("extra_cap_reached", 409, "Bonus coin cap reached.");
     /// <summary>All test attempts of the period are used up (409).</summary>
     public static readonly ApiError TestAttemptsExhausted = new("test_attempts_exhausted", 409, "No test attempts left.");
     /// <summary>Exercise contains no checkable content (400).</summary>

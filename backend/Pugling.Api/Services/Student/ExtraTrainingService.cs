@@ -72,14 +72,20 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         if (pool.FirstOrDefault(p => p.Row.ExerciseId == exerciseId) is not { } entry)
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.NotFound, "The exercise is not part of the bonus training.");
 
+        // Final beats provisional: a played exercise says so before the cap says "not now".
+        if (entry.Row.Done)
+            return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraExerciseDone,
+                "This bonus exercise has already been played.");
+        // A one-shot exercise is used up by its run, so at a full cap it would pay nothing and be gone for good. The
+        // check also covers resuming an open run: played to the end today, it would only hit the same wall at submit.
+        if (IsOneShot(entry.Exercise) && await CoinsLeftTodayAsync(childId, today, ct) == 0)
+            return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraCapReached, CapReachedDetail);
+
         var run = entry.Row.OpenRunId is { } openId
             ? await db.ExtraTrainingRuns.FirstAsync(r => r.Id == openId, ct)
             : null;
         if (run is null)
         {
-            if (entry.Row.Done)
-                return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraExerciseDone,
-                    "This bonus exercise has already been played.");
             run = new ExtraTrainingRun
             {
                 ChildId = childId,
@@ -134,15 +140,20 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraTrainingLocked,
                 "The bonus training opens once today's duty is done.");
 
+        var coinsBefore = await CoinsTodayAsync(childId, today, ct);
+        var dailyCap = CapOf(child.BonusDailyCoinCap);
+        var left = dailyCap is { } cap ? Math.Max(0, cap - coinsBefore) : int.MaxValue;
+        // A one-shot run handed in at a full cap stays open and unpaid until coins are left. This happens before grading: the
+        // answer carries the solutions, and a child who saw them today could hand in the same run later for full coins.
+        if (IsOneShot(run.Exercise) && left == 0)
+            return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraCapReached, CapReachedDetail);
+
         var graded = await preview.CheckAsync(run.Exercise,
             [.. answers.Select(a => new PreviewAnswer(a.ItemIndex, a.GivenAnswer, a.WasKnown))], run.Stage, ct);
         if (graded is null)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.NotFound, "The exercise has no content to grade any more.");
 
-        var coinsBefore = await CoinsTodayAsync(childId, today, ct);
         var earned = graded.Correct * CoinsPerHit(run.Form);
-        var dailyCap = CapOf(child.BonusDailyCoinCap);
-        var left = dailyCap is { } cap ? Math.Max(0, cap - coinsBefore) : int.MaxValue;
         var coins = Math.Min(earned, left);
 
         var now = time.GetUtcNow().UtcDateTime;
@@ -201,6 +212,19 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     // The supervisor's cap for this child wins over the server default.
     private int? CapOf(int? childCap) => childCap ?? opts.DailyCoinCap;
 
+    // Names the lock only: with a cap of 0 there is no "tomorrow" to promise.
+    private const string CapReachedDetail = "Today's bonus coin cap is reached; this exercise pays only once.";
+
+    // One definition of "pays only once": everything but vocabulary, which climbs a form per run instead.
+    private static bool IsOneShot(Exercise exercise) => exercise.Type != ExerciseTypeKeys.Vocabulary;
+
+    // What is left of today's cap; without any cap there is always something left.
+    private async Task<int> CoinsLeftTodayAsync(int childId, DateOnly today, CancellationToken ct)
+    {
+        var childCap = await db.Children.AsNoTracking().Where(c => c.Id == childId).Select(c => c.BonusDailyCoinCap).FirstAsync(ct);
+        return CapOf(childCap) is { } cap ? Math.Max(0, cap - await CoinsTodayAsync(childId, today, ct)) : int.MaxValue;
+    }
+
     private async Task<int> CoinsTodayAsync(int childId, DateOnly day, CancellationToken ct) =>
         await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0;
 
@@ -244,7 +268,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         foreach (var exercise in exercises)
         {
             if (registry.ByKey(exercise.Type) is not { } type) continue;
-            var repeatable = exercise.Type == ExerciseTypeKeys.Vocabulary;
+            var repeatable = !IsOneShot(exercise);
             if (!repeatable && knownFromPath.Contains(exercise.Id)) continue;
 
             var items = await content.ItemsOfAsync(exercise, ct: ct);

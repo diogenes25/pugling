@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ApiError, api } from "../lib/api";
@@ -71,6 +71,28 @@ export function SohnTest() {
     if (item) setStageName(stageLabel(item.stage, item.type, !!item.cueBox));
   }, [item]); // nur die Karte: stageLabel ist je Render eine neue Funktion, aber immer dieselbe Regel
 
+  /*
+   * B-541 (Regel aus B-531): nimmt eine Handlung des Kindes den fokussierten Knopf mit – Aufdecken, Antwort, „Weiter
+   * versuchen", „Nochmal versuchen" –, landet der Fokus dort, wo es als Nächstes handelt: erstes Bedienbares der
+   * Antwortzone, sonst die Überschrift des Ergebnisses oder die Fehlermeldung. Die Absicht wird erst verbraucht, wenn
+   * ein Ziel da ist: die neue Frage steht schon, während `action.busy` ihre Optionen noch sperrt – ein Lauf in diesem
+   * Augenblick fände nichts und ließe den Fokus auf `body`. Der erste Aufbau setzt die Absicht nicht (B-443).
+   */
+  const focusIntent = useRef(false);
+  const answerRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const resultTitleRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusIntent.current) return;
+    const target = error ? errorRef.current
+      : result ? resultTitleRef.current
+      : item && !action.busy ? answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")
+      : null;
+    if (!target) return;
+    target.focus();
+    focusIntent.current = false;
+  }, [item, cursor, revealed, error, result, action.busy]);
+
   async function finish(id: number) {
     if (!planId) return;
     const res = await api.submitTest(planId, positionId, id);
@@ -127,6 +149,7 @@ export function SohnTest() {
 
   // Laufenden Versuch nach einem transienten Fehler fortsetzen: aktuelle Cursor-Frage erneut holen.
   async function resume() {
+    focusIntent.current = true;
     if (!planId || attemptId === null) { await start(); return; }
     // Die alte Frage weg, bevor die neue geholt wird: meist ist sie schon beantwortet (nur `nextTest` scheiterte), und
     // stünde sie bis zur Antwort wieder da, sagte die Region sie als neue Aufgabe an und die Karte wäre anklickbar (B-339).
@@ -141,6 +164,7 @@ export function SohnTest() {
   // Antwort abgeben (server-geführt: der Server adressiert stets die aktuelle Cursor-Frage) und weiterrücken.
   async function answerAndAdvance(dto: AnswerDto) {
     if (!planId || attemptId === null) return;
+    focusIntent.current = true;
     // Der Fehler wird im `catch` gesetzt, nicht danach aus `action.message` gelesen: das ist der Zustand des Renders,
     // in dem der Klick entstand, und war beim ersten Fehlschlag `null` (B-320). Ein von der Sperre verworfener
     // Doppelklick ruft `fn` gar nicht auf und zeigt darum zu Recht nichts.
@@ -176,12 +200,13 @@ export function SohnTest() {
   function view() {
   // Bei einem transienten Fehler den LAUFENDEN Versuch fortsetzen können (nicht verwerfen): resume() holt
   // die aktuelle Frage des bestehenden Attempts erneut, statt über start() einen neuen Versuch anzulegen.
-  if (error) return <div className="sohn-body"><div className="error-box">{error}</div>
+  if (error) return <div className="sohn-body"><div className="error-box" ref={errorRef} tabIndex={-1} role="alert">{error}</div>
     {attemptId !== null && !planStopped && <button type="button" className="btn lime" onClick={resume}>{t("test.resume")}</button>}
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
-    <TestResult result={result} stageName={stageName} skin={skin} onHome={() => nav("/sohn")} onRetry={start}
+    <TestResult result={result} stageName={stageName} skin={skin} titleRef={resultTitleRef} onHome={() => nav("/sohn")}
+      onRetry={() => { focusIntent.current = true; void start(); }}
       onPractice={() => nav(`/sohn/practice/${positionId}`)} />
   );
 
@@ -222,7 +247,7 @@ export function SohnTest() {
           </>
         )}
       />
-      <div className="lektion-antwort">
+      <div className="lektion-antwort" ref={answerRef}>
         {typed ? (
           // Dieselbe Antwortfläche wie beim Üben – sie weiß nichts von richtig und falsch, und hier bleibt das so.
           <Antwortflaeche
@@ -238,7 +263,7 @@ export function SohnTest() {
               revealed={revealed}
               loesungInDerKarte
               busy={action.busy}
-              onReveal={() => setRevealed(true)}
+              onReveal={() => { focusIntent.current = true; setRevealed(true); }}
               onJudge={(wasKnown) => answerAndAdvance({ itemIndex: item.itemIndex, wasKnown })}
             />
           </div>
@@ -302,8 +327,13 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesung
  * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
  * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
  */
-export function TestResult({ result, stageName, skin, onHome, onRetry, onPractice }: {
+export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry, onPractice }: {
   result: TestSubmitResponse; stageName?: string | null; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
+  /**
+   * Landeplatz für den Fokus (B-541). Fokussiert wird er vom Aufrufer, nur nach einer Handlung des Kindes – ein Ergebnis,
+   * das ohne Handlung erscheint (der Start trifft einen fertigen Versuch), bekommt keinen Fokus.
+   */
+  titleRef?: Ref<HTMLDivElement>;
 }) {
   const { t } = useTranslation();
   const stageLabel = useStageLabel();
@@ -323,7 +353,7 @@ export function TestResult({ result, stageName, skin, onHome, onRetry, onPractic
         <div style={{ fontFamily: "var(--font-display)", letterSpacing: ".2em", color: "var(--muted)", fontSize: 12 }}>
           {t("test.header", { stage: (stageName ?? stageLabel(result.stage)).toUpperCase() })}
         </div>
-        <div className={`vtitle ${result.passed ? "win" : "lose"}`}>{result.passed ? t("test.victory") : t("test.almost")}</div>
+        <div className={`vtitle ${result.passed ? "win" : "lose"}`} ref={titleRef} tabIndex={-1}>{result.passed ? t("test.victory") : t("test.almost")}</div>
         <div className="ring" style={ring}><b>{pct}%<small>{result.correctItems} / {result.totalItems}</small></b></div>
         <Mascot skin={skin} mood={result.passed ? "hyped" : "sleepy"} size={84} />
         <p className="sub">{t("test.passMark", { pct: result.passPercent })}</p>

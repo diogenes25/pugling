@@ -8440,7 +8440,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s duty is done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played.",
+        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s duty is done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played, \u0060409 extra_cap_reached\u0060 for a one-shot exercise - new or open - once today\u0027s coin cap is\nfull, so it is not used up for nothing.",
         "parameters": [
           {
             "name": "childId",
@@ -8522,7 +8522,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit.",
+        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit. A one-shot run handed in at a full cap is neither graded nor\nused up (\u0060409 extra_cap_reached\u0060) and can be handed in again once coins are left.",
         "parameters": [
           {
             "name": "childId",
@@ -41658,6 +41658,7 @@
               "exercise_items_locked",
               "exercise_not_assigned",
               "exercise_not_executable",
+              "extra_cap_reached",
               "extra_exercise_done",
               "extra_run_completed",
               "extra_training_locked",

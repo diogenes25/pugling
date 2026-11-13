@@ -180,6 +180,9 @@ export function SohnPractice() {
     // bzw. die Meldung (B-515). Jedes Ende des Ladens verbraucht die Absicht, nicht nur der Weg zur Karte.
     if (prevPhase.current === "loading" && focusAfterLoad.current && (phase === "empty" || phase === "error"))
       landingRef.current?.focus();
+    // B-541: endet der Plan mitten in der Runde (`plan_inactive`), verschwindet die Karte samt fokussiertem Knopf – der
+    // Fokus geht an die Meldung, nicht nur nach dem Laden.
+    if (fromCard && phase === "error") landingRef.current?.focus();
     if (prevPhase.current === "loading" && phase !== "loading") focusAfterLoad.current = false;
     // „done" → „done" gibt es hier nicht: im Rundenende wechselt weder Phase noch Karte.
     if (phase === "done") doneRef.current?.focus();

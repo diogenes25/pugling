@@ -241,8 +241,11 @@ describe("SohnPractice, doppeltes Absenden", () => {
     fireEvent.change(input, { target: { value: "one" } });
     fireEvent.submit(input.closest("form")!);
 
-    expect(await screen.findByText(de.sohn.problem.plan_inactive)).toBeTruthy();
+    const meldung = await screen.findByText(de.sohn.problem.plan_inactive);
     expect(screen.queryByText("zwei")).toBeNull();
+    // B-541 AK 9: das Feld ist mit der Karte verschwunden – der Fokus steht auf der Meldung. Rot, wenn der
+    // `landingRef`-Zweig weiter nur nach dem Laden greift (dann liegt er auf `body`).
+    expect(document.activeElement).toBe(meldung);
   });
 });
 

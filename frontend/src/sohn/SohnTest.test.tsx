@@ -325,6 +325,147 @@ describe("SohnTest, Fehler beim Beantworten", () => {
   });
 });
 
+/**
+ * B-541: dieselbe Regel wie im Üben (B-531) – nimmt eine Handlung des Kindes den fokussierten Knopf mit, landet der
+ * Fokus dort, wo es als Nächstes handelt. Sonst fiele er auf `body`, und wer an der Tastatur oder mit Screenreader
+ * prüft, verlöre die Stelle.
+ */
+describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+  const selbst = { itemIndex: 0, prompt: "the horse", stage: 2, reveal: "das Pferd" };
+  const fertig = { passed: false, scorePercent: 50, passPercent: 80, correctItems: 1, totalItems: 2, stage: 3, items: [], attemptsRemaining: 1 };
+
+  // AK 1. Rot, wenn `onReveal` die Absicht nicht setzt oder der Effekt nicht an `revealed` hängt.
+  it("steht nach dem Aufdecken auf „Nicht gewusst“", async () => {
+    nextTest.mockResolvedValue({ item: selbst, done: false, cursor: 0, total: 2 });
+    renderTest();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Aufdecken 🔄" }));
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Nicht gewusst" }));
+  });
+
+  // AK 2. Rot, wenn der Effekt nicht an der Frage hängt (dann bleibt der Fokus beim verschwundenen „Gewusst“).
+  it("steht nach dem Urteil auf „Aufdecken“ der nächsten Frage", async () => {
+    answerTest.mockResolvedValueOnce({ done: false });
+    nextTest.mockResolvedValueOnce({ item: selbst, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item: { ...selbst, itemIndex: 1, prompt: "the sheep", reveal: "das Schaf" }, done: false, cursor: 1, total: 2 });
+    renderTest();
+    fireEvent.click(await screen.findByRole("button", { name: "Aufdecken 🔄" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Gewusst" }));
+    await screen.findByText("the sheep");
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Aufdecken 🔄" }));
+  });
+
+  // AK 3. Rot, wenn der Effekt die Absicht verbraucht, obwohl er kein Ziel fand (dann lief er, während `action.busy` die
+  // Optionen sperrte), oder wenn er nicht an `action.busy` hängt.
+  it("steht nach einer Auswahl auf der ersten freigegebenen Option der nächsten Frage", async () => {
+    answerTest.mockResolvedValueOnce({ done: false });
+    nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item: { ...item, itemIndex: 1, prompt: "the sheep", choices: ["das Schaf", "das Rind"] }, done: false, cursor: 1, total: 2 });
+    renderTest();
+
+    await antworte();
+    await screen.findByText("the sheep");
+    await act(async () => {});
+
+    const erste = screen.getByRole("button", { name: "das Schaf" });
+    expect((erste as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(erste);
+  });
+
+  // AK 5. Rot, wenn das Ergebnis keinen fokussierbaren Landeplatz bekommt oder der Effekt nicht an `result` hängt.
+  it("steht nach der letzten Antwort auf der Überschrift des Ergebnisses", async () => {
+    answerTest.mockResolvedValueOnce({ done: true });
+    submitTest.mockResolvedValueOnce(fertig);
+    renderTest();
+
+    await antworte();
+    const titel = await screen.findByText("FAST!");
+
+    expect(document.activeElement).toBe(titel);
+  });
+
+  // AK 6. Rot, wenn die Fehlerbox ohne Ref/`tabIndex={-1}` bleibt.
+  it("steht nach einer gescheiterten Antwort auf der Fehlermeldung", async () => {
+    answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    renderTest();
+
+    await antworte();
+    const meldung = await screen.findByText("Server kaputt. (Ref: trace-1)");
+
+    expect(document.activeElement).toBe(meldung);
+  });
+
+  // Review B-541: wie im Üben (`SohnPractice.tsx`) wird die Meldung angesagt, nicht nur fokussiert. Rot, wenn der Fehlerbox
+  // `role="alert"` fehlt.
+  it("sagt die Fehlermeldung als Alarm an", async () => {
+    answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    renderTest();
+
+    await antworte();
+
+    expect((await screen.findByRole("alert")).textContent).toBe("Server kaputt. (Ref: trace-1)");
+  });
+
+  // AK 7. Rot, wenn `resume` die Absicht nicht setzt: die Fehlerbox ist dann längst fokussiert und verbraucht, und der
+  // Fokus bliebe nach „Weiter versuchen“ auf `body`.
+  it("steht nach „Weiter versuchen“ im ersten Bedienbaren der geholten Frage", async () => {
+    answerTest.mockRejectedValueOnce(new ApiError(500, "Server kaputt.", "trace-1"));
+    nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })
+      .mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 });
+    renderTest();
+    await antworte();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Weiter versuchen" }));
+    const erste = await screen.findByRole("button", { name: "das Pferd" });
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(erste);
+  });
+
+  // AK 7, zweiter Weg. Rot, wenn „Nochmal versuchen“ die Absicht nicht setzt.
+  it("steht nach „Nochmal versuchen“ im ersten Bedienbaren der neuen Frage", async () => {
+    nextTest.mockReset().mockResolvedValueOnce({ item: null, done: true, cursor: 0, total: 0 })
+      .mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 });
+    submitTest.mockResolvedValueOnce(fertig);
+    renderTest();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Nochmal versuchen" }));
+    const erste = await screen.findByRole("button", { name: "das Pferd" });
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(erste);
+  });
+
+  // AK 8 (Absicherung des neuen Zweigs, im Ist-Code ohne Effekt grün): der erste Aufbau fokussiert nichts (B-443) – auch
+  // kein Ergebnis, das ohne Handlung erscheint. Rot, wenn der Mount-`start` die Absicht setzt.
+  it("fokussiert beim ersten Aufbau nichts", async () => {
+    renderTest();
+
+    await screen.findByRole("button", { name: "das Pferd" });
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  // AK 8, zweiter Weg (Review B-541): trifft der erste Aufbau einen fertigen Versuch, erscheint das Ergebnis ohne Handlung –
+  // auch seine Überschrift bekommt keinen Fokus. Rot, wenn der Effekt das Ergebnis ohne Absicht fokussiert (`titleRef`).
+  it("fokussiert ein Ergebnis nicht, das schon beim ersten Aufbau erscheint", async () => {
+    nextTest.mockReset().mockResolvedValueOnce({ item: null, done: true, cursor: 0, total: 0 });
+    submitTest.mockResolvedValueOnce(fertig);
+    renderTest();
+
+    await screen.findByText("FAST!");
+    await act(async () => {});
+
+    expect(document.activeElement).toBe(document.body);
+  });
+});
+
 /** B-326: nach einem Reload mit einer Plan-Id, die es nicht mehr gibt, geht es zur Basis – die korrigiert die Wahl. */
 describe("SohnTest mit einem Plan, den es nicht mehr gibt", () => {
   // Rot, wenn der Start-Fehler wieder als Meldung steht: dann liest das Kind „Study plan not found. (Ref: …)“.

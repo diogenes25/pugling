@@ -219,6 +219,135 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(30, result.GetProperty("coinsToday").GetInt32());
     }
 
+    // Books bonus coins as earned today by an earlier vocabulary run, so the cap can be filled without playing to it.
+    private void SeedCoinsToday(Setup s, int coins)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
+        db.ExtraTrainingRuns.Add(new ExtraTrainingRun
+        {
+            ChildId = s.ChildId,
+            ExerciseId = s.VocabId,
+            Day = DateOnly.FromDateTime(now),
+            Pass = 0,
+            Form = ExtraForm.Typed,
+            Stage = (int)TestStage.FreeText,
+            StartedAt = now,
+            CompletedAt = now,
+            ItemCount = coins / 2,
+            CorrectCount = coins / 2,
+            CoinsAwarded = coins,
+        });
+        db.SaveChanges();
+    }
+
+    // Answers every "n + n" card of an arithmetic exercise right.
+    private static object[] RightMathAnswers(JsonElement run) =>
+    [
+        .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = (c.GetProperty("prompt").GetString()![0] - '0') * 2 + "",
+        }),
+    ];
+
+    // B-543 AK 1: at a full cap a one-shot exercise does not start, so it is not burnt for zero coins. Red if StartAsync
+    // has no cap check (then 200 and the exercise is used up).
+    [Fact]
+    public async Task Bei_Vollem_Deckel_Startet_Eine_Einmal_Uebung_Nicht()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4));
+        SeedCoinsToday(s, 30);
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId);
+        JsonAssert.False(entry, "done");
+        Assert.Equal(JsonValueKind.Null, entry.GetProperty("openRunId").ValueKind);
+    }
+
+    // B-543 AK 2: the child's own cap of 0 means "pays nothing", so no one-shot exercise starts. Red if the check reads
+    // only the server default (30) or compares with > instead of >=.
+    [Fact]
+    public async Task Bei_Kind_Deckel_Null_Startet_Keine_Einmal_Uebung()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
+        var patched = await JsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}",
+            new { bonusDailyCoinCap = 0 }));
+        Assert.Equal(0, patched.GetProperty("bonusDailyCoinCap").GetInt32());
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+    }
+
+    // B-543 AK 3: an open one-shot run is not resumed at a full cap either. Red if the check sits only before a new run
+    // is created.
+    [Fact]
+    public async Task Eine_Offene_Einmal_Runde_Wird_Bei_Vollem_Deckel_Nicht_Fortgesetzt()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
+        await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        SeedCoinsToday(s, 30);
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+    }
+
+    // B-543 AK 4: vocabulary may be played again and burns nothing, so it still starts at a full cap. Red if the check
+    // does not tell repeatable exercises apart.
+    [Fact]
+    public async Task Eine_Vokabeluebung_Startet_Auch_Bei_Vollem_Deckel()
+    {
+        var s = await SetupAsync();
+        SeedCoinsToday(s, 30);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        Assert.Equal(s.VocabId, run.GetProperty("exerciseId").GetInt32());
+    }
+
+    // B-543 AK 5: a cap filled between start and submit leaves the one-shot run open and unpaid, without its solutions;
+    // the same submit tomorrow pays in full. Red if the submit still caps and uses up (200 with 0 coins) or checks the
+    // cap only after grading.
+    [Fact]
+    public async Task Eine_Bei_Vollem_Deckel_Abgegebene_Einmal_Runde_Zahlt_Morgen()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        var runId = run.GetProperty("runId").GetInt32();
+        var body = new { answers = RightMathAnswers(run) };
+        SeedCoinsToday(s, 30);
+
+        var refused = await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body);
+        var text = await refused.Content.ReadAsStringAsync();
+        await AssertProblemAsync(refused, HttpStatusCode.Conflict, "extra_cap_reached");
+        Assert.DoesNotContain("expected", text, StringComparison.OrdinalIgnoreCase);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.Null(db.ExtraTrainingRuns.Single(r => r.Id == runId).CompletedAt);
+        }
+        Assert.Equal(0, CoinsBooked(s.ChildId));
+
+        factory.Clock.FreezeNow();
+        factory.Clock.Advance(TimeSpan.FromDays(1));
+        try
+        {
+            var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body));
+            Assert.Equal(2, result.GetProperty("correct").GetInt32());
+            Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
+            Assert.Equal(4, CoinsBooked(s.ChildId));
+        }
+        finally
+        {
+            factory.Clock.Advance(TimeSpan.FromDays(-1));
+        }
+    }
+
     [Fact]
     public async Task Der_Vater_Sieht_Das_Bonus_Training_Spielt_Es_Aber_Nicht()
     {
