@@ -395,3 +395,18 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   - **abgenommen.** Commits: 04f2bbe, 4835626, 88dd669, 973ced1, 17790fb, **cc0e114**. Nicht geprüft: ein Lauf gegen
     die echte `pugling.db`. Die Migration ist an einer Kopie geprüft (2026-11-12), und in der echten DB hat noch kein
     Schlagwort einen Bild-Prompt.
+- 2026-11-13 · **Erster Lauf auf der echten DB** (Server :5200, vorher gesichert:
+  `pugling.db.bak-vor-b485-bilder-20261113-093713`). Bild-Prompts gesetzt für Pokémon (`with a cute small fantasy
+  creature companion`), Schach (`on a chessboard with chess pieces`), Roblox (`in a blocky toy-like 3D game world`) und
+  Brawl Stars (`as a colorful cartoon arena brawler character`). `images --max 10` je Kind: Theodor 6 Bilder (Bilder
+  1–6), Friedrich 6 Bilder (7–12), 0 Fehler, 5 min. Nur 2 von 10 Wörtern je Kind galten als zeichenbar, denn die
+  alphabetische Reihenfolge beginnt mit Abstrakta.
+  - **Befund (Defekt, durchgerutscht bei der Abnahme):** Bild 9 und Bild 12 (Brawl Stars, Friedrich) sind für
+    Kinderkarten ungeeignet: eine Figur nur in einer Art Unterhose, eine Kriegerin mit tiefem Ausschnitt. Beide
+    sind als `Everyone` eingestuft. Sofort von den Vokabeln 199 und 273 abgehängt (Links 9 und 12, die Assets
+    bleiben zur Durchsicht in der Bild-Bibliothek) und den Brawl-Stars-Prompt wieder geleert, damit der nächste
+    Lauf nicht neu zeichnet. Ursache: `dreamshaper` neigt zu sexualisierten Figuren, und der Negativ-Prompt
+    verbietet nur Schrift. Dazu treibt „arena brawler“ zu Kampfszenen. Weitere Funde: markenähnliche Logos auf
+    Trikots (Bilder 4 und 6 aus dem Wegwerf-Lauf), und zwei Interessen-Bilder ohne das Interesse (5 Pokémon, 8 Roblox).
+  - Gut: beide Schach-Bilder (3, 6), Pokémon „bend down“ (2, Fee mit Münzen), alle vier neutralen Bilder.
+
