@@ -464,3 +464,9 @@ Lehre: einen neuen Fall nie mitten in einen bestehenden Test hängen, der danach
 Playwright gegen den Endstand `6c7a5ce`: **141/141** (9,8 min, Ausweichports). Suite 1483/1483. Stellvertretend entschieden
 und gebaut: B-430 (c), B-446, B-501 Punkt 2, B-480 Punkt 3; dazu B-523 (Werkzeug). Neu offen: B-522 (Leitner-Leerrunde nach
 „▶ Üben", `Wunsch`). Veto zu jeder stellvertretenden Entscheidung beim Nutzer; nichts gepusht.
+
+## Restzeit bis 05:40 — Refinement ohne Code
+
+Fünf Stories von `idee` nach `ausformuliert`, je mit Ist-Stand am Code: B-522, B-410 (Falle: nur 5 explizite
+`[FromBody]`, der Wächter muss über den `ApiExplorer` zählen), B-380 (Bestand nachgezählt), B-494 (`fails` nimmt schon
+Teilstrings – vermutlich nur Doku), B-465 (der wirksame Defekt ist die zu strenge Verrats-Regel). Nichts gebaut.
