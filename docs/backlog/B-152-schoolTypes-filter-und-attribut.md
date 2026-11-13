@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/katalog, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/katalog, rolle/supervisor]
 aliases: [Ein Enum zwei Rollen, SchoolTypes Filter oder Attribut, unbekannte Schulart]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Frage
 groesse: XS
@@ -155,3 +155,4 @@ Frontend nie schickt).
   | B152-AK2-IsDefined | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
   | B152-AK3 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
   | B152-AK4 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:130 | red | red |  |
+- **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Befund (`IsPow2` + `IsDefined` bei POST und PATCH, alte Kombination bleibt, solange das Feld nicht gesendet wird). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).

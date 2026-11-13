@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/vater]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/vater]
 aliases: [Assistent ohne Bewertung]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: S
@@ -82,7 +82,7 @@ für diese Story erteilt.
 4. E2E Assistent: zwei eigene Übungen, eine von einem zweiten Konto bewertet; die Zeile zeigt die Bewertung, „beste
    Bewertung zuerst" stellt sie vor die unbewertete, eine vorher gewählte Übung bleibt gewählt. *Rot macht ihn:* Zeile ohne
    `ratingSummary`, Sortierwahl ohne Wirkung, oder Auswahl beim Umsortieren verworfen.
-5. E2E Planbau: gewählte Übung, die nach „beste zuerst" weiter in der Seite steht, bleibt gewählt (Absende-Knopf bedienbar).
+5. **→ verschoben nach [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md)** (Schnitt 2026-11-13, `PlanPositions.tsx` wird parallel umgebaut). E2E Planbau: gewählte Übung, die nach „beste zuerst" weiter in der Seite steht, bleibt gewählt (Absende-Knopf bedienbar).
    *Rot macht ihn:* `besteZuerst` im Auswahl-Schlüssel ohne die neue Regel (heutiger Stand).
 
 ## Schätzung
@@ -117,3 +117,25 @@ Backend. Grenzwertig zu M nur, falls der Planbau-Umbau der Abfrage-Abhängigkeit
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: S, frontend, keine Migration, kein Vertragsbruch.
 - **2026-11-13** — Schnitt im Backlog-Lauf: Angriffsplan-Schritt 3 (`PlanPositions.tsx`) und das zugehörige Planbau-Kriterium gehen an [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md), weil die parallele B-534-Arbeit diese Datei unkommittiert umbaut. Diese Story baut nur den Assistenten (`VaterWizard.tsx`, `wizardSearch.ts`) samt `auswahlNachUmsortieren`.
+- **2026-11-13** — `in-arbeit` (Sprint 71, Frontend, nur der Assistent): `wizardSearch.ts` – `WizardFilter.besteZuerst`,
+  `wizardSearchParams` schickt `sort: "rating", dir: "desc"` (auch im „Alle wählen"-Nachschlag, dieselbe Funktion),
+  `wizardFilterKey` lässt `sort`/`dir` aus; neue reine Regel `auswahlNachUmsortieren` (für B-540, im Assistenten
+  bewusst nicht benutzt – dort bleibt die Auswahl voll, Entscheidung 2). `VaterWizard.tsx`: Wahl „Trefferliste
+  sortieren" (`#wiz-reihenfolge`), Abfrage-Abhängigkeit `[filterKey, besteZuerst]`, Zeile mit `ratingSummary`.
+  `PlanPositions.tsx` nicht berührt; AK 5 → B-540. Tests: `wizardSearch.test.ts` (AK 1–3, vier Fälle),
+  `VaterWizard.test.tsx` (Bewertung in der Zeile); E2E neu `frontend/e2e/assistent-bewertung.spec.ts` (AK 4) –
+  geschrieben, **noch nicht gelaufen** (Playwright im Sprint zurückgestellt), läuft im Rollengang. Rote Probe
+  (`mutant-probe.py`, Vitest beider Dateien):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | AK1 | frontend/src/vater/wizardSearch.ts:49 | red | red | `sort` erreicht die Abfrage nicht |
+  | AK1b | frontend/src/vater/wizardSearch.ts:50 | red | red | `"asc"` statt `"desc"` |
+  | AK2 | frontend/src/vater/wizardSearch.ts:68 | red | red | Sortierung im Auswahl-Schlüssel |
+  | AK3a | frontend/src/vater/wizardSearch.ts:120 | red | red | immer leeren |
+  | AK3b | frontend/src/vater/wizardSearch.ts:120 | red | red | immer behalten |
+  | Zeile | frontend/src/vater/VaterWizard.tsx:808 | red | red | Zeile ohne `ratingSummary` |
+
+  Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:10; Grundlinie nach dem Zurückspielen grün (6/6).
+  Nicht per Vitest gedeckt: dass `VaterWizard` den Wunsch wirklich in `wizardSearchParams` und die Abhängigkeit
+  reicht – das trägt AK 4 (E2E). E2E-Lauf: `assistent-bewertung.spec.ts`, `assistent.spec.ts`.

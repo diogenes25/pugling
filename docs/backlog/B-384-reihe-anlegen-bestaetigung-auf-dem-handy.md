@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/frontend, rolle/creator]
 aliases: [Reihe anlegen auf dem Handy]
-status: geschaetzt
+status: verworfen
 prio: P3
 art: Frage
 groesse: XS
@@ -9,7 +9,7 @@ wo: frontend
 migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-u
-grund: ""
+grund: "gemessen 2026-11-13: bei 393x830 liegt die Unterkante des Meldungsplatzes nach 'Reihe anlegen' bei 507,75 px, also im Bild - die Vorbedingung der Entscheidung trifft nicht zu, kein Code noetig"
 ersetzt_durch: []
 ---
 
@@ -96,3 +96,12 @@ Beide: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
 - **2026-11-13** — gegrillt: Messung als Vorbedingung der E2E, `NewSeries` meldet „weit weg". Stakeholder-Entscheidung im
   Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: XS, frontend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 71, Frontend), Angriffsplan-Schritt 1: Spec
+  `frontend/e2e/reihe-anlegen-handy-im-bild.spec.ts` geschrieben (Handy-Fall mit der Messung als Vorbedingung
+  „Platz-Unterkante ≤ 0", Wert als Anhang `Messung`; AK 1 Meldung im Bild, AK 2 `#ns-name` geleert und im Bild;
+  Desktop-Gegenprobe 1024 × 768 mit Vorbedingung „Platz im Bild" und unverändertem `scrollY`). Code unverändert
+  (`VaterLehrwerke.tsx:270` trägt weiter `onMeldung={melde}`): die Messung gegen den heutigen Stand steht aus, weil
+  Playwright im Sprint wegen paralleler Debug-Builds des Backends zurückgestellt ist. Weiter: Spec auf Ausweichports
+  (5212/5185) gegen den heutigen Stand – Vorbedingung rot → `verworfen` mit Messwert; Vorbedingung grün und AK 1 rot →
+  Prop auf `meldeVonWeitWeg`, Kommentar `:177-187` ergänzen, drei Specs laufen lassen.
+- **2026-11-13** — **verworfen** nach Messung (Entscheidung der Story: erst messen, sonst verwerfen). Playwright gegen frisch gestartete Server auf Ausweichports (API 5212, Web 5185), Viewport 393 × 830: Unterkante des Meldungsplatzes **507,75 px** (`getBoundingClientRect().bottom`), die Vorbedingung „≤ 0 px“ fiel; die Desktop-Gegenprobe lief grün. Die Mess-Spec `reihe-anlegen-handy-im-bild.spec.ts` ist wieder entfernt, weil sie eine verworfene Annahme dauerhaft rot hielte. Nichts gebaut.

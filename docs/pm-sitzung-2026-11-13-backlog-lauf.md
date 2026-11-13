@@ -113,6 +113,45 @@ fehlende Gegenstück. Gefunden hat es jeweils ein Reviewer, der am anderen Ende 
 „Eine Grenze gilt an beiden Enden des Weges“) – kein neues Tor, darum kein Halt. Bewusst ungedeckt: das Frontend
 (die gleiche Regel im `frontend-reviewer` wäre die zweite Zeile; erst messen, ob sie dort trägt).
 
+## Sprint 70 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Vater verliert beim Pflegen von Katalog, Kind und Pflicht nichts still – kein fachloser Katalog,
+keine unsinnige Schulart, kein verschobener Lernstand, und eine neue Pflicht kostet nicht schon am ersten Tag.
+**Umfang:** B-404, B-152, B-208, B-328, B-445, B-432 (alle Backend).
+**Entwickler-Brief:** Quelle der Wahrheit Server; Sperren mit `ApiErrors`-Codes, Meldungen nennen nur die Sperre;
+Seed darf eine bestehende DB nie verändern; Malus-Regel nur in `SettleClosedPeriodsAsync`, gebuchte Zeilen bleiben.
+
+## Iteration 70 — umgesetzt
+
+Commit `f88464e8`. Backend **1569/1569**, Mutanten 25/25 + 18/18 nach den Review-Fixes rot. `pugling-reviewer`: keine
+Blocker, vier Funde **im selben Sprint behoben** – B-404 nannte gesperrte Auswege; B-328 versprach mehr, als der
+Zählvergleich hält; B-432 bestrafte Tage **vor** dem Anlegen der Position (Fenster jetzt ab
+`max(CreatedAt, StartDate)`, AK 7); B-445 schrieb den Schutz der echten DB der falschen Sperre zu.
+
+## Runde 2 — Rollengang / Abnahme (Sprint 70)
+
+Playwright auf Ausweichports (API 5213, Web 5186), Server nach dem letzten Edit: **23 von 24 grün**. `lehrwerke`
+sicherte den Zustand vor B-445 zu („Kein Profil passt“) und ist angepasst (einzeln grün). `vater-von-null` bleibt rot –
+zwei „Speichern“ auf der Kind-Seite seit `f9df2087` (vor diesem Lauf); das ist der Gegenstand der parallelen B-534.
+
+- **Vater — abgenommen:** „Ich kann kein Fach mehr wegwerfen, an dem Übungen hängen, und eine Pflicht, die ich
+  mittwochs anlege, kostet nicht rückwirkend Montag und Dienstag.“ Noch offen bei ihm: die Kind-Seite mit zwei
+  „Speichern“ (B-534).
+- **Creator — abgenommen:** „Ich sehe beim Bearbeiten, wenn eine Kürzung den Lernstand verschieben würde – und die
+  Meldung sagt ehrlich, was sie nicht erkennt.“
+- **Sohn — Regressionszeuge:** Suite und seine Specs grün.
+
+## Retrospektive (Sprint 70)
+
+**Nachschau:** Sprint 69 (B-531, B-532, B-433, B-435, B-437, B-422) ist durch seine Reviews und den Rollengang frisch
+belegt; die eigentliche Nachschau dieses Laufs folgt am Ende für alle drei Sprints gemeinsam (Index-Zähler).
+
+**Was durchkam:** Drei der vier Review-Funde betreffen **Text, der mehr verspricht als der Code** (Meldung B-404, Meldung
+B-328, `<summary>` B-432 „first due day“, Testkommentar B-445). Mutanten können das nicht sehen – sie messen Verhalten,
+nicht Versprechen. **Der eine Mechanismus:** keiner neu; die bestehende Regel „Meldungen nennen die Sperre“ (pm-loop
+Step 5) hat B-404 gefangen, aber erst im Review. Bewusst ungedeckt: `<summary>`- und Kommentar-Wahrheit hat kein Tor;
+ein Tor dafür ist nicht denkbar ohne Sprachverständnis – das bleibt Reviewer-Arbeit.
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede

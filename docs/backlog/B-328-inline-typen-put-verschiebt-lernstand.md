@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator, rolle/student]
 aliases: [Inline-Typen ohne Sperre, Wort-Tausch per PATCH]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Frage
 groesse: S
@@ -164,3 +164,4 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+- **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` â€“ Fund ðŸŸ¡ (der reine ZÃ¤hlvergleich lÃ¤sst EinfÃ¼gen in der Mitte und LÃ¶schen-plus-AnhÃ¤ngen durch, die Meldung versprach mehr) im selben Sprint behoben: Meldung, `<summary>` und Entscheidung 3 nennen die Grenze ehrlich. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).

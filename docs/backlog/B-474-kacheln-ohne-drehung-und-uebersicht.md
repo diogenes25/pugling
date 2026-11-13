@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/werkzeug, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/werkzeug, rolle/creator]
 aliases: [kacheln.ps1 Drehung, Fotos auf dem Kopf, Übersichtsbogen]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -134,3 +134,48 @@ Alle drei: Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11
   Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13,
   [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — geschaetzt: S, Werkzeug (`.claude/skills/lehrwerk-aufbereiten`), keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit` (Sprint 71): `kacheln.ps1` mit `-Drehung 0|90|180|270` (nach EXIF, im Uhrzeigersinn),
+  Parameter-Sets `Uebersicht` (4×3 je Blatt, „<n>: <Dateiname>“, `uebersicht-<n>.jpg`) und `Ausschnitt`
+  (Bruchteile, zweifach, gekappt durch `MaxKante`, `<name>-ausschnitt.jpg`); Laden+Drehen in `Open-Upright`, Zeichnen in
+  `New-Scaled`. `SKILL.md` Schritt 1: Bogen, Drehung, Ausschnitt je mit Aufruf (AK 6, Absichtserklärung). Zwei Befunde
+  beim Messen: (1) **Der Testweg-Befehl oben konnte AK 1 nie grün sehen** – ein einzelnes rotes Pixel überlebt
+  JPEG-Kompression und bikubisches Skalieren nicht (gemessen `False` am fertigen Skript). Geprüft wird darum ein roter
+  20×20-Block: Pixel 5 vor der unteren rechten Ecke rot, oben links nicht. AK 2 prüft zusätzlich, dass der Block oben
+  rechts landet (90° im Uhrzeigersinn). (2) **`-Ausschnitt 0,0,1,0.15` über `pwsh -File`** (so steht der Aufruf im Skill)
+  kam als EIN String an, `[double[]]` las ihn in deutscher Kultur („10,15 > 1“); der Parameter ist darum `[string[]]` und
+  wird invariant geparst – eigener Fall AK 5f. Prüfskript (Testbilder in `$env:TEMP`, wieder gelöscht, nichts im Repo):
+  dieselben Schritte wie der Testweg, je Fall `ID True/False`, Summenzeile; AK 3 vergleicht die Kachel-Hashes gegen
+  eine Kopie des alten Skripts (`git show HEAD:…`), 6 Kacheln byte-gleich. Das alte Skript fällt in AK 1/2/4/5 (kennt die
+  Parameter nicht). Rote Probe (`mutant-probe.py`, Test = Prüfskript):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | AK1 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:80 | red | red | Drehung ignoriert |
+  | AK2 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:80 | red | red | `FlipX` statt `FlipNone` |
+  | AK3 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:41 | red | red | Vorgabe 180 statt 0 |
+  | AK4 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:97 | red | red | 13 je Blatt statt 12 |
+  | AK5 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:135 | red | red | ohne Hochskalierung |
+  | AK5f | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:55 | red | red | Bruchteile in Landeskultur geparst |
+
+  Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15; Grundlinie nach dem Zurückspielen grün (6/6).
+  **Nicht messbar:** „Drehung vor der EXIF-Drehung“ (AK 1, zweite Hälfte) – ein Testbild mit EXIF-Tag 0x0112 lässt sich
+  mit `System.Drawing` nicht ohne Weiteres schreiben; die Reihenfolge steht nur im Code (`Open-Upright`). Ein Bogen mit fünf
+  Seiten und `-Drehung 90` wurde angesehen (Beschriftung lesbar, Miniaturen gedreht). Offen für die Abnahme: kurzer Lauf an
+  zwei echten Fotos unter `raw/` als Rollengang.
+- **2026-11-13** — Review-Nachtrag (`frontend-reviewer`, ohne Blocker): „Ziel unter `raw/`" stand nur im Kommentar und
+  wird jetzt erzwungen – `kacheln.ps1` löst `-Ziel` auf und wirft, wenn es nicht unter `<repo>/raw/` liegt (vor dem
+  Anlegen des Ordners). Das Prüfskript schreibt seine Ausgaben darum nach `raw/b474-pruefung-<n>` (gitignored, danach
+  gelöscht) und hat den Fall `RAW` (Ziel in `$env:TEMP` → wirft, legt nichts an). Probe neu über alle Fälle, Zeilen nach
+  dem Einschub verschoben:
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | AK1 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:86 | red | red | Drehung ignoriert |
+  | AK2 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:86 | red | red | `FlipX` statt `FlipNone` |
+  | AK3 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:41 | red | red | Vorgabe 180 statt 0 |
+  | AK4 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:103 | red | red | 13 je Blatt statt 12 |
+  | AK5 | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:141 | red | red | ohne Hochskalierung |
+  | AK5f | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:55 | red | red | Bruchteile in Landeskultur geparst |
+  | RAW | .claude/skills/lehrwerk-aufbereiten/kacheln.ps1:69 | red | red | Ziel außerhalb `raw/` erlaubt |
+
+  Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:27; Grundlinie danach grün (7/7).
