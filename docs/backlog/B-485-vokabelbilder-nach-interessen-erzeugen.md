@@ -395,4 +395,3 @@ Reviewer vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
   - **abgenommen.** Commits: 04f2bbe, 4835626, 88dd669, 973ced1, 17790fb, **cc0e114**. Nicht geprüft: ein Lauf gegen
     die echte `pugling.db`. Die Migration ist an einer Kopie geprüft (2026-11-12), und in der echten DB hat noch kein
     Schlagwort einen Bild-Prompt.
-
