@@ -48,6 +48,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `ausformuliert` | P3 | S | frontend | — |
 | [B-20](B-20-ki-supervisor-agent.md) | KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen | Wunsch | `ausformuliert` | P3 | L | backend | — |
+| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | „▶ Üben" nach einem verpatzten Test landet bei Leitner-Positionen oft in „Nichts fällig 🎉" | Wunsch | `ausformuliert` | P3 | — | beides | — |
 | [B-122](B-122-top-level-listen-bekommen-paging.md) | Sieben Top-Level-Sammlungen bekommen `skip`/`take` | Wunsch | `idee` | P3 | — | — | — |
 | [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) | Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist | Wunsch | `idee` | P3 | — | — | — |
 | [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `idee` | P3 | — | — | — |
@@ -62,7 +63,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `idee` | P3 | — | — | — |
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | Fotos echter Buchseiten brauchen ein stärkeres Vision-Modell als gemma4:e2b | Wunsch | `idee` | P3 | — | — | — |
-| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | „▶ Üben" nach einem verpatzten Test landet bei Leitner-Positionen oft in „Nichts fällig 🎉" | Wunsch | `idee` | P3 | — | beides | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `idee` | P3 | — | frontend | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
@@ -887,7 +887,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-519](B-519-nachschau-reste-sprint-58.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Feld `migration`, Feld `vertragsbruch` |
-| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | `idee` | `unverifiziert: true` |
+| [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 
 <details>
