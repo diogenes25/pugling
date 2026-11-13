@@ -13,6 +13,7 @@ unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-424]
+nachgeschaut: 2026-11-13
 ---
 
 # B-448 · Umfang der Übung: „leer" ist am Server ungetestet, ein Zählfehler bleibt stumm, eine Summary hängt am falschen Helfer
@@ -64,3 +65,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - Review (`pugling-reviewer`): Logger in der Projektion wie `registry` (Feld, kein Instanzaufruf); einziger Aufrufer ist
     der Controller, einzige Überschreibung fängt `JsonException` selbst. Drei 🟢, eines behoben (Leerzeile vor `ApplySort`).
   - Rollengang Creator: Katalogsuche gegen den echten In-Process-Server; Vater/Sohn Regressionszeugen. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 54/55, frischer `pugling-reviewer` an `14be0fa`, gelesen). Geprüft: einziger
+  Aufrufer von `ItemCount` (`ExerciseCatalogController.cs:138`), einzige Überschreibung fängt `JsonException` selbst;
+  `ItemsOf`-Nutzer unverändert; `umfangText` liest nur `null` als „kein Umfang"; beide AK-Tests gegen die Mutanten
+  nachvollzogen. Kein Befund (zwei 🟢 zum Loggen, bewusst).

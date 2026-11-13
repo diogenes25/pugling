@@ -215,3 +215,46 @@ Meine Tests prüften, was der Satz *sagt*, nicht, ob der Rat *funktioniert*.
 Kombinationen einmal vollständig aufzählen.
 
 **Bewusst ungedeckt:** ein Tor, das jede Meldung mit Ausweg ausführt, gibt es nicht – die Auswege sind Text.
+
+## Sprint 54 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn sieht jedes Datum in der Sprache seiner Arcade und als den Tag, den der Server meint; die Tests
+dazu greifen auf jeder Maschine, und „beste Bewertung zuerst" ist gegen „schlechteste zuerst" belegt.
+**Umfang:** [B-449](backlog/B-449-zeitzonen-tests-greifen-nur-in-new-york.md), [B-447](backlog/B-447-arcade-zeigt-iso-daten.md),
+[B-412](backlog/B-412-beste-zuerst-richtung-unbelegt.md).
+
+## Sprint 55 — Ziel & Umfang
+
+**Sprint-Ziel:** Jeder Ausweg, den die Konsole an einer Reihe ohne Fach nennt, führt in einem Schritt durch beide Sperren.
+**Umfang:** [B-514](backlog/B-514-ausweg-series-fuer-anders-gebundenes-profil.md).
+
+## Iteration 54/55 — umgesetzt
+
+- Sprint 54: `formatDateIn`, `augenblick` exportiert, gemeinsame Lese-Hälfte `lies` (DateOnly als Mittag UTC),
+  `arcadeDatum` an vier Arcade-Stellen, Arcade-Wächter; Bewertungs-Spec mit drei Übungen. Vitest 820/820, Playwright
+  140/140, Mutanten D1–D6 + E1 (D1b/D4 begründet nicht rot). Review: 🟡 zwei Tests nur zonenabhängig → strukturell
+  behoben (Zähler 1).
+- Sprint 55: `NoSubject(series, namedProfile)` mit vier Zweigen, je ein Schritt durch beide Sperren; zwei Tests führen den
+  Rat aus (Retro-Regel aus 52/53) – das fand sofort einen Fehler im eigenen Testaufbau. Suite 1438/1438, Mutanten 4/4.
+  Review des ersten Entwurfs: 🟡 „oder anderes Profil" ließ den Nutzer auf derselben Reihe (Zähler 1) → neu gefasst.
+
+## Runde 5 — Rollengang / Abnahme (Sprint 54/55)
+
+- **Sohn — abgenommen (54):** E2E 140/140; Datumswerte als Komponententests in beiden Sprachen.
+- **Vater — abgenommen (54):** Planbau-Spec gegen echten Server, Reihenfolge 5 → 2 → unbewertet.
+- **Creator — abgenommen (55):** Konsolenaufrufe gegen den echten In-Process-Server, Ratschläge ausgeführt.
+- Commits `edaceab` (54), `637d868` (55).
+
+## Retrospektive (Sprint 54/55)
+
+**Nachschau:** Sprint 52 (`59fc0a8`, frischer `frontend-reviewer`, Vitest 68/68) und Sprint 53 (`14be0fa`, frischer
+`pugling-reviewer`) – **zum ersten Mal in diesem Lauf kein 🟡**: drei 🟢 → [B-515](backlog/B-515-nachschau-reste-sprint-52.md),
+Sprint 53 sauber. `nachgeschaut` an B-441, B-443, B-456, B-512, B-448.
+
+**Was die eigenen Tore durchgelassen haben:** im Review von Sprint 54 zwei Tests, die nur in bestimmten Zeitzonen griffen –
+also genau der Fehler, den die Story beheben sollte, eine Ebene tiefer. Gefunden vom Review, nicht von der Probe: die
+Mutanten-Probe lief auf einem Berliner Rechner.
+
+**Gelandet:** kein neuer Mechanismus. Argument: die Lehre „eine zonenabhängige Probe misst die Zone des Rechners" steht als
+Gedächtnis-Lehre bereits fest (`lokal-windows-ci-linux`), und die strukturelle Reparatur (Zone als Parameter, eine
+Lese-Hälfte) macht weitere Fälle dieser Art an dieser Stelle unmöglich.

@@ -89,3 +89,21 @@ Rollengang Sohn als Fall in `full-flow.spec.ts` oder `erstbegegnung.spec.ts` (B-
   setzt die Positions-Fälligkeit nicht (Belegstelle oben). Die E2E war nur grün, weil dasselbe Wort schon in der
   Übungsrunde falsch war. Nach Freigabe 8 angehalten: der Code ist **zurückgenommen** (kein Knopf, der ins Leere führen
   kann), Stufe zurück auf `ausformuliert`, Offener Punkt 3 für den Dialog.
+- **2026-11-13** — Tageslauf (Sprint 56), Nutzerrolle stellvertretend übertragen: Offener Punkt 3 als **(b)** gebaut
+  (falsche Test-Antwort → Positions-Karte Kasten 1, fällig am Testtag; nur Kind, nur Karteikasten, nur eingeführte
+  Karten) samt Knopf „▶ Diese Wörter üben", Tests und Mutanten 5/5 rot – dann vom `pugling-reviewer` widerlegt und
+  **zurückgenommen**, nichts committet:
+  - 🔴 **Münzen farmen:** die Herabstufung stempelt kein `LastReviewedAt`; die Übung bezahlt die nun fällige Karte (`8 −
+    preBox` = 7 Münzen in Kasten 1, dazu Combo/Tempo). Absichtlich Versuch 1 verpatzen, Wörter üben, Versuch 2 besteht –
+    nach der 7-Tage-Leiter täglich über den ganzen Pool. Ein Stempel `LastReviewedAt = jetzt` schließt nur den Tag selbst;
+    am Folgetag bezahlt die Karte trotzdem – die Schleife läuft dann über zwei Tage weiter.
+  - 🟡 **Testschwierigkeit selbst steuern:** in der Leiter-Woche fragt der Test eine Karte ab Kasten 3 schriftlich; nach
+    der Herabstufung fragt Versuch 2 am selben Tag sie als Auswahl.
+  - 🟢 bei `Scope = Neu` und bei `ItemCount` unter dem Index führt der Knopf weiter ins Leere; „Wörter" passt nicht für
+    Listen und Rechnen.
+  - **Was eine Entscheidung braucht (für den Dialog):** (b) trägt nur mit einer Markierung „vom Test herabgestuft, bis zum
+    ersten Aufstieg unbezahlt" (neue Spalte → Migration auf der echten DB) **und** einer Regel, die die Teststufe eines
+    Tages nicht unter die des ersten Versuchs fallen lässt. Alternativ (c): Knopf „▶ Üben" ohne Versprechen, ohne
+    Leitner-Eingriff. Empfehlung des PM: (c) jetzt, (b) mit Markierung als eigene Story, falls der Vater den Test die
+    Übung steuern lassen will. Stufe bleibt `ausformuliert`.
+

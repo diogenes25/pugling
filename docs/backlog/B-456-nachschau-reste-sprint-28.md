@@ -13,6 +13,7 @@ unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-11-13
 ---
 
 # B-456 · „Meine Übungen (0)" neben „Lade…", ein ungetesteter Zweig und ein falscher Tooltip im Manifest-Ausfall
@@ -51,3 +52,7 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
   - Verifikation: Vitest 816/816, `tsc -b` sauber; Mutanten T1–T7 7/7 rot nach der letzten Änderung (Tabelle im
     Protokoll, Sprint 52); Playwright 140/140 auf 5201/5174 (vor dem Fokus-Nachzug T7, der einen Komponententest trägt).
   - Rollengang Vater/Sohn: E2E-Suite gegen echten Server und UI; Creator Regressionszeuge. Abgenommen.
+- **2026-11-13** — nachgeschaut (Retro Sprint 54/55, frischer `frontend-reviewer` an `59fc0a8`, gelesen, Vitest 68/68).
+  Geprüft: Rücklesen symmetrisch zu Aufbau und Edit-Modal; Fokus nur nach „Jetzt abfragen", nie beim ersten Laden;
+  Tooltip während des Ladens und im Ausfall; Wächter über alle `items.length` und `Paged<`-Dateien. Nur 🟢 →
+  [B-515](B-515-nachschau-reste-sprint-52.md).
