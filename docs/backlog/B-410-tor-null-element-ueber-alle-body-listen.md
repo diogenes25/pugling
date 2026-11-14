@@ -103,7 +103,7 @@ Die Tor-Story selbst entschied der Nutzer am 2026-11-07 („Ja, wie empfohlen").
 Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahmeliste. `migration: nein`, `vertragsbruch: nein`
 (kein Vertrag ändert sich; ein Filter-Fix ändert nur, dass ein `500` zu einem `400` wird).
 
-**Risiken**
+**Risiken:**
 
 - **Instanz-Bau:** Records ohne parameterlosen Konstruktor brauchen `RuntimeHelpers.GetUninitializedObject` plus Setzen der
   `init`-Properties; abstrakte/polymorphe Typen brauchen eine konkrete Wahl. Eine nicht baubare Form muss rot melden, nicht still
@@ -113,14 +113,14 @@ Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahm
 - **Messung kann teilen** (Entscheidung 2): mehr als drei Ursachen → Story hält an.
 - Der Wächter läuft in der vollen Suite; die Kosten müssen im Rahmen der bestehenden Guards bleiben (Reflexion einmal je Typ).
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Wächter im Melde-Modus in `ConventionGuardTests.cs` (oder einer eigenen Guard-Datei daneben), Messung in den Verlauf.
 2. Rote Pfade nach Entscheidung 2 behandeln (Filter-Fix oder Ausnahme mit Grund).
 3. Scharf stellen; je Zusicherung die rote Probe (siehe Testweg).
 4. Eintrag ins Tor-Inventar `docs/codequalitaet-gates-plan.md`.
 
-**Testweg**
+**Testweg:**
 
 - `backend/Pugling.Api.Tests/ConventionGuardTests.cs`, neuer Fall `Jede_Body_Liste_Meldet_Ein_Null_Element` (AK 1–4). Rote Proben:
   Aufzählung über `[FromBody]` statt `ApiExplorer` → AK 1 rot; im Filter die Body-Liste selbst überspringen (`elementNotNull` auf `false`,

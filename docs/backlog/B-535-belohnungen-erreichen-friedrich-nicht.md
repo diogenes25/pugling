@@ -131,7 +131,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
   `contract.ts` neu erzeugen, `SohnHome` liest das Feld statt nachzurechnen. Additiv in der Antwort – kein Client
   bricht, aber `Contracts` ändert sich.
 
-**Risiken**
+**Risiken:**
 
 - Zwei Begriffe „Pflicht erfüllt" im Code (Entscheidung 1). Gegenmittel: genau eine Methode berechnet
   `RewardsUnlocked`, `DailyBoxService` und `ExtraTrainingService.cs:194` rufen nur sie; Regressionstest, dass
@@ -143,7 +143,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
 - Die Kiste wird pro Kind, aber aus der Übersicht *eines* Plans vergeben (`DailyBoxService.cs:35`); bei mehreren
   spielbaren Plänen bliebe das so – heute ist genau einer spielbar (Anti-Cheat), keine Änderung.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `RewardsUnlocked` in `PositionProgressService.ComputeDayAsync` (Tagesziele bzw. alle Ziele, wenn es keine
    Tagesziele gibt) + Feld in `DayOverview`; `DailyBoxService` und `ExtraTrainingService` darauf umstellen.
@@ -155,7 +155,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
 4. Vertrag/Client/`contract.ts` nachziehen, `SohnHome` auf `rewardsUnlocked`.
 5. Tutorials/Doku-Capture prüfen (`DayOverview` steht in `docs/api-examples`).
 
-**Testweg**
+**Testweg:**
 
 - `DailyBoxTests`: AK 1 (Wochenziel offen ⇒ Kiste), AK 2 (nur Wochenziele ⇒ alte Regel).
 - `ExtraTrainingTests`: AK 1 (Bonus `unlocked: true` bei offenem Wochenziel).

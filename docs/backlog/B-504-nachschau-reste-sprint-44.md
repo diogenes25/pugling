@@ -138,6 +138,7 @@ fahren, auf Ausweichports.
 | A1 | AK 5, „Davon" zurück | `lib/api.ts:189` | rot |
 
 Grundlinie nach dem Zurückspielen grün.
+
 - **2026-11-12** — **abgenommen.** Vitest **796/796**, `tsc -b` sauber, Playwright **6/6** (`full-flow`, `freigabe`,
   `shop-verlauf`, `shop-verlauf-wiederholen`, `vater-von-null`; Ausweichports 5201/5174, Server vom Lauf gestartet).
   **Review-Zähler Sprint 46: 3.** Rollengang als Maschinengang: Vater über Komponententests (keine Spec fährt eine

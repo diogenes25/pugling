@@ -34,6 +34,7 @@ ich sehe, wer sie erledigt hat — ohne für eines dieser Kinder einen Betreuung
 
 > **Korrekturen, Stand 2026-11-13** (die Punkte unten stammen vom 2026-08-04; was sich als falsch erwiesen hat, ist
 > durchgestrichen statt gelöscht):
+>
 > - **Es gibt einen Server-Guard „höchstens ein aktiver Plan je Kind“** (seit `7c8d72b`): ein neuer aktiver Plan
 >   deaktiviert alle anderen (`StudyPlansController.cs:102-105`, `DeactivateSiblingPlansAsync`). Ein eigener
 >   Hausaufgaben-Plan je Kind schaltet damit den Vaterplan ab – das ist die Kernfrage des neuen Grillens.

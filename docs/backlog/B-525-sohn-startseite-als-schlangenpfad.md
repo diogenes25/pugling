@@ -202,7 +202,7 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
   `overview`/`PositionStatus` außer dem Vater-`daily-overview`), und die drei Felder sind in einer
   **Antwort** additiv – die `unknown_field`-Abweisung gilt nur für Anfragen.
 
-**Risiken**
+**Risiken:**
 
 1. **Sieben Specs, nicht fünf.** Zu den fünf, die nach den Kachel-Knöpfen greifen, kommen
    `sprache.spec.ts:19,24,76` (Tab „Basis") und `vater-von-null.spec.ts:448` (Tab „Weg"). Jede fährt einen
@@ -239,7 +239,7 @@ M-Anker (ein Batch-Pfad in einem Dienst) und bleibt unter XL, weil keine Regel u
 8. Prototyp aus dem Arbeitsbaum nehmen (`frontend/src/prototyp/`, Route in `App.tsx`, Eintrag
    `prototyp-pfad` in `.claude/launch.json`) und auf einem Wegwerf-Branch festhalten.
 
-**Testweg**
+**Testweg:**
 
 - **Integration:** `PositionGoalOverviewTests` – ein Fall, der für ein Kind an seinem Plan `penaltyCoins`,
   `seriesUnitId` und `seriesUnitTitle` der Tagesübersicht gegen die angelegten Werte prüft (AK 7).

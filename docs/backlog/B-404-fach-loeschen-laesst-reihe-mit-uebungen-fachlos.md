@@ -88,19 +88,19 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 **Größe: XS** – eine weitere `AnyAsync`-Bedingung neben `:150-151` und ein Test. `migration: nein` (keine Schemaänderung),
 `vertragsbruch: nein` (bestehender Fehlercode, kein DTO-Feld).
 
-**Risiken**
+**Risiken:**
 
 - Die Reihenfolge Eigentum vor Nutzung (`SubjectsController.cs:141-146`) muss bleiben; die neue Bedingung kommt in denselben
   Nutzungsblock.
 - Der `<summary>` am `Delete` warnt ausdrücklich davor, die Regel als „Kind-Daten sperren" zu formulieren
   (`SubjectsController.cs:123-125`). Er wird um den Katalog-Fall ergänzt, nicht umgedeutet.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Roter Test in `FachLoeschenSperreTests.cs`, dann die Bedingung in `SubjectsController.Delete`, `<summary>` nachziehen.
 2. Frontend: keine Änderung; die Katalog-Seite zeigt den 409 über den vorhandenen `StatusBanner`.
 
-**Testweg**
+**Testweg:**
 
 - `backend/Pugling.Api.Tests/FachLoeschenSperreTests.cs`, neuer Fall `Fach_MitReiheDieUebungenTraegt_LaesstSichNichtLoeschen`
   (AK 1). Rot wird er, wenn die neue `AnyAsync`-Bedingung fehlt oder die Reihe statt über `SeriesUnit.Series` gar nicht geprüft
@@ -125,6 +125,7 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   | B404-AK1 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
   | B404-AK2 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
   | B404-AK3 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:167 | red | red |  |
+
 - **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: die 409-Meldung nannte zwei Auswege, die selbst gesperrt sein können (Reihe umhängen → `series_subject_in_use`/nur Besitzer; Übungen entfernen → `exercise_in_use`/`position_has_data`). Sie nennt jetzt nur die Sperre („This subject carries a textbook series with exercises.“, wie B-401); der Test prüft zusätzlich, dass kein Ausweg mit „first“ genannt wird. `old-phrases.py`: keine Fundstelle erwartet den alten Text. Rote Probe 4/4 rot.
   Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
 
@@ -134,4 +135,5 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   | B404-AK2 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:165 | red | red |  |
   | B404-AK3 | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:168 | red | red |  |
   | B404-AK3-way-out | backend/Pugling.Api/Controllers/Creator/SubjectsController.cs:168 | red | red |  |
+
 - **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` â€“ Fund ðŸŸ¡ (die Meldung nannte Auswege, die selbst gesperrt sind) im selben Sprint behoben: die Meldung nennt nur noch die Sperre, ein Test prÃ¼ft, dass kein Ausweg genannt wird. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).
