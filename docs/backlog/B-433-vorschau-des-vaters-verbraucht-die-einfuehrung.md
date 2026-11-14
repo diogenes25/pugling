@@ -117,6 +117,7 @@ eines heute eingeführten Atoms vor `:382`), vier Integrationstests. `wo: backen
 Schemaänderung), `vertragsbruch: nein` (Antwortform unverändert).
 
 **Risiken:**
+
 - Entscheidung 2 berührt die Wertungslogik des Übens, die mehrere Pfade teilt (Mengen-Modus `:369-380`,
   Selbsteinschätzungs-Leiter `:367`, `:404`). Die neue Bedingung muss vor `wasCorrect` greifen und darf den Mengen-Modus
   nicht ändern (dort kommt immer eine Antwort).

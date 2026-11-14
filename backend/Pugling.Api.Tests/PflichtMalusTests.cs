@@ -59,7 +59,10 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         db.TestAttempts.Add(new TestAttempt
         {
-            StudyPlanId = planId, PlanPositionId = positionId, Day = day, BySupervisor = bySupervisor,
+            StudyPlanId = planId,
+            PlanPositionId = positionId,
+            Day = day,
+            BySupervisor = bySupervisor,
             StartedAt = day.ToDateTime(new TimeOnly(10, 0), DateTimeKind.Utc),
         });
         db.SaveChanges();
@@ -301,8 +304,14 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
             var second = new PlanPosition
             {
-                StudyPlanId = planId, ExerciseId = exerciseId, Order = 1, Cadence = GoalCadence.Daily, PointsGoalMet = 20,
-                PenaltyCoins = 5, UseLeitner = true, CreatedAt = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                StudyPlanId = planId,
+                ExerciseId = exerciseId,
+                Order = 1,
+                Cadence = GoalCadence.Daily,
+                PointsGoalMet = 20,
+                PenaltyCoins = 5,
+                UseLeitner = true,
+                CreatedAt = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
             };
             db.PlanPositions.Add(second);
             db.SaveChanges();

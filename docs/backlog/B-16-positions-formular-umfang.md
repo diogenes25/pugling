@@ -39,6 +39,7 @@ Tempo-Bonus einstellen können, damit ich nicht auf den Server-Standard angewies
 > Die Zeilenangaben unten gelten für den Stand vom 2026-08-03.
 >
 > **Nachgemessen 2026-11-14 für das neue Grillen:**
+>
 > - Die Stufen je Typ kennt der Server als `IExerciseType.StageOptions` (`backend/Pugling.Api/Exercises/IExerciseType.cs:133`);
 >   sie sind die erlaubte Menge der Prüfung (`Exercises/StageValidation.cs`, leer = Typ ohne Stufenwahl) und vollständig
 >   (`ExerciseTypeManifestTests.cs:61-77`). Das **Manifest** (`Pugling.Contracts/Common/ExerciseTypeManifest.cs`, ausgeliefert von
