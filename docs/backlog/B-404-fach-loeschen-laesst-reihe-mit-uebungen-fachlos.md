@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-z
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-404 · Ein gelöschtes Fach lässt Reihen mit Übungen fachlos zurück

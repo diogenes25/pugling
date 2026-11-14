@@ -16,7 +16,7 @@ import type {
   InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
-import { SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
+import { SectionPanel, SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
 
 /**
  * Die Reiter des Kind-Hubs. Gruppiert nach der Frage, die der Vater gerade hat – nicht nach dem Endpunkt:
@@ -79,23 +79,24 @@ export function VaterKind() {
       {/*
         Reiter statt einer langen Seite (B-534): vorher standen neun Abschnitte mit drei verschiedenen
         „Speichern" untereinander, und welcher Knopf welche Eingabe sichert, musste der Vater erraten. Jetzt ist
-        je Reiter höchstens ein Speichern sichtbar.
+        je Reiter höchstens ein Speichern sichtbar. Die Reiter bleiben eingehängt (`SectionPanel`): wer im Profil
+        tippt und kurz in „Schule" nachsieht, findet seine ungespeicherte Eingabe beim Zurückkommen wieder.
       */}
       <SectionTabs tabs={CHILD_TABS} active={tab} label={`Profil von ${me.name}`} />
 
-      {tab === "profil" && <CoreDataSection child={me} onSaved={child.reload} />}
+      <SectionPanel section="profil" active={tab}><CoreDataSection child={me} onSaved={child.reload} /></SectionPanel>
 
-      {tab === "schule" && (
-        <>
-          {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
-              der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
-          <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
-          <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
-          <TimetableSection childId={childId} subjects={subjects.data ?? []} />
-        </>
-      )}
+      <SectionPanel section="schule" active={tab}>
+        {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
+            der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
+        <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+        {/* Klasse und Schulart entscheiden mit, welcher Fachlehrer passt: nach dem Speichern im Profil neu fragen. */}
+        <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []}
+          kindStand={`${me.grade ?? "-"}:${me.schoolType}`} />
+        <TimetableSection childId={childId} subjects={subjects.data ?? []} />
+      </SectionPanel>
 
-      {tab === "interessen" && (
+      <SectionPanel section="interessen" active={tab}>
         <section>
           <h3 className="h-section">Interessen</h3>
           <p className="sub">
@@ -117,18 +118,16 @@ export function VaterKind() {
             />
           )}
         </section>
-      )}
+      </SectionPanel>
 
-      {tab === "einstellungen" && (
-        <>
-          <RatingSection child={me} onSaved={child.reload} />
-          {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
-          <BonusSection key={me.id} child={me} onSaved={child.reload} />
-        </>
-      )}
+      <SectionPanel section="einstellungen" active={tab}>
+        <RatingSection child={me} onSaved={child.reload} />
+        {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
+        <BonusSection key={me.id} child={me} onSaved={child.reload} />
+      </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}
-      {tab === "betreuer" && <SupervisorsSection childId={childId} childName={me.name} />}
+      <SectionPanel section="betreuer" active={tab}><SupervisorsSection childId={childId} childName={me.name} /></SectionPanel>
     </>
   );
 }

@@ -132,3 +132,13 @@ oder im Bonus-Training.
   | M6 | frontend/src/sohn/SohnPractice.tsx:317 | red | red | `next()` meldet nichts (AK 7) |
 
   Grundlinie nach dem Zurückspielen: green (beide Läufe).
+- **2026-11-14** — Code-Review-Fund behoben (Restrisiko 1 des Frontend-Reviews): `api.cardShown` ist fire-and-forget; überholte die Antwort auf Karte B die Meldung „B sichtbar", wurde der Stempel zur Startzeit der übernächsten Karte und maß deren Antwort zu kurz. Die Meldung nennt jetzt ihre Karte (`CardShownDto(ItemIndex)`, Pflicht-Rumpf von `POST …/shown`); der Server stempelt nur, wenn sie `Order[Cursor]` der Sitzung ist, sonst 204 ohne Wirkung (für das Kind nichts zu tun). Die Arcade schickt `cards[idx + 1].itemIndex`. Tests: `SpeedBonusTests.Verspaeteter_Stempel_Der_Vorigen_Karte_Zaehlt_Nicht`, `SohnPractice.test.tsx` „meldet mit Weiter die nächste Karte genau einmal als sichtbar" (jetzt mit Indizes 7/4/9 und erwartetem `itemIndex`). Rote Probe:
+
+  Gemessen an `ae9fb08a + Arbeitsbaum geändert`, 2026-11-14 00:35 / 00:40.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | BE6 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:159 | red | red | Stempel nicht an die Karte gebunden |
+  | FE1 | frontend/src/sohn/SohnPractice.tsx:327 | red | red | Rundenposition statt `itemIndex` |
+
+  Grundlinie nach dem Zurückspielen: green (beide Läufe).

@@ -130,3 +130,13 @@ Verlauf über mehrere Wochen.
   | M8 | frontend/src/sohn/SohnProgress.tsx:62 | red | red | Zeile fehlt (AK 5) |
 
   Grundlinie nach dem Zurückspielen: green.
+- **2026-11-14** — Code-Review-Fund behoben: eine Shop-Stornierung bucht ihre Rückerstattung als **positive** `ShopCoins`-Zeile (`ShopService.CancelPurchaseAsync`) und zählte damit als „verdient". `WalletService.EarnedCoinKinds` schließt jetzt neben `Manual` auch `ShopCoins` und `GoalPenalty` aus (beide können positiv gebucht werden: Rückerstattung bzw. Malus-Korrektur, keins ist Lernen). Test `WochenvergleichTests.Stornierung_Und_Malus_Korrektur_Zaehlen_Nicht`. Rote Probe:
+
+  Gemessen an `ae9fb08a + Arbeitsbaum geändert`, 2026-11-14 00:40.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | BE1 | backend/Pugling.Api/Services/Shared/WalletService.cs:48 | red | red | `ShopCoins` wieder verdient |
+  | BE2 | backend/Pugling.Api/Services/Shared/WalletService.cs:48 | red | red | `GoalPenalty` wieder verdient |
+
+  Grundlinie nach dem Zurückspielen: green.

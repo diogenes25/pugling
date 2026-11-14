@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-532 · Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken

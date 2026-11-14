@@ -393,6 +393,73 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     }
 
     /// <summary>
+    /// Code review (B-522): a token carrying both the supervisor and the student role is capped at the exam start
+    /// (the start asks <c>IsStudent</c>), so the session must show it the same count - not the supervisor's maximum.
+    /// Red when the session decides by <c>IsSupervisor</c> (it would show 2 while the start answers
+    /// <c>test_attempts_exhausted</c>).
+    /// </summary>
+    [Fact]
+    public async Task Doppelrolle_Sieht_Dieselben_Restversuche_Wie_Der_Teststart()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var testsUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        for (var i = 0; i < 2; i++)
+        {
+            var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+            (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
+            {
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            })).EnsureSuccessStatusCode();
+        }
+        var both = DualRoleClient(adultId: 1, childId: 1);
+        var sessionUrl = $"{TestApi.PracticeBase(planId, positionId)}/{await TestApi.StartPositionSessionAsync(both, planId, positionId)}";
+
+        var start = await both.PostAsJsonAsync(testsUrl, new { });
+
+        Assert.Equal("test_attempts_exhausted", (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(0, (await both.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32());
+    }
+
+    /// <summary>
+    /// Code review (B-522): the heartbeat fires every few seconds and skips the attempt count, so its answer leaves
+    /// <c>testAttemptsLeft</c> null while a read of the same session carries it. Red when the heartbeat counts again.
+    /// </summary>
+    [Fact]
+    public async Task Heartbeat_Zaehlt_Die_Restversuche_Nicht()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionUrl = $"{TestApi.PracticeBase(planId, positionId)}/{await TestApi.StartPositionSessionAsync(child, planId, positionId)}";
+
+        var beat = await (await child.PostAsJsonAsync($"{sessionUrl}/heartbeat", new { seconds = 5, active = true }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(JsonValueKind.Null, beat.GetProperty("testAttemptsLeft").ValueKind);
+        Assert.Equal(5, beat.GetProperty("activeSeconds").GetInt32());
+        Assert.Equal(2, (await child.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32());
+    }
+
+    // A token with the supervisor AND the student role, issued like a login would issue it for an account carrying
+    // both profiles. No seeded account has both, so the token is minted directly with the server's own signer.
+    private HttpClient DualRoleClient(int adultId, int childId)
+    {
+        var tokens = _factory.Services.GetRequiredService<Pugling.Api.Auth.TokenService>();
+        var (token, _) = tokens.IssueForAccount(new Account { Id = 1, DisplayName = "Doppelrolle" },
+        [
+            new AccountProfile { Role = ProfileRole.Supervisor, AdultId = adultId },
+            new AccountProfile { Role = ProfileRole.Student, ChildId = childId },
+        ]);
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        return client;
+    }
+
+    /// <summary>
     /// B-529 AK 1 and AK 2: a rule task's hint comes back after the answer as its explanation - on a wrong answer
     /// and on a right one. Red when <c>ReviewOutcome</c> carries no explanation, or only misses get one.
     /// </summary>

@@ -10499,7 +10499,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "\u0022The next card is visible now\u0022 (B-530): the server stamps the moment with its own clock, so the fast-answer\nbonus measures from the visible card rather than from the previous answer - reading the feedback sheet is not\nanswer time. The client says only when, never how long. One stamp per card: once a stamp is\nlater than the latest answer, further calls change nothing, and before the first answer of a session there is\nnothing to stamp (the first card earns no speed bonus). The 1-second floor still applies to the measurement.\nThe supervisor does not stamp: a preview pays nothing, and his call must not shape the child\u0027s measurement.",
+        "summary": "\u0022The next card is visible now\u0022 (B-530): the server stamps the moment with its own clock, so the fast-answer\nbonus measures from the visible card rather than from the previous answer - reading the feedback sheet is not\nanswer time. The client says only when, never how long. One stamp per card: once a stamp is\nlater than the latest answer, further calls change nothing, and before the first answer of a session there is\nnothing to stamp (the first card earns no speed bonus). The 1-second floor still applies to the measurement.\nThe supervisor does not stamp: a preview pays nothing, and his call must not shape the child\u0027s measurement.\nThe stamp is bound to the card the client names: a report for any card but the session\u0027s current one changes\nnothing (still 204 - the child has nothing to fix).",
         "parameters": [
           {
             "name": "planId",
@@ -10532,6 +10532,26 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "No Content",
@@ -10567,7 +10587,7 @@
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "Adds (active) practice seconds (anti time cheat: capped per heartbeat).",
+        "summary": "Adds (active) practice seconds (anti time cheat: capped per heartbeat). The answer leaves\n\u0060TestAttemptsLeft\u0060 null: the heartbeat fires every few seconds and skips that count.",
         "parameters": [
           {
             "name": "planId",
@@ -29798,6 +29818,23 @@
         "type": "string",
         "description": "Which kind of book within a textbook series a \u0060SeriesUnit\u0060 belongs to. A series with several\ncompanion volumes (textbook, workbook, teacher\u0027s guide) tells them apart by this field instead of a\nsecond hierarchy level - see \u0060docs/backlog/B-63-lehrwerk-hierarchie.md\u0060, decision 6.\n\nAllowed values: Textbook, Workbook, TeacherGuide."
       },
+      "CardShownDto": {
+        "required": [
+          "itemIndex"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "\u0022This card is visible now\u0022 (B-530). ItemIndex names the card the client shows, the same atom\naddress as in ReviewDto: the server stamps only when it is the session\u0027s current card, so a report\nthat arrives after that card\u0027s own answer cannot become the base of the card after it."
+      },
       "CategoryResponse": {
         "required": [
           "createdAt",
@@ -42911,7 +42948,6 @@
           "positionId",
           "reviewCount",
           "startedAt",
-          "testAttemptsLeft",
           "testable",
           "total"
         ],
@@ -42997,13 +43033,14 @@
           "testAttemptsLeft": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "null",
               "integer",
               "string"
             ],
             "format": "int32"
           }
         },
-        "description": "A running or finished practice session on a position. Testable mirrors\n\u0060PositionStatus.Testable\u0060 (B-114) for this session\u0027s day: false on a free display stage, so a\nclient offering \u0022continue to the test\u0022 after the round (or when nothing is due) can gate on it instead\nof sending the child into the exam\u0027s \u0060stage_not_testable\u0060 dead end.\n\nTestAttemptsLeft (B-522) is the number of exam attempts still startable on the session\u0027s\nday - the same count that locks the exam start with \u0060test_attempts_exhausted\u0060; an open attempt counts as\nstartable (it is resumed). \u0060Testable\u0060 says whether the day\u0027s stage has a test at all, this says whether\nthe child may still take it today. The supervisor is exempt from the cap and always gets the daily maximum."
+        "description": "A running or finished practice session on a position. Testable mirrors\n\u0060PositionStatus.Testable\u0060 (B-114) for this session\u0027s day: false on a free display stage, so a\nclient offering \u0022continue to the test\u0022 after the round (or when nothing is due) can gate on it instead\nof sending the child into the exam\u0027s \u0060stage_not_testable\u0060 dead end.\n\nTestAttemptsLeft (B-522) is the number of exam attempts still startable on the session\u0027s\nday - the same count that locks the exam start with \u0060test_attempts_exhausted\u0060; an open attempt counts as\nstartable (it is resumed). \u0060Testable\u0060 says whether the day\u0027s stage has a test at all, this says whether\nthe child may still take it today. A token without the student role is exempt from the cap and always gets the\ndaily maximum. It is \u0060null\u0060 only in the heartbeat\u0027s answer: the heartbeat runs every few seconds and its\nanswer is not a screen state, so it skips the count (start, read and end always carry it)."
       },
       "SetChildInterestsDto": {
         "required": [

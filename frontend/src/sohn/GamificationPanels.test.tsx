@@ -31,11 +31,21 @@ beforeEach(async () => {
 
 describe("MissionsPanel, Restzeit (B-528)", () => {
   // AK 4. Rot, wenn die Frist fehlt (dann stünde wieder „Diese Woche") oder die Zahl nicht vom Server käme.
+  // `daysLeft` 4 heißt vier Tage nach heute, also fünf mit heute.
   it("zeigt bei einer offenen Wochenmission die Tage bis zum Periodenende", async () => {
     missions.mockResolvedValue([mission({ daysLeft: 4 })]);
     render(<MissionsPanel />);
 
-    expect(await screen.findByText("3/10 · noch 4 Tage")).toBeTruthy();
+    expect(await screen.findByText("3/10 · noch 5 Tage inkl. heute")).toBeTruthy();
+  });
+
+  // Review zu B-528: am Samstag (`daysLeft` 1) bleiben heute und morgen. Rot, wenn die Zahl wieder ohne heute zählt
+  // („noch 1 Tag" – der Sohn läse: nur noch heute).
+  it("zählt heute mit", async () => {
+    missions.mockResolvedValue([mission({ daysLeft: 1 })]);
+    render(<MissionsPanel />);
+
+    expect(await screen.findByText("3/10 · noch 2 Tage inkl. heute")).toBeTruthy();
   });
 
   // AK 4, letzter Tag. Rot, wenn 0 als „noch 0 Tage" erscheint statt „nur noch heute".
@@ -52,7 +62,7 @@ describe("MissionsPanel, Restzeit (B-528)", () => {
     render(<MissionsPanel />);
 
     expect(await screen.findByText("+5")).toBeTruthy();
-    expect(screen.queryByText(/noch 4 Tage/)).toBeNull();
+    expect(screen.queryByText(/inkl\. heute/)).toBeNull();
   });
 
   // Einmalige Mission: ohne Frist bleibt der Zeitraum stehen. Rot, wenn `null` als Zahl formatiert würde.

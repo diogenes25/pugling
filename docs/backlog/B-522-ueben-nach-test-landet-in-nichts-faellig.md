@@ -147,3 +147,16 @@ in `SubmitResponse`; erst bauen, wenn der Rollengang zeigt, dass der eine leere 
   | M8 | frontend/src/sohn/SohnTest.tsx:211 | red | red | `onPractice` ohne State (AK 6) |
 
   Grundlinie nach dem Zurückspielen: green. Abweichung vom Angriffsplan: der Fall „Versuche aufgebraucht, von der Startseite" bekommt ebenfalls den Titel ohne 🎉 (AK 4 verlangt ihn ohne Herkunftsbedingung).
+- **2026-11-14** — Code-Review-Funde behoben: (1) `TestAttemptsLeft` der Übungssitzung fragte `IsSupervisor`, der Teststart `IsStudent` – ein Token mit beiden Rollen sah 2 und bekam `test_attempts_exhausted`. Jetzt dieselbe Bedingung (`forSupervisor: !User.IsStudent()`), Test mit selbst ausgestelltem Doppelrollen-Token (`Doppelrolle_Sieht_Dieselben_Restversuche_Wie_Der_Teststart`). (2) Der Heartbeat zählt die Versuche nicht mehr (Count+Any je Takt); `SessionResponse.TestAttemptsLeft` ist dafür `int?` und nur in der Heartbeat-Antwort `null`, Start/Lesen/Ende tragen ihn weiter (`Heartbeat_Zaehlt_Die_Restversuche_Nicht`; die Arcade liest die Heartbeat-Antwort nicht). (3) Vier Leerzeilen in `PositionTestsController` auf eine. (4) Arcade: der `nachTest`-State wird nach dem Lesen per `replace` aus dem Verlaufseintrag entfernt, die Seite behält den gelesenen Wert – sonst unterdrückte ein späteres „Zurück" die Feier wieder (RTL „räumt nachTest nach dem Lesen aus dem Verlauf, ohne die Seite umzustimmen"). Rote Probe:
+
+  Gemessen an `ae9fb08a + Arbeitsbaum geändert`, 2026-11-14 00:35 / 00:40.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | BE3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:47 | red | red | Sitzung fragt wieder `IsSupervisor` |
+  | BE4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:180 | red | red | Heartbeat zählt wieder |
+  | BE5 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:41 | red | red | Schalter wirkungslos |
+  | FE2 | frontend/src/sohn/SohnPractice.tsx:66 | red | red | State bleibt im Verlauf |
+  | FE3 | frontend/src/sohn/SohnPractice.tsx:63 | red | red | Seite vergisst den gelesenen Wert |
+
+  Grundlinie nach dem Zurückspielen: green (beide Läufe).

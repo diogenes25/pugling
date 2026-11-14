@@ -12,6 +12,7 @@ quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im 
 entgangen_bei: []
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-465 · Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative

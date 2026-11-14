@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-533]
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-543 · Nach erreichtem Bonus-Deckel verbrennt eine Einmal-Übung für 0 Münzen

@@ -12,11 +12,13 @@ namespace Pugling.Contracts.Student;
 /// <paramref name="TestAttemptsLeft"/> (B-522) is the number of exam attempts still startable on the session's
 /// day - the same count that locks the exam start with <c>test_attempts_exhausted</c>; an open attempt counts as
 /// startable (it is resumed). <c>Testable</c> says whether the day's stage has a test at all, this says whether
-/// the child may still take it today. The supervisor is exempt from the cap and always gets the daily maximum.
+/// the child may still take it today. A token without the student role is exempt from the cap and always gets the
+/// daily maximum. It is <c>null</c> only in the heartbeat's answer: the heartbeat runs every few seconds and its
+/// answer is not a screen state, so it skips the count (start, read and end always carry it).
 /// </summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
     DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-    PlayMode Mode, int Cursor, int Total, bool Testable, int TestAttemptsLeft);
+    PlayMode Mode, int Cursor, int Total, bool Testable, int? TestAttemptsLeft);
 
 /// <summary>
 /// Start payload of a practice session. <paramref name="Mode"/> selects the playback mode (default
@@ -92,6 +94,13 @@ public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total)
 /// stages supply <paramref name="WasKnown"/>. The server enforces the stage; it grades – never the frontend.
 /// </summary>
 public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
+
+/// <summary>
+/// "This card is visible now" (B-530). <paramref name="ItemIndex"/> names the card the client shows, the same atom
+/// address as in <see cref="ReviewDto"/>: the server stamps only when it is the session's current card, so a report
+/// that arrives after that card's own answer cannot become the base of the card after it.
+/// </summary>
+public record CardShownDto(int ItemIndex);
 
 /// <summary>
 /// Result of a Leitner review (graded server-side) incl. bonuses for feedback. <see cref="Next"/>

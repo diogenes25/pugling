@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-ab
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-408 · Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon

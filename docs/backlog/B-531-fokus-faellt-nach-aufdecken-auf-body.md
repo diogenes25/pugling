@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-531 · Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body`

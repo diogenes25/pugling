@@ -61,8 +61,8 @@ export const en = {
       periodWeekly: "This week",
       periodOneOff: "Goal",
       lastDay: "today only",
-      daysLeft_one: "{{count}} day left",
-      daysLeft_other: "{{count}} days left",
+      daysLeft_one: "{{count}} day left incl. today",
+      daysLeft_other: "{{count}} days left incl. today",
     },
     interests: {
       introTitle: "Tell us about you!",

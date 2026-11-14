@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AddPanel } from "../components/AddPanel";
+import { ListenAusfall } from "../components/ListenAusfall";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
@@ -46,8 +47,8 @@ const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeig
 
 export function PlanPositions({ planId }: { planId: number }) {
   const positions = useAsync<PositionResponse[]>(() => api.positions(planId), [planId]);
-  // **Eine** Aktion für den ganzen Abschnitt: es lässt sich ohnehin nur eine Position auf einmal
-  // bearbeiten, und so steht die Rückmeldung an einer Stelle statt in jeder Zeile.
+  // **Eine** Aktion für die Zeilen: es lässt sich ohnehin nur eine Position auf einmal bearbeiten, und so steht
+  // ihre Rückmeldung an einer Stelle statt in jeder Zeile. Das Hinzufügen hat seine eigene (siehe `AddPosition`).
   const action = useAction();
 
   return (
@@ -58,9 +59,11 @@ export function PlanPositions({ planId }: { planId: number }) {
       </p>
       <StatusBanner message={action.message} />
 
-      {positions.loading && positions.data === null ? <div className="loading">Lade Positionen…</div> : positions.error ? (
-        <div className="banner err">{positions.error}</div>
-      ) : (
+      {/* B-183: ein gescheitertes Lesen bietet „Erneut laden". Der Platzhalter nur vor dem ersten Ergebnis
+          (`showPlaceholder`), sonst tauschte die Wiederholung den Ausfall gegen „Lade…" (B-216). */}
+      <ListenAusfall was="Die Positionen des Plans" fehler={positions.error} laedt={positions.loading}
+        onRetry={positions.reload} schluessel={planId} />
+      {positions.showPlaceholder ? <div className="loading">Lade Positionen…</div> : positions.data === null ? null : (
         <div style={{ overflowX: "auto", marginTop: 12 }}>
           <table className="table">
             <thead><tr><th>#</th><th>Übung</th><th>Ziel</th><th className="num">Punkte</th><th>Leitner</th><th>Aktionen</th></tr></thead>
@@ -79,9 +82,10 @@ export function PlanPositions({ planId }: { planId: number }) {
       {/* Unter dem Bestand und zugeklappt (B-534): das Anlege-Formular ist so groß wie die Tabelle und stand
           vorher davor. Ein leerer Plan öffnet es gleich – dort ist es der einzige nächste Schritt. Erst mit
           geladenem Bestand rendern, `defaultOpen` gilt nur beim Einhängen. */}
+      {/* Bewusst kein Panel ohne Bestand: scheitert das Laden, bietet der ListenAusfall oben „Erneut laden" – ein Hinzufügen in einen Plan, dessen Inhalt unbekannt ist, wäre blind. */}
       {positions.data && (
         <AddPanel label="Übung aus dem Katalog" defaultOpen={positions.data.length === 0}>
-          <AddPosition planId={planId} action={action} onAdded={positions.reload} />
+          <AddPosition planId={planId} onAdded={positions.reload} />
         </AddPanel>
       )}
     </section>
@@ -442,7 +446,13 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
 }
 
 /** Katalog-Übung über eine Filterleiste finden und als Position hinzufügen (übrige Werte erbt die Position). */
-function AddPosition({ planId, action, onAdded }: { planId: number; action: ActionState; onAdded: () => void }) {
+function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void }) {
+  /*
+   * Eine eigene Aktion samt Banner am Absende-Knopf: die Rückmeldung landet dort, wo gehandelt wurde. Mit der
+   * geteilten Aktion der Zeilen stand „hinzugefügt" bzw. ein 409 über der Tabelle – in einem langen Plan außer Sicht,
+   * und vom Knopf aus sah das Hinzufügen aus wie „nichts passiert".
+   */
+  const action = useAction();
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const types = useExerciseTypes();
   const typeLabel = types.label;
@@ -694,6 +704,7 @@ function AddPosition({ planId, action, onAdded }: { planId: number; action: Acti
           {action.busy ? "Füge hinzu…" : "+ Position hinzufügen"}
         </button>
       </div>
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
       <p className="muted" style={{ margin: 0, fontSize: 12 }}>
         Leere Felder bedeuten den Standard: Bestehen ab 80 %, alle Inhalte – und bei den Bonus-Werten den
         <b> Vorschlag der Übung</b>. Beim Auswählen einer Übung übernimmt das Formular deren Lern-Standards.

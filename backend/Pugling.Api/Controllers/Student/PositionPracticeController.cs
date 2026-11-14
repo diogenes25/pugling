@@ -32,14 +32,20 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     // Not static (B-114 follow-up): Testable needs `progress`, and PlanPosition/StudyPlan are only
     // reliably present when the caller loaded them - see `GetSession`'s Includes and `Start`'s assignment.
-    // Asynchronous since B-522: the attempts left come from the exam's own count (one query pair per session).
-    private async Task<SessionResponse> MapAsync(PracticeSession s, CancellationToken ct) =>
+    // `withAttempts` is false only for the heartbeat (B-522 review): it fires every few seconds, and the count costs a
+    // query pair the child's screen never reads from that answer.
+    private async Task<SessionResponse> MapAsync(PracticeSession s, bool withAttempts, CancellationToken ct) =>
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count,
             s.PlanPosition is { } pos && pos.StudyPlan is { } plan && progress.IsTestable(pos, plan, s.Day),
-            s.PlanPositionId is { } positionId
-                ? await progress.TestAttemptsLeftAsync(positionId, s.Day, User.IsSupervisor(), ct)
-                : 0);
+            withAttempts ? await TestAttemptsLeftAsync(s, ct) : null);
+
+    // The same exemption as the exam start (PositionTestsController.Start): the cap binds every token with the student
+    // role, so a token carrying both roles sees the count the start will enforce, not the supervisor's maximum.
+    private async Task<int> TestAttemptsLeftAsync(PracticeSession s, CancellationToken ct) =>
+        s.PlanPositionId is { } positionId
+            ? await progress.TestAttemptsLeftAsync(positionId, s.Day, forSupervisor: !User.IsStudent(), ct)
+            : 0;
 
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
@@ -94,7 +100,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         session.Order = [.. await IntroductionsFirstAsync(pos, day, dto.Mode, due, ct)];
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, await MapAsync(session, ct));
+        return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, await MapAsync(session, withAttempts: true, ct));
     }
 
     /// <summary>
@@ -128,7 +134,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     [HttpGet("{sessionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
-        await GetSession(planId, positionId, sessionId, ct) is { } s ? await MapAsync(s, ct) : NotFound();
+        await GetSession(planId, positionId, sessionId, ct) is { } s ? await MapAsync(s, withAttempts: true, ct) : NotFound();
 
     /// <summary>
     /// "The next card is visible now" (B-530): the server stamps the moment with its own clock, so the fast-answer
@@ -137,15 +143,20 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// later than the latest answer, further calls change nothing, and before the first answer of a session there is
     /// nothing to stamp (the first card earns no speed bonus). The 1-second floor still applies to the measurement.
     /// The supervisor does not stamp: a preview pays nothing, and his call must not shape the child's measurement.
+    /// The stamp is bound to the card the client names: a report for any card but the session's current one changes
+    /// nothing (still 204 - the child has nothing to fix).
     /// </summary>
     [HttpPost("{sessionId:int}/shown")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Shown(int planId, int positionId, int sessionId, CancellationToken ct = default)
+    public async Task<IActionResult> Shown(int planId, int positionId, int sessionId, CardShownDto dto, CancellationToken ct = default)
     {
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         if (!User.IsStudent() || session.EndedAt is not null || session.Reviews.Count == 0) return NoContent();
+        // The client fires this without waiting. Overtaken by the answer to the same card, it would land after that
+        // answer and become the base of the NEXT card, measuring its answer time too short.
+        if (session.Cursor >= session.Order.Count || session.Order[session.Cursor] != dto.ItemIndex) return NoContent();
 
         var lastAnswer = session.Reviews.Max(r => r.At);
         if (session.CardShownAt is { } stamped && stamped > lastAnswer) return NoContent();
@@ -154,7 +165,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return NoContent();
     }
 
-    /// <summary>Adds (active) practice seconds (anti time cheat: capped per heartbeat).</summary>
+    /// <summary>
+    /// Adds (active) practice seconds (anti time cheat: capped per heartbeat). The answer leaves
+    /// <c>TestAttemptsLeft</c> null: the heartbeat fires every few seconds and skips that count.
+    /// </summary>
     [HttpPost("{sessionId:int}/heartbeat")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Heartbeat(int planId, int positionId, int sessionId, HeartbeatDto dto, CancellationToken ct = default)
@@ -163,7 +177,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (session is null) return NotFound();
         if (dto.Active && dto.Seconds > 0) session.ActiveSeconds += Math.Clamp(dto.Seconds, 0, MaxHeartbeatSeconds);
         await db.SaveChangesAsync(ct);
-        return await MapAsync(session, ct);
+        return await MapAsync(session, withAttempts: false, ct);
     }
 
     /// <summary>
@@ -585,7 +599,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         session.EndedAt = time.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
-        if (!payable) return await MapAsync(session, ct);
+        if (!payable) return await MapAsync(session, withAttempts: true, ct);
 
         // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
@@ -593,6 +607,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
         // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
         await dailyBox.EvaluateAndAwardAsync(plan, session.Day, dayOverview, ct);
-        return await MapAsync(session, ct);
+        return await MapAsync(session, withAttempts: true, ct);
     }
 }

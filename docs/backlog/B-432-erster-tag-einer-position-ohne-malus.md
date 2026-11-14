@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-419
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-432 · Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden?

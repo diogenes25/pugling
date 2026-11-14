@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-433 · Spielt der Vater eine Übungsrunde des Kindes, sind dessen neue Wörter danach „schon gesehen"

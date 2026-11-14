@@ -666,9 +666,11 @@ export const api = {
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome | undefined>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
-  // B-530: „die nächste Karte ist jetzt sichtbar" – der Server stempelt mit seiner Uhr; der Client meldet nur das Wann.
-  cardShown: (planId: number, positionId: number, sessionId: number) =>
-    http<void>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/shown`, "POST"),
+  // B-530: „die nächste Karte ist jetzt sichtbar" – der Server stempelt mit seiner Uhr; der Client meldet nur das Wann
+  // und welche Karte. Der Server stempelt nur, wenn sie seine aktuelle Karte ist.
+  cardShown: (planId: number, positionId: number, sessionId: number, itemIndex: number) =>
+    http<void>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/shown`, "POST",
+      { itemIndex }),
   endSession: (planId: number, positionId: number, sessionId: number) =>
     http<PositionSession>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),

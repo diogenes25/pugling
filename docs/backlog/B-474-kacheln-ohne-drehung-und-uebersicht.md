@@ -12,6 +12,7 @@ quelle: Lauf des Skills lehrwerk-aufbereiten an Découvertes Série bleue 2 (202
 entgangen_bei: []
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-474 · `kacheln.ps1` kann nicht drehen, und für die Sichtung von 56 Fotos fehlt ein Übersichtsbogen

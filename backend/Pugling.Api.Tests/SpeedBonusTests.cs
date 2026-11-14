@@ -33,7 +33,8 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int thresholdSeconds, int bonus)
     {
         var father = await TestApi.AdultAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father,
+            ("hello", "hallo"), ("goodbye", "tschüss"), ("thanks", "danke"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: 0, speedThresholdSeconds: thresholdSeconds, speedBonusPoints: bonus);
         var child = await TestApi.ChildAsync(_factory);
@@ -110,8 +111,9 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
 
     // ---- B-530: the answer time counts from the visible card, not from the previous answer ----
 
-    private Task<HttpResponseMessage> ShownAsync(HttpClient client, int planId, int positionId, int sid) =>
-        client.PostAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/shown", null);
+    // The card after the first answer is item 1: the session's frozen order is 0, 1, 2.
+    private Task<HttpResponseMessage> ShownAsync(HttpClient client, int planId, int positionId, int sid, int itemIndex = 1) =>
+        client.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sid}/shown", new { itemIndex });
 
     /// <summary>
     /// B-530 AK 1: ten seconds of reading the sheet, then "Weiter" stamps the card as shown, then a two-second answer
@@ -208,5 +210,28 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
 
         Assert.Equal(0, second.GetProperty("speedBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// Code review (B-530): "shown" is fire-and-forget and can arrive after the answer to the very card it names. Here
+    /// the report for item 1 lands 2.5 s after item 1 was answered, and item 2 is answered half a second later. Bound to
+    /// its card the stale stamp changes nothing: item 2 is measured from the previous answer (3 s, pays). Red when the
+    /// stamp is not bound: item 2 would be measured from it (0.5 s, under the one-second floor, pays nothing).
+    /// </summary>
+    [Fact]
+    public async Task Verspaeteter_Stempel_Der_Vorigen_Karte_Zaehlt_Nicht()
+    {
+        var (planId, positionId, sid) = await SetupAsync(thresholdSeconds: 5, bonus: 4);
+        var child = await TestApi.ChildAsync(_factory);
+
+        await ReviewAsync(child, planId, positionId, sid, 0);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2));
+        await ReviewAsync(child, planId, positionId, sid, 1);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(2.5));
+        Assert.Equal(HttpStatusCode.NoContent, (await ShownAsync(child, planId, positionId, sid, itemIndex: 1)).StatusCode);
+        _factory.Clock.Advance(TimeSpan.FromSeconds(0.5));
+        var third = await ReviewAsync(child, planId, positionId, sid, 2);
+
+        Assert.Equal(4, third.GetProperty("speedBonus").GetInt32());
     }
 }

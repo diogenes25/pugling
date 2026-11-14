@@ -12,6 +12,7 @@ quelle: B-421
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-422 · Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie?

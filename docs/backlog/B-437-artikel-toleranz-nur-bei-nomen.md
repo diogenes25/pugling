@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-08-nacht.md
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-437 · Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist

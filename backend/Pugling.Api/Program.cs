@@ -704,7 +704,8 @@ app.MapControllers();
 // that direct calls to /sohn, /vater and so on load index.html (React Router takes over). Only applies if
 // wwwroot/index.html exists (the prod build) - locally a 404, which does not matter.
 // An unknown API path is a 404 problem, never the SPA: answered with index.html and 200, a frontend that is newer
-// than the API (a stale published build) fails on parsing HTML as JSON instead of saying what is missing.
+// than the API (a stale published build) fails on parsing HTML as JSON instead of saying what is missing. A known path
+// with the wrong method still gets the router's own 405: its method policy answers before any fallback is considered.
 app.MapFallback("/api/{**rest}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");
 app.Run();

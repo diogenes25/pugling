@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-09-nacht.md
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-445 · Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil

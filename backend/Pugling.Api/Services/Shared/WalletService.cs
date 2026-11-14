@@ -38,13 +38,14 @@ public class WalletService(PuglingDbContext db)
             .SumAsync(p => (int?)p.Amount, ct) ?? 0;
 
     /// <summary>
-    /// Coin kinds that count as "earned" in the week comparison (B-253): every coin kind except the parent's gift
-    /// (<see cref="PointKind.Manual"/>) - a gift says nothing about this week's learning. Shop purchases and fines are
-    /// coin kinds too, but negative; the comparison only sums positive entries, so buying something never makes the
-    /// week "sink". Gems (combo, speed, missions) stay out: one number, one currency.
+    /// Coin kinds that count as "earned" in the week comparison (B-253): every coin kind except those that move coins
+    /// without learning. The comparison only sums positive entries, but each excluded kind can also be booked
+    /// positive: <see cref="PointKind.Manual"/> is a gift, <see cref="PointKind.ShopCoins"/> a refund of a cancelled
+    /// purchase and <see cref="PointKind.GoalPenalty"/> a fine (a positive one would be a correction) - none of them
+    /// says anything about this week's learning. Gems (combo, speed, missions) stay out: one number, one currency.
     /// </summary>
     private static readonly PointKind[] EarnedCoinKinds =
-        [.. PointKindCurrency.CoinKinds.Where(k => k != PointKind.Manual)];
+        [.. PointKindCurrency.CoinKinds.Except([PointKind.Manual, PointKind.ShopCoins, PointKind.GoalPenalty])];
 
     /// <summary>
     /// The child's earned coins this week against its own previous week (B-253, user decision G-6: no siblings, no

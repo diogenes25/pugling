@@ -57,7 +57,14 @@ export function SohnPractice() {
   const positionId = Number(positionIdRaw);
   const nav = useNavigate();
   // B-522: kommt das Kind vom verpatzten Test, feiert der Leerbildschirm nicht. Ein Neuladen verliert den State – hinnehmbar.
-  const nachTest = (useLocation().state as { nachTest?: boolean } | null)?.nachTest === true;
+  // Einmal gelesen und danach aus dem Verlaufseintrag entfernt (Code-Review): sonst unterdrückte ein späteres „Zurück"
+  // auf diese Seite die Feier erneut, obwohl das Kind gar nicht vom Test kommt.
+  const location = useLocation();
+  const [nachTest] = useState(() => (location.state as { nachTest?: boolean } | null)?.nachTest === true);
+  useEffect(() => {
+    if ((location.state as { nachTest?: boolean } | null)?.nachTest)
+      nav({ pathname: location.pathname, search: location.search }, { replace: true, state: null });
+  }, [location, nav]);
 
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
@@ -314,7 +321,10 @@ export function SohnPractice() {
       setPhase("front");
       // B-530: ab jetzt ist die nächste Karte sichtbar – die Lesezeit auf dem Blatt zählt nicht in ihre Antwortzeit. Der
       // Server stempelt mit seiner Uhr. Fire-and-forget: ein Fehlschlag kostet höchstens den Tempo-Bonus, nie die Runde.
-      if (planId && session.current) api.cardShown(planId, positionId, session.current.id).catch(() => {});
+      // Die Meldung nennt ihre Karte: überholt die Antwort sie, verwirft der Server den Stempel, statt ihn der
+      // übernächsten Karte als Startzeit unterzuschieben (Code-Review B-530).
+      const sichtbar = cards[idx + 1];
+      if (planId && session.current) api.cardShown(planId, positionId, session.current.id, sichtbar.itemIndex).catch(() => {});
     }
   }
 

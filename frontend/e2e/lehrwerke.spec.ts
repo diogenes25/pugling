@@ -37,10 +37,11 @@ test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {
   await page.getByRole("button", { name: "Speichern" }).first().click();
   await expect(page.getByText("Gespeichert.", { exact: true }).first()).toBeVisible();
 
-  // Noch ohne Buch und ohne eigenes Profil: passen darf nur der geseedete Fachlehrer (B-445), und das ehrlich nur
-  // „allgemein“ – ohne Reihe am Kind gibt es keinen Grund, ihn vorzuziehen. Die Suche steht im Reiter „Schule" (B-534).
-  await page.goto(`/vater/kind/${childId}?bereich=schule`);
-  await expect(page.getByRole("row", { name: /Herr Schmidt – Englisch.*passt nur allgemein/ })).toBeVisible();
+  // Noch ohne Buch und ohne eigenes Profil: passen darf nur der geseedete Fachlehrer (B-445), nach Klasse 8 am
+  // Gymnasium. Die Suche steht im Reiter „Schule" (B-534) – per Reiterwechsel, nicht per Neuladen: der Reiter bleibt
+  // eingehängt und muss nach dem Speichern der Stammdaten selbst neu fragen (sonst stünde der Stand von vorher da).
+  await page.getByRole("navigation", { name: /^Profil von / }).getByRole("link", { name: /Schule/ }).click();
+  await expect(page.getByRole("row", { name: /Herr Schmidt – Englisch.*Klassenstufe passt/ })).toBeVisible();
 
   // ---- Die Buchreihe (geteilter Katalog) ----
   await page.goto("/vater/lehrwerke");

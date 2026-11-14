@@ -12,7 +12,7 @@ quelle: Review-Fund zum Bau von B-206 (pugling-reviewer, 2026-09-03)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-14
 wartet_auf: ""
 ---
 

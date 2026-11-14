@@ -134,6 +134,9 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
    */
   async function save(e?: React.FormEvent) {
     e?.preventDefault();
+    // Dieselbe Sperre wie am Knopf, hier für Enter: nach gescheitertem Nachladen ist `detail.config` veraltet,
+    // und ein Vollersatz daraus schriebe den alten Stand über den neuen (B-210).
+    if (veraltet) return;
     if (!detail || !form || !route) return;
     const editable = type !== "Vocabulary" && isContentEditable(type) && content !== null;
     // Erst die fachliche Prüfung – sie erspart einen Rundlauf mit sicherem 400.
@@ -151,6 +154,10 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
   }
 
   const gesperrt = action.busy || veraltet;
+  // Das Formular der Metadaten und der Speichern-Knopf darunter gehören über `form=` zusammen: so speichert
+  // Enter in einem Feld, und es ist genauso gesperrt wie der Knopf (implizites Absenden über einen
+  // `disabled`-Standardknopf findet nicht statt).
+  const formId = useId();
 
   return (
     // Titel aus dem GELADENEN Stand, nicht aus der Listenzeile: Nach einem Umbenennen stünde oben sonst
@@ -197,11 +204,11 @@ export function ExerciseEditModal({ exercise, onClose, onSaved }: {
               Beschreibung und Einordnung lassen sich unten ändern.
             </div>
           )}
-          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} onSubmit={save} busy={action.busy} />
+          <MetaEditor detail={detail} form={form} setForm={setForm} type={type} onSubmit={save} busy={action.busy} formId={formId} />
           {/* Der einzige Speichern-Knopf des Dialogs (B-534): er sichert Inhalt und Beschreibung zusammen.
               Titelbild und Rechte darunter wirken sofort und brauchen ihn nicht. */}
           <div className="row" style={{ gap: 10, alignItems: "center" }}>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={gesperrt} onClick={() => save()}>
+            <button type="submit" form={formId} className="btn inline-btn" style={{ width: "auto" }} disabled={gesperrt}>
               {action.busy ? "Speichere…" : "Übung speichern"}
             </button>
             <span className="sub" style={{ margin: 0 }}>
@@ -337,12 +344,14 @@ function langsOf(d: ExerciseDetail): { sourceLang: string; targetLang: string } 
   return { sourceLang: c.sourceLang ?? "", targetLang: c.targetLang ?? "" };
 }
 
-function MetaEditor({ detail, form, setForm, type, onSubmit, busy }: {
+function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
   detail: ExerciseDetail; form: MetaForm; setForm: (f: (prev: MetaForm | null) => MetaForm) => void;
   type: ExerciseTypeKey;
   /** Enter in einem Feld speichert die ganze Übung – derselbe Weg wie der Knopf des Dialogs. */
   onSubmit: (e: React.FormEvent) => void;
   busy: boolean;
+  /** Id des Formulars: der Speichern-Knopf des Dialogs steht außerhalb und hängt sich per `form=` daran. */
+  formId: string;
 }) {
   // Namen der Kästchen-Gruppen (B-236): die Überschrift benennt die Gruppe per `aria-labelledby`.
   const groupId = useId();
@@ -352,7 +361,7 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy }: {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <form id={formId} onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <h4 className="h-section" style={{ fontSize: 16, margin: 0 }}>Beschreibung & Einordnung</h4>
       <div className="form-grid">
         <div className="field"><label htmlFor="ed-title">Titel</label>

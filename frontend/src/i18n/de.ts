@@ -64,8 +64,8 @@ export const de = {
       periodWeekly: "Diese Woche",
       periodOneOff: "Ziel",
       lastDay: "nur noch heute",
-      daysLeft_one: "noch {{count}} Tag",
-      daysLeft_other: "noch {{count}} Tage",
+      daysLeft_one: "noch {{count}} Tag inkl. heute",
+      daysLeft_other: "noch {{count}} Tage inkl. heute",
     },
     interests: {
       introTitle: "Erzähl mal von dir!",

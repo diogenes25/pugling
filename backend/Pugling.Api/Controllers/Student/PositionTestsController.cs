@@ -29,9 +29,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
 
-
-
-
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>

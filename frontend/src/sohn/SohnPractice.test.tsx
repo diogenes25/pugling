@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { de } from "../i18n/de";
 import { ApiError } from "../lib/api";
@@ -527,9 +527,11 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(document.querySelector(".lektion-blatt")!.textContent).toContain("💡 Regel: de + les wird zu des");
   });
 
-  // B-530 AK 7: „Weiter" auf dem Blatt meldet die nächste Karte als sichtbar – genau einmal. Rot, wenn `next()` den
-  // Aufruf nicht macht oder ihn doppelt schickt.
+  // B-530 AK 7: „Weiter" auf dem Blatt meldet die nächste Karte als sichtbar – genau einmal, und nennt sie (Code-Review:
+  // der Server stempelt nur seine aktuelle Karte). Die Indizes sind absichtlich nicht 0, 1, 2. Rot, wenn `next()` den
+  // Aufruf nicht macht, ihn doppelt schickt, keine Karte nennt oder die Position in der Runde statt des `itemIndex`.
   it("meldet mit Weiter die nächste Karte genau einmal als sichtbar", async () => {
+    cards.mockImplementation(() => Promise.resolve([card(7, "eins"), card(4, "zwei"), card(9, "drei")]));
     review.mockResolvedValueOnce(outcome(false, "one"));
     renderPractice();
     await answerTyped("falsch");
@@ -539,7 +541,7 @@ describe("SohnPractice, falsche Antwort", () => {
 
     expect(await screen.findByText("zwei")).toBeTruthy();
     expect(cardShown).toHaveBeenCalledTimes(1);
-    expect(cardShown).toHaveBeenCalledWith(3, 5, 11);
+    expect(cardShown).toHaveBeenCalledWith(3, 5, 11, 4);
   });
 
   // B-530 AK 7: die Meldung ist fire-and-forget. Rot, wenn `next()` auf sie wartet (dann stünde „zwei" erst nach der
@@ -922,6 +924,27 @@ describe("SohnPractice nach dem Test", () => {
     expect(await screen.findByText(de.sohn.practice.nothingDueAfterTest)).toBeTruthy();
     expect(screen.queryByText(de.sohn.practice.nothingDue)).toBeNull();
     expect(screen.getByRole("button", { name: de.sohn.practice.toTest })).toBeTruthy();
+  });
+
+  // Code-Review B-522: der State wird nach dem Lesen aus dem Verlaufseintrag entfernt, die Seite behält ihn aber. Rot,
+  // wenn der Eintrag `nachTest` behält (ein späteres „Zurück" unterdrückte die Feier wieder) oder wenn das Entfernen
+  // die Seite den gelesenen Wert vergessen lässt (dann stünde „Nichts fällig 🎉" da).
+  it("räumt nachTest nach dem Lesen aus dem Verlauf, ohne die Seite umzustimmen", async () => {
+    startSession.mockResolvedValue({ id: 11, testable: true, testAttemptsLeft: 1 });
+    cards.mockImplementation(() => Promise.resolve([]));
+    function Ortsstand() {
+      return <output data-testid="ortsstand">{JSON.stringify(useLocation().state ?? null)}</output>;
+    }
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/sohn/practice/5", state: { nachTest: true } }]}>
+        <Routes><Route path="/sohn/practice/:positionId" element={<SohnPractice />} /></Routes>
+        <Ortsstand />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(de.sohn.practice.nothingDueAfterTest)).toBeTruthy();
+    expect(screen.getByTestId("ortsstand").textContent).toBe("null");
+    expect(screen.queryByText(de.sohn.practice.nothingDue)).toBeNull();
   });
 
   // AK 7. Rot, wenn der neue Titel auch ohne Herkunft und mit übrigen Versuchen erscheint.

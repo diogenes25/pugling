@@ -21,9 +21,11 @@ const PERIOD_KEY = {
 export function MissionsPanel() {
   const { t } = useTranslation();
   // B-528: die Frist rechnet der Server (UTC-Periode); ohne sie (einmalig, älterer Server) bleibt der Zeitraum stehen.
+  // `daysLeft` zählt die Tage NACH heute; angezeigt wird mit heute (+1), sonst hieße Samstag „noch 1 Tag", obwohl
+  // Samstag und Sonntag bleiben.
   const frist = (m: MissionStatus) => m.daysLeft == null
     ? t(PERIOD_KEY[m.period])
-    : m.daysLeft <= 0 ? t("missions.lastDay") : t("missions.daysLeft", { count: m.daysLeft });
+    : m.daysLeft <= 0 ? t("missions.lastDay") : t("missions.daysLeft", { count: m.daysLeft + 1 });
   const { childId, celebrate } = useSohn();
   const missions = useAsync<MissionStatus[]>(() => api.missions(), []);
 

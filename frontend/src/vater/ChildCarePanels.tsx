@@ -168,6 +168,7 @@ export function TimetableSection({ childId, subjects }: { childId: number; subje
         ))}
 
       {/* Erst mit geladenem Bestand: der Leerfall öffnet das Formular gleich (AddPanel liest `defaultOpen` nur einmal). */}
+      {/* Bewusst kein Panel nach gescheitertem Laden: der ListenAusfall oben bietet „Erneut laden", danach erscheint es. */}
       {entries.data && (
         <AddPanel label="Neuer Stundenplan-Eintrag" defaultOpen={entries.data.length === 0}>
           <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap", }} onSubmit={add}>

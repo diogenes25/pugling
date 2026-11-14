@@ -55,6 +55,27 @@ public class WochenvergleichTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
+    /// Code review: a cancelled shop purchase books its refund as a POSITIVE <see cref="PointKind.ShopCoins"/> entry
+    /// (<c>ShopService.CancelPurchaseAsync</c>), and a positive <see cref="PointKind.GoalPenalty"/> would be a
+    /// correction of a fine. Neither is learning. Wednesday 2023-01-18, 12:00 UTC. Red when either kind counts as
+    /// earned (thisWeek would be 45 or 33 instead of 8).
+    /// </summary>
+    [Fact]
+    public async Task Stornierung_Und_Malus_Korrektur_Zaehlen_Nicht()
+    {
+        factory.Clock.FreezeAt(Utc(2023, 1, 18, 12));
+        Book(8, PointKind.Base, Utc(2023, 1, 16, 9));
+        Book(-37, PointKind.ShopCoins, Utc(2023, 1, 16, 10));
+        Book(37, PointKind.ShopCoins, Utc(2023, 1, 16, 11));
+        Book(25, PointKind.GoalPenalty, Utc(2023, 1, 16, 12));
+        var child = await TestApi.ChildAsync(factory);
+
+        var week = await child.GetFromJsonAsync<JsonElement>(Url);
+
+        Assert.Equal(8, week.GetProperty("thisWeek").GetInt32());
+    }
+
+    /// <summary>
     /// AK 3. Monday 2024-01-15, 00:30 UTC: the week starts on this Monday, and an entry on Sunday 23:59 belongs to the
     /// old week. Red when the week starts on Sunday (the entry would count as this week and the start would be the 14th).
     /// </summary>

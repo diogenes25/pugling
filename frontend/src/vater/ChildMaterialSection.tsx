@@ -30,9 +30,15 @@ import { ListenAusfall } from "../components/ListenAusfall";
  * Titel und Kapitel bleiben als Freitext-Rückfallebene: ein Buch ohne katalogisierte Reihe ist erlaubt,
  * es liefert dem Creator aber nur seinen Namen.
  */
-export function ChildMaterialSection({ childId, childName, subjects }: {
+export function ChildMaterialSection({ childId, childName, subjects, kindStand = "" }: {
   childId: number;
   childName: string;
+  /**
+   * Die Angaben am Kind, nach denen der Server Fachlehrer bewertet (Klasse, Schulart), als Schlüssel. Ändern sie
+   * sich, fragt die Fachlehrer-Suche neu – sonst zeigte der Reiter „Schule" nach dem Speichern der Stammdaten
+   * weiter das Ergebnis von vorher (er bleibt eingehängt, B-534).
+   */
+  kindStand?: string;
   /* Von der Kind-Seite durchgereicht: Der Stundenplan daneben braucht dieselbe Liste, und zweimal
      dieselbe Fächer-Abfrage je Seitenaufruf ist eine Runde zu viel. */
   subjects: SubjectResponse[];
@@ -114,6 +120,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
       )}
 
       {/* Zugeklappt, solange schon Bücher da sind (B-534); ohne Buch ist das Formular der Inhalt der Fläche. */}
+      {/* Bewusst kein Panel nach gescheitertem Laden: der ListenAusfall oben bietet „Erneut laden", danach erscheint es. */}
       {books.data && (
         <AddPanel label="Weiteres Buch" defaultOpen={books.data.length === 0}>
           {/* Auch das Anlege-Formular räumt (B-197): Es schließt sich NICHT, kann eine alte Meldung
@@ -132,7 +139,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
           erst ohne Fach und gleich darauf noch einmal mit – eine überflüssige Runde und dazwischen eine
           Trefferliste, die schon wieder falsch war. */}
       {books.data
-        ? <MatchPanel childId={childId} childName={childName} books={books.data} />
+        ? <MatchPanel childId={childId} childName={childName} books={books.data} kindStand={kindStand} />
         : books.showPlaceholder ? <div className="loading">Lade…</div> : null}
     </section>
   );
@@ -519,10 +526,11 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
  * sie mit ihrer <b>Begründung</b>, weil eine nackte Punktzahl niemandem hilft. Ein Fach-Filter ist
  * absichtlich wählbar: bei mehreren Fächern gibt es nicht *einen* passenden Lehrer, sondern einen pro Fach.
  */
-function MatchPanel({ childId, childName, books }: {
+function MatchPanel({ childId, childName, books, kindStand }: {
   childId: number;
   childName: string;
   books: TextbookResponse[];
+  kindStand: string;
 }) {
   // Die Fächer, für die dieses Kind Bücher hat – mehr Auswahl wäre hier nur Rauschen.
   const bookSubjects = books
@@ -544,7 +552,7 @@ function MatchPanel({ childId, childName, books }: {
    */
   const signature = books.map((b) => `${b.id}:${b.seriesId ?? "-"}:${b.currentUnitId ?? "-"}`).join("|");
   const matches = useAsync<CreatorProfileMatch[]>(
-    () => api.matchCreatorProfiles(childId, filter), [childId, filter, signature]);
+    () => api.matchCreatorProfiles(childId, filter), [childId, filter, signature, kindStand]);
 
   return (
     <div style={{ marginTop: 16 }}>
@@ -563,7 +571,7 @@ function MatchPanel({ childId, childName, books }: {
         </div>
       )}
 
-      <ListenAusfall was="Die passenden Fachlehrer" fehler={matches.error} laedt={matches.loading} onRetry={matches.reload} schluessel={JSON.stringify([childId, filter, signature])} />
+      <ListenAusfall was="Die passenden Fachlehrer" fehler={matches.error} laedt={matches.loading} onRetry={matches.reload} schluessel={JSON.stringify([childId, filter, signature, kindStand])} />
       {matches.loading && matches.data === null ? <div className="loading">Lade…</div>
         : matches.data?.length === 0 ? (
           <p className="muted">
