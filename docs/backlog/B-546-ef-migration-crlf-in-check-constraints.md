@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/qualitaet]
 aliases: [EF-Migration schreibt CRLF in Check-Constraints]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -74,3 +74,7 @@ Windows ohne den Helfer; auf Linux strukturell blind – dort hat die Quelle sch
 ` im
   Snapshot), damit gemessen. Ausformuliert, gegrillt (autonom, `Aufräumen`), geschätzt und gebaut: `CheckSql` an den
   drei Literalen, Regressionstest in `SchemaGuardTests`.
+- **2026-11-14** — **abgenommen** (Sprint 73). volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutante M13 (`CheckSql` am ersten Constraint weg) → rot an
+  `CheckConstraintSql_Traegt_Nur_LF` (Windows-Arbeitskopie; auf Linux strukturell blind, im Test so beschriftet).
+  Beleg im Gebrauch: die zweite Migration des Sprints (`ExtraRunContentHash`) brauchte keine Handkorrektur mehr.
+  Kein Rollengang (kein Laufzeitverhalten).

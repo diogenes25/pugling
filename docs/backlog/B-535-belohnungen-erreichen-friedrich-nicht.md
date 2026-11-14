@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Friedrich bekommt keine Münzen, Box gesperrt durch Wochenziele]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -203,3 +203,10 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
   „Ziele diese Woche 0 / 1“), sonst stand „1 / 2“ neben offenem Bonus. Bewusst so: eine Nachtrag-Runde des Vaters
   verbraucht den Neu-Bonus des Kindes (B-542: sie zählt fürs Kind), startet aber die Malus-Uhr nicht (Vater-Tests
   zählen nicht als Spiel des Kindes).
+- **2026-11-14** — **abgenommen** (Sprint 73). volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutanten (mutant-probe, je AK-Fall, alle rot am benannten Test):
+  M1 `RewardsUnlocked`=`DutyDone`, M2/M3 `RewardObligations` immer alle/immer täglich, M4 `DutyDone` nur Tagesziele (AK 3),
+  M5 Kiste liest `DutyDone`, M6 Bonus-Sperre ungefiltert, M7 ohne Spieltag kein Abbruch, M8 Fenster ohne Spieltag,
+  M9 Vater-Test zählt, M10 „neu“ = `ReviewCount == 0`, M11 Markierung fehlt, M12 Neu-Bonus ohne Markierung,
+  M14 Arcade liest `dutyDone` (E2E), M15 Einführungstag am Planstart (Review-Fund), M24 Ziele-Karte gemischt (E2E).
+  Migration gegen eine Kopie der echten DB geprobt (läuft durch, Backfill 70/35). Ausgefallen/Gerät: keiner; Friedrichs
+  −60 schreibt der Vater per Hand gut (Entscheidung 4), das ist ein Handgriff am echten Konto.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Vater-Übungsrunde schreibt in den Lernstand des Kindes]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Frage
 groesse: XS
@@ -134,3 +134,7 @@ setzt der Bau-Sprint.
 - **2026-11-13** — angelegt im Backlog-Lauf 2026-11-13 aus B-433 (E3) und dem `pugling-reviewer`-Befund zu Sprint 69.
 - **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt – der Aufruf `itemProgress.RecordAsync` (`PositionPracticeController.cs:510-514`) prüft keine Rolle und schreibt `ItemReviewEvent` (`ItemProgressService.cs:37-48`) und `ItemProgress` (`:56-73`) auch für eine Vater-Runde; nur `PositionItemProgress.IntroducedAt` ist seit B-433 abgeschirmt (`PositionPracticeController.cs:449-451`). Zeilenangaben berichtigt.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt (drei Stakeholder-Entscheidungen im Auftrag des Nutzers: bleibt wie es ist – die Vater-Runde ist der dokumentierte Nachtrag, das Ausprobieren hat mit dem Preview-Endpunkt schon einen nebenwirkungsfreien Weg) und geschätzt: XS, ein Regressionstest als Beleg, kein Verhalten geändert.
+- **2026-11-14** — **abgenommen** (Sprint 73) mit Regressionstest als Beleg (Entscheidung: bleibt wie es ist).
+  volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutanten M20 (`IsStudent` um `RecordAsync`) und M21 (um die Punktebuchung) → rot an
+  `Gewertete_Vaterrunde_Schreibt_Verlauf_Lernstand_Und_Punkte_Des_Kindes` (beide Tage). Kommentar und Tutorial-Satz
+  nachgezogen. Kein Rollengang (kein UI-Weg betroffen).

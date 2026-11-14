@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [Bonus-Runde ohne Item-Schnappschuss]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -151,3 +151,10 @@ Vergleich: kleiner als B-543 (S/M, Deckel-Regel mit Frontend-Zeile), größer al
 - **2026-11-13** — angelegt aus B-543 (Entscheidung 6, zurückgestellt) beim Bau im Backlog-Lauf 2026-11-13.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt – `ExtraTrainingService.StartAsync` schreibt `ItemCount` (`ExtraTrainingService.cs:98`), gelesen wird er nirgends (Spalte `GamificationEntities.cs:136`); `SubmitAsync` wertet über `preview.CheckAsync` gegen die aktuellen Items (`:151`), `BuildRun` (`:116`, `:321`) baut die Karten ebenfalls aus den aktuellen Items. Kein Schnappschuss an der Runde.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt (sechs Stakeholder-Entscheidungen im Auftrag des Nutzers: Fingerabdruck statt Schnappschuss, veraltete Runde wird verworfen statt gewertet und verbraucht keine Einmal-Übung, Bestandsrunden unverändert) und geschätzt: S, Migration ja (nullbare Spalte), Vertrag nein (neuer 409-Code), `wo` auf beides (Problem-Key im Frontend).
+- **2026-11-14** — **abgenommen** (Sprint 73). volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutanten: M16 Start ohne Abgleich (AK 2), M17 Abgabe ohne
+  Abgleich (AK 1), M18 Hinweis im Fingerabdruck (AK 3), M19 `null` gilt als abweichend (AK 5), M22 Antworten nicht
+  geräumt (AK 6, Vitest), M23 Code fehlt in `PROBLEM_KEYS` (AK 6) – alle rot. AK 4 hält der Bestandstest
+  `Eine_Uebung_Ohne_Vokabeln_Ist_Nach_Dem_Start_Verbraucht`. Review-Fund behoben: Doppel-Abgabe einer veralteten Runde
+  fing `DbUpdateConcurrencyException` nicht (500 statt 409) – ungemessen (zwei parallele Abgaben sind im Test nicht
+  deterministisch zu erzwingen). Kein E2E (argumentierte Ausnahme laut Testweg: Creator-Änderung mitten in einer
+  Kinder-Runde braucht zwei Sitzungen).
