@@ -1,4 +1,4 @@
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach } from "vitest";
 // Die Übersetzungen einmal laden: Komponenten der Arcade rufen `useTranslation`, und ohne Instanz lieferte
 // react-i18next nur Schlüssel (B-294).
@@ -18,3 +18,11 @@ import "./lib/i18n";
  * Bewacht von `test-setup.test.tsx` – wer sie aushängt, bekommt Rot statt eines stillen Flakes.
  */
 afterEach(cleanup);
+
+/**
+ * Mehr Geduld für `findBy…`/`waitFor` als RTLs Vorgabe von 1 s. Der volle Lauf rendert ganze Vater-Seiten in parallelen
+ * Workern; gemessen (Backlog-Lauf 2026-11-14) brauchten einzelne Fälle unter Last bis 2,4 s und fielen sporadisch,
+ * einzeln waren sie 8 von 8 Mal grün. Länger warten macht keinen Fall grün, der fehlschlagen soll – ein fehlendes
+ * Element bleibt rot, nur später.
+ */
+configure({ asyncUtilTimeout: 4000 });

@@ -107,6 +107,31 @@ export function auswahlNachFilterwechsel(vorher: readonly number[], keyAlt: stri
 }
 
 /**
+ * Der Grund an einer gesperrten Trefferzeile (B-140, Entscheidung 3). `canAssign = false` hat heute genau einen Grund – die
+ * Übung ist nicht öffentlich und der Anfragende hat keinen Grant –, darum ein fester Satz statt eines Codes im Vertrag.
+ * Planbau, Assistent und Klassenarbeit teilen ihn, sonst wären es mehrere Formulierungen derselben Sperre.
+ */
+export const NICHT_ZUWEISBAR_GRUND =
+  "Nicht zuweisbar – der Ersteller hat sie nicht für alle freigegeben; zuweisen darf nur, wem er sie freigibt.";
+
+/**
+ * „Alle wählen" im Assistenten übernimmt nur, was der Vater auch zuweisen darf (B-140, Entscheidung 5) – sonst scheiterte der
+ * Abschluss am Ende an `exercise_not_executable`, mit Hunderten Positionen. Die Regel rechnet der Server (`canAssign`), hier
+ * wird nur gefiltert und gezählt. Ein Hinweis entsteht nur, wenn wirklich etwas übersprungen wurde.
+ */
+export function nurZuweisbare(items: readonly { id: number; canAssign: boolean }[]):
+{ ids: number[]; hinweis: string | null } {
+  const ids = items.filter((e) => e.canAssign).map((e) => e.id);
+  const weg = items.length - ids.length;
+  return {
+    ids,
+    hinweis: weg > 0
+      ? `${ids.length} ${ids.length === 1 ? "Übung" : "Übungen"} gewählt, ${weg} nicht zuweisbare übersprungen.`
+      : null,
+  };
+}
+
+/**
  * Was mit einer Auswahl geschieht, nachdem die Trefferliste **umsortiert** neu geladen wurde (B-408, Entscheidung 3).
  *
  * Für den Planbau (Einzelauswahl, Umbau in B-540): die Suche ist dieselbe, nur die Seite eine andere. Was in der neu
@@ -122,7 +147,7 @@ export function auswahlNachUmsortieren(vorher: readonly number[], geladeneIds: r
   return {
     selected,
     hinweis: weg > 0
-      ? `Auswahl zurückgesetzt (${weg} ${weg === 1 ? "Übung" : "Übungen"}), weil sie nach dem Umsortieren nicht mehr`
+      ? `Auswahl zurückgesetzt (${weg} ${weg === 1 ? "Übung" : "Übungen"}), weil sie nach dem Neuladen nicht mehr`
         + ` in der Liste ${weg === 1 ? "steht" : "stehen"}.`
       : null,
   };

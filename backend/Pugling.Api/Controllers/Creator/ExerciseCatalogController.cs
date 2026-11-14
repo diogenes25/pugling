@@ -139,7 +139,10 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
                 e.Ratings.Average(r => (double?)r.Stars), e.Ratings.Count,
                 // B-424: the size of the exercise. Evaluated in memory like GoalPointsPolicy above - SQL delivers the raw
                 // config and the item-row count as a correlated subquery in the same statement, no query per row.
-                ItemCountOf(registry, logger, e.Id, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id))))
+                ItemCountOf(registry, logger, e.Id, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id)),
+                // B-140: the execute rule of ExercisePermissionService.CanExecuteAsync, written for SQL - a call would
+                // load the grants per row. ExerciseSharingTests compares both on every constellation.
+                e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid))))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 

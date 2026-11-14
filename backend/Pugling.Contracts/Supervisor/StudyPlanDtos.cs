@@ -142,8 +142,10 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 ///
 /// <b>PATCH semantics:</b> a <c>null</c> means "not specified" for <i>every</i> field – the previous
 /// value stays. It does <b>not</b> mean "reset to default"; that needs an explicit <c>Clear</c> switch, and
-/// exactly one field has one: <see cref="ClearTimeSlots"/>. All the other fields cannot be emptied at all –
-/// they are either mandatory or already carry "inherit" as a value of their own.
+/// exactly two fields have one: <see cref="ClearTimeSlots"/> and <see cref="ClearStage"/>. The other fields cannot be
+/// emptied: most are mandatory or carry "off" as a value of their own (0); <c>ItemCount</c>, <c>GoalThreshold</c>,
+/// <c>BoxIntervalDays</c> and <c>StageSchedule</c> store <c>null</c> as "all"/"default" but have no switch yet - once set
+/// they can only be overwritten (B-547).
 /// </summary>
 /// <param name="Order">New position within the plan.</param>
 /// <param name="Stage">Query form of the final test.</param>
@@ -177,9 +179,14 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// window kept doubling the points. Wins over <c>timeSlots</c> if both arrive together.
 /// </param>
 /// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>0</c> removes the cap. 0 to 200.</param>
+/// <param name="ClearStage">
+/// Puts the stage back to the exercise's default (B-16). Needed because <c>null</c> means "not specified": without the
+/// switch a form set back to "default" would report "saved" while the old stage stayed. Wins over <c>stage</c> if both
+/// arrive together.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    bool ClearTimeSlots = false, int? NewItemsPerDay = null);
+    bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false);

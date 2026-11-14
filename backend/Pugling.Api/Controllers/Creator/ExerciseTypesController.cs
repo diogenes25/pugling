@@ -24,5 +24,5 @@ public class ExerciseTypesController(ExerciseTypeRegistry registry) : Controller
     [HttpGet("{type}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<ExerciseTypeManifest> Get(string type) =>
-        registry.ByKey(type)?.Manifest is { } manifest ? manifest : NotFound();
+        registry.ByKey(type) is { } found ? ExerciseTypeRegistry.Published(found) : NotFound();
 }

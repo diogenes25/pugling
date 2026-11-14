@@ -11,10 +11,10 @@ import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { TruncationHint } from "../components/ListControls";
 import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
-import { auswahlNachFilterwechsel } from "./wizardSearch";
+import { auswahlNachFilterwechsel, auswahlNachUmsortieren, NICHT_ZUWEISBAR_GRUND } from "./wizardSearch";
 import type {
-  CreatePositionDto, ExerciseSummary, GoalCadence, PositionReport, PositionResponse, Paged, PracticeOrder,
-  ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
+  CreatePositionDto, ExerciseCheckMode, ExercisePreviewStage, ExerciseSummary, GoalCadence, ItemScope, PositionReport, PositionResponse, Paged,
+  PracticeOrder, ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 import { ratingSummary } from "./ExerciseRatingPanel";
@@ -41,6 +41,14 @@ const ORDER_LABEL: Record<PracticeOrder, string> = {
 export const REMOVE_POSITION_QUESTION = "Diese Position wirklich aus dem Plan nehmen? Die Übung bleibt im Katalog.";
 
 const ORDERS: PracticeOrder[] = ["WeakestFirst", "Serial", "Random", "NewestWeighted"];
+
+// B-16: welche Inhalte der Übung die Position spielt. „Alle" ist die Vorgabe des Servers und selbst wählbar.
+const SCOPE_LABEL: Record<ItemScope, string> = {
+  All: "alle Inhalte", New: "nur neue", Old: "nur schon eingeführte",
+};
+const SCOPES: ItemScope[] = ["All", "New", "Old"];
+/** Die erste Option des Stufen-Felds: `null` an der Position, der Standard der Übung gilt (B-16). */
+export const STAGE_DEFAULT_LABEL = "Standard der Übung";
 
 // Anzeigename der Typen aus dem Server-Manifest – eine dritte Kopie der Tabelle lief zwangsläufig
 // aus dem Takt (das UI kannte sechs Typen, der Server führt zwölf).
@@ -118,6 +126,23 @@ export interface PositionSettings {
   comboBonusPoints: string;
   useLeitner: boolean;
   requireTypedTest: boolean;
+  /*
+   * Die Abfrageform des Tests (B-16) als String: "" = „Standard der Übung" (`null`), sonst ein Wert aus den
+   * Manifest-Stufen des Typs. Eine Zahl, die nicht in der Liste steht, ist im Formular gar nicht wählbar.
+   */
+  stage: string;
+  /*
+   * Die gespeicherte Stufe – nur, um beim Bearbeiten „zurück auf Standard" als `clearStage` zu senden: `null` heißt im
+   * PATCH „nicht angegeben", die alte Stufe bliebe sonst stehen. `null` = keine gespeichert (oder Anlegen).
+   */
+  stageStored: number | null;
+  scope: ItemScope;
+  /*
+   * Tempo-Bonus wie die Combo (B-16, Entscheidung 8): "" heißt beim Anlegen „erbt den Vorschlag der Übung", beim
+   * Bearbeiten „bleibt" (PATCH-`null`); 0 schaltet aus.
+   */
+  speedThresholdSeconds: string;
+  speedBonusPoints: string;
   /*
    * Das Zeitfenster als drei Strings; alle drei leer heißt „kein eigenes Fenster" – dann gelten nur die
    * globalen Fenster des Servers. Das Formular stellt genau EIN Fenster ein, die Ablage ist eine Liste.
@@ -232,6 +257,7 @@ function defaultSettings(): PositionSettings {
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
     useLeitner: false, requireTypedTest: false,
+    stage: "", stageStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
   };
@@ -253,6 +279,11 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
     requireTypedTest: pos.requireTypedTest,
+    stage: pos.stage?.toString() ?? "",
+    stageStored: pos.stage ?? null,
+    scope: pos.scope,
+    speedThresholdSeconds: pos.speedThresholdSeconds.toString(),
+    speedBonusPoints: pos.speedBonusPoints.toString(),
     // Bearbeitet wird nur das erste Fenster; die ganze Liste reist mit, damit das Speichern die übrigen
     // nicht verwirft und die Sekunden nicht abschneidet (siehe `timeSlotStored`).
     timeSlotStart: hhmm(pos.timeSlots?.[0]?.start ?? ""),
@@ -298,6 +329,10 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     comboBonusPoints: numOrNull(s.comboBonusPoints),
     useLeitner: s.useLeitner,
     requireTypedTest: s.requireTypedTest,
+    stage: numOrNull(s.stage),
+    scope: s.scope,
+    speedThresholdSeconds: numOrNull(s.speedThresholdSeconds),
+    speedBonusPoints: numOrNull(s.speedBonusPoints),
     timeSlots: timeSlotOf(s),
   };
 }
@@ -309,11 +344,23 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
  * Feld lehnt der Server mit `unknown_field` ab.
  */
 export function settingsToUpdateDto(s: PositionSettings): UpdatePositionDto {
-  return { ...settingsToDto(s), clearTimeSlots: timeSlotOf(s) === null };
+  return {
+    ...settingsToDto(s),
+    clearTimeSlots: timeSlotOf(s) === null,
+    // B-16: dieselbe Lage bei der Stufe – „Standard der Übung" ist `null`, und das ließe die gespeicherte stehen.
+    clearStage: s.stage === "" && s.stageStored !== null,
+  };
 }
 
-/** Die Felder selbst. Präsentational: den Zustand hält der Aufrufer (Anlegen bzw. Zeile im Edit-Modus). */
-function PositionFields({ value, onChange }: { value: PositionSettings; onChange: (next: PositionSettings) => void }) {
+/**
+ * Die Felder selbst. Präsentational: den Zustand hält der Aufrufer (Anlegen bzw. Zeile im Edit-Modus).
+ *
+ * `stages` sind die Manifest-Stufen des Übungstyps (B-16) – leer heißt: der Typ kennt keine Stufenwahl (oder das Manifest
+ * lädt noch), und dann gibt es kein Stufen-Feld. Keine Liste im Frontend (`VOCAB_FORMS` gehört dem Creator-Formular).
+ */
+function PositionFields({ value, onChange, stages }: {
+  value: PositionSettings; onChange: (next: PositionSettings) => void; stages: readonly ExercisePreviewStage[];
+}) {
   const uid = useId();
   const up = <K extends keyof PositionSettings>(k: K, v: PositionSettings[K]) => onChange({ ...value, [k]: v });
   /*
@@ -356,6 +403,23 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
           {ORDERS.map((o) => <option key={o} value={o}>{ORDER_LABEL[o]}</option>)}
         </select>
       </div>
+      <div className="field" style={{ maxWidth: 180 }}>
+        <FieldLabel htmlFor={`${uid}-scope`} topic="scope">Inhalte-Auswahl</FieldLabel>
+        <select id={`${uid}-scope`} aria-label="Inhalte-Auswahl" value={value.scope}
+          onChange={(e) => up("scope", e.target.value as ItemScope)}>
+          {SCOPES.map((o) => <option key={o} value={o}>{SCOPE_LABEL[o]}</option>)}
+        </select>
+      </div>
+      {stages.length > 0 && (
+        <div className="field" style={{ maxWidth: 220 }}>
+          <FieldLabel htmlFor={`${uid}-stage`} topic="stage">Stufe</FieldLabel>
+          <select id={`${uid}-stage`} aria-label="Stufe" value={value.stage}
+            onChange={(e) => up("stage", e.target.value)}>
+            <option value="">{STAGE_DEFAULT_LABEL}</option>
+            {stages.map((o) => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
+          </select>
+        </div>
+      )}
       <div className="field" style={{ maxWidth: 140 }}>
         <FieldLabel htmlFor={`${uid}-points`} topic="pointsGoalMet">Punkte (Ziel erreicht)</FieldLabel>
         <input id={`${uid}-points`} aria-label="Punkte bei erreichtem Ziel" type="number" min={0}
@@ -382,6 +446,16 @@ function PositionFields({ value, onChange }: { value: PositionSettings; onChange
         <FieldLabel htmlFor={`${uid}-combo-p`} topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel>
         <input id={`${uid}-combo-p`} aria-label="Combo-Bonuspunkte" type="number" min={0} placeholder="erbt"
           value={value.comboBonusPoints} onChange={(e) => up("comboBonusPoints", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 150 }}>
+        <FieldLabel htmlFor={`${uid}-speed-s`} topic="speedThresholdSeconds">Tempo bis … Sek.</FieldLabel>
+        <input id={`${uid}-speed-s`} aria-label="Tempo-Schwelle in Sekunden" type="number" min={0} placeholder="erbt"
+          value={value.speedThresholdSeconds} onChange={(e) => up("speedThresholdSeconds", e.target.value)} />
+      </div>
+      <div className="field" style={{ maxWidth: 140 }}>
+        <FieldLabel htmlFor={`${uid}-speed-p`} topic="speedBonusPoints">Tempo-Bonuspunkte</FieldLabel>
+        <input id={`${uid}-speed-p`} aria-label="Tempo-Bonuspunkte" type="number" min={0} placeholder="erbt"
+          value={value.speedBonusPoints} onChange={(e) => up("speedBonusPoints", e.target.value)} />
       </div>
       <span className="label-row">
         <label className="checkline">
@@ -495,7 +569,8 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
    * (scheitert die neue Abfrage, fällt `loading` zurück, während die alten Zeilen stehen bleiben). Die Kriterien gehen
    * normalisiert in den Hook, darum ist „abc " dieselbe Suche wie „abc".
    */
-  const filterKey = JSON.stringify(kriterien);
+  // B-540: der Auswahl-Schlüssel ohne Sortierung – ein Umsortieren ist dieselbe Suche und darf die Auswahl nicht leeren.
+  const filterKey = planbauAuswahlSchluessel(filter);
   /** Der Schlüssel, für den die aktuelle Auswahl gilt – nach dem Effekt immer der aktuelle. */
   const geltenderFilterKey = useRef(filterKey);
   const zeilenVeraltet = exercises.stale;
@@ -521,6 +596,20 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
     if (folge.hinweis) setAuswahlHinweis(folge.hinweis);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterKey]);
+  /*
+   * B-540: nach jeder frisch geladenen Seite **derselben** Suche (Umsortieren, „Erneut suchen") bleibt die Auswahl nur,
+   * wenn die Übung noch in der Liste steht – sonst zeigte sie auf eine unsichtbare Übung (B-167). Erst wenn die Daten zum
+   * eingestellten Stand gehören (`!stale`), sonst prüfte der Effekt gegen die alte Seite. Nach einem Filterwechsel ist die
+   * Auswahl schon leer; dann tut er nichts.
+   */
+  useEffect(() => {
+    if (exercises.stale || !exercises.data || exerciseId === "") return;
+    const folge = auswahlNachUmsortieren([exerciseId], exercises.data.items.map((x) => x.id));
+    if (!folge.hinweis) return;
+    setExerciseId(folge.selected[0] ?? "");
+    setAuswahlHinweis(folge.hinweis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercises.data, exercises.stale]);
   const [settings, setSettings] = useState<PositionSettings>(defaultSettings());
   /*
    * Hat der Vater die Zielpunkte SELBST gesagt? (B-191)
@@ -556,6 +645,8 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
   }
 
   const results = exercises.data?.items ?? [];
+  // Die gewählte Übung – ihr Typ bestimmt die Stufen im Formular (B-16).
+  const gewaehlt = results.find((ex) => ex.id === exerciseId);
   // Der letzte Fehler überlebt den Start der Wiederholung (B-216) – wie im Zwilling (`VaterWizard.tsx`), und
   // nur die: unter einem anderen `filterKey` läuft eine andere Suche, nicht dieselbe noch einmal (B-227).
   const sucheGescheitert = useGemerkterFehler(exercises.error, exercises.loading, filterKey);
@@ -627,8 +718,11 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                   borderBottom: "1px solid var(--stroke)" }}>
               <label className="row" style={{ gap: 8, alignItems: "flex-start", cursor: "pointer", flex: 1 }}>
                 {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-167): ein Klick markiert
-                    nicht nur, er schreibt die Lern-Standards dieser Übung ins Formular. */}
-                <input type="radio" name="add-position-exercise" disabled={zeilenVeraltet}
+                    nicht nur, er schreibt die Lern-Standards dieser Übung ins Formular. Und gesperrt, wenn der Vater
+                    die Übung nicht zuweisen darf (B-140) – der Server rechnet das (`canAssign`), der Grund steht
+                    daneben; sonst sagte erst das Speichern `exercise_not_executable`. */}
+                <input type="radio" name="add-position-exercise" disabled={zeilenVeraltet || !ex.canAssign}
+                  aria-describedby={ex.canAssign ? undefined : `${uid}-gesperrt-${ex.id}`}
                   checked={exerciseId === ex.id}
                   // Nur die Werte übernehmen, die AUS der Übung kommen – das Pflichtziel und der Malus
                   // bleiben stehen (ein Übungswechsel ist keine Rücknahme).
@@ -645,6 +739,9 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
                       pointsGoalMet: pointsFrom(ex, cur.pointsGoalMet, punkteGetippt),
+                      // B-16, Entscheidung 7: die Stufen gehören zum Typ – eine der vorigen Übung wäre hier womöglich
+                      // ungültig (validation_error) oder, schlimmer, gültig und ungewollt.
+                      stage: "",
                     }));
                   }}
                   style={{ marginTop: 3 }} />
@@ -662,6 +759,12 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                     <span className="muted"> · {ratingSummary(ex.averageRating, ex.ratingCount)}</span>
                   </span>
                   {ex.description && <span className="muted" style={{ fontSize: 12 }}>{ex.description}</span>}
+                  {/* Als Text, nicht als `title` (B-160). „Ausprobieren" bleibt daneben bedienbar – Lesen ist global. */}
+                  {!ex.canAssign && (
+                    <span id={`${uid}-gesperrt-${ex.id}`} className="pill mag" style={{ fontSize: 12, alignSelf: "flex-start" }}>
+                      {NICHT_ZUWEISBAR_GRUND}
+                    </span>
+                  )}
                 </span>
               </label>
               {/* Gesperrt wie das Radio (B-167): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
@@ -689,7 +792,7 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
           oben setzt `settings` dagegen direkt und läuft hier nicht durch. Damit braucht `PositionFields`
           keinen zusätzlichen Prop, und die Unterscheidung hängt an dem, was ohnehin verschieden ist:
           dem Weg, auf dem der Wert entsteht. */}
-      <PositionFields value={settings} onChange={(next) => {
+      <PositionFields value={settings} stages={gewaehlt ? types.stages(gewaehlt.type) : []} onChange={(next) => {
         if (next.pointsGoalMet !== settings.pointsGoalMet) setPunkteGetippt(true);
         setSettings(next);
       }} />
@@ -725,6 +828,9 @@ function PositionRow({ planId, pos, onChanged, action }: {
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));
+  // B-469: womit die Pflicht geprüft wird – erst, wenn das Manifest den Typ kennt (sonst `undefined` → nichts).
+  const typ = types.byType.get(pos.exerciseType);
+  const lernkontrolle = lernkontrolleText(typ?.checkMode, pos.requireTypedTest, typ?.selfAssessedTest ?? false);
 
   function cancel() {
     setSettings(settingsFrom(pos));
@@ -758,7 +864,13 @@ function PositionRow({ planId, pos, onChanged, action }: {
             {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
             {dosisText(pos) !== null && <span className="muted"> · {dosisText(pos)}</span>}
             <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
-            {pos.requireTypedTest && <span className="muted"> · getippt</span>}
+            {lernkontrolle && (
+              <>
+                {" · "}
+                <span className={lernkontrolle.hervorheben ? "pill amber" : "muted"}>{lernkontrolle.text}</span>
+                <InfoHint topic="lernkontrolle" />
+              </>
+            )}
           </td>
           <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
             {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
@@ -793,7 +905,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
       <td className="num">{pos.order + 1}</td>
       <td>{pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span></td>
       <td colSpan={3}>
-        <PositionFields value={settings} onChange={setSettings} />
+        <PositionFields value={settings} onChange={setSettings} stages={types.stages(pos.exerciseType)} />
       </td>
       <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
         <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>
@@ -847,6 +959,36 @@ export function dosisText(pos: { newItemsPerDay: number; dailyDoseInForce: numbe
   if (pos.dailyDoseInForce > 0) return `${pos.dailyDoseInForce} neue je Tag`;
   // Der Grund kommt vom Server (die Übung wertet als Menge, `GradesAsSet`) – der Satz nennt ihn so, nicht über einen Typ.
   return pos.newItemsPerDay > 0 ? "Tagesdosis ruht (die Übung wertet als Menge)" : null;
+}
+
+/**
+ * Was die Positionszeile über die Lernkontrolle sagt (B-469, Entscheidung 2): ein „erfüllt" bei Grammatik und eines beim
+ * getippten Vokabeltest sahen gleich aus – der Vater sah nicht, wo seine Pflicht schwach ist.
+ *
+ * `hervorheben` markiert die beiden schwachen Arten (Selbsteinschätzung zählt mit, kein Test). `null` heißt: nichts sagen –
+ * bei Katalog-Prüfungen und, tragend, bei unbekanntem Typ (`undefined`, das Manifest lädt noch oder scheiterte): sonst
+ * stünde dort ein falsches „kein Test".
+ */
+export function lernkontrolleText(checkMode: ExerciseCheckMode | undefined, requireTypedTest: boolean,
+  selfAssessedTest: boolean): { text: string; hervorheben: boolean } | null {
+  // `selfAssessedTest` kommt aus dem Manifest (Review Sprint 74): bei einem Typ, dessen Test immer getippt ist (Zuordnung),
+  // ändert „nur getippte Tests" nichts – die Warnung stünde dort grundlos.
+  if (checkMode === "StudyPlanTest")
+    return requireTypedTest || !selfAssessedTest
+      ? { text: "Test getippt", hervorheben: false }
+      : { text: "Test, Selbsteinschätzung zählt", hervorheben: true };
+  if (checkMode === "None") return { text: "kein Test – zählt Durchspielen", hervorheben: true };
+  return null;
+}
+
+/**
+ * Der Auswahl-Schlüssel des Planbaus (B-540): dieselben Felder wie {@link planbauKriterien}, aber **ohne** Sortierung –
+ * eine andere Reihenfolge ist dieselbe Treffermenge, die Auswahl fällt dort nicht pauschal (das regelt
+ * `auswahlNachUmsortieren` je geladener Seite). Aus derselben Quelle gebaut, damit kein Filterfeld an nur einer Stelle
+ * fehlen kann. Dient auch dem gemerkten Suchfehler: er überlebt ein Umsortieren, die Suche ist dieselbe.
+ */
+export function planbauAuswahlSchluessel(filter: ExerciseFilter): string {
+  return JSON.stringify(planbauKriterien(filter, false));
 }
 
 /**

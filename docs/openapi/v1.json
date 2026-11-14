@@ -37316,6 +37316,7 @@
       },
       "ExerciseSummary": {
         "required": [
+          "canAssign",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
@@ -37500,9 +37501,12 @@
               "string"
             ],
             "format": "int32"
+          },
+          "canAssign": {
+            "type": "boolean"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty.\n\n\u0060CanAssign\u0060 (B-140) says whether the requester may put the exercise into a study plan or class test: it is\npublic, or the requester holds any grant on it, or is an admin - the rule \u0060POST \u2026/positions\u0060 enforces, so a\npicker can lock a withdrawn exercise before the save fails with \u0060exercise_not_executable\u0060."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -37583,6 +37587,21 @@
               "string"
             ],
             "description": "German singular of ItemNoun (\u0022Karte\u0022) for a count of exactly one."
+          },
+          "stages": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StageOption"
+            },
+            "description": "The stages a plan position of this type may be set to (B-16) - the very list the server checks a\nposition\u0027s stage against, so a form built from it cannot offer an invalid one. Empty for a type without a stage\nchoice."
+          },
+          "selfAssessedTest": {
+            "type": "boolean",
+            "description": "A test of this type can run on a stage that is not typed (self-assessment), so a\nposition without \u0022typed tests only\u0022 may count a claim as a pass (B-469). \u0060false\u0060 where every testable stage is\ntyped (e.g. matching) - there the switch changes nothing.",
+            "default": false
           }
         },
         "description": "Self-description of an exercise type: the bridge between the authoring catalog (\u0060IExerciseType\u0060),\ntypical learning family (LearningMethod), play route, and frontend renderer. The frontend\nreads the manifest list once and wires up routing, checking, and display generically; the\nactual render component remains hand-built per string ExerciseTypeManifest.Renderer (the play view reveals\na different amount depending on the Leitner box \u2013 that cannot be generated generically from JSON)."
@@ -45762,9 +45781,14 @@
             ],
             "description": "Daily dose of new contents (see PositionResponse); \u00600\u0060 removes the cap. 0 to 200.",
             "format": "int32"
+          },
+          "clearStage": {
+            "type": "boolean",
+            "description": "Puts the stage back to the exercise\u0027s default (B-16). Needed because \u0060null\u0060 means \u0022not specified\u0022: without the\nswitch a form set back to \u0022default\u0022 would report \u0022saved\u0022 while the old stage stayed. Wins over \u0060stage\u0060 if both\narrive together.",
+            "default": false
           }
         },
-        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
+        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly two fields have one: bool UpdatePositionDto.ClearTimeSlots and bool UpdatePositionDto.ClearStage. The other fields cannot be\nemptied: most are mandatory or carry \u0022off\u0022 as a value of their own (0); \u0060ItemCount\u0060, \u0060GoalThreshold\u0060,\n\u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 store \u0060null\u0060 as \u0022all\u0022/\u0022default\u0022 but have no switch yet - once set\nthey can only be overwritten (B-547)."
       },
       "UpdatePublisherDto": {
         "type": "object",

@@ -166,4 +166,48 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         var invalid = await father.GetAsync("/api/v1/creator/exercise-types/999");
         Assert.Equal(HttpStatusCode.NotFound, invalid.StatusCode);
     }
+
+    /// <summary>
+    /// B-16 AK 1: the list endpoint and the single-type endpoint carry each type's stage options - exactly
+    /// <c>IExerciseType.StageOptions</c>, the list a position's stage is checked against - and an empty list for a type
+    /// without a stage choice. Red when the field is not filled (null everywhere), filled from a second list, or
+    /// filled on only one of the two endpoints.
+    /// </summary>
+    [Fact]
+    public async Task Manifest_Traegt_Die_Stufen_Des_Typs_An_Beiden_Endpunkten()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
+        var list = await (await father.GetAsync("/api/v1/creator/exercise-types")).Content.ReadFromJsonAsync<JsonElement>();
+
+        static List<(int, string)> Stages(JsonElement m) =>
+            [.. m.GetProperty("stages").EnumerateArray().Select(o => (o.GetProperty("value").GetInt32(), o.GetProperty("label").GetString()!))];
+
+        Assert.Contains(registry.All, t => t.StageOptions.Count > 0);
+        Assert.Contains(registry.All, t => t.StageOptions.Count == 0);
+        foreach (var t in registry.All)
+        {
+            var expected = t.StageOptions.Select(o => (o.Value, o.Label)).ToList();
+            var fromList = list.EnumerateArray().Single(m => m.GetProperty("type").GetString() == t.Key);
+            Assert.Equal(expected, Stages(fromList));
+            var single = await (await father.GetAsync($"/api/v1/creator/exercise-types/{t.Key}")).Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(expected, Stages(single));
+        }
+    }
+
+    /// <summary>
+    /// B-469 review finding: <c>selfAssessedTest</c> says whether a test of the type can pass on a self-assessment.
+    /// Vocabulary can (its self-assessment stage), matching cannot (every test is typed). Red when the flag is not
+    /// filled (always false: vocabulary fails) or set per check mode instead of the stage rule (matching fails).
+    /// </summary>
+    [Fact]
+    public async Task Manifest_Sagt_Ob_Ein_Test_Selbsteinschaetzung_Zaehlt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        async Task<bool> Flag(string type) => (await (await father.GetAsync($"/api/v1/creator/exercise-types/{type}"))
+            .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("selfAssessedTest").GetBoolean();
+
+        Assert.True(await Flag("Vocabulary"));
+        Assert.False(await Flag("Matching"));
+    }
 }

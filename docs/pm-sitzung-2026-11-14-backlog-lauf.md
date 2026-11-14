@@ -119,3 +119,30 @@ Abnahme-Zeilen; mechanisch repariert (Zeichenfolgen zurückdekodiert, sonst nich
 - **Tor-Vorschlag (nicht gebaut, hält sonst an):** ein Wächter, der in `docs/**/*.md` doppelt kodiertes UTF-8 (`Ã`,
   `â€`) ablehnt – die Umlaute des Vorlaufs sind zwei Tage unbemerkt geblieben. Liegt in der Liste für den Menschen.
 - **Bewusst ungedeckt:** die Doppel-Abgabe einer veralteten Bonus-Runde (500 → 409) ist nur gelesen, nicht gemessen.
+
+## Sprint 74 — Ziel & Umfang
+
+**Sprint-Ziel (Vater):** Der Vater baut einen Plan, ohne dass ihm die Auswahl verloren geht, ohne Übungen zu wählen,
+die er nicht zuweisen darf, und kann jede Positions-Einstellung im Formular setzen und zurücknehmen.
+**Umfang:** B-540, B-16, B-140, B-469 (Kern), dazu die Abnahme von B-534 (gebaut und reviewt im Lauf 2026-11-13).
+**Entwickler-Brief:** Backend zuerst und nacheinander: `ExerciseTypeManifest.Stages` über eine Senke
+(`ExerciseTypeRegistry.Published`, beide Endpunkte), `UpdatePositionDto.ClearStage` (Wert, dann Schalter),
+`ExerciseSummary.CanAssign` in der SQL-Projektion – gegen `CanExecuteAsync` durch einen Gleichheitstest gehalten. Danach
+das Frontend in einer Hand, weil drei Stories `PlanPositions.tsx` ändern (B-540 → B-16 → B-140 → B-469). Keine Migration.
+
+## Iteration 74 — umgesetzt
+
+- Backend: Manifest-`stages` und `selfAssessedTest` (Review-Fund, s. u.), `clearStage`, `canAssign`. Tests:
+  `ExerciseTypeManifestTests` (+2), `PatchSemanticsTests` (Schalter-Zeile), `ExerciseSharingTests` (+6 Fälle gegen
+  echtes Zuweisen; der Server antwortet 403, nicht 400 wie in der Story notiert).
+- Frontend (von einem Agenten gebaut, ich habe Reviews und Nachbesserungen gemacht): Auswahl-Schlüssel ohne Sortierung
+  (B-540); Stufe/Inhalte/Tempo im Positionsformular, Stufe aus dem Manifest, Reset beim Übungswechsel (B-16); gesperrte
+  Zeilen mit Grund in Planbau, Assistent **und Klassenarbeit** (B-140; die Klassenarbeit war zurückgestellt, das
+  Review zeigte die offene Grenze – nachgezogen); „Alle wählen“ übernimmt nur Zuweisbare; die Positionszeile nennt die
+  Art der Lernkontrolle (B-469).
+- Review-Funde behoben: Zuordnung warnte grundlos „Selbsteinschätzung zählt“ (der Server wertet dort jeden Test
+  getippt) – das Manifest trägt jetzt `selfAssessedTest` aus der Stufenregel des Typs; Grund-Satz unterstellte ein
+  „Zurückziehen“, das es bei einer nie freigegebenen Übung nicht gab; Hinweis „nach dem Umsortieren“ stand auch nach
+  einem Neuladen; DTO-Doku behauptete, die übrigen Felder trügen „erben“ als eigenen Wert (falsch für vier Felder →
+  neue Story **B-547**); Testverweis im Kommentar zeigte auf eine nicht existierende Datei.
+- Bewusst offen: der doppelt vorgelesene Grund (Span im `<label>` und per `aria-describedby`) – Kosmetik, nicht behoben.

@@ -43,6 +43,12 @@ public enum ExerciseCheckMode
 /// <c>ExerciseSummary.ItemCount</c> (B-424). It lives here so the "12 Karten" a supervisor reads is the server's word, not a
 /// frontend table. <c>null</c> for a type without countable atoms (essay, generated drill); its rows then carry no count.</param>
 /// <param name="ItemNounOne">German singular of <paramref name="ItemNoun"/> ("Karte") for a count of exactly one.</param>
+/// <param name="Stages">The stages a plan position of this type may be set to (B-16) - the very list the server checks a
+/// position's stage against, so a form built from it cannot offer an invalid one. Empty for a type without a stage
+/// choice.</param>
+/// <param name="SelfAssessedTest">A test of this type can run on a stage that is not typed (self-assessment), so a
+/// position without "typed tests only" may count a claim as a pass (B-469). <c>false</c> where every testable stage is
+/// typed (e.g. matching) - there the switch changes nothing.</param>
 public record ExerciseTypeManifest(
     string Type,
     string Label,
@@ -54,4 +60,6 @@ public record ExerciseTypeManifest(
     LearningMethod? Method,
     IReadOnlyList<string> Capabilities,
     string? ItemNoun = null,
-    string? ItemNounOne = null);
+    string? ItemNounOne = null,
+    IReadOnlyList<StageOption>? Stages = null,
+    bool SelfAssessedTest = false);

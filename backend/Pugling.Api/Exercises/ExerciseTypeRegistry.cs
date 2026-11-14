@@ -25,7 +25,22 @@ public sealed class ExerciseTypeRegistry
         _byKey.GetValueOrDefault(key) ?? throw new InvalidOperationException($"Unknown exercise type '{key}'.");
 
     /// <summary>Manifests of all types – the source of truth for the <c>exercise-types</c> endpoint.</summary>
-    public IReadOnlyList<ExerciseTypeManifest> Manifests => [.. _byKey.Values.Select(t => t.Manifest)];
+    public IReadOnlyList<ExerciseTypeManifest> Manifests => [.. _byKey.Values.Select(Published)];
+
+    /// <summary>
+    /// The manifest as the API hands it out: with the type's stage options (B-16), taken from
+    /// <see cref="IExerciseType.StageOptions"/> - the list <c>StageValidation</c> checks against - instead of a second
+    /// copy in every type's manifest literal.
+    /// </summary>
+    public static ExerciseTypeManifest Published(IExerciseType type) => type.Manifest with
+    {
+        Stages = type.StageOptions,
+        // B-469: from the type's own stage rule, the one the test grades by (`Graded = IsTypedStage`), so the father's
+        // warning "self-assessment counts" appears exactly where a claim can pass. Without options the preview stage
+        // stands for the type.
+        SelfAssessedTest = (type.StageOptions.Count > 0 ? type.StageOptions.Select(o => o.Value) : [type.PreviewStage])
+            .Any(s => !type.IsTypedStage(s) && !type.IsDisplayOnlyStage(s)),
+    };
 
     /// <summary>Keys of the types with cross-plan item learning progress – for in-DB filters (capability can't go into SQL).</summary>
     public IReadOnlyList<string> KeysSupportingItemProgress =>

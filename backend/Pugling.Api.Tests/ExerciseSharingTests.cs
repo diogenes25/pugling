@@ -166,4 +166,53 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
         Assert.Equal("not_owner", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
     }
+
+    /// <summary>
+    /// B-140 AK 1 + 2: <c>canAssign</c> in the exercise search says exactly what <c>POST …/positions</c> does - public,
+    /// withdrawn with an owner/write/execute grant, admin: assignable; withdrawn without a grant: not. Each case is
+    /// compared with a real assignment. Red when the projection drops the execute grant (or any grant kind), ignores
+    /// <c>ExecutePublic</c>, or forgets the admin.
+    /// </summary>
+    [Theory]
+    [InlineData("public", true)]
+    [InlineData("none", false)]
+    [InlineData("Owner", true)]
+    [InlineData("Write", true)]
+    [InlineData("Execute", true)]
+    [InlineData("admin", true)]
+    public async Task CanAssign_In_Der_Suche_Sagt_Dasselbe_Wie_Das_Zuweisen(string fall, bool erwartet)
+    {
+        var (creator, _) = await NewFatherAsync("Owner CanAssign", "6161");
+        var (_, seriesUnitId, exerciseId) = await PublishVocabAsync(creator);
+        if (fall != "public")
+            (await creator.PatchAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/sharing",
+                new { executePublic = false })).EnsureSuccessStatusCode();
+
+        HttpClient asker;
+        int planId;
+        if (fall == "admin")
+        {
+            asker = await TestApi.AdminAdultAsync(_factory, "6262");
+            var childId = await TestApi.IdAsync(await asker.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Kind", pin = "7777" }));
+            planId = await TestApi.IdAsync(await asker.PostAsJsonAsync("/api/v1/supervisor/study-plans", new { childId, title = "Plan", durationDays = 10 }));
+        }
+        else
+        {
+            (planId, asker) = await FamilyWithPlanAsync("Fragende Familie", "6363");
+            if (fall is "Owner" or "Write" or "Execute")
+            {
+                var askerId = (await asker.GetFromJsonAsync<JsonElement>("/api/v1/auth/me")).GetProperty("adultId").GetInt32();
+                (await creator.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/grants",
+                    new { creatorId = askerId, permission = fall })).EnsureSuccessStatusCode();
+            }
+        }
+
+        var hits = await asker.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises?seriesUnitId={seriesUnitId}");
+        var row = hits.EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == exerciseId);
+        Assert.Equal(erwartet, row.GetProperty("canAssign").GetBoolean());
+
+        var assign = await asker.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId, cadence = "Daily" });
+        Assert.Equal(erwartet ? HttpStatusCode.Created : HttpStatusCode.Forbidden, assign.StatusCode);
+    }
 }
