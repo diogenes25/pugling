@@ -170,3 +170,43 @@ das Frontend in einer Hand, weil drei Stories `PlanPositions.tsx` ändern (B-540
 - **Der eine Mechanismus:** `frontend/src/test-setup.ts` setzt `asyncUtilTimeout` auf 4 s – ein Lauf, der nur unter
   Last fällt, misst nichts und kostet Vertrauen in jede rote Zeile.
 - **Bewusst ungedeckt:** der doppelt vorgelesene Grund; der Mehr-Seiten-Zweig von „Alle wählen“.
+
+## Sprint 75 — Ziel & Umfang
+
+**Sprint-Ziel (Sohn):** Friedrich sieht seine verdiente Kiste als Truhe auf dem Pfad, öffnet sie selbst und bekommt
+den Inhalt genau einmal gutgeschrieben.
+**Umfang:** B-527, dazu B-548 und B-549 (beide aus der Nachschau zu Sprint 73: Texte, die noch die alte Regel nennen).
+B-252 (Vorlesen) aus dem Plan genommen: es teilt `PositionPracticeController` und die Arcade-Karte mit B-527 und
+gehört nicht zum Sprint-Ziel – es läuft im nächsten Sprint.
+**Entwickler-Brief:** Ziehen beim Verdienen, Buchen beim Öffnen (Streak vom Verdienen); Migration mit Bestands-`UPDATE`;
+Öffnen nur durch das Kind selbst, Wallet-Invariante per bedingtem Update + Stamp in einer Transaktion.
+
+## Iteration 75 — umgesetzt
+
+- B-527 von einem Agenten gebaut (Backend, Migration, Endpunkt, Arcade, E2E `truhe`); Reviews fanden zehn Punkte,
+  alle im Sprint behoben – darunter: ein Konto mit Kind- und Vater-Profil hätte die Truhe eines betreuten Kindes
+  öffnen können (jetzt `User.ChildId() == childId`), `daily_box_none` hatte keinen Arcade-Satz und ließ die Truhe
+  weiter leuchten, der Fokus fiel nach dem Öffnen auf `body`, eine gestern verdiente Truhe hieß „heute geöffnet“.
+- B-548/B-549: Swagger, Kommentare, `en.ts`, Vater-Absatz.
+- Verifikation: Suite **1628/1628**, Vitest **1033/1033** (zwei Läufe), `tsc -b` grün, **11 Mutanten** rot (P2 nicht
+  kompilierbar, durch P2b ersetzt), Migration gegen eine DB-Kopie geprobt. Commit `f96ec5c6`.
+
+## Runde 75 — Re-Review / Abnahme
+
+- **Sohn – abgenommen, mit Gerätevorbehalt.** Rollengang als Playwright: 8 passed; die Truhe leuchtet nach
+  erfüllten Tageszielen, öffnet auf Tipp, der Münzstand im HUD steigt um den gezeigten Betrag, nach Neuladen steht sie
+  offen. Ob die Animation sich gut anfühlt, entscheidet ein Mensch am Gerät.
+- **Vater – Regressionszeuge:** Suite grün; der Bonus-Absatz im Kind-Hub nennt die neue Regel.
+- **Creator – Regressionszeuge:** Suite grün, kein Creator-Pfad im Diff.
+
+## Retrospektive 75
+
+**Nachschau:** Sprint 73 – zwei Text-Durchrutscher (B-548, B-549), beide in diesem Sprint behoben; Doku in `wiki/` und
+den Tutorials direkt berichtigt. Sprint 74 läuft als Agent.
+
+- **Was die eigenen Tore durchgelassen haben:** In Sprint 73 habe ich die Texte an der neuen Regel nur an den Stellen
+  nachgezogen, die der Reviewer nannte; der Rest (Swagger-DTO, zwei Kommentare, `en.ts`, Vater-Absatz) blieb.
+- **Der eine Mechanismus:** keiner neu – die Regel „eine Story über einen Satz greppt jeden Satz dieser Art“ steht
+  schon in `pm-loop` Step 5; sie galt hier für eine **Regel**, nicht nur für einen Satz. Ich habe sie in diesem Sprint
+  angewandt (grep nach „duty“ über Backend, Frontend und Doku).
+- **Bewusst ungedeckt:** AK 3 der Truhe (paralleles Öffnen) ist ein Rennen; grün ist deterministisch, rot nicht.

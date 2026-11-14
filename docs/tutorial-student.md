@@ -115,6 +115,8 @@ Lies das so:
 
 - **`today.outstanding`** ist die konkrete To-do-Liste des Tages — hier `"Begrüßungen (Tagesziel)
   offen"`. Ist sie leer und `dutyDone: true`, ist die Tagesmission geschafft.
+- **`today.rewardsUnlocked`** (im Auszug nicht gezeigt) sagt, ob Tagesbox und Bonus-Training offen sind: es zählt nur
+  die **Tagesziele** (hat der Plan keine, alle Ziele; B-535). Ein offenes Wochenziel sperrt die Belohnung nicht.
 - **`cadence`** ist der Rhythmus einer Position: `Daily` (jeden Tag Pflicht), `Weekly` (x-mal pro
   Woche) oder `None` (frei — darf geübt werden, zählt aber nicht zur Pflicht).
 - **`renderer`** / **`checkMode`** sagen dem Frontend, wie die Position gespielt und geprüft wird.
@@ -359,7 +361,32 @@ GET /api/v1/student/me/points
 Die einzelnen Buchungen liegen paginiert unter `GET /api/v1/student/me/points/entries`
 (mit `X-Total-Count`); eine einzelne unter `…/entries/{entryId}`.
 
-### 6.2 Missionen und Auszeichnungen
+### 6.2 Die Tagestruhe öffnen
+
+Sind die **Tagesziele** geschafft (`today.rewardsUnlocked`), verdient der Student am Ende der Runde bzw. des Tests
+eine **Truhe** (B-527). Ihr Inhalt – zufällige Münzen und Gems, mit der Serie des Tages skaliert – ist dann schon
+gezogen, aber **noch nicht gebucht** und **geheim**. Die Übersicht zeigt nur, dass sie da ist:
+
+```jsonc
+// GET /api/v1/student/study-plans/1/overview → dailyBox
+{ "claimedToday": true, "openedToday": false, "waiting": 1,
+  "coinsAwarded": null, "gemsAwarded": null, "streakAtClaim": 1 }
+```
+
+Öffnen darf nur der Student selbst:
+
+```http
+POST /api/v1/student/children/1/daily-box/open
+→ { "coins": 20, "gems": 2, "streakAtClaim": 1, "day": "2026-07-09", "waitingAfter": 0 }
+```
+
+- Erst jetzt landen `DailyBoxCoins`/`DailyBoxGems` im Kontoauszug, und `dailyBox` zeigt `openedToday: true` samt
+  Inhalt.
+- **Eine Truhe verfällt nie.** Warten mehrere (`waiting`), öffnet der Aufruf die **älteste**. Es zahlt der Wert vom
+  Tag des Verdienens – Truhen aufzusparen bringt nichts.
+- Keine Truhe wartet (oder ein Doppeltipp war schneller) → `409 daily_box_none`; ein Supervisor bekommt `403`.
+
+### 6.3 Missionen und Auszeichnungen
 
 ```http
 GET /api/v1/student/me/missions
@@ -378,7 +405,7 @@ GET /api/v1/student/me/achievements
 `earned`-Status. Beide werden serverseitig **idempotent** belohnt (jedes nur einmal). Einzelsicht:
 `…/missions/{id}` bzw. `…/achievements/{id}`.
 
-### 6.3 Skins
+### 6.4 Skins
 
 ```http
 GET /api/v1/student/me/skins

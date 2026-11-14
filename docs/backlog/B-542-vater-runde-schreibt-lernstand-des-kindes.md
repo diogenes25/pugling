@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-542 · Soll eine Übungsrunde des Vaters überhaupt in Verlauf und Lernstand des Kindes schreiben?
@@ -138,3 +139,4 @@ setzt der Bau-Sprint.
   volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutanten M20 (`IsStudent` um `RecordAsync`) und M21 (um die Punktebuchung) → rot an
   `Gewertete_Vaterrunde_Schreibt_Verlauf_Lernstand_Und_Punkte_Des_Kindes` (beide Tage). Kommentar und Tutorial-Satz
   nachgezogen. Kein Rollengang (kein UI-Weg betroffen).
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Kommentar `PositionPracticeController.cs:444-450` und Satz in `docs/tutorial-supervisor.md` nennen die Entscheidung; das Zusammenspiel mit B-535 (Vater-Runde verbraucht den Neu-Bonus, startet die Malus-Uhr nicht) steht in B-535 und in `PositionProgressService.FirstPlayDaysAsync`; Regressionstest trägt (Mutanten M20/M21).

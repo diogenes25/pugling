@@ -181,9 +181,25 @@ a { color: var(--cyan); }
 .pfad-blatt-titel { flex: 1; font-family: var(--font-display); font-size: 18px; }
 .pfad-zu { flex: 0 0 auto; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #171a44; color: var(--ink); font-size: 16px; cursor: pointer; }
 .pfad-zu:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Die Tagestruhe als letzter Knoten des Pfads (B-527): zu, bereit (leuchtet), offen. */
+.truhe { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 22px; text-align: center; }
+.truhe-kiste { width: 96px; height: 96px; display: grid; place-items: center; border-radius: 26px; font-size: 48px; background: #171a44; border: 2px solid var(--stroke); }
+.truhe.zu .truhe-kiste { opacity: .55; filter: grayscale(.6); }
+.truhe.bereit .truhe-kiste { background: linear-gradient(180deg, var(--gold), var(--gold-2)); border-color: transparent; box-shadow: 0 7px 0 0 #b56a12, 0 0 22px 4px rgba(255, 199, 56, .45); animation: truhe-leuchten 1.6s ease-in-out infinite; }
+.truhe.offen .truhe-kiste { background: #20245a; border-color: var(--gold); }
+.truhe-kiste.oeffnet { animation: truhe-wackeln .6s ease-in-out; }
+.truhe-zahl { font: 800 11px/1 var(--font-body); background: var(--ink); color: #0b0d28; padding: 4px 8px; border-radius: 10px; }
+.truhe-inhalt { font: 800 15px/1.2 var(--font-display); color: var(--gold); }
+@keyframes truhe-leuchten { 50% { box-shadow: 0 7px 0 0 #b56a12, 0 0 30px 8px rgba(255, 199, 56, .65); } }
+@keyframes truhe-wackeln {
+  0%, 100% { transform: rotate(0) scale(1); }
+  20% { transform: rotate(-10deg); } 40% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); }
+  80% { transform: scale(1.15); }
+}
 @media (prefers-reduced-motion: reduce) {
   .pfad-start, .pfad-blatt { animation: none; }
   .pfad-kern { transition: none; }
+  .truhe.bereit .truhe-kiste, .truhe-kiste.oeffnet { animation: none; }
 }
 
 /* Login */

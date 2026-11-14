@@ -19,9 +19,9 @@ public enum ExtraForm
 }
 
 /// <summary>
-/// The bonus training of a child for today. <paramref name="Unlocked"/> is false until the day's duty is met
-/// (<paramref name="LockReason"/>: <c>no_plan</c> or <c>duty_open</c>, with the open duties in
-/// <paramref name="Outstanding"/>). <paramref name="DailyCoinCap"/> is <c>null</c> when there is no cap.
+/// The bonus training of a child for today. <paramref name="Unlocked"/> is false until today's daily goals are met -
+/// all goals in a plan without daily ones (B-535; not <c>DutyDone</c>, which also counts weekly goals). <paramref
+/// name="LockReason"/>: <c>no_plan</c> or <c>duty_open</c>, with the goals still open in <paramref name="Outstanding"/>. <paramref name="DailyCoinCap"/> is <c>null</c> when there is no cap.
 /// </summary>
 public record ExtraTrainingOverview(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding,
     int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraExercise> Exercises);

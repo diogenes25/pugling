@@ -1,17 +1,20 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import "../lib/i18n";
 import { DEFAULT_SKIN } from "../lib/skins";
-import type { PositionStatus } from "../lib/types";
+import type { DailyBoxOpened, DailyBoxStatus, PositionStatus } from "../lib/types";
 
 // Die Startseite hängt an Kontext, den der Pfad nur für den Begleiter braucht.
 vi.mock("./SohnApp", () => ({
-  useSohn: () => ({ planId: 1, setPlanId: () => {}, childId: 7, celebrate: () => {}, skin: DEFAULT_SKIN }),
+  useSohn: () => ({ planId: 1, setPlanId: () => {}, childId: 7, celebrate: () => {}, skin: DEFAULT_SKIN, refreshWallet }),
 }));
 vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
+const refreshWallet = vi.fn();
 
-const { Pfad } = await import("./SohnHome");
+const { Pfad, Truhe } = await import("./SohnHome");
+const { api, ApiError } = await import("../lib/api");
+type TruhenZiele = import("./SohnHome").TruhenZiele;
 
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter 1", exerciseType: "Vocabulary", renderer: "flashcards",
@@ -160,5 +163,125 @@ describe("Das Blatt zu einem Knoten", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(document.activeElement).toBe(knoten("Wörter 1"));
+  });
+});
+
+const status = (over: Partial<DailyBoxStatus>): DailyBoxStatus => ({
+  claimedToday: false, openedToday: false, waiting: 0, coinsAwarded: null, gemsAwarded: null, streakAtClaim: 0, ...over,
+});
+const HEUTE = "2026-11-14";
+const zeigeTruhe = (box: DailyBoxStatus, over: { ziele?: TruhenZiele; onVeraltet?: () => void } = {}) =>
+  render(<Truhe box={box} heute={HEUTE} ziele={over.ziele ?? "tag"} onVeraltet={over.onVeraltet ?? (() => {})} />);
+const truhe = () => screen.getByRole("region", { name: "Tagestruhe" });
+const geoeffnet = (over: Partial<DailyBoxOpened>): DailyBoxOpened =>
+  ({ coins: 25, gems: 1, streakAtClaim: 2, day: HEUTE, waitingAfter: 0, ...over });
+
+/*
+ * B-527 – die Tagestruhe am Ende des Pfads, AK 8 und die Review-Funde. Je Fall steht, welche Änderung ihn rot macht.
+ */
+describe("Die Tagestruhe", () => {
+  afterEach(() => { vi.restoreAllMocks(); refreshWallet.mockClear(); });
+
+  it("ist zu, solange nichts wartet: nur ein Hinweis, kein Knopf", () => {
+    // Rot, wenn die Truhe im Zustand *zu* einen Knopf hat (das Kind tippte ins Leere: 409 daily_box_none).
+    zeigeTruhe(status({}));
+    expect(within(truhe()).queryByRole("button")).toBeNull();
+    expect(truhe().textContent).toContain("Schaffe deine Tagesziele");
+    expect(truhe().className).toContain("zu");
+  });
+
+  it("nennt im Zustand zu die Ziele, die der Plan wirklich hat", () => {
+    // Review-Fund 9. Rot, wenn ein Plan nur mit Wochenzielen oder ganz ohne Pflicht „Schaffe deine Tagesziele“ läse –
+    // ein Ziel, das es dort nicht gibt.
+    const { unmount } = zeigeTruhe(status({}), { ziele: "woche" });
+    expect(truhe().textContent).toContain("Schaffe deine Wochenziele");
+    expect(truhe().textContent).not.toContain("Tagesziele");
+    unmount();
+    zeigeTruhe(status({}), { ziele: "keine" });
+    expect(truhe().textContent).toContain("keine Pflicht");
+    expect(truhe().textContent).not.toContain("Tagesziele");
+  });
+
+  it("leuchtet bereit, wenn eine wartet, nennt mehrere – und verrät den Inhalt nicht", () => {
+    // Rot, wenn eine wartende Truhe keinen Knopf bekäme oder die Zahl bei mehreren fehlte.
+    zeigeTruhe(status({ claimedToday: true, waiting: 2 }));
+    expect(truhe().className).toContain("bereit");
+    expect(within(truhe()).getByRole("button", { name: "Truhe öffnen" })).toBeTruthy();
+    expect(truhe().textContent).toContain("2 Truhen warten");
+    expect(truhe().textContent).not.toContain("Münzen");
+  });
+
+  it("zeigt offen den Inhalt der heute geöffneten Truhe", () => {
+    // Rot, wenn die Truhe nach dem Neuladen (Server: openedToday) wieder zu stünde oder den Inhalt verschwiege.
+    zeigeTruhe(status({ claimedToday: true, openedToday: true, coinsAwarded: 20, gemsAwarded: 2, streakAtClaim: 1 }));
+    expect(truhe().className).toContain("offen");
+    expect(within(truhe()).queryByRole("button")).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("+20 Münzen, +2 Gems");
+    expect(truhe().textContent).toContain("Heute geöffnet");
+  });
+
+  it("lässt „+0 Gems“ weg", () => {
+    // Review-Fund 10. Rot, wenn bei null Gems „+0 Gems“ dastünde.
+    zeigeTruhe(status({ claimedToday: true, openedToday: true, coinsAwarded: 20, gemsAwarded: 0 }));
+    expect(screen.getByRole("status").textContent).toBe("+20 Münzen");
+  });
+
+  it("öffnet beim Antippen genau einmal, lädt den Saldo neu, zeigt den Inhalt und hält den Fokus auf der Truhe", async () => {
+    // Rot, wenn ein Doppeltipp zwei POSTs schickt (Sperre in `useAction` fehlt) – beide Klicks in einem `act`, sonst
+    // fängt schon `disabled` den zweiten (B-325) –, wenn der Knopf während des Öffnens nicht gesperrt ist, wenn der
+    // Saldo nicht neu geladen wird oder der Inhalt danach fehlt. Review-Fund 7: rot, wenn der Fokus mit dem
+    // verschwundenen Knopf auf `body` fällt statt auf der Truhe zu landen.
+    let freigeben: (v: DailyBoxOpened) => void = () => {};
+    const open = vi.spyOn(api, "openDailyBox").mockImplementation(
+      () => new Promise<DailyBoxOpened>((resolve) => { freigeben = resolve; }));
+    zeigeTruhe(status({ claimedToday: true, waiting: 1 }));
+    const knopf = screen.getByRole("button", { name: "Truhe öffnen" });
+    knopf.focus();
+
+    act(() => { fireEvent.click(knopf); fireEvent.click(knopf); });
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith(7);
+    expect((knopf as HTMLButtonElement).disabled).toBe(true);
+
+    await act(async () => { freigeben(geoeffnet({})); });
+    expect(refreshWallet).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status").textContent).toBe("+25 Münzen, +1 Gems");
+    expect(truhe().className).toContain("offen");
+    expect(screen.queryByRole("button", { name: "Truhe öffnen" })).toBeNull();
+    expect(document.activeElement).toBe(truhe());
+  });
+
+  it("zeigt eine ältere geöffnete Truhe mit Inhalt, aber nicht als „heute geöffnet“", async () => {
+    // Review-Fund 8. Rot, wenn die Truhe von gestern als „Heute geöffnet“ dastünde, obwohl die heutige noch nicht
+    // verdient ist.
+    vi.spyOn(api, "openDailyBox").mockResolvedValue(geoeffnet({ day: "2026-11-13", coins: 11, waitingAfter: 0 }));
+    zeigeTruhe(status({ waiting: 1 }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Truhe öffnen" })); });
+    expect(screen.getByRole("status").textContent).toBe("+11 Münzen, +1 Gems");
+    expect(truhe().className).toContain("zu");
+    expect(truhe().textContent).not.toContain("Heute geöffnet");
+  });
+
+  it("bleibt bereit, solange nach dem Öffnen noch eine wartet", async () => {
+    // Review-Fund 8. Rot, wenn das Öffnen der ältesten Truhe die Truhe schlösse, obwohl `waitingAfter` noch eine nennt.
+    vi.spyOn(api, "openDailyBox").mockResolvedValue(geoeffnet({ day: "2026-11-13", coins: 11, waitingAfter: 1 }));
+    zeigeTruhe(status({ claimedToday: true, waiting: 2 }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Truhe öffnen" })); });
+    expect(truhe().className).toContain("bereit");
+    expect(screen.getByRole("status").textContent).toBe("+11 Münzen, +1 Gems");
+    expect(screen.getByRole("button", { name: "Truhe öffnen" })).toBeTruthy();
+  });
+
+  it("hört nach daily_box_none auf zu leuchten und holt den Stand neu", async () => {
+    // Review-Fund 6. Rot, wenn die Truhe nach dem 409 (Doppeltipp, zweiter Tab) weiter bereit stünde und zum nächsten
+    // Fehlversuch einlüde, oder wenn die Übersicht nicht neu geladen wird.
+    vi.spyOn(api, "openDailyBox").mockRejectedValue(new ApiError(409, "No reward chest waiting.", undefined, "daily_box_none"));
+    const onVeraltet = vi.fn();
+    zeigeTruhe(status({ claimedToday: true, waiting: 1 }), { onVeraltet });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Truhe öffnen" })); });
+    expect(onVeraltet).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Truhe öffnen" })).toBeNull();
+    expect(truhe().className).not.toContain("bereit");
+    expect(screen.getByRole("alert").textContent).toContain("Gerade wartet keine Truhe");
   });
 });

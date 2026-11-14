@@ -175,8 +175,9 @@ describe("Fehlermeldungen der Arcade", () => {
     // B-543: der volle Bonus-Deckel vor einer Einmal-Übung – Start und Abgabe; dazu die drei Bonus-Sperren aus B-533,
     // deren englischer Satz ohne Arcade-Schlüssel nie erschien.
     "extra_cap_reached", "extra_training_locked", "extra_exercise_done", "extra_run_completed",
-    // B-545: die Übung änderte sich während der Runde.
-    "extra_run_stale"])(
+    // B-545: die Übung änderte sich während der Runde. B-527: keine Truhe wartet (Doppeltipp, zweiter Tab) – rot, wenn
+    // `daily_box_none` in `PROBLEM_KEYS` fehlt und das Kind den englischen Server-Satz liest.
+    "extra_run_stale", "daily_box_none"])(
     "sagen dem Kind %s in beiden Sprachen mit einem eigenen Satz", async (code) => {
       const blocked = new ApiError(409, "Technical server line.", "trace-5", code);
       const { result } = renderHook(() => useErrorMessage());

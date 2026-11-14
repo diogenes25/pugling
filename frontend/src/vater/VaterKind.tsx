@@ -365,8 +365,9 @@ function BonusSection({ child, onSaved }: { child: ChildResponse; onSaved: () =>
     <section>
       <h3 className="h-section">Bonus-Training</h3>
       <p className="sub">
-        Nach erfüllter Tagespflicht kann {child.name} Extra-Übungen zum aktuellen Thema spielen. Münzen gibt es nur
-        für geprüfte Antworten (Auswahl, Tippen), jede Übung zahlt einmal, Vokabeln werden mit jeder Runde schwerer.
+        Sobald die Tagesziele erfüllt sind (Wochenziele zählen dafür nicht), kann {child.name} Extra-Übungen zum
+        aktuellen Thema spielen. Münzen gibt es nur für geprüfte Antworten (Auswahl, Tippen), jede Übung zahlt einmal,
+        Vokabeln werden mit jeder Runde schwerer.
       </p>
       <ListenAusfall was="Der heutige Bonus-Stand" fehler={today.error} laedt={today.loading} onRetry={today.reload} schluessel={child.id} />
       {today.data && (

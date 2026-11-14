@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-546 · `migrations add` unter Windows schreibt `\r\n` in Check-Constraint-Strings
@@ -46,8 +47,7 @@ Ursache stehen lassen.
 ## Entscheidungen
 
 1. **Die Quelle normalisiert:** alle Check-Constraint-SQL laufen durch einen Helfer `CheckSql` in
-   `PuglingDbContext` (`ReplaceLineEndings("
-")`). Begründung: eine Stelle, plattformunabhängig, kein Nachlauf.
+   `PuglingDbContext` (`ReplaceLineEndings("\n")`). Begründung: eine Stelle, plattformunabhängig, kein Nachlauf.
    Kosten: ein vierter Constraint muss den Helfer nutzen – das hält der Regressionstest unten. (`Aufräumen`, autonom
    gegrillt.)
 2. **Kein `eol=lf` für die Datei:** das änderte die Arbeitskopie aller Windows-Nutzer und hilft keinem künftigen
@@ -55,13 +55,12 @@ Ursache stehen lassen.
 
 ## Akzeptanzkriterien
 
-1. Das Design-Time-Modell trägt in keinem Check-Constraint ein `` (Windows-Arbeitskopie).
+1. Das Design-Time-Modell trägt in keinem Check-Constraint ein `\r` (Windows-Arbeitskopie).
 2. `migrations add` auf Windows ändert die drei Constraint-Zeilen im Snapshot nicht.
 
 ## Schätzung
 
-**Größe XS**, `wo: backend`, `migration: nein` (das Modell-SQL war in der Kette schon `
-`), `vertragsbruch: nein`.
+**Größe XS**, `wo: backend`, `migration: nein` (das Modell-SQL war in der Kette schon `\n`), `vertragsbruch: nein`.
 Risiko: Modell-Drift, falls `ReplaceLineEndings` ein anderes SQL ergäbe als der Snapshot – `SchemaGuardTests`
 (`HasPendingModelChanges`) fängt das. Testweg: `SchemaGuardTests.CheckConstraintSql_Traegt_Nur_LF` (rot auf
 Windows ohne den Helfer; auf Linux strukturell blind – dort hat die Quelle schon LF).
@@ -70,11 +69,11 @@ Windows ohne den Helfer; auf Linux strukturell blind – dort hat die Quelle sch
 
 - **2026-11-13** — angelegt aus dem Bau von B-530.
 - **2026-11-14** — Abgleich Backlog-Lauf: gilt, Ursache präzisiert (Raw-String-Literale in einer CRLF-Arbeitskopie, `PuglingDbContext.cs:133/449/479`); Snapshot derzeit sauber, kein Tor prüft den Inhalt.
-- **2026-11-14** — Backlog-Lauf, Sprint 73: beim Anlegen der B-535-Migration wieder aufgetreten (drei `
-` im
+- **2026-11-14** — Backlog-Lauf, Sprint 73: beim Anlegen der B-535-Migration wieder aufgetreten (drei `\r` im
   Snapshot), damit gemessen. Ausformuliert, gegrillt (autonom, `Aufräumen`), geschätzt und gebaut: `CheckSql` an den
   drei Literalen, Regressionstest in `SchemaGuardTests`.
 - **2026-11-14** — **abgenommen** (Sprint 73). volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutante M13 (`CheckSql` am ersten Constraint weg) → rot an
   `CheckConstraintSql_Traegt_Nur_LF` (Windows-Arbeitskopie; auf Linux strukturell blind, im Test so beschriftet).
   Beleg im Gebrauch: die zweite Migration des Sprints (`ExtraRunContentHash`) brauchte keine Handkorrektur mehr.
   Kein Rollengang (kein Laufzeitverhalten).
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Code-Fund – die drei Check-Constraints sind die einzigen Raw-String-SQL im Modell, alle laufen durch `CheckSql`. In dieser Story waren die Escape-Folgen `\r`/`\n` beim Schreiben zu echten Steuerzeichen geworden (Entscheidung 1, AK 1, Schätzung, Verlauf) – berichtigt.

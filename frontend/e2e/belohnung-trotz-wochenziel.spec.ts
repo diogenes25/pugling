@@ -19,7 +19,7 @@ async function postId(request: APIRequestContext, url: string, headers: Record<s
   return (await res.json())[key] as number;
 }
 
-test("Tagesziel geschafft, Wochenziel offen: Kiste gebucht und Bonus-Training offen", async ({ page, request }) => {
+test("Tagesziel geschafft, Wochenziel offen: Kiste verdient und Bonus-Training offen", async ({ page, request }) => {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
   const vater = { Authorization: `Bearer ${(await login.json()).token}` };
@@ -62,7 +62,11 @@ test("Tagesziel geschafft, Wochenziel offen: Kiste gebucht und Bonus-Training of
   const overview = await (await request.get(`/api/v1/student/study-plans/${planId}/overview`, { headers: kind })).json();
   expect(overview.today.dutyDone).toBe(false);
   expect(overview.today.rewardsUnlocked).toBe(true);
+  // B-527: verdient heißt noch nicht gebucht – die Truhe wartet, ihr Inhalt bleibt bis zum Öffnen geheim.
   expect(overview.dailyBox.claimedToday).toBe(true);
+  expect(overview.dailyBox.openedToday).toBe(false);
+  expect(overview.dailyBox.waiting).toBe(1);
+  expect(overview.dailyBox.coinsAwarded).toBeNull();
 
   await page.reload();
   await expect(page.getByRole("link", { name: "Zum Bonus-Training" })).toBeVisible();

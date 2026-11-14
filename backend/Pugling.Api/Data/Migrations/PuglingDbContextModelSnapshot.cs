@@ -606,6 +606,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("GemsAwarded")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("OpenedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("StreakAtClaim")
                         .HasColumnType("INTEGER");
 

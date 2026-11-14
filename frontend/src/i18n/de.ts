@@ -56,6 +56,20 @@ export const de = {
       due_one: "{{count}} fällig",
       due_other: "{{count}} fällig",
     },
+    // Die Tagestruhe am Ende des Pfads (B-527).
+    truhe: {
+      title: "Tagestruhe",
+      closed: "Schaffe deine Tagesziele, dann öffnet sich die Truhe.",
+      closedWeek: "Schaffe deine Wochenziele, dann öffnet sich die Truhe.",
+      closedNone: "Heute hast du keine Pflicht – darum gibt es heute keine Truhe.",
+      ready: "Deine Truhe wartet!",
+      open: "Truhe öffnen",
+      waiting_one: "{{count}} Truhe wartet",
+      waiting_other: "{{count}} Truhen warten",
+      content: "+{{coins}} Münzen, +{{gems}} Gems",
+      contentCoins: "+{{coins}} Münzen",
+      opened: "Heute geöffnet",
+    },
     missions: {
       title: "🎯 Missionen",
       done: "{{done}}/{{total}} geschafft",
@@ -421,6 +435,7 @@ export const de = {
       extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
       extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
       extra_cap_reached: "Dein Bonus-Deckel ist voll, und diese Übung zahlt nur einmal – darum geht sie gerade nicht.",
+      daily_box_none: "Gerade wartet keine Truhe auf dich.",
     },
   },
 } as const;

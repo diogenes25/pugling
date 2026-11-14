@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-533]
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-545 · Eine Bonus-Runde wird gegen die aktuellen Items gewertet, nicht gegen die beim Start
@@ -158,3 +159,4 @@ Vergleich: kleiner als B-543 (S/M, Deckel-Regel mit Frontend-Zeile), größer al
   fing `DbUpdateConcurrencyException` nicht (500 statt 409) – ungemessen (zwei parallele Abgaben sind im Test nicht
   deterministisch zu erzwingen). Kein E2E (argumentierte Ausnahme laut Testweg: Creator-Änderung mitten in einer
   Kinder-Runde braucht zwei Sitzungen).
+- **2026-11-14** — Nachschau Backlog-Lauf: Fingerabdruck, Verwerfen bei Start und Abgabe und das Räumen in der Arcade halten. Fund: die Endpunkt-Doku `ExtraTrainingController.cs:31-34/48-51` verspricht beim Start weiter das Fortsetzen mit denselben Karten und nennt `extra_run_stale` nicht (geplant war er in den Docs von Start/Abgabe) → **B-549**.

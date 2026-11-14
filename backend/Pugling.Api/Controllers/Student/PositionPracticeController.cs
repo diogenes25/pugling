@@ -609,7 +609,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
         var dayOverview = await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
         await dailyBox.EvaluateAndAwardAsync(plan, session.Day, dayOverview, ct);
         return await MapAsync(session, withAttempts: true, ct);
     }

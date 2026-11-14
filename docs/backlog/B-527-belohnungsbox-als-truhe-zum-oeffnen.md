@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [Truhe auf dem Pfad, Belohnungsbox öffnen]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -178,3 +178,13 @@ E2E; deutlich kleiner als B-525 (L).
 - 2026-11-13 · `idee` – abgespalten aus B-525; Prio P3 ist ein Vorschlag.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt – die Box wird beim Abschluss automatisch gutgeschrieben (`DailyBoxService.cs:33-36`, gerufen aus `PositionPracticeController.cs:612` und `PositionTestsController.cs:446`); einen Öffnen-Endpunkt oder eine Truhe in der Arcade gibt es nicht. Seit B-535 hängt die Vergabe an `RewardsUnlocked` statt `DutyDone`.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert (beim Belegen gefunden: kein Frontend-Code liest `dailyBox` – das Kind sieht die Box heute nur im Kontoauszug), gegrillt (sieben Stakeholder-Entscheidungen im Auftrag des Nutzers: gezogen beim Verdienen, gebucht beim Öffnen; verfällt nie; Inhalt bis zum Öffnen geheim; nur das Kind öffnet; Bestandsclaims gelten als geöffnet; Truhe als Endknoten mit einfacher Animation; Klang, Stufen, Wochentruhe und Vater-Sicht zurückgestellt) und geschätzt: M, Migration ja, Vertrag ja; baut auf B-535 auf.
+- **2026-11-14** — Bau Backlog-Lauf (nicht committet): Migration `20261114114551_DailyBoxOpenedAt` (Spalte + `UPDATE … SET OpenedAt = AwardedAt`), `DailyBoxService.EvaluateAndAwardAsync` bucht nicht mehr, neu `OpenAsync` (älteste zuerst, bedingtes `ExecuteUpdate` + Stamp in einer Transaktion), `DailyBoxStatus` neuer Feldsatz, `POST student/children/{id}/daily-box/open` (`DailyBoxController`, `daily_box_none`), Client `OpenDailyBoxAsync`; Arcade-Truhe als letzter Pfadknoten (`Truhe` in `SohnHome.tsx`). Tests: `DailyBoxTests` (AK 1–5), `DailyBoxOpenedAtMigrationTests` (AK 6, Kette down/up auf Wegwerf-DB), `DailyBoxRangeTests.Truhe_Zahlt_Den_Wert_Vom_Verdienen_Nicht_Vom_Oeffnen` (AK 7, Service-Ebene statt Uhr vorstellen), `SohnHome.test.tsx` (AK 8), `e2e/truhe.spec.ts` (AK 9). Abweichung: Zustand *zu* hängt an „nichts wartet, heute nichts geöffnet“ statt direkt an `rewardsUnlocked` (gleichwertig, weil die Truhe beim Freischalten verdient wird); keine Übersicht-Neuladung nach dem Öffnen (die Startseite hinge sonst kurz aus). Suite 1626 grün, Vitest 1027, E2E 4 passed.
+- **2026-11-14** — Review-Funde behoben (nicht committet): Öffnen nur durch das Kind selbst (`User.ChildId() == childId`, Test mit Zwei-Profil-Token) und Fremd-Kind-Test (404); Doku `PointKind.DailyBox*` und `StreakAtClaim`; Arcade: `daily_box_none` in `PROBLEM_KEYS`, nach dem 409 nicht weiter leuchten + Übersicht neu laden (Startseite hängt am `showPlaceholder` statt `loading`), Fokus nach dem Öffnen auf der Truhe, „Heute geöffnet“ nur für die Truhe von heute, Hinweis bei Plänen ohne Tagesziele, kein „+0 Gems“. Suite 1628, Vitest 1033, E2E 4 passed.
+- **2026-11-14** — **abgenommen** (Sprint 75). volle Suite 1628/1628 (Release, nach den Review-Fixes), Vitest 1033/1033 (zwei volle Läufe), `tsc -b` grün; Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 8 passed (`truhe`, `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `pfad`, `lektion`, `full-flow`, `interessen`); Reviews `pugling-reviewer` + `frontend-reviewer`, zehn Funde im Sprint behoben; Commit `f96ec5c6`. Mutanten rot (mutant-probe): P1 neueste statt älteste Truhe (AK 4),
+  P2b Öffnen bucht nicht (AK 2; P2 `if (false)` kompilierte nicht, zählt nicht), P3 Inhalt vorab im Status (AK 1),
+  P4 Konto mit zwei Profilen öffnet fremde Truhe (Review-Fund), P5 Supervisor (AK 5), P6 Bestands-`UPDATE` fehlt
+  (AK 6), P7 ältere Truhe als „heute geöffnet“, P8 Truhe leuchtet nach `daily_box_none` weiter, P9 Fokus fällt auf
+  `body`, P10 Knopf im Zustand *zu* (AK 8), P11 `daily_box_none` ohne Arcade-Satz. AK 3 (paralleles Öffnen) ist ein
+  Rennen und wird nur rot, wenn beide Sperren fehlen – vom Bau-Agenten so gemessen, nicht deterministisch. AK 7 am
+  Service mit festem Claim. Migration gegen eine Kopie der echten DB geprobt: 2 Bestandstruhen, beide als geöffnet
+  markiert. **Gerät:** das Urteil über die Animation (Wackeln/Deckel) bleibt beim Menschen.

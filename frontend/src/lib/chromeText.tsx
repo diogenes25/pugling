@@ -49,6 +49,8 @@ const PROBLEM_KEYS = [
   // Bonus-Training (B-533): die Sperren des Kindes; B-543: der volle Deckel vor einer Einmal-Übung; B-545: die Übung
   // änderte sich während der Runde.
   "extra_training_locked", "extra_exercise_done", "extra_run_completed", "extra_cap_reached", "extra_run_stale",
+  // B-527: die Tagestruhe ist schon offen (Doppeltipp, zweiter Tab).
+  "daily_box_none",
 ] as const;
 type ProblemKey = (typeof PROBLEM_KEYS)[number];
 const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);

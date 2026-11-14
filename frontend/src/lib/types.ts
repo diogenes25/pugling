@@ -671,6 +671,9 @@ export type ExtraRunResponse = S["ExtraRunResponse"];
 export type ExtraCard = S["ExtraCard"];
 export type ExtraAnswer = S["ExtraAnswer"];
 export type ExtraRunResult = S["ExtraRunResult"];
+// Tagestruhe (B-527): Stand in der Übersicht, Inhalt erst nach dem Öffnen.
+export type DailyBoxStatus = S["DailyBoxStatus"];
+export type DailyBoxOpened = S["DailyBoxOpened"];
 
 // ---- Sohn-Wallet ----
 

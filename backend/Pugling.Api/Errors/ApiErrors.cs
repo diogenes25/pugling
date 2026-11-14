@@ -223,6 +223,8 @@ public static class ApiErrors
     /// not used up for nothing and can be played once coins are left again (409).
     /// </summary>
     public static readonly ApiError ExtraCapReached = new("extra_cap_reached", 409, "Bonus coin cap reached.");
+    /// <summary>No daily reward chest is waiting to be opened (B-527) - none earned yet, or all already opened (409).</summary>
+    public static readonly ApiError DailyBoxNone = new("daily_box_none", 409, "No reward chest waiting.");
     /// <summary>All test attempts of the period are used up (409).</summary>
     public static readonly ApiError TestAttemptsExhausted = new("test_attempts_exhausted", 409, "No test attempts left.");
     /// <summary>Exercise contains no checkable content (400).</summary>
