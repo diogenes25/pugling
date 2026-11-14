@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-12-tageslauf.md (Sprint 64, Review B-430)
 unverifiziert: false
 entgangen_bei: []
 grund: ""
+nachgeschaut: 2026-11-14
 ersetzt_durch: []
 ---
 
@@ -160,4 +161,5 @@ in `SubmitResponse`; erst bauen, wenn der Rollengang zeigt, dass der eine leere 
   | FE3 | frontend/src/sohn/SohnPractice.tsx:63 | red | red | Seite vergisst den gelesenen Wert |
 
   Grundlinie nach dem Zurückspielen: green (beide Läufe).
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ zwei Funde behoben in `fbd78e04`: ein Konto mit beiden Rollen sah in der Sitzung andere Restversuche als beim Teststart (jetzt eine Bedingung), und der Heartbeat zÃ¤hlte die Versuche bei jedem Schlag mit (jetzt nur Start, Lesen, Ende); dazu `nachTest` verlÃ¤sst den Verlauf nach dem Lesen. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review – zwei Funde behoben in `fbd78e04`: ein Konto mit beiden Rollen sah in der Sitzung andere Restversuche als beim Teststart (jetzt eine Bedingung), und der Heartbeat zählte die Versuche bei jedem Schlag mit (jetzt nur Start, Lesen, Ende); dazu `nachTest` verlässt den Verlauf nach dem Lesen. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Eine Zählung für Anzeige und Sperre (`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:98-104`), geteilt von `PositionTestsController.cs:141` (Start) und `:451` (Abgabe) sowie `PositionPracticeController.cs:44-47` (dieselbe Rollenbedingung `!User.IsStudent()`); Heartbeat liefert `null`, die Arcade liest ihn nicht (`frontend/src/sohn/SohnPractice.tsx:139`, `:153`). Gates an beiden Knöpfen (`SohnPractice.tsx:355-369`, `:399`). Der Lernpfad bietet den Test weiter nur nach `testable` an (`frontend/src/sohn/pfad.ts:82`, `:88`), landet bei aufgebrauchten Versuchen aber in der ehrlichen Meldung `test_attempts_exhausted` (`frontend/src/i18n/de.ts:405`) – kein Feiern, kein Nichts; außerhalb des Schnitts dieser Story.

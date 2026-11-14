@@ -28,10 +28,15 @@ public record PositionStatus(
     bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
     int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel);
 
-/// <summary>Daily rollup of a study plan across its positions.</summary>
+/// <summary>
+/// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and
+/// drives streak and evaluation; <see cref="RewardsUnlocked"/> counts only the daily goals - or every goal when the
+/// plan has no daily one - and gates the daily box and the bonus training (B-535): a week of hard grammar must not
+/// lock seven days of rewards.
+/// </summary>
 public record DayOverview(
     DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet, int PointsAwarded,
-    IReadOnlyList<string> Outstanding, IReadOnlyList<PositionStatus> Positions);
+    IReadOnlyList<string> Outstanding, IReadOnlyList<PositionStatus> Positions, bool RewardsUnlocked);
 
 /// <summary>One day in the history (for the supervisor's evaluation).</summary>
 public record ProgressDay(DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet, int PointsAwarded);

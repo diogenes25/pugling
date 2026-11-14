@@ -920,6 +920,10 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("CorrectCount")
                         .HasColumnType("INTEGER");
 
@@ -1802,6 +1806,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("LastReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("NewBonusPaidAt")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PlanPositionId")

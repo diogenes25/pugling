@@ -138,3 +138,4 @@ Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahm
   Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: M (über dem Ziel XS/S des Sprints), backend, keine Migration, kein Vertragsbruch; als neues Tor letzte
   Story eines Sprints.
+- **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt – Filter global (`Program.cs:37`), Ausnahme `List<List<T>>` (`NullElementGuardFilter.cs:19`), Tiefe 16 (`:25`), Body-Schleife `:37-47`; weiter 12 Fälle in `UnknownReferenceCodeTests.cs`, 5 ausdrückliche `[FromBody]`; ein Wächter über alle Body-Listen fehlt in `ConventionGuardTests.cs`.

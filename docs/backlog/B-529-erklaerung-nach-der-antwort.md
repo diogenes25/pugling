@@ -12,6 +12,7 @@ quelle: "B-526, Entscheidung 8 (Grill-Runde 2026-11-13); docs/duolingo-snipwise-
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-529 · Erklärung nach der Antwort
@@ -133,4 +134,5 @@ Editor, KI-Creator-Befüllung), Erklärungen in der Testauswertung, Erklärungen
   | M8 | frontend/src/sohn/SohnPractice.tsx:271 | red | red | falsch-Zweig reicht nichts durch (AK 5) |
 
   Grundlinie nach dem Zurückspielen: green.
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review ohne Befund an dieser Story (ErklÃ¤rung bei richtig und falsch, reist als Platzhalter). Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review ohne Befund an dieser Story (Erklärung bei richtig und falsch, reist als Platzhalter). Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. `Explanation` entsteht nur in `GrammarExerciseType.ItemsOf` (`backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs:118-121`; keine andere `ContentItem`-Konstruktion trägt eine Erklärung) und reist nur in `ReviewOutcome` über `creditedIndex` (`backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:580-582`), nie auf einer Karte und nicht im Test (`TestItem`, `AnswerAck` ohne Feld). Blatt: `frontend/src/sohn/Lektion.tsx:251`, Platzhalter unescaped wie überall (`frontend/src/lib/i18n.ts:44`).

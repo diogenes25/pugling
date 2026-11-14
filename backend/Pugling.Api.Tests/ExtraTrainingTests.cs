@@ -455,4 +455,101 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("bonusDailyCoinCap").ValueKind);
         Assert.Equal(30, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
     }
+
+    private void EditExercise(int exerciseId, Action<Exercise> change)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        change(db.Exercises.Single(e => e.Id == exerciseId));
+        db.SaveChanges();
+    }
+
+    private static object[] RightMathAnswers(JsonElement run, params (string Prompt, string Answer)[] key) =>
+    [
+        .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = key.Single(k => k.Prompt == c.GetProperty("prompt").GetString()).Answer,
+        }),
+    ];
+
+    // B-545 AK 1: the author corrects a solution between start and submit - the run is discarded unpaid with 409, and
+    // the one-shot exercise is open again. Red when the submit grades without comparing the fingerprint (200, paid
+    // against a key the questions did not come from).
+    [Fact]
+    public async Task Eine_Geaenderte_Uebung_Verwirft_Die_Runde_Bei_Der_Abgabe_Unbezahlt()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        await AssertProblemAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightMathAnswers(run, ("2 + 3", "5"), ("4 × 4", "16")) }), HttpStatusCode.Conflict, "extra_run_stale");
+        Assert.Equal(0, CoinsBooked(s.ChildId));
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId);
+        JsonAssert.False(entry, "done");
+        Assert.Equal(JsonValueKind.Null, entry.GetProperty("openRunId").ValueKind);
+    }
+
+    // B-545 AK 2: resuming an open run of a changed exercise starts a fresh one from the new content. Red when the start
+    // resumes the old run without comparing (same run id, two cards).
+    [Fact]
+    public async Task Eine_Geaenderte_Uebung_Startet_Beim_Fortsetzen_Eine_Neue_Runde()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var first = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        var again = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        Assert.NotEqual(first.GetProperty("runId").GetInt32(), again.GetProperty("runId").GetInt32());
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{again.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightMathAnswers(again, ("2 + 3", "5"), ("4 × 4", "17")) }));
+        Assert.Equal(2, result.GetProperty("correct").GetInt32());
+    }
+
+    // B-545 AK 3: a field outside grading (the item's hint) changes - the run is graded as usual. Red when the
+    // fingerprint takes the hint (or image/audio) in: then the submit answers 409.
+    [Fact]
+    public async Task Ein_Geaenderter_Hinweis_Kostet_Die_Runde_Nicht()
+    {
+        var s = await SetupAsync();
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.ExerciseItems.First(i => i.ExerciseId == s.VocabId).Hint = "ein Tier";
+            db.SaveChanges();
+        }
+
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightVocabAnswers(run) }));
+        Assert.Equal(Words.Length, result.GetProperty("correct").GetInt32());
+    }
+
+    // B-545 AK 5: a run from before the column (no fingerprint) is graded as before, against the current content. Red
+    // when a missing fingerprint counts as "changed" (409).
+    [Fact]
+    public async Task Eine_Bestandsrunde_Ohne_Fingerabdruck_Wird_Wie_Bisher_Gewertet()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        var runId = run.GetProperty("runId").GetInt32();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.ExtraTrainingRuns.Single(r => r.Id == runId).ContentHash = null;
+            db.SaveChanges();
+        }
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit",
+            new { answers = RightMathAnswers(run, ("2 + 3", "5"), ("4 × 4", "17")) }));
+        Assert.Equal(2, result.GetProperty("correct").GetInt32());
+    }
 }

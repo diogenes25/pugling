@@ -45,6 +45,21 @@ Finger weg (B-216, im Browser gemessen). Wie Platzhalter und Ausfall dort zusamm
 Platzhalter an `showPlaceholder` statt `data === null`?), ist eine Gestaltungsfrage. Dazu: ob der Wächter die nackten Namen
 sehen soll – `error` heißt auch der Anmeldefehler (`VaterLogin.tsx:99/185`), ein Wächter darauf meldete falsch.
 
+## Ist-Stand am Code (nachgemessen 2026-11-14)
+
+Die Liste oben ist im Kern gültig, die Zeilen sind gewandert:
+
+- **Ternär-Form im Vater-Web, 21 Stellen:** `VaterClassTests.tsx:31/117/195/257`, `VaterShop.tsx:98/256/356/412/438/458`,
+  `VaterRewards.tsx:45/118/203`, `VaterDashboard.tsx:53/78`, `VaterKonto.tsx:25/65`, `VaterPlaene.tsx:75`,
+  `VaterVocab.tsx:305`, `VaterZiele.tsx:221`, `VaterAnmerkungen.tsx:148`. **Erledigt:** `PlanPositions.tsx` zeigt den
+  Positionsfehler inzwischen über `ListenAusfall` (`PlanPositions.tsx:64`).
+- **Frühe Rückgabe mit Banner:** `PlanPositions.tsx:811`, `VaterPlanDetail.tsx:33`, `VaterKind.tsx:60/63`,
+  `VaterLernstand.tsx:202/253/317/349/383`.
+- **Suchfehler über `StatusBanner`:** `vater/MediaPickers.tsx:139` (Pfad unter `vater/`, nicht `components/`).
+- **Arcade:** `SohnKonto.tsx:30`, `SohnShop.tsx:190`, `SohnHome.tsx:39/73`, `SohnProgress.tsx:17/49`,
+  `SohnInterests.tsx:145`, `SohnSkins.tsx:64`; neu dazu `SohnBonus.tsx:70` (`error-box` beim Laden der Übersicht).
+- **Wächter:** `lesefehler.test.ts:20` (`NACKTES_BANNER`) sieht weiter nur `{x.error && <… banner err`.
+
 ## Verlauf
 
 - **2026-11-03** — angelegt in Lauf R, Teil 2 (Teilen von B-183). Die **Entscheidung des Nutzers vom 2026-10-23** zu B-183 („`ListenAusfall`
@@ -52,3 +67,4 @@ sehen soll – `error` heißt auch der Anmeldefehler (`VaterLogin.tsx:99/185`), 
   autonomen Bau dieser Story ist damit **nicht** erteilt (Freigabe 9 gilt nur für die Story, in der sie steht) – offen sind die
   zwei Gestaltungsfragen oben.
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) der Ausfall hat Vorrang vor dem Platzhalter, „Erneut laden“ sperrt nur den Knopf und lässt den Kasten stehen; (2) der Wächter sieht keine nackten Namen, lernt aber die gelisteten Varianten; (3) die Arcade bekommt eine übersetzte Fassung, `SohnPractice`/`SohnTest` bleiben draußen; (4) größer als L heißt teilen in Vater-Web und Arcade. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
+- **2026-11-14** — Abgleich Backlog-Lauf: veraltet, Kern gilt. Zeilen nachgemessen (Abschnitt „Ist-Stand am Code"); `PlanPositions` (Positionsfehler) ist schon auf `ListenAusfall` (`PlanPositions.tsx:64`), neu gezählt `SohnBonus.tsx:70`. Vater-Web 21 Ternär-Stellen + 9 frühe Rückgaben, Arcade 9.

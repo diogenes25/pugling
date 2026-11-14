@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, errorMessage } from "./api";
-import type { ExerciseTypeManifest } from "./types";
+import type { ExerciseTypeManifest, ExercisePreviewStage } from "./types";
 
 /**
  * Das Typ-Manifest als geteilte Quelle für **Routen-Segment und Anzeigename** eines Übungstyps.
@@ -43,6 +43,12 @@ export interface ExerciseTypeLookup {
   route: (type: string) => string | null;
   /** Der Umfang einer Übung in Worten („12 Karten") – siehe {@link umfangText}. */
   umfang: (type: string, itemCount: number | null | undefined) => string | null;
+  /**
+   * Die Stufen, auf die eine Plan-Position dieses Typs gestellt werden darf (B-16) – dieselbe Liste, die der Server prüft.
+   * Leer heißt „keine Stufenwahl" – und ebenso, solange das Manifest lädt oder sein Abruf scheiterte (dann zeigt das
+   * Formular kein Stufen-Feld statt einer geratenen Liste).
+   */
+  stages: (type: string) => readonly ExercisePreviewStage[];
   /** Wahr, solange ein Abruf läuft – der erste wie jede Wiederholung. */
   loading: boolean;
   /** Der Fehlschlag des letzten Abrufs; `null`, solange geladen wird oder er gelang. */
@@ -78,6 +84,7 @@ export function useExerciseTypes(): ExerciseTypeLookup {
     label: (type) => byType.get(type)?.label ?? type,
     route: (type) => byType.get(type)?.authoringRoute ?? null,
     umfang: (type, itemCount) => umfangText(itemCount, byType.get(type)),
+    stages: (type) => byType.get(type)?.stages ?? [],
     loading,
     error,
     reload,

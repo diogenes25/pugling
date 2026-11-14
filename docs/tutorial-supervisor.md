@@ -511,7 +511,9 @@ POST /api/v1/supervisor/children/1/points
 Frontend sitzt das als „Verschenken"-Dialog unter `/vater/konto`.
 
 Nur der **Vater** darf beim Start von Practice/Test einen anderen `day` als heute setzen (fremde Tage
-nachtragen) — der Sohn ist serverseitig auf heute geklemmt.
+nachtragen) — der Sohn ist serverseitig auf heute geklemmt. Eine Runde des Vaters in der Position **zählt fürs
+Kind** (Verlauf, Lernstand, Punkte – B-542); wer eine Übung nur ausprobieren will, nimmt „🧪 Ausprobieren“ bzw.
+`creator/exercises/{id}/preview`, das schreibt nichts.
 
 ---
 

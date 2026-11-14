@@ -214,4 +214,9 @@ public class PositionItemProgress
     public DateTime? LastReviewedAt { get; set; }
     /// <summary>When the content was first introduced as "new". Null = not introduced yet.</summary>
     public DateOnly? IntroducedAt { get; set; }
+    /// <summary>
+    /// When the content paid its one-time new-content points (B-535). Null = not paid yet: "new" lasts until the first
+    /// graded HIT, not until the first contact - free rungs and a wrong first try must not use the bonus up.
+    /// </summary>
+    public DateTime? NewBonusPaidAt { get; set; }
 }

@@ -117,3 +117,31 @@ describe("Bonus-Runde am vollen Deckel", () => {
     expect(JSON.parse(sessionStorage.getItem("pugling.bonus.run.41") ?? "[]")).toEqual(saved);
   });
 });
+
+/*
+ * B-545 – hat sich die Übung während der Runde geändert, verwirft der Server die Runde. Ihre gespeicherten Antworten
+ * gehören zu Karten, die es nicht mehr gibt: sie werden geräumt, und der Satz sagt, wo es weitergeht.
+ */
+describe("Bonus-Runde einer geänderten Übung", () => {
+  it("räumt die Antworten und nennt den Neustart, wenn die Abgabe extra_run_stale bekommt", async () => {
+    // Rot, wenn die Lauf-Seite die Antworten bei extra_run_stale stehen lässt (ein Eintrag ohne Runde, den nichts mehr
+    // liest – Run-Ids werden nicht wiederverwendet), oder wenn der Code keinen eigenen Satz hat.
+    const saved: ExtraAnswer[] = [{ itemIndex: 0, givenAnswer: "2", wasKnown: null }];
+    sessionStorage.setItem("pugling.bonus.run.42", JSON.stringify(saved));
+    startExtraRun.mockResolvedValue({
+      runId: 42, exerciseId: 2, title: "Rechnen", type: "Arithmetic", form: "Typed", stage: 1, typed: true,
+      coinsPerHit: 2, cards: [{ itemIndex: 0, prompt: "1 + 1" }],
+    } as unknown as ExtraRunResponse);
+    submitExtraRun.mockRejectedValue(new ApiError(409, "Technical server line.", "trace-8", "extra_run_stale"));
+
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/2"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findByRole("alert")).textContent)
+      .toBe("Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.");
+    expect(sessionStorage.getItem("pugling.bonus.run.42")).toBeNull();
+  });
+});

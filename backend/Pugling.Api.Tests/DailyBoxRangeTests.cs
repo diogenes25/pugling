@@ -47,7 +47,7 @@ public class DailyBoxRangeTests(DailyBoxRangeFactory factory) : IClassFixture<Da
             db.StudyPlans.Add(plan);
             await db.SaveChangesAsync();
 
-            var overview = new DayOverview(day, true, 0, 0, 0, [], []);
+            var overview = new DayOverview(day, true, 0, 0, 0, [], [], true);
             await box.EvaluateAndAwardAsync(plan, day, overview);
 
             var claim = await db.DailyBoxClaims.AsNoTracking().SingleAsync(c => c.ChildId == 1 && c.Day == day);

@@ -11,6 +11,7 @@ import type {
 } from "../lib/types";
 import { PAGE_SIZE, Pager, TruncationHint } from "../components/ListControls";
 import { formatDate } from "../lib/datum";
+import { NICHT_ZUWEISBAR_GRUND } from "./wizardSearch";
 
 const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
   Planned: "geplant", Written: "geschrieben", Cancelled: "entfällt",
@@ -223,8 +224,12 @@ function ClassTestDetail({ id, subjectId, onChanged }:
                   <li key={e.id}>{e.title} <span className="muted">({e.type})</span>{" "}
                     {assignedIds.has(e.id)
                       ? <span className="pill lime">zugewiesen</span>
-                      : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
-                          onClick={() => act(() => api.assignClassTestExercises(id, [e.id]))}>zuweisen</button>}</li>
+                      // B-140: eine zurückgezogene Übung ohne Freigabe weist der Server ab (403) – der Knopf fehlt, der
+                      // Grund steht da, statt dass erst das Zuweisen scheitert.
+                      : !e.canAssign
+                        ? <span className="muted">{NICHT_ZUWEISBAR_GRUND}</span>
+                        : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
+                            onClick={() => act(() => api.assignClassTestExercises(id, [e.id]))}>zuweisen</button>}</li>
                 ))}
               </ul>
             )

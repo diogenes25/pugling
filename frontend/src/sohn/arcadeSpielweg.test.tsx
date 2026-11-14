@@ -174,7 +174,9 @@ describe("Fehlermeldungen der Arcade", () => {
     "insufficient_gems", "insufficient_coins", "shop_listing_inactive", "insufficient_inventory",
     // B-543: der volle Bonus-Deckel vor einer Einmal-Übung – Start und Abgabe; dazu die drei Bonus-Sperren aus B-533,
     // deren englischer Satz ohne Arcade-Schlüssel nie erschien.
-    "extra_cap_reached", "extra_training_locked", "extra_exercise_done", "extra_run_completed"])(
+    "extra_cap_reached", "extra_training_locked", "extra_exercise_done", "extra_run_completed",
+    // B-545: die Übung änderte sich während der Runde.
+    "extra_run_stale"])(
     "sagen dem Kind %s in beiden Sprachen mit einem eigenen Satz", async (code) => {
       const blocked = new ApiError(409, "Technical server line.", "trace-5", code);
       const { result } = renderHook(() => useErrorMessage());

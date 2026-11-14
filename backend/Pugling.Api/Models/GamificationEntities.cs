@@ -134,6 +134,12 @@ public class ExtraTrainingRun
     /// <summary>Set on submit; <c>null</c> while the run waits for its answers.</summary>
     public DateTime? CompletedAt { get; set; }
     public int ItemCount { get; set; }
+    /// <summary>
+    /// Fingerprint of the graded content at start (B-545): config and per item prompt, answer, accepted answers, gap and
+    /// item id. A run whose exercise changed since is discarded, not graded against the new key. <c>null</c> for runs
+    /// started before the column existed - they are graded as before.
+    /// </summary>
+    public string? ContentHash { get; set; }
     public int CorrectCount { get; set; }
     public int CoinsAwarded { get; set; }
 }

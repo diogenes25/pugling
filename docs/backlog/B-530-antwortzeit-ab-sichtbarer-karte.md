@@ -12,6 +12,7 @@ quelle: "B-526, Entscheidung 11 und Risiko 1 der Schätzung (2026-11-13)"
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-530 · Antwortzeit ab der sichtbaren Karte messen
@@ -142,4 +143,5 @@ oder im Bonus-Training.
   | FE1 | frontend/src/sohn/SohnPractice.tsx:327 | red | red | Rundenposition statt `itemIndex` |
 
   Grundlinie nach dem Zurückspielen: green (beide Läufe).
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ Fund behoben in `fbd78e04`: ein verspÃ¤tet eintreffender Stempel konnte zur Basis der Ã¼bernÃ¤chsten Karte werden; jetzt trÃ¤gt `POST â€¦/shown` den Index der Karte und wirkt nur auf die aktuelle. Das bewusst hingenommene Restrisiko (Stempel von Hand kurz vor der Antwort, begrenzt auf Gems) gilt weiter. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review – Fund behoben in `fbd78e04`: ein verspätet eintreffender Stempel konnte zur Basis der übernächsten Karte werden; jetzt trägt `POST …/shown` den Index der Karte und wirkt nur auf die aktuelle. Das bewusst hingenommene Restrisiko (Stempel von Hand kurz vor der Antwort, begrenzt auf Gems) gilt weiter. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Stempel nur für den Kind-Token, nach der ersten Antwort, an die Karte am Server-Cursor gebunden und einmal je Karte (`backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:152-165`); Messung `max(lastAt, CardShownAt)` nur bei einem Stempel nach der letzten Antwort (`:482-483`), sonst die alte Regel. Arcade stempelt fire-and-forget beim Wechsel zur nächsten Karte mit deren `itemIndex` (`frontend/src/sohn/SohnPractice.tsx:322-327`). Grenzfall ohne Wirkung zugunsten des Kindes: nach „Überspringen“ eines nicht angekommenen Urteils (`SohnPractice.tsx:532`) läuft der Server-Cursor eine Karte hinterher, jeder weitere Stempel der Runde wird verworfen – es gilt dann die alte Regel (Entscheidung 3), nie eine großzügigere.

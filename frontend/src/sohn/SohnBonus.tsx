@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
@@ -192,6 +192,8 @@ export function SohnBonusRun() {
       try {
         res = await api.submitExtraRun(childId, r.runId, all);
       } catch (e) {
+        // B-545: der Server hat die Runde verworfen – ihre gespeicherten Antworten gehören zu Karten, die es nicht mehr gibt.
+        if (e instanceof ApiError && e.code === "extra_run_stale") clearAnswers(r.runId);
         if (!gone.current) setError(errorMessage(e));
         throw e;
       }

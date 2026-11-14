@@ -7,8 +7,8 @@ namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
 /// The bonus training of a child: extra exercises on its current topic that pay coins beyond the day's duty
-/// (<see cref="ExtraTrainingService"/>). It opens once today's duty is met, pays only for checked hits, is capped
-/// per day, and pays for an exercise once - a vocabulary exercise asks harder with every completed run instead.
+/// (<see cref="ExtraTrainingService"/>). It opens once today's daily goals are met (B-535), pays only for checked hits,
+/// is capped per day, and pays for an exercise once - a vocabulary exercise asks harder with every completed run instead.
 /// The supervisor may read the pool; playing is the child's own, because the coins are booked to the child.
 /// </summary>
 [ApiController]
@@ -29,7 +29,7 @@ public class ExtraTrainingController(ExtraTrainingService extras) : ControllerBa
 
     /// <summary>
     /// Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. <c>409
-    /// extra_training_locked</c> before today's duty is done, <c>409 extra_exercise_done</c> for a one-shot exercise
+    /// extra_training_locked</c> before today's daily goals are done, <c>409 extra_exercise_done</c> for a one-shot exercise
     /// already played, <c>409 extra_cap_reached</c> for a one-shot exercise - new or open - once today's coin cap is
     /// full, so it is not used up for nothing.
     /// </summary>

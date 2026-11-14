@@ -260,6 +260,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         if (dto.Order is not null) pos.Order = dto.Order.Value;
         if (dto.Stage is not null) pos.Stage = dto.Stage;
+        // Value first, switch second (B-16): "back to the default" wins if a form sends both.
+        if (dto.ClearStage) pos.Stage = null;
         if (dto.ItemCount is not null) pos.ItemCount = dto.ItemCount;
         if (dto.Scope is not null) pos.Scope = dto.Scope.Value;
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;

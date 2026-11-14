@@ -78,8 +78,14 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
   await expect(radios.nth(0)).toHaveAccessibleName(new RegExp(mittel));
   await expect(radios.nth(1)).toHaveAccessibleName(new RegExp(erste));
 
+  // B-540 AK 5: eine gewählte Übung überlebt das Umsortieren – alle drei stehen auf einer Seite. Rot, wenn der
+  // Auswahl-Schlüssel die Sortierung wieder enthält (dann fiele die Wahl mit „weil sich die Suche geändert hat").
+  await page.getByRole("radio", { name: new RegExp(erste) }).check();
+
   await page.getByLabel("Trefferliste sortieren", { exact: true }).selectOption("rating");
   await expect(radios.nth(0)).toHaveAccessibleName(new RegExp(zweite));
   await expect(radios.nth(1)).toHaveAccessibleName(new RegExp(mittel));
   await expect(radios.nth(2)).toHaveAccessibleName(new RegExp(erste));
+  await expect(page.getByRole("radio", { name: new RegExp(erste) })).toBeChecked();
+  await expect(page.getByText(/Auswahl zurückgesetzt/)).toHaveCount(0);
 });

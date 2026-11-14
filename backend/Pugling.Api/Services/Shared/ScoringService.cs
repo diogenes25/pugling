@@ -55,19 +55,19 @@ public class ScoringService(IOptions<ScoringOptions> options)
 
     /// <summary>
     /// Scores a review and returns all due point contributions. Call BEFORE the box promotion
-    /// (<paramref name="box"/>/<paramref name="reviewCount"/> in the state before it – new content
-    /// counts the most). Wrong answer → no points. <paramref name="postBox"/> is the box AFTER
+    /// (<paramref name="box"/> in the state before it). <paramref name="isNew"/>: the content has not paid its
+    /// new-content points yet (B-535) – it counts the most. Wrong answer → no points. <paramref name="postBox"/> is the box AFTER
     /// the promotion, only for the ledger entry text. <paramref name="elapsedSeconds"/> is the
     /// server-side measured time since the last answer (null for the first card of a session).
     /// </summary>
-    public ReviewScore ScoreReview(ScoreConfig cfg, int reviewCount, int box, int postBox,
+    public ReviewScore ScoreReview(ScoreConfig cfg, bool isNew, int box, int postBox,
         bool wasCorrect, int combo, DateTime nowLocal, double? elapsedSeconds = null)
     {
         var contributions = new List<Contribution>();
         if (!wasCorrect)
             return new ReviewScore(contributions, combo);
 
-        var basePoints = BasePoints(cfg, reviewCount, box, nowLocal);
+        var basePoints = BasePoints(cfg, isNew, box, nowLocal);
         if (basePoints > 0)
             contributions.Add(new Contribution(PointKind.Base, basePoints,
                 $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"));
@@ -103,13 +103,13 @@ public class ScoringService(IOptions<ScoringOptions> options)
             : 0;
 
     /// <summary>
-    /// Base points of a correct review, procedure-neutral: the first review
-    /// (<paramref name="reviewCount"/> 0) counts the most, later ones less the higher the
+    /// Base points of a correct review, procedure-neutral: the first correct hit on new content
+    /// (<paramref name="isNew"/>) counts the most, later ones less the higher the
     /// <paramref name="box"/>; weighted by the time slot active at that time of day.
     /// </summary>
-    private int BasePoints(ScoreConfig cfg, int reviewCount, int box, DateTime nowLocal)
+    private int BasePoints(ScoreConfig cfg, bool isNew, int box, DateTime nowLocal)
     {
-        int basePoints = reviewCount == 0
+        int basePoints = isNew
             ? cfg.NewContentPoints                // new content (configurable)
             : Math.Max(2, 8 - box);               // repetition: the higher the box, the less
 

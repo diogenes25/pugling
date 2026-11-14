@@ -207,12 +207,17 @@ public static class ApiErrors
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
-    /// <summary>The bonus training is locked until today's duty is done (409).</summary>
+    /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals without daily ones) (409).</summary>
     public static readonly ApiError ExtraTrainingLocked = new("extra_training_locked", 409, "Bonus training is locked.");
     /// <summary>The one-shot bonus exercise has already been played (409).</summary>
     public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise already played.");
     /// <summary>The bonus run has already been submitted (409).</summary>
     public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
+    /// <summary>
+    /// The exercise changed since the bonus run started (B-545): the run is discarded unpaid, never graded against a
+    /// key its questions did not come from, and the exercise is open again (409).
+    /// </summary>
+    public static readonly ApiError ExtraRunStale = new("extra_run_stale", 409, "Bonus run is out of date.");
     /// <summary>
     /// Today's bonus coin cap is reached and the exercise pays only once: it is neither started nor graded, so it is
     /// not used up for nothing and can be played once coins are left again (409).

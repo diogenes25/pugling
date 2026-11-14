@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/knowunity-vergleich-plan.md#wo-knowunity-weiter-ist
 grund: ""
+nachgeschaut: 2026-11-14
 ersetzt_durch: []
 ---
 
@@ -140,5 +141,6 @@ Verlauf über mehrere Wochen.
   | BE2 | backend/Pugling.Api/Services/Shared/WalletService.cs:48 | red | red | `GoalPenalty` wieder verdient |
 
   Grundlinie nach dem Zurückspielen: green.
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ Fund behoben in `fbd78e04`: eine Shop-Stornierung (positive `ShopCoins`-Zeile) und eine Malus-Korrektur zÃ¤hlten als â€žverdientâ€œ; jetzt ausgeschlossen, Test `Stornierung_Und_Malus_Korrektur_Zaehlen_Nicht`. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review – Fund behoben in `fbd78e04`: eine Shop-Stornierung (positive `ShopCoins`-Zeile) und eine Malus-Korrektur zählten als „verdient“; jetzt ausgeschlossen, Test `Stornierung_Und_Malus_Korrektur_Zaehlen_Nicht`. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
 - **2026-11-14** — Handblick durch E2E ersetzt: `frontend/e2e/erfolge-woche-frist.spec.ts` – 2 passed (zusammen mit `bonus-deckel-voll.spec.ts`, Ausweichports 5217/5190). Rote Probe: `<WeekComparison />` entfernt → rot an „Diese Woche … · letzte Woche bis jetzt 0“.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. „Verdient“ = positive Buchungen der Münzarten außer `Manual`/`ShopCoins`/`GoalPenalty` (`backend/Pugling.Api/Services/Shared/WalletService.cs:47-48`), also `Base`, `Goal`, `ObjectiveCoins`, `DailyBoxCoins`, `ExtraTrainingCoins` – keine dieser Arten wird irgendwo negativ gebucht (Gegenbuchungen nur `ShopService.cs:159`, `PositionProgressService.cs:475`, Skins in Gems). Drei Summen in der DB mit UTC-Montag aus `GamificationService.WeekMonday` (`WalletService.cs:56-73`); Endpunkt nur mit Kind-Claim (`backend/Pugling.Api/Controllers/Student/MeController.cs:42-50`); Zeile entfällt bei 0/0 (`frontend/src/sohn/SohnProgress.tsx:34`).

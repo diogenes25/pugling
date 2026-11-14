@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/api, bereich/frontend, rolle/supervisor, rolle/creator, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/api, bereich/frontend, rolle/supervisor, rolle/creator, rolle/student]
 aliases: [Aufbau-Übungen, Vorstufen, Lernweg zum Stoff, Scaffolding]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
-groesse: ""
+groesse: XL
 wo: beides
 migration: ""
 vertragsbruch: ""
@@ -66,7 +66,35 @@ hinzufügen oder entfernen – den Weg dazwischen kann er nicht ausdrücken.
 5. Soll die Selbsteinschätzung „zu schwer" vom Kind kommen dürfen (Knopf), oder entscheidet nur der Vater/die
    Messung? *Empfehlung:* nur Messung + Vater – ein Knopf „zu schwer" ist ein Ausweg aus der Pflicht.
 
+## Entscheidungen
+
+Alle fünf Punkte tragen eine Empfehlung; sie gilt jeweils als **Stakeholder-Entscheidung im Auftrag des Nutzers**
+(Backlog-Lauf 2026-11-14) – umstoßbar, solange nichts gebaut ist.
+
+1. **Stufe am Katalog, eine Position je Thema** (Punkt 1, Variante b): eine Übung trägt eine Aufbau-Stufe
+   (1 = erkennen, 2 = einsetzen mit Auswahl, 3 = frei bilden); der Plan führt die Stufen eines Themas als *eine*
+   Position mit eigener Leiter wie bei Vokabeln. Begründung: überträgt die bewährte Vokabel-Leiter (B-96, B-476),
+   der Plan bleibt flach, der Vater wählt Thema und Ziel-Level. Kosten: neue Spalte(n) an `Exercise` und eine
+   Gruppierung je Position (Migration), Positions-Ausspielung muss zwischen Übungen wechseln können.
+2. **Der KI-Creator erzeugt die Vorstufen, der Vater wählt aus** (Punkt 2). Begründung: sonst bleibt der Katalog
+   leer, Friedrichs Grammatik hat heute keine einzige Vorstufe. Kosten: neues Agent-Verb, Qualität hängt am Modell.
+3. **Aufstieg nach bestandenem Test der Stufe, Abstieg nach zwei Tests unter 50 % – ohne Malus** (Punkt 3).
+   Begründung: das Kind soll „gerade so schaffen", Fairness heißt kein Abzug fürs Scheitern an der zu hohen Stufe.
+   Kosten: eine Ausnahme mehr im Malus-Pfad.
+4. **Das Pflichtziel einer gestuften Position ist die aktuelle Stufe** (Punkt 4). Begründung: sonst bleibt die
+   Woche gesperrt – genau der Befund von B-535. Kosten: der Vater sieht in der Auswertung Stufen statt eines
+   einheitlichen Ziels.
+5. **Kein „zu schwer"-Knopf für das Kind** (Punkt 5); Abstieg nur über die Messung (Entscheidung 3) und den Vater.
+   Begründung: ein Knopf wäre ein Ausweg aus der Pflicht (Anti-Cheat am Server). Kosten: keine.
+
+**Zuschnitt:** Mit diesen Entscheidungen ist die Story XL (Katalog-Stufe, Positions-Gruppe, Leiter, Agent-Verb,
+Vater-UI, Arcade). Sie passt in keine Sitzung und läuft als **Karte** (`/wayfinder`, README „Karten"); deren Tickets
+werden im Dialog mit dem Nutzer geschnitten. Bis dahin entlastet B-535 den akuten Schmerz (Kiste und Bonus hängen
+nicht mehr an der Wochen-Grammatik).
+
 ## Verlauf
 
 - **2026-11-13** — angelegt und ausformuliert aus Friedrichs erstem Feedback; Ist-Stand am Code und an einer
   Kopie der echten DB (Plan 6) belegt. `art: Wunsch` – die offenen Punkte gehören ins Grillen.
+- **2026-11-14** — Backlog-Lauf: gegrillt (alle fünf Empfehlungen als Stakeholder-Entscheidung im Auftrag des
+  Nutzers übernommen); Größe XL, nächster Schritt eine Karte im Dialog statt Bau in diesem Lauf.

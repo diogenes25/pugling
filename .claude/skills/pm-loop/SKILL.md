@@ -88,6 +88,8 @@ the central client/types, following the `CLAUDE.md` of each area.
 **Put a rule at the sink, not at the sources:** the one place every result passes to reach the user (word bank,
 briefing); none? make one first – rules per path escaped six times. Reuse the neighbours' input cleanup. **A sink
 function called elsewhere gets the inputs the sink builds** (a sink method builds them; escaped twice, Sprint 45).
+**Moving a boundary (a window start, a day, a threshold) moves every exception keyed on the old one:** grep the helper
+that computed it and re-read each caller (Sprint 73: the introduction-day spare stayed on the plan start).
 
 Sequential is the default. Fan out to subagents only when stories touch disjoint files, and then at
 every fan-in: merge, run the full suite plus guard tests, confirm the sprint goal still holds. Two

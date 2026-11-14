@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { WizardTrefferbereich } from "./VaterWizard";
+import { NICHT_ZUWEISBAR_GRUND, nurZuweisbare } from "./wizardSearch";
 import type { ExerciseSummary } from "../lib/types";
 
 /*
@@ -21,7 +22,7 @@ import type { ExerciseSummary } from "../lib/types";
 function uebung(over: Partial<ExerciseSummary> = {}): ExerciseSummary {
   return {
     id: 1, seriesId: 2, seriesUnitId: 3, type: "Vocabulary", title: "Unit 1 Wörter",
-    schoolTypes: "Gymnasium", isOwn: true, isOwner: true, executePublic: false, ...over,
+    schoolTypes: "Gymnasium", isOwn: true, isOwner: true, executePublic: false, canAssign: true, ...over,
   } as ExerciseSummary;
 }
 
@@ -167,5 +168,35 @@ describe("WizardTrefferbereich – Bewertung je Zeile", () => {
   it("zeigt die Bewertung einer bewerteten Übung", () => {
     render(<WizardTrefferbereich {...BASIS} treffer={[uebung({ averageRating: 4.5, ratingCount: 2 })]} fehler={null} geladen={1} gesamt={1} />);
     expect(screen.getByText(/★ 4,5 \(2 Bewertungen\)/)).toBeTruthy();
+  });
+});
+
+/*
+ * B-140 AK 4: im Assistenten ist das Kästchen einer nicht zuweisbaren Übung gesperrt, und „Alle wählen" übernimmt nur, was
+ * der Vater zuweisen darf – sonst scheiterte der Abschluss an `exercise_not_executable`, im schlimmsten Fall für Hunderte.
+ */
+describe("Assistent – nicht zuweisbare Übungen (B-140)", () => {
+  // Rot, wenn `disabled` am Kästchen nur an `zeilenVeraltet` hängt oder der Grund nicht per `aria-describedby` verbunden ist.
+  it("sperrt das Kästchen und nennt den Grund", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung(), uebung({ id: 2, title: "Zurückgezogen", canAssign: false })]}
+      fehler={null} geladen={2} gesamt={2} />);
+    const gesperrt = screen.getByRole("checkbox", { name: /Zurückgezogen/ }) as HTMLInputElement;
+    expect(gesperrt.disabled).toBe(true);
+    expect(document.getElementById(gesperrt.getAttribute("aria-describedby")!)?.textContent).toBe(NICHT_ZUWEISBAR_GRUND);
+    expect((screen.getByRole("checkbox", { name: /Unit 1 Wörter/ }) as HTMLInputElement).disabled).toBe(false);
+  });
+
+  // Rot, wenn „Alle wählen" alle Ids übernimmt (`items.map(e => e.id)`, der Ausgangszustand) oder die übersprungenen
+  // verschweigt.
+  it("„Alle wählen“ übernimmt nur zuweisbare und nennt die übersprungenen", () => {
+    const folge = nurZuweisbare([{ id: 1, canAssign: true }, { id: 2, canAssign: false }, { id: 3, canAssign: true },
+      { id: 4, canAssign: false }]);
+    expect(folge.ids).toEqual([1, 3]);
+    expect(folge.hinweis).toBe("2 Übungen gewählt, 2 nicht zuweisbare übersprungen.");
+  });
+
+  // Rot, wenn der Hinweis auch ohne Übersprungene erscheint – dann meldete jeder „Alle wählen"-Klick etwas, das nicht geschah.
+  it("schweigt, wenn alles zuweisbar ist", () => {
+    expect(nurZuweisbare([{ id: 1, canAssign: true }])).toEqual({ ids: [1], hinweis: null });
   });
 });

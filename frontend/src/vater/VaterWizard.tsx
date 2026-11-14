@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { pinProblem } from "../lib/pin";
@@ -14,7 +14,9 @@ import { ListenAusfall } from "../components/ListenAusfall";
 import { authorText } from "./ExerciseAttribution";
 import { ratingSummary } from "./ExerciseRatingPanel";
 import { VOCAB_FORMS } from "./exerciseConfig";
-import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
+import {
+  auswahlNachFilterwechsel, NICHT_ZUWEISBAR_GRUND, nurZuweisbare, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams,
+} from "./wizardSearch";
 import { dosisZeile, newWizardProgress, runWizardFinish } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import { radioGroupKeys } from "../lib/ui";
@@ -294,7 +296,13 @@ export function VaterWizard() {
   async function selectAll() {
     setAuswahlHinweis(null);
     const total = exercises.data?.total ?? 0;
-    if (total <= filteredExercises.length) { setSelected(filteredExercises.map((e) => e.id)); return; }
+    // B-140: nur zuweisbare übernehmen – und sagen, wie viele übersprungen wurden.
+    const uebernehmen = (items: readonly ExerciseSummary[]) => {
+      const folge = nurZuweisbare(items);
+      setSelected(folge.ids);
+      setAuswahlHinweis(folge.hinweis);
+    };
+    if (total <= filteredExercises.length) { uebernehmen(filteredExercises); return; }
 
     const keyBeimStart = filterKey;
     setSelectAllBusy(true);
@@ -306,12 +314,12 @@ export function VaterWizard() {
       // `merken` darf auch bei veralteter Antwort laufen - ein Metadaten-Vorrat schadet nie.
       merken(alle.items);
       if (geltenderFilterKey.current !== keyBeimStart) return;
-      setSelected(alle.items.map((e) => e.id));
+      uebernehmen(alle.items);
     } catch (err) {
       if (geltenderFilterKey.current !== keyBeimStart) return;
       // Zurückfallen ja, schweigen nein: Sonst stünden 100 statt 400 Positionen im Plan — genau die
       // Kappung, die dieser Knopf abschaffen soll, nur unbeobachtbar.
-      setSelected(filteredExercises.map((e) => e.id));
+      uebernehmen(filteredExercises);
       setError(`Konnte nicht alle Treffer laden – es sind nur die ${filteredExercises.length} geladenen `
         + `gewählt. ${errorMessage(err)}`);
     } finally {
@@ -740,6 +748,8 @@ export function WizardTrefferbereich({
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
   // (Begründung in `ListenAusfall.tsx`).
   const kasten = useRef<HTMLDivElement>(null);
+  // Ids für den Grund an gesperrten Zeilen (B-140), damit das Kästchen ihn per `aria-describedby` nennt.
+  const uid = useId();
   return (
     <>
       <div className="row">
@@ -797,15 +807,21 @@ export function WizardTrefferbereich({
               // umschalten, und ein Knopf im Label wäre für einen Screenreader Teil des Kästchen-Namens (B-424).
               <div key={e.id} className="row" style={{ gap: 8, padding: 8, border: "1px solid var(--stroke)", borderRadius: 8, alignItems: "center" }}>
               <label className="checkline" style={{ flex: 1 }}>
-                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). */}
-                <input type="checkbox" disabled={zeilenVeraltet}
+                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169) – und wenn der Vater die Übung nicht
+                    zuweisen darf (B-140): dann nennt die Zeile den Grund, statt erst der Abschluss mit
+                    `exercise_not_executable` zu scheitern. */}
+                <input type="checkbox" disabled={zeilenVeraltet || !e.canAssign}
+                  aria-describedby={e.canAssign ? undefined : `${uid}-gesperrt-${e.id}`}
                   checked={selected.includes(e.id)} onChange={() => onToggle(e.id)} />
                 {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
                     „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
                     einem Bildschirm. Der Rückfall auf den Schlüssel greift, solange das Manifest lädt – und
                     wenn sein Abruf scheiterte: Im Assistenten bleibt der Ausfall bewusst stumm (B-215,
                     Entscheidung 2), die Zeile liest sich dann als Schlüssel. */}
-                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""} · {ratingSummary(e.averageRating, e.ratingCount)}</span></span>
+                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""} · {ratingSummary(e.averageRating, e.ratingCount)}</span>
+                  {/* Als Text, nicht als `title` (B-160): der erscheint am gesperrten Element nicht. */}
+                  {!e.canAssign && <span id={`${uid}-gesperrt-${e.id}`} className="pill mag" style={{ marginLeft: 6 }}>{NICHT_ZUWEISBAR_GRUND}</span>}
+                </span>
               </label>
               {/* Gesperrt wie das Kästchen (B-169): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={zeilenVeraltet}

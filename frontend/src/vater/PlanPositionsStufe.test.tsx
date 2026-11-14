@@ -1,0 +1,117 @@
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { api } from "../lib/api";
+import { AuthProvider } from "../lib/auth";
+import type { ExerciseSummary, ExerciseTypeManifest, Paged, PositionResponse } from "../lib/types";
+import { PlanPositions, STAGE_DEFAULT_LABEL } from "./PlanPositions";
+
+/*
+ * B-16: das Stufen-Feld der Position kommt aus dem Manifest des Übungstyps – beim Anlegen (Typ der gewählten Übung) wie
+ * beim Bearbeiten (Typ der Position). Eigene Datei, weil `loadExerciseTypes` das Manifest modulweit zwischenspeichert:
+ * hier tragen alle Fälle dasselbe Manifest mit Stufen, die Nachbardateien ein leeres.
+ */
+const MANIFEST = [
+  { type: "Cloze", label: "Lückentext", checkMode: "StudyPlanTest", selfAssessedTest: true,
+    stages: [{ value: 1, label: "Aufdecken" }, { value: 4, label: "Tippen" }] },
+  { type: "Essay", label: "Aufsatz", checkMode: "None", stages: [] },
+] as unknown as ExerciseTypeManifest[];
+
+const ex = (id: number, type: string, title: string) => ({
+  id, type, title, defaultUseLeitner: false, defaultRequireTypedTest: false, defaultItemCount: null, gradeMin: null,
+  gradeMax: null, categoryName: null, source: null, description: null, averageRating: null, ratingCount: 0, itemCount: 3,
+  canAssign: true,
+}) as unknown as ExerciseSummary;
+
+const CLOZE_A = ex(5, "Cloze", "Lückentext A");
+const CLOZE_B = ex(6, "Cloze", "Lückentext B");
+const ESSAY = ex(7, "Essay", "Aufsatz C");
+
+function rendere(positions: PositionResponse[]) {
+  vi.spyOn(api, "positions").mockResolvedValue(positions);
+  vi.spyOn(api, "subjects").mockResolvedValue([]);
+  vi.spyOn(api, "exerciseTypes").mockResolvedValue(MANIFEST);
+  vi.spyOn(api, "textbookSeries").mockResolvedValue([]);
+  vi.spyOn(api, "searchExercises").mockResolvedValue(
+    { items: [CLOZE_A, CLOZE_B, ESSAY], total: 3 } as unknown as Paged<ExerciseSummary>);
+  render(<AuthProvider><PlanPositions planId={1} /></AuthProvider>);
+}
+
+const optionen = (select: HTMLElement) => within(select).getAllByRole("option").map((o) => o.textContent);
+
+const position = (over: Partial<PositionResponse> = {}) => ({
+  id: 9, order: 0, exerciseId: 5, exerciseTitle: "Lückentext A", exerciseType: "Cloze", stage: 4, scope: "All",
+  cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst", pointsGoalMet: 20,
+  penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5, speedThresholdSeconds: 0,
+  speedBonusPoints: 0, useLeitner: false, requireTypedTest: false, newItemsPerDay: 0, dailyDoseInForce: 0, maxBox: 5,
+  timeSlots: null, ...over,
+}) as unknown as PositionResponse;
+
+describe("Positions-Formular – Stufe aus dem Manifest (B-16)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  // AK 3 (Anlegen). Rot, wenn das Formular eine feste Liste (`VOCAB_FORMS`) statt der Manifest-Stufen des Typs zeigt, oder
+  // wenn das Feld bei einem Typ ohne Stufen (Aufsatz) dennoch erscheint.
+  it("zeigt beim Anlegen „Standard der Übung“ plus genau die Stufen des Typs – und keins für einen Typ ohne", async () => {
+    rendere([]);
+    fireEvent.click(await screen.findByRole("radio", { name: /Lückentext A/ }));
+    await act(async () => {});
+    expect(optionen(await screen.findByRole("combobox", { name: "Stufe" }))).toEqual([STAGE_DEFAULT_LABEL, "Aufdecken", "Tippen"]);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Aufsatz C/ }));
+    expect(screen.queryByRole("combobox", { name: "Stufe" })).toBeNull();
+  });
+
+  // AK 5. Rot, wenn der `onChange` der Radio-Zeile `stage` nicht zurücksetzt: dann trüge Übung B die Stufe, die der Vater
+  // für Übung A gewählt hat.
+  it("ein Übungswechsel setzt die Stufe auf „Standard der Übung“ zurück", async () => {
+    rendere([]);
+    fireEvent.click(await screen.findByRole("radio", { name: /Lückentext A/ }));
+    await act(async () => {});
+    fireEvent.change(await screen.findByRole("combobox", { name: "Stufe" }), { target: { value: "4" } });
+    expect((screen.getByRole("combobox", { name: "Stufe" }) as HTMLSelectElement).value).toBe("4");
+
+    fireEvent.click(screen.getByRole("radio", { name: /Lückentext B/ }));
+    expect((screen.getByRole("combobox", { name: "Stufe" }) as HTMLSelectElement).value).toBe("");
+  });
+
+  // AK 3 (Bearbeiten). Rot, wenn die Zeile im Bearbeiten-Modus ihre Stufen nicht aus `pos.exerciseType` liest (etwa eine
+  // leere Liste übergibt): dann fehlte das Feld genau dort, wo der Vater eine Stufe zurücknehmen will.
+  it("zeigt beim Bearbeiten die Stufen des Positionstyps mit der gespeicherten Stufe", async () => {
+    rendere([position()]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    await act(async () => {});
+
+    const stufe = await screen.findByRole("combobox", { name: "Stufe" }) as HTMLSelectElement;
+    expect(optionen(stufe)).toEqual([STAGE_DEFAULT_LABEL, "Aufdecken", "Tippen"]);
+    expect(stufe.value).toBe("4");
+  });
+});
+
+/*
+ * B-469 AK 2 und 4: die Zeile nennt die Lernkontrolle statt „· getippt" und erklärt sie per InfoHint. Hier, weil der Text
+ * am Manifest (`checkMode`) hängt – diese Datei trägt eines.
+ */
+describe("Positionszeile – Lernkontrolle sichtbar (B-469)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  // Rot, wenn `PositionRow` den Text nicht rendert (Ausgangszustand: bei ungetippt steht nichts), ihn nicht als `pill amber`
+  // hervorhebt oder das alte „· getippt" daneben stehen lässt.
+  it("zeigt je Position die Art der Prüfung, die schwachen hervorgehoben", async () => {
+    rendere([
+      position({ id: 1, exerciseTitle: "Getippt", requireTypedTest: true }),
+      position({ id: 2, exerciseTitle: "Ungetippt", requireTypedTest: false }),
+      position({ id: 3, exerciseTitle: "Grammatik", exerciseType: "Essay", stage: null }),
+    ]);
+    const zeile = async (titel: string) => (await screen.findByText(titel)).closest("tr") as HTMLElement;
+
+    const getippt = await zeile("Getippt");
+    // `findBy`: Positionen und Manifest kommen aus zwei Abrufen; ohne Warten prüfte die Zeile mal vor dem Manifest (AK 3:
+    // dann steht dort bewusst nichts) – gemessen als sporadisch rot.
+    expect((await within(getippt).findByText("Test getippt")).className).not.toMatch(/amber/);
+    expect(getippt.textContent).not.toMatch(/· getippt/);
+    expect(within(await zeile("Ungetippt")).getByText("Test, Selbsteinschätzung zählt").className).toBe("pill amber");
+    expect(within(await zeile("Grammatik")).getByText("kein Test – zählt Durchspielen").className).toBe("pill amber");
+    // AK 4: die Erklärung hängt an der Angabe.
+    expect(within(getippt).getByRole("button", { name: "Erklärung zu „Lernkontrolle\"" })).toBeTruthy();
+  });
+});

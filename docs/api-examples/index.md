@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 77** Codes aus `ApiErrors`.
+Verifiziert: **34 / 78** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -77,6 +77,7 @@ Verifiziert: **34 / 77** Codes aus `ApiErrors`.
 - `extra_cap_reached` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `extra_exercise_done` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `extra_run_completed` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `extra_run_stale` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `extra_training_locked` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `grammar_topic_in_use` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `http_error` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
