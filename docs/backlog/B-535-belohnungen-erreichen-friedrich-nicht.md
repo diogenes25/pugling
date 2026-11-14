@@ -12,6 +12,7 @@ quelle: "Nutzer im Chat 2026-11-13: erstes Feedback von Friedrich – Münzen, B
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-535 · Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht
@@ -210,3 +211,4 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
   M14 Arcade liest `dutyDone` (E2E), M15 Einführungstag am Planstart (Review-Fund), M24 Ziele-Karte gemischt (E2E).
   Migration gegen eine Kopie der echten DB geprobt (läuft durch, Backfill 70/35). Ausgefallen/Gerät: keiner; Friedrichs
   −60 schreibt der Vater per Hand gut (Entscheidung 4), das ist ein Handgriff am echten Konto.
+- **2026-11-14** — Nachschau Backlog-Lauf: Regel im Code auf jedem Pfad geprüft (Kiste nach Übungsrunde und Test liest `RewardsUnlocked`, Bonus-Sperre über `RewardObligations`, kein Bildschirm und kein Agent liest `dutyDone` für eine Belohnung, „neu“ hängt nur noch an `NewBonusPaidAt`, `ReviewCount: 0` steht nur noch in der Kein-Urteil-Regel von B-433). Fund: Swagger-Doku `ExtraTrainingDtos.cs:22`, Kommentare an der Kistenvergabe, `en.ts:149/151` und `VaterKind.tsx:368` nennen noch die volle Pflicht → **B-548**. Doku berichtigt: `wiki/05-punkte-und-bonus.md` (Tagesbox, Malus-Fairness, Basispunkte-Formel `reviewCount == 0`), `docs/tutorial-supervisor.md` (`newContentPoints`, Malus-Fairness, `rewardsUnlocked`), `docs/tutorial-student.md` (`rewardsUnlocked`).

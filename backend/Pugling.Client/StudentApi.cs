@@ -125,4 +125,10 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>Submits the answers of a bonus run and returns the graded result with the coins booked.</summary>
     public Task<ExtraRunResult> SubmitExtraRunAsync(int childId, int runId, SubmitExtraRunDto dto, CancellationToken ct = default) =>
         Http.PostAsync<ExtraRunResult>($"{Root}/children/{childId}/extra-training/runs/{runId}/submit", dto, ct);
+
+    // ---------------------------------------------------------------- Daily reward chest
+
+    /// <summary>Opens the oldest waiting reward chest and books its draw - the child's own seat only.</summary>
+    public Task<DailyBoxOpened> OpenDailyBoxAsync(int childId, CancellationToken ct = default) =>
+        Http.PostAsync<DailyBoxOpened>($"{Root}/children/{childId}/daily-box/open", null, ct);
 }

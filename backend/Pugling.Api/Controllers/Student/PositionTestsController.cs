@@ -442,7 +442,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var dayOverview = await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
         // Also evaluate metric-based missions/awards (e.g. "tests passed") on test completion.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
         await dailyBox.EvaluateAndAwardAsync(plan, attempt.Day, dayOverview, ct);
 
         // The same count Start uses for the cap (B-522) - this attempt's own row was inserted at Start and is

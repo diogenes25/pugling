@@ -92,7 +92,8 @@ public class AchievementAward
 /// a second box on the same calendar day, exactly as <see cref="PositionGoalReward"/> does per position.
 /// <see cref="StreakAtClaim"/> is a snapshot of the consecutive-fully-met-days streak at award time, so the
 /// history stays traceable even as the (recomputed) live streak moves on. Deliberately coins/gems only -
-/// no skin-drop rarity concept exists yet (see B-105).
+/// no skin-drop rarity concept exists yet (see B-105). Earning and booking are two steps (B-527): the claim holds
+/// the draw, the ledger rows follow only when the child opens the chest (<see cref="OpenedAt"/>).
 /// </summary>
 public class DailyBoxClaim
 {
@@ -105,6 +106,11 @@ public class DailyBoxClaim
     /// <summary>Consecutive fully-met days up to and including <see cref="Day"/> (streak snapshot).</summary>
     public int StreakAtClaim { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>
+    /// When the child opened the chest and the draw was booked to the ledger (B-527); <c>null</c> while it waits.
+    /// The draw is fixed at award time, so the streak of the earning day pays, not the day of opening.
+    /// </summary>
+    public DateTime? OpenedAt { get; set; }
 }
 
 /// <summary>

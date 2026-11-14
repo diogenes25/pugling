@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
@@ -10,13 +10,16 @@ import { useChosenPlan } from "./useChosenPlan";
 import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
+import { useAction } from "../lib/useAction";
+import { useErrorMessage } from "../lib/chromeText";
+import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
 import { BonusEinstieg } from "./SohnBonus";
 import {
   abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad,
   type Frist, type Spielweg,
 } from "./pfad";
-import type { OverviewResponse, PlanResponse, PositionStatus } from "../lib/types";
+import type { DailyBoxOpened, DailyBoxStatus, OverviewResponse, PlanResponse, PositionStatus } from "../lib/types";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -69,8 +72,9 @@ function HomeForPlan({
     if (overview.data) onStreak(overview.data.currentStreak);
   }, [overview.data, onStreak]);
 
-  if (overview.loading) return <div className="sohn-body"><div className="loading">{t("home.loadingMission")}</div></div>;
-  if (overview.error || !overview.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? t("home.error")}</div></div>;
+  // `showPlaceholder`, nicht `loading`: ein `reload` (Truhe nach `daily_box_none`) hängte sonst die ganze Startseite aus.
+  if (overview.showPlaceholder) return <div className="sohn-body"><div className="loading">{t("home.loadingMission")}</div></div>;
+  if (!overview.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? t("home.error")}</div></div>;
 
   const o = overview.data;
   const today = o.today;
@@ -134,6 +138,10 @@ function HomeForPlan({
       )}
 
       <Pfad positions={today.positions} />
+
+      {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
+      <Truhe box={o.dailyBox} heute={today.day} ziele={tag.total > 0 ? "tag" : today.goalsTotal > 0 ? "woche" : "keine"}
+        onVeraltet={overview.reload} />
 
       {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`:
           die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
@@ -303,5 +311,82 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
         )}
       </div>
     </div>
+  );
+}
+
+/** Welche Ziele die Truhe freischalten: die Tagesziele, ohne sie alle (Wochen-)Ziele, ohne Pflicht gar keine (B-535). */
+export type TruhenZiele = "tag" | "woche" | "keine";
+
+const ZU_TEXT = { tag: "truhe.closed", woche: "truhe.closedWeek", keine: "truhe.closedNone" } as const satisfies Record<TruhenZiele, string>;
+
+/**
+ * Die Tagestruhe am Ende des Pfads (B-527) in drei Zuständen: *bereit*, sobald eine wartet (leuchtet, Knopf, bei
+ * mehreren die Zahl); *offen*, wenn die Truhe von **heute** geöffnet ist (Inhalt, „Heute geöffnet“); sonst *zu* (nur ein
+ * Hinweis, kein Knopf). Eine ältere Truhe zeigt nach dem Öffnen ihren Inhalt, gilt aber nicht als „heute“. Den Inhalt
+ * nennt der Server erst nach dem Öffnen – die Truhe kann ihn vorher gar nicht verraten.
+ */
+export function Truhe({ box, heute, ziele, onVeraltet }: {
+  box: DailyBoxStatus; heute: string; ziele: TruhenZiele; onVeraltet: () => void;
+}) {
+  const { t } = useTranslation();
+  const { childId, refreshWallet } = useSohn();
+  const errorMessage = useErrorMessage();
+  const action = useAction(errorMessage);
+  const flaeche = useRef<HTMLElement | null>(null);
+  const [geoeffnet, setGeoeffnet] = useState<DailyBoxOpened | null>(null);
+  // Nach `daily_box_none` (Doppeltipp, zweiter Tab) wartet nichts mehr, bis die neu geladene Übersicht da ist.
+  const [leer, setLeer] = useState(false);
+  useEffect(() => { setLeer(false); }, [box]);
+
+  const wartend = leer ? 0 : geoeffnet ? geoeffnet.waitingAfter : box.waiting;
+  const inhalt = geoeffnet
+    ? { coins: geoeffnet.coins, gems: geoeffnet.gems }
+    : box.openedToday && box.coinsAwarded != null ? { coins: box.coinsAwarded, gems: box.gemsAwarded ?? 0 } : null;
+  const heuteOffen = box.openedToday || geoeffnet?.day === heute;
+  const zustand = wartend > 0 ? "bereit" : heuteOffen ? "offen" : "zu";
+
+  async function oeffnen() {
+    let leerGemeldet = false;
+    const res = await action.runFor(async () => {
+      try {
+        return await api.openDailyBox(childId);
+      } catch (e) {
+        leerGemeldet = e instanceof ApiError && e.code === "daily_box_none";
+        throw e;
+      }
+    });
+    if (!res) {
+      // Die Truhe ist schon offen: nicht weiter leuchten lassen, und den wahren Stand vom Server holen.
+      if (leerGemeldet) { setLeer(true); onVeraltet(); }
+      return;
+    }
+    setGeoeffnet(res);
+    refreshWallet();
+    // Der Knopf verschwindet mit dem Öffnen; ohne Fokus-Landung fiele der Fokus auf `body` (Muster B-231).
+    flaeche.current?.focus();
+  }
+
+  return (
+    <section ref={flaeche} tabIndex={-1} className={`truhe ${zustand}`} aria-label={t("truhe.title")}>
+      {/* Der Schlüssel startet das Wackeln bei jedem Öffnen neu; ohne Bewegung bleibt nur der Deckel offen. */}
+      <div key={geoeffnet ? `${geoeffnet.day}-${geoeffnet.waitingAfter}` : "kiste"}
+        className={`truhe-kiste${geoeffnet && !prefersReducedMotion() ? " oeffnet" : ""}`} aria-hidden="true">
+        {zustand === "zu" ? "🔒" : zustand === "bereit" ? "🎁" : "📭"}
+      </div>
+      {/* Live-Regionen stehen immer im DOM und tragen ihren Text nur bedingt (B-134) – sonst sagt sie niemand an. */}
+      <div className="truhe-inhalt" role="status">
+        {inhalt ? (inhalt.gems > 0 ? t("truhe.content", inhalt) : t("truhe.contentCoins", inhalt)) : null}
+      </div>
+      {zustand === "zu" && <p className="sub">{t(ZU_TEXT[ziele])}</p>}
+      {zustand === "offen" && <span className="pill lime">{t("truhe.opened")}</span>}
+      {zustand === "bereit" && (
+        <>
+          <b>{t("truhe.ready")}</b>
+          {wartend > 1 && <span className="truhe-zahl">{t("truhe.waiting", { count: wartend })}</span>}
+          <button type="button" className="btn gold" disabled={action.busy} onClick={oeffnen}>{t("truhe.open")}</button>
+        </>
+      )}
+      <div role="alert">{action.message && !action.message.ok ? <div className="error-box">{action.message.text}</div> : null}</div>
+    </section>
   );
 }

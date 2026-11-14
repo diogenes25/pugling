@@ -46,7 +46,29 @@ public record ProgressView(int DaysComplete, int TotalDays, int TotalPoints, int
     IReadOnlyList<ProgressDay> Days);
 
 /// <summary>
-/// Today's daily reward box status: whether it has already been claimed and, if so, what it held. Read-only -
-/// the box is granted only at the practice/test-completion write seams, never as a side effect of this view.
+/// Today's daily reward chest (B-527): whether it was earned today, whether it is opened, and how many chests wait
+/// to be opened in total (none ever lapses). Read-only - the chest is earned only at the practice/test-completion
+/// write seams and booked only when the child opens it, never as a side effect of this view.
 /// </summary>
-public record DailyBoxStatus(bool ClaimedToday, int? CoinsAwarded, int? GemsAwarded, int StreakAtClaim);
+/// <param name="ClaimedToday">Today's chest is earned (the reward goals of today are met).</param>
+/// <param name="OpenedToday">Today's chest is opened and booked.</param>
+/// <param name="Waiting">Earned chests not opened yet, of any day.</param>
+/// <param name="CoinsAwarded">Coins of today's chest - only once it is opened; the content stays a surprise until then.</param>
+/// <param name="GemsAwarded">Gems of today's chest - only once it is opened.</param>
+/// <param name="StreakAtClaim">
+/// Streak snapshot of today's chest (0 without one). Visible before opening on purpose: it tells the size class of the
+/// draw (the multiplier tier), not the amount, so the surprise stays intact.
+/// </param>
+public record DailyBoxStatus(bool ClaimedToday, bool OpenedToday, int Waiting, int? CoinsAwarded, int? GemsAwarded,
+    int StreakAtClaim);
+
+/// <summary>
+/// A daily reward chest the child just opened (B-527): the draw fixed on the day it was earned, now booked to the
+/// ledger. The oldest waiting chest is opened first.
+/// </summary>
+/// <param name="Coins">Coins booked.</param>
+/// <param name="Gems">Gems booked.</param>
+/// <param name="StreakAtClaim">Streak on the day the chest was earned - it scaled the draw.</param>
+/// <param name="Day">Day the chest was earned.</param>
+/// <param name="WaitingAfter">Chests still waiting after this one.</param>
+public record DailyBoxOpened(int Coins, int Gems, int StreakAtClaim, DateOnly Day, int WaitingAfter);
