@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/frontend, rolle/student]
 aliases: [Missionen-Tab, Missionen mit Restzeit]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: XS
@@ -115,3 +115,4 @@ der eingefrorenen Test-Uhr laufen oder maskiert werden. Sonst keine.
   | M7 | frontend/src/sohn/GamificationPanels.tsx:24 | red | red | `null` als Zahl formatiert |
 
   Grundlinie nach dem Zurückspielen: green.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ die Frist las sich am Samstag als â€žnoch 1 Tagâ€œ, obwohl heute und morgen bleiben; behoben in `fbd78e04` (â€žinkl. heuteâ€œ). Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.

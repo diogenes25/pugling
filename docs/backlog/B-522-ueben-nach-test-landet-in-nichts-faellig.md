@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Üben nach dem Test landet in „Nichts fällig"]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -160,3 +160,4 @@ in `SubmitResponse`; erst bauen, wenn der Rollengang zeigt, dass der eine leere 
   | FE3 | frontend/src/sohn/SohnPractice.tsx:63 | red | red | Seite vergisst den gelesenen Wert |
 
   Grundlinie nach dem Zurückspielen: green (beide Läufe).
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ zwei Funde behoben in `fbd78e04`: ein Konto mit beiden Rollen sah in der Sitzung andere Restversuche als beim Teststart (jetzt eine Bedingung), und der Heartbeat zÃ¤hlte die Versuche bei jedem Schlag mit (jetzt nur Start, Lesen, Ende); dazu `nachTest` verlÃ¤sst den Verlauf nach dem Lesen. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.

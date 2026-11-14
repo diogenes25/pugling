@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/gamification, rolle/student]
 aliases: [Tempo-Bonus-Messung, Antwortzeit je Karte]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -142,3 +142,4 @@ oder im Bonus-Training.
   | FE1 | frontend/src/sohn/SohnPractice.tsx:327 | red | red | Rundenposition statt `itemIndex` |
 
   Grundlinie nach dem Zurückspielen: green (beide Läufe).
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ Fund behoben in `fbd78e04`: ein verspÃ¤tet eintreffender Stempel konnte zur Basis der Ã¼bernÃ¤chsten Karte werden; jetzt trÃ¤gt `POST â€¦/shown` den Index der Karte und wirkt nur auf die aktuelle. Das bewusst hingenommene Restrisiko (Stempel von Hand kurz vor der Antwort, begrenzt auf Gems) gilt weiter. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.

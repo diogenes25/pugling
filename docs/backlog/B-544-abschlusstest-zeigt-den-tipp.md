@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [Abschlusstest zeigt den Tipp, Hinweis im Test]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -90,3 +90,4 @@ Mutanten-Probe je AK, volle Suite; Rollengang über die E2E-Specs des Tests (`te
   | M3 | frontend/src/sohn/SohnTest.tsx:240 | red | red | 💡-Zeile zurück (AK 3) |
 
   Grundlinie nach dem Zurückspielen: green.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review Ã¼ber den ganzen Lauf (`pugling-reviewer`, `frontend-reviewer`) ohne Befund an dieser Story. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.

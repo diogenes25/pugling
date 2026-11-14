@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Familien-Liga, Wochenvergleich]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -140,3 +140,4 @@ Verlauf über mehrere Wochen.
   | BE2 | backend/Pugling.Api/Services/Shared/WalletService.cs:48 | red | red | `GoalPenalty` wieder verdient |
 
   Grundlinie nach dem Zurückspielen: green.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ Fund behoben in `fbd78e04`: eine Shop-Stornierung (positive `ShopCoins`-Zeile) und eine Malus-Korrektur zÃ¤hlten als â€žverdientâ€œ; jetzt ausgeschlossen, Test `Stornierung_Und_Malus_Korrektur_Zaehlen_Nicht`. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.

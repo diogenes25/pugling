@@ -202,6 +202,73 @@ Auslegung von G-5 soll der Nutzer sehen, bevor gebaut wird).
 Migrationskette verlängert (nullable Spalte, nur angehängt). Anti-Cheat: der Sichtbar-Stempel setzt die Server-Uhr,
 der Client meldet nur das Ereignis.
 
+## Iteration 72 — umgesetzt
+
+Commit `ff6a08fb`, Review-Fixes `fbd78e04`. Migration `20261113224441_CardShownAt` (nullable, nur angehängt).
+Backend **1599/1599**, Vitest **998/998**, `tsc -b` sauber; Mutanten je Story rot (3/3, 8/8, 7/7, 8/8, 7/7, 6/6;
+Review-Fixes 6/6 + 3/3 + 9/9).
+
+## Merge und Code-Review über den ganzen Lauf
+
+Auf Wunsch des Nutzers (2026-11-13, spät): „Merge am Ende sämtliche Branches zum Main. Führe ein Code-Review durch,
+fixe sämtliche Findings und commite ein vollständiges, aktuelles Programm.“
+
+- `auto/fertigstellung` (B-534 Vater-Web aufräumen, Heimnetz-Startskript, B-535/B-536) in den Lauf gemergt
+  (`ae9fb08a`); Konflikte nur in `lehrwerke.spec.ts` (B-445 + B-534 kombiniert) und im generierten Index.
+- **`prototyp/lernpfad-b525` bewusst nicht gemergt:** sein einziger Commit heißt „PROTOTYP (Wegwerf) … Nicht nach main
+  mergen“ und hängt eine Route in `App.tsx` an.
+- Review (`pugling-reviewer` + `frontend-reviewer`) über `b0653edb..HEAD`: **keine Blocker**, alle Funde behoben in
+  `fbd78e04` – B-253 zählte Stornierungen als verdient, B-522 Doppelrolle/Heartbeat, B-530 verspäteter Stempel,
+  B-534 (Enter im Übungsdialog, verworfene Eingaben beim Reiterwechsel, Meldung fern vom AddPanel, Ladefehler ohne
+  „Erneut laden“), dazu die veraltete Fachlehrer-Suche nach dem Speichern der Klasse (im E2E-Lauf gefunden) und ein
+  Login-Flake im E2E-Helfer. Ein Fund war gemessen keiner (405 kommt schon vom Router; nur der Kommentar war falsch).
+
+## Runde 4 — Rollengang / Abnahme (Sprint 72 und Gesamtstand)
+
+Volle Playwright-Suite auf Ausweichports (API 5216, Web 5189), Server nach dem letzten Edit: **145/145 passed** – auch
+`vater-von-null`, das seit `f9df2087` rot war und durch B-534 wieder grün ist.
+
+- **Sohn — abgenommen, Handblick offen:** „Im Test gibt es keinen Tipp mehr, nach dem Test sagt mir das Üben, was noch
+  geht, und die Regel steht nach der Antwort da.“ Woche und Frist im Tab „Erfolge“ sind per RTL belegt – Handblick.
+- **Vater — abgenommen:** Kind-Hub verliert beim Reiterwechsel nichts, Meldungen stehen dort, wo er klickt.
+- **Creator — Regressionszeuge:** Suite und Specs grün.
+
+## Retrospektive (Sprint 72 und Lauf)
+
+**Nachschau:** Das Gesamt-Review über `b0653edb..HEAD` war die Nachschau für Sprint 69–71: an deren 17 Stories kein
+weiterer Defekt, `nachgeschaut: 2026-11-14` gesetzt. Index danach: **446 von 473** nachgesehen.
+
+**Was durchkam:** Sprint 72 hatte vor dem Gesamt-Review **kein** Einzel-Review – und genau dort lagen vier der Funde
+(B-253, B-522 ×2, B-530). Die Reviews je Sprint in 69–71 haben ihre Sprints sauber gehalten; das Auslassen kostet
+messbar. Durchgehend in diesem Lauf: **Text, der mehr verspricht als der Code** (Meldungen B-404, B-328, B-543,
+Kommentare B-432, B-445, Program.cs) – sechs Fälle, alle nur vom Review gefunden.
+
+**Der eine Mechanismus:** keiner neu (ein neues Tor hielte laut README an); der Vorschlag aus Sprint 71
+(`PROBLEM_KEYS` gegen `en.sohn.problem`) bleibt beim Menschen. Bewusst ungedeckt: Wahrheit von Meldungen und
+Kommentaren – das bleibt Reviewer-Arbeit, und ein Sprint ohne Review ist ein Sprint mit ungeprüften Versprechen.
+
+## Abschluss des Laufs
+
+| Zahl | Wert |
+| --- | --- |
+| offen zu Beginn (`b0653edb`) | 52 |
+| neu entstanden im Lauf | 7 (B-540 … B-546) |
+| abgenommen | 23 (Sprint 69: 6, 70: 6, 71: 5, 72: 6) |
+| verworfen | 4 (B-217, B-247, B-374 geteilt; B-384 nach Messung) |
+| **offen am Ende (Scope des Laufs)** | **32 = −38 %** |
+| offen im Index gesamt | 35 (inkl. B-534/B-535/B-536 der parallelen Sitzung) = −33 % |
+| in Sprints eingearbeitet | 24 von 52 = 46 % |
+
+### Liste für den Menschen
+
+- **Handblicke am Gerät:** voller Bonus-Deckel (B-543), Tab „Erfolge“ mit Woche und Frist (B-253, B-528).
+- **Live-Lauf:** B-465 AK 5 – `ki-creator plan` gegen eine Kopie der `pugling.db` mit dem lokalen Modell.
+- **Zur Kenntnis (Stakeholder-Entscheidungen):** B-422 (Tippfehler nur gekennzeichnet, nicht verziehen – wegen
+  B-524), B-432 (Einführungstag nur malusfrei, nicht erfüllt), B-223 (Auslegung von G-5 – vor dem Bau ansehen).
+- **Tor-Vorschlag:** `PROBLEM_KEYS` gegen `en.sohn.problem` prüfen (Sprint-71-Retro).
+- **Neue Migration:** `CardShownAt` – vor dem ersten Start gegen die echte DB per Kopie proben (Startskript sichert).
+- **Nicht gemergt:** `prototyp/lernpfad-b525` (Wegwerf-Prototyp).
+
 ## Stakeholder-Entscheidungen ohne Sprint
 
 - **B-217, B-247, B-374 verworfen (geteilt):** Eine Sammel-Story trägt keine eigene Arbeit; der Index führt jede
