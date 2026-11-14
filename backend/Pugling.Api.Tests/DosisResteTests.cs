@@ -132,8 +132,12 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
                 title = "Vier Flüsse",
                 orderIndex = 1,
                 rewardPoints = 10,
-                config = new { instruction = "Nenne vier Flüsse.", ordered = true,
-                    items = new[] { "Rhein", "Elbe", "Main", "Weser" }.Select(v => new { value = v }).ToArray() },
+                config = new
+                {
+                    instruction = "Nenne vier Flüsse.",
+                    ordered = true,
+                    items = new[] { "Rhein", "Elbe", "Main", "Weser" }.Select(v => new { value = v }).ToArray()
+                },
             }));
         var positionsUrl = $"/api/v1/supervisor/study-plans/{planId}/positions";
 

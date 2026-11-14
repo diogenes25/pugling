@@ -111,6 +111,7 @@ Frontend: `reviewFeedback` (`frontend/src/sohn/SohnPractice.tsx:39`) reicht das 
 `wo: beides`, `migration: nein`, `vertragsbruch: nein` (additives Feld mit Standardwert).
 
 **Risiken:**
+
 - `DocsCaptureTests` schreiben `docs/api-examples` neu, wenn `ReviewOutcome` ein Feld mehr trägt – erwartete Änderung,
   mitcommitten.
 - `UnmappedMemberHandling.Disallow` betrifft nur Eingaben; ein neues Ausgabefeld bricht keinen Client.
@@ -147,6 +148,7 @@ absichtlichen Tippfehler.
   | B422-AK2 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
   | B422-AK3a | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
   | B422-AK3b | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:388 | red | red |
+
 - **2026-11-13** — `in-arbeit`: AK 4 (Frontend) gebaut. `contract.ts` per `npm run gen:contract` neu erzeugt;
   `reviewFeedback` (`frontend/src/sohn/SohnPractice.tsx`) reicht `misspelled` im `wrong`-Fall durch, `Rueckmeldung` trägt
   `falschGeschrieben?`, und `RueckmeldungsBlatt` (`Lektion.tsx`) titelt dann „Falsch geschrieben“ (`test.misspelled`, wie

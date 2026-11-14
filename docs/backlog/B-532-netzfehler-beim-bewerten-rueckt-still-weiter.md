@@ -100,6 +100,7 @@ zwei i18n-Schlüssel in `frontend/src/i18n/de.ts`/`en.ts`, vier bis fünf Fälle
 `wo: frontend`, `migration: nein`, `vertragsbruch: nein`.
 
 **Risiken:**
+
 - Kam die erste Bewertung beim Server an und nur die Antwort ging verloren, zählt das erneute Senden ein zweites Mal:
   kein doppelter Punkt (`alreadyScoredToday`), aber ein zweiter `ReviewEvent`/Item-Verlaufseintrag und ein Server-Cursor,
   der eine Karte weiter steht. Der Cursor zählt nur für `/next` (Fortsetzen); hingenommen.

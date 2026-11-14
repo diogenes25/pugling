@@ -227,7 +227,7 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
 - **`vertragsbruch: nein`** – nachgesehen: alles, was das Blatt zeigt, liefert `ReviewOutcome` schon
   (`PracticeDtos.cs:102-103`: Lösung, Münzen, Box, Fälligkeit, Combo- und Tempo-Bonus).
 
-**Risiken**
+**Risiken:**
 
 1. **Der Tempo-Bonus wird schwerer – eine Folge von Entscheidung 3, die beim Grillen nicht auf dem Tisch lag.**
    Der Server misst die Antwortzeit als Abstand zur **vorigen** Antwort (`PositionPracticeController.cs:420`),
@@ -255,7 +255,7 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
 7. **Handyhöhe mit Bildschirmtastatur.** Ein Knopf am unteren Rand und ein Freitextfeld darüber: mit offener
    Tastatur muss beides sichtbar bleiben (`lueckentext-am-handy.spec.ts` fährt genau diesen Fall).
 
-**Angriffsplan**
+**Angriffsplan:**
 
 *Etappe 1 – ein Aufbau, eine Antwortfläche (Entscheidungen 1, 2, 5, 6, 7):*
 
@@ -267,14 +267,14 @@ zwei Etappen schneiden lässt, die je für sich grün und auslieferbar sind; nac
    Umzug beider Bildschirme hinein. Rückmeldung bleibt in dieser Etappe, wie sie ist.
 4. Specs und Komponententests nachziehen; Commit.
 
-*Etappe 2 – Blatt und Abschluss (Entscheidungen 3, 4, 8, 9):*
+   *Etappe 2 – Blatt und Abschluss (Entscheidungen 3, 4, 8, 9):*
 
 5. Blatt statt Toast und statt des angehaltenen Kastens, gespeist aus einer Region, die schon vor ihm steht;
    Fokus auf „Weiter".
 6. Abschlussbild mit Münzen und Genauigkeit aus servergeprüften Antworten.
 7. `docs/sohn-app-funktionsbeschreibung.md` (Abschnitte 2.8, 4.3, 4.4) nachziehen; Commit.
 
-**Testweg**
+**Testweg:**
 
 - **Vitest, neu:** die Aufgabenform-Funktion (jede Antwortform, je mit dem Fall, der sie rot macht); die
   Antwortfläche (Markieren ändert nichts am Server, Hauptknopf gesperrt ohne Markierung, Doppelklick wertet

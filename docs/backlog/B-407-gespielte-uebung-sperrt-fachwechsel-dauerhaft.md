@@ -80,20 +80,20 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 **Größe: S** – ein Feld im Dialog, eine Zeile in `payloadFrom`, ein Backend-Test. `migration: nein`, `vertragsbruch: nein`
 (Vertrag unverändert).
 
-**Risiken**
+**Risiken:**
 
 - `payloadFrom` ist exportiert und gegen genau diese Falle getestet (`ExerciseEditModal.test.ts:44`): wer `categoryId` aus dem Formular
   nimmt, muss `initialForm` mit der geladenen Art füllen, sonst leert ein reines Titel-Speichern die Art still.
 - Eine Übung einer fachlosen Reihe (Altbestand vor B-106) bekommt keine Art-Liste; das Feld zeigt dann nur „– keine Art –".
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `ReiheFachwechselTests.cs`: Fall für AK 1 schreiben (sollte ohne Code-Änderung grün sein – er pinnt den vorhandenen Weg).
 2. Frontend: `categoryId` in `MetaForm`/`initialForm`, Auswahlfeld mit `api.categories(detail.subjectId)`, `payloadFrom` nimmt
    `form.categoryId`; Kommentar `:43` nachziehen.
 3. Vitest in `ExerciseEditModal.test.ts`, kurzer E2E-Schritt optional.
 
-**Testweg**
+**Testweg:**
 
 - `backend/Pugling.Api.Tests/ReiheFachwechselTests.cs`, neuer Fall `Ausweg_Art_Entfernen_Entsperrt_Den_Wechsel_Auch_Bei_Gespielter_Uebung`
   (AK 1). Rot, wenn jemand dem Übungs-`PUT` eine Spiel-Sperre für die Art gibt oder `CategoryValid` `null` ablehnt – genau die

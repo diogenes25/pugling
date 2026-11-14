@@ -68,7 +68,9 @@ test("Tagesziel geschafft: das Kind öffnet die Truhe auf dem Pfad, die Münzen 
 
   await truhe.getByRole("button", { name: "Truhe öffnen" }).click();
   const inhalt = truhe.getByRole("status");
-  await expect(inhalt).toHaveText(/^\+\d+ Münzen, \+\d+ Gems$/);
+  // Gems sind ein Zufallsanteil ab 0 (`DailyBox:MinGems` = 0): ohne Gems entfällt der zweite Teil, statt „+0 Gems“
+  // zu zeigen. Die Zusicherung verlangt darum die Münzen immer und die Gems nur, wenn es welche gab.
+  await expect(inhalt).toHaveText(/^\+\d+ Münzen(, \+[1-9]\d* Gems)?$/);
   const muenzen = Number(/^\+(\d+)/.exec((await inhalt.textContent()) ?? "")![1]);
   expect(muenzen).toBeGreaterThan(0);
   await expect(hud).toHaveText(String(vorher + muenzen));

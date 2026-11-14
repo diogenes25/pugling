@@ -35,8 +35,15 @@ public class BelohnungenTagespflichtTests(PuglingWebAppFactory factory) : IClass
             var weekly = db.PlanPositions.AsNoTracking().Single(p => p.Id == weeklyId);
             var daily = new PlanPosition
             {
-                StudyPlanId = planId, ExerciseId = exerciseId, Order = 1, Stage = weekly.Stage, Cadence = GoalCadence.Daily,
-                UseLeitner = true, NewContentPoints = 10, PointsGoalMet = 20, CreatedAt = weekly.CreatedAt,
+                StudyPlanId = planId,
+                ExerciseId = exerciseId,
+                Order = 1,
+                Stage = weekly.Stage,
+                Cadence = GoalCadence.Daily,
+                UseLeitner = true,
+                NewContentPoints = 10,
+                PointsGoalMet = 20,
+                CreatedAt = weekly.CreatedAt,
             };
             db.PlanPositions.Add(daily);
             db.SaveChanges();

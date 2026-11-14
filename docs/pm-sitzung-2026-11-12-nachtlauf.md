@@ -39,7 +39,7 @@ betroffenen Datensatz.
   korrigiert); Lader 5/5 Fehlerfälle vorher unbemerkt.
 - Review-Zähler: **1** (🟡 Editor-Warnung) – behoben; 🟢 Trimmen ohne Zählung behoben.
 - Mutanten 8/8 rot nach der letzten Änderung – in `Debug`, weil fremde Testläufe zweimal die Release-DLL sperrten (zwei
-  Läufe verworfen). Ursache: die Sitzung [Doku](#local_345fb4f6-e737-444a-ae47-c98889edcff4) arbeitete parallel im
+  Läufe verworfen). Ursache: die Sitzung „Doku“ arbeitete parallel im
   selben Checkout (Doku-/Skill-Dateien, uncommittet) und ihr Test-Tor lief mit. Committet habe ich nur eigene Dateien.
 - Kopie der echten DB: kein betroffener Datensatz (sieben Wortbanken ohne leeren Eintrag oder Dublette, keine
   Verstehensfrage ohne Antwort).

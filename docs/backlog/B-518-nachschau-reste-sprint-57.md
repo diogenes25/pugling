@@ -40,7 +40,8 @@ Autonom gegrillt (`art: Defekt`, Tageslauf):
 
 ## Akzeptanzkriterien
 
-1. Die leere Unit verspricht keinen Reihen-Bereich. 2. Fehlt ein Filterfeld in den Kriterien, ist ein Test rot.
+1. Die leere Unit verspricht keinen Reihen-Bereich.
+2. Fehlt ein Filterfeld in den Kriterien, ist ein Test rot.
 3. Scheitert die neue Runde, steht der Fokus auf der Meldung.
 
 ## Verlauf

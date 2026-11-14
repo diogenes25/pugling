@@ -131,7 +131,7 @@ Test-Pfad ziehen (B-01, S) an Risiko, aber mit derselben Teile-Zahl.
 - **`vertragsbruch: nein`** – nutzt `checkMode` aus dem Typ-Manifest und `requireTypedTest` aus
   `PositionResponse`, beide schon im Vertrag.
 
-**Risiken**
+**Risiken:**
 
 - Das Manifest kommt asynchron; der Text darf erst erscheinen, wenn `byType` den Typ kennt (AK 3).
 - `old-phrases.py` und bestehende Specs, die `· getippt` lesen (vor dem Bau greppen: `grep -rn "getippt" frontend/e2e frontend/src --include=*.ts*`).
@@ -147,7 +147,7 @@ Test-Pfad ziehen (B-01, S) an Risiko, aber mit derselben Teile-Zahl.
 3. `fieldHelp.ts`: Eintrag `lernkontrolle`.
 4. E2E `frontend/e2e/lernkontrolle-sichtbar.spec.ts` (Positionen per API anlegen, dann Plan-Detail lesen).
 
-**Testweg**
+**Testweg:**
 
 - Vitest `frontend/src/vater/PlanPositions.test.ts` (AK 1, AK 3 über die Funktion mit `undefined`-Typ).
 - Playwright `frontend/e2e/lernkontrolle-sichtbar.spec.ts` (AK 2, AK 5) – zählt als Rollengang Vater; Ergebnis am

@@ -113,7 +113,7 @@ Tests. Größer als XS, weil zwei Komponententests mit zwei Mock-Seiten und eine
 
 - **`migration: nein`**, **`vertragsbruch: nein`** – reines Frontend, keine API berührt.
 
-**Risiken**
+**Risiken:**
 
 - Reihenfolge der Effekte: der Filterwechsel-Effekt (`:502-523`) und der neue Effekt auf `exercises.data` dürfen sich nicht
   gegenseitig den Hinweis überschreiben – der neue setzt `auswahlHinweis` nur, wenn `auswahlNachUmsortieren` einen liefert.
@@ -121,13 +121,13 @@ Tests. Größer als XS, weil zwei Komponententests mit zwei Mock-Seiten und eine
 - **Konflikt mit B-16 und B-140**: alle drei ändern `PlanPositions.tsx` (B-140 die Radio-Zeile `:620-660`, B-16 den
   `onChange` derselben Zeile). Nacheinander bauen, nicht parallel.
 
-**Angriffsplan (kein Backend-Schritt)**
+**Angriffsplan (kein Backend-Schritt):**
 
 1. `planbauAuswahlSchluessel` + Vitest (AK 1) – rote Probe: `filterKey` testweise wieder aus `kriterien`.
 2. `filterKey` darauf umstellen; Effekt auf `exercises.data` mit `auswahlNachUmsortieren` (AK 2, 3).
 3. E2E-Schritt in `planbau-bewertung.spec.ts` (AK 5).
 
-**Testweg**
+**Testweg:**
 
 - Vitest: `PlanPositions.test.ts` (AK 1), `PlanPositionsAdd.test.tsx` (AK 2–4, je eine rote Probe am richtigen Ort).
 - Playwright: `frontend/e2e/planbau-bewertung.spec.ts` erweitert (AK 5); zählt als Rollengang.

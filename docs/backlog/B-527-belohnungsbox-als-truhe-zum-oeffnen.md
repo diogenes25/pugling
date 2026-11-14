@@ -144,7 +144,7 @@ E2E; deutlich kleiner als B-525 (L).
   Endpunkt und DTO `DailyBoxOpened`, neuer Fehlercode `daily_box_none`; `contract.ts` neu erzeugen. Die einzige
   Leserin des Status ist die E2E aus B-535 (`belohnung-trotz-wochenziel.spec.ts:65`) – nachziehen.
 
-**Risiken**
+**Risiken:**
 
 - **Abhängigkeit:** setzt B-535 (`RewardsUnlocked`, im Bau) voraus; erst nach dessen Commit beginnen, sonst
   Konflikte in `DailyBoxService.cs`, `DailyBoxTests.cs` und `DailyBoxRangeTests.cs`.
@@ -154,7 +154,7 @@ E2E; deutlich kleiner als B-525 (L).
 - Gamification, die auf Ledger-Zeilen der Box reagierte, gibt es nicht (nur `PointKindCurrency.cs:22-26` ordnet die
   Währung zu) – beim Bau noch einmal greppen.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Spalte + Migration mit Bestands-`UPDATE`; `SchemaGuardTests`.
 2. `DailyBoxService`: Buchung aus `EvaluateAndAwardAsync` in neue `OpenAsync(childId)` verlegen (älteste wartende,
@@ -166,7 +166,7 @@ E2E; deutlich kleiner als B-525 (L).
    Problem-Key `daily_box_none`.
 6. Vitest AK 8, E2E AK 9; `docs/tutorial-student.md` und `docs/api-examples` (Doku-Capture) nachziehen.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstests in `DailyBoxTests.cs` (AK 1–6) und `DailyBoxRangeTests.cs` (AK 7).
 - Vitest `SohnHome.test.tsx` (AK 8).

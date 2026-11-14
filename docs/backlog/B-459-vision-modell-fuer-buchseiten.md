@@ -84,19 +84,19 @@ weil kein Test nötig ist.
 
 - **`migration: nein`**, **`vertragsbruch: nein`** – keine Code-Änderung.
 
-**Risiken**
+**Risiken:**
 
 - Der Kontext-Wächter (`.claude/scripts/context-budget.sh`) misst die dauerhaft geladenen Anweisungsdateien;
   `SKILL.md` lädt nur beim Aufruf – trotzdem kurz halten (ein Satz).
 - `old-phrases.py` (falls es die Skill-Texte prüft) nach dem Edit laufen lassen.
 
-**Angriffsplan**
+**Angriffsplan:**
 
 1. README-Absatz unter „Aus Fotos der Buchseiten“, direkt nach dem Ablauf-Absatz.
 2. Ein Satz in `ki-creator/SKILL.md`.
 3. Querlesen gegen `.claude/skills/lehrwerk-aufbereiten/SKILL.md` (Name und Zweck richtig zitiert).
 
-**Testweg**
+**Testweg:**
 
 - Kein automatischer Test (reine Doku, `art: Wunsch` mit AK als Prüfauftrag): `grep` je AK und Sichtprüfung des
   Abschnitts; Markdown-Lint des Repos, falls im Stop-Hook aktiv.

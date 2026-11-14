@@ -138,7 +138,7 @@ Doku. Vergleich: ungefähr der Batch-Pfad im `MediaSelector` (B-03, M); deutlich
 - **`vertragsbruch: nein`** – kein DTO ändert sich; `Pugling.Client` bekommt eine **zusätzliche** Methode für
   einen schon bestehenden Endpunkt (`ClientRouteGuardTests` prüft die Route mit).
 
-**Risiken**
+**Risiken:**
 
 - Der Host des Agenten könnte das Chat-Modell beim Start auflösen; dann bräche AK 8. Vor dem Bau
   `Program.cs` prüfen; ggf. `IChatClient` lazy beziehen.
@@ -149,7 +149,7 @@ Doku. Vergleich: ungefähr der Batch-Pfad im `MediaSelector` (B-03, M); deutlich
 - Der In-Process-Server teilt die Ratenbremse beim Login – Tests nutzen die vorhandene Factory
   (`RateLimiting:LoginEnabled` aus).
 
-**Angriffsplan (Backend)**
+**Angriffsplan (Backend):**
 
 1. `CreatorApi.ListTagExercisesAsync(tagId, skip, take)` (einzeiliger Wrapper, englische `<summary>`).
 2. `PlanAssigner` (Eingabe `AssignRequest(ChildId, PlanId?, ExerciseIds, TagName?, Points?, GoalThreshold?,
@@ -159,7 +159,7 @@ Doku. Vergleich: ungefähr der Batch-Pfad im `MediaSelector` (B-03, M); deutlich
 4. Tests `AssignAgentTests` (AK 1–8).
 5. README, Skill `ki-creator`, ggf. `backend/Pugling.Agent.Creator/CLAUDE.md` (Verb-Liste).
 
-**Testweg**
+**Testweg:**
 
 - Integrationstest `Pugling.Api.Tests/AssignAgentTests.cs` (In-Process-`PuglingWebAppFactory`, echter
   `Pugling.Client`, `PlanAssigner` direkt instanziiert wie `Filler` in `CreatorAgentTests.cs:83`; kein

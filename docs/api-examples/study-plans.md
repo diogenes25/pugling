@@ -574,8 +574,10 @@ Response — `HTTP 200`:
   },
   "dailyBox": {
     "claimedToday": true,
-    "coinsAwarded": 20,
-    "gemsAwarded": 2,
+    "openedToday": false,
+    "waiting": 1,
+    "coinsAwarded": null,
+    "gemsAwarded": null,
     "streakAtClaim": 1
   }
 }

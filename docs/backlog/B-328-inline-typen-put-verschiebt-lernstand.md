@@ -109,7 +109,7 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 **Größe: S** – eine Zählung im Basis-`UpdateConflictAsync`, eine Bedingung in `PatchItem`, zwei Testfälle. `migration: nein`,
 `vertragsbruch: nein` (bestehender Fehlercode, `PUT` und `PATCH` deklarieren `409` schon).
 
-**Risiken**
+**Risiken:**
 
 - `ExerciseInPlanAsync`/`ShiftBlockedProblem` müssen aus dem Vokabel-Controller in die Basis wandern (oder dort dupliziert werden);
   die Meldung nennt heute „items" und „adding to the end" – sie muss für Inline-Typen ebenso stimmen (B-414-Muster).
@@ -117,14 +117,14 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - Die Vokabelübung überschreibt `UpdateConflictAsync`; die neue Basis-Logik darf dort nicht doppelt laufen.
 - Ein Altbestand gespielter Übungen, deren Liste schon früher gekürzt wurde, bleibt verschoben; die Story heilt nicht rückwirkend.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Rote Tests für AK 1 und AK 4.
 2. Plan-Prüfung in die Basis ziehen, Basis-`UpdateConflictAsync` zählt `ItemsOf` alt/neu; `PatchItem` vergleicht `vocab.Id` mit
    `item.VocabularyId` und sperrt bei Plan-Bezug. `<summary>` mit der bekannten Grenze (Entscheidung 3).
 3. Frontend: keine Änderung; der Editor zeigt `409` über das vorhandene `StatusBanner`.
 
-**Testweg**
+**Testweg:**
 
 - `backend/Pugling.Api.Tests/ExerciseItemsAndProgressTests.cs`, neuer Fall `InlineTyp_InPlan_Sperrt_Kuerzere_Liste_Erlaubt_Korrektur`
   (AK 1–3). Rot, wenn die Basis weiter `null` liefert (AK 1), wenn sie jede Textänderung sperrt (AK 2) oder die Plan-Prüfung fehlt
@@ -154,6 +154,7 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+
 - **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: der reine Anzahl-Vergleich lässt auch ein Einfügen in der Mitte und Löschen plus Anhängen durch, die Meldung versprach aber „adding to the end is allowed“. Regel unverändert (Entscheidung 3); `<summary>`, Kommentar und Meldung („its list of entries cannot get shorter“) versprechen nichts mehr darüber hinaus, die bekannte Grenze in Entscheidung 3 ist entsprechend präzisiert. Rote Probe 6/6 rot.
   Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
 
@@ -165,4 +166,5 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
   | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+
 - **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` – Fund 🟡 (der reine Zählvergleich lässt Einfügen in der Mitte und Löschen-plus-Anhängen durch, die Meldung versprach mehr) im selben Sprint behoben: Meldung, `<summary>` und Entscheidung 3 nennen die Grenze ehrlich. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).

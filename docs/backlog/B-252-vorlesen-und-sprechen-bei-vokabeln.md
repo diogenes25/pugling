@@ -131,7 +131,7 @@ leere `PronunciationAudioUrl`, Klang-Urteil beim Gerätecheck (B-31).
 - **`vertragsbruch: ja`** – `PracticeCard` bekommt `SpeechLang` (additiv, optional am Ende der Parameterliste);
   `Contracts` und `contract.ts` ändern sich, kein Client bricht.
 
-**Risiken**
+**Risiken:**
 
 - `ContentItem` trägt die Sprache bisher nicht; das Feld muss in `WithDirection` (`ExerciseContentProvider.cs:104`)
   gelöscht werden wie `AudioUrl`, sonst spricht die Gegenrichtung (AK 3).
@@ -140,7 +140,7 @@ leere `PronunciationAudioUrl`, Klang-Urteil beim Gerätecheck (B-31).
 - Lösungsfeld-Regel (`ConventionGuardTests`): `SpeechLang` ist kein Lösungsfeld, der Name trifft keine der vier
   verbotenen Bezeichnungen.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `ContentItem.SpeechLang` im `ExerciseContentResolver` setzen (Sprache der Vokabel, nur ohne Aufnahme), in
    `WithDirection` löschen.
@@ -150,7 +150,7 @@ leere `PronunciationAudioUrl`, Klang-Urteil beim Gerätecheck (B-31).
    für die Übungskarte; `LektionsKarte` um `speechLang` erweitern (optional, Test/Bonus liefern es nicht).
 5. Vitest AK 5–7.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstests AK 1–4.
 - Vitest `Lektion.test.tsx` AK 5–7 (jsdom kennt `speechSynthesis` nicht – Mock über `vi.stubGlobal`).

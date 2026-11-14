@@ -116,7 +116,7 @@ Batch-Pfad im `MediaSelector` (B-03, M), etwa so groß wie `childId` aus dem Tes
 - **`vertragsbruch: nein`** – nur neue optionale Query-Parameter und ein Antwort-Kopf; kein DTO in
   `Pugling.Contracts` ändert sich.
 
-**Risiken**
+**Risiken:**
 
 - `ToPagedListAsync` klemmt `take` und setzt den Kopf vor dem Rumpf – ein zweiter Helfer darf das nicht
   anders machen. Gegenmittel: `ToOptionallyPagedListAsync(query, response, skip, int? take)` ruft bei gesetztem
@@ -126,7 +126,7 @@ Batch-Pfad im `MediaSelector` (B-03, M), etwa so groß wie `childId` aus dem Tes
   der Pin aus falschem Grund.
 - `docs/api-examples` (Doku-Capture) zeichnet Antwort-Köpfe ggf. mit auf: nach dem Lauf den Diff ansehen.
 
-**Angriffsplan (Backend)**
+**Angriffsplan (Backend):**
 
 1. `PagingExtensions.ToOptionallyPagedListAsync` (+ englische `<summary>`).
 2. Sechs Actions: `[FromQuery] int skip = 0, [FromQuery] int? take = null`, Sortierung um `ThenBy(Id)` ergänzen,
@@ -134,7 +134,7 @@ Batch-Pfad im `MediaSelector` (B-03, M), etwa so groß wie `childId` aus dem Tes
 3. Tor-Pin 35 → 29 mit Kommentarzeile.
 4. Testklasse `TopLevelPagingTests` (AK 1–5), dann `dotnet test` über die Suite.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstest `Pugling.Api.Tests/TopLevelPagingTests.cs` (In-Process-Server): AK 1–5 je Endpunkt als
   `[Theory]` über die sechs Routen, AK 2 zusätzlich mit 101 Fächern.

@@ -110,7 +110,7 @@ setzt der Bau-Sprint.
 - **`migration: nein`** – kein Schema berührt.
 - **`vertragsbruch: nein`** – kein DTO, kein Endpunkt.
 
-**Risiken**
+**Risiken:**
 
 - Der Test muss eine Karte treffen, die *gewertet* wird (eingeführt, fällig, getippt, heute noch nicht gewertet),
   sonst ist `countsForMastery` falsch und AK 1 prüft nur den Verlauf. Vorbild für den Aufbau:
@@ -118,7 +118,7 @@ setzt der Bau-Sprint.
   `introduced: true`.
 - Der KI-Supervisor-Agent (B-20) muss den Preview-Weg nehmen – als Hinweis in dessen Story, nicht hier.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Integrationstest (AK 1, AK 2) in `Pugling.Api.Tests/ErstbegegnungTests.cs` neben dem B-433-Test oder in
    `PositionPracticeFlowTests.cs`; rote Probe: `if (User.IsStudent())` um `RecordAsync` legen – der Test muss **an
@@ -126,7 +126,7 @@ setzt der Bau-Sprint.
 2. Kommentar in `PositionPracticeController.cs:444-448` umschreiben (englisch, Entscheidung statt offener Frage).
 3. Satz in `docs/tutorial-supervisor.md`.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstest wie oben; kein E2E (kein UI-Weg betroffen, Ist-Stand 4), kein `/smoke-test` nötig.
 

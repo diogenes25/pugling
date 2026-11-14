@@ -75,7 +75,6 @@ nachtlauffähig zu machen ([Protokoll](../pm-sitzung-2026-11-08-rollengang.md)).
 
 Nach Entscheidung 3 gilt die Beschriftung „▶ Üben" statt „Diese Wörter üben".
 
-
 1. Ergebnis nicht bestanden → Knopf „▶ Üben" sichtbar (unabhängig von den Restversuchen), führt zu
    `/sohn/practice/:positionId`; kein Versprechen „diese Wörter", kein Leitner-Eingriff.
 2. Ergebnis bestanden → Knopf fehlt.

@@ -118,7 +118,7 @@ Vergleich: kleiner als B-543 (S/M, Deckel-Regel mit Frontend-Zeile), größer al
   `ApiErrors` und in den `<response>`-Docs von Start/Abgabe). Clients, die ihn nicht kennen, zeigen den
   ProblemDetails-Text.
 
-**Risiken**
+**Risiken:**
 
 - Determinismus: der Fingerabdruck muss für denselben Inhalt immer gleich sein – feste Feldreihenfolge, eigene
   Serialisierung statt `JsonSerializer` über den ganzen `ContentItem` (der trägt Bild-/Audio-Felder).
@@ -127,7 +127,7 @@ Vergleich: kleiner als B-543 (S/M, Deckel-Regel mit Frontend-Zeile), größer al
 - Der Löschpfad bei der Abgabe läuft nach dem Laden des Kindes; das `ConcurrencyStamp`-Muster aus `SubmitAsync`
   (`:175`) bleibt die Serialisierung, damit eine doppelte Abgabe nicht einmal löscht und einmal bezahlt.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Spalte + Migration; `SchemaGuardTests` grün.
 2. `ContentFingerprint(Exercise, IReadOnlyList<ContentItem>)` (privat in `ExtraTrainingService`); beim Anlegen
@@ -138,7 +138,7 @@ Vergleich: kleiner als B-543 (S/M, Deckel-Regel mit Frontend-Zeile), größer al
 4. `ApiErrors.ExtraRunStale`, Controller-Doku, `contract.ts` neu erzeugen (nur Doku-Text ändert sich).
 5. Frontend: Problem-Key, Texte, `clearAnswers` im Fehlerpfad.
 
-**Testweg**
+**Testweg:**
 
 - `ExtraTrainingTests`: AK 1–5 als Integrationstests (Creator ändert die Übung über die echte API zwischen Start und
   Abgabe); je Fall die rote Probe am richtigen Ort.

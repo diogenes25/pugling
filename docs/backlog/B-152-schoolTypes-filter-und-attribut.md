@@ -111,20 +111,20 @@ Die Entscheidung vom 2026-10-23 („der Server validiert") ist nicht gebaut. Das
 Test. `migration: nein` (Entscheidung 2), `vertragsbruch: nein` (kein DTO-Feld ändert sich; die engere Prüfung trifft nur Werte, die das
 Frontend nie schickt).
 
-**Risiken**
+**Risiken:**
 
 - Die Prüfung muss **vor** jedem Schreiben stehen (Muster `BonusCapAcceptable`, `ChildrenController.cs:75`), sonst schreibt ein
   abgelehnter PATCH halb.
 - Tests oder Seeds, die ein Kind mit Kombination anlegen, würden rot: per `grep` keiner gefunden (`SchoolType` in den Tests nur an
   Reihen und Profilen, die die Filter-Rolle tragen).
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. Rote Tests, dann eine private Prüfung in `ChildrenController` für `Create` und `Update`; `<summary>` am DTO-Feld ergänzt die Regel
    (fließt in Swagger).
 2. Frontend: keine Änderung (bereits Einfachauswahl).
 
-**Testweg**
+**Testweg:**
 
 - `backend/Pugling.Api.Tests/ChildLifecycleTests.cs`, neuer Fall `Schulart_Des_Kindes_Ist_Ein_Wert_Oder_Keine_Angabe` (AK 1–3). Rot,
   wenn die Prüfung in `Create` **oder** in `Update` fehlt (je eine Zusicherung pro Weg), und rot an der `1024`-Zeile, wenn nur
@@ -155,4 +155,5 @@ Frontend nie schickt).
   | B152-AK2-IsDefined | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
   | B152-AK3 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:41 | red | red |  |
   | B152-AK4 | backend/Pugling.Api/Controllers/Supervisor/ChildrenController.cs:130 | red | red |  |
+
 - **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` ohne Befund (`IsPow2` + `IsDefined` bei POST und PATCH, alte Kombination bleibt, solange das Feld nicht gesendet wird). Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).

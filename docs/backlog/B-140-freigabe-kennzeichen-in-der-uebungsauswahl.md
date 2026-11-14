@@ -132,7 +132,7 @@ als B-540.
 - **`vertragsbruch: nein`** – `CanAssign` ist ein additives Antwortfeld. (Positionsparameter am Ende des Records; Tests,
   die `ExerciseSummary` von Hand bauen, ziehen nach.)
 
-**Risiken**
+**Risiken:**
 
 - Die Suche ist auf `Roles.Creator` gegated (`ExerciseCatalogController.cs:22`), das Zuweisen auf `Roles.Supervisor`; ein
   Vater ist beides. Ein reines Lehrer-Konto (nur Creator) bekommt `canAssign` auch – harmlos, es weist nicht zu.
@@ -140,7 +140,7 @@ als B-540.
   zu verändern.
 - **Konflikt mit B-16 und B-540** in `PlanPositions.tsx` (Radio-Zeile `:620-660`); dazu `VaterWizard.tsx`. Nacheinander bauen.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `ExerciseSummary.CanAssign` (Vertrag) + Projektion in `ExerciseCatalogController.cs:116ff`; Integrationstest AK 1+2.
 2. `contract.ts` neu erzeugen; Doku-Capture (`docs/api-examples`) prüfen.
@@ -148,7 +148,7 @@ als B-540.
 4. Assistent: Checkbox sperren, `selectAll` filtern + Hinweis (AK 4).
 5. E2E (AK 5) als eigene Spec-Datei (eine Fläche je Spec).
 
-**Testweg**
+**Testweg:**
 
 - Integrationstest in `Pugling.Api.Tests` (AK 1, 2), Tabellenform.
 - Vitest: `PlanPositionsAdd.test.tsx` (AK 3), `VaterWizard.test.tsx` (AK 4).

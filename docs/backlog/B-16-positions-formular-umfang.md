@@ -40,6 +40,7 @@ Tempo-Bonus einstellen können, damit ich nicht auf den Server-Standard angewies
 > Die Zeilenangaben unten gelten für den Stand vom 2026-08-03.
 >
 > **Nachgemessen 2026-11-14 für das neue Grillen:**
+>
 > - Die Stufen je Typ kennt der Server als `IExerciseType.StageOptions` (`backend/Pugling.Api/Exercises/IExerciseType.cs:133`);
 >   sie sind die erlaubte Menge der Prüfung (`Exercises/StageValidation.cs`, leer = Typ ohne Stufenwahl) und vollständig
 >   (`ExerciseTypeManifestTests.cs:61-77`). Das **Manifest** (`Pugling.Contracts/Common/ExerciseTypeManifest.cs`, ausgeliefert von
@@ -170,7 +171,7 @@ Migration), mehr als ein reiner Formular-Nachtrag.
 `wo: beides` · `migration: nein` (keine Spalte; `Stage` ist schon nullbar) · `vertragsbruch: nein` (beide Felder
 additiv, `ClearStage` mit Vorgabe `false`; `Pugling.Client` braucht keine neue Methode)
 
-**Risiken**
+**Risiken:**
 
 - Das Manifest wird an mehreren Stellen gelesen (`PositionProgressService.cs:53`, `:226`, KI-Creator `types`);
   ein additives Feld bricht keinen davon, aber `docs/api-examples` (Doku-Capture) ändert sich mit.
@@ -181,7 +182,7 @@ additiv, `ClearStage` mit Vorgabe `false`; `Pugling.Client` braucht keine neue M
 - **Konflikt mit B-540 und B-140**: alle drei ändern `PlanPositions.tsx` (dieser die `PositionSettings`/`PositionFields`
   und den `onChange` der Radio-Zeile). Nacheinander bauen.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `ExerciseTypeManifest.Stages` (additiv) + Anreicherung aus `StageOptions` an einer Stelle; AK 1 im
    `ExerciseTypeManifestTests`.
@@ -192,7 +193,7 @@ additiv, `ClearStage` mit Vorgabe `false`; `Pugling.Client` braucht keine neue M
    `settingsToUpdateDto`/`PositionFields`, Reset im Radio-`onChange`; Feldhilfe-Themen in `lib/fieldHelp.ts`.
 5. Vitest (AK 3–5), Doku-Capture prüfen.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstests: `ExerciseTypeManifestTests` (AK 1), `PatchClearFieldTests` + Tabellenzeile in `PatchSemanticsTests`
   (AK 2).

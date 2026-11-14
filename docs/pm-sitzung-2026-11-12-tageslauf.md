@@ -300,6 +300,7 @@ frischer `pugling-reviewer`): drei 🟡 → [B-516](backlog/B-516-nosubject-nur-
 an B-449, B-447, B-412, B-514.
 
 **Was die eigenen Tore durchgelassen haben:**
+
 - Die Ratschläge von `NoSubject` zum fünften Mal. Antwort diesmal nicht ein weiterer Zweig, sondern weniger Rat (B-516) –
   und die Regel in pm-loop Step 5 („nur die Aufhebung dieser Sperre nennen, sonst den Rat ausführen").
 - Ein **Steuerzeichen** (U+0008) im Muster des Arcade-Wächters aus Sprint 54: aus `\b` in einem Python-Heredoc wurde ein
@@ -385,6 +386,7 @@ selben Sprint eine echte Drift fand. Zwei neue Tore → Halt nach `README`; der 
 ## Offene Roadmap nach dem Tageslauf
 
 Durable Liste: [docs/backlog/](backlog/INDEX.md). Reihenfolge-Vorschlag:
+
 1. **Nachschau Sprint 60** (B-480, B-501) und Sprint 61/62 – erste Pflichthandlung.
 2. **B-430 im Dialog:** (b) widerlegt (Münzen-Farmen, leichterer zweiter Versuch); Empfehlung (c) „▶ Üben" ohne Eingriff in
    den Karteikasten.

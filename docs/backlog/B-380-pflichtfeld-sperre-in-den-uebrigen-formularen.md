@@ -146,7 +146,7 @@ mehr Fläche als B-233 (eine Seite), keine Logik.
 
 - **`migration: nein`**, **`vertragsbruch: nein`** – reines Frontend.
 
-**Risiken**
+**Risiken:**
 
 - Label-Nachzug: ein vergessener exakter Selektor bricht erst in der E2E. Gegenmittel: vor dem Umbau je Label die Treffer
   in `frontend/e2e` und `src/**/*.test.*` zählen und nach dem Umbau dieselbe Zahl mit „(Pflicht)“ finden.
@@ -155,13 +155,13 @@ mehr Fläche als B-233 (eine Seite), keine Logik.
 - **Konflikt**: `VaterClassTests.tsx` ist auch die zurückgestellte Klassenarbeit-Auswahl von B-140 – darum dort jetzt nur
   die Sperre. Keine Überschneidung mit B-16/B-140/B-540 in `PlanPositions.tsx` (zurückgestellt).
 
-**Angriffsplan (kein Backend-Schritt)**
+**Angriffsplan (kein Backend-Schritt):**
 
 1. `components/Pflicht.tsx`, `VaterLehrwerke.tsx` darauf umstellen (AK 4).
 2. Je Kern-Datei: Marke ins Label, Sperre an den Knopf, `fail`-Zeile stumm (Entscheidung 4), Vitest (AK 1–3).
 3. Selektoren in E2E/Vitest nachziehen; `frontend/CLAUDE.md` (AK 5).
 
-**Testweg**
+**Testweg:**
 
 - Vitest: vorhandene `ClozeTexts.test.tsx`, `VaterClassTests.test.tsx`, `VaterFachlehrer.test.tsx`, `VaterZiele.test.ts`
   erweitern; neu `ChildMaterialSection.test.tsx`, `VaterKind.test.tsx`, `VaterProfil.test.tsx`, `VaterDashboard.test.tsx`.
