@@ -210,3 +210,40 @@ den Tutorials direkt berichtigt. Sprint 74 läuft als Agent.
   schon in `pm-loop` Step 5; sie galt hier für eine **Regel**, nicht nur für einen Satz. Ich habe sie in diesem Sprint
   angewandt (grep nach „duty“ über Backend, Frontend und Doku).
 - **Bewusst ungedeckt:** AK 3 der Truhe (paralleles Öffnen) ist ein Rennen; grün ist deterministisch, rot nicht.
+
+## Sprint 76 — Ziel & Umfang
+
+**Sprint-Ziel (Vater + Creator):** Der Vater bereitet eine Klassenarbeit im Assistenten mit Termin und Stufenleiter
+vor, kein Formular lässt ihn ein Pflichtfeld leer speichern, und der Creator weist per Agent eine Übungsliste einem
+Plan zu, ohne die API von Hand zu treiben.
+**Umfang:** B-122, B-407, B-20 (Backend-Kette, ein Agent), B-423, B-380, B-459 (Frontend/Doku, ein Agent ohne dotnet).
+
+## Iteration 76 — umgesetzt
+
+- B-122 Paging für sechs Listen; B-407 Ausweg „Art entfernen“ im Übungsdialog; B-20 Agent-Verb `assign`; B-423
+  Klassenarbeit im Assistenten; B-380 Pflichtfelder in acht Formularen (`<Pflicht />`); B-459 Warnung in Agent-Doku.
+- Review-Funde behoben: zweiter Anlauf mit neuem Termin baute auf den alten Plan; Leiter versprach „getippt“ bei
+  nicht getippten Stufen (jetzt: keine Leiter bei Stufe ≤ 2, Entscheidung 7); Schwellentag nicht zweistellig
+  eintippbar; Exit 2 für „nichts neu“ kollidierte mit „falsch aufgerufen“ (jetzt 3); gekürztes Lesefenster endete mit
+  0 (jetzt Abbruch vor dem Schreiben); mehrdeutige Tag-Schreibweise; leeres `--exercise-id`. Ein Vitest-Fall brach,
+  weil das neue Art-Feld ungemockt ins Netz ging (zweiter „Erneut laden“-Knopf) – Mock ergänzt.
+- Verifikation: Suite **1650/1650**, Vitest **1079/1079**, `tsc -b` grün, **14 Mutanten** rot. Commit `8e970493`.
+
+## Runde 76 — Re-Review / Abnahme
+
+- **Vater – abgenommen.** Rollengang als Playwright: 38 passed, darunter `assistent-klassenarbeit` (Termin, Leiter,
+  eine Klassenarbeit, kein zweiter Plan beim Wiederholen) und die Formular-Specs mit „(Pflicht)“.
+- **Creator – abgenommen (Agent):** `AssignAgentTests` 12/12 gegen einen In-Process-Server; ein Handlauf gegen eine
+  laufende Instanz steht aus (Liste für den Menschen).
+- **Sohn – Regressionszeuge:** `erstbegegnung` grün, kein Sohn-Pfad im Diff.
+
+## Retrospektive 76
+
+**Nachschau:** Sprint 74 – zwei Durchrutscher (B-550 Lernkontroll-Anzeige ignoriert eine feste Stufe, B-551
+Feldhilfe zum Stufenplan falsch), `wiki/08` nachgezogen. Sprint 75 und 76 sieht der Gesamt-Review im Abschluss nach.
+
+- **Was die eigenen Tore durchgelassen haben:** In zwei Sprints hintereinander hat das Frontend eine Server-Regel
+  vereinfacht nachgebaut (B-469 → B-550; B-423 „getippt“). Beide Male fand es erst ein Review.
+- **Der eine Mechanismus:** keiner neu gebaut – die Regel „Übungstypen und ihre Eigenschaften kommen aus dem
+  Server-Manifest“ steht in `frontend/CLAUDE.md`; B-550 wird sie für die Positions-Stufe ebenso vom Server holen.
+- **Bewusst ungedeckt:** der Handlauf des Agenten gegen eine laufende Instanz.

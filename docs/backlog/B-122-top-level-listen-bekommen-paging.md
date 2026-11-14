@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/api]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/api]
 aliases: [Paging-Form a, Top-Level-Sammlungen paginieren]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -152,3 +152,4 @@ Batch-Pfad im `MediaSelector` (B-03, M), etwa so groß wie `childId` aus dem Tes
 - **2026-11-14** — Abgleich Backlog-Lauf: veraltet – Ist-Stand nachgezählt (Abschnitt „Ist-Stand am Code“): sechs echte Top-Level-Listen ohne `take`; `AdultsController.cs:37` liefert nur das eigene Konto, `MyInterestsController.cs:44` ein Objekt – beide fallen aus der Zählung. Kern gilt.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt, geschätzt in einem Zug – Titel auf sechs Listen berichtigt; Entscheidung 2 vom Nutzer (2026-10-23), Entscheidungen 1, 3, 4, 5 als Stakeholder im Auftrag des Nutzers (immer `X-Total-Count`, `ThenBy(Id)`, Client/Frontend unverändert); S, backend, keine Migration, kein Vertragsbruch.
 - **2026-11-14** — Sprint 76, gebaut: `PagingExtensions.ToOptionallyPagedListAsync` (ohne `take` kein Fenster, `X-Total-Count` immer), sechs Listen mit `[FromQuery] int skip = 0, int? take = null` und `ThenBy(Id)` (Route des Schüler-Endpunkts heißt `student/study-plans`), Tor-Pin 35 → 29; Tests `TopLevelPagingTests` (AK 1–5, Theorie über sechs Routen) und `ConventionGuardTests.Unpaginierte_Array_GETs_Sind_Gepinnt` (AK 6). Client/Frontend unverändert (Entscheidung 5).
+- **2026-11-14** — **abgenommen** (Sprint 76). volle Suite 1650/1650 (Release, nach den Review-Fixes), Vitest 1079/1079, `tsc -b` grün; Rollengang als Playwright gegen frisch gestartete Server nach dem letzten Edit: 38 passed (Assistent inkl. `assistent-klassenarbeit`, Lehrwerk-/Reihen-/Fachlehrer-Formulare, `vater-von-null`, `kind-anlegen-id`, `uebung-teilspeichern`, `erstbegegnung`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `8e970493`. Mutanten rot: Q1 `take` ignoriert (AK 1/3), Q2 absteigender Tie-Break (AK 4); AK 2, 5, 6 vom Bau-Agenten benannt und in der Suite gehalten. Rolle Creator/Entwickler: kein UI-Weg, Client und Frontend rufen die Listen unverändert ohne `take`.

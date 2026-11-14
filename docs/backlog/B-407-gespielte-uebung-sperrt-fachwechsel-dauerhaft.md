@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, bereich/frontend, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/backend, bereich/frontend, rolle/creator]
 aliases: [Gespielte Übung sperrt Fachwechsel dauerhaft, Art im Bearbeiten-Dialog]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Frage
 groesse: S
@@ -114,3 +114,4 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - **2026-11-13** — Im Backlog-Lauf 2026-11-13 bewusst **nicht** in einen Sprint genommen: der Dialog-Teil ändert `ExerciseEditModal.tsx`, das die parallele B-534-Arbeit unkommittiert umbaut. Nach B-534 baubar wie geschätzt.
 - **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt (Dialog reicht `detail.categoryId` weiter durch, `ExerciseEditModal.tsx:251`; kein Art-Feld). Zeilenangaben im Ist-Stand berichtigt. Der Hinderungsgrund vom 2026-11-13 ist weg: B-534 ist committet (`a3e5c1ba`), `ExerciseEditModal.tsx` ist wieder frei.
 - **2026-11-14** — Sprint 76, gebaut: Backend unverändert (Entscheidung 2), Absichtserklärung `ReiheFachwechselTests.Ausweg_Art_Entfernen_Entsperrt_Den_Wechsel_Auch_Bei_Gespielter_Uebung` (AK 1, prüft vorab `position_has_data` und `exercise_in_use`); Dialog: Feld „Art" (`CategoryField`, Arten des Reihen-Fachs + „– keine Art –", geladene Art bleibt bei Ladeausfall wählbar), `MetaForm.categoryId`, `initialForm` übernimmt die geladene Art, `payloadFrom` nimmt `form.categoryId`; Vitest in `ExerciseEditModal.test.ts` (AK 2, AK 3).
+- **2026-11-14** — **abgenommen** (Sprint 76). volle Suite 1650/1650 (Release, nach den Review-Fixes), Vitest 1079/1079, `tsc -b` grün; Rollengang als Playwright gegen frisch gestartete Server nach dem letzten Edit: 38 passed (Assistent inkl. `assistent-klassenarbeit`, Lehrwerk-/Reihen-/Fachlehrer-Formulare, `vater-von-null`, `kind-anlegen-id`, `uebung-teilspeichern`, `erstbegegnung`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `8e970493`. Mutante Q8 (`categoryId` nicht aus dem Formular) rot (AK 2). Backend-Test als Absichtserklärung beschriftet (Ausweg „Art entfernen“ war serverseitig schon offen). Rollengang: `uebung-teilspeichern` grün.
