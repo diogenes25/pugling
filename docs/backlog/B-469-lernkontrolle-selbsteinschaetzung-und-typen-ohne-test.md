@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: Rollengang am Access-Lehrwerk 2026-11-10 (Kopie der pugling.db, Sohn im Handy-Format 375×812, Vater-Web)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-469 · Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test
@@ -166,3 +167,4 @@ Test-Pfad ziehen (B-01, S) an Risiko, aber mit derselben Teile-Zahl.
   Server dort jeden Test getippt wertet – das Manifest trägt jetzt `selfAssessedTest` aus der Stufenregel des Typs
   (`ExerciseTypeRegistry.Published`), Test `Manifest_Sagt_Ob_Ein_Test_Selbsteinschaetzung_Zaehlt`. AK 5 hält die E2E
   `lernkontrolle-sichtbar` (Rot-Probe vom Bau-Agenten gemessen). Entscheidungen 3/4 bleiben zurückgestellt.
+- **2026-11-14** — Nachschau Backlog-Lauf: Fund – `lernkontrolleText` (`PlanPositions.tsx:972-981`) kennt Stufe, Stufenplan und `defaultStage` nicht; bei getippter Tagesstufe prüft der Server nie per Selbsteinschätzung (`PositionPlayService.cs:80`, `:157`), die Zeile warnt trotzdem „Test, Selbsteinschätzung zählt“, und die Feldhilfe `lernkontrolle` verspricht „Aufdecken und „Gewusst!“ zählen mit“ → [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md). Vitest und E2E setzen keine Stufe, darum hielt keine Zusicherung dagegen.

@@ -48,6 +48,8 @@ test("B-162: Scheitert die Übungssuche, nennt der Assistent nicht den Katalog �
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();
   await page.getByLabel("Fach", { exact: true }).selectOption({ label: "Englisch" });
+  // B-423: das vorbelegte Ziel „Klassenarbeit" verlangt einen Termin – diese Spec meint die freie Dauer.
+  await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Übungen wählen/ })).toBeVisible();
 

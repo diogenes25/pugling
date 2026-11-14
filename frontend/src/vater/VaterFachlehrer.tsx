@@ -2,6 +2,7 @@ import { Fragment, useRef, useState } from "react";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { seriesOptions, subjectOptions } from "../lib/referenceOptions";
 import { useAction } from "../lib/useAction";
@@ -264,7 +265,8 @@ export function ProfileForm({ profile, subjects, series, exerciseTypes = [], onD
     e.preventDefault();
     // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
     onMeldung(null);
-    if (!form.name.trim()) { action.fail("Der Name fehlt."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!form.name.trim()) return;
     const min = form.gradeMin.trim() === "" ? null : Number(form.gradeMin);
     const max = form.gradeMax.trim() === "" ? null : Number(form.gradeMax);
     if (min != null && max != null && min > max) {
@@ -334,7 +336,7 @@ export function ProfileForm({ profile, subjects, series, exerciseTypes = [], onD
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor={`fl-name-${id}`}>Name des Profils</label>
+          <label htmlFor={`fl-name-${id}`}>Name des Profils <Pflicht /></label>
           <input
             id={`fl-name-${id}`} value={form.name} onChange={(e) => up("name", e.target.value)}
             placeholder="Englisch 8 Gymnasium – Access"
@@ -460,7 +462,7 @@ export function ProfileForm({ profile, subjects, series, exerciseTypes = [], onD
       </label>
 
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.name.trim()}>
           {action.busy ? "Speichere…" : profile ? "Speichern" : "Fachlehrer anlegen"}
         </button>
         {profile && (

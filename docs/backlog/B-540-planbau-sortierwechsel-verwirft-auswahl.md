@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-540 · Im Planbau verwirft ein Sortierwechsel die gewählte Übung
@@ -140,3 +141,4 @@ Tests. Größer als XS, weil zwei Komponententests mit zwei Mock-Seiten und eine
 - **2026-11-14** — **abgenommen** (Sprint 74). volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. Mutante N8b (Schlüssel mit Sortierung) → rot an „A bleibt gewählt …“
   (meine erste Fassung N8 war äquivalent – sie fixierte die Sortierung – und ist kein Beleg). Review-Fund behoben: der
   Hinweis sagt „nach dem Neuladen“ statt „nach dem Umsortieren“, weil der Effekt auch nach „Erneut suchen“ greift.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. `planbauAuswahlSchluessel` baut aus `planbauKriterien(filter, false)` (`PlanPositions.tsx`), also aus derselben Quelle wie die Suche; der Hinweis aus `auswahlNachUmsortieren` sagt „nach dem Neuladen“ (`wizardSearch.ts`), keine Feldhilfe oder Doku verspricht mehr.

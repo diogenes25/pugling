@@ -50,7 +50,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline, FakeChatClient? chat = null) =>
         new(creator, new SupervisorApi(Authenticated()), pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
             new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")),
-            ImageAgentTests.Run(creator, chat ?? new FakeChatClient("{}"), new FakeImageGenerator()));
+            ImageAgentTests.Run(creator, chat ?? new FakeChatClient("{}"), new FakeImageGenerator()),
+            new PlanAssigner(creator, new SupervisorApi(Authenticated())));
 
     private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat, IModelInventory? models = null)
     {

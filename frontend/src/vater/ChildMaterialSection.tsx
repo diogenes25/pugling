@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { FREETEXT_SUBJECT } from "./subjectField";
 import { EMPTY_TEXTBOOK_FORM, textbookFormValues, textbookPatch, type TextbookFormValues } from "./textbookPatch";
 import { api } from "../lib/api";
@@ -261,7 +262,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
 
   async function reiheAnlegen() {
     const name = neueReihe.trim();
-    if (!name) { action.fail("Der Name der Reihe fehlt."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!name) return;
     onMeldung(null);
     // Das Fach des Buchs wandert mit, solange es ein Katalog-Fach ist; ein Freitext-Fach hat keine Id.
     const subjectId = /^\d+$/.test(form.subjectId) ? Number(form.subjectId) : null;
@@ -299,7 +301,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
     e.preventDefault();
     // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
     onMeldung(null);
-    if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!form.title.trim()) return;
 
     if (book && geladen.current) {
       // Beim Ändern nur das Geänderte, und „leer" ausdrücklich über die Schalter (der Server überliest
@@ -421,14 +424,14 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
         {neueReiheOffen && (
           <div className="row" style={{ gap: 6, alignItems: "flex-end", flexWrap: "wrap", marginTop: 6 }}>
             <div className="field" style={{ flex: 1, minWidth: 200 }}>
-              <label htmlFor={`${id}-neue-reihe`}>Name der neuen Reihe</label>
+              <label htmlFor={`${id}-neue-reihe`}>Name der neuen Reihe <Pflicht /></label>
               <input
                 id={`${id}-neue-reihe`} value={neueReihe} onChange={(e) => setNeueReihe(e.target.value)} placeholder="Access"
                 // Kein eigenes <form> (Formulare schachteln nicht): Enter legt die Reihe an, statt das Buch abzuschicken.
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void reiheAnlegen(); } }}
               />
             </div>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => void reiheAnlegen()}>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !neueReihe.trim()} onClick={() => void reiheAnlegen()}>
               Reihe anlegen &amp; wählen
             </button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -442,7 +445,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
       </div>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor={`${id}-title`}>Titel</label>
+          <label htmlFor={`${id}-title`}>Titel <Pflicht /></label>
           <input id={`${id}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Access 8" />
         </div>
         <div className="field">
@@ -506,7 +509,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
         </div>
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.title.trim()}>
           {action.busy ? "Speichere…" : book ? "Speichern" : "Buch hinterlegen"}
         </button>
         {book && (

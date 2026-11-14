@@ -40,8 +40,14 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         };
 
     /// <summary>List study plans. Child sees only its own, father only those of his children.</summary>
+    /// <param name="childId">Optional filter on one child (supervisor only).</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
-    public async Task<IEnumerable<PlanResponse>> List([FromQuery] int? childId = null, CancellationToken ct = default)
+    public async Task<IEnumerable<PlanResponse>> List(
+        [FromQuery] int? childId = null, [FromQuery] int skip = 0, [FromQuery] int? take = null,
+        CancellationToken ct = default)
     {
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
@@ -57,7 +63,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             scoped = scoped.Where(p => db.SupervisorLinks.Any(l => l.StudentId == p.ChildId && l.SupervisorId == fid));
             if (childId is not null) scoped = scoped.Where(p => p.ChildId == childId);
         }
-        return await scoped.OrderByDescending(p => p.CreatedAt).Select(ToResponse(today)).ToListAsync(ct);
+        return await scoped.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id).Select(ToResponse(today))
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>A study plan (own only).</summary>

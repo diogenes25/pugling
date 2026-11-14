@@ -20,7 +20,10 @@ namespace Pugling.Agent.Creator;
 /// </summary>
 public static class Program
 {
-    /// <summary>Exit codes: 0 = done, 1 = failed on domain grounds, 2 = invoked incorrectly, 130 = cancelled.</summary>
+    /// <summary>
+    /// Exit codes: 0 = done, 1 = failed on domain grounds, 2 = invoked incorrectly, 3 = nothing to do (<c>assign</c>:
+    /// every exercise already in the plan), 130 = cancelled.
+    /// </summary>
     public static async Task<int> Main(string[] args)
     {
         try
@@ -115,6 +118,7 @@ public static class Program
         builder.Services.AddSingleton<CreatorPipeline>();
         builder.Services.AddSingleton<ExamPlanner>();
         builder.Services.AddSingleton<PlanPlanner>();
+        builder.Services.AddSingleton<PlanAssigner>();
         builder.Services.AddSingleton<UnitNotesFiller>();
         builder.Services.AddOptions<ImageOptions>()
             .Bind(builder.Configuration.GetSection(ImageOptions.SectionName))

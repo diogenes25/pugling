@@ -26,6 +26,21 @@ public static class PagingExtensions
     }
 
     /// <summary>
+    /// Additive paging for top-level collections that historically returned everything (B-122): with a
+    /// <paramref name="take"/> it behaves exactly like <see cref="ToPagedListAsync{T}"/>; without one it
+    /// applies no window at all, so an existing caller expecting the full list never silently gets a slice.
+    /// <c>X-Total-Count</c> is set in both branches, so a client can read the header uniformly.
+    /// Expects a query with a unique ordering (tie-break on <c>Id</c>), so a window is deterministic.
+    /// </summary>
+    public static async Task<List<T>> ToOptionallyPagedListAsync<T>(
+        this IQueryable<T> query, HttpResponse response, int skip, int? take, CancellationToken ct)
+    {
+        if (take is { } window) return await query.ToPagedListAsync(response, skip, window, ct);
+        response.Headers["X-Total-Count"] = (await query.CountAsync(ct)).ToString();
+        return await query.Skip(Math.Max(skip, 0)).ToListAsync(ct);
+    }
+
+    /// <summary>
     /// In-memory variant of <see cref="ToPagedListAsync{T}"/> for already materialized, sorted
     /// lists (e.g. metrics from services without <c>IQueryable</c>): writes the total count into
     /// <c>X-Total-Count</c> (before the body!), then applies skip/take. <paramref name="take"/> is clamped to

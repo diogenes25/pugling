@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: B-11
+nachgeschaut: 2026-11-14
 ---
 
 # B-140 · Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist
@@ -172,3 +173,4 @@ als B-540.
   (gilt auch für nie freigegebene Übungen). Bewusst offen: der Grund wird doppelt vorgelesen (Span im Label und per
   `aria-describedby`), Kosmetik. Ungedeckt: `VaterWizard.tsx` `uebernehmen(alle.items)` (greift erst bei mehr Treffern
   als einer Seite).
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Code-Fund. `canAssign` (`ExerciseCatalogController.cs:145`) deckt sich mit `CanExecuteAsync` (`Auth/ExercisePermissionService.cs:44-50`); zugewiesen wird serverseitig nur über `POST …/positions` (`PlanPositionsController.cs:155`) und die Klassenarbeit (`KlassenarbeitenController.cs:341`), im Frontend sperren Planbau, Assistent (auch `uebernehmen(alle.items)`) und Klassenarbeit; `ExerciseSummary` entsteht an genau einer Stelle. Der KI-Planer weist Buch-Wortlisten ohne Blick auf `canAssign` zu, fängt ein 403 aber je Position ab (`PlanPlanner.cs`, `failedPositions`) – kein Defekt. `tutorial-supervisor.md` (Zuweisbarkeit), `tutorial-creator.md:452` und `Pugling.Client/SupervisorApi.cs:128` stimmen.

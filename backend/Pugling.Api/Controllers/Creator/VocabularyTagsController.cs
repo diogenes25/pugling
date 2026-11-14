@@ -23,11 +23,15 @@ namespace Pugling.Api.Controllers.Creator;
 public class VocabularyTagsController(PuglingDbContext db) : ControllerBase
 {
     /// <summary>All vocabulary tags (alphabetically), each with the count of linked vocabulary entries.</summary>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet("tags")]
-    public async Task<IEnumerable<VocabTagResponse>> List(CancellationToken ct = default) =>
-        await db.VocabTags.AsNoTracking().OrderBy(t => t.Name)
+    public async Task<IEnumerable<VocabTagResponse>> List(
+        [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default) =>
+        await db.VocabTags.AsNoTracking().OrderBy(t => t.Name).ThenBy(t => t.Id)
             .Select(t => new VocabTagResponse(t.Id, t.Name, t.Color, t.Links.Count, t.CreatedAt))
-            .ToListAsync(ct);
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
 
     /// <summary>Creates a tag (name globally unique). If it already exists, the existing one is returned (idempotent).</summary>
     [HttpPost("tags")]

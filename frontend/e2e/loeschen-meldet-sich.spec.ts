@@ -26,7 +26,7 @@ test("Das Entfernen eines Buchs am Kind meldet sich — und nennt das Buch", asy
   await page.getByRole("button", { name: "Weiteres Buch" }).click();
 
   const TITEL = `Wegbuch ${RUN}`;
-  await page.getByLabel("Titel", { exact: true }).fill(TITEL);
+  await page.getByLabel("Titel (Pflicht)", { exact: true }).fill(TITEL);
   await page.getByRole("button", { name: "Buch hinterlegen" }).click();
   await expect(page.getByText("Buch hinterlegt.", { exact: true })).toBeVisible();
 

@@ -166,6 +166,14 @@ public sealed class CreatorApi(HttpClient http)
     public Task<TagResponse> CreateTagAsync(CreateTagDto dto, CancellationToken ct = default) =>
         Http.PostAsync<TagResponse>($"{Root}/tags", dto, ct);
 
+    /// <summary>
+    /// The exercises carrying a tag, one window of them (<paramref name="take"/> is clamped to 0..500 by the server);
+    /// the page's total tells whether the tag holds more than the window.
+    /// </summary>
+    public Task<PuglingPage<ExerciseBrief>> ListTagExercisesAsync(int tagId, int skip = 0, int take = 100,
+        CancellationToken ct = default) =>
+        Http.GetPageAsync<ExerciseBrief>($"{Root}/tags/{tagId}/exercises" + PuglingHttp.Query(("skip", skip), ("take", take)), ct);
+
     /// <summary>Tags exercises with a tag – this is how a class-test bundle is held together.</summary>
     public Task<TagResponse> TagExercisesAsync(int tagId, TagExercisesDto dto, CancellationToken ct = default) =>
         Http.PostAsync<TagResponse>($"{Root}/tags/{tagId}/exercises", dto, ct);

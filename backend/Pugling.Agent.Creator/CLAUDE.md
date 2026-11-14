@@ -43,6 +43,12 @@ wird **vor** dem ersten Modellaufruf geprüft, und der Plan entsteht **inaktiv**
 darf nicht über Nacht zur Pflicht werden, und ein aktiv angelegter Plan würde den laufenden Plan des
 Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`).
 
+`assign` (B-20) ist das einzige Verb **ohne** Sprachmodell: der `PlanAssigner` übernimmt vorhandene Übungen (Ids oder
+ein kind-skopierter Tag) als Positionen in den **spielbaren** Plan des Kindes (`IsPlayable`, nie bloß `Active`). Erst
+alles lesen, dann schreiben; Dubletten prüft der Agent, weil der Server sie annimmt; der erste abgelehnte Schreibaufruf
+bricht ab (Exit 1), nichts Neues ist Exit 3 (2 bleibt „falsch aufgerufen“), ein Tag über dem Lesefenster bricht vor
+dem Schreiben ab.
+
 `fill --images` (B-375) liest Fotos von Buchseiten mit dem `PageReader`: eine Seite je Aufruf auf
 `Agent:VisionModel` (per `ChatOptions.ModelId`), Ergebnis ist ein Stoffauszug als Klartext. Daraus werden nur die
 Stoffnotizen. **Das Foto wird Stoff, nicht Übung**: Kein Schritt nach dem Vision-Aufruf sieht das Bild, und es geht

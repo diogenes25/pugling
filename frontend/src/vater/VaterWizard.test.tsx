@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { WizardTrefferbereich } from "./VaterWizard";
+import { useState } from "react";
+import { KlassenarbeitTerminFeld, klassenarbeitZeile, SchwellenFeld, WizardTrefferbereich, zeitraumZeile } from "./VaterWizard";
 import { NICHT_ZUWEISBAR_GRUND, nurZuweisbare } from "./wizardSearch";
 import type { ExerciseSummary } from "../lib/types";
 
@@ -198,5 +199,73 @@ describe("Assistent – nicht zuweisbare Übungen (B-140)", () => {
   // Rot, wenn der Hinweis auch ohne Übersprungene erscheint – dann meldete jeder „Alle wählen"-Klick etwas, das nicht geschah.
   it("schweigt, wenn alles zuweisbar ist", () => {
     expect(nurZuweisbare([{ id: 1, canAssign: true }])).toEqual({ ids: [1], hinweis: null });
+  });
+});
+
+/*
+ * B-423: das Ziel „Klassenarbeit" fragt den Termin. Die Sperre von „Weiter" hängt an `terminProblem` (wizardFinish.test.ts)
+ * und fährt die E2E `assistent-klassenarbeit.spec.ts`; hier steht, was das Feld selbst sagt.
+ */
+describe("Assistent – Termin der Klassenarbeit (B-423)", () => {
+  // AK 1. Rot, wenn das Label „(Pflicht)" nicht trägt (der Grund für den gesperrten Knopf stünde dann nirgends).
+  it("trägt „(Pflicht)“ im Namen des Feldes", () => {
+    render(<KlassenarbeitTerminFeld termin="" heute="2026-11-14" onChange={() => {}} />);
+    expect(screen.getByLabelText("Termin der Klassenarbeit (Pflicht)")).toBeTruthy();
+  });
+
+  // AK 1. Rot, wenn ein zu naher Termin keinen Grund am Feld nennt (`aria-describedby` fehlt oder der Text).
+  it("nennt bei einem zu nahen Termin den Grund am Feld", () => {
+    render(<KlassenarbeitTerminFeld termin="2026-11-15" heute="2026-11-14" onChange={() => {}} />);
+    const feld = screen.getByLabelText("Termin der Klassenarbeit (Pflicht)");
+    expect(document.getElementById(feld.getAttribute("aria-describedby")!)?.textContent).toMatch(/^Frühestens am 16\.11\.2026/);
+  });
+
+  // Gegenprobe: ein tauglicher Termin trägt keinen Grund. Rot, wenn der Grund unbedingt dasteht.
+  it("schweigt bei einem tauglichen Termin", () => {
+    render(<KlassenarbeitTerminFeld termin="2026-11-22" heute="2026-11-14" onChange={() => {}} />);
+    expect(screen.getByLabelText("Termin der Klassenarbeit (Pflicht)").getAttribute("aria-describedby")).toBeNull();
+    expect(screen.queryByText(/Frühestens/)).toBeNull();
+  });
+
+  // AK 2. Rot, wenn der Überblick das Ende auf den Termin legt (Dauer statt Dauer − 1) oder die Arbeit verschweigt.
+  it("zeigt im Überblick Zeitraum bis zum Vortag und die Klassenarbeit", () => {
+    expect(zeitraumZeile("2026-11-14", 8, true)).toBe("14.11.2026 – 21.11.2026 · 8 Tage");
+    expect(klassenarbeitZeile("2026-11-22")).toBe("legt die Klassenarbeit am 22.11.2026 an");
+  });
+
+  // AK 6. Rot, wenn die anderen Ziele plötzlich ein Ende zeigen – `assistent.spec.ts` prüft genau diese Form.
+  it("lässt den Zeitraum der anderen Ziele, wie er war", () => {
+    expect(zeitraumZeile("2026-11-14", 30, false)).toBe("14.11.2026 · 30 Tage");
+  });
+});
+
+/*
+ * B-423, Review-Fund 3: das Schwellenfeld hält den Rohtext. Vorher stand der geklemmte Wert im Feld – „1" sprang sofort auf
+ * die Untergrenze 2, und „12" ließ sich nicht tippen.
+ */
+function SchwellenRahmen({ max }: { max: number }) {
+  const [wert, setWert] = useState("");
+  const zahl = /^\d+$/.test(wert) ? Number(wert) : 4;
+  return <SchwellenFeld wert={wert} onWert={setWert} angewandt={Math.min(Math.max(zahl, 2), max)} max={max} />;
+}
+
+describe("Assistent – Schwellentag der Leiter (B-423)", () => {
+  // Rot, wenn das Feld den angewandten statt des getippten Werts zeigt: dann stünde nach der „1" eine „2".
+  it("nimmt eine zweistellige Eingabe Ziffer für Ziffer an", () => {
+    render(<SchwellenRahmen max={14} />);
+    const feld = screen.getByLabelText("Zweite Stufe ab Tag") as HTMLInputElement;
+    fireEvent.change(feld, { target: { value: "1" } });
+    expect(feld.value).toBe("1");
+    fireEvent.change(feld, { target: { value: "12" } });
+    expect(feld.value).toBe("12");
+  });
+
+  // Rot, wenn `onBlur` fehlt: dann bliebe ein ungültiger Rohtext („1") stehen, obwohl Tag 2 gilt.
+  it("zeigt beim Verlassen den angewandten Tag", () => {
+    render(<SchwellenRahmen max={14} />);
+    const feld = screen.getByLabelText("Zweite Stufe ab Tag") as HTMLInputElement;
+    fireEvent.change(feld, { target: { value: "1" } });
+    fireEvent.blur(feld);
+    expect(feld.value).toBe("2");
   });
 });

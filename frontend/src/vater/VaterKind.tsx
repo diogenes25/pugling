@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
 import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
@@ -190,7 +191,8 @@ function formStateOf(child: ChildResponse) {
   };
 }
 
-function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+/** Exportiert für den Test (B-380). */
+export function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
   const nav = useNavigate();
   const [form, setForm] = useState(() => formStateOf(child));
   const [pin, setPin] = useState("");
@@ -202,7 +204,8 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!form.name.trim()) return;
 
     // Nur Geändertes senden (PATCH-Semantik); ein leeres PIN-Feld heißt „unverändert", nicht „löschen".
     const initial = formStateOf(child);
@@ -255,7 +258,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
       <h3 className="h-section">Stammdaten</h3>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="form-grid" style={{ alignItems: "end" }}>
-          <div className="field"><label htmlFor="kd-name">Name</label>
+          <div className="field"><label htmlFor="kd-name">Name <Pflicht /></label>
             <input id="kd-name" value={form.name} onChange={(e) => up("name", e.target.value)} /></div>
           <div className="field"><label htmlFor="kd-year">Geburtsjahr</label>
             <input id="kd-year" type="number" min={1990} max={2030} value={form.birthYear} onChange={(e) => up("birthYear", e.target.value)} /></div>
@@ -285,7 +288,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
             placeholder="z.B. Schwächen bei unregelmäßigen Verben, braucht kurze Einheiten." />
         </div>
         <div className="row" style={{ gap: 8 }}>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Speichere…" : "Speichern"}</button>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.name.trim()}>{action.busy ? "Speichere…" : "Speichern"}</button>
         </div>
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />

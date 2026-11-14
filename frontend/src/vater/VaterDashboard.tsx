@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { pinProblem } from "../lib/pin";
@@ -30,7 +31,8 @@ export function VaterDashboard() {
 
   async function addChild(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { action.fail("Bitte einen Vornamen angeben."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!name.trim()) return;
     const pinError = pinProblem(pin.trim());
     if (pinError) { action.fail(pinError); return; }
     // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
@@ -101,10 +103,10 @@ export function VaterDashboard() {
         )}
 
         <form className="form-grid" style={{ marginTop: 12, alignItems: "end" }} onSubmit={addChild}>
-          <div className="field"><label htmlFor="new-child-name">Name</label><input id="new-child-name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
+          <div className="field"><label htmlFor="new-child-name">Name <Pflicht /></label><input id="new-child-name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
           <div className="field"><label htmlFor="new-child-grade">Klasse</label><input id="new-child-grade" name="grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
           <div className="field"><label htmlFor="new-child-pin">PIN</label><input id="new-child-pin" name="pin" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !name.trim()}>
             {action.busy ? "Lege an…" : "Kind anlegen"}
           </button>
         </form>

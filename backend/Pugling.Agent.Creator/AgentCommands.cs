@@ -13,7 +13,7 @@ namespace Pugling.Agent.Creator;
 /// strategies.
 /// </summary>
 public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, CreatorPipeline pipeline, ExamPlanner exams,
-    PlanPlanner plans, UnitNotesFiller unitNotes, ImageRun images)
+    PlanPlanner plans, UnitNotesFiller unitNotes, ImageRun images, PlanAssigner assigner)
 {
     // Default values for the request when the command line is silent.
     private const int DefaultItemCount = 10;
@@ -42,6 +42,18 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
 
     /// <summary>The types a generated study plan consists of when none are named.</summary>
     private static readonly string[] DefaultPlanTypes = ["Vocabulary", "Cloze"];
+
+    /// <summary>
+    /// Adds existing exercises to a child's running plan (B-20) - no language model involved. Exit 0 when positions
+    /// were created (or a dry run found something new), 1 when the server refused one or the tag exceeds the window,
+    /// 3 when nothing was new.
+    /// </summary>
+    private async Task<int> AssignAsync(CommandLine command, CancellationToken ct)
+    {
+        var outcome = await assigner.RunAsync(AssignRequest.Parse(command), ct);
+        foreach (var line in outcome.Report()) Console.WriteLine(line);
+        return outcome.ExitCode;
+    }
 
     /// <summary>
     /// Drafts a unit's notes from a human-supplied source (B-22): <c>--series</c> and <c>--unit</c> are required, and
@@ -205,6 +217,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                 return await PlanAsync(command, ct);
             case "fill":
                 return await FillAsync(command, ct);
+            case "assign":
+                return await AssignAsync(command, ct);
             case "images":
                 return await ImagesAsync(command, ct);
             case "help":
@@ -868,6 +882,14 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
                                    für ein Interesse. Gezeichnet vom Bild-Dienst (Images:Model, Schlüssel in
                                    Images:ApiKey); --dry-run zeigt die Prompts und die Kosten ohne Schlüssel.
                                    --max: höchstens so viele Wörter je Lauf (Standard 20))
+          pugling-creator assign   --child <id> (--exercise-id <id> [--exercise-id <id> …] | --tag <name>)
+                                   [--plan-id <id>] [--points <n>] [--goal-threshold <n>]
+                                   [--cadence Daily|Weekly] [--dry-run]
+                                   (vorhandene Übungen als Positionen in den spielbaren Plan des Kindes
+                                   übernehmen – ohne Sprachmodell; --plan-id wählt einen anderen eigenen
+                                   Plan des Kindes; schon vorhandene Übungen werden übersprungen;
+                                   ohne Overrides gelten die Server-Vorgaben; Exit 3 = nichts Neues.
+                                   Beispiel: assign --child 1 --exercise-id 12 --exercise-id 15 --dry-run)
 
         Wer und in wessen Namen:
           --child <id>          Kind, auf das zugeschnitten wird (individuelle Übung)

@@ -9,6 +9,7 @@ wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: memory/lehrplan-umbau.md
+nachgeschaut: 2026-11-14
 ---
 
 # B-16 · Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab?
@@ -223,3 +224,4 @@ additiv, `ClearStage` mit Vorgabe `false`; `Pugling.Client` braucht keine neue M
   Optionen gezeigt (AK 3), N11 kein Reset beim Übungswechsel (AK 5). Abweichung: AK 2 hält der reflexive Fall in
   `PatchSemanticsTests`, keine eigene Zeile in `PatchClearFieldTests`. Rest aus dem Review: vier weitere Felder ohne
   „zurück auf Standard“ → B-547.
+- **2026-11-14** — Nachschau Backlog-Lauf: Grenze an beiden Enden geprüft – PATCH setzt den Schalter nach dem Wert (`PlanPositionsController.cs:264`), die `UpdatePositionDto`-Summary nennt zwei Schalter, `Pugling.Client` reicht den Vertrag durch, der KI-Planer setzt keine Stufe (`PlanPlanner.cs`, `Stage: null`). Zwei Funde: die neue Feldhilfe `stage` nennt einen „Stufenplan je Leitner-Fach“, der Stufenplan gilt aber je Plantag → [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md); die neue Stufenwahl macht die Lernkontrolle-Warnung aus B-469 falsch → [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md). Doku berichtigt: `wiki/08-erweitern.md` nannte `StageOptions` nur als Testmodus-Umschalter (jetzt: Positions-Prüfung, Manifest `stages`, `selfAssessedTest`). Nur fehlend, nicht falsch: `docs/tutorial-supervisor.md` „Positionen ändern“ nennt `clearStage` nicht.

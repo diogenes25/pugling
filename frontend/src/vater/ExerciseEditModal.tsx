@@ -10,7 +10,7 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import type {
-  CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, InterestTagResponse, SchoolType,
+  CategoryResponse, CreateExercisePayload, ExerciseDetail, ExerciseSummary, ExerciseTypeKey, InterestTagResponse, SchoolType,
   VocabItemInput, VocabItemResponse, VocabularyResponse,
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
@@ -40,7 +40,7 @@ export const removeItemQuestion = (front: string, back: string) =>
  * Zwei Dinge sind hier nicht offensichtlich und tragen die ganze Mechanik:
  *
  * 1. **Der Server ersetzt die Übung vollständig** (PUT). Alles, was das Formular nicht anfasst
- *    (Bonus-Vorschlag, Ausführ-Sichtbarkeit, Kategorie), muss also aus dem geladenen Stand
+ *    (Bonus-Vorschlag, Ausführ-Sichtbarkeit), muss also aus dem geladenen Stand
  *    **mitgeschickt** werden – sonst fällt es auf den Record-Default zurück und wäre still gelöscht.
  * 2. **Vokabelpaare sind kein Config-Inhalt.** Sie liegen als eigene Item-Ebene mit stabilen Ids, an denen
  *    der Lernstand des Kindes hängt. Sie werden darum einzeln über `/items` gepflegt, und der Metadaten-PUT
@@ -248,7 +248,9 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     gradeMax: form.gradeMax === "" ? null : Number(form.gradeMax),
     schoolTypes: form.schoolTypes.length > 0 ? form.schoolTypes.join(", ") : "None",
     source: form.source.trim() || null,
-    categoryId: detail.categoryId,
+    // Seit B-407 aus dem FORMULAR: die Art ist im Dialog änderbar und entfernbar – der einzige Ausweg, wenn eine gespielte
+    // Übung mit einer Art des alten Fachs den Fachwechsel ihrer Reihe sperrt. `initialForm` füllt sie mit der geladenen.
+    categoryId: form.categoryId,
     defaultUseLeitner: form.defaultUseLeitner,
     defaultRequireTypedTest: form.defaultRequireTypedTest,
     defaultStage: form.defaultStage === "" ? null : Number(form.defaultStage),
@@ -295,6 +297,8 @@ interface MetaForm {
   interestTagIds: number[];
   /** Die Grammatik-Themen der Übung (B-155) – aus dem fachgebundenen Vokabular. */
   grammarTopicIds: number[];
+  /** Die Art (Kategorie) der Übung, `null` = keine (B-407) – aus den Arten des Reihen-Fachs. */
+  categoryId: number | null;
 }
 
 export function initialForm(d: ExerciseDetail): MetaForm {
@@ -316,6 +320,7 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     // gegen den der Dialog seine Änderung misst.
     interestTagIds: [...d.interestTagIds],
     grammarTopicIds: [...d.grammarTopicIds],
+    categoryId: d.categoryId ?? null,
     ...langsOf(d),
     articleRequired: (d.config as { articleRequired?: unknown } | null)?.articleRequired === true,
   };
@@ -396,6 +401,13 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
           ))}
         </div>
       </div>
+      <CategoryField
+        subjectId={detail.subjectId ?? null}
+        loaded={{ id: detail.categoryId ?? null, name: detail.categoryName ?? null }}
+        value={form.categoryId}
+        onChange={(id) => up("categoryId", id)}
+        disabled={busy}
+      />
       <InterestDressing
         tagIds={form.interestTagIds}
         onChange={(ids) => up("interestTagIds", ids)}
@@ -765,6 +777,42 @@ function InterestDressing({ tagIds, onChange, disabled }: {
         onChange={onChange}
         disabled={disabled || known.loading}
       />
+    </div>
+  );
+}
+
+/**
+ * Die Art der Übung (B-407): die Arten des Reihen-Fachs plus „– keine Art –". Mehr nimmt der Server nicht an
+ * (`invalid_reference`), darum bietet das Feld nicht mehr an.
+ *
+ * Die geladene Art steht **immer** als Option da, auch wenn die Liste sie nicht kennt (Ladeausfall, eine Reihe ohne
+ * Fach aus dem Altbestand): sonst zeigte das `<select>` einen anderen Wert, als das Formular trägt, und ein
+ * unberührtes Feld sähe aus wie geleert. Scheitert die Liste, bleibt die Art also unverändert wählbar.
+ */
+function CategoryField({ subjectId, loaded, value, onChange, disabled }: {
+  subjectId: number | null;
+  /** Die Art im geladenen Stand – sie bleibt wählbar, auch wenn die Liste sie nicht führt. */
+  loaded: { id: number | null; name: string | null };
+  value: number | null;
+  onChange: (id: number | null) => void;
+  disabled: boolean;
+}) {
+  const list = useAsync<CategoryResponse[]>(
+    () => (subjectId === null ? Promise.resolve([]) : api.categories(subjectId)), [subjectId]);
+  const options = list.data ?? [];
+  const loadedMissing = loaded.id !== null && !options.some((c) => c.id === loaded.id);
+
+  return (
+    <div className="field" style={{ maxWidth: 300 }}>
+      <label htmlFor="ed-category">Art</label>
+      <ListenAusfall was="Die Arten des Fachs" fehler={list.error} laedt={list.loading} onRetry={list.reload}
+        schluessel={subjectId} style={{ marginBottom: 6 }} />
+      <select id="ed-category" value={value ?? ""} disabled={disabled}
+        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}>
+        <option value="">– keine Art –</option>
+        {loadedMissing && <option value={loaded.id!}>{loaded.name ?? `Art ${loaded.id}`}</option>}
+        {options.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
     </div>
   );
 }

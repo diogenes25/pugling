@@ -32,9 +32,14 @@ public class SubjectsController(PuglingDbContext db) : ControllerBase
             s.OwnerAdultId, fid != null && s.OwnerAdultId == fid));
 
     /// <summary>List of all subjects.</summary>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
-    public async Task<IEnumerable<SubjectResponse>> List(CancellationToken ct = default) =>
-        await Project(db.Subjects.AsNoTracking().OrderBy(s => s.Name), User.CreatorId()).ToListAsync(ct);
+    public async Task<IEnumerable<SubjectResponse>> List(
+        [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default) =>
+        await Project(db.Subjects.AsNoTracking().OrderBy(s => s.Name).ThenBy(s => s.Id), User.CreatorId())
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
 
     /// <summary>A single subject.</summary>
     [HttpGet("{subjectId:int}")]

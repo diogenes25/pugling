@@ -20,6 +20,7 @@ import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
 import { ratingSummary } from "./ExerciseRatingPanel";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { formatDate } from "../lib/datum";
+import { leiterText } from "./wizardFinish";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -831,6 +832,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
   // B-469: womit die Pflicht geprüft wird – erst, wenn das Manifest den Typ kennt (sonst `undefined` → nichts).
   const typ = types.byType.get(pos.exerciseType);
   const lernkontrolle = lernkontrolleText(typ?.checkMode, pos.requireTypedTest, typ?.selfAssessedTest ?? false);
+  // B-423, AK 7: die Stufenleiter nur lesbar – bearbeiten bleibt B-16. Namen aus dem Manifest, sonst „Stufe n".
+  const leiter = leiterText(pos.stageSchedule, (st) => types.stages(pos.exerciseType).find((o) => o.value === st)?.label);
 
   function cancel() {
     setSettings(settingsFrom(pos));
@@ -864,6 +867,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
             {pos.itemCount != null && <span className="muted"> · {pos.itemCount} Inhalte</span>}
             {dosisText(pos) !== null && <span className="muted"> · {dosisText(pos)}</span>}
             <span className="muted"> · {ORDER_LABEL[pos.orderStrategy]}</span>
+            {leiter && <span className="muted"> · Stufen: {leiter}</span>}
             {lernkontrolle && (
               <>
                 {" · "}

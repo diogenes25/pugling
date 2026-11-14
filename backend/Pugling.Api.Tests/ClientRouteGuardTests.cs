@@ -56,7 +56,7 @@ public class ClientRouteGuardTests(SchemaOnlyWebAppFactory factory) : IClassFixt
     /// Every HTTP call in the facades goes through the <c>Http</c> property, so counting these is a second,
     /// <b>dumb</b> measure of how many routes there have to be – independent of the resolver.
     /// </summary>
-    private const string CallSitePattern = @"\bHttp\.(Get|Post|Patch|Put|Send|PostContent)Async";
+    private const string CallSitePattern = @"\bHttp\.(Get|GetPage|Post|Patch|Put|Send|PostContent)Async";
 
     // ─────────────────────────────────────────────────────── The gate
 

@@ -29,6 +29,9 @@ beforeEach(() => {
     [{ type: "Birkenbihl", label: "Birkenbihl", authoringRoute: "birkenbihl" } as unknown as ExerciseTypeManifest]);
   vi.spyOn(api, "interestTags").mockResolvedValue([]);
   vi.spyOn(api, "grammarTopics").mockResolvedValue([]);
+  // B-407: der Dialog lädt die Arten des Fachs. Ungemockt ginge der Abruf ins Netz und brächte einen zweiten
+  // „Erneut laden“-Knopf – der Fall unten fände dann nicht mehr den des Nachladens.
+  vi.spyOn(api, "categories").mockResolvedValue([]);
   vi.spyOn(api, "exerciseGrants").mockResolvedValue([]);
   vi.spyOn(api, "exerciseMedia").mockResolvedValue([]);
   update = vi.fn().mockResolvedValue(DETAIL);

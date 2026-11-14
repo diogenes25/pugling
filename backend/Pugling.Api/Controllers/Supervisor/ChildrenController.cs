@@ -52,20 +52,25 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of students supervised by the logged-in supervisor.</summary>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ChildResponse>>> List(CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<ChildResponse>>> List(
+        [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default)
     {
         var supervisorId = User.AdultId();
         return await db.Children
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == supervisorId))
-            .OrderBy(c => c.Name)
+            // Names are not unique (two children called "Max"): the Id tie-break keeps a window deterministic.
+            .OrderBy(c => c.Name).ThenBy(c => c.Id)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
                 c.Gender, c.Interests, c.ProfileNotes, c.AllowedContentRating,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.BonusDailyCoinCap))
-            .ToListAsync(ct);
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>A single child.</summary>

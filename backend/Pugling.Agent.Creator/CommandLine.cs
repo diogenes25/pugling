@@ -16,6 +16,9 @@ public sealed class CommandLine
 {
     private readonly Dictionary<string, string?> _options = new(StringComparer.OrdinalIgnoreCase);
 
+    // Every occurrence per name, for repeatable options (`--exercise-id 4 --exercise-id 9`); `_options` keeps the last.
+    private readonly Dictionary<string, List<string?>> _occurrences = new(StringComparer.OrdinalIgnoreCase);
+
     private CommandLine(string verb) => Verb = verb;
 
     /// <summary>The chosen verb (<c>create</c>, <c>briefing</c>, <c>types</c>, <c>help</c>).</summary>
@@ -42,24 +45,35 @@ public sealed class CommandLine
             if (name.Contains('='))
             {
                 var split = name.Split('=', 2);
-                line._options[split[0]] = split[1];
+                line.Set(split[0], split[1]);
                 continue;
             }
 
             var next = i + 1 < args.Length ? args[i + 1] : null;
             if (next is not null && !next.StartsWith("--", StringComparison.Ordinal))
             {
-                line._options[name] = next;
+                line.Set(name, next);
                 i++;
             }
             else
             {
-                line._options[name] = null;
+                line.Set(name, null);
             }
         }
 
         return line;
     }
+
+    private void Set(string name, string? value)
+    {
+        _options[name] = value;
+        if (!_occurrences.TryGetValue(name, out var all)) _occurrences[name] = all = [];
+        all.Add(value);
+    }
+
+    /// <summary>Every value a repeatable option was given, in order; empty if it was not named.</summary>
+    public IReadOnlyList<string?> Values(string name) =>
+        _occurrences.TryGetValue(name, out var all) ? all : [];
 
     /// <summary>Value of an option, or <c>null</c>.</summary>
     public string? Value(string name) => _options.TryGetValue(name, out var v) ? v : null;

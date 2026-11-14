@@ -185,7 +185,9 @@ public class ConventionGuardTests
     /// </summary>
     // 35 since B-12: ExerciseRatingsController.List holds at most one row per creator, the same bound
     // as the grants list beside it.
-    private const int UnpaginatedArrayGetCount = 35;
+    // 29 since B-122: the six top-level collections (subjects, tags, vocabulary tags, children, study plans,
+    // student plans) gained an optional `take` without a default.
+    private const int UnpaginatedArrayGetCount = 29;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

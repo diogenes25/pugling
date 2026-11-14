@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { pinProblem } from "../lib/pin";
@@ -98,7 +99,8 @@ export function VaterProfil() {
   );
 }
 
-function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
+/** Exportiert für den Test (B-380). */
+export function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
   name: string; email: string | null; onSaved: () => void;
 }) {
   const [name, setName] = useState(initialName);
@@ -109,7 +111,8 @@ function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!name.trim()) return;
     if (pin !== pin2) { action.fail("Die beiden PINs stimmen nicht überein."); return; }
     // Gesendet wird `pin` ungetrimmt, sobald etwas anderes als Leerraum drinsteht – geprüft wird darum dasselbe.
     const pinError = pin.trim() ? pinProblem(pin) : null;
@@ -138,7 +141,7 @@ function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
       <h3 className="h-section">Stammdaten</h3>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="form-grid" style={{ alignItems: "end" }}>
-          <div className="field"><label htmlFor="prof-name">Name</label>
+          <div className="field"><label htmlFor="prof-name">Name <Pflicht /></label>
             <input id="prof-name" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="field"><label htmlFor="prof-email">E-Mail <span className="muted">(optional)</span></label>
             <input id="prof-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
@@ -147,7 +150,7 @@ function ProfileForm({ name: initialName, email: initialEmail, onSaved }: {
           <div className="field"><label htmlFor="prof-pin2">Neue PIN wiederholen</label>
             <input id="prof-pin2" type="password" autoComplete="new-password" value={pin2} onChange={(e) => setPin2(e.target.value)} /></div>
         </div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !name.trim()}>
           {action.busy ? "Speichere…" : "Speichern"}
         </button>
       </form>

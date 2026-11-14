@@ -157,6 +157,9 @@ dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 \
 # Lehrplan: je Typ mehrere Übungen, jede als eigene Position – der Plan entsteht INAKTIV
 dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 \
     --types Vocabulary,Cloze --per-type 2 --count 10 --intensity Normal --days 21
+
+# Vorhandene Übungen in den laufenden Plan des Kindes übernehmen – ohne Sprachmodell
+dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1 --exercise-id 12 --exercise-id 15 --dry-run
 ```
 
 ### Wer und in wessen Namen
@@ -194,7 +197,8 @@ Eines von `--child`/`--profile` ist Pflicht – sonst fehlt sowohl die Zielgrupp
 | `--dry-run` | nur planen und drucken | aus |
 | `--strict` | Übung löschen, wenn der Selbsttest < 100 % | aus |
 
-Exit-Codes: `0` fertig · `1` fachlich gescheitert · `2` falsch aufgerufen · `130` abgebrochen.
+Exit-Codes: `0` fertig · `1` fachlich gescheitert · `2` falsch aufgerufen · `3` nichts zu tun (`assign`: alles schon
+im Plan) · `130` abgebrochen.
 
 ### Die Übungsklausur (`exam`)
 
@@ -241,6 +245,35 @@ ungeprüfter KI-Plan darf nicht über Nacht zur Pflicht werden und Malus-Münzen
 angelegter Plan würde zusätzlich den Plan abschalten, den das Kind heute spielt (die Regel „genau ein
 aktiver Plan je Kind"). Der Vater sichtet ihn unter `/vater/plaene` und schaltet ihn dort scharf.
 
+### In einen laufenden Plan zuweisen (`assign`)
+
+`assign` (B-20) übernimmt **vorhandene** Katalog-Übungen als Positionen in einen bestehenden Plan – der kleine
+Schritt nach `create`/`exam`, ohne den die erzeugten Übungen von Hand zugewiesen werden müssten. Es ist
+deterministisch und läuft **ohne Ollama**.
+
+```bash
+# Je Übung eine Position im spielbaren Plan des Kindes (Server-Vorgaben für Ziel und Punkte)
+dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1 --exercise-id 12 --exercise-id 15
+# Alle Übungen eines kind-skopierten Tags (z. B. die einer Übungsklausur), mit eigenen Vorgaben
+dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1 --tag "Klausur Unit 3"     --points 30 --cadence Weekly --goal-threshold 80 --dry-run
+```
+
+- **Quelle:** genau eins von `--exercise-id` (wiederholbar oder kommagetrennt, jede Angabe mit Wert) und
+  `--tag <name>`; beides, keins oder ein leeres `--exercise-id` ist eine Fehlbedienung (Exit 2). Der Tag wird über
+  das Kind aufgelöst – gleichnamige Tags anderer Kinder zählen nicht; die genaue Schreibweise gewinnt, mehrere
+  Treffer nur in Groß-/Kleinschreibung sind eine Fehlbedienung. Trägt der Tag mehr als 500 Übungen, bricht der
+  Agent vor dem Schreiben ab (Exit 1), statt einen Teil zuzuweisen.
+- **Ziel:** der **spielbare** Plan des Kindes (aktiv *und* heute in seiner Laufzeit, `IsPlayable`); `--plan-id`
+  wählt einen anderen eigenen Plan desselben Kindes. Ohne spielbaren Plan oder mit dem Plan eines anderen Kindes:
+  Exit 2, nichts geschrieben.
+- **Dubletten:** eine Übung, die schon Position im Plan ist, wird übersprungen und gemeldet; ist nichts neu, Exit 3
+  (eigener Code, weil der Aufruf richtig war – 2 heißt „falsch aufgerufen“).
+- **Vorgaben:** ohne Overrides gelten die Server-Vorgaben; `--points`, `--goal-threshold`, `--cadence Daily|Weekly`
+  übersteuern sie.
+- **Reihenfolge:** erst alles lesen (Plan, Positionen, Übungen), dann schreiben; `--dry-run` endet nach dem Lesen.
+  Lehnt der Server eine Position ab (etwa `exercise_not_executable` für eine fremde private Übung), bricht der Lauf
+  mit Exit 1 ab; die schon angelegten Positionen bleiben, ein erneuter Lauf überspringt sie.
+
 ### Die Stoffnotizen einer Unit (`fill`)
 
 ```bash
@@ -271,6 +304,14 @@ Jede Seite geht **einzeln** an das lokale Vision-Modell (`Agent:VisionModel`, Vo
 kommt als **Stoffauszug** zurück: Themen, Grammatik in eigenen Worten, Wortpaare. Die Auszüge aller Seiten (dazu ein
 optionales `--source-file`) sind dann die Quelle des gewohnten `fill`-Laufs auf dem Textmodell. Alle Regeln von oben
 gelten unverändert. `--dry-run` druckt je Seite den erkannten Stoff, damit du ihn neben das Foto legen kannst.
+
+**Grenze des Modells: dicht bedruckte Buchseiten liest ein kleines lokales Vision-Modell unzuverlässig** (B-459). Gemessen
+an 53 Fotos eines echten Lehrwerks (B-375): Die Themen stimmten, die Grammatik war falsch („Zustandssätze" statt
+will-future und conditional 1/2), und Themen landeten ohne Übersetzung als Wörter. Eine groß gesetzte Einzelseite las
+dasselbe Modell richtig – vermutlich überfordert eine hochauflösende Doppelseite ein Modell dieser Größe. `fill --images`
+taugt darum nur für einzelne, groß fotografierte Seiten, und immer zuerst mit `--dry-run` und Abgleich jedes Auszugs am
+Foto: falsche Grammatik in den Stoffnotizen wandert in jede Übung, die daraus entsteht. **Für ein ganzes Lehrwerk ist der
+Skill `lehrwerk-aufbereiten` der Weg** – dort liest Claude die Fotos selbst und kachelt dichte Seiten (`kacheln.ps1`).
 
 **Copyright: Das Foto wird Stoff, nicht Übung.** Beide Prompts verbieten, Aufgabenstellungen, Lese- und Hörtexte,
 Dialoge und Beispielsätze des Buches zu übernehmen. Gehalten wird der Schnitt aber im Code: Das Foto erreicht nur den

@@ -12,6 +12,7 @@ quelle: "Nutzer im Chat 2026-11-13: Vater-Seite total überladen, mehrere Speich
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-534 · Das Vater-Web zeigt je Fläche höchstens ein Speichern
@@ -57,3 +58,4 @@ und nicht rätseln muss, welcher von drei Knöpfen meine Änderung sichert.
   `a3e5c1ba` + `40dd9bfa`). Belege nach dem letzten Edit: volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. AK 1 (Reiter, `?bereich=`) tragen `interessen`,
   `bonus-deckel`, `kind-lehrbuch-fach`; AK 2 `AddPanel.test.tsx`; AK 3 `uebung-teilspeichern`. Keine eigene
   Mutantenprobe in diesem Lauf (die Arbeit stammt aus dem Vorlauf, dort reviewt).
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Gegen `HEAD` gelesen: `VaterKind.tsx` zeigt je Reiter höchstens ein Speichern (`:288`, `:388`, Löschen abgesetzt `:292`), `ExerciseEditModal.tsx` und `PlanPositions.tsx` tragen keinen zweiten Speichern-Knopf; der Rest der Arbeit war im Vorlauf zweimal reviewt.
