@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/api, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/api, rolle/student]
 aliases: [extra_run_stale fehlt in der Swagger-Doku]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -31,3 +31,6 @@ neuer `runId` an der alten fest. Die Arcade ist nicht betroffen (sie kennt den C
 ## Verlauf
 
 - **2026-11-14** — angelegt aus der Nachschau zu Sprint 73 (Backlog-Lauf 2026-11-14), Stellen am Stand `HEAD` gelesen.
+- **2026-11-14** — **abgenommen** (Sprint 75). `ExtraTrainingController`-`<summary>` nennt beim Start das Verwerfen
+  einer veralteten Runde (neue `runId`) und bei der Abgabe `409 extra_run_stale` und `extra_training_locked`. volle Suite 1628/1628 (Release, nach den Review-Fixes), Vitest 1033/1033 (zwei volle Läufe), `tsc -b` grün; Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 8 passed (`truhe`, `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `pfad`, `lektion`, `full-flow`, `interessen`); Reviews `pugling-reviewer` + `frontend-reviewer`, zehn Funde im Sprint behoben; Commit `f96ec5c6`.
+  Kein eigener Test: Doku-Text, das Verhalten halten die B-545-Tests.

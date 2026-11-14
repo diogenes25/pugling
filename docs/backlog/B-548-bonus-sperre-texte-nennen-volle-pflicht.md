@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/api, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/api, rolle/student, rolle/supervisor]
 aliases: [Bonus-Sperre nennt noch die volle Pflicht]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -36,3 +36,7 @@ Die Markdown-Doku (`wiki/05-punkte-und-bonus.md`, `docs/tutorial-*.md`) ist in d
 ## Verlauf
 
 - **2026-11-14** — angelegt aus der Nachschau zu Sprint 73 (Backlog-Lauf 2026-11-14), Stellen am Stand `HEAD` gelesen.
+- **2026-11-14** — **abgenommen** (Sprint 75). Texte nachgezogen: `ExtraTrainingDtos.cs` (Swagger), Kommentare an der
+  Kistenvergabe in `PositionPracticeController`/`PositionTestsController`, `en.ts` („Today's daily goals first“),
+  `VaterKind.tsx` (Bonus-Absatz: Wochenziele zählen nicht). volle Suite 1628/1628 (Release, nach den Review-Fixes), Vitest 1033/1033 (zwei volle Läufe), `tsc -b` grün; Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 8 passed (`truhe`, `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `pfad`, `lektion`, `full-flow`, `interessen`); Reviews `pugling-reviewer` + `frontend-reviewer`, zehn Funde im Sprint behoben; Commit `f96ec5c6`. Kein eigener Test: reine Texte, die der Code schon
+  einhält (B-535-Tests); geprüft per grep, dass keine Stelle mehr „duty“ für die Belohnungsregel sagt.
