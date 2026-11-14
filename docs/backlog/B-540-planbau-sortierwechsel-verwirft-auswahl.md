@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Planbau verwirft Auswahl beim Umsortieren]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -137,3 +137,6 @@ Tests. Größer als XS, weil zwei Komponententests mit zwei Mock-Seiten und eine
 - **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt (Sortierung steckt weiter im Schlüssel, `PlanPositions.tsx:498`, `:863`; `auswahlNachUmsortieren` steht in `wizardSearch.ts:117`, im Planbau unbenutzt). Ist-Stand-Zeilen berichtigt; `wartet_auf` geleert, weil B-534 den Umbau von `PlanPositions.tsx` committet hat (`a3e5c1ba`).
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert (User Story, Ist-Stand mit Zeilen, Lücke), gegrillt (drei Stakeholder-Entscheidungen im Auftrag des Nutzers: eigener Auswahl-Schlüssel aus `planbauKriterien`, `auswahlNachUmsortieren` nach jeder frischen Seite, Formularwerte bleiben), geschätzt: S, nur Frontend, Konflikt mit B-16/B-140 in `PlanPositions.tsx`.
 - **2026-11-14** — Sprint 74, Frontend gebaut: `planbauAuswahlSchluessel(filter)` (ohne Sortierung) speist `filterKey`; neuer Effekt auf `exercises.data` ruft `auswahlNachUmsortieren`, sobald die Seite zum Stand gehört (`frontend/src/vater/PlanPositions.tsx`). Tests: `PlanPositions.test.ts` „Planbau – Auswahl-Schlüssel“ (AK 1, zwei Fälle); `PlanPositionsAdd.test.tsx` „A bleibt gewählt, wenn die umsortierte Seite A enthält“ (AK 2), „die Auswahl fällt mit Hinweis, wenn die umsortierte Seite A nicht enthält“ (AK 3), „ein Filterwechsel leert die Auswahl weiter mit dem bisherigen Hinweis“ (AK 4); E2E `e2e/planbau-bewertung.spec.ts` um Auswahl vor dem Umsortieren und `toBeChecked` danach erweitert (AK 5). Rote Proben für AK 2/3 gemessen.
+- **2026-11-14** — **abgenommen** (Sprint 74). volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. Mutante N8b (Schlüssel mit Sortierung) → rot an „A bleibt gewählt …“
+  (meine erste Fassung N8 war äquivalent – sie fixierte die Sortierung – und ist kein Beleg). Review-Fund behoben: der
+  Hinweis sagt „nach dem Neuladen“ statt „nach dem Umsortieren“, weil der Effekt auch nach „Erneut suchen“ greift.

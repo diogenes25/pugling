@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Vater-UI aufräumen, Reiter, AddPanel, ein Speichern]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -53,3 +53,7 @@ und nicht rätseln muss, welcher von drei Knöpfen meine Änderung sichert.
 
 - **2026-11-13** — angelegt und umgesetzt (Quelle: Nutzer im Chat).
 - **2026-11-14** — Im Code-Review des Backlog-Laufs 2026-11-13 (Branch `auto/backlog-lauf-2026-11-13`, nach dem Merge von `auto/fertigstellung`) drei Funde an dieser Arbeit, dort behoben: (1) `ExerciseEditModal` – Enter speicherte nicht (kein Submit-Knopf mehr im Formular) und `save()` prüfte `veraltet` nicht (Vollersatz aus altem Stand möglich, B-210) → Knopf per `form=` gebunden, `veraltet`-Prüfung; (2) `VaterKind` – ein Reiterwechsel verwarf ungesicherte Eingaben → Reiter bleiben eingehängt (`SectionPanel`, `hidden`), die Fachlehrer-Suche lädt nach dem Speichern von Klasse/Schulart neu; (3) `PlanPositions` – die Meldung zum Hinzufügen stand weit über dem `AddPanel` → eigenes Banner am Panel, Ladefehler als `ListenAusfall`. Dazu `AddPanel` `aria-controls` nur offen, `SectionTabs`-Kommentar zu `replace` berichtigt.
+- **2026-11-14** — **abgenommen** (Sprint 74; gebaut und im Gesamt-Review des Laufs 2026-11-13 nachgebessert,
+  `a3e5c1ba` + `40dd9bfa`). Belege nach dem letzten Edit: volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. AK 1 (Reiter, `?bereich=`) tragen `interessen`,
+  `bonus-deckel`, `kind-lehrbuch-fach`; AK 2 `AddPanel.test.tsx`; AK 3 `uebung-teilspeichern`. Keine eigene
+  Mutantenprobe in diesem Lauf (die Arbeit stammt aus dem Vorlauf, dort reviewt).

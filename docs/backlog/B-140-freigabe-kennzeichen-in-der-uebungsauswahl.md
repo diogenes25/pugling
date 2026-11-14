@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/supervisor]
 aliases: [zurückgezogen in der Übungsauswahl, exercise_not_executable erst beim Speichern, canAssign]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -164,3 +164,11 @@ als B-540.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert (User Story, Ist-Stand um Regel `CanExecuteAsync`, Projektion und `selectAll` ergänzt, `unverifiziert` entfernt), gegrillt (Entscheidung 1 vom Nutzer aus G-4, 2–6 als Stakeholder-Entscheidungen im Auftrag des Nutzers: SQL-Projektion mit Gleichheitstest, fester Grund-Satz, sperren statt ausblenden, „Alle wählen“ filtert, Klassenarbeit-Auswahl zurückgestellt), geschätzt: M, `wo: beides`, keine Migration, kein Vertragsbruch.
 - **2026-11-14** — Sprint 74, Frontend gebaut: fester Grund-Satz `NICHT_ZUWEISBAR_GRUND` und reine Regel `nurZuweisbare` (`frontend/src/vater/wizardSearch.ts`); Planbau-Radio `disabled={zeilenVeraltet || !ex.canAssign}` mit Grund-Text per `aria-describedby`, „Ausprobieren“ bleibt bedienbar (`PlanPositions.tsx`); Assistent: Kästchen gesperrt + Grund, „Alle wählen“ übernimmt über `nurZuweisbare` nur Zuweisbare und meldet die übersprungenen im Auswahl-Hinweis (`VaterWizard.tsx`). Tests: `PlanPositionsAdd.test.tsx` „sperrt das Radio, nennt den Grund und lässt die zuweisbare Zeile frei“ (AK 3); `VaterWizard.test.tsx` „sperrt das Kästchen und nennt den Grund“, „„Alle wählen“ übernimmt nur zuweisbare und nennt die übersprungenen“, „schweigt, wenn alles zuweisbar ist“ (AK 4); neue E2E `e2e/auswahl-nicht-zuweisbar.spec.ts` (AK 5, prüft dazu das 403 `exercise_not_executable` des Servers). Grenze: AK 4 hält die Regel, nicht ihre Aufrufstelle in `selectAll` (ein Rückbau dort auf `items.map(e => e.id)` fängt kein Vitest).
 - **2026-11-14** — Sprint 74, Lücke an der Aufrufstelle geschlossen: `e2e/auswahl-nicht-zuweisbar.spec.ts` gemeinsamer Aufbau `aufbau()` und zweiter Fall „„Alle wählen“ im Assistenten überspringt die zurückgezogene Übung und sagt es“ (Kästchen gesperrt mit Beschreibung, Hinweis „1 Übung gewählt, 1 nicht zuweisbare übersprungen.“, zurückgezogene nicht gewählt). Rote Probe: `VaterWizard.tsx` `selectAll` auf `setSelected(filteredExercises.map(…))` zurückgebaut → Fall rot (Hinweis fehlt). Weiter ungedeckt: der 500er-Nachschlag-Zweig `uebernehmen(alle.items)` (braucht mehr Treffer als eine Seite).
+- **2026-11-14** — **abgenommen** (Sprint 74). volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. Mutanten rot: N5 Execute-Grant fehlt, N6 `ExecutePublic`
+  ignoriert, N7 Admin fehlt (AK 1/2, sechs Fälle gegen echtes Zuweisen – der Server antwortet 403, nicht 400), N12
+  Planbau-Radio (AK 3), N13 Assistent-Kästchen und N14 „Alle wählen“-Filter (AK 4; die Aufrufstelle hält die E2E,
+  Rot-Probe vom Bau-Agenten gemessen), N16 Klassenarbeit (Review-Fund: Entscheidung 6 hatte sie zurückgestellt, die
+  Grenze war offen – nachgezogen, E2E-Fall). Grund-Satz nach Review neutral: „hat sie nicht für alle freigegeben“
+  (gilt auch für nie freigegebene Übungen). Bewusst offen: der Grund wird doppelt vorgelesen (Span im Label und per
+  `aria-describedby`), Kosmetik. Ungedeckt: `VaterWizard.tsx` `uebernehmen(alle.items)` (greift erst bei mehr Treffern
+  als einer Seite).

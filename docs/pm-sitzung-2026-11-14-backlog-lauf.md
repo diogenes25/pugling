@@ -146,3 +146,27 @@ das Frontend in einer Hand, weil drei Stories `PlanPositions.tsx` ändern (B-540
   einem Neuladen; DTO-Doku behauptete, die übrigen Felder trügen „erben“ als eigenen Wert (falsch für vier Felder →
   neue Story **B-547**); Testverweis im Kommentar zeigte auf eine nicht existierende Datei.
 - Bewusst offen: der doppelt vorgelesene Grund (Span im `<label>` und per `aria-describedby`) – Kosmetik, nicht behoben.
+- Verifikation: Suite **1621/1621** (Release), Vitest **1023/1023** (drei volle Läufe in Folge), `tsc -b` grün,
+  **17 Mutanten** rot (N1–N16, N8b; N8 war äquivalent und zählt nicht). Commit `defa3ea0`.
+
+## Runde 74 — Re-Review / Abnahme
+
+- **Vater – abgenommen.** Rollengang als Playwright gegen frisch gestartete Server: 19 passed. Gesehen: eine
+  zurückgezogene Übung steht im Planbau, im Assistenten und in der Klassenarbeit gesperrt mit Grund; „Alle wählen“
+  überspringt sie und sagt es; die Positionszeile nennt die Lernkontrolle (getippt / Selbsteinschätzung / kein Test).
+  B-534 (Reiter im Kind-Hub, ein Speichern je Fläche) mit abgenommen.
+- **Creator – Regressionszeuge:** Suite grün; das Manifest ist additiv (`stages`, `selfAssessedTest`), der KI-Creator
+  liest es unverändert.
+- **Sohn – Regressionszeuge:** `full-flow` grün, kein Sohn-Pfad im Diff.
+
+## Retrospektive 74
+
+**Nachschau:** Sprint 73 läuft als Agent (Ergebnis folgt in Retro 75).
+
+- **Was die eigenen Tore durchgelassen haben:** Der Bau-Agent hat eine Server-Regel im Frontend nachgebaut
+  („ungetippter Test ⇒ Selbsteinschätzung zählt“) und für Zuordnung damit falsch gewarnt; die Klassenarbeit war per
+  Entscheidung zurückgestellt, das Sprint-Ziel sprach aber von „Übungen, die er nicht zuweisen darf“ – die Grenze war
+  offen. Dazu ein Vitest-Lauf, der unter Last 2–3 Fälle verlor (Wartezeit 1 s, gemessen bis 2,4 s).
+- **Der eine Mechanismus:** `frontend/src/test-setup.ts` setzt `asyncUtilTimeout` auf 4 s – ein Lauf, der nur unter
+  Last fällt, misst nichts und kostet Vertrauen in jede rote Zeile.
+- **Bewusst ungedeckt:** der doppelt vorgelesene Grund; der Mehr-Seiten-Zweig von „Alle wählen“.

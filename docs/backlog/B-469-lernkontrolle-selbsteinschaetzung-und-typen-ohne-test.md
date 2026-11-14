@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, rolle/supervisor]
 aliases: [Lernkontrolle, Selbstcheck, Grammar ohne Test, Lernkontrolle sichtbar]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Frage
 groesse: S
@@ -161,3 +161,8 @@ Test-Pfad ziehen (B-01, S) an Risiko, aber mit derselben Teile-Zahl.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt, geschätzt – Stakeholder im Auftrag des Nutzers: getippt wird keine Pflicht (Entscheidung 1), Kern ist die sichtbare Lernkontrolle je Positionszeile (Entscheidung 2), Test für Grammatik/Übersetzung und der API-Testversuch an `None`-Positionen zurückgestellt (3, 4); S, frontend, keine Migration, kein Vertragsbruch.
 - **2026-11-14** — Sprint 74, Frontend gebaut (Kern nach Entscheidung 2): `lernkontrolleText(checkMode, requireTypedTest)` und die Angabe in `PositionRow` statt „· getippt“, schwache Arten als `pill amber`, InfoHint `lernkontrolle` (`frontend/src/vater/PlanPositions.tsx`, `lib/fieldHelp.ts`). Tests: `PlanPositions.test.ts` „Positionszeile – Lernkontrolle (B-469)“ (AK 1 vier Fälle, AK 3 „unbekannter Typ: nichts“); `PlanPositionsStufe.test.tsx` „zeigt je Position die Art der Prüfung, die schwachen hervorgehoben“ (AK 2, AK 4). Offen: die E2E `e2e/lernkontrolle-sichtbar.spec.ts` (AK 5) ist nicht gebaut.
 - **2026-11-14** — Sprint 74, E2E nachgezogen: `frontend/e2e/lernkontrolle-sichtbar.spec.ts` „Die Positionszeilen nennen die Art der Lernkontrolle“ (AK 5; drei Positionen per API, Plan-Detail im UI; getippt/ungetippt/Grammatik je Zeile, `pill amber` an den schwachen, kein „· getippt“). Grün (Lauf „3 passed“ zusammen mit `auswahl-nicht-zuweisbar`); rote Probe: Zeile auf `· getippt` zurückgedreht → Spec rot an „Expected substring: Test getippt“.
+- **2026-11-14** — **abgenommen** (Sprint 74, Kern nach Entscheidung 2). volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. Mutanten rot: N15 Manifest-Flag ignoriert;
+  N3 `selfAssessedTest` immer falsch. Review-Fund behoben: Zuordnung warnte „Selbsteinschätzung zählt“, obwohl der
+  Server dort jeden Test getippt wertet – das Manifest trägt jetzt `selfAssessedTest` aus der Stufenregel des Typs
+  (`ExerciseTypeRegistry.Published`), Test `Manifest_Sagt_Ob_Ein_Test_Selbsteinschaetzung_Zaehlt`. AK 5 hält die E2E
+  `lernkontrolle-sichtbar` (Rot-Probe vom Bau-Agenten gemessen). Entscheidungen 3/4 bleiben zurückgestellt.

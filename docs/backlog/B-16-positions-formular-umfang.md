@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/training, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/training, rolle/supervisor]
 aliases: [Positions-Edit-Formular]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -218,3 +218,8 @@ additiv, `ClearStage` mit Vorgabe `false`; `Pugling.Client` braucht keine neue M
 - **2026-11-14** — Abgleich Backlog-Lauf: Lücke besteht unverändert (`settingsToDto` `PlanPositions.tsx:286-302` ohne `stage`/`scope`/`speed…`; Vertrag `UpdatePositionDto` `StudyPlanDtos.cs:180-185` mit 22 Feldern; Stufenprüfung `PlanPositionsController.cs:130`). Zeilen im Stand-Block berichtigt. Hinweis: der Status `ausformuliert` steht, obwohl G-4 (2026-10-23) die überholte Entscheidung 4 ersetzt hat – Entscheidungen 3/4 und AK 2 sprechen noch vom rohen Zahlenfeld; vor `gegrillt` nachziehen.
 - **2026-11-14** — Refinement Backlog-Lauf: neu gegrillt nach G-4 – Entscheidung 3 berichtigt, 4 durch die Nutzer-Entscheidung ersetzt und ausgeformt (`ExerciseTypeManifest.Stages` aus `IExerciseType.StageOptions`), 5 `ClearStage` (Nutzer, G-4), dazu Stakeholder-Entscheidungen 6–8 im Auftrag des Nutzers (nur `Stage` bekommt einen Schalter, Übungswechsel setzt die Stufe zurück, Tempo-Felder im Combo-Muster); Ist-Stand um Manifest/PATCH-Belege ergänzt; AKs neu mit roter Probe je Fall. Geschätzt: M, `wo: beides`, keine Migration, kein Vertragsbruch (additiv).
 - **2026-11-14** — Sprint 74, Frontend gebaut (Schritte 3–5): `ExerciseTypeLookup.stages(type)` (`frontend/src/lib/exerciseTypes.ts`); `PositionSettings` um `stage`/`stageStored`/`scope`/`speedThresholdSeconds`/`speedBonusPoints`, `settingsToDto`/`settingsToUpdateDto` (`clearStage`), `PositionFields` mit „Inhalte-Auswahl“, „Stufe“ (nur bei Manifest-Stufen, erste Option „Standard der Übung“) und zwei Tempo-Feldern, Stufen-Reset im Radio-`onChange` (`frontend/src/vater/PlanPositions.tsx`); Feldhilfe `scope`, `stage`, `speedThresholdSeconds`, `speedBonusPoints` (`lib/fieldHelp.ts`). Tests: `PlanPositions.test.ts` „Positions-Formular – Stufe, Auswahl, Tempo (B-16)“ (AK 4, fünf Fälle); neue Datei `PlanPositionsStufe.test.tsx` (eigenes Manifest, weil `loadExerciseTypes` modulweit cacht) mit „zeigt beim Anlegen …“ und „zeigt beim Bearbeiten …“ (AK 3) sowie „ein Übungswechsel setzt die Stufe … zurück“ (AK 5). Abweichung: AK 3 liegt nicht in `PlanPositions.test.ts` (reine `.ts`, kein Render).
+- **2026-11-14** — **abgenommen** (Sprint 74). volle Suite 1621/1621 (Release), Vitest 1023/1023 (drei volle Läufe in Folge), `tsc -b` grün; Rollengang Vater als Playwright gegen frisch gestartete Server nach dem letzten Edit: 19 passed (`auswahl-nicht-zuweisbar` 3 Fälle, `lernkontrolle-sichtbar`, `planbau-bewertung`, `vater-von-null`, `assistent`, `uebung-teilspeichern`, `interessen`, `bonus-deckel`, `kind-lehrbuch-fach`, `responsive-vater`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `defa3ea0`. Mutanten rot: N1 `Stages` leer und N2 Einzel-Endpunkt ohne Senke
+  (AK 1), N4 Schalter fehlt (AK 2, `PatchSemanticsTests`), N9 `clearStage` nie gesendet (AK 4), N10 Feld ohne
+  Optionen gezeigt (AK 3), N11 kein Reset beim Übungswechsel (AK 5). Abweichung: AK 2 hält der reflexive Fall in
+  `PatchSemanticsTests`, keine eigene Zeile in `PatchClearFieldTests`. Rest aus dem Review: vier weitere Felder ohne
+  „zurück auf Standard“ → B-547.
