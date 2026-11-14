@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-544 · Der Abschlusstest liefert und zeigt den Tipp
@@ -90,4 +91,5 @@ Mutanten-Probe je AK, volle Suite; Rollengang über die E2E-Specs des Tests (`te
   | M3 | frontend/src/sohn/SohnTest.tsx:240 | red | red | 💡-Zeile zurück (AK 3) |
 
   Grundlinie nach dem Zurückspielen: green.
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review Ã¼ber den ganzen Lauf (`pugling-reviewer`, `frontend-reviewer`) ohne Befund an dieser Story. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review über den ganzen Lauf (`pugling-reviewer`, `frontend-reviewer`) ohne Befund an dieser Story. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Am Stand `fa335075` gelesen: einzige Ausgabe einer Testkarte ist `ToItem` (`backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:45-52`, über `Next` `:235`), der Vertrag `TestItem` hat kein `Hint` mehr (`backend/Pugling.Contracts/Student/TestDtos.cs:34-41`), die Arcade keinen Platz dafür (`frontend/src/sohn/SohnTest.tsx:241`); das Üben behält den Tipp (`PositionPlayService.cs:328`). `ItemResultDto.HintsUsed` (`TestDtos.cs:59`) ist schon vor dieser Story nie gesetzt worden – Sache von B-223, kein Durchrutscher.

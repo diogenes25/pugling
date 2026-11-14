@@ -80,3 +80,42 @@ B-432 schon gebaut.
 `dotnet-ef database update` gegen eine Kopie der echten DB: `CardShownAt` (aus dem Lauf 2026-11-13, auf der echten
 DB noch nicht angewandt), `NewBonusPaidAt`, `ExtraRunContentHash` laufen durch; 70 Fortschrittszeilen als bezahlt
 markiert, 35 offen; 11 Bestandsrunden ohne Fingerabdruck.
+
+## Iteration 73 — umgesetzt
+
+- **B-535** (Backend + Arcade): `RewardsUnlocked` als eine Senke; Malus ab dem ersten eigenen Spieltag; Neu-Bonus über
+  `NewBonusPaidAt`; die Ziele-Karte zählt Tages- und Wochenziele getrennt (Review-Fund).
+- **B-545**: Fingerabdruck der Bonus-Runde, veraltete Runde wird verworfen (`409 extra_run_stale`), Arcade räumt die
+  gespeicherten Antworten.
+- **B-546**: `CheckSql` – die zweite Migration des Sprints brauchte keine Handkorrektur mehr.
+- **B-542**: entschieden „bleibt“, Regressionstest.
+- Verifikation: Suite **1612/1612** (Release), Vitest **1000/1000**, `tsc -b` grün, **24 Mutanten** rot am benannten
+  Test (Tabellen im `## Verlauf` der Stories), Migration gegen eine DB-Kopie geprobt. Commits `fa335075` (Code),
+  `1f16a98c` (Abnahme).
+
+## Runde 73 — Re-Review / Abnahme
+
+- **Sohn – abgenommen.** Rollengang als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed
+  (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`). Mit
+  erfülltem Tagesziel und offenem Wochenziel ist das Bonus-Training offen, die Kiste gebucht, und die Karte zeigt
+  „Ziele heute 1 / 1“ neben „Ziele diese Woche 0 / 1“.
+- **Vater – Regressionszeuge:** Suite grün, `full-flow` grün; kein Vater-Pfad im Diff außer dem Tutorial-Satz (B-542).
+- **Creator – Regressionszeuge:** Suite grün; kein Creator-Pfad im Diff.
+- **Am Gerät offen:** keiner. Handgriff: Friedrichs −60 Malus vom 13.11. per „Verschenken“ ausgleichen (B-535,
+  Entscheidung 4).
+
+## Retrospektive 73
+
+**Nachschau:** Sprint 72 (B-544, B-522, B-528, B-529, B-253, B-530) nachgesehen – ohne Fund, `nachgeschaut` gesetzt.
+Nebenbefund: 20 Story-Dateien des Laufs vom 2026-11-13 trugen doppelt kodierte Umlaute (`Ã¼`, `â€“`) in den
+Abnahme-Zeilen; mechanisch repariert (Zeichenfolgen zurückdekodiert, sonst nichts geändert).
+
+- **Was die eigenen Tore durchgelassen haben:** Der Reviewer fand, dass die Einführungstag-Ausnahme (B-432) noch am
+  alten Fensterbeginn hing – genau an Friedrichs erstem Spieltag hätte sie nie gegriffen. Mein eigener Test seedete
+  nur einen Test ohne Einführung und hielt das falsche Verhalten fest. Dazu Texte „today's duty“ an der neuen Regel.
+- **Der eine Mechanismus:** eine Zeile in `pm-loop` (Step 4): Wer eine Grenze verschiebt, greppt den Helfer der alten
+  Grenze und liest jeden Aufrufer neu. Prosa, weil sich „Ausnahme an einer verschobenen Grenze“ nicht statisch
+  erkennen lässt.
+- **Tor-Vorschlag (nicht gebaut, hält sonst an):** ein Wächter, der in `docs/**/*.md` doppelt kodiertes UTF-8 (`Ã`,
+  `â€`) ablehnt – die Umlaute des Vorlaufs sind zwei Tage unbemerkt geblieben. Liegt in der Liste für den Menschen.
+- **Bewusst ungedeckt:** die Doppel-Abgabe einer veralteten Bonus-Runde (500 → 409) ist nur gelesen, nicht gemessen.

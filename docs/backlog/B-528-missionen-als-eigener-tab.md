@@ -12,6 +12,7 @@ quelle: "B-525, Entscheidung 9 (Grill-Runde 2026-11-13); docs/duolingo-snipwise-
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-528 · Missionen mit Restzeit (statt eines eigenen Tabs)
@@ -115,5 +116,6 @@ der eingefrorenen Test-Uhr laufen oder maskiert werden. Sonst keine.
   | M7 | frontend/src/sohn/GamificationPanels.tsx:24 | red | red | `null` als Zahl formatiert |
 
   Grundlinie nach dem Zurückspielen: green.
-- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review â€“ die Frist las sich am Samstag als â€žnoch 1 Tagâ€œ, obwohl heute und morgen bleiben; behoben in `fbd78e04` (â€žinkl. heuteâ€œ). Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review – die Frist las sich am Samstag als „noch 1 Tag“, obwohl heute und morgen bleiben; behoben in `fbd78e04` („inkl. heute“). Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
 - **2026-11-14** — Handblick durch E2E ersetzt: `frontend/e2e/erfolge-woche-frist.spec.ts` – 2 passed (zusammen mit `bonus-deckel-voll.spec.ts`, Ausweichports 5217/5190; Wochenfrist aus dem UTC-Wochentag gerechnet). Rote Probe: Zeitraum statt Frist im `MissionsPanel` → rot an „nur noch heute“.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. `DaysLeft` aus `PeriodWindow(...).To − today` (`backend/Pugling.Api/Services/Shared/GamificationService.cs:96-103`, Woche Mo–So UTC `:162-172`), `null` bei `OneOff`; Vertrag sagt „Tage nach heute“ (`backend/Pugling.Contracts/Student/LearnProgressDtos.cs:26-31`), das Panel zeigt `+1` „inkl. heute“ (`frontend/src/sohn/GamificationPanels.tsx:24-28`, `frontend/src/i18n/de.ts:67-69`) – Vertrag und Anzeige stimmen überein. AK 4 nennt noch „noch 4 Tage“ für `daysLeft = 4`; die Review-Änderung (`fbd78e04`) steht im Verlauf, das ist Text der Story, kein Code-Fehler.
