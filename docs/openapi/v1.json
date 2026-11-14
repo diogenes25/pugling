@@ -8440,7 +8440,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s duty is done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played, \u0060409 extra_cap_reached\u0060 for a one-shot exercise - new or open - once today\u0027s coin cap is\nfull, so it is not used up for nothing.",
+        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s daily goals are done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played, \u0060409 extra_cap_reached\u0060 for a one-shot exercise - new or open - once today\u0027s coin cap is\nfull, so it is not used up for nothing.",
         "parameters": [
           {
             "name": "childId",
@@ -32344,7 +32344,8 @@
           "goalsTotal",
           "outstanding",
           "pointsAwarded",
-          "positions"
+          "positions",
+          "rewardsUnlocked"
         ],
         "type": "object",
         "properties": {
@@ -32390,9 +32391,12 @@
             "items": {
               "$ref": "#/components/schemas/PositionStatus"
             }
+          },
+          "rewardsUnlocked": {
+            "type": "boolean"
           }
         },
-        "description": "Daily rollup of a study plan across its positions."
+        "description": "Daily rollup of a study plan across its positions. bool DayOverview.DutyDone counts every goal (daily and weekly) and\ndrives streak and evaluation; bool DayOverview.RewardsUnlocked counts only the daily goals - or every goal when the\nplan has no daily one - and gates the daily box and the bonus training (B-535): a week of hard grammar must not\nlock seven days of rewards."
       },
       "DecodedSentence": {
         "required": [
@@ -41815,6 +41819,7 @@
               "extra_cap_reached",
               "extra_exercise_done",
               "extra_run_completed",
+              "extra_run_stale",
               "extra_training_locked",
               "forbidden",
               "grammar_topic_in_use",

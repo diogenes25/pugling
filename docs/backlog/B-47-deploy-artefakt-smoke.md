@@ -30,6 +30,13 @@ zu bleiben.
 
 ## Ist-Stand am Code
 
+> **Nachgemessen 2026-11-14:** `deploy-azure.yml:74-75` („API publish") geht direkt zu `azure/webapps-deploy@v3`
+> (`:78`); der `workflow_run`-Block ist auskommentiert (`:28`), es bleibt `workflow_dispatch` (`:35`). `ci.yml` hat
+> weiter drei Jobs (`ci` `:48`, `frontend` `:173`, `markdownlint` `:206`), keiner publiziert. `Program.cs:233`
+> (`AddHealthChecks`), `:274-275` (Fail-fast `Jwt:Key`), `:701` (`/health`), `:710` (`MapFallbackToFile`). Neu:
+> der tatsächlich gefahrene Betrieb ist `scripts/heimnetz.ps1` (`dotnet publish` `:112`, Prüfung auf eine gebaute
+> `index.html` `:118`, aber kein HTTP-Probelauf). Die Zeilenangaben in den Abschnitten darunter sind älter.
+
 - `ProductionWebAppFactory`/`ProductionStartupTests` (B-41, abgenommen) starten die Produktions-
   **Konfiguration** ausschließlich in-process über `WebApplicationFactory<Program>`
   (`backend/Pugling.Api.Tests/ProductionWebAppFactory.cs`) – kein `dotnet publish`, kein eigener
@@ -189,3 +196,4 @@ Angriffsplan-Schritt 5, nicht der grüne Lauf allein – dasselbe Prinzip wie be
   `workflow_dispatch` plus Gegenprobe.
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt inhaltlich, Zeilen verrutscht (`deploy-azure.yml:74-82`, `Program.cs:226/681/686`). Die User Story nennt als Gate „die Azure-Reaktivierung aus B-33“ – **B-33 ist verworfen**; das Gate ist der Neubau des Deploys (`docs/deployment-azure.md:7-10`). Entscheidung 1 verbietet den Bau davor, darum `wartet_auf`. Wird das Deployment neu gebaut, ist die Bauform (Schritt in genau dieser YAML) eventuell hinfällig.
 - **2026-10-23** — In der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-07 ist verworfen (Neubau statt Reaktivierung). Das Gate dieser Story ist damit allein der Neubau; beim Neubau prüfen, ob der Smoke-Schritt in die neue Pipeline gehört statt in `deploy-azure.yml`.
+- **2026-11-14** — Abgleich Backlog-Lauf: veraltet, Kern gilt, `wartet_auf` unverändert. Zeilen nachgemessen (Kasten unter „Ist-Stand am Code"); neu ist `scripts/heimnetz.ps1` als gefahrener Betrieb mit eigenem `dotnet publish` – beim Bau prüfen, ob der Smoke dorthin gehört statt in `deploy-azure.yml`.

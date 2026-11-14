@@ -569,7 +569,8 @@ Response — `HTTP 200`:
         "seriesUnitId": 7,
         "seriesUnitLabel": "Unit 1"
       }
-    ]
+    ],
+    "rewardsUnlocked": true
   },
   "dailyBox": {
     "claimedToday": true,

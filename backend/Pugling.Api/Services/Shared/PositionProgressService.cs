@@ -247,13 +247,30 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var obligations = statuses.Where(s => s.Cadence != GoalCadence.None).ToList();
         var met = obligations.Count(s => s.GoalMet);
         var dutyDone = obligations.Count > 0 && met == obligations.Count;
-        var outstanding = obligations.Where(s => !s.GoalMet)
-            .Select(s => $"{s.ExerciseTitle} ({(s.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")}) offen")
-            .ToList();
+        var outstanding = obligations.Where(s => !s.GoalMet).Select(OutstandingLabel).ToList();
+        var rewardObligations = RewardObligations(statuses);
 
         return new DayOverview(day, dutyDone, obligations.Count, met,
-            await PointsAwardedAsync(plan.Id, day, ct), outstanding, statuses);
+            await PointsAwardedAsync(plan.Id, day, ct), outstanding, statuses,
+            rewardObligations.Count > 0 && rewardObligations.All(s => s.GoalMet));
     }
+
+    /// <summary>
+    /// The goals the day's rewards (daily box, bonus training) hang on (B-535): the daily goals, or every goal when the
+    /// plan has none. Weekly goals keep their own penalty at the end of the week; letting them gate the box would lock
+    /// it on every day of a week whose hard topic is still open. Without daily goals the old rule stays, or a plan of
+    /// weekly goals would hand out the box for nothing.
+    /// </summary>
+    public static IReadOnlyList<PositionStatus> RewardObligations(IReadOnlyList<PositionStatus> statuses)
+    {
+        var obligations = statuses.Where(s => s.Cadence != GoalCadence.None).ToList();
+        var daily = obligations.Where(s => s.Cadence == GoalCadence.Daily).ToList();
+        return daily.Count > 0 ? daily : obligations;
+    }
+
+    /// <summary>The child-facing line for an open goal, shared by the day's list and the bonus lock.</summary>
+    public static string OutstandingLabel(PositionStatus s) =>
+        $"{s.ExerciseTitle} ({(s.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")}) offen";
 
     /// <summary>
     /// Evaluates the day and credits the goal points once for every position with a reached goal
@@ -362,17 +379,21 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <para>
     /// The rule only spares the penalty; it does NOT count as goal met (no reward, no daily box, the overview keeps the
     /// goal open), which is why it lives here and not in <see cref="IsGoalMetAsync"/>: introducing deliberately earns
-    /// nothing. The introduction day is the position's first due day, <c>max(CreatedAt as UTC date, plan.StartDate)</c>,
-    /// bound to creation so that skipping cannot push the exception to tomorrow. Daily cadence only - a weekly goal leaves
+    /// nothing. The introduction day is the first day the position owes anything: its first due day,
+    /// <c>max(CreatedAt as UTC date, plan.StartDate)</c>, or the child's first play day in the plan when that is later
+    /// (B-535 - before it nothing is settled, so a fixed earlier day would never be spared). Both are fixed once reached,
+    /// so skipping cannot push the exception to tomorrow. Daily cadence only - a weekly goal leaves
     /// days to practise. The portion is the whole pool, or <c>min(dose, pool)</c> under a daily dose (whose positions
     /// introduce every day, hence the fixed day). A position without an introducible pool keeps the old rule. Already
     /// booked penalties stay: this check only runs for periods not yet settled.
     /// </para>
     /// </summary>
-    private async Task<bool> IsIntroductionDaySparedAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct)
+    private async Task<bool> IsIntroductionDaySparedAsync(PlanPosition pos, StudyPlan plan, DateOnly firstPlay,
+        DateOnly day, CancellationToken ct)
     {
         if (pos.Cadence != GoalCadence.Daily) return false;
-        var introductionDay = FirstDueDay(pos, plan);
+        var firstDue = FirstDueDay(pos, plan);
+        var introductionDay = firstPlay > firstDue ? firstPlay : firstDue;
         if (day != introductionDay) return false;
 
         var pool = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
@@ -409,13 +430,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var appliedCoins = 0;
         var changed = false;
 
+        var firstPlayDays = await FirstPlayDaysAsync(positions.Select(p => p.StudyPlanId).Distinct().ToList(), ct);
+
         foreach (var pos in positions)
         {
             var plan = pos.StudyPlan!;
+            // B-535: the penalty starts with the child's first play in this plan - a plan set up days before the child
+            // ever opens it must not greet the child with a batch of deductions. From then on every position counts,
+            // also one never opened, or skipping a position would be the way out of its duty.
+            if (!firstPlayDays.TryGetValue(plan.Id, out var firstPlay)) continue;
             // B-432: a position owes nothing for days before it existed - settlement starts at its first due day.
             // Penalties already booked for such days stay (no retroactive rewrite of the ledger).
             var firstDue = FirstDueDay(pos, plan);
-            var windowStart = firstDue > lookbackFloor ? firstDue : lookbackFloor;
+            var windowStart = new[] { firstDue, firstPlay, lookbackFloor }.Max();
 
             var cadence = pos.Cadence;
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
@@ -430,7 +457,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 // goal can still be met): punish only when the period was actually missed.
                 if (await IsGoalMetAsync(pos, plan, to, ct)) continue;
                 // Spared, not met: no penalty, but no reward either - the reward path never sees this rule (B-432).
-                if (await IsIntroductionDaySparedAsync(pos, plan, from, ct)) continue;
+                if (await IsIntroductionDaySparedAsync(pos, plan, firstPlay, from, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {
@@ -471,6 +498,32 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             return 0;
         }
         return appliedCoins;
+    }
+
+    /// <summary>
+    /// The first day the child itself played each plan (B-535): its first own answer the server attributes to an atom
+    /// (<see cref="PositionItemProgress.IntroducedAt"/>, stamped only for the child, B-433) or its first own test. Opening
+    /// a round without answering, or only missing in a set-graded list (a miss credits no atom), does not start it.
+    /// Supervisor previews and catch-up rounds do not count - otherwise the father's check would start the child's
+    /// penalty clock. Plans the child never played are absent.
+    /// </summary>
+    private async Task<Dictionary<int, DateOnly>> FirstPlayDaysAsync(IReadOnlyCollection<int> planIds, CancellationToken ct)
+    {
+        var introduced = await db.PositionItemProgress.AsNoTracking()
+            .Where(p => planIds.Contains(p.PlanPosition!.StudyPlanId) && p.IntroducedAt != null)
+            .GroupBy(p => p.PlanPosition!.StudyPlanId)
+            .Select(g => new { PlanId = g.Key, Day = g.Min(p => p.IntroducedAt!.Value) })
+            .ToListAsync(ct);
+        var tested = await db.TestAttempts.AsNoTracking()
+            .Where(t => planIds.Contains(t.StudyPlanId) && !t.BySupervisor)
+            .GroupBy(t => t.StudyPlanId)
+            .Select(g => new { PlanId = g.Key, Day = g.Min(t => t.Day) })
+            .ToListAsync(ct);
+
+        var first = new Dictionary<int, DateOnly>();
+        foreach (var (planId, day) in introduced.Select(x => (x.PlanId, x.Day)).Concat(tested.Select(x => (x.PlanId, x.Day))))
+            if (!first.TryGetValue(planId, out var known) || day < known) first[planId] = day;
+        return first;
     }
 
     /// <summary>Day-by-day status across the runtime up to today (for the supervisor evaluation view).</summary>

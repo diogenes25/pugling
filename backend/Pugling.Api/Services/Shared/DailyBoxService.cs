@@ -8,7 +8,7 @@ namespace Pugling.Api.Services.Shared;
 /// <summary>
 /// Grants the daily reward box - the positive counterpart to
 /// <see cref="PositionProgressService.SettleClosedPeriodsAsync"/> (the "stick"). Awarded once per
-/// (child, day) when the day's duty is fully met (<see cref="DayOverview.DutyDone"/>), with a random
+/// (child, day) when the day's reward goals are met (<see cref="DayOverview.RewardsUnlocked"/>, B-535), with a random
 /// coins/gems draw that scales with the child's current streak (<see cref="PositionProgressService.Streak"/>,
 /// reused rather than a separate login counter - see B-105, decision 2).
 /// <para>
@@ -23,8 +23,8 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
     private readonly DailyBoxOptions opts = options.Value;
 
     /// <summary>
-    /// Awards the box for <paramref name="day"/> if <paramref name="dayOverview"/> reports the duty fully
-    /// met and no box has been claimed yet that day. The idempotency pre-check (a single indexed lookup)
+    /// Awards the box for <paramref name="day"/> if <paramref name="dayOverview"/> reports the reward goals
+    /// met (<see cref="DayOverview.RewardsUnlocked"/>) and no box has been claimed yet that day. The idempotency pre-check (a single indexed lookup)
     /// runs BEFORE the streak recomputation, so it only ever runs once per calendar day, not on every
     /// practice/test completion; the streak itself uses the bounded, short-circuiting
     /// <see cref="PositionProgressService.StreakBoundedAsync"/> rather than a full-runtime scan, since this
@@ -32,7 +32,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
     /// </summary>
     public async Task EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, DayOverview dayOverview, CancellationToken ct = default)
     {
-        if (!dayOverview.DutyDone) return;
+        if (!dayOverview.RewardsUnlocked) return;
         if (await db.DailyBoxClaims.AnyAsync(c => c.ChildId == plan.ChildId && c.Day == day, ct)) return;
 
         var streak = await progress.StreakBoundedAsync(plan, day, ct);

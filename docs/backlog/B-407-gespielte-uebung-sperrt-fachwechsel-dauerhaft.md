@@ -32,17 +32,17 @@ gespielt werden, ihr Fach noch wechseln kann, ohne dass ich eine Übung löschen
 ## Ist-Stand am Code
 
 - **Die Sperre:** [TextbookSeriesController.cs:195-198](../../backend/Pugling.Api/Controllers/Creator/TextbookSeriesController.cs#L195)
-  zählt Übungen der Reihe mit einer Art oder einem Grammatik-Thema des alten Fachs; der Aufruf steht in `Update` bei `:231-233`.
+  zählt Übungen der Reihe mit einer Art oder einem Grammatik-Thema des alten Fachs; der Aufruf steht in `Update` bei `:231-232` (Methode `SubjectInUseProblemAsync`, `:193`).
 - **Die API hat den Ausweg schon:** Der `PUT` einer Übung nimmt `CategoryId` an
   ([ExerciseAuthoringDtos.cs:29](../../backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs#L29)), prüft sie nur gegen das
-  **aktuelle** Fach der Reihe ([ExerciseControllerBase.cs:440](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs#L440),
-  `CategoryValid` erlaubt `null`, `:131-135`) und schreibt sie bei `:471`. Eine Spiel-Sperre auf dem `PUT` gibt es für die Art nicht
-  (`UpdateConflictAsync` betrifft nur Inhaltslisten).
-- **Die Oberfläche versperrt ihn:** [ExerciseEditModal.tsx:235](../../frontend/src/vater/ExerciseEditModal.tsx#L235) reicht
+  **aktuelle** Fach der Reihe ([ExerciseControllerBase.cs:470](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs#L470),
+  `CategoryValid` erlaubt `null`, `:161-165`) und schreibt sie bei `:501`. Eine Spiel-Sperre auf dem `PUT` gibt es für die Art nicht
+  (`UpdateConflictAsync`, `:115`, Aufruf `:486`, betrifft nur Inhaltslisten).
+- **Die Oberfläche versperrt ihn:** [ExerciseEditModal.tsx:251](../../frontend/src/vater/ExerciseEditModal.tsx#L251) reicht
   `detail.categoryId` unverändert durch (Kommentar `:43`: „Kategorie" gehört zu den Feldern, die das Formular nicht anfasst). Die
-  Grammatik-Themen dagegen sind im Dialog änderbar (`GrammarTopicPicker`, `:410-413`) – für sie besteht der Ausweg also schon,
+  Grammatik-Themen dagegen sind im Dialog änderbar (`GrammarTopicPicker`, `:404-409`) – für sie besteht der Ausweg also schon,
   belegt durch `ReiheFachwechselTests.Ausweg_Themen_Herausnehmen_Entsperrt_Den_Wechsel` (`:148`).
-- **Arten laden kann das Frontend:** `api.categories(subjectId)` wird im Wizard schon benutzt (`VaterWizard.tsx:153-154`).
+- **Arten laden kann das Frontend:** `api.categories(subjectId)` wird im Wizard schon benutzt (`VaterWizard.tsx:158`, ebenso `ExerciseFilterBar.tsx:47`).
 
 ## Die echte Lücke
 
@@ -112,3 +112,4 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
   (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 - **2026-11-13** — **geschaetzt**: S, beides, keine Migration, kein Vertragsbruch.
 - **2026-11-13** — Im Backlog-Lauf 2026-11-13 bewusst **nicht** in einen Sprint genommen: der Dialog-Teil ändert `ExerciseEditModal.tsx`, das die parallele B-534-Arbeit unkommittiert umbaut. Nach B-534 baubar wie geschätzt.
+- **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt (Dialog reicht `detail.categoryId` weiter durch, `ExerciseEditModal.tsx:251`; kein Art-Feld). Zeilenangaben im Ist-Stand berichtigt. Der Hinderungsgrund vom 2026-11-13 ist weg: B-534 ist committet (`a3e5c1ba`), `ExerciseEditModal.tsx` ist wieder frei.

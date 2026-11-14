@@ -33,7 +33,7 @@ public class ScoringTimeSlotTests
     private static int BasePointsAt(ScoringService scoring, TimeOnly at) => BasePointsAt(scoring, Cfg, at);
 
     private static int BasePointsAt(ScoringService scoring, ScoringService.ScoreConfig cfg, TimeOnly at) =>
-        scoring.ScoreReview(cfg, reviewCount: 0, box: 1, postBox: 2,
+        scoring.ScoreReview(cfg, isNew: true, box: 1, postBox: 2,
             wasCorrect: true, combo: 0,
             DateOnly.FromDateTime(DateTime.UtcNow).ToDateTime(at), elapsedSeconds: null).BasePoints;
 

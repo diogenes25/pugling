@@ -29,21 +29,21 @@ ich festhänge, und sehen, was er mich gekostet hat.
 
 ## Ist-Stand am Code
 
-Gelesen am 2026-11-13 (Worktree `backlog-lauf`, `699b02a7`):
+Gelesen am 2026-11-13 (Worktree `backlog-lauf`, `699b02a7`), Zeilen nachgemessen am 2026-11-14:
 
 - Der Tipp reist **mit der Karte** und ist kostenlos: `PositionPlayService.CardFacets` gibt `item.Hint` auf getippten
   Stufen heraus (`backend/Pugling.Api/Services/Shared/PositionPlayService.cs:314`, `:328`; nicht neben einem Wortkasten,
-  B-524), `PracticeCard.Hint` (`backend/Pugling.Contracts/Student/PracticeDtos.cs:75`), gebaut in
-  `PositionPracticeController.cs:156-157`. Die Arcade deckt ihn nur auf Wunsch auf – rein clientseitig
-  (`frontend/src/sohn/SohnPractice.tsx:80`, `:454-458`). Der Server erfährt nicht, ob er gelesen wurde.
+  B-524), `PracticeCard.Hint` (`backend/Pugling.Contracts/Student/PracticeDtos.cs:81-82`), gebaut in
+  `PositionPracticeController.cs:196-199`. Die Arcade deckt ihn nur auf Wunsch auf – rein clientseitig
+  (`frontend/src/sohn/SohnPractice.tsx:89`, `:477-482`). Der Server erfährt nicht, ob er gelesen wurde.
 - Die Wortlänge gibt es schon ohne Kosten (`AnswerLength`/Buchstabenkästen, `CardFacets` `letterBoxLength`).
-- **`HintsUsed` liegt nicht am Üben, sondern an der Testzeile** `TestItemResult` (`backend/Pugling.Api/Models/StudyPlanEntities.cs:175`,
-  `:193-199`, „Set by no path and therefore always 0"), im Vertrag `ItemResultDto` (`backend/Pugling.Contracts/Student/TestDtos.cs:56`),
-  gelesen in `PositionTestsController.cs:351`. Ein Üben-Review schreibt nur `ReviewEvent(WasCorrect, At)` und die
-  Positions-Fortschrittszeile `PositionItemProgress` (`backend/Pugling.Api/Models/PlanPositionEntities.cs:198-216`).
+- **`HintsUsed` liegt nicht am Üben, sondern an der Testzeile** `TestItemResult` (`backend/Pugling.Api/Models/StudyPlanEntities.cs:183`,
+  `:199-207`, „Set by no path and therefore always 0"), im Vertrag `ItemResultDto` (`backend/Pugling.Contracts/Student/TestDtos.cs:59`),
+  gelesen in `PositionTestsController.cs:329`. Ein Üben-Review schreibt nur `ReviewEvent(WasCorrect, At)` und die
+  Positions-Fortschrittszeile `PositionItemProgress` (`backend/Pugling.Api/Models/PlanPositionEntities.cs:198-217`).
 - Punkte: `ScoringService.ScoreReview` (`backend/Pugling.Api/Services/Shared/ScoringService.cs:63-90`) – Basis in Münzen,
   Combo/Tempo in Gems; Buchungstext je Beitrag.
-- **Befund am Rand:** Der Test liefert und zeigt den Tipp offen – `TestItem.Hint` (`TestDtos.cs:34`,
+- **Befund am Rand (erledigt durch [B-544](B-544-abschlusstest-zeigt-den-tipp.md), abgenommen):** `TestItem` trägt keinen Tipp mehr (`TestDtos.cs:37`), `SohnTest.tsx` zeigt keinen. Damals: `TestItem.Hint` (`TestDtos.cs:34`,
   `PositionTestsController.cs:72`), `frontend/src/sohn/SohnTest.tsx:215` – entgegen der Rest-Entscheidung vom 2026-11-05
   („im Abschlusstest gibt es keine Hinweise").
 
@@ -117,7 +117,7 @@ nur für diesen Tag – gewollt.
 **Angriffsplan:** (1) neue Datei `backend/Pugling.Api.Tests/TippKostetTests.cs` (AK 1–6) und Fall in
 `ScoringServiceBoundaryTests.cs` (Halbierung, Abrundung), rot gegen den Ist-Code; (2) Spalte + Migration, Endpunkt,
 `HasHint` in `CardFacets`/`BuildCard`, Parameter `hinted` in `ScoreReview`; (3) `pugling-reviewer`; (4) Client und
-Frontend-Typen, Tipp-Knopf in `SohnPractice.tsx:454-458` über `useAction`; (5) Vitest AK 8; (6) rote Probe je AK;
+Frontend-Typen, Tipp-Knopf in `SohnPractice.tsx:477-482` über `useAction`; (5) Vitest AK 8; (6) rote Probe je AK;
 `frontend-reviewer`; `DocsCaptureTests` neu schreiben lassen.
 
 **Testweg:** `backend/Pugling.Api.Tests/TippKostetTests.cs` (AK 1–6), `ScoringServiceBoundaryTests.cs` (AK 3, Rechnung),
@@ -125,8 +125,8 @@ Frontend-Typen, Tipp-Knopf in `SohnPractice.tsx:454-458` über `useAction`; (5) 
 sieht die halbe Buchung im Konto.
 
 **Nicht in dieser Story:** Stufe 2 und 3 (Anfangsbuchstabe, weiterer Buchstabe – serverseitig aus der Lösung abgeleitet,
-mit eigener Kostenstufe); Tipps im Bonus-Training (`ExtraCard.Hint`). **Für den PM als eigene Defekt-Story:** der Test
-liefert und zeigt den Tipp (`TestItem.Hint`, `SohnTest.tsx:215`) entgegen der Entscheidung vom 2026-11-05.
+mit eigener Kostenstufe); Tipps im Bonus-Training (`ExtraCard.Hint`). **Als eigene Defekt-Story erledigt ([B-544](B-544-abschlusstest-zeigt-den-tipp.md)):** der Test
+lieferte und zeigte den Tipp (`TestItem.Hint`, `SohnTest.tsx:215`) entgegen der Entscheidung vom 2026-11-05.
 
 ## Verlauf
 
@@ -137,3 +137,4 @@ liefert und zeigt den Tipp (`TestItem.Hint`, `SohnTest.tsx:215`) entgegen der En
 - **2026-11-13** — `ausformuliert`: am Code belegt – der Tipp reist mit der Karte (`CardFacets`), `HintsUsed` hängt an der Testzeile, nicht am Üben; Befund: der Test zeigt den Tipp entgegen 2026-11-05.
 - **2026-11-13** — `gegrillt`: Entscheidungen 1–4 (Tipp per Anfrage, Zählung als `HintedOn` an `PositionItemProgress` – Auslegung von G-5, weil `HintsUsed` am Test liegt –, halbe Basis ohne Tempo-Bonus, nur Stufe 1); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)); G-5 und 2026-11-05 unverändert.
 - **2026-11-13** — `geschaetzt`: M (schon auf Stufe 1 geschnitten), beides, Migration ja, Vertragsbruch ja; Buchstaben-Stufen und der Test-Befund ausdrücklich nicht in dieser Story.
+- **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt – der Tipp reist weiter mit der Karte (`PositionPlayService.cs:328`, `PracticeDtos.cs:82`), kein `hint`-Endpunkt, kein `HintedOn`. Ist-Stand-Zeilen berichtigt; der Rand-Befund (Tipp im Abschlusstest) ist durch B-544 erledigt (`TestDtos.cs:37` ohne `Hint`).

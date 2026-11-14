@@ -76,6 +76,13 @@ function HomeForPlan({
   const today = o.today;
   const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
   const goalPct = today.goalsTotal > 0 ? Math.round((today.goalsMet / today.goalsTotal) * 100) : 0;
+  // B-535: Tages- und Wochenziele getrennt zählen. Gemischt stünde „Ziele heute 1 / 2“ neben einem offenen
+  // Bonus-Training, obwohl alles von heute geschafft ist – die Woche hat ihr eigenes Ende.
+  const zaehle = (cadence: string) => {
+    const ziele = today.positions.filter((p) => p.cadence === cadence);
+    return { met: ziele.filter((p) => p.goalMet).length, total: ziele.length };
+  };
+  const tag = zaehle("Daily"), woche = zaehle("Weekly");
 
   return (
     <div className="sohn-body">
@@ -104,10 +111,18 @@ function HomeForPlan({
         </div>
       ) : (
         <div className="card">
-          <div className="row" style={{ marginBottom: 8 }}>
-            <b style={{ fontSize: 13 }}>{t("home.goalsToday")}</b>
-            <span className="sub" style={{ marginLeft: "auto" }}>{today.goalsMet} / {today.goalsTotal}</span>
-          </div>
+          {tag.total > 0 && (
+            <div className="row" style={{ marginBottom: 8 }}>
+              <b style={{ fontSize: 13 }}>{t("home.goalsToday")}</b>
+              <span className="sub" style={{ marginLeft: "auto" }}>{tag.met} / {tag.total}</span>
+            </div>
+          )}
+          {woche.total > 0 && (
+            <div className="row" style={{ marginBottom: 8 }}>
+              <b style={{ fontSize: 13 }}>{t("home.goalsWeek")}</b>
+              <span className="sub" style={{ marginLeft: "auto" }}>{woche.met} / {woche.total}</span>
+            </div>
+          )}
           <div className="bar lime"><i style={{ width: `${goalPct}%` }} /></div>
         </div>
       )}
@@ -120,9 +135,9 @@ function HomeForPlan({
 
       <Pfad positions={today.positions} />
 
-      {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen wie beim Server – erledigte Pflicht oder
-          ein Plan ohne Pflicht; die Sperre selbst hält der Server. */}
-      <BonusEinstieg offen={today.dutyDone || today.goalsTotal === 0} />
+      {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`:
+          die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
+      <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} />
     </div>
   );
 }

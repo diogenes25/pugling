@@ -557,4 +557,20 @@ public class SchemaGuardTests
 
         Assert.Equal(erwartet, gefunden);
     }
+
+    /// <summary>
+    /// B-546: check-constraint SQL carries LF only. The constraints are raw string literals and take the line ends of
+    /// the checkout, so `migrations add` on Windows wrote CRLF into the snapshot - a loud diff and, on the next platform,
+    /// a seeming model change. Red on a CRLF working copy (Windows) when a constraint skips <c>CheckSql</c>; on an LF
+    /// checkout (Linux CI) it cannot fail - there the source already has LF.
+    /// </summary>
+    [Fact]
+    public void CheckConstraintSql_Traegt_Nur_LF()
+    {
+        using var db = Context();
+        var constraints = db.GetService<IDesignTimeModel>().Model.GetEntityTypes()
+            .SelectMany(e => e.GetCheckConstraints()).ToList();
+        Assert.NotEmpty(constraints);
+        Assert.All(constraints, c => Assert.DoesNotContain("\r", c.Sql, StringComparison.Ordinal));
+    }
 }

@@ -444,8 +444,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // position's atom (B-433): what the supervisor sees in a preview or catch-up round the child has not seen -
         // the same wall as in the test (PositionTestsController, daily dose and IntroduceAnsweredAsync). The wall
         // covers PositionItemProgress only: a graded supervisor review still writes the child's plan-wide
-        // ItemProgress/history (B-542), and a Leitner review without an introduction stage moves box and DueOn while
-        // IntroducedAt stays null, so the daily dose keeps counting the atom as new.
+        // ItemProgress/history - by decision the catch-up the supervisor records for the child (B-542; trying an
+        // exercise without side effects is the preview) - and a Leitner review without an introduction stage moves
+        // box and DueOn while IntroducedAt stays null, so the daily dose keeps counting the atom as new.
         if (User.IsStudent() && prog is not null && prog.IntroducedAt is null)
         {
             prog.IntroducedAt = session.Day;
@@ -520,7 +521,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (leitnerScored && prog is not null)
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
-            var (preBox, preReviewCount) = (prog.Box, prog.ReviewCount);
+            var preBox = prog.Box;
+            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later.
+            var isNew = wasCorrect && prog.NewBonusPaidAt is null;
+            if (isNew) prog.NewBonusPaidAt = now;
             // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
             // "already named" marker read back above. A second reading would put the stamp outside the window
             // a frozen test clock defines, and then every remaining card would accept the same answer again.
@@ -529,7 +533,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
                 pos.TimeSlots);
-            var score = scoring.ScoreReview(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
+            var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
                 time.GetLocalNow().DateTime, elapsedSeconds);
             foreach (var c in score.Contributions)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
@@ -548,8 +552,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         }
         else if (climbs && prog is not null)
         {
-            // The claim moves the box like a review, but it is not one for the score: the first CHECKED hit on this
-            // card must still be the one that pays the new-content points (ScoringService keys them on ReviewCount 0).
+            // The claim moves the box like a review, but it is not one for the score: ReviewCount counts graded reviews
+            // only. The new-content points hang on NewBonusPaidAt (B-535), which a claim never sets.
             var reviewCount = prog.ReviewCount;
             play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
             prog.ReviewCount = reviewCount;

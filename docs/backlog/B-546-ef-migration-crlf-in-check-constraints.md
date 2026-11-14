@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/backend, bereich/qualitaet]
+tags: [typ/story, status/in-arbeit, bereich/backend, bereich/qualitaet]
 aliases: [EF-Migration schreibt CRLF in Check-Constraints]
-status: idee
+status: in-arbeit
 prio: P3
 art: Aufräumen
 groesse: XS
@@ -27,6 +27,50 @@ Plattform des nächsten Laufs – eine scheinbare Modelländerung (vgl. Memory �
 Zu klären: ein Nachlauf-Skript zu `migrations add` (normalisiert die Strings), oder ein Wächter in `SchemaGuardTests`,
 der `\r` in Check-Constraint-SQL des Snapshots ablehnt.
 
+## Ist-Stand am Code (2026-11-14)
+
+- Die Ursache liegt vermutlich nicht in EF, sondern in der Quelle: die drei Constraints stehen als Raw-String-Literale
+  (`"""`) in `backend/Pugling.Api/Data/PuglingDbContext.cs:133/449/479`; die Datei ist im Index LF, im Windows-
+  Arbeitsbaum CRLF (`git ls-files --eol`: `i/lf w/crlf`, `.gitattributes` setzt für `*.cs` nur `text`). Der
+  Compiler übernimmt das Zeilenende des Quelltexts in den String, also schreibt `migrations add` dort `\r\n`.
+- Der Snapshot ist heute sauber (`\n` in `PuglingDbContextModelSnapshot.cs:93/424/1405`, kein `\r` im Ordner
+  `Data/Migrations`); `SchemaGuardTests.cs:554` liest die Constraints nur nach Namen, nicht nach Inhalt.
+- Damit kommt eine dritte Lösung dazu: `.ReplaceLineEndings("\n")` an den drei Literalen oder `eol=lf` für die Datei.
+
+## Die echte Lücke
+
+Das Modell selbst hängt vom Zeilenende des Checkouts ab. Die Korrektur gehört an die Quelle (das Modell), nicht an
+den Snapshot – ein Nachlauf-Skript würde jede Migration von Hand reparieren, ein Wächter nur auf dem Snapshot die
+Ursache stehen lassen.
+
+## Entscheidungen
+
+1. **Die Quelle normalisiert:** alle Check-Constraint-SQL laufen durch einen Helfer `CheckSql` in
+   `PuglingDbContext` (`ReplaceLineEndings("
+")`). Begründung: eine Stelle, plattformunabhängig, kein Nachlauf.
+   Kosten: ein vierter Constraint muss den Helfer nutzen – das hält der Regressionstest unten. (`Aufräumen`, autonom
+   gegrillt.)
+2. **Kein `eol=lf` für die Datei:** das änderte die Arbeitskopie aller Windows-Nutzer und hilft keinem künftigen
+   Raw-String in einer anderen Datei.
+
+## Akzeptanzkriterien
+
+1. Das Design-Time-Modell trägt in keinem Check-Constraint ein `` (Windows-Arbeitskopie).
+2. `migrations add` auf Windows ändert die drei Constraint-Zeilen im Snapshot nicht.
+
+## Schätzung
+
+**Größe XS**, `wo: backend`, `migration: nein` (das Modell-SQL war in der Kette schon `
+`), `vertragsbruch: nein`.
+Risiko: Modell-Drift, falls `ReplaceLineEndings` ein anderes SQL ergäbe als der Snapshot – `SchemaGuardTests`
+(`HasPendingModelChanges`) fängt das. Testweg: `SchemaGuardTests.CheckConstraintSql_Traegt_Nur_LF` (rot auf
+Windows ohne den Helfer; auf Linux strukturell blind – dort hat die Quelle schon LF).
+
 ## Verlauf
 
 - **2026-11-13** — angelegt aus dem Bau von B-530.
+- **2026-11-14** — Abgleich Backlog-Lauf: gilt, Ursache präzisiert (Raw-String-Literale in einer CRLF-Arbeitskopie, `PuglingDbContext.cs:133/449/479`); Snapshot derzeit sauber, kein Tor prüft den Inhalt.
+- **2026-11-14** — Backlog-Lauf, Sprint 73: beim Anlegen der B-535-Migration wieder aufgetreten (drei `
+` im
+  Snapshot), damit gemessen. Ausformuliert, gegrillt (autonom, `Aufräumen`), geschätzt und gebaut: `CheckSql` an den
+  drei Literalen, Regressionstest in `SchemaGuardTests`.

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Pugling.Api.Data;
@@ -9,7 +11,8 @@ namespace Pugling.Api.Services.Student;
 /// <summary>
 /// The bonus training: extra exercises on the child's current topic that pay coins beyond the day's duty.
 /// <para>
-/// Three rules keep it from becoming a coin farm. It opens only once today's duty is met - the path comes first.
+/// Three rules keep it from becoming a coin farm. It opens only once today's daily goals are met (B-535; all goals in a
+/// plan without daily ones) - the path comes first.
 /// Coins are paid for checked hits only (choice, typed), never for a self-assessment, and capped per day. And an
 /// exercise pays only once: a non-vocabulary exercise has exactly one run (started is used up), while a vocabulary
 /// exercise may be played again but asks harder with every completed run - self-assessment, then choice, then typed
@@ -32,7 +35,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
     /// <summary>Lock reason: the child has no playable plan, so there is neither a duty nor a topic.</summary>
     public const string LockNoPlan = "no_plan";
-    /// <summary>Lock reason: today's duty is not met yet.</summary>
+    /// <summary>Lock reason: today's daily goals (or, in a plan without daily goals, all goals) are not met yet.</summary>
     public const string LockDutyOpen = "duty_open";
 
     /// <summary>Outcome of a start or submit: either the value or the error to answer with.</summary>
@@ -66,7 +69,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var gate = await GateAsync(childId, today, ct);
         if (!gate.Unlocked)
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraTrainingLocked,
-                "The bonus training opens once today's duty is done.");
+                "The bonus training opens once today's daily goals are done.");
 
         var pool = await PoolAsync(childId, gate.Plans, ct);
         if (pool.FirstOrDefault(p => p.Row.ExerciseId == exerciseId) is not { } entry)
@@ -84,6 +87,14 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var run = entry.Row.OpenRunId is { } openId
             ? await db.ExtraTrainingRuns.FirstAsync(r => r.Id == openId, ct)
             : null;
+        var fingerprint = ContentFingerprint(entry.Exercise, entry.Items);
+        // B-545: an open run whose exercise changed since asks questions the key no longer matches - start it afresh.
+        if (run is { ContentHash: { } started } && started != fingerprint)
+        {
+            db.ExtraTrainingRuns.Remove(run);
+            await db.SaveChangesAsync(ct);
+            run = null;
+        }
         if (run is null)
         {
             run = new ExtraTrainingRun
@@ -96,6 +107,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
                 Stage = entry.Stage,
                 StartedAt = time.GetUtcNow().UtcDateTime,
                 ItemCount = entry.Items.Count,
+                ContentHash = fingerprint,
             };
             db.ExtraTrainingRuns.Add(run);
             try
@@ -118,8 +130,8 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
     /// <summary>
     /// Grades a run and books its coins: per checked hit, never above what is left of today's cap. A run is graded
-    /// once, and only while today's duty is met - a run started on an open day and kept back must not pay out on a day
-    /// the duty was skipped. The child's concurrency stamp serializes the submit against every other one.
+    /// once, and only while today's daily goals are met - a run started on an open day and kept back must not pay out on a
+    /// day they were skipped. The child's concurrency stamp serializes the submit against every other one.
     /// </summary>
     public async Task<Outcome<ExtraRunResult>> SubmitAsync(int childId, int runId, IReadOnlyList<ExtraAnswer> answers,
         CancellationToken ct)
@@ -135,10 +147,29 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         if (run.CompletedAt is not null)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraRunCompleted, "This bonus run has already been submitted.");
 
+        // B-545: graded only against the content its questions came from. A changed exercise discards the run unpaid;
+        // deleting it leaves a one-shot exercise open again - the child caused nothing and saw no solution yet.
+        if (run.ContentHash is { } started
+            && started != ContentFingerprint(run.Exercise, await content.ItemsOfAsync(run.Exercise, ct: ct)))
+        {
+            db.ExtraTrainingRuns.Remove(run);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // A parallel submit of the same run (double tap) deleted it first - the run is gone either way.
+                db.ChangeTracker.Clear();
+            }
+            return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraRunStale,
+                "The exercise was changed since you started; start it again.");
+        }
+
         var today = Today;
         if (!(await GateAsync(childId, today, ct)).Unlocked)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraTrainingLocked,
-                "The bonus training opens once today's duty is done.");
+                "The bonus training opens once today's daily goals are done.");
 
         var coinsBefore = await CoinsTodayAsync(childId, today, ct);
         var dailyCap = CapOf(child.BonusDailyCoinCap);
@@ -188,9 +219,27 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect))]));
     }
 
+    /// <summary>
+    /// SHA-256 over what grading reads (B-545): the config and, per item, index, prompt, answer, accepted answers, gap
+    /// and item id - in a fixed order, so the same content always gives the same value. Image, audio and hint stay out:
+    /// a new picture changes no solution and must not cost a run.
+    /// </summary>
+    private static string ContentFingerprint(Exercise exercise, IReadOnlyList<ContentItem> items)
+    {
+        var text = new StringBuilder(exercise.ConfigJson);
+        foreach (var i in items)
+        {
+            text.Append('\u001e').Append(i.Index).Append('\u001f').Append(i.Prompt).Append('\u001f').Append(i.Answer)
+                .Append('\u001f').Append(string.Join('\u001d', i.AcceptedAnswers)).Append('\u001f').Append(i.GapIndex)
+                .Append('\u001f').Append(i.ItemId);
+        }
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
+    }
+
     private record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans);
 
-    // Open once every playable plan has met today's duty. A plan without any duty has nothing to come first.
+    // Open once every playable plan has met today's reward goals (its daily goals, B-535). A plan without any duty has
+    // nothing to come first.
     private async Task<Gate> GateAsync(int childId, DateOnly today, CancellationToken ct)
     {
         var plans = await db.StudyPlans.AsNoTracking()
@@ -202,7 +251,10 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         foreach (var plan in plans)
         {
             var day = await progress.ComputeDayAsync(plan, today, ct);
-            if (day.GoalsTotal > 0 && !day.DutyDone) outstanding.AddRange(day.Outstanding);
+            // The open reward goals, not the whole duty (B-535): an open weekly goal must not lock the bonus every
+            // day. A plan without goals adds nothing, so it has nothing to come first.
+            outstanding.AddRange(PositionProgressService.RewardObligations(day.Positions)
+                .Where(s => !s.GoalMet).Select(PositionProgressService.OutstandingLabel));
         }
         return outstanding.Count == 0
             ? new Gate(true, null, [], plans)

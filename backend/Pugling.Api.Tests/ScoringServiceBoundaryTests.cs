@@ -25,7 +25,7 @@ public class ScoringServiceBoundaryTests
     public void SchnelleAntwort_UntereSchwelle_GreiftGenauAbEinerSekunde(double elapsedSeconds, bool expectBonus)
     {
         var cfg = Cfg with { SpeedThresholdSeconds = 10, SpeedBonusPoints = 5 };
-        var score = PlainService().ScoreReview(cfg, reviewCount: 1, box: 3, postBox: 3,
+        var score = PlainService().ScoreReview(cfg, isNew: false, box: 3, postBox: 3,
             wasCorrect: true, combo: 0, DateTime.UtcNow, elapsedSeconds);
 
         Assert.Equal(expectBonus ? 5 : 0, score.SpeedBonus);
@@ -37,7 +37,7 @@ public class ScoringServiceBoundaryTests
     public void SchnelleAntwort_ObereSchwelle_GreiftGenauBisZurSchwelle(double elapsedSeconds, bool expectBonus)
     {
         var cfg = Cfg with { SpeedThresholdSeconds = 10, SpeedBonusPoints = 5 };
-        var score = PlainService().ScoreReview(cfg, reviewCount: 1, box: 3, postBox: 3,
+        var score = PlainService().ScoreReview(cfg, isNew: false, box: 3, postBox: 3,
             wasCorrect: true, combo: 0, DateTime.UtcNow, elapsedSeconds);
 
         Assert.Equal(expectBonus ? 5 : 0, score.SpeedBonus);
@@ -49,7 +49,7 @@ public class ScoringServiceBoundaryTests
     public void ComboBonus_GreiftGenauAbDerSchwelle(int combo, bool expectBonus)
     {
         var cfg = Cfg with { ComboThreshold = 3, ComboBonusPoints = 5 };
-        var score = PlainService().ScoreReview(cfg, reviewCount: 1, box: 3, postBox: 3,
+        var score = PlainService().ScoreReview(cfg, isNew: false, box: 3, postBox: 3,
             wasCorrect: true, combo, DateTime.UtcNow, elapsedSeconds: null);
 
         Assert.Equal(expectBonus ? 5 : 0, score.ComboBonus);
@@ -66,7 +66,7 @@ public class ScoringServiceBoundaryTests
             TimeSlots = [new ScoringTimeSlot { Name = "Fenster", Start = new TimeOnly(13, 0), End = new TimeOnly(15, 0), Multiplier = 2.0 }],
         };
         var at = DateOnly.FromDateTime(DateTime.UtcNow).ToDateTime(new TimeOnly(hour, minute));
-        var score = scoring.ScoreReview(cfg, reviewCount: 0, box: 1, postBox: 2,
+        var score = scoring.ScoreReview(cfg, isNew: true, box: 1, postBox: 2,
             wasCorrect: true, combo: 0, at, elapsedSeconds: null);
 
         Assert.Equal(expectDoubled ? 20 : 10, score.BasePoints);
@@ -78,7 +78,7 @@ public class ScoringServiceBoundaryTests
     [InlineData(7, 2)] // the clamp holds: 8 - 7 = 1, but Math.Max(2, …) keeps it at 2
     public void Wiederholungspunkte_BodenBeiZweiPunkten_GreiftAbBox6(int box, int expectedBasePoints)
     {
-        var score = PlainService().ScoreReview(Cfg, reviewCount: 1, box, postBox: box + 1,
+        var score = PlainService().ScoreReview(Cfg, isNew: false, box, postBox: box + 1,
             wasCorrect: true, combo: 0, DateTime.UtcNow, elapsedSeconds: null);
 
         Assert.Equal(expectedBasePoints, score.BasePoints);

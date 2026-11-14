@@ -1,10 +1,10 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/supervisor]
-aliases: [KI-Supervisor-Agent]
-status: ausformuliert
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/supervisor, rolle/creator]
+aliases: [KI-Supervisor-Agent, assign-Verb]
+status: geschaetzt
 prio: P3
 art: Wunsch
-groesse: L
+groesse: M
 wo: backend
 migration: nein
 vertragsbruch: nein
@@ -13,172 +13,159 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-20 · KI-Supervisor-Agent (Teil D) — erster Schritt: Übungen einem Plan zuweisen
+# B-20 · KI-Agent: Übungen per `assign` einem laufenden Plan zuweisen
 
-Der Creator-Agent (`Pugling.Agent.Creator`) erzeugt Übungen im Katalog, weist sie aber laut eigener
-Dokumentation bewusst **nicht** einem Lehrplan zu — das soll „von Hand (oder später vom
-Supervisor-Agenten)" passieren. Diesen zweiten Agenten gibt es noch nicht. Der Ist-Stand zeigt aber: die
-HTTP-Schicht dafür (`Pugling.Client.SupervisorApi`) ist bereits vollständig, nur das Konsolenprojekt und
-sein Kommando fehlen.
+Der Creator-Agent (`Pugling.Agent.Creator`) erzeugt Übungen im Katalog und baut mit `plan` (B-19) ganze neue
+Lehrpläne. Was fehlt, ist der kleine Schritt dazwischen: vorhandene Übungen – frisch erzeugt, per Id gewählt
+oder über einen Klausur-Tag gebündelt – einem **bestehenden, laufenden** Plan als Positionen hinzuzufügen.
+Seit der Entscheidung des Nutzers vom 2026-10-23 ist das ein **`assign`-Verb im Creator-Agenten**, kein eigenes
+Konsolenprojekt.
 
 ## User Story
 
-Als *Supervisor* (bzw. sein KI-Agent in seinem Namen) möchte ich eine bereits im Katalog vorhandene Übung
-mit einem Kommando in den aktiven Lehrplan eines Kindes übernehmen, damit die vom Creator-Agenten
+Als *Supervisor* (bzw. sein KI-Agent in seinem Namen) möchte ich eine oder mehrere bereits im Katalog
+vorhandene Übungen mit einem Kommando in den laufenden Lehrplan eines Kindes übernehmen, damit die vom Agenten
 erzeugten Übungen nicht mehr von Hand als Position angelegt werden müssen.
 
-## Ist-Stand am Code
+## Ist-Stand am Code (2026-11-14)
 
-> **Stand 2026-11-13:** Seit der Entscheidung vom 2026-10-23 gibt es **kein** eigenes Projekt
-> `Pugling.Agent.Supervisor` – die Story ist ein **`assign`-Verb im Creator-Agenten**. Das gibt es noch nicht:
-> `AgentCommands.cs:195-211` kennt `profiles`, `briefing`, `create`, `exam`, `plan`, `fill`, `images`, `help`. Für
-> `--tag` fehlt der Client-Wrapper zu `GET creator/tags/{id}/exercises` (`CreatorApi.cs:171` hat nur den POST).
-> Die Punkte unten zum eigenen Projekt sind damit nur noch als Bauplan-Hinweis gültig; AK 1 ist hinfällig.
-
-- **Der Supervisor-Agent existiert nicht.** `Pugling.sln` listet nur ein Konsolenprojekt:
-  `Project(...) = "Pugling.Agent.Creator", "backend\Pugling.Agent.Creator\Pugling.Agent.Creator.csproj"` —
-  kein `Pugling.Agent.Supervisor`. Der Ordner ist nicht angelegt.
-- **Der Creator-Agent dokumentiert die Lücke selbst**, statt sie zu füllen:
-  `backend/Pugling.Agent.Creator/README.md:170-173` — „**In einen Lehrplan zuweisen.** Ziele, Punkte und
-  Malus sind Sache des Supervisors – der Agent füllt den Katalog. Die erzeugte Übungs-Id wandert von Hand
-  (oder später vom Supervisor-Agenten) in eine Lehrplan-Position."
-- **Die Client-Schicht ist bereits vollständig** — entgegen der Annahme in der Memory-Notiz
-  („ungeprüft, welche Client-Methoden noch fehlen"): `backend/Pugling.Client/SupervisorApi.cs` deckt
-  Kinder (`ListChildrenAsync`/`GetChildAsync`), Study Plans (`ListPlansAsync`/`CreatePlanAsync`),
-  Positionen (`AddPositionAsync:130`, `UpdatePositionAsync`, `DeletePositionAsync`), Objectives/Key
-  Results, den Familien-Shop, Missionen/Auszeichnungen und Klassenarbeiten ab — jede Methode ein
-  einzeiliger Wrapper wie von `CLAUDE.md` gefordert. Für das MVP dieser Story reichen
-  `ListPlansAsync`/`GetPlanAsync` und `AddPositionAsync` — beide vorhanden, kein neuer Client-Code nötig.
-- **`CreatePositionDto` braucht nur die Übungs-Id als Pflichtfeld** —
-  `backend/Pugling.Contracts/Supervisor/StudyPlanDtos.cs:110-114`: `ExerciseId` ist der einzige
-  nicht-nullable Parameter, alle anderen (`Cadence`, `PointsGoalMet`, `GoalThreshold`, …) haben laut
-  XML-Doc (`:90-109`) Server-Defaults (`null` = 20 Punkte, 80 % Ziel, tägliche Fälligkeit etc.). Ein
-  minimaler Aufruf ist also schon heute möglich, ganz ohne neue Vertragsfelder.
-  `CreateMissionDto` (`backend/Pugling.Contracts/Supervisor/GamificationDtos.cs:11`) hat dagegen **keine**
-  optionalen Felder (`Title`, `Metric`, `Target`, `Period`, `RewardPoints` allesamt Pflicht) — eine
-  Missions-Vorschlagsfunktion bräuchte selbst entworfene Heuristiken/Inhalte und ist damit ungleich
-  teurer als die reine Positions-Zuweisung.
-- **Das Creator-Agent-Muster ist der Bauplan**: `backend/Pugling.Agent.Creator/Program.cs` zeigt
-  Host-Aufbau, `CommandLine`/`AgentCommands` die Kommandostruktur, `CreatorPipeline.cs` die
-  deterministische Ablauf-Klasse. `Pugling.Agent.Creator.csproj` referenziert nur `Pugling.Client` +
-  `Pugling.Contracts` als Projekt-Referenzen, dazu `Microsoft.Extensions.AI`/`OllamaSharp` **weil** der
-  Creator Inhalte generiert. Eine reine Zuweisungsfunktion braucht keinen dieser Sprachmodell-Bausteine.
-- **`Pugling.Client.StudentApi.ListWordMasteryAsync(childId, onlyWeak, take)`** existiert bereits (genutzt
-  von `BriefingBuilder.cs:151-152` für `--use-weak`) und wäre die Grundlage für eine spätere, ambitioniertere
-  Missions- oder Zielvorschlags-Funktion — aber nicht Teil dieses ersten Schritts.
+- **Das Verb fehlt:** `backend/Pugling.Agent.Creator/AgentCommands.cs:186-213` kennt `types`, `profiles`,
+  `briefing`, `create`, `exam`, `plan`, `fill`, `images`, `help`.
+- **Der Agent hält schon beide Clients:** `AgentCommands.cs:15` bekommt `CreatorApi` **und** `SupervisorApi`
+  injiziert; `PlanPlanner.cs:105` und `ExamPlanner.cs:46` nutzen `SupervisorApi` bereits. Das Konto des Agenten
+  (`Pugling:Pin`) trägt also schon die Supervisor-Rolle – kein neues Setup.
+- **Client-Schicht:** `Pugling.Client/SupervisorApi.cs:100` (`ListPlansAsync(childId)`), `:104` (`GetPlanAsync`),
+  `:123` (`ListPositionsAsync`), `:130` (`AddPositionAsync`) sind da. `Pugling.Client/CreatorApi.cs:160-170`
+  hat `ListTagsAsync(childId)` und zum Tag nur den POST `TagExercisesAsync`; der **GET**
+  `creator/tags/{tagId}/exercises` steht am Server (`Pugling.Api/Controllers/Creator/TagsController.cs:205-208`,
+  paginiert mit `skip`/`take`, `ExerciseBrief`), aber ohne Client-Wrapper.
+- **Welcher Plan läuft:** `PlanResponse.IsPlayable` (`Pugling.Contracts/Supervisor/StudyPlanDtos.cs:7-16`) ist
+  die serverseitige Antwort auf „aktiv **und** heute in der Laufzeit“ – der Agent muss die Regel nicht
+  nachbauen.
+- **Positions-Defaults:** `CreatePositionDto` braucht nur `ExerciseId`; `null` erbt die Server- bzw.
+  Übungsvorgaben (`Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:169`, `:196`).
+- **Doppelte Positionen:** der Server lehnt eine zweite Position derselben Übung **nicht** ab
+  (`PlanPositionsController.cs:152-196`: geprüft werden Existenz, Typ-Regel `RequireTypedTest`, Ausführbarkeit,
+  keine Eindeutigkeit) – die Idempotenz muss im Agenten sitzen.
+- **Doku:** `backend/Pugling.Agent.Creator/README.md` erwähnt das Zuweisen nicht mehr; Skill
+  `.claude/skills/ki-creator/SKILL.md` kennt kein `assign`.
+- **Testmuster:** `Pugling.Api.Tests/CreatorAgentTests.cs:18` (In-Process-Server, echter `Pugling.Client`,
+  Ablaufklassen direkt instanziiert, z. B. `Filler(...).RunAsync(...)` `:83`).
 
 ## Die echte Lücke
 
-Nicht „welche Client-Methoden fehlen" (keine) und nicht „ob die deterministische Pipeline trägt" (sie
-trägt, nur ohne Sprachmodell-Schritt) — sondern schlicht: **das Konsolenprojekt selbst fehlt**, plus ein
-einziges Kommando, das eine vorhandene Übungs-Id in eine Plan-Position verwandelt. Ein vollständiger
-„Supervisor-Agent" mit Missionen, Zielen (Objectives/KeyResults) und Klassenarbeiten-Planung ist deutlich
-größer und bewusst **nicht** Teil dieses ersten Schritts (siehe Entscheidung 1).
+Ein Verb, eine Ablaufklasse und ein Client-Wrapper. Alles andere – Rollen, Positions-Defaults,
+Spielbarkeits-Regel – liefert der Server schon.
 
 ## Offene Punkte
 
-~~Welche Client-Methoden fehlen für einen Supervisor-Agenten?~~ → siehe Entscheidung 2 (keine — die
-Client-Schicht ist vollständig).
-
-~~Trägt die deterministische Pipeline des Creator-Agenten (C# besitzt den Ablauf, das Modell liefert nur
-Inhalt) hier genauso?~~ → siehe Entscheidung 3.
-
-1. Welche Supervisor-Fähigkeit ist der erste, in eine Sitzung passende Baustein — Zuweisen, Missionen,
-   Ziele oder Klassenarbeiten? → siehe Entscheidung 1.
-2. Braucht der erste Baustein überhaupt ein Sprachmodell (Ollama/`IChatClient`)? → siehe Entscheidung 3.
-3. Woher bekommt der Agent die zuzuweisende Übungs-Id — freie Eingabe oder Kopplung an den
-   Creator-Agenten? → siehe Entscheidung 4.
-4. In welchen Plan wird zugewiesen, wenn ein Kind mehrere Pläne hat/hatte? → siehe Entscheidung 5.
-5. Welche Ziel-/Punktewerte setzt der Agent, wenn der Nutzer nichts vorgibt? → siehe Entscheidung 6.
+1. ~~Welche Client-Methoden fehlen?~~ → nur der GET-Wrapper zum Tag (Entscheidung 4).
+2. ~~Eigenes Projekt oder Verb?~~ → Verb (Entscheidung 2, Nutzer 2026-10-23).
+3. ~~Vorhandene Position derselben Übung?~~ → Entscheidung 6.
+4. ~~`--tag` im ersten Schritt?~~ → Entscheidung 4.
+5. ~~Positions-Vorgaben?~~ → Entscheidung 7.
+6. ~~In welchen Plan?~~ → Entscheidung 5.
+7. ~~Was bei einem Schreibfehler mitten in der Liste?~~ → Entscheidung 8.
 
 ## Entscheidungen
 
-1. **Erster Baustein ist „Zuweisen" (`assign`), nicht Missionen/Ziele/Klassenarbeiten.** Begründung: Es ist
-   die Lücke, die der Creator-Agent selbst dokumentiert (README-Zitat oben) und schließt einen echten
-   Workflow-Bruch: heute muss jede vom Creator erzeugte Übung von Hand in eine Position verwandelt werden.
-   Missionen (`CreateMissionDto` ohne Defaults) und Objectives/KeyResults brauchen eigene inhaltliche
-   Heuristiken (welches Ziel, welcher Titel) — das ist eine eigene, spätere Story. Kosten: die Story liefert
-   bewusst *keinen* vollständigen „Supervisor-Agenten", nur seinen ersten, tragfähigen Ausschnitt; Folge-Ideen
-   (Missions-Vorschlag, Objective-Planung) gehören als neue Backlog-Einträge nachgezogen, sobald dieser
-   Baustein steht.
-2. **Keine neuen Client-Methoden nötig.** Begründung: `SupervisorApi.ListPlansAsync`/`GetPlanAsync`/
-   `AddPositionAsync` decken den gesamten MVP-Bedarf bereits ab (siehe Ist-Stand). Kosten: keine — das ist
-   der Grund, warum diese Story trotz „neuer Agent" bei `vertragsbruch: nein` bleibt.
-3. **Kein Sprachmodell für diesen Schritt.** Begründung: Zuweisen ist eine deterministische Entscheidung über
-   Zahlen (Ziel, Cadence, Punkte) mit vorhandenen Server-Defaults — es gibt keinen Text- oder Inhalts-Anteil,
-   den ein Modell beisteuern müsste. Das Creator-Agent-Muster „C# besitzt den Ablauf, das Modell liefert nur
-   Inhalt" trägt hier in der Konsequenz sogar dahin, den Modell-Schritt ganz wegzulassen, statt ihn
-   künstlich einzubauen. Kosten: kein `Microsoft.Extensions.AI`/`OllamaSharp`-Paket, kein Ollama-Setup nötig
-   für dieses Projekt (schlankere csproj als beim Creator). Eine spätere, inhaltlichere Ausbaustufe
-   (Missions-Text, Zielformulierung) kann das Muster bei Bedarf nachrüsten.
-4. **Übungs-Id(s) per `--exercise-id` (wiederholbar) oder `--tag <name>`, keine harte Kopplung an den
-   Creator-Agenten.** Begründung: Der Creator legt bei `exam` einen kind-skopierten Tag an
-   (`backend/Pugling.Agent.Creator/README.md:161-166`) — darüber lässt sich eine ganze Klausur-Übungsmenge
-   in einem Aufruf zuweisen, ohne dass der Supervisor-Agent den `ExamPlanner` kennen oder importieren muss.
-   Kosten: eine zusätzliche Auflösung „Tag → Übungs-Ids" über die vorhandene Tag-Filterung der
-   Katalog-Lese-Endpunkte (keine neue Client-Methode, falls ein `tag`-Query-Parameter dort schon existiert —
-   sonst ein einzeiliger Ergänzungs-Wrapper).
-5. **Zugewiesen wird in den aktiven Plan des Kindes** (`ListPlansAsync` gefiltert auf `Active`); ohne aktiven
-   Plan bricht der Agent mit klarer Fehlermeldung ab, `--plan-id` überschreibt die Auswahl explizit.
-   Begründung: konsistent mit der Anti-Cheat-Regel „genau ein aktiver+laufender Plan je Kind ist spielbar"
-   (siehe Memory `ein-aktiver-plan-anti-cheat`) — der Agent soll nicht eigenmächtig einen zweiten Plan
-   anlegen oder in einen inaktiven schreiben. Kosten: ein zusätzlicher Guard-Codepfad (kein aktiver Plan →
-   Exit 2, keine stille Fallback-Erzeugung).
-6. **Alle Ziel-/Punktefelder bleiben `null`, sofern nicht per Flag gesetzt** (`--goal-threshold`,
-   `--points`, `--cadence` als optionale Overrides, analog zu den bestehenden Creator-Agent-Flags wie
-   `--points`). Begründung: `CreatePositionDto` trägt die Server-Defaults schon (siehe Ist-Stand); sie ein
-   zweites Mal im Agenten zu duplizieren wäre die Art Drift, die dieses Projekt teuer bezahlt hat. Kosten:
-   der Agent ist beim ersten Wurf bewusst „dumm" (reine Übernahme der Server-Voreinstellung) — eine
-   spätere Heuristik (z. B. Punkte aus `ExercisePayload.SuggestedBonus` ableiten) ist eine additive
-   Erweiterung, kein Umbau.
+1. **Erster Baustein ist „Zuweisen“, nicht Missionen/Ziele/Klassenarbeiten** (2026-08-03, unverändert).
+   Begründung: schließt den Workflow-Bruch nach `create`/`exam`; Missionen (`CreateMissionDto` ohne Defaults)
+   bräuchten eigene Heuristiken. Kosten: kein vollständiger „Supervisor-Agent“.
+2. **Kein zweites Konsolenprojekt – `assign` ist ein Verb im Creator-Agenten.** **Entscheidung des Nutzers**
+   in der Grill-Runde der Backlog-Sichtung 2026-10-23 (Linie von B-19, Entscheidung 2 dort). Die frühere
+   Entscheidung „eigenes Projekt `Pugling.Agent.Supervisor`“ (2026-08-03) ist damit ~~aufgehoben~~. Kosten: der
+   Agent heißt weiter „Creator“, obwohl er hier Supervisor-Arbeit tut.
+3. **Kein Sprachmodell für `assign`** (2026-08-03, unverändert). Begründung: Zuweisen ist deterministisch.
+   Kosten: `assign` läuft auch ohne Ollama – der Host darf beim Start für dieses Verb kein Modell verlangen.
+4. **`--exercise-id` (wiederholbar) oder `--tag <name>`; der Client-Wrapper wird mitgebaut.**
+   Entscheidung im Auftrag des Nutzers vom 2026-11-05 ([Protokoll](../pm-sitzung-2026-11-05-delegation.md)).
+   `--tag` löst den Namen über `ListTagsAsync(childId)` (Tags sind kind-skopiert) und dann über den neuen
+   `CreatorApi.ListTagExercisesAsync(tagId, skip, take)` auf, mit `take = 500` (`MaxTake`). Beide zugleich ⇒
+   Fehlbedienung. Kosten: ein einzeiliger Wrapper; ein Tag mit mehr als 500 Übungen wird abgeschnitten – der
+   Agent meldet das, statt still zu kürzen (Kopf `X-Total-Count` lesen).
+5. **Zugewiesen wird in den spielbaren Plan des Kindes (`IsPlayable`); `--plan-id` wählt ausdrücklich einen
+   anderen eigenen Plan desselben Kindes.** Stakeholder-Entscheidung im Auftrag des Nutzers (präzisiert die
+   Entscheidung vom 2026-08-03, die „aktiv“ sagte). Begründung: `IsPlayable` ist die serverseitige Regel „ein
+   spielbarer Plan je Kind“ (Anti-Cheat); ein nur „aktiver“, aber abgelaufener Plan wäre das falsche Ziel. Ohne
+   spielbaren Plan und ohne `--plan-id` ⇒ Exit 2 mit Hinweis auf `plan` bzw. `--plan-id`; ein `--plan-id` eines
+   anderen Kindes ⇒ Exit 2. Kosten: ein Plan, der erst nächste Woche startet, braucht `--plan-id`.
+6. **Eine schon vorhandene Position derselben Übung wird übersprungen und gemeldet; ist nichts neu, Exit 2.**
+   Entscheidung im Auftrag des Nutzers vom 2026-11-05. Kosten: ein `ListPositionsAsync` vor dem Schreiben.
+7. **Positions-Vorgaben bleiben Server-Defaults; optionale Overrides `--points`, `--goal-threshold`,
+   `--cadence Daily|Weekly`.** Entscheidung im Auftrag des Nutzers vom 2026-11-05 (Defaults) und 2026-08-03
+   (Overrides). Begründung: keine zweite Wahrheit über Defaults im Agenten. Kosten: der Agent setzt keine
+   klugen Werte.
+8. **Erst alles lesen, dann schreiben; der erste Schreibfehler bricht ab.** Stakeholder-Entscheidung im
+   Auftrag des Nutzers. Begründung: Plan, vorhandene Positionen und Übungs-Ids werden vor dem ersten
+   `AddPositionAsync` aufgelöst (`--dry-run` endet genau hier). Lehnt der Server eine Position ab (z. B.
+   `exercise_not_executable`), nennt der Agent die schon angelegten und die abgelehnte Übung und endet mit
+   Exit 1 – ein erneuter Lauf überspringt die schon angelegten (Entscheidung 6), ist also sicher wiederholbar.
+   Kosten: kein Rollback – die angelegten Positionen bleiben stehen.
+9. **Zurückgestellt: Bulk-POST für Positionen** (Eingang 2026-08-04, API-Design B7). Stakeholder-Entscheidung
+   im Auftrag des Nutzers. Begründung: für Familien-Mengen reicht ein Aufruf je Übung; ein Batch-Endpunkt wäre
+   ein Vertragszusatz ohne Not. Kosten: n Aufrufe statt einem. Wird er später gebraucht, gilt die Auflage aus
+   dem Verlauf (Enum aus B-59, kein nackter Status-String).
 
 ## Akzeptanzkriterien
 
-1. Ein neues Konsolenprojekt `backend/Pugling.Agent.Supervisor` (Sdk-Style, `net10.0`, referenziert nur
-   `Pugling.Client` + `Pugling.Contracts`, **kein** `Microsoft.Extensions.AI`/`OllamaSharp`) ist in
-   `Pugling.sln` eingetragen und baut mit `TreatWarningsAsErrors`/`GenerateDocumentationFile` wie die
-   Nachbarprojekte.
-2. Das Kommando `assign --child <id> (--exercise-id <id> [--exercise-id <id>…] | --tag <name>)
-   [--plan-id <id>] [--goal-threshold <n>] [--points <n>] [--cadence <Daily|Weekly>] [--dry-run]` legt für
-   jede aufgelöste Übung eine Position im aktiven Plan des Kindes an (`SupervisorApi.AddPositionAsync`).
-3. Fehlt ein aktiver Plan und wird `--plan-id` nicht gesetzt, bricht der Agent mit einer verständlichen
-   Fehlermeldung und Exit-Code 2 ab — kein stiller Fallback auf einen neuen oder inaktiven Plan.
-4. `--dry-run` listet die geplanten Positionen (Kind, Plan, Übungs-Id, effektive Ziel-/Punktewerte) ohne
-   einen einzigen schreibenden Aufruf.
-5. Eine neue Testklasse `SupervisorAgentTests` (in `Pugling.Api.Tests`, In-Process-Server, echtes
-   `Pugling.Client`, analog `CreatorAgentTests`) deckt: erfolgreiche Zuweisung per `--exercise-id`,
-   Zuweisung per `--tag`, den Abbruch ohne aktiven Plan, und `--dry-run` ohne Schreibzugriff.
-6. `backend/Pugling.Agent.Supervisor/README.md` und `CLAUDE.md` (Muster wie beim Creator-Agenten)
-   dokumentieren Verwendung, Voraussetzungen (laufende API, Konto mit Supervisor-Rolle) und die bewusste
-   Entscheidung gegen ein Sprachmodell für diesen ersten Baustein.
-7. `dotnet build`/`dotnet test Pugling.sln -c Release` sind grün.
+1. `assign --child <id> --exercise-id <a> --exercise-id <b>` legt im spielbaren Plan des Kindes je Übung eine
+   Position an, alle Ziel-/Punktefelder `null`. *Rot, wenn* der Plan nach `Active` statt `IsPlayable` gewählt
+   wird (Testdaten: ein aktiver, abgelaufener Plan neben dem spielbaren).
+2. `assign --child <id> --tag <name>` legt für jede Übung des kind-skopierten Tags eine Position an. *Rot, wenn*
+   der Tag-Name nicht über das Kind aufgelöst wird (Testdaten: gleichnamiger Tag an einem zweiten Kind mit
+   anderen Übungen).
+3. Ist eine Übung schon Position im Plan, wird sie übersprungen und gemeldet; sind alle schon da, Exit 2 und
+   keine neue Position. *Rot, wenn* die Vorab-Prüfung fehlt (Server legt sonst eine Dublette an).
+4. Kein spielbarer Plan, kein `--plan-id` ⇒ Exit 2, Meldung nennt `--plan-id`; `--plan-id` eines anderen
+   Kindes ⇒ Exit 2. Kein schreibender Aufruf in beiden Fällen.
+5. `--dry-run` druckt Kind, Plan, je Übung „neu“/„schon vorhanden“ und die gesetzten Overrides und macht
+   **keinen** schreibenden Aufruf (Positionszahl vor = nach). *Rot, wenn* der Dry-Run-Zweig nach dem ersten
+   `AddPositionAsync` greift.
+6. `--points 30 --cadence Weekly` landet in der angelegten Position (`PointsGoalMet = 30`, `Cadence = Weekly`).
+7. `--exercise-id` und `--tag` zusammen, oder keins von beiden ⇒ `AgentUsageException` (Fehlbedienung).
+8. `assign` startet ohne erreichbares Ollama (kein `IChatClient`-Aufruf).
+9. README (neuer Abschnitt „In einen laufenden Plan zuweisen (`assign`)“), `help`-Ausgabe und Skill
+   `ki-creator` nennen das Verb mit Beispiel.
 
 ## Schätzung
 
-**Größe: L** — ein komplett neues Konsolenprojekt (Host-Wiring, CLI-Parsing, ein Kommando, Tests, README +
-CLAUDE.md) ist mehr als ein Anker-„M", bleibt aber unter der Größenordnung des Creator-Agenten selbst: kein
-Sprachmodell, keine Prompt-/Reparatur-Logik, keine neuen Vertrags- oder Client-Typen (Entscheidungen 2 und
-3). Ein Split in mehrere Stories war hier nicht nötig — der Zuschnitt auf „nur Zuweisen" (Entscheidung 1)
-hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in einer Sitzung zu bauen.
+**Größe: M** (vorher L) – nach Entscheidung 2 kein Projekt, keine Host-Verdrahtung, keine Projektdatei: ein
+Verb, eine Ablaufklasse `PlanAssigner` nach dem Muster von `PlanPlanner`, ein Client-Wrapper, eine Testklasse,
+Doku. Vergleich: ungefähr der Batch-Pfad im `MediaSelector` (B-03, M); deutlich unter einer DB-Etappe (E6, L).
 
-- **`migration: nein`** — keine Schemaänderung, keine neue Entität.
-- **`vertragsbruch: nein`** — kein neues/geändertes DTO in `Pugling.Contracts`; `CreatePositionDto`
-  existiert unverändert.
-- **Risiken**: (a) Mehrfachzuweisung derselben Übung an denselben Plan — zu prüfen, ob der Server das
-  ablehnt oder stillschweigend eine zweite Position anlegt; falls Letzteres, braucht `assign` eine eigene
-  Idempotenz-Prüfung (Positionsliste vorher lesen). (b) `--tag`-Auflösung setzt voraus, dass die
-  Katalog-Lese-Endpunkte nach Tag filtern lassen — falls nicht, schrumpft dieser Teilaspekt auf
-  `--exercise-id`-only und die Tag-Variante wird eine kleine Folge-Story.
-- **Angriffsplan** (Backend zuerst, hier ist alles Backend): 1) `Pugling.Agent.Supervisor.csproj` anlegen,
-  in `Pugling.sln` eintragen. 2) `CommandLine`/`AgentCommands`-Grundgerüst vom Creator-Agenten
-  übernehmen und auf das eine Kommando kürzen. 3) `assign`-Ablauf: aktiven Plan ermitteln (oder
-  `--plan-id`), Übungs-Ids auflösen (`--exercise-id`/`--tag`), je Übung `AddPositionAsync` aufrufen,
-  `--dry-run` respektieren. 4) `SupervisorAgentTests` gegen den In-Process-Server. 5) README + CLAUDE.md
-  des neuen Projekts schreiben.
-- **Testweg**: neue Testklasse `SupervisorAgentTests` in `backend/Pugling.Api.Tests` (In-Process-`WebApplicationFactory`,
-  echtes `Pugling.Client`, kein `FakeChatClient` nötig, da kein `IChatClient` existiert); ergänzend ein
-  manueller Lauf über `/smoke-test`-Instanz mit `dotnet run --project backend/Pugling.Agent.Supervisor --
-  assign --child 1 --exercise-id <id> --dry-run`.
+- **`migration: nein`** – keine Schemaänderung.
+- **`vertragsbruch: nein`** – kein DTO ändert sich; `Pugling.Client` bekommt eine **zusätzliche** Methode für
+  einen schon bestehenden Endpunkt (`ClientRouteGuardTests` prüft die Route mit).
+
+**Risiken**
+
+- Der Host des Agenten könnte das Chat-Modell beim Start auflösen; dann bräche AK 8. Vor dem Bau
+  `Program.cs` prüfen; ggf. `IChatClient` lazy beziehen.
+- `ListTagExercisesAsync` liest eine paginierte Antwort: der Wrapper muss `X-Total-Count` erreichbar machen
+  (gibt es dafür schon einen Paged-Helfer in `PuglingHttp`? sonst `IReadOnlyList` + Warnung bei genau 500).
+- `exercise_not_executable` (Grant-Modell, `ExecutePublic`) ist der wahrscheinlichste Schreibfehler für
+  fremde Übungen – AK-Test dafür über Entscheidung 8 (angelegte bleiben, Exit 1).
+- Der In-Process-Server teilt die Ratenbremse beim Login – Tests nutzen die vorhandene Factory
+  (`RateLimiting:LoginEnabled` aus).
+
+**Angriffsplan (Backend)**
+
+1. `CreatorApi.ListTagExercisesAsync(tagId, skip, take)` (einzeiliger Wrapper, englische `<summary>`).
+2. `PlanAssigner` (Eingabe `AssignRequest(ChildId, PlanId?, ExerciseIds, TagName?, Points?, GoalThreshold?,
+   Cadence?, DryRun)`, Ausgabe `AssignOutcome` mit angelegt/übersprungen/abgelehnt) – Lesen, dann Schreiben.
+3. `AgentCommands`: `case "assign"`, Flag-Parsing, Exit-Codes 0/1/2, `PrintUsage`-Zeile; DI-Registrierung neben
+   `PlanPlanner`.
+4. Tests `AssignAgentTests` (AK 1–8).
+5. README, Skill `ki-creator`, ggf. `backend/Pugling.Agent.Creator/CLAUDE.md` (Verb-Liste).
+
+**Testweg**
+
+- Integrationstest `Pugling.Api.Tests/AssignAgentTests.cs` (In-Process-`PuglingWebAppFactory`, echter
+  `Pugling.Client`, `PlanAssigner` direkt instanziiert wie `Filler` in `CreatorAgentTests.cs:83`; kein
+  `FakeChatClient`): je AK ein Fall; die „Rot, wenn“-Probe je AK am genannten Ort.
+- Handlauf gegen `/smoke-test`-Instanz: `dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1
+  --exercise-id <id> --dry-run`, dann ohne `--dry-run`, dann erneut (⇒ Exit 2, alles übersprungen).
 
 ## Verlauf
 
@@ -207,3 +194,5 @@ hält die Story bereits auf L, ohne dass etwas Wesentliches fehlt, um sie in ein
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): **kein zweites Konsolenprojekt** – die Story wird als **`assign`-Verb im bestehenden Creator-Agenten** neu geschnitten (Linie von B-19, Entscheidung 2 dort bleibt). Ziel: erzeugte bzw. per Id oder Tag gewählte Übungen einem bestehenden, aktiven Plan als Positionen hinzufügen. Vor `gegrillt` noch offen: Verhalten bei einer schon vorhandenen Position derselben Übung, ob `--tag` im ersten Schritt dabei ist (Client-Wrapper fehlt), und welche Positions-Vorgaben (Ziel, Punkte) das Verb setzt. AK 1 (eigenes Projekt) ist damit hinfällig.
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) eine schon vorhandene Position derselben Übung wird übersprungen und gemeldet (Exit 2, wenn nichts neu ist); (2) `--tag` ist im ersten Schritt dabei, der Client-Wrapper wird mitgebaut; (3) Positions-Vorgaben bleiben Server-Defaults. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
 - **2026-11-13** — Backlog-Abgleich gegen den Code: Ist-Stand-Abschnitt nachgezogen (kein eigenes Projekt, `assign`-Verb fehlt, `--tag`-Wrapper fehlt). Lücke besteht.
+- **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt. Das `assign`-Verb fehlt weiter (`backend/Pugling.Agent.Creator/AgentCommands.cs:194-211` kennt `profiles`, `briefing`, `create`, `exam`, `plan`, `fill`, `images`, `help`); `CreatorApi.cs:171` hat zu `creator/tags/{tagId}/exercises` nur den POST, der GET steht am Server (`TagsController.cs:205`). Lücke besteht.
+- **2026-11-14** — Refinement Backlog-Lauf: Ist-Stand neu am Code belegt (Agent hält schon `SupervisorApi`, `IsPlayable` statt „aktiv“, Server lehnt Dubletten nicht ab), Entscheidungen auf das `assign`-Verb umgeschrieben (Nutzer 2026-10-23, Auftrag 2026-11-05; neu als Stakeholder im Auftrag des Nutzers: Ziel `IsPlayable`, erst lesen dann schreiben, Bulk-POST zurückgestellt), AKs mit „Rot, wenn“; Schätzung L → M, backend, keine Migration, kein Vertragsbruch.
