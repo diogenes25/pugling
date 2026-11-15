@@ -306,3 +306,11 @@ Rechnung: 35 + 6 − 20 = 21.
    schadet nicht – bei Gelegenheit entfernen oder für den Agenten nutzen.
 10. `prototyp/lernpfad-b525` hat die parallele Sitzung nach `main` gemergt – mit Strategie `ours`, also ohne Inhalt;
     der Commit sagt „Nicht nach main mergen“, sein Inhalt steht weiter nur im Branch.
+
+### CI nach dem Push
+
+Der erste CI-Lauf auf `9e02510f` war rot, obwohl alle 1659 Tests grün waren: `EndpointCoverageGuard` meldete beim
+Aufräumen der Assembly 282 statt der gepinnten 281 abgedeckten Actions (neuer Truhen-Endpunkt aus Sprint 75). Die
+Konsole zeigt dabei „Passed!“ – ich hatte lokal nur diese Zeile gelesen, nicht den Exit-Code. Konstante auf 282
+nachgezogen; lokal danach Exit-Code 0. **Lehre für die Liste der Werkzeug-Fallstricke:** bei `dotnet test` den
+Exit-Code prüfen, nicht die „Passed!“-Zeile – dieselbe Klasse wie „E2E nie am Exit-Code messen“, nur umgekehrt.
