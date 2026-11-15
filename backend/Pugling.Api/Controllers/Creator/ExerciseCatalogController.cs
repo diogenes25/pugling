@@ -232,7 +232,9 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
             // of the two views they were read through.
             [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(x => x)],
             rating.Average, rating.Count,
-            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(x => x)]);
+            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(x => x)],
+            // B-20: the execute rule of the search projection above, on the loaded grants.
+            e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid)));
     }
 
     /// <summary>

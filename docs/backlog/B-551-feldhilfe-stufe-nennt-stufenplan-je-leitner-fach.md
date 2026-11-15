@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Feldhilfe Stufe, Stufenplan je Leitner-Fach]
-status: idee
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: ""
@@ -30,3 +30,5 @@ Stufe als für neue – tatsächlich wechselt sie für alle Wörter am selben Pl
 ## Verlauf
 
 - **2026-11-14** — angelegt in der Nachschau zu Sprint 74 (Backlog-Lauf 2026-11-14), Beleg am Code `HEAD`.
+- **2026-11-14** — Sprint 76, behoben (Frontend, Review-Auftrag): Feldhilfe `stage` nennt den Stufenplan je Plantag (Beispiel Assistent „Klassenarbeit“) und sagt ausdrücklich „nicht je Leitner-Fach“; Vitest-Fall in `fieldHelp.test.ts` (rot, wenn „Stufenplan je Leitner-Fach“ zurückkommt). Status unverändert.
+- **2026-11-15** — **abgenommen** (Abschluss des Laufs). Gesamt-Review des Laufs (Backend + Frontend), dort als Fund aus dem Zusammenspiel behoben. Volle Suite 1659/1659 (Release), Vitest 1088/1088, `tsc -b` grün, volle Playwright-Suite nach dem letzten Code-Edit 153 passed (zwei Specs mit veralteter Erwartung danach angepasst und grün: 3 passed). Feldhilfe `stage` nennt den Stufenplan je Plantag; Vitest-Fall in `fieldHelp.test.ts` wird rot, sobald „Stufenplan je Leitner-Fach“ zurückkommt (vom Bau-Agenten gemessen).

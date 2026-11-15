@@ -98,9 +98,10 @@ describe("Positionszeile – Lernkontrolle sichtbar (B-469)", () => {
   // hervorhebt oder das alte „· getippt" daneben stehen lässt.
   it("zeigt je Position die Art der Prüfung, die schwachen hervorgehoben", async () => {
     rendere([
-      position({ id: 1, exerciseTitle: "Getippt", requireTypedTest: true }),
-      position({ id: 2, exerciseTitle: "Ungetippt", requireTypedTest: false }),
-      position({ id: 3, exerciseTitle: "Grammatik", exerciseType: "Essay", stage: null }),
+      // Die Art kommt vom Server (B-550) – die Fixtures tragen sie wie die echte Antwort.
+      position({ id: 1, exerciseTitle: "Getippt", requireTypedTest: true, learningCheck: { kind: "Typed" } } as Partial<PositionResponse>),
+      position({ id: 2, exerciseTitle: "Ungetippt", requireTypedTest: false, learningCheck: { kind: "SelfAssessed" } } as Partial<PositionResponse>),
+      position({ id: 3, exerciseTitle: "Grammatik", exerciseType: "Essay", stage: null, learningCheck: { kind: "NoTest" } } as Partial<PositionResponse>),
     ]);
     const zeile = async (titel: string) => (await screen.findByText(titel)).closest("tr") as HTMLElement;
 
@@ -113,5 +114,27 @@ describe("Positionszeile – Lernkontrolle sichtbar (B-469)", () => {
     expect(within(await zeile("Grammatik")).getByText("kein Test – zählt Durchspielen").className).toBe("pill amber");
     // AK 4: die Erklärung hängt an der Angabe.
     expect(within(getippt).getByRole("button", { name: "Erklärung zu „Lernkontrolle\"" })).toBeTruthy();
+  });
+});
+
+/*
+ * B-550: die Zeile rendert, was der Server über die Lernkontrolle sagt. Das Manifest (Lückentext: `selfAssessedTest`) und
+ * das fehlende Häkchen ergäben nach der alten Ableitung „Selbsteinschätzung zählt“ – der Server sagt „Typed“ (etwa wegen
+ * der Stufe). Rot, sobald die Zeile wieder selbst rechnet.
+ */
+describe("Positionszeile – Lernkontrolle vom Server (B-550)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("zeigt die Art des Servers, nicht eine eigene Ableitung", async () => {
+    rendere([position({ requireTypedTest: false, learningCheck: { kind: "Typed" } } as Partial<PositionResponse>)]);
+    const zeile = await screen.findByRole("row", { name: /Lückentext A/ });
+    expect(zeile.textContent).toContain("Test getippt");
+    expect(zeile.textContent).not.toContain("Selbsteinschätzung zählt");
+  });
+
+  it("zeigt eine unerreichbare Kombination rot", async () => {
+    rendere([position({ learningCheck: { kind: "Unreachable" } } as Partial<PositionResponse>)]);
+    const zeile = await screen.findByRole("row", { name: /Lückentext A/ });
+    expect(within(zeile).getByText(/^Ziel nicht erreichbar/).className).toBe("pill mag");
   });
 });

@@ -384,7 +384,9 @@ POST /api/v1/student/children/1/daily-box/open
   Inhalt.
 - **Eine Truhe verfällt nie.** Warten mehrere (`waiting`), öffnet der Aufruf die **älteste**. Es zahlt der Wert vom
   Tag des Verdienens – Truhen aufzusparen bringt nichts.
-- Keine Truhe wartet (oder ein Doppeltipp war schneller) → `409 daily_box_none`; ein Supervisor bekommt `403`.
+- Keine Truhe wartet (oder ein Doppeltipp war schneller) → `409 daily_box_none`; ein Supervisor bekommt `403`. Beim
+  Doppeltipp verliert der zweite Aufruf auch dann, wenn noch eine Truhe wartet – geöffnet wird immer die älteste
+  wartende Truhe, ein erneuter Aufruf öffnet also die nächste.
 
 ### 6.3 Missionen und Auszeichnungen
 

@@ -11,6 +11,7 @@ import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
 import { useAction } from "../lib/useAction";
+import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { useErrorMessage } from "../lib/chromeText";
 import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
@@ -79,7 +80,6 @@ function HomeForPlan({
   const o = overview.data;
   const today = o.today;
   const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
-  const goalPct = today.goalsTotal > 0 ? Math.round((today.goalsMet / today.goalsTotal) * 100) : 0;
   // B-535: Tages- und Wochenziele getrennt zählen. Gemischt stünde „Ziele heute 1 / 2“ neben einem offenen
   // Bonus-Training, obwohl alles von heute geschafft ist – die Woche hat ihr eigenes Ende.
   const zaehle = (cadence: string) => {
@@ -87,6 +87,9 @@ function HomeForPlan({
     return { met: ziele.filter((p) => p.goalMet).length, total: ziele.length };
   };
   const tag = zaehle("Daily"), woche = zaehle("Weekly");
+  // Der Balken zählt dieselben Ziele wie Truhe und Bonus (Review B-535): die Tagesziele, ohne sie alle.
+  const belohnung = belohnungsZiele(today.positions);
+  const goalPct = belohnung.total > 0 ? Math.round((belohnung.met / belohnung.total) * 100) : 0;
 
   return (
     <div className="sohn-body">
@@ -131,6 +134,10 @@ function HomeForPlan({
         </div>
       )}
 
+      {/* Scheitert das Neuladen (etwa nach `daily_box_none`), bleibt die alte Übersicht stehen – der Fehler muss
+          trotzdem sichtbar sein, sonst wartet das Kind auf einen Stand, der nie kommt. */}
+      <NeuLadenFehler fehler={overview.error} laedt={overview.loading} onRetry={overview.reload} />
+
       {today.positions.length === 0 && (
         <div className="card" style={{ textAlign: "center" }}>
           <p className="sub">{t("home.noExercises")}</p>
@@ -140,12 +147,12 @@ function HomeForPlan({
       <Pfad positions={today.positions} />
 
       {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
-      <Truhe box={o.dailyBox} heute={today.day} ziele={tag.total > 0 ? "tag" : today.goalsTotal > 0 ? "woche" : "keine"}
+      <Truhe box={o.dailyBox} heute={today.day} ziele={belohnung.art} freigeschaltet={today.rewardsUnlocked}
         onVeraltet={overview.reload} />
 
       {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`:
           die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
-      <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} />
+      <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} ziele={belohnung.art} />
     </div>
   );
 }
@@ -317,16 +324,53 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
 /** Welche Ziele die Truhe freischalten: die Tagesziele, ohne sie alle (Wochen-)Ziele, ohne Pflicht gar keine (B-535). */
 export type TruhenZiele = "tag" | "woche" | "keine";
 
+/**
+ * Die Ziele, an denen Truhe und Bonus-Training hängen, mit ihrem Stand – dieselbe Auswahl wie
+ * `PositionProgressService.RewardObligations` am Server: die Tagesziele, ohne sie alle Ziele mit Takt. Ob sie
+ * **erfüllt** sind, liest die Seite trotzdem am Server (`rewardsUnlocked`); hier geht es um Wortlaut und Balken.
+ */
+export function belohnungsZiele(positions: readonly PositionStatus[]): { art: TruhenZiele; met: number; total: number } {
+  const mitTakt = positions.filter((p) => p.cadence !== "None");
+  const tag = mitTakt.filter((p) => p.cadence === "Daily");
+  const ziele = tag.length > 0 ? tag : mitTakt;
+  return {
+    art: tag.length > 0 ? "tag" : mitTakt.length > 0 ? "woche" : "keine",
+    met: ziele.filter((p) => p.goalMet).length, total: ziele.length,
+  };
+}
+
+/**
+ * Ein gescheitertes Neuladen der Übersicht (Review B-527). Der Fehler überlebt den Start der Wiederholung
+ * (`useGemerkterFehler`, B-216) – sonst hinge der Kasten samt Knopf im Moment des Tippens aus.
+ */
+export function NeuLadenFehler({ fehler, laedt, onRetry }: { fehler: string | null; laedt: boolean; onRetry: () => void }) {
+  const { t } = useTranslation();
+  const gescheitert = useGemerkterFehler(fehler, laedt);
+  return (
+    <div role="alert">
+      {gescheitert && (
+        <div className="error-box">
+          {t("home.reloadFailed", { error: gescheitert })}{" "}
+          <button type="button" className="btn ghost small" disabled={laedt} onClick={onRetry}>{t("home.retry")}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const ZU_TEXT = { tag: "truhe.closed", woche: "truhe.closedWeek", keine: "truhe.closedNone" } as const satisfies Record<TruhenZiele, string>;
 
 /**
  * Die Tagestruhe am Ende des Pfads (B-527) in drei Zuständen: *bereit*, sobald eine wartet (leuchtet, Knopf, bei
  * mehreren die Zahl); *offen*, wenn die Truhe von **heute** geöffnet ist (Inhalt, „Heute geöffnet“); sonst *zu* (nur ein
- * Hinweis, kein Knopf). Eine ältere Truhe zeigt nach dem Öffnen ihren Inhalt, gilt aber nicht als „heute“. Den Inhalt
+ * Hinweis, kein Knopf). Ob die Ziele erfüllt sind, sagt der Server (`freigeschaltet` = `rewardsUnlocked`): verdient wird
+ * die Truhe aber erst auf dem Schreibweg – beim Abschluss einer Runde oder eines Tests (`DailyBoxService`). Erfüllt und
+ * noch nicht verdient sagt die Truhe darum genau das, statt „Schaffe deine Tagesziele“ neben erfüllten Zielen.
+ * Eine ältere Truhe zeigt nach dem Öffnen ihren Inhalt, gilt aber nicht als „heute“. Den Inhalt
  * nennt der Server erst nach dem Öffnen – die Truhe kann ihn vorher gar nicht verraten.
  */
-export function Truhe({ box, heute, ziele, onVeraltet }: {
-  box: DailyBoxStatus; heute: string; ziele: TruhenZiele; onVeraltet: () => void;
+export function Truhe({ box, heute, ziele, freigeschaltet, onVeraltet }: {
+  box: DailyBoxStatus; heute: string; ziele: TruhenZiele; freigeschaltet: boolean; onVeraltet: () => void;
 }) {
   const { t } = useTranslation();
   const { childId, refreshWallet } = useSohn();
@@ -377,7 +421,7 @@ export function Truhe({ box, heute, ziele, onVeraltet }: {
       <div className="truhe-inhalt" role="status">
         {inhalt ? (inhalt.gems > 0 ? t("truhe.content", inhalt) : t("truhe.contentCoins", inhalt)) : null}
       </div>
-      {zustand === "zu" && <p className="sub">{t(ZU_TEXT[ziele])}</p>}
+      {zustand === "zu" && <p className="sub">{freigeschaltet ? t("truhe.comesNext") : t(ZU_TEXT[ziele])}</p>}
       {zustand === "offen" && <span className="pill lime">{t("truhe.opened")}</span>}
       {zustand === "bereit" && (
         <>

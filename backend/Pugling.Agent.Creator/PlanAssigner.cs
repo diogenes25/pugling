@@ -51,8 +51,9 @@ public sealed record AssignRequest(
         if (hasTag && string.IsNullOrWhiteSpace(tag))
             throw new AgentUsageException("--tag fehlt ein Name.");
 
+        // None is no goal at all - a position that never counts is not what assigning into a running plan is for.
         GoalCadence? cadence = command.Value("cadence") is { } raw
-            ? Enum.TryParse<GoalCadence>(raw, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)
+            ? Enum.TryParse<GoalCadence>(raw, ignoreCase: true, out var parsed) && parsed is GoalCadence.Daily or GoalCadence.Weekly
                 ? parsed
                 : throw new AgentUsageException($"--cadence erwartet Daily oder Weekly, bekam '{raw}'.")
             : null;
@@ -74,7 +75,8 @@ public sealed record AssignRequest(
 /// <param name="Title">Its title, for the report.</param>
 /// <param name="AlreadyPresent">It is already a position of the plan and was skipped.</param>
 /// <param name="PositionId">The position created for it; <c>null</c> when skipped, not yet written or refused.</param>
-public sealed record AssignItem(int ExerciseId, string Title, bool AlreadyPresent, int? PositionId);
+/// <param name="Assignable">May this account put it into a plan (<c>ExerciseDetail.CanAssign</c>)?</param>
+public sealed record AssignItem(int ExerciseId, string Title, bool AlreadyPresent, int? PositionId, bool Assignable = true);
 
 /// <summary>The result of an assign run.</summary>
 /// <param name="Request">The request as resolved.</param>
@@ -92,6 +94,9 @@ public sealed record AssignOutcome(
     /// <summary>The exercises that were new to the plan (to be written, or written).</summary>
     public IReadOnlyList<AssignItem> New => [.. Items.Where(i => !i.AlreadyPresent)];
 
+    /// <summary>New exercises this account may not assign - any of them stops the run before the first write.</summary>
+    public IReadOnlyList<AssignItem> NotAssignable => [.. New.Where(i => !i.Assignable)];
+
     /// <summary>The positions actually created.</summary>
     public IReadOnlyList<int> CreatedPositionIds => [.. Items.Where(i => i.PositionId is not null).Select(i => i.PositionId!.Value)];
 
@@ -100,7 +105,7 @@ public sealed record AssignOutcome(
     /// <see cref="NothingNewExitCode"/> = nothing new to assign. Not 2: that code means "invoked incorrectly"
     /// across the console, and a rerun that finds everything in place was invoked correctly.
     /// </summary>
-    public int ExitCode => Rejected is not null ? 1 : New.Count == 0 ? NothingNewExitCode : 0;
+    public int ExitCode => Rejected is not null || NotAssignable.Count > 0 ? 1 : New.Count == 0 ? NothingNewExitCode : 0;
 
     /// <summary>Exit code of a run in which every exercise already was a position of the plan.</summary>
     public const int NothingNewExitCode = 3;
@@ -117,13 +122,16 @@ public sealed record AssignOutcome(
         foreach (var item in Items)
         {
             var state = item.AlreadyPresent ? "schon vorhanden – übersprungen"
+                : !item.Assignable ? "nicht zuweisbar – privat, ohne Ausführungsrecht für dieses Konto"
                 : item.PositionId is { } pid ? $"angelegt (Position {pid})"
                 : Rejected?.ExerciseId == item.ExerciseId ? $"abgelehnt: {Rejected.Error}"
                 : Request.DryRun ? "neu"
                 : "nicht angelegt (Lauf abgebrochen)";
             lines.Add($"  #{item.ExerciseId} {item.Title}: {state}");
         }
-        if (Request.DryRun) lines.Add("Trockenlauf – nichts geschrieben.");
+        if (NotAssignable.Count > 0)
+            lines.Add($"Abgebrochen vor dem Schreiben: {NotAssignable.Count} Übung(en) nicht zuweisbar – nichts geschrieben.");
+        else if (Request.DryRun) lines.Add("Trockenlauf – nichts geschrieben.");
         else if (Rejected is not null)
             lines.Add($"Abgebrochen: {CreatedPositionIds.Count} Position(en) angelegt, die bleiben stehen; ein erneuter Lauf überspringt sie.");
         else if (New.Count == 0) lines.Add("Nichts Neues: alle Übungen stehen schon im Plan.");
@@ -164,8 +172,10 @@ public sealed class PlanAssigner(CreatorApi creator, SupervisorApi supervisor)
         var (exercises, tagTotal) = await ResolveExercisesAsync(request, ct);
         var present = (await supervisor.ListPositionsAsync(plan.Id, ct)).Select(p => p.ExerciseId).ToHashSet();
 
-        var items = exercises.Select(e => new AssignItem(e.Id, e.Title, present.Contains(e.Id), null)).ToList();
-        if (request.DryRun) return new AssignOutcome(request, plan, items, null, tagTotal);
+        var items = exercises.Select(e => new AssignItem(e.Id, e.Title, present.Contains(e.Id), null, e.CanAssign)).ToList();
+        // A non-assignable exercise would fail at its POST, after the ones before it were written - refuse the run first.
+        if (request.DryRun || items.Any(i => !i.AlreadyPresent && !i.Assignable))
+            return new AssignOutcome(request, plan, items, null, tagTotal);
 
         for (var i = 0; i < items.Count; i++)
         {
@@ -211,12 +221,14 @@ public sealed class PlanAssigner(CreatorApi creator, SupervisorApi supervisor)
 
         // IsPlayable is the server's own rule (active AND within its run) - an active but expired plan is the wrong target.
         var playable = (await supervisor.ListPlansAsync(request.ChildId, ct)).FirstOrDefault(p => p.IsPlayable);
+        // Not "create one with plan": that verb creates the plan inactive, so the hint would lead into the next lock.
         return playable ?? throw new AgentUsageException(
-            $"Kind {request.ChildId} hat keinen spielbaren Plan. Lege einen an (Verb plan) oder nenne ihn mit --plan-id.");
+            $"Kind {request.ChildId} hat keinen spielbaren Plan. Nenne einen seiner Pläne mit --plan-id, oder schalte einen "
+            + "unter /vater/plaene scharf (ein mit plan erzeugter Plan entsteht inaktiv).");
     }
 
     /// <summary>The exercises to assign, in request order; every id is checked before anything is written.</summary>
-    private async Task<(List<(int Id, string Title)> Exercises, int? TagTotal)> ResolveExercisesAsync(
+    private async Task<(List<(int Id, string Title, bool CanAssign)> Exercises, int? TagTotal)> ResolveExercisesAsync(
         AssignRequest request, CancellationToken ct)
     {
         if (request.TagName is { } tagName)
@@ -229,16 +241,20 @@ public sealed class PlanAssigner(CreatorApi creator, SupervisorApi supervisor)
             if (page.Truncated)
                 throw new AgentException($"Der Tag „{tagName}“ trägt {page.TotalCount} Übungen, gelesen werden höchstens "
                     + $"{TagWindow} – nichts zugewiesen. Teile den Tag oder nenne die Übungen mit --exercise-id.");
-            return ([.. page.Items.Select(e => (e.Id, e.Title))], page.TotalCount);
+            // The tag list is lean (ExerciseBrief, no grants): the detail carries the assign rule.
+            var tagged = new List<(int, string, bool)>();
+            foreach (var brief in page.Items)
+                tagged.Add((brief.Id, brief.Title, (await creator.GetExerciseDetailAsync(brief.Id, ct)).CanAssign));
+            return (tagged, page.TotalCount);
         }
 
-        var exercises = new List<(int, string)>();
+        var exercises = new List<(int, string, bool)>();
         foreach (var id in request.ExerciseIds)
         {
             try
             {
                 var detail = await creator.GetExerciseDetailAsync(id, ct);
-                exercises.Add((detail.Id, detail.Title));
+                exercises.Add((detail.Id, detail.Title, detail.CanAssign));
             }
             catch (PuglingApiException ex) when (ex.StatusCode is HttpStatusCode.NotFound)
             {

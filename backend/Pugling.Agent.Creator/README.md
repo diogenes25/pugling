@@ -265,11 +265,14 @@ dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1 --tag "Kl
   Agent vor dem Schreiben ab (Exit 1), statt einen Teil zuzuweisen.
 - **Ziel:** der **spielbare** Plan des Kindes (aktiv *und* heute in seiner Laufzeit, `IsPlayable`); `--plan-id`
   wählt einen anderen eigenen Plan desselben Kindes. Ohne spielbaren Plan oder mit dem Plan eines anderen Kindes:
-  Exit 2, nichts geschrieben.
+  Exit 2, nichts geschrieben. Die Meldung verweist auf `--plan-id` bzw. aufs Scharfschalten unter `/vater/plaene` –
+  nicht auf `plan`, das einen Plan inaktiv anlegt.
 - **Dubletten:** eine Übung, die schon Position im Plan ist, wird übersprungen und gemeldet; ist nichts neu, Exit 3
   (eigener Code, weil der Aufruf richtig war – 2 heißt „falsch aufgerufen“).
 - **Vorgaben:** ohne Overrides gelten die Server-Vorgaben; `--points`, `--goal-threshold`, `--cadence Daily|Weekly`
-  übersteuern sie.
+  übersteuern sie (`None` – kein Ziel – lehnt der Agent ab: eine Position, die nie zählt, ist kein Zuweisen).
+- **Zuweisbar:** eine fremde private Übung ohne Ausführungsrecht (`canAssign: false` am Übungsdetail) bricht den Lauf
+  **vor** dem ersten Schreiben ab (Exit 1); `--dry-run` nennt sie.
 - **Reihenfolge:** erst alles lesen (Plan, Positionen, Übungen), dann schreiben; `--dry-run` endet nach dem Lesen.
   Lehnt der Server eine Position ab (etwa `exercise_not_executable` für eine fremde private Übung), bricht der Lauf
   mit Exit 1 ab; die schon angelegten Positionen bleiben, ein erneuter Lauf überspringt sie.

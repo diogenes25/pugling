@@ -472,6 +472,8 @@ export type ScoringTimeSlot = S["ScoringTimeSlot"];
 
 /** Eine Position eines Lehrplans: Verweis auf eine Katalog-Übung + eigene Ziele/Punkte/Leitner. */
 export type PositionResponse = S["PositionResponse"];
+/** Womit eine Position geprüft wird – vom Server bestimmt (B-550). */
+export type LearningCheck = S["LearningCheck"];
 
 /** Tagesstand eines Kindes im Vater-Dashboard (aggregiert über seine aktiven Lehrpläne). */
 export type ChildDay = S["ChildDay"];

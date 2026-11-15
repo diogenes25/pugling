@@ -12,7 +12,8 @@ vi.mock("./SohnApp", () => ({
 vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
 const refreshWallet = vi.fn();
 
-const { Pfad, Truhe } = await import("./SohnHome");
+const { belohnungsZiele, NeuLadenFehler, Pfad, Truhe } = await import("./SohnHome");
+const { BonusEinstieg } = await import("./SohnBonus");
 const { api, ApiError } = await import("../lib/api");
 type TruhenZiele = import("./SohnHome").TruhenZiele;
 
@@ -170,8 +171,10 @@ const status = (over: Partial<DailyBoxStatus>): DailyBoxStatus => ({
   claimedToday: false, openedToday: false, waiting: 0, coinsAwarded: null, gemsAwarded: null, streakAtClaim: 0, ...over,
 });
 const HEUTE = "2026-11-14";
-const zeigeTruhe = (box: DailyBoxStatus, over: { ziele?: TruhenZiele; onVeraltet?: () => void } = {}) =>
-  render(<Truhe box={box} heute={HEUTE} ziele={over.ziele ?? "tag"} onVeraltet={over.onVeraltet ?? (() => {})} />);
+const zeigeTruhe = (box: DailyBoxStatus,
+  over: { ziele?: TruhenZiele; freigeschaltet?: boolean; onVeraltet?: () => void } = {}) =>
+  render(<Truhe box={box} heute={HEUTE} ziele={over.ziele ?? "tag"} freigeschaltet={over.freigeschaltet ?? false}
+    onVeraltet={over.onVeraltet ?? (() => {})} />);
 const truhe = () => screen.getByRole("region", { name: "Tagestruhe" });
 const geoeffnet = (over: Partial<DailyBoxOpened>): DailyBoxOpened =>
   ({ coins: 25, gems: 1, streakAtClaim: 2, day: HEUTE, waitingAfter: 0, ...over });
@@ -283,5 +286,50 @@ describe("Die Tagestruhe", () => {
     expect(screen.queryByRole("button", { name: "Truhe öffnen" })).toBeNull();
     expect(truhe().className).not.toContain("bereit");
     expect(screen.getByRole("alert").textContent).toContain("Gerade wartet keine Truhe");
+  });
+});
+
+/*
+ * Gesamt-Review des Laufs: Truhe und Bonus lesen „erfüllt“ am Server (`rewardsUnlocked`) und zählen dieselben Ziele wie
+ * er (`RewardObligations`). Je Fall steht, welche Änderung ihn rot macht.
+ */
+describe("Belohnungen – dieselben Ziele wie der Server", () => {
+  // Rot, wenn die Truhe bei erfüllten Zielen wieder „Schaffe deine Tagesziele“ sagt (`freigeschaltet` nicht gelesen).
+  it("sagt bei erfüllten Zielen ohne verdiente Truhe, wann sie kommt", () => {
+    zeigeTruhe(status({}), { freigeschaltet: true });
+    expect(truhe().textContent).toContain("die Truhe kommt, sobald du eine Runde oder einen Test abschließt");
+    expect(truhe().textContent).not.toContain("Schaffe deine");
+    expect(within(truhe()).queryByRole("button")).toBeNull();
+  });
+
+  // Rot, wenn der Balken wieder alle Ziele mischt (dann 1 / 2 statt 1 / 1) oder ohne Tagesziele nichts zählt.
+  it("zählt die Tagesziele, ohne sie alle Ziele mit Takt", () => {
+    expect(belohnungsZiele([position({ positionId: 1, goalMet: true }), position({ positionId: 2, cadence: "Weekly" })]))
+      .toEqual({ art: "tag", met: 1, total: 1 });
+    expect(belohnungsZiele([position({ cadence: "Weekly", goalMet: true }), position({ positionId: 2, cadence: "None" })]))
+      .toEqual({ art: "woche", met: 1, total: 1 });
+    expect(belohnungsZiele([position({ cadence: "None" })])).toEqual({ art: "keine", met: 0, total: 0 });
+  });
+
+  // Rot, wenn der Bonus-Einstieg bei einem Plan nur mit Wochenzielen „Erst die Tagesziele“ verlangt.
+  it("nennt im Bonus-Einstieg die Wochenziele, wo es nur sie gibt", () => {
+    const { unmount } = render(<MemoryRouter><BonusEinstieg offen={false} ziele="woche" /></MemoryRouter>);
+    expect(screen.getByText("🔒 Erst die Wochenziele – dann öffnet das Bonus-Training.")).toBeTruthy();
+    unmount();
+    render(<MemoryRouter><BonusEinstieg offen={false} ziele="tag" /></MemoryRouter>);
+    expect(screen.getByText("🔒 Erst die Tagesziele – dann öffnet das Bonus-Training.")).toBeTruthy();
+  });
+
+  // Rot, wenn ein gescheitertes Neuladen unsichtbar bleibt oder der Kasten beim Wiederholen aushängt (B-216).
+  it("zeigt ein gescheitertes Neuladen mit Wiederholen-Knopf", () => {
+    const onRetry = vi.fn();
+    const { rerender } = render(<NeuLadenFehler fehler="Netz weg" laedt={false} onRetry={onRetry} />);
+    expect(screen.getByRole("alert").textContent).toContain("Neu laden hat nicht geklappt: Netz weg");
+    fireEvent.click(screen.getByRole("button", { name: "Nochmal versuchen" }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    rerender(<NeuLadenFehler fehler={null} laedt onRetry={onRetry} />);
+    expect(screen.getByRole("alert").textContent).toContain("Netz weg");
+    rerender(<NeuLadenFehler fehler={null} laedt={false} onRetry={onRetry} />);
+    expect(screen.getByRole("alert").textContent).toBe("");
   });
 });

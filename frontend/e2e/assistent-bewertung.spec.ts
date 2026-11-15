@@ -64,7 +64,7 @@ test("Der Assistent zeigt die Bewertung, sortiert nach ihr und behält dabei die
   await page.locator("#wiz-name").fill(`E2E-Bewertung-${RUN}`);
   await page.locator("#wiz-pin").fill("1357");
   await page.getByRole("button", { name: "Weiter" }).click();
-  await page.getByLabel("Fach", { exact: true }).selectOption({ label: fach });
+  await page.getByLabel("Fach (Pflicht)", { exact: true }).selectOption({ label: fach });
   // B-423: das vorbelegte Ziel „Klassenarbeit" verlangt einen Termin – diese Spec meint die freie Dauer.
   await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
   await page.getByRole("button", { name: "Weiter" }).click();

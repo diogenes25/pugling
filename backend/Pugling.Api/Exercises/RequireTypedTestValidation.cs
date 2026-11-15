@@ -29,4 +29,15 @@ public static class RequireTypedTestValidation
         requireTypedTest == true && type?.SupportsRequireTypedTest == false
             ? $"requireTypedTest cannot be set: the exercise type \"{type.Key}\" has no typed stage at all, so this would never score."
             : null;
+
+    /// <summary>
+    /// Returns an error text if <paramref name="requireTypedTest"/> is <c>true</c> while the stage schedule holds a
+    /// self-assessed stage (neither typed nor a free display stage), otherwise <c>null</c> (B-550). A test on such a day is
+    /// never graded, so the goal could not be met there - the malus would run against a child that did its part.
+    /// </summary>
+    public static string? LadderProblemText(IExerciseType? type, bool requireTypedTest, IReadOnlyList<StageStep>? schedule) =>
+        requireTypedTest && type is not null
+            && schedule?.Any(s => !type.IsTypedStage(s.Stage) && !type.IsDisplayOnlyStage(s.Stage)) == true
+            ? "requireTypedTest cannot be combined with a stage schedule that has a self-assessed stage."
+            : null;
 }

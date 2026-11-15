@@ -88,7 +88,7 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Diese Übung hat noch keine Inhalte.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
-  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagespflicht erledigt ist.",
+  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagesziele erfüllt sind.",
   extra_exercise_done: "Diese Bonus-Übung hast du schon gespielt.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
   extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",

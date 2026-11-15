@@ -46,7 +46,7 @@ test("Tagesziel geschafft, Wochenziel offen: Kiste verdient und Bonus-Training o
   await postId(request, positions, vater, { exerciseId: exWoche, stage: 4, cadence: "Weekly", useLeitner: false });
 
   await sohnLogin(page, { id: String(childId), pin });
-  await expect(page.getByText("🔒 Erst die Tagespflicht – dann öffnet das Bonus-Training.")).toBeVisible();
+  await expect(page.getByText("🔒 Erst die Tagesziele – dann öffnet das Bonus-Training.")).toBeVisible();
 
   // Nur das Tagesziel erfüllen: ein bestandener Test der Tages-Position. Das Wochenziel bleibt offen.
   const kindLogin = await request.post("/api/v1/auth/child", { data: { childId, pin } });
@@ -70,7 +70,7 @@ test("Tagesziel geschafft, Wochenziel offen: Kiste verdient und Bonus-Training o
 
   await page.reload();
   await expect(page.getByRole("link", { name: "Zum Bonus-Training" })).toBeVisible();
-  await expect(page.getByText("🔒 Erst die Tagespflicht – dann öffnet das Bonus-Training.")).toHaveCount(0);
+  await expect(page.getByText("🔒 Erst die Tagesziele – dann öffnet das Bonus-Training.")).toHaveCount(0);
   // Die Ziele-Karte zählt Tag und Woche getrennt: heute ist alles geschafft, die Woche läuft noch.
   await expect(page.locator(".row", { hasText: "🎯 Ziele heute" })).toContainText("1 / 1");
   await expect(page.locator(".row", { hasText: "📅 Ziele diese Woche" })).toContainText("0 / 1");

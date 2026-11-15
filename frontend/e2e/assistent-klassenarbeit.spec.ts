@@ -51,7 +51,7 @@ async function bisZumUeberblick(page: Page, s: { childId: string; fach: string; 
   await page.getByRole("button", { name: "Weiter" }).click();
 
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();
-  await page.getByLabel("Fach", { exact: true }).selectOption({ label: s.fach });
+  await page.getByLabel("Fach (Pflicht)", { exact: true }).selectOption({ label: s.fach });
   await expect(page.getByRole("radio", { name: /Klassenarbeit vorbereiten/ })).toHaveAttribute("aria-checked", "true");
   const weiter = page.getByRole("button", { name: "Weiter" });
   const feld = page.getByLabel("Termin der Klassenarbeit (Pflicht)", { exact: true });
@@ -98,7 +98,8 @@ test("Klassenarbeit aus dem Assistenten: Plan bis zum Vortag, Leiter, Arbeit –
     const zeile = page.getByRole("row", { name: new RegExp(s.titel) });
     await expect(zeile).toContainText("Stufen: Selbsteinschätzung bis Tag 3, dann Freitext");
     // AK 8 sichtbar: mit Leiter zählt die Selbsteinschätzung (B-469-Text), obwohl das Ziel „nur getippt" vorbelegt.
-    await expect(zeile).toContainText("Test, Selbsteinschätzung zählt");
+    // B-550: die Zeile nennt die Leiter, die der Server meldet – keine gelbe Warnung für den gewollten Selbsteinschätzungs-Anfang.
+    await expect(zeile).toContainText("Selbsteinschätzung bis Tag 3, ab Tag 4 getippt");
 
     // AK 4: die Arbeit steht mit Termin, Fach und der gewählten Übung unter „Klassenarbeiten".
     await page.goto(`/vater/class-tests?childId=${s.childId}`);

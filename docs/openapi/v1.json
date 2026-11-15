@@ -33275,9 +33275,13 @@
               ],
               "format": "int32"
             }
+          },
+          "canAssign": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them.\n\u0060CanAssign\u0060: the same rule as on ExerciseSummary (B-140) - may the requester put the exercise\ninto a study plan or class test? Lets a caller holding only an id (the agent\u0027s \u0060assign\u0060, B-20) refuse it\nbefore the first write instead of failing halfway with \u0060exercise_not_executable\u0060."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -39642,6 +39646,41 @@
         "type": "string",
         "description": "Status of a class test in its lifecycle.\n\nAllowed values: Planned, Written, Cancelled."
       },
+      "LearningCheck": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "What meets the goal.",
+            "$ref": "#/components/schemas/LearningCheckKind"
+          },
+          "typedFromDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "For LearningCheckKind.Ladder: plan day (1-based) from which every day is typed; otherwise \u0060null\u0060.",
+            "format": "int32"
+          }
+        },
+        "description": "A position\u0027s learning check (B-550)."
+      },
+      "LearningCheckKind": {
+        "enum": [
+          "Typed",
+          "SelfAssessed",
+          "Ladder",
+          "Playthrough",
+          "NoTest",
+          "Unreachable"
+        ],
+        "type": "string",
+        "description": "What carries a position\u0027s goal - the honest answer to \u0022how strictly is this duty checked?\u0022 (B-550).\n\nAllowed values: Typed, SelfAssessed, Ladder, Playthrough, NoTest, Unreachable."
+      },
       "LearningMethod": {
         "enum": [
           "Vocabulary",
@@ -41510,6 +41549,17 @@
             ],
             "description": "The dose the play actually applies: NewItemsPerDay, but 0 while the exercise grades as a set (an\nunordered list) - the stored dose then rests and comes back when the list is ordered again (B-478, B-480).",
             "format": "int32"
+          },
+          "learningCheck": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What meets this position\u0027s goal, computed by the server from the rules it grades by (B-550) - stage schedule,\nposition stage, exercise default stage and \u0022typed tests only\u0022. \u0060null\u0060 only for an exercise type the server\ndoes not know.",
+                "$ref": "#/components/schemas/LearningCheck"
+              }
+            ]
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."

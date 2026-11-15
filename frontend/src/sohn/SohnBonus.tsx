@@ -1,3 +1,4 @@
+import type { TruhenZiele } from "./SohnHome";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -44,7 +45,7 @@ function clearAnswers(runId: number) {
 }
 
 /** Der Einstieg auf dem Pfad: gesperrt, bis die Tagespflicht erledigt ist – die Sperre selbst hält der Server. */
-export function BonusEinstieg({ offen }: { offen: boolean }) {
+export function BonusEinstieg({ offen, ziele = "tag" }: { offen: boolean; ziele?: TruhenZiele }) {
   const { t } = useTranslation();
   return (
     <div className="card bonus-einstieg" style={{ borderColor: offen ? "var(--gold)" : undefined }}>
@@ -52,7 +53,7 @@ export function BonusEinstieg({ offen }: { offen: boolean }) {
         <span style={{ fontSize: 26 }} aria-hidden="true">{offen ? "⭐" : "🔒"}</span>
         <b>{t("bonus.title")}</b>
       </div>
-      <p className="sub" style={{ margin: "6px 0" }}>{offen ? t("bonus.teaserOpen") : t("bonus.teaserLocked")}</p>
+      <p className="sub" style={{ margin: "6px 0" }}>{offen ? t("bonus.teaserOpen") : ziele === "woche" ? t("bonus.teaserLockedWeek") : t("bonus.teaserLocked")}</p>
       {offen && (
         <Link to="/sohn/bonus" className="btn gold small" style={{ textDecoration: "none", textAlign: "center" }}>{t("bonus.enter")}</Link>
       )}

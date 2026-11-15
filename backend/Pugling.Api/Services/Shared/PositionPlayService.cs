@@ -81,6 +81,36 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// What meets the position's goal (B-550), from the same rules the test and <c>IsGoalMetAsync</c> grade by: a type
+    /// without a final test counts playthrough; otherwise every stage the position can be on - the base stage
+    /// (position → exercise default → type default, as in <see cref="StageForDay"/>) and each step of the schedule - is
+    /// a display stage (playthrough), a typed stage (graded) or a self-assessed one. "Typed tests only" makes a
+    /// self-assessed day unreachable, since such an attempt is never graded.
+    /// </summary>
+    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type)
+    {
+        if (type.Manifest.CheckMode == ExerciseCheckMode.None) return new LearningCheck(LearningCheckKind.NoTest);
+
+        var baseStage = pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
+        var steps = (pos.StageSchedule ?? []).OrderBy(s => s.DayNumber).ToList();
+        // Segments (first day, stage) in plan order; the base stage holds until the first step takes over.
+        var segments = new List<(int Day, int Stage)>();
+        if (steps.Count == 0 || steps[0].DayNumber > 1) segments.Add((1, baseStage));
+        segments.AddRange(steps.Select(s => (Math.Max(1, s.DayNumber), s.Stage)));
+
+        var kinds = segments.Select(s => type.IsDisplayOnlyStage(s.Stage) ? LearningCheckKind.Playthrough
+            : type.IsTypedStage(s.Stage) ? LearningCheckKind.Typed : LearningCheckKind.SelfAssessed).ToList();
+        if (pos.RequireTypedTest && kinds.Contains(LearningCheckKind.SelfAssessed))
+            return new LearningCheck(LearningCheckKind.Unreachable);
+        if (kinds.Distinct().Count() == 1) return new LearningCheck(kinds[0]);
+
+        // The day from which every later segment is typed - the point the father reads as "from then on it is checked".
+        int? typedFrom = null;
+        for (var i = segments.Count - 1; i >= 0 && kinds[i] == LearningCheckKind.Typed; i--) typedFrom = segments[i].Day;
+        return new LearningCheck(LearningCheckKind.Ladder, typedFrom);
+    }
+
+    /// <summary>
     /// The stage a never-seen card is shown at first (B-419): the type's free display stage, or <c>null</c> for a
     /// type that has none - there the card is played at the day's stage as before, because there is no way to
     /// show it without grading it.

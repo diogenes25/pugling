@@ -46,7 +46,9 @@ test("Die Positionszeilen nennen die Art der Lernkontrolle", async ({ page, requ
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
     { childId, title: `Kontrollplan ${RUN}`, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
-  await postId(request, positions, vater, { exerciseId: exGetippt, requireTypedTest: true });
+  // Stufe 4 (Freitext): ohne sie gälte die Vorgabestufe der Vokabeln (Selbsteinschätzung), und „nur getippt“ machte das
+  // Ziel unerreichbar – das meldet der Server dann als `Unreachable` (B-550, gemessen im Gesamt-Review).
+  await postId(request, positions, vater, { exerciseId: exGetippt, requireTypedTest: true, stage: 4 });
   await postId(request, positions, vater, { exerciseId: exUngetippt, requireTypedTest: false });
   await postId(request, positions, vater, { exerciseId: exGrammatik });
 

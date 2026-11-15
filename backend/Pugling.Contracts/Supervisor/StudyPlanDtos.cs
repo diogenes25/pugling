@@ -90,12 +90,45 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// The dose the play actually applies: <paramref name="NewItemsPerDay"/>, but 0 while the exercise grades as a set (an
 /// unordered list) - the stored dose then rests and comes back when the list is ordered again (B-478, B-480).
 /// </param>
+/// <param name="LearningCheck">
+/// What meets this position's goal, computed by the server from the rules it grades by (B-550) - stage schedule,
+/// position stage, exercise default stage and "typed tests only". <c>null</c> only for an exercise type the server
+/// does not know.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
-    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce);
+    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null);
+
+/// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
+public enum LearningCheckKind
+{
+    /// <summary>The final test asks in a typed (objectively checked) form on every day.</summary>
+    Typed,
+    /// <summary>The final test asks in a form the child judges itself ("Gewusst!" counts) on every day.</summary>
+    SelfAssessed,
+    /// <summary>
+    /// The stage schedule changes the form over the plan: self-assessed or display days first, typed from
+    /// <see cref="LearningCheck.TypedFromDay"/> on (<c>null</c> if the schedule never ends on typed days).
+    /// </summary>
+    Ladder,
+    /// <summary>A free display stage on every day: there is no question, playing the round through meets the goal (B-96).</summary>
+    Playthrough,
+    /// <summary>The exercise type has no final test at all; playing the round through meets the goal.</summary>
+    NoTest,
+    /// <summary>
+    /// "Typed tests only" is set, but the test asks in a self-assessed form on at least one day: an attempt there is
+    /// never graded, so the goal cannot be met on such a day.
+    /// </summary>
+    Unreachable,
+}
+
+/// <summary>A position's learning check (B-550).</summary>
+/// <param name="Kind">What meets the goal.</param>
+/// <param name="TypedFromDay">For <see cref="LearningCheckKind.Ladder"/>: plan day (1-based) from which every day is typed; otherwise <c>null</c>.</param>
+public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 
 /// <summary>
 /// Creating a position. Empty override fields inherit the exercise's suggestion (hybrid principle):

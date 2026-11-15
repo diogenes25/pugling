@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: B-375
 grund: ""
+nachgeschaut: 2026-11-15
 ersetzt_durch: []
 ---
 
@@ -108,3 +109,4 @@ weil kein Test nötig ist.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt, geschätzt – auf die Doku-Fassung geschnitten (Warnung in Agent-README und Skill `ki-creator`, Verweis auf `lehrwerk-aufbereiten`); Modellwechsel und Kacheln im `PageReader` zurückgestellt (Stakeholder im Auftrag des Nutzers); XS, doku.
 - **2026-11-14** — Sprint 76, gebaut (nur Doku): Absatz „Grenze des Modells" im README-Abschnitt „Aus Fotos der Buchseiten" (Lesegrenze mit B-375-Befund, nur einzelne groß fotografierte Seiten, `--dry-run` mit Abgleich am Foto, ganzes Lehrwerk über `lehrwerk-aufbereiten` samt `kacheln.ps1`) und ein Satz in `ki-creator/SKILL.md`; `grep -n lehrwerk-aufbereiten` trifft README:310 und SKILL.md:59; `old-phrases.py` ohne Fund. AK 3 nur eingeschränkt prüfbar: in beiden Dateien liegen parallel die unverbundenen `assign`-Absätze aus B-20.
 - **2026-11-14** — **abgenommen** (Sprint 76). volle Suite 1650/1650 (Release, nach den Review-Fixes), Vitest 1079/1079, `tsc -b` grün; Rollengang als Playwright gegen frisch gestartete Server nach dem letzten Edit: 38 passed (Assistent inkl. `assistent-klassenarbeit`, Lehrwerk-/Reihen-/Fachlehrer-Formulare, `vater-von-null`, `kind-anlegen-id`, `uebung-teilspeichern`, `erstbegegnung`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `8e970493`. Reine Doku (Agent-README, Skill `ki-creator`); kein Test, kein Rollengang. Kacheln und Modellwechsel bleiben zurückgestellt.
+- **2026-11-15** — Nachschau im Gesamt-Review des Laufs (Backend + Frontend über `40dd9bfa..HEAD`): Funde aus dem Zusammenspiel im Lauf behoben (Lernkontrolle vom Server `learningCheck`, Truhe/Bonus-Texte aus `rewardsUnlocked`, Agent prüft `canAssign` vor dem Schreiben, `--cadence None` abgelehnt, Truhen-Meldung und Tutorial-Halbsatz); siehe Protokoll „Abschluss“.

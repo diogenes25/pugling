@@ -42,7 +42,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
-            p.NewItemsPerDay, PositionPlayService.DailyDose(p, types));
+            p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
+            types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -167,7 +168,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // The EFFECTIVE value (position override, otherwise the exercise's own default) - an unfulfillable
         // setting must not slip through just because the position itself left it unset (B-93).
         var effectiveRequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest;
-        if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest) is { } typedProblem)
+        if ((RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest)
+                ?? RequireTypedTestValidation.LadderProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest, dto.StageSchedule))
+            is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
 
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? 0, dto.UseLeitner ?? exercise.DefaultUseLeitner)
@@ -249,6 +252,12 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
         if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
+        // Judged on the combination after the PATCH, but only when this PATCH touches one of its two halves: an older
+        // position holding both must stay editable in everything else.
+        if ((dto.RequireTypedTest is not null || dto.StageSchedule is not null)
+            && RequireTypedTestValidation.LadderProblemText(types.ByKey(exercise.Type),
+                dto.RequireTypedTest ?? pos.RequireTypedTest, dto.StageSchedule ?? pos.StageSchedule) is { } ladderProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, ladderProblem);
 
         // The set check only judges a dose being set now: a list the creator switched to any order after it was assigned
         // keeps its stored dose, which play ignores (PositionPlayService.DailyDose) - blocking every other edit of the

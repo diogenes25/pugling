@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-ab
 grund: ""
+nachgeschaut: 2026-11-15
 ersetzt_durch: []
 ---
 
@@ -115,3 +116,4 @@ Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Proto
 - **2026-11-14** — Abgleich Backlog-Lauf: Kern gilt (Dialog reicht `detail.categoryId` weiter durch, `ExerciseEditModal.tsx:251`; kein Art-Feld). Zeilenangaben im Ist-Stand berichtigt. Der Hinderungsgrund vom 2026-11-13 ist weg: B-534 ist committet (`a3e5c1ba`), `ExerciseEditModal.tsx` ist wieder frei.
 - **2026-11-14** — Sprint 76, gebaut: Backend unverändert (Entscheidung 2), Absichtserklärung `ReiheFachwechselTests.Ausweg_Art_Entfernen_Entsperrt_Den_Wechsel_Auch_Bei_Gespielter_Uebung` (AK 1, prüft vorab `position_has_data` und `exercise_in_use`); Dialog: Feld „Art" (`CategoryField`, Arten des Reihen-Fachs + „– keine Art –", geladene Art bleibt bei Ladeausfall wählbar), `MetaForm.categoryId`, `initialForm` übernimmt die geladene Art, `payloadFrom` nimmt `form.categoryId`; Vitest in `ExerciseEditModal.test.ts` (AK 2, AK 3).
 - **2026-11-14** — **abgenommen** (Sprint 76). volle Suite 1650/1650 (Release, nach den Review-Fixes), Vitest 1079/1079, `tsc -b` grün; Rollengang als Playwright gegen frisch gestartete Server nach dem letzten Edit: 38 passed (Assistent inkl. `assistent-klassenarbeit`, Lehrwerk-/Reihen-/Fachlehrer-Formulare, `vater-von-null`, `kind-anlegen-id`, `uebung-teilspeichern`, `erstbegegnung`); Reviews `pugling-reviewer` + `frontend-reviewer`, Funde im Sprint behoben; Commit `8e970493`. Mutante Q8 (`categoryId` nicht aus dem Formular) rot (AK 2). Backend-Test als Absichtserklärung beschriftet (Ausweg „Art entfernen“ war serverseitig schon offen). Rollengang: `uebung-teilspeichern` grün.
+- **2026-11-15** — Nachschau im Gesamt-Review des Laufs (Backend + Frontend über `40dd9bfa..HEAD`): Funde aus dem Zusammenspiel im Lauf behoben (Lernkontrolle vom Server `learningCheck`, Truhe/Bonus-Texte aus `rewardsUnlocked`, Agent prüft `canAssign` vor dem Schreiben, `--cadence None` abgelehnt, Truhen-Meldung und Tutorial-Halbsatz); siehe Protokoll „Abschluss“.

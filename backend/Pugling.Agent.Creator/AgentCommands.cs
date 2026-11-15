@@ -45,8 +45,8 @@ public sealed class AgentCommands(CreatorApi creator, SupervisorApi supervisor, 
 
     /// <summary>
     /// Adds existing exercises to a child's running plan (B-20) - no language model involved. Exit 0 when positions
-    /// were created (or a dry run found something new), 1 when the server refused one or the tag exceeds the window,
-    /// 3 when nothing was new.
+    /// were created (or a dry run found something new), 1 when the server refused one, an exercise is not assignable or
+    /// the tag exceeds the window, 3 when nothing was new.
     /// </summary>
     private async Task<int> AssignAsync(CommandLine command, CancellationToken ct)
     {

@@ -94,8 +94,10 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
         var marked = await db.DailyBoxClaims
             .Where(c => c.Id == claim.Id && c.OpenedAt == null)
             .ExecuteUpdateAsync(u => u.SetProperty(c => c.OpenedAt, now), ct);
-        // A parallel open of the same chest won the update - it books, this one must not.
-        if (marked == 0) return new OpenOutcome(null, ApiErrors.DailyBoxNone, "This reward chest has already been opened.");
+        // A parallel open of the same chest won the update - it books, this one must not. The text names only that lock:
+        // another chest may still be waiting, and the next call opens it.
+        if (marked == 0)
+            return new OpenOutcome(null, ApiErrors.DailyBoxNone, "Another request opened this reward chest at the same moment.");
 
         var reason = $"Tägliche Belohnungsbox (Streak {claim.StreakAtClaim})";
         if (claim.CoinsAwarded > 0)

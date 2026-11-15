@@ -105,7 +105,9 @@ export const FIELD_HELP = {
     title: "Stufe",
     text: "Wie der Test abfragt – vom Aufdecken mit Selbsteinschätzung bis zum freien Tippen. Welche Stufen es "
       + "gibt, hängt am Übungstyp; „Standard der Übung“ übernimmt, was der Ersteller der Übung vorgesehen hat. "
-      + "Ein per API gesetzter Stufenplan je Leitner-Fach geht dieser Einstellung vor.",
+      + "Ein Stufenplan je Plantag geht dieser Einstellung vor – etwa der, den der Assistent beim Ziel „Klassenarbeit“ "
+      + "schreibt (erst Selbsteinschätzung, dann die gewählte Stufe). Er wechselt die Stufe ab seinem Tag für alle "
+      + "Inhalte der Position, nicht je Leitner-Fach.",
   },
   useLeitner: {
     title: "Leitner-Kasten",
@@ -125,8 +127,10 @@ export const FIELD_HELP = {
     title: "Lernkontrolle",
     text: "Womit diese Pflicht geprüft wird. „Test getippt“: das Kind muss die Lösung tippen. „Test, "
       + "Selbsteinschätzung zählt“: Aufdecken und „Gewusst!“ zählen mit – schalte „nur getippte Tests“ ein, wenn "
-      + "dir das zu weich ist. „kein Test – zählt Durchspielen“: diese Übungsart hat keinen Test, erfüllt ist die "
-      + "Pflicht, sobald genug davon gespielt ist.",
+      + "dir das zu weich ist. Ausnahme Stufenleiter („Selbsteinschätzung bis Tag …, ab Tag … getippt“): dort bleibt "
+      + "das Häkchen aus, sonst wäre das Ziel an den ersten Tagen unerreichbar – der Server lehnt die Kombination ab; "
+      + "getippt wird ab dem genannten Tag ohnehin. „kein Test – zählt Durchspielen“: diese Übungsart hat keinen Test, "
+      + "erfüllt ist die Pflicht, sobald genug davon gespielt ist.",
   },
   requireTypedTest: {
     title: "Nur getippte Tests zählen",

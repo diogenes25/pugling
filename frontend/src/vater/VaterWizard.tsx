@@ -155,7 +155,10 @@ export function VaterWizard() {
    * gescheiterte Anlauf setzt `busy` zurück und rendert damit neu.
    */
   const planSteht = progress.current.planId !== null;
-  const stufenName = (stage: number) => VOCAB_FORMS.find((f) => f.value === stage)?.label;
+  // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md) – auch die Namen
+  // der Leiterstufen (Review B-423). Hier oben, weil die Leiter darunter schon gerechnet wird.
+  const types = useExerciseTypes();
+  const stufenName = (stage: number) => types.stages("Vocabulary").find((o) => o.value === stage)?.label;
   const leiter = leiterText(vorgaben.stageSchedule, stufenName);
 
   // Der Schlüssel über die Suchkriterien (B-161) – gebildet aus `wizardSearchParams`, also aus genau der Abfrage. Er ist
@@ -187,8 +190,6 @@ export function VaterWizard() {
   // Grammatik-Themen des gewählten Fachs (B-155); die Liste hängt am Fach wie die Arten.
   const grammarTopics = useAsync<GrammarTopicResponse[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.grammarTopics(Number(subjectId))), [subjectId]);
-  // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md).
-  const types = useExerciseTypes();
 
   /*
    * Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
@@ -358,6 +359,7 @@ export function VaterWizard() {
       if (mode === "existing") return childId === "" ? "Bitte ein Kind wählen." : null;
       return newName.trim() ? pinProblem(newPin) : "Bitte einen Namen eingeben.";
     }
+    // Beides sperrt auch den Knopf (eine Regel je Bildschirm, Hausregel „Pflichtfeld → gesperrt"); die Zeile hält Enter.
     if (step === 1) return subjectId === "" ? "Bitte ein Fach wählen." : terminGrund;
     if (step === 2) return selected.length === 0 ? "Bitte mindestens eine Übung wählen." : null;
     return null;
@@ -506,8 +508,8 @@ export function VaterWizard() {
           <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading}
             onRetry={subjects.reload} />
           <div className="form-grid">
-            <div className="field"><label>Fach</label>
-              <select aria-label="Fach" value={subjectId} onChange={(e) => {
+            <div className="field"><label htmlFor="wiz-fach">Fach <Pflicht /></label>
+              <select id="wiz-fach" value={subjectId} onChange={(e) => {
                 // Die Art gehört zum alten Fach – stehen gelassen filterte sie auf eine Kategorie, die es
                 // im neuen gar nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer. Hier
                 // statt in einem Effekt, weil hier die Entscheidung fällt: ein Effekt liefe erst NACH der
@@ -747,8 +749,8 @@ export function VaterWizard() {
         {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} disabled={planSteht} onClick={back}>← Zurück</button>}
         <span style={{ marginLeft: "auto" }} />
         {step < STEPS.length - 1
-          // Gesperrt nur am Termin (B-423, AK 1, Hausregel „Pflichtfeld → gesperrt"): der Grund steht am Feld.
-          ? <button type="button" className="btn" style={{ width: "auto" }} disabled={step === 1 && terminGrund !== null} onClick={next}>Weiter →</button>
+          // Gesperrt an Fach und Termin (B-423, Hausregel „Pflichtfeld → gesperrt"): der Grund steht am Feld.
+          ? <button type="button" className="btn" style={{ width: "auto" }} disabled={step === 1 && (subjectId === "" || terminGrund !== null)} onClick={next}>Weiter →</button>
           : <button type="button" className="btn lime" style={{ width: "auto" }} disabled={busy} onClick={finish}>
             {busy ? "…" : klassenarbeitFehlt ? "Klassenarbeit erneut anlegen" : "✅ Lehrplan erstellen"}</button>}
       </div>

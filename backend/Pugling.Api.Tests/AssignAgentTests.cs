@@ -150,6 +150,9 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var none = await Assert.ThrowsAsync<AgentUsageException>(() =>
             Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{exercise}"), default));
         Assert.Contains("--plan-id", none.Message);
+        // Review: "create one with plan" led into the next lock - plan creates it inactive. Red if the hint names it again
+        // without the way to switch it on.
+        Assert.Contains("/vater/plaene", none.Message);
 
         await Assert.ThrowsAsync<AgentUsageException>(() =>
             Assigner.RunAsync(Parse("--child", $"{childId}", "--plan-id", $"{siblingPlan}", "--exercise-id", $"{exercise}"), default));
@@ -261,14 +264,16 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         Assert.Throws<AgentUsageException>(() => Parse("--child", "1", "--exercise-id", "4", "--tag", "Klausur"));
         Assert.Throws<AgentUsageException>(() => Parse("--child", "1"));
+        // Review B (3): None is no goal - a position that never counts. Red when the cadence check accepts every enum value.
+        Assert.Throws<AgentUsageException>(() => Parse("--child", "1", "--exercise-id", "4", "--cadence", "None"));
         // Counter-check: the repeated option really collects every value (the parser kept only the last one before).
         Assert.Equal([4, 9], Parse("--child", "1", "--exercise-id", "4", "--exercise-id", "9").ExerciseIds);
     }
 
     /// <summary>
-    /// Decision 8: the first refused write stops the run; what was created stays, and a rerun skips it. The foreign
-    /// exercise is not executable for this account (<c>executePublic: false</c>). Red when the agent swallows the refusal
-    /// and carries on (the third exercise would be written) or reports exit 0.
+    /// Decision 8: the first refused write stops the run; what was created stays, and a rerun skips it. The refusal comes
+    /// from a vocabulary exercise without items (<c>exercise_empty</c>) - a state the read phase cannot see. Red when the
+    /// agent swallows the refusal and carries on (the third exercise would be written) or reports exit 0.
     /// </summary>
     [Fact]
     public async Task Abgelehnte_Position_Bricht_Ab_Und_Laesst_Die_Angelegten_Stehen()
@@ -276,14 +281,55 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var childId = await ChildAsync("Assign-Abgelehnt");
         var plan = await PlayablePlanAsync(childId);
         var (own, after) = (await ExerciseAsync(), await ExerciseAsync());
-        var foreign = await ForeignPrivateExerciseAsync();
+        var empty = await EmptyVocabularyExerciseAsync();
 
-        var outcome = await Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{own},{foreign},{after}"), default);
+        var outcome = await Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{own},{empty},{after}"), default);
 
         Assert.Equal(1, outcome.ExitCode);
-        Assert.Equal(foreign, outcome.Rejected!.ExerciseId);
-        Assert.Contains("exercise_not_executable", outcome.Rejected.Error);
+        Assert.Equal(empty, outcome.Rejected!.ExerciseId);
+        Assert.Contains("exercise_empty", outcome.Rejected.Error);
         Assert.Equal([own], (await PositionsAsync(plan)).Select(p => p.ExerciseId).ToArray());
+    }
+
+    /// <summary>
+    /// Review B (2): an exercise this account may not assign (foreign, private) is refused before the first write - the
+    /// dry run names it, the real run writes nothing (also not the assignable one before it) and ends with exit 1. Red
+    /// when the agent ignores <c>CanAssign</c> (the own exercise would be written, the foreign one refused mid-run), or
+    /// when <c>ExerciseDetail.CanAssign</c> reports a private foreign exercise as assignable.
+    /// </summary>
+    [Fact]
+    public async Task Nicht_Zuweisbare_Uebung_Bricht_Vor_Dem_Schreiben_Ab()
+    {
+        var childId = await ChildAsync("Assign-Privat");
+        var plan = await PlayablePlanAsync(childId);
+        var own = await ExerciseAsync();
+        var foreign = await ForeignPrivateExerciseAsync();
+
+        var dry = await Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{own},{foreign}", "--dry-run"), default);
+        Assert.Equal(1, dry.ExitCode);
+        Assert.Contains(dry.Report(), l => l.Contains($"#{foreign}") && l.Contains("nicht zuweisbar"));
+
+        var run = await Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{own},{foreign}"), default);
+        Assert.Equal(1, run.ExitCode);
+        Assert.Null(run.Rejected);
+        Assert.Equal([foreign], run.NotAssignable.Select(i => i.ExerciseId).ToArray());
+        Assert.Empty(await PositionsAsync(plan));
+
+        // Same rule for the tag source, which reads the detail of every tagged exercise.
+        var tag = await Creator.CreateTagAsync(new CreateTagDto(childId, "Gemischt", null));
+        await Creator.TagExercisesAsync(tag.Id, new TagExercisesDto([own, foreign]));
+        var byTag = await Assigner.RunAsync(Parse("--child", $"{childId}", "--tag", "Gemischt"), default);
+        Assert.Equal([foreign], byTag.NotAssignable.Select(i => i.ExerciseId).ToArray());
+        Assert.Empty(await PositionsAsync(plan));
+    }
+
+    private async Task<int> EmptyVocabularyExerciseAsync()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Leer-Fach") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        return await TestApi.IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/vocabulary",
+            new { title = "Noch leer", orderIndex = 1, rewardPoints = 5, config = new { direction = "front-to-back" } }));
     }
 
     private async Task<int> ForeignPrivateExerciseAsync()

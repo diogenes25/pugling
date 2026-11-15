@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Sprint 73 (Retro-Pflicht), Backlog-Lauf 2026-11-14 – docs/pm-sitzung-2026-11-14-backlog-lauf.md"
 unverifiziert: false
 grund: ""
+nachgeschaut: 2026-11-15
 ersetzt_durch: []
 entgangen_bei: [B-545]
 wartet_auf: ""
@@ -34,3 +35,4 @@ neuer `runId` an der alten fest. Die Arcade ist nicht betroffen (sie kennt den C
 - **2026-11-14** — **abgenommen** (Sprint 75). `ExtraTrainingController`-`<summary>` nennt beim Start das Verwerfen
   einer veralteten Runde (neue `runId`) und bei der Abgabe `409 extra_run_stale` und `extra_training_locked`. volle Suite 1628/1628 (Release, nach den Review-Fixes), Vitest 1033/1033 (zwei volle Läufe), `tsc -b` grün; Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 8 passed (`truhe`, `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `pfad`, `lektion`, `full-flow`, `interessen`); Reviews `pugling-reviewer` + `frontend-reviewer`, zehn Funde im Sprint behoben; Commit `f96ec5c6`.
   Kein eigener Test: Doku-Text, das Verhalten halten die B-545-Tests.
+- **2026-11-15** — Nachschau im Gesamt-Review des Laufs (Backend + Frontend über `40dd9bfa..HEAD`): Funde aus dem Zusammenspiel im Lauf behoben (Lernkontrolle vom Server `learningCheck`, Truhe/Bonus-Texte aus `rewardsUnlocked`, Agent prüft `canAssign` vor dem Schreiben, `--cadence None` abgelehnt, Truhen-Meldung und Tutorial-Halbsatz); siehe Protokoll „Abschluss“.

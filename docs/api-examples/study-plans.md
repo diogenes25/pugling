@@ -82,7 +82,11 @@ Response — `HTTP 201`:
   "speedBonusPoints": 0,
   "timeSlots": null,
   "newItemsPerDay": 0,
-  "dailyDoseInForce": 0
+  "dailyDoseInForce": 0,
+  "learningCheck": {
+    "kind": "Typed",
+    "typedFromDay": null
+  }
 }
 ```
 

@@ -377,34 +377,41 @@ describe("Positions-Formular – Stufe, Auswahl, Tempo (B-16)", () => {
 });
 
 /*
- * B-469 AK 1 und 3: die Positionszeile sagt, womit die Pflicht geprüft wird. Je Fall ein eigener Grund, rot zu werden.
+ * B-469 AK 1 und 3, B-550: die Positionszeile sagt, womit die Pflicht geprüft wird. Die Art kommt vom Server
+ * (`learningCheck`); `lernkontrolleText` übersetzt sie nur. Je Art ein Fall – rot, wenn ihr Zweig fehlt (dann käme `undefined`
+ * statt des Satzes) oder Text bzw. Ton vertauscht sind.
  */
-describe("Positionszeile – Lernkontrolle (B-469)", () => {
-  // Rot, wenn `requireTypedTest` bei `StudyPlanTest` ignoriert wird (dann sagten beide Fälle dasselbe).
-  it("Test mit Tipp-Pflicht", () => {
-    expect(lernkontrolleText("StudyPlanTest", true, true)).toEqual({ text: "Test getippt", hervorheben: false });
+describe("Positionszeile – Lernkontrolle (B-469, B-550)", () => {
+  it("Typed: neutral „Test getippt“", () => {
+    expect(lernkontrolleText({ kind: "Typed" })).toEqual({ text: "Test getippt", ton: "neutral" });
   });
-  it("Test, in dem die Selbsteinschätzung zählt – hervorgehoben", () => {
-    expect(lernkontrolleText("StudyPlanTest", false, true)).toEqual({ text: "Test, Selbsteinschätzung zählt", hervorheben: true });
-    // Review Sprint 74: ein Typ, dessen Test immer getippt ist (Zuordnung), warnt nicht – rot, wenn der Manifest-Wert
-    // ignoriert wird (dann stünde dort „Selbsteinschätzung zählt").
-    expect(lernkontrolleText("StudyPlanTest", false, false)).toEqual({ text: "Test getippt", hervorheben: false });
+  it("SelfAssessed: gelb", () => {
+    expect(lernkontrolleText({ kind: "SelfAssessed" })).toEqual({ text: "Test, Selbsteinschätzung zählt", ton: "warnung" });
   });
-  // Rot, wenn der `None`-Zweig fehlt – dann stünde wie vor B-469 nichts an einer Grammatik-Position.
-  it("kein Test – hervorgehoben", () => {
-    expect(lernkontrolleText("None", false, true)).toEqual({ text: "kein Test – zählt Durchspielen", hervorheben: true });
-    // Das Häkchen ändert daran nichts: ohne Test gibt es nichts zu tippen.
-    expect(lernkontrolleText("None", true, true)?.text).toBe("kein Test – zählt Durchspielen");
+  // Rot, wenn die Leiter gelb warnt (der Fund aus B-550) oder den Tag falsch nennt (Schwellentag statt Vortag).
+  it("Ladder: neutral, mit dem Tag, ab dem getippt wird", () => {
+    expect(lernkontrolleText({ kind: "Ladder", typedFromDay: 4 }))
+      .toEqual({ text: "Selbsteinschätzung bis Tag 3, ab Tag 4 getippt", ton: "neutral" });
+    // Ohne Tag kein erfundener Tag.
+    expect(lernkontrolleText({ kind: "Ladder", typedFromDay: null }))
+      .toEqual({ text: "Erst Selbsteinschätzung, dann getippt", ton: "neutral" });
   });
-  // Rot, wenn Katalog-Prüfungen einen der drei Texte bekommen (die Entscheidung sagt: nichts, wie bisher).
-  it("Katalog-Prüfungen: nichts", () => {
-    expect(lernkontrolleText("CatalogCheck", true, true)).toBeNull();
-    expect(lernkontrolleText("CatalogGenerateCheck", false, true)).toBeNull();
+  it("Playthrough: gelb „zählt Durchspielen“", () => {
+    expect(lernkontrolleText({ kind: "Playthrough" })).toEqual({ text: "zählt Durchspielen", ton: "warnung" });
   });
-  // AK 3. Rot, wenn ein unbekannter Typ (Manifest lädt noch oder scheiterte) wie `None` behandelt wird – dann stünde dort
-  // ein falsches „kein Test".
-  it("unbekannter Typ: nichts", () => {
-    expect(lernkontrolleText(undefined, false, true)).toBeNull();
-    expect(lernkontrolleText(undefined, true, true)).toBeNull();
+  // Rot, wenn der `NoTest`-Zweig fehlt – dann stünde wie vor B-469 nichts an einer Grammatik-Position.
+  it("NoTest: gelb „kein Test – zählt Durchspielen“", () => {
+    expect(lernkontrolleText({ kind: "NoTest" })).toEqual({ text: "kein Test – zählt Durchspielen", ton: "warnung" });
+  });
+  // Rot, wenn die unerreichbare Kombination nur gelb oder gar nicht gemeldet wird.
+  it("Unreachable: rot, mit Grund", () => {
+    const zeile = lernkontrolleText({ kind: "Unreachable" });
+    expect(zeile?.ton).toBe("fehler");
+    expect(zeile?.text).toMatch(/^Ziel nicht erreichbar: nur getippte Tests zählen/);
+  });
+  // AK 3. Rot, wenn ein unbekannter Typ (Server: `null`) einen Satz bekommt – er wäre geraten.
+  it("null: nichts", () => {
+    expect(lernkontrolleText(null)).toBeNull();
+    expect(lernkontrolleText(undefined)).toBeNull();
   });
 });

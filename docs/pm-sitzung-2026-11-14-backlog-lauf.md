@@ -247,3 +247,62 @@ Feldhilfe zum Stufenplan falsch), `wiki/08` nachgezogen. Sprint 75 und 76 sieht 
 - **Der eine Mechanismus:** keiner neu gebaut – die Regel „Übungstypen und ihre Eigenschaften kommen aus dem
   Server-Manifest“ steht in `frontend/CLAUDE.md`; B-550 wird sie für die Positions-Stufe ebenso vom Server holen.
 - **Bewusst ungedeckt:** der Handlauf des Agenten gegen eine laufende Instanz.
+
+## Abschluss
+
+- **Merge:** Eine parallele Sitzung hatte die Sprints 73–75 schon nach `main` gemergt (lokal `489bc8b4`, gepusht
+  bis `99f5cec2` samt eigener CI-Fixes `cfe2331b`, `99f5cec2` und dem Merge von `prototyp/lernpfad-b525` „als
+  erledigt“ mit Strategie `ours` – kein Inhalt übernommen). `auto/fertigstellung` ist ein Vorfahre von `main`. Ich habe
+  `main` in den Lauf-Branch gemergt (`2ef0ec8a`, konfliktfrei).
+- **Gesamt-Review** (Backend + Frontend über `40dd9bfa..HEAD`, inklusive der fremden Commits): kein Blocker, neun
+  „sollte“-Funde aus dem Zusammenspiel, alle behoben. Der schwerste: Die Lernkontroll-Anzeige rechnete eine
+  Server-Regel nach und riet dem Vater bei den Leiter-Positionen des Assistenten zu „nur getippte Tests“ – das hätte
+  das Ziel unerreichbar gemacht. Jetzt liefert der Server `PositionResponse.learningCheck`; damit sind B-550 und B-551
+  erledigt. Ferner: Truhe/Bonus lesen `rewardsUnlocked` statt nachzurechnen, Bonus-Satz für Pläne nur mit
+  Wochenzielen, Balken nur über die Belohnungsziele, sichtbarer Neuladen-Fehler, Assistent mit Manifest-Stufennamen
+  und Fach als Pflichtfeld, Agent prüft `canAssign` vor dem ersten Schreiben und lehnt `--cadence None` ab,
+  `requireTypedTest` + Leiter mit Selbsteinschätzung → `validation_error`.
+- **Messung im Abschluss:** Die volle Playwright-Suite fand mit der Server-Lernkontrolle einen echten, vorher
+  verdeckten Defekt: „nur getippte Tests“ auf einer Vokabel-Position **ohne** Stufe prüft auf der Vorgabestufe
+  Selbsteinschätzung und ist nie erfüllbar (täglicher Malus). Die alte Anzeige sagte dort „Test getippt“ → **B-552**
+  (P1, Defekt), nicht mehr in diesem Lauf.
+- **Belege nach dem letzten Code-Edit:** Suite **1659/1659** (Release), Vitest **1088/1088**, `tsc -b` grün, volle
+  Playwright-Suite **153 passed**, 2 rot mit veralteter Erwartung (beide Specs angepasst, danach 3 passed). Mutanten
+  der Abschluss-Fixes: G1–G4, G5b, G6–G8, G10 rot; G9 (Balkenbreite nutzt die Belohnungsziele) bewusst ungedeckt – der
+  Test hält die Rechnung, nicht die Aufrufstelle.
+
+### Zähltabelle
+
+| Größe | Wert |
+| --- | --- |
+| N (offen zu Beginn, Index auf `main` `40dd9bfa`) | 35 |
+| neu angelegt im Lauf | 6 (B-547 Review 74, B-548/B-549 Nachschau 73, B-550/B-551 Nachschau 74, B-552 Abschluss) |
+| abgenommen | 20 (Sprint 73: 4, Sprint 74: 5, Sprint 75: 3, Sprint 76: 6, Abschluss: 2) |
+| davon aus N | 16 = **46 %** von N (Ziel ≥ 30 %) |
+| verworfen | 0 – der Abgleich fand keine erledigte, doppelte oder Sammel-Story |
+| offen am Ende (Index) | **21** = 60 % von N (Ziel ≤ 24,5) |
+
+Rechnung: 35 + 6 − 20 = 21.
+
+### Liste für den Menschen
+
+1. **Echte DB vor dem nächsten Start:** vier angehängte Migrationen – `CardShownAt` (Lauf 2026-11-13) sowie
+   `NewBonusPaidAt`, `ExtraRunContentHash`, `DailyBoxOpenedAt` aus diesem Lauf. Alle vier sind gegen eine Kopie der
+   echten `pugling.db` geprobt (laufen durch; 70 Fortschrittszeilen als „Neu-Bonus bezahlt“ markiert, 2 Bestandstruhen
+   als geöffnet). Das Startskript legt vor dem Start eine Sicherung an.
+2. **Friedrichs −60 Malus vom 11./12.11.** von Hand per „Verschenken“ ausgleichen (B-535, Entscheidung 4 des Nutzers).
+3. **Gerät:** die Truhen-Animation (B-527) und weiter Klang/Haptik (B-31) am echten Handy beurteilen.
+4. **B-552 (P1)** grillen: soll der Server „nur getippt“ ohne getippte Stufe ablehnen? Vorher an einer DB-Kopie zählen,
+   welche echten Positionen so stehen.
+5. **B-536** (Aufbau-Übungen, XL) ist gegrillt (fünf Empfehlungen übernommen) und braucht eine Karte im Dialog.
+6. **Agent `assign`:** ein Handlauf gegen die laufende Instanz steht aus (Tests laufen gegen einen In-Process-Server).
+7. **Tor-Vorschlag** (nicht gebaut, Regel „neues Tor nur vorschlagen“): ein Wächter gegen doppelt kodiertes UTF-8
+   (`Ã`, `â€`) in `docs/**/*.md` – im Vorlauf blieb so etwas in 20 Stories zwei Tage unbemerkt.
+8. **Stakeholder-Entscheidungen zum Umstoßen** (alle in den Stories markiert): B-535 Entscheidung 6 (Bestandszeilen mit
+   `ReviewCount > 0` gelten als bezahlt – gemessen widerlegte Prämisse), B-545 (veraltete Bonus-Runde wird verworfen),
+   B-527 (Truhe verfällt nie, nur das Kind öffnet), B-16/B-140/B-469-Entscheidungen, B-423 Entscheidung 7 (keine
+   Leiter bei Stufe ≤ 2), B-20 (Exit 3 = nichts neu), B-550 (Server lehnt „nur getippt“ + Leiter ab), B-536.
+9. Das Manifest-Feld `selfAssessedTest` (Sprint 74) hat seit B-550 keinen Leser im Frontend mehr; es ist additiv und
+   schadet nicht – bei Gelegenheit entfernen oder für den Agenten nutzen.
+10. `prototyp/lernpfad-b525` hat die parallele Sitzung nach `main` gemergt – mit Strategie `ours`, also ohne Inhalt;
+    der Commit sagt „Nicht nach main mergen“, sein Inhalt steht weiter nur im Branch.

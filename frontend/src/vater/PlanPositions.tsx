@@ -13,7 +13,7 @@ import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { auswahlNachFilterwechsel, auswahlNachUmsortieren, NICHT_ZUWEISBAR_GRUND } from "./wizardSearch";
 import type {
-  CreatePositionDto, ExerciseCheckMode, ExercisePreviewStage, ExerciseSummary, GoalCadence, ItemScope, PositionReport, PositionResponse, Paged,
+  CreatePositionDto, ExercisePreviewStage, LearningCheck, ExerciseSummary, GoalCadence, ItemScope, PositionReport, PositionResponse, Paged,
   PracticeOrder, ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
@@ -829,9 +829,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
   const [editing, setEditing] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [settings, setSettings] = useState<PositionSettings>(() => settingsFrom(pos));
-  // B-469: womit die Pflicht geprüft wird – erst, wenn das Manifest den Typ kennt (sonst `undefined` → nichts).
-  const typ = types.byType.get(pos.exerciseType);
-  const lernkontrolle = lernkontrolleText(typ?.checkMode, pos.requireTypedTest, typ?.selfAssessedTest ?? false);
+  // B-469/B-550: womit die Pflicht geprüft wird – der Server sagt es (`learningCheck`), die Zeile rechnet nichts nach.
+  const lernkontrolle = lernkontrolleText(pos.learningCheck);
   // B-423, AK 7: die Stufenleiter nur lesbar – bearbeiten bleibt B-16. Namen aus dem Manifest, sonst „Stufe n".
   const leiter = leiterText(pos.stageSchedule, (st) => types.stages(pos.exerciseType).find((o) => o.value === st)?.label);
 
@@ -871,7 +870,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
             {lernkontrolle && (
               <>
                 {" · "}
-                <span className={lernkontrolle.hervorheben ? "pill amber" : "muted"}>{lernkontrolle.text}</span>
+                <span className={TON_KLASSE[lernkontrolle.ton]}>{lernkontrolle.text}</span>
                 <InfoHint topic="lernkontrolle" />
               </>
             )}
@@ -965,24 +964,38 @@ export function dosisText(pos: { newItemsPerDay: number; dailyDoseInForce: numbe
   return pos.newItemsPerDay > 0 ? "Tagesdosis ruht (die Übung wertet als Menge)" : null;
 }
 
+/** Wie laut die Zeile die Lernkontrolle sagt: neutral, gelb (schwach) oder rot (Ziel nicht erreichbar). */
+export type LernkontrollTon = "neutral" | "warnung" | "fehler";
+
+const TON_KLASSE: Record<LernkontrollTon, string> = { neutral: "muted", warnung: "pill amber", fehler: "pill mag" };
+
 /**
- * Was die Positionszeile über die Lernkontrolle sagt (B-469, Entscheidung 2): ein „erfüllt" bei Grammatik und eines beim
- * getippten Vokabeltest sahen gleich aus – der Vater sah nicht, wo seine Pflicht schwach ist.
+ * Was die Positionszeile über die Lernkontrolle sagt (B-469, Entscheidung 2; B-550). Die Art bestimmt der Server
+ * (`PositionResponse.learningCheck`) – aus Typ, Stufe, Stufenplan und „nur getippt“. Die Zeile übersetzt sie nur: eine
+ * Ableitung hier (vorher aus Manifest und Häkchen) übersah die Stufenleiter und warnte bei ihr grundlos (B-550).
  *
- * `hervorheben` markiert die beiden schwachen Arten (Selbsteinschätzung zählt mit, kein Test). `null` heißt: nichts sagen –
- * bei Katalog-Prüfungen und, tragend, bei unbekanntem Typ (`undefined`, das Manifest lädt noch oder scheiterte): sonst
- * stünde dort ein falsches „kein Test".
+ * `null` heißt: nichts sagen – der Server liefert es nur bei unbekanntem Typ, und dort wäre jeder Satz geraten.
  */
-export function lernkontrolleText(checkMode: ExerciseCheckMode | undefined, requireTypedTest: boolean,
-  selfAssessedTest: boolean): { text: string; hervorheben: boolean } | null {
-  // `selfAssessedTest` kommt aus dem Manifest (Review Sprint 74): bei einem Typ, dessen Test immer getippt ist (Zuordnung),
-  // ändert „nur getippte Tests" nichts – die Warnung stünde dort grundlos.
-  if (checkMode === "StudyPlanTest")
-    return requireTypedTest || !selfAssessedTest
-      ? { text: "Test getippt", hervorheben: false }
-      : { text: "Test, Selbsteinschätzung zählt", hervorheben: true };
-  if (checkMode === "None") return { text: "kein Test – zählt Durchspielen", hervorheben: true };
-  return null;
+export function lernkontrolleText(check: LearningCheck | null | undefined): { text: string; ton: LernkontrollTon } | null {
+  if (!check) return null;
+  switch (check.kind) {
+    case "Typed": return { text: "Test getippt", ton: "neutral" };
+    case "SelfAssessed": return { text: "Test, Selbsteinschätzung zählt", ton: "warnung" };
+    case "Ladder": {
+      const tag = check.typedFromDay;
+      // Ohne Tag (der Vertrag erlaubt `null`) nur die Reihenfolge – kein erfundener Tag.
+      return tag != null && tag > 1
+        ? { text: `Selbsteinschätzung bis Tag ${tag - 1}, ab Tag ${tag} getippt`, ton: "neutral" }
+        : { text: "Erst Selbsteinschätzung, dann getippt", ton: "neutral" };
+    }
+    case "Playthrough": return { text: "zählt Durchspielen", ton: "warnung" };
+    case "NoTest": return { text: "kein Test – zählt Durchspielen", ton: "warnung" };
+    case "Unreachable":
+      return {
+        text: "Ziel nicht erreichbar: nur getippte Tests zählen, aber an manchen Tagen wird per Selbsteinschätzung geprüft",
+        ton: "fehler",
+      };
+  }
 }
 
 /**

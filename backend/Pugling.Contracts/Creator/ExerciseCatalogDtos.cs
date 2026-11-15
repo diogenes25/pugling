@@ -54,6 +54,9 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// <c>AverageRating</c>/<c>RatingCount</c>: the same aggregate as on <see cref="ExerciseSummary"/> (B-12).
 /// <c>GrammarTopicIds</c> (B-155): the topics the exercise practices, ascending like the dressing - the editor
 /// reads them back here and the PUT has to carry them, or the full replacement drops them.
+/// <c>CanAssign</c>: the same rule as on <see cref="ExerciseSummary"/> (B-140) - may the requester put the exercise
+/// into a study plan or class test? Lets a caller holding only an id (the agent's <c>assign</c>, B-20) refuse it
+/// before the first write instead of failing halfway with <c>exercise_not_executable</c>.
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
@@ -62,7 +65,7 @@ public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string Seri
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount,
     JsonElement Config, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds,
-    double? AverageRating, int RatingCount, IReadOnlyList<int> GrammarTopicIds);
+    double? AverageRating, int RatingCount, IReadOnlyList<int> GrammarTopicIds, bool CanAssign = false);
 
 /// <summary>A study plan in which an exercise is used as a position.</summary>
 public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

@@ -11,6 +11,7 @@ vertragsbruch: ja
 quelle: "B-525, Entscheidung 8 (Grill-Runde 2026-11-13)"
 unverifiziert: false
 grund: ""
+nachgeschaut: 2026-11-15
 ersetzt_durch: []
 wartet_auf: ""
 ---
@@ -188,3 +189,6 @@ E2E; deutlich kleiner als B-525 (L).
   Rennen und wird nur rot, wenn beide Sperren fehlen – vom Bau-Agenten so gemessen, nicht deterministisch. AK 7 am
   Service mit festem Claim. Migration gegen eine Kopie der echten DB geprobt: 2 Bestandstruhen, beide als geöffnet
   markiert. **Gerät:** das Urteil über die Animation (Wackeln/Deckel) bleibt beim Menschen.
+- **2026-11-14** — Sprint 76, Review-Funde (Frontend): Truhe liest „erfüllt“ am Server (`freigeschaltet` = `today.rewardsUnlocked`) und sagt bei erfüllten Zielen ohne verdiente Truhe „…die Truhe kommt, sobald du eine Runde oder einen Test abschließt“ (`truhe.comesNext`, de+en; verdient wird sie nur beim Abschluss, `DailyBoxService.EvaluateAndAwardAsync`); Ziel-Auswahl für Wortlaut und Balken aus `belohnungsZiele` (dieselbe Regel wie `RewardObligations`), Balken der Ziele-Karte nur über diese Ziele; gescheitertes Neuladen nach `daily_box_none` sichtbar (`NeuLadenFehler`, `home.reloadFailed`/`home.retry`). Vitest: 4 neue Fälle in `SohnHome.test.tsx`.
+- **2026-11-14** — Sprint 76, Gesamt-Review: die `daily_box_none`-Meldung des verlorenen Doppeltipps sagte „already opened“, obwohl noch eine Truhe warten kann – jetzt nennt sie nur die Sperre („Another request opened this reward chest at the same moment.“); `docs/tutorial-student.md` ergänzt, dass immer die älteste wartende Truhe geöffnet wird. Kein eigener Test: der Zweig hängt an einem echten Wettlauf, `DailyBoxTests` prüft dort nur den Code.
+- **2026-11-15** — Nachschau im Gesamt-Review des Laufs (Backend + Frontend über `40dd9bfa..HEAD`): Funde aus dem Zusammenspiel im Lauf behoben (Lernkontrolle vom Server `learningCheck`, Truhe/Bonus-Texte aus `rewardsUnlocked`, Agent prüft `canAssign` vor dem Schreiben, `--cadence None` abgelehnt, Truhen-Meldung und Tutorial-Halbsatz); siehe Protokoll „Abschluss“.

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Sprint 73 (Retro-Pflicht), Backlog-Lauf 2026-11-14 – docs/pm-sitzung-2026-11-14-backlog-lauf.md"
 unverifiziert: false
 grund: ""
+nachgeschaut: 2026-11-15
 ersetzt_durch: []
 entgangen_bei: [B-535]
 wartet_auf: ""
@@ -40,3 +41,5 @@ Die Markdown-Doku (`wiki/05-punkte-und-bonus.md`, `docs/tutorial-*.md`) ist in d
   Kistenvergabe in `PositionPracticeController`/`PositionTestsController`, `en.ts` („Today's daily goals first“),
   `VaterKind.tsx` (Bonus-Absatz: Wochenziele zählen nicht). volle Suite 1628/1628 (Release, nach den Review-Fixes), Vitest 1033/1033 (zwei volle Läufe), `tsc -b` grün; Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 8 passed (`truhe`, `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `pfad`, `lektion`, `full-flow`, `interessen`); Reviews `pugling-reviewer` + `frontend-reviewer`, zehn Funde im Sprint behoben; Commit `f96ec5c6`. Kein eigener Test: reine Texte, die der Code schon
   einhält (B-535-Tests); geprüft per grep, dass keine Stelle mehr „duty“ für die Belohnungsregel sagt.
+- **2026-11-14** — Sprint 76, Review-Funde (Frontend): Bonus-Einstieg unterscheidet Tages- und Wochenziele wie die Truhe (`bonus.teaserLockedWeek`, de+en); deutsches „Tagespflicht“ in `bonus.teaserLocked`/`lockedDuty` und `extra_training_locked` (i18n und `lib/api.ts`) auf „Tagesziele“ angeglichen; `VaterKind.tsx` ergänzt „– ohne Tagesziele zählen alle Ziele“; E2E `bonus.spec.ts` und `belohnung-trotz-wochenziel.spec.ts` nachgezogen. Vitest: 1 Fall in `SohnHome.test.tsx`.
+- **2026-11-15** — Nachschau im Gesamt-Review des Laufs (Backend + Frontend über `40dd9bfa..HEAD`): Funde aus dem Zusammenspiel im Lauf behoben (Lernkontrolle vom Server `learningCheck`, Truhe/Bonus-Texte aus `rewardsUnlocked`, Agent prüft `canAssign` vor dem Schreiben, `--cadence None` abgelehnt, Truhen-Meldung und Tutorial-Halbsatz); siehe Protokoll „Abschluss“.
