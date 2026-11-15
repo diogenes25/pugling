@@ -222,6 +222,16 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError ExtraRunStale = new("extra_run_stale", 409, "Bonus run is out of date.");
     /// <summary>
+    /// A position of the plan already practises exactly this set of words (B-557) - a review or the exercise they came
+    /// from: a second position would be the same duty twice. An overlapping set is allowed (409).
+    /// </summary>
+    public static readonly ApiError ReviewAlreadyInPlan = new("review_already_in_plan", 409, "Review already in plan.");
+    /// <summary>
+    /// The words come from another subject than the plan (B-557): the review belongs into a plan of their subject (400).
+    /// Its own code because the father's form names this case in German - a generic validation error could not.
+    /// </summary>
+    public static readonly ApiError ReviewSubjectMismatch = new("review_subject_mismatch", 400, "Review words of another subject.");
+    /// <summary>
     /// Today's bonus coin cap is reached and the exercise is a fixed-form one: its run would show the solutions for no
     /// coins, so it is neither started nor graded and can be played once coins are left again (409).
     /// </summary>

@@ -38,3 +38,29 @@ public record ChildDay(int ChildId, string Name, int ActivePlans, int GoalsTotal
 
 /// <summary>The daily overview across all children of a supervisor.</summary>
 public record Dashboard(DateOnly Date, IReadOnlyList<ChildDay> Children);
+
+/// <summary>How the timeline of the children overview groups its days (B-39). Display only - no goal period.</summary>
+public enum OverviewGranularity
+{
+    /// <summary>Every day on its own.</summary>
+    Day,
+    /// <summary>Monday to Sunday, the week of the weekly goals.</summary>
+    Week,
+    /// <summary>The calendar month.</summary>
+    Month,
+}
+
+/// <summary>
+/// One period of a child's timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the
+/// daily overview - per day, the goals of every cadence of the plans that are active now and run that day (a weekly goal
+/// counts on each of its days). <paramref name="Start"/>/<paramref name="End"/> are the first and last day of the period
+/// that lie in the range. <paramref name="DutyDone"/> means: on every day of the period that had a goal, the duty was done
+/// - and there was at least one such day.
+/// </summary>
+public record ChildPeriod(DateOnly Start, DateOnly End, int GoalsTotal, int GoalsMet, int Points, bool DutyDone);
+
+/// <summary>A child with its periods in the requested range, oldest first.</summary>
+public record ChildTimeline(int ChildId, string Name, IReadOnlyList<ChildPeriod> Periods);
+
+/// <summary>The supervisor's children over a range of at most 92 days, grouped by <paramref name="Granularity"/> (B-39).</summary>
+public record ChildrenOverview(DateOnly From, DateOnly To, OverviewGranularity Granularity, IReadOnlyList<ChildTimeline> Children);

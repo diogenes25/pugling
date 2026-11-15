@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
+import { ChildrenTimeline } from "./ChildrenTimeline";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/types";
 
@@ -17,6 +18,7 @@ export function VaterDashboard() {
   // Nur für die Standortbestimmung „gibt es überhaupt einen Plan?" – die Liste selbst liegt beim Zuweisen.
   const plans = useAsync<PlanResponse[]>(() => api.plans(), [adultId]);
   const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [adultId]);
+  const [timelineToken, setTimelineToken] = useState(0);
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
@@ -45,6 +47,8 @@ export function VaterDashboard() {
     children.reload();
     // The "Heute" card lists the same children (B-453) - without this it kept saying "Noch keine Kinder".
     today.reload();
+    // Die Zeitachse ebenso (B-39): sie fragt eigenständig ab und hielte sonst am alten Bestand fest.
+    setTimelineToken((n) => n + 1);
   }
 
 
@@ -74,6 +78,8 @@ export function VaterDashboard() {
           </table>
         )}
       </section>
+
+      <ChildrenTimeline reloadToken={timelineToken} />
 
       <section>
         <h2 className="h-section">Kinder</h2>

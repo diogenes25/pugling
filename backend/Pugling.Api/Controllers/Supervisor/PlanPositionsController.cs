@@ -232,6 +232,29 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return CreatedAtAction(nameof(Get), new { planId, positionId = pos.Id }, Map(pos));
     }
 
+    /// <summary>
+    /// Turns the child's weak words into a daily review (B-557): builds a vocabulary exercise from exactly these store
+    /// entries (author = caller, not executable for others) and adds it as a daily position. Only words the plan's child
+    /// has learning state for (<c>400 invalid_reference</c>), 1 to 25 of one language pair (<c>400 validation_error</c>)
+    /// and, if the plan has a subject, of that subject (<c>400 review_subject_mismatch</c>); <c>409
+    /// review_already_in_plan</c> when a position of the plan already practises exactly these words.
+    /// </summary>
+    [HttpPost("from-words")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PositionResponse>> CreateFromWords(int planId, CreateReviewFromWordsDto dto,
+        [FromServices] WeakWordReviewService reviews, CancellationToken ct = default)
+    {
+        var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
+        if (plan is null) return NotFound();
+        var outcome = await reviews.CreateAsync(plan, dto.VocabularyIds, User.AdultId(), ct);
+        if (outcome.Error is { } error) return this.ProblemWithCode(error, outcome.Detail!);
+        var pos = outcome.Position!;
+        return CreatedAtAction(nameof(Get), new { planId, positionId = pos.Id }, Map(pos));
+    }
+
     /// <summary>Changes a position (partial). Only fields that are set are changed.</summary>
     [HttpPatch("{positionId:int}")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

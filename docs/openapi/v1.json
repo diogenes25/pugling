@@ -2396,6 +2396,128 @@
         }
       }
     },
+    "/api/v1/supervisor/children/overview": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Children"
+        ],
+        "summary": "The timeline of the own children from from to to (default: the last 28 days up\nto today, UTC), grouped by granularity. A \u0060to\u0060 after today ends today: a day still to come\nwould read as a missed duty. At most 92 days and \u0060from\u0060 not after \u0060to\u0060, otherwise\n\u0060400 validation_error\u0060. Pages over the children (ordered by name); \u0060X-Total-Count\u0060 is the number\nof children. childId narrows it to one own child - another one simply does not appear.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "granularity",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "$ref": "#/components/schemas/OverviewGranularity"
+            }
+          },
+          {
+            "name": "childId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildrenOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/objectives/{objectiveId}/key-results": {
       "post": {
         "tags": [
@@ -4928,6 +5050,108 @@
             "description": "No Content",
             "content": {
               "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/study-plans/{planId}/positions/from-words": {
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Plan Positions"
+        ],
+        "summary": "Turns the child\u0027s weak words into a daily review (B-557): builds a vocabulary exercise from exactly these store\nentries (author = caller, not executable for others) and adds it as a daily position. Only words the plan\u0027s child\nhas learning state for (\u0060400 invalid_reference\u0060), 1 to 25 of one language pair (\u0060400 validation_error\u0060)\nand, if the plan has a subject, of that subject (\u0060400 review_subject_mismatch\u0060); \u0060409\nreview_already_in_plan\u0060 when a position of the plan already practises exactly these words.",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReviewFromWordsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReviewFromWordsDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReviewFromWordsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
             }
           },
           "404": {
@@ -30414,6 +30638,55 @@
         },
         "description": "Child login via domain child id \u002B PIN."
       },
+      "ChildPeriod": {
+        "required": [
+          "dutyDone",
+          "end",
+          "goalsMet",
+          "goalsTotal",
+          "points",
+          "start"
+        ],
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          },
+          "goalsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "goalsMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "points": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dutyDone": {
+            "type": "boolean"
+          }
+        },
+        "description": "One period of a child\u0027s timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the\ndaily overview - per day, the goals of every cadence of the plans that are active now and run that day (a weekly goal\ncounts on each of its days). Start/End are the first and last day of the period\nthat lie in the range. DutyDone means: on every day of the period that had a goal, the duty was done\n- and there was at least one such day."
+      },
       "ChildPointsResponse": {
         "required": [
           "childId",
@@ -30455,6 +30728,35 @@
           }
         },
         "description": "Balance of the child (both currencies) with a page of its ledger entries."
+      },
+      "ChildrenOverview": {
+        "required": [
+          "children",
+          "from",
+          "granularity",
+          "to"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "granularity": {
+            "$ref": "#/components/schemas/OverviewGranularity"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildTimeline"
+            }
+          }
+        },
+        "description": "The supervisor\u0027s children over a range of at most 92 days, grouped by Granularity (B-39)."
       },
       "ChildResponse": {
         "required": [
@@ -30551,6 +30853,34 @@
           }
         },
         "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins; \u0060null\u0060 = the server default."
+      },
+      "ChildTimeline": {
+        "required": [
+          "childId",
+          "name",
+          "periods"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildPeriod"
+            }
+          }
+        },
+        "description": "A child with its periods in the requested range, oldest first."
       },
       "ClassTestUsage": {
         "required": [
@@ -31877,6 +32207,27 @@
           }
         },
         "description": "Capture a new remark. Only the text is required \u2013 everything else comes from the widget or stays empty."
+      },
+      "CreateReviewFromWordsDto": {
+        "required": [
+          "vocabularyIds"
+        ],
+        "type": "object",
+        "properties": {
+          "vocabularyIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "description": "The store entries, in the order the review should list them."
+          }
+        },
+        "description": "The weak words of the plan\u0027s child to review daily (B-557): ids of vocabulary store entries the child already has\nlearning state for, 1 to 25, one language pair. Duplicates count once. The server builds a vocabulary exercise from\nexactly these store entries and adds it to the plan as a daily position."
       },
       "CreateSeriesUnitDto": {
         "required": [
@@ -41036,6 +41387,15 @@
         },
         "description": "Evaluated objective incl. key results and roll-up."
       },
+      "OverviewGranularity": {
+        "enum": [
+          "Day",
+          "Week",
+          "Month"
+        ],
+        "type": "string",
+        "description": "How the timeline of the children overview groups its days (B-39). Display only - no goal period.\n\nAllowed values: Day, Week, Month."
+      },
       "OverviewResponse": {
         "required": [
           "active",
@@ -42314,6 +42674,8 @@
               "remark_comment_not_found",
               "remark_not_found",
               "remark_scope_forbidden",
+              "review_already_in_plan",
+              "review_subject_mismatch",
               "series_subject_in_use",
               "series_without_subject",
               "shop_insufficient_stock",
@@ -47546,9 +47908,17 @@
           },
           "vocabulary": {
             "type": "string"
+          },
+          "sourceLanguage": {
+            "type": "string",
+            "default": ""
+          },
+          "targetLanguage": {
+            "type": "string",
+            "default": ""
           }
         },
-        "description": "Aggregated word mastery status across all exercises that use this store word."
+        "description": "Aggregated word mastery status across all exercises that use this store word. \u0060SourceLanguage\u0060/\u0060TargetLanguage\u0060\nare the store entry\u0027s language pair (B-557): the father\u0027s review groups a page of weak words by it, because one review\ntakes one pair."
       },
       "WordOverride": {
         "type": "object",

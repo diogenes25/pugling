@@ -9,7 +9,7 @@ import type {
   CreateChildTagDto, ExerciseWriteResult,
   ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, CreateTeacherDto, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, UpdateMissionDto, MissionStatus, PlanResponse,
-  ChildrenDashboard, CreatePositionDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
+  ChildrenDashboard, ChildrenOverview, OverviewGranularity, CreatePositionDto, CreateReviewFromWordsDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
   ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
@@ -90,6 +90,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
   extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagesziele erfüllt sind.",
   extra_exercise_done: "Diese Bonus-Übung bringt heute nichts mehr.",
+  // B-557: dieselbe Wortmenge zweimal wäre dieselbe Pflicht doppelt – auch, wenn es die Übung ist, aus der die Wörter stammen.
+  review_already_in_plan: "Genau diese Wörter übt dieser Plan schon in einer Position.",
+  review_subject_mismatch: "Diese Wörter gehören zu einem anderen Fach als dieser Plan.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
   extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
   extra_cap_reached: "Dein Bonus-Deckel ist voll – diese Übung würde dir jetzt nur die Lösungen zeigen, ohne Münzen. Darum geht sie gerade nicht.",
@@ -573,6 +576,9 @@ export const api = {
     http<PositionResponse[]>(`${V1}/supervisor/study-plans/${planId}/positions`),
   addPosition: (planId: number, dto: CreatePositionDto) =>
     http<PositionResponse>(`${V1}/supervisor/study-plans/${planId}/positions`, "POST", dto),
+  // B-557: schwache Wörter des Kindes als tägliche Wiederholung – der Server baut die Übung aus genau diesen Store-Einträgen.
+  addReviewFromWords: (planId: number, dto: CreateReviewFromWordsDto) =>
+    http<PositionResponse>(`${V1}/supervisor/study-plans/${planId}/positions/from-words`, "POST", dto),
   updatePosition: (planId: number, positionId: number, dto: UpdatePositionDto) =>
     http<PositionResponse>(`${V1}/supervisor/study-plans/${planId}/positions/${positionId}`, "PATCH", dto),
   deletePosition: (planId: number, positionId: number) =>
@@ -650,6 +656,9 @@ export const api = {
   // ---- Vater: kindübergreifender Tagesüberblick ----
   childrenDaily: (date?: string) =>
     http<ChildrenDashboard>(`${V1}/supervisor/children/daily-overview${date ? `?date=${date}` : ""}`),
+  // B-39: die Kinder über die Zeit – je Tag, Woche oder Monat, höchstens 92 Tage.
+  childrenOverview: (q: { from: string; to: string; granularity: OverviewGranularity }) =>
+    http<ChildrenOverview>(`${V1}/supervisor/children/overview?from=${q.from}&to=${q.to}&granularity=${q.granularity}`),
 
   // ---- Tagesmission (Sohn) / Verlauf (Vater) über Positionen ----
   overview: (planId: number) => http<OverviewResponse>(`${V1}/student/study-plans/${planId}/overview`),

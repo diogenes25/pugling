@@ -7,8 +7,10 @@ import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { radioGroupKeys } from "../lib/ui";
 import type {
   SeriesUnitProgress, ChildResponse, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse,
-  MasteryRollup, Paged, SubjectProgress, WordMastery,
+  MasteryRollup, Paged, PlanResponse, SubjectProgress, WordMastery,
 } from "../lib/types";
+import { useAction } from "../lib/useAction";
+import { StatusBanner } from "../components/StatusBanner";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { formatDate, formatDateTime } from "../lib/datum";
 
@@ -144,7 +146,85 @@ function WordList({ childId, onlyWeak, setOnlyWeak }: {
         </div>
       )}
       {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} busy={words.loading || words.stale} />}
+      {/* B-557: nur unter „nur schwache“ und nur für die Wörter dieses Kindes auf dieser Seite – sonst wiese der Server
+          Wörter ohne Lernstand ab, und ein Knopf über einer veralteten Liste bündelte die Wörter eines anderen Filters. */}
+      {/* Sperren, nicht ausblenden (B-169): beim Blättern bleibt der Knopf mit seiner Meldung stehen und ist gesperrt, bis die
+          neue Seite da ist. */}
+      {onlyWeak && !!words.data?.total && (
+        <ReviewAssign childId={childId} words={words.data.items} locked={words.stale || words.loading} />
+      )}
     </section>
+  );
+}
+
+/** Die Wörter einer Seite je Sprachpaar – eine Wiederholung nimmt genau ein Paar (B-557). */
+export function byLanguagePair(words: WordMastery[]): { pair: string; ids: number[] }[] {
+  const groups = new Map<string, number[]>();
+  for (const w of words) {
+    const pair = `${w.sourceLanguage ?? ""} → ${w.targetLanguage ?? ""}`;
+    groups.set(pair, [...(groups.get(pair) ?? []), w.vocabularyId]);
+  }
+  return [...groups].map(([pair, ids]) => ({ pair, ids }));
+}
+
+/**
+ * Die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung zuweisen (B-557). Ziel ist ein **spielbarer**
+ * Plan des Kindes – der Server sagt, welcher das ist (`isPlayable`), statt dass die Seite die Regel nachbaut. Ohne einen
+ * ist der Knopf gesperrt und nennt den Grund; bei mehreren (ein Plan je Fach, B-539) wählt der Vater. Lernt das Kind
+ * mehrere Sprachen, gibt es einen Knopf je Sprachpaar – der Server nimmt je Wiederholung genau eines.
+ */
+export function ReviewAssign({ childId, words, locked = false }: { childId: number; words: WordMastery[]; locked?: boolean }) {
+  const plans = useAsync<PlanResponse[]>(() => api.plans(childId), [childId]);
+  const playable = (plans.data ?? []).filter((p) => p.isPlayable);
+  const [chosen, setChosen] = useState<number | null>(null);
+  const planId = playable.some((p) => p.id === chosen) ? chosen : playable[0]?.id ?? null;
+  const action = useAction();
+  const [done, setDone] = useState<number | null>(null);
+  const groups = byLanguagePair(words);
+  const reasonId = `review-lock-${childId}`;
+  const noPlan = !!plans.data && planId === null;
+
+  async function assign(ids: number[]) {
+    if (planId === null) return;
+    const pos = await action.runFor(() => api.addReviewFromWords(planId, { vocabularyIds: ids }),
+      ids.length === 1 ? "1 Wort ist jetzt eine tägliche Wiederholung." : `${ids.length} Wörter sind jetzt eine tägliche Wiederholung.`);
+    if (pos) setDone(planId);
+  }
+
+  return (
+    // Die Live-Region steht immer, auch wenn eine leere Seite jenseits des Bestands nichts zuzuweisen hat (B-134).
+    <div style={{ marginTop: 12 }}>
+      {groups.length > 0 && (
+        <div className="card">
+          <ListenAusfall was="Die Pläne des Kindes" fehler={plans.error} laedt={plans.loading} onRetry={plans.reload} schluessel={childId} />
+          {playable.length > 1 && (
+            <label className="field" style={{ maxWidth: 320 }}>
+              <span>Plan</span>
+              <select aria-label="Plan für die Wiederholung" value={planId ?? ""} onChange={(e) => setChosen(Number(e.target.value))}>
+                {playable.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+              </select>
+            </label>
+          )}
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            {groups.map((g) => (
+              <button key={g.pair} type="button" className="btn small" style={{ width: "auto" }}
+                disabled={action.busy || locked || planId === null} aria-describedby={noPlan ? reasonId : undefined}
+                onClick={() => assign(g.ids)}>
+                Diese {g.ids.length} {g.ids.length === 1 ? "Wort" : "Wörter"}{groups.length > 1 ? ` (${g.pair})` : ""} als tägliche
+                Wiederholung zuweisen
+              </button>
+            ))}
+          </div>
+          {noPlan && (
+            <p id={reasonId} className="muted" style={{ margin: "6px 0 0" }}>Gesperrt: das Kind hat heute keinen laufenden Plan.</p>
+          )}
+        </div>
+      )}
+      <StatusBanner message={action.message} />
+      {done !== null && action.message?.ok && (
+        <p style={{ margin: "6px 0 0" }}><Link to={`/vater/plan/${done}`}>Zum Plan – dort Malus und Punkte nachschärfen</Link></p>
+      )}
+    </div>
   );
 }
 

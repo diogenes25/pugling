@@ -1,10 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
 import type { Paged } from "../lib/uiTypes";
-import type { ChildResponse, SubjectProgress, WordMastery } from "../lib/types";
+import type { ChildResponse, PlanResponse, SubjectProgress, WordMastery } from "../lib/types";
 import { VaterLernstand, WeakWords } from "./VaterLernstand";
 
 /*
@@ -12,6 +12,9 @@ import { VaterLernstand, WeakWords } from "./VaterLernstand";
  * noch gar kein Wort". Nur das erste ist ein Erfolg. Gefälscht wird der Abruf, nicht das `fetch` (Vorbild
  * `TextbookForm.test.tsx`).
  */
+// B-557: unter einer Liste mit Wörtern fragt der Zuweisen-Knopf die Pläne ab – ohne Fälschung ginge das ans Netz.
+beforeEach(() => { vi.spyOn(api, "plans").mockResolvedValue([]); });
+
 // `AuthProvider` ist Pflicht: `useAsync` hängt für den 401-Fall an `useAuth`.
 const show = () => render(<AuthProvider><WeakWords childId={1} /></AuthProvider>);
 const page = (total: number): Paged<WordMastery> => ({ items: [], total });
@@ -314,3 +317,90 @@ function Nav({ to }: { to: string }) {
   const navigate = useNavigate();
   return <button type="button" onClick={() => navigate(to)}>wechseln</button>;
 }
+
+/*
+ * B-557 AK 8: die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung. Gefälscht werden die Abrufe.
+ */
+describe("Lernstand – schwache Wörter als Wiederholung zuweisen (B-557)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const wort = (vocabularyId: number, word: string, sourceLanguage = "en") =>
+    ({ vocabularyId, word, translation: "x", masteryPercent: 20, minBox: 1, correctCount: 0, seenCount: 2,
+      sourceLanguage, targetLanguage: "de" }) as unknown as WordMastery;
+  const plan = (id: number, isPlayable: boolean) => ({ id, title: `Plan ${id}`, isPlayable }) as unknown as PlanResponse;
+  const zeige = () => render(<AuthProvider><MemoryRouter><WeakWords childId={1} /></MemoryRouter></AuthProvider>);
+
+  // Rot, wenn der Knopf ohne spielbaren Plan freigegeben ist (dann führte er in einen Server-Fehler), oder wenn er den
+  // Grund nicht nennt.
+  it("sperrt den Knopf ohne spielbaren Plan und nennt den Grund", async () => {
+    vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [wort(7, "dog"), wort(8, "cat")], total: 2 });
+    vi.spyOn(api, "plans").mockResolvedValue([plan(3, false)]);
+    zeige();
+
+    const knopf = await screen.findByRole("button", { name: "Diese 2 Wörter als tägliche Wiederholung zuweisen" });
+    expect(await screen.findByText("Gesperrt: das Kind hat heute keinen laufenden Plan.")).toBeTruthy();
+    expect((knopf as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // Rot, wenn der Knopf auch ohne „nur schwache“ erscheint (dann bündelte er sichere Wörter), oder wenn er die Wörter
+  // der Seite nicht an den spielbaren Plan schickt.
+  it("schickt die Wörter der Seite an den spielbaren Plan – und fehlt ohne „nur schwache“", async () => {
+    vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [wort(7, "dog"), wort(8, "cat")], total: 2 });
+    vi.spyOn(api, "plans").mockResolvedValue([plan(3, false), plan(4, true)]);
+    const zuweisen = vi.spyOn(api, "addReviewFromWords").mockResolvedValue({ id: 99 } as never);
+    zeige();
+
+    const knopf = await screen.findByRole("button", { name: "Diese 2 Wörter als tägliche Wiederholung zuweisen" });
+    await vi.waitFor(() => expect((knopf as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(knopf);
+    await screen.findByText("2 Wörter sind jetzt eine tägliche Wiederholung.");
+    expect(zuweisen).toHaveBeenCalledWith(4, { vocabularyIds: [7, 8] });
+    expect(screen.getByRole("link", { name: /Zum Plan/ }).getAttribute("href")).toBe("/vater/plan/4");
+  });
+
+  // Review-Fund (die frühere Zeile prüfte im Ladefenster und trug nichts). Rot, wenn der Knopf auch ohne „nur schwache“
+  // erscheint: dann bündelte er Wörter, die sitzen.
+  it("fehlt ohne „nur schwache“, auch nachdem die Liste geladen ist", async () => {
+    const abruf = vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [wort(7, "dog")], total: 1 });
+    vi.spyOn(api, "plans").mockResolvedValue([plan(4, true)]);
+    zeige();
+    await screen.findByRole("button", { name: "Diese 1 Wort als tägliche Wiederholung zuweisen" });
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /nur schwache/ }));
+    await vi.waitFor(() => expect(abruf).toHaveBeenCalledWith(1, expect.objectContaining({ onlyWeak: false })));
+    await act(async () => {});
+    expect(await screen.findByText("dog")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /als tägliche Wiederholung/ })).toBeNull();
+  });
+
+  // B-557 Entscheidung 4: bei mehreren spielbaren Plänen wählt der Vater. Rot, wenn die Auswahl fehlt oder die Wahl nicht
+  // beim Server ankommt (dann ginge es immer in den ersten Plan).
+  it("lässt bei mehreren spielbaren Plänen wählen und schickt an den gewählten", async () => {
+    vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [wort(7, "dog")], total: 1 });
+    vi.spyOn(api, "plans").mockResolvedValue([plan(4, true), plan(5, true)]);
+    const zuweisen = vi.spyOn(api, "addReviewFromWords").mockResolvedValue({ id: 99 } as never);
+    zeige();
+
+    fireEvent.change(await screen.findByRole("combobox", { name: "Plan für die Wiederholung" }), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Diese 1 Wort als tägliche Wiederholung zuweisen" }));
+    await screen.findByText("1 Wort ist jetzt eine tägliche Wiederholung.");
+    expect(zuweisen).toHaveBeenCalledWith(5, { vocabularyIds: [7] });
+  });
+
+  // Review-Blocker: lernt das Kind zwei Sprachen, nimmt eine Wiederholung nur ein Paar. Rot, wenn die Seite alle Wörter in
+  // einen Knopf packt (dann lehnte der Server ab).
+  it("bietet je Sprachpaar einen eigenen Knopf", async () => {
+    vi.spyOn(api, "childWordMastery").mockResolvedValue({
+      items: [wort(7, "dog", "en"), wort(8, "la gare", "fr"), wort(9, "cat", "en")], total: 3,
+    });
+    vi.spyOn(api, "plans").mockResolvedValue([plan(4, true)]);
+    const zuweisen = vi.spyOn(api, "addReviewFromWords").mockResolvedValue({ id: 99 } as never);
+    zeige();
+
+    const englisch = await screen.findByRole("button", { name: "Diese 2 Wörter (en → de) als tägliche Wiederholung zuweisen" });
+    expect(screen.getByRole("button", { name: "Diese 1 Wort (fr → de) als tägliche Wiederholung zuweisen" })).toBeTruthy();
+    await vi.waitFor(() => expect((englisch as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(englisch);
+    await vi.waitFor(() => expect(zuweisen).toHaveBeenCalledWith(4, { vocabularyIds: [7, 9] }));
+  });
+});

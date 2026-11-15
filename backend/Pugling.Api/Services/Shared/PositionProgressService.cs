@@ -28,8 +28,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // ---- Periods ---- ----
 
-    /// <summary>Monday of the week that <paramref name="day"/> falls in (week = Mon–Sun).</summary>
-    private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+    /// <summary>The Monday of the week <paramref name="day"/> lies in - the one week start of the app (weekly goals, B-39).</summary>
+    public static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     /// <summary>Range [from, to] of the period in which the position must meet its goal.</summary>
     private static (DateOnly From, DateOnly To) PeriodRange(GoalCadence cadence, DateOnly day) => cadence switch

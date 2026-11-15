@@ -97,13 +97,13 @@ public class ChildVocabularyProgressController(PuglingDbContext db) : Controller
 
         var ids = page.Select(g => g.VocabularyId).ToList();
         var vocabById = await db.Vocabularies.AsNoTracking().Where(v => ids.Contains(v.Id))
-            .ToDictionaryAsync(v => v.Id, v => new { v.Word, v.Translation }, ct);
+            .ToDictionaryAsync(v => v.Id, v => new { v.Word, v.Translation, v.SourceLanguage, v.TargetLanguage }, ct);
         return page.Select(g =>
         {
             var v = vocabById.GetValueOrDefault(g.VocabularyId);
             return new WordMasteryResponse(g.VocabularyId, v?.Word ?? "", v?.Translation ?? "", g.ItemCount,
                 g.AvgMastery, g.MinBox, g.Seen, g.Correct, g.Seen == 0 ? 0 : (int)Math.Round(100.0 * g.Correct / g.Seen),
-                VocabLink.Path + g.VocabularyId);
+                VocabLink.Path + g.VocabularyId, v?.SourceLanguage ?? "", v?.TargetLanguage ?? "");
         }).ToList();
     }
 

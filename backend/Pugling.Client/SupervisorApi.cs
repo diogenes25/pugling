@@ -94,6 +94,15 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<Dashboard> GetDailyOverviewAsync(DateOnly? date = null, CancellationToken ct = default) =>
         Http.GetAsync<Dashboard>($"{Root}/children/daily-overview" + PuglingHttp.Query(("date", date)), ct);
 
+    /// <summary>
+    /// The own children over time (B-39): goals, points and duty per day, week or month in <paramref name="from"/>..
+    /// <paramref name="to"/> (at most 92 days), paged over the children.
+    /// </summary>
+    public Task<ChildrenOverview> ChildrenOverviewAsync(DateOnly? from = null, DateOnly? to = null,
+        OverviewGranularity granularity = OverviewGranularity.Day, int? childId = null, CancellationToken ct = default) =>
+        Http.GetAsync<ChildrenOverview>($"{Root}/children/overview" + PuglingHttp.Query(("from", from), ("to", to),
+            ("granularity", granularity), ("childId", childId)), ct);
+
     // ---------------------------------------------------------------- Study plans & positions
 
     /// <summary>Study plans, optionally filtered by a child.</summary>
@@ -129,6 +138,13 @@ public sealed class SupervisorApi(HttpClient http)
     /// </summary>
     public Task<PositionResponse> AddPositionAsync(int planId, CreatePositionDto dto, CancellationToken ct = default) =>
         Http.PostAsync<PositionResponse>($"{Root}/study-plans/{planId}/positions", dto, ct);
+
+    /// <summary>
+    /// Turns the child's weak words into a daily review position of the plan (B-557); <c>409 review_already_in_plan</c>
+    /// when a position of the plan already practises exactly these words.
+    /// </summary>
+    public Task<PositionResponse> AddReviewFromWordsAsync(int planId, CreateReviewFromWordsDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<PositionResponse>($"{Root}/study-plans/{planId}/positions/from-words", dto, ct);
 
     /// <summary>Updates a position (goal, points, Leitner settings).</summary>
     public Task<PositionResponse> UpdatePositionAsync(int planId, int positionId, UpdatePositionDto dto,

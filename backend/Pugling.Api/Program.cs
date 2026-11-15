@@ -213,6 +213,7 @@ builder.Services.AddSingleton(builder.Configuration.GetSection("Remarks").Get<Re
 builder.Services.AddSingleton<MediaImageProcessor>();
 // Maintains the stably identified items of a vocabulary exercise (id-preserving sync config → item table).
 builder.Services.AddScoped<ExerciseItemService>();
+builder.Services.AddScoped<WeakWordReviewService>();
 // Rolls the cross-plan learning state per (child, item) forward and records the answer history.
 builder.Services.AddScoped<ItemProgressService>();
 // Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→series unit→exercise→item).

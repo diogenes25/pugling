@@ -19,10 +19,15 @@ public record ItemProgressResponse(int ItemId, int ExerciseId, int VocabularyId,
     DateOnly? IntroducedAt, DateTime? LastAnswerAt, bool? LastCorrect,
     [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary);
 
-/// <summary>Aggregated word mastery status across all exercises that use this store word.</summary>
+/// <summary>
+/// Aggregated word mastery status across all exercises that use this store word. <c>SourceLanguage</c>/<c>TargetLanguage</c>
+/// are the store entry's language pair (B-557): the father's review groups a page of weak words by it, because one review
+/// takes one pair.
+/// </summary>
 public record WordMasteryResponse(int VocabularyId, string Word, string Translation, int ItemCount,
     int AvgMasteryPercent, int MinBox, int SeenCount, int CorrectCount, int CorrectPercent,
-    [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary);
+    [property: System.Text.Json.Serialization.JsonPropertyName("vocabulary")] string Vocabulary,
+    string SourceLanguage = "", string TargetLanguage = "");
 
 /// <summary>A logged answer event from the item history.</summary>
 public record HistoryResponse(DateTime At, string Source, int StageValue, string? GivenAnswer,

@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
-import type { ChildrenDashboard } from "../lib/types";
+import type { ChildrenDashboard, ChildrenOverview } from "../lib/types";
 import { VaterDashboard } from "./VaterDashboard";
 
 /*
@@ -18,6 +18,8 @@ describe("Dashboard – Kind anlegen, Pflichtfeld Name (B-380)", () => {
     vi.spyOn(api, "children").mockResolvedValue([]);
     vi.spyOn(api, "plans").mockResolvedValue([]);
     vi.spyOn(api, "childrenDaily").mockResolvedValue({ children: [] } as unknown as ChildrenDashboard);
+    // B-39: die Zeitachse fragt eigenständig ab – ohne Fälschung ginge das ans Netz.
+    vi.spyOn(api, "childrenOverview").mockResolvedValue({ children: [] } as unknown as ChildrenOverview);
   });
   afterEach(() => { vi.restoreAllMocks(); localStorage.removeItem("pugling.session"); });
 

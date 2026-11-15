@@ -480,6 +480,9 @@ export type ChildDay = S["ChildDay"];
 
 /** Kindübergreifender Tagesüberblick des Vaters („wer hat heute was geschafft?"). */
 export type ChildrenDashboard = S["Dashboard"];
+export type ChildrenOverview = S["ChildrenOverview"];
+export type ChildPeriod = S["ChildPeriod"];
+export type OverviewGranularity = S["OverviewGranularity"];
 
 /** Eine Report-Zeile: wie gut ein einzelner Inhalt der Position „sitzt". */
 export type ItemReport = S["ItemReport"];
@@ -489,6 +492,7 @@ export type PositionReport = S["Report"];
 
 /** Anlegen einer Position. Leere Felder erben den Vorschlag der Übung (Hybrid-Prinzip). */
 export type CreatePositionDto = S["CreatePositionDto"];
+export type CreateReviewFromWordsDto = S["CreateReviewFromWordsDto"];
 
 /** Partielle Änderung einer Position (nur gesetzte Felder). */
 export type UpdatePositionDto = S["UpdatePositionDto"];
