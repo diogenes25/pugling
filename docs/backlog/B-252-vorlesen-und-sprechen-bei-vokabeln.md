@@ -185,3 +185,4 @@ leere `PronunciationAudioUrl`, Klang-Urteil beim Gerätecheck (B-31).
     Handy des Sohns erscheint.
   - Belege: volle Suite **1678/1678**, Vitest **1102/1102**, `tsc -b` grün. Reviewer: `pugling-reviewer`,
     `frontend-reviewer`.
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutors Vokabeltrainer (Englisch, Französisch, Spanisch) setzt auf Bild **und Audio** an jeder Vokabel. Für Friedrichs Französisch zählt die Aussprache mehr als für Englisch. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)). Keine Änderung an den Entscheidungen.

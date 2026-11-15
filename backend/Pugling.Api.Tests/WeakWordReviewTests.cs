@@ -9,7 +9,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// B-557: the father turns the child's weak words into a daily review with one call -
+/// B-584: the father turns the child's weak words into a daily review with one call -
 /// <c>POST supervisor/study-plans/{planId}/positions/from-words</c>. Each case names the change that makes it red.
 /// </summary>
 public class WeakWordReviewTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>

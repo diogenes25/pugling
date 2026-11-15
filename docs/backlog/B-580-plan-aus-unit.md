@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-553 · Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan
+# B-580 · Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan
 
 Teil c von [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md). Begründungen der Nutzer-Entscheidungen stehen
 dort. **Braucht [B-539](B-539-ein-aktiver-plan-je-fach.md)** (Fach Pflicht und Unit am Plan, Abschaltung je Fach) –
@@ -224,7 +224,6 @@ B-539 (keine Migration, kein Bruch).
 ## Verlauf
 
 - 2026-11-15 · `gegrillt` angelegt durch Teilung von B-537 (Entscheidung 11); Entscheidungen dort.
-- 2026-11-15 · Id von B-540 auf **B-553** umgezogen: `auto/fertigstellung` und `main` hatten B-540…B-544 doppelt vergeben (auf `main` abgenommen: B-540 Planbau-Sortierwechsel). Gefunden im Abgleich des Backlog-Laufs 2026-11-15.
 - 2026-11-15 · Backlog-Lauf 2026-11-15: Ist-Stand am Code nachgetragen (kein `from-unit`; Agent plant alles täglich,
   B-463-Wortlistenregel und Intensitäten nur im Agenten; Wizard kennt keine Unit; Bonus-Vorrat nimmt Nicht-Positionen
   schon auf), an der DB-Kopie Units gemessen (Unit 7: 4 Wortlisten + 4 Dubletten-Scheiben). Entscheidungen 11–18 als
@@ -232,3 +231,4 @@ B-539 (keine Migration, kein Bruch).
   Nutzer-Entscheidung 8 angeglichen) geändert.
 - 2026-11-15 · `geschaetzt` im Backlog-Lauf 2026-11-15: L, beides, keine Migration, kein Vertragsbruch; nach B-539
   (Teil A) bauen.
+- **2026-11-15** — umnummeriert von B-540 auf B-580: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-584). Inhalt unverändert.

@@ -21,7 +21,7 @@ public record ItemProgressResponse(int ItemId, int ExerciseId, int VocabularyId,
 
 /// <summary>
 /// Aggregated word mastery status across all exercises that use this store word. <c>SourceLanguage</c>/<c>TargetLanguage</c>
-/// are the store entry's language pair (B-557): the father's review groups a page of weak words by it, because one review
+/// are the store entry's language pair (B-584): the father's review groups a page of weak words by it, because one review
 /// takes one pair.
 /// </summary>
 public record WordMasteryResponse(int VocabularyId, string Word, string Translation, int ItemCount,

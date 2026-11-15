@@ -300,3 +300,4 @@ kein L mehr, weil die zweite Einbaustelle mit eigenem Lade-/Fehlerzustand entfä
   - Belege: volle Suite **1693/1693** (Exit 0), Vitest **1113/1113**, `tsc -b` grün; Rollengang Vater: E2E
     `vater-zeitachse.spec.ts` (Kind erfüllt heute → Tag-Raster 14 Balken, heutiger „1 von 1 Zielen – Pflicht geschafft“,
     Monat ebenso, Link) im Lauf mit **13 passed**. Reviewer: `pugling-reviewer`, `frontend-reviewer`.
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): In unabhängigen Bewertungen loben Eltern bei sofatutor vor allem, dass sie den Fortschritt je Kind sehen (Aktivitäten und Merklisten je Geschwisterprofil). Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)). Keine Änderung an Entscheidungen oder Schätzung.

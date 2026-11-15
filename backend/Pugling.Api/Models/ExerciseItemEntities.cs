@@ -34,7 +34,7 @@ public class ExerciseItem
     public string? Hint { get; set; }
 
     /// <summary>
-    /// Optional explanation why the answer is what it is (B-556) - handed to the child only with the review outcome, after
+    /// Optional explanation why the answer is what it is (B-583) - handed to the child only with the review outcome, after
     /// the answer, never on the card. Unlike <see cref="Hint"/>, which helps before the answer.
     /// </summary>
     public string? Explanation { get; set; }

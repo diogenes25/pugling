@@ -6,7 +6,7 @@ prio: P1
 art: Wunsch
 quelle: "Nutzer im Chat 2026-11-15: Vervollständigung des Übungsaufbaus – ein Lehrplan stellt ein Kapitel dar"
 grund: "geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit"
-ersetzt_durch: [B-538, B-539, B-553]
+ersetzt_durch: [B-538, B-539, B-580]
 ---
 
 # B-537 · Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen
@@ -138,8 +138,8 @@ Gegrillt am 2026-11-15 im Dialog mit dem Nutzer (Vater). Jede Entscheidung mit B
     Kapitel" ist ein Schritt, ein Wiederholungsplan zu einer früheren Unit verstellt nichts. Kosten: die
     Reihenfolge der Units muss verlässlich sein – sie steht in `SeriesUnit.Grade` + `OrderIndex`
     (`Models/CurriculumEntities.cs:72-75`).
-11. **Geteilt in drei Stories, Reihenfolge B-535 → B-538 → B-539 → B-553.** B-538 Bonus-Münzregeln (4–7), B-539
-    ein Plan je Fach (1, 2), B-553 Plan aus Unit (8–10, braucht B-539). B-535 zuerst, weil es Box und
+11. **Geteilt in drei Stories, Reihenfolge B-535 → B-538 → B-539 → B-580.** B-538 Bonus-Münzregeln (4–7), B-539
+    ein Plan je Fach (1, 2), B-580 Plan aus Unit (8–10, braucht B-539). B-535 zuerst, weil es Box und
     Bonus-Training für Friedrich erreichbar macht und B-539 dieselben Stellen umbaut. Keine Karte – die
     Entscheidungen hängen nicht mehr voneinander ab. B-536 (Aufbau-Übungen) bleibt getrennt; seine leichteren
     Übungen landen von selbst im Bonus-Vorrat.
@@ -147,7 +147,7 @@ Gegrillt am 2026-11-15 im Dialog mit dem Nutzer (Vater). Jede Entscheidung mit B
 ## Akzeptanzkriterien
 
 Final und je Teil-Story aufgeteilt: [B-538](B-538-bonus-muenzregeln-form-und-degression.md),
-[B-539](B-539-ein-aktiver-plan-je-fach.md), [B-553](B-553-plan-aus-unit.md).
+[B-539](B-539-ein-aktiver-plan-je-fach.md), [B-580](B-580-plan-aus-unit.md).
 
 ## Verlauf
 
@@ -156,5 +156,5 @@ Final und je Teil-Story aufgeteilt: [B-538](B-538-bonus-muenzregeln-form-und-deg
   `Cadence.None`, Ein-Plan-Regel, Generator 14 Tage nur Pflicht, Bonus-Training als Kür, Leitner-Degression je Karte),
   elf offene Punkte mit Empfehlung.
 - 2026-11-15 · `gegrillt`: elf Entscheidungen im Dialog mit dem Nutzer; offene Punkte durchgestrichen.
-- 2026-11-15 · `verworfen` (geteilt) nach Entscheidung 11 in B-538, B-539, B-553; diese Story bleibt die Quelle
+- 2026-11-15 · `verworfen` (geteilt) nach Entscheidung 11 in B-538, B-539, B-580; diese Story bleibt die Quelle
   für Ist-Stand und Begründungen.

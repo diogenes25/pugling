@@ -6,7 +6,7 @@ import type { ExerciseDetail, ExerciseSummary, ExerciseTypeManifest, VocabItemRe
 import { ExerciseEditModal } from "./ExerciseEditModal";
 
 /*
- * B-556 AK 6: die Erklärung je Wort im Bearbeiten-Dialog – gespeicherter Wert beim Öffnen sichtbar, Änderung per PATCH.
+ * B-583 AK 6: die Erklärung je Wort im Bearbeiten-Dialog – gespeicherter Wert beim Öffnen sichtbar, Änderung per PATCH.
  */
 const DETAIL = {
   id: 7, seriesId: 2, seriesUnitId: 3, seriesUnitLabel: "Unit 1", subjectId: 1, subjectName: "Französisch",
@@ -41,7 +41,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("Bearbeiten-Dialog – Erklärung je Wort (B-556)", () => {
+describe("Bearbeiten-Dialog – Erklärung je Wort (B-583)", () => {
   // Rot, wenn das Feld beim Öffnen leer ist (der gespeicherte Wert käme nicht zurück) oder die Änderung nicht als
   // `explanation` gepatcht wird.
   it("zeigt die gespeicherte Erklärung und speichert eine Änderung", async () => {

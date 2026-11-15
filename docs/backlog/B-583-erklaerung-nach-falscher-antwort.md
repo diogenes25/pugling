@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/creator]
 aliases: [Erklärung nach dem Fehler, Warum falsch, Vokabel-Erklärung]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-556 · Nach einer falschen Antwort erklärt die Übung, warum
+# B-583 · Nach einer falschen Antwort erklärt die Übung, warum
 
 RocketTutors Kern ist ein KI-Tutor, der erklärt, warum eine Antwort falsch ist. Pugling zeigt nach der
 Antwort nur das erwartete Ergebnis (`Expected`). Am Item gibt es einen optionalen `Hint`
@@ -169,6 +169,21 @@ ein Blatt öffnet, kann die Erklärung mit prüfen.
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 4 des Übernahmeplans; Sammel-Story [B-554](B-554-rockettutor-vergleich-sammel-story.md)).
-- **2026-11-15** — Id umgezogen (vorher B-543): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 4 des Übernahmeplans; Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)).
 - **2026-11-15** — Backlog-Lauf 2026-11-15: ausformuliert gegen den Code – B-529 (abgenommen) liefert Vertrag, Ausgabe nach der Antwort und Arcade-Anzeige schon; Story auf die echte Lücke **Vokabel-Items** verengt. Gegrillt mit sieben Stakeholder-Entscheidungen im Auftrag des Nutzers (andere Übungstypen und KI-Creator-Befüllung zurückgestellt) und geschätzt: **S**, `beides`, Migration ja (eine nullable Spalte), kein Vertragsbruch.
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutors Übungen bieten nach dem Fehler eine Video-Hilfe, die an die passende Stelle des Erklärvideos springt. Das Pugling-Gegenstück wäre ein Verweis von der Erklärung auf die Stoffnotiz der Unit (`SeriesUnit.Grammar`/`VocabularyNotes`). Beim Ausformulieren das Verhältnis zu [B-529](B-529-erklaerung-nach-der-antwort.md) klären: beide beschreiben eine Erklärung nach der Antwort. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — umnummeriert von B-543 auf B-583: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-584). Inhalt unverändert.
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 80 des Backlog-Laufs 2026-11-15, Code-Commit `73c73a6a`.
+  `ExerciseItem.Explanation` (Migration `20261115215256_ExerciseItemExplanation` angehängt, gegen eine Kopie der echten
+  `pugling.db` angewendet: 305 Items erhalten), Vertrag (`VocabItemInput`/`VocabItemResponse`/`VocabItem`, additiv),
+  Items-POST/PATCH (leer löscht, weggelassen bleibt), Abgleich der Inline-Form, Abbildung im `ExerciseContentResolver`;
+  Feld „Erklärung“ je Wort im Bearbeiten-Dialog. Abweichung: die Anlege-Zeile in `exerciseConfig.tsx` bekam kein Feld –
+  Vokabel-Übungen werden dort über den Store-Picker angelegt, die Zeilen sind für diesen Typ ungenutzt; Erklärungen
+  setzt der Creator im Bearbeiten-Dialog. Der `laden.py`-Feldabgleich (`LadenFieldListTests`) kennt das Feld.
+  - AK 1 → `VokabelErklaerungTests.Creator_Schreibt_Und_Liest_…`; Mutanten „PATCH“, „Ausgabe“, „Inline“ → rot.
+  - AK 2 → `…Das_Kind_Bekommt_…`, `…Auch_Ein_Treffer_…`; Mutante „Abbildung“ → rot.
+  - AK 3 → `…Das_Kind_Bekommt_Die_Erklaerung_Erst_Nach_Der_Antwort` (roher Text von Karten, Sitzung, Teststart und
+    Testauswertung enthält die Erklärung nicht).
+  - AK 4 → `…Umgekehrte_Richtung_…`. AK 5 → `SchemaGuardTests` grün mit Migration.
+  - AK 6 → Vitest `ExerciseItemErklaerung.test.tsx`; Mutante „Rückweg“ → rot.
+  - Belege und Review: siehe Abschluss im Protokoll (Gesamt-Review deckt Sprint 80 mit ab).

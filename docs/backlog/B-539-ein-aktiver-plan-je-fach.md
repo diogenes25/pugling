@@ -19,7 +19,7 @@ ersetzt_durch: []
 Teil b von [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md). Begründungen der Nutzer-Entscheidungen stehen
 dort. **Nach [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) (abgenommen) und
 [B-538](B-538-bonus-muenzregeln-form-und-degression.md) bauen** – alle drei ändern Tagesbox und Bonus-Sperre.
-**[B-553](B-553-plan-aus-unit.md) braucht diese Story** (Fach und Unit am Plan).
+**[B-580](B-580-plan-aus-unit.md) braucht diese Story** (Fach und Unit am Plan).
 
 > **Teilungsvorschlag (siehe Schätzung):** Als Ganzes liegt die Story über L. Vorgeschlagen ist, die Kind-Tagessicht
 > (AK 5, 6) als eigene Story **vor** dem Rest zu bauen; B-539 behält AK 1–4 (L). Die neue Story legt der Lauf an,

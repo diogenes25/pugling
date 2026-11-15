@@ -279,7 +279,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             item.Vocabulary = vocab;
         }
         if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);
-        // Same rule as the hint: empty clears, set overwrites, left out stays (B-556).
+        // Same rule as the hint: empty clears, set overwrites, left out stays (B-583).
         if (body.Explanation is not null) item.Explanation = NormalizeHint(body.Explanation);
         if (body.OrderIndex is { } order && order != item.OrderIndex)
         {

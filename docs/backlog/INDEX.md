@@ -12,34 +12,35 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (21)
+### Offen (22)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `geschaetzt` | P1 | L | beides | Migration + Vertrag |
-| [B-553](B-553-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
+| [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-555](B-555-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
+| [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
+| [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `idee` | P2 | — | — | — |
+| [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Unit und Seite), und das Kind sieht, ob der Stoff schon durchgenommen ist | Wunsch | `idee` | P2 | — | — | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `geschaetzt` | P2 | M | backend | — |
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist | Defekt | `idee` | P3 | — | — | — |
 | [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
-| [B-556](B-556-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `geschaetzt` | P3 | S | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-250](B-250-stundenplan-in-der-tagesmission.md) | Der Stundenplan gewichtet die Tagesmission | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Wunsch | `idee` | P3 | — | — | — |
-| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
+| [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (499)</summary>
+<summary>Abgenommen (501)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -417,6 +418,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `abgenommen` | P2 | S | frontend | — |
+| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `abgenommen` | P1 | S | doku | — |
 | [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `abgenommen` | P1 | M | beides | — |
@@ -504,10 +506,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | Defekt | `abgenommen` | P3 | — | — | — |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | Defekt | `abgenommen` | P3 | — | — | — |
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | Defekt | `abgenommen` | P1 | S | beides | — |
-| [B-557](B-557-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `abgenommen` | P2 | S | frontend | — |
+| [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `abgenommen` | P3 | S | beides | Migration |
+| [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -556,7 +559,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (183)
 
-**Nachgeschaut: 474 von 499 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 25 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 474 von 501 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 27 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -745,7 +748,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (25) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (27) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -766,6 +769,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
+| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
@@ -776,7 +780,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 | [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn |
-| [B-557](B-557-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position |
+| [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum |
+| [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position |
 
 </details>
 
@@ -934,7 +939,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 
 <details>
-<summary>Verworfen (37)</summary>
+<summary>Verworfen (38)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -967,8 +972,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397. |
 | [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md) | Nach einem Fehler zählt die Lesezeit der Lösung als Antwortzeit der nächsten Karte | zusammengelegt mit B-530 – dieselbe Messstelle (elapsedSeconds ab der vorigen Review, PositionPracticeController.cs:418-420); B-530 ist die allgemeinere Fassung (seit B-526 jede Antwort mit Blatt, nicht nur Fehler) → [B-530] |
 | [B-503](B-503-lernstand-ueberlebt-loeschen.md) | Prüfauftrag: soll der Lernstand der Kinder das Löschen einer Übung oder Vokabel überleben? | Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen. |
-| [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md) | Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen | geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit → [B-538, B-539, B-553] |
-| [B-554](B-554-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-555, B-556, B-557 führt der Index einzeln, der Plan liegt in docs/rockettutor-vergleich-plan.md → [B-555, B-556, B-557] |
+| [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md) | Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen | geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit → [B-538, B-539, B-580] |
+| [B-581](B-581-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-582, B-583, B-584 führt der Index einzeln, der Plan liegt in docs/rockettutor-vergleich-plan.md → [B-582, B-583, B-584] |
+| [B-585](B-585-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-586, B-587 führt der Index einzeln, der Plan liegt in docs/sofatutor-vergleich-plan.md → [B-586, B-587] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |

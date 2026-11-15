@@ -8,7 +8,8 @@ raw/france/decouvertes-2-pugling/
   vokabeln-unit1.tsv     eine je Unit, deren Vokabelseiten fotografiert sind
   vokabeln-unit2.tsv
   uebungen.json          optional: eigene Start-Übungen
-  analyse/               Lesenotizen je Foto (Markdown, eigene Worte), nur für Menschen
+  md/                    Seiten-Markdown je Foto (MARKDOWN.md), Quelle für alles Weitere
+  analyse/               Lesenotizen je Unit (Markdown, eigene Worte)
   kacheln/               Ausschnitte dichter Seiten aus kacheln.ps1
 ```
 

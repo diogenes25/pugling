@@ -5100,7 +5100,7 @@
         "tags": [
           "Supervisor \u2013 Plan Positions"
         ],
-        "summary": "Turns the child\u0027s weak words into a daily review (B-557): builds a vocabulary exercise from exactly these store\nentries (author = caller, not executable for others) and adds it as a daily position. Only words the plan\u0027s child\nhas learning state for (\u0060400 invalid_reference\u0060), 1 to 25 of one language pair (\u0060400 validation_error\u0060)\nand, if the plan has a subject, of that subject (\u0060400 review_subject_mismatch\u0060); \u0060409\nreview_already_in_plan\u0060 when a position of the plan already practises exactly these words.",
+        "summary": "Turns the child\u0027s weak words into a daily review (B-584): builds a vocabulary exercise from exactly these store\nentries (author = caller, not executable for others) and adds it as a daily position. Only words the plan\u0027s child\nhas learning state for (\u0060400 invalid_reference\u0060), 1 to 25 of one language pair (\u0060400 validation_error\u0060)\nand, if the plan has a subject, of that subject (\u0060400 review_subject_mismatch\u0060); \u0060409\nreview_already_in_plan\u0060 when a position of the plan already practises exactly these words.",
         "parameters": [
           {
             "name": "planId",
@@ -32227,7 +32227,7 @@
             "description": "The store entries, in the order the review should list them."
           }
         },
-        "description": "The weak words of the plan\u0027s child to review daily (B-557): ids of vocabulary store entries the child already has\nlearning state for, 1 to 25, one language pair. Duplicates count once. The server builds a vocabulary exercise from\nexactly these store entries and adds it to the plan as a daily position."
+        "description": "The weak words of the plan\u0027s child to review daily (B-584): ids of vocabulary store entries the child already has\nlearning state for, 1 to 25, one language pair. Duplicates count once. The server builds a vocabulary exercise from\nexactly these store entries and adds it to the plan as a daily position."
       },
       "CreateSeriesUnitDto": {
         "required": [
@@ -47447,7 +47447,7 @@
               "null",
               "string"
             ],
-            "description": "Why the answer is what it is (B-556), shown to the child only after the answer; empty deletes\nit, left out keeps it."
+            "description": "Why the answer is what it is (B-583), shown to the child only after the answer; empty deletes\nit, left out keeps it."
           }
         },
         "description": "Creating/changing an item: either via VocabularyId (existing store vocabulary) or inline\nvia Front/Back (created/found in the store). Hint\nempty = delete, set = overwrite; on PATCH every omitted field remains unchanged."
@@ -47529,7 +47529,7 @@
               "null",
               "string"
             ],
-            "description": "Why the answer is what it is (B-556); shown to the child only after the answer."
+            "description": "Why the answer is what it is (B-583); shown to the child only after the answer."
           }
         },
         "description": "A single vocabulary pair of the exercise. Front/back come from the linked store entry."
@@ -47938,7 +47938,7 @@
             "default": ""
           }
         },
-        "description": "Aggregated word mastery status across all exercises that use this store word. \u0060SourceLanguage\u0060/\u0060TargetLanguage\u0060\nare the store entry\u0027s language pair (B-557): the father\u0027s review groups a page of weak words by it, because one review\ntakes one pair."
+        "description": "Aggregated word mastery status across all exercises that use this store word. \u0060SourceLanguage\u0060/\u0060TargetLanguage\u0060\nare the store entry\u0027s language pair (B-584): the father\u0027s review groups a page of weak words by it, because one review\ntakes one pair."
       },
       "WordOverride": {
         "type": "object",

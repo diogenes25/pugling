@@ -146,7 +146,7 @@ function WordList({ childId, onlyWeak, setOnlyWeak }: {
         </div>
       )}
       {words.data && <Pager skip={skip} take={PAGE_SIZE} total={words.data.total} onSkip={setSkip} busy={words.loading || words.stale} />}
-      {/* B-557: nur unter „nur schwache“ und nur für die Wörter dieses Kindes auf dieser Seite – sonst wiese der Server
+      {/* B-584: nur unter „nur schwache“ und nur für die Wörter dieses Kindes auf dieser Seite – sonst wiese der Server
           Wörter ohne Lernstand ab, und ein Knopf über einer veralteten Liste bündelte die Wörter eines anderen Filters. */}
       {/* Sperren, nicht ausblenden (B-169): beim Blättern bleibt der Knopf mit seiner Meldung stehen und ist gesperrt, bis die
           neue Seite da ist. */}
@@ -157,7 +157,7 @@ function WordList({ childId, onlyWeak, setOnlyWeak }: {
   );
 }
 
-/** Die Wörter einer Seite je Sprachpaar – eine Wiederholung nimmt genau ein Paar (B-557). */
+/** Die Wörter einer Seite je Sprachpaar – eine Wiederholung nimmt genau ein Paar (B-584). */
 export function byLanguagePair(words: WordMastery[]): { pair: string; ids: number[] }[] {
   const groups = new Map<string, number[]>();
   for (const w of words) {
@@ -168,7 +168,7 @@ export function byLanguagePair(words: WordMastery[]): { pair: string; ids: numbe
 }
 
 /**
- * Die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung zuweisen (B-557). Ziel ist ein **spielbarer**
+ * Die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung zuweisen (B-584). Ziel ist ein **spielbarer**
  * Plan des Kindes – der Server sagt, welcher das ist (`isPlayable`), statt dass die Seite die Regel nachbaut. Ohne einen
  * ist der Knopf gesperrt und nennt den Grund; bei mehreren (ein Plan je Fach, B-539) wählt der Vater. Lernt das Kind
  * mehrere Sprachen, gibt es einen Knopf je Sprachpaar – der Server nimmt je Wiederholung genau eines.

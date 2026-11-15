@@ -552,7 +552,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
                   storeHref={storeHref(it.front)}
                   onHint={(hint) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
-                  // B-556: leer löscht beim Server, wie beim Hinweis.
+                  // B-583: leer löscht beim Server, wie beim Hinweis.
                   onExplanation={(explanation) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id,
                     { explanation }), "Erklärung gespeichert.")}
                   // Eine ausdrücklich leere Liste löscht (B-71); `null` hieße beim Server „unverändert“.
@@ -587,7 +587,7 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onExplan
   /** Ziel im Vokabel-Store, vorgefiltert auf dieses Wort. */
   storeHref: string;
   onHint: (hint: string) => void;
-  /** B-556: die Erklärung, die das Kind erst nach seiner Antwort sieht; leer löscht. */
+  /** B-583: die Erklärung, die das Kind erst nach seiner Antwort sieht; leer löscht. */
   onExplanation: (explanation: string) => void;
   /** Die bereinigte Liste; leer heißt löschen. Liefert die Antwort des Servers bzw. `null` beim Fehlschlag. */
   onAlternatives: (alternatives: string[]) => Promise<VocabItemResponse | null>;
@@ -650,7 +650,7 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onExplan
           </span>
         </td>
         <td>
-          {/* B-556: „warum" – das Kind sieht es erst nach der Antwort; der Hinweis daneben hilft davor. */}
+          {/* B-583: „warum" – das Kind sieht es erst nach der Antwort; der Hinweis daneben hilft davor. */}
           <span className="row" style={{ gap: 4 }}>
             <input aria-label={`Erklärung für ${item.front}`} value={explanation} onChange={(e) => setExplanation(e.target.value)}
               placeholder="–" style={{ maxWidth: 220 }} />

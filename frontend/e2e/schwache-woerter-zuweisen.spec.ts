@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from "@playwright/test";
 import { sohnLogin, vaterLogin } from "./helpers";
 
 /*
- * B-557 (Rollengang Vater, AK 8 und 9): das Kind schreibt einen Test mit falschen Antworten, der Vater öffnet den Lernstand,
+ * B-584 (Rollengang Vater, AK 8 und 9): das Kind schreibt einen Test mit falschen Antworten, der Vater öffnet den Lernstand,
  * sieht die schwachen Wörter und weist sie mit einem Griff als tägliche Wiederholung zu; das Kind sieht danach die neue
  * Tagespflicht auf seinem Pfad.
  *
@@ -15,7 +15,7 @@ import { sohnLogin, vaterLogin } from "./helpers";
 const FATHER = { id: "1", pin: "0000" };
 const RUN = Date.now().toString(36).slice(-5);
 // Zwei Übungen, beide im Plan: sind alle Wörter einer einzigen Übung schwach, wäre die Wiederholung genau diese Übung,
-// und der Server lehnte sie als doppelte Pflicht ab (B-557, AK 6 – gefunden am laufenden Produkt). Über zwei Übungen
+// und der Server lehnte sie als doppelte Pflicht ab (B-584, AK 6 – gefunden am laufenden Produkt). Über zwei Übungen
 // hinweg ist die Wortmenge neu.
 const WORDS_A = [["dog", "Hund"], ["cat", "Katze"], ["cow", "Kuh"]] as const;
 const WORDS_B = [["pig", "Schwein"]] as const;

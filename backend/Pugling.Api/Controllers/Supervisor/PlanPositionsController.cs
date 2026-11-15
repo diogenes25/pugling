@@ -233,7 +233,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     }
 
     /// <summary>
-    /// Turns the child's weak words into a daily review (B-557): builds a vocabulary exercise from exactly these store
+    /// Turns the child's weak words into a daily review (B-584): builds a vocabulary exercise from exactly these store
     /// entries (author = caller, not executable for others) and adds it as a daily position. Only words the plan's child
     /// has learning state for (<c>400 invalid_reference</c>), 1 to 25 of one language pair (<c>400 validation_error</c>)
     /// and, if the plan has a subject, of that subject (<c>400 review_subject_mismatch</c>); <c>409

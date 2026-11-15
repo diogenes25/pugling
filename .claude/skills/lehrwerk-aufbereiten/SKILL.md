@@ -1,20 +1,28 @@
 ---
 name: lehrwerk-aufbereiten
-description: Ein Schulbuch aus Fotos seiner Seiten für Pugling aufbereiten – Claude liest die Fotos selbst (Inhaltsverzeichnis, Unit-Seiten, Grammatikteil, Vokabelteil), schreibt Stoffnotizen, Wortlisten je Unit und eigene Start-Übungen in einen gitignorierten Ordner unter raw/, prüft sie mit laden.py, lädt sie über die API und stellt das Kind auf das Buch um. Nutze dies, wenn ein neues Lehrwerk, eine weitere Unit oder weitere Vokabelseiten aus Fotos in die App sollen („bereite das Buch auf“, „neue Seiten fotografiert“, „Vokabelseiten einlesen“, „Lehrwerk aus Fotos“). Nicht für reinen Text als Quelle (das ist `fill` im Skill ki-creator).
+description: Ein Schulbuch beliebigen Fachs (Mathe, Latein, Englisch, Französisch, …) aus Fotos seiner Seiten aufbereiten – Claude liest jedes Foto selbst und schreibt je Foto eine einheitliche, mit Obsidian-Tags (Buch, Fach, Stufe, Kapitel, Seitentyp, Thema, Grammatik) katalogisierte Markdown-Datei, die spätere LLMs statt des Fotos lesen; md_pruefen.py prüft Vollständigkeit und Form und erzeugt den Index. Für Fremdsprachen geht es weiter in die App – Stoffnotizen, Wortlisten je Unit und Start-Übungen, laden.py prüft und lädt über die API, das Kind wird auf das Buch umgestellt. Nutze dies, wenn Buchfotos in Markdown sollen („Fotos in Markdown“, „Buch katalogisieren“, „Lehrbuch-Fotos auswerten“) oder ein neues Lehrwerk, eine weitere Unit oder Vokabelseiten in die App sollen („bereite das Buch auf“, „neue Seiten fotografiert“, „Vokabelseiten einlesen“, „Lehrwerk aus Fotos“). Nicht für reinen Text als Quelle (das ist `fill` im Skill ki-creator).
 ---
 
 # Lehrwerk aus Fotos aufbereiten
 
 **Claude liest die Seiten** (Read-Tool auf die Fotos), nicht das lokale Vision-Modell des Agenten: Das ist an
 dichten Seiten gescheitert (B-459). Dass die Fotos dabei an das Modell gehen, hat der Nutzer ausdrücklich
-erlaubt (B-470). Alles Weitere ist deterministisch: `laden.py` prüft, lädt und testet; Datenformat in
-[FORMAT.md](FORMAT.md).
+erlaubt (B-470). Alles Weitere ist deterministisch: `md_pruefen.py` prüft das Seiten-Markdown, `laden.py`
+prüft, lädt und testet; Formate in [MARKDOWN.md](MARKDOWN.md) und [FORMAT.md](FORMAT.md).
+
+**Zwei Ausbaustufen.** Schritt 1 (Seiten-Markdown) gilt für **jedes** Fach und ist für sich ein fertiges
+Ergebnis: Jedes Foto wird zu einer getaggten Markdown-Datei, die jedes spätere LLM liest, statt das Foto zu
+analysieren. Die Schritte 2–7 (in die App laden) setzen auf diesem Markdown auf und gelten für **Fremdsprachen**;
+für andere Fächer (Mathematik) endet der Lauf nach Schritt 1, solange der Nutzer nichts anderes sagt.
 
 ## Regeln, die nicht verhandelbar sind
 
 1. **Urheberrecht.** In die App kommen Fakten, Wortpaare, Themen und Namen von Grammatik-Themen. **Nie**
    Aufgaben, Lesetexte, Dialoge oder Beispielsätze des Buchs; Regeln stehen in eigenen Worten, Beispiele sind
    eigene. Fotos, Kacheln und der Datenordner bleiben unter `raw/` (gitignored) und werden nie committet.
+   Das **Seiten-Markdown** (Schritt 1) ist private Arbeitsnotiz unter `raw/`: dort steht Lernstoff wie
+   Redemittel und Grammatik-Beispielsätze genau (MARKDOWN.md regelt, was genau und was nur beschrieben wird) –
+   in die **App** gelangt davon trotzdem nur, was diese Regel erlaubt.
 2. **Ein Wortpaar wird gelesen, nicht vermutet.** Ein falsches Paar lernt das Kind wochenlang. Was nicht sicher
    lesbar ist, bekommt in der Spalte `unsicher` einen Grund, statt geraten zu werden; `laden.py` lädt eine Unit
    mit unsicheren Zeilen nicht. Erst eine Kachel (`kacheln.ps1`) versuchen, dann den Nutzer fragen.
@@ -25,42 +33,92 @@ erlaubt (B-470). Alles Weitere ist deterministisch: `laden.py` prüft, lädt und
 
 ## Ablauf
 
-### 1. Bestand aufnehmen
+### 1. Seiten nach Markdown (jedes Fach)
 
-- Fotos liegen unter `raw/<fach>/<werk>/` (vom Nutzer abgelegt, schreibgeschützt). Arbeitsordner:
-  `raw/<fach>/<werk-slug>-pugling/`. Gibt es ihn schon, ist das ein **Nachtrag**: `buch.json` lesen und
-  ergänzen, nichts neu erfinden.
-- Jedes Foto einmal ansehen – über **Übersichtsbögen** statt Einzelbilder (12 Miniaturen je Blatt, mit Nummer und
-  Dateiname; bei 56 Fotos fünf Bilder statt 56) – und in `analyse/fotos.md` eine Zeile schreiben: Datei, Buchseite,
-  Art (Inhaltsverzeichnis · Unit-Einstieg · Unit-Seite · Grammatikteil · Vokabelteil · Sonstiges), lesbar ja/nein,
-  Drehung (0/90/180/270):
-
-  ```bash
-  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>" -Ziel "raw/<fach>/<werk-slug>-pugling/uebersicht" -Uebersicht
-  ```
-
-- Dichte oder kleine Schrift (Vokabelteil, Grammatikteil) **immer** in Kacheln lesen:
-
-  ```bash
-  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Zeilen 3
-  ```
-
-  Doppelseite quer: `-Spalten 2`. Kacheln überlappen 8 %, eine angeschnittene Zeile steht in der Nachbarkachel ganz.
-- **Auf dem Kopf oder quer** (flach über dem Tisch fotografiert, das Handy schreibt dann keine EXIF-Drehung): von
-  Hand drehen, im Uhrzeigersinn, nach der EXIF-Drehung – gilt für Kacheln, Bogen und Ausschnitt gleich:
+- Fotos liegen unter `raw/<fach>/<werk>/` oder direkt unter `raw/<fach>/` (vom Nutzer abgelegt,
+  schreibgeschützt). Arbeitsordner: `raw/<fach>/<werk-slug>-pugling/`, das Markdown in dessen `md/`. Gibt es
+  `md/` schon, ist das ein **Nachtrag**: nur Fotos ohne Seitendatei bearbeiten (das Prüfskript nennt sie),
+  vorhandene Dateien nicht neu schreiben.
+- Format, Pflichtfelder, Tag-Schema und was genau bzw. nur beschrieben wird: **[MARKDOWN.md](MARKDOWN.md)** –
+  vor dem ersten Foto ganz lesen. Kurz: **ein Foto = eine Datei**, gleiche Frontmatter und die fünf
+  Abschnitte Überblick · Seitenelemente · Fakten · Aufgaben · Unsicher in jeder Datei.
+- Reihenfolge: zuerst Umschlag und Inhaltsverzeichnis (daraus `_buch.md` mit Kapitelliste und dem
+  verbindlichen Tag-Vokabular unter `## Tags`), dann die Fotos in Dateinamen-Reihenfolge. **Kein
+  Inhaltsverzeichnis fotografiert:** nur die belegten Kapitel aufnehmen (Kapitelauftakt, Kopfzeilen), die übrigen
+  als eine Zeile „weitere Kapitel: unbekannt (kein Inhaltsverzeichnis fotografiert)“; die Stichprobe nimmt dann
+  einen Kapitelauftakt oder Rückblick statt des Inhaltsverzeichnisses.
+- Der Ordner-Slug (`access-pugling`) und der Buch-Tag (`buch/english-g-access-g9-3`) dürfen verschieden sein;
+  der Tag benennt das Buch eindeutig (Reihe, Band, Region).
+- **Überblick zuerst:** Kontaktbögen des ganzen Fotoordners (8 Vorschaubilder je Bogen mit Dateinamen) zeigen
+  Ausrichtung, Seitenart und Lücken, bevor ein Foto gelesen wird – und dem Koordinator, wie er Blöcke schneidet:
 
   ```bash
-  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Zeilen 3 -Drehung 180
+  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kontaktbogen.ps1 -Quelle "raw/<fach>/<werk>" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln/uebersicht"
   ```
 
-- **Blasse Zeilen** (Blitzlicht, oft die obersten Zeilen einer linken Vokabelseite): den Bereich vergrößern.
-  `x,y,Breite,Höhe` als Bruchteile 0–1 des gedrehten Bilds, zweifach hochskaliert; Datei `<name>-ausschnitt.jpg`:
+- **Drehung je Foto**, nicht pauschal: jedes Foto zuerst ganz ansehen (EXIF und Hoch-/Querformat sagen
+  nichts Verlässliches). Text auf dem Kopf → `-Drehen 180`; Zeilen laufen von oben nach unten → `-Drehen 270`;
+  von unten nach oben → `-Drehen 90`. Den Wert in `drehung` festhalten. `kacheln.ps1` dreht und kachelt in
+  einem Lauf; eine gedrehte Einzelkopie zum Überblick gibt `-Zeilen 1`.
+- Dichte oder kleine Schrift (Vokabelteil, Grammatikteil, Inhaltsverzeichnis, Aufgabenseiten) **immer** in
+  Kacheln lesen. Richtwerte für ein 3000×4000-Foto einer Doppelseite: Lehrtext/Aufgaben `-Zeilen 2 -Spalten 2`,
+  Grammatik/Inhaltsverzeichnis `-Zeilen 3 -Spalten 2`, sehr dichte Seiten `-Zeilen 3 -Spalten 3`. Vokabelteil und
+  Wortlisten in **Streifen** je Buchseite: `-Spalten 2 -Zeilen 8` (Wort und Übersetzung bleiben in einer Zeile;
+  ein Raster mitten durch eine Listenspalte zerreißt sie). Für Lautschrift notfalls `-Zeilen 12`:
 
   ```bash
-  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Ausschnitt 0,0,1,0.15
+  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Zeilen 3 -Spalten 2 -Drehen 180
   ```
+
+  Kacheln überlappen 8 %, eine angeschnittene Zeile steht in der Nachbarkachel ganz. Der Name trägt Raster und
+  Drehung (`IMG_x-3x2-d180-r1c1.jpg`), ein feineres Raster überschreibt also kein gröberes. Kacheln bleiben
+  unter `raw/`.
+- **Lichtreflex** (Bücher in Schutzfolie) ist die häufigste Ursache für Unlesbares; Kacheln helfen dagegen
+  nicht. Die Stelle sofort als `**unleserlich**` eintragen und im Abschlussbericht ein neues Foto vorschlagen.
+- **Vollständig heißt:** jedes Element der Seite steht unter „Seitenelemente“, jeder Fakt unter „Fakten“, jede
+  Aufgabe unter „Aufgaben“ – auch Übungs-, Methoden- und Anhangseiten. Nichts wird übersprungen, weil es für
+  die App gerade nicht gebraucht wird; ein späteres LLM soll das Foto nie mehr öffnen müssen.
+- Was nach Kachel nicht sicher lesbar ist, kommt unter „Unsicher“ (mit bester Lesart), nie geraten in die Fakten.
+- Prüfen, bis keine `FEHLER` mehr kommen, dann den Index schreiben:
+
+  ```bash
+  python -I -X utf8 .claude/skills/lehrwerk-aufbereiten/md_pruefen.py "raw/<fach>/<werk-slug>-pugling/md" --fotos "raw/<fach>/<werk>" --index
+  ```
+
+  Jeder `Hinweis` wird angesehen (kurze Datei = übersprungen? schlechte Lesbarkeit ohne Unsicher-Eintrag?).
+  Teillauf (nur ein Fotoblock): `--nur <erstes-foto.jpg> <letztes-foto.jpg>` erwartet nur diese Fotos;
+  `--index` schreibt erst der Lauf über alles. Dateien nach einem älteren Format: zuerst
+  `md_migrieren.py <md-ordner>` (fünfte Aufgabenspalte, Tag-Vokabular aus den vorhandenen Tags), den Rest meldet
+  das Prüfskript.
+- Das Skript sieht nur die Form; zum Schluss **drei Seitendateien gegen ihr Foto** vergleichen – je eine der
+  vorhandenen Seitenarten Vokabel-/Merkseite, Aufgabenseite, Inhaltsverzeichnis (fehlt eine Art im Block:
+  Register, Formentabelle oder Kapitelauftakt) – dafür die Kacheln **neu öffnen**, nicht aus der Erinnerung
+  prüfen. Fehlt ein Element oder steht ein Fakt falsch, die ganze Seitenart nachbessern.
+- Nach dem letzten Fotoblock `## Abdeckung` in `_buch.md` schreiben (fotografierte Seiten, Lücken) und das
+  Tag-Vokabular auf Dubletten durchsehen.
+- Viele Seiten: auf Subagenten verteilen – nach **Dichte**, nicht nach Fotozahl: ein Block hat höchstens ~8
+  dichte Doppelseiten (Vokabel-, Grammatik-, Aufgabenseiten) oder ~15 lockere (Lektion, Einstieg, Umschlag). Je
+  Agent ein zusammenhängender Fotoblock mit ausdrücklich genanntem erstem und letztem Dateinamen (aus dem
+  Kontaktbogen abzählen, nicht schätzen). Briefing-Vorlage – jedes Feld ausfüllen, keines offen lassen:
+
+  ```text
+  Skill lehrwerk-aufbereiten, NUR Schritt 1. Lies SKILL.md (Regeln + Schritt 1) und MARKDOWN.md ganz.
+  Buch: <Titel> · Fotos: <Ordner> · Dein Block: <erstes.jpg> bis einschließlich <letztes.jpg> (<n> Fotos)
+  Ausgabe: <…-pugling/md/> · Kacheln: <…-pugling/kacheln/> · _buch.md lesen, nicht ändern (Kapitel, Aufbau, Tags)
+  Prüfen: md_pruefen.py <md> --fotos <Ordner> --nur <erstes.jpg> <letztes.jpg> bis 0 FEHLER
+  Bericht: Prüfzeile, Dateien mit seitentyp, unsichere Stellen, benutzte neue Tags, Unklarheiten im Skill.
+  ``` Der
+  **Koordinator** schreibt vorher `_buch.md` mit Kapitelliste und einem großzügig aus dem Inhaltsverzeichnis
+  vorbefüllten Tag-Vokabular, `## Abdeckung` vorläufig („vorläufig, nach Kontaktbogen“). Parallele Agenten
+  ändern `_buch.md` **nicht**: braucht einer einen neuen Tag, nimmt er ihn trotzdem und nennt ihn im Bericht;
+  der Koordinator trägt ihn nach (oder führt ihn mit einem vorhandenen zusammen), schreibt `## Abdeckung`
+  final und lässt das Prüfskript über den ganzen Ordner laufen. Nacheinander laufende Agenten dürfen
+  `_buch.md` selbst ergänzen.
 
 ### 2. Stoff verstehen (Notizen in eigenen Worten)
+
+Ab hier nur Fremdsprachen (siehe oben). **Quelle sind die Seitendateien aus `md/`**, nicht die Fotos; ein Foto
+wird nur geöffnet, wenn eine Seitendatei eine Stelle als unsicher führt.
 
 - `analyse/units.md`: je Unit Titel, Themen, Kommunikationsziele, Grammatik, Wortfelder – aus Inhaltsverzeichnis
   und Unit-Seiten.

@@ -170,7 +170,7 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
     int? NewItemsPerDay = null);
 
 /// <summary>
-/// The weak words of the plan's child to review daily (B-557): ids of vocabulary store entries the child already has
+/// The weak words of the plan's child to review daily (B-584): ids of vocabulary store entries the child already has
 /// learning state for, 1 to 25, one language pair. Duplicates count once. The server builds a vocabulary exercise from
 /// exactly these store entries and adds it to the plan as a daily position.
 /// </summary>

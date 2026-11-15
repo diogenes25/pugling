@@ -30,16 +30,16 @@ Vier Agenten haben die 28 offenen Stories parallel gegen den Code geprüft. Erge
 
 | Urteil | Stories |
 | --- | --- |
-| gilt | B-552, B-538, B-536, B-539, B-553 (vorher B-540), B-547, B-219, B-218, B-248, B-249, B-250, B-221, B-376, B-31, B-39, B-410, B-09, B-377, B-555, B-252, B-223 |
-| teilweise erledigt, Kern gilt | B-220 (`PenaltyCoins` schon im Vertrag), B-556 (B-529 liefert die Erklärung für Regel-Aufgaben), B-557 (Konsole kann `--use-weak` + `assign`, es fehlt der Griff im Vater-Web), B-369 (Zeilen gewandert) |
+| gilt | B-552, B-538, B-536, B-539, B-580 (vorher B-540), B-547, B-219, B-218, B-248, B-249, B-250, B-221, B-376, B-31, B-39, B-410, B-09, B-377, B-582, B-252, B-223 |
+| teilweise erledigt, Kern gilt | B-220 (`PenaltyCoins` schon im Vertrag), B-583 (B-529 liefert die Erklärung für Regel-Aufgaben), B-584 (Konsole kann `--use-weak` + `assign`, es fehlt der Griff im Vater-Web), B-369 (Zeilen gewandert) |
 | veraltet, neu zuschneiden | B-47 (Azure-Weg tot; der gefahrene Betrieb ist `scripts/heimnetz.ps1`) |
-| **verworfen** | **B-554** (geteilt – Sammel-Story ohne eigene Arbeit, Muster B-247) · **B-251** (gegenstandslos durch B-470, gemessen in B-459) |
+| **verworfen** | **B-581** (geteilt – Sammel-Story ohne eigene Arbeit, Muster B-247) · **B-251** (gegenstandslos durch B-470, gemessen in B-459) |
 
 ### Buchhaltungs-Funde beim Abgleich
 
 - **Doppelte Ids.** `auto/fertigstellung` hatte B-540…B-544 neu vergeben, während `main` dieselben Nummern im Lauf
-  vom 2026-11-14 abgenommen hatte. Umgezogen: B-540 → **B-553** (Plan aus Unit), B-541 → **B-554**, B-542 → **B-555**,
-  B-543 → **B-556**, B-544 → **B-557**; Verweise in B-537, B-248, B-249, B-09, `docs/obsidian.md` und
+  vom 2026-11-14 abgenommen hatte. Umgezogen: B-540 → **B-580** (Plan aus Unit), B-541 → **B-581**, B-542 → **B-582**,
+  B-543 → **B-583**, B-544 → **B-584**; Verweise in B-537, B-248, B-249, B-09, `docs/obsidian.md` und
   `docs/rockettutor-vergleich-plan.md` nachgezogen. Kein Tor sieht doppelte Ids – Vorschlag für die Retro.
 - **Konfliktmarken.** Mein Merge-Commit `d39770b1` trug unaufgelöste Marken in B-09 und B-248: die Merge-Ausgabe war
   per `tail` abgeschnitten, und `git add -A` hat die Dateien als gelöst markiert. Behoben in `d41df00a`.
@@ -50,7 +50,7 @@ Nach dem Abgleich: **26 offen**.
 
 - **B-31** – wartet auf ein echtes Handy.
 - **B-536** – XL, Karte; geht in den Dialog.
-- **B-09, B-248, B-249, B-555** – L/XL mit Migration, hängen aneinander (Klassenarbeit-Kette) bzw. an der Teilung.
+- **B-09, B-248, B-249, B-582** – L/XL mit Migration, hängen aneinander (Klassenarbeit-Kette) bzw. an der Teilung.
 - **B-218, B-220, B-250** – Queue-Kette, hängt an B-248.
 - **B-221, B-376** – Gems/Auszeichnungen, Migration; nachrangig zu den P1.
 - **B-223** – Vertragsbruch an `PracticeCard`; nachrangig.
@@ -60,13 +60,13 @@ Nach dem Abgleich: **26 offen**.
 ## Refinement
 
 Drei Agenten treiben je drei Kandidaten bis `geschaetzt` (nur Doku, getrennte Dateien): Vater-Plan (B-552, B-539,
-B-553), Vater-Sicht (B-557, B-39, B-377), Sohn/Entwickler (B-219, B-47, B-556). B-538, B-547, B-252 und B-410 waren
+B-580), Vater-Sicht (B-584, B-39, B-377), Sohn/Entwickler (B-219, B-47, B-583). B-538, B-547, B-252 und B-410 waren
 schon geschätzt.
 
 Ergebnis Refinement (alle Entscheidungen als „Stakeholder-Entscheidung im Auftrag des Nutzers“ markiert): B-552 (S),
-B-557 (M), B-39 (L → M, Kind-Hub-Reiter gestrichen, höchstens 92 Tage je Abfrage), B-377 (M, Migration), B-219 (M,
+B-584 (M), B-39 (L → M, Kind-Hub-Reiter gestrichen, höchstens 92 Tage je Abfrage), B-377 (M, Migration), B-219 (M,
 Migration), B-47 (S, neu zugeschnitten auf ein wiederverwendbares `scripts/artefakt-smoke.ps1` plus CI-Job; die
-Azure-gebundenen Entscheidungen 1–2 durchgestrichen), B-556 (S, eingeengt auf Vokabel-Items, Migration). An der Kopie
+Azure-gebundenen Entscheidungen 1–2 durchgestrichen), B-583 (S, eingeengt auf Vokabel-Items, Migration). An der Kopie
 der echten DB gemessen: **0** Positionen und **0** Übungen in der Lage von B-552.
 
 ## Sprint 77 — Ziel & Umfang
@@ -166,15 +166,15 @@ Editor) mit; kein Durchrutscher. `nachgeschaut: 2026-11-15` gesetzt.
 
 **Sprint-Ziel (Vater):** Der Vater sieht seine Kinder über die Zeit und macht aus den schwachen Wörtern eines Kindes mit
 einem Griff eine tägliche Pflicht.
-**Umfang:** B-557, B-39.
-**Entwickler-Brief:** Zwei neue, additive Endpunkte. B-557: ein Service als einzige Stelle, die aus Wörtern eine Übung
+**Umfang:** B-584, B-39.
+**Entwickler-Brief:** Zwei neue, additive Endpunkte. B-584: ein Service als einzige Stelle, die aus Wörtern eine Übung
 baut – nur Wort-Ids im Rumpf, nie eine Config (sonst ein Hintereingang am Creator-Pfad vorbei); alle Prüfungen vor dem
 ersten Schreiben, Schreiben in einer Transaktion. B-39: die vorhandene Tagesrechnung je Tag, nur gruppiert; höchstens
 92 Tage. Keine Migration.
 
 ## Iteration 79 — umgesetzt
 
-- B-557 und B-39 wie in den Stories beschrieben; neue Fehlercodes `review_already_in_plan`, `review_subject_mismatch`;
+- B-584 und B-39 wie in den Stories beschrieben; neue Fehlercodes `review_already_in_plan`, `review_subject_mismatch`;
   `WordMasteryResponse` trägt das Sprachpaar.
 - **Am laufenden Produkt gefunden:** die E2E zeigte, dass die Herkunftsübung selbst als „schon im Plan“ zählt – richtig
   vom Server, aber der deutsche Satz behauptete „schon als Wiederholung“. Berichtigt, Integrationstest dazu.

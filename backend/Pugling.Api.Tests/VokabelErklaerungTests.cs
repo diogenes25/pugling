@@ -5,7 +5,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// B-556: a vocabulary item may carry an explanation why the answer is what it is. The creator writes and reads it back,
+/// B-583: a vocabulary item may carry an explanation why the answer is what it is. The creator writes and reads it back,
 /// the child gets it with the review outcome - after the answer, on a miss and on a hit - and never before: not on a card,
 /// not in a test. Each case names the change that makes it red.
 /// </summary>

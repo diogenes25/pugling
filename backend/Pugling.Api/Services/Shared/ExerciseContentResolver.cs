@@ -101,7 +101,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             return new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
                 r.Hint ?? ArticleHint(v), AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
                 ImageUrl: picked?.Url, ImageAlt: picked?.Alt,
-                // B-556: why the answer is what it is - the review outcome hands it out after the answer, never the card.
+                // B-583: why the answer is what it is - the review outcome hands it out after the answer, never the card.
                 Explanation: r.Explanation,
                 // B-252: the device may read the word aloud only where nobody recorded it, and only in a known language -
                 // a German voice reading "la gare" teaches a wrong pronunciation.

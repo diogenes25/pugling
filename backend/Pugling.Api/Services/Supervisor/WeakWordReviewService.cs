@@ -7,7 +7,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
-/// Turns a child's weak words into a daily review duty with one call (B-557): a new vocabulary exercise that references the
+/// Turns a child's weak words into a daily review duty with one call (B-584): a new vocabulary exercise that references the
 /// existing store entries, plus a position for it in the given plan.
 /// <para>
 /// The exercise is built here and not through the creator path on purpose - the father bundles material the child already

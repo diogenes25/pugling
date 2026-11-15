@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Deploy-Artefakt-Smoke, Artefakt-Smoke]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -200,3 +200,11 @@ nicht am Exit-Code des Jobs allein.
 - **2026-10-23** — In der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-07 ist verworfen (Neubau statt Reaktivierung). Das Gate dieser Story ist damit allein der Neubau; beim Neubau prüfen, ob der Smoke-Schritt in die neue Pipeline gehört statt in `deploy-azure.yml`.
 - **2026-11-14** — Abgleich Backlog-Lauf: veraltet, Kern gilt, `wartet_auf` unverändert. Zeilen nachgemessen (Kasten unter „Ist-Stand am Code"); neu ist `scripts/heimnetz.ps1` als gefahrener Betrieb mit eigenem `dotnet publish` – beim Bau prüfen, ob der Smoke dorthin gehört statt in `deploy-azure.yml`.
 - **2026-11-15** — Backlog-Lauf 2026-11-15: neu geschnitten auf den gefahrenen Betrieb `heimnetz.ps1`. Entscheidungen 1 und 2 (Azure-gebunden, autonom) abgelöst und durchgestrichen; sieben Stakeholder-Entscheidungen im Auftrag des Nutzers (6–12): Bau jetzt, Skript `scripts/artefakt-smoke.ps1`, CI-Job `artefakt` ohne `needs:`, `/health` + `/` + `/sohn`, Heimnetz-Startform mit Wegwerf-DB, kein Probelauf gegen die echte Instanz, dauerhafte Gegenprobe. `wartet_auf` entfernt. Bleibt `geschaetzt`: **S**, `backend`, keine Migration, kein Vertragsbruch.
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 80 des Backlog-Laufs 2026-11-15, Code-Commit `73c73a6a`.
+  `scripts/artefakt-smoke.ps1` und Job `artefakt` in `ci.yml` nach den Entscheidungen 6–12; Satz in `docs/heimnetz.md`.
+  - AK 1 → lokal (Windows) grün: `/health` 200, `/` und `/sohn` mit dem gebauten Frontend.
+  - AK 4 → lokal `-SkipBuild -EmptyWebRoot` rot an `/` (404), nicht an `/health`.
+  - AK 3 → nach dem roten Lauf kein Wegwerf-Ordner mehr unter dem Temp-Pfad, Port 5299 frei (gemessen).
+  - AK 2 → Retry gegen `/health` mit Prozess-Exit-Prüfung im Skript; ein eigener Rotlauf ohne `Jwt__Key` ist **nicht**
+    gemessen (das Skript setzt den Schlüssel immer).
+  - AK 5/6 → CI-Lauf auf Linux mit dem Push nach `main` (Ergebnis im Protokoll, Abschluss).

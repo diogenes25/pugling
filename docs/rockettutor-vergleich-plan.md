@@ -6,7 +6,7 @@ aliases: [RocketTutor-Vergleich, RocketTutor, Probearbeit auf Papier, Erklärung
 # RocketTutor als Vergleichsmaßstab: was wir übernehmen, was nicht
 
 Status: **Plan** (2026-11-15). Die Übernahme läuft als Stories im [Backlog](backlog/README.md); die
-Sammel-Story ist [B-554](backlog/B-554-rockettutor-vergleich-sammel-story.md). Dieses Dokument hält den
+Sammel-Story ist [B-581](backlog/B-581-rockettutor-vergleich-sammel-story.md). Dieses Dokument hält den
 Vergleich und die Reihenfolge, **nicht** den Zustand der Etappen.
 
 ← [Zurück zur Wissenskarte](obsidian.md) · Vorgänger-Vergleiche: [Khan Academy](khan-academy-vergleich-plan.md),
@@ -53,7 +53,7 @@ sind Anbieterangaben, unabhängige Erfahrungsberichte waren nicht zu finden.
 | --- | --- | --- |
 | Lernplan nach Schulbuch | `TextbookSeries → SeriesUnit`, Kind zeigt auf sein Buch, Lehrwerk aus Fotos (Skill `lehrwerk-aufbereiten`) | Gleichwertig; RocketTutor bestätigt die Richtung. |
 | Abschlusstest je Lektion | Abschlusstest je Position, Klausur-Modus one-at-a-time | Gleichwertig. |
-| Lücken erkennen, gezielt üben | Leitner-Stufe je Item, `onlyWeak` im Lernstand (`ChildVocabularyProgressController.cs:47`), `PracticeOrder.WeakestFirst` als Default (`PlanPositionsController.cs:193`) | Wir erkennen die Lücke. Der Weg von der Lücke zur Pflicht fehlt (→ B-557). |
+| Lücken erkennen, gezielt üben | Leitner-Stufe je Item, `onlyWeak` im Lernstand (`ChildVocabularyProgressController.cs:47`), `PracticeOrder.WeakestFirst` als Default (`PlanPositionsController.cs:193`) | Wir erkennen die Lücke. Der Weg von der Lücke zur Pflicht fehlt (→ B-584). |
 | Lehrer-Hausaufgabe mit Frist | Lehrer-Konto ohne Betreuungsauftrag, Hausaufgaben in [B-09](backlog/B-09-lehrer-hausaufgaben.md) ausformuliert | RocketTutor ist weiter; der QR-Beitritt ist ein günstiger Weg in B-09. |
 
 ## Wo RocketTutor weiter ist
@@ -86,9 +86,9 @@ sind Anbieterangaben, unabhängige Erfahrungsberichte waren nicht zu finden.
 ## Bewusst nicht übernommen
 
 - **Dialog-Tutor beim Kind.** Bricht „kein LLM im Backend" und die Lösungsfeld-Regel. Übernommen wird nur
-  die Offline-Form: Erklärungen entstehen beim Creator und sind vor dem Zuweisen prüfbar (B-556).
+  die Offline-Form: Erklärungen entstehen beim Creator und sind vor dem Zuweisen prüfbar (B-583).
 - **KI korrigiert beim Kind.** Dieselbe Entscheidung wie im Baobab-Vergleich. Die Probearbeit auf Papier
-  korrigiert der Vater bzw. ein Creator-Werkzeug, das Ergebnis trägt der Vater ein (B-555).
+  korrigiert der Vater bzw. ein Creator-Werkzeug, das Ergebnis trägt der Vater ein (B-582).
 - **Erklärvideos.** Content-Aufwand ohne Bezug zum Vokabel-Schwerpunkt.
 - **Mathe-Lösungsweg Zeile für Zeile.** Wäre ein eigener Übungstyp mit eigener Bewertung; erst
   anzugehen, wenn Mathe für Friedrich ein eigenes Vorhaben wird.
@@ -103,9 +103,9 @@ Anlass, nicht der Ist-Stand. Beim Ausformulieren wird gegen den Code belegt.
 | --- | --- | --- | --- |
 | 1 | [B-248](backlog/B-248-klassenarbeit-countdown-treibt-den-plan.md) (bestehend) | Klassenarbeit-Termin verteilt die Tagesdosis rückwärts | [B-423](backlog/B-423-assistent-klassenarbeit-termin-und-stufenleiter.md) |
 | 2 | [B-249](backlog/B-249-probeklausur-mit-notenprognose.md) (bestehend) | Probeklausur mit Note und Vergleich Prognose ↔ echte Note | B-248 |
-| 3 | [B-555](backlog/B-555-probearbeit-auf-papier-mit-foto-korrektur.md) | Probearbeit als PDF, Lösung auf Papier, Foto → Korrektur durch Vater/Creator-Werkzeug → Note | B-249; Vision-Qualität aus [B-459](backlog/B-459-vision-modell-fuer-buchseiten.md) |
-| 4 | [B-556](backlog/B-556-erklaerung-nach-falscher-antwort.md) | Erklärung je Übung/Item, offline vom KI-Creator erzeugt, nach der Antwort gezeigt | keine |
-| 5 | [B-557](backlog/B-557-schwache-woerter-werden-wiederholungs-position.md) | Schwache Wörter mit einem Griff zur Wiederholungs-Position mit Pflichtziel | berührt [B-39](backlog/B-39-supervisor-dashboard.md) |
+| 3 | [B-582](backlog/B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Probearbeit als PDF, Lösung auf Papier, Foto → Korrektur durch Vater/Creator-Werkzeug → Note | B-249; Vision-Qualität aus [B-459](backlog/B-459-vision-modell-fuer-buchseiten.md) |
+| 4 | [B-583](backlog/B-583-erklaerung-nach-falscher-antwort.md) | Erklärung je Übung/Item, offline vom KI-Creator erzeugt, nach der Antwort gezeigt | keine |
+| 5 | [B-584](backlog/B-584-schwache-woerter-werden-wiederholungs-position.md) | Schwache Wörter mit einem Griff zur Wiederholungs-Position mit Pflichtziel | berührt [B-39](backlog/B-39-supervisor-dashboard.md) |
 
 Dazu bekommt [B-09](backlog/B-09-lehrer-hausaufgaben.md) den QR-Code/Link als Beitrittsweg als
 Anregung für das Grillen, ohne neue Story.

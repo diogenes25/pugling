@@ -140,7 +140,7 @@ public sealed class SupervisorApi(HttpClient http)
         Http.PostAsync<PositionResponse>($"{Root}/study-plans/{planId}/positions", dto, ct);
 
     /// <summary>
-    /// Turns the child's weak words into a daily review position of the plan (B-557); <c>409 review_already_in_plan</c>
+    /// Turns the child's weak words into a daily review position of the plan (B-584); <c>409 review_already_in_plan</c>
     /// when a position of the plan already practises exactly these words.
     /// </summary>
     public Task<PositionResponse> AddReviewFromWordsAsync(int planId, CreateReviewFromWordsDto dto, CancellationToken ct = default) =>

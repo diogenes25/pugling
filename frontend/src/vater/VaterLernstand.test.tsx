@@ -12,7 +12,7 @@ import { VaterLernstand, WeakWords } from "./VaterLernstand";
  * noch gar kein Wort". Nur das erste ist ein Erfolg. Gefälscht wird der Abruf, nicht das `fetch` (Vorbild
  * `TextbookForm.test.tsx`).
  */
-// B-557: unter einer Liste mit Wörtern fragt der Zuweisen-Knopf die Pläne ab – ohne Fälschung ginge das ans Netz.
+// B-584: unter einer Liste mit Wörtern fragt der Zuweisen-Knopf die Pläne ab – ohne Fälschung ginge das ans Netz.
 beforeEach(() => { vi.spyOn(api, "plans").mockResolvedValue([]); });
 
 // `AuthProvider` ist Pflicht: `useAsync` hängt für den 401-Fall an `useAuth`.
@@ -319,9 +319,9 @@ function Nav({ to }: { to: string }) {
 }
 
 /*
- * B-557 AK 8: die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung. Gefälscht werden die Abrufe.
+ * B-584 AK 8: die schwachen Wörter der Seite mit einem Griff als tägliche Wiederholung. Gefälscht werden die Abrufe.
  */
-describe("Lernstand – schwache Wörter als Wiederholung zuweisen (B-557)", () => {
+describe("Lernstand – schwache Wörter als Wiederholung zuweisen (B-584)", () => {
   afterEach(() => vi.restoreAllMocks());
 
   const wort = (vocabularyId: number, word: string, sourceLanguage = "en") =>
@@ -373,7 +373,7 @@ describe("Lernstand – schwache Wörter als Wiederholung zuweisen (B-557)", () 
     expect(screen.queryByRole("button", { name: /als tägliche Wiederholung/ })).toBeNull();
   });
 
-  // B-557 Entscheidung 4: bei mehreren spielbaren Plänen wählt der Vater. Rot, wenn die Auswahl fehlt oder die Wahl nicht
+  // B-584 Entscheidung 4: bei mehreren spielbaren Plänen wählt der Vater. Rot, wenn die Auswahl fehlt oder die Wahl nicht
   // beim Server ankommt (dann ginge es immer in den ersten Plan).
   it("lässt bei mehreren spielbaren Plänen wählen und schickt an den gewählten", async () => {
     vi.spyOn(api, "childWordMastery").mockResolvedValue({ items: [wort(7, "dog")], total: 1 });

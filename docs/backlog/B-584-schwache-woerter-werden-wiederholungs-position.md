@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-557 · Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position
+# B-584 · Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position
 
 RocketTutors Lehrer-Sicht zeigt die größten Wissenslücken und ist zugleich der Startpunkt einer
 Zuweisung. Pugling erkennt die Lücke schon: der Lernstand filtert schwache Wörter (`onlyWeak`, Schwelle
@@ -199,8 +199,7 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 5 des Übernahmeplans; Sammel-Story [B-554](B-554-rockettutor-vergleich-sammel-story.md)).
-- **2026-11-15** — Id umgezogen (vorher B-544): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 5 des Übernahmeplans; Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)).
 - **2026-11-15** — Backlog-Lauf 2026-11-15: `ausformuliert` – Ist-Stand am Code belegt (Liste und Filter da, Konsole
   kann `--use-weak` + `assign`, Web hat keinen Knopf; Übung braucht Unit; ein aktiver Plan je Kind, B-539 im Blick).
 - **2026-11-15** — Backlog-Lauf 2026-11-15: `gegrillt` – acht Stakeholder-Entscheidungen im Auftrag des Nutzers
@@ -241,3 +240,4 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
     die Tagespflicht).
   - Belege: volle Suite **1693/1693** (Exit 0, `EndpointCoverageGuard` 284), Vitest **1113/1113**, `tsc -b` grün;
     Rollengang Vater **13 passed** (Ports 5253/5193). Reviewer: `pugling-reviewer`, `frontend-reviewer`.
+- **2026-11-15** — umnummeriert von B-544 auf B-584: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-584). Inhalt unverändert.
