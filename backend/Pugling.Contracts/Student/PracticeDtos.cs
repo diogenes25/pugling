@@ -77,13 +77,18 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// (so <c>DisplayOnly</c> is set too) whatever the day's stage, and asked for in the next round. The second way to
 /// <c>DisplayOnly</c> next to a display stage of the day, told apart here so the round's end can say "new words
 /// learned" only where there were new words - a display stage of the day introduces nothing.
+///
+/// <c>SpeechLang</c> (B-252) is the language the <c>Prompt</c> may be read aloud in by the device - only for a vocabulary
+/// card in reading direction whose word has no recording, never on the listening stage. Only the prompt is ever spoken,
+/// so it gives away nothing the card does not already show; <c>null</c> = no read-aloud button.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
     string? ImageUrl = null, string? ImageAlt = null, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
-    IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null);
+    IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
+    string? SpeechLang = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

@@ -113,8 +113,9 @@ export function SohnBonus() {
 }
 
 /**
- * Eine Zeile des Pools. Bei vollem Deckel bietet eine Einmal-Übung keinen Start an: der Server wiese ihn ab
- * (`extra_cap_reached`), weil sie sonst für 0 Münzen verbraucht wäre – die Zeile sagt stattdessen, wann sie wieder geht.
+ * Eine Zeile des Pools. Bei vollem Deckel bietet eine Übung ohne Formleiter (`!repeatable`) keinen Start an: der Server
+ * wiese ihn ab (`extra_cap_reached`), weil ihre Runde die Lösungen für 0 Münzen zeigte – die Zeile sagt stattdessen, wann
+ * sie wieder geht.
  */
 function BonusZeile({ e, capReached, capZero }: { e: ExtraExercise; capReached: boolean; capZero: boolean }) {
   const { t } = useTranslation();
@@ -127,11 +128,15 @@ function BonusZeile({ e, capReached, capZero }: { e: ExtraExercise; capReached: 
         {e.unitLabel && <span className="pill" style={{ marginLeft: "auto" }}>{e.unitLabel}</span>}
       </div>
       <div className="sub" style={{ margin: "4px 0 8px" }}>
-        {e.done ? t("bonus.done") : formText(e.nextForm, e.coinsPerHit)}
+        {e.done && !e.repeatable ? t(capZero ? "bonus.doneTodayNoCoins" : "bonus.doneToday") : formText(e.nextForm, e.coinsPerHit)}
+        {/* B-538: jede weitere Runde derselben Übung am selben Tag zahlt die Hälfte – der Wert steht vor dem Spielen da. Am
+            vollen Deckel zahlt ohnehin nichts mehr; dann sagt es die Deckel-Karte, nicht ein Prozentwert. */}
+        {!capReached && e.repeatable && e.done && <> · {t("bonus.vocabNoWorth")}</>}
+        {!capReached && !e.done && e.nextRunPercent < 100 && <> · {t("bonus.worth", { percent: e.nextRunPercent })}</>}
         {e.repeatable && e.completedRuns > 0 && <> · {t("bonus.played", { count: e.completedRuns })}</>}
       </div>
       {wartetAufMorgen && <div className="sub"><b>{t(capZero ? "bonus.oneShotNoCoins" : "bonus.oneShotTomorrow")}</b></div>}
-      {!e.done && !wartetAufMorgen && (
+      {!(e.done && !e.repeatable) && !wartetAufMorgen && (
         <Link to={`/sohn/bonus/${e.exerciseId}`} className="btn lime small" style={{ textDecoration: "none", textAlign: "center" }}
           aria-label={`${e.openRunId != null ? t("bonus.resume") : t("bonus.play")}: ${e.title}`}>
           {e.openRunId != null ? t("bonus.resume") : t("bonus.play")}
@@ -270,7 +275,11 @@ export function SohnBonusRun() {
         schliessenName={t("bonus.later")} onSchliessen={() => nav("/sohn/bonus")}
         zaehler={t("bonus.cardOf", { n: cursor + 1, total: run.cards.length })} anteil={cursor / run.cards.length}
         anweisung={t(form.anweisung)}
-        hinweis={run.coinsPerHit > 0 ? t("bonus.hintPaid", { coins: run.coinsPerHit }) : t("bonus.hintSelf")}
+        hinweis={run.coinsPerHit === 0 ? t("bonus.hintSelf")
+          // B-538: die Runde nennt ihren heutigen Wert, nicht den vollen Satz – sonst verspräche der Hinweis zu viel.
+          : run.runPercent === 0 ? t("bonus.hintNoWorth")
+          : run.runPercent < 100 ? t("bonus.hintPaidReduced", { percent: run.runPercent, coins: run.coinsPerHit })
+          : t("bonus.hintPaid", { coins: run.coinsPerHit })}
       >
         <Aufgabe
           karte={card} form={form} skin={skin} gedreht={!typed && revealed}

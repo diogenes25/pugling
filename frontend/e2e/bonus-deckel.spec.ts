@@ -18,8 +18,8 @@ test("Der Vater setzt den Bonus-Tagesdeckel je Kind und stellt ihn auf die Vorga
   await page.goto(`/vater/kind/${childId}?bereich=einstellungen`);
 
   const bereich = page.locator("section", { has: page.getByRole("heading", { name: "Bonus-Training" }) });
-  // Ohne eigenen Wert gilt die Vorgabe des Servers (appsettings: 30).
-  await expect(bereich.getByText("Heute verdient: 0 von 30 🪙 – Vorgabe des Servers")).toBeVisible();
+  // Ohne eigenen Wert gilt die Vorgabe des Servers (appsettings: 90, B-538).
+  await expect(bereich.getByText("Heute verdient: 0 von 90 🪙 – Vorgabe des Servers")).toBeVisible();
   const feld = bereich.getByLabel("Tagesdeckel (Münzen)", { exact: true });
   const speichern = bereich.getByRole("button", { name: "Speichern" });
   await expect(speichern).toBeDisabled();
@@ -40,6 +40,6 @@ test("Der Vater setzt den Bonus-Tagesdeckel je Kind und stellt ihn auf die Vorga
 
   await bereich.getByRole("button", { name: "Auf Vorgabe zurück" }).click();
   await expect(bereich.getByText("Vorgabe gilt wieder.")).toBeVisible();
-  await expect(bereich.getByText("Heute verdient: 0 von 30 🪙 – Vorgabe des Servers")).toBeVisible();
+  await expect(bereich.getByText("Heute verdient: 0 von 90 🪙 – Vorgabe des Servers")).toBeVisible();
   await expect(feld).toHaveValue("");
 });

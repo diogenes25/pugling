@@ -198,7 +198,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
             f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles,
-            introduction, f.CueBox);
+            introduction, f.CueBox,
+            // B-252: never on the listening stage - there hearing the word IS the task, and its text stands in only when
+            // no recording came.
+            type.AudioReplacesPrompt(stage) ? null : item.SpeechLang);
     }
 
     /// <summary>
@@ -522,8 +525,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
             var preBox = prog.Box;
-            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later.
-            var isNew = wasCorrect && prog.NewBonusPaidAt is null;
+            // B-538: a position without a duty pays no coins at all - otherwise it were a second, uncapped way to coins
+            // next to the bonus training, open before the duty. The box and the learning state move as before.
+            var paysCoins = pos.Cadence != GoalCadence.None;
+            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later. A
+            // hit that pays nothing leaves them too: a later duty on the same position still pays them.
+            var isNew = paysCoins && wasCorrect && prog.NewBonusPaidAt is null;
             if (isNew) prog.NewBonusPaidAt = now;
             // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
             // "already named" marker read back above. A second reading would put the stamp outside the window
@@ -535,13 +542,16 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
                 pos.TimeSlots);
             var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
                 time.GetLocalNow().DateTime, elapsedSeconds);
-            foreach (var c in score.Contributions)
-                db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
-            awarded = score.BasePoints;
-            comboBonus = score.ComboBonus;
-            speedBonus = score.SpeedBonus;
+            if (paysCoins)
+            {
+                foreach (var c in score.Contributions)
+                    db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
+                awarded = score.BasePoints;
+                comboBonus = score.ComboBonus;
+                speedBonus = score.SpeedBonus;
+            }
 
-            if (score.Total > 0)
+            if (paysCoins && score.Total > 0)
                 // The CREDITED entry, not the card it arrived on: in set mode those differ, and the card index is
                 // the one value the booking has nothing to do with.
                 logger.LogInformation(

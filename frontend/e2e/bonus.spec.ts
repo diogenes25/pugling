@@ -3,9 +3,10 @@ import { sohnLogin } from "./helpers";
 
 /*
  * Bonus-Training – Extra-Übungen zum aktuellen Thema, offen erst nach der Tagespflicht. Die Regeln (Form je Durchgang,
- * Münzen nur für geprüfte Treffer, Tagesdeckel, Einmal-Übung) hält der Server und prüft `ExtraTrainingTests`; hier
- * liegt, was nur die laufende App zeigt: die Sperre auf dem Pfad, das Öffnen nach erfüllter Pflicht, eine getippte
- * Einmal-Übung, die Münzen bringt und danach abgehakt ist, und eine Vokabel-Runde zum Aufwärmen ohne Münzen.
+ * Münzen nur für geprüfte Treffer, Tagesdeckel, Halbierung je weiterer Runde am selben Tag) hält der Server und prüft
+ * `ExtraTrainingTests`; hier liegt, was nur die laufende App zeigt: die Sperre auf dem Pfad, das Öffnen nach erfüllter
+ * Pflicht, eine getippte Rechen-Übung, die Münzen bringt und danach heute noch die Hälfte wert ist (B-538), und eine
+ * Vokabel-Runde zum Aufwärmen ohne Münzen.
  *
  * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
  */
@@ -68,9 +69,9 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
   await expect(page.getByRole("heading", { name: "Bonus-Training" })).toBeVisible();
   const zeile = (titel: string) => page.locator(".bonus-zeile", { hasText: titel });
   await expect(zeile(VOKABELN)).toContainText("Karteikarte · Aufwärmen, ohne Münzen");
-  await expect(zeile(RECHNEN)).toContainText("Tippen · 2 🪙 je Treffer");
+  await expect(zeile(RECHNEN)).toContainText("Tippen · 3 🪙 je Treffer");
 
-  // Die Einmal-Übung: getippt, am Ende ausgewertet, danach abgehakt.
+  // Die Rechen-Übung: getippt, am Ende ausgewertet – danach bleibt sie im Vorrat und ist heute noch die Hälfte wert (B-538).
   await zeile(RECHNEN).getByRole("link", { name: `Spielen: ${RECHNEN}` }).click();
   for (let i = 0; i < 2; i++) {
     const frage = (await page.locator(".fcard").innerText()).includes("2 + 3") ? "5" : "16";
@@ -78,11 +79,11 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
     await page.getByRole("button", { name: "Weiter →" }).click();
   }
   await expect(page.getByText("2 / 2 richtig")).toBeVisible();
-  await expect(page.getByText("+4 🪙 verdient")).toBeVisible();
+  await expect(page.getByText("+6 🪙 verdient")).toBeVisible();
   await page.getByRole("button", { name: "Zurück zum Bonus-Training" }).click();
-  await expect(zeile(RECHNEN)).toContainText("✓ Geschafft");
-  await expect(zeile(RECHNEN).getByRole("link")).toHaveCount(0);
-  await expect(page.getByText("Heute verdient: 4 / 30 🪙")).toBeVisible();
+  await expect(zeile(RECHNEN)).toContainText("heute noch 50 % wert");
+  await expect(zeile(RECHNEN).getByRole("link", { name: `Spielen: ${RECHNEN}` })).toBeVisible();
+  await expect(page.getByText("Heute verdient: 6 / 90 🪙")).toBeVisible();
 
   // Die Vokabeln: Aufwärmen per Karteikarte zahlt nichts, und die Runde zählt als gespielt.
   // Zwei Karten, dann „Später weiter“: die Runde setzt bei Karte 3 fort, statt von vorn zu beginnen.

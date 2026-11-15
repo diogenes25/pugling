@@ -46,6 +46,16 @@ describe("Knoten auf dem Lernpfad", () => {
     expect(knoten("Pflicht erledigt").getAttribute("aria-label")).toContain("Ziel erfüllt");
   });
 
+  it("sagt an einer freien Position, dass sie keine Münzen bringt (B-538 AK 7)", () => {
+    // Rot, wenn die Kür-Position weiter nur „frei“ heißt – seit B-538 zahlt sie nichts, und das Kind soll es vorher sehen.
+    zeige([
+      position({ positionId: 1, exerciseTitle: "Frei geübt", cadence: "None" }),
+      position({ positionId: 2, exerciseTitle: "Pflicht", cadence: "Daily" }),
+    ]);
+    expect(knoten("Frei geübt").getAttribute("aria-label")).toContain("ohne Münzen");
+    expect(knoten("Pflicht").getAttribute("aria-label")).not.toContain("ohne Münzen");
+  });
+
   it("hebt genau einen Knoten als nächsten hervor und keinen, wenn die Pflicht erfüllt ist", () => {
     // Rot, wenn jeder offene Knoten „START“ trägt – oder wenn nach erfüllter Pflicht noch einer hervorgehoben wird.
     const { unmount } = zeige([

@@ -115,10 +115,10 @@ public class DailyBoxClaim
 
 /// <summary>
 /// One run of the bonus training: a child plays one catalog exercise of its current topic beyond the day's duty
-/// for extra coins. The run is created on start and is the "already played" marker - an exercise that is not
-/// repeatable is done once it has a run, finished or not, so the child cannot open it, look at the questions, leave
-/// and come back prepared. A repeatable (vocabulary) exercise counts its completed runs as <see cref="Pass"/>: each
-/// one asks in a harder <see cref="Form"/>. At most one open run per (child, exercise), held by a filtered unique
+/// for extra coins. The run is created on start, so an open run is resumed with the same questions - the child cannot
+/// open it, look at the questions, leave and come back to a fresh draw. Every completed run of the same exercise on the
+/// same <see cref="Day"/> halves the worth of the next (B-538). A vocabulary exercise counts its completed runs as
+/// <see cref="Pass"/>: each one asks in a harder <see cref="Form"/>. At most one open run per (child, exercise), held by a filtered unique
 /// index. Independent of the plan: it moves no Leitner box and no plan goal.
 /// </summary>
 public class ExtraTrainingRun

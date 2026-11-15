@@ -854,8 +854,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         });
 
         // Bonus training runs: at most one OPEN run per (child, exercise) - a started run is resumed, never replaced,
-        // so restarting cannot reshuffle a one-shot exercise. Filtered, because finished runs of a repeatable
-        // exercise pile up by design. The (child, day) index serves the daily coin cap. Cascade with child and
+        // so restarting cannot reshuffle the questions. Filtered, because finished runs of an exercise pile up by
+        // design. The (child, day) index serves the daily coin cap. Cascade with child and
         // exercise: the coins stay in the ledger, the run is only the play log.
         modelBuilder.Entity<ExtraTrainingRun>(e =>
         {

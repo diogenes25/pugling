@@ -100,7 +100,11 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             // "huge" must not lose the goal (and its coins) to the row that happens to store "riesig".
             return new ContentItem(i, v.Word, v.Translation, Accepted(v.Translation, v.TranslationAlternatives),
                 r.Hint ?? ArticleHint(v), AudioUrl: v.PronunciationAudioUrl, ItemId: r.Id, VocabularyId: r.VocabularyId,
-                ImageUrl: picked?.Url, ImageAlt: picked?.Alt);
+                ImageUrl: picked?.Url, ImageAlt: picked?.Alt,
+                // B-252: the device may read the word aloud only where nobody recorded it, and only in a known language -
+                // a German voice reading "la gare" teaches a wrong pronunciation.
+                SpeechLang: string.IsNullOrWhiteSpace(v.PronunciationAudioUrl) && !string.IsNullOrWhiteSpace(v.SourceLanguage)
+                    ? v.SourceLanguage : null);
         }).ToList();
 
         return ExerciseContentProvider.WithDirection(canonical, direction).Select(card =>

@@ -27,20 +27,27 @@ public record ExtraTrainingOverview(bool Unlocked, string? LockReason, IReadOnly
     int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraExercise> Exercises);
 
 /// <summary>
-/// One exercise of the bonus pool. <paramref name="Repeatable"/> exercises (vocabulary) climb a form per completed
-/// run; the others are <paramref name="Done"/> after their one run. <paramref name="NextForm"/> is the form the next
-/// run asks in, <paramref name="CoinsPerHit"/> what one correct card of it pays. <paramref name="OpenRunId"/> names a
-/// started run that still waits for its answers - it is resumed, never replaced.
+/// One exercise of the bonus pool. Every exercise may be played again (B-538). <paramref name="Repeatable"/> marks the
+/// ones that climb a form per completed run (<paramref name="CompletedRuns"/>, vocabulary) and so may also be played at
+/// a full cap, for no coins; any other plays its checked stage each time and waits at a full cap, because its run would
+/// show the solutions for nothing. <paramref name="NextRunPercent"/> is
+/// what the next run is worth today in percent of its hits - 100, 50, 25, then 0, halved by every run of this exercise
+/// completed earlier today; <paramref name="Done"/> means that worth is 0 until tomorrow. <paramref name="NextForm"/> is
+/// the form the next run asks in, <paramref name="CoinsPerHit"/> what one correct card of it pays at 100 %.
+/// <paramref name="OpenRunId"/> names a started run that still waits for its answers - it is resumed, never replaced.
 /// </summary>
 public record ExtraExercise(int ExerciseId, string Title, string Type, string UnitLabel, int ItemCount,
-    bool Repeatable, int CompletedRuns, bool Done, ExtraForm NextForm, int CoinsPerHit, int? OpenRunId);
+    bool Repeatable, int CompletedRuns, bool Done, ExtraForm NextForm, int CoinsPerHit, int? OpenRunId,
+    int NextRunPercent);
 
 /// <summary>
 /// A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning
-/// (<see cref="ExtraCard.Reveal"/>) is shown only on the self-assessed form.
+/// (<see cref="ExtraCard.Reveal"/>) is shown only on the self-assessed form. <paramref name="CoinsPerHit"/> is the full
+/// rate; <paramref name="RunPercent"/> is the share of it this run is worth as of its start (B-538). The submit judges
+/// by the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less.
 /// </summary>
 public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string Type, ExtraForm Form, int Stage,
-    bool Typed, int CoinsPerHit, IReadOnlyList<ExtraCard> Cards);
+    bool Typed, int CoinsPerHit, IReadOnlyList<ExtraCard> Cards, int RunPercent);
 
 /// <summary>One card of a bonus run - the same facets a practice card carries, without an image.</summary>
 public record ExtraCard(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,

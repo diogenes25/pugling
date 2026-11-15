@@ -9,7 +9,8 @@ namespace Pugling.Api.Tests;
 
 /// <summary>
 /// The bonus training: extra exercises on the current topic that pay coins beyond the day's duty - but only after it,
-/// only for checked hits, once per exercise (vocabulary climbs a form per run instead) and within a daily cap.
+/// only for checked hits, halved by every further run of the same exercise on the same day (B-538; vocabulary also climbs
+/// a form per run) and within a daily cap.
 /// </summary>
 public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -111,57 +112,180 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     public async Task Vokabeln_Werden_Je_Durchgang_Schwerer_Und_Zahlen_Nur_Geprueft()
     {
         var s = await SetupAsync();
-        var expected = new[] { ("SelfAssess", 0), ("SelfAssess", 0), ("Choice", 4), ("Choice", 4), ("Typed", 8), ("Typed", 8) };
+        // The form climbs per completed run, whatever the day; the halving (B-538) counts the runs of the day only. Day one
+        // ends after three runs (a fourth would be worth 0 % and does not start): the first choice run is the third of the
+        // day and pays 4 × 1 × 25 % = 1. Day two starts at 100 % again: choice 4, then typed 4 × 3 × 50 % = 6 and 25 % = 3.
+        var expected = new[]
+        {
+            ("SelfAssess", 0, 0), ("SelfAssess", 0, 0), ("Choice", 1, 0),
+            ("Choice", 4, 1), ("Typed", 6, 1), ("Typed", 3, 1),
+        };
 
         var total = 0;
-        foreach (var (form, coins) in expected)
+        factory.Clock.FreezeNow();
+        var advanced = false;
+        try
         {
-            var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
-            Assert.Equal(form, run.GetProperty("form").GetString());
-            var card = run.GetProperty("cards")[0];
-            // The meaning is shown on the self-assessed form only, the options on the choice form only.
-            Assert.Equal(form == "SelfAssess", card.GetProperty("reveal").ValueKind == JsonValueKind.String);
-            Assert.Equal(form == "Choice", card.GetProperty("choices").ValueKind == JsonValueKind.Array);
+            foreach (var (form, coins, day) in expected)
+            {
+                if (day == 1 && !advanced)
+                {
+                    factory.Clock.Advance(TimeSpan.FromDays(1));
+                    advanced = true;
+                }
+                var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+                Assert.Equal(form, run.GetProperty("form").GetString());
+                var card = run.GetProperty("cards")[0];
+                // The meaning is shown on the self-assessed form only, the options on the choice form only.
+                Assert.Equal(form == "SelfAssess", card.GetProperty("reveal").ValueKind == JsonValueKind.String);
+                Assert.Equal(form == "Choice", card.GetProperty("choices").ValueKind == JsonValueKind.Array);
 
-            var result = await JsonAsync(await s.Child.PostAsJsonAsync(
-                $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(run) }));
-            Assert.Equal(4, result.GetProperty("correct").GetInt32());
-            Assert.Equal(coins, result.GetProperty("coinsAwarded").GetInt32());
-            total += coins;
+                var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+                    $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(run) }));
+                Assert.Equal(4, result.GetProperty("correct").GetInt32());
+                Assert.Equal(coins, result.GetProperty("coinsAwarded").GetInt32());
+                total += coins;
+            }
+        }
+        finally
+        {
+            // Rewind only what was advanced: a failure on day one must not leave the shared clock a day early.
+            if (advanced) factory.Clock.Advance(TimeSpan.FromDays(-1));
         }
 
         Assert.Equal(total, CoinsBooked(s.ChildId));
     }
 
+    /// <summary>
+    /// B-538 AK 3, 4, 6 and 2: a non-vocabulary exercise stays in the pool after its run and pays 100, 50, 25 % of its typed
+    /// hits (3 coins each) on runs one to three of the day; the fourth does not start (worth 0 today), and the next day the
+    /// first run pays in full again. Red when the factor is fixed at 1 (6, 6, 6), when a played exercise is used up (the
+    /// second start refused), when the pool does not report the next run's worth, or when the halving outlives the day.
+    /// </summary>
     [Fact]
-    public async Task Eine_Uebung_Ohne_Vokabeln_Ist_Nach_Dem_Start_Verbraucht()
+    public async Task Eine_Uebung_Ohne_Vokabeln_Bleibt_Im_Vorrat_Und_Halbiert_Sich_Je_Lauf()
     {
         var s = await SetupAsync();
         var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        object[] Right(JsonElement run) =>
+        [
+            .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+            {
+                itemIndex = c.GetProperty("itemIndex").GetInt32(),
+                givenAnswer = c.GetProperty("prompt").GetString() == "2 + 3" ? "5" : "16",
+            }),
+        ];
 
         var first = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
         var runId = first.GetProperty("runId").GetInt32();
         Assert.Equal("Typed", first.GetProperty("form").GetString());
-
         // Leaving and coming back resumes the same run instead of handing out a fresh one.
-        var again = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
-        Assert.Equal(runId, again.GetProperty("runId").GetInt32());
+        Assert.Equal(runId, (await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null))).GetProperty("runId").GetInt32());
+        Assert.Equal(100, PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId).GetProperty("nextRunPercent").GetInt32());
 
-        var answers = first.GetProperty("cards").EnumerateArray().Select(c => new
+        var paid = new List<int>();
+        var percents = new List<int>();
+        var started = new List<int>();
+        for (var i = 0; i < 3; i++)
         {
-            itemIndex = c.GetProperty("itemIndex").GetInt32(),
-            givenAnswer = c.GetProperty("prompt").GetString() == "2 + 3" ? "5" : "16",
-        }).ToArray();
-        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", new { answers }));
-        Assert.Equal(2, result.GetProperty("correct").GetInt32());
-        Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
+            var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+            started.Add(run.GetProperty("runPercent").GetInt32());
+            var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+                $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = Right(run) }));
+            Assert.Equal(2, result.GetProperty("correct").GetInt32());
+            paid.Add(result.GetProperty("coinsAwarded").GetInt32());
+            percents.Add(PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId).GetProperty("nextRunPercent").GetInt32());
+        }
+        Assert.Equal([6, 3, 1], paid);
+        Assert.Equal([50, 25, 0], percents);
+        // The run tells the child what it is worth before the first card (review finding: the hint promised 100 %).
+        Assert.Equal([100, 50, 25], started);
 
-        await AssertProblemAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", new { answers }),
-            HttpStatusCode.Conflict, "extra_run_completed");
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId);
+        JsonAssert.True(entry, "done");
+        // Played again - but it does not climb a form, so it still waits at a full cap (B-543).
+        JsonAssert.False(entry, "repeatable");
         await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
             HttpStatusCode.Conflict, "extra_exercise_done");
-        JsonAssert.True(PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId), "done");
-        Assert.Equal(4, CoinsBooked(s.ChildId));
+        Assert.Equal(10, CoinsBooked(s.ChildId));
+
+        factory.Clock.FreezeNow();
+        factory.Clock.Advance(TimeSpan.FromDays(1));
+        try
+        {
+            Assert.Equal(100, PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId).GetProperty("nextRunPercent").GetInt32());
+            var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+            var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+                $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = Right(run) }));
+            Assert.Equal(6, result.GetProperty("coinsAwarded").GetInt32());
+        }
+        finally
+        {
+            factory.Clock.Advance(TimeSpan.FromDays(-1));
+        }
+    }
+
+    /// <summary>
+    /// B-538, review finding: the halving counts the runs of the day the run is handed in, not of the day it started. One
+    /// run completed on day one, a second started on day one (worth 50 % then) and handed in on day two pays 100 %. Red
+    /// when the count reads the run's start day.
+    /// </summary>
+    [Fact]
+    public async Task Ein_Am_Folgetag_Abgegebener_Lauf_Zaehlt_Die_Laeufe_Dieses_Tages()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        object[] Right(JsonElement run) =>
+        [
+            .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+            {
+                itemIndex = c.GetProperty("itemIndex").GetInt32(),
+                givenAnswer = c.GetProperty("prompt").GetString() == "2 + 3" ? "5" : "16",
+            }),
+        ];
+        factory.Clock.FreezeNow();
+        var first = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{first.GetProperty("runId").GetInt32()}/submit",
+            new { answers = Right(first) }));
+        var second = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        Assert.Equal(50, second.GetProperty("runPercent").GetInt32());
+
+        factory.Clock.Advance(TimeSpan.FromDays(1));
+        try
+        {
+            var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+                $"{Base(s)}/runs/{second.GetProperty("runId").GetInt32()}/submit", new { answers = Right(second) }));
+            Assert.Equal(6, result.GetProperty("coinsAwarded").GetInt32());
+        }
+        finally
+        {
+            factory.Clock.Advance(TimeSpan.FromDays(-1));
+        }
+    }
+
+    /// <summary>
+    /// B-538, stakeholder decision on review: vocabulary worth 0 % today still starts and pays nothing - as it may at a full
+    /// cap (B-543, decision 5). Only a fixed-form exercise is refused, because its run would show the solutions. Red when
+    /// the "done" lock covers vocabulary too.
+    /// </summary>
+    [Fact]
+    public async Task Vokabeln_Bei_Null_Prozent_Duerfen_Weiter_Ohne_Muenzen()
+    {
+        var s = await SetupAsync();
+        for (var i = 0; i < 3; i++)
+        {
+            var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+            await JsonAsync(await s.Child.PostAsJsonAsync(
+                $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(run) }));
+        }
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), s.VocabId);
+        Assert.Equal(0, entry.GetProperty("nextRunPercent").GetInt32());
+
+        var fourth = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        Assert.Equal(0, fourth.GetProperty("runPercent").GetInt32());
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{fourth.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(fourth) }));
+        Assert.Equal(0, result.GetProperty("coinsAwarded").GetInt32());
     }
 
     [Fact]
@@ -184,7 +308,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4), ("3 + 3", 6));
         using (var scope = factory.Services.CreateScope())
         {
-            // 26 bonus coins already earned today by an earlier run, against the configured cap of 30.
+            // 86 bonus coins already earned today by an earlier run, against the configured cap of 90 (B-538).
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
             var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
             db.ExtraTrainingRuns.Add(new ExtraTrainingRun
@@ -197,9 +321,9 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
                 Stage = (int)TestStage.FreeText,
                 StartedAt = now,
                 CompletedAt = now,
-                ItemCount = 13,
-                CorrectCount = 13,
-                CoinsAwarded = 26,
+                ItemCount = 29,
+                CorrectCount = 29,
+                CoinsAwarded = 86,
             });
             db.SaveChanges();
         }
@@ -216,7 +340,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(3, result.GetProperty("correct").GetInt32());
         Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
         JsonAssert.True(result, "capReached");
-        Assert.Equal(30, result.GetProperty("coinsToday").GetInt32());
+        Assert.Equal(90, result.GetProperty("coinsToday").GetInt32());
     }
 
     // Books bonus coins as earned today by an earlier vocabulary run, so the cap can be filled without playing to it.
@@ -235,8 +359,8 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             Stage = (int)TestStage.FreeText,
             StartedAt = now,
             CompletedAt = now,
-            ItemCount = coins / 2,
-            CorrectCount = coins / 2,
+            ItemCount = coins / 3,
+            CorrectCount = coins / 3,
             CoinsAwarded = coins,
         });
         db.SaveChanges();
@@ -259,7 +383,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var s = await SetupAsync();
         var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4));
-        SeedCoinsToday(s, 30);
+        SeedCoinsToday(s, 90);
 
         await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
             HttpStatusCode.Conflict, "extra_cap_reached");
@@ -268,10 +392,10 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(JsonValueKind.Null, entry.GetProperty("openRunId").ValueKind);
     }
 
-    // B-543 AK 2: the child's own cap of 0 means "pays nothing", so no one-shot exercise starts. Red if the check reads
-    // only the server default (30) or compares with > instead of >=.
+    // B-543 AK 2: the child's own cap of 0 means "pays nothing", so no fixed-form exercise starts. Red if the check reads
+    // only the server default (90) or compares with > instead of >=.
     [Fact]
-    public async Task Bei_Kind_Deckel_Null_Startet_Keine_Einmal_Uebung()
+    public async Task Bei_Kind_Deckel_Null_Startet_Keine_Uebung_Fester_Form()
     {
         var s = await SetupAsync();
         var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
@@ -291,7 +415,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var s = await SetupAsync();
         var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
         await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
-        SeedCoinsToday(s, 30);
+        SeedCoinsToday(s, 90);
 
         await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
             HttpStatusCode.Conflict, "extra_cap_reached");
@@ -303,7 +427,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     public async Task Eine_Vokabeluebung_Startet_Auch_Bei_Vollem_Deckel()
     {
         var s = await SetupAsync();
-        SeedCoinsToday(s, 30);
+        SeedCoinsToday(s, 90);
 
         var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
         Assert.Equal(s.VocabId, run.GetProperty("exerciseId").GetInt32());
@@ -320,7 +444,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
         var runId = run.GetProperty("runId").GetInt32();
         var body = new { answers = RightMathAnswers(run) };
-        SeedCoinsToday(s, 30);
+        SeedCoinsToday(s, 90);
 
         var refused = await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body);
         var text = await refused.Content.ReadAsStringAsync();
@@ -339,8 +463,8 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         {
             var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body));
             Assert.Equal(2, result.GetProperty("correct").GetInt32());
-            Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
-            Assert.Equal(4, CoinsBooked(s.ChildId));
+            Assert.Equal(6, result.GetProperty("coinsAwarded").GetInt32());
+            Assert.Equal(6, CoinsBooked(s.ChildId));
         }
         finally
         {
@@ -375,7 +499,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
 
         Assert.Single(both, r => r.IsSuccessStatusCode);
         Assert.Single(both, r => r.StatusCode == HttpStatusCode.Conflict);
-        Assert.Equal(2, CoinsBooked(s.ChildId));
+        Assert.Equal(3, CoinsBooked(s.ChildId));
     }
 
     [Fact]
@@ -438,7 +562,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(3, patched.GetProperty("bonusDailyCoinCap").GetInt32());
         Assert.Equal(3, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
 
-        // Three typed hits would pay 6; the child's own cap of 3 cuts it, not the server default of 30.
+        // Three typed hits would pay 9; the child's own cap of 3 cuts it, not the server default of 90.
         var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
         var answers = run.GetProperty("cards").EnumerateArray().Select(c => new
         {
@@ -453,7 +577,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         // Back to the default.
         var cleared = await JsonAsync(await s.Father.PatchAsJsonAsync(child, new { clearBonusDailyCoinCap = true }));
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("bonusDailyCoinCap").ValueKind);
-        Assert.Equal(30, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
+        Assert.Equal(90, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
     }
 
     private void EditExercise(int exerciseId, Action<Exercise> change)

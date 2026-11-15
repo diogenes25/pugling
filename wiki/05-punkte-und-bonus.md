@@ -79,7 +79,9 @@ checkbare Katalogübungen über gelöste Aufgaben, reine Inhaltsübungen über S
 ### Bahn B — Review-Punkte (`ScoringService`, nur Leitner-Pläne)
 
 Beim server-autoritativen `POST …/practice-sessions/{sid}/review` einer **richtigen** Antwort auf einer
-`useLeitner`-Position bucht der `ScoringService` mehrere Beiträge auf einmal:
+`useLeitner`-Position bucht der `ScoringService` mehrere Beiträge auf einmal – **nur an einer Position mit Pflicht**
+(`cadence` `Daily`/`Weekly`). Eine Position ohne Pflicht (`None`, „frei · ohne Münzen“) bewegt Kasten und Lernstand,
+bucht aber nichts: sie wäre sonst ein zweiter, ungedeckelter Münzweg neben dem Bonus-Training (B-538).
 
 ```text
 Review-Punkte = Base (Pflicht)  + Combo (falls Meilenstein)  + Speed (falls schnell)

@@ -28,6 +28,9 @@ namespace Pugling.Api.Services.Shared;
 /// word): its answer is in the source language. Distractors are only drawn from cards answered in the same language.
 /// <paramref name="Explanation"/> (B-529) says why an answer is right - handed out only with the review, never on the
 /// card. Unlike <paramref name="Hint"/>, which is help before the answer ("starts with b").
+/// <paramref name="SpeechLang"/> (B-252) is the language the prompt may be read aloud in by the device's speech output:
+/// set only for a vocabulary card asked in its reading direction whose word has no recording - the prompt is then the
+/// foreign word itself, never the solution. A reversed card loses it (its prompt is the German side).
 /// </summary>
 public record ContentItem(
     int Index,
@@ -46,7 +49,8 @@ public record ContentItem(
     string? ArticleOptionalIn = null,
     bool MeaningsSeparable = false,
     bool Reversed = false,
-    string? Explanation = null)
+    string? Explanation = null,
+    string? SpeechLang = null)
 {
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
@@ -101,5 +105,10 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     // The image stays: it shows the *meaning* and is thus direction-independent; whether it may be shown at
     // all is decided by the stage (StageFacets) anyway, not by the direction.
     private static ContentItem Swap(ContentItem it) =>
-        it with { Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null, Reversed = true };
+        it with
+        {
+            Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null, Reversed = true,
+            // B-252: the reversed prompt is the translation; reading the foreign word aloud here would speak the solution.
+            SpeechLang = null,
+        };
 }

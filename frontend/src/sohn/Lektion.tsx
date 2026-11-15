@@ -4,6 +4,7 @@ import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
+import { SpeakButton } from "../components/SpeakButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
@@ -24,8 +25,8 @@ import type { Aufgabenform } from "./aufgabenform";
 /** Was Übungs- und Testkarte gemeinsam tragen und der Rahmen anzeigt. */
 export type LektionsKarte = Pick<PracticeCard, "itemIndex" | "prompt" | "gapIndex" | "passage" | "audioUrl"
   | "decoding" | "anyOrder" | "cueBox" | "choices" | "letterTiles" | "answerLength" | "answerPattern">
-  // Die Testkarte nennt ihren Typ nur optional.
-  & { type?: string | null };
+  // Die Testkarte nennt ihren Typ nur optional – und trägt keine Vorlese-Sprache (B-252: nur die Übungskarte).
+  & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang">>;
 
 /**
  * Kopf und Arbeitsanweisung. Das ✕ trägt kein Wort, aber einen Vorlesenamen, der sagt, was es hier tut: im Üben
@@ -91,6 +92,8 @@ export function Aufgabe({ karte, form, skin, gedreht = false, bild, hinweis, auf
         sie das Material und kann lang sein – dann die Bedienelemente. Gelesen aus den Feldern, nicht aus dem Typ.
       */}
       {karte.audioUrl && <AudioButton url={karte.audioUrl} autoPlay={!karte.prompt} withControls={!!karte.prompt} />}
+      {/* B-252: vorgelesen wird nur der Text, der ohnehin auf der Karte steht – ob und in welcher Sprache, sagt der Server. */}
+      {karte.speechLang && karte.prompt && <SpeakButton text={karte.prompt} lang={karte.speechLang} />}
       <ClozePrompt text={karte.prompt} gapIndex={karte.gapIndex} fitAsked />
       {/* Die Dekodierung steht direkt unter dem Satz: sie ist die Methode, nicht die Lösung (B-78, B-93). */}
       <BirkenbihlDecoding decoding={karte.decoding} />

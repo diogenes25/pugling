@@ -13,10 +13,11 @@ namespace Pugling.Api.Services.Student;
 /// <para>
 /// Three rules keep it from becoming a coin farm. It opens only once today's daily goals are met (B-535; all goals in a
 /// plan without daily ones) - the path comes first.
-/// Coins are paid for checked hits only (choice, typed), never for a self-assessment, and capped per day. And an
-/// exercise pays only once: a non-vocabulary exercise has exactly one run (started is used up), while a vocabulary
-/// exercise may be played again but asks harder with every completed run - self-assessment, then choice, then typed
-/// for good. Typing a word from memory again and again is work the child may be paid for.
+/// Coins are paid for checked hits only (choice 1, typed 3), never for a self-assessment, and capped per day. And every
+/// further completed run of the same exercise on the same day halves its worth - 100, 50, 25, then 0 % (B-538); the next
+/// day it pays in full again, because daily repetition is the core of learning words. A vocabulary exercise also asks
+/// harder with every completed run - self-assessment, then choice, then typed for good; any other exercise plays its
+/// checked stage on every run.
 /// </para>
 /// <para>
 /// The topic is the set of textbook units the child's playable plans draw from, plus the current unit of its
@@ -75,13 +76,16 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         if (pool.FirstOrDefault(p => p.Row.ExerciseId == exerciseId) is not { } entry)
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.NotFound, "The exercise is not part of the bonus training.");
 
-        // Final beats provisional: a played exercise says so before the cap says "not now".
-        if (entry.Row.Done)
+        // Final for today beats provisional: a fixed-form exercise worth nothing more today says so before the cap says
+        // "not now" - a run at 0 % would show its solutions for nothing. Vocabulary may go on for no coins, as it may at a
+        // full cap (B-543, decision 5).
+        if (entry.Row.Done && IsFixedForm(entry.Exercise))
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraExerciseDone,
-                "This bonus exercise has already been played.");
-        // A one-shot exercise is used up by its run, so at a full cap it would pay nothing and be gone for good. The
-        // check also covers resuming an open run: played to the end today, it would only hit the same wall at submit.
-        if (IsOneShot(entry.Exercise) && await CoinsLeftTodayAsync(childId, today, ct) == 0)
+                "This bonus exercise is worth nothing more today; its worth resets tomorrow.");
+        // A fixed-form exercise shows its solutions after the run, so at a full cap it would hand them out for nothing -
+        // and pay in full for the same answers tomorrow. The check also covers resuming an open run: played to the end
+        // today, it would only hit the same wall at submit.
+        if (IsFixedForm(entry.Exercise) && await CoinsLeftTodayAsync(childId, today, ct) == 0)
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraCapReached, CapReachedDetail);
 
         var run = entry.Row.OpenRunId is { } openId
@@ -125,7 +129,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             }
         }
 
-        return new Outcome<ExtraRunResponse>(BuildRun(run, entry.Exercise, entry.Type, entry.Items));
+        return new Outcome<ExtraRunResponse>(BuildRun(run, entry.Exercise, entry.Type, entry.Items, entry.Row.NextRunPercent));
     }
 
     /// <summary>
@@ -148,7 +152,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraRunCompleted, "This bonus run has already been submitted.");
 
         // B-545: graded only against the content its questions came from. A changed exercise discards the run unpaid;
-        // deleting it leaves a one-shot exercise open again - the child caused nothing and saw no solution yet.
+        // deleting it costs no halving step - the child caused nothing and saw no solution yet.
         if (run.ContentHash is { } started
             && started != ContentFingerprint(run.Exercise, await content.ItemsOfAsync(run.Exercise, ct: ct)))
         {
@@ -174,9 +178,9 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var coinsBefore = await CoinsTodayAsync(childId, today, ct);
         var dailyCap = CapOf(child.BonusDailyCoinCap);
         var left = dailyCap is { } cap ? Math.Max(0, cap - coinsBefore) : int.MaxValue;
-        // A one-shot run handed in at a full cap stays open and unpaid until coins are left. This happens before grading: the
-        // answer carries the solutions, and a child who saw them today could hand in the same run later for full coins.
-        if (IsOneShot(run.Exercise) && left == 0)
+        // A fixed-form run handed in at a full cap stays open and unpaid until coins are left. This happens before grading:
+        // the answer carries the solutions, and a child who saw them today could hand in the same run later for full coins.
+        if (IsFixedForm(run.Exercise) && left == 0)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraCapReached, CapReachedDetail);
 
         var graded = await preview.CheckAsync(run.Exercise,
@@ -184,7 +188,11 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         if (graded is null)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.NotFound, "The exercise has no content to grade any more.");
 
-        var earned = graded.Correct * CoinsPerHit(run.Form);
+        // The halving counts the runs of this exercise completed today BEFORE this one, at the submit and not at the start:
+        // a run is booked on the day it is handed in, so a run started yesterday pays by today's count.
+        var completedToday = await db.ExtraTrainingRuns.CountAsync(r => r.ChildId == childId && r.ExerciseId == run.ExerciseId
+            && r.Day == today && r.CompletedAt != null, ct);
+        var earned = graded.Correct * CoinsPerHit(run.Form) * RunPercent(completedToday) / 100;
         var coins = Math.Min(earned, left);
 
         var now = time.GetUtcNow().UtcDateTime;
@@ -265,10 +273,22 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     private int? CapOf(int? childCap) => childCap ?? opts.DailyCoinCap;
 
     // Names the lock only: with a cap of 0 there is no "tomorrow" to promise.
-    private const string CapReachedDetail = "Today's bonus coin cap is reached; this exercise pays only once.";
+    private const string CapReachedDetail = "Today's bonus coin cap is reached; this exercise would show its solutions for no coins.";
 
-    // One definition of "pays only once": everything but vocabulary, which climbs a form per run instead.
-    private static bool IsOneShot(Exercise exercise) => exercise.Type != ExerciseTypeKeys.Vocabulary;
+    // Everything but vocabulary plays the same checked stage on every run; vocabulary climbs a form per run instead.
+    private static bool IsFixedForm(Exercise exercise) => exercise.Type != ExerciseTypeKeys.Vocabulary;
+
+    /// <summary>
+    /// What the next completed run of an exercise is worth today, in percent of its hits (B-538): 100, 50, 25, then 0 -
+    /// halved by every run of the same exercise completed earlier the same day. The coins are rounded down.
+    /// </summary>
+    public static int RunPercent(int completedToday) => completedToday switch
+    {
+        0 => 100,
+        1 => 50,
+        2 => 25,
+        _ => 0,
+    };
 
     // What is left of today's cap; without any cap there is always something left.
     private async Task<int> CoinsLeftTodayAsync(int childId, DateOnly today, CancellationToken ct)
@@ -309,43 +329,47 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             .OrderBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToListAsync(ct);
 
+        var today = Today;
         var runs = await db.ExtraTrainingRuns.AsNoTracking()
             .Where(r => r.ChildId == childId)
-            .Select(r => new { r.ExerciseId, r.Id, r.CompletedAt })
+            .Select(r => new { r.ExerciseId, r.Id, r.CompletedAt, r.Day })
             .ToListAsync(ct);
         var completed = runs.Where(r => r.CompletedAt != null).GroupBy(r => r.ExerciseId).ToDictionary(g => g.Key, g => g.Count());
+        var completedToday = runs.Where(r => r.CompletedAt != null && r.Day == today).GroupBy(r => r.ExerciseId)
+            .ToDictionary(g => g.Key, g => g.Count());
         var open = runs.Where(r => r.CompletedAt == null).ToDictionary(r => r.ExerciseId, r => r.Id);
 
         var pool = new List<PoolEntry>();
         foreach (var exercise in exercises)
         {
             if (registry.ByKey(exercise.Type) is not { } type) continue;
-            var repeatable = !IsOneShot(exercise);
-            if (!repeatable && knownFromPath.Contains(exercise.Id)) continue;
+            var climbs = !IsFixedForm(exercise);
+            if (!climbs && knownFromPath.Contains(exercise.Id)) continue;
 
             var items = await content.ItemsOfAsync(exercise, ct: ct);
             if (items.Count == 0) continue;
 
             var done = completed.GetValueOrDefault(exercise.Id);
-            if (FormFor(exercise, type, repeatable, items, done) is not var (form, stage)) continue;
-            // A one-shot exercise is used up once started: an open run is resumed, a finished one ends it.
-            var finished = !repeatable && (done > 0 || open.ContainsKey(exercise.Id)) && !open.ContainsKey(exercise.Id);
+            if (FormFor(exercise, type, climbs, items, done) is not var (form, stage)) continue;
+            // Every exercise may be played again (B-538); "done" now means "worth nothing more today".
+            var percent = RunPercent(completedToday.GetValueOrDefault(exercise.Id));
 
             pool.Add(new PoolEntry(
                 new ExtraExercise(exercise.Id, exercise.Title, exercise.Type, exercise.SeriesUnit?.Label ?? "", items.Count,
-                    repeatable, done, finished, form, CoinsPerHit(form), open.TryGetValue(exercise.Id, out var runId) ? runId : null),
+                    climbs, done, percent == 0, form, CoinsPerHit(form), open.TryGetValue(exercise.Id, out var runId) ? runId : null,
+                    percent),
                 exercise, type, stage, items));
         }
         return pool;
     }
 
     // The form of the next run, or null when the exercise has no checked form to be paid for. Vocabulary climbs with
-    // its completed runs; everything else plays its author's stage, or the type's most telling one, once - and only
-    // where that stage is checked, because a self-assessed one-shot would be the cheapest coins there are.
-    private (ExtraForm Form, int Stage)? FormFor(Exercise exercise, IExerciseType type, bool repeatable,
+    // its completed runs; everything else plays its author's stage, or the type's most telling one, on every run - and
+    // only where that stage is checked, because a self-assessed fixed form would be the cheapest coins there are.
+    private (ExtraForm Form, int Stage)? FormFor(Exercise exercise, IExerciseType type, bool climbs,
         IReadOnlyList<ContentItem> items, int completedRuns)
     {
-        if (repeatable)
+        if (climbs)
         {
             if (completedRuns < opts.SelfAssessRuns) return (ExtraForm.SelfAssess, (int)TestStage.SelfAssess);
             if (completedRuns < opts.SelfAssessRuns + opts.ChoiceRuns && items.Count >= MinItemsForChoice)
@@ -371,7 +395,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     // The cards in an order of their own per run, and the options shuffled per run as well: the shared projection
     // places the right option by the atom's index, which a child replaying the same words would learn as a position.
     private ExtraRunResponse BuildRun(ExtraTrainingRun run, Exercise exercise, IExerciseType type,
-        IReadOnlyList<ContentItem> items)
+        IReadOnlyList<ContentItem> items, int runPercent)
     {
         var typed = type.IsTypedStage(run.Stage);
         var rng = new Random(run.Id);
@@ -384,6 +408,6 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
                 choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox);
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
-            typed ? CoinsPerHit(run.Form) : 0, cards);
+            typed ? CoinsPerHit(run.Form) : 0, cards, runPercent);
     }
 }

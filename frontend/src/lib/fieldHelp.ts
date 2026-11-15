@@ -21,8 +21,8 @@ export const FIELD_HELP = {
   cadence: {
     title: "Ziel-Rhythmus",
     text: "Wie oft diese Übung Pflicht ist. „Tagesziel“ muss jeden Tag erledigt werden, „Wochenziel“ "
-      + "einmal pro Woche (Mo–So). „frei“ heißt: darf geübt werden, muss aber nicht – dann gibt es "
-      + "weder Ziel-Punkte noch Münz-Malus.",
+      + "einmal pro Woche (Mo–So). „frei“ heißt: darf geübt werden, muss aber nicht – dann bringt die Position "
+      + "nichts: weder Ziel-Punkte noch Übungspunkte, Combo oder Tempo-Bonus, und es gibt keinen Münz-Malus.",
   },
   goalThreshold: {
     title: "Bestehen ab %",

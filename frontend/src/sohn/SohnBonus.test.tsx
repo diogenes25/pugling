@@ -33,7 +33,7 @@ afterEach(() => sessionStorage.clear());
 
 const uebung = (over: Partial<ExtraExercise>): ExtraExercise => ({
   exerciseId: 1, title: "Tiere", type: "Vocabulary", unitLabel: "Unit 1", itemCount: 4, repeatable: true,
-  completedRuns: 0, done: false, nextForm: "Typed", coinsPerHit: 2, openRunId: null, ...over,
+  completedRuns: 0, done: false, nextForm: "Typed", coinsPerHit: 3, openRunId: null, nextRunPercent: 100, ...over,
 });
 
 const zeige = async (coinsToday: number, dailyCoinCap: number | null) => {
@@ -50,11 +50,87 @@ const zeige = async (coinsToday: number, dailyCoinCap: number | null) => {
 };
 
 /*
- * B-543 – bei vollem Tagesdeckel verbrennt eine Einmal-Übung nicht für 0 Münzen: der Server weist ihren Start ab, die
+ * B-538 AK 6 – der Vorrat zeigt, was der nächste Lauf heute wert ist, und eine Übung, die heute nichts mehr bringt, bietet
+ * keinen Start an.
+ */
+describe("Bonus-Übersicht – Wert des nächsten Laufs (B-538)", () => {
+  it("nennt den Prozentwert ab der zweiten Runde und sperrt eine Übung, die heute nichts mehr bringt", async () => {
+    // Rot, wenn die Zeile `nextRunPercent` nicht zeigt (dann fehlte „heute noch 50 % wert“), ihn auch bei 100 % zeigte,
+    // oder wenn eine erledigte Übung weiter einen Link hätte.
+    extraTraining.mockResolvedValue({
+      unlocked: true, lockReason: null, outstanding: [], coinsToday: 9, dailyCoinCap: 90,
+      exercises: [
+        uebung({ exerciseId: 1, title: "Tiere" }),
+        uebung({ exerciseId: 2, title: "Rechnen", type: "Arithmetic", repeatable: false, nextRunPercent: 50 }),
+        uebung({ exerciseId: 3, title: "Lücken", type: "Cloze", repeatable: false, nextRunPercent: 0, done: true }),
+      ],
+    } as ExtraTrainingOverview);
+    render(<MemoryRouter><SohnBonus /></MemoryRouter>);
+    await screen.findByText("Tiere");
+
+    expect(screen.getAllByText(/heute noch 50 % wert/)).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Spielen: Rechnen" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /Lücken/ })).toBeNull();
+    expect(screen.getByText(/Für heute geschafft – morgen zählt sie wieder voll/)).toBeTruthy();
+    expect(screen.queryByText(/100 % wert/)).toBeNull();
+  });
+
+  // Review-Fund. Rot, wenn eine Vokabel-Übung bei 0 % wie eine Übung fester Form gesperrt wird (der Server lässt sie ohne
+  // Münzen weiterspielen), oder wenn am vollen Deckel noch ein Prozentwert steht, der dort nichts mehr bedeutet.
+  it("lässt Vokabeln bei 0 % weiterspielen und nennt am vollen Deckel keinen Prozentwert", async () => {
+    extraTraining.mockResolvedValue({
+      unlocked: true, lockReason: null, outstanding: [], coinsToday: 90, dailyCoinCap: 90,
+      exercises: [
+        uebung({ exerciseId: 1, title: "Tiere", nextRunPercent: 0, done: true, completedRuns: 3 }),
+        uebung({ exerciseId: 2, title: "Wörter", nextRunPercent: 50 }),
+      ],
+    } as ExtraTrainingOverview);
+    render(<MemoryRouter><SohnBonus /></MemoryRouter>);
+    await screen.findByText("Tiere");
+
+    expect(screen.getByRole("link", { name: "Spielen: Tiere" })).toBeTruthy();
+    expect(screen.queryByText(/Für heute geschafft/)).toBeNull();
+    expect(screen.queryByText(/% wert/)).toBeNull();
+  });
+});
+
+/*
+ * B-538, Review-Fund – die Runde nennt ihren heutigen Wert, nicht den vollen Satz: der Hinweis über den Karten versprach
+ * sonst „3 🪙 je Treffer“, während die Abgabe nur die Hälfte bucht.
+ */
+describe("Bonus-Runde – Hinweis zum Wert", () => {
+  const starte = async (runPercent: number) => {
+    startExtraRun.mockResolvedValue({
+      runId: 50 + runPercent, exerciseId: 2, title: "Rechnen", type: "Arithmetic", form: "Typed", stage: 1, typed: true,
+      coinsPerHit: 3, runPercent, cards: [{ itemIndex: 0, prompt: "1 + 1" }, { itemIndex: 1, prompt: "2 + 2" }],
+    } as unknown as ExtraRunResponse);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/2"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("1 + 1");
+  };
+
+  // Rot, wenn der Hinweis `runPercent` übergeht (dann stünde der volle Satz da), oder bei 100 % schon von Prozent spricht.
+  it("nennt bei halbem Wert den Prozentsatz, bei vollem den Satz je Treffer", async () => {
+    await starte(50);
+    expect(screen.getByText(/Diese Runde zählt heute 50 %: 3 🪙 je richtige Antwort/)).toBeTruthy();
+  });
+
+  it("nennt bei 0 % keine Münzen", async () => {
+    await starte(0);
+    expect(screen.getByText(/bringt heute keine Münzen mehr/)).toBeTruthy();
+    expect(screen.queryByText(/bringt 3 🪙/)).toBeNull();
+  });
+});
+
+/*
+ * B-543 – bei vollem Tagesdeckel zeigt eine Übung fester Form ihre Lösungen nicht für 0 Münzen: der Server weist ihren Start ab, die
  * Zeile bietet ihn darum gar nicht erst an und sagt, wann sie wieder geht.
  */
 describe("Bonus-Übersicht am Tagesdeckel", () => {
-  it("bietet bei vollem Deckel nur noch Vokabeln an und sagt es den Einmal-Übungen ehrlich", async () => {
+  it("bietet bei vollem Deckel nur noch Vokabeln an und sagt es den Übungen fester Form ehrlich", async () => {
     // Rot, wenn `BonusZeile` den Link ohne Blick auf `capReached`/`repeatable` rendert (dann hätten „Rechnen“ und
     // „Lücken“ einen Link), wenn der Satz an der Vokabelzeile stünde, oder wenn die Deckel-Karte den alten Text trägt.
     await zeige(30, 30);
@@ -62,30 +138,30 @@ describe("Bonus-Übersicht am Tagesdeckel", () => {
     expect(screen.getByRole("link", { name: "Spielen: Tiere" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: /Rechnen/ })).toBeNull();
     expect(screen.queryByRole("link", { name: /Lücken/ })).toBeNull();
-    expect(screen.getAllByText("Zahlt nur einmal – morgen wieder")).toHaveLength(2);
+    expect(screen.getAllByText("Morgen wieder – heute würde sie dir nur die Lösungen zeigen, ohne Münzen")).toHaveLength(2);
     expect(screen.getByText(
-      "Tagesdeckel erreicht – Vokabeln üben darfst du weiter, ohne Münzen. Übungen, die nur einmal zahlen, warten bis morgen.",
+      "Tagesdeckel erreicht – Vokabeln üben darfst du weiter, ohne Münzen. Die anderen Übungen warten bis morgen.",
     )).toBeTruthy();
   });
 
   it("verspricht bei einem Deckel von 0 kein „morgen“", async () => {
     // Rot, wenn Zeile oder Karte bei Deckel 0 „morgen“ zusagen – morgen zahlt die Übung genauso wenig – oder wenn die
-    // Einmal-Übungen bei 0 doch einen Link bekommen.
+    // Übungen fester Form bei 0 doch einen Link bekommen.
     await zeige(0, 0);
 
     expect(screen.getByRole("link", { name: "Spielen: Tiere" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: /Rechnen/ })).toBeNull();
-    expect(screen.getAllByText("Zahlt nur einmal – gerade gibt es keine Bonus-Münzen")).toHaveLength(2);
+    expect(screen.getAllByText("Wartet, bis es wieder Bonus-Münzen gibt")).toHaveLength(2);
     expect(screen.queryByText(/morgen/)).toBeNull();
   });
 
-  it("lässt Einmal-Übungen unter dem Deckel spielen", async () => {
+  it("lässt Übungen fester Form unter dem Deckel spielen", async () => {
     // Rot, wenn die Zeile den Start schon ohne vollen Deckel wegnimmt (etwa nur nach `repeatable` entscheidet).
     await zeige(29, 30);
 
     expect(screen.getByRole("link", { name: "Spielen: Rechnen" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Weiterspielen: Lücken" })).toBeTruthy();
-    expect(screen.queryByText("Zahlt nur einmal – morgen wieder")).toBeNull();
+    expect(screen.queryByText("Morgen wieder – heute würde sie dir nur die Lösungen zeigen, ohne Münzen")).toBeNull();
   });
 });
 
@@ -112,7 +188,7 @@ describe("Bonus-Runde am vollen Deckel", () => {
     );
 
     expect((await screen.findByRole("alert")).textContent)
-      .toBe("Dein Bonus-Deckel ist voll, und diese Übung zahlt nur einmal – darum geht sie gerade nicht.");
+      .toBe("Dein Bonus-Deckel ist voll – diese Übung würde dir jetzt nur die Lösungen zeigen, ohne Münzen. Darum geht sie gerade nicht.");
     expect(submitExtraRun).toHaveBeenCalledWith(7, 41, saved);
     expect(JSON.parse(sessionStorage.getItem("pugling.bonus.run.41") ?? "[]")).toEqual(saved);
   });

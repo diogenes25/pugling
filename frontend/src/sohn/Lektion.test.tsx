@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import "../lib/i18n";
 import { DEFAULT_SKIN } from "../lib/skins";
 import { aufgabenform } from "./aufgabenform";
@@ -228,5 +228,78 @@ describe("Blatt", () => {
     expect(blatt.querySelector("[role=status], [aria-live]")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Weiter →" }));
     expect(weiter).toHaveBeenCalledTimes(1);
+  });
+});
+
+/*
+ * B-252 – Vorlesen ohne Aufnahme. Die Sprachausgabe gibt es in happy-dom nicht; `speechSynthesis` und
+ * `SpeechSynthesisUtterance` werden je Fall gesetzt.
+ */
+describe("Aufgabe – Vorlesen (B-252)", () => {
+  // Nach jedem Fall, auch einem roten: sonst sickerte die gefälschte Sprachausgabe in die nächsten Fälle.
+  afterEach(() => vi.unstubAllGlobals());
+  class Aeusserung { lang = ""; voice: unknown = null; constructor(public text: string) {} }
+  const stimmen = (...langs: string[]) => {
+    const speak = vi.fn();
+    vi.stubGlobal("SpeechSynthesisUtterance", Aeusserung);
+    vi.stubGlobal("speechSynthesis", {
+      getVoices: () => langs.map((lang) => ({ lang, name: lang })),
+      speak, cancel: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    });
+    return speak;
+  };
+  const zeige = (k: LektionsKarte) =>
+    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k })} skin={DEFAULT_SKIN} />);
+
+  // AK 5 und 7. Rot, wenn der Knopf fehlt, wenn er etwas anderes als den Prompt spricht (etwa die Lösung) oder ohne
+  // Sprache, oder wenn sein Name nicht sichtbar ist.
+  it("liest auf Antippen den Prompt in der Sprache des Servers vor", () => {
+    const speak = stimmen("de-DE", "fr-FR");
+    zeige(karte({ prompt: "la gare", speechLang: "fr" }));
+    expect(speak).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "🗣️ Vorlesen" }));
+    expect(speak).toHaveBeenCalledTimes(1);
+    const gesagt = speak.mock.calls[0][0] as Aeusserung;
+    expect([gesagt.text, gesagt.lang]).toEqual(["la gare", "fr"]);
+    expect((gesagt.voice as { lang: string }).lang).toBe("fr-FR");
+  });
+
+  // Review-Fund. Rot, wenn der Knopf nicht auf `voiceschanged` hört: Chrome liefert beim ersten `getVoices()` oft eine
+  // leere Liste, und ohne das Nachladen bliebe der Knopf dort für immer weg.
+  it("erscheint, sobald die Stimmen nachgeladen sind", async () => {
+    let voices: { lang: string; name: string }[] = [];
+    let changed: (() => void) | undefined;
+    vi.stubGlobal("SpeechSynthesisUtterance", Aeusserung);
+    vi.stubGlobal("speechSynthesis", {
+      getVoices: () => voices, speak: vi.fn(), cancel: vi.fn(),
+      addEventListener: (_: string, f: () => void) => { changed = f; }, removeEventListener: vi.fn(),
+    });
+    zeige(karte({ prompt: "la gare", speechLang: "fr" }));
+    expect(screen.queryByRole("button", { name: /Vorlesen/ })).toBeNull();
+
+    voices = [{ lang: "fr-FR", name: "Amélie" }];
+    await act(async () => { changed?.(); });
+    expect(screen.getByRole("button", { name: "🗣️ Vorlesen" })).toBeTruthy();
+  });
+
+  // AK 6. Rot, wenn der Knopf ohne passende Stimme, ohne Sprachausgabe oder ohne `speechLang` erscheint, oder wenn
+  // beim Erscheinen schon gesprochen wird.
+  it("zeigt keinen Knopf ohne passende Stimme, ohne Sprachausgabe oder ohne Freigabe des Servers", () => {
+    const speak = stimmen("de-DE");
+    const { unmount } = zeige(karte({ prompt: "la gare", speechLang: "fr" }));
+    expect(screen.queryByRole("button", { name: /Vorlesen/ })).toBeNull();
+    unmount();
+
+    stimmen("fr-FR");
+    const zweite = zeige(karte({ prompt: "der Bahnhof", speechLang: null }));
+    expect(screen.queryByRole("button", { name: /Vorlesen/ })).toBeNull();
+    zweite.unmount();
+
+    expect(speak).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("speechSynthesis", undefined);
+    zeige(karte({ prompt: "la gare", speechLang: "fr" }));
+    expect(screen.queryByRole("button", { name: /Vorlesen/ })).toBeNull();
   });
 });

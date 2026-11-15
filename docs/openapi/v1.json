@@ -8585,7 +8585,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards unless the exercise\nchanged since: then the open run is discarded and a fresh one starts, with a new \u0060runId\u0060 (B-545). \u0060409\nextra_training_locked\u0060 before today\u0027s daily goals are done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played, \u0060409 extra_cap_reached\u0060 for a one-shot exercise - new or open - once today\u0027s coin cap is\nfull, so it is not used up for nothing.",
+        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards unless the exercise\nchanged since: then the open run is discarded and a fresh one starts, with a new \u0060runId\u0060 (B-545). \u0060409\nextra_training_locked\u0060 before today\u0027s daily goals are done, \u0060409 extra_exercise_done\u0060 for a fixed-form\n(non-vocabulary) exercise worth nothing more today, \u0060409 extra_cap_reached\u0060 for a fixed-form exercise - new or\nopen - once today\u0027s coin cap is full, so it does not show its solutions for nothing.",
         "parameters": [
           {
             "name": "childId",
@@ -8667,7 +8667,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit. A one-shot run handed in at a full cap is neither graded nor\nused up (\u0060409 extra_cap_reached\u0060) and can be handed in again once coins are left. \u0060409 extra_run_stale\u0060\nwhen the exercise changed since the start: the run is discarded unpaid and the exercise is open again (B-545).\n\u0060409 extra_training_locked\u0060 when today\u0027s daily goals are not met (any more).",
+        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit. A fixed-form run handed in at a full cap is neither graded nor\ncompleted (\u0060409 extra_cap_reached\u0060) and can be handed in again once coins are left. \u0060409 extra_run_stale\u0060\nwhen the exercise changed since the start: the run is discarded unpaid and the exercise is open again (B-545).\n\u0060409 extra_training_locked\u0060 when today\u0027s daily goals are not met (any more).",
         "parameters": [
           {
             "name": "childId",
@@ -38132,6 +38132,7 @@
           "exerciseId",
           "itemCount",
           "nextForm",
+          "nextRunPercent",
           "repeatable",
           "title",
           "type",
@@ -38197,9 +38198,17 @@
               "string"
             ],
             "format": "int32"
+          },
+          "nextRunPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "One exercise of the bonus pool. Repeatable exercises (vocabulary) climb a form per completed\nrun; the others are Done after their one run. NextForm is the form the next\nrun asks in, CoinsPerHit what one correct card of it pays. OpenRunId names a\nstarted run that still waits for its answers - it is resumed, never replaced."
+        "description": "One exercise of the bonus pool. Every exercise may be played again (B-538). Repeatable marks the\nones that climb a form per completed run (CompletedRuns, vocabulary) and so may also be played at\na full cap, for no coins; any other plays its checked stage each time and waits at a full cap, because its run would\nshow the solutions for nothing. NextRunPercent is\nwhat the next run is worth today in percent of its hits - 100, 50, 25, then 0, halved by every run of this exercise\ncompleted earlier today; Done means that worth is 0 until tomorrow. NextForm is\nthe form the next run asks in, CoinsPerHit what one correct card of it pays at 100 %.\nOpenRunId names a started run that still waits for its answers - it is resumed, never replaced."
       },
       "ExtraForm": {
         "enum": [
@@ -38254,6 +38263,7 @@
           "exerciseId",
           "form",
           "runId",
+          "runPercent",
           "stage",
           "title",
           "type",
@@ -38310,9 +38320,17 @@
             "items": {
               "$ref": "#/components/schemas/ExtraCard"
             }
+          },
+          "runPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning\n(string? ExtraCard.Reveal) is shown only on the self-assessed form."
+        "description": "A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning\n(string? ExtraCard.Reveal) is shown only on the self-assessed form. CoinsPerHit is the full\nrate; RunPercent is the share of it this run is worth as of its start (B-538). The submit judges\nby the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less."
       },
       "ExtraRunResult": {
         "required": [
@@ -41838,9 +41856,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "speechLang": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image **selected for this child**; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\n\n\u0060GapIndex\u0060 names the placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.\n\n\u0060Passage\u0060 is what the question is **about** and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\n\u0060Prompt\u0060: the prompt is the question and is reused as such in every evaluation line.\n\n\u0060Prompt\u0060 is nullable because at the vocabulary listening stage the recording **is** the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.\n\n\u0060AnyOrder\u0060 says that **any** answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the \u0060Ordered\u0060 setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way.\n\n\u0060RevealAlternatives\u0060 carries the **equally valid** answers beside \u0060Reveal\u0060 and is set exactly\nwhere \u0060Reveal\u0060 is. Its own field rather than a merged comma list, so the interface can separate \u0022the\nanswer\u0022 from \u0022also correct\u0022: whoever thought of an alternative must not grade themselves wrong.\n\n\u0060Decoding\u0060 is the word-for-word decoding of the sentence (Birkenbihl) \u2013 the method itself, so it belongs\non the **front** of the card next to \u0060Prompt\u0060, not behind the reveal. \u0060null\u0060 for every other type.\n\n\u0060DisplayOnly\u0060 (B-96) marks a free display stage (\u0022getting acquainted\u0022): both sides are shown at\nonce, there is no self-assessment and no Leitner movement. Distinct from typed-ness \u2013 the frontend must\nnot infer it from \u0060Reveal\u0060 being set, because self-assessment stages set it too.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask: an underscore per letter/digit to type, every other\ncharacter (space, hyphen, \u2026) kept literally \u2013 already fixed by the solution, so the child never types\nit. \u0060null\u0060 outside the letter-box stage, same as \u0060AnswerLength\u0060.\n\n\u0060LetterTiles\u0060 (B-05) are the scrambled letters of the answer on the scramble stage, in the order to show\nthem; the child sends the word it builds as \u0060GivenAnswer\u0060. Shuffled once per session/attempt (the same card\nshows the same order when fetched again). \u0060null\u0060 on every other stage and for an answer that is not one\nshort word - that card comes as letter boxes instead.\n\n\u0060Introduction\u0060 (B-419) marks a card the child has never seen: it is shown at the type\u0027s display stage\n(so \u0060DisplayOnly\u0060 is set too) whatever the day\u0027s stage, and asked for in the next round. The second way to\n\u0060DisplayOnly\u0060 next to a display stage of the day, told apart here so the round\u0027s end can say \u0022new words\nlearned\u0022 only where there were new words - a display stage of the day introduces nothing."
+        "description": "A practice card \u2013 deliberately WITHOUT the solution, except at display/self-assessment stages that\nreveal the solution by design (the server grades, never the frontend).\n\u0060ImageUrl\u0060/\u0060ImageAlt\u0060 carry the image **selected for this child**; they are only set at\nstages where a motif cannot give away the solution, and are absent otherwise.\n\n\u0060GapIndex\u0060 names the placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 that is being asked. It is set only\nby types whose atoms share one text (the cloze); without it two gaps of the same text would arrive as\nbyte-identical cards and the child could not tell which one to fill.\n\n\u0060Passage\u0060 is what the question is **about** and belongs to the whole exercise \u2013 the reading text,\nthe instruction covering all grammar tasks. Deliberately its own field rather than folded into\n\u0060Prompt\u0060: the prompt is the question and is reused as such in every evaluation line.\n\n\u0060Prompt\u0060 is nullable because at the vocabulary listening stage the recording **is** the question \u2013\nshowing the word next to it would turn \u0022listen, then type\u0022 into a reading task. That is an anti-cheat\ndecision, so the server makes it; the frontend renders whatever arrives.\n\n\u0060AnyOrder\u0060 says that **any** answer not yet named counts, because the exercise is a set rather\nthan a sequence (an unordered list). The child has to be told: the \u0060Ordered\u0060 setting lives in the\nexercise config and never reaches it, so an ordered and an unordered list would arrive as identical cards\nwhile the grading works the opposite way.\n\n\u0060RevealAlternatives\u0060 carries the **equally valid** answers beside \u0060Reveal\u0060 and is set exactly\nwhere \u0060Reveal\u0060 is. Its own field rather than a merged comma list, so the interface can separate \u0022the\nanswer\u0022 from \u0022also correct\u0022: whoever thought of an alternative must not grade themselves wrong.\n\n\u0060Decoding\u0060 is the word-for-word decoding of the sentence (Birkenbihl) \u2013 the method itself, so it belongs\non the **front** of the card next to \u0060Prompt\u0060, not behind the reveal. \u0060null\u0060 for every other type.\n\n\u0060DisplayOnly\u0060 (B-96) marks a free display stage (\u0022getting acquainted\u0022): both sides are shown at\nonce, there is no self-assessment and no Leitner movement. Distinct from typed-ness \u2013 the frontend must\nnot infer it from \u0060Reveal\u0060 being set, because self-assessment stages set it too.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask: an underscore per letter/digit to type, every other\ncharacter (space, hyphen, \u2026) kept literally \u2013 already fixed by the solution, so the child never types\nit. \u0060null\u0060 outside the letter-box stage, same as \u0060AnswerLength\u0060.\n\n\u0060LetterTiles\u0060 (B-05) are the scrambled letters of the answer on the scramble stage, in the order to show\nthem; the child sends the word it builds as \u0060GivenAnswer\u0060. Shuffled once per session/attempt (the same card\nshows the same order when fetched again). \u0060null\u0060 on every other stage and for an answer that is not one\nshort word - that card comes as letter boxes instead.\n\n\u0060Introduction\u0060 (B-419) marks a card the child has never seen: it is shown at the type\u0027s display stage\n(so \u0060DisplayOnly\u0060 is set too) whatever the day\u0027s stage, and asked for in the next round. The second way to\n\u0060DisplayOnly\u0060 next to a display stage of the day, told apart here so the round\u0027s end can say \u0022new words\nlearned\u0022 only where there were new words - a display stage of the day introduces nothing.\n\n\u0060SpeechLang\u0060 (B-252) is the language the \u0060Prompt\u0060 may be read aloud in by the device - only for a vocabulary\ncard in reading direction whose word has no recording, never on the listening stage. Only the prompt is ever spoken,\nso it gives away nothing the card does not already show; \u0060null\u0060 = no read-aloud button."
       },
       "PracticeOrder": {
         "enum": [

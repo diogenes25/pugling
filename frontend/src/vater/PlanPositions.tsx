@@ -29,7 +29,7 @@ import { leiterText } from "./wizardFinish";
  */
 
 const CADENCE_LABEL: Record<GoalCadence, string> = {
-  None: "frei (kein Ziel)", Daily: "Tagesziel", Weekly: "Wochenziel",
+  None: "frei (kein Ziel, keine Punkte)", Daily: "Tagesziel", Weekly: "Wochenziel",
 };
 const CADENCES: GoalCadence[] = ["Daily", "Weekly", "None"];
 const ORDER_LABEL: Record<PracticeOrder, string> = {
@@ -433,43 +433,50 @@ function PositionFields({ value, onChange, stages }: {
           </select>
         </div>
       )}
-      <div className="field" style={{ maxWidth: 140 }}>
-        <FieldLabel htmlFor={`${uid}-points`} topic="pointsGoalMet">Punkte (Ziel erreicht)</FieldLabel>
-        <input id={`${uid}-points`} aria-label="Punkte bei erreichtem Ziel" type="number" min={0}
-          value={value.pointsGoalMet} onChange={(e) => up("pointsGoalMet", Number(e.target.value))} />
-      </div>
-      {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung; Schulden sind erlaubt. */}
-      <div className="field" style={{ maxWidth: 150 }}>
-        <FieldLabel htmlFor={`${uid}-penalty`} topic="penaltyCoins">Münz-Malus (versäumt)</FieldLabel>
-        <input id={`${uid}-penalty`} aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0}
-          value={value.penaltyCoins} onChange={(e) => up("penaltyCoins", Number(e.target.value))} />
-      </div>
-      {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
-      <div className="field" style={{ maxWidth: 130 }}>
-        <FieldLabel htmlFor={`${uid}-new`} topic="newContentPoints">Punkte neuer Inhalt</FieldLabel>
-        <input id={`${uid}-new`} aria-label="Punkte für neuen Inhalt" type="number" min={0} placeholder="erbt"
-          value={value.newContentPoints} onChange={(e) => up("newContentPoints", e.target.value)} />
-      </div>
-      <div className="field" style={{ maxWidth: 150 }}>
-        <FieldLabel htmlFor={`${uid}-combo-n`} topic="comboThreshold">Combo alle … Treffer</FieldLabel>
-        <input id={`${uid}-combo-n`} aria-label="Combo-Schwelle" type="number" min={0} placeholder="erbt"
-          value={value.comboThreshold} onChange={(e) => up("comboThreshold", e.target.value)} />
-      </div>
-      <div className="field" style={{ maxWidth: 140 }}>
-        <FieldLabel htmlFor={`${uid}-combo-p`} topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel>
-        <input id={`${uid}-combo-p`} aria-label="Combo-Bonuspunkte" type="number" min={0} placeholder="erbt"
-          value={value.comboBonusPoints} onChange={(e) => up("comboBonusPoints", e.target.value)} />
-      </div>
-      <div className="field" style={{ maxWidth: 150 }}>
-        <FieldLabel htmlFor={`${uid}-speed-s`} topic="speedThresholdSeconds">Tempo bis … Sek.</FieldLabel>
-        <input id={`${uid}-speed-s`} aria-label="Tempo-Schwelle in Sekunden" type="number" min={0} placeholder="erbt"
-          value={value.speedThresholdSeconds} onChange={(e) => up("speedThresholdSeconds", e.target.value)} />
-      </div>
-      <div className="field" style={{ maxWidth: 140 }}>
-        <FieldLabel htmlFor={`${uid}-speed-p`} topic="speedBonusPoints">Tempo-Bonuspunkte</FieldLabel>
-        <input id={`${uid}-speed-p`} aria-label="Tempo-Bonuspunkte" type="number" min={0} placeholder="erbt"
-          value={value.speedBonusPoints} onChange={(e) => up("speedBonusPoints", e.target.value)} />
-      </div>
+      {/* B-538: eine Position ohne Pflicht zahlt keine Münzen – Ziel-Punkte, Malus und Boni wären hier wirkungslos. */}
+      {value.cadence === "None" ? (
+        <p className="sub" style={{ margin: 0, alignSelf: "center" }}>Ohne Pflicht bringt diese Position keine Punkte.</p>
+      ) : (
+        <>
+        <div className="field" style={{ maxWidth: 140 }}>
+          <FieldLabel htmlFor={`${uid}-points`} topic="pointsGoalMet">Punkte (Ziel erreicht)</FieldLabel>
+          <input id={`${uid}-points`} aria-label="Punkte bei erreichtem Ziel" type="number" min={0}
+            value={value.pointsGoalMet} onChange={(e) => up("pointsGoalMet", Number(e.target.value))} />
+        </div>
+        {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung; Schulden sind erlaubt. */}
+        <div className="field" style={{ maxWidth: 150 }}>
+          <FieldLabel htmlFor={`${uid}-penalty`} topic="penaltyCoins">Münz-Malus (versäumt)</FieldLabel>
+          <input id={`${uid}-penalty`} aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0}
+            value={value.penaltyCoins} onChange={(e) => up("penaltyCoins", Number(e.target.value))} />
+        </div>
+        {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
+        <div className="field" style={{ maxWidth: 130 }}>
+          <FieldLabel htmlFor={`${uid}-new`} topic="newContentPoints">Punkte neuer Inhalt</FieldLabel>
+          <input id={`${uid}-new`} aria-label="Punkte für neuen Inhalt" type="number" min={0} placeholder="erbt"
+            value={value.newContentPoints} onChange={(e) => up("newContentPoints", e.target.value)} />
+        </div>
+        <div className="field" style={{ maxWidth: 150 }}>
+          <FieldLabel htmlFor={`${uid}-combo-n`} topic="comboThreshold">Combo alle … Treffer</FieldLabel>
+          <input id={`${uid}-combo-n`} aria-label="Combo-Schwelle" type="number" min={0} placeholder="erbt"
+            value={value.comboThreshold} onChange={(e) => up("comboThreshold", e.target.value)} />
+        </div>
+        <div className="field" style={{ maxWidth: 140 }}>
+          <FieldLabel htmlFor={`${uid}-combo-p`} topic="comboBonusPoints">Combo-Bonuspunkte</FieldLabel>
+          <input id={`${uid}-combo-p`} aria-label="Combo-Bonuspunkte" type="number" min={0} placeholder="erbt"
+            value={value.comboBonusPoints} onChange={(e) => up("comboBonusPoints", e.target.value)} />
+        </div>
+        <div className="field" style={{ maxWidth: 150 }}>
+          <FieldLabel htmlFor={`${uid}-speed-s`} topic="speedThresholdSeconds">Tempo bis … Sek.</FieldLabel>
+          <input id={`${uid}-speed-s`} aria-label="Tempo-Schwelle in Sekunden" type="number" min={0} placeholder="erbt"
+            value={value.speedThresholdSeconds} onChange={(e) => up("speedThresholdSeconds", e.target.value)} />
+        </div>
+        <div className="field" style={{ maxWidth: 140 }}>
+          <FieldLabel htmlFor={`${uid}-speed-p`} topic="speedBonusPoints">Tempo-Bonuspunkte</FieldLabel>
+          <input id={`${uid}-speed-p`} aria-label="Tempo-Bonuspunkte" type="number" min={0} placeholder="erbt"
+            value={value.speedBonusPoints} onChange={(e) => up("speedBonusPoints", e.target.value)} />
+        </div>
+        </>
+      )}
       <span className="label-row">
         <label className="checkline">
           <input type="checkbox" checked={value.useLeitner}
@@ -897,15 +904,18 @@ function PositionRow({ planId, pos, onChanged, action }: {
               </>
             )}
           </td>
-          <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
-            {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
-            {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
-            {pos.timeSlots?.map((s) => (
-              <span key={`${s.start}-${s.end}`} className="muted">
-                {" · "}{hhmm(s.start)}–{hhmm(s.end)} ×{s.multiplier.toLocaleString("de-DE")}
-              </span>
-            ))}
-          </td>
+          {/* B-538: eine freie Position bucht nichts – ihre gespeicherten Punkte sind wirkungslos und stehen darum nicht da. */}
+          {pos.cadence === "None" ? <td className="num muted">keine Punkte</td> : (
+            <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
+              {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
+              {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
+              {pos.timeSlots?.map((s) => (
+                <span key={`${s.start}-${s.end}`} className="muted">
+                  {" · "}{hhmm(s.start)}–{hhmm(s.end)} ×{s.multiplier.toLocaleString("de-DE")}
+                </span>
+              ))}
+            </td>
+          )}
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}

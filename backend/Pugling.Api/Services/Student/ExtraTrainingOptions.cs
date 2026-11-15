@@ -11,11 +11,11 @@ public class ExtraTrainingOptions
     public const string SectionName = "Gamification:ExtraTraining";
 
     /// <summary>Most bonus coins a child earns per day; <c>null</c> = no cap.</summary>
-    public int? DailyCoinCap { get; set; } = 30;
+    public int? DailyCoinCap { get; set; } = 90;
     /// <summary>Coins per correct card on the choice form.</summary>
     public int CoinsPerChoiceHit { get; set; } = 1;
     /// <summary>Coins per correct card on the typed form.</summary>
-    public int CoinsPerTypedHit { get; set; } = 2;
+    public int CoinsPerTypedHit { get; set; } = 3;
     /// <summary>Completed runs a vocabulary exercise is asked as self-assessment before it moves on to choice.</summary>
     public int SelfAssessRuns { get; set; } = 2;
     /// <summary>Completed runs on the choice form before a vocabulary exercise is asked typed for good.</summary>

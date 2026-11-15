@@ -209,8 +209,11 @@ public static class ApiErrors
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
     /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals without daily ones) (409).</summary>
     public static readonly ApiError ExtraTrainingLocked = new("extra_training_locked", 409, "Bonus training is locked.");
-    /// <summary>The one-shot bonus exercise has already been played (409).</summary>
-    public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise already played.");
+    /// <summary>
+    /// The fixed-form bonus exercise is worth nothing more today: three runs of it were completed today (B-538). Its worth
+    /// resets the next day; vocabulary is never refused for this (409).
+    /// </summary>
+    public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise worth nothing more today.");
     /// <summary>The bonus run has already been submitted (409).</summary>
     public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
     /// <summary>
@@ -219,8 +222,8 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError ExtraRunStale = new("extra_run_stale", 409, "Bonus run is out of date.");
     /// <summary>
-    /// Today's bonus coin cap is reached and the exercise pays only once: it is neither started nor graded, so it is
-    /// not used up for nothing and can be played once coins are left again (409).
+    /// Today's bonus coin cap is reached and the exercise is a fixed-form one: its run would show the solutions for no
+    /// coins, so it is neither started nor graded and can be played once coins are left again (409).
     /// </summary>
     public static readonly ApiError ExtraCapReached = new("extra_cap_reached", 409, "Bonus coin cap reached.");
     /// <summary>No daily reward chest is waiting to be opened (B-527) - none earned yet, or all already opened (409).</summary>

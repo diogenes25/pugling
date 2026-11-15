@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from "@playwright/test";
 import { sohnLogin } from "./helpers";
 
 /*
- * B-543: Ist der Bonus-Tagesdeckel voll, bietet eine Einmal-Übung keinen Start an – der Server wiese ihn ab
+ * B-543: Ist der Bonus-Tagesdeckel voll, bietet eine Übung fester Form (keine Vokabeln) keinen Start an – der Server wiese ihn ab
  * (`extra_cap_reached`), und ohne die Sperre verbrannte der Start sie für 0 Münzen. Eine Vokabelzeile behält „Spielen“
  * (Üben ohne Münzen bleibt erlaubt). Die Regeln prüft `ExtraTrainingTests`; hier liegt der Blick auf die laufende App,
  * der vorher ein Handblick am Gerät war.
@@ -22,7 +22,7 @@ async function postId(request: APIRequestContext, url: string, headers: Record<s
   return (await res.json())[key] as number;
 }
 
-test("Bei vollem Bonus-Deckel wartet eine Einmal-Übung bis morgen, Vokabeln bleiben spielbar", async ({ page, request }) => {
+test("Bei vollem Bonus-Deckel wartet eine Übung fester Form bis morgen, Vokabeln bleiben spielbar", async ({ page, request }) => {
   const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
   expect(login.ok(), await login.text()).toBeTruthy();
   const vater = { Authorization: `Bearer ${(await login.json()).token}` };
@@ -69,7 +69,7 @@ test("Bei vollem Bonus-Deckel wartet eine Einmal-Übung bis morgen, Vokabeln ble
   });
   expect(submit.ok(), await submit.text()).toBeTruthy();
 
-  // Die erste Einmal-Übung über die API spielen: 2 Treffer × 2 🪙 = 4 – der Deckel ist voll.
+  // Die erste Rechen-Übung über die API spielen: 2 Treffer × 3 🪙 = 6, gekappt auf 4 – der Deckel ist voll.
   const bonus = `/api/v1/student/children/${childId}/extra-training`;
   const start = await request.post(`${bonus}/${exErste}/runs`, { headers: kind });
   expect(start.ok(), await start.text()).toBeTruthy();
@@ -82,7 +82,7 @@ test("Bei vollem Bonus-Deckel wartet eine Einmal-Übung bis morgen, Vokabeln ble
   const graded = (await result.json()) as { coinsToday: number; dailyCoinCap: number | null };
   expect(graded).toMatchObject({ coinsToday: 4, dailyCoinCap: 4 });
 
-  // Der Server sperrt den Start der zweiten Einmal-Übung (Entscheidung 1) – die Zeile darf ihn also nicht anbieten.
+  // Der Server sperrt den Start der zweiten Rechen-Übung (Entscheidung 1) – die Zeile darf ihn also nicht anbieten.
   const refused = await request.post(`${bonus}/${exZweite}/runs`, { headers: kind });
   expect(refused.status(), await refused.text()).toBe(409);
   expect(await refused.text()).toContain("extra_cap_reached");
@@ -92,17 +92,17 @@ test("Bei vollem Bonus-Deckel wartet eine Einmal-Übung bis morgen, Vokabeln ble
   await expect(page.getByRole("heading", { name: "Bonus-Training" })).toBeVisible();
   await expect(page.getByText("Heute verdient: 4 / 4 🪙", { exact: true })).toBeVisible();
   await expect(page.getByText(
-    "Tagesdeckel erreicht – Vokabeln üben darfst du weiter, ohne Münzen. Übungen, die nur einmal zahlen, warten bis morgen.",
+    "Tagesdeckel erreicht – Vokabeln üben darfst du weiter, ohne Münzen. Die anderen Übungen warten bis morgen.",
     { exact: true })).toBeVisible();
 
   const zeile = (titel: string) => page.locator(".bonus-zeile", { hasText: titel });
   // Tragend für B-543: ohne die Sperre stünde hier „Spielen“ statt des Satzes (und der Link führte in einen 409).
-  await expect(zeile(ZWEITE)).toContainText("Zahlt nur einmal – morgen wieder");
+  await expect(zeile(ZWEITE)).toContainText("Morgen wieder – heute würde sie dir nur die Lösungen zeigen, ohne Münzen");
   await expect(zeile(ZWEITE).getByRole("link")).toHaveCount(0);
-  // Erledigt bleibt erledigt – ohne den Warte-Satz, der nur offenen Einmal-Übungen gilt.
-  await expect(zeile(ERSTE)).toContainText("✓ Geschafft");
-  await expect(zeile(ERSTE)).not.toContainText("Zahlt nur einmal");
+  // Seit B-538 ist auch die gespielte Übung wieder spielbar (heute zur Hälfte) – am vollen Deckel wartet sie wie die zweite.
+  await expect(zeile(ERSTE)).toContainText("Morgen wieder – heute würde sie dir nur die Lösungen zeigen, ohne Münzen");
+  await expect(zeile(ERSTE).getByRole("link")).toHaveCount(0);
   // Vokabeln dürfen weiter, ohne Münzen (Entscheidung 5).
   await expect(zeile(VOKABELN).getByRole("link", { name: `Spielen: ${VOKABELN}` })).toBeVisible();
-  await expect(zeile(VOKABELN)).not.toContainText("Zahlt nur einmal");
+  await expect(zeile(VOKABELN)).not.toContainText("Morgen wieder");
 });

@@ -89,10 +89,10 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
   extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagesziele erfüllt sind.",
-  extra_exercise_done: "Diese Bonus-Übung hast du schon gespielt.",
+  extra_exercise_done: "Diese Bonus-Übung bringt heute nichts mehr.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
   extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
-  extra_cap_reached: "Dein Bonus-Deckel ist voll, und diese Übung zahlt nur einmal – darum geht sie gerade nicht.",
+  extra_cap_reached: "Dein Bonus-Deckel ist voll – diese Übung würde dir jetzt nur die Lösungen zeigen, ohne Münzen. Darum geht sie gerade nicht.",
   daily_box_none: "Gerade wartet keine Truhe auf dich.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
   // Seit B-123 ist das der wahrscheinlichste Fehlschlag im Reihen-Formular: vorher war der 409 über die
