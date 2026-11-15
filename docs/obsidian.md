@@ -132,7 +132,7 @@ Der Graph-Hub: Bereich → maßgebliche Seite(n). Von hier aus ist jede Domäne 
 | **Knowunity-Vergleich** (Klausur-Countdown, Notenprognose, Übernahmeplan B-247…B-253) | [docs/knowunity-vergleich-plan.md](knowunity-vergleich-plan.md) |
 | **Baobab-Vergleich** (Heftseite zur Übung, Lob-Kanal, Sammelalbum, Übernahmeplan B-374…B-378) | [docs/baobab-vergleich-plan.md](baobab-vergleich-plan.md) |
 | **Duolingo-/Snipwise-Vergleich** (Lernpfad, Lektion fester Länge, Trainingsraum, drei Ausbaustufen – Analyse, noch ohne Stories) | [docs/duolingo-snipwise-vergleich-plan.md](duolingo-snipwise-vergleich-plan.md) |
-| **RocketTutor-Vergleich** (Probearbeit auf Papier, Erklärung nach dem Fehler, Lücke wird Pflicht, Übernahmeplan B-541…B-544) | [docs/rockettutor-vergleich-plan.md](rockettutor-vergleich-plan.md) |
+| **RocketTutor-Vergleich** (Probearbeit auf Papier, Erklärung nach dem Fehler, Lücke wird Pflicht, Übernahmeplan B-554…B-557) | [docs/rockettutor-vergleich-plan.md](rockettutor-vergleich-plan.md) |
 | **Backlog-Sichtung 2026-11-05** (Entscheidungen im Auftrag des Nutzers, 37 von 43 autonom bearbeitbar) | [docs/pm-sitzung-2026-11-05-delegation.md](pm-sitzung-2026-11-05-delegation.md) |
 | **Nachtlauf** (unbeaufsichtigter Backlog-Lauf: Auftragstext, Freigaben, Grenzen) | [docs/nachtlauf.md](nachtlauf.md) |
 | Grill-Protokoll Vokabellernen (Quelle der Stories B-01…B-06) | [docs/backlog-vokabellernen.md](backlog-vokabellernen.md) |

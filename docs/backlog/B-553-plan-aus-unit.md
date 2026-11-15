@@ -10,7 +10,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-540 · Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan
+# B-553 · Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan
 
 Teil c von [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md). Ist-Stand am Code (Punkte 1, 4 und 5) und
 Begründungen stehen dort. **Braucht [B-539](B-539-ein-aktiver-plan-je-fach.md)** (Fach und Unit am Plan).
@@ -50,3 +50,4 @@ Siehe [B-537 → Ist-Stand](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md#ist-s
 ## Verlauf
 
 - 2026-11-15 · `gegrillt` angelegt durch Teilung von B-537 (Entscheidung 11); Entscheidungen dort.
+- 2026-11-15 · Id von B-540 auf **B-553** umgezogen: `auto/fertigstellung` und `main` hatten B-540…B-544 doppelt vergeben (auf `main` abgenommen: B-540 Planbau-Sortierwechsel). Gefunden im Abgleich des Backlog-Laufs 2026-11-15.

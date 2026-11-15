@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/katalog, bereich/vokabeln, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/katalog, bereich/vokabeln, rolle/creator]
 aliases: [Foto zu Vokabeln, Vorlage zu Übung]
-status: idee
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: ""
@@ -9,9 +9,9 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/knowunity-vergleich-plan.md#wo-knowunity-weiter-ist
-unverifiziert: true
-grund: ""
-ersetzt_durch: []
+unverifiziert: false
+grund: "gegenstandslos durch B-470 (Buchfotos → geprüfte Wortliste → Vokabelspeicher über laden.py) und gemessen in B-459 (lokales Vision-Modell liest Buchseiten nicht verlässlich)"
+ersetzt_durch: [B-470]
 ---
 
 # B-251 · Ein Foto der Vokabelliste aus dem Buch landet im Vokabelspeicher
@@ -33,3 +33,12 @@ OCR-Vorstufe nötig ist, und wie Dubletten gegen den bestehenden Store aufgelös
 - **2026-11-05** — **Rest-Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05, [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): Vision-Modell konfigurierbar, Vorgabe `llama3.2-vision`; fehlt es lokal, Exit 2 mit `ollama pull`-Hinweis.
 - **2026-11-10** — Reihenfolge gedreht: [B-375](B-375-heftseite-wird-uebungsentwurf.md) baut den Lese-Baustein (`PageReader`, `Agent:VisionModel`, Modell-Check) zuerst und schreibt den Stoff in die Unit-Notizen. Diese Story nimmt denselben Baustein später für den Vokabelspeicher. Dabei gilt die Regel des Nutzers aus B-375 (Entscheidung 1): Aus dem Foto werden nur Wortpaare übernommen, keine Beispielsätze oder Aufgaben des Buches.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt: der Lese-Baustein aus B-375 (abgenommen) steht (`backend/Pugling.Agent.Creator/PageReader.cs:114`, `AgentOptions.cs:33` Vorgabe `llama3.2-vision`), wird aber nur von `UnitNotesFiller.cs:55` genutzt; ein Weg vom Foto in den Vokabelspeicher fehlt.
+- **2026-11-15** — `verworfen` im Abgleich des Backlog-Laufs 2026-11-15. Das Ziel der Story (Foto der Vokabelliste →
+  Wortpaare mit Vorschau → Vokabelspeicher) liefert [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) über den Skill
+  `lehrwerk-aufbereiten`: Claude liest die Seite, schreibt `vokabeln-unit<N>.tsv` (die Vorschau), `laden.py` prüft und
+  lädt über die Creator-API, `VocabItemInput` front/back hängt an bestehende Store-Einträge
+  (`ExerciseAuthoringDtos.cs:85-91`). Der Weg über ein lokales Modell (Entscheidung G-8) ist in
+  [B-459](B-459-vision-modell-fuer-buchseiten.md) **gemessen** und reicht für Buchseiten nicht; der Nutzer liest Fotos seither
+  selbst mit Opus. **Stakeholder-Entscheidung im Auftrag des Nutzers.** Die Entscheidung G-8 wird damit nicht
+  umgestoßen, sondern durch ihre eigene Messung beantwortet; soll eine Wortliste **ohne** Buch (loses Blatt) in den
+  Speicher, ist das eine neue, kleinere Story. Steht in der Liste für den Menschen.

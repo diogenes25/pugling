@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-543 · Nach einer falschen Antwort erklärt die Übung, warum
+# B-556 · Nach einer falschen Antwort erklärt die Übung, warum
 
 RocketTutors Kern ist ein KI-Tutor, der erklärt, warum eine Antwort falsch ist. Pugling zeigt nach der
 Antwort nur das erwartete Ergebnis (`Expected`). Am Item gibt es einen optionalen `Hint`
@@ -29,4 +29,5 @@ den Code prüfen, ob einzelne Übungstypen schon etwas Ähnliches tragen.
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 4 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 4 des Übernahmeplans; Sammel-Story [B-554](B-554-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — Id umgezogen (vorher B-546): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.

@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-542 · Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet
+# B-555 · Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet
 
 RocketTutor gibt eine Probearbeit als PDF aus. Der Schüler löst sie auf Papier, lädt ein Foto hoch und
 bekommt Punkte und Note. Pugling prüft nur am Bildschirm, die Schule prüft auf Papier, und Friedrichs
@@ -31,4 +31,5 @@ nicht).
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-554](B-554-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — Id umgezogen (vorher B-545): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
