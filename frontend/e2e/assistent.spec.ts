@@ -28,7 +28,9 @@ async function waehleSohnUndEnglisch(page: Page) {
   await page.getByRole("button", { name: "Weiter" }).click();
 
   await expect(page.getByRole("heading", { name: /Wo hakt es/ })).toBeVisible();
-  await page.getByLabel("Fach", { exact: true }).selectOption({ label: "Englisch" });
+  await page.getByLabel("Fach (Pflicht)", { exact: true }).selectOption({ label: "Englisch" });
+  // B-423: das vorbelegte Ziel „Klassenarbeit" verlangt einen Termin – diese Spec meint die freie Dauer.
+  await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
   await page.getByRole("button", { name: "Weiter" }).click();
   await expect(page.getByRole("heading", { name: /Übungen wählen/ })).toBeVisible();
 }
@@ -56,7 +58,7 @@ test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschlif
   await page.getByRole("button", { name: "Weiter" }).click();
 
   // ---------- Schritt 2: Problemfeld ----------
-  await page.getByLabel("Fach", { exact: true }).selectOption({ label: "Englisch" });
+  await page.getByLabel("Fach (Pflicht)", { exact: true }).selectOption({ label: "Englisch" });
   await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
   await page.getByRole("radio", { name: /^Normal/ }).click();
   await page.getByRole("button", { name: "Weiter" }).click();

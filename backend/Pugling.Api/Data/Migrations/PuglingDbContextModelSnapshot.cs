@@ -606,6 +606,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("GemsAwarded")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("OpenedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("StreakAtClaim")
                         .HasColumnType("INTEGER");
 
@@ -918,6 +921,10 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("CorrectCount")
@@ -1804,6 +1811,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime?>("LastReviewedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("NewBonusPaidAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PlanPositionId")
                         .HasColumnType("INTEGER");
 
@@ -1826,6 +1836,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<int>("ActiveSeconds")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CardShownAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Cursor")
                         .HasColumnType("INTEGER");

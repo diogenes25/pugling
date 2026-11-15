@@ -280,6 +280,88 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Gruß" })).StatusCode);      // the hint is ok
     }
 
+    /// <summary>
+    /// B-328 AK 1-3: an inline type (translation) keeps its progress on the list position, so a SHORTER list in an
+    /// exercise a plan plays is refused; correcting a sentence in place and appending stay allowed. Red if the base
+    /// <c>UpdateConflictAsync</c> returns <c>null</c> again (AK 1), if it locks any text change (AK 2), or if it skips the
+    /// plan check (AK 3, the exercise without a position).
+    /// </summary>
+    [Fact]
+    public async Task InlineTyp_InPlan_Sperrt_Kuerzere_Liste_Erlaubt_Korrektur()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Inline-Fach") }));
+        var (s, c) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var baseUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/translation";
+        object Body(string title, params (string Source, string Target)[] sentences) => new
+        {
+            title,
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { sourceLang = "de", targetLang = "en", items = sentences.Select(x => new { source = x.Source, target = x.Target }) },
+        };
+        (string, string) eins = ("Ich bin muede.", "I am tired."), zwei = ("Es regnet.", "It is raining."), drei = ("Wir lachen.", "We laugh.");
+
+        var played = await TestApi.IdAsync(await father.PostAsJsonAsync(baseUrl, Body("Gespielt", eins, zwei)));
+        var free = await TestApi.IdAsync(await father.PostAsJsonAsync(baseUrl, Body("Frei", eins, zwei)));
+        TestApi.SeedLeitnerPosition(_factory, played, (int)TestStage.FreeText);
+
+        // AK 1: fewer entries in a played exercise -> 409, nothing written (the title stays).
+        var shorter = await father.PutAsJsonAsync($"{baseUrl}/{played}", Body("Gekuerzt", zwei));
+        Assert.Equal(HttpStatusCode.Conflict, shorter.StatusCode);
+        var problem = await shorter.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("exercise_items_locked", problem.GetProperty("code").GetString());
+        Assert.DoesNotContain("from plans", problem.GetProperty("detail").GetString());
+        var unchanged = await father.GetFromJsonAsync<JsonElement>($"{baseUrl}/{played}");
+        Assert.Equal("Gespielt", unchanged.GetProperty("title").GetString());
+        Assert.Equal(2, unchanged.GetProperty("config").GetProperty("items").GetArrayLength());
+
+        // AK 2: same length with a corrected text, and an appended entry, both pass.
+        Assert.Equal(HttpStatusCode.OK, (await father.PutAsJsonAsync($"{baseUrl}/{played}",
+            Body("Korrigiert", ("Ich bin sehr muede.", "I am very tired."), zwei))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await father.PutAsJsonAsync($"{baseUrl}/{played}",
+            Body("Angehaengt", ("Ich bin sehr muede.", "I am very tired."), zwei, drei))).StatusCode);
+
+        // AK 3: without a plan position the shorter PUT goes through.
+        Assert.Equal(HttpStatusCode.OK, (await father.PutAsJsonAsync($"{baseUrl}/{free}", Body("Frei gekuerzt", zwei))).StatusCode);
+    }
+
+    /// <summary>
+    /// B-328 AK 4-5: a PATCH that points a played vocabulary item at another store entry is a replacement and locked like
+    /// deleting - by <c>vocabularyId</c> as well as by <c>front</c>/<c>back</c> resolving to another word; the hint stays
+    /// free. Red if <c>PatchItem</c> does not check the swap, if it compares only the sent <c>vocabularyId</c> (the
+    /// front/back line falls), or if it locks the hint as well.
+    /// </summary>
+    [Fact]
+    public async Task ItemPatch_InPlan_Sperrt_Wort_Tausch_Erlaubt_Hinweis()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (s, c, exerciseId) = await VocabWithItemsAsync(father, ("apple", "Apfel"), ("pear", "Birne"));
+        var itemsUrl = $"/api/v1/creator/textbook-series/{s}/units/{c}/vocabulary/{exerciseId}/items";
+        var first = (await father.GetFromJsonAsync<List<JsonElement>>(itemsUrl))![0];
+        var firstId = first.GetProperty("id").GetInt32();
+        var originalVocab = first.GetProperty("vocabularyId").GetInt32();
+        var (otherVocab, _) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("plum"), "Pflaume");
+        TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+
+        foreach (var swap in new[]
+                 {
+                     await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { vocabularyId = otherVocab }),
+                     await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { front = TestApi.UniqueName("cherry"), back = "Kirsche" }),
+                 })
+        {
+            Assert.Equal(HttpStatusCode.Conflict, swap.StatusCode);
+            var problem = await swap.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal("exercise_items_locked", problem.GetProperty("code").GetString());
+            Assert.Contains("vocabulary store", problem.GetProperty("detail").GetString());
+        }
+        var item = await father.GetFromJsonAsync<JsonElement>($"{itemsUrl}/{firstId}");
+        Assert.Equal(originalVocab, item.GetProperty("vocabularyId").GetInt32());
+
+        // AK 5: the hint alone (same entry) stays free.
+        Assert.Equal(HttpStatusCode.OK, (await father.PatchAsJsonAsync($"{itemsUrl}/{firstId}", new { hint = "Obst" })).StatusCode);
+    }
+
     // The whole-exercise PUT rewrites the same item list as the single routes (B-323): the lock must hold there
     // too, and a rejected PUT must not have saved its header fields either.
     [Fact]

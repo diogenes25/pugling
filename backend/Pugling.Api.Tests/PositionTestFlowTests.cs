@@ -477,4 +477,44 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, supervisorSubmit.GetProperty("attemptsRemaining").GetInt32());
     }
+
+    /// <summary>
+    /// B-544: the exam measures, so its card carries no hint – not even an always-null field – while the practice
+    /// card of the very same exercise keeps it. AK 1 turns red when <c>f.Hint</c> goes back into the exam card
+    /// (the field reappears); AK 2 turns red when the hint is dropped from practice as well.
+    /// </summary>
+    [Fact]
+    public async Task Abschlusstest_Liefert_Keinen_Tipp_Das_Ueben_Schon()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Tipp-Fach") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary", new
+            {
+                title = "Mit Tipp",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = "hello", back = "hallo", hint = "beginnt mit h" }, new { front = "goodbye", back = "tschüss", hint = "beginnt mit t" } },
+                },
+            }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(_factory);
+
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+        var cards = await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards");
+        Assert.Contains(cards.EnumerateArray(), c => c.GetProperty("hint").GetString() is { Length: > 0 });
+
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var next = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next");
+        var item = next.GetProperty("item");
+        Assert.Equal(JsonValueKind.Object, item.ValueKind);
+        Assert.False(item.TryGetProperty("hint", out _), "The exam card must not carry a hint field (B-544).");
+    }
 }

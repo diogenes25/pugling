@@ -21,6 +21,18 @@ describe("AddPanel", () => {
     expect(screen.getByRole("button", { name: "Buch hinterlegen" })).toBeTruthy();
   });
 
+  // Rot, wenn `aria-controls` auch zugeklappt gesetzt ist: dann zeigt der Knopf auf eine Id, die nicht im DOM steht.
+  it("verweist per aria-controls nur auf einen Inhalt, den es gibt", () => {
+    render(<AddPanel label="Weiteres Buch"><span>Inhalt</span></AddPanel>);
+    const toggle = screen.getByRole("button", { name: "Weiteres Buch" });
+    expect(toggle.getAttribute("aria-controls")).toBeNull();
+
+    fireEvent.click(toggle);
+    const id = toggle.getAttribute("aria-controls");
+    expect(id).toBeTruthy();
+    expect(document.getElementById(id!)?.textContent).toBe("Inhalt");
+  });
+
   // Rot, wenn das „+"/„−" in den Namen rutscht: dann wechselte der Knopf beim Öffnen seinen Namen.
   it("behält seinen Namen beim Öffnen", () => {
     render(<AddPanel label="Weiteres Buch"><span>Inhalt</span></AddPanel>);

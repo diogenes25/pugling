@@ -1,5 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pugling.Api.Auth;
+using Pugling.Api.Data;
 
 namespace Pugling.Api.Tests;
 
@@ -33,5 +37,40 @@ public class SeedFamilyTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
 
         Assert.Equal("Manual", entries.Single(e => e.GetProperty("reason").GetString() == "Startguthaben (Münzen)").GetProperty("kind").GetString());
         Assert.Equal("ManualGems", entries.Single(e => e.GetProperty("reason").GetString() == "Willkommens-Gems").GetProperty("kind").GetString());
+    }
+
+    private static Task SeedAsync(IServiceProvider sp, PuglingDbContext db) =>
+        Seed.RunAsync(db,
+            sp.GetRequiredService<ExerciseItemService>(),
+            sp.GetRequiredService<AccountService>(),
+            sp.GetRequiredService<InterestTagService>(),
+            CancellationToken.None);
+
+    private static Task<int> TeacherProfilesAsync(PuglingDbContext db) =>
+        db.CreatorProfiles.AsNoTracking().CountAsync(p => p.Name == "Herr Schmidt – Englisch");
+
+    /// <summary>
+    /// B-445 AK 2 and 3: the subject-teacher profile is created once on a fresh database and never on one that already
+    /// holds the demo unit, i.e. an existing demo database. (The family's real database is protected differently: it is
+    /// not seeded at all - Production defaults to no seed and scripts/heimnetz.ps1 sets Seed__Enabled=false.) Red when the profile is created before the demo-unit
+    /// lock in <c>SeedTeacherLibrary</c> or without its own existence check: then the second run adds one (AK 2) and the
+    /// database whose profile was removed gets it back (AK 3).
+    /// </summary>
+    [Fact]
+    public async Task FachlehrerProfil_Entsteht_Nur_Auf_Frischer_Datenbank()
+    {
+        using var scope = factory.Services.CreateScope();
+        var sp = scope.ServiceProvider;
+        var db = sp.GetRequiredService<PuglingDbContext>();
+
+        // AK 2: the host seeded at startup; another run adds nothing.
+        Assert.Equal(1, await TeacherProfilesAsync(db));
+        await SeedAsync(sp, db);
+        Assert.Equal(1, await TeacherProfilesAsync(db));
+
+        // AK 3: the demo unit exists, the profile does not (an existing demo database) - the seed leaves it so.
+        await db.CreatorProfiles.Where(p => p.Name == "Herr Schmidt – Englisch").ExecuteDeleteAsync();
+        await SeedAsync(sp, db);
+        Assert.Equal(0, await TeacherProfilesAsync(db));
     }
 }

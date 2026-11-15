@@ -116,7 +116,9 @@ public sealed class GrammarExerciseType : ExerciseTypeBase
         var c = Deserialize<GrammarConfig>(configJson);
         return [.. c.Tasks.Select((t, i) =>
             new ContentItem(i, t.Prompt, t.Answer, [t.Answer], t.RuleHint,
-                Passage: AnswerChecking.Blank(c.Instruction)))];
+                Passage: AnswerChecking.Blank(c.Instruction),
+                // The rule hint is meant "after the answer" (GrammarTask); it stays the tip before it as well (B-529).
+                Explanation: AnswerChecking.Blank(t.RuleHint)))];
     }
 }
 

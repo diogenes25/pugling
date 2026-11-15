@@ -86,6 +86,29 @@ export const FIELD_HELP = {
     text: "Wie viele Punkte die Combo einbringt, wenn sie zuschlägt. Leer lassen = Vorschlag der Übung "
       + "übernehmen.",
   },
+  speedThresholdSeconds: {
+    title: "Tempo bis … Sekunden",
+    text: "Bis zu wie vielen Sekunden eine richtige Antwort als „schnell“ zählt und den Tempo-Bonus bringt. "
+      + "0 = kein Tempo-Bonus. Leer lassen = Vorschlag der Übung übernehmen (beim Bearbeiten: bleibt, wie es ist).",
+  },
+  speedBonusPoints: {
+    title: "Tempo-Bonuspunkte",
+    text: "Wie viele Punkte eine schnelle richtige Antwort zusätzlich einbringt. 0 = aus. Leer lassen = Vorschlag "
+      + "der Übung übernehmen (beim Bearbeiten: bleibt, wie es ist).",
+  },
+  scope: {
+    title: "Inhalte-Auswahl",
+    text: "Welche Inhalte der Übung diese Position spielt: alle, nur die noch neuen oder nur die schon "
+      + "eingeführten (reine Wiederholung). Vorgabe ist „alle Inhalte“.",
+  },
+  stage: {
+    title: "Stufe",
+    text: "Wie der Test abfragt – vom Aufdecken mit Selbsteinschätzung bis zum freien Tippen. Welche Stufen es "
+      + "gibt, hängt am Übungstyp; „Standard der Übung“ übernimmt, was der Ersteller der Übung vorgesehen hat. "
+      + "Ein Stufenplan je Plantag geht dieser Einstellung vor – etwa der, den der Assistent beim Ziel „Klassenarbeit“ "
+      + "schreibt (erst Selbsteinschätzung, dann die gewählte Stufe). Er wechselt die Stufe ab seinem Tag für alle "
+      + "Inhalte der Position, nicht je Leitner-Fach.",
+  },
   useLeitner: {
     title: "Leitner-Kasten",
     text: "Verteiltes Wiederholen: Jeder Inhalt wandert bei richtiger Antwort ein Fach weiter und kommt "
@@ -99,6 +122,15 @@ export const FIELD_HELP = {
       + "die Ziel-Punkte. Leer lassen heißt: es gelten nur die Zeitfenster des Servers (vormittags mehr, "
       + "spätabends weniger). Beide werden zusammen betrachtet – liegt ein Zeitpunkt in mehreren Fenstern, "
       + "gewinnt das engste, und Faktoren werden nie multipliziert.",
+  },
+  lernkontrolle: {
+    title: "Lernkontrolle",
+    text: "Womit diese Pflicht geprüft wird. „Test getippt“: das Kind muss die Lösung tippen. „Test, "
+      + "Selbsteinschätzung zählt“: Aufdecken und „Gewusst!“ zählen mit – schalte „nur getippte Tests“ ein, wenn "
+      + "dir das zu weich ist. Ausnahme Stufenleiter („Selbsteinschätzung bis Tag …, ab Tag … getippt“): dort bleibt "
+      + "das Häkchen aus, sonst wäre das Ziel an den ersten Tagen unerreichbar – der Server lehnt die Kombination ab; "
+      + "getippt wird ab dem genannten Tag ohnehin. „kein Test – zählt Durchspielen“: diese Übungsart hat keinen Test, "
+      + "erfüllt ist die Pflicht, sobald genug davon gespielt ist.",
   },
   requireTypedTest: {
     title: "Nur getippte Tests zählen",

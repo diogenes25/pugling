@@ -1,17 +1,18 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Üben nach dem Test landet in „Nichts fällig"]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Wunsch
-groesse: ""
+groesse: S
 wo: "beides"
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-12-tageslauf.md (Sprint 64, Review B-430)
 unverifiziert: false
 entgangen_bei: []
 grund: ""
+nachgeschaut: 2026-11-14
 ersetzt_durch: []
 ---
 
@@ -20,11 +21,7 @@ ersetzt_durch: []
 Gefunden vom `frontend-reviewer` an [B-430](B-430-nach-test-diese-woerter-ueben.md) (c), dort bewusst als Grenze
 angenommen. Bei `useLeitner=true` zeigt die Übungsrunde nur fällige Karten; wer erst übt und dann testet, hat heute
 nichts mehr fällig. Das Kind, eben durchgefallen, sieht „Nichts fällig 🎉 – Mach den Test oder komm später wieder."
-und „🎯 Zum Test" – bei 0 Restversuchen führt das in `test_attempts_exhausted` (`SohnPractice.tsx:291-299`).
-
-Zu klären (Dialog, `art: Wunsch`): (1) Knopf nur zeigen, wenn die Position heute etwas fällig hat (Server liefert ein
-Flag, `SohnTest` reicht es durch); (2) ein eigener Leertext nach einer Niederlage ohne 🎉 und ohne verbrauchten Test;
-(3) beides. Variante (b) aus B-430 (Test stuft herab) bleibt ausgeschlossen, solange sie Münzen farmbar macht.
+und „🎯 Zum Test" – bei 0 Restversuchen führt das in `test_attempts_exhausted`.
 
 ## User Story
 
@@ -34,29 +31,135 @@ Test angeboten bekomme, den ich heute nicht mehr schreiben darf.
 
 ## Ist-Stand am Code
 
-- `frontend/src/sohn/SohnPractice.tsx:290-300`: Phase `empty` zeigt `practice.nothingDue` („Nichts fällig 🎉") und – wenn
-  `testable` – „🎯 Zum Test". Der Bildschirm weiß nicht, dass er von einem verpatzten Test kommt, und nicht, ob heute noch
-  Versuche übrig sind.
-- `frontend/src/i18n/de.ts:254-256`: die drei Texte; keiner für „nach dem Test".
-- `TestSubmitResponse` (`TestResult` in `SohnTest.tsx`) trägt `attemptsRemaining`, aber keine Fälligkeit der Position.
-- `PositionStatus.DueCount` (`backend/Pugling.Contracts/Shared/ProgressDtos.cs:20`) liefert die Fälligkeit je Position
-  über die Plan-Übersicht schon heute – ein neuer Endpunkt ist für Variante (1) vermutlich nicht nötig.
-- Bei `useLeitner=false` filtert die Runde nicht nach Fälligkeit (Review B-430) – das Problem betrifft nur Leitner-Positionen.
+Gelesen am 2026-11-13 (Worktree `backlog-lauf`, Stand nach Sprint 69 / `699b02a7`):
+
+- `frontend/src/sohn/SohnPractice.tsx:334`: `const testable = session.current?.testable ?? true;` – das einzige Gate.
+- `frontend/src/sohn/SohnPractice.tsx:336-346`: Phase `empty` zeigt `practice.nothingDue` („Nichts fällig 🎉"), darunter
+  `nothingDueTest` bzw. `nothingDueLater`, und bei `testable` den Knopf „🎯 Zum Test". Der Bildschirm weiß weder, dass er
+  von einem verpatzten Test kommt, noch ob heute noch Versuche übrig sind.
+- `frontend/src/sohn/SohnPractice.tsx:374`: dasselbe Gate am Rundenende („🎯 Weiter zum Test", `practice.onToTest`).
+- `frontend/src/i18n/de.ts:320-323`, `:331`: die Texte; keiner für „nach dem Test" oder „Versuche aufgebraucht".
+- `Testable` heißt **Tag/Stufe**, nicht Restversuche: `backend/Pugling.Contracts/Student/PracticeDtos.cs:6-14`
+  („mirrors `PositionStatus.Testable`"), gesetzt in `backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:35-38`
+  über `progress.IsTestable(pos, plan, s.Day)`.
+- Die Sperre der Versuche lebt nur im Test-Controller: `PositionTestsController.cs:49` (`MaxAttemptsPerDay = 2`),
+  `:150-165` (offener Versuch wird fortgesetzt; sonst gezählt wird der **Start**, `used >= MaxAttemptsPerDay` →
+  `test_attempts_exhausted`), `:473-476` (dieselbe Zählung für `attemptsRemaining` der Abgabe).
+- `frontend/src/sohn/SohnTest.tsx:185`: `onPractice={() => nav(`/sohn/practice/${positionId}`)}` – ohne State;
+  `:380-385`: „▶ Üben" bei `!passed`, „Nochmal" nur bei `attemptsRemaining > 0` (B-62).
+- `PositionStatus.DueCount` (`backend/Pugling.Contracts/Shared/ProgressDtos.cs:24-28`) kennt die Fälligkeit je Position,
+  aber die Test-Abgabe (`SubmitResponse`) trägt sie nicht.
+- Bei `useLeitner=false` filtert die Runde nicht nach Fälligkeit – das Problem betrifft nur Leitner-Positionen.
 
 ## Die echte Lücke
 
-Zwei getrennte Dinge: (a) der Knopf erscheint auch, wenn nichts fällig ist; (b) der Leertext passt nicht zu einer
-Niederlage und bietet bei 0 Restversuchen einen Test an, den der Server mit `test_attempts_exhausted` abweist.
+Zwei Dinge: (a) Der Übungsbildschirm bietet den Test nach `Testable` an, ohne die Restversuche zu kennen – auch auf dem
+Weg von der Startseite. (b) Der Leertext feiert („🎉"), obwohl das Kind gerade durchgefallen ist.
 
 ## Offene Punkte
 
-1. Variante (1) Knopf nur bei `DueCount > 0` (aus der Übersicht), (2) eigener Leertext nach dem Test (Herkunft per
-   Navigation-State, ohne 🎉, ohne Test-Knopf bei 0 Restversuchen), oder (3) beides? Empfehlung PM: (3) – (2) allein ist
-   ehrlich, (1) erspart den leeren Umweg.
-2. Gilt (2) auch für den Weg von der Startseite (Test schon verbraucht, Übung leer)? Dann gehört die Restversuchs-Info in
-   den Übungsbildschirm selbst, nicht in den Navigation-State.
+1. ~~Variante (1) Knopf „▶ Üben" nur bei `DueCount > 0`, (2) eigener Leertext, (3) beides?~~ → Entscheidung 1.
+2. ~~Gilt (2) auch für den Weg von der Startseite?~~ → Entscheidung 2.
+3. ~~Wie erfährt der Übungsbildschirm die Restversuche?~~ → Entscheidung 3.
+
+## Entscheidungen
+
+Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
+
+1. **Variante (2) – der Übungsbildschirm wird ehrlich; „▶ Üben" bleibt.** Abweichend von der PM-Empfehlung (3).
+   *Begründung:* Mit einem ehrlichen Leerbildschirm kostet der Umweg einen Tipp und sagt dem Kind, wann es weitergeht –
+   das ist die Lage, die die User Story verlangt. Variante (1) bräuchte die Fälligkeit in der Test-Abgabe (oder einen
+   zweiten Abruf der Übersicht) und versteckte einen Knopf, den das Kind gerade erwartet. *Kosten:* ein leerer Umweg
+   bleibt möglich; siehe „Nicht in dieser Story".
+2. **Ja, die Restversuchs-Auskunft gehört in den Übungsbildschirm selbst**, nicht in den Navigation-State. *Begründung:*
+   Von der Startseite aus („Üben" nach zwei verbrauchten Versuchen) ist die Lage dieselbe; eine Herkunftsangabe allein
+   heilte nur einen von zwei Wegen. *Kosten:* ein Feld mehr in der Sitzungsantwort.
+3. **Additives Feld `TestAttemptsLeft` (int) an `SessionResponse`**, berechnet wie die Sperre in `Start`: offener
+   Versuch zählt als startbar (≥ 1), sonst `MaxAttemptsPerDay − heute gestartete` (≥ 0); für den Supervisor
+   `MaxAttemptsPerDay` (er ist von der Sperre ausgenommen, wie `SubmitResponse`). Die Zählung wandert in **eine** Methode
+   (`PositionProgressService`), die `PositionTestsController.Start`/`Submit` und `PositionPracticeController.Map` teilen.
+   *Begründung:* `Testable` bleibt, was es ist (Tag/Stufe, B-114) – eine Umdeutung bräche die Doku-Gleichheit mit
+   `PositionStatus.Testable`. Eine Quelle verhindert, dass Anzeige und Sperre auseinanderlaufen. *Kosten:* `Map` wird
+   asynchron (alle Aufrufer im Controller); kein Vertragsbruch, Frontend-Typ und `Pugling.Client` ziehen additiv nach.
+4. **Leertext ohne 🎉 nach einem Test.** `SohnTest` navigiert mit State `{ nachTest: true }`; dann lautet der Titel
+   „Heute nichts mehr fällig" statt „Nichts fällig 🎉". *Begründung:* Nach einer Niederlage zu feiern ist der zweite
+   Teil der Lücke und kostet nur einen State. Ein Neuladen verliert den State und zeigt wieder 🎉 – hinnehmbar, die
+   Auskunft über die Versuche (Entscheidung 3) bleibt richtig. *Kosten:* ein Text, ein Zweig.
+
+## Akzeptanzkriterien
+
+1. `GET`/`POST` der Übungssitzung liefert `testAttemptsLeft`: 2 ohne Test heute, 1 nach einem gestarteten, 0 nach zwei
+   gestarteten und abgegebenen; ≥ 1, solange ein Versuch offen ist. *Rot, wenn* das Feld fehlt oder die Zählung den
+   offenen Versuch als verbraucht wertet.
+2. Der Supervisor bekommt `MaxAttemptsPerDay`, auch nach zwei Versuchen des Kindes. *Rot, wenn* die Ausnahme fehlt.
+3. `Start` des Tests weist weiter mit `test_attempts_exhausted` ab – jetzt über die geteilte Methode. *Rot, wenn* die
+   Sperre beim Umzug verloren geht (bestehender Fall bleibt grün).
+4. Übungsbildschirm, nichts fällig, `testAttemptsLeft = 0`: Titel „Heute nichts mehr fällig", Text „Deine Testversuche
+   für heute sind aufgebraucht. Morgen geht's weiter.", **kein** Knopf „🎯 Zum Test". *Rot, wenn* der Knopf nur an
+   `testable` hängt.
+5. Rundenende mit `testAttemptsLeft = 0`: kein „🎯 Weiter zum Test". *Rot, wenn* `SohnPractice.tsx:374` nur `testable` prüft.
+6. Nichts fällig, Herkunft „nach dem Test", Versuche übrig: Titel ohne 🎉, Knopf „🎯 Zum Test" da. *Rot, wenn*
+   `SohnTest` keinen State mitgibt oder der Titel ihn nicht liest.
+7. Nichts fällig, von der Startseite, Versuche übrig: unverändert „Nichts fällig 🎉" mit Test-Knopf. *Rot, wenn* der
+   neue Titel auch ohne Herkunft erscheint.
+
+## Schätzung
+
+**Größe: S** – eine geteilte Zählung, ein additives Feld, ein asynchrones `Map`, zwei Texte und zwei Gates im Frontend.
+`wo: beides`, `migration: nein`, `vertragsbruch: nein` (additiv).
+
+**Risiken:** `Map` hat mehrere Aufrufer (`Start`, Sitzung lesen, Heartbeat/Ende); jeder muss die Position samt Plan geladen
+haben, sonst rechnet `Testable` heute schon falsch (Kommentar `PositionPracticeController.cs:33-34`). Der Zählschritt
+darf nicht in eine Schleife über viele Sitzungen geraten (N+1) – `Map` wird nur für eine Sitzung gerufen; beim Bau prüfen.
+`DocsCaptureTests` schreiben das neue Feld in `docs/api-examples` (byte-stabil, kein zeitabhängiger Wert).
+
+**Angriffsplan:** (1) Backend-Tests AK 1–3 in `PositionPracticeFlowTests.cs`, AK 1 rot gegen den Ist-Vertrag; (2) Zählung
+nach `PositionProgressService` ziehen, `Start`/`Submit` darauf umstellen, Feld in `SessionResponse` und `Map`;
+(3) `pugling-reviewer`; (4) Frontend: Typ, Gates an `:344`/`:374`, Texte in `de.ts`/`en.ts`, State in `SohnTest.tsx:185`;
+(5) Vitest AK 4–7; (6) rote Probe je AK; (7) `frontend-reviewer`.
+
+**Testweg:** `backend/Pugling.Api.Tests/PositionPracticeFlowTests.cs` (AK 1–3; der Sperrfall in den Test-Tests bleibt
+Zeuge für AK 3); `frontend/src/sohn/SohnPractice.test.tsx` (AK 4, 5, 6, 7); `frontend/src/sohn/TestResult.test.tsx` bzw.
+`SohnTest.test.tsx` für den mitgegebenen State (AK 6). Rollengang: Kind fällt zweimal durch, tippt „▶ Üben".
+
+**Nicht in dieser Story:** Knopf „▶ Üben" am Testergebnis nur bei `DueCount > 0` (Variante 1). Bräuchte die Fälligkeit
+in `SubmitResponse`; erst bauen, wenn der Rollengang zeigt, dass der eine leere Tipp stört.
 
 ## Verlauf
 
 - **2026-11-13** — angelegt aus dem Review von B-430 (c), Tageslauf Sprint 64.
 - **2026-11-13** — ausformuliert (Tageslauf, Restzeit): Ist-Stand am Code belegt, Lücke in (a)/(b) zerlegt, zwei offene Punkte; `art: Wunsch` – Grillen im Dialog.
+- **2026-11-13** — Ist-Stand nach Sprint 69 neu gelesen (Zeilen verschoben: Leeransicht jetzt `SohnPractice.tsx:336-346`, Texte `de.ts:320-323`).
+- **2026-11-13** — `gegrillt`: Entscheidungen 1–4 (ehrlicher Übungsbildschirm statt versteckter Knopf, Restversuche als additives Sitzungsfeld aus einer geteilten Zählung, kein 🎉 nach dem Test); Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
+- **2026-11-13** — `geschaetzt`: S, beides, ohne Migration und Vertragsbruch; Variante (1) ausdrücklich nicht in dieser Story.
+- **2026-11-13** — `in-arbeit` (Sprint 72): die Tageszählung zieht als `PositionProgressService.TestAttemptsLeftAsync` (samt `MaxTestAttemptsPerDay`) aus dem Test-Controller in den Service; `Start`, `Submit` und `PositionPracticeController.MapAsync` teilen sie. Additives Feld `SessionResponse.TestAttemptsLeft`; `SohnPractice` sperrt „🎯 Zum Test"/„🎯 Weiter zum Test" auch an den Restversuchen, Leertext „Heute nichts mehr fällig" nach dem Test (State `{ nachTest: true }` aus `SohnTest`) oder bei aufgebrauchten Versuchen, dazu „Deine Testversuche für heute sind aufgebraucht. Morgen geht's weiter." (de/en). Tests: `PositionPracticeFlowTests.Sitzung_Nennt_Die_Restversuche_Des_Tests` (AK 1, AK 3), `…Sitzung_Zeigt_Dem_Supervisor_Die_Volle_Versuchszahl` (AK 2); `SohnPractice.test.tsx` „SohnPractice nach dem Test" (AK 4–7, mit Gegenprobe zu AK 5); `SohnTest.test.tsx` „gibt dem Üben mit, dass das Kind vom Test kommt" (AK 6). Rote Probe:
+
+  Gemessen an `36ebffe5 + Arbeitsbaum geändert`, 2026-11-13 23:29.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:103 | red | red | offener Versuch zählt als verbraucht (AK 1) |
+  | M2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:100 | red | red | Supervisor-Ausnahme fehlt (AK 2) |
+  | M3 | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:144 | red | red | Sperre beim Start verloren (AK 3) |
+  | M4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:41 | red | red | Sitzung zählt nicht selbst (AK 1) |
+  | M5 | frontend/src/sohn/SohnPractice.tsx:341 | red | red | Knopf nur an `testable` (AK 4, AK 5) |
+  | M6 | frontend/src/sohn/SohnPractice.tsx:343 | red | red | Titel liest den State nicht (AK 6) |
+  | M7 | frontend/src/sohn/SohnPractice.tsx:343 | red | red | neuer Titel ohne Herkunft (AK 7) |
+  | M8 | frontend/src/sohn/SohnTest.tsx:211 | red | red | `onPractice` ohne State (AK 6) |
+
+  Grundlinie nach dem Zurückspielen: green. Abweichung vom Angriffsplan: der Fall „Versuche aufgebraucht, von der Startseite" bekommt ebenfalls den Titel ohne 🎉 (AK 4 verlangt ihn ohne Herkunftsbedingung).
+- **2026-11-14** — Code-Review-Funde behoben: (1) `TestAttemptsLeft` der Übungssitzung fragte `IsSupervisor`, der Teststart `IsStudent` – ein Token mit beiden Rollen sah 2 und bekam `test_attempts_exhausted`. Jetzt dieselbe Bedingung (`forSupervisor: !User.IsStudent()`), Test mit selbst ausgestelltem Doppelrollen-Token (`Doppelrolle_Sieht_Dieselben_Restversuche_Wie_Der_Teststart`). (2) Der Heartbeat zählt die Versuche nicht mehr (Count+Any je Takt); `SessionResponse.TestAttemptsLeft` ist dafür `int?` und nur in der Heartbeat-Antwort `null`, Start/Lesen/Ende tragen ihn weiter (`Heartbeat_Zaehlt_Die_Restversuche_Nicht`; die Arcade liest die Heartbeat-Antwort nicht). (3) Vier Leerzeilen in `PositionTestsController` auf eine. (4) Arcade: der `nachTest`-State wird nach dem Lesen per `replace` aus dem Verlaufseintrag entfernt, die Seite behält den gelesenen Wert – sonst unterdrückte ein späteres „Zurück" die Feier wieder (RTL „räumt nachTest nach dem Lesen aus dem Verlauf, ohne die Seite umzustimmen"). Rote Probe:
+
+  Gemessen an `ae9fb08a + Arbeitsbaum geändert`, 2026-11-14 00:35 / 00:40.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | BE3 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:47 | red | red | Sitzung fragt wieder `IsSupervisor` |
+  | BE4 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:180 | red | red | Heartbeat zählt wieder |
+  | BE5 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:41 | red | red | Schalter wirkungslos |
+  | FE2 | frontend/src/sohn/SohnPractice.tsx:66 | red | red | State bleibt im Verlauf |
+  | FE3 | frontend/src/sohn/SohnPractice.tsx:63 | red | red | Seite vergisst den gelesenen Wert |
+
+  Grundlinie nach dem Zurückspielen: green (beide Läufe).
+- **2026-11-13** — **abgenommen** mit Commit `ff6a08fb + fbd78e04` (Sprint 72, Backlog-Lauf 2026-11-13). Verifikation: Backend 1599/1599 grün (dotnet test Pugling.sln -c Release), Vitest 998/998, tsc -b sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: Code-Review – zwei Funde behoben in `fbd78e04`: ein Konto mit beiden Rollen sah in der Sitzung andere Restversuche als beim Teststart (jetzt eine Bedingung), und der Heartbeat zählte die Versuche bei jedem Schlag mit (jetzt nur Start, Lesen, Ende); dazu `nachTest` verlässt den Verlauf nach dem Lesen. Rollengang: volle Playwright-Suite gegen frisch gestartete Server auf Ausweichports (API 5216, Web 5189) nach dem letzten Edit: **145 passed** (alle Specs). Den Tab „Erfolge“ (Woche, Frist) fährt keine Spec eigens; er ist über RTL-Tests belegt – ein Handblick am Gerät bleibt für den Menschen.
+- **2026-11-14** — Nachschau Backlog-Lauf: ohne Fund. Eine Zählung für Anzeige und Sperre (`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:98-104`), geteilt von `PositionTestsController.cs:141` (Start) und `:451` (Abgabe) sowie `PositionPracticeController.cs:44-47` (dieselbe Rollenbedingung `!User.IsStudent()`); Heartbeat liefert `null`, die Arcade liest ihn nicht (`frontend/src/sohn/SohnPractice.tsx:139`, `:153`). Gates an beiden Knöpfen (`SohnPractice.tsx:355-369`, `:399`). Der Lernpfad bietet den Test weiter nur nach `testable` an (`frontend/src/sohn/pfad.ts:82`, `:88`), landet bei aufgebrauchten Versuchen aber in der ehrlichen Meldung `test_attempts_exhausted` (`frontend/src/i18n/de.ts:405`) – kein Feiern, kein Nichts; außerhalb des Schnitts dieser Story.

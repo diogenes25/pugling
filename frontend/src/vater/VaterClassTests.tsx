@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
@@ -11,6 +12,7 @@ import type {
 } from "../lib/types";
 import { PAGE_SIZE, Pager, TruncationHint } from "../components/ListControls";
 import { formatDate } from "../lib/datum";
+import { NICHT_ZUWEISBAR_GRUND } from "./wizardSearch";
 
 const STATUS_LABEL: Record<KlassenarbeitStatus, string> = {
   Planned: "geplant", Written: "geschrieben", Cancelled: "entfällt",
@@ -44,7 +46,8 @@ export function VaterClassTests() {
   );
 }
 
-function ClassTestManager({ childId }: { childId: number }) {
+/** Exportiert für den Test (B-380). */
+export function ClassTestManager({ childId }: { childId: number }) {
   // Server-paginiert (feste Termin-Ordnung, daher keine Sortier-UI). childId ist je Instanz fix
   // (key={activeChild} remountet bei Kindwechsel) → skip startet sauber bei 0.
   const [skip, setSkip] = useState(0);
@@ -67,8 +70,8 @@ function ClassTestManager({ childId }: { childId: number }) {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     const title = form.title.trim();
-    if (!title) { action.fail("Titel nötig."); return; }
-    if (!form.scheduledDate) { action.fail("Termin nötig."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!title || !form.scheduledDate) return;
     const ok = await action.run(() => api.createClassTest({
       ...form, childId, title, topic: form.topic?.trim() || null, subjectId: form.subjectId || null,
     }), `Klassenarbeit „${title}" geplant.`);
@@ -96,7 +99,7 @@ function ClassTestManager({ childId }: { childId: number }) {
       <section>
         <h3 className="h-section">Neue Klassenarbeit</h3>
         <form className="form-grid" onSubmit={create} style={{ alignItems: "end" }}>
-          <div className="field" style={{ minWidth: 200 }}><label htmlFor="ct-title">Titel</label>
+          <div className="field" style={{ minWidth: 200 }}><label htmlFor="ct-title">Titel <Pflicht /></label>
             <input id="ct-title" value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Vokabeltest Unité 3" /></div>
           <div className="field" style={{ minWidth: 160 }}><label htmlFor="ct-topic">Thema (optional)</label>
             <input id="ct-topic" value={form.topic ?? ""} onChange={(e) => up("topic", e.target.value)} placeholder="Passé composé" /></div>
@@ -105,9 +108,10 @@ function ClassTestManager({ childId }: { childId: number }) {
               <option value="">–</option>
               {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select></div>
-          <div className="field"><label>Termin</label>
-            <input title="Termin" type="date" value={form.scheduledDate} onChange={(e) => up("scheduledDate", e.target.value)} /></div>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Plane…" : "Planen"}</button>
+          <div className="field"><label htmlFor="ct-date">Termin <Pflicht /></label>
+            <input id="ct-date" title="Termin" type="date" value={form.scheduledDate} onChange={(e) => up("scheduledDate", e.target.value)} /></div>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
+            disabled={action.busy || !form.title.trim() || !form.scheduledDate}>{action.busy ? "Plane…" : "Planen"}</button>
         </form>
         <StatusBanner message={action.message} style={{ marginTop: 10 }} />
       </section>
@@ -223,8 +227,12 @@ function ClassTestDetail({ id, subjectId, onChanged }:
                   <li key={e.id}>{e.title} <span className="muted">({e.type})</span>{" "}
                     {assignedIds.has(e.id)
                       ? <span className="pill lime">zugewiesen</span>
-                      : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
-                          onClick={() => act(() => api.assignClassTestExercises(id, [e.id]))}>zuweisen</button>}</li>
+                      // B-140: eine zurückgezogene Übung ohne Freigabe weist der Server ab (403) – der Knopf fehlt, der
+                      // Grund steht da, statt dass erst das Zuweisen scheitert.
+                      : !e.canAssign
+                        ? <span className="muted">{NICHT_ZUWEISBAR_GRUND}</span>
+                        : <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
+                            onClick={() => act(() => api.assignClassTestExercises(id, [e.id]))}>zuweisen</button>}</li>
                 ))}
               </ul>
             )

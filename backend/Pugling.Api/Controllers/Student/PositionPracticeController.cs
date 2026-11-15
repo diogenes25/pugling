@@ -32,10 +32,20 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     // Not static (B-114 follow-up): Testable needs `progress`, and PlanPosition/StudyPlan are only
     // reliably present when the caller loaded them - see `GetSession`'s Includes and `Start`'s assignment.
-    private SessionResponse Map(PracticeSession s) =>
+    // `withAttempts` is false only for the heartbeat (B-522 review): it fires every few seconds, and the count costs a
+    // query pair the child's screen never reads from that answer.
+    private async Task<SessionResponse> MapAsync(PracticeSession s, bool withAttempts, CancellationToken ct) =>
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count,
-            s.PlanPosition is { } pos && pos.StudyPlan is { } plan && progress.IsTestable(pos, plan, s.Day));
+            s.PlanPosition is { } pos && pos.StudyPlan is { } plan && progress.IsTestable(pos, plan, s.Day),
+            withAttempts ? await TestAttemptsLeftAsync(s, ct) : null);
+
+    // The same exemption as the exam start (PositionTestsController.Start): the cap binds every token with the student
+    // role, so a token carrying both roles sees the count the start will enforce, not the supervisor's maximum.
+    private async Task<int> TestAttemptsLeftAsync(PracticeSession s, CancellationToken ct) =>
+        s.PlanPositionId is { } positionId
+            ? await progress.TestAttemptsLeftAsync(positionId, s.Day, forSupervisor: !User.IsStudent(), ct)
+            : 0;
 
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
@@ -71,7 +81,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
-        // Assigned directly (not reloaded via GetSession) so Map() can compute Testable right away - pos
+        // Assigned directly (not reloaded via GetSession) so MapAsync() can compute Testable right away - pos
         // already carries Exercise + StudyPlan from GetPosition above.
         var session = new PracticeSession
         {
@@ -90,7 +100,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         session.Order = [.. await IntroductionsFirstAsync(pos, day, dto.Mode, due, ct)];
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, Map(session));
+        return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, await MapAsync(session, withAttempts: true, ct));
     }
 
     /// <summary>
@@ -124,9 +134,41 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     [HttpGet("{sessionId:int}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Get(int planId, int positionId, int sessionId, CancellationToken ct = default) =>
-        await GetSession(planId, positionId, sessionId, ct) is { } s ? Map(s) : NotFound();
+        await GetSession(planId, positionId, sessionId, ct) is { } s ? await MapAsync(s, withAttempts: true, ct) : NotFound();
 
-    /// <summary>Adds (active) practice seconds (anti time cheat: capped per heartbeat).</summary>
+    /// <summary>
+    /// "The next card is visible now" (B-530): the server stamps the moment with its own clock, so the fast-answer
+    /// bonus measures from the visible card rather than from the previous answer - reading the feedback sheet is not
+    /// answer time. The client says only <i>when</i>, never <i>how long</i>. One stamp per card: once a stamp is
+    /// later than the latest answer, further calls change nothing, and before the first answer of a session there is
+    /// nothing to stamp (the first card earns no speed bonus). The 1-second floor still applies to the measurement.
+    /// The supervisor does not stamp: a preview pays nothing, and his call must not shape the child's measurement.
+    /// The stamp is bound to the card the client names: a report for any card but the session's current one changes
+    /// nothing (still 204 - the child has nothing to fix).
+    /// </summary>
+    [HttpPost("{sessionId:int}/shown")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Shown(int planId, int positionId, int sessionId, CardShownDto dto, CancellationToken ct = default)
+    {
+        var session = await GetSession(planId, positionId, sessionId, ct);
+        if (session is null) return NotFound();
+        if (!User.IsStudent() || session.EndedAt is not null || session.Reviews.Count == 0) return NoContent();
+        // The client fires this without waiting. Overtaken by the answer to the same card, it would land after that
+        // answer and become the base of the NEXT card, measuring its answer time too short.
+        if (session.Cursor >= session.Order.Count || session.Order[session.Cursor] != dto.ItemIndex) return NoContent();
+
+        var lastAnswer = session.Reviews.Max(r => r.At);
+        if (session.CardShownAt is { } stamped && stamped > lastAnswer) return NoContent();
+        session.CardShownAt = time.GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Adds (active) practice seconds (anti time cheat: capped per heartbeat). The answer leaves
+    /// <c>TestAttemptsLeft</c> null: the heartbeat fires every few seconds and skips that count.
+    /// </summary>
     [HttpPost("{sessionId:int}/heartbeat")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SessionResponse>> Heartbeat(int planId, int positionId, int sessionId, HeartbeatDto dto, CancellationToken ct = default)
@@ -135,7 +177,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (session is null) return NotFound();
         if (dto.Active && dto.Seconds > 0) session.ActiveSeconds += Math.Clamp(dto.Seconds, 0, MaxHeartbeatSeconds);
         await db.SaveChangesAsync(ct);
-        return Map(session);
+        return await MapAsync(session, withAttempts: false, ct);
     }
 
     /// <summary>
@@ -382,12 +424,30 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var wasCorrect = setMode ? creditedIndex is not null
             : typed ? grader.Matches(dto.GivenAnswer, item)
             : dto.WasKnown ?? false;
+        // B-422: a wrong typed answer that is the right word misspelled is named, not forgiven - the review stays wrong,
+        // as in the test (B-524). Set mode has no asked atom to measure against; the siblings keep a neighbouring word
+        // from passing as a slip. Only on a miss: the distance runs over every atom of the exercise.
+        var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, items);
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
         var prog = creditedIndex is { } credited ? await play.ProgressForAsync(positionId, credited, ct) : null;
+        // B-433: a review with no answer at all on an atom introduced today and never checked is no verdict. The card
+        // the child was served was an introduction that asked for nothing; the atom was introduced elsewhere since
+        // (a second tab), so the server now sees an asked card. Judging the empty "next" as wrong would be unfair and
+        // invisible to the child. Narrow on purpose: a word introduced today sits in box 1 anyway, so nothing is lost by
+        // not demoting it. Read before the first-contact stamp below, which would make every new atom look like this.
+        var noVerdict = !setMode && !displayOnly && dto.WasKnown is null && string.IsNullOrEmpty(dto.GivenAnswer)
+            && PositionPlayService.IntroductionStage(type) is not null
+            && prog is { ReviewCount: 0 } && prog.IntroducedAt == session.Day;
         // First contact counts as the introduction - otherwise IntroducedAt/DueOn would stand still for purely
-        // practice-based learning (due dates, the "new/old" scope).
-        if (prog is not null && prog.IntroducedAt is null)
+        // practice-based learning (due dates, the "new/old" scope). Only the child's own encounter introduces the
+        // position's atom (B-433): what the supervisor sees in a preview or catch-up round the child has not seen -
+        // the same wall as in the test (PositionTestsController, daily dose and IntroduceAnsweredAsync). The wall
+        // covers PositionItemProgress only: a graded supervisor review still writes the child's plan-wide
+        // ItemProgress/history - by decision the catch-up the supervisor records for the child (B-542; trying an
+        // exercise without side effects is the preview) - and a Leitner review without an introduction stage moves
+        // box and DueOn while IntroducedAt stays null, so the daily dose keeps counting the atom as new.
+        if (User.IsStudent() && prog is not null && prog.IntroducedAt is null)
         {
             prog.IntroducedAt = session.Day;
             prog.DueOn ??= session.Day;
@@ -400,8 +460,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A self-assessed rung of the ladder (B-476) is a claim, not a check: it pays nothing either. It still moves
         // the box (below), or the card would never reach the rungs where it is checked.
         var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday && !displayOnly
-            && !selfClaimRung;
-        var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday;
+            && !selfClaimRung && !noVerdict;
+        var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday && !noVerdict;
 
         // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
         var prevStreak = 0;
@@ -417,7 +477,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // of a hope.
         var lastAt = session.Reviews.Count > 0 ? session.Reviews.Max(r => r.At) : (DateTime?)null;
         var now = time.GetUtcNow().UtcDateTime;
-        double? elapsedSeconds = lastAt is { } la ? (now - la).TotalSeconds : null;
+        // B-530: from the moment this card became visible, if the client reported it after the previous answer;
+        // without such a stamp the old rule (since the previous answer) holds - never more generous.
+        var measuredFrom = lastAt is { } la && session.CardShownAt is { } shownAt && shownAt > la ? shownAt : lastAt;
+        double? elapsedSeconds = measuredFrom is { } from ? (now - from).TotalSeconds : null;
 
         // In set mode the progress row IS the "already named" marker (see NamedInRoundAsync), so a hit stamps
         // it even on a position without Leitner (where ApplyReview below never runs) - otherwise the same
@@ -444,7 +507,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A display-only stage (B-96) never carries a verdict at all - `wasCorrect` here would just be the
         // ungated `dto.WasKnown` claim, and the history must not show a "correctly answered" Kennenlernen card
         // when there was no judgment to make.
-        if (creditedIndex is { } recorded)
+        // A review without a verdict (B-433) leaves no history entry: the introduction it answers was recorded already.
+        if (creditedIndex is { } recorded && !noVerdict)
         {
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect && !displayOnly,
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
@@ -457,7 +521,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (leitnerScored && prog is not null)
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
-            var (preBox, preReviewCount) = (prog.Box, prog.ReviewCount);
+            var preBox = prog.Box;
+            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later.
+            var isNew = wasCorrect && prog.NewBonusPaidAt is null;
+            if (isNew) prog.NewBonusPaidAt = now;
             // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
             // "already named" marker read back above. A second reading would put the stamp outside the window
             // a frozen test clock defines, and then every remaining card would accept the same answer again.
@@ -466,7 +533,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
                 pos.TimeSlots);
-            var score = scoring.ScoreReview(cfg, preReviewCount, preBox, prog.Box, wasCorrect, combo,
+            var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
                 time.GetLocalNow().DateTime, elapsedSeconds);
             foreach (var c in score.Contributions)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
@@ -485,8 +552,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         }
         else if (climbs && prog is not null)
         {
-            // The claim moves the box like a review, but it is not one for the score: the first CHECKED hit on this
-            // card must still be the one that pays the new-content points (ScoringService keys them on ReviewCount 0).
+            // The claim moves the box like a review, but it is not one for the score: ReviewCount counts graded reviews
+            // only. The new-content points hang on NewBonusPaidAt (B-535), which a claim never sets.
             var reviewCount = prog.ReviewCount;
             play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
             prog.ReviewCount = reviewCount;
@@ -511,7 +578,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
         // and give away an entry that is still to be asked for.
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? items[shown].Answer : null,
-            awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done);
+            awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
+            creditedIndex is { } explained ? items[explained].Explanation : null);
     }
 
     /// <summary>
@@ -535,14 +603,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         session.EndedAt = time.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
-        if (!payable) return Map(session);
+        if (!payable) return await MapAsync(session, withAttempts: true, ct);
 
         // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
         var dayOverview = await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
         await dailyBox.EvaluateAndAwardAsync(plan, session.Day, dayOverview, ct);
-        return Map(session);
+        return await MapAsync(session, withAttempts: true, ct);
     }
 }

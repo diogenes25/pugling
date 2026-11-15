@@ -49,7 +49,9 @@ Wiedereintritt selbst sperrt (`useRef`, synchron): es ist der Wartepunkt der Pla
 sichtbare Grund, warum eine verworfene zweite Aktion nicht wie „nichts passiert" aussieht. Die Sperre gilt je
 **Hook-Instanz**, in Listen mit *geteilter* `ActionState` also listenweit. Als **Regel**, nicht als Zustand:
 die Sohn-Arcade (B-49) folgt ihr noch nicht. **Pflichtfeld leer → Speichern `disabled`**, das Label trägt
-„(Pflicht)", keine lokale Meldung (B-233; Rest: B-380). Den Fokus eines gesperrten `busy`-Knopfs nimmt ohne
+„(Pflicht)" über `<Pflicht />` (`src/components/Pflicht.tsx`), die Bedingung steht inline am Knopf
+(`disabled={busy || !wert.trim()}`), die Prüfzeile im Handler kehrt stumm zurück; keine lokale Meldung (B-233, B-380).
+Bewusste Ausnahme: das Anmerkungs-Widget meldet einen leeren Text nach Enter (Hauptweg Enter, kein Speichern-Knopf). Den Fokus eines gesperrten `busy`-Knopfs nimmt ohne
 Fehlerkasten der Container (`tabIndex={-1}`, B-231). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 

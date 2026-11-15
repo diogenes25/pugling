@@ -12,6 +12,7 @@ quelle: "Echter Vokabeltest von Friedrich (Englisch, 11.11.2026), abgeschrieben 
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-13
 ---
 
 # B-524 · Vokabeltest im Format der Schule: englische Lückensätze, deutscher Wortkasten, frei geschrieben
@@ -244,7 +245,7 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
 - Alte Payloads bleiben gültig. Neue Felder müssen aber im Frontend-Editor und in `Pugling.Client` ankommen,
   sonst greift beim Schreiben `unknown_field` nicht, sondern das Feld fehlt still.
 
-**Risiken**
+**Risiken:**
 
 - **Anti-Cheat am Wortkasten:** Der Kasten darf die Zuordnung Lücke → Bedeutung nicht verraten. Nicht in
   Lückenreihenfolge, nicht je Karte verschieden, und keine Bedeutung wegen eines Großbuchstabens auffällig. Das
@@ -259,7 +260,7 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
 - **KI-Creator:** Die Qualität der Ablenker und Satzformen hängt am lokalen Modell. Seit B-460 entscheidet C#, was
   eine Antwort ist; das muss für die Satzform genauso gelten.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. **C** zuerst: klein, sofort nützlich für die heutigen Freitext-Tests und unabhängig von den anderen Teilen.
    Abstandsfunktion und Nachbarvergleich am `AnswerGrader` (`backend/Pugling.Api/Services/Shared/AnswerGrader.cs`),
@@ -273,7 +274,7 @@ Sitzung fertig wird (README → „Teilen und Zusammenlegen“; die Entscheidung
 4. **D:** Format-Schalter in `backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs` (Ablenker aus Wortfamilien
    der Unit, Satzform aus `ClozeMarkup`), danach `ki-creator`-Skill und Agent-`CLAUDE.md` nachziehen.
 
-**Testweg**
+**Testweg:**
 
 - Integrationstest in `Pugling.Api.Tests` mit dem nachgebauten Test vom 11.11. (AK 3, AK 4): Friedrichs Antworten
   einreichen, die drei Kategorien je Lücke prüfen, Prozent unverändert binär (AK 2). Rote Probe je Fall benennen

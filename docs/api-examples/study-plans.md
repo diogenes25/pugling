@@ -82,7 +82,11 @@ Response — `HTTP 201`:
   "speedBonusPoints": 0,
   "timeSlots": null,
   "newItemsPerDay": 0,
-  "dailyDoseInForce": 0
+  "dailyDoseInForce": 0,
+  "learningCheck": {
+    "kind": "Typed",
+    "typedFromDay": null
+  }
 }
 ```
 
@@ -161,7 +165,8 @@ Response — `HTTP 201`:
   "mode": "Lern",
   "cursor": 0,
   "total": 2,
-  "testable": true
+  "testable": true,
+  "testAttemptsLeft": 2
 }
 ```
 
@@ -254,7 +259,9 @@ Response — `HTTP 200`:
     "introduction": true,
     "cueBox": null
   },
-  "done": false
+  "done": false,
+  "misspelled": false,
+  "explanation": null
 }
 ```
 
@@ -287,7 +294,8 @@ Response — `HTTP 201`:
   "mode": "Info",
   "cursor": 0,
   "total": 2,
-  "testable": true
+  "testable": true,
+  "testAttemptsLeft": 2
 }
 ```
 
@@ -412,7 +420,6 @@ Response — `HTTP 200`:
     "stage": 6,
     "reveal": null,
     "answerLength": null,
-    "hint": null,
     "choices": [
       "hallo",
       "tsch\u00FCss"
@@ -566,12 +573,15 @@ Response — `HTTP 200`:
         "seriesUnitId": 7,
         "seriesUnitLabel": "Unit 1"
       }
-    ]
+    ],
+    "rewardsUnlocked": true
   },
   "dailyBox": {
     "claimedToday": true,
-    "coinsAwarded": 20,
-    "gemsAwarded": 2,
+    "openedToday": false,
+    "waiting": 1,
+    "coinsAwarded": null,
+    "gemsAwarded": null,
     "streakAtClaim": 1
   }
 }

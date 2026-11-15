@@ -30,8 +30,15 @@ erlaubt (B-470). Alles Weitere ist deterministisch: `laden.py` prüft, lädt und
 - Fotos liegen unter `raw/<fach>/<werk>/` (vom Nutzer abgelegt, schreibgeschützt). Arbeitsordner:
   `raw/<fach>/<werk-slug>-pugling/`. Gibt es ihn schon, ist das ein **Nachtrag**: `buch.json` lesen und
   ergänzen, nichts neu erfinden.
-- Jedes Foto einmal ansehen und in `analyse/fotos.md` eine Zeile schreiben: Datei, Buchseite, Art
-  (Inhaltsverzeichnis · Unit-Einstieg · Unit-Seite · Grammatikteil · Vokabelteil · Sonstiges), lesbar ja/nein.
+- Jedes Foto einmal ansehen – über **Übersichtsbögen** statt Einzelbilder (12 Miniaturen je Blatt, mit Nummer und
+  Dateiname; bei 56 Fotos fünf Bilder statt 56) – und in `analyse/fotos.md` eine Zeile schreiben: Datei, Buchseite,
+  Art (Inhaltsverzeichnis · Unit-Einstieg · Unit-Seite · Grammatikteil · Vokabelteil · Sonstiges), lesbar ja/nein,
+  Drehung (0/90/180/270):
+
+  ```bash
+  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>" -Ziel "raw/<fach>/<werk-slug>-pugling/uebersicht" -Uebersicht
+  ```
+
 - Dichte oder kleine Schrift (Vokabelteil, Grammatikteil) **immer** in Kacheln lesen:
 
   ```bash
@@ -39,6 +46,19 @@ erlaubt (B-470). Alles Weitere ist deterministisch: `laden.py` prüft, lädt und
   ```
 
   Doppelseite quer: `-Spalten 2`. Kacheln überlappen 8 %, eine angeschnittene Zeile steht in der Nachbarkachel ganz.
+- **Auf dem Kopf oder quer** (flach über dem Tisch fotografiert, das Handy schreibt dann keine EXIF-Drehung): von
+  Hand drehen, im Uhrzeigersinn, nach der EXIF-Drehung – gilt für Kacheln, Bogen und Ausschnitt gleich:
+
+  ```bash
+  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Zeilen 3 -Drehung 180
+  ```
+
+- **Blasse Zeilen** (Blitzlicht, oft die obersten Zeilen einer linken Vokabelseite): den Bereich vergrößern.
+  `x,y,Breite,Höhe` als Bruchteile 0–1 des gedrehten Bilds, zweifach hochskaliert; Datei `<name>-ausschnitt.jpg`:
+
+  ```bash
+  pwsh -NoProfile -File .claude/skills/lehrwerk-aufbereiten/kacheln.ps1 -Quelle "raw/<fach>/<werk>/IMG_x.jpg" -Ziel "raw/<fach>/<werk-slug>-pugling/kacheln" -Ausschnitt 0,0,1,0.15
+  ```
 
 ### 2. Stoff verstehen (Notizen in eigenen Worten)
 

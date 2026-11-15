@@ -99,7 +99,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
         var current = await metrics.ValueAsync(childId, m.Metric, from, to, today, ct);
         var completed = await AlreadyAwardedAsync(m.Id, m.Period, from, ct) || current >= m.Target;
         return new MissionStatus(m.Id, m.Title, m.Metric, m.Period, m.Target,
-            Math.Min(current, m.Target), completed, m.RewardPoints);
+            Math.Min(current, m.Target), completed, m.RewardPoints, to is { } end ? end.DayNumber - today.DayNumber : null);
     }
 
     /// <summary>Current achievement status (pure read view, without granting points), achieved ones first.</summary>
@@ -168,7 +168,8 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             _ => (null, null),
         };
 
-    private static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
+    /// <summary>Monday of the ISO week of <paramref name="day"/> - the one week boundary (UTC) shared with the week comparison (B-253).</summary>
+    public static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     /// <summary>
     /// Is this mission's reward for this period already there? The period kind belongs in the condition: on

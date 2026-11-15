@@ -151,3 +151,23 @@ describe("Vokabel aus der Übung entfernen", () => {
     expect(question).toMatch(/bleibt im Store/);
   });
 });
+
+/*
+ * B-407: die Art ist im Dialog änderbar und entfernbar – der Ausweg, wenn eine gespielte Übung mit einer Art des alten
+ * Fachs den Fachwechsel ihrer Reihe sperrt. Zwei Richtungen, je eine Mutante:
+ */
+describe("payloadFrom – die Art kommt aus dem Formular (B-407)", () => {
+  // Rot, solange `payloadFrom` `detail.categoryId` statt `form.categoryId` nimmt: dann käme 9 statt null bzw. 11 an.
+  it("schickt die im Formular gewählte bzw. entfernte Art", () => {
+    const detail = detailWith({ categoryId: 9 });
+    expect(payloadFrom(detail, { ...initialForm(detail), categoryId: null }, detail.config).categoryId).toBeNull();
+    expect(payloadFrom(detail, { ...initialForm(detail), categoryId: 11 }, detail.config).categoryId).toBe(11);
+  });
+
+  // Rot, wenn `initialForm` die geladene Art nicht übernimmt: ein reines Titel-Speichern leerte sie dann still.
+  it("lässt die geladene Art unverändert, wenn das Feld nicht angefasst wird", () => {
+    const detail = detailWith({ categoryId: 9 });
+    const form = { ...initialForm(detail), title: "Tiere 2" };
+    expect(payloadFrom(detail, form, detail.config).categoryId).toBe(9);
+  });
+});

@@ -13,8 +13,8 @@ import type {
   ProgressResponse, ReviewInput, ReviewOutcome,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
-  ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WalletEntry, ChildPointsEntry, Currency,
+  ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
@@ -88,9 +88,12 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Diese Übung hat noch keine Inhalte.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
-  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagespflicht erledigt ist.",
+  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagesziele erfüllt sind.",
   extra_exercise_done: "Diese Bonus-Übung hast du schon gespielt.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
+  extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
+  extra_cap_reached: "Dein Bonus-Deckel ist voll, und diese Übung zahlt nur einmal – darum geht sie gerade nicht.",
+  daily_box_none: "Gerade wartet keine Truhe auf dich.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
   // Seit B-123 ist das der wahrscheinlichste Fehlschlag im Reihen-Formular: vorher war der 409 über die
   // Oberfläche gar nicht erreichbar, weil Anlegen idempotent ist. Und die Feld-Erklärung bewirbt die
@@ -665,6 +668,11 @@ export const api = {
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome | undefined>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
+  // B-530: „die nächste Karte ist jetzt sichtbar" – der Server stempelt mit seiner Uhr; der Client meldet nur das Wann
+  // und welche Karte. Der Server stempelt nur, wenn sie seine aktuelle Karte ist.
+  cardShown: (planId: number, positionId: number, sessionId: number, itemIndex: number) =>
+    http<void>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/shown`, "POST",
+      { itemIndex }),
   endSession: (planId: number, positionId: number, sessionId: number) =>
     http<PositionSession>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/end`, "POST", {}),
@@ -690,9 +698,15 @@ export const api = {
   submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>
     http<ExtraRunResult>(`${V1}/student/children/${childId}/extra-training/runs/${runId}/submit`, "POST", { answers }),
 
+  // ---- Sohn: Tagestruhe (B-527) ----
+  // Verdient beim Abschluss der Tagesziele, gebucht erst hier: der Server öffnet die älteste wartende Truhe.
+  openDailyBox: (childId: number) =>
+    http<DailyBoxOpened>(`${V1}/student/children/${childId}/daily-box/open`, "POST"),
+
   // ---- Sohn: Wallet ----
   // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.
   wallet: () => http<WalletBalance>(`${V1}/student/me/points`),
+  weekCoins: () => http<WeekCoins>(`${V1}/student/me/points/week`),
   walletEntries: (opts: { skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     appendPaging(q, opts);

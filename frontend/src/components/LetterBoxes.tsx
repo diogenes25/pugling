@@ -16,12 +16,14 @@ import { useChromeT } from "../lib/chromeText";
  * bezeichnet `value[i]` dasselbe Kästchen wie `i`. Serverseitig kostet das nichts – `StageMechanics.Normalize`
  * trimmt und faltet Leerzeichen vor dem Vergleich.
  */
-export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
+export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesperrt = false }: {
   length: number;
   value: string;
   onChange: (v: string) => void;
   onSubmit?: () => void;
   pattern?: string;
+  /** Nur lesen: `readOnly` statt `disabled`, damit ein fokussiertes Kästchen den Fokus behält (B-532). */
+  gesperrt?: boolean;
 }) {
   const t = useChromeT();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
@@ -50,6 +52,7 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
   }
 
   function setChar(i: number, raw: string) {
+    if (gesperrt) return;
     const ch = raw.slice(-1); // nur das zuletzt getippte Zeichen übernehmen
     const next = chars.slice();
     next[i] = ch;
@@ -88,6 +91,7 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern }: {
             autoCorrect="off"
             spellCheck={false}
             value={ch}
+            readOnly={gesperrt}
             aria-label={t("play.letterOf", { n: i + 1, total: length })}
             onChange={(e) => setChar(i, e.target.value)}
             onKeyDown={(e) => onKeyDown(i, e)}

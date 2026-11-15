@@ -187,6 +187,55 @@ public class ReiheFachwechselTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// B-407 (statement of intent - green on arrival, it pins the way out the edit dialog now offers): a played exercise
+    /// holding a category of the old subject can neither be deleted (<c>exercise_in_use</c>) nor taken out of its plan
+    /// (<c>position_has_data</c>), but a PUT with <c>categoryId: null</c> still saves, and then the subject change goes
+    /// through. Red if the exercise PUT gains a play lock for the category, or if <c>CategoryValid</c> stops accepting
+    /// <c>null</c> - exactly the changes that would close the way out again.
+    /// </summary>
+    [Fact]
+    public async Task Ausweg_Art_Entfernen_Entsperrt_Den_Wechsel_Auch_Bei_Gespielter_Uebung()
+    {
+        var r = await ReiheAsync();
+        var category = await TestApi.IdAsync(await r.Creator.PostAsJsonAsync(
+            $"/api/v1/creator/subjects/{r.OldSubject}/categories", new { name = TestApi.UniqueName("Art") }));
+        var title = TestApi.UniqueName("Gespielte Übung");
+        var exerciseId = await TestApi.IdAsync(await r.Creator.PostAsJsonAsync($"{r.Url}/units/{r.UnitId}/vocabulary",
+            new
+            {
+                title,
+                orderIndex = 1,
+                rewardPoints = 10,
+                categoryId = category,
+                config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "hello", back = "hallo" } } },
+                grammarTopicIds = Array.Empty<int>()
+            }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, stage: 1);
+        await TestApi.StartPositionSessionAsync(await TestApi.ChildAsync(factory), planId, positionId);
+
+        // Precondition: the other two ways out are locked - otherwise this case would not show what it claims.
+        var removePosition = await r.Creator.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}");
+        Assert.Equal("position_has_data", (await removePosition.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        var delete = await r.Creator.DeleteAsync($"{r.Url}/units/{r.UnitId}/vocabulary/{exerciseId}");
+        Assert.Equal("exercise_in_use", (await delete.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        await AssertBlockedAsync(r, await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject }), "1 exercise(s) and 0 unit(s)");
+
+        var put = await r.Creator.PutAsJsonAsync($"{r.Url}/units/{r.UnitId}/vocabulary/{exerciseId}", new
+        {
+            title,
+            orderIndex = 1,
+            rewardPoints = 10,
+            categoryId = (int?)null,
+            config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = new[] { new { front = "hello", back = "hallo" } } },
+            grammarTopicIds = Array.Empty<int>(),
+        });
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await r.Creator.PatchAsJsonAsync(r.Url, new { subjectId = r.NewSubject })).StatusCode);
+        Assert.Equal(r.NewSubject, await SubjectOfAsync(r));
+    }
+
+    /// <summary>
     /// Only the series' OWN carriers count: two series on the same subject, only A carries a topic - B may change, A is
     /// refused with exactly its own count. Red if either count drops the series filter.
     /// </summary>

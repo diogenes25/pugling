@@ -263,6 +263,13 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             var vocab = await ResolveVocabularyAsync(body, config, ct);
             if (vocab is null) return this.ProblemWithCode(body.VocabularyId is > 0 ? ApiErrors.InvalidReference : ApiErrors.ValidationError,
                 "Provide an existing vocabularyId, or front and back (plus the exercise's sourceLang/targetLang) to change the word.");
+            // B-328: pointing a played item at another store entry hands its Leitner progress to a word the child never
+            // practised - a replacement, locked like deleting. Compared on the RESOLVED entry, so front/back that resolve
+            // to another word count as well; the same entry (hint, alternatives) stays free.
+            if (vocab.Id != item.VocabularyId && await ExerciseInPlanAsync(exerciseId, ct))
+                return this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
+                    // B-414: the way out is the store, where the word keeps its link; nothing else is offered.
+                    "The exercise is used in a study plan; an item cannot be pointed at another word (its saved progress would move to that word). Correct the word in the vocabulary store instead.");
             // The same rule as AddItem, checked before saving: the unique index would only answer with a 500 (B-334).
             if (vocab.Id > 0 && await Db.ExerciseItems.AnyAsync(i => i.ExerciseId == exerciseId && i.Id != itemId && i.VocabularyId == vocab.Id, ct))
                 return this.ProblemWithCode(ApiErrors.DuplicateVocabularyInExercise,
@@ -306,18 +313,6 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
     // omitted optional argument - without a default the compiler forces you to pass it on.
     private Task<ExerciseItem?> FindItemAsync(int exerciseId, int itemId, CancellationToken ct) =>
         Db.ExerciseItems.Include(i => i.Vocabulary).FirstOrDefaultAsync(i => i.Id == itemId && i.ExerciseId == exerciseId, ct);
-
-    // Is the exercise played in a study plan? Then PositionItemProgress anchors the Leitner progress per
-    // position on the (positional) item order - index-shifting item mutations (delete, reorder, insert at a
-    // fixed position) would bend stored progress onto the wrong word.
-    private Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
-        Db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
-
-    private ObjectResult ShiftBlockedProblem() =>
-        this.ProblemWithCode(ApiErrors.ExerciseItemsLocked,
-            // B-414: "adding to the end" is part of this lock's own rule; taking the exercise out of its plans is not offered,
-            // because a played position cannot be removed (position_has_data).
-            "The exercise is used in a study plan; items cannot be removed or reordered (it would shift saved progress). Adding to the end is allowed.");
 
     private static string? NormalizeHint(string? hint) =>
         string.IsNullOrWhiteSpace(hint) ? null : hint.Trim();

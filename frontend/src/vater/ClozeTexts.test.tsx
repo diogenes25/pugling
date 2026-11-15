@@ -106,3 +106,45 @@ describe("listsForSave", () => {
     expect(listsForSave([], []).wordBank).toBeNull();
   });
 });
+
+/*
+ * B-380: Titel und – beim Anlegen – Key sind Pflicht. Leer ist „Trägertext anlegen" gesperrt, das Label sagt „(Pflicht)",
+ * und Enter im Feld schickt nichts, ohne eine Meldung „… fehlt" (die Sperre ist die Rückmeldung).
+ */
+describe("ClozeForm – Pflichtfelder (B-380)", () => {
+  // AK 1. Rot, wenn am Knopf `|| !title.trim()` bzw. `(!existing && !key.trim())` fehlt.
+  it("sperrt das Anlegen, bis Titel und Key gefüllt sind", () => {
+    render(<ClozeForm onDone={() => {}} />);
+    const knopf = screen.getByRole("button", { name: "Trägertext anlegen" }) as HTMLButtonElement;
+    expect(knopf.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Titel (Pflicht)"), { target: { value: "Begrüßungen" } });
+    expect(knopf.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Key (Pflicht)"), { target: { value: "cz_x" } });
+    expect(knopf.disabled).toBe(false);
+  });
+
+  // AK 1. Rot, wenn die `fail`-Zeile zurückkommt: Enter auf leerem Formular zeigte dann „Der Titel fehlt.".
+  it("meldet nach Enter auf leerem Formular nichts", () => {
+    const { container } = render(<ClozeForm onDone={() => {}} />);
+    fireEvent.submit(container.querySelector("form")!);
+    expect(screen.queryByText(/fehlt|nötig|darf nicht leer|Bitte einen/)).toBeNull();
+  });
+
+  // AK 2. Rot, wenn die Bedingung `!existing` an Marke oder Sperre fehlt: beim Bearbeiten ist der Key fest.
+  it("macht den Key beim Bearbeiten nicht zur Pflicht", () => {
+    render(<ClozeForm existing={cloze([{ index: 1, answer: "morning" }])} onDone={() => {}} />);
+    expect(screen.getByLabelText("Key (unveränderlich)")).toBeTruthy();
+    expect(screen.queryByLabelText(/Key \(Pflicht\)/)).toBeNull();
+    expect((screen.getByRole("button", { name: "Speichern" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  // AK 3. Die Lücken-Prüfung ist keine Pflichtfeld-Prüfung und meldet weiter nach dem Klick. Rot, wenn sie mit
+  // weggeräumt wurde (dann stünde der Satz nur einmal, vor dem Knopf).
+  it("meldet ein Lücken-Problem weiter nach dem Absenden", () => {
+    render(<ClozeForm onDone={() => {}} />);
+    fireEvent.change(screen.getByLabelText("Titel (Pflicht)"), { target: { value: "Begrüßungen" } });
+    fireEvent.change(screen.getByLabelText("Key (Pflicht)"), { target: { value: "cz_x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Trägertext anlegen" }));
+    expect(screen.getAllByText("Der Text braucht mindestens einen Platzhalter, z. B. {{1}}.")).toHaveLength(2);
+  });
+});

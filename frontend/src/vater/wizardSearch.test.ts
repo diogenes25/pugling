@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams, type WizardFilter } from "./wizardSearch";
+import { auswahlNachFilterwechsel, auswahlNachUmsortieren, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams, type WizardFilter } from "./wizardSearch";
 
 /*
  * B-18. Die Filter des Assistenten-Schritts „Übungen".
@@ -166,5 +166,38 @@ describe("auswahlNachFilterwechsel – die Regel, die den Defekt traegt", () => 
   it("nennt die Zahl der verworfenen, nicht bloss dass etwas geschah", () => {
     expect(auswahlNachFilterwechsel(Array.from({ length: 500 }, (_, i) => i), "A", "B")?.hinweis)
       .toContain("500");
+  });
+});
+
+/** B-408: „beste Bewertung zuerst" im Assistenten – eine Reihenfolge, kein Suchkriterium. */
+describe("Sortierwunsch im Assistenten (B-408)", () => {
+  // AK 1. Rot, wenn der Wunsch die Abfrage nicht erreicht oder aufsteigend sortiert.
+  it("fragt mit beste-zuerst nach rating absteigend, ohne den Wunsch nach keinem von beiden", () => {
+    const mit = wizardSearchParams({ ...leer, besteZuerst: true });
+    expect([mit.sort, mit.dir]).toEqual(["rating", "desc"]);
+    // „Alle wählen" baut seine Abfrage aus derselben Funktion und fragt damit dieselbe Reihenfolge.
+    expect(wizardSearchParams({ ...leer, besteZuerst: true }, 500)).toMatchObject({ sort: "rating", dir: "desc", take: 500 });
+    const ohne = wizardSearchParams(leer);
+    expect([ohne.sort, ohne.dir]).toEqual([undefined, undefined]);
+  });
+
+  // AK 2. Rot, wenn die Sortierung in den Schlüssel gerät – dann verwürfe der Assistent die Auswahl beim Umsortieren.
+  it("laesst den Auswahl-Schluessel beim Umsortieren gleich", () => {
+    expect(wizardFilterKey({ ...leer, besteZuerst: true })).toBe(wizardFilterKey(leer));
+  });
+});
+
+/** B-408, Entscheidung 3: die Regel für den Planbau (der Bau dort ist B-540). */
+describe("auswahlNachUmsortieren", () => {
+  // AK 3. Rot, wenn die Regel immer leert (der heutige Planbau).
+  it("behaelt eine Auswahl, die in der neuen Seite steht, ohne Hinweis", () => {
+    expect(auswahlNachUmsortieren([7], [3, 7, 9])).toEqual({ selected: [7], hinweis: null });
+  });
+
+  // AK 3. Rot, wenn die Regel immer behält (B-167 kehrte zurück: die Auswahl zeigte auf eine unsichtbare Übung).
+  it("leert eine Auswahl, die aus der Seite gerutscht ist, mit Hinweis", () => {
+    const folge = auswahlNachUmsortieren([7], [3, 9]);
+    expect(folge.selected).toEqual([]);
+    expect(folge.hinweis).toContain("(1 Übung)");
   });
 });

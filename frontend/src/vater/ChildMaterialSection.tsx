@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { FREETEXT_SUBJECT } from "./subjectField";
 import { EMPTY_TEXTBOOK_FORM, textbookFormValues, textbookPatch, type TextbookFormValues } from "./textbookPatch";
 import { api } from "../lib/api";
@@ -30,9 +31,15 @@ import { ListenAusfall } from "../components/ListenAusfall";
  * Titel und Kapitel bleiben als Freitext-Rückfallebene: ein Buch ohne katalogisierte Reihe ist erlaubt,
  * es liefert dem Creator aber nur seinen Namen.
  */
-export function ChildMaterialSection({ childId, childName, subjects }: {
+export function ChildMaterialSection({ childId, childName, subjects, kindStand = "" }: {
   childId: number;
   childName: string;
+  /**
+   * Die Angaben am Kind, nach denen der Server Fachlehrer bewertet (Klasse, Schulart), als Schlüssel. Ändern sie
+   * sich, fragt die Fachlehrer-Suche neu – sonst zeigte der Reiter „Schule" nach dem Speichern der Stammdaten
+   * weiter das Ergebnis von vorher (er bleibt eingehängt, B-534).
+   */
+  kindStand?: string;
   /* Von der Kind-Seite durchgereicht: Der Stundenplan daneben braucht dieselbe Liste, und zweimal
      dieselbe Fächer-Abfrage je Seitenaufruf ist eine Runde zu viel. */
   subjects: SubjectResponse[];
@@ -114,6 +121,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
       )}
 
       {/* Zugeklappt, solange schon Bücher da sind (B-534); ohne Buch ist das Formular der Inhalt der Fläche. */}
+      {/* Bewusst kein Panel nach gescheitertem Laden: der ListenAusfall oben bietet „Erneut laden", danach erscheint es. */}
       {books.data && (
         <AddPanel label="Weiteres Buch" defaultOpen={books.data.length === 0}>
           {/* Auch das Anlege-Formular räumt (B-197): Es schließt sich NICHT, kann eine alte Meldung
@@ -132,7 +140,7 @@ export function ChildMaterialSection({ childId, childName, subjects }: {
           erst ohne Fach und gleich darauf noch einmal mit – eine überflüssige Runde und dazwischen eine
           Trefferliste, die schon wieder falsch war. */}
       {books.data
-        ? <MatchPanel childId={childId} childName={childName} books={books.data} />
+        ? <MatchPanel childId={childId} childName={childName} books={books.data} kindStand={kindStand} />
         : books.showPlaceholder ? <div className="loading">Lade…</div> : null}
     </section>
   );
@@ -254,7 +262,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
 
   async function reiheAnlegen() {
     const name = neueReihe.trim();
-    if (!name) { action.fail("Der Name der Reihe fehlt."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!name) return;
     onMeldung(null);
     // Das Fach des Buchs wandert mit, solange es ein Katalog-Fach ist; ein Freitext-Fach hat keine Id.
     const subjectId = /^\d+$/.test(form.subjectId) ? Number(form.subjectId) : null;
@@ -292,7 +301,8 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
     e.preventDefault();
     // Der Meldungsplatz der Seite gilt ab jetzt nicht mehr – egal wie dieser Versuch ausgeht (B-197).
     onMeldung(null);
-    if (!form.title.trim()) { action.fail("Der Titel fehlt."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!form.title.trim()) return;
 
     if (book && geladen.current) {
       // Beim Ändern nur das Geänderte, und „leer" ausdrücklich über die Schalter (der Server überliest
@@ -414,14 +424,14 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
         {neueReiheOffen && (
           <div className="row" style={{ gap: 6, alignItems: "flex-end", flexWrap: "wrap", marginTop: 6 }}>
             <div className="field" style={{ flex: 1, minWidth: 200 }}>
-              <label htmlFor={`${id}-neue-reihe`}>Name der neuen Reihe</label>
+              <label htmlFor={`${id}-neue-reihe`}>Name der neuen Reihe <Pflicht /></label>
               <input
                 id={`${id}-neue-reihe`} value={neueReihe} onChange={(e) => setNeueReihe(e.target.value)} placeholder="Access"
                 // Kein eigenes <form> (Formulare schachteln nicht): Enter legt die Reihe an, statt das Buch abzuschicken.
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void reiheAnlegen(); } }}
               />
             </div>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => void reiheAnlegen()}>
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !neueReihe.trim()} onClick={() => void reiheAnlegen()}>
               Reihe anlegen &amp; wählen
             </button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -435,7 +445,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
       </div>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor={`${id}-title`}>Titel</label>
+          <label htmlFor={`${id}-title`}>Titel <Pflicht /></label>
           <input id={`${id}-title`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="Access 8" />
         </div>
         <div className="field">
@@ -499,7 +509,7 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
         </div>
       </div>
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.title.trim()}>
           {action.busy ? "Speichere…" : book ? "Speichern" : "Buch hinterlegen"}
         </button>
         {book && (
@@ -519,10 +529,11 @@ export function TextbookForm({ childId, book, series, subjects, onDone, onMeldun
  * sie mit ihrer <b>Begründung</b>, weil eine nackte Punktzahl niemandem hilft. Ein Fach-Filter ist
  * absichtlich wählbar: bei mehreren Fächern gibt es nicht *einen* passenden Lehrer, sondern einen pro Fach.
  */
-function MatchPanel({ childId, childName, books }: {
+function MatchPanel({ childId, childName, books, kindStand }: {
   childId: number;
   childName: string;
   books: TextbookResponse[];
+  kindStand: string;
 }) {
   // Die Fächer, für die dieses Kind Bücher hat – mehr Auswahl wäre hier nur Rauschen.
   const bookSubjects = books
@@ -544,7 +555,7 @@ function MatchPanel({ childId, childName, books }: {
    */
   const signature = books.map((b) => `${b.id}:${b.seriesId ?? "-"}:${b.currentUnitId ?? "-"}`).join("|");
   const matches = useAsync<CreatorProfileMatch[]>(
-    () => api.matchCreatorProfiles(childId, filter), [childId, filter, signature]);
+    () => api.matchCreatorProfiles(childId, filter), [childId, filter, signature, kindStand]);
 
   return (
     <div style={{ marginTop: 16 }}>
@@ -563,7 +574,7 @@ function MatchPanel({ childId, childName, books }: {
         </div>
       )}
 
-      <ListenAusfall was="Die passenden Fachlehrer" fehler={matches.error} laedt={matches.loading} onRetry={matches.reload} schluessel={JSON.stringify([childId, filter, signature])} />
+      <ListenAusfall was="Die passenden Fachlehrer" fehler={matches.error} laedt={matches.loading} onRetry={matches.reload} schluessel={JSON.stringify([childId, filter, signature, kindStand])} />
       {matches.loading && matches.data === null ? <div className="loading">Lade…</div>
         : matches.data?.length === 0 ? (
           <p className="muted">

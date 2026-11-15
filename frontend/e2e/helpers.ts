@@ -9,8 +9,15 @@ export interface LoginCredentials {
 /** Logs a supervisor in via id/PIN and waits for the dashboard to render. */
 export async function vaterLogin(page: Page, credentials: LoginCredentials) {
   await page.goto("/vater");
-  await page.locator("#fid").fill(credentials.id);
-  await page.locator("#pin").fill(credentials.pin);
+  // Erst ausfüllen, wenn die Seite steht, und vor dem Klick prüfen, dass beide Werte noch drinstehen: im vollen Lauf
+  // leerte ein spätes Neurendern einmal das Id-Feld, und der Login scheiterte mit „Id oder PIN falsch“ (Backlog-Lauf
+  // 2026-11-13, `unit-anlegen-bleibt-im-bild` einzeln 3/3 grün). `toPass` füllt dann erneut statt zu raten.
+  await expect(async () => {
+    await page.locator("#fid").fill(credentials.id);
+    await page.locator("#pin").fill(credentials.pin);
+    await expect(page.locator("#fid")).toHaveValue(credentials.id, { timeout: 500 });
+    await expect(page.locator("#pin")).toHaveValue(credentials.pin, { timeout: 500 });
+  }).toPass({ timeout: 10_000 });
   await page.getByRole("button", { name: "Anmelden" }).click();
   await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
 }

@@ -1,7 +1,8 @@
+import type { TruhenZiele } from "./SohnHome";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { api } from "../lib/api";
+import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
@@ -44,7 +45,7 @@ function clearAnswers(runId: number) {
 }
 
 /** Der Einstieg auf dem Pfad: gesperrt, bis die Tagespflicht erledigt ist – die Sperre selbst hält der Server. */
-export function BonusEinstieg({ offen }: { offen: boolean }) {
+export function BonusEinstieg({ offen, ziele = "tag" }: { offen: boolean; ziele?: TruhenZiele }) {
   const { t } = useTranslation();
   return (
     <div className="card bonus-einstieg" style={{ borderColor: offen ? "var(--gold)" : undefined }}>
@@ -52,7 +53,7 @@ export function BonusEinstieg({ offen }: { offen: boolean }) {
         <span style={{ fontSize: 26 }} aria-hidden="true">{offen ? "⭐" : "🔒"}</span>
         <b>{t("bonus.title")}</b>
       </div>
-      <p className="sub" style={{ margin: "6px 0" }}>{offen ? t("bonus.teaserOpen") : t("bonus.teaserLocked")}</p>
+      <p className="sub" style={{ margin: "6px 0" }}>{offen ? t("bonus.teaserOpen") : ziele === "woche" ? t("bonus.teaserLockedWeek") : t("bonus.teaserLocked")}</p>
       {offen && (
         <Link to="/sohn/bonus" className="btn gold small" style={{ textDecoration: "none", textAlign: "center" }}>{t("bonus.enter")}</Link>
       )}
@@ -70,6 +71,8 @@ export function SohnBonus() {
   if (overview.error || !overview.data) return <div className="sohn-body"><div className="error-box" role="alert">{overview.error ?? t("home.error")}</div></div>;
   const o = overview.data;
   const capReached = o.dailyCoinCap != null && o.coinsToday >= o.dailyCoinCap;
+  // Ein Deckel von 0 heißt „zahlt nichts“ – dort gibt es kein „morgen wieder“ zu versprechen.
+  const capZero = o.dailyCoinCap === 0;
 
   return (
     <div className="sohn-body">
@@ -100,18 +103,23 @@ export function SohnBonus() {
         </div>
       ) : (
         <>
-          {capReached && <div className="card" style={{ borderColor: "var(--gold)" }}><p className="sub" style={{ margin: 0 }}>{t("bonus.capReached")}</p></div>}
+          {capReached && <div className="card" style={{ borderColor: "var(--gold)" }}><p className="sub" style={{ margin: 0 }}>{t(capZero ? "bonus.capZero" : "bonus.capReached")}</p></div>}
           {o.exercises.length === 0 && <div className="card"><p className="sub" style={{ margin: 0 }}>{t("bonus.empty")}</p></div>}
-          {o.exercises.map((e) => <BonusZeile key={e.exerciseId} e={e} />)}
+          {o.exercises.map((e) => <BonusZeile key={e.exerciseId} e={e} capReached={capReached} capZero={capZero} />)}
         </>
       )}
     </div>
   );
 }
 
-function BonusZeile({ e }: { e: ExtraExercise }) {
+/**
+ * Eine Zeile des Pools. Bei vollem Deckel bietet eine Einmal-Übung keinen Start an: der Server wiese ihn ab
+ * (`extra_cap_reached`), weil sie sonst für 0 Münzen verbraucht wäre – die Zeile sagt stattdessen, wann sie wieder geht.
+ */
+function BonusZeile({ e, capReached, capZero }: { e: ExtraExercise; capReached: boolean; capZero: boolean }) {
   const { t } = useTranslation();
   const formText = useFormText();
+  const wartetAufMorgen = capReached && !e.repeatable && !e.done;
   return (
     <div className={`card bonus-zeile${e.done ? " erledigt" : ""}`}>
       <div className="row">
@@ -122,7 +130,8 @@ function BonusZeile({ e }: { e: ExtraExercise }) {
         {e.done ? t("bonus.done") : formText(e.nextForm, e.coinsPerHit)}
         {e.repeatable && e.completedRuns > 0 && <> · {t("bonus.played", { count: e.completedRuns })}</>}
       </div>
-      {!e.done && (
+      {wartetAufMorgen && <div className="sub"><b>{t(capZero ? "bonus.oneShotNoCoins" : "bonus.oneShotTomorrow")}</b></div>}
+      {!e.done && !wartetAufMorgen && (
         <Link to={`/sohn/bonus/${e.exerciseId}`} className="btn lime small" style={{ textDecoration: "none", textAlign: "center" }}
           aria-label={`${e.openRunId != null ? t("bonus.resume") : t("bonus.play")}: ${e.title}`}>
           {e.openRunId != null ? t("bonus.resume") : t("bonus.play")}
@@ -184,6 +193,8 @@ export function SohnBonusRun() {
       try {
         res = await api.submitExtraRun(childId, r.runId, all);
       } catch (e) {
+        // B-545: der Server hat die Runde verworfen – ihre gespeicherten Antworten gehören zu Karten, die es nicht mehr gibt.
+        if (e instanceof ApiError && e.code === "extra_run_stale") clearAnswers(r.runId);
         if (!gone.current) setError(errorMessage(e));
         throw e;
       }

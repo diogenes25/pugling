@@ -127,7 +127,11 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
   kartenId: string | number;
   wert: string;
   onWert: (wert: string) => void;
-  /** Eine Bewertung läuft – nichts annehmen. */
+  /**
+   * Nichts annehmen: eine Bewertung läuft, oder sie ist gescheitert und wartet auf „Noch einmal senden" (B-532). Das
+   * Feld wird `readOnly`, nicht `disabled` – ein gesperrtes Feld gäbe den Fokus an `body` ab, und Enter erreichte das
+   * Formular nicht mehr (die Sperre gegen ein doppeltes Absenden sitzt in `useAction`).
+   */
   gesperrt: boolean;
   /** Beschriftung des Hauptknopfs: „Prüfen“ im Üben, „Weiter“ im Test. */
   knopf: string;
@@ -155,15 +159,15 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
           ))}
         </div>
       ) : karte.letterTiles ? (
-        <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} />
+        <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} gesperrt={gesperrt} />
       ) : karte.answerLength ? (
-        <LetterBoxes length={karte.answerLength} value={wert} onChange={onWert} onSubmit={abschicken} pattern={karte.answerPattern ?? undefined} />
+        <LetterBoxes length={karte.answerLength} value={wert} onChange={onWert} onSubmit={abschicken} pattern={karte.answerPattern ?? undefined} gesperrt={gesperrt} />
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); abschicken(); }}>
           <input
             className="lektion-feld" aria-label={feldName} name={`answer-${karte.itemIndex}`} placeholder={platzhalter}
             autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
-            value={wert} onChange={(e) => onWert(e.target.value)}
+            value={wert} onChange={(e) => onWert(e.target.value)} readOnly={gesperrt}
           />
         </form>
       )}
@@ -188,6 +192,16 @@ export interface Rueckmeldung {
   faelligAm: string | null;
   /** Wählt das Lobwort; der Combo-Stand, damit es wechselt, ohne zu würfeln. */
   lob: number;
+  /**
+   * B-422: falsch, aber das richtige Wort falsch geschrieben (der Server meldet `misspelled`). Nur ein Etikett – die
+   * Wertung bleibt falsch; das Kind soll sehen, dass es das Wort wusste und nur die Schreibweise fehlte.
+   */
+  falschGeschrieben?: boolean;
+  /**
+   * B-529: warum die Antwort richtig oder falsch war (heute der Regel-Hinweis einer Regelaufgabe). Der Server schickt
+   * sie erst mit der Bewertung; `null`, wo der Inhalt keine kennt – dann steht auch keine leere Zeile da.
+   */
+  erklaerung?: string | null;
 }
 
 const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
@@ -218,7 +232,7 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
     <div className={`lektion-blatt ${r.richtig ? "richtig" : "falsch"}`}>
       <div className="row">
         <div className="lektion-begleiter" aria-hidden="true"><Mascot skin={skin} mood={r.richtig ? "hyped" : "happy"} size={48} /></div>
-        <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : t("lektion.almost")}</b>
+        <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : r.falschGeschrieben ? t("test.misspelled") : t("lektion.almost")}</b>
         {r.richtig && r.muenzen > 0 && <span className="pill gold" style={{ marginLeft: "auto" }}>+{r.muenzen} 🪙</span>}
       </div>
       {r.richtig ? (
@@ -232,6 +246,9 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
           <div className="rev">{r.loesung ? t("practice.solution", { expected: r.loesung }) : t("practice.wrong")}</div>
         </>
       )}
+      {/* Bei richtig UND falsch (B-529, Entscheidung 5): richtig bestätigt sie, warum. Der Inhalt ist Nutzerdaten und
+          reist als Platzhalter. */}
+      {r.erklaerung && <div className="sub lektion-erklaerung">{t("lektion.rule", { text: r.erklaerung })}</div>}
       <button type="button" ref={weiterRef} className={`btn ${r.richtig ? "lime" : "red"}`} onClick={onWeiter}>{t("practice.next")}</button>
     </div>
   );

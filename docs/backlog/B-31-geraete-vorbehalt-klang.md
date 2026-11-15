@@ -36,10 +36,11 @@ Ton und Vibration sind gebaut und zentral verdrahtet — das ist recherchierbar 
   [feedback.ts:104](../../frontend/src/lib/feedback.ts)).
 - **Auslöser**: beide hängen an `playCelebration(tier)`, aufgerufen von `celebrate(...)`
   ([Celebration.tsx:30](../../frontend/src/components/Celebration.tsx)) — zentral für jede Feier, nicht an
-  jeder Aufrufstelle einzeln verdrahtet. Aufrufer sind `SohnPractice.tsx:103,105` (Combo-Treffer),
-  `SohnTest.tsx:46` (Klausur bestanden/durchgefallen), `SohnShop.tsx:60` (Kauf) und
-  `GamificationPanels.tsx:59,111` (Mission/Abzeichen).
-- **Stummschaltung**: ein HUD-Schalter (`SohnApp.tsx:58,82-84`) spiegelt `isMuted()`/`setMuted()`
+  jeder Aufrufstelle einzeln verdrahtet. Aufrufer (Stand 2026-11-14) sind `SohnPractice.tsx:252,254`
+  (Combo-Treffer), `SohnTest.tsx:104` (Klausur bestanden/durchgefallen), `SohnShop.tsx:147` (Kauf),
+  `GamificationPanels.tsx:42,95` (Mission/Abzeichen), dazu neu `MyObjectives.tsx:52,58` (Ziel-Etappe/Ziel
+  erreicht), `SohnBonus.tsx:202` (Bonus-Training) und `SohnInterests.tsx:141` (Interessen gespeichert).
+- **Stummschaltung**: ein HUD-Schalter (`SohnApp.tsx:23,80,106-108`) spiegelt `isMuted()`/`setMuted()`
   ([feedback.ts:22-33](../../frontend/src/lib/feedback.ts)) nach `localStorage`; bei `muted` passiert gar
   nichts (`feedback.ts:85`).
 - **Absicherung**: fehlt `AudioContext` oder `navigator.vibrate`, oder wirft einer der beiden Aufrufe,
@@ -118,3 +119,4 @@ Automatisierung.
   möglich)**. Die Story bleibt bewusst bei `art: Frage` und wird **nicht** `verworfen` — die Geräteprüfung
   selbst steht nach diesem Durchgang weiterhin aus und ist erst mit einem dokumentierten Ergebnis
   abschließbar.
+- **2026-11-14** — Abgleich Backlog-Lauf: Code-Ist-Stand gilt (`feedback.ts:53-109` unverändert: Töne, Vibrationsmuster, Stumm-/Reduced-Motion-Gate); Aufrufer-Zeilen waren verrutscht und sind berichtigt, vier neue Aufrufer (Objectives, Bonus-Training, Interessen). Die Geräteprüfung selbst steht weiter aus.

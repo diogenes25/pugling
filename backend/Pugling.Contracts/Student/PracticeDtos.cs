@@ -8,10 +8,17 @@ namespace Pugling.Contracts.Student;
 /// <c>PositionStatus.Testable</c> (B-114) for this session's day: false on a free display stage, so a
 /// client offering "continue to the test" after the round (or when nothing is due) can gate on it instead
 /// of sending the child into the exam's <c>stage_not_testable</c> dead end.
+///
+/// <paramref name="TestAttemptsLeft"/> (B-522) is the number of exam attempts still startable on the session's
+/// day - the same count that locks the exam start with <c>test_attempts_exhausted</c>; an open attempt counts as
+/// startable (it is resumed). <c>Testable</c> says whether the day's stage has a test at all, this says whether
+/// the child may still take it today. A token without the student role is exempt from the cap and always gets the
+/// daily maximum. It is <c>null</c> only in the heartbeat's answer: the heartbeat runs every few seconds and its
+/// answer is not a screen state, so it skips the count (start, read and end always carry it).
 /// </summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
     DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-    PlayMode Mode, int Cursor, int Total, bool Testable);
+    PlayMode Mode, int Cursor, int Total, bool Testable, int? TestAttemptsLeft);
 
 /// <summary>
 /// Start payload of a practice session. <paramref name="Mode"/> selects the playback mode (default
@@ -89,6 +96,13 @@ public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total)
 public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 
 /// <summary>
+/// "This card is visible now" (B-530). <paramref name="ItemIndex"/> names the card the client shows, the same atom
+/// address as in <see cref="ReviewDto"/>: the server stamps only when it is the session's current card, so a report
+/// that arrives after that card's own answer cannot become the base of the card after it.
+/// </summary>
+public record CardShownDto(int ItemIndex);
+
+/// <summary>
 /// Result of a Leitner review (graded server-side) incl. bonuses for feedback. <see cref="Next"/>
 /// carries the next card directly in learn mode (no separate roundtrip needed); <see cref="Done"/> signals
 /// the end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),
@@ -98,6 +112,17 @@ public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// atom at all, and naming one particular entry as "the" solution would be arbitrary while a dozen are still
 /// open – it would also give away an entry the child is about to be asked for. <see cref="Box"/> is 0 and
 /// <see cref="DueOn"/> null in that case for the same reason: nothing was reviewed, so nothing moved.
+/// <para>
+/// <see cref="Misspelled"/> marks a wrong typed answer that is the right word with a small spelling slip (B-422, the
+/// measure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -
+/// so practice prepares for the strict test; the mark only tells the child it knew the word.
+/// </para>
+/// <para>
+/// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - today the rule hint of a rule task, on a
+/// right and on a wrong answer alike. It follows the rule of <see cref="Expected"/>: given only after the answer, and
+/// <c>null</c> where no atom was hit; <c>null</c> as well for content that has no explanation (vocabulary).
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
-    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done);
+    DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
+    string? Explanation = null);

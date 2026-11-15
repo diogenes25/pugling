@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FieldLabel } from "../components/InfoHint";
+import { Pflicht } from "../components/Pflicht";
 import { ReferenceSelect } from "../components/ReferenceSelect";
 import { StatusBanner } from "../components/StatusBanner";
 import { GrammarTopicPicker } from "../components/GrammarTopicChips";
@@ -529,7 +530,7 @@ export function SeriesForm({ series, subjects, publishers, onSaved, onMeldung }:
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
           <FieldLabel htmlFor={`se-name-${id}`} topic="seriesName">
-            Name der Reihe <span className="muted">(Pflicht)</span>
+            Name der Reihe <Pflicht />
           </FieldLabel>
           <input id={`se-name-${id}`} value={form.name} onChange={(e) => up("name", e.target.value)} />
           {/* Nur der WERT – die Erklärung dazu steht im `HelpTopic` und darf nicht zweimal dastehen
@@ -838,7 +839,7 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor={`unit-label-${id}`}>Bezeichnung <span className="muted">(Pflicht)</span></label>
+          <label htmlFor={`unit-label-${id}`}>Bezeichnung <Pflicht /></label>
           <input
             id={`unit-label-${id}`} value={form.label} onChange={(e) => up("label", e.target.value)}
             placeholder="Unit 3 – Growing up"
@@ -1002,7 +1003,7 @@ function NewSeries({ subjects, publishers, onPublisherCreated, onCreated, onMeld
       <form className="form-grid" style={{ alignItems: "end" }} onSubmit={submit}>
         <div className="field">
           {/* Der Grund für den gesperrten Knopf steht am Feld, nicht in einem `title` am Knopf (B-160, B-225). */}
-          <label htmlFor="ns-name">Reihe <span className="muted">(Pflicht)</span></label>
+          <label htmlFor="ns-name">Reihe <Pflicht /></label>
           <input id="ns-name" value={form.name} onChange={(e) => up("name", e.target.value)} placeholder="Access" />
         </div>
         <div className="field">

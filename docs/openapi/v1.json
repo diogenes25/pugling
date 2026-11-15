@@ -1584,9 +1584,46 @@
           "Supervisor \u2013 Children"
         ],
         "summary": "List of students supervised by the logged-in supervisor.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -6366,6 +6403,34 @@
           {
             "name": "childId",
             "in": "query",
+            "description": "Optional filter on one child (supervisor only).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -6379,6 +6444,14 @@
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -8383,6 +8456,78 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/daily-box/open": {
+      "post": {
+        "tags": [
+          "Student \u2013 Daily Box"
+        ],
+        "summary": "Opens the oldest waiting chest and books its coins and gems - the draw fixed on the day it was earned.\n\u0060409 daily_box_none\u0060 when no chest is waiting (or a parallel tap opened it first), \u0060409\nconcurrency_conflict\u0060 when another wallet write collided.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyBoxOpened"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/children/{childId}/extra-training": {
       "get": {
         "tags": [
@@ -8440,7 +8585,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards. \u0060409\nextra_training_locked\u0060 before today\u0027s duty is done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played.",
+        "summary": "Starts a bonus run of the exercise - or resumes its open run, which keeps its form and cards unless the exercise\nchanged since: then the open run is discarded and a fresh one starts, with a new \u0060runId\u0060 (B-545). \u0060409\nextra_training_locked\u0060 before today\u0027s daily goals are done, \u0060409 extra_exercise_done\u0060 for a one-shot exercise\nalready played, \u0060409 extra_cap_reached\u0060 for a one-shot exercise - new or open - once today\u0027s coin cap is\nfull, so it is not used up for nothing.",
         "parameters": [
           {
             "name": "childId",
@@ -8522,7 +8667,7 @@
         "tags": [
           "Student \u2013 Bonus Training"
         ],
-        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit.",
+        "summary": "Grades a bonus run and books its coins (checked hits only, within the daily cap). A run is graded once:\n\u0060409 extra_run_completed\u0060 on a second submit. A one-shot run handed in at a full cap is neither graded nor\nused up (\u0060409 extra_cap_reached\u0060) and can be handed in again once coins are left. \u0060409 extra_run_stale\u0060\nwhen the exercise changed since the start: the run is discarded unpaid and the exercise is open again (B-545).\n\u0060409 extra_training_locked\u0060 when today\u0027s daily goals are not met (any more).",
         "parameters": [
           {
             "name": "childId",
@@ -8721,6 +8866,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WalletResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/points/week": {
+      "get": {
+        "tags": [
+          "Student \u2013 Me"
+        ],
+        "summary": "Own earned coins this week against the own previous week up to the same moment (B-253). Only the child\u0027s own\nweek - no siblings, no ranks (user decision G-6).",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekCoinsResponse"
                 }
               }
             }
@@ -10454,12 +10639,100 @@
         }
       }
     },
+    "/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/shown": {
+      "post": {
+        "tags": [
+          "Student \u2013 Position Practice"
+        ],
+        "summary": "\u0022The next card is visible now\u0022 (B-530): the server stamps the moment with its own clock, so the fast-answer\nbonus measures from the visible card rather than from the previous answer - reading the feedback sheet is not\nanswer time. The client says only when, never how long. One stamp per card: once a stamp is\nlater than the latest answer, further calls change nothing, and before the first answer of a session there is\nnothing to stamp (the first card earns no speed bonus). The 1-second floor still applies to the measurement.\nThe supervisor does not stamp: a preview pays nothing, and his call must not shape the child\u0027s measurement.\nThe stamp is bound to the card the client names: a report for any card but the session\u0027s current one changes\nnothing (still 204 - the child has nothing to fix).",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "positionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CardShownDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions/{sessionId}/heartbeat": {
       "post": {
         "tags": [
           "Student \u2013 Position Practice"
         ],
-        "summary": "Adds (active) practice seconds (anti time cheat: capped per heartbeat).",
+        "summary": "Adds (active) practice seconds (anti time cheat: capped per heartbeat). The answer leaves\n\u0060TestAttemptsLeft\u0060 null: the heartbeat fires every few seconds and skips that count.",
         "parameters": [
           {
             "name": "planId",
@@ -11411,9 +11684,46 @@
           "Student \u2013 Plans"
         ],
         "summary": "The playable study plans of the logged-in child (practically exactly one): active and today\nwithin its run time. Inactive/expired ones stay deliberately hidden (anti-cheat: no easy\npoints plan to pick). From the result the client takes the \u0060id\u0060 for the next steps.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -22994,7 +23304,7 @@
         "tags": [
           "Creator \u2013 Interest Tags"
         ],
-        "summary": "Deletes a tag along with its links to images and children (cascade). Links to exercises block\nthe delete instead (409) \u2013 the one asymmetry that matters here (B-206).\n\nThe line runs along what the loss costs. An image link or a child\u0027s preference can be set\nagain from what is still there; a tag that dresses an exercise carries authored information\nthat nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only\nthe first kind existed, which is why the old reasoning (\u0022its loss only costs selection quality\u0022)\nwas right at the time and is wrong now.\n\nThe lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be\nremoved. Without that door this would be a dead end instead of a guard rail.\n\nTwo limits, so this does not read as more than it is. It guards the tag, not the dressing:\nthe exercise \u0060PUT\u0060 is a replacement, so a caller that omits \u0060InterestTagIds\u0060 still clears\nthe dressing without a word (deliberate since B-46 - whether an omitted field should mean \u0022keep\u0022 is\na contract question of its own). And it is an application-level check, not a constraint: the foreign\nkey stays \u0060Cascade\u0060, so a request that dresses an exercise between this check and the commit\nslips through.",
+        "summary": "Deletes a tag along with its links to images and children (cascade). Links to exercises block\nthe delete instead (409) \u2013 the one asymmetry that matters here (B-206).\n\nThe line runs along what the loss costs. An image link or a child\u0027s preference can be set\nagain from what is still there; a tag that dresses an exercise carries authored information\nthat nothing else records, so a cascade would erase it silently and unrecoverably. Until B-46 only\nthe first kind existed, which is why the old reasoning (\u0022its loss only costs selection quality\u0022)\nwas right at the time and is wrong now.\n\nThe lock has a way out, and it needs one: the exercise editor shows the dressing and lets it be\nremoved. Without that door this would be a dead end instead of a guard rail.\n\nTwo limits, so this does not read as more than it is. It guards the tag, not the dressing:\nthe exercise \u0060PUT\u0060 is a replacement, so a caller that omits \u0060InterestTagIds\u0060 still clears\nthe dressing without a word. Omitted means cleared, decided in B-208: a PUT that replaces some fields\nand keeps others would be the bigger surprise, and callers carry the field along instead (as for\n\u0060suggestedBonus\u0060 and \u0060executePublic\u0060). And it is an application-level check, not a constraint: the foreign\nkey stays \u0060Cascade\u0060, so a request that dresses an exercise between this check and the commit\nslips through.",
         "parameters": [
           {
             "name": "id",
@@ -25185,9 +25495,46 @@
           "Creator \u2013 Subjects"
         ],
         "summary": "List of all subjects.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -25445,7 +25792,7 @@
         "tags": [
           "Creator \u2013 Subjects"
         ],
-        "summary": "Deletes a subject along with its exercise categories (owner only), unless a row that cannot live\nwithout it points at it.\n\nThe line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional \u0060SubjectId\u0060 only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are \u0060SetNull\u0060, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - \u0060CategoryId\u0060 is\n\u0060SetNull\u0060 in turn). The other two are \u0060Restrict\u0060 and block the delete with 409\n\u0060subject_in_use\u0060, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n\nStating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a \u0060SetNull\u0060 subject would quietly\nfall on the other side of the line.\n\nThe pre-check is not redundant next to \u0060DeleteBehavior.Restrict\u0060, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without \u0060Restrict\u0060 this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
+        "summary": "Deletes a subject along with its exercise categories (owner only), unless a row that cannot live\nwithout it points at it.\n\nThe line runs along whether the reference is REQUIRED, not along who owns the row (B-144). Every\noptional \u0060SubjectId\u0060 only loses its assignment - textbook series, textbooks, creator profiles,\nstudy plans and class tests are \u0060SetNull\u0060, and the last three belong to a child just as much\nas the two below do. Of the three mandatory ones, the cheap one cascades: an exercise category is\ncatalog-internal and meaningless without its subject (its exercises survive - \u0060CategoryId\u0060 is\n\u0060SetNull\u0060 in turn). The other two are \u0060Restrict\u0060 and block the delete with 409\n\u0060subject_in_use\u0060, because the cascade would take a child\u0027s work with it: a key result\u0027s\nmilestone together with the payout it earned, and a timetable entry that was typed by hand.\n\nStating the rule as \u0022child data blocks\u0022 would be the trap it was written to close: it reads as a\npromise for the next child-owned entity, and one added with a \u0060SetNull\u0060 subject would quietly\nfall on the other side of the line.\n\nOne catalog rule blocks as well (B-404): a series of this subject that hosts exercises. The series\u0027\n\u0060SetNull\u0060 would otherwise produce a series without a subject that carries exercises - the state\nthat creating an exercise (B-106 T-01) and clearing a series\u0027 subject (B-401) both refuse. A series\nwithout exercises keeps losing only its assignment and shows the old name as free text (B-142).\nKnown limit: units with grammar topics of this subject and exercises of other series that carry one\nof its categories do not block; those links still go with the cascade.\n\nThe pre-check is not redundant next to \u0060DeleteBehavior.Restrict\u0060, and vice versa. Without the\ncheck the database would raise the conflict as a bare 500 with a half-saved state instead of a\nreadable 409. Without \u0060Restrict\u0060 this check would be the only thing between a child\u0027s\nmilestones and their deletion - and it only guards the one path that runs through here.",
         "parameters": [
           {
             "name": "subjectId",
@@ -25518,6 +25865,34 @@
           {
             "name": "childId",
             "in": "query",
+            "description": "Child whose tags are listed.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
@@ -25541,6 +25916,14 @@
           },
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -28221,9 +28604,46 @@
           "Creator \u2013 Vocabulary Store"
         ],
         "summary": "All vocabulary tags (alphabetically), each with the count of linked vocabulary entries.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries to skip (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Optional page size (0..500). Without it the whole list is returned; the total count is always in the \u0060X-Total-Count\u0060 header.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -29690,6 +30110,23 @@
         "type": "string",
         "description": "Which kind of book within a textbook series a \u0060SeriesUnit\u0060 belongs to. A series with several\ncompanion volumes (textbook, workbook, teacher\u0027s guide) tells them apart by this field instead of a\nsecond hierarchy level - see \u0060docs/backlog/B-63-lehrwerk-hierarchie.md\u0060, decision 6.\n\nAllowed values: Textbook, Workbook, TeacherGuide."
       },
+      "CardShownDto": {
+        "required": [
+          "itemIndex"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "\u0022This card is visible now\u0022 (B-530). ItemIndex names the card the client shows, the same atom\naddress as in ReviewDto: the server stamps only when it is the session\u0027s current card, so a report\nthat arrives after that card\u0027s own answer cannot become the base of the card after it."
+      },
       "CategoryResponse": {
         "required": [
           "createdAt",
@@ -30427,7 +30864,7 @@
             "format": "int32"
           }
         },
-        "description": "Input for creating a child."
+        "description": "Input for creating a child. \u0060SchoolType\u0060 is a single value or \u0060None\u0060 (\u0022not specified\u0022): a child attends one\nschool, so a combination of flags or an undefined bit is rejected with \u0060validation_error\u0060 (B-152)."
       },
       "CreateClassTestDto": {
         "required": [
@@ -32119,15 +32556,85 @@
         "type": "string",
         "description": "The app\u0027s two currencies. Currency.Coins (\u0022coins\u0022) buys **real-world** supervisor offers,\nCurrency.Gems buys **cosmetic/playful** things (skins, future game features).\n\nAllowed values: Coins, Gems."
       },
+      "DailyBoxOpened": {
+        "required": [
+          "coins",
+          "day",
+          "gems",
+          "streakAtClaim",
+          "waitingAfter"
+        ],
+        "type": "object",
+        "properties": {
+          "coins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Coins booked.",
+            "format": "int32"
+          },
+          "gems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Gems booked.",
+            "format": "int32"
+          },
+          "streakAtClaim": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Streak on the day the chest was earned - it scaled the draw.",
+            "format": "int32"
+          },
+          "day": {
+            "type": "string",
+            "description": "Day the chest was earned.",
+            "format": "date"
+          },
+          "waitingAfter": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Chests still waiting after this one.",
+            "format": "int32"
+          }
+        },
+        "description": "A daily reward chest the child just opened (B-527): the draw fixed on the day it was earned, now booked to the\nledger. The oldest waiting chest is opened first."
+      },
       "DailyBoxStatus": {
         "required": [
           "claimedToday",
-          "streakAtClaim"
+          "openedToday",
+          "streakAtClaim",
+          "waiting"
         ],
         "type": "object",
         "properties": {
           "claimedToday": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Today\u0027s chest is earned (the reward goals of today are met)."
+          },
+          "openedToday": {
+            "type": "boolean",
+            "description": "Today\u0027s chest is opened and booked."
+          },
+          "waiting": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Earned chests not opened yet, of any day.",
+            "format": "int32"
           },
           "coinsAwarded": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -32136,6 +32643,7 @@
               "integer",
               "string"
             ],
+            "description": "Coins of today\u0027s chest - only once it is opened; the content stays a surprise until then.",
             "format": "int32"
           },
           "gemsAwarded": {
@@ -32145,6 +32653,7 @@
               "integer",
               "string"
             ],
+            "description": "Gems of today\u0027s chest - only once it is opened.",
             "format": "int32"
           },
           "streakAtClaim": {
@@ -32153,10 +32662,11 @@
               "integer",
               "string"
             ],
+            "description": "Streak snapshot of today\u0027s chest (0 without one). Visible before opening on purpose: it tells the size class of the\ndraw (the multiplier tier), not the amount, so the surprise stays intact.",
             "format": "int32"
           }
         },
-        "description": "Today\u0027s daily reward box status: whether it has already been claimed and, if so, what it held. Read-only -\nthe box is granted only at the practice/test-completion write seams, never as a side effect of this view."
+        "description": "Today\u0027s daily reward chest (B-527): whether it was earned today, whether it is opened, and how many chests wait\nto be opened in total (none ever lapses). Read-only - the chest is earned only at the practice/test-completion\nwrite seams and booked only when the child opens it, never as a side effect of this view."
       },
       "Dashboard": {
         "required": [
@@ -32199,7 +32709,8 @@
           "goalsTotal",
           "outstanding",
           "pointsAwarded",
-          "positions"
+          "positions",
+          "rewardsUnlocked"
         ],
         "type": "object",
         "properties": {
@@ -32245,9 +32756,12 @@
             "items": {
               "$ref": "#/components/schemas/PositionStatus"
             }
+          },
+          "rewardsUnlocked": {
+            "type": "boolean"
           }
         },
-        "description": "Daily rollup of a study plan across its positions."
+        "description": "Daily rollup of a study plan across its positions. bool DayOverview.DutyDone counts every goal (daily and weekly) and\ndrives streak and evaluation; bool DayOverview.RewardsUnlocked counts only the daily goals - or every goal when the\nplan has no daily one - and gates the daily box and the bonus training (B-535): a week of hard grammar must not\nlock seven days of rewards."
       },
       "DecodedSentence": {
         "required": [
@@ -32761,9 +33275,13 @@
               ],
               "format": "int32"
             }
+          },
+          "canAssign": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them.\n\u0060CanAssign\u0060: the same rule as on ExerciseSummary (B-140) - may the requester put the exercise\ninto a study plan or class test? Lets a caller holding only an id (the agent\u0027s \u0060assign\u0060, B-20) refuse it\nbefore the first write instead of failing halfway with \u0060exercise_not_executable\u0060."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -37167,6 +37685,7 @@
       },
       "ExerciseSummary": {
         "required": [
+          "canAssign",
           "defaultRequireTypedTest",
           "defaultUseLeitner",
           "executePublic",
@@ -37351,9 +37870,12 @@
               "string"
             ],
             "format": "int32"
+          },
+          "canAssign": {
+            "type": "boolean"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty.\n\n\u0060CanAssign\u0060 (B-140) says whether the requester may put the exercise into a study plan or class test: it is\npublic, or the requester holds any grant on it, or is an admin - the rule \u0060POST \u2026/positions\u0060 enforces, so a\npicker can lock a withdrawn exercise before the save fails with \u0060exercise_not_executable\u0060."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -37434,6 +37956,21 @@
               "string"
             ],
             "description": "German singular of ItemNoun (\u0022Karte\u0022) for a count of exactly one."
+          },
+          "stages": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StageOption"
+            },
+            "description": "The stages a plan position of this type may be set to (B-16) - the very list the server checks a\nposition\u0027s stage against, so a form built from it cannot offer an invalid one. Empty for a type without a stage\nchoice."
+          },
+          "selfAssessedTest": {
+            "type": "boolean",
+            "description": "A test of this type can run on a stage that is not typed (self-assessment), so a\nposition without \u0022typed tests only\u0022 may count a claim as a pass (B-469). \u0060false\u0060 where every testable stage is\ntyped (e.g. matching) - there the switch changes nothing.",
+            "default": false
           }
         },
         "description": "Self-description of an exercise type: the bridge between the authoring catalog (\u0060IExerciseType\u0060),\ntypical learning family (LearningMethod), play route, and frontend renderer. The frontend\nreads the manifest list once and wires up routing, checking, and display generically; the\nactual render component remains hand-built per string ExerciseTypeManifest.Renderer (the play view reveals\na different amount depending on the Leitner box \u2013 that cannot be generated generically from JSON)."
@@ -37902,7 +38439,7 @@
             }
           }
         },
-        "description": "The bonus training of a child for today. Unlocked is false until the day\u0027s duty is met\n(LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the open duties in\nOutstanding). DailyCoinCap is \u0060null\u0060 when there is no cap."
+        "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals are met -\nall goals in a plan without daily ones (B-535; not \u0060DutyDone\u0060, which also counts weekly goals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding. DailyCoinCap is \u0060null\u0060 when there is no cap."
       },
       "Gap": {
         "required": [
@@ -39109,6 +39646,41 @@
         "type": "string",
         "description": "Status of a class test in its lifecycle.\n\nAllowed values: Planned, Written, Cancelled."
       },
+      "LearningCheck": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "What meets the goal.",
+            "$ref": "#/components/schemas/LearningCheckKind"
+          },
+          "typedFromDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "For LearningCheckKind.Ladder: plan day (1-based) from which every day is typed; otherwise \u0060null\u0060.",
+            "format": "int32"
+          }
+        },
+        "description": "A position\u0027s learning check (B-550)."
+      },
+      "LearningCheckKind": {
+        "enum": [
+          "Typed",
+          "SelfAssessed",
+          "Ladder",
+          "Playthrough",
+          "NoTest",
+          "Unreachable"
+        ],
+        "type": "string",
+        "description": "What carries a position\u0027s goal - the honest answer to \u0022how strictly is this duty checked?\u0022 (B-550).\n\nAllowed values: Typed, SelfAssessed, Ladder, Playthrough, NoTest, Unreachable."
+      },
       "LearningMethod": {
         "enum": [
           "Vocabulary",
@@ -39916,9 +40488,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "daysLeft": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Status of a mission from the child\u0027s perspective: target, current value, completed?"
+        "description": "Status of a mission from the child\u0027s perspective: target, current value, completed?\nDaysLeft (B-528) counts the days after today until the period ends on the UTC calendar - 0 on\nits last day, \u0060null\u0060 for a one-off mission, which has no period. The server computes it because the day\nboundary is UTC; a client counting on its local clock would say \u0022today only\u0022 on the wrong side of midnight."
       },
       "MyActivationResponse": {
         "required": [
@@ -40968,6 +41549,17 @@
             ],
             "description": "The dose the play actually applies: NewItemsPerDay, but 0 while the exercise grades as a set (an\nunordered list) - the stored dose then rests and comes back when the list is ordered again (B-478, B-480).",
             "format": "int32"
+          },
+          "learningCheck": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What meets this position\u0027s goal, computed by the server from the rules it grades by (B-550) - stage schedule,\nposition stage, exercise default stage and \u0022typed tests only\u0022. \u0060null\u0060 only for an exercise type the server\ndoes not know.",
+                "$ref": "#/components/schemas/LearningCheck"
+              }
+            ]
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -41642,6 +42234,7 @@
               "cannot_rate_own_exercise",
               "concurrency_conflict",
               "conflict",
+              "daily_box_none",
               "duplicate_achievement",
               "duplicate_category_name",
               "duplicate_email",
@@ -41658,8 +42251,10 @@
               "exercise_items_locked",
               "exercise_not_assigned",
               "exercise_not_executable",
+              "extra_cap_reached",
               "extra_exercise_done",
               "extra_run_completed",
+              "extra_run_stale",
               "extra_training_locked",
               "forbidden",
               "grammar_topic_in_use",
@@ -42521,9 +43116,19 @@
           },
           "done": {
             "type": "boolean"
+          },
+          "misspelled": {
+            "type": "boolean",
+            "default": false
+          },
+          "explanation": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved."
+        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - today the rule hint of a rule task, on a\nright and on a wrong answer alike. It follows the rule of string? ReviewOutcome.Expected: given only after the answer, and\nnull where no atom was hit; null as well for content that has no explanation (vocabulary)."
       },
       "RubricCriterion": {
         "required": [
@@ -42864,9 +43469,18 @@
           },
           "testable": {
             "type": "boolean"
+          },
+          "testAttemptsLeft": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A running or finished practice session on a position. Testable mirrors\n\u0060PositionStatus.Testable\u0060 (B-114) for this session\u0027s day: false on a free display stage, so a\nclient offering \u0022continue to the test\u0022 after the round (or when nothing is due) can gate on it instead\nof sending the child into the exam\u0027s \u0060stage_not_testable\u0060 dead end."
+        "description": "A running or finished practice session on a position. Testable mirrors\n\u0060PositionStatus.Testable\u0060 (B-114) for this session\u0027s day: false on a free display stage, so a\nclient offering \u0022continue to the test\u0022 after the round (or when nothing is due) can gate on it instead\nof sending the child into the exam\u0027s \u0060stage_not_testable\u0060 dead end.\n\nTestAttemptsLeft (B-522) is the number of exam attempts still startable on the session\u0027s\nday - the same count that locks the exam start with \u0060test_attempts_exhausted\u0060; an open attempt counts as\nstartable (it is resumed). \u0060Testable\u0060 says whether the day\u0027s stage has a test at all, this says whether\nthe child may still take it today. A token without the student role is exempt from the cap and always gets the\ndaily maximum. It is \u0060null\u0060 only in the heartbeat\u0027s answer: the heartbeat runs every few seconds and its\nanswer is not a screen state, so it skips the count (start, read and end always carry it)."
       },
       "SetChildInterestsDto": {
         "required": [
@@ -43678,7 +44292,7 @@
             }
           }
         },
-        "description": "Overall result of the class test incl. pass threshold.\n\nIReadOnlyList\u0026lt;string\u0026gt;? SubmitResponse.WrongMentions only fills up for the set-graded types (an unordered list): an answer that\nmatched no open entry belongs to no ItemOutcome, because the outcomes are keyed by entry\nthere. Without this list the review screen would show what the child *forgot* but silently drop what\nit actually typed.\n\nint SubmitResponse.AttemptsRemaining is the daily test attempts left after this one (never negative) - lets\nthe result screen decide on its own whether to offer \u0022try again\u0022 instead of the child hitting a\nrejection after an already-spent click. For a supervisor attempt this is always \u0060MaxAttemptsPerDay\u0060:\nthe daily cap never applies to them, so the value is filler here, not a statement about attempts\nactually left."
+        "description": "Overall result of the class test incl. pass threshold.\n\nIReadOnlyList\u0026lt;string\u0026gt;? SubmitResponse.WrongMentions only fills up for the set-graded types (an unordered list): an answer that\nmatched no open entry belongs to no ItemOutcome, because the outcomes are keyed by entry\nthere. Without this list the review screen would show what the child *forgot* but silently drop what\nit actually typed.\n\nint SubmitResponse.AttemptsRemaining is the daily test attempts left after this one (never negative) - lets\nthe result screen decide on its own whether to offer \u0022try again\u0022 instead of the child hitting a\nrejection after an already-spent click. For a supervisor attempt this is always \u0060MaxTestAttemptsPerDay\u0060:\nthe daily cap never applies to them, so the value is filler here, not a statement about attempts\nactually left."
       },
       "SuggestedBonus": {
         "required": [
@@ -44064,12 +44678,6 @@
             ],
             "format": "int32"
           },
-          "hint": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
           "choices": {
             "type": [
               "null",
@@ -44153,7 +44761,7 @@
             }
           }
         },
-        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n**without** an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\n\n\u0060GapIndex\u0060 is no such lie: it names the asked placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.\n\n\u0060AnyOrder\u0060 likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.\n\n\u0060Type\u0060 is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an **ordered** list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.\n\n\u0060RevealAlternatives\u0060 lists the equally valid answers beside \u0060Reveal\u0060 and is set exactly where\n\u0060Reveal\u0060 is \u2013 see PracticeCard.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does.\n\n\u0060Decoding\u0060 (B-93) is the word-for-word decoding (Birkenbihl), same as PracticeCard \u2013\nthe exam must not show less material than practice, or it would be the harder task with less to go on.\n\n\u0060LetterTiles\u0060 (B-05) are the scrambled letters, same as on PracticeCard, shuffled once per attempt."
+        "description": "An exam question \u2013 without the solution, except at stages that reveal it by design. Deliberately\n**without** an image: the exam shows none, and a field that is always null is the kind of silent lie\nthe API otherwise rejects with \u0060unknown_field\u0060.\n\n\u0060GapIndex\u0060 is no such lie: it names the asked placeholder \u0060{{n}}\u0060 of \u0060Prompt\u0060 and is null\nonly for types whose atoms already stand on their own. The exam needs it just as much as the practice\ncard \u2013 it is where a child gets stuck for good, because there is no going back.\n\n\u0060AnyOrder\u0060 likewise: it says that any entry not yet named counts (a set instead of a sequence). The\nexam is where that matters most \u2013 there is no second try, so a card whose rule the child has to guess is\nlost for good.\n\n\u0060Type\u0060 is the exercise type key, as the practice card has carried all along: the renderer needs it to\ntell an **ordered** list (where \u0022entry 8\u0022 is the address of the card) from a vocabulary card, and both\narrive with the same fields otherwise.\n\n\u0060RevealAlternatives\u0060 lists the equally valid answers beside \u0060Reveal\u0060 and is set exactly where\n\u0060Reveal\u0060 is \u2013 see PracticeCard.\n\n\u0060AnswerPattern\u0060 (B-66) is the letter-box mask, same as on PracticeCard \u2013 the exam\u0027s\nletter boxes fix punctuation/spacing exactly like practice does.\n\n\u0060Decoding\u0060 (B-93) is the word-for-word decoding (Birkenbihl), same as PracticeCard \u2013\nthe exam must not show less material than practice, or it would be the harder task with less to go on.\n\n\u0060LetterTiles\u0060 (B-05) are the scrambled letters, same as on PracticeCard, shuffled once per attempt.\n\nUnlike PracticeCard there is deliberately no hint (B-544): the exam measures, so a field that\ncould carry help is not part of its contract."
       },
       "TestNextResponse": {
         "required": [
@@ -44685,7 +45293,7 @@
             "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap to the server default."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
       },
       "UpdateClassTestDto": {
         "type": "object",
@@ -45589,9 +46197,14 @@
             ],
             "description": "Daily dose of new contents (see PositionResponse); \u00600\u0060 removes the cap. 0 to 200.",
             "format": "int32"
+          },
+          "clearStage": {
+            "type": "boolean",
+            "description": "Puts the stage back to the exercise\u0027s default (B-16). Needed because \u0060null\u0060 means \u0022not specified\u0022: without the\nswitch a form set back to \u0022default\u0022 would report \u0022saved\u0022 while the old stage stayed. Wins over \u0060stage\u0060 if both\narrive together.",
+            "default": false
           }
         },
-        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly one field has one: bool UpdatePositionDto.ClearTimeSlots. All the other fields cannot be emptied at all \u2013\nthey are either mandatory or already carry \u0022inherit\u0022 as a value of their own."
+        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly two fields have one: bool UpdatePositionDto.ClearTimeSlots and bool UpdatePositionDto.ClearStage. The other fields cannot be\nemptied: most are mandatory or carry \u0022off\u0022 as a value of their own (0); \u0060ItemCount\u0060, \u0060GoalThreshold\u0060,\n\u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 store \u0060null\u0060 as \u0022all\u0022/\u0022default\u0022 but have no switch yet - once set\nthey can only be overwritten (B-547)."
       },
       "UpdatePublisherDto": {
         "type": "object",
@@ -46780,6 +47393,46 @@
         },
         "description": "Account balance (wallet) of the child per currency. The ledger entries are under \u0060points/entries\u0060."
       },
+      "WeekCoinsResponse": {
+        "required": [
+          "lastWeekSoFar",
+          "lastWeekTotal",
+          "thisWeek",
+          "weekStart"
+        ],
+        "type": "object",
+        "properties": {
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "thisWeek": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastWeekSoFar": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastWeekTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The child\u0027s earned coins this week against its own previous week (B-253). WeekStart is the\nMonday of the running week (UTC); LastWeekSoFar cuts the previous week at the same moment,\nLastWeekTotal is all of it. \u0022Earned\u0022 = positive coin entries except the parent\u0027s gift - shop\npurchases, fines and gems stay out."
+      },
       "WordMasteryResponse": {
         "required": [
           "avgMasteryPercent",
@@ -47079,6 +47732,9 @@
     },
     {
       "name": "Student \u2013 Child Progress"
+    },
+    {
+      "name": "Student \u2013 Daily Box"
     },
     {
       "name": "Student \u2013 Interests"

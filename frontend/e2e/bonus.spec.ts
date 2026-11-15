@@ -49,7 +49,7 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
 
   // Vor der Pflicht: der Einstieg steht gesperrt unter dem Pfad.
   await sohnLogin(page, { id: String(childId), pin });
-  await expect(page.getByText("🔒 Erst die Tagespflicht – dann öffnet das Bonus-Training.")).toBeVisible();
+  await expect(page.getByText("🔒 Erst die Tagesziele – dann öffnet das Bonus-Training.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Zum Bonus-Training" })).toHaveCount(0);
 
   // Die Pflicht über die API erfüllen: ein bestandener Test der Position.

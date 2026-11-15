@@ -97,6 +97,10 @@ public sealed class StudentApi(HttpClient http)
     public Task<MyInterestProfileResponse> GetMyInterestsAsync(CancellationToken ct = default) =>
         Http.GetAsync<MyInterestProfileResponse>($"{Root}/me/interests", ct);
 
+    /// <summary>The child's earned coins this week against its own previous week up to now (B-253).</summary>
+    public Task<WeekCoinsResponse> GetWeekCoinsAsync(CancellationToken ct = default) =>
+        Http.GetAsync<WeekCoinsResponse>($"{Root}/me/points/week", ct);
+
     /// <summary>
     /// Replaces the child's own interests entirely. Resolves against <b>existing</b> tags only - an unknown
     /// id yields <c>invalid_reference</c> rather than quietly creating taxonomy.
@@ -121,4 +125,10 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>Submits the answers of a bonus run and returns the graded result with the coins booked.</summary>
     public Task<ExtraRunResult> SubmitExtraRunAsync(int childId, int runId, SubmitExtraRunDto dto, CancellationToken ct = default) =>
         Http.PostAsync<ExtraRunResult>($"{Root}/children/{childId}/extra-training/runs/{runId}/submit", dto, ct);
+
+    // ---------------------------------------------------------------- Daily reward chest
+
+    /// <summary>Opens the oldest waiting reward chest and books its draw - the child's own seat only.</summary>
+    public Task<DailyBoxOpened> OpenDailyBoxAsync(int childId, CancellationToken ct = default) =>
+        Http.PostAsync<DailyBoxOpened>($"{Root}/children/{childId}/daily-box/open", null, ct);
 }

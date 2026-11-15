@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 /** Ein Reiter einer Seite: Schlüssel (steht in der URL) und Beschriftung. */
@@ -28,8 +29,10 @@ export function useActiveSection<K extends string>(tabs: readonly SectionTab<K>[
  * damit jeder Speichern-Knopf eindeutig zu dem gehört, was gerade sichtbar ist – stehen drei Formulare
  * untereinander, rät der Vater, welcher Knopf welche Eingabe sichert.
  *
- * Bewusst **Links**, keine Knöpfe: der Reiter steht in der URL, also öffnet ein Lesezeichen oder der Zurück-Knopf
+ * Bewusst **Links**, keine Knöpfe: der Reiter steht in der URL, also öffnet ein Lesezeichen oder ein Neuladen
  * dasselbe Thema wieder, und andere Seiten können direkt auf einen Reiter verlinken („Interessen pflegen →").
+ * Der Wechsel **ersetzt** den Verlaufseintrag (`replace`): ein Reiter ist eine Ansicht derselben Seite, kein
+ * neuer Ort – der Zurück-Knopf führt darum zur vorigen Seite, nicht durch die zuvor angeklickten Reiter.
  */
 export function SectionTabs<K extends string>({ tabs, active, label }: {
   tabs: readonly SectionTab<K>[];
@@ -48,4 +51,17 @@ export function SectionTabs<K extends string>({ tabs, active, label }: {
       ))}
     </nav>
   );
+}
+
+/**
+ * Der Inhalt eines Reiters. Er bleibt **eingehängt** und wird nur verborgen (`hidden`), solange ein anderer Reiter
+ * aktiv ist: ein Reiterwechsel ist kein Verwerfen, und ausgehängt verlöre ein Formular seine ungespeicherte
+ * Eingabe. `hidden` nimmt den Inhalt zugleich aus dem Fokus-Weg und aus dem Barrierefreiheitsbaum.
+ */
+export function SectionPanel<K extends string>({ section, active, children }: {
+  section: K;
+  active: K;
+  children: ReactNode;
+}) {
+  return <div hidden={section !== active}>{children}</div>;
 }

@@ -25,7 +25,7 @@ test("scheitert „Reihe anlegen & wählen“, steht der Fokus im Namensfeld sta
 
   const formular = page.locator("form").filter({ has: page.locator("#tbnew-series") });
   await formular.getByRole("button", { name: "+ Neue Reihe" }).click();
-  const name = formular.getByLabel("Name der neuen Reihe", { exact: true });
+  const name = formular.getByLabel("Name der neuen Reihe (Pflicht)", { exact: true });
   await name.fill("Fokusprobe");
   // Per Tastatur auslösen: der Knopf hat den Fokus, wenn er gesperrt wird – genau der Weg einer Tastaturnutzerin.
   const anlegen = formular.getByRole("button", { name: /Reihe anlegen/ });

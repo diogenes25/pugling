@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Friedrich bekommt keine Münzen, Box gesperrt durch Wochenziele]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -12,6 +12,7 @@ quelle: "Nutzer im Chat 2026-11-13: erstes Feedback von Friedrich – Münzen, B
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-14
 ---
 
 # B-535 · Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht
@@ -100,6 +101,17 @@ Gegrillt im Chat am 2026-11-13 (Nutzer, fünf Fragen, jeweils die Empfehlung gew
 5. **B-527 bleibt getrennt, B-535 zuerst.** B-535 macht die Kiste erreichbar (Backend), B-527 baut danach das
    Öffnen-Erlebnis darauf. Kosten: die Vergaberegel der Kiste wird zweimal angefasst.
 
+6. **Präzisierung zu Entscheidung 2 nach Messung** (Stakeholder-Entscheidung im Auftrag des Nutzers, 2026-11-14):
+   Die Prämisse „die Regel hat bisher nie ausgezahlt" hält nicht – an einer Kopie der echten DB trägt Theodor
+   (Child 1) elf `Base`-Buchungen zu je 10 Münzen = `NewContentPoints`. Freie Sprossen erhöhen `ReviewCount` schon
+   heute nicht (`climbs`-Zweig setzt ihn zurück); der Neu-Bonus ging verloren, wenn der *erste gewertete* Versuch
+   falsch war. Darum setzt die Migration `NewBonusPaidAt` für Bestandszeilen mit `ReviewCount > 0` (ihre eine Chance
+   nach alter Regel ist vorbei), Zeilen ohne gewertete Antwort bleiben `null`. Kosten: ein Wort, dessen erster Versuch
+   früher falsch war, bekommt den Neu-Bonus nicht nachgezahlt (Friedrich: höchstens vier Wörter); dafür zahlt nichts
+   doppelt. Entscheidung 2 selbst (Neu-Bonus beim ersten gewerteten Treffer, genau einmal) gilt unverändert.
+7. **Entscheidung 4 war schon gebaut** (B-432, `FirstDueDay` = max(`CreatedAt`, `StartDate`) in
+   `PositionProgressService.SettleClosedPeriodsAsync`); AK 6 hält `PflichtMalusTests.Position_SpaeterAngelegt_…`.
+
 ## Akzeptanzkriterien
 
 1. Plan mit Tages- und Wochenzielen: alle Tagesziele erfüllt, ein Wochenziel offen ⇒ die Kiste wird gebucht
@@ -123,7 +135,8 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
 
 - **`migration: ja`** – Entscheidung 2 braucht je Wort die Markierung „Neu-Bonus bezahlt": nullbare Spalte
   `PositionItemProgress.NewBonusPaidAt` (`DateTime?`), neue Migration an die Kette; Bestandszeilen bleiben `null`
-  (= nicht bezahlt, wie entschieden). Kein Umschreiben vorhandener Zeilen.
+  (= nicht bezahlt, wie entschieden) – ~~überholt durch Entscheidung 6~~: die Migration markiert Zeilen mit
+  `ReviewCount > 0` als bezahlt. Kein Umschreiben vorhandener Zeilen.
 - **`vertragsbruch: ja`** – die Arcade rechnet die Bonus-Sperre heute selbst nach
   (`frontend/src/sohn/SohnHome.tsx:125`: `today.dutyDone || today.goalsTotal === 0`). Nach Entscheidung 1 wiche sie
   vom Server ab. Darum bekommt `DayOverview` (`Pugling.Contracts/Shared/ProgressDtos.cs:32`) ein Feld
@@ -131,7 +144,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
   `contract.ts` neu erzeugen, `SohnHome` liest das Feld statt nachzurechnen. Additiv in der Antwort – kein Client
   bricht, aber `Contracts` ändert sich.
 
-**Risiken**
+**Risiken:**
 
 - Zwei Begriffe „Pflicht erfüllt" im Code (Entscheidung 1). Gegenmittel: genau eine Methode berechnet
   `RewardsUnlocked`, `DailyBoxService` und `ExtraTrainingService.cs:194` rufen nur sie; Regressionstest, dass
@@ -143,7 +156,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
 - Die Kiste wird pro Kind, aber aus der Übersicht *eines* Plans vergeben (`DailyBoxService.cs:35`); bei mehreren
   spielbaren Plänen bliebe das so – heute ist genau einer spielbar (Anti-Cheat), keine Änderung.
 
-**Angriffsplan (Backend zuerst)**
+**Angriffsplan (Backend zuerst):**
 
 1. `RewardsUnlocked` in `PositionProgressService.ComputeDayAsync` (Tagesziele bzw. alle Ziele, wenn es keine
    Tagesziele gibt) + Feld in `DayOverview`; `DailyBoxService` und `ExtraTrainingService` darauf umstellen.
@@ -155,7 +168,7 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
 4. Vertrag/Client/`contract.ts` nachziehen, `SohnHome` auf `rewardsUnlocked`.
 5. Tutorials/Doku-Capture prüfen (`DayOverview` steht in `docs/api-examples`).
 
-**Testweg**
+**Testweg:**
 
 - `DailyBoxTests`: AK 1 (Wochenziel offen ⇒ Kiste), AK 2 (nur Wochenziele ⇒ alte Regel).
 - `ExtraTrainingTests`: AK 1 (Bonus `unlocked: true` bei offenem Wochenziel).
@@ -174,3 +187,28 @@ eine DB-Umbau-Etappe (E6, L) – die Migration ist reines Anhängen einer nullba
   aufgenommen: nachträglich hinzugefügte Positionen werden rückwirkend ab Planstart bestraft.
 - **2026-11-13** — geschätzt: M, Migration ja (nullbare Spalte), Vertrag ja (`DayOverview.RewardsUnlocked`,
   weil `SohnHome.tsx:125` die Bonus-Sperre selbst nachrechnet).
+- **2026-11-14** — Backlog-Lauf, Sprint 73: gebaut. `DayOverview.RewardsUnlocked` (eine Stelle,
+  `PositionProgressService.RewardObligations`), Kiste und Bonus-Sperre lesen nur sie, die Bonus-Sperre nennt nur die
+  Tagesziele; Malus-Fenster beginnt beim ersten eigenen Spieltag des Kindes im Plan (`FirstPlayDaysAsync`:
+  `IntroducedAt` oder eigener Test, Vater-Test zählt nicht); `PositionItemProgress.NewBonusPaidAt` + Migration
+  `20261114090616_NewBonusPaidAt` (Bestandszeilen siehe Entscheidung 6); `SohnHome` liest `rewardsUnlocked`.
+  Tests: `BelohnungenTagespflichtTests` (3), `PflichtMalusTests` (+2, Bestandsfälle spielen ab Tag 1), E2E
+  `belohnung-trotz-wochenziel.spec.ts`.
+- **2026-11-14** — Review Sprint 73 (`pugling-reviewer`, `frontend-reviewer`), im Sprint behoben: (1) die
+  Einführungstag-Regel (B-432) hing noch am Planstart und konnte am ersten Spieltag – dem ersten abgerechneten Tag –
+  nie greifen: Einführungstag = max(erster Fälligkeitstag, erster Spieltag), Test
+  `Einfuehrungstag_Ist_Der_Erste_Spieltag_Wenn_Der_Plan_Frueher_Begann`; (2) `FirstPlayDaysAsync`-Doku auf das
+  eingeengt, was gilt (erste eigene, einem Atom zugeordnete Antwort oder eigener Test – eine Runde ohne Antwort oder nur
+  Fehlversuche in einer Mengen-Übung starten die Uhr nicht); (3) Texte „today's duty“ → „today's daily goals“ an
+  Kiste/Bonus-Sperre; (4) die Ziele-Karte der Arcade zählt Tages- und Wochenziele getrennt („Ziele heute 1 / 1“,
+  „Ziele diese Woche 0 / 1“), sonst stand „1 / 2“ neben offenem Bonus. Bewusst so: eine Nachtrag-Runde des Vaters
+  verbraucht den Neu-Bonus des Kindes (B-542: sie zählt fürs Kind), startet aber die Malus-Uhr nicht (Vater-Tests
+  zählen nicht als Spiel des Kindes).
+- **2026-11-14** — **abgenommen** (Sprint 73). volle Suite 1612/1612 (Release), Vitest 1000/1000, `tsc -b` grün, Rollengang Sohn als Playwright gegen frisch gestartete Server nach dem letzten Edit: 9 passed (`belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel*`, `pfad`, `lektion`, `erstbegegnung`, `full-flow`); Reviews `pugling-reviewer` + `frontend-reviewer` (Funde im Sprint behoben); Commit `fa335075`. Mutanten (mutant-probe, je AK-Fall, alle rot am benannten Test):
+  M1 `RewardsUnlocked`=`DutyDone`, M2/M3 `RewardObligations` immer alle/immer täglich, M4 `DutyDone` nur Tagesziele (AK 3),
+  M5 Kiste liest `DutyDone`, M6 Bonus-Sperre ungefiltert, M7 ohne Spieltag kein Abbruch, M8 Fenster ohne Spieltag,
+  M9 Vater-Test zählt, M10 „neu“ = `ReviewCount == 0`, M11 Markierung fehlt, M12 Neu-Bonus ohne Markierung,
+  M14 Arcade liest `dutyDone` (E2E), M15 Einführungstag am Planstart (Review-Fund), M24 Ziele-Karte gemischt (E2E).
+  Migration gegen eine Kopie der echten DB geprobt (läuft durch, Backfill 70/35). Ausgefallen/Gerät: keiner; Friedrichs
+  −60 schreibt der Vater per Hand gut (Entscheidung 4), das ist ein Handgriff am echten Konto.
+- **2026-11-14** — Nachschau Backlog-Lauf: Regel im Code auf jedem Pfad geprüft (Kiste nach Übungsrunde und Test liest `RewardsUnlocked`, Bonus-Sperre über `RewardObligations`, kein Bildschirm und kein Agent liest `dutyDone` für eine Belohnung, „neu“ hängt nur noch an `NewBonusPaidAt`, `ReviewCount: 0` steht nur noch in der Kein-Urteil-Regel von B-433). Fund: Swagger-Doku `ExtraTrainingDtos.cs:22`, Kommentare an der Kistenvergabe, `en.ts:149/151` und `VaterKind.tsx:368` nennen noch die volle Pflicht → **B-548**. Doku berichtigt: `wiki/05-punkte-und-bonus.md` (Tagesbox, Malus-Fairness, Basispunkte-Formel `reviewCount == 0`), `docs/tutorial-supervisor.md` (`newContentPoints`, Malus-Fairness, `rewardsUnlocked`), `docs/tutorial-student.md` (`rewardsUnlocked`).

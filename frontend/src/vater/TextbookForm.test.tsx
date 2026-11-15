@@ -239,7 +239,7 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     zeigeMit([]);
     const katalog = screen.getByRole("group", { name: /Aus dem Katalog/ });
     const freitext = screen.getByRole("group", { name: /Ohne Katalog/ });
-    const titel = screen.getByLabelText("Titel", { exact: true });
+    const titel = screen.getByLabelText("Titel (Pflicht)", { exact: true });
     expect(within(katalog).getByLabelText("Reihe im Katalog", { exact: true })).toBeTruthy();
     expect(within(freitext).getByLabelText("Verlag", { exact: true })).toBeTruthy();
     // DOCUMENT_POSITION_FOLLOWING: das zweite Element steht im Dokument hinter dem ersten.
@@ -323,7 +323,7 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     zeigeMit([], {}, neuGeladen);
 
     fireEvent.click(screen.getByRole("button", { name: "+ Neue Reihe" }));
-    fireEvent.change(screen.getByLabelText("Name der neuen Reihe", { exact: true }), { target: { value: " Green Line " } });
+    fireEvent.change(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true }), { target: { value: " Green Line " } });
     fireEvent.click(screen.getByRole("button", { name: /Reihe anlegen/ }));
 
     await within(screen.getByLabelText("Reihe im Katalog", { exact: true }))
@@ -347,21 +347,21 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
 
     knopf.focus();
     fireEvent.click(knopf);
-    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true })));
 
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     await waitFor(() => expect(document.activeElement).toBe(knopf));
 
     // Dasselbe Ziel zweimal hintereinander: öffnen, per Knopf schließen (setzt kein Ziel), wieder öffnen.
     fireEvent.click(knopf);
-    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true })));
     fireEvent.click(knopf);
     knopf.focus();
     fireEvent.click(knopf);
-    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true })));
 
     // Der Streifen ist offen: anlegen.
-    fireEvent.change(screen.getByLabelText("Name der neuen Reihe", { exact: true }), { target: { value: "Green Line" } });
+    fireEvent.change(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true }), { target: { value: "Green Line" } });
     const anlegen = screen.getByRole("button", { name: /Reihe anlegen/ });
     anlegen.focus();
     expect(document.activeElement).not.toBe(reiheFeld);
@@ -370,7 +370,7 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
 
     // B-280: Das Ziel gilt einem Sprung, nicht jedem Rendern. Die Nutzerin geht weiter ins Titelfeld und tippt – jedes
     // Tippen rendert neu, und der Fokus bleibt, wo sie ihn hingesetzt hat. Rot, wenn der Effekt das Ziel nicht leert.
-    const titel = screen.getByLabelText("Titel", { exact: true });
+    const titel = screen.getByLabelText("Titel (Pflicht)", { exact: true });
     titel.focus();
     fireEvent.change(titel, { target: { value: "Green Line 2" } });
     expect(document.activeElement).toBe(titel);
@@ -383,11 +383,11 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     zeigeMit([]);
     const knopf = screen.getByRole("button", { name: "+ Neue Reihe" });
     fireEvent.click(knopf);
-    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true })));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true })));
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
     await waitFor(() => expect(document.activeElement).toBe(knopf));
 
-    const titel = screen.getByLabelText("Titel", { exact: true });
+    const titel = screen.getByLabelText("Titel (Pflicht)", { exact: true });
     titel.focus();
     fireEvent.change(titel, { target: { value: "Green Line 2" } });
     expect(document.activeElement).toBe(titel);
@@ -400,12 +400,59 @@ describe("TextbookForm – Katalog zuerst, Verlag und Klasse aus dem Katalog (B-
     vi.spyOn(api, "createTextbookSeries").mockRejectedValue(new Error("Server weg"));
     zeigeMit([]);
     fireEvent.click(screen.getByRole("button", { name: "+ Neue Reihe" }));
-    fireEvent.change(screen.getByLabelText("Name der neuen Reihe", { exact: true }), { target: { value: "Green Line" } });
+    fireEvent.change(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true }), { target: { value: "Green Line" } });
     const anlegen = screen.getByRole("button", { name: /Reihe anlegen/ });
     anlegen.focus();
     fireEvent.click(anlegen);
     // Erst die Meldung abwarten – sonst prüfte der Fall den Zustand vor dem Scheitern.
     await screen.findByText(/Server weg/);
-    expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe", { exact: true }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true }));
+  });
+});
+
+/*
+ * B-380: der Titel des Buchs und der Name einer neuen Reihe sind Pflicht. Leer ist der Knopf gesperrt, das Label sagt
+ * „(Pflicht)", und Enter schickt nichts – ohne Meldung „… fehlt".
+ */
+describe("TextbookForm – Pflichtfelder (B-380)", () => {
+  afterEach(() => vi.restoreAllMocks());
+  const neu = () => render(
+    <AuthProvider>
+      <TextbookForm onMeldung={() => {}} onSeriesCreated={() => {}} childId={1} series={[]} subjects={SUBJECTS} onDone={() => {}} />
+    </AuthProvider>,
+  );
+
+  // AK 1. Rot, wenn am Knopf „Buch hinterlegen" das `|| !form.title.trim()` fehlt.
+  it("sperrt „Buch hinterlegen“ ohne Titel", () => {
+    neu();
+    const knopf = screen.getByRole("button", { name: "Buch hinterlegen" }) as HTMLButtonElement;
+    expect(knopf.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Titel (Pflicht)", { exact: true }), { target: { value: "Access 8" } });
+    expect(knopf.disabled).toBe(false);
+  });
+
+  // AK 1. Rot, wenn die `fail`-Zeile zurückkommt („Der Titel fehlt.") oder trotzdem angelegt wird.
+  it("schickt nach Enter ohne Titel nichts und meldet nichts", () => {
+    const anlegen = vi.spyOn(api, "createChildTextbook");
+    const { container } = neu();
+    fireEvent.submit(container.querySelector("form")!);
+    expect(anlegen).not.toHaveBeenCalled();
+    expect(screen.queryByText(/fehlt|nötig|darf nicht leer|Bitte einen/)).toBeNull();
+  });
+
+  // AK 1. Rot, wenn am Knopf „Reihe anlegen & wählen" das `|| !neueReihe.trim()` fehlt bzw. Enter wieder „Der Name der
+  // Reihe fehlt." meldet.
+  it("sperrt „Reihe anlegen“ ohne Namen, und Enter im leeren Feld bleibt stumm", () => {
+    const anlegen = vi.spyOn(api, "createTextbookSeries");
+    neu();
+    fireEvent.click(screen.getByRole("button", { name: "+ Neue Reihe" }));
+    const knopf = screen.getByRole("button", { name: /Reihe anlegen/ }) as HTMLButtonElement;
+    expect(knopf.disabled).toBe(true);
+    const feld = screen.getByLabelText("Name der neuen Reihe (Pflicht)", { exact: true });
+    fireEvent.keyDown(feld, { key: "Enter" });
+    expect(anlegen).not.toHaveBeenCalled();
+    expect(screen.queryByText(/fehlt|nötig|darf nicht leer|Bitte einen/)).toBeNull();
+    fireEvent.change(feld, { target: { value: "Green Line" } });
+    expect(knopf.disabled).toBe(false);
   });
 });

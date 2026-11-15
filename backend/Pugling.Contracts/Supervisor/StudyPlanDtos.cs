@@ -90,12 +90,45 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// The dose the play actually applies: <paramref name="NewItemsPerDay"/>, but 0 while the exercise grades as a set (an
 /// unordered list) - the stored dose then rests and comes back when the list is ordered again (B-478, B-480).
 /// </param>
+/// <param name="LearningCheck">
+/// What meets this position's goal, computed by the server from the rules it grades by (B-550) - stage schedule,
+/// position stage, exercise default stage and "typed tests only". <c>null</c> only for an exercise type the server
+/// does not know.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
-    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce);
+    List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null);
+
+/// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
+public enum LearningCheckKind
+{
+    /// <summary>The final test asks in a typed (objectively checked) form on every day.</summary>
+    Typed,
+    /// <summary>The final test asks in a form the child judges itself ("Gewusst!" counts) on every day.</summary>
+    SelfAssessed,
+    /// <summary>
+    /// The stage schedule changes the form over the plan: self-assessed or display days first, typed from
+    /// <see cref="LearningCheck.TypedFromDay"/> on (<c>null</c> if the schedule never ends on typed days).
+    /// </summary>
+    Ladder,
+    /// <summary>A free display stage on every day: there is no question, playing the round through meets the goal (B-96).</summary>
+    Playthrough,
+    /// <summary>The exercise type has no final test at all; playing the round through meets the goal.</summary>
+    NoTest,
+    /// <summary>
+    /// "Typed tests only" is set, but the test asks in a self-assessed form on at least one day: an attempt there is
+    /// never graded, so the goal cannot be met on such a day.
+    /// </summary>
+    Unreachable,
+}
+
+/// <summary>A position's learning check (B-550).</summary>
+/// <param name="Kind">What meets the goal.</param>
+/// <param name="TypedFromDay">For <see cref="LearningCheckKind.Ladder"/>: plan day (1-based) from which every day is typed; otherwise <c>null</c>.</param>
+public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 
 /// <summary>
 /// Creating a position. Empty override fields inherit the exercise's suggestion (hybrid principle):
@@ -142,8 +175,10 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 ///
 /// <b>PATCH semantics:</b> a <c>null</c> means "not specified" for <i>every</i> field – the previous
 /// value stays. It does <b>not</b> mean "reset to default"; that needs an explicit <c>Clear</c> switch, and
-/// exactly one field has one: <see cref="ClearTimeSlots"/>. All the other fields cannot be emptied at all –
-/// they are either mandatory or already carry "inherit" as a value of their own.
+/// exactly two fields have one: <see cref="ClearTimeSlots"/> and <see cref="ClearStage"/>. The other fields cannot be
+/// emptied: most are mandatory or carry "off" as a value of their own (0); <c>ItemCount</c>, <c>GoalThreshold</c>,
+/// <c>BoxIntervalDays</c> and <c>StageSchedule</c> store <c>null</c> as "all"/"default" but have no switch yet - once set
+/// they can only be overwritten (B-547).
 /// </summary>
 /// <param name="Order">New position within the plan.</param>
 /// <param name="Stage">Query form of the final test.</param>
@@ -177,9 +212,14 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// window kept doubling the points. Wins over <c>timeSlots</c> if both arrive together.
 /// </param>
 /// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>0</c> removes the cap. 0 to 200.</param>
+/// <param name="ClearStage">
+/// Puts the stage back to the exercise's default (B-16). Needed because <c>null</c> means "not specified": without the
+/// switch a form set back to "default" would report "saved" while the old stage stayed. Wins over <c>stage</c> if both
+/// arrive together.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    bool ClearTimeSlots = false, int? NewItemsPerDay = null);
+    bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false);

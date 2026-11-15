@@ -3,6 +3,7 @@ import { InfoHint } from "../components/InfoHint";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { placeholderIndices } from "../lib/cloze";
 import { LANGUAGES } from "../lib/languages";
@@ -162,8 +163,8 @@ export function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDo
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) { action.fail("Der Titel fehlt."); return; }
-    if (!existing && !key.trim()) { action.fail("Der Key fehlt – er ist die stabile Referenz."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!title.trim() || (!existing && !key.trim())) return;
     if (problem) { action.fail(problem); return; }
 
     const { gaps: cleanedGaps, wordBank: bank, clearWordBank } = listsForSave(gaps, wordBank);
@@ -194,12 +195,13 @@ export function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDo
 
       <div className="form-grid" style={{ alignItems: "end" }}>
         <div className="field">
-          <label htmlFor="cz-key">Key {existing && <span className="muted">(unveränderlich)</span>}</label>
+          {/* Pflicht nur beim Anlegen: beim Bearbeiten ist der Key fest und nicht editierbar (B-380, AK 2). */}
+          <label htmlFor="cz-key">Key {existing ? <span className="muted">(unveränderlich)</span> : <Pflicht />}</label>
           <input id="cz-key" value={key} disabled={!!existing} onChange={(e) => setKey(e.target.value)}
             placeholder="cz_greetings_1" />
         </div>
         <div className="field">
-          <label htmlFor="cz-title">Titel</label>
+          <label htmlFor="cz-title">Titel <Pflicht /></label>
           <input id="cz-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Begrüßungen" />
         </div>
         {/* Die Sprachen liegen am Trägertext und bleiben beim Bearbeiten fest – ein Sprachwechsel
@@ -280,7 +282,8 @@ export function ClozeForm({ existing, onDone }: { existing?: ClozeResponse; onDo
       {problem && <p className="sub" style={{ color: "var(--danger, #c00)" }}>{problem}</p>}
 
       <div className="row" style={{ gap: 8 }}>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
+          disabled={action.busy || !title.trim() || (!existing && !key.trim())}>
           {action.busy ? "Speichere…" : existing ? "Speichern" : "Trägertext anlegen"}
         </button>
       </div>

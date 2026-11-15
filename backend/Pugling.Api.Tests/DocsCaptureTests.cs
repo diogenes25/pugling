@@ -126,6 +126,8 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         var redacted = Regex.Replace(s, "(\"token\"\\s*:\\s*)\"[^\"]*\"", "$1\"<redacted-jwt>\"");
         redacted = Regex.Replace(redacted, "(\"traceId\"\\s*:\\s*)\"[^\"]*\"", "$1\"<trace-id>\"");
+        // A mission's days left follow the weekday the capture runs on (B-528) - masked like a run-relative date.
+        redacted = Regex.Replace(redacted, "(\"daysLeft\"\\s*:\\s*)\\d+", "$1\"<days-left>\"");
         // Mask timestamps - with **or without** a zone marker: the API serializes `DateTime` (UTC values
         // without a `Z`), and a pattern insisting on `Z` never matched and made every run rewrite all
         // timestamps in the checked-in documentation.

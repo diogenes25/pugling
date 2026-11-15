@@ -28,7 +28,7 @@ zentral aus [`WalletService`](../backend/Pugling.Api/Services/Shared/WalletServi
 | `ShopCoins` | 🪙 Münzen | **Familien-Shop-Kauf** – Coin-Anteil (negativ) |
 | `GoalPenalty` | 🪙 Münzen | **Pflicht-Malus** – gerissenes Positionsziel (negativ, siehe §2) |
 | `ObjectiveCoins` | 🪙 Münzen | Pflicht-Lernziel (Objective) oder eines seiner Key Results erreicht |
-| `DailyBoxCoins` | 🪙 Münzen | Münz-Anteil der Tagesbox (Pflicht des Tages voll erfüllt) |
+| `DailyBoxCoins` | 🪙 Münzen | Münz-Anteil der Tagesbox (alle Tagesziele des Tages erfüllt; B-535) |
 | `Combo` | 💎 Gems | Combo-Bonus (Treffer in Folge) |
 | `Speed` | 💎 Gems | Bonus für schnelle Antwort |
 | `Mission` | 💎 Gems | erfüllte Mission |
@@ -53,8 +53,13 @@ Lern-Punkte entstehen an zwei Stellen (Bahn A/B). Daneben buchen drei weitere Qu
 Punkte: Missionen/Auszeichnungen (`GamificationService`, §5), erreichte **Lernziele** samt Key Results
 ([`ObjectiveRewardService`](../backend/Pugling.Api/Services/Shared/ObjectiveRewardService.cs) — einmalig,
 Pflichtziel → `ObjectiveCoins`, Stretch-Ziel → `ObjectiveGems`) und die **Tagesbox**
-([`DailyBoxService`](../backend/Pugling.Api/Services/Shared/DailyBoxService.cs) — einmal je voll erfülltem
-Pflicht-Tag, zufälliger Münz-/Gem-Zug, mit der Streak skaliert → `DailyBoxCoins`/`DailyBoxGems`).
+([`DailyBoxService`](../backend/Pugling.Api/Services/Shared/DailyBoxService.cs) — einmal je Tag, an dem alle
+**Tagesziele** erfüllt sind (`DayOverview.RewardsUnlocked`; hat der Plan keine Tagesziele, zählen alle Ziele – B-535),
+zufälliger Münz-/Gem-Zug, mit der Streak skaliert → `DailyBoxCoins`/`DailyBoxGems`). Seit B-527 ist die Box eine
+**Truhe**: gezogen wird beim Verdienen (Streak dieses Tages), gebucht erst, wenn das Kind sie öffnet
+(`POST student/children/{id}/daily-box/open`, die älteste wartende zuerst; verfällt nie). Ein offenes Wochenziel sperrt
+die Box nicht; es hat seinen eigenen Malus am Ende der Woche. Dieselbe Regel öffnet das Bonus-Training. Serie (Streak)
+und Auswertung zählen weiter **alle** Ziele (`dutyDone`).
 
 ### Bahn A — Positionsziele (`PositionProgressService`)
 
@@ -104,7 +109,9 @@ der App um: *Lernen wird erzwungen.* Reißt eine Pflichtposition (`cadence=Daily
   und beim **Shop-Kauf** (vor der Deckungsprüfung, also nicht durch „schnell kaufen" umgehbar).
   Rückblick höchstens 14 Tage.
 - **Fairness:** kein Malus für Perioden, in denen der Plan **inaktiv** oder **außerhalb des Datumsfensters**
-  war (der Vater hatte ihn aus → es durfte gar nicht gelernt werden).
+  war (der Vater hatte ihn aus → es durfte gar nicht gelernt werden), und keiner vor dem **ersten eigenen Spieltag**
+  des Kindes im Plan (erste eigene Antwort in einer Übungsrunde oder eigener Test; Runden und Tests des Vaters zählen nicht – B-535).
+  Ab diesem Tag zählt jede Pflichtposition, auch eine nie geöffnete; eine später angelegte erst ab ihrem Anlegen.
 - Default `penaltyCoins=0` → reine Belohnung (bisheriges Verhalten). Der Malus ist **opt-in pro Position**.
 
 Der Malus wohnt bewusst am **Pflichtziel (Münzen = reale Privilegien)** und **nicht** am Missions-System
@@ -115,13 +122,16 @@ Der Malus wohnt bewusst am **Pflichtziel (Münzen = reale Privilegien)** und **n
 ## 3. Die Basispunkte-Formel
 
 ```text
-basis = (reviewCount == 0)  ?  newContentPoints            // erstmals geübt → „neuer Stoff zählt am meisten"
+basis = isNew  ?  newContentPoints                         // erster gewerteter Treffer → „neuer Stoff zählt am meisten"
                             :  max(2, 8 − box)             // Wiederholung: je höher die Box, desto weniger
 
 Base  = round(basis × Zeitfenster-Multiplikator)
 ```
 
-- `reviewCount`/`box` sind der Zustand **vor** dem Aufstieg (neuer Inhalt zählt voll).
+- `isNew`: der Inhalt hat seinen Neu-Bonus noch nicht bekommen (`PositionItemProgress.NewBonusPaidAt` leer, B-535).
+  Gezahlt wird er genau einmal, beim **ersten richtigen gewerteten** Treffer – Kennenlernen und Selbsteinschätzung
+  zählen nicht, ein falscher erster Versuch lässt ihn für später stehen.
+- `box` ist der Zustand **vor** dem Aufstieg.
 - Wiederholungs-Staffel `max(2, 8−box)`: Box 1→7, Box 2→6, Box 3→5, Box 4→4, Box 5→3, ab Box 6→2.
 
 ### Zeitfenster-Multiplikator

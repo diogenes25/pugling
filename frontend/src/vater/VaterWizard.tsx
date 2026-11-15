@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useId, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
@@ -11,10 +11,16 @@ import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { Pflicht } from "../components/Pflicht";
 import { authorText } from "./ExerciseAttribution";
+import { ratingSummary } from "./ExerciseRatingPanel";
 import { VOCAB_FORMS } from "./exerciseConfig";
-import { auswahlNachFilterwechsel, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams } from "./wizardSearch";
-import { dosisZeile, newWizardProgress, runWizardFinish } from "./wizardFinish";
+import {
+  auswahlNachFilterwechsel, NICHT_ZUWEISBAR_GRUND, nurZuweisbare, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams,
+} from "./wizardSearch";
+import {
+  dosisZeile, KlassenarbeitFehlt, leiterText, newWizardProgress, planVorgaben, plusTage, runWizardFinish, terminProblem,
+} from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import { radioGroupKeys } from "../lib/ui";
 import { formatDate } from "../lib/datum";
@@ -76,6 +82,8 @@ export function VaterWizard() {
   const [topic, setTopic] = useState("");
   const [goal, setGoal] = useState<Goal>("Klassenarbeit");
   const [intensity, setIntensity] = useState<Intensity>("Normal");
+  // B-423: beim Ziel „Klassenarbeit" ist der Termin Pflicht – Planende, Leiter und die Arbeit selbst folgen daraus.
+  const [termin, setTermin] = useState("");
 
   // --- Schritt 3: Übungen (Katalog) ---
   const [contentSearch, setContentSearch] = useState("");
@@ -86,6 +94,8 @@ export function VaterWizard() {
   const [sourceSearch, setSourceSearch] = useState("");
   // Die achte Facette (B-155): ein Thema des gewählten Fachs; wie die Art fällt sie mit dem Fachwechsel.
   const [grammarTopicId, setGrammarTopicId] = useState<number | "">("");
+  // B-408: „beste Bewertung zuerst" wie im Planbau – eine Reihenfolge, kein Suchkriterium (verwirft die Auswahl nicht).
+  const [besteZuerst, setBesteZuerst] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
   /** Sagt, dass ein Filterwechsel die Auswahl verworfen hat – nur wenn wirklich etwas wegfiel (B-161). */
   const [auswahlHinweis, setAuswahlHinweis] = useState<string | null>(null);
@@ -104,12 +114,16 @@ export function VaterWizard() {
   const [comboBonusPoints, setComboBonusPoints] = useState(5);
   // B-04: a dose by default, so a large exercise becomes a daily portion instead of one first day with everything.
   const [newItemsPerDay, setNewItemsPerDay] = useState(10);
+  // B-423: der im Feinschliff getippte Tag der zweiten Stufe – Rohtext, geklemmt wird in `planVorgaben` (leer = Vorgabe).
+  const [schwelleText, setSchwelleText] = useState("");
   const [touchedFineTune, setTouchedFineTune] = useState(false);
   // „Der Vater hat die Kind-Art selbst gewählt" – dieselbe Idee wie `touchedFineTune`: eine Vorbelegung
   // darf nur greifen, solange niemand entschieden hat.
   const [touchedMode, setTouchedMode] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+  // B-423, AK 5: Plan steht, die Klassenarbeit nicht – eigener Kasten mit Links statt der Fehlerzeile.
+  const [klassenarbeitFehlt, setKlassenarbeitFehlt] = useState<KlassenarbeitFehlt | null>(null);
   const [busy, setBusy] = useState(false);
   // B-424: die Übung, die der Vater gerade ausprobiert – genau eine, der Dialog liegt über dem ganzen Assistenten.
   const [vorschau, setVorschau] = useState<{ id: number; title: string } | null>(null);
@@ -126,6 +140,26 @@ export function VaterWizard() {
   const effectiveSchoolType: SchoolType | undefined =
     mode === "new" ? schoolType : (selectedChild?.schoolType as SchoolType | undefined);
   const subject = subjects.data?.find((s) => s.id === subjectId);
+
+  /*
+   * Was das Ziel aus Start, Dauer und Termin macht (B-423) – abgeleitet, nicht in den State geschrieben: so gilt es auch,
+   * wenn der Vater den Feinschliff schon angefasst hat (`applyDefaults` schweigt dann) oder danach das Ziel wechselt.
+   */
+  const heute = todayIso();
+  const istKlassenarbeit = goal === "Klassenarbeit";
+  const terminGrund = istKlassenarbeit ? terminProblem(termin, heute) : null;
+  const vorgaben = planVorgaben(goal, { startDate, durationDays }, heute, termin, defaultStage, schwelleText);
+  /*
+   * Steht der Plan schon (ein Anlauf scheiterte danach), ist der Assistent nur noch ein Wiederholen: zurück ließe sich
+   * Termin oder Auswahl ändern, aber Plan und Positionen sind geschrieben (B-423, Review). Gelesen beim Rendern – jeder
+   * gescheiterte Anlauf setzt `busy` zurück und rendert damit neu.
+   */
+  const planSteht = progress.current.planId !== null;
+  // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md) – auch die Namen
+  // der Leiterstufen (Review B-423). Hier oben, weil die Leiter darunter schon gerechnet wird.
+  const types = useExerciseTypes();
+  const stufenName = (stage: number) => types.stages("Vocabulary").find((o) => o.value === stage)?.label;
+  const leiter = leiterText(vorgaben.stageSchedule, stufenName);
 
   // Der Schlüssel über die Suchkriterien (B-161) – gebildet aus `wizardSearchParams`, also aus genau der Abfrage. Er ist
   // zugleich die Abhängigkeit der Suche (B-164): getrimmte Eingaben („abc " → "abc") sind dieselbe Suche, lösen keine
@@ -144,9 +178,10 @@ export function VaterWizard() {
     () => (subjectId === "" ? Promise.resolve({ items: [], total: 0 })
       : api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId, besteZuerst,
       }))),
-    [filterKey],
+    // Die Reihenfolge lädt neu, gehört aber nicht in `filterKey` – sonst verwürfe Umsortieren die Auswahl (B-408).
+    [filterKey, besteZuerst],
   );
 
   // Arten des gewählten Fachs; die Liste hängt am Fach, nicht am Katalog insgesamt.
@@ -155,8 +190,6 @@ export function VaterWizard() {
   // Grammatik-Themen des gewählten Fachs (B-155); die Liste hängt am Fach wie die Arten.
   const grammarTopics = useAsync<GrammarTopicResponse[]>(
     () => (subjectId === "" ? Promise.resolve([]) : api.grammarTopics(Number(subjectId))), [subjectId]);
-  // Übungstypen kommen aus dem Server-Manifest, nie aus einer Tabelle im Frontend (frontend/CLAUDE.md).
-  const types = useExerciseTypes();
 
   /*
    * Erstes Kind vorwählen; wenn schon Kinder existieren, „bestehendes" als Standard.
@@ -290,24 +323,30 @@ export function VaterWizard() {
   async function selectAll() {
     setAuswahlHinweis(null);
     const total = exercises.data?.total ?? 0;
-    if (total <= filteredExercises.length) { setSelected(filteredExercises.map((e) => e.id)); return; }
+    // B-140: nur zuweisbare übernehmen – und sagen, wie viele übersprungen wurden.
+    const uebernehmen = (items: readonly ExerciseSummary[]) => {
+      const folge = nurZuweisbare(items);
+      setSelected(folge.ids);
+      setAuswahlHinweis(folge.hinweis);
+    };
+    if (total <= filteredExercises.length) { uebernehmen(filteredExercises); return; }
 
     const keyBeimStart = filterKey;
     setSelectAllBusy(true);
     try {
       const alle = await api.searchExercises(wizardSearchParams({
         subjectId: Number(subjectId), grade: effectiveGrade, schoolType: effectiveSchoolType,
-        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId,
+        search: contentSearch, categoryId, type: typeKey, source: sourceSearch, grammarTopicId, besteZuerst,
       }, 500));
       // `merken` darf auch bei veralteter Antwort laufen - ein Metadaten-Vorrat schadet nie.
       merken(alle.items);
       if (geltenderFilterKey.current !== keyBeimStart) return;
-      setSelected(alle.items.map((e) => e.id));
+      uebernehmen(alle.items);
     } catch (err) {
       if (geltenderFilterKey.current !== keyBeimStart) return;
       // Zurückfallen ja, schweigen nein: Sonst stünden 100 statt 400 Positionen im Plan — genau die
       // Kappung, die dieser Knopf abschaffen soll, nur unbeobachtbar.
-      setSelected(filteredExercises.map((e) => e.id));
+      uebernehmen(filteredExercises);
       setError(`Konnte nicht alle Treffer laden – es sind nur die ${filteredExercises.length} geladenen `
         + `gewählt. ${errorMessage(err)}`);
     } finally {
@@ -320,7 +359,8 @@ export function VaterWizard() {
       if (mode === "existing") return childId === "" ? "Bitte ein Kind wählen." : null;
       return newName.trim() ? pinProblem(newPin) : "Bitte einen Namen eingeben.";
     }
-    if (step === 1) return subjectId === "" ? "Bitte ein Fach wählen." : null;
+    // Beides sperrt auch den Knopf (eine Regel je Bildschirm, Hausregel „Pflichtfeld → gesperrt"); die Zeile hält Enter.
+    if (step === 1) return subjectId === "" ? "Bitte ein Fach wählen." : terminGrund;
     if (step === 2) return selected.length === 0 ? "Bitte mindestens eine Übung wählen." : null;
     return null;
   }
@@ -340,6 +380,7 @@ export function VaterWizard() {
    */
   async function finish() {
     setError(null);
+    setKlassenarbeitFehlt(null);
     setBusy(true);
     try {
       const planId = await runWizardFinish(progress.current, {
@@ -354,8 +395,8 @@ export function VaterWizard() {
         plan: {
           title: title.trim() || "Neuer Lehrplan",
           subjectId: subjectId === "" ? null : Number(subjectId),
-          durationDays,
-          startDate,
+          durationDays: vorgaben.durationDays,
+          startDate: vorgaben.startDate,
         },
         exerciseIds: selected,
         // Jede gewählte Übung wird ein Tagesziel mit den Feinschliff-Werten.
@@ -374,13 +415,21 @@ export function VaterWizard() {
         },
         titleOf: (id) => gesehen.current.get(id)?.title ?? `#${id}`,
         typeOf: (id) => gesehen.current.get(id)?.type ?? "",
+        stageSchedule: vorgaben.stageSchedule,
+        classTest: vorgaben.klassenarbeitTermin === null ? null : {
+          title: `${subject?.name ?? "Klassen"}-Arbeit`,
+          topic: topic.trim() || null,
+          subjectId: subjectId === "" ? null : Number(subjectId),
+          scheduledDate: vorgaben.klassenarbeitTermin,
+        },
       }, api);
       // `null` heißt: es läuft schon ein Durchgang (zweiter Klick). Der erste besitzt das Ergebnis und
       // navigiert – `busy` bleibt absichtlich stehen.
       if (planId === null) return;
       nav(`/vater/plan/${planId}`);
     } catch (err) {
-      setError(errorMessage(err));
+      if (err instanceof KlassenarbeitFehlt) setKlassenarbeitFehlt(err);
+      else setError(errorMessage(err));
       setBusy(false);
     }
   }
@@ -397,7 +446,7 @@ export function VaterWizard() {
         <span className="muted" style={{ marginLeft: "auto", fontSize: 13 }}>Schritt {step + 1} von {STEPS.length}</span>
       </div>
 
-      <Stepper step={step} onGo={(i) => i < step && setStep(i)} />
+      <Stepper step={step} onGo={(i) => !planSteht && i < step && setStep(i)} />
 
       {/* -------- Schritt 1: Kind -------- */}
       {step === 0 && (
@@ -459,8 +508,8 @@ export function VaterWizard() {
           <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading}
             onRetry={subjects.reload} />
           <div className="form-grid">
-            <div className="field"><label>Fach</label>
-              <select aria-label="Fach" value={subjectId} onChange={(e) => {
+            <div className="field"><label htmlFor="wiz-fach">Fach <Pflicht /></label>
+              <select id="wiz-fach" value={subjectId} onChange={(e) => {
                 // Die Art gehört zum alten Fach – stehen gelassen filterte sie auf eine Kategorie, die es
                 // im neuen gar nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer. Hier
                 // statt in einem Effekt, weil hier die Entscheidung fällt: ein Effekt liefe erst NACH der
@@ -487,6 +536,7 @@ export function VaterWizard() {
               ))}
             </div>
           </div>
+          {istKlassenarbeit && <KlassenarbeitTerminFeld termin={termin} heute={heute} onChange={setTermin} />}
 
           <div>
             <span id="wiz-intensitaet" className="sub" style={{ display: "block", marginBottom: 8 }}>Wie intensiv soll geübt werden?</span>
@@ -578,6 +628,16 @@ export function VaterWizard() {
             <input aria-label="Quelle" placeholder="Quelle, z. B. Green Line 1…" style={{ maxWidth: 220 }}
               value={sourceSearch} onChange={(e) => setSourceSearch(e.target.value)} />
           </div>
+          {/* B-408: dieselbe Wahl wie im Planbau (B-270). Umsortieren lädt neu, die Auswahl bleibt vollständig – was dabei
+              aus der Seite rutscht, zählt „davon N unten nicht sichtbar". */}
+          <div className="row" style={{ gap: 6, alignItems: "center", margin: "4px 0" }}>
+            <label className="muted" htmlFor="wiz-reihenfolge" style={{ fontSize: 12 }}>Trefferliste sortieren</label>
+            <select id="wiz-reihenfolge" value={besteZuerst ? "rating" : "catalog"}
+              onChange={(e) => setBesteZuerst(e.target.value === "rating")}>
+              <option value="catalog">wie im Katalog</option>
+              <option value="rating">beste Bewertung zuerst</option>
+            </select>
+          </div>
 
           {/* `platzhalter` ist hier heute wirkungslos: ohne gewähltes Fach liefert die Suche sofort
               `{items:[],total:0}`, `data` ist danach nie wieder `null`. Sobald der Assistent ein Fach
@@ -601,8 +661,10 @@ export function VaterWizard() {
           <h3 style={{ margin: "0 0 12px" }}>Feinschliff <span className="muted">(gilt für alle {selected.length} Positionen)</span></h3>
           <div className="form-grid" onChange={() => setTouchedFineTune(true)}>
             <div className="field"><label htmlFor="wiz-title">Titel</label><input id="wiz-title" title="Titel" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-            <div className="field"><label htmlFor="wiz-start">Start</label><input id="wiz-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="field"><FieldLabel htmlFor="wiz-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="wiz-duration" title="Dauer" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+            {/* Beim Ziel „Klassenarbeit" folgen Start und Dauer aus dem Termin (B-423, Entscheidung 1) – nur Anzeige. */}
+            <div className="field"><label htmlFor="wiz-start">Start</label><input id="wiz-start" title="Startdatum" type="date" readOnly={istKlassenarbeit} value={vorgaben.startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
+            <div className="field"><FieldLabel htmlFor="wiz-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="wiz-duration" title="Dauer" type="number" min={1} readOnly={istKlassenarbeit} value={vorgaben.durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} />
+              {istKlassenarbeit && <span className="sub">bis zum Vortag der Klassenarbeit</span>}</div>
             <div className="field"><FieldLabel htmlFor="wiz-pass" topic="goalThreshold">Bestehen ab %</FieldLabel><input id="wiz-pass" title="Bestehen ab Prozent" type="number" min={1} max={100} value={passPercent} onChange={(e) => setPassPercent(Number(e.target.value))} /></div>
             <div className="field"><FieldLabel htmlFor="wiz-points" topic="pointsGoalMet">Punkte je Ziel</FieldLabel><input id="wiz-points" title="Punkte je erreichtem Ziel" type="number" min={0} value={pointsGoalMet} onChange={(e) => setPointsGoalMet(Number(e.target.value))} /></div>
             {/* Der „Stick": verpasste Pflicht kostet Münzen. 0 = reine Belohnung, Schulden sind erlaubt. */}
@@ -634,6 +696,16 @@ export function VaterWizard() {
               <InfoHint topic="requireTypedTest" />
             </span>
           </div>
+          {/* B-423, Entscheidungen 2 und 5: die Leiter als ein Satz mit einem änderbaren Tag. Vokabel-Positionen mit Leiter
+              gehen ohne „Nur getippte Tests zählen" an den Server – das Häkchen gilt dann nur für die übrigen Übungen,
+              und der Satz sagt das, statt still zu wirken. */}
+          {vorgaben.stageSchedule && leiter && (
+            <div className="row" style={{ marginTop: 12, gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span>Vokabeln: {leiter}. „Nur getippte Tests zählen" gilt hier nur für die übrigen Übungen.</span>
+              <SchwellenFeld wert={schwelleText} onWert={setSchwelleText}
+                angewandt={vorgaben.stageSchedule[1].dayNumber} max={vorgaben.durationDays} />
+            </div>
+          )}
           <p className="sub" style={{ marginTop: 12 }}>
             Der <strong>Münz-Malus</strong> greift, wenn ein Tagesziel am Ende des Tages nicht erreicht wurde –
             das Kind kann dadurch ins Minus geraten. Setze ihn auf 0, wenn du nur belohnen willst.
@@ -649,8 +721,10 @@ export function VaterWizard() {
           <SummaryRow label="Fach" value={subject?.name ?? "–"} />
           <SummaryRow label="Ziel · Intensität" value={`${GOALS[goal].label} · ${INTENSITY[intensity].label}`} />
           <SummaryRow label="Titel" value={title || "Neuer Lehrplan"} />
-          <SummaryRow label="Zeitraum" value={`${formatDate(startDate)} · ${durationDays} Tage`} />
+          <SummaryRow label="Zeitraum" value={zeitraumZeile(vorgaben.startDate, vorgaben.durationDays, vorgaben.klassenarbeitTermin !== null)} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
+          {leiter && <SummaryRow label="Stufenleiter" value={`Vokabeln: ${leiter}`} />}
+          {vorgaben.klassenarbeitTermin && <SummaryRow label="Klassenarbeit" value={klassenarbeitZeile(vorgaben.klassenarbeitTermin)} />}
           <SummaryRow label="Tagesdosis" value={dosisZeile(useLeitner, newItemsPerDay, selected.map((id) => gesehen.current.get(id)?.type ?? ""))} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />
           <SummaryRow label="Übungen" value={`${selected.length} als Tagesziel-Positionen`} />
@@ -659,14 +733,26 @@ export function VaterWizard() {
       )}
 
       <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
+      {klassenarbeitFehlt && (
+        <div className="banner err" role="alert">
+          {klassenarbeitFehlt.message}{" "}
+          <Link to={`/vater/class-tests?childId=${klassenarbeitFehlt.childId}`}>Klassenarbeit von Hand anlegen</Link>
+          {" · "}<Link to={`/vater/plan/${klassenarbeitFehlt.planId}`}>Zum Plan</Link>
+          {" · "}oder unten erneut versuchen – der Plan entsteht dabei nicht doppelt. Eine von Hand angelegte Arbeit
+          bekommt ihre Übungen dort über „Übungen &amp; Vorbereiten“.
+        </div>
+      )}
       {vorschau && <ExercisePreviewModal exerciseId={vorschau.id} title={vorschau.title} onClose={() => setVorschau(null)} />}
 
       <div className="row" style={{ gap: 10 }}>
-        {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={back}>← Zurück</button>}
+        {/* Gesperrt statt ausgeblendet, sobald der Plan steht: der Knopf verschwände sonst unter dem Finger. */}
+        {step > 0 && <button type="button" className="btn ghost" style={{ width: "auto" }} disabled={planSteht} onClick={back}>← Zurück</button>}
         <span style={{ marginLeft: "auto" }} />
         {step < STEPS.length - 1
-          ? <button type="button" className="btn" style={{ width: "auto" }} onClick={next}>Weiter →</button>
-          : <button type="button" className="btn lime" style={{ width: "auto" }} disabled={busy} onClick={finish}>{busy ? "…" : "✅ Lehrplan erstellen"}</button>}
+          // Gesperrt an Fach und Termin (B-423, Hausregel „Pflichtfeld → gesperrt"): der Grund steht am Feld.
+          ? <button type="button" className="btn" style={{ width: "auto" }} disabled={step === 1 && (subjectId === "" || terminGrund !== null)} onClick={next}>Weiter →</button>
+          : <button type="button" className="btn lime" style={{ width: "auto" }} disabled={busy} onClick={finish}>
+            {busy ? "…" : klassenarbeitFehlt ? "Klassenarbeit erneut anlegen" : "✅ Lehrplan erstellen"}</button>}
       </div>
     </div>
   );
@@ -726,6 +812,8 @@ export function WizardTrefferbereich({
   // Ein gesperrter Knopf verliert in Chromium den Fokus – darum wandert er beim Klick auf den Kasten
   // (Begründung in `ListenAusfall.tsx`).
   const kasten = useRef<HTMLDivElement>(null);
+  // Ids für den Grund an gesperrten Zeilen (B-140), damit das Kästchen ihn per `aria-describedby` nennt.
+  const uid = useId();
   return (
     <>
       <div className="row">
@@ -783,15 +871,21 @@ export function WizardTrefferbereich({
               // umschalten, und ein Knopf im Label wäre für einen Screenreader Teil des Kästchen-Namens (B-424).
               <div key={e.id} className="row" style={{ gap: 8, padding: 8, border: "1px solid var(--stroke)", borderRadius: 8, alignItems: "center" }}>
               <label className="checkline" style={{ flex: 1 }}>
-                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169). */}
-                <input type="checkbox" disabled={zeilenVeraltet}
+                {/* Gesperrt, solange die Zeilen zum vorigen Filter gehören (B-169) – und wenn der Vater die Übung nicht
+                    zuweisen darf (B-140): dann nennt die Zeile den Grund, statt erst der Abschluss mit
+                    `exercise_not_executable` zu scheitern. */}
+                <input type="checkbox" disabled={zeilenVeraltet || !e.canAssign}
+                  aria-describedby={e.canAssign ? undefined : `${uid}-gesperrt-${e.id}`}
                   checked={selected.includes(e.id)} onChange={() => onToggle(e.id)} />
                 {/* Anzeigename aus dem Manifest, nicht der Schlüssel: sonst bietet das Pulldown darüber
                     „Vokabelkarten" an, während die Zeile darunter „Vocabulary" sagt — ein Widerspruch in
                     einem Bildschirm. Der Rückfall auf den Schlüssel greift, solange das Manifest lädt – und
                     wenn sein Abruf scheiterte: Im Assistenten bleibt der Ausfall bewusst stumm (B-215,
                     Entscheidung 2), die Zeile liest sich dann als Schlüssel. */}
-                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""}</span></span>
+                <span>{e.title} <span className="muted">· {typLabel(e.type)}{groesse ? ` · ${groesse}` : ""}{by ? ` – ${by}` : ""}{e.source ? ` [${e.source}]` : ""} · {ratingSummary(e.averageRating, e.ratingCount)}</span>
+                  {/* Als Text, nicht als `title` (B-160): der erscheint am gesperrten Element nicht. */}
+                  {!e.canAssign && <span id={`${uid}-gesperrt-${e.id}`} className="pill mag" style={{ marginLeft: 6 }}>{NICHT_ZUWEISBAR_GRUND}</span>}
+                </span>
               </label>
               {/* Gesperrt wie das Kästchen (B-169): verschwände die Zeile bei offenem Dialog, fiele der Fokus beim Schließen ins Leere. */}
               <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={zeilenVeraltet}
@@ -801,6 +895,57 @@ export function WizardTrefferbereich({
           })}
         </div>
       )}
+    </>
+  );
+}
+
+/**
+ * Das Terminfeld des Ziels „Klassenarbeit" (B-423, AK 1): Pflicht, und ein zu naher Termin nennt seinen Grund am Feld –
+ * der „Weiter"-Knopf ist dann gesperrt. Exportiert für den Test; die Regel selbst steht in `terminProblem`.
+ */
+export function KlassenarbeitTerminFeld({ termin, heute, onChange }: {
+  termin: string; heute: string; onChange: (termin: string) => void;
+}) {
+  const grund = terminProblem(termin, heute);
+  // Leer sagt „(Pflicht)" genug; der zweite Grund (zu nah) steht als Text am Feld, nicht in einem `title` (B-160).
+  const zuNah = termin !== "" && grund !== null;
+  return (
+    <div className="field" style={{ maxWidth: 320 }}>
+      <label htmlFor="wiz-termin">Termin der Klassenarbeit <Pflicht /></label>
+      <input id="wiz-termin" type="date" min={plusTage(heute, 2)} value={termin}
+        aria-describedby={zuNah ? "wiz-termin-grund" : undefined} onChange={(e) => onChange(e.target.value)} />
+      {zuNah
+        ? <span id="wiz-termin-grund" className="sub">{grund}</span>
+        : <span className="sub">Der Plan läuft bis zum Vortag; die Klassenarbeit wird mit angelegt.</span>}
+    </div>
+  );
+}
+
+/** Die Zeile „Zeitraum" im Überblick (B-427 deutsch, B-423 mit Ende): „14.11.2026 – 21.11.2026 · 8 Tage". */
+export function zeitraumZeile(startDate: string, durationDays: number, mitEnde: boolean): string {
+  return mitEnde
+    ? `${formatDate(startDate)} – ${formatDate(plusTage(startDate, durationDays - 1))} · ${durationDays} Tage`
+    : `${formatDate(startDate)} · ${durationDays} Tage`;
+}
+
+/** Die Zeile „Klassenarbeit" im Überblick (B-423, AK 2): sagt vorher, was der Abschluss zusätzlich anlegt. */
+export function klassenarbeitZeile(termin: string): string {
+  return `legt die Klassenarbeit am ${formatDate(termin)} an`;
+}
+
+/**
+ * Der Tag der zweiten Leiter-Stufe (B-423, Review). Das Feld hält den **Rohtext**: geklemmt wird in `planVorgaben`, und
+ * erst beim Verlassen zeigt das Feld den angewandten Tag – sonst spränge „12" schon nach der „1" auf die Untergrenze 2.
+ */
+export function SchwellenFeld({ wert, onWert, angewandt, max }: {
+  wert: string; onWert: (wert: string) => void; angewandt: number; max: number;
+}) {
+  return (
+    <>
+      <label htmlFor="wiz-schwelle" className="muted" style={{ fontSize: 12 }}>Zweite Stufe ab Tag</label>
+      <input id="wiz-schwelle" type="number" min={2} max={max} style={{ maxWidth: 80 }}
+        value={wert === "" ? String(angewandt) : wert}
+        onChange={(e) => onWert(e.target.value)} onBlur={() => onWert(String(angewandt))} />
     </>
   );
 }

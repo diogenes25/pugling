@@ -16,6 +16,21 @@ internal static class PuglingHttp
         return await ReadAsync<T>(response, ct);
     }
 
+    /// <summary>
+    /// GET on a paginated list: the items plus the server's <c>X-Total-Count</c> header, so a caller can tell a full
+    /// answer from a window cut at <c>take</c> instead of silently working on a slice.
+    /// </summary>
+    internal static async Task<PuglingPage<T>> GetPageAsync<T>(this HttpClient http, string uri, CancellationToken ct)
+    {
+        using var response = await http.GetAsync(uri, ct);
+        var items = await ReadAsync<List<T>>(response, ct);
+        int? total = response.Headers.TryGetValues("X-Total-Count", out var values)
+            && int.TryParse(values.FirstOrDefault(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed
+            : null;
+        return new PuglingPage<T>(items, total);
+    }
+
     internal static async Task<T> PostAsync<T>(this HttpClient http, string uri, object? body, CancellationToken ct)
     {
         using var response = await http.PostAsync(uri, Body(body), ct);

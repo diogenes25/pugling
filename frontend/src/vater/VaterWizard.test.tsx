@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { WizardTrefferbereich } from "./VaterWizard";
+import { useState } from "react";
+import { KlassenarbeitTerminFeld, klassenarbeitZeile, SchwellenFeld, WizardTrefferbereich, zeitraumZeile } from "./VaterWizard";
+import { NICHT_ZUWEISBAR_GRUND, nurZuweisbare } from "./wizardSearch";
 import type { ExerciseSummary } from "../lib/types";
 
 /*
@@ -21,7 +23,7 @@ import type { ExerciseSummary } from "../lib/types";
 function uebung(over: Partial<ExerciseSummary> = {}): ExerciseSummary {
   return {
     id: 1, seriesId: 2, seriesUnitId: 3, type: "Vocabulary", title: "Unit 1 Wörter",
-    schoolTypes: "Gymnasium", isOwn: true, isOwner: true, executePublic: false, ...over,
+    schoolTypes: "Gymnasium", isOwn: true, isOwner: true, executePublic: false, canAssign: true, ...over,
   } as ExerciseSummary;
 }
 
@@ -158,5 +160,112 @@ describe("WizardTrefferbereich – Umfang und Ausprobieren", () => {
   it("sperrt Ausprobieren auf veralteten Zeilen", () => {
     render(<WizardTrefferbereich {...BASIS} treffer={[uebung()]} fehler={null} geladen={1} gesamt={1} zeilenVeraltet />);
     expect((screen.getByRole("button", { name: "„Unit 1 Wörter\" ausprobieren" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+/** B-408: die Zeile zeigt die Bewertung wie ihr Zwilling im Planbau (B-270). */
+describe("WizardTrefferbereich – Bewertung je Zeile", () => {
+  // Rot, wenn die Zeile ohne `ratingSummary` gerendert wird (dann fehlt der Stern-Text).
+  it("zeigt die Bewertung einer bewerteten Übung", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung({ averageRating: 4.5, ratingCount: 2 })]} fehler={null} geladen={1} gesamt={1} />);
+    expect(screen.getByText(/★ 4,5 \(2 Bewertungen\)/)).toBeTruthy();
+  });
+});
+
+/*
+ * B-140 AK 4: im Assistenten ist das Kästchen einer nicht zuweisbaren Übung gesperrt, und „Alle wählen" übernimmt nur, was
+ * der Vater zuweisen darf – sonst scheiterte der Abschluss an `exercise_not_executable`, im schlimmsten Fall für Hunderte.
+ */
+describe("Assistent – nicht zuweisbare Übungen (B-140)", () => {
+  // Rot, wenn `disabled` am Kästchen nur an `zeilenVeraltet` hängt oder der Grund nicht per `aria-describedby` verbunden ist.
+  it("sperrt das Kästchen und nennt den Grund", () => {
+    render(<WizardTrefferbereich {...BASIS} treffer={[uebung(), uebung({ id: 2, title: "Zurückgezogen", canAssign: false })]}
+      fehler={null} geladen={2} gesamt={2} />);
+    const gesperrt = screen.getByRole("checkbox", { name: /Zurückgezogen/ }) as HTMLInputElement;
+    expect(gesperrt.disabled).toBe(true);
+    expect(document.getElementById(gesperrt.getAttribute("aria-describedby")!)?.textContent).toBe(NICHT_ZUWEISBAR_GRUND);
+    expect((screen.getByRole("checkbox", { name: /Unit 1 Wörter/ }) as HTMLInputElement).disabled).toBe(false);
+  });
+
+  // Rot, wenn „Alle wählen" alle Ids übernimmt (`items.map(e => e.id)`, der Ausgangszustand) oder die übersprungenen
+  // verschweigt.
+  it("„Alle wählen“ übernimmt nur zuweisbare und nennt die übersprungenen", () => {
+    const folge = nurZuweisbare([{ id: 1, canAssign: true }, { id: 2, canAssign: false }, { id: 3, canAssign: true },
+      { id: 4, canAssign: false }]);
+    expect(folge.ids).toEqual([1, 3]);
+    expect(folge.hinweis).toBe("2 Übungen gewählt, 2 nicht zuweisbare übersprungen.");
+  });
+
+  // Rot, wenn der Hinweis auch ohne Übersprungene erscheint – dann meldete jeder „Alle wählen"-Klick etwas, das nicht geschah.
+  it("schweigt, wenn alles zuweisbar ist", () => {
+    expect(nurZuweisbare([{ id: 1, canAssign: true }])).toEqual({ ids: [1], hinweis: null });
+  });
+});
+
+/*
+ * B-423: das Ziel „Klassenarbeit" fragt den Termin. Die Sperre von „Weiter" hängt an `terminProblem` (wizardFinish.test.ts)
+ * und fährt die E2E `assistent-klassenarbeit.spec.ts`; hier steht, was das Feld selbst sagt.
+ */
+describe("Assistent – Termin der Klassenarbeit (B-423)", () => {
+  // AK 1. Rot, wenn das Label „(Pflicht)" nicht trägt (der Grund für den gesperrten Knopf stünde dann nirgends).
+  it("trägt „(Pflicht)“ im Namen des Feldes", () => {
+    render(<KlassenarbeitTerminFeld termin="" heute="2026-11-14" onChange={() => {}} />);
+    expect(screen.getByLabelText("Termin der Klassenarbeit (Pflicht)")).toBeTruthy();
+  });
+
+  // AK 1. Rot, wenn ein zu naher Termin keinen Grund am Feld nennt (`aria-describedby` fehlt oder der Text).
+  it("nennt bei einem zu nahen Termin den Grund am Feld", () => {
+    render(<KlassenarbeitTerminFeld termin="2026-11-15" heute="2026-11-14" onChange={() => {}} />);
+    const feld = screen.getByLabelText("Termin der Klassenarbeit (Pflicht)");
+    expect(document.getElementById(feld.getAttribute("aria-describedby")!)?.textContent).toMatch(/^Frühestens am 16\.11\.2026/);
+  });
+
+  // Gegenprobe: ein tauglicher Termin trägt keinen Grund. Rot, wenn der Grund unbedingt dasteht.
+  it("schweigt bei einem tauglichen Termin", () => {
+    render(<KlassenarbeitTerminFeld termin="2026-11-22" heute="2026-11-14" onChange={() => {}} />);
+    expect(screen.getByLabelText("Termin der Klassenarbeit (Pflicht)").getAttribute("aria-describedby")).toBeNull();
+    expect(screen.queryByText(/Frühestens/)).toBeNull();
+  });
+
+  // AK 2. Rot, wenn der Überblick das Ende auf den Termin legt (Dauer statt Dauer − 1) oder die Arbeit verschweigt.
+  it("zeigt im Überblick Zeitraum bis zum Vortag und die Klassenarbeit", () => {
+    expect(zeitraumZeile("2026-11-14", 8, true)).toBe("14.11.2026 – 21.11.2026 · 8 Tage");
+    expect(klassenarbeitZeile("2026-11-22")).toBe("legt die Klassenarbeit am 22.11.2026 an");
+  });
+
+  // AK 6. Rot, wenn die anderen Ziele plötzlich ein Ende zeigen – `assistent.spec.ts` prüft genau diese Form.
+  it("lässt den Zeitraum der anderen Ziele, wie er war", () => {
+    expect(zeitraumZeile("2026-11-14", 30, false)).toBe("14.11.2026 · 30 Tage");
+  });
+});
+
+/*
+ * B-423, Review-Fund 3: das Schwellenfeld hält den Rohtext. Vorher stand der geklemmte Wert im Feld – „1" sprang sofort auf
+ * die Untergrenze 2, und „12" ließ sich nicht tippen.
+ */
+function SchwellenRahmen({ max }: { max: number }) {
+  const [wert, setWert] = useState("");
+  const zahl = /^\d+$/.test(wert) ? Number(wert) : 4;
+  return <SchwellenFeld wert={wert} onWert={setWert} angewandt={Math.min(Math.max(zahl, 2), max)} max={max} />;
+}
+
+describe("Assistent – Schwellentag der Leiter (B-423)", () => {
+  // Rot, wenn das Feld den angewandten statt des getippten Werts zeigt: dann stünde nach der „1" eine „2".
+  it("nimmt eine zweistellige Eingabe Ziffer für Ziffer an", () => {
+    render(<SchwellenRahmen max={14} />);
+    const feld = screen.getByLabelText("Zweite Stufe ab Tag") as HTMLInputElement;
+    fireEvent.change(feld, { target: { value: "1" } });
+    expect(feld.value).toBe("1");
+    fireEvent.change(feld, { target: { value: "12" } });
+    expect(feld.value).toBe("12");
+  });
+
+  // Rot, wenn `onBlur` fehlt: dann bliebe ein ungültiger Rohtext („1") stehen, obwohl Tag 2 gilt.
+  it("zeigt beim Verlassen den angewandten Tag", () => {
+    render(<SchwellenRahmen max={14} />);
+    const feld = screen.getByLabelText("Zweite Stufe ab Tag") as HTMLInputElement;
+    fireEvent.change(feld, { target: { value: "1" } });
+    fireEvent.blur(feld);
+    expect(feld.value).toBe("2");
   });
 });

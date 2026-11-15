@@ -29,26 +29,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
     private const int DefaultPassPercent = 80;
 
-    /// <summary>
-    /// How many test attempts the child gets per <b>day</b>. A second chance is pedagogically right, the
-    /// fifth is grade farming: without a cap the child can restart until the result is good and silently drop
-    /// every bad run (an abandoned attempt writes nothing – see <see cref="Answer"/>).
-    ///
-    /// Per day and deliberately <em>not</em> per goal period: what the cap defends against is the immediate
-    /// restart, and a fresh day is fresh learning rather than farming. Tied to the period, a weekly position
-    /// would grant two attempts for the entire week – two Monday failures would lock the child out of its own
-    /// duty until Sunday and then fine it (<see cref="PlanPosition.PenaltyCoins"/>) for missing it.
-    ///
-    /// It also holds for positions without a duty (<see cref="GoalCadence.None"/>): a test always writes item
-    /// progress and feeds the metric missions, so unlimited restarts are farming there too.
-    ///
-    /// Deliberately a constant and not a field on the position: a per-position cap would be a schema change,
-    /// and the migration chain is folded rather than extended. If the cap ever needs to be configurable, this
-    /// is the one place to replace.
-    /// </summary>
-    private const int MaxAttemptsPerDay = 2;
-
-
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
@@ -65,11 +45,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     private static TestItem ToItem(Exercise exercise, IReadOnlyList<ContentItem> items, ContentItem item,
         IExerciseType type, int stage, bool typed, int attemptId)
     {
-        // Shared anti-cheat projection (reveal/length/hint/choices/audio per stage) - the same rule as the
-        // practice card. The image is deliberately left out: the exam renders none, and asking for one would
+        // Shared anti-cheat projection (reveal/length/choices/audio per stage) - the same rule as the
+        // practice card, minus the hint: the exam measures (B-544). The image is deliberately left out: the exam renders none, and asking for one would
         // freeze the child's motif choice as a side effect of taking a test (see MediaSelector).
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
-        return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Hint, f.Choices, f.AudioUrl,
+        return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Choices, f.AudioUrl,
             f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles,
             f.CueBox);
     }
@@ -157,10 +137,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     .FirstOrDefaultAsync(ct) is { } open)
                 return new AttemptResponse(open.Id, planId, positionId, open.Day, open.StageValue, open.TotalItems);
 
-            // The START is counted, not the submission: otherwise walking away would be free and the cap toothless.
-            var used = await db.TestAttempts
-                .CountAsync(t => t.PlanPositionId == positionId && t.Day == day && !t.BySupervisor, ct);
-            if (used >= MaxAttemptsPerDay)
+            // The START is counted, not the submission - by the same count the practice screen shows (B-522).
+            if (await progress.TestAttemptsLeftAsync(positionId, day, forSupervisor: false, ct) == 0)
                 return this.ProblemWithCode(ApiErrors.TestAttemptsExhausted,
                     "No test attempts left for today. Ask your parent.");
         }
@@ -178,17 +156,17 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         // The test is a position check: test the contents already introduced, otherwise the whole pool
         // (it does not block when practice has nothing "due" yet).
-        var progress = await db.PositionItemProgress
+        var atomProgress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == positionId && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
-        var introduced = progress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
+        var introduced = atomProgress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
         // With a daily dose (B-04) the test checks the day's portion; otherwise everything introduced.
         var dose = play.DailyDose(pos);
         var pool = dose > 0
-            ? PositionPlayService.DailyTestPortion(dose, poolSize, progress.Values, day)
+            ? PositionPlayService.DailyTestPortion(dose, poolSize, atomProgress.Values, day)
             : introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
         // FREEZE the examination order per the position's strategy (strictly server-driven, no going back).
-        var order = PositionPlayService.OrderIndices(pool.Select(i => (i, progress.GetValueOrDefault(i))), pos.OrderStrategy);
+        var order = PositionPlayService.OrderIndices(pool.Select(i => (i, atomProgress.GetValueOrDefault(i))), pos.OrderStrategy);
 
         var attempt = new TestAttempt
         {
@@ -209,8 +187,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             {
                 ItemIndex = i,
                 StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage,
-                    progress.GetValueOrDefault(i)?.Box,
-                    progress.GetValueOrDefault(i)?.IntroducedAt ?? day, day),
+                    atomProgress.GetValueOrDefault(i)?.Box,
+                    atomProgress.GetValueOrDefault(i)?.IntroducedAt ?? day, day),
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);
@@ -464,16 +442,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var dayOverview = await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
         // Also evaluate metric-based missions/awards (e.g. "tests passed") on test completion.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once the day's duty is fully met.
+        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
         await dailyBox.EvaluateAndAwardAsync(plan, attempt.Day, dayOverview, ct);
 
-        // Same daily count Start already uses for the cap (used >= MaxAttemptsPerDay) - this attempt's own
-        // row was inserted at Start, so counting now naturally includes it (1st of 2 -> remaining 1, 2nd -> 0).
-        // A supervisor attempt is exempt from the cap, so the field is constant filler there (Entscheidung 3).
-        var attemptsRemaining = attempt.BySupervisor
-            ? MaxAttemptsPerDay
-            : Math.Max(0, MaxAttemptsPerDay - await db.TestAttempts
-                .CountAsync(t => t.PlanPositionId == positionId && t.Day == attempt.Day && !t.BySupervisor, ct));
+        // The same count Start uses for the cap (B-522) - this attempt's own row was inserted at Start and is
+        // completed by now, so it counts as used (1st of 2 -> remaining 1, 2nd -> 0). A supervisor attempt is
+        // exempt from the cap, so the field is constant filler there.
+        var attemptsRemaining = await progress.TestAttemptsLeftAsync(positionId, attempt.Day, attempt.BySupervisor, ct);
 
         // The wrong mentions ride along only where they exist: in set mode the outcomes above name what the
         // child FORGOT, and without this list what it actually typed would silently disappear.

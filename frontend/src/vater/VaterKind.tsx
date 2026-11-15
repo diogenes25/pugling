@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
 import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
@@ -16,7 +17,7 @@ import type {
   InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
-import { SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
+import { SectionPanel, SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
 
 /**
  * Die Reiter des Kind-Hubs. Gruppiert nach der Frage, die der Vater gerade hat – nicht nach dem Endpunkt:
@@ -79,23 +80,24 @@ export function VaterKind() {
       {/*
         Reiter statt einer langen Seite (B-534): vorher standen neun Abschnitte mit drei verschiedenen
         „Speichern" untereinander, und welcher Knopf welche Eingabe sichert, musste der Vater erraten. Jetzt ist
-        je Reiter höchstens ein Speichern sichtbar.
+        je Reiter höchstens ein Speichern sichtbar. Die Reiter bleiben eingehängt (`SectionPanel`): wer im Profil
+        tippt und kurz in „Schule" nachsieht, findet seine ungespeicherte Eingabe beim Zurückkommen wieder.
       */}
       <SectionTabs tabs={CHILD_TABS} active={tab} label={`Profil von ${me.name}`} />
 
-      {tab === "profil" && <CoreDataSection child={me} onSaved={child.reload} />}
+      <SectionPanel section="profil" active={tab}><CoreDataSection child={me} onSaved={child.reload} /></SectionPanel>
 
-      {tab === "schule" && (
-        <>
-          {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
-              der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
-          <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
-          <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []} />
-          <TimetableSection childId={childId} subjects={subjects.data ?? []} />
-        </>
-      )}
+      <SectionPanel section="schule" active={tab}>
+        {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
+            der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
+        <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+        {/* Klasse und Schulart entscheiden mit, welcher Fachlehrer passt: nach dem Speichern im Profil neu fragen. */}
+        <ChildMaterialSection childId={childId} childName={me.name} subjects={subjects.data ?? []}
+          kindStand={`${me.grade ?? "-"}:${me.schoolType}`} />
+        <TimetableSection childId={childId} subjects={subjects.data ?? []} />
+      </SectionPanel>
 
-      {tab === "interessen" && (
+      <SectionPanel section="interessen" active={tab}>
         <section>
           <h3 className="h-section">Interessen</h3>
           <p className="sub">
@@ -117,18 +119,16 @@ export function VaterKind() {
             />
           )}
         </section>
-      )}
+      </SectionPanel>
 
-      {tab === "einstellungen" && (
-        <>
-          <RatingSection child={me} onSaved={child.reload} />
-          {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
-          <BonusSection key={me.id} child={me} onSaved={child.reload} />
-        </>
-      )}
+      <SectionPanel section="einstellungen" active={tab}>
+        <RatingSection child={me} onSaved={child.reload} />
+        {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
+        <BonusSection key={me.id} child={me} onSaved={child.reload} />
+      </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}
-      {tab === "betreuer" && <SupervisorsSection childId={childId} childName={me.name} />}
+      <SectionPanel section="betreuer" active={tab}><SupervisorsSection childId={childId} childName={me.name} /></SectionPanel>
     </>
   );
 }
@@ -191,7 +191,8 @@ function formStateOf(child: ChildResponse) {
   };
 }
 
-function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+/** Exportiert für den Test (B-380). */
+export function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
   const nav = useNavigate();
   const [form, setForm] = useState(() => formStateOf(child));
   const [pin, setPin] = useState("");
@@ -203,7 +204,8 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) { action.fail("Der Name darf nicht leer sein."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
+    if (!form.name.trim()) return;
 
     // Nur Geändertes senden (PATCH-Semantik); ein leeres PIN-Feld heißt „unverändert", nicht „löschen".
     const initial = formStateOf(child);
@@ -256,7 +258,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
       <h3 className="h-section">Stammdaten</h3>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="form-grid" style={{ alignItems: "end" }}>
-          <div className="field"><label htmlFor="kd-name">Name</label>
+          <div className="field"><label htmlFor="kd-name">Name <Pflicht /></label>
             <input id="kd-name" value={form.name} onChange={(e) => up("name", e.target.value)} /></div>
           <div className="field"><label htmlFor="kd-year">Geburtsjahr</label>
             <input id="kd-year" type="number" min={1990} max={2030} value={form.birthYear} onChange={(e) => up("birthYear", e.target.value)} /></div>
@@ -286,7 +288,7 @@ function CoreDataSection({ child, onSaved }: { child: ChildResponse; onSaved: ()
             placeholder="z.B. Schwächen bei unregelmäßigen Verben, braucht kurze Einheiten." />
         </div>
         <div className="row" style={{ gap: 8 }}>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Speichere…" : "Speichern"}</button>
+          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !form.name.trim()}>{action.busy ? "Speichere…" : "Speichern"}</button>
         </div>
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
@@ -366,8 +368,9 @@ function BonusSection({ child, onSaved }: { child: ChildResponse; onSaved: () =>
     <section>
       <h3 className="h-section">Bonus-Training</h3>
       <p className="sub">
-        Nach erfüllter Tagespflicht kann {child.name} Extra-Übungen zum aktuellen Thema spielen. Münzen gibt es nur
-        für geprüfte Antworten (Auswahl, Tippen), jede Übung zahlt einmal, Vokabeln werden mit jeder Runde schwerer.
+        Sobald die Tagesziele erfüllt sind (Wochenziele zählen dafür nicht – ohne Tagesziele zählen alle Ziele), kann {child.name} Extra-Übungen zum
+        aktuellen Thema spielen. Münzen gibt es nur für geprüfte Antworten (Auswahl, Tippen), jede Übung zahlt einmal,
+        Vokabeln werden mit jeder Runde schwerer.
       </p>
       <ListenAusfall was="Der heutige Bonus-Stand" fehler={today.error} laedt={today.loading} onRetry={today.reload} schluessel={child.id} />
       {today.data && (

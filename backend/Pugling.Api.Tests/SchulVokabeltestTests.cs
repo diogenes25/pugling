@@ -237,7 +237,8 @@ public class SchulVokabeltestTests(PuglingWebAppFactory factory) : IClassFixture
         var next = await child.GetFromJsonAsync<JsonElement>($"{baseUrl}/{attemptId}/next");
         var item = next.GetProperty("item");
         Assert.Equal(4, item.GetProperty("cueBox").GetArrayLength());
-        Assert.Equal(JsonValueKind.Null, item.GetProperty("hint").ValueKind);
+        // Since B-544 the exam card has no hint field at all - the exam measures.
+        Assert.False(item.TryGetProperty("hint", out _));
     }
 
     // Gap 1 "racism" and gap 2 "community" from the store, plus the distractors "rassistisch" and "Gesundheit".

@@ -46,12 +46,18 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     }
 
     /// <summary>All tags of a child (student: own only, adult: own children only).</summary>
+    /// <param name="childId">Child whose tags are listed.</param>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<TagResponse>>> List([FromQuery] int childId, CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<TagResponse>>> List(
+        [FromQuery] int childId, [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default)
     {
         if (!await access.OwnsChildAsync(User, childId, ct)) return Forbid();
-        return await Project(db.Tags.Where(t => t.ChildId == childId).OrderBy(t => t.Name)).ToListAsync(ct);
+        return await Project(db.Tags.Where(t => t.ChildId == childId).OrderBy(t => t.Name).ThenBy(t => t.Id))
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>Creates a tag for a child (name unique per child).</summary>

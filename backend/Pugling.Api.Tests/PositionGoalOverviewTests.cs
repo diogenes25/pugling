@@ -96,7 +96,11 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             db.SeriesUnits.Single(u => u.Id == unitId).Label = unitLabel;
             var free = new PlanPosition
             {
-                StudyPlanId = planId, ExerciseId = exerciseId, Order = 99, Cadence = GoalCadence.None, PenaltyCoins = penalty,
+                StudyPlanId = planId,
+                ExerciseId = exerciseId,
+                Order = 99,
+                Cadence = GoalCadence.None,
+                PenaltyCoins = penalty,
             };
             db.PlanPositions.Add(free);
             db.SaveChanges();

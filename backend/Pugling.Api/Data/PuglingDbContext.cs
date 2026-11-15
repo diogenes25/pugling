@@ -131,10 +131,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // be one login with two identities behind it, neither a role pointing at nothing (AuthAccess would
             // then check silently into the void). Same construction as MediaLink/ChildMediaPick.
             e.ToTable(t => t.HasCheckConstraint("CK_AccountProfile_SingleProfile",
-                """
+                CheckSql("""
                 (CASE WHEN "AdultId" IS NULL THEN 0 ELSE 1 END
                  + CASE WHEN "ChildId" IS NULL THEN 0 ELSE 1 END) = 1
-                """));
+                """)));
 
             e.Property(p => p.Role).HasConversion<string>();
             e.HasOne(p => p.Account).WithMany(a => a.Profiles)
@@ -447,11 +447,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<MediaLink>(e =>
         {
             e.ToTable(t => t.HasCheckConstraint("CK_MediaLink_SingleCarrier",
-                """
+                CheckSql("""
                 (CASE WHEN "VocabularyId" IS NULL THEN 0 ELSE 1 END
                  + CASE WHEN "ExerciseItemId" IS NULL THEN 0 ELSE 1 END
                  + CASE WHEN "ExerciseId" IS NULL THEN 0 ELSE 1 END) = 1
-                """));
+                """)));
 
             e.HasIndex(l => new { l.MediaAssetId, l.VocabularyId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(l => new { l.MediaAssetId, l.ExerciseItemId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
@@ -477,10 +477,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<ChildMediaPick>(e =>
         {
             e.ToTable(t => t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier",
-                """
+                CheckSql("""
                 (CASE WHEN "VocabularyId" IS NULL THEN 0 ELSE 1 END
                  + CASE WHEN "ExerciseItemId" IS NULL THEN 0 ELSE 1 END) = 1
-                """));
+                """)));
 
             e.HasIndex(p => new { p.ChildId, p.VocabularyId, p.MediaAssetId }).IsUnique().HasFilter("[VocabularyId] IS NOT NULL");
             e.HasIndex(p => new { p.ChildId, p.ExerciseItemId, p.MediaAssetId }).IsUnique().HasFilter("[ExerciseItemId] IS NOT NULL");
@@ -1190,4 +1190,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             }
         }
     }
+
+    /// <summary>
+    /// Check-constraint SQL with LF line ends (B-546). The constraints are raw string literals, and a raw string takes
+    /// the line ends of the checkout: on Windows (CRLF working copy) `migrations add` wrote CRLF into the snapshot, on
+    /// Linux LF - the same model looked changed depending on where the last migration was made.
+    /// </summary>
+    private static string CheckSql(string sql) => sql.ReplaceLineEndings("\n");
 }

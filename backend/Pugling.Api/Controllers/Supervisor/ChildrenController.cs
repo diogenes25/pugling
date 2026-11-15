@@ -27,6 +27,19 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     private static bool BonusCapAcceptable(int? cap) => cap is null or (>= 0 and <= MaxBonusDailyCoinCap);
 
+    private const string SchoolTypeMessage = "A child attends exactly one school type; send a single value or None.";
+
+    /// <summary>
+    /// B-152: <see cref="SchoolTypes"/> is a flags enum because exercises, series and profiles use it as a filter,
+    /// where a combination makes sense. A child attends ONE school, so a combination is a modelling accident that
+    /// makes profile matches ambiguous. Only a SENT value is checked - stored combinations stay until someone
+    /// touches the field. <c>Enum.IsDefined</c> catches undefined bits that the string-enum converter lets through
+    /// as plain numbers.
+    /// </summary>
+    private static bool SchoolTypeAcceptable(SchoolTypes? value) =>
+        value is null or SchoolTypes.None
+        || (System.Numerics.BitOperations.IsPow2((int)value.Value) && Enum.IsDefined(value.Value));
+
     Task<ChildResponse?> ProjectOne(int childId, CancellationToken ct) =>
         db.Children
             .Where(c => c.Id == childId)
@@ -39,20 +52,25 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of students supervised by the logged-in supervisor.</summary>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ChildResponse>>> List(CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<ChildResponse>>> List(
+        [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default)
     {
         var supervisorId = User.AdultId();
         return await db.Children
             .Where(c => c.SupervisorLinks.Any(l => l.SupervisorId == supervisorId))
-            .OrderBy(c => c.Name)
+            // Names are not unique (two children called "Max"): the Id tie-break keeps a window deterministic.
+            .OrderBy(c => c.Name).ThenBy(c => c.Id)
             .Select(c => new ChildResponse(c.Id, c.Name, c.BirthYear, c.Grade, c.SchoolType,
                 c.Gender, c.Interests, c.ProfileNotes, c.AllowedContentRating,
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.BonusDailyCoinCap))
-            .ToListAsync(ct);
+            .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
     /// <summary>A single child.</summary>
@@ -73,6 +91,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (string.IsNullOrWhiteSpace(dto.Name)) return this.ProblemWithCode(ApiErrors.ValidationError, "Name is required.");
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
+        if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         var child = new Child
         {
@@ -113,6 +132,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (child is null) return NotFound();
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
+        if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
         // Value first, clear switch second - "clear" wins if a client sends both.

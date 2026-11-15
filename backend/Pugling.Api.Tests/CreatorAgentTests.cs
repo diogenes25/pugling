@@ -50,7 +50,8 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     private AgentCommands Commands(CreatorApi creator, CreatorPipeline pipeline, FakeChatClient? chat = null) =>
         new(creator, new SupervisorApi(Authenticated()), pipeline, new ExamPlanner(pipeline, creator, new SupervisorApi(Authenticated())),
             new PlanPlanner(pipeline, new SupervisorApi(Authenticated())), Filler(creator, chat ?? new FakeChatClient("{}")),
-            ImageAgentTests.Run(creator, chat ?? new FakeChatClient("{}"), new FakeImageGenerator()));
+            ImageAgentTests.Run(creator, chat ?? new FakeChatClient("{}"), new FakeImageGenerator()),
+            new PlanAssigner(creator, new SupervisorApi(Authenticated())));
 
     private static UnitNotesFiller Filler(CreatorApi creator, FakeChatClient chat, IModelInventory? models = null)
     {
@@ -1114,7 +1115,9 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// it is dropped, so "horse" leaves only "fence". Red if any of the three rules goes, or if the answer-distractor
     /// is counted (no distractor violation). The text also holds two cases the reveal check must NOT report - "horses"
     /// contains "horse" only as a substring, and the base-form hint "(clean)" after its own gap is part of the task -
-    /// so a substring check or one that reads the hints is red too, through the exact list of violations.
+    /// so a substring check or one that reads the hints is red too, through the exact list of violations. B-465 AK 3: the
+    /// list bracket on gap 3 is no base form, so the gap stays checked for a reveal; red if the form-task exception
+    /// counts any bracket.
     /// </summary>
     [Fact]
     public async Task Eine_verratene_Loesung_eine_Auswahlliste_und_zu_wenige_Ablenker_werden_abgelehnt()
@@ -1134,6 +1137,73 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             v => Assert.StartsWith("Lücke 3: die Lösung 'sheep'", v),
             v => Assert.StartsWith("Es fehlen Ablenker: 1", v));
         Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>
+    /// B-465 AK 1: a gap with one base form ("(be)") asks for the form, so its answer may stand elsewhere in the text - in
+    /// a text on the past progressive "was" and "were" stand everywhere. Red if the reveal check runs for every gap again
+    /// (the defect: no text on that grammar survived the repair round).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Formaufgabe_mit_Grundform_darf_ihre_Loesung_anderswo_im_Text_haben()
+    {
+        const string cloze = """
+            {"title":"Past progressive","text":"Yesterday I [was] (be) at home. She was reading a book. We [were] (be) happy, and they were tired. He [played] (play) football.",
+             "distractors":["is","are","plays"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Formaufgabe");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.Empty(outcome.Violations);
+        Assert.True(outcome.DraftAccepted);
+    }
+
+    /// <summary>
+    /// B-465 AK 2: a vocabulary gap without a bracket whose answer stands elsewhere in the text is still given away -
+    /// next to a form gap in the same text, which is not reported. Red if the exception switches the reveal check off
+    /// altogether.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Vokabelluecke_ohne_Klammer_bleibt_als_verraten_abgelehnt()
+    {
+        const string cloze = """
+            {"title":"Verraten","text":"Tom feeds the [horse]. The horse is hungry. He [cleans] (clean) the stable, and Ann cleans the yard. The [sheep] sleeps.",
+             "distractors":["fence","tractor"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Vokabel-verraten");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Collection(outcome.Violations,
+            v => Assert.StartsWith("Lücke 1: die Lösung 'horse' steht außerhalb der Klammern", v));
+    }
+
+    /// <summary>
+    /// B-465 AK 4: in a school test the bracket names the word of the list and the gap asks the vocabulary, so a gap with
+    /// a bracket whose answer stands elsewhere is still given away. Red if the exception ignores <c>SchoolTest</c>.
+    /// </summary>
+    [Fact]
+    public async Task Im_Schultest_bleibt_eine_Luecke_mit_Klammer_als_verraten_abgelehnt()
+    {
+        const string draft = """
+            {"title":"Vokabeltest Bauernhof","text":"1. Ann rides her [horse] (the horse) every day, and the horse is brown.\n2. Two [sheep] (the sheep) stand in the field.\n3. The [goats] (the goat) eat everything.",
+             "distractors":["Pferdestall","Schäfer"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(draft, draft);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Schultest-verraten");
+        await BookVocabularyAsync(creator, seriesId, seriesUnitId,
+            ("the horse", "das Pferd", null), ("the sheep", "das Schaf", null), ("the goat", "die Ziege", null));
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze") with { SchoolTest = true });
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Collection(outcome.Violations,
+            v => Assert.StartsWith("Lücke 1: die Lösung 'horse' steht außerhalb der Klammern", v));
     }
 
     /// <summary>

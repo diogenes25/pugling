@@ -472,6 +472,8 @@ export type ScoringTimeSlot = S["ScoringTimeSlot"];
 
 /** Eine Position eines Lehrplans: Verweis auf eine Katalog-Übung + eigene Ziele/Punkte/Leitner. */
 export type PositionResponse = S["PositionResponse"];
+/** Womit eine Position geprüft wird – vom Server bestimmt (B-550). */
+export type LearningCheck = S["LearningCheck"];
 
 /** Tagesstand eines Kindes im Vater-Dashboard (aggregiert über seine aktiven Lehrpläne). */
 export type ChildDay = S["ChildDay"];
@@ -671,6 +673,9 @@ export type ExtraRunResponse = S["ExtraRunResponse"];
 export type ExtraCard = S["ExtraCard"];
 export type ExtraAnswer = S["ExtraAnswer"];
 export type ExtraRunResult = S["ExtraRunResult"];
+// Tagestruhe (B-527): Stand in der Übersicht, Inhalt erst nach dem Öffnen.
+export type DailyBoxStatus = S["DailyBoxStatus"];
+export type DailyBoxOpened = S["DailyBoxOpened"];
 
 // ---- Sohn-Wallet ----
 
@@ -686,6 +691,9 @@ export type ChildPointsEntry = S["PointsEntryResponse"];
 
 /** Reiner Kontostand des Sohns (GET me/points). Die Buchungen liegen unter me/points/entries. */
 export type WalletBalance = S["WalletResponse"];
+
+/** Wochenvergleich des Sohns gegen die eigene Vorwoche (GET me/points/week, B-253). */
+export type WeekCoins = S["WeekCoinsResponse"];
 
 /** Kombinierte Konto-Sicht des Vaters (GET children/{id}/points): Salden + eingebettete Buchungen. */
 export type Wallet = S["ChildPointsResponse"];

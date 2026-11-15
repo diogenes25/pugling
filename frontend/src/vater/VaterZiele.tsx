@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { reiheFilter } from "./VaterExercises";
 import { Link, useParams } from "react-router-dom";
 import { StatusBanner } from "../components/StatusBanner";
+import { Pflicht } from "../components/Pflicht";
 import { FieldLabel } from "../components/InfoHint";
 import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
@@ -421,7 +422,8 @@ function KeyResultForm({ subjects, busy = false, onSubmit }: {
   );
 }
 
-function NewObjective({ childId, subjects, action, onCreated }: {
+/** Exportiert für den Test (B-380). */
+export function NewObjective({ childId, subjects, action, onCreated }: {
   childId: number; subjects: SubjectResponse[]; action: ActionState; onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -435,7 +437,8 @@ function NewObjective({ childId, subjects, action, onCreated }: {
   // Etappen werden inline gesammelt: ein Ziel ohne Etappe ist nicht erreichbar, deshalb gleich hier.
   const [keyResults, setKeyResults] = useState<CreateKeyResultRequest[]>([]);
   async function submit() {
-    if (!title.trim()) { action.fail("Bitte einen Titel angeben."); return; }
+    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt.
+    if (!title.trim()) return;
     const ok = await action.run(() => api.createObjective(childId, {
       title: title.trim(), motivation: motivation.trim() || null, kind,
       start: start || null, dueDate: dueDate || null,
@@ -460,7 +463,7 @@ function NewObjective({ childId, subjects, action, onCreated }: {
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="form-grid" style={{ alignItems: "end" }}>
-        <div className="field"><label htmlFor="ob-title">Titel</label>
+        <div className="field"><label htmlFor="ob-title">Titel <Pflicht /></label>
           <input id="ob-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Englisch aufholen bis Ostern" /></div>
         <div className="field"><FieldLabel htmlFor="ob-kind" topic="objectiveKind">Art</FieldLabel>
           <select id="ob-kind" value={kind} onChange={(e) => setKind(e.target.value as ObjectiveKind)}>
@@ -499,7 +502,7 @@ function NewObjective({ childId, subjects, action, onCreated }: {
       <KeyResultForm subjects={subjects} onSubmit={(dto) => setKeyResults((cur) => [...cur, dto])} />
 
       <div className="row" style={{ gap: 8 }}>
-        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={submit}>
+        <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !title.trim()} onClick={submit}>
           {action.busy ? "Lege an…" : "Ziel anlegen"}
         </button>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setOpen(false)}>Abbrechen</button>

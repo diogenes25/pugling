@@ -81,6 +81,36 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// What meets the position's goal (B-550), from the same rules the test and <c>IsGoalMetAsync</c> grade by: a type
+    /// without a final test counts playthrough; otherwise every stage the position can be on - the base stage
+    /// (position → exercise default → type default, as in <see cref="StageForDay"/>) and each step of the schedule - is
+    /// a display stage (playthrough), a typed stage (graded) or a self-assessed one. "Typed tests only" makes a
+    /// self-assessed day unreachable, since such an attempt is never graded.
+    /// </summary>
+    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type)
+    {
+        if (type.Manifest.CheckMode == ExerciseCheckMode.None) return new LearningCheck(LearningCheckKind.NoTest);
+
+        var baseStage = pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
+        var steps = (pos.StageSchedule ?? []).OrderBy(s => s.DayNumber).ToList();
+        // Segments (first day, stage) in plan order; the base stage holds until the first step takes over.
+        var segments = new List<(int Day, int Stage)>();
+        if (steps.Count == 0 || steps[0].DayNumber > 1) segments.Add((1, baseStage));
+        segments.AddRange(steps.Select(s => (Math.Max(1, s.DayNumber), s.Stage)));
+
+        var kinds = segments.Select(s => type.IsDisplayOnlyStage(s.Stage) ? LearningCheckKind.Playthrough
+            : type.IsTypedStage(s.Stage) ? LearningCheckKind.Typed : LearningCheckKind.SelfAssessed).ToList();
+        if (pos.RequireTypedTest && kinds.Contains(LearningCheckKind.SelfAssessed))
+            return new LearningCheck(LearningCheckKind.Unreachable);
+        if (kinds.Distinct().Count() == 1) return new LearningCheck(kinds[0]);
+
+        // The day from which every later segment is typed - the point the father reads as "from then on it is checked".
+        int? typedFrom = null;
+        for (var i = segments.Count - 1; i >= 0 && kinds[i] == LearningCheckKind.Typed; i--) typedFrom = segments[i].Day;
+        return new LearningCheck(LearningCheckKind.Ladder, typedFrom);
+    }
+
+    /// <summary>
     /// The stage a never-seen card is shown at first (B-419): the type's free display stage, or <c>null</c> for a
     /// type that has none - there the card is played at the day's stage as before, because there is no way to
     /// show it without grading it.
@@ -187,7 +217,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
         var due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
-            .Where(x => ScopeMatch(pos.Scope, x.Prog) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
+            .Where(x => ScopeMatch(pos.Scope, x.Prog, day) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
 
         // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
         if (dueOnly && DailyDose(pos) is > 0 and var dose)
@@ -418,9 +448,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         return result;
     }
 
-    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog) => scope switch
+    // "New" includes the introduction day (B-435): since the first contact is an ungraded introduction card (B-419),
+    // a scope of "never introduced" would only ever show a word and never ask it. The word is asked in the follow-up
+    // round of its introduction day and becomes review material from the next day on - with or without Leitner,
+    // which is why the day decides and not the review count (without Leitner no review is ever counted).
+    // "Old" stays "introduced at all", so on the introduction day a word lies in both scopes.
+    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog, DateOnly day) => scope switch
     {
-        ItemScope.New => prog?.IntroducedAt is null,
+        ItemScope.New => prog?.IntroducedAt is null || prog.IntroducedAt == day,
         ItemScope.Old => prog?.IntroducedAt is not null,
         _ => true,
     };

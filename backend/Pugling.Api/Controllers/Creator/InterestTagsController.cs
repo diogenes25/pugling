@@ -227,8 +227,9 @@ public class InterestTagsController(PuglingDbContext db) : ControllerBase
     ///
     /// <b>Two limits, so this does not read as more than it is.</b> It guards the tag, not the dressing:
     /// the exercise <c>PUT</c> is a replacement, so a caller that omits <c>InterestTagIds</c> still clears
-    /// the dressing without a word (deliberate since B-46 - whether an omitted field should mean "keep" is
-    /// a contract question of its own). And it is an application-level check, not a constraint: the foreign
+    /// the dressing without a word. Omitted means cleared, decided in B-208: a PUT that replaces some fields
+    /// and keeps others would be the bigger surprise, and callers carry the field along instead (as for
+    /// <c>suggestedBonus</c> and <c>executePublic</c>). And it is an application-level check, not a constraint: the foreign
     /// key stays <c>Cascade</c>, so a request that dresses an exercise between this check and the commit
     /// slips through.
     /// </summary>

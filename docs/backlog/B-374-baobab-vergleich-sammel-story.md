@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/training, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/training, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Baobab-Übernahme, Baobab-Sammel-Story]
-status: idee
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: docs/baobab-vergleich-plan.md
 unverifiziert: true
-grund: ""
-ersetzt_durch: []
+grund: "geteilt – Sammel-Story ohne eigene Arbeit; B-375 abgenommen, B-378 verworfen, die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/baobab-vergleich-plan.md"
+ersetzt_durch: [B-376, B-377]
 ---
 
 # B-374 · Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story)
@@ -29,3 +29,4 @@ stehen in den Teil-Stories.
 ## Verlauf
 
 - **2026-11-05** — angelegt (Quelle: Baobab-Vergleich im Gespräch mit dem Nutzer, Plan unter `docs/baobab-vergleich-plan.md`).
+- **2026-11-13** — `verworfen` im Backlog-Lauf 2026-11-13 (Stakeholder-Entscheidung im Auftrag des Nutzers, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)): Eine Sammel-Story trägt keine eigene Arbeit; sie hielt nur den Vergleichsplan im Index. Der Index führt jede Teil-Story selbst, und der Plan liegt unter `docs/`. Als offene Story verzerrte sie den Bestand und wäre erst mit der letzten Teil-Story fertig geworden. Die offenen Teil-Stories stehen in `ersetzt_durch`.

@@ -102,18 +102,25 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
             DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true);
         }
 
-        // A form hint is one base form. A list in the brackets ("(Pokémon, friend, match)", second live run) puts the
-        // answer right beside its gap and turns the gap into multiple choice without a word bank's distractors.
-        foreach (var (gap, hint) in ClozeMarkup.FormHints(parsed.Text))
-            if (hint.IndexOfAny([',', '/', ';']) >= 0 || hint.Contains(" or ", StringComparison.OrdinalIgnoreCase))
+        var hints = ClozeMarkup.FormHints(parsed.Text).ToList();
+        foreach (var (gap, hint) in hints)
+            if (IsChoiceList(hint))
                 violations.Add($"Lücke {gap}: in die runde Klammer hinter einer Lücke gehört genau eine Grundform, " +
                                $"keine Auswahl ('({hint})').");
+
+        // A gap with one valid base form asks for the form, not the word: in a text on the past progressive "was" stands
+        // everywhere, and that gives nothing away about "{{3}} (be)". In a school test the bracket names the word of
+        // the list and the gap asks the vocabulary, so there every gap stays checked.
+        // A choice list is no base form: the answer stands beside the gap, so such a gap stays checked for a reveal.
+        HashSet<int> formTasks = request.SchoolTest
+            ? []
+            : hints.Where(h => !IsChoiceList(h.Hint)).Select(h => h.Gap).ToHashSet();
 
         // Revealed means: standing as a word of its own outside the brackets. What remains of the text is what the
         // child reads - minus the base-form hints (part of the task) and the placeholders (a "3" is no "{{3}}").
         var readable = ClozeMarkup.ReadableText(parsed.Text);
         foreach (var (gap, index) in parsed.Gaps.Select((gap, index) => (gap, index)))
-            if (ClozeMarkup.ContainsWord(readable, gap.Answer))
+            if (!formTasks.Contains(index + 1) && ClozeMarkup.ContainsWord(readable, gap.Answer))
                 violations.Add($"Lücke {index + 1}: die Lösung '{gap.Answer}' steht außerhalb der Klammern im Text " +
                                "und ist damit verraten.");
 
@@ -126,6 +133,11 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
 
         return violations.Messages;
     }
+
+    // A form hint is one base form. A list in the brackets ("(Pokémon, friend, match)", second live run) puts the
+    // answer right beside its gap and turns the gap into multiple choice without a word bank's distractors.
+    private static bool IsChoiceList(string hint) =>
+        hint.IndexOfAny([',', '/', ';']) >= 0 || hint.Contains(" or ", StringComparison.OrdinalIgnoreCase);
 
     // B-524: every gap names its word of the list (the round bracket) - that is the link to the store entry the cue
     // box reads its meaning from. A word outside the list would leave the box without a meaning for that gap. And a

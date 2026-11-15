@@ -25,10 +25,14 @@ public class StudentPlansController(PuglingDbContext db, TimeProvider time) : Co
     /// within its run time. Inactive/expired ones stay deliberately hidden (anti-cheat: no easy
     /// points plan to pick). From the result the client takes the <c>id</c> for the next steps.
     /// </summary>
+    /// <param name="skip">Number of entries to skip (paging).</param>
+    /// <param name="take">Optional page size (0..500). Without it the whole list is returned; the total count is always in the <c>X-Total-Count</c> header.</param>
+    /// <param name="ct">Cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<PlanResponse>>> List(CancellationToken ct = default)
+    public async Task<ActionResult<IEnumerable<PlanResponse>>> List(
+        [FromQuery] int skip = 0, [FromQuery] int? take = null, CancellationToken ct = default)
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
@@ -36,8 +40,8 @@ public class StudentPlansController(PuglingDbContext db, TimeProvider time) : Co
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         return Ok(await db.StudyPlans.AsNoTracking()
             .Where(p => p.ChildId == cid.Value && p.Active && p.StartDate <= today && p.EndDate >= today)
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id)
             .Select(StudyPlansController.ToResponse(today))
-            .ToListAsync(ct));
+            .ToOptionallyPagedListAsync(Response, skip, take, ct));
     }
 }

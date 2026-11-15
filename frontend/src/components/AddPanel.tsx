@@ -21,7 +21,8 @@ export function AddPanel({ label, defaultOpen = false, children }: {
   return (
     <div className="add-panel">
       <button type="button" className={`btn ghost small add-panel-toggle${open ? " open" : ""}`}
-        style={{ width: "auto" }} aria-expanded={open} aria-controls={bodyId}
+        // `aria-controls` nur, solange der Inhalt im DOM steht: zugeklappt zeigte er auf eine Id, die es nicht gibt.
+        style={{ width: "auto" }} aria-expanded={open} aria-controls={open ? bodyId : undefined}
         onClick={() => setOpen((o) => !o)}>
         <span aria-hidden="true">{open ? "− " : "+ "}</span>{label}
       </button>

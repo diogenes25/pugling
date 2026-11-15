@@ -227,7 +227,7 @@ POST /api/v1/supervisor/study-plans/1/positions
 | `orderStrategy` | Ausspielreihenfolge: `WeakestFirst` (Default), `Serial`, `Random`, `NewestWeighted`. |
 | `pointsGoalMet` | 🪙 Münzen für ein **erfülltes Positionsziel** je Periode (idempotent). |
 | `penaltyCoins` | 🪙 **Münz-Malus**, wenn die Pflicht-Periode **gerissen** wird (0 = aus). Der einzige „Stick". |
-| `newContentPoints` | Basispunkte für **erstmals** geübten Inhalt. |
+| `newContentPoints` | Basispunkte für den **ersten richtigen gewerteten** Treffer eines Inhalts – genau einmal (Kennenlernen/Selbsteinschätzung zahlen nichts, B-535). |
 | `combo*` / `speed*` | 💎 Gem-Boni für Trefferfolgen bzw. schnelle Antworten. |
 
 Vollständige Feldliste inkl. `maxBox`/`boxIntervalDays`: die frühere Referenz lebt jetzt in diesem Tutorial
@@ -243,7 +243,9 @@ Server `penaltyCoins` 🪙 wieder ab (`PointKind.GoalPenalty`).
   wieder verdient oder du Münzen **verschenkst** (Schritt 7). So koppelt der Malus reale Privilegien ans Lernen.
 - **Automatisch & idempotent:** Es gibt keinen Scheduler — der Malus wird **faul** beim **Kind-Login** und
   beim **Shop-Kauf** nachgerechnet, je Periode höchstens einmal (Rückblick max. 14 Tage).
-- **Fair:** Kein Malus für Tage/Wochen, in denen der Plan **inaktiv** oder außerhalb der Laufzeit war.
+- **Fair:** Kein Malus für Tage/Wochen, in denen der Plan **inaktiv** oder außerhalb der Laufzeit war, und keiner vor
+  dem **ersten eigenen Spieltag** des Kindes im Plan (deine eigenen Runden und Tests zählen dafür nicht; B-535). Ab dann zählt
+  jede Pflichtposition, auch eine, die das Kind nie geöffnet hat.
 - Default `0` = reines Belohnen (bisheriges Verhalten). Setzen/ändern via `POST`/`PATCH` der Position, z. B.
   `{ "penaltyCoins": 50 }`. Hintergrund: [wiki/05 · Punkte & Bonus §2](../wiki/05-punkte-und-bonus.md).
 
@@ -459,7 +461,9 @@ GET /api/v1/student/study-plans/1/overview
 ```
 
 `overview` verdichtet die Positionen zur Tagesmission: `cadence: Daily` wird zur Pflicht, `dutyDone`/`goalsMet`
-zeigen den Tagesstand, `outstanding` nennt die offenen Punkte. Verlauf: `GET …/overview/progress`.
+zeigen den Tagesstand (alle Ziele, auch Wochenziele – daran hängen Serie und Auswertung), `outstanding` nennt die
+offenen Punkte. `rewardsUnlocked` zählt nur die Tagesziele (ohne Tagesziele: alle) und öffnet Tagesbox und
+Bonus-Training (B-535) – ein offenes Wochenziel sperrt sie nicht. Verlauf: `GET …/overview/progress`.
 
 ### b) Pro Position (Leitner-/Teststand im Plan-Kontext)
 
@@ -511,7 +515,9 @@ POST /api/v1/supervisor/children/1/points
 Frontend sitzt das als „Verschenken"-Dialog unter `/vater/konto`.
 
 Nur der **Vater** darf beim Start von Practice/Test einen anderen `day` als heute setzen (fremde Tage
-nachtragen) — der Sohn ist serverseitig auf heute geklemmt.
+nachtragen) — der Sohn ist serverseitig auf heute geklemmt. Eine Runde des Vaters in der Position **zählt fürs
+Kind** (Verlauf, Lernstand, Punkte – B-542); wer eine Übung nur ausprobieren will, nimmt „🧪 Ausprobieren“ bzw.
+`creator/exercises/{id}/preview`, das schreibt nichts.
 
 ---
 

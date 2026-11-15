@@ -40,4 +40,26 @@ public class SpaFallbackTests
             Directory.Delete(webRoot, recursive: true);
         }
     }
+
+    /// <summary>
+    /// Code review (finding: "the catch-all turns a wrong method into 404") - measured, not reproduced: the router's
+    /// method policy answers a known path with the wrong method itself, 405 with an <c>Allow</c> header, before the
+    /// <c>/api/{**rest}</c> fallback is considered; the unknown path stays the fallback's 404. Statement of intent
+    /// pinning that split for the framework's routing: no one-line change in Program.cs turns it red - measured with
+    /// the fallback as <c>app.Map</c> and as <c>MapMethods</c> over all verbs, both stay 405 because a literal route
+    /// outranks a catch-all. It falls when routing itself changes (a framework upgrade, a custom 404 middleware).
+    /// </summary>
+    [Fact]
+    public async Task Falsche_Methode_Auf_Bekanntem_Pfad_Ist_405_Mit_Allow()
+    {
+        await using var factory = new PuglingWebAppFactory();
+        var client = factory.CreateClient();
+
+        var wrong = await client.DeleteAsync("/api/v1/student/me/points/week");
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, wrong.StatusCode);
+        Assert.Equal(["GET"], wrong.Content.Headers.Allow);
+
+        var unknown = await client.DeleteAsync("/api/v1/student/me/no-such-endpoint");
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+    }
 }

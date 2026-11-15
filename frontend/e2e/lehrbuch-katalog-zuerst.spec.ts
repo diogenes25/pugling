@@ -90,7 +90,7 @@ test("Katalog zuerst: Reihe inline anlegen, Verlag und Klasse aus dem Katalog, F
   const neueReihe = `Inline-Reihe ${STAMP}`;
   const zweitesBuch = `Inline-Buch ${STAMP}`;
   await anlegen.getByRole("button", { name: "+ Neue Reihe" }).click();
-  await anlegen.getByLabel("Name der neuen Reihe", { exact: true }).fill(neueReihe);
+  await anlegen.getByLabel("Name der neuen Reihe (Pflicht)", { exact: true }).fill(neueReihe);
   await anlegen.getByRole("button", { name: /Reihe anlegen/ }).click();
   await expect(page.getByText(`Reihe „${neueReihe}“ steht im Katalog und ist gewählt.`)).toBeVisible();
   await expect(page.locator("#tbnew-series")).toHaveValue(/\d+/);

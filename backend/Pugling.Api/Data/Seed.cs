@@ -634,6 +634,23 @@ public static class Seed
         };
 
         db.Exercises.AddRange(vocab, conditionals, translation);
+
+        // B-445: the teacher as a subject-teacher profile, so the child hub of the seeded son shows a match instead of
+        // "no profile fits". Deliberately behind the demo-unit lock above: only a fresh database gets it, an existing demo
+        // database is not changed by a new seed step (the family's real database is not seeded at all). Grade 5-10 covers the demo
+        // content (grade 5-6 and 9); the son has no grade and therefore fits any active profile (CreatorProfileService.Fits).
+        db.CreatorProfiles.Add(new CreatorProfile
+        {
+            Name = "Herr Schmidt – Englisch",
+            OwnerAdultId = teacher.Id,
+            SubjectId = englisch.Id,
+            SubjectName = englisch.Name,
+            SchoolTypes = gym,
+            GradeMin = 5,
+            GradeMax = 10,
+            Persona = "Erfahrener Englischlehrer am Gymnasium: freundlich, klar, mit Beispielen aus dem Alltag der Kinder.",
+            Active = true,
+        });
         db.SaveChanges();
     }
 

@@ -47,7 +47,7 @@ public class DailyBoxRangeTests(DailyBoxRangeFactory factory) : IClassFixture<Da
             db.StudyPlans.Add(plan);
             await db.SaveChangesAsync();
 
-            var overview = new DayOverview(day, true, 0, 0, 0, [], []);
+            var overview = new DayOverview(day, true, 0, 0, 0, [], [], true);
             await box.EvaluateAndAwardAsync(plan, day, overview);
 
             var claim = await db.DailyBoxClaims.AsNoTracking().SingleAsync(c => c.ChildId == 1 && c.Day == day);
@@ -61,6 +61,46 @@ public class DailyBoxRangeTests(DailyBoxRangeFactory factory) : IClassFixture<Da
         Assert.Contains(DailyBoxRangeFactory.MaxCoins, coins);
         Assert.Contains(DailyBoxRangeFactory.MinGems, gems);
         Assert.Contains(DailyBoxRangeFactory.MaxGems, gems);
+    }
+
+    /// <summary>
+    /// AK 7 (B-527): a chest earned on a streak-7 day and opened a day later, when the live streak is back at 0, pays
+    /// the value fixed when it was earned. The seeded draw (30 coins, 5 gems) lies outside this factory's [7,9]/[2,4]
+    /// range even before any multiplier, so a chest drawn anew on opening could never produce it. Red when
+    /// <c>OpenAsync</c> draws again instead of booking the claim's <c>CoinsAwarded</c>/<c>GemsAwarded</c>.
+    /// </summary>
+    [Fact]
+    public async Task Truhe_Zahlt_Den_Wert_Vom_Verdienen_Nicht_Vom_Oeffnen()
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var box = scope.ServiceProvider.GetRequiredService<DailyBoxService>();
+
+        var child = new Child { Name = "Truhe-Serie" };
+        db.Children.Add(child);
+        await db.SaveChangesAsync();
+        var earnedOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        db.DailyBoxClaims.Add(new DailyBoxClaim
+        {
+            ChildId = child.Id,
+            Day = earnedOn,
+            CoinsAwarded = 30,
+            GemsAwarded = 5,
+            StreakAtClaim = 7,
+            AwardedAt = DateTime.UtcNow.AddDays(-1),
+        });
+        await db.SaveChangesAsync();
+
+        var outcome = await box.OpenAsync(child.Id, CancellationToken.None);
+
+        var opened = Assert.IsType<DailyBoxOpened>(outcome.Value);
+        Assert.Equal(30, opened.Coins);
+        Assert.Equal(5, opened.Gems);
+        Assert.Equal(7, opened.StreakAtClaim);
+        Assert.Equal(earnedOn, opened.Day);
+        var booked = await db.ChildPointsEntries.AsNoTracking().Where(e => e.ChildId == child.Id).ToListAsync();
+        Assert.Equal(30, booked.Where(e => e.Kind == PointKind.DailyBoxCoins).Sum(e => e.Amount));
+        Assert.Equal(5, booked.Where(e => e.Kind == PointKind.DailyBoxGems).Sum(e => e.Amount));
     }
 }
 

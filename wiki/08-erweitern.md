@@ -191,7 +191,9 @@ Am Muster von `VocabularyExerciseType`/`ClozeExerciseType`:
    (Lernfamilie aus `LearningMethod`, [Pugling.Contracts/Common/StudyPlanBaseTypes.cs](../backend/Pugling.Contracts/Common/StudyPlanBaseTypes.cs)).
 2. **Stufen:** eine Stufen-Enum (analog `TestStage`/`ClozeStage`/`MatchStage`), dann `DefaultStage`,
    `PreviewStage`, `IsTypedStage` (welche Stufen sind objektiv/getippt — via `StageMechanics.IsTyped`)
-   und `StageOptions` (die im Testmodus umschaltbaren Abfrageformen) überschreiben.
+   und `StageOptions` (die im Testmodus umschaltbaren Abfrageformen – dieselbe Liste prüft der Server an der
+   `stage` einer Position, das Manifest gibt sie als `stages` an die Stufen-Auswahl im Positions-Formular und
+   leitet daraus `selfAssessedTest` ab, B-16/B-469) überschreiben.
 3. **Facetten:** `Choices` (Multiple-Choice-Ablenker) und `StageFacets` (Buchstabenkästchen-Länge,
    Audioquelle) je Stufe, falls das Verfahren sie kennt.
 4. **Inhalts-Bezug:** Kommt der Inhalt allein aus der Config? Dann reicht `ItemsOf`. Braucht der Typ den

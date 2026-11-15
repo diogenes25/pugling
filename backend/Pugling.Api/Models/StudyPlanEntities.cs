@@ -109,6 +109,14 @@ public class PracticeSession
     /// <summary>Current position within <see cref="Order"/> (the server-driven cursor in learn mode).</summary>
     public int Cursor { get; set; }
 
+    /// <summary>
+    /// When the card after the latest answer became visible (B-530), stamped by the server's clock on the client's
+    /// "shown" call. The fast-answer bonus measures from here instead of from the previous answer, so reading the
+    /// feedback sheet does not count as answer time. One stamp per card: it is only set while it is not later than the
+    /// latest answer. <c>null</c> (old client, lost call) keeps the old measurement from the previous answer.
+    /// </summary>
+    public DateTime? CardShownAt { get; set; }
+
     public List<ReviewEvent> Reviews { get; set; } = new();
 }
 

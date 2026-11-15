@@ -1,6 +1,6 @@
 ---
 name: ki-creator
-description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan), Stoffnotizen einer Unit aus Text oder aus Fotos von Buchseiten befüllen (fill, fill --images), Bilder zu Vokabeln zeichnen lassen (images) und das Typ-Manifest des Servers zeigen (types). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
+description: Den KI-Creator-Konsolenagenten (backend/Pugling.Agent.Creator) gegen die laufende Pugling-API fahren – Fachlehrer-Treffer prüfen (profiles), Briefing ohne LLM ansehen, Übungen erzeugen (create, auch --dry-run), Übungsklausuren planen (exam) und ganze Lehrpläne erzeugen (plan), vorhandene Übungen in den laufenden Plan eines Kindes übernehmen (assign, ohne LLM), Stoffnotizen einer Unit aus Text oder aus Fotos von Buchseiten befüllen (fill, fill --images), Bilder zu Vokabeln zeichnen lassen (images) und das Typ-Manifest des Servers zeigen (types). Nutze dies, wenn Übungen, eine Klausur oder ein kompletter Lehrplan per LLM erzeugt werden sollen, wenn der Agent selbst eingerichtet oder debuggt wird (Ollama-Modell, Pugling:Pin), oder bei Fragen zu individuell (--child) vs. allgemein (--profile).
 ---
 
 # KI-Creator fahren
@@ -24,6 +24,7 @@ dotnet run --project backend/Pugling.Agent.Creator -- create --profile 3 --type 
 dotnet run --project backend/Pugling.Agent.Creator -- exam --child 1 --types Vocabulary,Cloze --date 2026-09-15
 dotnet run --project backend/Pugling.Agent.Creator -- create --child 3 --type Cloze --count 12 --schultest   # Schul-Vokabeltest (B-524)
 dotnet run --project backend/Pugling.Agent.Creator -- plan --child 1 --types Vocabulary,Cloze --per-type 2 --intensity Normal
+dotnet run --project backend/Pugling.Agent.Creator -- assign --child 1 --exercise-id 12 --exercise-id 15 --dry-run  # in den laufenden Plan
 dotnet run --project backend/Pugling.Agent.Creator -- fill --series 3 --unit 12 --source-file inhalt.txt --dry-run  # Stoffnotizen
 dotnet run --project backend/Pugling.Agent.Creator -- images --child 1 --dry-run   # Vokabelbilder: Prompts + Kosten, ohne Schlüssel
 dotnet run --project backend/Pugling.Agent.Creator -- images --unit 12 --tag fussball --max 50
@@ -53,7 +54,15 @@ liest einzeln das lokale Vision-Modell (`Agent:VisionModel`, Vorgabe `llama3.2-v
 `ollama pull`). Es liefert nur **Stoff** (Themen, Regeln in eigenen Worten, Wortpaare) und keine Aufgaben oder
 Texte des Buches. Die Übungen entstehen danach mit `create`/`plan` aus den Notizen. Das Foto verlässt den Rechner
 nicht. Die Regel stammt vom Nutzer: Copyright wahren und den aktuellen Unterrichtsstoff lernen, ohne die Übungen des
-Originals.
+Originals. **Vorsicht:** Ein kleines lokales Vision-Modell liest dicht bedruckte Buch- und Doppelseiten unzuverlässig
+(B-375: falsche Grammatik, Themen als Wörter) – nur einzelne, groß fotografierte Seiten, immer mit `--dry-run` und
+Abgleich am Foto; ein ganzes Lehrwerk bereitet der Skill `lehrwerk-aufbereiten` auf (B-459).
+
+`assign` (B-20) übernimmt vorhandene Übungen (`--exercise-id`, wiederholbar, oder `--tag <name>` des Kindes) als
+Positionen in den **spielbaren** Plan des Kindes (`--plan-id` für einen anderen eigenen Plan) – ohne Sprachmodell,
+also auch ohne Ollama. Schon vorhandene Positionen werden übersprungen (nichts neu ⇒ Exit 3, nicht 2 – der Aufruf war ja richtig), Ziel und Punkte sind
+Server-Vorgaben, übersteuerbar mit `--points`, `--goal-threshold`, `--cadence Daily|Weekly`. Typischer Weg: `exam`
+oder `create` erzeugt, `assign --tag`/`--exercise-id` hängt es in den laufenden Plan.
 
 Bei `plan` zählt `--per-type` **Übungen** je Typ (je eine Position), nicht Aufgaben – die kommen wie bei
 `create` aus `--count`. `--child` ist dort Pflicht, und der erzeugte Lehrplan ist **inaktiv**: der Vater

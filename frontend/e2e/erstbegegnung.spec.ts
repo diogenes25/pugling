@@ -12,8 +12,8 @@ import { sohnLogin, pfadStart } from "./helpers";
  * - B-421: „Stadt" für „die Stadt" zählt – der Artikel darf fehlen.
  *   Beide brauchen eine getippte Karte gleich nach dem Kennenlernen; die gibt es nur ohne Leitner (keine Leiter, B-476).
  *
- * Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das Anlegen) – mit Stufe 4 (Freitext), genau der
- * Stufe, die der Assistent für das Ziel „Klassenarbeit" ab Tag 1 schreibt (`VaterWizard.tsx`). Serielle Reihenfolge,
+ * Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das Anlegen) – mit Stufe 4 (Freitext), der Stufe,
+ * die der Assistent beim Ziel „Klassenarbeit" nach dem ersten Drittel schreibt (davor Selbsteinschätzung, B-423). Serielle Reihenfolge,
  * damit jeder Kartenübergang vorhersagbar ist. Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
  */
 

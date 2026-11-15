@@ -227,3 +227,35 @@ describe("ProfileForm – Manifest fällt aus (B-456)", () => {
     expect(screen.getByRole("button", { name: "Altlast" }).getAttribute("title")).toMatch(/nicht mehr/);
   });
 });
+
+/* B-380: der Name des Profils ist Pflicht – leer gesperrt, „(Pflicht)" im Label, Enter stumm. */
+describe("ProfileForm – Pflichtfeld Name (B-380)", () => {
+  const neu = () => render(<ProfileForm onMeldung={() => {}} subjects={[ENGLISH]} series={[]} onDone={() => {}} />);
+
+  // AK 1. Rot, wenn am Knopf das `|| !form.name.trim()` fehlt.
+  it("sperrt „Fachlehrer anlegen“ ohne Namen", () => {
+    neu();
+    const knopf = screen.getByRole("button", { name: "Fachlehrer anlegen" }) as HTMLButtonElement;
+    expect(knopf.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Name des Profils (Pflicht)"), { target: { value: "Englisch 8" } });
+    expect(knopf.disabled).toBe(false);
+  });
+
+  // AK 1. Rot, wenn die `fail`-Zeile zurückkommt („Der Name fehlt.").
+  it("meldet nach Enter ohne Namen nichts", () => {
+    const { container } = neu();
+    fireEvent.submit(container.querySelector("form")!);
+    expect(screen.queryByText(/fehlt|nötig|darf nicht leer|Bitte einen/)).toBeNull();
+  });
+
+  // AK 3. Die Klassenstufen-Reihenfolge ist eine Regel, kein leeres Feld – sie meldet weiter nach dem Klick. Rot, wenn
+  // die Prüfung mit den Pflicht-Zeilen verschwand.
+  it("meldet eine vertauschte Klassenstufe weiter nach dem Absenden", () => {
+    neu();
+    fireEvent.change(screen.getByLabelText("Name des Profils (Pflicht)"), { target: { value: "Englisch 8" } });
+    fireEvent.change(screen.getByLabelText("Klasse von"), { target: { value: "9" } });
+    fireEvent.change(screen.getByLabelText("Klasse bis"), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: "Fachlehrer anlegen" }));
+    expect(screen.getByText("Die untere Klassenstufe darf nicht über der oberen liegen.")).toBeTruthy();
+  });
+});

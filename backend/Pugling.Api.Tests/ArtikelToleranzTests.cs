@@ -120,6 +120,69 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(1, res.GetProperty("correct").GetInt32());
     }
 
+    /// <summary>
+    /// B-437: a store-backed exercise with one entry of the given part of speech - the tolerance follows the entry's
+    /// part of speech, so the setup goes through the store rather than inline items (those are created as Other).
+    /// </summary>
+    private static async Task<int> StoreExerciseAsync(HttpClient father, string src, string tgt, string word,
+        string translation, PartOfSpeech partOfSpeech)
+    {
+        var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
+            new { sourceLanguage = src, targetLanguage = tgt, word = TestApi.UniqueName(word), translation, partOfSpeech });
+        res.EnsureSuccessStatusCode();
+        var key = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("key").GetString()!;
+        return await TestApi.CreateVocabRefExerciseAsync(father, key);
+    }
+
+    // B-437 AK 1: "a" in "a few" is part of a quantity word, not the article of a noun - "few" means the opposite.
+    // Red if the part-of-speech condition at the resolver is missing.
+    [Theory]
+    [InlineData(PartOfSpeech.Pronoun)]
+    [InlineData(PartOfSpeech.Phrase)]
+    public async Task Nicht_Nomen_Wertet_Few_Fuer_A_Few_Als_Falsch(PartOfSpeech partOfSpeech)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await StoreExerciseAsync(father, "de", "en", "einige", "a few", partOfSpeech);
+        Assert.False(await PracticeAsync(exerciseId, "few"));
+        Assert.True(await PracticeAsync(exerciseId, "a few"));
+    }
+
+    // B-437 AK 2: a noun keeps the tolerance of B-421. Red if the condition excludes Noun.
+    [Fact]
+    public async Task Nomen_Wertet_Stadt_Fuer_Die_Stadt_Weiter_Als_Richtig()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await StoreExerciseAsync(father, "fr", "de", "la ville", "die Stadt", PartOfSpeech.Noun);
+        Assert.True(await PracticeAsync(exerciseId, "Stadt"));
+    }
+
+    // B-437 AK 3: an entry without a determined part of speech (the default on creation) stays tolerant. Red if the
+    // condition admits only Noun.
+    [Fact]
+    public async Task Ohne_Wortart_Bleibt_Das_Weglassen_Des_Artikels_Richtig()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await StoreExerciseAsync(father, "fr", "de", "la rue", "die Straße", PartOfSpeech.Other);
+        Assert.True(await PracticeAsync(exerciseId, "Straße"));
+    }
+
+    // B-437 AK 4: the bulk test grades "few" like practice - the rule is restricted at its source, not at one reader.
+    [Fact]
+    public async Task Test_Gesammelt_Wertet_Few_Fuer_A_Few_Wie_Das_Ueben()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await StoreExerciseAsync(father, "de", "en", "einige", "a few", PartOfSpeech.Pronoun);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
+        var child = await TestApi.ChildAsync(factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+
+        var res = await (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit",
+            new { answers = new[] { new { itemIndex = 0, givenAnswer = "few" } } })).Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(1, res.GetProperty("totalItems").GetInt32());
+        Assert.Equal(0, res.GetProperty("correctItems").GetInt32());
+    }
+
     // The settings round trip: the field is read back as saved.
     [Fact]
     public async Task ArticleRequired_Kommt_So_Zurueck_Wie_Gespeichert()

@@ -28,3 +28,12 @@ describe("FIELD_HELP.pointsGoalMet – stimmt an beiden Orten", () => {
     expect(text).toMatch(/Familien-Shop/);
   });
 });
+
+// B-551: der Stufenplan gilt je Plantag (`StageStep(DayNumber, Stage)`), nicht je Leitner-Fach. Rot, wenn der Text wieder
+// eine Übersteuerung je Fach verspricht.
+describe("Feldhilfe Stufe – Stufenplan", () => {
+  it("nennt den Stufenplan je Plantag", () => {
+    expect(FIELD_HELP.stage.text).toContain("Stufenplan je Plantag");
+    expect(FIELD_HELP.stage.text).not.toMatch(/Stufenplan je Leitner-Fach/);
+  });
+});

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ExerciseFilter } from "./ExerciseFilterBar";
-import { planbauKriterien, dosisText,
+import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
   type PositionSettings,
 } from "./PlanPositions";
@@ -24,6 +24,7 @@ const LEER: PositionSettings = {
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
   useLeitner: true, requireTypedTest: false,
+  stage: "", stageStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
 
@@ -37,6 +38,7 @@ const gespeichert = (...timeSlots: ScoringTimeSlot[]) =>
     timeSlots, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
     pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
     useLeitner: true, requireTypedTest: false, newItemsPerDay: 0,
+    stage: null, scope: "All", speedThresholdSeconds: 0, speedBonusPoints: 0,
   } as unknown as PositionResponse);
 
 describe("Zeitfenster einer Position", () => {
@@ -224,6 +226,7 @@ describe("Tagesdosis einer Position (B-04)", () => {
       timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
       pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
       useLeitner: true, requireTypedTest: false, newItemsPerDay,
+      stage: null, scope: "All", speedThresholdSeconds: 0, speedBonusPoints: 0,
     } as unknown as PositionResponse);
     expect(stand(0).newItemsPerDay).toBe("");
     expect(stand(8).newItemsPerDay).toBe("8");
@@ -301,3 +304,114 @@ describe("Planbau – Abhängigkeiten der Suche", () => {
   });
 });
 
+// B-540 AK 1: der Auswahl-Schlüssel des Planbaus kennt die Sortierung nicht, aber jedes Filterfeld.
+describe("Planbau – Auswahl-Schlüssel", () => {
+  const voll = {
+    subjectId: 1, seriesId: 2, seriesUnitId: 3, grade: 7, schoolType: "Gymnasium", categoryId: 4, type: "Vocabulary",
+    search: "x", grammarTopicId: 5,
+  } satisfies Required<ExerciseFilter>;
+
+  // Rot, wenn `planbauAuswahlSchluessel` die Sortierung mitnimmt (etwa `planbauKriterien(filter, besteZuerst)` statt `false`) –
+  // dann leerte ein reines Umsortieren die Auswahl (der Defekt aus B-540). Die Kriterien der Abfrage ändern sich dabei sehr wohl.
+  it("ist für beide Reihenfolgen gleich, während die Abfrage-Kriterien sich ändern", () => {
+    expect(planbauAuswahlSchluessel(voll)).toBe(JSON.stringify(planbauKriterien(voll, false)));
+    expect(JSON.stringify(planbauKriterien(voll, true))).not.toBe(planbauAuswahlSchluessel(voll));
+  });
+
+  // Rot, wenn ein Filterfeld im Schlüssel fehlt (etwa eine eigene Feldliste statt `planbauKriterien`): ein Wechsel dieses
+  // Felds behielte dann die Auswahl einer Übung, die nicht mehr in der Liste steht.
+  it("ändert sich mit jedem Feld des Filters", () => {
+    const basis = planbauAuswahlSchluessel(voll);
+    for (const feld of Object.keys(voll) as (keyof ExerciseFilter)[])
+      expect(planbauAuswahlSchluessel({ ...voll, [feld]: undefined }), feld).not.toBe(basis);
+  });
+});
+
+/*
+ * B-16 AK 4: Stufe, Inhalte-Auswahl und Tempo-Bonus erreichen den Vertrag; „zurück auf Standard" wird beim Bearbeiten
+ * zum ausdrücklichen Schalter `clearStage`, weil `stage: null` im PATCH „bleibt" heißt.
+ */
+describe("Positions-Formular – Stufe, Auswahl, Tempo (B-16)", () => {
+  // Rot, wenn `settingsToDto` eines der vier Felder nicht sendet (heutiger Stand: keines) oder die Stufe als String schickt.
+  it("sendet Stufe, Auswahl und Tempo-Werte", () => {
+    const dto = settingsToDto({ ...LEER, stage: "3", scope: "New", speedThresholdSeconds: "8", speedBonusPoints: "2" });
+    expect(dto.stage).toBe(3);
+    expect(dto.scope).toBe("New");
+    expect(dto.speedThresholdSeconds).toBe(8);
+    expect(dto.speedBonusPoints).toBe(2);
+  });
+
+  // Rot, wenn ein leeres Feld als 0 statt `null` ankommt: dann schaltete „leer" (= erbt bzw. Standard) den Tempo-Bonus ab
+  // bzw. setzte eine Stufe 0.
+  it("leer heißt null (Standard bzw. Vorschlag der Übung)", () => {
+    const dto = settingsToDto(LEER);
+    expect(dto.stage).toBeNull();
+    expect(dto.speedThresholdSeconds).toBeNull();
+    expect(dto.speedBonusPoints).toBeNull();
+  });
+
+  // Rot, wenn `clearStage` fehlt oder nicht an der gespeicherten Stufe hängt – dann bliebe die alte Stufe nach
+  // „Standard der Übung" stehen, und das Formular meldete trotzdem „Gespeichert.".
+  it("schickt clearStage genau dann, wenn eine gespeicherte Stufe auf Standard zurückgeht", () => {
+    expect(settingsToUpdateDto({ ...LEER, stage: "", stageStored: 3 }).clearStage).toBe(true);
+    expect(settingsToUpdateDto({ ...LEER, stage: "", stageStored: null }).clearStage).toBe(false);
+    expect(settingsToUpdateDto({ ...LEER, stage: "2", stageStored: 3 }).clearStage).toBe(false);
+  });
+
+  // Rot, wenn das Anlegen den Schalter mitschickt: `CreatePositionDto` kennt ihn nicht, der Server antwortet `unknown_field`.
+  it("das Anlegen kennt den Schalter nicht", () => {
+    expect("clearStage" in settingsToDto({ ...LEER, stage: "", stageStored: 3 })).toBe(false);
+  });
+
+  // Rot, wenn `settingsFrom` die gespeicherte Stufe nicht als `stageStored` merkt (dann ginge `clearStage` nie an) oder
+  // Auswahl/Tempo nicht übernimmt (dann überschriebe jedes Speichern sie mit den Formular-Vorgaben).
+  it("übernimmt den gespeicherten Stand", () => {
+    const s = settingsFrom({
+      timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+      pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+      useLeitner: true, requireTypedTest: false, newItemsPerDay: 0,
+      stage: 4, scope: "Old", speedThresholdSeconds: 6, speedBonusPoints: 1,
+    } as unknown as PositionResponse);
+    expect([s.stage, s.stageStored, s.scope, s.speedThresholdSeconds, s.speedBonusPoints]).toEqual(["4", 4, "Old", "6", "1"]);
+  });
+});
+
+/*
+ * B-469 AK 1 und 3, B-550: die Positionszeile sagt, womit die Pflicht geprüft wird. Die Art kommt vom Server
+ * (`learningCheck`); `lernkontrolleText` übersetzt sie nur. Je Art ein Fall – rot, wenn ihr Zweig fehlt (dann käme `undefined`
+ * statt des Satzes) oder Text bzw. Ton vertauscht sind.
+ */
+describe("Positionszeile – Lernkontrolle (B-469, B-550)", () => {
+  it("Typed: neutral „Test getippt“", () => {
+    expect(lernkontrolleText({ kind: "Typed" })).toEqual({ text: "Test getippt", ton: "neutral" });
+  });
+  it("SelfAssessed: gelb", () => {
+    expect(lernkontrolleText({ kind: "SelfAssessed" })).toEqual({ text: "Test, Selbsteinschätzung zählt", ton: "warnung" });
+  });
+  // Rot, wenn die Leiter gelb warnt (der Fund aus B-550) oder den Tag falsch nennt (Schwellentag statt Vortag).
+  it("Ladder: neutral, mit dem Tag, ab dem getippt wird", () => {
+    expect(lernkontrolleText({ kind: "Ladder", typedFromDay: 4 }))
+      .toEqual({ text: "Selbsteinschätzung bis Tag 3, ab Tag 4 getippt", ton: "neutral" });
+    // Ohne Tag kein erfundener Tag.
+    expect(lernkontrolleText({ kind: "Ladder", typedFromDay: null }))
+      .toEqual({ text: "Erst Selbsteinschätzung, dann getippt", ton: "neutral" });
+  });
+  it("Playthrough: gelb „zählt Durchspielen“", () => {
+    expect(lernkontrolleText({ kind: "Playthrough" })).toEqual({ text: "zählt Durchspielen", ton: "warnung" });
+  });
+  // Rot, wenn der `NoTest`-Zweig fehlt – dann stünde wie vor B-469 nichts an einer Grammatik-Position.
+  it("NoTest: gelb „kein Test – zählt Durchspielen“", () => {
+    expect(lernkontrolleText({ kind: "NoTest" })).toEqual({ text: "kein Test – zählt Durchspielen", ton: "warnung" });
+  });
+  // Rot, wenn die unerreichbare Kombination nur gelb oder gar nicht gemeldet wird.
+  it("Unreachable: rot, mit Grund", () => {
+    const zeile = lernkontrolleText({ kind: "Unreachable" });
+    expect(zeile?.ton).toBe("fehler");
+    expect(zeile?.text).toMatch(/^Ziel nicht erreichbar: nur getippte Tests zählen/);
+  });
+  // AK 3. Rot, wenn ein unbekannter Typ (Server: `null`) einen Satz bekommt – er wäre geraten.
+  it("null: nichts", () => {
+    expect(lernkontrolleText(null)).toBeNull();
+    expect(lernkontrolleText(undefined)).toBeNull();
+  });
+});

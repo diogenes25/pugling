@@ -1,19 +1,19 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/creator, rolle/student]
 aliases: [Inline-Typen ohne Sperre, Wort-Tausch per PATCH]
-status: ausformuliert
+status: abgenommen
 prio: P3
 art: Frage
-groesse: ""
+groesse: S
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: B-323 (Lauf J, docs/pm-sitzung-2026-10-28-nacht.md)
-unverifiziert: true
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-14
 ---
 
 # B-328 · Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein?
@@ -34,16 +34,103 @@ Reparatur – darum `Frage`:
 Zu entscheiden: Ist ein Tausch/eine Textänderung an gespielter Stelle eine **Korrektur** (erlaubt, Lernstand bleibt)
 oder ein **Ersatz** (gesperrt)? Bei den Inline-Typen ggf. nur Länge/Reihenfolge sperren, Text erlauben.
 
-## Entscheidungen (stellvertretend, 2026-11-13 – Veto beim Nutzer)
+## User Story
+
+Als **Vater** möchte ich, dass das Bearbeiten einer Übung, die mein Sohn schon spielt, seinen Lernstand nicht still auf andere
+Sätze oder Wörter verschiebt, damit Leitner-Stufen und Fälligkeiten weiter zu dem gehören, was er wirklich geübt hat.
+
+## Ist-Stand am Code (nachgeprüft 2026-11-13)
+
+- **Inline-Typen ohne Sperre:** [ExerciseControllerBase.cs:107-108](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs#L107)
+  (`UpdateConflictAsync` → `null`), aufgerufen im `PUT` bei `:456`. Überschrieben wird es nur von der Vokabelübung
+  ([ExerciseControllers.cs:111-120](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs#L111)).
+- **Der Lernstand hängt am Index:** `PositionItemProgress.ItemIndex` – „index of the content in the item list"
+  ([PlanPositionEntities.cs:204-205](../../backend/Pugling.Api/Models/PlanPositionEntities.cs#L204)); die Liste liefert je Typ
+  `ItemsOf` ([BuiltInExerciseTypes.cs](../../backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs), z. B. `:25`, `:46`, `:114`;
+  `ExerciseContentProvider.cs:65-69`). Die Vokabelübung liefert hier `[]` (`VocabularyExerciseType.cs:38`), ihre Items liegen in
+  einer eigenen Tabelle.
+- **Wort-Tausch ohne Sperre:** [ExerciseControllers.cs:252-283](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs#L252)
+  (`PatchItem`) setzt `item.Vocabulary = vocab` (`:270`) ohne Plan-Prüfung; gesperrt ist dort nur `OrderIndex` (`:273-278`). Auch
+  `front`/`back` tauschen das Wort, weil `ResolveVocabularyAsync` per `GetOrCreateAsync` einen anderen Store-Eintrag liefert (`:330-338`).
+- **Die Sperr-Bausteine gibt es:** `ExerciseInPlanAsync` und `ShiftBlockedProblem` (`exercise_items_locked`)
+  ([ExerciseControllers.cs:313-319](../../backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs#L313)), heute `private` im
+  Vokabel-Controller.
+- **Test:** `ExerciseItemsAndProgressTests.cs:252` (`ItemMutation_BeiInPlanUebung_BlocktIndexVerschiebung_ErlaubtAnhaengen`) prüft
+  Löschen, Umsortieren, Anhängen – nicht den Tausch, nicht die Inline-Typen.
+
+## Die echte Lücke
+
+Zwei Schreibwege verschieben den Lernstand einer gespielten Übung ohne Rückfrage: der `PUT` eines Inline-Typs mit kürzerer Liste und
+der `PATCH` eines Vokabel-Items auf ein anderes Wort.
+
+## Offene Punkte
+
+1. ~~Inline-Typen: Korrektur oder Ersatz?~~ → Entscheidung 1 (2026-11-05)
+2. ~~Wort-Tausch per `PATCH`?~~ → Entscheidung 2 (2026-11-05)
+3. ~~Woran wird „andere Reihenfolge" ohne stabile Ids erkannt?~~ → Entscheidung 3
+4. ~~Zählt der Tausch über `front`/`back` wie der über `vocabularyId`?~~ → Entscheidung 4
+
+## Entscheidungen
+
+Entscheidungen 1–2 stellvertretend am 2026-11-05 (Delegation, [Protokoll](../pm-sitzung-2026-11-05-delegation.md)); 3–4
+Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
 
 1. **Inline-Typen:** gesperrt wird, was den Lernstand **verschiebt** – weniger Einträge oder eine andere Reihenfolge in
    einer Übung, die in einem Plan steht. Erlaubt bleiben Ändern an Ort und Stelle (Tippfehler im Satz) und Anhängen.
    Das ist dieselbe Linie wie bei Vokabeln (Löschen/Umsortieren gesperrt, Anhängen frei), nur ohne Store: die Korrektur
-   geschieht im Eintrag selbst. Zu klären beim Schätzen: woran „andere Reihenfolge" ohne stabile Ids erkannt wird – ohne
-   Ids ist nur „weniger Einträge" sicher erkennbar; das Umsortieren gleich langer Listen bliebe dann eine bekannte Grenze.
+   geschieht im Eintrag selbst. *Kosten:* ein Satz lässt sich aus einer gespielten Übung nicht mehr streichen.
 2. **Wort-Tausch per `PATCH …/items/{id}` mit neuer `vocabularyId`:** in einer Übung, die in einem Plan steht, gesperrt
    wie Löschen – der Lernstand gehört sonst einem Wort, das das Kind nie geübt hat. Die Korrektur eines Wortes geschieht
-   im Store (dort bleibt der Bezug).
+   im Store (dort bleibt der Bezug). *Kosten:* ein falsch gewähltes Wort bleibt in der gespielten Übung, bis man es im Store
+   berichtigt.
+3. **Erkannt wird nur „weniger Einträge"** (`ItemsOf(neu).Count < ItemsOf(alt).Count`). Ein Umsortieren gleich langer Listen ist von
+   einer Text-Korrektur an mehreren Stellen ohne stabile Ids nicht zu unterscheiden; es bleibt eine **bekannte Grenze**, im
+   `<summary>` benannt. Begründung: eine Sperre, die Korrekturen mitträfe, nähme Entscheidung 1 die erlaubte Hälfte. *Kosten:*
+   wer gleich lange Listen umsortiert, verschiebt den Lernstand weiter still. **Genauer (Review 2026-11-13):** die Prüfung vergleicht
+   nur die Anzahl – auch ein Einfügen mitten in der Liste und ein Löschen plus Anhängen gehen durch und verschieben den Lernstand
+   still; erkannt wird allein die kürzere Liste.
+4. **Jeder `PATCH`, der das Item auf einen anderen Store-Eintrag zeigen lässt, ist ein Tausch** – gleich ob per `vocabularyId` oder
+   `front`/`back`. Gleicher Eintrag (z. B. nur `hint` oder Übersetzungs-Alternativen) bleibt frei. Begründung: das Kind merkt keinen
+   Unterschied zwischen den beiden Wegen. *Kosten:* auch ein per `front`/`back` „berichtigtes" Wort wird gesperrt; berichtigt wird im
+   Store.
+
+## Akzeptanzkriterien
+
+1. `PUT` eines Inline-Typs (z. B. Übersetzung) mit **weniger** Einträgen auf eine Übung, die in einem Plan steht → `409
+   exercise_items_locked`; die Übung ist unverändert.
+2. Derselbe `PUT` mit gleich vielen Einträgen und geändertem Text → `200`; mit mehr Einträgen (angehängt) → `200`.
+3. Ohne Plan-Position geht auch der kürzere `PUT` durch (`200`).
+4. `PATCH …/vocabulary/{id}/items/{itemId}` mit einer anderen `vocabularyId` oder mit `front`/`back`, die einen anderen Store-Eintrag
+   ergeben, auf eine Übung in einem Plan → `409 exercise_items_locked`; Item unverändert.
+5. `PATCH` nur mit `hint` auf dieselbe Übung → `200`.
+
+## Schätzung
+
+**Größe: S** – eine Zählung im Basis-`UpdateConflictAsync`, eine Bedingung in `PatchItem`, zwei Testfälle. `migration: nein`,
+`vertragsbruch: nein` (bestehender Fehlercode, `PUT` und `PATCH` deklarieren `409` schon).
+
+**Risiken:**
+
+- `ExerciseInPlanAsync`/`ShiftBlockedProblem` müssen aus dem Vokabel-Controller in die Basis wandern (oder dort dupliziert werden);
+  die Meldung nennt heute „items" und „adding to the end" – sie muss für Inline-Typen ebenso stimmen (B-414-Muster).
+- Typen ohne Liste (`ItemsOf` → `[]`, `BuiltInExerciseTypes.cs:76`, `:412`) dürfen nie sperren: 0 < 0 ist falsch, also sicher.
+- Die Vokabelübung überschreibt `UpdateConflictAsync`; die neue Basis-Logik darf dort nicht doppelt laufen.
+- Ein Altbestand gespielter Übungen, deren Liste schon früher gekürzt wurde, bleibt verschoben; die Story heilt nicht rückwirkend.
+
+**Angriffsplan (Backend zuerst):**
+
+1. Rote Tests für AK 1 und AK 4.
+2. Plan-Prüfung in die Basis ziehen, Basis-`UpdateConflictAsync` zählt `ItemsOf` alt/neu; `PatchItem` vergleicht `vocab.Id` mit
+   `item.VocabularyId` und sperrt bei Plan-Bezug. `<summary>` mit der bekannten Grenze (Entscheidung 3).
+3. Frontend: keine Änderung; der Editor zeigt `409` über das vorhandene `StatusBanner`.
+
+**Testweg:**
+
+- `backend/Pugling.Api.Tests/ExerciseItemsAndProgressTests.cs`, neuer Fall `InlineTyp_InPlan_Sperrt_Kuerzere_Liste_Erlaubt_Korrektur`
+  (AK 1–3). Rot, wenn die Basis weiter `null` liefert (AK 1), wenn sie jede Textänderung sperrt (AK 2) oder die Plan-Prüfung fehlt
+  (AK 3).
+- Neuer Fall `ItemPatch_InPlan_Sperrt_Wort_Tausch_Erlaubt_Hinweis` (AK 4–5). Rot, wenn `PatchItem` den Tausch nicht prüft, nur
+  `vocabularyId` statt des aufgelösten Eintrags vergleicht (dann fällt die `front`/`back`-Zeile) oder auch `hint` sperrt.
 
 ## Verlauf
 
@@ -51,3 +138,33 @@ oder ein **Ersatz** (gesperrt)? Bei den Inline-Typen ggf. nur Länge/Reihenfolge
   gelesen, nicht gemessen. Bewusst nicht in B-323 genommen: `Frage`, im Nachtlauf nicht grillbar (Freigabe 1).
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) Inline-Typen: Länge und Reihenfolge gespielter Inhaltslisten gesperrt, Textänderung an einer Stelle erlaubt (Korrektur); (2) Wort-Tausch per `PATCH …/items/{id}` mit neuer `vocabularyId` ist Ersatz und gesperrt, korrigiert wird im Store. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
 - **2026-11-13** — ausformuliert mit zwei Entscheidungen, stellvertretend im Tageslauf (Restzeit); Schätzen und Bauen offen.
+- **2026-11-13** — Ist-Stand am Code nachgeprüft (Backlog-Lauf): `UpdateConflictAsync` bei `:107-108`, `PatchItem` `:252-283`;
+  User Story, Lücke und AKs ergänzt, `unverifiziert` entfernt.
+- **2026-11-13** — **gegrillt**: Entscheidungen 3–4 (Reihenfolge als bekannte Grenze; `front`/`back` zählt als Tausch).
+  Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-13, [Protokoll](../pm-sitzung-2026-11-13-backlog-lauf.md)).
+- **2026-11-13** — **geschaetzt**: S, backend, keine Migration, kein Vertragsbruch.
+- **2026-11-13** — `in-arbeit`: Das Basis-`UpdateConflictAsync` zählt `ItemsOf` alt/neu und sperrt eine **kürzere** Liste einer gespielten Inline-Übung mit `409 exercise_items_locked` (eigene Meldung: Korrektur an Ort und Stelle und Anhängen erlaubt); `ExerciseInPlanAsync`/`ShiftBlockedProblem` in die Basis gezogen. `PatchItem` vergleicht den **aufgelösten** Store-Eintrag mit `item.VocabularyId` und sperrt den Tausch (auch per `front`/`back`); Ausweg ist der Store. Bekannte Grenze (Entscheidung 3) im `<summary>`. Tests `ExerciseItemsAndProgressTests.InlineTyp_InPlan_Sperrt_Kuerzere_Liste_Erlaubt_Korrektur` (AK 1–3) und `ItemPatch_InPlan_Sperrt_Wort_Tausch_Erlaubt_Hinweis` (AK 4–5). AK 2, 3 und 5 sind im Ausgangszustand grün (Absichtserklärungen, rot unter B328-AK2/AK3/AK5). Rote Probe 6/6 rot.
+  Rote Probe (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:15, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B328-AK1 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK2 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK3 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:118 | red | red |  |
+  | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+
+- **2026-11-13** — Review-Fund (`pugling-reviewer`) behoben: der reine Anzahl-Vergleich lässt auch ein Einfügen in der Mitte und Löschen plus Anhängen durch, die Meldung versprach aber „adding to the end is allowed“. Regel unverändert (Entscheidung 3); `<summary>`, Kommentar und Meldung („its list of entries cannot get shorter“) versprechen nichts mehr darüber hinaus, die bekannte Grenze in Entscheidung 3 ist entsprechend präzisiert. Rote Probe 6/6 rot.
+  Rote Probe nach den Review-Fixes (Gemessen an `afadf18d + Arbeitsbaum geändert`, 2026-11-13 22:33, `mutant-probe.py`, Grundlinie nach dem Zurückspielen grün):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | B328-AK1 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK2 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK3 | backend/Pugling.Api/Controllers/Creator/ExerciseControllerBase.cs:121 | red | red |  |
+  | B328-AK4 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK4-frontback | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:269 | red | red |  |
+  | B328-AK5 | backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:279 | red | red |  |
+
+- **2026-11-13** — **abgenommen** mit Commit `f88464e8` (Sprint 70, Backlog-Lauf 2026-11-13). Verifikation: Backend 1569/1569 grün (dotnet test Pugling.sln -c Release), dotnet format für die geänderten Dateien sauber, Mutanten-Probe je AK-Fall rot (Tabelle oben). Review: `pugling-reviewer` – Fund 🟡 (der reine Zählvergleich lässt Einfügen in der Mitte und Löschen-plus-Anhängen durch, die Meldung versprach mehr) im selben Sprint behoben: Meldung, `<summary>` und Entscheidung 3 nennen die Grenze ehrlich. Rollengang: Playwright gegen frisch gestartete Server auf Ausweichports (API 5213, Web 5186) nach dem letzten Edit – creator-lehrwerk-weg, einkleidung, fachlehrer-faecher-fallen-aus, kind-anlegen-id, kind-auswahlliste, kind-lehrbuch-fach, lehrwerk-bearbeiten, lehrwerke, reihe-fachwechsel-gesperrt, uebung-teilspeichern u. a.: **23 von 24 grün**. `lehrwerke` war zuerst rot, weil sie den Zustand vor B-445 zusicherte („Kein Profil passt“) – angepasst und einzeln grün nachgelaufen. `vater-von-null` bleibt rot: zwei „Speichern“-Knöpfe auf der Kind-Seite, eingeführt von `f9df2087` (B-533-Nachtrag, **vor** diesem Lauf), unabhängig von dieser Story; die parallele B-534-Arbeit baut genau diese Fläche um. Sohn ist Regressionszeuge (Suite grün).

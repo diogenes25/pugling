@@ -219,6 +219,135 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(30, result.GetProperty("coinsToday").GetInt32());
     }
 
+    // Books bonus coins as earned today by an earlier vocabulary run, so the cap can be filled without playing to it.
+    private void SeedCoinsToday(Setup s, int coins)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
+        db.ExtraTrainingRuns.Add(new ExtraTrainingRun
+        {
+            ChildId = s.ChildId,
+            ExerciseId = s.VocabId,
+            Day = DateOnly.FromDateTime(now),
+            Pass = 0,
+            Form = ExtraForm.Typed,
+            Stage = (int)TestStage.FreeText,
+            StartedAt = now,
+            CompletedAt = now,
+            ItemCount = coins / 2,
+            CorrectCount = coins / 2,
+            CoinsAwarded = coins,
+        });
+        db.SaveChanges();
+    }
+
+    // Answers every "n + n" card of an arithmetic exercise right.
+    private static object[] RightMathAnswers(JsonElement run) =>
+    [
+        .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = (c.GetProperty("prompt").GetString()![0] - '0') * 2 + "",
+        }),
+    ];
+
+    // B-543 AK 1: at a full cap a one-shot exercise does not start, so it is not burnt for zero coins. Red if StartAsync
+    // has no cap check (then 200 and the exercise is used up).
+    [Fact]
+    public async Task Bei_Vollem_Deckel_Startet_Eine_Einmal_Uebung_Nicht()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4));
+        SeedCoinsToday(s, 30);
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId);
+        JsonAssert.False(entry, "done");
+        Assert.Equal(JsonValueKind.Null, entry.GetProperty("openRunId").ValueKind);
+    }
+
+    // B-543 AK 2: the child's own cap of 0 means "pays nothing", so no one-shot exercise starts. Red if the check reads
+    // only the server default (30) or compares with > instead of >=.
+    [Fact]
+    public async Task Bei_Kind_Deckel_Null_Startet_Keine_Einmal_Uebung()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
+        var patched = await JsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}",
+            new { bonusDailyCoinCap = 0 }));
+        Assert.Equal(0, patched.GetProperty("bonusDailyCoinCap").GetInt32());
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+    }
+
+    // B-543 AK 3: an open one-shot run is not resumed at a full cap either. Red if the check sits only before a new run
+    // is created.
+    [Fact]
+    public async Task Eine_Offene_Einmal_Runde_Wird_Bei_Vollem_Deckel_Nicht_Fortgesetzt()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2));
+        await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        SeedCoinsToday(s, 30);
+
+        await AssertProblemAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null),
+            HttpStatusCode.Conflict, "extra_cap_reached");
+    }
+
+    // B-543 AK 4: vocabulary may be played again and burns nothing, so it still starts at a full cap. Red if the check
+    // does not tell repeatable exercises apart.
+    [Fact]
+    public async Task Eine_Vokabeluebung_Startet_Auch_Bei_Vollem_Deckel()
+    {
+        var s = await SetupAsync();
+        SeedCoinsToday(s, 30);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        Assert.Equal(s.VocabId, run.GetProperty("exerciseId").GetInt32());
+    }
+
+    // B-543 AK 5: a cap filled between start and submit leaves the one-shot run open and unpaid, without its solutions;
+    // the same submit tomorrow pays in full. Red if the submit still caps and uses up (200 with 0 coins) or checks the
+    // cap only after grading.
+    [Fact]
+    public async Task Eine_Bei_Vollem_Deckel_Abgegebene_Einmal_Runde_Zahlt_Morgen()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("1 + 1", 2), ("2 + 2", 4));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        var runId = run.GetProperty("runId").GetInt32();
+        var body = new { answers = RightMathAnswers(run) };
+        SeedCoinsToday(s, 30);
+
+        var refused = await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body);
+        var text = await refused.Content.ReadAsStringAsync();
+        await AssertProblemAsync(refused, HttpStatusCode.Conflict, "extra_cap_reached");
+        Assert.DoesNotContain("expected", text, StringComparison.OrdinalIgnoreCase);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            Assert.Null(db.ExtraTrainingRuns.Single(r => r.Id == runId).CompletedAt);
+        }
+        Assert.Equal(0, CoinsBooked(s.ChildId));
+
+        factory.Clock.FreezeNow();
+        factory.Clock.Advance(TimeSpan.FromDays(1));
+        try
+        {
+            var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit", body));
+            Assert.Equal(2, result.GetProperty("correct").GetInt32());
+            Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
+            Assert.Equal(4, CoinsBooked(s.ChildId));
+        }
+        finally
+        {
+            factory.Clock.Advance(TimeSpan.FromDays(-1));
+        }
+    }
+
     [Fact]
     public async Task Der_Vater_Sieht_Das_Bonus_Training_Spielt_Es_Aber_Nicht()
     {
@@ -325,5 +454,102 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var cleared = await JsonAsync(await s.Father.PatchAsJsonAsync(child, new { clearBonusDailyCoinCap = true }));
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("bonusDailyCoinCap").ValueKind);
         Assert.Equal(30, (await JsonAsync(await s.Child.GetAsync(Base(s)))).GetProperty("dailyCoinCap").GetInt32());
+    }
+
+    private void EditExercise(int exerciseId, Action<Exercise> change)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        change(db.Exercises.Single(e => e.Id == exerciseId));
+        db.SaveChanges();
+    }
+
+    private static object[] RightMathAnswers(JsonElement run, params (string Prompt, string Answer)[] key) =>
+    [
+        .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = key.Single(k => k.Prompt == c.GetProperty("prompt").GetString()).Answer,
+        }),
+    ];
+
+    // B-545 AK 1: the author corrects a solution between start and submit - the run is discarded unpaid with 409, and
+    // the one-shot exercise is open again. Red when the submit grades without comparing the fingerprint (200, paid
+    // against a key the questions did not come from).
+    [Fact]
+    public async Task Eine_Geaenderte_Uebung_Verwirft_Die_Runde_Bei_Der_Abgabe_Unbezahlt()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        await AssertProblemAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightMathAnswers(run, ("2 + 3", "5"), ("4 × 4", "16")) }), HttpStatusCode.Conflict, "extra_run_stale");
+        Assert.Equal(0, CoinsBooked(s.ChildId));
+        var entry = PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId);
+        JsonAssert.False(entry, "done");
+        Assert.Equal(JsonValueKind.Null, entry.GetProperty("openRunId").ValueKind);
+    }
+
+    // B-545 AK 2: resuming an open run of a changed exercise starts a fresh one from the new content. Red when the start
+    // resumes the old run without comparing (same run id, two cards).
+    [Fact]
+    public async Task Eine_Geaenderte_Uebung_Startet_Beim_Fortsetzen_Eine_Neue_Runde()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var first = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        var again = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        Assert.NotEqual(first.GetProperty("runId").GetInt32(), again.GetProperty("runId").GetInt32());
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{again.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightMathAnswers(again, ("2 + 3", "5"), ("4 × 4", "17")) }));
+        Assert.Equal(2, result.GetProperty("correct").GetInt32());
+    }
+
+    // B-545 AK 3: a field outside grading (the item's hint) changes - the run is graded as usual. Red when the
+    // fingerprint takes the hint (or image/audio) in: then the submit answers 409.
+    [Fact]
+    public async Task Ein_Geaenderter_Hinweis_Kostet_Die_Runde_Nicht()
+    {
+        var s = await SetupAsync();
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.ExerciseItems.First(i => i.ExerciseId == s.VocabId).Hint = "ein Tier";
+            db.SaveChanges();
+        }
+
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit",
+            new { answers = RightVocabAnswers(run) }));
+        Assert.Equal(Words.Length, result.GetProperty("correct").GetInt32());
+    }
+
+    // B-545 AK 5: a run from before the column (no fingerprint) is graded as before, against the current content. Red
+    // when a missing fingerprint counts as "changed" (409).
+    [Fact]
+    public async Task Eine_Bestandsrunde_Ohne_Fingerabdruck_Wird_Wie_Bisher_Gewertet()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 3", 5), ("4 × 4", 16));
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
+        var runId = run.GetProperty("runId").GetInt32();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.ExtraTrainingRuns.Single(r => r.Id == runId).ContentHash = null;
+            db.SaveChanges();
+        }
+        EditExercise(mathId, e => e.ConfigJson = e.ConfigJson.Replace("16", "17", StringComparison.Ordinal));
+
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync($"{Base(s)}/runs/{runId}/submit",
+            new { answers = RightMathAnswers(run, ("2 + 3", "5"), ("4 × 4", "17")) }));
+        Assert.Equal(2, result.GetProperty("correct").GetInt32());
     }
 }

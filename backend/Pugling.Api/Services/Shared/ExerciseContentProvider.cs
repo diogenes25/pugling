@@ -26,6 +26,8 @@ namespace Pugling.Api.Services.Shared;
 /// counts (<see cref="AnswerVariants"/>). Only vocabulary sets it - in a sentence a comma is part of the answer.
 /// <paramref name="Reversed"/> marks a vocabulary card asked against the exercise's canonical direction (translation →
 /// word): its answer is in the source language. Distractors are only drawn from cards answered in the same language.
+/// <paramref name="Explanation"/> (B-529) says why an answer is right - handed out only with the review, never on the
+/// card. Unlike <paramref name="Hint"/>, which is help before the answer ("starts with b").
 /// </summary>
 public record ContentItem(
     int Index,
@@ -43,7 +45,8 @@ public record ContentItem(
     IReadOnlyList<WordPair>? Decoding = null,
     string? ArticleOptionalIn = null,
     bool MeaningsSeparable = false,
-    bool Reversed = false)
+    bool Reversed = false,
+    string? Explanation = null)
 {
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
