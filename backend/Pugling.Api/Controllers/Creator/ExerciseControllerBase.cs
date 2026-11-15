@@ -166,6 +166,17 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
                 : db.ExerciseCategories.AnyAsync(c => c.Id == categoryId && c.SubjectId == subjectId, ct);
 
     /// <summary>
+    /// The default pair of the exercise (B-552): "typed tests only" on a self-assessed effective default stage is never
+    /// gradable, and every position that leaves both open inherits it. Judged by the same rule as the position
+    /// (<see cref="RequireTypedTestValidation.UnreachableProblemText"/>), worded for the creator's two fields.
+    /// </summary>
+    private static string? DefaultPairProblem(IExerciseType? type, bool defaultRequireTypedTest, int? defaultStage) =>
+        type is not null
+            && RequireTypedTestValidation.UnreachableProblemText(type, defaultRequireTypedTest, defaultStage ?? type.DefaultStage, null) is not null
+            ? "defaultRequireTypedTest cannot be combined with a self-assessed default stage: a test there is never graded, so a position inheriting both could never be met. Set a typed defaultStage or switch defaultRequireTypedTest off."
+            : null;
+
+    /// <summary>
     /// Validates the dressing tags (B-46) and returns the problem (<c>invalid_reference</c>), or <c>null</c> when there is none.
     /// An unknown id is rejected rather than skipped: a caller who mistypes one would otherwise be told
     /// <c>201</c> and believe the exercise carries a dressing it does not have - the same reason
@@ -388,6 +399,9 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // creator who set it never saw the problem. Check it here too, at the place the default is set.
         if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } createTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
+        // B-552: the pair itself must be reachable - every position that leaves both open inherits it.
+        if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } createPairErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createPairErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
             return this.ProblemWithCode(createTagErr.Error, createTagErr.Detail);
@@ -476,6 +490,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, updateStageErr);
         if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } updateTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
+        if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } updatePairErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updatePairErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
             return this.ProblemWithCode(updateTagErr.Error, updateTagErr.Detail);

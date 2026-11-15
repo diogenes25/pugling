@@ -168,8 +168,10 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // The EFFECTIVE value (position override, otherwise the exercise's own default) - an unfulfillable
         // setting must not slip through just because the position itself left it unset (B-93).
         var effectiveRequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest;
-        if ((RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest)
-                ?? RequireTypedTestValidation.LadderProblemText(types.ByKey(exercise.Type), effectiveRequireTypedTest, dto.StageSchedule))
+        var createType = types.ByKey(exercise.Type);
+        if ((RequireTypedTestValidation.ProblemText(createType, effectiveRequireTypedTest)
+                ?? (createType is null ? null : RequireTypedTestValidation.UnreachableProblemText(createType,
+                    effectiveRequireTypedTest, dto.Stage ?? exercise.DefaultStage ?? createType.DefaultStage, dto.StageSchedule)))
             is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
 
@@ -199,8 +201,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             RequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest,
             UseLeitner = dto.UseLeitner ?? exercise.DefaultUseLeitner,
             MaxBox = dto.MaxBox is > 0 ? dto.MaxBox.Value : 5,
-            BoxIntervalDays = dto.BoxIntervalDays,
-            StageSchedule = dto.StageSchedule,
+            // Empty means "method default" here as in the PATCH (B-547) - no third state next to "default" and "own".
+            BoxIntervalDays = dto.BoxIntervalDays is { Count: > 0 } intervals ? intervals : null,
+            StageSchedule = dto.StageSchedule is { Count: > 0 } schedule ? schedule : null,
             // Points/bonus: position override → exercise suggestion → model default.
             //
             // The target reward takes the creator's recommendation (B-45), but only within bounds on BOTH
@@ -245,19 +248,30 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // skip the checks below (B-95) - `pos.Exercise is { }` used to make that skip look intentional.
         if (pos.Exercise is not { } exercise) return NotFound();
         // Same checks as in Create, and before the first assignment: a rejected PATCH must leave the position
-        // untouched, not half-written. The exercise (and its type) never changes on a PATCH, so
-        // RequireTypedTest only needs checking against an explicit new `true` - leaving it unset cannot
-        // newly break an already-valid position.
+        // untouched, not half-written. The exercise (and its type) never changes on a PATCH, so the type check
+        // (ProblemText) only needs an explicit new `true`; whether the stages can still be graded is the next block's
+        // question.
         if (StageProblem(exercise, dto.Stage, dto.StageSchedule) is { } stageProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, stageProblem);
         if (RequireTypedTestValidation.ProblemText(types.ByKey(exercise.Type), dto.RequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
-        // Judged on the combination after the PATCH, but only when this PATCH touches one of its two halves: an older
-        // position holding both must stay editable in everything else.
-        if ((dto.RequireTypedTest is not null || dto.StageSchedule is not null)
-            && RequireTypedTestValidation.LadderProblemText(types.ByKey(exercise.Type),
-                dto.RequireTypedTest ?? pos.RequireTypedTest, dto.StageSchedule ?? pos.StageSchedule) is { } ladderProblem)
-            return this.ProblemWithCode(ApiErrors.ValidationError, ladderProblem);
+        // Judged on the combination after the PATCH, but only when this PATCH changes one of its halves (B-552): an older
+        // position holding an unreachable combination must stay editable in everything else (points, penalty ...). A
+        // CHANGE, not a sent field: the father's form sends requireTypedTest and the stage with every save, so a check on
+        // presence would lock him out of exactly those other settings.
+        var touchesCheck = (dto.RequireTypedTest is { } typedSent && typedSent != pos.RequireTypedTest)
+            || (dto.Stage is { } stageSent && stageSent != pos.Stage)
+            || (dto.ClearStage && pos.Stage is not null)
+            || dto.StageSchedule is not null;
+        if (touchesCheck && types.ByKey(exercise.Type) is { } patchType)
+        {
+            var stageAfter = dto.ClearStage ? null : dto.Stage ?? pos.Stage;
+            // An empty schedule puts it back to the default (B-547), so it counts as none here as well.
+            var scheduleAfter = dto.StageSchedule is { } sent ? (sent.Count > 0 ? sent : null) : pos.StageSchedule;
+            if (RequireTypedTestValidation.UnreachableProblemText(patchType, dto.RequireTypedTest ?? pos.RequireTypedTest,
+                    stageAfter ?? exercise.DefaultStage ?? patchType.DefaultStage, scheduleAfter) is { } unreachableProblem)
+                return this.ProblemWithCode(ApiErrors.ValidationError, unreachableProblem);
+        }
 
         // The set check only judges a dose being set now: a list the creator switched to any order after it was assigned
         // keeps its stored dose, which play ignores (PositionPlayService.DailyDose) - blocking every other edit of the
@@ -272,15 +286,19 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // Value first, switch second (B-16): "back to the default" wins if a form sends both.
         if (dto.ClearStage) pos.Stage = null;
         if (dto.ItemCount is not null) pos.ItemCount = dto.ItemCount;
+        if (dto.ClearItemCount) pos.ItemCount = null;
         if (dto.Scope is not null) pos.Scope = dto.Scope.Value;
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;
         if (dto.OrderStrategy is not null) pos.OrderStrategy = dto.OrderStrategy.Value;
         if (dto.GoalThreshold is not null) pos.GoalThreshold = dto.GoalThreshold;
+        if (dto.ClearGoalThreshold) pos.GoalThreshold = null;
         if (dto.RequireTypedTest is not null) pos.RequireTypedTest = dto.RequireTypedTest.Value;
         if (dto.UseLeitner is not null) pos.UseLeitner = dto.UseLeitner.Value;
         if (dto.MaxBox is > 0) pos.MaxBox = dto.MaxBox.Value;
-        if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays;
-        if (dto.StageSchedule is not null) pos.StageSchedule = dto.StageSchedule;
+        // An empty list means "back to the method default" (B-547): no form sends these two, and storing an empty
+        // schedule would be a third state next to "default" and "own" that play treats like the default anyway.
+        if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays.Count > 0 ? dto.BoxIntervalDays : null;
+        if (dto.StageSchedule is not null) pos.StageSchedule = dto.StageSchedule.Count > 0 ? dto.StageSchedule : null;
         if (dto.PointsGoalMet is not null) pos.PointsGoalMet = dto.PointsGoalMet.Value;
         if (dto.PenaltyCoins is not null) pos.PenaltyCoins = dto.PenaltyCoins.Value;
         if (dto.NewContentPoints is not null) pos.NewContentPoints = dto.NewContentPoints.Value;

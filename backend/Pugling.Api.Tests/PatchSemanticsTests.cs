@@ -294,10 +294,13 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
                 {
                     exerciseId,
                     stage = 1,
+                    itemCount = 2,
+                    goalThreshold = 90,
                     timeSlots = new[] { new { name = "Hausaufgaben", start = "13:00", end = "15:00", multiplier = 2.0 } },
                 }));
             return new Ziel(c, $"/api/v1/supervisor/study-plans/{planId}/positions/{id}");
-        }, [new("clearTimeSlots", "timeSlots"), new("clearStage", "stage")]),
+        }, [new("clearTimeSlots", "timeSlots"), new("clearStage", "stage"), new("clearItemCount", "itemCount"),
+            new("clearGoalThreshold", "goalThreshold")]),
 
         new(typeof(UpdateShopArticleDto), "title", "Artikel neu", async f =>
         {

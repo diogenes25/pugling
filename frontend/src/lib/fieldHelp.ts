@@ -136,7 +136,8 @@ export const FIELD_HELP = {
     title: "Nur getippte Tests zählen",
     text: "Gegen Raten: Ein Test erfüllt die Pflicht nur, wenn das Kind die Lösung getippt hat – Anzeigen "
       + "oder Selbsteinschätzung reicht dann nicht. Nur bei Übungstypen wirksam, die überhaupt geprüft "
-      + "werden.",
+      + "werden. Braucht eine getippte Test-Stufe: auf „Selbsteinschätzung“ (auch als Standard der Übung) wäre die "
+      + "Pflicht nie erreichbar.",
   },
   planDuration: {
     title: "Dauer in Tagen",

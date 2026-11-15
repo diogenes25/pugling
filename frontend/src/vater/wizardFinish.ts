@@ -12,6 +12,31 @@ import type {
  * dafür soll nicht `api.ts`, den Router und fünf Assistenten-Schritte hereinziehen müssen.
  */
 
+/*
+ * Die selbst eingeschätzte Vokabelstufe (`TestStage.SelfAssess`). Der Assistent spricht ohnehin die Vokabel-Skala (seine
+ * Ziele setzen 2 bzw. 4); das Manifest sagt nicht, welche Stufe gewertet wird – das tut erst die Lernkontrolle der
+ * gespeicherten Position.
+ */
+const VOKABEL_SELBSTEINSCHAETZUNG = 2;
+
+/**
+ * Geht „Nur getippte Tests zählen" an den Vokabel-Positionen verloren? Ja bei einer Leiter (B-423, Entscheidung 5) und bei
+ * der festen Stufe Selbsteinschätzung (B-552, Entscheidung 5) – in beiden Fällen wäre das Ziel an solchen Tagen
+ * unerreichbar. EINE Regel für den Abschluss und für den Satz, der es dem Vater sagt, damit beide nicht auseinanderlaufen.
+ */
+export function haekchenFaelltBeiVokabelnWeg(stage: number | null | undefined, stageSchedule: StageStep[] | null | undefined): boolean {
+  return (stageSchedule ?? null) !== null || stage === VOKABEL_SELBSTEINSCHAETZUNG;
+}
+
+/**
+ * Der Satz dazu für die feste Stufe Selbsteinschätzung (die Leiter hat ihren eigenen Satz) – `null`, wenn nichts wegfällt.
+ */
+export function haekchenZeile(requireTypedTest: boolean, stage: number, stageSchedule: StageStep[] | null): string | null {
+  if (!requireTypedTest || stageSchedule !== null || !haekchenFaelltBeiVokabelnWeg(stage, stageSchedule)) return null;
+  return "„Nur getippte Tests zählen“ gilt nicht für Vokabeln: auf Selbsteinschätzung wird nie gewertet, das Ziel wäre "
+    + "unerreichbar. Es gilt nur für die übrigen Übungen.";
+}
+
 /**
  * Was der Abschluss schon geschrieben hat – und ob er gerade läuft. Der Aufrufer hält das über einen
  * Durchgang hinweg (im Bildschirm ein `useRef`), denn beides wird **mitten** im Ablauf gelesen und
@@ -149,7 +174,13 @@ export async function runWizardFinish(
            */
           : leiter !== null
             ? { ...input.position, stageSchedule: leiter, requireTypedTest: false, exerciseId }
-            : { ...input.position, exerciseId };
+            /*
+             * Dieselbe Lage ohne Leiter (B-552, Entscheidung 5): auf der Selbsteinschätzung wird nie gewertet, und der Server
+             * lehnt „nur getippt" dort ab – eine `400` je Vokabel-Position hinterließe einen halb gebauten Plan.
+             */
+            : haekchenFaelltBeiVokabelnWeg(input.position.stage, null)
+              ? { ...input.position, requireTypedTest: false, exerciseId }
+              : { ...input.position, exerciseId };
         /*
          * Eine Liste kann als Menge werten (ungeordnet), und dort lehnt der Server jede Tagesdosis ab (B-04,
          * Entscheidung 9): die Dosis friert einen Teil der Einträge ein, eine richtige Nennung außerhalb davon

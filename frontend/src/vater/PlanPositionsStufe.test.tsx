@@ -138,3 +138,32 @@ describe("Positionszeile – Lernkontrolle vom Server (B-550)", () => {
     expect(within(zeile).getByText(/^Ziel nicht erreichbar/).className).toBe("pill mag");
   });
 });
+
+/*
+ * B-547, Review-Fund: die Zeile bleibt über das Neuladen nach dem Speichern montiert. Merkte sie sich die Werte nur beim
+ * ersten Rendern, schickte ein zweites „zurück auf Standard" keinen Schalter – und „Gespeichert." stimmte nicht.
+ */
+describe("Positionszeile – zweimal bearbeiten (B-547)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  // Rot, wenn „Bearbeiten" die Einstellungen nicht frisch aus der neu geladenen Position übernimmt: dann stünde
+  // `itemCountStored: null` aus dem ersten Rendern, und der zweite PATCH trüge `clearItemCount: false`.
+  it("schickt nach einem Speichern beim Leeren den Schalter", async () => {
+    const update = vi.spyOn(api, "updatePosition").mockResolvedValue(position({ itemCount: 5 }));
+    rendere([position()]);
+    vi.mocked(api.positions).mockResolvedValue([position({ itemCount: 5 })]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Inhalte", { exact: true }), { target: { value: "5" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "OK" })); });
+    await act(async () => {});
+
+    fireEvent.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    expect((screen.getByLabelText("Inhalte", { exact: true }) as HTMLInputElement).value).toBe("5");
+    fireEvent.change(screen.getByLabelText("Inhalte", { exact: true }), { target: { value: "" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "OK" })); });
+
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update.mock.calls[1][2]).toMatchObject({ itemCount: null, clearItemCount: true });
+  });
+});

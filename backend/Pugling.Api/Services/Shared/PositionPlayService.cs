@@ -87,12 +87,20 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// a display stage (playthrough), a typed stage (graded) or a self-assessed one. "Typed tests only" makes a
     /// self-assessed day unreachable, since such an attempt is never graded.
     /// </summary>
-    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type)
+    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type) =>
+        LearningCheckOf(type, pos.RequireTypedTest, pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage,
+            pos.StageSchedule);
+
+    /// <summary>
+    /// The same rule over loose values (B-552), so a request can be judged before anything is written: validation and
+    /// the father's display share one segment computation instead of two copies that could drift apart.
+    /// </summary>
+    public static LearningCheck LearningCheckOf(IExerciseType type, bool requireTypedTest, int baseStage,
+        IReadOnlyList<StageStep>? schedule)
     {
         if (type.Manifest.CheckMode == ExerciseCheckMode.None) return new LearningCheck(LearningCheckKind.NoTest);
 
-        var baseStage = pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage;
-        var steps = (pos.StageSchedule ?? []).OrderBy(s => s.DayNumber).ToList();
+        var steps = (schedule ?? []).OrderBy(s => s.DayNumber).ToList();
         // Segments (first day, stage) in plan order; the base stage holds until the first step takes over.
         var segments = new List<(int Day, int Stage)>();
         if (steps.Count == 0 || steps[0].DayNumber > 1) segments.Add((1, baseStage));
@@ -100,7 +108,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
         var kinds = segments.Select(s => type.IsDisplayOnlyStage(s.Stage) ? LearningCheckKind.Playthrough
             : type.IsTypedStage(s.Stage) ? LearningCheckKind.Typed : LearningCheckKind.SelfAssessed).ToList();
-        if (pos.RequireTypedTest && kinds.Contains(LearningCheckKind.SelfAssessed))
+        if (requireTypedTest && kinds.Contains(LearningCheckKind.SelfAssessed))
             return new LearningCheck(LearningCheckKind.Unreachable);
         if (kinds.Distinct().Count() == 1) return new LearningCheck(kinds[0]);
 

@@ -175,10 +175,10 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 ///
 /// <b>PATCH semantics:</b> a <c>null</c> means "not specified" for <i>every</i> field – the previous
 /// value stays. It does <b>not</b> mean "reset to default"; that needs an explicit <c>Clear</c> switch, and
-/// exactly two fields have one: <see cref="ClearTimeSlots"/> and <see cref="ClearStage"/>. The other fields cannot be
-/// emptied: most are mandatory or carry "off" as a value of their own (0); <c>ItemCount</c>, <c>GoalThreshold</c>,
-/// <c>BoxIntervalDays</c> and <c>StageSchedule</c> store <c>null</c> as "all"/"default" but have no switch yet - once set
-/// they can only be overwritten (B-547).
+/// four fields have one: <see cref="ClearTimeSlots"/>, <see cref="ClearStage"/>, <see cref="ClearItemCount"/> and
+/// <see cref="ClearGoalThreshold"/>. The two list fields <c>BoxIntervalDays</c> and <c>StageSchedule</c> take an
+/// <b>empty</b> list as "back to the method default" instead (like <c>TimeSlots</c>). The other fields cannot be
+/// emptied: they are mandatory or carry "off" as a value of their own (0).
 /// </summary>
 /// <param name="Order">New position within the plan.</param>
 /// <param name="Stage">Query form of the final test.</param>
@@ -192,8 +192,8 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// <param name="RequireTypedTest">Only typed stages in the final test.</param>
 /// <param name="UseLeitner">Leitner box instead of a single simple pass.</param>
 /// <param name="MaxBox">Highest Leitner box.</param>
-/// <param name="BoxIntervalDays">Review intervals per box.</param>
-/// <param name="StageSchedule">Stage schedule per box.</param>
+/// <param name="BoxIntervalDays">Review intervals per box; an <b>empty</b> list puts it back to the method default.</param>
+/// <param name="StageSchedule">Stage schedule per box; an <b>empty</b> list puts it back to the method default.</param>
 /// <param name="PointsGoalMet">Points when the goal is met.</param>
 /// <param name="PenaltyCoins">Coin penalty for a missed mandatory goal.</param>
 /// <param name="NewContentPoints">Points for new content.</param>
@@ -217,9 +217,18 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
 /// switch a form set back to "default" would report "saved" while the old stage stayed. Wins over <c>stage</c> if both
 /// arrive together.
 /// </param>
+/// <param name="ClearItemCount">
+/// Puts the item count back to "all items". Needed because <c>null</c> means "not specified": without the switch an
+/// emptied field would report "saved" while the old count stayed. Wins over <c>itemCount</c> if both arrive together.
+/// </param>
+/// <param name="ClearGoalThreshold">
+/// Puts the passing threshold back to the default (80 %). Wins over <c>goalThreshold</c> if both arrive together; a
+/// value sent alongside is still range-checked.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false);
+    bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false,
+    bool ClearItemCount = false, bool ClearGoalThreshold = false);

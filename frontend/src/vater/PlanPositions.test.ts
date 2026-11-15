@@ -24,7 +24,7 @@ const LEER: PositionSettings = {
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
   useLeitner: true, requireTypedTest: false,
-  stage: "", stageStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
+  stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
 
@@ -358,6 +358,24 @@ describe("Positions-Formular – Stufe, Auswahl, Tempo (B-16)", () => {
     expect(settingsToUpdateDto({ ...LEER, stage: "2", stageStored: 3 }).clearStage).toBe(false);
   });
 
+  // B-547 AK 3. Rot, wenn ein Schalter fehlt oder nicht am gespeicherten Wert hängt – dann bliebe „5 Inhalte" bzw.
+  // „90 %" nach dem Leeren stehen, und das Formular meldete „Gespeichert.". Die Gegenfälle machen ihn rot, wenn er
+  // ohne gespeicherten Wert (nichts zu leeren) oder bei gefülltem Feld (der Wert gewönne nicht) mitkäme.
+  it("schickt clearItemCount/clearGoalThreshold genau dann, wenn ein gespeicherter Wert geleert wird", () => {
+    const geleert = settingsToUpdateDto({ ...LEER, itemCount: " ", itemCountStored: 5, goalThreshold: "", goalThresholdStored: 90 });
+    expect([geleert.clearItemCount, geleert.clearGoalThreshold]).toEqual([true, true]);
+    const nieGesetzt = settingsToUpdateDto({ ...LEER, itemCount: "", itemCountStored: null, goalThreshold: "", goalThresholdStored: null });
+    expect([nieGesetzt.clearItemCount, nieGesetzt.clearGoalThreshold]).toEqual([false, false]);
+    const geaendert = settingsToUpdateDto({ ...LEER, itemCount: "3", itemCountStored: 5, goalThreshold: "70", goalThresholdStored: 90 });
+    expect([geaendert.clearItemCount, geaendert.clearGoalThreshold]).toEqual([false, false]);
+  });
+
+  // Rot, wenn das Anlegen die B-547-Schalter mitschickt – `CreatePositionDto` kennt sie nicht (`unknown_field`).
+  it("das Anlegen kennt die Leeren-Schalter für Inhalte und Bestehen nicht", () => {
+    const dto = settingsToDto({ ...LEER, itemCountStored: 5, goalThresholdStored: 90 });
+    expect(["clearItemCount" in dto, "clearGoalThreshold" in dto]).toEqual([false, false]);
+  });
+
   // Rot, wenn das Anlegen den Schalter mitschickt: `CreatePositionDto` kennt ihn nicht, der Server antwortet `unknown_field`.
   it("das Anlegen kennt den Schalter nicht", () => {
     expect("clearStage" in settingsToDto({ ...LEER, stage: "", stageStored: 3 })).toBe(false);
@@ -367,12 +385,14 @@ describe("Positions-Formular – Stufe, Auswahl, Tempo (B-16)", () => {
   // Auswahl/Tempo nicht übernimmt (dann überschriebe jedes Speichern sie mit den Formular-Vorgaben).
   it("übernimmt den gespeicherten Stand", () => {
     const s = settingsFrom({
-      timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+      timeSlots: null, cadence: "Daily", goalThreshold: 90, itemCount: 5, orderStrategy: "WeakestFirst",
       pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
       useLeitner: true, requireTypedTest: false, newItemsPerDay: 0,
       stage: 4, scope: "Old", speedThresholdSeconds: 6, speedBonusPoints: 1,
     } as unknown as PositionResponse);
     expect([s.stage, s.stageStored, s.scope, s.speedThresholdSeconds, s.speedBonusPoints]).toEqual(["4", 4, "Old", "6", "1"]);
+    // B-547: ohne die gemerkten Werte ginge clearItemCount/clearGoalThreshold nie an.
+    expect([s.itemCount, s.itemCountStored, s.goalThreshold, s.goalThresholdStored]).toEqual(["5", 5, "90", 90]);
   });
 });
 

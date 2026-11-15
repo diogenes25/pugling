@@ -19,7 +19,8 @@ import {
   auswahlNachFilterwechsel, NICHT_ZUWEISBAR_GRUND, nurZuweisbare, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams,
 } from "./wizardSearch";
 import {
-  dosisZeile, KlassenarbeitFehlt, leiterText, newWizardProgress, planVorgaben, plusTage, runWizardFinish, terminProblem,
+  dosisZeile, haekchenZeile, KlassenarbeitFehlt, leiterText, newWizardProgress, planVorgaben, plusTage, runWizardFinish,
+  terminProblem,
 } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
 import { radioGroupKeys } from "../lib/ui";
@@ -706,6 +707,11 @@ export function VaterWizard() {
                 angewandt={vorgaben.stageSchedule[1].dayNumber} max={vorgaben.durationDays} />
             </div>
           )}
+          {/* B-552, Entscheidung 5: auf der festen Stufe Selbsteinschätzung fällt das Häkchen für Vokabeln ebenso weg – der Satz
+              sagt es, statt still zu wirken. */}
+          {haekchenZeile(requireTyped, defaultStage, vorgaben.stageSchedule) && (
+            <p style={{ marginTop: 12 }}>{haekchenZeile(requireTyped, defaultStage, vorgaben.stageSchedule)}</p>
+          )}
           <p className="sub" style={{ marginTop: 12 }}>
             Der <strong>Münz-Malus</strong> greift, wenn ein Tagesziel am Ende des Tages nicht erreicht wurde –
             das Kind kann dadurch ins Minus geraten. Setze ihn auf 0, wenn du nur belohnen willst.
@@ -724,6 +730,8 @@ export function VaterWizard() {
           <SummaryRow label="Zeitraum" value={zeitraumZeile(vorgaben.startDate, vorgaben.durationDays, vorgaben.klassenarbeitTermin !== null)} />
           <SummaryRow label="Je Position" value={`Test-Stufe ${defaultStage} · bestehen ab ${passPercent}% · ${pointsGoalMet} Punkte/Ziel`} />
           {leiter && <SummaryRow label="Stufenleiter" value={`Vokabeln: ${leiter}`} />}
+          {haekchenZeile(requireTyped, defaultStage, vorgaben.stageSchedule)
+            && <SummaryRow label="Nur getippt" value={haekchenZeile(requireTyped, defaultStage, vorgaben.stageSchedule)!} />}
           {vorgaben.klassenarbeitTermin && <SummaryRow label="Klassenarbeit" value={klassenarbeitZeile(vorgaben.klassenarbeitTermin)} />}
           <SummaryRow label="Tagesdosis" value={dosisZeile(useLeitner, newItemsPerDay, selected.map((id) => gesehen.current.get(id)?.type ?? ""))} />
           <SummaryRow label="Versäumnis" value={penaltyCoins > 0 ? `−${penaltyCoins} 🪙 je gerissenem Tagesziel` : "kein Malus (reine Belohnung)"} />

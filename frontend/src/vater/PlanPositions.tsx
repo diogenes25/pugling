@@ -137,6 +137,13 @@ export interface PositionSettings {
    * PATCH „nicht angegeben", die alte Stufe bliebe sonst stehen. `null` = keine gespeichert (oder Anlegen).
    */
   stageStored: number | null;
+  /*
+   * Dasselbe für „Inhalte" und „Bestehen ab %" (B-547): ein geleertes Feld heißt „alle" bzw. „Standard", im PATCH aber
+   * „nicht angegeben". Ohne den gespeicherten Wert wüsste das Formular nicht, ob es `clearItemCount`/`clearGoalThreshold`
+   * senden muss.
+   */
+  itemCountStored: number | null;
+  goalThresholdStored: number | null;
   scope: ItemScope;
   /*
    * Tempo-Bonus wie die Combo (B-16, Entscheidung 8): "" heißt beim Anlegen „erbt den Vorschlag der Übung", beim
@@ -258,7 +265,7 @@ function defaultSettings(): PositionSettings {
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
     useLeitner: false, requireTypedTest: false,
-    stage: "", stageStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
+    stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
   };
@@ -282,6 +289,8 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     requireTypedTest: pos.requireTypedTest,
     stage: pos.stage?.toString() ?? "",
     stageStored: pos.stage ?? null,
+    itemCountStored: pos.itemCount ?? null,
+    goalThresholdStored: pos.goalThreshold ?? null,
     scope: pos.scope,
     speedThresholdSeconds: pos.speedThresholdSeconds.toString(),
     speedBonusPoints: pos.speedBonusPoints.toString(),
@@ -350,6 +359,9 @@ export function settingsToUpdateDto(s: PositionSettings): UpdatePositionDto {
     clearTimeSlots: timeSlotOf(s) === null,
     // B-16: dieselbe Lage bei der Stufe – „Standard der Übung" ist `null`, und das ließe die gespeicherte stehen.
     clearStage: s.stage === "" && s.stageStored !== null,
+    // B-547: geleerte Felder kommen nur über den Schalter auf „alle Inhalte" bzw. „Standard" zurück.
+    clearItemCount: s.itemCount.trim() === "" && s.itemCountStored !== null,
+    clearGoalThreshold: s.goalThreshold.trim() === "" && s.goalThresholdStored !== null,
   };
 }
 
@@ -839,6 +851,16 @@ function PositionRow({ planId, pos, onChanged, action }: {
     setEditing(false);
   }
 
+  /*
+   * Beim Öffnen frisch aus der gespeicherten Position: die Zeile bleibt über ein Neuladen hinweg montiert (`key={p.id}`),
+   * und ohne das stünden nach dem ersten Speichern die alten Merkwerte (`stageStored`, `itemCountStored` …) im Formular –
+   * ein zweites „zurück auf Standard" schickte dann keinen Schalter, und „Gespeichert." stimmte nicht (B-547).
+   */
+  function beginEdit() {
+    setSettings(settingsFrom(pos));
+    setEditing(true);
+  }
+
   async function save() {
     const slotProblem = timeSlotProblem(settings);
     if (slotProblem) { action.fail(slotProblem); return; }
@@ -888,7 +910,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
               aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>
-            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={() => setEditing(true)}>Bearbeiten</button>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={beginEdit}>Bearbeiten</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={remove}>Entfernen</button>
           </td>
         </tr>

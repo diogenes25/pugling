@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  dosisZeile, KlassenarbeitFehlt, leiterText, newWizardProgress, planVorgaben, runWizardFinish, stageScheduleFor, terminProblem,
+  dosisZeile, haekchenZeile, KlassenarbeitFehlt, leiterText, newWizardProgress, planVorgaben, runWizardFinish, stageScheduleFor, terminProblem,
 } from "./wizardFinish";
 import type { WizardFinishInput, WizardWriter } from "./wizardFinish";
 import type { CreateChildDto, CreateKlassenarbeitDto, CreatePlanDto, CreatePositionDto } from "../lib/types";
@@ -288,6 +288,29 @@ describe("runWizardFinish – Klassenarbeit und Leiter (B-423)", () => {
     expect(s.positionen[0].dto.requireTypedTest).toBe(false);
     expect(s.positionen[1].dto).not.toHaveProperty("stageSchedule");
     expect(s.positionen[1].dto.requireTypedTest).toBe(true);
+  });
+
+  // B-552 AK 7. Rot, wenn die Ausnahme nur an der Leiter hängt: dann trüge die Vokabel-Position auf Stufe 2 das Häkchen, und
+  // der Server lehnte sie ab. Die Matching-Position behält es (die Stufe 2 der Vokabel-Skala gilt dort nicht).
+  it("nimmt das Häkchen bei selbst eingeschätzter Stufe aus der Vokabel-Position", async () => {
+    const s = schreiber();
+    await runWizardFinish(newWizardProgress(), auftrag({
+      exerciseIds: [11, 12],
+      position: { ...POSITION, stage: 2, requireTypedTest: true },
+      typeOf: (id) => (id === 11 ? "Vocabulary" : "Matching"),
+    }), s.writer);
+    expect(s.positionen[0].dto.requireTypedTest).toBe(false);
+    expect(s.positionen[1].dto.requireTypedTest).toBe(true);
+  });
+
+  // B-552, Review-Fund: der Satz für den Vater hängt an derselben Regel wie der Abschluss. Rot, wenn er bei Stufe 2 fehlt
+  // (der Vater sähe ein Häkchen, das nicht wirkt), bei Stufe 4, ohne Häkchen oder neben einer Leiter (die hat ihren
+  // eigenen Satz) erscheint.
+  it("sagt dem Vater, wann das Häkchen bei Vokabeln wegfällt", () => {
+    expect(haekchenZeile(true, 2, null)).toMatch(/gilt nicht für Vokabeln/);
+    expect(haekchenZeile(true, 4, null)).toBeNull();
+    expect(haekchenZeile(false, 2, null)).toBeNull();
+    expect(haekchenZeile(true, 2, [{ dayNumber: 1, stage: 2 }, { dayNumber: 4, stage: 4 }])).toBeNull();
   });
 
   // Gegenprobe zu AK 8: ohne Leiter bleibt das Häkchen auch an der Vokabel-Position. Rot, wenn der Schnitt immer greift.

@@ -282,9 +282,10 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var patch = await father.PatchAsJsonAsync($"{url}/{posId}", new { requireTypedTest = true });
         Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
 
-        // A type that DOES have a typed stage (vocabulary) is unaffected - the same setting still works there.
+        // A type that DOES have a typed stage (vocabulary) is unaffected - the same setting still works there, on a typed
+        // stage (without one it would fall on self-assessment, which B-552 refuses for a reason of its own).
         var vocabId = await TestApi.CreateVocabExerciseAsync(father);
-        var vocabPos = await father.PostAsJsonAsync(url, new { exerciseId = vocabId, requireTypedTest = true });
+        var vocabPos = await father.PostAsJsonAsync(url, new { exerciseId = vocabId, requireTypedTest = true, stage = 4 });
         Assert.Equal(HttpStatusCode.Created, vocabPos.StatusCode);
     }
 

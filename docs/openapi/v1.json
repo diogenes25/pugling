@@ -46091,7 +46091,7 @@
               ],
               "format": "int32"
             },
-            "description": "Review intervals per box."
+            "description": "Review intervals per box; an **empty** list puts it back to the method default."
           },
           "stageSchedule": {
             "type": [
@@ -46101,7 +46101,7 @@
             "items": {
               "$ref": "#/components/schemas/StageStep"
             },
-            "description": "Stage schedule per box."
+            "description": "Stage schedule per box; an **empty** list puts it back to the method default."
           },
           "pointsGoalMet": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -46202,9 +46202,19 @@
             "type": "boolean",
             "description": "Puts the stage back to the exercise\u0027s default (B-16). Needed because \u0060null\u0060 means \u0022not specified\u0022: without the\nswitch a form set back to \u0022default\u0022 would report \u0022saved\u0022 while the old stage stayed. Wins over \u0060stage\u0060 if both\narrive together.",
             "default": false
+          },
+          "clearItemCount": {
+            "type": "boolean",
+            "description": "Puts the item count back to \u0022all items\u0022. Needed because \u0060null\u0060 means \u0022not specified\u0022: without the switch an\nemptied field would report \u0022saved\u0022 while the old count stayed. Wins over \u0060itemCount\u0060 if both arrive together.",
+            "default": false
+          },
+          "clearGoalThreshold": {
+            "type": "boolean",
+            "description": "Puts the passing threshold back to the default (80 %). Wins over \u0060goalThreshold\u0060 if both arrive together; a\nvalue sent alongside is still range-checked.",
+            "default": false
           }
         },
-        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nexactly two fields have one: bool UpdatePositionDto.ClearTimeSlots and bool UpdatePositionDto.ClearStage. The other fields cannot be\nemptied: most are mandatory or carry \u0022off\u0022 as a value of their own (0); \u0060ItemCount\u0060, \u0060GoalThreshold\u0060,\n\u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 store \u0060null\u0060 as \u0022all\u0022/\u0022default\u0022 but have no switch yet - once set\nthey can only be overwritten (B-547)."
+        "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nfour fields have one: bool UpdatePositionDto.ClearTimeSlots, bool UpdatePositionDto.ClearStage, bool UpdatePositionDto.ClearItemCount and\nbool UpdatePositionDto.ClearGoalThreshold. The two list fields \u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 take an\n**empty** list as \u0022back to the method default\u0022 instead (like \u0060TimeSlots\u0060). The other fields cannot be\nemptied: they are mandatory or carry \u0022off\u0022 as a value of their own (0)."
       },
       "UpdatePublisherDto": {
         "type": "object",

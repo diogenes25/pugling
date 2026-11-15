@@ -1,7 +1,9 @@
 namespace Pugling.Api.Exercises;
 
 /// <summary>
-/// Checks a <c>requireTypedTest</c> setting against whether its exercise type has a typed stage at all.
+/// Checks a <c>requireTypedTest</c> setting against whether its exercise type has a typed stage at all
+/// (<see cref="ProblemText"/>), and against the stages the position is actually tested on - base stage and stage schedule
+/// (<see cref="UnreachableProblemText"/>, B-550/B-552).
 /// <para>
 /// This exists because the setting does not break a card either - it silently disables scoring:
 /// <c>PositionPracticeController</c> gates <c>scored</c> on <c>typed || !RequireTypedTest</c>, and a type
@@ -31,13 +33,21 @@ public static class RequireTypedTestValidation
             : null;
 
     /// <summary>
-    /// Returns an error text if <paramref name="requireTypedTest"/> is <c>true</c> while the stage schedule holds a
-    /// self-assessed stage (neither typed nor a free display stage), otherwise <c>null</c> (B-550). A test on such a day is
-    /// never graded, so the goal could not be met there - the malus would run against a child that did its part.
+    /// Returns an error text if <paramref name="requireTypedTest"/> is <c>true</c> while a day of the position would be
+    /// tested on a self-assessed stage (neither typed nor a free display stage), otherwise <c>null</c>. Such a day is the
+    /// base stage until the schedule takes over (B-552) or a step of the schedule (B-550). A test on it is never graded,
+    /// so the goal could not be met there - the malus would run against a child that did its part. Judged by
+    /// <see cref="PositionPlayService.LearningCheckOf(IExerciseType, bool, int, IReadOnlyList{StageStep})"/>, the rule the
+    /// father's plan page shows, so the refusal and the red "unreachable" line cannot disagree.
     /// </summary>
-    public static string? LadderProblemText(IExerciseType? type, bool requireTypedTest, IReadOnlyList<StageStep>? schedule) =>
+    /// <param name="type">The exercise type; an unknown type (<c>null</c>) is not judged here.</param>
+    /// <param name="requireTypedTest">The effective "typed tests only" after the request.</param>
+    /// <param name="baseStage">The effective base stage: position stage, else the exercise default, else the type default.</param>
+    /// <param name="schedule">The effective stage schedule after the request; <c>null</c> or empty = none.</param>
+    public static string? UnreachableProblemText(IExerciseType? type, bool requireTypedTest, int baseStage,
+        IReadOnlyList<StageStep>? schedule) =>
         requireTypedTest && type is not null
-            && schedule?.Any(s => !type.IsTypedStage(s.Stage) && !type.IsDisplayOnlyStage(s.Stage)) == true
-            ? "requireTypedTest cannot be combined with a stage schedule that has a self-assessed stage."
+            && PositionPlayService.LearningCheckOf(type, true, baseStage, schedule).Kind == LearningCheckKind.Unreachable
+            ? "requireTypedTest cannot be combined with a self-assessed stage (the base stage or a step of the stage schedule): a test there is never graded, so the goal could not be met. Choose a typed stage or switch requireTypedTest off."
             : null;
 }
