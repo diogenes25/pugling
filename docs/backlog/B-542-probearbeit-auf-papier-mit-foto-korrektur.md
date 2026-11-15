@@ -32,3 +32,4 @@ nicht).
 ## Verlauf
 
 - **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutor bewirbt Arbeitsblätter zum Ausdrucken mit Lösungsschlüssel als Vorbereitung auf Klassenarbeiten „unter Prüfungsbedingungen"; korrigiert wird dort vom Kind selbst am Schlüssel. Bestätigt die Papierform, nicht die Selbstkorrektur – die bleibt beim Vater. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-545](B-545-sofatutor-vergleich-sammel-story.md)).

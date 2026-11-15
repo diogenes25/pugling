@@ -30,3 +30,4 @@ den Code prüfen, ob einzelne Übungstypen schon etwas Ähnliches tragen.
 ## Verlauf
 
 - **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 4 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutors Übungen bieten nach dem Fehler eine Video-Hilfe, die an die passende Stelle des Erklärvideos springt. Das Pugling-Gegenstück wäre ein Verweis von der Erklärung auf die Stoffnotiz der Unit (`SeriesUnit.Grammar`/`VocabularyNotes`). Beim Ausformulieren das Verhältnis zu [B-529](B-529-erklaerung-nach-der-antwort.md) klären: beide beschreiben eine Erklärung nach der Antwort. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-545](B-545-sofatutor-vergleich-sammel-story.md)).
