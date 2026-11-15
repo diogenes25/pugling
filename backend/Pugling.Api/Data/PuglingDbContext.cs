@@ -1149,7 +1149,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// grammar note is free text like its vocabulary note - 200 characters barely held half a sentence.
     /// </summary>
     private static readonly string[] FreeTextSuffixes =
-        ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer", "Grammar"];
+        ["Description", "Notes", "Text", "Reason", "Persona", "Didactics", "Comment", "Message", "Answer", "Grammar", "Explanation"];
 
     /// <summary>Name suffixes that give away a slug/key (short length, often unique-indexed).</summary>
     private static readonly string[] KeySuffixes = ["Key", "Slug"];

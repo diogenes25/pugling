@@ -68,10 +68,12 @@ public record RefsFromTagsDto(List<string> Tags, bool MatchAll = false, bool Bas
 /// <param name="Hint">Exercise-local hint; overrides the derived store hint.</param>
 /// <param name="Self">HATEOAS link to the item itself.</param>
 /// <param name="Vocabulary">HATEOAS link to the store entry.</param>
+/// <param name="Explanation">Why the answer is what it is (B-556); shown to the child only after the answer.</param>
 public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string Front, string Back,
     IReadOnlyList<string>? TranslationAlternatives, string? Hint,
     [property: JsonPropertyName("_self")] string Self,
-    [property: JsonPropertyName("vocabulary")] string Vocabulary);
+    [property: JsonPropertyName("vocabulary")] string Vocabulary,
+    string? Explanation = null);
 
 /// <summary>
 /// Creating/changing an item: either via <paramref name="VocabularyId"/> (existing store vocabulary) or inline
@@ -87,8 +89,10 @@ public record VocabItemResponse(int Id, int OrderIndex, int VocabularyId, string
 /// also when that entry already existed, so they are never dropped silently. <c>null</c> (or omitted) leaves
 /// the entry's alternatives unchanged; an empty list <c>[]</c> deletes them. The store keeps one list per
 /// word, so every exercise using the same entry sees the change.</param>
+/// <param name="Explanation">Why the answer is what it is (B-556), shown to the child only after the answer; empty deletes
+/// it, left out keeps it.</param>
 public record VocabItemInput(int? VocabularyId = null, string? Front = null, string? Back = null,
-    string? Hint = null, int? OrderIndex = null, List<string>? TranslationAlternatives = null);
+    string? Hint = null, int? OrderIndex = null, List<string>? TranslationAlternatives = null, string? Explanation = null);
 
 /// <summary>An interchangeable vocabulary candidate for a word (several for homonyms).</summary>
 /// <param name="VocabularyId">Vocabulary id.</param>

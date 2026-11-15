@@ -168,7 +168,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
 
     private static VocabItemResponse MapItem(int seriesId, int seriesUnitId, int exerciseId, ExerciseItem item) =>
         new(item.Id, item.OrderIndex, item.VocabularyId, item.Vocabulary?.Word ?? "", item.Vocabulary?.Translation ?? "",
-            item.Vocabulary?.TranslationAlternatives, item.Hint, ItemSelf(seriesId, seriesUnitId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId);
+            item.Vocabulary?.TranslationAlternatives, item.Hint, ItemSelf(seriesId, seriesUnitId, exerciseId, item.Id), VocabLink.Path + item.VocabularyId,
+            item.Explanation);
 
     /// <summary>All items of the exercise in order (front/back from the store).</summary>
     [HttpGet("{exerciseId:int}/items")]
@@ -233,6 +234,7 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             ExerciseId = exerciseId,
             Vocabulary = vocab,
             Hint = NormalizeHint(body.Hint),
+            Explanation = NormalizeHint(body.Explanation),
             OrderIndex = nextOrder,
         };
         Db.ExerciseItems.Add(item);
@@ -277,6 +279,8 @@ public class VocabularyController(PuglingDbContext db, ExerciseTypeRegistry regi
             item.Vocabulary = vocab;
         }
         if (body.Hint is not null) item.Hint = NormalizeHint(body.Hint);
+        // Same rule as the hint: empty clears, set overwrites, left out stays (B-556).
+        if (body.Explanation is not null) item.Explanation = NormalizeHint(body.Explanation);
         if (body.OrderIndex is { } order && order != item.OrderIndex)
         {
             // Reordering shifts positions → block while the exercise is played in a plan (see ExerciseInPlanAsync).

@@ -19,6 +19,9 @@ des Rechners, in der Umgebung `Production`, mit der echten `backend/Pugling.Api/
 Adressen für Sohn und Vater, etwa `http://192.168.178.55:5200/sohn`. Beenden mit Strg+C.
 
 - `-SkipBuild` startet ohne Neubau, wenn sich am Code nichts geändert hat.
+- Vor einem Neustart mit neuem Stand prüft `pwsh scripts/artefakt-smoke.ps1`, ob das veröffentlichte Artefakt überhaupt
+  hochkommt und Sohn- wie Vater-Seite ausliefert – gegen eine Wegwerf-Datenbank auf Port 5299, ohne die echte
+  `pugling.db` zu berühren (B-47; derselbe Lauf steht als Job `artefakt` in CI).
 - Läuft schon etwas auf Port 5200 (meist der Entwicklungsserver), bricht das Skript ab: zwei Server dürfen nicht
   gleichzeitig in dieselbe Datenbank schreiben. **Ein Entwicklungsserver auf einem anderen Port erkennt das
   Skript nicht** – dann vorher selbst beenden.

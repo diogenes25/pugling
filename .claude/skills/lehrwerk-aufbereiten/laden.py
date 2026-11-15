@@ -35,7 +35,7 @@ MAX_TOPIC, MAX_TEXT = 200, 2000
 # FIELDS-BEGIN
 FIELDS = {
     "vocabulary": {"": ["direction", "sourceLang", "targetLang", "articleRequired", "refs", "items"],
-                   "items": ["front", "back", "hint", "vocabularyId"], "refs": ["vocabularyId", "key"]},
+                   "items": ["front", "back", "hint", "vocabularyId", "explanation"], "refs": ["vocabularyId", "key"]},
     "cloze": {"": ["text", "gaps", "wordBank", "cueDistractors"], "gaps": ["index", "answer", "alternatives", "vocabKey", "form"]},
     "grammar": {"": ["instruction", "tasks"], "tasks": ["prompt", "answer", "ruleHint"]},
     "matching": {"": ["instruction", "pairs"], "pairs": ["left", "right"]},

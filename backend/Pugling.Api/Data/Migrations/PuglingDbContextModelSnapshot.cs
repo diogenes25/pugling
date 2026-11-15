@@ -826,6 +826,10 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ExerciseId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Explanation")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Hint")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");

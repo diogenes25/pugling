@@ -11,9 +11,9 @@ name: CI
 # (deploy-azure.yml: Azure nicht konfiguriert). Dieses Tor steht unabhängig davon – es bewacht `main`,
 # nicht das Deploy. Kommt der Trigger zurück, hängt das Deploy wieder am Gesamtergebnis.
 #
-# Drei Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1/D3): Backend, Frontend und Markdown
+# Vier Jobs, **bewusst ohne `needs:` zwischen ihnen** (Etappe D1/D3, B-47): Backend, Frontend, Artefakt und Markdown
 # prüfen Unabhängiges und laufen parallel. Ein wieder scharfes Deploy hängt am Gesamtergebnis des
-# Workflows, zieht alle drei also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
+# Workflows, zieht alle vier also automatisch mit – ohne dass hier eine Reihenfolge erfunden werden muss.
 
 on:
   push:
@@ -200,6 +200,37 @@ jobs:
       - name: Vitest
         working-directory: frontend
         run: npm test
+
+  # B-47. Startet das **veröffentlichte Artefakt** – `dotnet publish` mit dem gebauten Frontend in `wwwroot`, als eigener
+  # Prozess in Production gegen eine Wegwerf-DB – und prüft `/health`, `/` und `/sohn`. Genau dieser Weg ist der echte
+  # Betrieb (`scripts/heimnetz.ps1`); kein In-Process-Test sieht ihn (24 Tage unbemerkt kaputt, B-41). Die Gegenprobe läuft
+  # danach dauerhaft mit: mit leerem `wwwroot` MUSS das Skript rot enden, sonst trüge die Seitenprüfung nichts.
+  artefakt:
+    name: Artefakt – veröffentlicht starten und antworten
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Artefakt-Smoke
+        shell: pwsh
+        run: ./scripts/artefakt-smoke.ps1
+
+      - name: Gegenprobe – leeres wwwroot muss rot sein
+        shell: pwsh
+        run: |
+          ./scripts/artefakt-smoke.ps1 -SkipBuild -EmptyWebRoot
+          if ($LASTEXITCODE -eq 0) { throw 'Die Gegenprobe war grün: der Smoke erkennt ein fehlendes Frontend nicht.' }
+          exit 0
 
   # Etappe D3. Die Doku ist in diesem Projekt Produkt, nicht Beiwerk (docs/api-examples ist sogar
   # verifizierter Vertrag). Eigener, unabhängiger Job – kein .NET/Node-Setup außer `npx` nötig.

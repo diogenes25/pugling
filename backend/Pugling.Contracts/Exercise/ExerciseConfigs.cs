@@ -56,7 +56,7 @@ public record VocabRef(int VocabularyId, string? Key = null, string? Self = null
 /// populated HATEOAS link.
 /// </summary>
 public record VocabItem(string? Front = null, string? Back = null, string? Hint = null,
-    int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null);
+    int? VocabularyId = null, [property: JsonPropertyName("_self")] string? Self = null, string? Explanation = null);
 
 /// <summary>Reading comprehension: text + comprehension questions.</summary>
 public class ReadingConfig

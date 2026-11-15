@@ -546,12 +546,15 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       {items.loading && items.data === null ? <div className="loading">Lade Wortpaare…</div> : items.data && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
-            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Auch richtig</th><th>Hinweis</th><th /></tr></thead>
+            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Auch richtig</th><th>Hinweis</th><th>Erklärung (nach der Antwort)</th><th /></tr></thead>
             <tbody>
               {items.data.map((it, i) => (
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}
                   storeHref={storeHref(it.front)}
                   onHint={(hint) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id, { hint }), "Hinweis gespeichert.")}
+                  // B-556: leer löscht beim Server, wie beim Hinweis.
+                  onExplanation={(explanation) => act(() => api.patchExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id,
+                    { explanation }), "Erklärung gespeichert.")}
                   // Eine ausdrücklich leere Liste löscht (B-71); `null` hieße beim Server „unverändert“.
                   onAlternatives={async (translationAlternatives) => {
                     // Die Antwort zurückgeben: der Server bereinigt die Liste, und nur sie sagt, was jetzt gilt.
@@ -565,7 +568,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
                     act(() => api.deleteExerciseItem(detail.seriesId, detail.seriesUnitId, detail.id, it.id), "Wort entfernt.");
                   }} />
               ))}
-              {items.data.length === 0 && <tr><td colSpan={6} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
+              {items.data.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Wörter – unten hinzufügen.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -579,11 +582,13 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
   );
 }
 
-function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onAlternatives, onRemove }: {
+function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onExplanation, onAlternatives, onRemove }: {
   item: VocabItemResponse; position: number; busy: boolean; exerciseId: number;
   /** Ziel im Vokabel-Store, vorgefiltert auf dieses Wort. */
   storeHref: string;
   onHint: (hint: string) => void;
+  /** B-556: die Erklärung, die das Kind erst nach seiner Antwort sieht; leer löscht. */
+  onExplanation: (explanation: string) => void;
   /** Die bereinigte Liste; leer heißt löschen. Liefert die Antwort des Servers bzw. `null` beim Fehlschlag. */
   onAlternatives: (alternatives: string[]) => Promise<VocabItemResponse | null>;
   onRemove: () => void;
@@ -603,6 +608,8 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onAltern
   // Das Bild-Panel steht eingeklappt: es lädt eigene Daten, und bei 30 Wörtern wären das 30 Abfragen.
   const [showMedia, setShowMedia] = useState(false);
   const dirty = hint !== (item.hint ?? "");
+  const [explanation, setExplanation] = useState(item.explanation ?? "");
+  const explanationDirty = explanation !== (item.explanation ?? "");
   return (
     <>
       <tr>
@@ -642,6 +649,15 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onAltern
               disabled={busy} onClick={() => onHint(hint)}>OK</button>}
           </span>
         </td>
+        <td>
+          {/* B-556: „warum" – das Kind sieht es erst nach der Antwort; der Hinweis daneben hilft davor. */}
+          <span className="row" style={{ gap: 4 }}>
+            <input aria-label={`Erklärung für ${item.front}`} value={explanation} onChange={(e) => setExplanation(e.target.value)}
+              placeholder="–" style={{ maxWidth: 220 }} />
+            {explanationDirty && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              aria-label={`Erklärung für ${item.front} speichern`} disabled={busy} onClick={() => onExplanation(explanation)}>OK</button>}
+          </span>
+        </td>
         <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
             aria-expanded={showMedia} aria-label={`Bild für ${item.front} nur in dieser Übung`}
@@ -652,7 +668,7 @@ function ItemRow({ item, position, busy, exerciseId, storeHref, onHint, onAltern
       </tr>
       {showMedia && (
         <tr>
-          <td colSpan={6}>
+          <td colSpan={7}>
             <ExerciseItemMediaPanel exerciseId={exerciseId} itemId={item.id} word={item.front} />
           </td>
         </tr>

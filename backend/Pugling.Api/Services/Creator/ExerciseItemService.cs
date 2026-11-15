@@ -5,7 +5,7 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Creator;
 
 /// <summary>A desired item for reconciliation: which store vocabulary entry, with an optional exercise-local hint.</summary>
-public readonly record struct DesiredItem(int VocabularyId, string? Hint);
+public readonly record struct DesiredItem(int VocabularyId, string? Hint, string? Explanation = null);
 
 /// <summary>
 /// Maintains the stably identified <see cref="ExerciseItem"/> rows of a vocabulary exercise. Translates the
@@ -47,14 +47,15 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         var inline = InlineItems(config);
         for (var i = 0; i < config.Items.Count; i++)
             if (config.Items[i].VocabularyId is { } id)
-                desired[i] = new DesiredItem(id, config.Items[i].Hint);
+                desired[i] = new DesiredItem(id, config.Items[i].Hint, Blank(config.Items[i].Explanation));
         if (inline.Count > 0)
         {
             var vocabs = await store.GetOrCreateManyAsync(config.SourceLang, config.TargetLang,
                 inline.Select(x => x.Pair).ToList(), ct: ct);
             await db.SaveChangesAsync(ct);
             for (var n = 0; n < inline.Count; n++)
-                desired[inline[n].Index] = new DesiredItem(vocabs[n].Id, config.Items[inline[n].Index].Hint);
+                desired[inline[n].Index] = new DesiredItem(vocabs[n].Id, config.Items[inline[n].Index].Hint,
+                    Blank(config.Items[inline[n].Index].Explanation));
         }
         return desired.ToList();
     }
@@ -117,6 +118,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
                 pool.Remove(match);
                 match.OrderIndex = i;
                 match.Hint = d.Hint;
+                match.Explanation = d.Explanation;
             }
             else
             {
@@ -125,6 +127,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
                     ExerciseId = exerciseId,
                     VocabularyId = d.VocabularyId,
                     Hint = d.Hint,
+                    Explanation = d.Explanation,
                     OrderIndex = i,
                 });
             }
@@ -132,4 +135,7 @@ public class ExerciseItemService(PuglingDbContext db, VocabularyStoreService sto
         if (pool.Count > 0) db.ExerciseItems.RemoveRange(pool); // words no longer contained
         await db.SaveChangesAsync(ct);
     }
+
+    // An explanation of only whitespace is none - the child would see an empty line after its answer.
+    private static string? Blank(string? text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 }
