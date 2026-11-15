@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/auswertung, rolle/supervisor]
 aliases: [Lücke wird Pflicht, Schwache Wörter zuweisen]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -209,3 +209,35 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
   `--mode weakness` getrennt).
 - **2026-11-15** — Backlog-Lauf 2026-11-15: `geschaetzt` – M, beides, keine Migration, kein Vertragsbruch; Risiken
   zweiter Übungs-Schreibpfad und Transaktion.
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 79 des Backlog-Laufs 2026-11-15, Code-Commit `c2353a57`.
+  Gebaut nach dem Angriffsplan: `WeakWordReviewService` (alle Prüfungen vor dem ersten Schreiben, Übung + Owner-Grant +
+  Items + Position in einer Transaktion), `POST …/positions/from-words`, neue Codes `review_already_in_plan` (409) und
+  `review_subject_mismatch` (400, Review-Fund: eigener Code, damit das Vater-Web den Fall deutsch nennen kann),
+  Client-Methode, Knopf im Lernstand.
+  **Am laufenden Produkt gefunden (E2E):** sind alle Wörter einer einzigen Übung schwach, ist die Wiederholung genau
+  diese Übung – der Server lehnt sie richtig als doppelte Pflicht ab, der deutsche Satz sagte aber „schon als
+  Wiederholung“. Satz und Doku nennen jetzt jede Position; ein eigener Integrationstest hält den Fall.
+  **Review-Funde behoben:** Blocker – ein Kind mit zwei Sprachen (Friedrich) bekam einen Knopf über gemischte Wörter, den
+  der Server ablehnte: der Lernstand nennt jetzt das Sprachpaar je Wort (`WordMasteryResponse.SourceLanguage/
+  TargetLanguage`, additiv), die Seite bietet einen Knopf je Paar; die Unit-Wahl war nicht deterministisch (jetzt die
+  früheste Herkunftsübung je Wort); Reihe ohne Fach wird abgelehnt (der Creator-Pfad verbietet sie); Knopf wird beim
+  Blättern gesperrt statt ausgeblendet; Sperrgrund nennt nur, was sperrt; Einzahl; zwei leere Test-Zusicherungen ersetzt,
+  Planwahl getestet. Bewusst offen: zwei gleichzeitige identische Anfragen können beide durchkommen (der Doppelklick
+  fängt der Client; die Doku sagt es so).
+  **Stakeholder-Entscheidung im Auftrag des Nutzers beim Bau:** bei der Fach-Abweichung bleibt der Knopf eines Paars
+  klickbar und der Server antwortet mit dem deutschen Satz – die Seite kennt das Fach der Wörter nicht; mit B-539 (ein
+  Plan je Fach) wählt der Vater dann den passenden Plan.
+  - AK 1 → `WeakWordReviewTests.Legt_Eine_Taegliche_Wiederholung_…`; Mutanten „Tagespflicht“, „nicht öffentlich“ → rot.
+  - AK 2 → `…Das_Kind_Darf_Es_Nicht`, `…Ein_Fremder_Plan_Ist_Unbekannt` (zweiter, echter Vater).
+  - AK 3 → `…Ein_Wort_Ohne_Lernstand_…`; Mutante „Lernstand dieses Kindes“ → rot.
+  - AK 4 → `…Anzahl_Und_Sprachpaar_…`; Mutanten „Obergrenze“, „ein Sprachpaar“ → rot.
+  - AK 5 → `…Ein_Plan_Eines_Anderen_Fachs_…`; Mutante „Fach des Plans“ → rot.
+  - AK 6 → `…Dieselbe_Wortmenge_…`, `…Die_Herkunftsuebung_…`; Mutanten „Mengengleichheit“, „Herkunftsübung zählt“ → rot.
+  - AK 7 → `…Die_Uebung_Haengt_An_Der_Haeufigsten_Unit`; Mutante „häufigste Unit“ → rot.
+  - AK 8 → Vitest `VaterLernstand.test.tsx` (gesperrt ohne spielbaren Plan, nur unter „nur schwache“, Planwahl, je
+    Sprachpaar); Mutanten „nur spielbarer Plan“, „nur unter schwache“, „Planwahl“, „je Sprachpaar“, „Sprachpaar je Wort“
+    → rot.
+  - AK 9 → E2E `schwache-woerter-zuweisen.spec.ts` (Test falsch → Lernstand → Knopf → 409 beim zweiten Klick → Kind sieht
+    die Tagespflicht).
+  - Belege: volle Suite **1693/1693** (Exit 0, `EndpointCoverageGuard` 284), Vitest **1113/1113**, `tsc -b` grün;
+    Rollengang Vater **13 passed** (Ports 5253/5193). Reviewer: `pugling-reviewer`, `frontend-reviewer`.

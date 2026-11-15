@@ -161,3 +161,49 @@ Editor) mit; kein Durchrutscher. `nachgeschaut: 2026-11-15` gesetzt.
   greppen ließe („einmal“ ist überall). Der Entwickler-Brief nennt künftig die alte Regel als Suchwort – das habe ich hier
   zu spät getan.
 - **Bewusst ungedeckt:** Missionen an freien Positionen (gewollt, nicht getestet).
+
+## Sprint 79 — Ziel & Umfang
+
+**Sprint-Ziel (Vater):** Der Vater sieht seine Kinder über die Zeit und macht aus den schwachen Wörtern eines Kindes mit
+einem Griff eine tägliche Pflicht.
+**Umfang:** B-557, B-39.
+**Entwickler-Brief:** Zwei neue, additive Endpunkte. B-557: ein Service als einzige Stelle, die aus Wörtern eine Übung
+baut – nur Wort-Ids im Rumpf, nie eine Config (sonst ein Hintereingang am Creator-Pfad vorbei); alle Prüfungen vor dem
+ersten Schreiben, Schreiben in einer Transaktion. B-39: die vorhandene Tagesrechnung je Tag, nur gruppiert; höchstens
+92 Tage. Keine Migration.
+
+## Iteration 79 — umgesetzt
+
+- B-557 und B-39 wie in den Stories beschrieben; neue Fehlercodes `review_already_in_plan`, `review_subject_mismatch`;
+  `WordMasteryResponse` trägt das Sprachpaar.
+- **Am laufenden Produkt gefunden:** die E2E zeigte, dass die Herkunftsübung selbst als „schon im Plan“ zählt – richtig
+  vom Server, aber der deutsche Satz behauptete „schon als Wiederholung“. Berichtigt, Integrationstest dazu.
+- Review-Funde: Backend 1 Blocker (Endpunkt-Zähler 282 → 284, schlägt nur im Dispose an – „Passed!“ täuschte) + 6,
+  Frontend 1 Blocker (zwei Sprachen eines Kindes) + 9 – alle behoben bis auf einen echten Rest: **B-558** (abgeschaltete
+  Pläne fallen aus der Zeitachse).
+- Mutanten (nach dem letzten Edit): **27 Zeilen, alle rot am benannten Test**.
+- Volle Suite **1693/1693** (Exit-Code 0 geprüft), Vitest **1113/1113**, `tsc -b` grün.
+
+## Runde 79 — Abnahme
+
+- **Vater – abgenommen:** Playwright gegen frisch gestartete Server (5253/5193): `vater-zeitachse` (Tagespflicht heute
+  erfüllt → Balken „1 von 1 Zielen – Pflicht geschafft“, Tag/Monat, Link), `schwache-woerter-zuweisen` (Test falsch →
+  Lernstand → Knopf → zweiter Klick 409 → Kind sieht die Pflicht), dazu `vater-von-null`, `responsive-vater`,
+  `perspektiven`, `kind-anlegen-id`, `position-zurueck-auf-standard` – **13 passed**.
+- **Sohn – Regressionszeuge:** sieht die neue Wiederholung als Tagespflicht auf dem Pfad (in der Spec); keine
+  Arcade-Datei im Diff.
+- **Creator – Regressionszeuge:** die Wiederholungs-Übung erscheint im Katalog als private Übung des Vaters; Suite grün.
+
+## Retrospektive 79
+
+**Nachschau:** Sprint 78 (B-538, B-252) übernimmt der Gesamt-Review im Abschluss (er liest alles seit Laufbeginn).
+
+- **Was die eigenen Tore durchgelassen haben:** (1) Ich habe zwei Sprints lang nur „Passed!“ gelesen – der
+  `EndpointCoverageGuard` meldet im Dispose und setzt nur den Exit-Code; das Review fand es am Zählerstand der Datei.
+  (2) Der Blocker „Kind mit zwei Sprachen“ war im Datenmodell sichtbar (Friedrich lernt Französisch **und** Englisch),
+  aber weder Story noch E2E hatten zwei Sprachpaare.
+- **Der eine Mechanismus:** Prosa im treibenden Skill wäre zu schwach; die wirksame Änderung ist meine eigene Praxis seit
+  diesem Sprint: Suiten-Läufe mit `echo exit=$?` – im Protokoll belegt. Vorschlag für ein **Tor** (nicht gebaut): das
+  Test-Gate-Hook-Skript wertet den Exit-Code von `dotnet test` aus, nicht die Zeile „Passed!“ – vorher nachsehen, ob es
+  das schon tut.
+- **Bewusst ungedeckt:** gleichzeitige identische Zuweisungen (zwei Übungen möglich), dokumentiert.

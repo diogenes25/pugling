@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/auswertung, rolle/supervisor]
 aliases: [Supervisor-Dashboard, Eltern-Dashboard, Fortschritts-Dashboard, Tag Woche Monat]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -273,3 +273,30 @@ kein L mehr, weil die zweite Einbaustelle mit eigenem Lade-/Fehlerzustand entfä
   `children/overview`, keine Chart-Bibliothek in `frontend/package.json`. **Neu geschätzt L → M** durch zwei
   Stakeholder-Entscheidungen im Auftrag des Nutzers: 8 (Kind-Hub-Reiter entfällt, Link in den Lernstand; Teilung a/b
   bleibt Bau-Reihenfolge in einer Story) und 9 (Zeitraum ≤ 92 Tage). AKs mit roter Probe je Fall, E2E-Spec benannt.
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 79 des Backlog-Laufs 2026-11-15, Code-Commit `c2353a57`.
+  Gebaut nach den Entscheidungen 1–9: `GET supervisor/children/overview` (`ChildrenDashboardService.TimelineAsync` über
+  dieselbe `ComputeDayAsync`-Schleife, Woche über das jetzt öffentliche `PositionProgressService.WeekMonday`),
+  `ChildrenTimeline` im Dashboard mit Umschalter Tag/Woche/Monat, handgebauten Balken (kein npm-Paket, AK 6) und Link je
+  Kind in den Lernstand.
+  **Review-Funde behoben:** `EndpointCoverageGuard` stand auf 282 (der Zähler schlägt nur im Dispose an, „Passed!“
+  täuschte – jetzt 284, Exit-Code geprüft); ein `to` in der Zukunft las kommende Tage als verpasste Pflicht (endet jetzt
+  heute); unbekanntes Raster → 400; `ChildPeriod`-Doku versprach „Tagesziele“, gezählt werden Ziele jeder Taktung je
+  Tag wie in der Tagesübersicht – Doku berichtigt; Zeitachse lud nach „Kind anlegen“ nicht neu; leere Fläche beim
+  Rasterwechsel; erster Wochenbalken eine halbe Woche (Raster beginnt jetzt am Montag); Status nur als `aria-label` an
+  einem nicht bedienbaren Listeneintrag (jetzt Text im Element) und ohne sichtbare Achse; Monat als Datumsspanne.
+  **Rest als Story:** [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) – abgeschaltete Pläne fallen aus der
+  Vergangenheit (dieselbe Regel wie Tagesübersicht und Malus; ehrlich dokumentiert).
+  - AK 1 → `ChildrenOverviewTests.Blaettert_Ueber_Die_Kinder_…`, `…Zeitraum_Ist_Begrenzt`; Mutanten „childId-Filter“,
+    „nur eigene Kinder“, „Zählung Kinder“, „92 Tage“ → rot.
+  - AK 2 → `…Gruppiert_Nach_Tag_Woche_Und_Kalendermonat` (So 29.03./Mo 30.03., 31.03./01.04.),
+    `…Pflicht_Der_Periode_Folgt_Den_Tagen`, `…Zukunft_Endet_Heute_…`; Mutanten „Woche ab Montag“, „Kalendermonat“,
+    „Pflicht je Periode“, „Zukunft endet heute“ → rot.
+  - AK 3 → Vitest `ChildrenTimeline.test.tsx` „zeichnet je Periode …“; Mutante „Raster fragt neu“ → rot.
+  - AK 4 → „führt aus jeder Kindzeile in deren Lernstand“; Mutante „Link je Kind“ → rot.
+  - AK 5 → „nennt je Balken den Status in Worten“; Mutante „Text je Balken“ → rot. Keine Animation, darum keine
+    `prefersReducedMotion`-Weiche nötig (Kommentar an der Komponente).
+  - AK 6 → kein neues npm-Paket (`package.json` unverändert).
+  - Review-Fälle → „beginnt das Wochen-Raster an einem Montag“, „nennt einen Monat beim Namen“; Mutanten → rot.
+  - Belege: volle Suite **1693/1693** (Exit 0), Vitest **1113/1113**, `tsc -b` grün; Rollengang Vater: E2E
+    `vater-zeitachse.spec.ts` (Kind erfüllt heute → Tag-Raster 14 Balken, heutiger „1 von 1 Zielen – Pflicht geschafft“,
+    Monat ebenso, Link) im Lauf mit **13 passed**. Reviewer: `pugling-reviewer`, `frontend-reviewer`.
