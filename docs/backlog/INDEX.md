@@ -18,7 +18,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-534](B-534-vater-ui-aufraeumen.md) | Das Vater-Web zeigt je Fläche höchstens ein Speichern | Wunsch | `in-arbeit` | P1 | M | frontend | — |
 | [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) | Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht | Wunsch | `geschaetzt` | P1 | M | beides | Migration + Vertrag |
-| [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn | Wunsch | `gegrillt` | P1 | — | — | — |
+| [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-540](B-540-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `ausformuliert` | P1 | — | beides | — |
