@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/vokabeln, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, bereich/vokabeln, rolle/student]
 aliases: [Vokabel vorlesen, Spracheingabe]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: S
@@ -166,3 +166,22 @@ leere `PronunciationAudioUrl`, Klang-Urteil beim Gerätecheck (B-31).
 - **2026-11-05** — **Entscheidung im Auftrag des Nutzers** (getroffen von Claude; Delegation im Dialog am 2026-11-05: „Wenn es etwas zu entscheiden gibt, übernimm meine Position und entscheide nach bestem Wissen und Gewissen“; [Protokoll](../pm-sitzung-2026-11-05-delegation.md)): (1) keine Spracheingabe (die Browser-Spracherkennung schickt den Ton an einen fremden Dienst); (2) „keine Aufnahme“ = leere `PronunciationAudioUrl`, kein neues Vertragsfeld; Vorlesen nie in der Hörstufe. Das Klang-Urteil bleibt beim Gerätecheck (B-31). **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt im Dialog am 2026-11-05 mit derselben Delegation):** ein Lauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen; trifft er auf eine Produktfrage, die sie nicht hergeben, hält er an.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt, Fundstellen gewandert: `AudioButton` jetzt `frontend/src/components/AudioButton.tsx` (Hörstufe ohne Text `:9-10`), an der Karte `frontend/src/sohn/Lektion.tsx:93` (nur bei `audioUrl`); `AudioUrl` aus `PronunciationAudioUrl` in `ExerciseContentResolver.cs:102`. `speechSynthesis` kommt im Frontend nicht vor.
 - **2026-11-14** — Refinement Backlog-Lauf: ausformuliert, gegrillt und geschätzt (S). Beim Belegen gefunden: die Karte kennt ihre Sprache nicht, und außerhalb der Hörstufe kommt auch eine vorhandene Aufnahme nicht mit – „reine Frontend-Arbeit“ trägt nicht. Fünf Stakeholder-Entscheidungen im Auftrag des Nutzers (Server setzt `PracticeCard.SpeechLang`, gesprochen wird nur der `prompt`, nur auf Antippen, kein Knopf ohne passende Stimme, Kern nur Übungskarte); die früheren Entscheidungen bleiben unangetastet. Vertragsbruch ja (additives Feld).
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 78 des Backlog-Laufs 2026-11-15, Code-Commit `06e1a78b`.
+  Gebaut nach den Entscheidungen 1–5: `ContentItem.SpeechLang` im `ExerciseContentResolver` (nur ohne
+  `PronunciationAudioUrl` und mit `SourceLanguage`), in `WithDirection` für umgekehrte Karten gelöscht;
+  `PracticeCard.SpeechLang` nicht auf der Hörstufe. Frontend: `SpeakButton` (nur auf Antippen, nur mit passender Stimme,
+  `voiceschanged`, bricht beim Kartenwechsel ab), in `Aufgabe` nur für Karten mit `speechLang` – Test- und Bonuskarten
+  tragen das Feld nicht. Review-Funde behoben: laufende Äußerung sprach über die nächste Karte; Stimmen-Abgleich ohne
+  Grenze („fr“ ≠ „fro“); Test-Stubs sickerten bei einem roten Fall weiter; Nachladen der Stimmen ungetestet.
+  - AK 1–4 → `VorlesenTests` (vier Fälle); Mutanten „Sprache gesetzt“, „Aufnahme der Vokabel“, „Umkehrung löscht“,
+    „Hörstufe“ → rot.
+  - AK 5 → Vitest `Lektion.test.tsx` „liest auf Antippen den Prompt …“; Mutanten „spricht den Prompt“, „Knopf an der
+    Karte“ → rot.
+  - AK 6 → „zeigt keinen Knopf ohne passende Stimme …“, „erscheint, sobald die Stimmen nachgeladen sind“; Mutanten „ohne
+    Stimme kein Knopf“, „Stimmen nachladen“ → rot.
+  - AK 7 → sichtbarer Text „🗣️ Vorlesen“ als Name, in `de.ts` und `en.ts` (Parität per `i18n.test.ts`).
+  - **Kein E2E** (argumentierte Ausnahme aus dem Testweg): Playwright-Chromium hat je nach Plattform keine Stimmen, der
+    Knopf wäre dort zu Recht unsichtbar. **Am Gerät offen** (wie B-31): ob die Stimme gut klingt und der Knopf auf dem
+    Handy des Sohns erscheint.
+  - Belege: volle Suite **1678/1678**, Vitest **1102/1102**, `tsc -b` grün. Reviewer: `pugling-reviewer`,
+    `frontend-reviewer`.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Bonus-Münzregeln, Degression je Wiederholung, getippt zahlt drei]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -114,3 +114,41 @@ Pflicht-Begriffs; mehr als `childId` aus dem Test-Pfad (B-01, S), weil Backend *
 - 2026-11-15 · `gegrillt` angelegt durch Teilung von B-537 (Entscheidung 11); Entscheidungen dort.
 - 2026-11-15 · `geschaetzt`: M, beides, keine Migration, kein Vertragsbruch (additives Feld); Risiko
   `appsettings.json` übersteuert die Vorgaben, Abhängigkeit zu B-535 (Neu-Bonus).
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 78 des Backlog-Laufs 2026-11-15, Code-Commit `06e1a78b`.
+  Gebaut nach dem Angriffsplan: Münzsperre für `Cadence.None` vor jeder Buchung (auch vor dem Neu-Bonus, dessen
+  `NewBonusPaidAt` dann nicht verbraucht wird); `CoinsPerTypedHit` 3 und `DailyCoinCap` 90 in `ExtraTrainingOptions`
+  **und** `appsettings.json`; Halbierung 100/50/25/0 % je am selben Tag abgeschlossenem Lauf, bei der Abgabe gezählt;
+  jede Übung bleibt im Vorrat; `ExtraExercise.NextRunPercent` und `ExtraRunResponse.RunPercent` (additiv). An der Kopie
+  der echten DB: die Positionen beider Söhne tragen alle eine Pflicht – die Sperre trifft sie nicht (nur das Demo-Kind
+  hat vier freie Positionen).
+  **Stakeholder-Entscheidungen im Auftrag des Nutzers beim Bau:**
+  (a) `Repeatable` behält seine Lesart „steigt je Lauf eine Form (Vokabeln) und darf darum auch am vollen Deckel“ –
+  sonst könnte die Arcade eine Übung fester Form am Deckel nicht mehr vom Start abhalten (B-543);
+  (b) eine Übung **fester Form** bei 0 % startet nicht (`extra_exercise_done`), weil ihre Runde die Lösungen für nichts
+  zeigte und die Übung morgen wieder voll zählt; **Vokabeln** bei 0 % starten weiter, ohne Münzen – wie am vollen
+  Deckel (B-543, Entscheidung 5). Kosten: zwei Fälle statt einer Regel.
+  (c) Auch Selbsteinschätzungs-Läufe (0 Münzen) zählen für die Halbierung – wörtlich Entscheidung 6 des Nutzers
+  („jeder weitere abgeschlossene Lauf“). Folge: am ersten Tag einer neuen Liste zahlt die erste Auswahl-Runde nur 25 %.
+  Steht in der Liste für den Menschen, weil es das Ziel „schwerer = mehr“ am ersten Tag schwächt.
+  **Review-Funde behoben** (Backend 6 + Aufräumen, Frontend 1 blockierend + 6): der Hinweis über den Karten versprach den
+  vollen Satz (jetzt mit `runPercent`); veraltete „zahlt nur einmal“-Texte in `ApiErrors`, Controller, Entity- und
+  DbContext-Doku, Vater-Kindseite, Feldhilfe `cadence`, Plan-Zeile; „morgen zahlt sie wieder voll“ am Deckel 0; Prozentwert
+  am vollen Deckel; „zeigte“ statt „würde zeigen“; Teaser ohne „weitere“; fehlender Test für den Abgabetag; Neu-Bonus;
+  Testuhr nach einem roten Fall einen Tag früh.
+  Bewusst offen: Missionen/Auszeichnungen werden weiter von Übung an freien Positionen gespeist (eigener, gedeckelter Weg,
+  Edelsteine) – nicht eigens getestet.
+  - AK 1 → `KuerOhneMuenzenTests` (beide Fälle, Neu-Bonus), Mutanten „freie Position zahlt nicht“, „Neu-Bonus bleibt“ → rot.
+  - AK 2 → `ExtraTrainingTests` (Kappung, getippt 3), Mutante „getippt 3“ → rot.
+  - AK 3 → `…Halbiert_Sich_Je_Lauf` (6/3/1, Folgetag 6), `…Ein_Am_Folgetag_Abgegebener_Lauf_…`, `…Vokabeln_Werden_…`;
+    Mutanten „zweiter Lauf halb“, „dritter Lauf Viertel“, „Abgabetag zählt“ → rot.
+  - AK 4 → `…Halbiert_Sich_Je_Lauf` (zweiter Start erlaubt, `repeatable` false), `…Vokabeln_Bei_Null_Prozent_…`;
+    Mutanten „Repeatable = Formleiter“, „Vokabeln bei 0 % weiter“ → rot.
+  - AK 5 → `…Der_Tagesdeckel_Kappt_…`, `…Der_Vater_Setzt_Den_Tagesdeckel_…`; Mutante „Deckel 90“ → rot.
+  - AK 6 → Pool `nextRunPercent` und Lauf `runPercent` im Integrationstest, Vitest `SohnBonus.test.tsx` (Wert, Deckel,
+    Hinweis); Mutanten „Vorrat nennt Wert“, „Runde nennt Wert“, „kein Prozent am Deckel“, „Vokabel-Link bei 0 %“,
+    „Hinweis halber Wert“, „Hinweis null“ → rot.
+  - AK 7 → Vitest `SohnHome.test.tsx` (aria-Name „ohne Münzen“), `PlanPositionsStufe.test.tsx` (Felder ausgeblendet);
+    Mutanten „Arcade ohne Münzen“, „Editor blendet aus“ → rot.
+  - Belege: volle Suite **1678/1678**, Vitest **1102/1102**, `tsc -b` grün; Rollengang Sohn (Playwright, frische Server,
+    Ports 5252/5192): `bonus`, `bonus-deckel`, `bonus-deckel-voll` (an die neuen Regeln angepasst), `lektion`, `pfad`,
+    `erstbegegnung`, `belohnung-trotz-wochenziel`, `truhe` – **10 passed (mit `position-zurueck-auf-standard`)**. Reviewer: `pugling-reviewer`, `frontend-reviewer`.

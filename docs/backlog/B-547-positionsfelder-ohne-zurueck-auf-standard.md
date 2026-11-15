@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-16]
+nachgeschaut: 2026-11-15
 ---
 
 # B-547 · Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück

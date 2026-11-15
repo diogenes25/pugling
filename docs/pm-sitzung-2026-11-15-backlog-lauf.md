@@ -117,3 +117,47 @@ B-552 vor und ist jetzt geschlossen. `nachgeschaut: 2026-11-15` gesetzt.
 - **Vorschlag für ein Tor (nicht gebaut, hält sonst an):** `backlog-index.sh` bricht bei doppelter Id ab bzw. meldet sie
   im Index – heute zählt es zwei Dateien mit derselben Id stumm als zwei Stories.
 - **Bewusst ungedeckt:** dass ein PATCH-Auslöser „gesendet“ statt „geändert“ prüft, findet weiter nur ein Review.
+
+## Sprint 78 — Ziel & Umfang
+
+**Sprint-Ziel (Sohn):** Zusätzliches Üben lohnt sich fair – schwerer bringt mehr, Wiederholen am selben Tag weniger, freie
+Positionen bringen nichts –, und der Sohn kann sich ein fremdes Wort vorlesen lassen, ohne dass das je die Lösung verrät.
+**Umfang:** B-538, B-252.
+**Entwickler-Brief:** B-538 nach den Entscheidungen 4–7 des Nutzers (B-537): Münzsperre an der einen Buchungsstelle der
+Übung (`PositionPracticeController`), Sätze in Optionen **und** `appsettings.json`, Halbierung bei der Abgabe aus den heute
+abgeschlossenen Läufen, Wert je Übung im Vorrat und in der Runde. B-252: die Regel am Inhalt (`ContentItem.SpeechLang`),
+an der Karte nur außerhalb der Hörstufe; im Frontend ein Knopf nur mit passender Stimme. Keine Migration.
+
+## Iteration 78 — umgesetzt
+
+- Backend und Frontend wie in B-538/B-252 beschrieben; drei Bonus-Specs an die neuen Regeln angepasst (Rechen-Übung
+  bleibt im Vorrat, 3 🪙 je Treffer, Deckel 90).
+- Review-Funde: Backend 6 + Aufräumen, Frontend 1 blockierend (Hinweis versprach den vollen Satz) + 6 – alle im Sprint
+  behoben. Zwei Stakeholder-Entscheidungen beim Bau (in B-538): Vokabeln bei 0 % weiter spielbar, Selbsteinschätzungs-Läufe
+  zählen für die Halbierung (wörtlich Entscheidung 6 des Nutzers).
+- Mutanten (nach dem letzten Edit): **25 Zeilen, alle rot am benannten Test**.
+- Volle Suite **1678/1678**, Vitest **1102/1102**, `tsc -b` grün.
+
+## Runde 78 — Abnahme
+
+- **Sohn – abgenommen:** Playwright gegen frisch gestartete Server (5252/5192): `bonus` (Rechen-Übung bringt 6 🪙, steht
+  danach mit „heute noch 50 % wert“ weiter im Vorrat), `bonus-deckel`, `bonus-deckel-voll`, `lektion`, `pfad`,
+  `erstbegegnung`, `belohnung-trotz-wochenziel`, `truhe` und `position-zurueck-auf-standard` – **10 passed**.
+  **Am Gerät offen:** das Vorlesen (Chromium in Playwright hat keine Stimmen) – Klang und Erscheinen des Knopfs am Handy
+  gehören zum Gerätecheck B-31.
+- **Vater – Regressionszeuge:** Positions-Editor blendet bei „frei“ die Punkte aus (Vitest), `position-zurueck-auf-standard`
+  grün.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
+
+## Retrospektive 78
+
+**Nachschau:** B-547, B-552 (Sprint 77) – das Frontend-Review dieses Sprints las `PlanPositions.tsx` (Positionszeile,
+Editor) mit; kein Durchrutscher. `nachgeschaut: 2026-11-15` gesetzt.
+
+- **Was die eigenen Tore durchgelassen haben:** „Text verspricht mehr als der Code“ in Serie – neun Texte über das alte
+  „zahlt nur einmal“ an Stellen, die der Diff nicht berührte (API-Fehler, Swagger, Vater-Seite, Feldhilfe). Das Skript
+  `old-phrases.py` fand nur Tests, die alte Wendungen **erwarten**, nicht Doku, die eine geänderte **Regel** beschreibt.
+- **Der eine Mechanismus:** keiner gebaut. Argument: eine Regeländerung hat keinen maschinenlesbaren Namen, nach dem sich
+  greppen ließe („einmal“ ist überall). Der Entwickler-Brief nennt künftig die alte Regel als Suchwort – das habe ich hier
+  zu spät getan.
+- **Bewusst ungedeckt:** Missionen an freien Positionen (gewollt, nicht getestet).
