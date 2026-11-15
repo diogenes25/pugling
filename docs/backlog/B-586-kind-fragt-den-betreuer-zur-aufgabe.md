@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-546 · Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App
+# B-586 · Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App
 
 sofatutors teuerstes Merkmal ist ein Mensch, der Fragen zur Aufgabe beantwortet (Hausaufgaben-Chat mit
 Lehrkräften, auch per Foto, erklärend statt lösend). Pugling hat den Menschen schon – den Vater –, aber
@@ -46,4 +46,5 @@ Zu klären beim Ausformulieren:
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: sofatutor-Vergleich, Etappe 1 des Übernahmeplans; Sammel-Story [B-545](B-545-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: sofatutor-Vergleich, Etappe 1 des Übernahmeplans; Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — umnummeriert von B-546 auf B-586: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-557). Inhalt unverändert.

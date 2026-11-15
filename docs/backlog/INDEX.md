@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (65)
+### Offen (66)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -20,7 +20,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) | Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht | Wunsch | `geschaetzt` | P1 | M | beides | Migration + Vertrag |
 | [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `gegrillt` | P1 | — | — | — |
-| [B-540](B-540-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `gegrillt` | P1 | — | — | — |
+| [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `ausformuliert` | P1 | — | beides | — |
 | [B-465](B-465-ki-lueckentext-mehrdeutig-und-verraten.md) | Ein KI-Lückentext nach dem Umbau: Titel passt nicht, Auswahl steht im Satz, Zeitformen ohne Alternative | Defekt | `ausformuliert` | P2 | — | backend | — |
 | [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `idee` | P2 | — | frontend | — |
@@ -38,10 +38,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
 | [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `idee` | P2 | — | beides | — |
-| [B-541](B-541-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
-| [B-542](B-542-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
-| [B-544](B-544-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `idee` | P2 | — | — | — |
-| [B-546](B-546-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `idee` | P2 | — | — | — |
+| [B-581](B-581-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P2 | — | — | — |
+| [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
+| [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `idee` | P2 | — | — | — |
+| [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `idee` | P2 | — | — | — |
+| [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Unit und Seite), und das Kind sieht, ob der Stoff schon durchgenommen ist | Wunsch | `idee` | P2 | — | — | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `ausformuliert` | P2 | — | backend | — |
 | [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `idee` | P3 | — | frontend | — |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Prüfauftrag: ein Wochenvergleich gegen sich selbst oder Geschwister statt einer Liga? | Frage | `ausformuliert` | P3 | — | — | — |
@@ -75,9 +76,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-527](B-527-belohnungsbox-als-truhe-zum-oeffnen.md) | Belohnungsbox als Truhe auf dem Pfad, die das Kind selbst öffnet | Wunsch | `idee` | P3 | — | beides | — |
 | [B-528](B-528-missionen-als-eigener-tab.md) | Missionen als eigener Tab mit Restzeit | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `idee` | P3 | — | beides | — |
-| [B-543](B-543-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `idee` | P3 | — | — | — |
-| [B-545](B-545-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P3 | — | — | — |
-| [B-547](B-547-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
+| [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `idee` | P3 | — | — | — |
+| [B-585](B-585-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | Wunsch | `idee` | P3 | — | — | — |
+| [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `ausformuliert` | P3 | — | frontend | — |
 | [B-445](B-445-seed-kind-ohne-klasse-und-fachlehrer.md) | Seed: „Sohn" hat weder Klasse noch Schulart, und Herr Schmidt trägt kein Fachlehrer-Profil | Aufräumen | `idee` | P3 | — | beides | — |
@@ -955,7 +956,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397. |
 | [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md) | Nach einem Fehler zählt die Lesezeit der Lösung als Antwortzeit der nächsten Karte | zusammengelegt mit B-530 – dieselbe Messstelle (elapsedSeconds ab der vorigen Review, PositionPracticeController.cs:418-420); B-530 ist die allgemeinere Fassung (seit B-526 jede Antwort mit Blatt, nicht nur Fehler) → [B-530] |
 | [B-503](B-503-lernstand-ueberlebt-loeschen.md) | Prüfauftrag: soll der Lernstand der Kinder das Löschen einer Übung oder Vokabel überleben? | Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen. |
-| [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md) | Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen | geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit → [B-538, B-539, B-540] |
+| [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md) | Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen | geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit → [B-538, B-539, B-580] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |

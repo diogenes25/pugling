@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-544 · Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position
+# B-584 · Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position
 
 RocketTutors Lehrer-Sicht zeigt die größten Wissenslücken und ist zugleich der Startpunkt einer
 Zuweisung. Pugling erkennt die Lücke schon: der Lernstand filtert schwache Wörter (`onlyWeak`, Schwelle
@@ -30,4 +30,5 @@ dasselbe Ziel schon abdeckt. Berührt [B-39](B-39-supervisor-dashboard.md).
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 5 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 5 des Übernahmeplans; Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — umnummeriert von B-544 auf B-584: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-557). Inhalt unverändert.

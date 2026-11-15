@@ -14,7 +14,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-542 · Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet
+# B-582 · Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet
 
 RocketTutor gibt eine Probearbeit als PDF aus. Der Schüler löst sie auf Papier, lädt ein Foto hoch und
 bekommt Punkte und Note. Pugling prüft nur am Bildschirm, die Schule prüft auf Papier, und Friedrichs
@@ -31,5 +31,6 @@ nicht).
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-541](B-541-rockettutor-vergleich-sammel-story.md)).
-- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutor bewirbt Arbeitsblätter zum Ausdrucken mit Lösungsschlüssel als Vorbereitung auf Klassenarbeiten „unter Prüfungsbedingungen"; korrigiert wird dort vom Kind selbst am Schlüssel. Bestätigt die Papierform, nicht die Selbstkorrektur – die bleibt beim Vater. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-545](B-545-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)).
+- **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutor bewirbt Arbeitsblätter zum Ausdrucken mit Lösungsschlüssel als Vorbereitung auf Klassenarbeiten „unter Prüfungsbedingungen"; korrigiert wird dort vom Kind selbst am Schlüssel. Bestätigt die Papierform, nicht die Selbstkorrektur – die bleibt beim Vater. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — umnummeriert von B-542 auf B-582: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-557). Inhalt unverändert.

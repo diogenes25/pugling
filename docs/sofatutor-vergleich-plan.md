@@ -6,7 +6,7 @@ aliases: [sofatutor-Vergleich, sofatutor, Frage an den Betreuer, Einstufungstest
 # sofatutor als Vergleichsmaßstab: was wir übernehmen, was nicht
 
 Status: **Plan** (2026-11-15). Die Übernahme läuft als Stories im [Backlog](backlog/README.md); die
-Sammel-Story ist [B-545](backlog/B-545-sofatutor-vergleich-sammel-story.md). Dieses Dokument hält den
+Sammel-Story ist [B-585](backlog/B-585-sofatutor-vergleich-sammel-story.md). Dieses Dokument hält den
 Vergleich und die Reihenfolge, **nicht** den Zustand der Etappen.
 
 ← [Zurück zur Wissenskarte](obsidian.md) · Vorgänger-Vergleiche: [Khan Academy](khan-academy-vergleich-plan.md),
@@ -86,17 +86,17 @@ es, die Videos seien für Klasse 9/10 zu kindlich – für Friedrich (15) ein Hi
    Kind niemanden fragen. Das Erfassungs-Widget samt Kontext-Mitschnitt gibt es zwar
    (`Controllers/RemarksController.cs:12`), es ist aber ein Dev-Werkzeug und in der Sohn-App nur im
    Entwicklungsmodus eingebunden (`frontend/src/sohn/SohnApp.tsx:174`). Ein Nachrichten-Modell zwischen
-   Kind und Betreuer gibt es nicht (keine Entität in `backend/Pugling.Api/Models/`). → **B-546**
+   Kind und Betreuer gibt es nicht (keine Entität in `backend/Pugling.Api/Models/`). → **B-586**
 2. **Einstufung vor dem Start.** Ein kurzes Quiz legt den Startpunkt fest. Pugling führt jedes Wort einer
    Position neu ein, in Buchreihenfolge und nach Tagesdosis
    (`Services/Shared/PositionPlayService.cs:201`–`215`, `Models/PlanPositionEntities.cs:40`), auch wenn
-   das Kind es längst kann. → **B-547**
+   das Kind es längst kann. → **B-587**
 3. **Hilfe springt zum Stoff.** Die Video-Hilfe öffnet die passende Stelle. Das Pugling-Gegenstück wäre
    der Sprung von der falschen Antwort zur Stoffnotiz der Unit; das gehört zur Erklärung nach der Antwort
-   ([B-543](backlog/B-543-erklaerung-nach-falscher-antwort.md), [B-529](backlog/B-529-erklaerung-nach-der-antwort.md)).
+   ([B-583](backlog/B-583-erklaerung-nach-falscher-antwort.md), [B-529](backlog/B-529-erklaerung-nach-der-antwort.md)). Den Bezug selbst – Unit und Buchseite an der Übung, „schon durchgenommen" beim Kind – hat der Nutzer im Gespräch ergänzt. → **B-588**
 4. **Papier zur Klassenarbeits-Vorbereitung.** Arbeitsblätter mit Lösungsschlüssel. Pugling hat keine
    Druckausgabe (weder im Backend noch ein `window.print`/`@media print` im Frontend); das ist schon
-   [B-542](backlog/B-542-probearbeit-auf-papier-mit-foto-korrektur.md).
+   [B-582](backlog/B-582-probearbeit-auf-papier-mit-foto-korrektur.md).
 5. **Freigabe-Link für Lehrkräfte**, ohne dass Schüler ein Konto brauchen. Anregung für
    [B-09](backlog/B-09-lehrer-hausaufgaben.md).
 
@@ -118,18 +118,18 @@ es, die Videos seien für Klasse 9/10 zu kindlich – für Friedrich (15) ein Hi
 ## Bewusst nicht übernommen
 
 - **KI-Chatbot beim Kind** (Sofabuddy). Bricht „kein LLM im Backend" und die Lösungsfeld-Regel und
-  schickt Kinderfragen an einen Drittanbieter. Die passende Form ist B-546: Die Antwort gibt ein Mensch,
+  schickt Kinderfragen an einen Drittanbieter. Die passende Form ist B-586: Die Antwort gibt ein Mensch,
   der Betreuer. Wer mag, lässt sich dort vom KI-Creator **offline** einen Antwortentwurf machen, den er
   prüft.
 - **Lernvideos.** Content-Aufwand, den eine Familie nicht leisten kann; die Stoffnotizen der Unit und die
-  Erklärung nach der Antwort (B-543) decken den Vokabel- und Grammatik-Schwerpunkt.
+  Erklärung nach der Antwort (B-583) decken den Vokabel- und Grammatik-Schwerpunkt.
 - **Selbstgesteuertes Nachschlagen als Prinzip.** sofatutor lässt das Kind wählen. Bei Pugling entscheidet
   der Vater, was Pflicht ist; Hilfe darf die Pflicht stützen, nicht ersetzen.
-- **Selbstkorrektur am Lösungsschlüssel.** Bei Papier korrigiert der Vater bzw. sein Werkzeug (B-542),
+- **Selbstkorrektur am Lösungsschlüssel.** Bei Papier korrigiert der Vater bzw. sein Werkzeug (B-582),
   nicht das Kind – sonst ist die Papierprobe Selbstauskunft.
 - **Merkliste des Kindes für die Klassenarbeit.** Die Leitner-Stufe und `onlyWeak` wissen schon, was
   wackelt; was das Kind selbst markiert, ist schwächer als die gemessene Schwäche. Der Weg zur Pflicht
-  ist [B-544](backlog/B-544-schwache-woerter-werden-wiederholungs-position.md).
+  ist [B-584](backlog/B-584-schwache-woerter-werden-wiederholungs-position.md).
 - **12-Minuten-Routine und Minispiel.** Die feste Sitzungslänge ist im
   [Duolingo-Vergleich](duolingo-snipwise-vergleich-plan.md) behandelt, das Ausgeben von Punkten im
   [Baobab-Vergleich](baobab-vergleich-plan.md) (Sammelalbum, B-376).
@@ -138,7 +138,7 @@ es, die Videos seien für Klasse 9/10 zu kindlich – für Friedrich (15) ein Hi
 ## Abgrenzung zu den früheren Vergleichen
 
 sofatutor bestätigt vor allem Bekanntes: Vorlesen (Knowunity, B-252), Erklärung beim Fehler (RocketTutor
-B-543, Snipwise B-529), Papier als Prüfungsform (RocketTutor B-542), Eltern-Übersicht (B-39),
+B-583, Snipwise B-529), Papier als Prüfungsform (RocketTutor B-582), Eltern-Übersicht (B-39),
 Lehrer-Freigabe (B-09). Diese Stories bekommen je einen Verlaufseintrag „Prioritäts-Beleg von außen",
 keine neue Story. Neu ist nur, was keiner der früheren Anbieter so hatte: ein **Mensch als Ansprechpartner
 bei der Aufgabe** und die **Einstufung vor dem Start**. Der Lob-Kanal aus dem Baobab-Vergleich
@@ -147,12 +147,12 @@ Vater) und ist keine Hilfe bei der Aufgabe.
 
 ## Nutzen für Theodor und Friedrich
 
-- **Theodor (12, Englisch/Latein, Access-Buch):** Die Frage an den Vater (B-546) hilft am meisten, wo
-  Latein-Grammatik hakt und der Vater nicht danebensitzt. Die Einstufung (B-547) spart ihm bekannte
+- **Theodor (12, Englisch/Latein, Access-Buch):** Die Frage an den Vater (B-586) hilft am meisten, wo
+  Latein-Grammatik hakt und der Vater nicht danebensitzt. Die Einstufung (B-587) spart ihm bekannte
   Access-Wörter aus früheren Units.
 - **Friedrich (15, Französisch > Englisch > Mathe):** Er scheitert an zu schwerem Stoff
   ([B-536](backlog/B-536-aufbau-uebungen-statt-versagen.md)) und braucht Erfolge, die Münzen bringen
-  (B-535). B-546 gibt ihm einen Ausweg statt „0 von 8"; B-547 schiebt die Wörter, die er schon kann,
+  (B-535). B-586 gibt ihm einen Ausweg statt „0 von 8"; B-587 schiebt die Wörter, die er schon kann,
   aus der Einführung, damit die Tagesdosis auf das Neue geht. Vorlesen (B-252) ist für die französische
   Aussprache wichtiger als für Englisch.
 
@@ -163,11 +163,12 @@ Anlass, nicht der Ist-Stand.
 
 | Etappe | Story | Was | Hängt ab von |
 | --- | --- | --- | --- |
-| 1 | [B-546](backlog/B-546-kind-fragt-den-betreuer-zur-aufgabe.md) | Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer, mit Kontext; Antwort kommt asynchron; nie während der Klausur | berührt [B-377](backlog/B-377-lob-kanal-des-vaters.md) (Kanal Kind ↔ Vater) |
-| 2 | [B-547](backlog/B-547-einstufungstest-vor-der-vokabel-position.md) | Einstufungstest vor einer Vokabel-Position: sicher getippte Wörter überspringen die Einführung | [B-04](backlog/B-04-adaptiver-vokabel-pool.md) (Tagesdosis), [B-540](backlog/B-540-plan-aus-unit.md) |
+| 1 | [B-586](backlog/B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer, mit Kontext; Antwort kommt asynchron; nie während der Klausur | berührt [B-377](backlog/B-377-lob-kanal-des-vaters.md) (Kanal Kind ↔ Vater) |
+| 2 | [B-587](backlog/B-587-einstufungstest-vor-der-vokabel-position.md) | Einstufungstest vor einer Vokabel-Position: sicher getippte Wörter überspringen die Einführung | [B-04](backlog/B-04-adaptiver-vokabel-pool.md) (Tagesdosis), [B-580](backlog/B-580-plan-aus-unit.md) |
+| 3 | [B-588](backlog/B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Übung zeigt Unit und Seite im Lehrwerk; das Kind sieht „schon durchgenommen" (Wunsch des Nutzers, Gegenstück zur Video-Hilfe) | Seite aus [B-375](backlog/B-375-heftseite-wird-uebungsentwurf.md); Anti-Cheat: nie während Test/Klausur |
 | – | [B-252](backlog/B-252-vorlesen-und-sprechen-bei-vokabeln.md) (bestehend) | Vorlesen an der Vokabelkarte | Verlaufseintrag |
-| – | [B-543](backlog/B-543-erklaerung-nach-falscher-antwort.md) (bestehend) | Erklärung nach der Antwort, mit Sprung zur Stoffnotiz | Verlaufseintrag |
-| – | [B-542](backlog/B-542-probearbeit-auf-papier-mit-foto-korrektur.md), [B-39](backlog/B-39-supervisor-dashboard.md), [B-09](backlog/B-09-lehrer-hausaufgaben.md) (bestehend) | Papier, Eltern-Übersicht, Lehrer-Freigabe | Verlaufseinträge |
+| – | [B-583](backlog/B-583-erklaerung-nach-falscher-antwort.md) (bestehend) | Erklärung nach der Antwort, mit Sprung zur Stoffnotiz | Verlaufseintrag |
+| – | [B-582](backlog/B-582-probearbeit-auf-papier-mit-foto-korrektur.md), [B-39](backlog/B-39-supervisor-dashboard.md), [B-09](backlog/B-09-lehrer-hausaufgaben.md) (bestehend) | Papier, Eltern-Übersicht, Lehrer-Freigabe | Verlaufseinträge |
 
 Etappe 1 ist die eigentliche Übernahme: sofatutor verkauft den Menschen als Premium-Merkmal, Pugling hat
 ihn schon – den Vater. Es fehlt nur der Kanal.

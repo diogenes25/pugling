@@ -14,14 +14,14 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-547 · Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen
+# B-587 · Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen
 
 sofatutor beginnt mit einem kurzen Einstufungs-Quiz, aus dem der Lernplan entsteht. Pugling führt jedes
 Wort einer Position neu ein, in Buchreihenfolge und begrenzt durch die Tagesdosis
 (`backend/Pugling.Api/Services/Shared/PositionPlayService.cs:201`–`215`,
 `backend/Pugling.Api/Models/PlanPositionEntities.cs:40`), auch wenn das Kind es aus früheren Units oder
 aus dem Unterricht längst kann. Bei einem Vier-Wochen-Plan aus einer Unit
-([B-540](B-540-plan-aus-unit.md)) verbraucht das Bekannte die Tagesdosis, und das Neue kommt später –
+([B-580](B-580-plan-aus-unit.md)) verbraucht das Bekannte die Tagesdosis, und das Neue kommt später –
 für Friedrich, der Erfolge braucht ([B-535](B-535-belohnungen-erreichen-friedrich-nicht.md)), ist das
 Langeweile statt Fortschritt, für Theodor ein Grund, die Access-Grundwörter wegzuklicken.
 
@@ -47,4 +47,5 @@ Zu klären beim Ausformulieren:
 
 ## Verlauf
 
-- **2026-11-15** — angelegt (Quelle: sofatutor-Vergleich, Etappe 2 des Übernahmeplans; Sammel-Story [B-545](B-545-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — angelegt (Quelle: sofatutor-Vergleich, Etappe 2 des Übernahmeplans; Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
+- **2026-11-15** — umnummeriert von B-547 auf B-587: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-557). Inhalt unverändert.
