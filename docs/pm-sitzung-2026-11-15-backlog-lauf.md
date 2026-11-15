@@ -62,3 +62,58 @@ Nach dem Abgleich: **26 offen**.
 Drei Agenten treiben je drei Kandidaten bis `geschaetzt` (nur Doku, getrennte Dateien): Vater-Plan (B-552, B-539,
 B-553), Vater-Sicht (B-557, B-39, B-377), Sohn/Entwickler (B-219, B-47, B-556). B-538, B-547, B-252 und B-410 waren
 schon geschätzt.
+
+Ergebnis Refinement (alle Entscheidungen als „Stakeholder-Entscheidung im Auftrag des Nutzers“ markiert): B-552 (S),
+B-557 (M), B-39 (L → M, Kind-Hub-Reiter gestrichen, höchstens 92 Tage je Abfrage), B-377 (M, Migration), B-219 (M,
+Migration), B-47 (S, neu zugeschnitten auf ein wiederverwendbares `scripts/artefakt-smoke.ps1` plus CI-Job; die
+Azure-gebundenen Entscheidungen 1–2 durchgestrichen), B-556 (S, eingeengt auf Vokabel-Items, Migration). An der Kopie
+der echten DB gemessen: **0** Positionen und **0** Übungen in der Lage von B-552.
+
+## Sprint 77 — Ziel & Umfang
+
+**Sprint-Ziel (Vater):** Der Vater kann jede Positions-Einstellung speichern und wieder auf „Standard“ setzen, und keine
+Einstellung, die er (oder der Creator als Vorgabe) setzen kann, macht eine Pflicht unerreichbar.
+**Umfang:** B-547, B-552.
+**Entwickler-Brief:** Senke ist **eine** Regel: `PositionPlayService.LearningCheckOf(type, requireTypedTest, baseStage,
+schedule)` – dieselbe Rechnung zeigt dem Vater „unerreichbar“ und lehnt jetzt Anlegen, PATCH (sobald er
+`requireTypedTest`/`stage`/`clearStage`/`stageSchedule` berührt) und die Creator-Vorgabe ab. Die alte Leiterprüfung
+geht darin auf. B-547 nach dem Muster `ClearStage` (Wert, dann Schalter); leere Listen heißen „Methoden-Vorgabe“.
+Keine Migration (0 Bestandsfälle).
+
+## Iteration 77 — umgesetzt
+
+- Backend: `UpdatePositionDto.ClearItemCount`/`ClearGoalThreshold`; leere Listen = Methoden-Vorgabe (PATCH und Anlegen);
+  `LearningCheckOf` über lose Werte, `RequireTypedTestValidation.UnreachableProblemText` als einzige Prüfung (Anlegen,
+  PATCH bei Änderung einer Hälfte, Creator-Vorgabe über `DefaultPairProblem`). Ein bestehender Test
+  (`PlanPositionCrudTests`) legte genau die jetzt abgelehnte Kombination an und wurde auf Stufe 4 gesetzt.
+- Frontend: Merkwerte `itemCountStored`/`goalThresholdStored`, Schalter im Update-DTO, „Bearbeiten“ übernimmt frisch;
+  Assistent: eine Regel für Häkchen-Wegfall und Satz an den Vater; Feldhilfe ergänzt.
+- Review-Funde (Backend 1 + 5 Aufräumpunkte, Frontend 2 + 3) im Sprint behoben, Einzelheiten in B-547/B-552. Bewusst offen
+  und ohne eigene Story: englische `validation_error`-Meldung im Formular (wie schon die Leiterregel), Stufe 2 als Kopie
+  der Vokabel-Skala im Assistenten (das Manifest trägt keine Stufenart).
+- Mutanten (nach dem letzten Edit, Debug): 18 + 8 Zeilen, **alle rot am benannten Test**; Tabellen in den Stories.
+- Volle Suite **1670/1670**, Vitest **1093/1093**, `tsc -b` grün.
+
+## Runde 77 — Abnahme
+
+- **Vater – abgenommen:** Playwright gegen frisch gestartete Server (5251/5191): neue Spec
+  `position-zurueck-auf-standard.spec.ts` – „Inhalte“ auf 5, gespeichert, im zweiten Durchgang geleert, Zeile ohne
+  „Inhalte“; Häkchen an bei „Standard der Übung“ → Ablehnung sichtbar, Zeile unverändert. Dazu sechs Nachbar-Specs
+  (Assistent, Klassenarbeit-Assistent, Planbau, Feldhilfe, Lernkontrolle, Vier-Wochen-Ziel): **13 passed**.
+- **Creator – Regressionszeuge:** Creator-Vorgabe-Prüfung im Integrationstest; `feldhilfe`, `ziel-vier-wochen` grün.
+- **Sohn – Regressionszeuge:** kein Sohn-Pfad im Diff; Suite grün.
+
+## Retrospektive 77
+
+**Nachschau:** B-550, B-551 (Abschluss des Laufs vom 2026-11-14) – sauber; die Fluchtstelle von B-550 lag schon als
+B-552 vor und ist jetzt geschlossen. `nachgeschaut: 2026-11-15` gesetzt.
+
+- **Was die eigenen Tore durchgelassen haben:** (1) mein eigener Merge-Commit mit Konfliktmarken (Ausgabe per `tail`
+  gekürzt), (2) doppelte Story-Ids zwischen zwei Branches – beides vor dem Sprint, beides von Agenten gefunden, nicht von
+  einem Tor; (3) im Sprint selbst „Text verspricht mehr als der Code“ zweimal (Bestandsschutz nur für API-Aufrufer;
+  Assistent nimmt das Häkchen still weg) – beide vom Review gefunden.
+- **Der eine Mechanismus:** Prosa im treibenden Skill (`pm-loop`, Step 4): nach jedem Merge `git diff --cached --check`,
+  Merge-Ausgabe nie kürzen, doppelte Ids prüfen.
+- **Vorschlag für ein Tor (nicht gebaut, hält sonst an):** `backlog-index.sh` bricht bei doppelter Id ab bzw. meldet sie
+  im Index – heute zählt es zwei Dateien mit derselben Id stumm als zwei Stories.
+- **Bewusst ungedeckt:** dass ein PATCH-Auslöser „gesendet“ statt „geändert“ prüft, findet weiter nur ein Review.

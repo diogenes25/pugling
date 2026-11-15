@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/frontend, rolle/supervisor]
 aliases: [ClearItemCount, Positionsfelder zurücksetzen]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -73,3 +73,19 @@ Vertrag neu, `PositionSettings` merkt sich die gespeicherten Werte (`itemCountSt
 
 - **2026-11-14** — angelegt aus dem Backend-Review von Sprint 74.
 - **2026-11-14** — ausformuliert, gegrillt (autonom, `Defekt`) und geschätzt (S) im Backlog-Lauf.
+- **2026-11-15** — `in-arbeit` → **`abgenommen`** in Sprint 77 des Backlog-Laufs 2026-11-15, Code-Commit `627e081f`.
+  Gebaut nach den Entscheidungen 1–3: `ClearItemCount`/`ClearGoalThreshold` (Wert, dann Schalter), leere Liste bei
+  `boxIntervalDays`/`stageSchedule` = Methoden-Vorgabe – im PATCH **und beim Anlegen** (Review-Fund), Formular merkt sich
+  die gespeicherten Werte. Review-Funde behoben: (1) die Zeile übernahm die Merkwerte nur beim ersten Rendern, ein zweites
+  „zurück auf Standard“ in derselben Sitzung schickte keinen Schalter (Komponententest `PlanPositionsStufe.test.tsx`
+  „zweimal bearbeiten“); (2) Anlegen speicherte `[]`.
+  - AK 1 → `PatchSemanticsTests` (Zeilen `clearItemCount`, `clearGoalThreshold`), Mutanten B547-AK1a/1b → rot.
+  - AK 2 → `PositionListenZuruecksetzenTests.Leere_Liste_Setzt_…`, `…Ohne_Angabe_Bleiben_…`, `…Leere_Listen_Beim_Anlegen_…`;
+    Mutanten B547-AK2a/2b/2c, R2 (zwei) → rot.
+  - AK 3 → `PlanPositions.test.ts` „schickt clearItemCount/clearGoalThreshold …“, „übernimmt den gespeicherten Stand“;
+    Mutanten B547-AK3a/3b/3c → rot; Review-Fall → `PlanPositionsStufe.test.tsx`, Mutante F1 → rot.
+  - Belege: volle Suite **1670/1670** (Release), Vitest **1093/1093**, `tsc -b` grün. Rollengang Vater als Playwright
+    gegen frisch gestartete Server (Ports 5251/5191): `position-zurueck-auf-standard.spec.ts` (setzen, zweiter Durchgang
+    leeren, Zeile ohne „Inhalte“) plus `lernkontrolle-sichtbar`, `assistent`, `assistent-klassenarbeit`,
+    `planbau-bewertung`, `feldhilfe`, `ziel-vier-wochen` – **13 passed**. Reviewer: `pugling-reviewer`,
+    `frontend-reviewer`.

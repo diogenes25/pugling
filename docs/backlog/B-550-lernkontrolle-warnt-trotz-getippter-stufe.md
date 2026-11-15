@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-469, B-16]
 wartet_auf: ""
+nachgeschaut: 2026-11-15
 ---
 
 # B-550 · Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft

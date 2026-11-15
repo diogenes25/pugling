@@ -28,5 +28,5 @@ stehen in den Teil-Stories.
 ## Verlauf
 
 - **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich im Gespräch mit dem Nutzer, Plan unter `docs/rockettutor-vergleich-plan.md`).
-- **2026-11-15** — Id umgezogen (vorher B-544): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
+- **2026-11-15** — Id umgezogen (vorher B-541): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
 - **2026-11-15** — `verworfen` (geteilt) im Abgleich des Backlog-Laufs 2026-11-15: die Story führt selbst keine Arbeit und keine Stufe (eigener Text); Muster B-247. Stakeholder-Entscheidung im Auftrag des Nutzers, gedeckt durch den Auftrag „Sammel-Stories ohne eigene Arbeit als geteilt schließen“.

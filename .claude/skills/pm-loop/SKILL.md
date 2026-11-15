@@ -96,6 +96,10 @@ every fan-in: merge, run the full suite plus guard tests, confirm the sprint goa
 traps: hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree's build/test hits the main worktree; and
 the migration chain is only ever extended, so two branches that each add a migration collide on `PuglingDbContextModelSnapshot.cs`: merge, then
 re-create the later branch's migration on top of the earlier one so the chain stays linear — never refold.
+After any merge, before its commit: `git diff --cached --check` (it flags leftover conflict markers) and never read the
+merge's output through `tail`/`head` — a cut list of conflicts was committed as resolved once (2026-11-15). Story ids
+are only unique per branch: a branch that created stories after its base meets the other side's numbers, so list
+`docs/backlog` for duplicate ids after the merge.
 
 ## Step 5 — Verify, then review
 

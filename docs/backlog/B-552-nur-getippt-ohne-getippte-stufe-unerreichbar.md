@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/api, rolle/supervisor, rolle/student]
 aliases: [Unerreichbare Pflicht, nur getippt ohne Stufe]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -201,3 +201,30 @@ Prüffunktion, drei Aufrufer, ein Satz im Wizard; kleiner als B-03 (M), weil kei
 - **2026-11-15** — `gegrillt` im Backlog-Lauf 2026-11-15: sechs Stakeholder-Entscheidungen im Auftrag des Nutzers
   (Ablehnen, Creator-Seite mit, Bestand bleibt rot, PATCH-Auslöser, Wizard, keine Sperre über erbende Positionen).
 - **2026-11-15** — `geschaetzt` im Backlog-Lauf 2026-11-15: S, beides, keine Migration, kein Vertragsbruch.
+- **2026-11-15** — `geschaetzt` → **`abgenommen`** in Sprint 77 des Backlog-Laufs 2026-11-15, Code-Commit `627e081f`.
+  Senke: `PositionPlayService.LearningCheckOf(type, requireTypedTest, baseStage, schedule)` – dieselbe Rechnung zeigt dem
+  Vater „unerreichbar“ und lehnt über `RequireTypedTestValidation.UnreachableProblemText` ab (die alte
+  `LadderProblemText` ist darin aufgegangen). Aufrufer: Anlegen, PATCH, Creator-Anlegen/PUT (`DefaultPairProblem`).
+  Assistent: eine Regel `haekchenFaelltBeiVokabelnWeg` für Abschluss und Satz an den Vater.
+  **Review-Funde behoben:** (1) der PATCH prüfte bei *gesendetem* statt *geändertem* Feld – das Formular schickt
+  `requireTypedTest` und die Stufe bei jedem Speichern, Entscheidung 3 hätte für den Vater nicht gegolten; jetzt
+  Auslöser bei Änderung; (2) der Assistent nahm das Häkchen still weg – jetzt Satz in Schritt 4 und im Überblick;
+  (3) Feldhilfe sprach von „dem Server“ und versprach eine Ablehnung, die es im Assistenten nicht gibt – umformuliert;
+  (4) veraltete Kommentare/Klassen-`<summary>` nachgezogen; (5) Test für den leeren Stufenplan bei „nur getippt“.
+  Bewusst offen (kein eigener Story-Wert, im Protokoll vermerkt): die Ablehnung erscheint im Formular englisch
+  (`validation_error` steht nicht in `GERMAN_PROBLEM_TEXT`, wie schon die Leiterregel); die Stufe 2 des Assistenten ist
+  eine Kopie der Vokabel-Skala, weil das Manifest keine Stufenart trägt.
+  - AK 1 → `LernkontrolleTests.Nur_Getippt_Ohne_Getippte_Basisstufe_Wird_Abgelehnt`, Mutante B552-AK1 → rot.
+  - AK 2 → `…Geerbtes_Nur_Getippt_…`, Mutante B552-AK2 → rot.
+  - AK 3 → `…Stufenplan_Ab_Tag_Eins_…`, Mutante B552-AK3 → rot.
+  - AK 4 → `…Patch_Der_Die_Kombination_Kippt_…`, Mutanten B552-AK4a/4b → rot; leerer Stufenplan →
+    `…Leerer_Stufenplan_Bei_Nur_Getippt_…`, Mutante R5 → rot.
+  - AK 5 → `…Bestand_Nur_Getippt_…_Und_Aenderbar` (Punkte-PATCH, `clearStage` ohne Stufe, Formular-PATCH mit unveränderter
+    Stufe und Häkchen), Mutanten B552-AK5, R1 (drei) → rot.
+  - AK 6 → `…Creator_Vorgabe_Nur_Getippt_…`, Mutanten B552-AK6a/6b → rot.
+  - AK 7 → `wizardFinish.test.ts` „nimmt das Häkchen bei selbst eingeschätzter Stufe …“, „sagt dem Vater …“; Mutanten
+    B552-AK7, F2 → rot.
+  - AK 8 → `…Bestand_…`, Mutante B552-AK8 → rot.
+  - Belege: volle Suite **1670/1670**, Vitest **1093/1093**, `tsc -b` grün; Rollengang Vater (Playwright, frische Server,
+    Ports 5251/5191): `position-zurueck-auf-standard.spec.ts` (Häkchen an, Stufe Standard → Ablehnung sichtbar) und
+    sechs Nachbar-Specs – **13 passed**. Reviewer: `pugling-reviewer`, `frontend-reviewer`.

@@ -1,6 +1,6 @@
 ---
 tags: [typ/story, status/geschaetzt, bereich/qualitaet, bereich/tests]
-aliases: [Deploy-Artefakt-Smoke]
+aliases: [Deploy-Artefakt-Smoke, Artefakt-Smoke]
 status: geschaetzt
 prio: P3
 art: Aufräumen
@@ -9,172 +9,174 @@ wo: backend
 migration: nein
 vertragsbruch: nein
 quelle: B-41
-wartet_auf: den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz)
+unverifiziert: false
 ---
 
 # B-47 · Startet das veröffentlichte Artefakt überhaupt?
 
 Abgespalten von [B-41](B-41-produktions-startup-smoke.md) (Entscheidung 1): Dessen Testklasse deckt die
-Produktions-**Konfiguration** in-process ab. Ungeprüft bleibt das Produktions-**Artefakt** – der Weg, den
-`deploy-azure.yml` geht: Frontend bauen → nach `wwwroot` kopieren → `dotnet publish` → starten → liefert
-Kestrel die PWA über `MapFallbackToFile("index.html")` aus und antwortet die API daneben? Genau diese Kette
-ist 24 Tage lang unbemerkt gescheitert (Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8`), weil kein Tor sie fuhr.
+Produktions-**Konfiguration** in-process ab. Ungeprüft bleibt das Produktions-**Artefakt** – Frontend bauen →
+neben die veröffentlichte API legen → `dotnet publish` → starten → liefert Kestrel die PWA aus und antwortet die API
+daneben? Genau diese Kette ist 24 Tage lang unbemerkt gescheitert (Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8`), weil
+kein Tor sie fuhr. Seit 2026-11-11 fährt sie `scripts/heimnetz.ps1` für die echten Kinder – ohne Probelauf.
 
 ## User Story
 
-Als **Betreiber**, der einen Deploy tatsächlich fahren will (sobald die Azure-Reaktivierung aus B-33
-nachgeholt ist), möchte ich, dass ein CI-Schritt das **veröffentlichte Artefakt** – die `dotnet publish`-
-Ausgabe samt dem hineinkopierten Frontend-Build – tatsächlich hochfährt und per HTTP prüft, damit ein
-stiller Ausfall wie der 24-tägige Peer-Konflikt beim nächsten Deploy sofort auffällt statt erneut unbemerkt
-zu bleiben.
+Als **Vater, der Pugling im Heimnetz betreibt**, möchte ich, dass ein Tor das **veröffentlichte Artefakt** – die
+`dotnet publish`-Ausgabe samt gebautem Frontend, gestartet wie im Heimnetz – tatsächlich hochfährt und per HTTP
+prüft, damit ein kaputter Stand auf `main` auffällt, bevor ich ihn für meine Söhne starte, statt erst, wenn das Handy
+eine leere Seite zeigt.
 
 ## Ist-Stand am Code
 
-> **Nachgemessen 2026-11-14:** `deploy-azure.yml:74-75` („API publish") geht direkt zu `azure/webapps-deploy@v3`
-> (`:78`); der `workflow_run`-Block ist auskommentiert (`:28`), es bleibt `workflow_dispatch` (`:35`). `ci.yml` hat
-> weiter drei Jobs (`ci` `:48`, `frontend` `:173`, `markdownlint` `:206`), keiner publiziert. `Program.cs:233`
-> (`AddHealthChecks`), `:274-275` (Fail-fast `Jwt:Key`), `:701` (`/health`), `:710` (`MapFallbackToFile`). Neu:
-> der tatsächlich gefahrene Betrieb ist `scripts/heimnetz.ps1` (`dotnet publish` `:112`, Prüfung auf eine gebaute
-> `index.html` `:118`, aber kein HTTP-Probelauf). Die Zeilenangaben in den Abschnitten darunter sind älter.
+Nachgemessen am 2026-11-15:
 
-- `ProductionWebAppFactory`/`ProductionStartupTests` (B-41, abgenommen) starten die Produktions-
-  **Konfiguration** ausschließlich in-process über `WebApplicationFactory<Program>`
-  (`backend/Pugling.Api.Tests/ProductionWebAppFactory.cs`) – kein `dotnet publish`, kein eigener
-  Kestrel-Prozess, kein gebautes `wwwroot`. B-41s eigenes AK 7 hält das ausdrücklich fest: „Der
-  Out-of-process-Teil ist nicht enthalten, sondern liegt als B-47 vor."
-- `.github/workflows/ci.yml` hat drei Jobs (`ci`, `frontend`, `markdownlint`) – keiner ruft `dotnet publish`
-  auf oder startet einen Prozess, gegen den `curl` liefe (gegen die Datei nachgelesen, nicht vermutet).
-- `.github/workflows/deploy-azure.yml:80-81` ruft `dotnet publish ${{ env.API_PROJECT }} -c Release -o
-  publish` und geht **direkt weiter** zu `azure/webapps-deploy@v3` (Zeilen 84-88) – dazwischen liegt kein
-  Start, kein Health-Check, kein `curl`. Der Workflow ist seit 2026-07-30 stillgelegt: der `workflow_run`-
-  Block ist auskommentiert (Zeilen 27-31), es bleibt nur `workflow_dispatch`.
-- `/health` existiert: `Program.cs:221` registriert `AddHealthChecks().AddDbContextCheck<PuglingDbContext>()`,
-  `Program.cs:531` mappt `app.MapHealthChecks("/health")` – anonym, laut Kommentar direkt darüber „for load
-  balancers/monitoring". Kein Test und kein CI-Schritt ruft ihn auf; der `EndpointCoverageGuard`
-  (`backend/Pugling.Api.Tests/EndpointCoverageGuard.cs`) zählt ausschließlich Controller-Actions – ein
-  `MapHealthChecks`-Endpunkt ist kein Controller und steht in keinem Inventar.
-- `Program.cs:536` (`app.MapFallbackToFile("index.html")`) liefert die PWA aus `wwwroot` aus. Lokal und in
-  jedem bestehenden Testlauf ist `wwwroot` leer – der Zweig läuft also nie mit echtem Frontend-Inhalt durch.
+- **Der gefahrene Betrieb ist `scripts/heimnetz.ps1`**, nicht Azure: `npm run build` (`:107`), `dotnet publish … -o
+  $appDir` (`:112`), `frontend/dist` als Kopie nach `$appDir/wwwroot` (`:115-116`), danach nur eine **Datei**-Prüfung
+  auf `index.html` und `Pugling.Api.dll` (`:118-119`), dann Start im **Vordergrund** gegen die echte `pugling.db` auf
+  `:5200` mit `--contentRoot backend/Pugling.Api --webroot $webRoot` (`:167-174`). Kein HTTP-Probelauf.
+- **Azure ist stillgelegt** (`docs/deployment-azure.md:7-10`): `deploy-azure.yml` hat nur `workflow_dispatch` (`:35`),
+  `workflow_run` auskommentiert (`:28`); dort `dotnet publish` (`:75`) direkt vor `azure/webapps-deploy@v3` (`:78`).
+- **`ci.yml`** (Trigger `push: main`, `pull_request`, `workflow_dispatch`, `:18-22`) hat drei Jobs ohne `needs:` –
+  `ci` (`:48`, Build/Test/Format, mit ~140 s Format der längste), `frontend` (`:173`, `npm ci` + `npm run build` +
+  Vitest), `markdownlint` (`:206`). Keiner publiziert oder startet einen Prozess.
+- **`Program.cs`**: `AddHealthChecks().AddDbContextCheck<PuglingDbContext>()` (`:233`), Fail-fast ohne `Jwt:Key`
+  außerhalb von Development (`:274-275`), `MigrateAsync` beim Start (`:658`, legt eine leere DB vollständig an),
+  `UseDefaultFiles`/`UseStaticFiles` (`:590-591`, liefert `/`), `MapHealthChecks("/health")` (`:701`),
+  `MapFallback("/api/{**rest}")` (`:709`), `MapFallbackToFile("index.html")` (`:710`, liefert Tiefenlinks wie
+  `/sohn`).
+- `frontend/index.html:11` trägt `<div id="root"></div>` – ein stabiles, seltenes Fragment.
+- `ProductionStartupTests` (B-41) bleiben in-process (`WebApplicationFactory`), ohne `publish`, ohne gebautes
+  `wwwroot`; ihr AK 7 verweist den Out-of-process-Teil ausdrücklich hierher.
 
 ## Die echte Lücke
 
-Keine Überschneidung mit B-41: dessen Testklasse prüft *Konfigurationszweige* (Jwt-Fail-fast, Seed-Schalter,
-Anmerkungs-Sichtbarkeit) in einem In-Process-Host, dessen `wwwroot` nie das gebaute Frontend enthält. B-47
-prüft etwas kategorisch anderes – **ob der tatsächlich veröffentlichte Prozess überhaupt hochkommt und
-antwortet**: `dotnet publish` mit dem echten `frontend/dist`-Inhalt in `wwwroot`, als eigener Kestrel-Prozess
-gestartet, gegen `/health` **und** `index.html` per HTTP abgefragt. Genau diese Kette scheiterte 24 Tage lang
-am Peer-Konflikt, ohne dass ein Tor es bemerkte – kein In-Process-Test hätte das gefangen, weil `npm ci` dort
-gar nicht läuft.
-
-Die Lücke ist real und eigenständig, aber **aktuell folgenlos**: Ohne reaktivierten `workflow_run`-Trigger
-(das fehlende Azure-Secret ist als [B-33](B-33-azure-publish-profile.md) bewusst verworfen) läuft
-`deploy-azure.yml` nur noch per Handauslösung. Ein Smoke-Schritt dort wachte über einen Weg, den zurzeit
-niemand automatisch geht.
+Kein Tor startet das veröffentlichte Artefakt. Der einzige Weg, der es heute startet, ist der echte Heimnetz-Start –
+also der Moment, in dem die Söhne es brauchen. Die alte Bauform (ein Schritt in `deploy-azure.yml`) bewachte einen
+Weg, den niemand mehr geht; darum lag die Story mit `wartet_auf` still. Der Wartegrund ist entfallen: das zu
+bewachende Artefakt ist heute das von `heimnetz.ps1`.
 
 ## Offene Punkte
 
-1. ~~Ist B-47 durch B-41 abgedeckt?~~ → siehe „Die echte Lücke" oben – nein, eigenständig.
-2. ~~Wann darf gebaut werden – sofort oder erst nach Reaktivierung?~~ → siehe Entscheidung 1.
-3. ~~Eigener Workflow oder Schritt in einem bestehenden?~~ → siehe Entscheidung 2.
-4. ~~xUnit-Test oder CI-Schritt?~~ → siehe Entscheidung 3.
-5. ~~Welche Route(n) genau prüfen – reicht `/health` oder auch `index.html`?~~ → siehe Entscheidung 4.
-6. ~~Woher `Jwt:Key` und eine harmlose Wegwerf-DB für den Probestart nehmen?~~ → siehe Entscheidung 5.
+1. ~~Ist B-47 durch B-41 abgedeckt?~~ → nein, eigenständig (siehe „Die echte Lücke“).
+2. ~~Wann darf gebaut werden?~~ → Entscheidung 6 (ersetzt Entscheidung 1).
+3. ~~Wo sitzt der Smoke?~~ → Entscheidungen 7 und 8 (ersetzen Entscheidung 2).
+4. ~~xUnit-Test oder CI-Schritt?~~ → Entscheidung 3 (gilt weiter).
+5. ~~Welche Routen?~~ → Entscheidung 9 (erweitert Entscheidung 4).
+6. ~~`Jwt:Key` und Wegwerf-DB?~~ → Entscheidung 5 (gilt weiter, präzisiert in 10).
+7. ~~Prüft `heimnetz.ps1` selbst nach dem Start?~~ → Entscheidung 11.
+8. ~~Woran sieht man, dass der Smoke selbst etwas fängt?~~ → Entscheidung 12.
 
 ## Entscheidungen
 
-1. **Gebaut wird erst, wenn der `workflow_run`-Block in `deploy-azure.yml` wieder scharf ist** (heute
-   auskommentiert, Zeilen 27-31). Begründung: Solange nur `workflow_dispatch` triggert, bewachte ein
-   Smoke-Schritt einen Weg, den niemand automatisch geht – die Story bleibt `geschaetzt`, ihr `in-arbeit`
-   wartet auf dieses Ereignis. Kosten: Die Lücke bleibt bis dahin offen, trifft aber nicht zu, solange kein
-   automatischer Deploy läuft. Übernommen aus dem Grillen des Testabdeckungs-Pakets (2026-08-01), hier nur
-   bestätigt statt neu verhandelt.
-2. **Schritt im bestehenden `deploy-azure.yml`, kein eigener Workflow.** Begründung: Der Smoke-Schritt muss
-   exakt das Artefakt prüfen, das im selben Job zwei Schritte vorher mit `dotnet publish` entstand
-   (`deploy-azure.yml:80-81`) – ein zweiter Workflow müsste Build und Publish redundant wiederholen und liefe
-   Gefahr, in einer **anderen** Umgebung zu laufen als die, die deployt wird (dieselbe Falle, die `ci.yml`
-   bei `NODE_VERSION` schon benennt: „ein Tor, das eine andere Umgebung prüft als die, in der gebaut und
-   deployt wird, bewacht nichts"). Kosten: Der Schritt läuft nur, wenn `deploy-azure.yml` überhaupt anläuft
-   (Entscheidung 1) – kein eigenständiges Tor für PRs.
-3. **CI-Schritt (Shell), kein xUnit-Test in `Pugling.sln`.** Begründung: bereits in der Eintrittsbedingung
-   vom 2026-08-01 festgelegt – `dotnet publish` + Vite-Build + Kestrel-Start liegen im Minutenbereich; als
-   Test im Haupttor liefe das bei **jeder** `.cs`-Änderung mit und spränge dem 63-Sekunden-Stop-Hook-Budget
-   davon. Kosten: kein `EndpointCoverageGuard`-Schutz, keine Gegenprobe-Disziplin wie bei B-41 – der Schritt
-   ist ein CI-Skript, keine versionierte Testklasse mit Assertion-Historie.
-4. **Beide prüfen: `/health` UND `index.html`.** Begründung: `/health` beweist nur, dass Kestrel läuft und
-   die DB erreichbar ist – nicht, dass `wwwroot` das gebaute Frontend enthält. Genau der Peer-Konflikt, der
-   diese Story ausgelöst hat, hätte einen laufenden Server mit leerem oder veraltetem `wwwroot` erzeugt (der
-   Vite-Build bricht, `cp -r frontend/dist/.` kopiert dann nichts Neues) – ein reiner `/health`-Check hätte
-   das **nicht** gefangen. Der zweite Aufruf gegen `/` prüft, dass `MapFallbackToFile("index.html")` etwas
-   anderes als 404 liefert und die Antwort nach echtem HTML aussieht. Kosten: ein zweiter Curl-Aufruf plus
-   eine Inhaltsprüfung statt eines reinen Status-Codes.
-5. **Eigene, kurzlebige SQLite-Datei plus ein im Workflow-Schritt gesetzter `Jwt:Key`, kein Zugriff auf
-   Azure-Secrets.** Begründung: Der Probestart läuft standardmäßig als „Production" (kein
-   `ASPNETCORE_ENVIRONMENT` nötig, das ist bereits der Default), darum greift der Fail-fast auf `Jwt:Key`
-   (`Program.cs:262-263`, siehe auch B-41) ohne einen gesetzten Wert – ein beliebiger, im Workflow generierter
-   Wert genügt, da nichts über den Prozess hinaus gilt. Die Connection-String zeigt auf eine Wegwerf-Datei im
-   Runner-Workspace (Muster aus dem Skill `smoke-test`: relativer Pfad, kein `/tmp`), `Seed:Enabled` bleibt
-   auf seinem Produktions-Vorgabewert `false` – geprüft wird der Start, nicht der Lernstand. Kosten: ein
-   weiterer Satz Umgebungsvariablen im Workflow-Schritt, gepflegt neben den bestehenden aus
-   `deploy-azure.yml`.
+Die Entscheidungen 1–5 vom 2026-08-03 waren autonom getroffen (Nutzerauftrag 2026-08-04), keine **Entscheidung des
+Nutzers**; sie werden darum hier neu geschnitten statt verteidigt.
+
+1. ~~**Gebaut wird erst, wenn der `workflow_run`-Block in `deploy-azure.yml` wieder scharf ist.**~~ **Abgelöst durch
+   Entscheidung 6** (2026-11-15): das Gate setzte voraus, dass Azure der Betrieb ist; seit 2026-11-11 ist es
+   `heimnetz.ps1`.
+2. ~~**Schritt im bestehenden `deploy-azure.yml`, kein eigener Workflow.**~~ **Abgelöst durch Entscheidungen 7 und 8**
+   (2026-11-15): ein Schritt dort läuft nie automatisch und prüft nicht den Start, den `heimnetz.ps1` macht.
+3. **CI-Skript (Shell), kein xUnit-Test in `Pugling.sln`.** Gilt weiter. Begründung: Vite-Build + `publish` +
+   Kestrel-Start liegen im Minutenbereich und sprängen dem Test-Tor-Budget (~63 s) davon. Kosten: keine
+   Testklasse mit Assertion-Historie – ausgeglichen durch Entscheidung 12.
+4. **Beide prüfen: `/health` UND die Seite.** Gilt weiter, erweitert durch Entscheidung 9.
+5. **Eigene, kurzlebige SQLite-Datei plus generierter `Jwt:Key`, keine Secrets.** Gilt weiter, präzisiert durch
+   Entscheidung 10.
+6. **Gebaut wird jetzt; `wartet_auf` entfällt.** Stakeholder-Entscheidung im Auftrag des Nutzers. Begründung: der
+   Artefakt-Weg wird seit 2026-11-11 für echte Kinder gefahren; ein Fehler dort trifft die Söhne, nicht einen
+   stillgelegten Azure-Dienst. Kosten: ein CI-Job mehr, der gepflegt werden will.
+7. **Ein wiederverwendbares Skript `scripts/artefakt-smoke.ps1` (PowerShell 7, plattformneutral).**
+   Stakeholder-Entscheidung im Auftrag des Nutzers. Es baut das Frontend (`npm ci` + `npm run build`), publiziert die
+   API in einen Wegwerf-Ordner, kopiert `frontend/dist` nach `<ordner>/wwwroot` und startet
+   `dotnet <ordner>/Pugling.Api.dll --webroot <ordner>/wwwroot` – **dieselbe Startform wie `heimnetz.ps1:174`**, nur
+   mit dem Veröffentlichungs-Ordner als Inhaltswurzel (nichts im Repo wird beschrieben). Schalter: `-Port` (Vorgabe
+   ein unüblicher, z. B. `5299`), `-SkipBuild`, `-EmptyWebRoot` (Gegenprobe, Entscheidung 12). Begründung: PowerShell,
+   weil der Betrieb PowerShell ist und `pwsh` auf `ubuntu-latest` vorinstalliert ist – **ein** Skript lokal und in CI
+   statt eines Bash-Zwillings. Windows-only-Cmdlets aus `heimnetz.ps1` (`Get-NetTCPConnection`, `Get-NetIPConfiguration`)
+   sind darin verboten. Kosten: lokal Windows, CI Linux – die Pfadbehandlung muss beides tragen (siehe Risiken).
+8. **Aufgerufen von einem vierten Job `artefakt` in `ci.yml`, ohne `needs:`, auf allen bestehenden Triggern.**
+   Stakeholder-Entscheidung im Auftrag des Nutzers. Begründung: geschätzt ~3 min (setup-dotnet, `npm ci` mit Cache,
+   Vite-Build, `publish`, zwei Starts) und damit kürzer als der parallele `ci`-Job (Test + ~140 s Format) – die
+   Wandzeit eines Laufs wächst nicht. Auf PRs, weil dort ein kaputter Build am billigsten zurückgeht. Kosten: Runner-
+   Minuten und ein doppeltes `npm ci` (der `frontend`-Job baut ebenfalls). **Fallback**: verlängert der Job die
+   Wandzeit messbar, wird er auf `push: main` + `workflow_dispatch` beschränkt – ohne neue Entscheidung, nur mit
+   einer Verlauf-Zeile.
+9. **Drei Prüfungen**: `GET /health` → `200`; `GET /` → `200` und enthält `<div id="root">`; `GET /sohn` → `200` und
+   enthält `<div id="root">`. Stakeholder-Entscheidung im Auftrag des Nutzers. Begründung: `/` geht über
+   `UseDefaultFiles`, `/sohn` über `MapFallbackToFile` (`Program.cs:590/710`) – zwei verschiedene Wege, und `/sohn`
+   ist die Adresse, die das Handy des Sohns öffnet. Kosten: eine Anfrage mehr.
+10. **Laufzeitumgebung des Probestarts**: `ASPNETCORE_ENVIRONMENT=Production`, `ASPNETCORE_URLS=http://127.0.0.1:<Port>`
+    (nur Loopback), `ConnectionStrings__Default` auf eine Datei im Wegwerf-Ordner, `Jwt__Key` je Lauf zufällig
+    erzeugt, `Seed__Enabled=false` – wie `heimnetz.ps1:167-171`. Stakeholder-Entscheidung im Auftrag des Nutzers.
+    Begründung: genau die Konfiguration des echten Betriebs, nur mit fremder DB; die Migration läuft dabei einmal
+    über eine leere DB (`Program.cs:658`). Kosten: keine Prüfung der Migration gegen den **Bestand** der echten DB –
+    das ist eine andere Frage und gehört nicht in diesen Schnitt.
+11. **`heimnetz.ps1` bekommt keinen Probelauf gegen die laufende Instanz.** Stakeholder-Entscheidung im Auftrag des
+    Nutzers. Begründung: dort läuft die **echte** `pugling.db` auf `:5200` im Vordergrund; ein Probelauf müsste den
+    Start in den Hintergrund verlagern und gegen echte Kinderdaten fragen – auch ein lesendes `/health` öffnet die
+    echte DB. Der Schutz kommt vorher: das Tor auf `main` (Entscheidung 8), und von Hand ist `scripts/artefakt-smoke.ps1`
+    vor einem Heimnetz-Neustart aufrufbar (ein Satz in `docs/heimnetz.md`). Kosten: lokal ungepushte Stände sind nur
+    geschützt, wenn jemand das Skript von Hand aufruft.
+12. **Die Gegenprobe ist dauerhaft: ein zweiter Lauf mit `-SkipBuild -EmptyWebRoot` muss rot enden.**
+    Stakeholder-Entscheidung im Auftrag des Nutzers. Der CI-Job ruft ihn nach dem grünen Lauf auf und schlägt fehl,
+    wenn der Exit-Code `0` ist. Begründung: ein Smoke ohne gesehene rote Probe ist eine Behauptung (Muster B-41 AK 6);
+    eine einmalige Handprobe verrottet, ein Job-Schritt nicht. Kosten: ~15 s je Lauf.
 
 ## Akzeptanzkriterien
 
-1. Ein neuer Schritt in `deploy-azure.yml` startet nach „API publish" (vor `azure/webapps-deploy@v3`) den
-   veröffentlichten Prozess im Hintergrund, mit einer Wegwerf-SQLite-Datei und einem im Schritt gesetzten
-   `Jwt:Key`.
-2. Der Schritt wartet mit Zeitlimit auf Bereitschaft (Retry-Schleife gegen `/health`, kein Sleep ins Blaue)
-   und schlägt **rot** fehl, wenn der Prozess innerhalb der Frist nicht antwortet.
-3. `GET /health` liefert `200`.
-4. `GET /` liefert **kein** `404` und enthält erkennbar den gebauten Frontend-Inhalt (nicht bloß „irgendein
-   200").
-5. Der Prozess wird **in jedem Fall** beendet (Erfolg wie Fehlschlag), bevor der Job weiterläuft oder endet –
-   kein verwaister Hintergrundprozess, keine liegen gebliebene Wegwerf-Datei.
-6. Schlägt der Smoke fehl, bricht der Job **vor** `azure/webapps-deploy@v3` ab – ein kaputtes Artefakt
-   erreicht Azure nicht.
-7. Der bestehende `if:`-Bedingungsblock und die `ref:`-Fallstrick-Behandlung aus `deploy-azure.yml`
-   (Fallstrick 2, [docs/deployment-azure.md](../deployment-azure.md)) bleiben unverändert.
+Die früheren AKs (Schritt in `deploy-azure.yml` vor `azure/webapps-deploy@v3`, unveränderter `if:`/`ref:`-Block)
+sind mit den Entscheidungen 1 und 2 abgelöst; ihr Kern (Retry statt Sleep, Abbruch bei Nicht-Antwort, Prozess immer
+beenden) steht unten.
+
+1. `scripts/artefakt-smoke.ps1` endet mit Exit `0`, wenn `/health`, `/` und `/sohn` wie in Entscheidung 9 antworten.
+   **Rot**, wenn das Frontend nicht gebaut oder nicht kopiert wird (dann fehlt `<div id="root">`).
+2. Bereitschaft per Retry-Schleife gegen `/health` mit Frist (z. B. 60 s), kein fester Sleep. Beendet sich der Prozess
+   vorher (etwa Fail-fast auf `Jwt:Key`), meldet das Skript dessen Exit-Code und die letzten Zeilen seiner Ausgabe
+   statt nur „Timeout“. **Rot**, wenn `Jwt__Key` weggelassen wird.
+3. Prozess **und** Wegwerf-Ordner (DB, Publish, `wwwroot`) werden in jedem Fall entfernt (`try/finally`), auch bei
+   rotem Ausgang. Prüfbar: nach einem roten Lauf ist der Port frei und der Ordner weg.
+4. `-EmptyWebRoot` lässt `wwwroot` leer; der Lauf endet **rot** an der Seitenprüfung, nicht am `/health`
+   (Meldung nennt `/`). Das ist die Gegenprobe; sie belegt, dass AK 1 etwas trägt.
+5. Job `artefakt` in `ci.yml` ruft AK 1 und danach AK 4 auf und ist nur grün, wenn AK 1 grün **und** AK 4 rot ist.
+   **Rot**, wenn das Skript die Seitenprüfung verliert (dann wäre AK 4 grün).
+6. Das Skript nutzt keine Windows-only-Cmdlets und keinen festen Pfad unter `/tmp`; es läuft unter `pwsh` auf
+   Windows und `ubuntu-latest`.
+7. `docs/heimnetz.md` nennt den Aufruf vor einem Neustart in einem Satz; `heimnetz.ps1` bleibt unverändert.
 
 ## Schätzung
 
-**Größe S** (Anker: „`childId` aus dem Test-Pfad ziehen", B-01; nächstliegender Vorgang ist B-41s
-Produktions-Startup-Smoke) – kein Produktivcode, keine neue Abhängigkeit, keine Vertragsänderung. Der Umfang
-ist ein Shell-Block in einer bestehenden YAML-Datei, aber mit mehreren Teilen, die einzeln leicht zu
-vergessen sind (Wegwerf-DB, `Jwt:Key`, Retry-Schleife, Cleanup, zwei Curl-Prüfungen) – vergleichbar im
-Zuschnitt mit B-41, nur als CI-Skript statt als C#-Testklasse.
-
-`migration: nein` – kein Entity, kein `DbContext` ändert sich; die Wegwerf-Datei entsteht und verschwindet
-im selben Job-Lauf. `vertragsbruch: nein` – `Pugling.Contracts` bleibt unberührt.
+**Größe S** (Anker B-01; nächstliegend B-41) – kein Produktivcode, keine Abhängigkeit, kein Vertrag. Ein Skript, ein
+Job, ein Satz Doku. `wo: backend` (CI/Skript), `migration: nein` (die Wegwerf-DB entsteht und verschwindet im Lauf),
+`vertragsbruch: nein`.
 
 ### Risiken
 
 | Risiko | Warum es hier greift | Gegenmittel |
 | --- | --- | --- |
-| Runner-Firewall/Port-Konflikt | Der Ubuntu-Runner startet den Prozess selbst; ein falscher Port oder eine belegte Adresse ließe die Retry-Schleife nur ins Timeout laufen | Festen, unwahrscheinlichen Port über `ASPNETCORE_URLS` setzen, Timeout eng genug für schnelles Feedback |
-| Fail-fast frisst den Prozess sofort | Fehlt `Jwt:Key` oder ist die Wegwerf-DB-Zeichenkette falsch escaped, bricht der Start ab, bevor `curl` überhaupt fragt | Exit-Code des Hintergrundprozesses nach der Wartezeit mitprüfen, nicht nur den Curl-Status – sonst zeigt ein rotes `curl` nicht die eigentliche Ursache |
-| `index.html`-Prüfung zu strikt/zu lasch | Ein zu enger Textvergleich bricht bei jeder Frontend-Änderung, ein zu weiter lässt eine leere `wwwroot` durchgehen | Auf ein stabiles, seltenes Fragment prüfen (z. B. `<div id="root">`), nicht auf den vollen Seitentitel |
-| Verwaister Hintergrundprozess bei Job-Abbruch | Ein Timeout-Abbruch (wie in `e2e.yml`) überspringt ein reines `if: failure()`-Cleanup | Cleanup über `if: always()` führen, nicht über `failure()` – das Muster steht bereits im `zustellung`-Job von `e2e.yml` |
-| Deploy bleibt stillgelegt | Ohne Reaktivierung (Entscheidung 1) läuft der neue Schritt nie automatisch, nur per `workflow_dispatch` | Bewusst getragen; der Schritt kostet nichts, solange niemand ihn auslöst, und ist bereit, sobald B-33 fällt |
+| Lokal Windows, CI Linux | Pfade, `dotnet`-Aufruf, Prozess-Beenden unterscheiden sich; eine Messung nur auf Windows ist für Linux blind | `Join-Path`/`[IO.Path]`, `Start-Process -PassThru` + `Stop-Process`; einmal lokal **und** einmal in CI grün und rot sehen |
+| Port belegt | ein Dev-Server oder Heimnetz läuft lokal | unüblicher Vorgabe-Port, nur `127.0.0.1`; belegter Port → sofort rot mit klarer Meldung, nie auf `:5200` |
+| Fail-fast frisst den Prozess | falscher `Jwt__Key`/Connection-String | Exit-Code des Prozesses in der Retry-Schleife prüfen (AK 2) |
+| Verwaister Prozess bei Job-Abbruch | ein Timeout überspringt `failure()`-Aufräumen | `try/finally` im Skript, Runner wird ohnehin verworfen; lokal ist das `finally` der Schutz |
+| Laufzeit größer als geschätzt | `publish` + Vite auf dem Runner | Fallback aus Entscheidung 8 |
+| Prüfung zu strikt/zu lasch | Titel ändert sich, leeres `wwwroot` liefert 404 | auf `<div id="root">` prüfen, nicht auf den Titel; Gegenprobe AK 4 |
 
 ### Angriffsplan
 
-Nur Backend/CI-Brille (Workflow-Datei, kein Frontend-Code), in dieser Reihenfolge:
-
-1. Neuen Schritt „Artefakt-Smoke" zwischen „API publish" und „Nach Azure deployen" in `deploy-azure.yml`
-   einfügen: Hintergrundstart, `ASPNETCORE_URLS`, `Jwt__Key`, `ConnectionStrings__Default` auf eine
-   Wegwerf-Datei im Runner-Workspace.
-2. Retry-Schleife gegen `/health` (Muster aus dem Skill `smoke-test`: `for … curl -s -m 3 …; sleep 1`),
-   Zeitlimit z. B. 30 s.
-3. Zweiter `curl` gegen `/`, Textprüfung auf ein stabiles Fragment.
-4. Cleanup über einen eigenen `if: always()`-Schritt, der Prozess und Wegwerf-DB entfernt.
-5. Einmal per `workflow_dispatch` **gegen einen absichtlich kaputten Stand fahren** (z. B. `wwwroot` lokal
-   leeren) und rot sehen – ohne diese Gegenprobe ist der Schritt eine Behauptung (Muster B-41, AK 6).
+1. `scripts/artefakt-smoke.ps1` schreiben (Bauen, Publish in Wegwerf-Ordner, Kopie nach `wwwroot`, Start mit
+   Entscheidung-10-Umgebung, Retry gegen `/health`, drei Prüfungen, `finally`-Aufräumen, `-EmptyWebRoot`).
+2. Lokal unter Windows: einmal grün, einmal mit `-EmptyWebRoot` rot, einmal ohne `Jwt__Key` rot (AK 2).
+3. Job `artefakt` in `ci.yml` (setup-dotnet, setup-node mit derselben `NODE_VERSION`, `pwsh`-Schritte für AK 1 und
+   AK 4 mit invertierter Erwartung).
+4. Satz in `docs/heimnetz.md`.
+5. CI-Lauf per `workflow_dispatch` auf dem Branch: grün, Laufzeit des Jobs gegen den `ci`-Job notieren
+   (Fallback-Entscheidung 8).
 
 ### Testweg
 
-Es entsteht **kein** neuer Eintrag in `Pugling.sln` (Entscheidung 3) und kein Playwright-Spec – der Testweg
-**ist** der neue CI-Schritt selbst, gefahren über `workflow_dispatch` auf `deploy-azure.yml` (manuell, da der
-automatische Trigger stillgelegt bleibt, Entscheidung 1). Nachweis der Wirksamkeit ist die Gegenprobe aus
-Angriffsplan-Schritt 5, nicht der grüne Lauf allein – dasselbe Prinzip wie bei B-41s Gegenproben-Tabelle.
+Kein Eintrag in `Pugling.sln`. Der Testweg ist das Skript selbst: lokal grün/rot (Angriffsplan 2) und der CI-Job mit
+eingebauter Gegenprobe (AK 5). Abgenommen ist es erst mit einem CI-Lauf, dessen Log die rote Gegenprobe zeigt –
+nicht am Exit-Code des Jobs allein.
 
 ## Verlauf
 
@@ -197,3 +199,4 @@ Angriffsplan-Schritt 5, nicht der grüne Lauf allein – dasselbe Prinzip wie be
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): gilt inhaltlich, Zeilen verrutscht (`deploy-azure.yml:74-82`, `Program.cs:226/681/686`). Die User Story nennt als Gate „die Azure-Reaktivierung aus B-33“ – **B-33 ist verworfen**; das Gate ist der Neubau des Deploys (`docs/deployment-azure.md:7-10`). Entscheidung 1 verbietet den Bau davor, darum `wartet_auf`. Wird das Deployment neu gebaut, ist die Bauform (Schritt in genau dieser YAML) eventuell hinfällig.
 - **2026-10-23** — In der Grill-Runde G-0 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): B-07 ist verworfen (Neubau statt Reaktivierung). Das Gate dieser Story ist damit allein der Neubau; beim Neubau prüfen, ob der Smoke-Schritt in die neue Pipeline gehört statt in `deploy-azure.yml`.
 - **2026-11-14** — Abgleich Backlog-Lauf: veraltet, Kern gilt, `wartet_auf` unverändert. Zeilen nachgemessen (Kasten unter „Ist-Stand am Code"); neu ist `scripts/heimnetz.ps1` als gefahrener Betrieb mit eigenem `dotnet publish` – beim Bau prüfen, ob der Smoke dorthin gehört statt in `deploy-azure.yml`.
+- **2026-11-15** — Backlog-Lauf 2026-11-15: neu geschnitten auf den gefahrenen Betrieb `heimnetz.ps1`. Entscheidungen 1 und 2 (Azure-gebunden, autonom) abgelöst und durchgestrichen; sieben Stakeholder-Entscheidungen im Auftrag des Nutzers (6–12): Bau jetzt, Skript `scripts/artefakt-smoke.ps1`, CI-Job `artefakt` ohne `needs:`, `/health` + `/` + `/sohn`, Heimnetz-Startform mit Wegwerf-DB, kein Probelauf gegen die echte Instanz, dauerhafte Gegenprobe. `wartet_auf` entfernt. Bleibt `geschaetzt`: **S**, `backend`, keine Migration, kein Vertragsbruch.

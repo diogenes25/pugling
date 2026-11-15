@@ -12,39 +12,37 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (26)
+### Offen (24)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | Defekt | `idee` | P1 | S | beides | — |
 | [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn | Wunsch | `geschaetzt` | P1 | M | beides | — |
+| [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `geschaetzt` | P1 | L | beides | Migration + Vertrag |
+| [B-553](B-553-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
-| [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `gegrillt` | P1 | — | — | — |
-| [B-553](B-553-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | L | beides | — |
+| [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `geschaetzt` | P2 | M | beides | — |
+| [B-557](B-557-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
 | [B-555](B-555-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
-| [B-557](B-557-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `idee` | P2 | — | — | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `geschaetzt` | P2 | M | backend | — |
-| [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück | Defekt | `geschaetzt` | P3 | S | beides | — |
+| [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `geschaetzt` | P3 | S | beides | Vertrag |
+| [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
+| [B-556](B-556-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `geschaetzt` | P3 | S | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
-| [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `idee` | P3 | — | — | — |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-250](B-250-stundenplan-in-der-tagesmission.md) | Der Stundenplan gewichtet die Tagesmission | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Wunsch | `idee` | P3 | — | — | — |
-| [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `idee` | P3 | — | — | — |
-| [B-556](B-556-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `idee` | P3 | — | — | — |
 | [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `geschaetzt` | P3 | S | backend | — |
 
 <details>
-<summary>Abgenommen (493)</summary>
+<summary>Abgenommen (495)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -499,11 +497,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-544](B-544-abschlusstest-zeigt-den-tipp.md) | Der Abschlusstest liefert und zeigt den Tipp | Defekt | `abgenommen` | P2 | XS | beides | Vertrag |
 | [B-545](B-545-bonus-runde-wertet-gegen-aktuelle-items.md) | Eine Bonus-Runde wird gegen die aktuellen Items gewertet, nicht gegen die beim Start | Defekt | `abgenommen` | P3 | S | beides | Migration |
 | [B-546](B-546-ef-migration-crlf-in-check-constraints.md) | `migrations add` unter Windows schreibt `\r\n` in Check-Constraint-Strings | Aufräumen | `abgenommen` | P3 | XS | backend | — |
+| [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-548](B-548-bonus-sperre-texte-nennen-volle-pflicht.md) | Swagger und Texte nennen für Kiste und Bonus-Training noch die volle Pflicht | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | Die Swagger-Doku des Bonus-Trainings kennt die verworfene Runde nicht | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | Defekt | `abgenommen` | P3 | — | — | — |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | Defekt | `abgenommen` | P3 | — | — | — |
+| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | Defekt | `abgenommen` | P1 | S | beides | — |
 | [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `abgenommen` | P2 | S | frontend | — |
@@ -544,7 +544,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (2)
+### Wartet auf Zutun von außen (1)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -552,11 +552,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
-| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | `geschaetzt` | den Neubau des Azure-Deploys (B-07 ist verworfen, es gibt keine Alt-Instanz) |
 
 ### Nach der Abnahme entgangen (183)
 
-**Nachgeschaut: 470 von 493 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 23 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 470 von 495 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 25 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -737,15 +736,15 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | [B-520, B-493, B-501, B-492] | `abgenommen` |
 | [B-543](B-543-bonus-deckel-verbrennt-einmal-uebung.md) | Nach erreichtem Bonus-Deckel verbrennt eine Einmal-Übung für 0 Münzen | [B-533] | `abgenommen` |
 | [B-545](B-545-bonus-runde-wertet-gegen-aktuelle-items.md) | Eine Bonus-Runde wird gegen die aktuellen Items gewertet, nicht gegen die beim Start | [B-533] | `abgenommen` |
-| [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück | [B-16] | `geschaetzt` |
+| [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück | [B-16] | `abgenommen` |
 | [B-548](B-548-bonus-sperre-texte-nennen-volle-pflicht.md) | Swagger und Texte nennen für Kiste und Bonus-Training noch die volle Pflicht | [B-535] | `abgenommen` |
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | Die Swagger-Doku des Bonus-Trainings kennt die verworfene Runde nicht | [B-545] | `abgenommen` |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | [B-469, B-16] | `abgenommen` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | [B-16] | `abgenommen` |
-| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `idee` |
+| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (23) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (25) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -773,8 +772,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
+| [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt |
+| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus |
 
 </details>
 
@@ -930,7 +931,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
-| [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (37)</summary>

@@ -32,4 +32,4 @@ nicht).
 ## Verlauf
 
 - **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-554](B-554-rockettutor-vergleich-sammel-story.md)).
-- **2026-11-15** — Id umgezogen (vorher B-545): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.
+- **2026-11-15** — Id umgezogen (vorher B-542): Kollision mit der auf `main` vergebenen Nummer; gefunden im Abgleich des Backlog-Laufs 2026-11-15.

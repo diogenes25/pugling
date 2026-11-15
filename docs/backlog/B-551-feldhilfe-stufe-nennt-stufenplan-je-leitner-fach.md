@@ -14,6 +14,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-16]
 wartet_auf: ""
+nachgeschaut: 2026-11-15
 ---
 
 # B-551 · Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt

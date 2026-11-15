@@ -4,11 +4,12 @@ aliases: [Supervisor-Dashboard, Eltern-Dashboard, Fortschritts-Dashboard, Tag Wo
 status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: L
+groesse: M
 wo: beides
 migration: nein
 vertragsbruch: nein
 quelle: Nutzer, Sitzung 2026-07-31
+unverifiziert: false
 ---
 
 # B-39 · Supervisor-Dashboard über die Kinder
@@ -29,22 +30,22 @@ jedes Kind einzeln in einer eigenen Ansicht nachzuschlagen.
 ## Ist-Stand am Code
 
 - **Eine kind-übergreifende Tagesübersicht existiert bereits, aber nur für den heutigen Tag und als reine
-  HTML-Tabelle.** `frontend/src/vater/VaterDashboard.tsx:44-69` rendert eine `<table>` mit Kind/Status/
+  HTML-Tabelle.** `frontend/src/vater/VaterDashboard.tsx:53-75` rendert eine `<table>` mit Kind/Status/
   Ziele/Punkte, gespeist von `api.childrenDaily()`. Serverseitig liefert
-  `backend/Pugling.Api/Controllers/Supervisor/ChildrenDashboardController.cs:11-26`
+  `backend/Pugling.Api/Controllers/Supervisor/ChildrenDashboardController.cs:13` (Route), `:20-25` (Action)
   (`GET supervisor/children/daily-overview`, optional `?date=`, sonst heute UTC) einen
   `Dashboard`-Record; die Aggregation läuft in
-  `backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:12-51`, die pro Kind über die
-  aktiven Pläne den Tag per `PositionProgressService.ComputeDayAsync` aufsummiert
+  `backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:17-50`, die pro Kind über die
+  aktiven Pläne den Tag per `PositionProgressService.ComputeDayAsync` (`Services/Shared/PositionProgressService.cs:211`) aufsummiert
   (`goalsTotal`/`goalsMet`/`points`/`dutyDone`/`practiced`). **Es gibt keinen `?date=`-Bereich, keine
   Woche, keinen Monat** — nur genau ein Tag je Aufruf.
 - **Der Drill-down existiert schon — aber entlang des Katalogs, nicht der Zeit.**
-  `frontend/src/vater/VaterLernstand.tsx:28-51` bietet pro Kind zwei Reiter: „Schlecht gelernte Wörter"
+  `frontend/src/vater/VaterLernstand.tsx:34-55` bietet pro Kind zwei Reiter: „Schlecht gelernte Wörter"
   (Rollup über `api.childWordMastery`, kind-zentrisch flach) und „Nach Katalog" (Fach → Kapitel → Übung →
   Wort). Serverseitig sind das
-  `backend/Pugling.Api/Controllers/Student/ChildVocabularyProgressController.cs:17-24`
+  `backend/Pugling.Api/Controllers/Student/ChildVocabularyProgressController.cs:19`
   (`.../children/{childId}/vocabulary-progress`) und
-  `backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs:16-23`
+  `backend/Pugling.Api/Controllers/Student/ChildLearnProgressController.cs:19`
   (`.../children/{childId}/learn`). Beide drillen entlang der **Katalog-Hierarchie**; eine Achse
   Monat → Woche → Tag → Sitzung gibt es an keiner Stelle im Frontend.
 - **„Monatlich" existiert nirgends im Domänenmodell — bestätigt.**
@@ -54,22 +55,26 @@ jedes Kind einzeln in einer eigenen Ansicht nachzuschlagen.
   Monatsansicht kann darum nur eine **Aggregation über bereits existierende Tageswerte** sein — keine
   neue Zielperiode, keine Migration.
 - **Übung ↔ Klausur ist modelliert, aber ungenutzt für eine Dashboard-Sicht.**
-  `backend/Pugling.Api/Models/KlassenarbeitEntities.cs:35-41` (`ExerciseTag`: Tag ↔ Exercise) und
-  `:106-113` (`KlassenarbeitTag`: Klassenarbeit ↔ Tag) ergeben die Kette
+  `backend/Pugling.Api/Models/KlassenarbeitEntities.cs:35` (`ExerciseTag`: Tag ↔ Exercise) und
+  `:106` (`KlassenarbeitTag`: Klassenarbeit ↔ Tag) ergeben die Kette
   `Klassenarbeit --< KlassenarbeitTag >-- Tag --< ExerciseTag >-- Exercise`; zusätzlich existiert die
-  direkte `KlassenarbeitExercise` (`:92-100`). Eine Oberfläche, die diese Kette **zeigt**, existiert nicht.
+  direkte `KlassenarbeitExercise` (`:92`). Eine Oberfläche, die diese Kette **zeigt**, existiert nicht.
 - **Ein Paging/Sortier-Muster für Zeitreihen ist bereits etabliert und dient als Vorlage.**
-  `backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs:57-74`
+  `backend/Pugling.Api/Controllers/Student/PlanOverviewController.cs:58-75`
   (`GET study-plans/{planId}/overview/progress`) nimmt `from`/`to`/`sort`/`skip`/`take` und liefert
   `X-Total-Count` — exakt das Muster, das die neue Zeitachse für mehrere Kinder braucht, nur bisher
   **innerhalb eines Plans**, nicht kind-übergreifend.
 - **Das `?childId=`-Filtermuster für kind-übergreifende Aggregate ist etabliert.**
-  `backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:44`
+  `backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:48-49`
   (`List([FromQuery] int? childId = null, …)`) ist der Präzedenzfall für „top-level Aggregat, das nur
   nach Kind filtert" (siehe `CLAUDE.md` → Konventionen, Abschnitt „Eigentum").
 - **Es gibt keine Chart-Bibliothek im Frontend.** `frontend/package.json` enthält weder `d3`, `recharts`,
   `victory`, `visx` noch `nivo` — bestätigt.
 - **`prefersReducedMotion` existiert bereits als geteilte Regel.** `frontend/src/lib/ui.ts:22-25`.
+- **Die Woche beginnt am Montag** – so rechnet schon die Wochen-Pflicht (`PositionProgressService.cs:46`,
+  `PeriodStart`); die Zeitachse übernimmt diese Grenze, statt eine zweite zu erfinden.
+- **Ein Tagesverlauf über eine Laufzeit existiert schon als Schleife** (`PositionProgressService.ProgressAsync`,
+  `:529-539`: je Tag ein `ComputeDayAsync`) – die neue Aggregation ist dieselbe Schleife über mehrere Pläne/Kinder.
 - **`Objective`/`KeyResult` liefern schon einen live berechneten Zielfortschritt** (siehe
   `docs/obsidian.md` → Lernziele/Bonus-System) — eine eigene Berechnung im Dashboard wäre eine zweite
   Fassung derselben Zahl.
@@ -163,37 +168,57 @@ Visualisierung sind vier trennbare Brocken.~~ → siehe Entscheidung 6.
    eine zweite Fassung derselben Zahl und liefe garantiert irgendwann auseinander. Kosten: keine —
    Wiederverwendung des bestehenden Wertes über die vorhandene Route.
 
+8. **Schnitt auf einen Sprint: der Kind-Hub-Reiter „Zeitachse" (alte AK 4) entfällt; das Aufklappen führt aus
+   der Haushaltszeile per Link in den vorhandenen Lernstand `/vater/kind/:id/lernstand`.** Stakeholder-Entscheidung im Auftrag des Nutzers
+   (Backlog-Lauf 2026-11-15). Begründung: die Rolle des Vaters braucht den Überblick über
+   die Zeit; der Weg „Haushalt → Kind → Wort" bleibt vollständig, weil die Wort-Ebene schon existiert. Ein dritter
+   Reiter wäre dieselbe Darstellung an zweiter Stelle mit eigenem Lade-/Fehlerzustand – das war der Posten, der die
+   Story auf L hob. Die vereinbarte Teilung (a) Endpunkt + Tests, (b) Frontend bleibt die **Bau-Reihenfolge**
+   innerhalb dieser einen Story, keine zweite Id. Kosten: ein Kind über die Zeit sieht der Vater nur in der
+   Haushaltsansicht (seine Zeile, oder `?childId=`), nicht im Kind-Hub. Die Nutzer-Entscheidung G-7 (Blättern über
+   Kinder) bleibt unberührt; Entscheidung 3 (autonom getroffen 2026-08-03) wird damit für die zweite Ansicht
+   zurückgestellt, nicht umgestoßen – der Reiter kann als eigene Idee nachkommen.
+9. **Der Zeitraum ist gedeckelt: höchstens 92 Tage je Aufruf (`400 validation_error` darüber).**
+   Stakeholder-Entscheidung im Auftrag des Nutzers (Backlog-Lauf 2026-11-15). Begründung: die Kosten wachsen mit
+   Tagen × Plänen × Kindern (`ComputeDayAsync` je Tag; nicht gemessen, gerechnet: ein Quartal bei zwei Kindern mit
+   je einem Plan sind ~184 Aufrufe); ein Quartal deckt Tag/Woche/Monat ab, eine Jahresansicht ist nicht verlangt.
+   Kosten: wer weiter zurück will, verschiebt den Zeitraum.
+
 ## Akzeptanzkriterien
 
 1. `GET api/v1/supervisor/children/overview` liefert für `granularity=day|week|month` je Kind eine
-   Periodenreihe (`goalsTotal`/`goalsMet`/`points`/`dutyDone`) im Bereich `from`..`to`, paged über
-   `skip`/`take` mit `X-Total-Count`, optional gefiltert über `?childId=`; die bestehende
-   `daily-overview` bleibt unverändert erreichbar.
-2. Die Monatsansicht ist eine serverseitige Summe über die zugehörigen Kalenderwochen/-tage — keine neue
-   `GoalCadence`, kein Schema-Wechsel.
+   Periodenreihe (`goalsTotal`/`goalsMet`/`points`/`dutyDone`) im Bereich `from`..`to`; `skip`/`take` blättern
+   **über die Kinder** (Nutzer-Entscheidung G-7), `X-Total-Count` = Zahl der Kinder, optional gefiltert über
+   `?childId=` (ein fremdes Kind erscheint nie); die bestehende `daily-overview` bleibt unverändert erreichbar.
+   *Rot, wenn* `X-Total-Count` die Perioden zählt oder ein nicht betreutes Kind in der Antwort steht.
+   Zusatz: Zeitraum über 92 Tage oder `from > to` → `400 validation_error` (Entscheidung 9). *Rot, wenn* die Grenze
+   fehlt.
+2. Woche = Montag bis Sonntag (`PeriodStart`), Monat = Kalendermonat, beides in UTC; eine Periode ist die Summe
+   ihrer Tage im Bereich, `dutyDone` einer Periode heißt „an jedem Tag mit Tagesziel erfüllt". Keine neue
+   `GoalCadence`, kein Schema-Wechsel. *Rot, wenn* ein Sonntag in die Folgewoche fällt (Grenztag-Test So/Mo und
+   31./1.) oder der Monat als 4 × 7 Tage gerechnet wird.
 3. Die Haushalts-Übersicht (`/vater`) zeigt neben der heutigen Tabelle einen Umschalter Tag/Woche/Monat
-   mit einer handgebauten Balken-/Sparkline-Darstellung je Kind.
-4. Der Kind-Hub (`/vater/kind/:id/lernstand`) bekommt einen dritten Reiter „Zeitachse" mit derselben
-   Darstellung für ein Kind, aufklappbar bis zur bestehenden Wort-/Katalog-Sicht (kein neuer
-   Drill-down-Endpunkt nötig — die bestehenden Reiter „Schlecht gelernte Wörter"/„Nach Katalog" bleiben
-   das Ziel des Aufklappens).
+   mit einer handgebauten Balken-Darstellung je Kind (Ziele erfüllt / gesamt je Periode). *Rot (Vitest), wenn* der
+   Umschalter „Woche" nicht so viele Balken rendert, wie die Antwort Perioden trägt.
+4. ~~Der Kind-Hub bekommt einen dritten Reiter „Zeitachse".~~ (entfallen, Entscheidung 8) Jede Kindzeile der
+   Haushalts-Übersicht verlinkt auf `/vater/kind/:id/lernstand` – dort liegt die Wort-Ebene. *Rot (Vitest), wenn* der
+   Link fehlt oder auf ein anderes Kind zeigt.
 5. Die Darstellung respektiert `prefersReducedMotion` und trägt bei jedem Status zusätzlich zur Farbe
-   Text oder Symbol.
+   Text oder Symbol. *Rot (Vitest), wenn* ein Balken seinen Status nur über die Farbklasse zeigt (Prüfung auf
+   zugänglichen Namen/Text je Balken).
 6. Kein neues npm-Paket für Diagramme wird installiert.
 7. Tätigkeits-Zeitleiste (Sitzungen/Käufe/Missionen als chronologisches Log) und eine dedizierte
    Klausur↔Übung-Ansicht sind **nicht** Teil dieser Story (Entscheidung 6).
 
 ## Schätzung
 
-**Größe: L** — Anker „eine DB-Umbau-Etappe wie E6" trifft von der Tragweite her nicht zu (keine
-Migration), aber die Kombination aus neuem Backend-Endpunkt (Gruppierungslogik Tag→Woche→Monat über
-mehrere Kinder), neuem additivem Contracts-DTO und **zwei** Frontend-Integrationsstellen mit
-handgebauter Visualisierung ohne Bibliothek übersteigt die M-Anker (ein vokabel-basierter Batch-Pfad,
-B-03) deutlich — passt aber noch in eine baubare Story ohne Split.
+**Größe: M** (bis 2026-11-15: L) — nach Entscheidung 8 bleibt **ein** neuer Endpunkt mit Gruppierung und
+**eine** Frontend-Einbaustelle mit handgebauten Balken. Vergleich: in der Breite wie B-538 (M: Regeln in einem
+Dienst, ein additives Vertragsstück, eine Oberfläche); mehr als B-01 (S), weil Backend und Frontend nachziehen;
+kein L mehr, weil die zweite Einbaustelle mit eigenem Lade-/Fehlerzustand entfällt und keine Migration entsteht.
 
 - **`wo`: beides** — Backend zuerst (API-First): neuer Endpunkt und Gruppierungslogik in
-  `ChildrenDashboardService`/einem neuen Service, danach die zwei Frontend-Integrationen
-  (`VaterDashboard.tsx`, `VaterLernstand.tsx`).
+  `ChildrenDashboardService`, danach die eine Frontend-Integration (`VaterDashboard.tsx`).
 - **`migration`: nein** — keine Schema-Änderung; die Aggregation liest ausschließlich bereits
   vorhandene, tagesgenaue Werte neu gruppiert.
 - **`vertragsbruch`: nein** — ein neuer, additiver Endpunkt mit neuem DTO; `daily-overview` und alle
@@ -201,19 +226,25 @@ B-03) deutlich — passt aber noch in eine baubare Story ohne Split.
 - **Risiken**: (a) SQLite-Aggregation über Kalenderwochen/-monate ist fehleranfällig bei Zeitzonen nahe
   Mitternacht (`CLAUDE.md` → „Zeit/UTC") — Wochen-/Monatsgrenzen strikt in UTC ziehen, wie die übrige
   Tageslogik. (b) Ohne Chart-Bibliothek kostet die Balkendarstellung mehr Handarbeit als ein
-  Library-Aufruf — akzeptiert (Entscheidung 4). (c) Die in Entscheidung 6 zurückgestellten Brocken
+  Library-Aufruf — akzeptiert (Entscheidung 4). (d) **Laufzeit:** `ComputeDayAsync` lädt je Aufruf die Positionen neu; bei 92 Tagen × Plänen × Kindern
+  zuerst messen (Integrationstest mit Zeitausgabe genügt), erst bei Bedarf die Positionen je Plan einmal laden –
+  nicht vorbeugend umbauen. (e) `EndpointCoverageGuard` (`Pugling.Api.Tests/EndpointCoverageGuard.cs:30`) zählt
+  die neue Action. (c) Die in Entscheidung 6 zurückgestellten Brocken
   (Tätigkeits-Zeitleiste, Klausur-Sicht) bleiben offene, potenziell wertvolle Folgeideen — bewusst nicht
   Teil dieser Schätzung.
-- **Angriffsplan**: (1) Contracts-DTO für die Periodenreihe (additiv); (2) Service-Erweiterung: bestehende
-  `ComputeDayAsync`-Schleife über einen Datumsbereich laufen lassen und je nach `granularity` zu Woche/
-  Monat gruppieren; (3) neuer Controller-Endpunkt `supervisor/children/overview` nach dem
-  Paging-/Sortier-Muster von `PlanOverviewController.Progress`; (4) Frontend: Umschalter + Balkenkomponente
-  einmal bauen, an zwei Stellen (`VaterDashboard.tsx`, `VaterLernstand.tsx`) einhängen.
+- **Angriffsplan** (Teilung a/b als Reihenfolge): (a1) Contracts-DTO für die Periodenreihe (additiv);
+  (a2) `ChildrenDashboardService`: die `ComputeDayAsync`-Schleife über den Bereich laufen lassen und nach
+  `granularity` über `PeriodStart` bzw. Monatsanfang gruppieren; (a3) Action unter `supervisor/children/overview`
+  (eigene Route neben `daily-overview`, `Roles.Supervisor`, Paging über Kinder mit `X-Total-Count`); (a4)
+  Client-Zeile, OpenAPI, `contract.ts`; (b1) Frontend: Umschalter + Balkenkomponente in `VaterDashboard.tsx`, Link
+  je Kindzeile zum Lernstand.
 - **Testweg**: neue Integrationstestklasse in `Pugling.Api.Tests` (mirrored an `ChildrenDashboardTests`/
   `PositionGoalOverviewTests`) für die Gruppierungslogik — je ein Fall für `day`/`week`/`month`, Grenztag
   an einer Kalenderwochen-/Monatsgrenze, `?childId=`-Filter und Paging/`X-Total-Count`. Frontend:
   Vitest-Komponententest für die neue Zeitachsen-Komponente (Umschalter rendert die richtige Periodenzahl
-  an Balken), zusätzlich Sichtprüfung über `/smoke-test` auf `/vater` und `/vater/kind/:id/lernstand`.
+  an Balken, Link je Kind, Text neben der Farbe). E2E: neue Spec `frontend/e2e/vater-zeitachse.spec.ts` (eine
+  Fläche je Spec): Kind erfüllt heute die Pflicht → Vater schaltet auf „Woche" → der Balken der laufenden Woche
+  nennt „1 von 1"; zählt als Rollengang. Reviewer `pugling-reviewer` und `frontend-reviewer`.
 
 ## Verlauf
 
@@ -236,3 +267,9 @@ B-03) deutlich — passt aber noch in eine baubare Story ohne Split.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-7 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): `skip`/`take`/`sort` in AK 1 blättern **über die Kinder** – eine Zeile je Kind, der Zeitraum (Woche/Monat) ist ein Filter, kein Blätter-Achse. Damit gibt es keine offene Produktfrage mehr; die Story ist nachtlauffähig, Teilen bleibt Schritt 0 (a: Endpunkt mit Integrationstests, b: die zwei Einbaustellen im Frontend). Paket NP-13.
 - **2026-11-05** — Prioritäts-Beleg von außen: Baobab zeigt Eltern in Echtzeit, was sitzt und was noch nicht – eine Ansicht „sitzt / sitzt nicht" ist die einfachste Form dieser Story. Vergleich in `docs/baobab-vergleich-plan.md` (Sammel-Story [B-374](B-374-baobab-vergleich-sammel-story.md)). Keine Änderung an Entscheidungen oder Schätzung.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt, kein Teil geliefert – einziger Supervisor-Überblick bleibt `daily-overview` (`ChildrenDashboardController.cs:13`, Aggregation `ChildrenDashboardService.cs:17-36`), Haushaltssicht weiter als Tabelle (`VaterDashboard.tsx:18,54`), Kind-Hub mit zwei Reitern (`VaterLernstand.tsx:34-55`), keine Chart-Bibliothek in `frontend/package.json`, kein Endpunkt `children/overview`. Die neue Wochen-Münzsicht `me/points/week` (`MeController.cs:42`, B-253) ist Student-seitig und deckt die Story nicht ab.
+- **2026-11-15** — Backlog-Lauf 2026-11-15: Abgleich am Code, bleibt `geschaetzt`. Zeilen aufgefrischt
+  (`ChildrenDashboardController.cs:13`, `ChildrenDashboardService.cs:17-50`, `VaterDashboard.tsx:53-75`,
+  `VaterLernstand.tsx:34-55`, `StudyPlansController.cs:48-49`, `PlanOverviewController.cs:58-75`); weiter kein
+  `children/overview`, keine Chart-Bibliothek in `frontend/package.json`. **Neu geschätzt L → M** durch zwei
+  Stakeholder-Entscheidungen im Auftrag des Nutzers: 8 (Kind-Hub-Reiter entfällt, Link in den Lernstand; Teilung a/b
+  bleibt Bau-Reihenfolge in einer Story) und 9 (Zeitraum ≤ 92 Tage). AKs mit roter Probe je Fall, E2E-Spec benannt.
