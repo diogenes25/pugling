@@ -167,7 +167,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
 
     /// <summary>
     /// The default pair of the exercise (B-552): "typed tests only" on a self-assessed effective default stage is never
-    /// gradable, and every position that leaves both open inherits it. Judged by the same rule as the position
+    /// gradable. A new position takes the switch from it and, without a stage of its own, the stage too. Changing the default
+    /// stage later is not checked against existing positions (B-552, decision 6) - their plan page shows them red. Judged by the same rule as the position
     /// (<see cref="RequireTypedTestValidation.UnreachableProblemText"/>), worded for the creator's two fields.
     /// </summary>
     private static string? DefaultPairProblem(IExerciseType? type, bool defaultRequireTypedTest, int? defaultStage) =>
@@ -401,7 +402,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, createTypedErr);
         // B-552: the pair itself must be reachable - every position that leaves both open inherits it.
         if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } createPairErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, createPairErr);
+            return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, createPairErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
             return this.ProblemWithCode(createTagErr.Error, createTagErr.Detail);
@@ -491,7 +492,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (RequireTypedTestValidation.ProblemText(exerciseType, body.DefaultRequireTypedTest) is { } updateTypedErr)
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } updatePairErr)
-            return this.ProblemWithCode(ApiErrors.ValidationError, updatePairErr);
+            return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, updatePairErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
             return this.ProblemWithCode(updateTagErr.Error, updateTagErr.Detail);

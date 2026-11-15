@@ -172,7 +172,7 @@ describe("Fehlermeldungen der Arcade", () => {
     // B-499: vier 400er aus Kauf und Einlösen (zu wenig Gems/Münzen, ein abgelaufenes Angebot, zu wenig Bestand) – das
     // 409-Tor aus B-411 sieht sie nicht.
     "insufficient_gems", "insufficient_coins", "shop_listing_inactive", "insufficient_inventory",
-    // B-543: der volle Bonus-Deckel vor einer Einmal-Übung – Start und Abgabe; dazu die drei Bonus-Sperren aus B-533,
+    // B-543: der volle Bonus-Deckel vor einer Übung fester Form – Start und Abgabe; dazu die drei Bonus-Sperren aus B-533,
     // deren englischer Satz ohne Arcade-Schlüssel nie erschien.
     "extra_cap_reached", "extra_training_locked", "extra_exercise_done", "extra_run_completed",
     // B-545: die Übung änderte sich während der Runde. B-527: keine Truhe wartet (Doppeltipp, zweiter Tab) – rot, wenn

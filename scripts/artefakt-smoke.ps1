@@ -22,7 +22,7 @@
 .EXAMPLE
     pwsh scripts/artefakt-smoke.ps1
 .EXAMPLE
-    pwsh scripts/artefakt-smoke.ps1 -SkipBuild -EmptyWebRoot   # muss mit Exit 1 enden
+    pwsh scripts/artefakt-smoke.ps1 -SkipBuild -EmptyWebRoot   # muss mit Exit 2 enden (rot an der Seitenprüfung)
 #>
 param(
     [int]$Port = 5299,
@@ -49,6 +49,10 @@ $probe = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $Port)
 try { $probe.Start() } catch { throw "Port $Port ist belegt – mit -Port einen freien wählen." } finally { $probe.Stop() }
 
 $process = $null
+# Restored in `finally`: run from an open prompt, the variables would otherwise point a later `dotnet run` at a deleted DB.
+$envNames = 'ASPNETCORE_ENVIRONMENT', 'ASPNETCORE_URLS', 'ConnectionStrings__Default', 'Jwt__Key', 'Seed__Enabled'
+$savedEnv = @{}; foreach ($n in $envNames) { $savedEnv[$n] = [Environment]::GetEnvironmentVariable($n) }
+$pageCheckFailed = $false
 try {
     New-Item -ItemType Directory -Path $work | Out-Null
 
@@ -106,15 +110,18 @@ try {
 
     foreach ($path in '/', '/sohn') {
         $page = Invoke-WebRequest -Uri "$base$path" -TimeoutSec 10 -SkipHttpErrorCheck
+        $pageCheckFailed = $true
         if ($page.StatusCode -ne 200) { throw "$path antwortete mit $($page.StatusCode) statt 200 – fehlt das gebaute Frontend in wwwroot?" }
         if ($page.Content -notmatch '<div id="root">') { throw "$path liefert kein gebautes Frontend (kein <div id=""root"">)." }
+        $pageCheckFailed = $false
         Write-Host "${path}: 200 mit dem gebauten Frontend"
     }
     Write-Host 'Artefakt-Smoke grün.'
 }
 catch {
     Write-Host "Artefakt-Smoke rot: $($_.Exception.Message)"
-    exit 1
+    # Exit 2 = rot an der Seitenprüfung (das, was die Gegenprobe mit -EmptyWebRoot sehen muss), 1 = alles andere.
+    exit ($pageCheckFailed ? 2 : 1)
 }
 finally {
     if ($process -and -not $process.HasExited) {
@@ -122,5 +129,6 @@ finally {
         $process.WaitForExit(10000) | Out-Null
     }
     Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $work
+    foreach ($n in $envNames) { [Environment]::SetEnvironmentVariable($n, $savedEnv[$n]) }
 }
 exit 0

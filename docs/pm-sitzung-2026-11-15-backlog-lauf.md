@@ -207,3 +207,60 @@ ersten Schreiben, Schreiben in einer Transaktion. B-39: die vorhandene Tagesrech
   Test-Gate-Hook-Skript wertet den Exit-Code von `dotnet test` aus, nicht die Zeile „Passed!“ – vorher nachsehen, ob es
   das schon tut.
 - **Bewusst ungedeckt:** gleichzeitige identische Zuweisungen (zwei Übungen möglich), dokumentiert.
+
+## Sprint 80 — Ziel, Umfang, Abnahme
+
+**Sprint-Ziel (Creator/Entwickler):** Der Creator kann jedem Vokabel-Wort eine Erklärung geben, die der Sohn erst nach
+seiner Antwort sieht, und jedes veröffentlichte Artefakt wird vor dem Betrieb mechanisch gestartet und befragt.
+**Umfang:** B-583 (vorher B-556), B-47. B-410 (neues Tor) bleibt draußen – auf Wunsch des Nutzers endet der Lauf mit
+diesem Sprint.
+- B-583: Spalte `ExerciseItems.Explanation` (Migration angehängt, gegen eine Kopie der echten DB angewendet, 305 Items
+  erhalten), Vertrag additiv, Feld im Bearbeiten-Dialog; der Lader-Feldabgleich (`laden.py`) kennt das Feld.
+- B-47: `scripts/artefakt-smoke.ps1` + CI-Job `artefakt` mit dauerhafter Gegenprobe (Exit 2 = rot an der Seitenprüfung).
+- Mutanten: 5/5 rot. Review: durch den Gesamt-Review (unten) mit abgedeckt.
+
+## Abschluss
+
+1. **Merge `auto/fertigstellung`** (`c3411038`): die parallele Sitzung hatte dieselben Kollisionen B-540…B-547 bemerkt
+   und auf **B-580…B-588** ausgewichen, während dieser Lauf auf B-553…B-557 umgezogen war. Übernommen sind **ihre**
+   Nummern (B-553→B-580 … B-557→B-584), repo-weit in Code, Tests und Doku; Verlaufszeilen beider Seiten zusammengeführt,
+   die Skill-Dateien `lehrwerk-aufbereiten` von ihrer Seite. Neu aus ihr: B-585 (Sammel-Story, hier geteilt), B-586,
+   B-587, B-588.
+2. **Gesamt-Review** (Backend + Frontend, alles seit `d41df00a`): kein Blocker. Behoben: die B-552-Ablehnung kam beim
+   Vater englisch an (eigener Code `typed_test_unreachable` + deutscher Satz, E2E prüft ihn); veraltete
+   `ReviewOutcome`-Doku; Umgebungsvariablen des Smoke-Skripts blieben in einer offenen Shell stehen; die Gegenprobe prüfte
+   nur „nicht 0“ statt „rot an der Seitenprüfung“ (jetzt Exit 2, eigener Port); feste Münzzahlen im Vater-Text;
+   veraltete Summaries/Kommentare. Bewusst offen (Entscheidung 6 von B-552): eine spätere Änderung der Übungs-Vorgabe
+   wird nicht gegen bestehende Positionen geprüft – die Plan-Seite zeigt sie rot; Doku sagt es jetzt so.
+3. **Belege nach dem letzten Edit:** volle Suite **1697/1697** (Exit-Code 0), Vitest **1114/1114**, `tsc -b` grün,
+   Gegenprobe lokal Exit 2; volle Playwright-Suite **158 passed** (Ports 5254/5194, frische Server).
+
+### Zähltabelle
+
+| Größe | Wert |
+| --- | --- |
+| N (offen zu Beginn, nach Merge von `main`) | 28 |
+| neu im Index (Lauf: B-558; parallele Sitzung: B-585, B-586, B-587, B-588) | 5 |
+| abgenommen | 8 (B-547, B-552, B-538, B-252, B-584, B-39, B-583, B-47) |
+| verworfen | 3 (B-581 geteilt, B-251 gemessen/gegenstandslos, B-585 geteilt) |
+| **offen am Ende (Index)** | **22** = 79 % von N – **Ziel ≤ 19 (0,7 × N) nicht erreicht** |
+| eingearbeitet (abgenommen + nach Messung verworfen) | 9 = 32 % von N – Ziel ≥ 30 % erreicht |
+
+Warum das Ziel verfehlt ist: der Lauf endete auf Wunsch des Nutzers nach Sprint 80 (Kontextgrenze), und die parallele
+Sitzung legte vier Stories an, die nach Auftrag mitzählen. Ohne sie stünde der Index bei 18.
+
+### Liste für den Menschen
+
+- **B-251 verworfen** (gegenstandslos durch B-470, gemessen in B-459) – Deine Entscheidung G-8 (lokales Modell) ist
+  damit beantwortet, nicht umgestoßen; eine Wortliste **ohne** Buch wäre eine neue Story.
+- **B-538, Entscheidung 6 wörtlich umgesetzt:** auch Selbsteinschätzungs-Läufe zählen für die Halbierung – am ersten Tag
+  einer neuen Liste zahlt die erste Auswahl-Runde darum nur 25 %. Bitte bestätigen oder auf „nur geprüfte Läufe“ ändern.
+- **Shop-Preise prüfen** (B-537 Entscheidung 7): Bonus getippt 3 statt 2, Deckel 90 statt 30.
+- **Am Gerät:** Vorlesen (B-252) und Klang/Haptik (B-31) – Knopf erscheint nur mit passender Stimme.
+- **B-539/B-580 (P1, ein Plan je Fach, Plan aus Unit):** geschätzt, aber L+L mit Vertragsbruch; B-539 sollte vorher in
+  Teil A/B geteilt werden (Vorschlag in der Story). Nicht autonom begonnen.
+- **B-410 (neues Tor):** bewusst nicht gebaut.
+- **Tor-Vorschläge aus den Retros** (nicht gebaut): `backlog-index.sh` meldet doppelte Ids; das Test-Gate wertet den
+  Exit-Code statt „Passed!“ (der `EndpointCoverageGuard` schlägt nur im Dispose an).
+- **Branch `auto/fertigstellung`** im Haupt-Checkout: ist mit diesem Lauf in `main`; der Haupt-Checkout trägt weiter
+  ungesicherte Änderungen (`docs/api-examples/catalog.md`, `.claude/launch.json`) der parallelen Sitzung.

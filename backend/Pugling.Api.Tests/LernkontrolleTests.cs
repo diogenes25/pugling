@@ -278,7 +278,7 @@ public class LernkontrolleTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         var problem = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Equal("typed_test_unreachable", problem.GetProperty("code").GetString());
         Assert.StartsWith(field + " cannot be combined with a self-assessed", problem.GetProperty("detail").GetString());
     }
 
@@ -303,7 +303,7 @@ public class LernkontrolleTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var refused = await AddAsync(father, planId, new { exerciseId, requireTypedTest = true, stageSchedule = selfAssessedLadder });
         Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
         var problem = await refused.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("validation_error", problem.GetProperty("code").GetString());
+        Assert.Equal("typed_test_unreachable", problem.GetProperty("code").GetString());
         Assert.Contains("self-assessed stage", problem.GetProperty("detail").GetString());
 
         var typedId = await TestApi.IdAsync(await AddAsync(father, planId, new { exerciseId, requireTypedTest = true, stage = 4 }));

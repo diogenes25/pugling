@@ -123,9 +123,8 @@ public record CardShownDto(int ItemIndex);
 /// so practice prepares for the strict test; the mark only tells the child it knew the word.
 /// </para>
 /// <para>
-/// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - today the rule hint of a rule task, on a
-/// right and on a wrong answer alike. It follows the rule of <see cref="Expected"/>: given only after the answer, and
-/// <c>null</c> where no atom was hit; <c>null</c> as well for content that has no explanation (vocabulary).
+/// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);
+/// <c>null</c> where no atom was hit; <c>null</c> for content that has no explanation.
 /// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,

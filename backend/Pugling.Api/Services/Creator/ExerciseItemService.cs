@@ -4,7 +4,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Creator;
 
-/// <summary>A desired item for reconciliation: which store vocabulary entry, with an optional exercise-local hint.</summary>
+/// <summary>A desired item for reconciliation: which store vocabulary entry, with an optional exercise-local hint and explanation (B-583).</summary>
 public readonly record struct DesiredItem(int VocabularyId, string? Hint, string? Explanation = null);
 
 /// <summary>

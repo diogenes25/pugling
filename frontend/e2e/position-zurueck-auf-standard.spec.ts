@@ -71,7 +71,7 @@ test("Der Vater setzt Inhalte zurück auf Standard und kann keine unerreichbare 
   await zeile.getByRole("button", { name: "Bearbeiten" }).click();
   await bearbeiten.getByRole("checkbox", { name: "nur getippte Tests" }).check();
   await page.getByRole("button", { name: "OK" }).click();
-  await expect(page.getByText(/requireTypedTest cannot be combined with a self-assessed stage/)).toBeVisible();
+  await expect(page.getByText("„Nur getippte Tests zählen“ braucht eine getippte Stufe – auf Selbsteinschätzung wäre die Pflicht nie erreichbar.")).toBeVisible();
   await page.getByRole("button", { name: "Abbrechen" }).click();
   await expect(zeile).not.toContainText("Ziel nicht erreichbar");
 });

@@ -227,6 +227,11 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError ReviewAlreadyInPlan = new("review_already_in_plan", 409, "Review already in plan.");
     /// <summary>
+    /// "Typed tests only" on a stage that is never graded (B-552): the goal could not be met. Its own code so the father's
+    /// form can name it in German (400).
+    /// </summary>
+    public static readonly ApiError TypedTestUnreachable = new("typed_test_unreachable", 400, "Typed test unreachable.");
+    /// <summary>
     /// The words come from another subject than the plan (B-584): the review belongs into a plan of their subject (400).
     /// Its own code because the father's form names this case in German - a generic validation error could not.
     /// </summary>

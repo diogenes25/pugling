@@ -169,11 +169,11 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // setting must not slip through just because the position itself left it unset (B-93).
         var effectiveRequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest;
         var createType = types.ByKey(exercise.Type);
-        if ((RequireTypedTestValidation.ProblemText(createType, effectiveRequireTypedTest)
-                ?? (createType is null ? null : RequireTypedTestValidation.UnreachableProblemText(createType,
-                    effectiveRequireTypedTest, dto.Stage ?? exercise.DefaultStage ?? createType.DefaultStage, dto.StageSchedule)))
-            is { } typedProblem)
+        if (RequireTypedTestValidation.ProblemText(createType, effectiveRequireTypedTest) is { } typedProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, typedProblem);
+        if (createType is not null && RequireTypedTestValidation.UnreachableProblemText(createType, effectiveRequireTypedTest,
+                dto.Stage ?? exercise.DefaultStage ?? createType.DefaultStage, dto.StageSchedule) is { } unreachableOnCreate)
+            return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, unreachableOnCreate);
 
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? 0, dto.UseLeitner ?? exercise.DefaultUseLeitner)
                 ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? 0)) is { } doseProblem)
@@ -293,7 +293,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             var scheduleAfter = dto.StageSchedule is { } sent ? (sent.Count > 0 ? sent : null) : pos.StageSchedule;
             if (RequireTypedTestValidation.UnreachableProblemText(patchType, dto.RequireTypedTest ?? pos.RequireTypedTest,
                     stageAfter ?? exercise.DefaultStage ?? patchType.DefaultStage, scheduleAfter) is { } unreachableProblem)
-                return this.ProblemWithCode(ApiErrors.ValidationError, unreachableProblem);
+                return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, unreachableProblem);
         }
 
         // The set check only judges a dose being set now: a list the creator switched to any order after it was assigned

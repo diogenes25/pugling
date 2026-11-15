@@ -93,6 +93,8 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // B-584: dieselbe Wortmenge zweimal wäre dieselbe Pflicht doppelt – auch, wenn es die Übung ist, aus der die Wörter stammen.
   review_already_in_plan: "Genau diese Wörter übt dieser Plan schon in einer Position.",
   review_subject_mismatch: "Diese Wörter gehören zu einem anderen Fach als dieser Plan.",
+  // B-552: nennt nur die Sperre – welche Stufe getippt prüft, steht in der Feldhilfe.
+  typed_test_unreachable: "„Nur getippte Tests zählen“ braucht eine getippte Stufe – auf Selbsteinschätzung wäre die Pflicht nie erreichbar.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
   extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
   extra_cap_reached: "Dein Bonus-Deckel ist voll – diese Übung würde dir jetzt nur die Lösungen zeigen, ohne Münzen. Darum geht sie gerade nicht.",

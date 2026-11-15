@@ -369,7 +369,7 @@ function BonusSection({ child, onSaved }: { child: ChildResponse; onSaved: () =>
       <h3 className="h-section">Bonus-Training</h3>
       <p className="sub">
         Sobald die Tagesziele erfüllt sind (Wochenziele zählen dafür nicht – ohne Tagesziele zählen alle Ziele), kann {child.name} Extra-Übungen zum
-        aktuellen Thema spielen. Münzen gibt es nur für geprüfte Antworten (Auswahl 1, Tippen 3 je Treffer); jede weitere
+        aktuellen Thema spielen. Münzen gibt es nur für geprüfte Antworten (Tippen bringt mehr als Auswahl); jede weitere
         Runde derselben Übung am selben Tag zahlt die Hälfte der vorigen, die vierte nichts mehr. Vokabeln werden mit jeder
         Runde schwerer.
       </p>

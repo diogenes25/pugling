@@ -228,8 +228,9 @@ jobs:
       - name: Gegenprobe – leeres wwwroot muss rot sein
         shell: pwsh
         run: |
-          ./scripts/artefakt-smoke.ps1 -SkipBuild -EmptyWebRoot
-          if ($LASTEXITCODE -eq 0) { throw 'Die Gegenprobe war grün: der Smoke erkennt ein fehlendes Frontend nicht.' }
+          ./scripts/artefakt-smoke.ps1 -SkipBuild -EmptyWebRoot -Port 5298
+          # Exit 2 heißt: rot an der Seitenprüfung. 0 wäre ein blinder Smoke, 1 ein anderer Fehler – beides trägt nichts.
+          if ($LASTEXITCODE -ne 2) { throw "Die Gegenprobe endete mit $LASTEXITCODE statt 2 (rot an der Seitenprüfung)." }
           exit 0
 
   # Etappe D3. Die Doku ist in diesem Projekt Produkt, nicht Beiwerk (docs/api-examples ist sogar
