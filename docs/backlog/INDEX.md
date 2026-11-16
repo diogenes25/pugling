@@ -12,35 +12,33 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (22)
+### Offen (20)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `geschaetzt` | P1 | L | beides | Migration + Vertrag |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
+| [B-589](B-589-import-setzt-buchseite.md) | Import und KI-Creator setzen die Buchseite und löschen sie nicht | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `idee` | P2 | — | — | — |
-| [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Wunsch | `idee` | P2 | — | — | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `idee` | P2 | — | — | — |
-| [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Unit und Seite), und das Kind sieht, ob der Stoff schon durchgenommen ist | Wunsch | `idee` | P2 | — | — | — |
-| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `geschaetzt` | P2 | M | backend | — |
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist | Defekt | `idee` | P3 | — | — | — |
-| [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
+| [B-591](B-591-ungepruefte-antwort-loescht-fehler-merker.md) | Löscht eine ungeprüfte „gewusst"-Antwort den Fehler-Merker der milden Abstufung? | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-250](B-250-stundenplan-in-der-tagesmission.md) | Der Stundenplan gewichtet die Tagesmission | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
-| [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Wunsch | `idee` | P3 | — | — | — |
 | [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
+| [B-590](B-590-lehrwerk-bezug-im-vater-plan.md) | Lehrwerk-Bezug und „schon durchgenommen" in Vater-Plan und Lernstand | Wunsch | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (501)</summary>
+<summary>Abgenommen (504)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -173,6 +171,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-214](B-214-store-zeile-per-teilstring-und-position.md) | Die Store-Zeile wird per Teilstring **und** Position gegriffen — dieselbe Bauart wie B-153 | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-215](B-215-typ-manifest-ohne-fehlerkanal.md) | Das Typ-Manifest schluckt seinen Ausfall — und niemand kann ihn anzeigen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-216](B-216-wiederholknopf-haengt-sich-aus.md) | Zwei Wiederhol-Knöpfe verschwinden im Moment des Klicks unter dem Finger | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `abgenommen` | P3 | M | beides | Migration |
 | [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `abgenommen` | P3 | M | backend | Migration |
 | [B-224](B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md) | Der Verlags-Baustein trägt auf der Lehrwerke-Seite einen zweiten Meldungsplatz | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-225](B-225-reihe-anlegen-schweigt-bei-leerem-namen.md) | „Reihe anlegen“ ist bei leerem Namen klickbar und schweigt | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -355,6 +354,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-409](B-409-verwendung-zeigt-keine-ziel-etappen.md) | „Verwendung" an der Übung zeigt keine Ziel-Etappen – der Verweis in der Fachwechsel-Meldung ist darum nur halb wahr | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `abgenommen` | P2 | M | backend | — |
 | [B-411](B-411-tor-409-codes-haben-deutschen-text.md) | Tor: jeder 409-Code einer Creator-/Supervisor-Action hat einen deutschen Text oder einen begründeten Ausnahmeeintrag | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-412](B-412-beste-zuerst-richtung-unbelegt.md) | „beste Bewertung zuerst" im Planbau ist nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst" | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-413](B-413-loeschsperre-unit-verweist-auf-verwendung-ohne-unit-ziele.md) | Unit/Reihe löschen meldet `exercise_in_use` mit Verweis auf „Verwendung" – Ziel-Etappen auf der Unit stehen dort nie | Defekt | `abgenommen` | P2 | S | beides | — |
@@ -511,6 +511,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `abgenommen` | P2 | S | frontend | — |
 | [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `abgenommen` | P3 | S | beides | Migration |
 | [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `abgenommen` | P2 | M | beides | — |
+| [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite) | Wunsch | `abgenommen` | P2 | S | beides | Migration |
 | [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -559,7 +560,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (183)
 
-**Nachgeschaut: 474 von 501 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 27 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 480 von 504 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 24 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -748,7 +749,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (27) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (24) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -756,9 +757,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | Id | Story |
 | --- | --- |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
-| [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten |
+| [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
-| [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder |
+| [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
 | [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | Der Vokabel-Tipp zeigt den Artikel des Frageworts, nicht einen Hinweis auf die Lösung |
@@ -769,7 +770,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-463](B-463-ki-lehrplan-deckt-ein-sechstel-der-wortliste.md) | Der KI-Lehrplan übt 20 von 124 Wörtern der Unit, ohne Karteikasten und nur Englisch → Deutsch |
 | [B-464](B-464-access-datenstand-aufraeumen.md) | Der Access-Datenstand trägt Trümmer des ersten Laufs, und das Kind zeigt auf das falsche Buch |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server |
-| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben |
 | [B-476](B-476-kartenstufe-steigt-mit-dem-leitner-fach.md) | Die Stufe einer Vokabelkarte steigt mit ihrem Leitner-Fach: erst umdrehen, dann auswählen, dann schreiben |
@@ -779,9 +779,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
-| [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn |
-| [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum |
-| [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position |
+| [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite) |
 
 </details>
 
@@ -937,9 +935,10 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
+| [B-591](B-591-ungepruefte-antwort-loescht-fehler-merker.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (38)</summary>
+<summary>Verworfen (40)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -966,6 +965,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-33](B-33-azure-publish-profile.md) | Azure-Secret `AZURE_WEBAPP_PUBLISH_PROFILE` fehlt | bewusste Nicht-Aufgabe für eine Code-Sitzung (Nutzer-Entscheidung) |
 | [B-34](B-34-sitzungsbonus-dauer.md) | „Dauer durchgehend gelernt" als eskalierender Sitzungs-Bonus | durch MinutesPracticed-Missionen abgelöst |
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; B-375 abgenommen, B-378 verworfen, die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/baobab-vergleich-plan.md → [B-376, B-377] |
+| [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): ein Sammelalbum für Gems trägt nichts zur Pflicht-Kernidee bei und überschneidet sich mit den Skins und B-221 |
 | [B-378](B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: eine mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung? | gegenstandslos: die Selbsteinschätzungs-Stufe gibt es schon (B-70), Vorlesen kommt mit B-252; eine Selbsteinschätzung, die auf den Leitner-Stand zählt, wäre ein Selbstbetrugs-Weg (Entscheidung im Auftrag des Nutzers, 2026-11-05) |
 | [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | gemessen 2026-11-13: bei 393x830 liegt die Unterkante des Meldungsplatzes nach 'Reihe anlegen' bei 507,75 px, also im Bild - die Vorbedingung der Entscheidung trifft nicht zu, kein Code noetig |
@@ -974,6 +974,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-503](B-503-lernstand-ueberlebt-loeschen.md) | Prüfauftrag: soll der Lernstand der Kinder das Löschen einer Übung oder Vokabel überleben? | Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen. |
 | [B-537](B-537-lehrplan-als-kapitel-pflicht-und-kuer.md) | Lehrplan als Kapitel: tägliche Pflicht plus großer Kür-Pool mit abnehmenden Münzen | geteilt — gegrillt am 2026-11-15 (elf Entscheidungen hier), gebaut wird in drei unabhängigen Teilen: Bonus-Münzregeln, ein Plan je Fach, Plan aus Unit → [B-538, B-539, B-580] |
 | [B-581](B-581-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-582, B-583, B-584 führt der Index einzeln, der Plan liegt in docs/rockettutor-vergleich-plan.md → [B-582, B-583, B-584] |
+| [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): setzt die ungebaute Probeklausur B-249 voraus; wird mit B-249 neu angelegt, falls diese gebaut ist |
 | [B-585](B-585-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-586, B-587 führt der Index einzeln, der Plan liegt in docs/sofatutor-vergleich-plan.md → [B-586, B-587] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |

@@ -74,6 +74,9 @@ Positions-Editor, Leitner aus, Lehrwerk-Weg, Full-Flow): **8 passed**.
 
 - **Nachschau:** die sechs im Lauf vom 2026-11-15 abgenommenen Stories ohne `nachgeschaut` (B-252, B-39, B-47, B-538,
   B-583, B-584) geprüft – sauber, `nachgeschaut: 2026-11-16` gesetzt.
+- **Durchrutscher aus Sprint 79:** die volle Playwright-Suite (159/160) fand `vater-von-null.spec.ts:460` rot – der
+  mit B-39 eingeführte Link „Lernstand von <Kind>" macht den Teilstring-Treffer auf den Kindnamen mehrdeutig. Die
+  Nachschau hatte das Frontend nur gestreift. Spec auf `exact: true` korrigiert, danach 1 passed; Vermerk in B-39.
 - **Was rutschte:** der Bau von B-219 schrieb einen neuen Zustand (`LastMissed`) in einem geteilten Helfer
   (`ApplyReview`), ohne jeden Aufrufer darauf zu prüfen, ob dessen Antwort geprüft ist. Das Review fand es, kein Tor.
 - **Was es jetzt deckt:** eine Regel in Schritt 4 des `pm-loop`-Skills – wer in einem geteilten Helfer neuen Zustand

@@ -457,5 +457,5 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await wieder.locator("#pin").fill(FATHER.pin);
   await wieder.getByRole("button", { name: "Anmelden" }).click();
   await expect(wieder.getByRole("heading", { name: "Kinder" })).toBeVisible();
-  await expect(wieder.getByRole("link", { name: CHILD.name })).toBeVisible();
+  await expect(wieder.getByRole("link", { name: CHILD.name, exact: true })).toBeVisible();
 });

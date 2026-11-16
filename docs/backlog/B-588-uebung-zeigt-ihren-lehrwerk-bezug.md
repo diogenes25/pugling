@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/katalog, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/katalog, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Lehrwerk-Bezug, Buchseite zur Übung, schon durchgenommen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -221,3 +221,4 @@ Vater-Plan und Lernstand (Entscheidungen 7, 8); (b) `lehrwerk-aufbereiten`/`lade
 - AK 8, Pille mit Seite → „zeigt Reihe, Unit und Seite als Pille – und ohne Seite keine" (`frontend/src/sohn/SohnHome.test.tsx:143`), M14 `{false && (` (`SohnHome.tsx:304`) → rot; Fall ohne Seite keine Pille: dieselbe Datei:Zeile, M15 `{true && (` → rot.
 - AK 9 bleibt Absichtserklärung ohne Test: `TestDtos.cs`/`PracticeDtos.cs` sind unverändert.
 - Mutanten-Probe (`.claude/scripts/mutant-probe.py`, Debug), gemessen an `58fec04b + Arbeitsbaum geändert`, 2026-11-16 08:29: M1–M15 erwartet rot, gemessen rot, jeweils am benannten Test; Grundlinie nach dem Zurückspielen grün.
+- **2026-11-16** — abgenommen in Sprint 81 (6e459ecb): Review-Funde behoben, volle Suite 1715/1715, Rollengang `sprint-81-rollengang.spec.ts` 2 passed; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md`.

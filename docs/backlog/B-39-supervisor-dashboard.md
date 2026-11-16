@@ -302,3 +302,4 @@ kein L mehr, weil die zweite Einbaustelle mit eigenem Lade-/Fehlerzustand entfä
     `vater-zeitachse.spec.ts` (Kind erfüllt heute → Tag-Raster 14 Balken, heutiger „1 von 1 Zielen – Pflicht geschafft“,
     Monat ebenso, Link) im Lauf mit **13 passed**. Reviewer: `pugling-reviewer`, `frontend-reviewer`.
 - **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): In unabhängigen Bewertungen loben Eltern bei sofatutor vor allem, dass sie den Fortschritt je Kind sehen (Aktivitäten und Merklisten je Geschwisterprofil). Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)). Keine Änderung an Entscheidungen oder Schätzung.
+- **2026-11-16** — Durchrutscher bei der Nachschau gefunden: der neue Link „Lernstand von <Kind>" (c2353a57) machte `e2e/vater-von-null.spec.ts:460` per Teilstring-Treffer rot; die volle E2E-Suite lief bei der Abnahme nicht. Im Lauf 2026-11-16 auf `exact: true` korrigiert.

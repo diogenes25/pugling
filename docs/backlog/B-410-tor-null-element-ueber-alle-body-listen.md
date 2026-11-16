@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: [Tor null-Element je Body-Liste]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Aufräumen
 groesse: M
@@ -149,3 +149,4 @@ Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahm
 - **2026-11-16** — AK 3, `List<T?>` bleibt still → `Nullbare_Elementliste_Meldet_Keinen_Fehler` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:128`; kein Vertrag trägt heute `List<T?>`, darum über einen Listen-Body), M4 (`ElementNotNull` ignoriert die Nullability, `NullElementGuardFilter.cs:100`) → rot.
 - **2026-11-16** — AK 4, `List<List<T>>` in Ausnahmeliste `KnownBlindShapes` mit Grund, Fund macht das Haupttor rot (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:71`); Erkennung belegt durch `Liste_In_Liste_Wird_Gemeldet` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:138`), M5 (Erkennung abgeschaltet, `backend/Pugling.Api.Tests/NullElementGuardTests.cs:209`) → rot.
 - **2026-11-16** — Mutanten-Probe (`mutant-probe.py`, Debug, an `73de5380` + Arbeitsbaum): M1–M8 erwartet rot, gemessen rot; Grundlinie nach dem Zurückspielen grün.
+- **2026-11-16** — abgenommen in Sprint 81 (6e459ecb): Review-Funde behoben, volle Suite 1715/1715, Rollengang `sprint-81-rollengang.spec.ts` 2 passed; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md`.
