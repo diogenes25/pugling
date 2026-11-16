@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator]
 aliases: [laden.py Buchseite, bookPages beim Import]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -153,3 +153,4 @@ Mutant mit roter Probe. Kein `dotnet`-Anteil, kein Server.
 - **2026-11-16** — AK 5, `--pruefen` → `test_pruefen_lehnt_ungueltige_seite_ab` (`test_laden.py:155`), Mutant
   „Prüfung abgeschaltet (`if False and …`)" → rot. Offen bis `abgenommen`: Review und ein Lauf gegen eine
   Wegwerf-Instanz.
+- **2026-11-16** — abgenommen (77b16cbc): Review gegen den echten Vertrag sauber (GET-Detail `bookPages`, typisierter PUT, Längenregel); 10/10 unittest, 6/6 Mutanten rot. Rollengang Creator nur offline gegen den Fake-Server – der nächste echte `laden.py --ersetzen`-Lauf ist die Probe an der App.

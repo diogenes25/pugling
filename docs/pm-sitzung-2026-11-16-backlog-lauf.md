@@ -101,9 +101,15 @@ Positions-Editor, Leitner aus, Lehrwerk-Weg, Full-Flow): **8 passed**.
 | neu angelegt | 3 (B-589, B-590, B-591) |
 | **offen am Ende (Index)** | **20** |
 
+### Nachtrag: B-589 auf Wunsch des Nutzers
+
+Nach dem Abschluss freigegeben und gebaut: `laden.py` liest vor einem PUT die gespeicherte Seite aus
+`GET /creator/exercises/{id}` und schickt sie mit; neues optionales Feld `seiten` je Übung in `uebungen.json`
+(gewinnt, `--pruefen` prüft 1–20 Zeichen). KI-Creator ausgeklammert (macht kein PUT). Offen ist damit noch 19.
+
 ### Liste für den Menschen
 
-1. **B-589 zuerst** (`Defekt`, P2): bis es gebaut ist, löscht jeder `laden.py --ersetzen`-Lauf eine von Hand gepflegte
+1. ~~**B-589 zuerst**~~ (Nachtrag: gebaut) (`Defekt`, P2): bis es gebaut ist, löscht jeder `laden.py --ersetzen`-Lauf eine von Hand gepflegte
    Buchseite. Bis dahin Seiten erst nach dem letzten Import pflegen.
 2. **B-591 entscheiden** (Frage): soll eine ungeprüfte „gewusst"-Antwort auf einer nicht getippten Tagesstufe den
    Fehler-Merker der milden Abstufung löschen dürfen?

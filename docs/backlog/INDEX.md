@@ -12,14 +12,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (20)
+### Offen (19)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind | Wunsch | `geschaetzt` | P1 | L | beides | Migration + Vertrag |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
-| [B-589](B-589-import-setzt-buchseite.md) | Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch | Defekt | `in-arbeit` | P2 | XS | doku | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
@@ -38,7 +37,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-590](B-590-lehrwerk-bezug-im-vater-plan.md) | Lehrwerk-Bezug und „schon durchgenommen" in Vater-Plan und Lernstand | Wunsch | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (504)</summary>
+<summary>Abgenommen (505)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -512,6 +511,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `abgenommen` | P3 | S | beides | Migration |
 | [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite) | Wunsch | `abgenommen` | P2 | S | beides | Migration |
+| [B-589](B-589-import-setzt-buchseite.md) | Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch | Defekt | `abgenommen` | P2 | XS | doku | — |
 | [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -560,7 +560,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (183)
 
-**Nachgeschaut: 480 von 504 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 24 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 480 von 505 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 25 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -749,7 +749,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (24) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (25) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -780,6 +780,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 | [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite) |
+| [B-589](B-589-import-setzt-buchseite.md) | Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch |
 
 </details>
 
