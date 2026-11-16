@@ -219,6 +219,16 @@ describe("Blatt", () => {
     expect(blatt.textContent).not.toContain("💡");
   });
 
+  // B-598: eine aufgegebene Lernkarte hat keine eigene Antwort, und sie kommt am Rundenende wieder. Rot, wenn eine leere
+  // Antwort durchgestrichen dastünde oder der Hinweis auf die Wiederholung fehlte bzw. ohne sie erschiene.
+  it("nennt bei einer aufgegebenen Lernkarte keine Antwort und sagt, dass sie wiederkommt", () => {
+    const blatt = zeige(r({ richtig: false, gegeben: "", loesung: "walk", nochmal: true }));
+    expect(blatt.querySelector("s")).toBeNull();
+    expect(blatt.textContent).toContain("Lösung: walk");
+    expect(blatt.textContent).toContain("Das Wort kommt am Ende der Runde noch einmal.");
+    expect(zeige(r({ richtig: false, gegeben: "x", loesung: "y" })).textContent).not.toContain("noch einmal");
+  });
+
   it("ist selbst keine Live-Region und führt mit Weiter weiter", () => {
     // Rot, wenn das Blatt `role="status"` trüge: es entsteht zusammen mit seinem Text und bliebe stumm (B-134) –
     // angesagt wird über die Region des Bildschirms.

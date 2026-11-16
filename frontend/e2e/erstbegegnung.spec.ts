@@ -1,10 +1,10 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-import { sohnLogin, pfadStart } from "./helpers";
+import { lernkarteDurchspielen, sohnLogin, pfadStart } from "./helpers";
 
 /*
  * NP-24 „Erst lesen, dann prüfen" als Rollengang des Sohnes – mit einem FRISCHEN Plan, denn nur dort gibt es Wörter, die
  * er nie gesehen hat (Retro-Vorschlag CB vom 2026-11-08). Drei Wege in einer Fläche, weil sie ein Erlebnis sind:
- * - B-419: die erste Runde zeigt jedes neue Wort mit Lösung, das Ende sagt „3 neue Wörter kennengelernt" und bietet die
+ * - B-419/B-598: die erste Runde lernt jedes neue Wort auf der Lernkarte, das Ende sagt „3 neue Wörter kennengelernt" und bietet die
  *   Abfrage an.
  * - B-476: mit Leitner fragt die zweite Runde als Karteikarte – umdrehen, „Gewusst!"/„Nochmal" –, nicht mit Antwortfeld;
  *   getippt wird erst ab dem dritten Fach.
@@ -56,13 +56,14 @@ async function setUp(request: APIRequestContext, page: Page, tag: string, useLei
   await pfadStart(page, "practice");
   const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
 
-  // ---------- B-419: Runde 1 zeigt, statt zu fragen ----------
+  // ---------- B-419/B-598: Runde 1 lernt jedes neue Wort auf der Lernkarte, statt es abzufragen ----------
   for (const [i, [front, back]] of WORDS.entries()) {
     await expect(counter).toHaveText(`Karte ${i + 1} / 3`);
-    await expect(page.getByText(front, { exact: true })).toBeVisible();
-    await expect(page.getByText(`→ ${back}`)).toBeVisible();
+    // Deutsch steht da, das Fremdwort erst nach dem Aufdecken.
+    await expect(page.getByText(back, { exact: true })).toBeVisible();
+    await expect(page.getByText(`→ ${front}`)).toHaveCount(0);
     await expect(page.getByRole("textbox")).toHaveCount(0);
-    await page.getByRole("button", { name: "Weiter →" }).click();
+    expect(await lernkarteDurchspielen(page)).toBe(front);
   }
   await expect(page.getByText("3 neue Wörter kennengelernt")).toBeVisible();
   await page.getByRole("button", { name: /Jetzt abfragen/ }).click();

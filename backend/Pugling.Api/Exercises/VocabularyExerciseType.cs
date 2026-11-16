@@ -72,6 +72,12 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </summary>
     public override bool IsDisplayOnlyStage(int stage) => (TestStage)stage == TestStage.ShowBoth;
 
+    /// <inheritdoc/>
+    public override bool IsLearnCardStage(int stage) => (TestStage)stage == TestStage.LearnCard;
+
+    /// <summary>B-598: a new word is met on the learn card - seen, copied, recalled - instead of a bare "both sides".</summary>
+    public override int? IntroductionStage => (int)TestStage.LearnCard;
+
     /// <summary>
     /// The vocabulary ladder (B-476): box 1 turns the card over and asks "did you know it?", box 2 offers a choice,
     /// from box 3 on the card is asked at the target. Recognition before recall - typing a word the child has only
@@ -87,10 +93,13 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
 
     /// <summary>
     /// B-597: the forward card of a word asked both ways stops at the choice - its reversed sibling is the one that is
-    /// written, and two cards of one word must not ask the same thing.
+    /// written, and two cards of one word must not ask the same thing. The learn card writes the learnt word as well
+    /// (B-598), so a recognition card meets its word on "both sides" instead.
     /// </summary>
     public override int CardCeiling(ContentItem item, int stage) =>
-        item.RecognitionOnly && IsWritingStage((TestStage)stage) ? (int)TestStage.MultipleChoice : stage;
+        !item.RecognitionOnly ? stage
+        : (TestStage)stage == TestStage.LearnCard ? (int)TestStage.ShowBoth
+        : IsWritingStage((TestStage)stage) ? (int)TestStage.MultipleChoice : stage;
 
     /// <summary>
     /// B-597: on a writing stage the child writes the learnt word, whatever the exercise's direction - German shown,
@@ -100,17 +109,20 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         IsWritingStage((TestStage)stage) && item.Written is { } written ? written : item;
 
     /// <summary>
-    /// The stages on which the child writes the word (B-597): letter boxes, letter tiles, free text and the dictation.
-    /// The choice is no writing stage - it taps, and "walk - what is that?" trains recognition.
+    /// The stages on which the child writes the word (B-597): letter boxes, letter tiles, free text and the dictation - and
+    /// the learn card, whose copy and recall write the learnt word (B-598). The choice is no writing stage - it taps, and
+    /// "walk - what is that?" trains recognition.
     /// </summary>
     public static bool IsWritingStage(TestStage stage) =>
-        stage is TestStage.LetterBoxes or TestStage.LetterScramble or TestStage.FreeText or TestStage.Audio;
+        stage is TestStage.LetterBoxes or TestStage.LetterScramble or TestStage.FreeText or TestStage.Audio
+            or TestStage.LearnCard;
 
     // The enum values are not ordered by difficulty (multiple choice came last), so the ladder ranks them itself.
     // Everything the child produces from memory shares the top rank: none of it is a rung below another target.
+    // A learn-card day plays every card as one (B-598, decision 1: also for shaky words), so it ranks with the display.
     private static int Difficulty(TestStage stage) => stage switch
     {
-        TestStage.ShowBoth => 0,
+        TestStage.ShowBoth or TestStage.LearnCard => 0,
         TestStage.SelfAssess => 1,
         TestStage.MultipleChoice => 2,
         _ => 3,
@@ -171,6 +183,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     public override IReadOnlyList<StageOption> StageOptions { get; } =
     [
         new((int)TestStage.ShowBoth, "Beide zeigen (Kennenlernen)"),
+        new((int)TestStage.LearnCard, "Lernkarte (sehen, abschreiben, erinnern)"),
         new((int)TestStage.SelfAssess, "Selbsteinschätzung"),
         new((int)TestStage.MultipleChoice, "Multiple-Choice"),
         new((int)TestStage.LetterBoxes, "Buchstabenkästchen"),

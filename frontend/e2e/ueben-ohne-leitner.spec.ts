@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { lernkarteDurchspielen, sohnLogin } from "./helpers";
 
 /*
  * B-454: eine prüfbare Vokabel-Position OHNE Leitner-Kasten bot dem Kind nur „TEST" – es wurde Wörter gefragt, die es
@@ -38,8 +38,9 @@ test("Ohne Leitner-Kasten kann das Kind trotzdem erst üben, dann testen", async
   await page.locator(".pfad-knoten").click();
   const blatt = page.getByRole("dialog");
   await expect(blatt.getByRole("link", { name: "🎯 Test", exact: true })).toBeVisible();
-  // Der Kern: „Los" führt zuerst ins Üben, nicht in den Test – und zeigt das Wort mit Lösung, bevor gefragt wird.
+  // Der Kern: „Los" führt zuerst ins Üben, nicht in den Test – und zeigt das Wort mit Lösung, bevor gefragt wird: die
+  // Lernkarte (B-598) zeigt das deutsche Wort und deckt das Fremdwort auf.
   await blatt.getByRole("link", { name: "▶ LOS", exact: true }).click();
-  await expect(page.getByText(`le pont ${RUN}`, { exact: true })).toBeVisible();
-  await expect(page.getByText("→ die Brücke")).toBeVisible();
+  await expect(page.getByText("die Brücke", { exact: true })).toBeVisible();
+  expect(await lernkarteDurchspielen(page)).toBe(`le pont ${RUN}`);
 });

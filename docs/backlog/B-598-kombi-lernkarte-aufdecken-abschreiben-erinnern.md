@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte, Kombi-Karte, Abschreiben und Erinnern]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -238,3 +238,115 @@ Vergleichsregeln in TypeScript mit gemeinsamem Testfall-Satz.
 - **2026-11-16** — gegrillt mit dem Vater: zehn Entscheidungen, Akzeptanzkriterien final.
 - **2026-11-16** — geschätzt: L, beides, keine Migration (zwei Historien-Zeilen statt neuer Spalte, Risiko 4),
   kein Vertragsbruch; zwölf Stellen der Regel „Anzeige-Stufe“ als Kern der Arbeit.
+- **2026-11-16** — in Arbeit (Sprint 82). **Risiko 4 entschieden ohne Migration:** Der einzige Leser von
+  `ItemReviewEvent` ist der Verlaufs-Endpunkt `…/vocabulary-progress/{itemId}/history` – er listet, zählt nicht;
+  Lernstand und Auswertungen lesen `ItemProgress`. Zwei Zeilen mit `countsForMastery: false` tragen also, keine Spalte.
+- **2026-11-16** — **Gebaut:** `TestStage.LearnCard` (8), im Manifest „Lernkarte (sehen, abschreiben, erinnern)“ neben
+  „Beide zeigen“. Am Typ: `IsLearnCardStage` (Risiko 1: eigene Eigenschaft, weder Anzeige- noch Wertungsstufe) und
+  `IntroductionStage` (Risiko 2: der Typ nennt seine Einführungsstufe; Vokabeln die Lernkarte, sonst die erste
+  Anzeigestufe). Die Lernkarte ist eine Schreibstufe aus B-597 (Risiko 6): deutsch gezeigt, das Fremdwort als Lösung;
+  die Vorwärtskarte einer `both`-Liste lernt ihr Wort auf „Beide zeigen“, die Rückwärtskarte auf der Lernkarte. Übungs-
+  Controller: `LearnCardReviewAsync` nimmt beide Ergebnisse in einem Aufruf, schreibt zwei Historien-Zeilen
+  (Selbsteinschätzung mit `WasKnown`, Lernkarte mit `GivenAnswer`, aufgegeben = `null`), setzt `IntroducedAt`, bucht
+  weder Münze noch Treffer noch Box; aufgegeben oder falsch hängt den Index **einmal** an die Rundenfolge (Risiko 3: die
+  zweite Stelle eines Index in `Order` ist die Wiederholung und wird wieder als Lernkarte gespielt, nie erneut angehängt;
+  `BuildCard` adressiert dafür die Position in der Folge). Vertrag additiv: `PracticeCard.LearnCard`,
+  `RevealSpeechLang`/`RevealAudioUrl` (Vorlesen des Lösungsworts, Entscheidung 10), `ReviewOutcome.RepeatsAtEnd`.
+  Frontend: `Lernkarte.tsx` mit vier Schritten; die Abschreib-Prüfung nutzt `normalizeAnswer`, das die bestehende
+  gemeinsame Fallliste (`docs/fallliste-antwortvergleich.json`, B-493) gegen xUnit, Vitest und den Lader hält – kein
+  zweiter Satz nötig (Entscheidung 5); die Funktion liegt dafür jetzt in `src/lib/`. Die Runde hängt die Karte bei
+  `repeatsAtEnd` selbst an (sie lädt ihre Karten am Anfang).
+- **2026-11-16** — **Die Stellen der Regel „Anzeige-Stufe“ einzeln entschieden** (Auftrag, Risiko 1):
+  - `PositionPracticeController.IsSelfClaimRung` – schließt die Lernkarte aus (sie ist keine Selbst-Behauptung).
+  - `BuildCard`, Flag `DisplayOnly` – bleibt `false`; neues Flag `LearnCard`, `Introduction` wie bisher (Wiederholung:
+    `false`).
+  - `Review`: `displayOnly`, `noVerdict` (B-433), `scored`, `RecordAsync` – erreicht die Lernkarte nicht mehr; sie
+    zweigt vorher in `LearnCardReviewAsync` ab, wo nichts zahlt.
+  - `PositionTestsController.Start` – vor der Anzeige-Prüfung bildet `TestTargetStage` den Lernkarten-Tag (und die
+    frei gewählte Stufe des Vaters) auf die Zielstufe ab (Entscheidung 9).
+  - `PositionPlayService.LearningCheckOf` – bewertet Lernkarten-Abschnitte an der Zielstufe (der Vater sieht „getippt“).
+  - `PositionPlayService.IntroductionStage` – fragt den Typ; `IsIntroduction` unverändert (eine Lernkarte ist keine
+    Anzeigestufe, ein Lernkarten-Tag führt neue Karten wie jede Stufe ein – als Lernkarte).
+  - `PositionPlayService.CardStage` – Info-Modus auf einem Lernkarten-Tag zeigt „Beide zeigen“ (Entscheidung 9);
+    die Leiter stuft die Lernkarte wie „Beide zeigen“ ein, damit ein Lernkarten-Tag jedes Wort als Lernkarte spielt.
+  - `PositionProgressService.IsDisplayOnlyDay` – unverändert: ein Lernkarten-Tag ist kein reiner Anzeigetag, sein
+    Test läuft an der Zielstufe.
+  - `ExerciseTypeRegistry` (`SelfAssessedTest`) – ignoriert die Lernkarte (äquivalent für Vokabeln, weil sie ohnehin
+    eine Selbsteinschätzungs-Stufe haben; L17 grün erwartet).
+  - Frontend `aufgabenform.ts` – eigene Form „lernkarte“ vor der Lösungs-Prüfung; `SohnPractice.tsx` – eigene
+    Antwortfläche statt Antwortfeld oder „Gewusst?“; `reviewFeedback` (`displayOnly`) bleibt.
+  - Bonus (`ExtraTrainingService.FormFor`) spielt nie die Lernkarte: Vokabeln klettern über Selbsteinschätzung, Auswahl,
+    Freitext; eine feste Form auf der Lernkarte ist keine geprüfte Stufe und fällt auf die Vorschau-Stufe.
+- **2026-11-16** — **Belege je Akzeptanzkriterium** (`backend/Pugling.Api.Tests/`):
+  - AK 1, neue Karte als Lernkarte: `ErstbegegnungTests.cs:80`; im Stufenplan wählbar `LernkarteTests.cs:304`; ein
+    Lernkarten-Tag spielt auch bekannte Wörter so `:267`.
+  - AK 2/3, Karte und Vorlesen: `LernkarteTests.cs:78`; Schritte, OK nur bei richtiger Abschrift, Server-Regeln
+    `frontend/src/sohn/Lernkarte.test.tsx`; gemeinsamer Fall-Satz `FalllisteAntwortvergleichTests.cs` /
+    `frontend/src/vater/answerNormalize.test.ts` (unverändert, Funktion verschoben).
+  - AK 4, Schritt 4 ohne Wort und ohne Vorlesen, Abbruch/falsch → einmal ans Ende: `Lernkarte.test.tsx`,
+    `LernkarteTests.cs:128`, Anhängen in der Runde `frontend/src/sohn/SohnPractice.test.tsx` (Lernkarte am
+    Rundenende), Hinweis im Blatt `Lektion.test.tsx`.
+  - AK 5, ein Aufruf, zwei Zeilen, keine Münze/Box/Treffer, `IntroducedAt`: `LernkarteTests.cs:98`.
+  - AK 6, kein Test/Info mit Lernkarte: `:162` (Kind und Vater), `:267` (Info), Lernkontrolle `:251`, `both` `:288`.
+- **2026-11-16** — **Reviews.** `pugling-reviewer` (1769/1769 grün, keine Blocker), eingearbeitet: (1) eine späte
+  Lernkarten-Antwort (doppelt gesendet oder im zweiten Tab nach dem Einführen) wurde als Antwort auf der Stufe des Worts
+  gewertet – jetzt bleibt sie Lernkarte, wenn seit Rundenbeginn eine Lernkarten-Zeile des Worts steht
+  (`LernkarteTests.cs:212`), und eine Antwort ohne beide Ergebnisse ist wie in B-433 kein Urteil (führt ein, schreibt
+  nichts; `ErstbegegnungTests` B-433 bleibt grün); (2) angehängt wird nur die Karte am Cursor (ebd.); (3) Zielstufe,
+  Testbarkeit und Lernkontrolle folgen einer Regel, auch wenn die Grundstufe „Beide zeigen“ ist (`:185`); (4) „Anderes
+  Bild“ kennt die Wiederholung. Vater-Runde führt nichts ein (`:235`). Gelassen: verlorene Anhänge bei parallelen
+  Antworten verschiedener Karten (bestand schon für den Cursor), Vorschau einer Lernkarte als Selbsteinschätzung.
+  `frontend-reviewer` (keine Blocker): fünf weitere E2E-Specs spielten die alte Erstbegegnung (nachgezogen:
+  `full-flow`, `ziel-vier-wochen`, `bilder`, `sprache` auf Englisch, `ueben-ohne-leitner`; dazu `karten-umdrehen`,
+  `buchstaben-ordnen`); Rundenende zeigt für reine Lernkarten-Runden keine Münz-/Genauigkeits-Kachel, Lernkarten zählen
+  nicht in die Genauigkeit; die Sperre nach dem Blatt gilt auch für „Aufdecken“ und „Kannte ich?“, und sie endet mit der
+  Runde (der erste Tipp einer neuen Runde wurde sonst verschluckt – gefunden an `karten-umdrehen`); Felder `readOnly`
+  statt `disabled`, ohne Autokorrektur; das Wort hängt per `aria-describedby` an Frage und Abschrift; kein Fokus beim
+  ersten Laden (B-443); grünes Blatt ohne Fälligkeitsdatum. Gelassen: Blatt-Titel „Fast.“ auch beim Aufgeben, Anweisung
+  „Neues Wort“ auch auf einer im Stufenplan gewählten Lernkarte für ein bekanntes Wort, Abschreiben ohne Artikel-
+  Toleranz (bewusst: abgeschrieben wird das Wort, wie es dasteht).
+- **2026-11-16** — **Bonus (AK 6):** kein eigener Test – Vokabeln sind im Bonus nie feste Form, sie klettern über
+  Selbsteinschätzung, Auswahl, Freitext (`ExtraTrainingService.FormFor`); belegt durch `ExtraTrainingTests`
+  (`Vokabeln_Werden_Je_Durchgang_Schwerer_Und_Zahlen_Nur_Geprueft`). Eine Lernkarte als Vorgabestufe ist keine geprüfte
+  Stufe und fällt dort auf die Vorschau-Stufe.
+- **2026-11-16** — **Rote Probe nach der letzten Änderung** (`.claude/scripts/mutant-probe.py`, Backend Debug, Filter
+  `LernkarteTests|ErstbegegnungTests|Schreibstufen_Sind|VierWochenTests.Dosis_TestPrueftDieTagesportion`; Frontend
+  `Lernkarte.test.tsx`, `SohnPractice.test.tsx`, `Lektion.test.tsx`), gemessen an `bacb165d + Arbeitsbaum`, Grundlinie
+  danach grün:
+
+  | Mutante | Stelle | Änderung | gemessen |
+  |---|---|---|---|
+  | L1 | `VocabularyExerciseType.cs:79` | Erstbegegnung = Beide zeigen statt Lernkarte | rot |
+  | L2 | `VocabularyExerciseType.cs:76` | `IsLearnCardStage` immer falsch | rot |
+  | L3 | `VocabularyExerciseType.cs:101` | Erkennen-Karte einer `both`-Liste bekommt die Lernkarte | rot |
+  | L4 | `VocabularyExerciseType.cs:118` | Lernkarte keine Schreibstufe (zeigt Deutsch nicht) | rot |
+  | L5 | `VocabularyExerciseType.cs:125` | Lernkarte rangiert nicht mit der Anzeige | rot |
+  | L6 | `PositionPlayService.cs:189` | Info-Modus spielt die Lernkarte | rot |
+  | L7 | `PositionPlayService.cs:137` | Test spielt die Lernkarte | rot |
+  | L9 | `PositionPlayService.cs:110` | Lernkontrolle ohne Zielstufe | rot |
+  | L10 | `PositionPracticeController.cs:142` | Wiederholung nie erkannt | rot |
+  | L11 | `PositionPracticeController.cs:694` | mehr als ein Anhängen | rot |
+  | L12 | `PositionPracticeController.cs:694` | nie anhängen | rot |
+  | L13 | `PositionPracticeController.cs:463` | Lernkarten-Antwort normal gewertet | rot |
+  | L14 | `PositionPracticeController.cs:686` | „gekannt“ immer wahr | rot |
+  | L15 | `PositionPracticeController.cs:690` | leere Abschrift als Antwort gespeichert | rot |
+  | L16 | `PositionPracticeController.cs:135` | Lernkarte nicht aus `IsSelfClaimRung` ausgenommen | grün, erwartet: äquivalent – Lernkarten verlassen `IntroductionsFirstAsync` vorher mit 0 und `Review` vorher über `LearnCardReviewAsync`, ein Lernkarten-Tag hat `stage == dayStage` |
+  | L17 | `ExerciseTypeRegistry.cs:43` | Lernkarte nicht aus `SelfAssessedTest` gefiltert | grün, erwartet: äquivalent – die Vokabel trägt „Selbsteinschätzung“ als Option, `SelfAssessedTest` bleibt wahr; einziger Typ mit Lernkarte |
+  | L18 | `PositionPracticeController.cs:236` | Lernkarte ohne Vorlese-Sprache | rot |
+  | L19 | `PositionPracticeController.cs:459` | späte Lernkarten-Antwort auf der Stufe des Worts | rot |
+  | L20 | `PositionPracticeController.cs:694` | Anhängen auch abseits des Cursors | rot |
+  | L21 | `PositionPracticeController.cs:683` | Antwort ohne Ergebnis ist ein Urteil | rot |
+  | L22 | `PositionPlayService.cs:138` | Anzeige-Grundstufe nicht auf die Vorschau-Stufe | rot |
+  | L23 | `PositionPracticeController.cs:458` | `>=` statt `>` beim Rundenbeginn (eingefrorene Uhr, `VierWochenTests`) | rot |
+  | P1 | `SohnPractice.tsx:254` | `repeatsAtEnd` hängt nichts an | rot |
+  | P2 | `Lernkarte.tsx:22` | jede Abschrift gilt | rot |
+  | P3 | `aufgabenform.ts:44` | Lernkarte ohne eigene Form | rot |
+  | P4 | `Lernkarte.tsx:120` | Aufgeben schickt eine leere Antwort | rot |
+  | P5 | `Lernkarte.tsx:75` | Wort im Erinnern-Schritt sichtbar | rot |
+  | P6 | `Lektion.tsx:259` | Blatt verschweigt die Wiederholung | rot |
+
+  L23 kam mit dem letzten Edit (`>` statt `>=`): `VierWochenTests.Dosis_TestPrueftDieTagesportion…` fiel mit `>=`, weil
+  die Testuhr steht und eine neue Runde im selben Augenblick wie die Antwort der vorigen beginnt. Läufe danach:
+  `dotnet test Pugling.sln -c Release` **1772 passed**, Vitest **1144 passed**, `dotnet build Pugling.sln` 0 Fehler,
+  `dotnet format Pugling.sln` ohne Änderung. E2E der zehn betroffenen Specs **10 passed** (vor dem `>`-Edit, der nur das
+  Backend-Rennen zweier Runden betrifft; der Rollengang läuft gegen den Endstand).

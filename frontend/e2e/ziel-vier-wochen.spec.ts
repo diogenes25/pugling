@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createChild, sohnLogin, vaterLogin, pfadStart } from "./helpers";
+import { createChild, lernkarteDurchspielen, sohnLogin, vaterLogin, pfadStart } from "./helpers";
 
 /*
  * Das Produktziel als Rollengang (Fertigstellungs-Lauf 2026-11-10): der Vater fügt eine Französisch-Liste ein, macht
@@ -70,11 +70,11 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   await pfadStart(sohn, "practice");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   for (let i = 0; i < DOSE; i++) {
-    // Buchreihenfolge: die ersten vier Wörter der Liste, je mit Lösung.
+    // Buchreihenfolge: die ersten vier Wörter der Liste, je auf der Lernkarte (B-598) – deutsch gezeigt, das Fremdwort
+    // aufgedeckt.
     await expect(counter).toHaveText(`Karte ${i + 1} / ${DOSE}`);
-    await expect(sohn.getByText(PAIRS[i][0], { exact: true })).toBeVisible();
-    await expect(sohn.getByText(`→ ${PAIRS[i][1]}`)).toBeVisible();
-    await sohn.getByRole("button", { name: "Weiter →" }).click();
+    await expect(sohn.getByText(PAIRS[i][1], { exact: true })).toBeVisible();
+    expect(await lernkarteDurchspielen(sohn)).toBe(PAIRS[i][0]);
   }
   await expect(sohn.getByText(`${DOSE} neue Wörter kennengelernt`)).toBeVisible();
 

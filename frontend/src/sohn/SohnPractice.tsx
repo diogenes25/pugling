@@ -9,6 +9,7 @@ import { useSohn } from "./SohnApp";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform, istDiktat } from "./aufgabenform";
+import { Lernkarte } from "./Lernkarte";
 import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
@@ -207,7 +208,7 @@ export function SohnPractice() {
    * merken, dass nichts gezählt hat. `payload` ist genau das, was nicht angekommen ist: „Noch einmal senden" schickt es
    * unverändert, auch wenn das Feld inzwischen anders aussähe.
    */
-  const [failed, setFailed] = useState<{ payload: { wasKnown?: boolean; givenAnswer?: string }; text: string } | null>(null);
+  const [failed, setFailed] = useState<{ payload: { wasKnown?: boolean; givenAnswer?: string | null }; text: string } | null>(null);
   const resendRef = useRef<HTMLButtonElement>(null);
   // Der Knopf, der die Bewertung schickte, ist gesperrt oder verschwunden – der Fokus geht an „Noch einmal senden" (B-531).
   useEffect(() => { if (failed) resendRef.current?.focus(); }, [failed]);
@@ -221,6 +222,9 @@ export function SohnPractice() {
     setEarned(0);
     setCombo(0);
     setGeprueft({ richtig: 0, gesamt: 0 });
+    // Die Sperre nach dem letzten Blatt gilt der alten Runde: sonst schluckte sie den ersten Tipp der neuen (B-598 – seit
+    // die Lernkarte ein Blatt zeigt, endet eine Kennenlern-Runde auf einem).
+    ruheBis.current = 0;
     setRound((r) => r + 1);
   }
 
@@ -231,7 +235,7 @@ export function SohnPractice() {
    * schickten sonst zwei `review` auf denselben `itemIndex` **und** zwei `next()`, der Zähler sprang von
    * 1/5 auf 3/5 und Karte 2 kam nie.
    */
-  async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string }) {
+  async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string | null }) {
     if (!planId || !session.current) return;
     // `next()` läuft bewusst außerhalb von `action.run`: das innere `try/catch` fängt jeden Fehler selbst, und
     // `action.run` bekommt darum nie eine Ablehnung zu sehen. `false` heißt hier also nur „von der Sperre verworfen" –
@@ -245,6 +249,9 @@ export function SohnPractice() {
       try {
         const outcome = await api.review(planId, positionId, session.current!.id, { itemIndex: card.itemIndex, ...payload });
         setFailed(null);
+        // B-598: eine aufgegebene oder falsch erinnerte Lernkarte kommt einmal ans Rundenende. Der Server hängt sie an seine
+        // Folge; die Runde hier hat ihre Karten schon geladen und hängt dieselbe Karte an – als Wiederholung, nicht als neu.
+        if (outcome?.repeatsAtEnd) setCards((prev) => [...prev, { ...card, introduction: false }]);
         setCombo(outcome?.combo ?? 0);
         const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
         const getippt = payload.givenAnswer !== undefined;
@@ -259,11 +266,13 @@ export function SohnPractice() {
           refreshWallet();
           if (getippt) {
             halted = true;
-            setGeprueft((g) => ({ richtig: g.richtig + 1, gesamt: g.gesamt + 1 }));
+            // Die Lernkarte wertet nichts (B-598, Entscheidung 2) – sie zählt nicht in die Genauigkeit der Runde.
+            if (!card.learnCard) setGeprueft((g) => ({ richtig: g.richtig + 1, gesamt: g.gesamt + 1 }));
             setBlatt({
-              richtig: true, gegeben: payload.givenAnswer!, loesung: null, muenzen: feedback.awarded,
+              richtig: true, gegeben: payload.givenAnswer ?? "", loesung: null, muenzen: feedback.awarded,
               comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
-              faelligAm: outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
+              // Eine Lernkarte bewegt keinen Kasten: ein Fälligkeitsdatum sähe wie ein Leitner-Termin aus, den es nicht gibt.
+              faelligAm: card.learnCard ? null : outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
             });
             // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
             setToast(feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
@@ -274,11 +283,11 @@ export function SohnPractice() {
           // „Lösung: Hessen" willkürlich, solange ein Dutzend Einträge offen ist – und verriete einen, der noch
           // gefragt wird. Der Server liefert dann `null`, und es bleibt bei der schlichten Absage.
           halted = true;
-          setGeprueft((g) => ({ ...g, gesamt: g.gesamt + 1 }));
+          if (!card.learnCard) setGeprueft((g) => ({ ...g, gesamt: g.gesamt + 1 }));
           setBlatt({
-            richtig: false, gegeben: payload.givenAnswer!, loesung: feedback.expected, muenzen: 0, comboBonus: 0,
+            richtig: false, gegeben: payload.givenAnswer ?? "", loesung: feedback.expected, muenzen: 0, comboBonus: 0,
             tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled,
-            erklaerung: outcome?.explanation ?? null,
+            erklaerung: outcome?.explanation ?? null, nochmal: outcome?.repeatsAtEnd ?? false,
           });
           const absage = feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong");
           setToast(feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
@@ -388,7 +397,8 @@ export function SohnPractice() {
         {introduced > 0 && <p className="sub" style={{ textAlign: "center" }}>{t("practice.introduced", { count: introduced })}</p>}
         {/* Eine Runde kann neue und schon bekannte Karten mischen (die Einführung gilt je Karte): was die
             abgefragten verdient haben, bleibt sichtbar. Nur eine reine Kennenlern-Runde hat nichts zu zeigen. */}
-        {cards.length > introduced && (
+        {/* Lernkarten (B-598) zahlen nichts und sind keine Abfrage – auch ihre Wiederholung am Rundenende nicht. */}
+        {cards.some((c) => !c.introduction && !c.learnCard) && (
           <div className="reward">
             <div className="card">🪙<span style={{ color: "var(--gold)" }}>+{earned}</span></div>
             {/* Genauigkeit nur aus Antworten, die der Server geprüft hat; gab es keine, fehlt die Kachel. Keine Zeit:
@@ -411,7 +421,8 @@ export function SohnPractice() {
   // Eine Quelle für „getippt“: dieselbe Form, die Anweisung und Darstellung wählt. Sonst Flip-Karte
   // (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil).
   const form = aufgabenform(card, diktatStimme !== null);
-  const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
+  // Die Lernkarte (B-598) schreibt zwar, bringt ihre Lösung aber mit – sie hat ihre eigene Fläche, keine getippte.
+  const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen" && form.antwort !== "lernkarte";
   // Steht die Meldung (B-532), schickt Enter im Feld nichts: was noch einmal geht, entscheiden die beiden Knöpfe darunter.
   const submitTyped = () => { if (typedAnswer.trim() && !failed) judge(card, { givenAnswer: typedAnswer }); };
 
@@ -502,7 +513,11 @@ export function SohnPractice() {
           <RueckmeldungsBlatt r={blatt} skin={skin} weiterRef={continueRef} onWeiter={next} />
         ) : (
           <>
-            {typed ? (
+            {form.antwort === "lernkarte" ? (
+              // Je Karte frisch eingehängt: die vier Schritte beginnen bei jeder Lernkarte (auch der Wiederholung) vorn.
+              !failed && <Lernkarte key={`${round}-${idx}`} karte={card} gesperrt={action.busy} zuFrueh={zuFrueh}
+                onFertig={(ergebnis) => judge(card, ergebnis)} />
+            ) : typed ? (
               // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
               // Dieselbe Stelle im Baum mit und ohne Meldung (B-532): sonst baute React die Fläche neu auf, und eine
               // gewählte Option verlöre ihre Markierung. Steht die Meldung, ist das Feld nur noch lesbar – „Noch einmal

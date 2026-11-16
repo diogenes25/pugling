@@ -183,12 +183,12 @@ Response — `HTTP 200`:
 {
   "card": {
     "itemIndex": 0,
-    "stage": 1,
+    "stage": 8,
     "type": "Vocabulary",
-    "prompt": "hello",
+    "prompt": "hallo",
     "hint": null,
     "answerLength": null,
-    "reveal": "hallo",
+    "reveal": "hello",
     "choices": null,
     "audioUrl": null,
     "imageUrl": null,
@@ -198,14 +198,17 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": true,
+    "displayOnly": false,
     "answerPattern": null,
     "letterTiles": null,
     "introduction": true,
     "cueBox": null,
-    "speechLang": "en",
+    "speechLang": null,
     "dictationSpokenAnswer": null,
-    "dictationLang": null
+    "dictationLang": null,
+    "learnCard": true,
+    "revealSpeechLang": "en",
+    "revealAudioUrl": null
   },
   "done": false,
   "cursor": 0,
@@ -233,7 +236,7 @@ Response — `HTTP 200`:
 ```json
 {
   "wasCorrect": false,
-  "expected": "hallo",
+  "expected": "hello",
   "awarded": 0,
   "box": 1,
   "dueOn": "<date>",
@@ -242,12 +245,12 @@ Response — `HTTP 200`:
   "speedBonus": 0,
   "next": {
     "itemIndex": 1,
-    "stage": 1,
+    "stage": 8,
     "type": "Vocabulary",
-    "prompt": "goodbye",
+    "prompt": "tsch\u00FCss",
     "hint": null,
     "answerLength": null,
-    "reveal": "tsch\u00FCss",
+    "reveal": "goodbye",
     "choices": null,
     "audioUrl": null,
     "imageUrl": null,
@@ -257,18 +260,22 @@ Response — `HTTP 200`:
     "anyOrder": false,
     "revealAlternatives": null,
     "decoding": null,
-    "displayOnly": true,
+    "displayOnly": false,
     "answerPattern": null,
     "letterTiles": null,
     "introduction": true,
     "cueBox": null,
-    "speechLang": "en",
+    "speechLang": null,
     "dictationSpokenAnswer": null,
-    "dictationLang": null
+    "dictationLang": null,
+    "learnCard": true,
+    "revealSpeechLang": "en",
+    "revealAudioUrl": null
   },
   "done": false,
-  "misspelled": false,
-  "explanation": null
+  "misspelled": true,
+  "explanation": null,
+  "repeatsAtEnd": true
 }
 ```
 
@@ -340,7 +347,10 @@ Response — `HTTP 200`:
     "cueBox": null,
     "speechLang": null,
     "dictationSpokenAnswer": null,
-    "dictationLang": null
+    "dictationLang": null,
+    "learnCard": false,
+    "revealSpeechLang": null,
+    "revealAudioUrl": null
   },
   {
     "itemIndex": 1,
@@ -366,7 +376,10 @@ Response — `HTTP 200`:
     "cueBox": null,
     "speechLang": null,
     "dictationSpokenAnswer": null,
-    "dictationLang": null
+    "dictationLang": null,
+    "learnCard": false,
+    "revealSpeechLang": null,
+    "revealAudioUrl": null
   }
 ]
 ```

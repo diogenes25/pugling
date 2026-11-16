@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sohnLogin, vaterLogin } from "./helpers";
+import { lernkarteDurchspielen, sohnLogin, vaterLogin } from "./helpers";
 
 /*
  * B-294 – die Sohn-Arcade auf Englisch. Der Umschalter sitzt im HUD, die Wahl liegt im `localStorage` und überlebt
@@ -114,11 +114,15 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   await page.locator(".pfad-zeile", { hasText: EXERCISE }).locator(".pfad-knoten").click();
   await page.getByRole("dialog").getByRole("link", { name: "▶ GO", exact: true }).click();
   await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
-  // Die Arbeitsanweisung ist Chrome: die erste Karte eines neuen Plans ist eine Kennenlern-Karte.
-  await expect(page.getByRole("heading", { name: "New – remember this" })).toBeVisible();
-  await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Weiter)/)).toHaveCount(0);
+  // Die Arbeitsanweisung ist Chrome: die erste Karte eines neuen Plans ist eine Lernkarte (B-598).
+  await expect(page.getByRole("heading", { name: "New word – learn it" })).toBeVisible();
+  await expect(page.getByText(/^(Karte \d|Aufgabe|Runde beenden|Weiter|Aufdecken)/)).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Next →" }).click();
+  // Ihre Schritte sprechen ebenfalls Englisch.
+  await lernkarteDurchspielen(page, false, {
+    aufdecken: "Uncover", neu: "No, it's new", abschreiben: "Copy it", erinnern: "Now from memory", ok: "OK",
+    aufgeben: "I don't know", weiter: "Next →",
+  });
 
   // Nach der ersten Karte die zweite: die Seed-Übung hat mehrere Einträge. Ein Zweig „oder schon ROUND DONE!“ lief hier
   // nie und sah nur wie ein Beleg für das Rundenende aus (B-319).

@@ -38,7 +38,9 @@ public sealed class ExerciseTypeRegistry
         // B-469: from the type's own stage rule, the one the test grades by (`Graded = IsTypedStage`), so the father's
         // warning "self-assessment counts" appears exactly where a claim can pass. Without options the preview stage
         // stands for the type.
+        // A learn card is never tested (B-598): its station is tested at a typed target, so it warns of nothing.
         SelfAssessedTest = (type.StageOptions.Count > 0 ? type.StageOptions.Select(o => o.Value) : [type.PreviewStage])
+            .Where(s => !type.IsLearnCardStage(s))
             .Any(s => !type.IsTypedStage(s) && !type.IsDisplayOnlyStage(s)),
     };
 

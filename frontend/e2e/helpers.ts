@@ -64,16 +64,58 @@ export async function createChild(page: Page, name: string, pin: string): Promis
   return id;
 }
 
+/** The learn card's labels, German by default (Playwright pins German, B-294); `sprache.spec` plays it in English. */
+export interface LernkartenTexte {
+  aufdecken: string; neu: string; abschreiben: string; erinnern: string; ok: string; aufgeben: string; weiter: string;
+}
+
+export const LERNKARTE_DE: LernkartenTexte = {
+  aufdecken: "Aufdecken", neu: "Nein, neu", abschreiben: "Schreib es ab", erinnern: "Und jetzt aus dem Kopf", ok: "OK",
+  aufgeben: "Weiß ich nicht", weiter: "Weiter →",
+};
+
 /**
- * Plays the introduction round of a fresh position (B-419) and starts the quiz round: every never-seen card is shown
- * with its solution first ("Weiter →"), and the round's end offers "Jetzt abfragen". Specs about the quiz itself start
- * from here, so the introduction does not have to be restated in each of them. Expects to be on the practice screen.
+ * Plays one learn card (B-598) through: uncover, "new", copy, write from memory, continue. Returns the learnt word the card
+ * showed. With `aufgeben` the fourth step ends with "Weiß ich nicht" instead.
+ *
+ * The first two taps retry until the card reacts: right after a feedback sheet the round swallows taps for a moment
+ * (`NACH_BLATT_MS`, so a held Enter cannot run through the card), and Playwright taps faster than a child.
+ */
+export async function lernkarteDurchspielen(page: Page, aufgeben = false, t: LernkartenTexte = LERNKARTE_DE): Promise<string> {
+  const wortFeld = page.locator(".lernkarte-wort .rev");
+  await expect(async () => {
+    await page.getByRole("button", { name: t.aufdecken, exact: true }).click({ timeout: 2000 });
+    await expect(wortFeld).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  const wort = (await wortFeld.innerText()).replace(/^→\s*/, "").trim();
+  const kopie = page.getByLabel(t.abschreiben, { exact: true });
+  await expect(async () => {
+    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
+    await expect(kopie).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await kopie.fill(wort);
+  await page.getByRole("button", { name: t.ok, exact: true }).click();
+  if (aufgeben) {
+    await page.getByRole("button", { name: t.aufgeben, exact: true }).click();
+  } else {
+    await page.getByLabel(t.erinnern, { exact: true }).fill(wort);
+    await page.getByRole("button", { name: t.ok, exact: true }).click();
+  }
+  await page.getByRole("button", { name: t.weiter, exact: true }).click();
+  return wort;
+}
+
+/**
+ * Plays the introduction round of a fresh position (B-419) and starts the quiz round: every never-seen card is met on a
+ * learn card first (B-598), and the round's end offers "Jetzt abfragen". Specs about the quiz itself start from here, so
+ * the introduction does not have to be restated in each of them. Expects to be on the practice screen.
  */
 export async function introduceAndQuiz(page: Page, total: number) {
   const counter = page.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   for (let i = 0; i < total; i++) {
     await expect(counter).toHaveText(`Karte ${i + 1} / ${total}`);
-    await page.getByRole("button", { name: "Weiter →" }).click();
+    // Since B-598 the first encounter is a learn card.
+    await lernkarteDurchspielen(page);
   }
   await page.getByRole("button", { name: /Jetzt abfragen/ }).click();
   await expect(counter).toHaveText(`Karte 1 / ${total}`);

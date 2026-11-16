@@ -87,6 +87,11 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
 /// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
 /// plays the card as free text from the German <c>Prompt</c>.
+///
+/// <c>LearnCard</c> (B-598) marks the learn card: <c>Prompt</c> is the German word, <c>Reveal</c> the learnt word the child
+/// uncovers, copies and then recalls; the answer carries both results (<c>WasKnown</c> of the uncovering,
+/// <c>GivenAnswer</c> of the recall, <c>null</c> = given up). <c>RevealSpeechLang</c>/<c>RevealAudioUrl</c> read that
+/// learnt word aloud - on the learn card only, where it is shown anyway, and only while it is shown.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -94,7 +99,8 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
-    string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null);
+    string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
+    bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
@@ -132,7 +138,10 @@ public record CardShownDto(int ItemIndex);
 /// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);
 /// <c>null</c> where no atom was hit; <c>null</c> for content that has no explanation.
 /// </para>
+/// <para>
+/// <see cref="RepeatsAtEnd"/> (B-598): a learn card given up or recalled wrong comes back once at the end of this round.
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
     DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
-    string? Explanation = null);
+    string? Explanation = null, bool RepeatsAtEnd = false);

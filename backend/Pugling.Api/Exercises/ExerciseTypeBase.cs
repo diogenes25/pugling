@@ -46,6 +46,13 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool IsDisplayOnlyStage(int stage) => false;
 
     /// <inheritdoc/>
+    public virtual bool IsLearnCardStage(int stage) => false;
+
+    /// <inheritdoc/>
+    public virtual int? IntroductionStage =>
+        StageOptions.Where(o => IsDisplayOnlyStage(o.Value)).Select(o => (int?)o.Value).FirstOrDefault();
+
+    /// <inheritdoc/>
     public virtual int CardStage(int targetStage, int box) => targetStage;
 
     /// <inheritdoc/>

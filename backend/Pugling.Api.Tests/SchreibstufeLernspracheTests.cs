@@ -79,7 +79,8 @@ public class SchreibstufeLernspracheTests(PuglingWebAppFactory factory) : IClass
     }
 
     /// <summary>
-    /// Decision 1: the writing stages are letter boxes, letter tiles, free text and the dictation; the choice taps and stays
+    /// Decision 1: the writing stages are letter boxes, letter tiles, free text and the dictation - and since B-598 the learn
+    /// card, which copies and recalls the learnt word; the choice taps and stays
     /// with the exercise's direction, as do the self-assessment and getting acquainted. Red for any stage moved across.
     /// </summary>
     [Theory]
@@ -90,6 +91,7 @@ public class SchreibstufeLernspracheTests(PuglingWebAppFactory factory) : IClass
     [InlineData(TestStage.LetterScramble, true)]
     [InlineData(TestStage.FreeText, true)]
     [InlineData(TestStage.Audio, true)]
+    [InlineData(TestStage.LearnCard, true)]
     public void Schreibstufen_Sind_Kaestchen_Kacheln_Freitext_Und_Diktat(TestStage stage, bool writing) =>
         Assert.Equal(writing, VocabularyExerciseType.IsWritingStage(stage));
 

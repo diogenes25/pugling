@@ -74,10 +74,10 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         }
     }
 
-    // AK 1: a never-seen atom comes as a display card on a typed stage - with the solution - and earns nothing,
-    // while its review introduces it for today.
+    // AK 1, since B-598: a never-seen atom comes as a learn card on a typed stage - German shown, the learnt word as the
+    // solution it uncovers - and earns nothing, while its review introduces it for today.
     [Fact]
-    public async Task NieGesehenesWort_KommtAufTippstufe_AlsKennenlernkarte_MitLoesung_UndOhnePunkte()
+    public async Task NieGesehenesWort_KommtAufTippstufe_AlsLernkarte_MitLoesung_UndOhnePunkte()
     {
         var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
         var sessionId = await StartAsync(child, planId, positionId);
@@ -87,18 +87,21 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.All(cards, c =>
         {
             JsonAssert.True(c, "introduction");
-            JsonAssert.True(c, "displayOnly");
-            Assert.Equal((int)TestStage.ShowBoth, c.GetProperty("stage").GetInt32());
+            JsonAssert.True(c, "learnCard");
+            JsonAssert.False(c, "displayOnly");
+            Assert.Equal((int)TestStage.LearnCard, c.GetProperty("stage").GetInt32());
         });
-        Assert.Equal("die Stadt", cards.Single(c => c.GetProperty("itemIndex").GetInt32() == 0).GetProperty("reveal").GetString());
+        var first = cards.Single(c => c.GetProperty("itemIndex").GetInt32() == 0);
+        Assert.Equal("die Stadt", first.GetProperty("prompt").GetString());
+        Assert.Equal("la ville", first.GetProperty("reveal").GetString());
 
         // The /next path decides the same way.
         var next = await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/next");
         JsonAssert.True(next.GetProperty("card"), "introduction");
 
-        // Even the right answer typed onto an introduction earns nothing: it was shown, not asked.
-        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "die Stadt"))
-            .Content.ReadFromJsonAsync<JsonElement>();
+        // Even the right word recalled on a learn card earns nothing: it was shown first.
+        var outcome = await (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/review",
+            new { itemIndex = 0, givenAnswer = "la ville", wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
         // The next card of this round is still an introduction.
         JsonAssert.True(outcome.GetProperty("next"), "introduction");

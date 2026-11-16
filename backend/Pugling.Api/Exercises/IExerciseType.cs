@@ -78,6 +78,19 @@ public interface IExerciseType
     bool IsDisplayOnlyStage(int stage);
 
     /// <summary>
+    /// Is the stage a learn card (B-598)? It shows the solution and still lets the child write - neither a display stage
+    /// (it takes an answer) nor a scoring one (the solution lay on the device): it never pays and moves no box, and the test
+    /// plays the station's target instead. Default <c>false</c>.
+    /// </summary>
+    bool IsLearnCardStage(int stage);
+
+    /// <summary>
+    /// The stage a never-seen card is shown at (B-419), or <c>null</c> for a type that cannot show a card without grading
+    /// it. Default: the first free display stage among <see cref="StageOptions"/>; vocabulary names its learn card (B-598).
+    /// </summary>
+    int? IntroductionStage { get; }
+
+    /// <summary>
     /// The stage one introduced card is asked at, given its Leitner <paramref name="box"/> and the
     /// <paramref name="targetStage"/> the position sets for the day (B-476). The target is a ceiling, not the entry
     /// point: a type with a ladder of easier forms (recognise, then choose, then produce) lets a card earn its way up

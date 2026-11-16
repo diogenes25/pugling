@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { vaterLogin, sohnLogin, pfadStart } from "./helpers";
+import { lernkarteDurchspielen, vaterLogin, sohnLogin, pfadStart } from "./helpers";
 
 // End-to-End des vertikalen Durchstichs im Positions-Modell:
 //   Vater legt (Web) einen Lehrplan-Container an und hängt eine Katalog-Übung als Position hinein
@@ -67,10 +67,11 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Nur Sichtprüfung: ein Klick würde die Runde beenden und den restlichen Durchstich abschneiden.
   await expect(sohn.getByRole("button", { name: "Runde beenden" })).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
-  // B-419: die Position ist neu, also lernt der Sohn die Wörter zuerst kennen – jede Karte zeigt ihre Lösung, ohne Urteil.
+  // B-419/B-598: die Position ist neu, also lernt der Sohn die Wörter zuerst auf der Lernkarte – sehen, abschreiben,
+  // erinnern, ohne Münzen.
   for (let i = 0; i < total; i++) {
     await expect(counter).toHaveText(`Karte ${i + 1} / ${total}`);
-    await sohn.getByRole("button", { name: "Weiter →" }).click();
+    await lernkarteDurchspielen(sohn);
   }
   await expect(sohn.getByText(`${total} neue Wörter kennengelernt`)).toBeVisible();
   await sohn.getByRole("button", { name: /Jetzt abfragen/ }).click();

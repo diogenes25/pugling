@@ -106,8 +106,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         if (steps.Count == 0 || steps[0].DayNumber > 1) segments.Add((1, baseStage));
         segments.AddRange(steps.Select(s => (Math.Max(1, s.DayNumber), s.Stage)));
 
-        var kinds = segments.Select(s => type.IsDisplayOnlyStage(s.Stage) ? LearningCheckKind.Playthrough
-            : type.IsTypedStage(s.Stage) ? LearningCheckKind.Typed : LearningCheckKind.SelfAssessed).ToList();
+        // A learn-card day (B-598) is checked at the station's target, as its test plays it.
+        var kinds = segments.Select(s => TestTargetStage(type, baseStage, s.Stage))
+            .Select(stage => type.IsDisplayOnlyStage(stage) ? LearningCheckKind.Playthrough
+                : type.IsTypedStage(stage) ? LearningCheckKind.Typed : LearningCheckKind.SelfAssessed).ToList();
         if (requireTypedTest && kinds.Contains(LearningCheckKind.SelfAssessed))
             return new LearningCheck(LearningCheckKind.Unreachable);
         if (kinds.Distinct().Count() == 1) return new LearningCheck(kinds[0]);
@@ -119,11 +121,29 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
-    /// The stage a never-seen card is shown at first (B-419): the type's free display stage, or <c>null</c> for a
-    /// type that has none - there the card is played at the day's stage as before, because there is no way to
-    /// show it without grading it.
+    /// The stage a never-seen card is shown at first (B-419): the one the type names (B-598: vocabulary's learn card,
+    /// otherwise its free display stage), or <c>null</c> for a type that has none - there the card is played at the
+    /// day's stage as before, because there is no way to show it without grading it.
     /// </summary>
-    public static int? IntroductionStage(IExerciseType type) =>
+    public static int? IntroductionStage(IExerciseType type) => type.IntroductionStage;
+
+    /// <summary>
+    /// The stage a test plays for a station whose stage is <paramref name="stage"/> (B-598, decision 9): a learn card
+    /// shows the solution and is never tested, so its day is tested at the station's target - the position's own stage,
+    /// or, where that is a learn card or a display stage itself, the type's most telling one. Every other stage is tested
+    /// as it is. Testability, the father's check and the test start all read this one rule.
+    /// </summary>
+    public static int TestTargetStage(IExerciseType type, int baseStage, int stage) =>
+        !type.IsLearnCardStage(stage) ? stage
+        : type.IsLearnCardStage(baseStage) || type.IsDisplayOnlyStage(baseStage) ? type.PreviewStage
+        : baseStage;
+
+    /// <summary><see cref="TestTargetStage(IExerciseType, int, int)"/> for a position: its base stage as in <see cref="StageForDay"/>.</summary>
+    public static int TestTargetStage(IExerciseType type, PlanPosition pos, int stage) =>
+        TestTargetStage(type, pos.Stage ?? pos.Exercise?.DefaultStage ?? type.DefaultStage, stage);
+
+    // The type's free display stage, if it has one.
+    private static int? DisplayStage(IExerciseType type) =>
         type.StageOptions.Where(o => type.IsDisplayOnlyStage(o.Value)).Select(o => (int?)o.Value).FirstOrDefault();
 
     /// <summary>
@@ -165,6 +185,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         CardProgress? card, DateOnly day)
     {
         if (IsIntroduction(type, dayStage, mode, card is not null)) return IntroductionStage(type)!.Value;
+        // B-598, decision 9: free practice records nothing, so a learn-card day shows the word on its display stage there.
+        if (mode == PlayMode.Info && type.IsLearnCardStage(dayStage)) return DisplayStage(type) ?? dayStage;
         if (mode != PlayMode.Lern || !pos.UseLeitner || card is not { } c || c.Box >= pos.MaxBox) return dayStage;
         if (c.IntroducedAt.AddDays(LadderDays) <= day) return dayStage;
         return type.CardStage(dayStage, c.Box);

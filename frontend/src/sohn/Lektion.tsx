@@ -211,6 +211,8 @@ export interface Rueckmeldung {
    * sie erst mit der Bewertung; `null`, wo der Inhalt keine kennt – dann steht auch keine leere Zeile da.
    */
   erklaerung?: string | null;
+  /** B-598: eine Lernkarte, aufgegeben oder falsch erinnert, kommt am Ende der Runde noch einmal (der Server meldet es). */
+  nochmal?: boolean;
 }
 
 const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
@@ -251,8 +253,10 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
         </>
       ) : (
         <>
-          <div className="sub">{t("practice.yourAnswerWas")} <s>{r.gegeben}</s></div>
+          {/* Aufgegeben (B-598) gibt es keine eigene Antwort zum Durchstreichen. */}
+          {r.gegeben && <div className="sub">{t("practice.yourAnswerWas")} <s>{r.gegeben}</s></div>}
           <div className="rev">{r.loesung ? t("practice.solution", { expected: r.loesung }) : t("practice.wrong")}</div>
+          {r.nochmal && <div className="sub">{t("lektion.learnAgain")}</div>}
         </>
       )}
       {/* Bei richtig UND falsch (B-529, Entscheidung 5): richtig bestätigt sie, warum. Der Inhalt ist Nutzerdaten und

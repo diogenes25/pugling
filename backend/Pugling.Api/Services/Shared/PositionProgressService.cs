@@ -57,9 +57,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// question to grade, so the exam rejects it (<c>ApiErrors.StageNotTestable</c>) – which is why every rule
     /// that would otherwise demand a test attempt has to know about it.
     /// </summary>
+    /// <remarks>Judged at the stage the test plays (B-598): a learn-card day is tested at its target, never shown only.</remarks>
     public bool IsDisplayOnlyDay(PlanPosition pos, StudyPlan plan, DateOnly day) =>
         pos.Exercise is { } ex && registry.ByKey(ex.Type) is { } type
-            && type.IsDisplayOnlyStage(PositionPlayService.StageForDay(pos, plan, day, type));
+            && type.IsDisplayOnlyStage(PositionPlayService.TestTargetStage(type, pos,
+                PositionPlayService.StageForDay(pos, plan, day, type)));
 
     /// <summary>
     /// Is the position testable on <paramref name="day"/>? False for content types without a check mode

@@ -957,3 +957,32 @@ describe("SohnPractice nach dem Test", () => {
     expect(screen.getByRole("button", { name: de.sohn.practice.toTest })).toBeTruthy();
   });
 });
+
+/** B-598: eine aufgegebene Lernkarte kommt einmal ans Ende der Runde. */
+describe("SohnPractice, Lernkarte am Rundenende", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  // Rot, wenn die Runde `repeatsAtEnd` überginge: der Server hat die Karte an seine Folge gehängt, die Runde hier hätte
+  // sie nicht – sie endete nach einer Karte, und die Folgen liefen auseinander.
+  it("hängt die Karte an, wenn der Server sie wiederholt", async () => {
+    cards.mockImplementation(() => Promise.resolve([{
+      itemIndex: 0, stage: 8, type: "Vocabulary", prompt: "gehen", reveal: "walk", learnCard: true, introduction: true,
+    } as PracticeCard]));
+    review.mockResolvedValueOnce({ ...outcome(false, "walk"), repeatsAtEnd: true });
+    renderPractice();
+
+    fireEvent.click(await screen.findByRole("button", { name: de.sohn.lernkarte.uncover }));
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.new }));
+    fireEvent.change(screen.getByLabelText(de.sohn.lernkarte.copy), { target: { value: "walk" } });
+    fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.ok }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.giveUp })); });
+
+    expect(review).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(),
+      { itemIndex: 0, wasKnown: false, givenAnswer: null });
+    expect(screen.getByText(de.sohn.lektion.learnAgain)).toBeTruthy();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next })); });
+
+    expect(screen.getByText(/Karte 2 \/ 2/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: de.sohn.lernkarte.uncover })).toBeTruthy();
+  });
+});

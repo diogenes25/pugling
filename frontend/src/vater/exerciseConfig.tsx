@@ -4,6 +4,7 @@ import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
 import { RepeatedPairFields, nonEmptyPairs, type Pair } from "../components/RepeatedPairFields";
 import type { HelpTopic } from "../lib/fieldHelp";
 import { LANGUAGES } from "../lib/languages";
+import { normalizeAnswer } from "../lib/answerNormalize";
 import type { ArithmeticOperation, ExerciseTypeKey } from "../lib/types";
 
 /*
@@ -147,16 +148,8 @@ export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string 
  */
 const strList = (l: unknown): string[] => (Array.isArray(l) ? l.map((x) => String(x ?? "")) : []);
 
-/**
- * Wie der Server vergleicht (`StageMechanics.Normalize`): ein Apostroph (B-440), Schlusszeichen `.?!…` weg, außer die
- * Antwort besteht nur daraus (B-457), dann trimmen, klein, Mehrfach-Leerzeichen zusammen.
- */
-export const normalizeAnswer = (s: string) => {
-  // U+FEFF fällt weg, bevor `\s` es als Trenner sähe – der Server entfernt es (B-501, Fallliste B-493).
-  const folded = s.split(String.fromCharCode(0xfeff)).join("").replace(/[’‘ʼ´`]/g, "'").trim();
-  const stripped = folded.replace(/[\s.?!…]+$/, "");
-  return (stripped || folded).toLowerCase().split(/\s+/).filter(Boolean).join(" ");
-};
+/** Wie der Server vergleicht – seit B-598 in `lib/`, weil die Lernkarte der Arcade dieselbe Regel braucht. */
+export { normalizeAnswer };
 
 /**
  * Auswahl gefüllt, aber die Lösung steht nicht darin. Seit B-490 hängt der Server die Antwort dann als letzten Knopf

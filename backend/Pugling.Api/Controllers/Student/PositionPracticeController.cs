@@ -130,8 +130,30 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         introduced.TryGetValue(index, out var card) ? card : null;
 
     // A card the ladder lowered to self-assessment (B-476): the child only claims to know it, nothing is checked.
+    // A learn card (B-598) is neither: it is shown with its solution and never scores.
     private static bool IsSelfClaimRung(IExerciseType type, int dayStage, int stage) =>
-        stage != dayStage && !type.IsTypedStage(stage) && !type.IsDisplayOnlyStage(stage);
+        stage != dayStage && !type.IsTypedStage(stage) && !type.IsDisplayOnlyStage(stage) && !type.IsLearnCardStage(stage);
+
+    /// <summary>
+    /// B-598: is the card at <paramref name="position"/> of the frozen order a learn card coming back? A learn card given
+    /// up or recalled wrong is appended once (see Review), so a second occurrence of an index is exactly that repeat.
+    /// </summary>
+    private static bool IsRepeat(PracticeSession session, int position) =>
+        position >= 0 && position < session.Order.Count && session.Order.IndexOf(session.Order[position]) < position;
+
+    /// <summary>
+    /// The stage the card at <paramref name="position"/> of the round is played at: its own (B-419, B-476), or the learn
+    /// card again where it is the repeat of one (B-598, decision 7) - the word was not learnt yet, so it is learnt again.
+    /// </summary>
+    private static int StageAt(IExerciseType type, PlanPosition pos, int dayStage, PracticeSession session,
+        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position)
+    {
+        var index = session.Order[position];
+        if (IsRepeat(session, position) && type.IntroductionStage is { } learn && type.IsLearnCardStage(learn))
+            return type.CardCeiling(items[index], learn);
+        return PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, index), session.Day,
+            items[index]);
+    }
 
     /// <summary>A practice session of the position.</summary>
     [HttpGet("{sessionId:int}")]
@@ -189,12 +211,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// it by design, or supply the audio source.
     /// </summary>
     private static PracticeCard BuildCard(PlanPosition pos, IExerciseType type, int dayStage, PracticeSession session,
-        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int index)
+        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position)
     {
         var exercise = pos.Exercise!;
+        var index = session.Order[position];
         var card = CardOf(introduced, index);
         var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode, card is not null);
-        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, card, session.Day, items[index]);
+        var stage = StageAt(type, pos, dayStage, session, introduced, items, position);
+        var learnCard = type.IsLearnCardStage(stage);
         // B-597: the card in the form its stage asks it - the same form Review grades.
         var staged = PositionPlayService.AtStage(type, items, stage);
         var item = staged[index];
@@ -207,7 +231,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // B-252: never on the listening stage - there hearing the word IS the task, and its text stands in only when
             // no recording came.
             type.AudioReplacesPrompt(stage) ? null : item.SpeechLang,
-            f.DictationSpokenAnswer, f.DictationLang);
+            f.DictationSpokenAnswer, f.DictationLang,
+            // B-598: the learn card reads its learnt word aloud while it shows it (decision 10) - the word is the reveal.
+            learnCard, learnCard ? item.DictationLang : null, learnCard ? item.DictationAudioUrl : null);
     }
 
     /// <summary>
@@ -274,9 +300,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
 
-        // The frozen order; skip items removed since the start (item CRUD).
-        return session.Order.Where(i => i >= 0 && i < items.Count)
-            .Select(i => BuildCard(pos, type, stage, session, introduced, items, i)).ToList();
+        // The frozen order; skip items removed since the start (item CRUD). By position: a learn card coming back (B-598)
+        // stands twice in the order and is played as the repeat the second time.
+        return Enumerable.Range(0, session.Order.Count)
+            .Where(p => session.Order[p] >= 0 && session.Order[p] < items.Count)
+            .Select(p => BuildCard(pos, type, stage, session, introduced, items, p)).ToList();
     }
 
     /// <summary>
@@ -324,8 +352,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // An introduction (B-419) is shown at the display stage and therefore does show its image.
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
-        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, itemIndex),
-            session.Day, item);
+        // The card the round shows at the cursor - a learn card coming back (B-598) shows its image like the first time.
+        var stage = session.Cursor < session.Order.Count && session.Order[session.Cursor] == itemIndex
+            ? StageAt(type, pos, dayStage, session, introduced, items, session.Cursor)
+            : PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, itemIndex), session.Day, item);
         if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items,
                 type.CardForStage(item, stage), type, stage, type.IsTypedStage(stage), seed: 0).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
@@ -363,7 +393,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
-        var card = BuildCard(pos, type, stage, session, introduced, items, session.Order[cursor]);
+        var card = BuildCard(pos, type, stage, session, introduced, items, cursor);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
 
@@ -411,11 +441,28 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // The card's own stage, not the day's (B-419, B-476): a card is graded as what it was shown as - an
         // introduction earns nothing, a choice rung is checked as a choice - so the client cannot pick its form.
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
-        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
-            session.Day, items[dto.ItemIndex]);
+        // The card at the cursor when the answer is for it; otherwise (an offline batch) its first place in the round.
+        var position = session.Cursor < session.Order.Count && session.Order[session.Cursor] == dto.ItemIndex
+            ? session.Cursor : session.Order.IndexOf(dto.ItemIndex);
+        var stage = position >= 0
+            ? StageAt(type, pos, dayStage, session, introduced, items, position)
+            : PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
+                session.Day, items[dto.ItemIndex]);
+        // B-598: a learn card answered after its word was introduced meanwhile - by its own first answer (sent twice) or by
+        // another round in a second tab - is still the learn card this round showed; graded as its rung, a recall made
+        // seconds after seeing the solution would count. The learn card's history row written after this round started tells
+        // it - strictly after: a round started in the same instant as a previous round's answer (a frozen clock) is a new round.
+        if (!type.IsLearnCardStage(stage) && type.IntroductionStage is { } learn && type.IsLearnCardStage(learn)
+            && items[dto.ItemIndex].ItemId is { } learntItem
+            && await db.ItemReviewEvents.AnyAsync(e => e.ChildId == plan.ChildId && e.PlanPositionId == pos.Id
+                && e.ItemId == learntItem && e.StageValue == learn && e.At > session.StartedAt, ct))
+            stage = type.CardCeiling(items[dto.ItemIndex], learn);
         // B-597: graded in the form the card was shown in - on a writing stage the learnt word, never the German one.
         var staged = PositionPlayService.AtStage(type, items, stage);
         var item = staged[dto.ItemIndex];
+        if (type.IsLearnCardStage(stage))
+            return await LearnCardReviewAsync(plan, pos, session, type, dayStage, introduced, items, staged, item, dto,
+                atCursor: position == session.Cursor, ct);
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
         var selfClaimRung = IsSelfClaimRung(type, dayStage, stage);
@@ -592,13 +639,73 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // client answered a card other than the cursor's (offline batch).
         if (prog?.IntroducedAt is { } introducedAt) introduced[prog.ItemIndex] = new CardProgress(prog.Box, introducedAt);
         var done = session.Cursor >= session.Order.Count;
-        var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Order[session.Cursor]);
+        var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
         // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
         // and give away an entry that is still to be asked for.
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? staged[shown].Answer : null,
             awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
             creditedIndex is { } explained ? staged[explained].Explanation : null);
+    }
+
+    /// <summary>
+    /// The answer to a learn card (B-598): both results of the card in one call - <see cref="ReviewDto.WasKnown"/> from
+    /// uncovering it, <see cref="ReviewDto.GivenAnswer"/> from recalling it (<c>null</c> = given up). Neither scores nor
+    /// moves a box (decision 2: the solution lay on the device); the word counts as introduced, and both results go into
+    /// the learning history as two rows that count for no mastery - a recall given up keeps no answer, a wrong one keeps
+    /// what was written (decisions 6, 8). Given up or wrong, the card comes back once at the end of the round (decision 7):
+    /// a second occurrence in the order is that repeat, and a repeat is never appended again.
+    /// </summary>
+    /// <remarks>
+    /// Only the card at the cursor is appended: an answer for an index outside the round, or a learn card answered again
+    /// after the round moved on, would otherwise grow the round with a card it never served.
+    /// </remarks>
+    private async Task<ActionResult<ReviewOutcome>> LearnCardReviewAsync(StudyPlan plan, PlanPosition pos,
+        PracticeSession session, IExerciseType type, int dayStage, Dictionary<int, CardProgress> introduced,
+        IReadOnlyList<ContentItem> items, IReadOnlyList<ContentItem> staged, ContentItem item, ReviewDto dto,
+        bool atCursor, CancellationToken ct)
+    {
+        var index = dto.ItemIndex;
+        var recalled = !string.IsNullOrWhiteSpace(dto.GivenAnswer) && grader.Matches(dto.GivenAnswer, item);
+        var prog = await play.ProgressForAsync(pos.Id, index, ct);
+        // Only the child's own encounter introduces (B-433), as in every other review.
+        if (User.IsStudent() && prog.IntroducedAt is null)
+        {
+            prog.IntroducedAt = session.Day;
+            prog.DueOn ??= session.Day;
+        }
+
+        var now = time.GetUtcNow().UtcDateTime;
+        // A review without a hit: the round counts as played, and the combo does not grow on a card that pays nothing.
+        db.ReviewEvents.Add(new ReviewEvent { PracticeSessionId = session.Id, WasCorrect = false, At = now });
+        // The card always sends whether the word was known; an answer carrying neither result is no verdict (B-433) - it
+        // introduces the word and leaves neither a history row nor a repeat.
+        var verdict = dto.WasKnown is not null || !string.IsNullOrWhiteSpace(dto.GivenAnswer);
+        if (verdict)
+        {
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, dto.WasKnown ?? false,
+                (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false,
+                ct: ct);
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, recalled, (int)TestStage.LearnCard,
+                string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
+                session.Day, countsForMastery: false, ct: ct);
+        }
+
+        var repeats = verdict && !recalled && atCursor && session.Order.Count(i => i == index) < 2;
+        if (repeats) session.Order = [.. session.Order, index];
+
+        var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
+        if (cursor < session.Order.Count) cursor++;
+        session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
+        await db.SaveChangesAsync(ct);
+
+        if (prog.IntroducedAt is { } introducedAt) introduced[index] = new CardProgress(prog.Box, introducedAt);
+        var done = session.Cursor >= session.Order.Count;
+        var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
+        var misspelled = !recalled && !string.IsNullOrWhiteSpace(dto.GivenAnswer)
+            && grader.IsMisspelled(dto.GivenAnswer, item, staged);
+        return new ReviewOutcome(recalled, item.Answer, 0, prog.Box, prog.DueOn, 0, 0, 0, next, done, misspelled,
+            item.Explanation, repeats);
     }
 
     /// <summary>

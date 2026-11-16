@@ -11,14 +11,14 @@ import type { PracticeCard } from "../lib/types";
 /** Die Felder, an denen sich die Form entscheidet. Übungs- und Testkarte tragen sie beide. */
 export type FormKarte = Pick<PracticeCard, "reveal" | "choices" | "letterTiles" | "answerLength" | "audioUrl" | "prompt"
   | "passage" | "decoding" | "cueBox"> & { displayOnly?: boolean; introduction?: boolean; imageUrl?: string | null }
-  & Partial<Pick<PracticeCard, "dictationSpokenAnswer">>;
+  & Partial<Pick<PracticeCard, "dictationSpokenAnswer" | "learnCard">>;
 
-export type Antwortart = "auswahl" | "ordnen" | "kaestchen" | "freitext" | "selbst" | "kennenlernen";
+export type Antwortart = "auswahl" | "ordnen" | "kaestchen" | "freitext" | "selbst" | "kennenlernen" | "lernkarte";
 
 /** Schlüssel der Arbeitsanweisung unter `lektion.*`. */
 export type AnweisungKey =
   | "lektion.choose" | "lektion.order" | "lektion.boxes" | "lektion.cueBox" | "lektion.listen" | "lektion.write"
-  | "lektion.self" | "lektion.intro" | "lektion.look";
+  | "lektion.self" | "lektion.intro" | "lektion.look" | "lektion.learn";
 
 export interface Aufgabenform {
   antwort: Antwortart;
@@ -40,6 +40,8 @@ const hat = (liste: readonly unknown[] | null | undefined) => (liste?.length ?? 
  * genauesten vorgibt.
  */
 function antwortart(karte: FormKarte): Antwortart {
+  // B-598: die Lernkarte bringt die Lösung mit und lässt trotzdem schreiben – eine eigene Form, vor allen anderen.
+  if (karte.learnCard) return "lernkarte";
   if (karte.reveal != null) return karte.displayOnly ? "kennenlernen" : "selbst";
   if (karte.choices) return "auswahl";
   if (karte.letterTiles) return "ordnen";
@@ -52,6 +54,7 @@ function anweisung(karte: FormKarte, antwort: Antwortart): AnweisungKey {
     // „Neu“ nur, wo der Server die Karte als Erstkontakt meldet: eine Anzeigestufe des Tages zeigt auch Bekanntes.
     case "kennenlernen": return karte.introduction === false ? "lektion.look" : "lektion.intro";
     case "selbst": return "lektion.self";
+    case "lernkarte": return "lektion.learn";
     case "auswahl": return "lektion.choose";
     case "ordnen": return "lektion.order";
     default:

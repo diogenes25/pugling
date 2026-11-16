@@ -334,6 +334,18 @@ export const de = {
       passage: "Text zur Aufgabe",
       alsoRight: "auch richtig: {{list}}",
     },
+    // Die Lernkarte (B-598): ein neues Wort in vier Schritten.
+    lernkarte: {
+      uncover: "Aufdecken",
+      knewIt: "Kanntest du das Wort schon?",
+      known: "Ja, kannte ich",
+      new: "Nein, neu",
+      copy: "Schreib es ab",
+      recall: "Und jetzt aus dem Kopf",
+      ok: "OK",
+      giveUp: "Weiß ich nicht",
+      listen: "🔊 Anhören",
+    },
     // Der Lektionsbildschirm (B-526): die Arbeitsanweisung je Antwortform.
     lektion: {
       choose: "Wähle die richtige Antwort",
@@ -346,6 +358,8 @@ export const de = {
       self: "Weißt du es?",
       intro: "Neu – präg es dir ein",
       look: "Schau es dir noch mal an",
+      learn: "Neues Wort – lerne es",
+      learnAgain: "Das Wort kommt am Ende der Runde noch einmal.",
       inTest: "Test · {{task}}",
       praise1: "Stark!",
       praise2: "Genau!",

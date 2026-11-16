@@ -53,6 +53,11 @@ public enum TestStage
     /// answer is played as <see cref="LetterBoxes"/>, card by card.
     /// </summary>
     LetterScramble = 7,
+    /// <summary>
+    /// Learn card (B-598): the first encounter of a word in four steps - German shown, uncover the learnt word and say
+    /// whether it was known, copy it, then write it from memory. Never scores and moves no box; the test never plays it.
+    /// </summary>
+    LearnCard = 8,
 }
 
 // StageStep lives in the contract project (Pugling.Contracts).

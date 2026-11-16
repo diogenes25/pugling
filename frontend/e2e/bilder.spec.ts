@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild, pfadStart } from "./helpers";
+import { createChild, lernkarteDurchspielen, pfadStart } from "./helpers";
 
 // End-to-End der individualisierten Bebilderung:
 //   Vater legt zwei Darstellungen desselben Motivs an  →  ordnet beide der Vokabel „la ville" zu
@@ -197,13 +197,13 @@ test("Vater bebildert eine Vokabel, der Sohn sieht sein Bild und kann es wechsel
   await expect(sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ })).toBeVisible();
 
   // Die bebilderte Vokabel suchen: der Kartensatz ist eingefroren, „la ville" kann irgendwo stehen. Die Position ist
-  // frisch, also ist jede Karte eine Kennenlernkarte (B-419) – weiter geht es mit „Weiter", nicht über die
-  // Selbsteinschätzung. Der Bildwechsel unten wird damit auf einer Kennenlernkarte geprüft (B-439).
+  // frisch, also ist jede Karte eine Lernkarte (B-419, B-598) – weiter geht es über ihre vier Schritte. Die Lernkarte ist
+  // nicht getippt, sie zeigt ihr Bild; der Bildwechsel unten wird damit auf einer Lernkarte geprüft (B-439).
   const image = sohn.locator(".fcard img");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   for (let i = 0; i < 12 && !(await image.count()); i++) {
     const before = await counter.textContent();
-    await sohn.getByRole("button", { name: "Weiter →" }).click();
+    await lernkarteDurchspielen(sohn);
     // Erst die nächste Karte abwarten – sonst zählt die Schleife noch die alte und überspringt die gesuchte.
     await expect(counter).not.toHaveText(before ?? "");
   }
