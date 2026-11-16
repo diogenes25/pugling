@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [LastMissed ungeprüft, Selbstauskunft im gewerteten Pfad]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Frage
 groesse: XS
@@ -116,3 +116,4 @@ statt 1.
   - AK 2, ungeprüft „nicht gewusst“ im gewerteten Pfad → `Mild_Ungepruefte_Wertung_Nicht_Gewusst_Setzt_Den_Fehler_Merker_Nicht` (`:148`), M1 → rot; M3 Setzen ohne `if (verified)` → rot.
   - AK 3, Gegenfall geprüfter Treffer löscht → `Mild_Treffer_Unterbricht_Die_Folge` (`:36`), M4 Löschzeile entfernt → rot (erster M4-Versuch `if (false)` kompilierte nicht, ungemessen; neu gemessen mit Kommentarzeile).
   - AK 4, Selbstauskunft über die Senke → `Mild_Selbstauskunft_Gewusst_…` (`:99`) und `Mild_Selbstauskunft_Nicht_Gewusst_…` (`:115`), M5 `verified: true` am `climbs`-Aufrufer → rot.
+- **2026-11-16** — abgenommen (d535d7b2): Review sauber (nur zwei Aufrufer, `verified` serverseitig aus der erzwungenen Stufe), volle Suite 1717/1717, 5/5 Mutanten rot. Rollengang Sohn über die Integrationstests; das Verhalten ist in der UI nicht sichtbar.

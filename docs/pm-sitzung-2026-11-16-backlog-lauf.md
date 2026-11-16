@@ -107,11 +107,17 @@ Nach dem Abschluss freigegeben und gebaut: `laden.py` liest vor einem PUT die ge
 `GET /creator/exercises/{id}` und schickt sie mit; neues optionales Feld `seiten` je Übung in `uebungen.json`
 (gewinnt, `--pruefen` prüft 1–20 Zeichen). KI-Creator ausgeklammert (macht kein PUT). Offen ist damit noch 19.
 
+### Nachtrag: B-591 nach Nutzer-Entscheidung
+
+Nutzer: „nein, ungeprüft löscht den Merker nicht". `PositionPlayService.ApplyReview` schreibt `LastMissed` nur noch bei
+`verified` (getippte, vom Server geprüfte Kartenstufe); Selbstauskunft und ungeprüft gewertete Tagesstufe lassen ihn
+stehen. Stakeholder-Entscheidung 3: auch ein ungeprüftes „nicht gewusst" setzt den Merker nicht. Offen ist damit 18.
+
 ### Liste für den Menschen
 
 1. ~~**B-589 zuerst**~~ (Nachtrag: gebaut) (`Defekt`, P2): bis es gebaut ist, löscht jeder `laden.py --ersetzen`-Lauf eine von Hand gepflegte
    Buchseite. Bis dahin Seiten erst nach dem letzten Import pflegen.
-2. **B-591 entscheiden** (Frage): soll eine ungeprüfte „gewusst"-Antwort auf einer nicht getippten Tagesstufe den
+2. ~~**B-591 entscheiden**~~ (Nachtrag: entschieden und gebaut) (Frage): soll eine ungeprüfte „gewusst"-Antwort auf einer nicht getippten Tagesstufe den
    Fehler-Merker der milden Abstufung löschen dürfen?
 3. **Neues Tor B-410** ansehen (`NullElementGuardTests`) – der Lauf hält deshalb hier an.
 4. Stakeholder-Entscheidungen zum Umstoßen: B-376/B-582 verworfen; B-219 Entscheidungen 9–11; B-588 Entscheidungen 1–9
