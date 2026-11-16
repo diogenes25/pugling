@@ -121,6 +121,12 @@ public class PlanPosition
     // --- Leitner review (only for drillable methods such as vocabulary/cloze/matching) ---
     /// <summary>Enables the Leitner box scheduling of this position.</summary>
     public bool UseLeitner { get; set; }
+    /// <summary>
+    /// Forgiving demotion (B-219): a single miss drops the item only one box, a second miss in a row sends it back to
+    /// box 1. Off by default - the hard reset is the father's baseline, he opts in per obligation. Position-only: the
+    /// cross-plan learning state per word stays hard so it remains an honest measurement.
+    /// </summary>
+    public bool ForgivingDemotion { get; set; }
     /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
     /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>
@@ -219,4 +225,9 @@ public class PositionItemProgress
     /// graded HIT, not until the first contact - free rungs and a wrong first try must not use the bonus up.
     /// </summary>
     public DateTime? NewBonusPaidAt { get; set; }
+    /// <summary>
+    /// Whether the last graded review of this content was a miss (B-219). Kept on every review, also with forgiving
+    /// demotion off: switching it on mid-plan must see the real history, or a word missed yesterday would be forgiven twice.
+    /// </summary>
+    public bool LastMissed { get; set; }
 }

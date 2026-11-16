@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/qualitaet, bereich/tests]
 aliases: [Deploy-Artefakt-Smoke, Artefakt-Smoke]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P3
 art: Aufräumen
 groesse: S

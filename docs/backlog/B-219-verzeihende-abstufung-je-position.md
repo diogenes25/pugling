@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/backend, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/backend, rolle/student, rolle/supervisor]
 aliases: [Verzeihende Abstufung, Box-Abstieg, Soft Demotion]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Wunsch
 groesse: M
@@ -124,6 +124,16 @@ fehlt zusammen: ohne Merker lässt sich die Regel „erst der zweite Fehler setz
    (`Pugling.Client`, Tests) nicht brechen. Feldhilfe `forgivingDemotion` in `lib/fieldHelp.ts`. Begründung: die
    Option ist nur mit Leitner sinnvoll; ein ausgegrautes Häkchen erklärt das, statt es zu verstecken. Kosten: ein
    weiteres Formularfeld in einem ohnehin vollen Formular.
+9. **Bestandszeilen über den Spalten-Default der Migration, kein Modell-Default.** Stakeholder-Entscheidung im
+   Auftrag des Nutzers (2026-11-16). SQLite kann eine `NOT NULL`-Spalte nur mit `DEFAULT` anhängen; `AddColumn(…,
+   defaultValue: false)` füllt die Bestandszeilen mit „hart“ bzw. „letzte war richtig“. Das Modell trägt **kein**
+   `HasDefaultValue` (G9 bleibt bei zwei bewussten Defaults), EF schreibt beide Spalten bei jedem `INSERT` selbst.
+   Begründung: `false` ist der Fail-Safe (heutiges Verhalten); ein `UPDATE` nach dem Anhängen wäre derselbe Wert.
+10. **Abgewählter Leitner leert die Milde nicht.** Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16). Das
+    Häkchen wird nur ausgegraut, der gespeicherte Wert bleibt und wirkt erst wieder mit Leitner. Begründung: ohne
+    Leitner gibt es keine Box, die Milde ist dann wirkungslos; schaltet der Vater Leitner wieder an, steht seine Wahl
+    noch da. Die Positionszeile nennt die Milde im Leitner-Kästchen („an · max 5 · verzeihend“), damit der Vater sie
+    sieht, ohne zu bearbeiten.
 
 ## Akzeptanzkriterien
 
@@ -189,3 +199,15 @@ falsch tippen und die Box im Feedback sehen (oder E2E über die Planbau-Specs, f
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde G-5 der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): die verzeihende Abstufung wirkt **nur in der Position** (`PositionPlayService.cs:283`). Der plan-übergreifende Lernstand je Vokabel (`ItemProgressService.cs:66`) bleibt hart und damit die ehrliche Messung. Der Default an der Position bleibt das heutige Verhalten. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen (Paket NP-18); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt; die Zeilen sind gewandert: harter Reset der Position `backend/Pugling.Api/Services/Shared/PositionPlayService.cs:468` (`prog.Box = 1`), plan-übergreifend `Services/Shared/ItemProgressService.cs:70`. Keine Positions-Option für milde Abstufung vorhanden.
 - **2026-11-15** — Backlog-Lauf 2026-11-15: ausformuliert (Ist-Stand nachgemessen, Reset jetzt `PositionPlayService.cs:498`, zwei Aufrufer), gegrillt (acht Stakeholder-Entscheidungen im Auftrag des Nutzers; die Entscheidung des Nutzers vom 2026-10-23 übernommen) und geschätzt: **M**, `beides`, Migration ja (zwei Spalten, Default `false`), kein Vertragsbruch.
+- **2026-11-16** — Backlog-Lauf 2026-11-16: gebaut (Stufe `in-arbeit`). Migration `20261116065113_ForgivingDemotion` hängt an `20261115215256_ExerciseItemExplanation` (die Kette ist seit der Schätzung um ein Glied gewachsen): zwei `AddColumn<bool>` mit `defaultValue: false`, sonst nichts; Snapshot-Diff genau die zwei Properties. Regel in `PositionPlayService.ApplyReview`, Vertrag additiv (`PositionResponse`/`CreatePositionDto`/`UpdatePositionDto` je letzter Parameter mit Vorgabe), Controller Anlegen/PATCH/Map, Formular-Häkchen „Ausrutscher verzeihen“ (ausgegraut ohne Leitner), Feldhilfe, Positionszeile „· verzeihend“. Zwei Stakeholder-Entscheidungen im Auftrag des Nutzers (2026-11-16) als Entscheidung 9 und 10 ergänzt. Volle Suite 1708/1708 grün (exit 0), Vitest 66/66 in den drei Positions-Dateien, `dotnet format --verify-no-changes` sauber.
+- **2026-11-16** — Nachweis je AK-Fall (Mutanten per `.claude/scripts/mutant-probe.py`, Debug, gemessen an `88b7b50c` + Arbeitsbaum, Grundlinie nach dem Zurückspielen grün):
+  - AK 1, Option ignoriert → `VerzeihendeAbstufungTests.Mild_Erster_Fehler_Eine_Box_Zweiter_In_Folge_Box_1` (`backend/Pugling.Api.Tests/VerzeihendeAbstufungTests.cs:21`), M1 `prog.Box = 1` → rot.
+  - AK 1, Merker nicht gelesen → derselbe Test (`:21`), M2 ohne `!prog.LastMissed` → rot.
+  - AK 2, Treffer setzt `LastMissed` nicht zurück → `Mild_Treffer_Unterbricht_Die_Folge` (`:36`), M3 → rot.
+  - AK 3, Milde ohne Option → `Hart_Ohne_Option_Ein_Fehler_Box_1` (`:48`), M4 → rot.
+  - AK 4, Milde im plan-übergreifenden Lernstand → `Mild_Gilt_Nicht_Fuer_Den_Planuebergreifenden_Lernstand` (`:58`, geseedeter `ItemProgress.Box = 4`, sonst könnte die Zusicherung nie fallen), M5 in `ItemProgressService.cs:70` → rot.
+  - AK 5, ohne `Max(1, …)` → `Mild_Box_1_Bleibt_Box_1` (`:87`), M6 → rot.
+  - AK 6, Default an / PATCH ignoriert / `null` überschreibt / Antwort ohne Feld → `PlanPositionCrudTests.Verzeihende_Abstufung_Default_Aus_Patch_Setzt_Leerer_Patch_Laesst_Stehen` (`backend/Pugling.Api.Tests/PlanPositionCrudTests.cs:547`), M7/M8/M9/M10 → je rot.
+  - AK 7, Read-back → `PlanPositions.test.ts:452` „liest den gespeicherten Stand zurück“, M12 → rot; Senden → `:460` „schickt das Häkchen …“, M13 → rot; ausgegraut ohne Leitner → `PlanPositionsStufe.test.tsx:200`, M14 → rot.
+  - AK 8, Modell ohne passende Migration → `SchemaGuardTests.Modell_Und_Migrationen_Stimmen_Ueberein` (`SchemaGuardTests.cs:33`), M11 Snapshot-Property umbenannt → rot.
+  - Offen bis `abgenommen`: Probe der Migration gegen eine **Kopie** der echten `pugling.db` und der Rollengang (Vater setzt das Häkchen, Sohn tippt ein Wort aus hoher Box falsch).

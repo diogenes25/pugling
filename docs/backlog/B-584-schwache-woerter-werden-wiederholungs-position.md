@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/training, bereich/auswertung, rolle/supervisor]
 aliases: [Lücke wird Pflicht, Schwache Wörter zuweisen]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P2
 art: Wunsch
 groesse: M

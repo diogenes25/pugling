@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/auswertung, rolle/supervisor]
 aliases: [Supervisor-Dashboard, Eltern-Dashboard, Fortschritts-Dashboard, Tag Woche Monat]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P2
 art: Wunsch
 groesse: M

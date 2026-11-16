@@ -189,3 +189,31 @@ describe("Positions-Formular – ohne Pflicht keine Punkte-Felder (B-538)", () =
     expect(screen.getByRole("spinbutton", { name: "Punkte bei erreichtem Ziel" })).toBeTruthy();
   });
 });
+
+/*
+ * B-219 AK 7: das Häkchen „Ausrutscher verzeihen" ist nur mit Leitner bedienbar. Hier, weil diese Datei das Formular rendert.
+ */
+describe("Positions-Formular – Ausrutscher verzeihen (B-219)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  // Rot, wenn das Häkchen fehlt, ohne Leitner bedienbar bleibt oder den gespeicherten Stand nicht zeigt.
+  it("ist ohne Leitner ausgegraut und zeigt mit Leitner den gespeicherten Stand", async () => {
+    rendere([position({ useLeitner: false })]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    await act(async () => {});
+    const aus = await screen.findByRole("checkbox", { name: /Ausrutscher verzeihen/ }) as HTMLInputElement;
+    expect(aus.disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Leitner-Kasten/ }));
+    expect((screen.getByRole("checkbox", { name: /Ausrutscher verzeihen/ }) as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it("zeigt eine gespeicherte Milde angehakt", async () => {
+    rendere([position({ useLeitner: true, forgivingDemotion: true })]);
+    fireEvent.click(await screen.findByRole("button", { name: "Bearbeiten" }));
+    await act(async () => {});
+    const an = await screen.findByRole("checkbox", { name: /Ausrutscher verzeihen/ }) as HTMLInputElement;
+    expect(an.checked).toBe(true);
+    expect(an.disabled).toBe(false);
+  });
+});

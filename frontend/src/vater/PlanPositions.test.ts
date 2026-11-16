@@ -23,7 +23,7 @@ const LEER: PositionSettings = {
   cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "", orderStrategy: "WeakestFirst",
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-  useLeitner: true, requireTypedTest: false,
+  useLeitner: true, forgivingDemotion: false, requireTypedTest: false,
   stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
@@ -433,5 +433,34 @@ describe("Positionszeile – Lernkontrolle (B-469, B-550)", () => {
   it("null: nichts", () => {
     expect(lernkontrolleText(null)).toBeNull();
     expect(lernkontrolleText(undefined)).toBeNull();
+  });
+});
+
+/*
+ * B-219 AK 7: die verzeihende Abstufung reist beidseitig – Read-back aus der Antwort, Senden beim Anlegen und Ändern.
+ */
+describe("Ausrutscher verzeihen (B-219)", () => {
+  const stand = (forgivingDemotion?: boolean) => settingsFrom({
+    timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+    pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+    useLeitner: true, requireTypedTest: false, newItemsPerDay: 0, forgivingDemotion,
+    stage: null, scope: "All", speedThresholdSeconds: 0, speedBonusPoints: 0,
+  } as unknown as PositionResponse);
+
+  // Rot, wenn `settingsFrom` das Feld nicht liest: dann stünde das Häkchen beim Bearbeiten aus, und jedes Speichern
+  // schaltete die Milde still wieder ab.
+  it("liest den gespeicherten Stand zurück", () => {
+    expect(stand(true).forgivingDemotion).toBe(true);
+    // Eine ältere Antwort ohne das Feld heißt „aus", nicht `undefined` im Häkchen.
+    expect(stand(undefined).forgivingDemotion).toBe(false);
+  });
+
+  // Rot, wenn `settingsToDto` das Feld nicht mitschickt – Anlegen und PATCH ließen die Milde dann serverseitig aus bzw.
+  // unverändert.
+  it("schickt das Häkchen beim Anlegen und beim Ändern", () => {
+    expect(settingsToDto({ ...LEER, forgivingDemotion: true }).forgivingDemotion).toBe(true);
+    expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: true }).forgivingDemotion).toBe(true);
+    // Abwählen ist eine Aussage: `false`, nicht `null` – im PATCH bliebe die Milde sonst stehen.
+    expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: false }).forgivingDemotion).toBe(false);
   });
 });

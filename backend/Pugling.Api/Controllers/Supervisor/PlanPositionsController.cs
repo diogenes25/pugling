@@ -43,7 +43,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
             p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
-            types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null);
+            types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
+            p.ForgivingDemotion);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -201,6 +202,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             RequireTypedTest = dto.RequireTypedTest ?? exercise.DefaultRequireTypedTest,
             UseLeitner = dto.UseLeitner ?? exercise.DefaultUseLeitner,
             MaxBox = dto.MaxBox is > 0 ? dto.MaxBox.Value : 5,
+            // How hard a miss resets is a statement about this obligation, not the material: no exercise default.
+            ForgivingDemotion = dto.ForgivingDemotion ?? false,
             // Empty means "method default" here as in the PATCH (B-547) - no third state next to "default" and "own".
             BoxIntervalDays = dto.BoxIntervalDays is { Count: > 0 } intervals ? intervals : null,
             StageSchedule = dto.StageSchedule is { Count: > 0 } schedule ? schedule : null,
@@ -318,6 +321,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.RequireTypedTest is not null) pos.RequireTypedTest = dto.RequireTypedTest.Value;
         if (dto.UseLeitner is not null) pos.UseLeitner = dto.UseLeitner.Value;
         if (dto.MaxBox is > 0) pos.MaxBox = dto.MaxBox.Value;
+        if (dto.ForgivingDemotion is not null) pos.ForgivingDemotion = dto.ForgivingDemotion.Value;
         // An empty list means "back to the method default" (B-547): no form sends these two, and storing an empty
         // schedule would be a third state next to "default" and "own" that play treats like the default anyway.
         if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays.Count > 0 ? dto.BoxIntervalDays : null;

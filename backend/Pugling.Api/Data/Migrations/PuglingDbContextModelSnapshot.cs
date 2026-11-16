@@ -1663,6 +1663,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ExerciseId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("ForgivingDemotion")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("GoalThreshold")
                         .HasColumnType("INTEGER");
 
@@ -1810,6 +1813,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ItemIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("LastMissed")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("LastReviewedAt")

@@ -115,6 +115,12 @@ export const FIELD_HELP = {
       + "erst nach längerer Pause wieder dran; ein Fehler wirft ihn zurück. Aus heißt: jede Sitzung "
       + "zeigt wieder alles. An ist für Vokabeln fast immer die bessere Wahl.",
   },
+  forgivingDemotion: {
+    title: "Ausrutscher verzeihen",
+    text: "Nur mit Leitner-Kasten: Ein Fehler wirft ein Wort nur ein Fach zurück statt auf Fach 1; erst ein zweiter "
+      + "Fehler in Folge setzt es ganz zurück. Fällig ist es nach einem Fehler trotzdem sofort wieder. Aus heißt: jeder "
+      + "Fehler zurück auf Fach 1. Der Lernstand je Vokabel über alle Pläne bleibt in jedem Fall streng.",
+  },
   positionTimeSlot: {
     title: "Zeitfenster (Punkte-Faktor)",
     text: "Ein Zeitraum am Tag, in dem diese Pflicht mehr (oder weniger) einbringt – etwa „13–15 Uhr, "

@@ -32116,6 +32116,13 @@
             ],
             "description": "Daily dose of new contents (see PositionResponse); \u0060null\u0060 = 0 (no cap). 0 to 200.",
             "format": "int32"
+          },
+          "forgivingDemotion": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "As in PositionResponse; \u0060null\u0060 = \u0060false\u0060 (hard reset). Not inherited from the exercise."
           }
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
@@ -41938,6 +41945,11 @@
                 "$ref": "#/components/schemas/LearningCheck"
               }
             ]
+          },
+          "forgivingDemotion": {
+            "type": "boolean",
+            "description": "Forgiving demotion (B-219): a miss drops an item only one Leitner box, a second miss in a row sends it back to box 1.\n\u0060false\u0060 = every miss resets to box 1. Applies within this position only - the cross-plan learning state per\nword always resets hard.",
+            "default": false
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -46599,6 +46611,13 @@
             "type": "boolean",
             "description": "Puts the passing threshold back to the default (80 %). Wins over \u0060goalThreshold\u0060 if both arrive together; a\nvalue sent alongside is still range-checked.",
             "default": false
+          },
+          "forgivingDemotion": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Forgiving demotion (see PositionResponse); \u0060false\u0060 switches it off."
           }
         },
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nfour fields have one: bool UpdatePositionDto.ClearTimeSlots, bool UpdatePositionDto.ClearStage, bool UpdatePositionDto.ClearItemCount and\nbool UpdatePositionDto.ClearGoalThreshold. The two list fields \u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 take an\n**empty** list as \u0022back to the method default\u0022 instead (like \u0060TimeSlots\u0060). The other fields cannot be\nemptied: they are mandatory or carry \u0022off\u0022 as a value of their own (0)."

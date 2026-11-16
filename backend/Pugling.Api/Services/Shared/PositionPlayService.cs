@@ -488,7 +488,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
     /// <summary>
     /// Records a Leitner review on the progress: correct → one box higher (longer
-    /// interval), incorrect → back to box 1 and due again immediately. The caller saves.
+    /// interval), incorrect → back to box 1 and due again immediately. With <see cref="PlanPosition.ForgivingDemotion"/>
+    /// the first miss in a row only drops one box (B-219). The caller saves.
     /// </summary>
     public void ApplyReview(PlanPosition pos, PositionItemProgress prog, bool correct, DateOnly today, DateTime nowUtc)
     {
@@ -500,11 +501,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         {
             prog.Box = Math.Min(pos.MaxBox, Math.Max(1, prog.Box) + 1);
             prog.DueOn = today.AddDays(intervals[Math.Min(prog.Box, intervals.Count - 1)]);
+            prog.LastMissed = false;
         }
         else
         {
-            prog.Box = 1;
+            // Forgiving demotion pardons only the first miss in a row; never below box 1.
+            prog.Box = pos.ForgivingDemotion && !prog.LastMissed ? Math.Max(1, prog.Box - 1) : 1;
             prog.DueOn = today; // same day: practice again right away
+            prog.LastMissed = true;
         }
     }
 }

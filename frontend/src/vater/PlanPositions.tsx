@@ -126,6 +126,8 @@ export interface PositionSettings {
   comboThreshold: string;
   comboBonusPoints: string;
   useLeitner: boolean;
+  /** B-219: ein Ausrutscher senkt nur ein Fach, erst der zweite in Folge setzt auf Fach 1. Nur mit Leitner wirksam. */
+  forgivingDemotion: boolean;
   requireTypedTest: boolean;
   /*
    * Die Abfrageform des Tests (B-16) als String: "" = „Standard der Übung" (`null`), sonst ein Wert aus den
@@ -264,7 +266,7 @@ function defaultSettings(): PositionSettings {
     orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-    useLeitner: false, requireTypedTest: false,
+    useLeitner: false, forgivingDemotion: false, requireTypedTest: false,
     stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
@@ -286,6 +288,7 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     comboThreshold: pos.comboThreshold.toString(),
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
+    forgivingDemotion: pos.forgivingDemotion ?? false,
     requireTypedTest: pos.requireTypedTest,
     stage: pos.stage?.toString() ?? "",
     stageStored: pos.stage ?? null,
@@ -338,6 +341,7 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     comboThreshold: numOrNull(s.comboThreshold),
     comboBonusPoints: numOrNull(s.comboBonusPoints),
     useLeitner: s.useLeitner,
+    forgivingDemotion: s.forgivingDemotion,
     requireTypedTest: s.requireTypedTest,
     stage: numOrNull(s.stage),
     scope: s.scope,
@@ -483,6 +487,14 @@ function PositionFields({ value, onChange, stages }: {
             onChange={(e) => onChange(withLeitner(value, e.target.checked))} /> Leitner-Kasten
         </label>
         <InfoHint topic="useLeitner" />
+      </span>
+      {/* Nur mit Leitner sinnvoll (B-219): ausgegraut statt versteckt, damit der Zusammenhang sichtbar bleibt. */}
+      <span className="label-row">
+        <label className="checkline">
+          <input type="checkbox" checked={value.forgivingDemotion} disabled={!value.useLeitner}
+            onChange={(e) => up("forgivingDemotion", e.target.checked)} /> Ausrutscher verzeihen
+        </label>
+        <InfoHint topic="forgivingDemotion" />
       </span>
       <span className="label-row">
         <label className="checkline">
@@ -916,7 +928,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
               ))}
             </td>
           )}
-          <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}</span> : <span className="muted">aus</span>}</td>
+          <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
               aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>

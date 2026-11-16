@@ -86,7 +86,8 @@ Response — `HTTP 201`:
   "learningCheck": {
     "kind": "Typed",
     "typedFromDay": null
-  }
+  },
+  "forgivingDemotion": false
 }
 ```
 

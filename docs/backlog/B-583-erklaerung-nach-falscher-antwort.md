@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/creator]
 aliases: [Erklärung nach dem Fehler, Warum falsch, Vokabel-Erklärung]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P3
 art: Wunsch
 groesse: S

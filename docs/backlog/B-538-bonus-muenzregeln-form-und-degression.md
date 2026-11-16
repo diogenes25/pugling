@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Bonus-Münzregeln, Degression je Wiederholung, getippt zahlt drei]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P1
 art: Wunsch
 groesse: M

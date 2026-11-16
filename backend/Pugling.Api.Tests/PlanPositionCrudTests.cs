@@ -540,4 +540,27 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var position = await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}");
         Assert.Equal(15, position.GetProperty("pointsGoalMet").GetInt32());
     }
+
+    // B-219 AK 6: forgiving demotion is off unless the supervisor sets it; PATCH sets it, an empty PATCH keeps it. Red if
+    // the create defaults it on, the PATCH ignores the field, or a missing field overwrites the stored value.
+    [Fact]
+    public async Task Verzeihende_Abstufung_Default_Aus_Patch_Setzt_Leerer_Patch_Laesst_Stehen()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "meadow", "Wiese");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var planId = await EmptyPlanAsync(father);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions";
+
+        var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(url, new { exerciseId, useLeitner = true }));
+        JsonAssert.False(await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}"), "forgivingDemotion");
+
+        var on = await father.PatchAsJsonAsync($"{url}/{posId}", new { forgivingDemotion = true });
+        on.EnsureSuccessStatusCode();
+        JsonAssert.True(await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}"), "forgivingDemotion");
+
+        var untouched = await father.PatchAsJsonAsync($"{url}/{posId}", new { });
+        untouched.EnsureSuccessStatusCode();
+        JsonAssert.True(await father.GetFromJsonAsync<JsonElement>($"{url}/{posId}"), "forgivingDemotion");
+    }
 }

@@ -2,6 +2,7 @@
 tags: [typ/story, status/abgenommen, bereich/frontend, bereich/vokabeln, rolle/student]
 aliases: [Vokabel vorlesen, Spracheingabe]
 status: abgenommen
+nachgeschaut: 2026-11-16
 prio: P3
 art: Wunsch
 groesse: S
