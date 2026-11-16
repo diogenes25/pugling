@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte, Kombi-Karte, Abschreiben und Erinnern]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
@@ -156,6 +156,79 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen (6–10 auf �
 - [ ] Integrationstests mit roter Probe: Lernkarte zahlt nichts (Probe: mit Treffer-Wertung steigt die Box),
   Wiederholung höchstens einmal (Probe: ohne Grenze kommt die Karte ein drittes Mal), keine Lernkarte im Test.
 
+## Schätzung
+
+**Größe L**, am Anker E6 gemessen: Die Stufe selbst ist klein, aber sie ist die erste, die **zeigt und trotzdem
+schreiben lässt**. Die Regel „Anzeige-Stufe zahlt nichts“ hängt heute an `IsDisplayOnlyStage`, und das an zehn
+Stellen im Backend (`PositionPracticeController.cs:131`, `:200`, `:411`, `:442`, `:465`, `:516`;
+`PositionTestsController.cs:153`; `PositionPlayService.cs:109`, `:127`, `:137`; `PositionProgressService.cs:62`)
+und zwei im Frontend (`SohnPractice.tsx`, `aufgabenform.ts`). Jede muss für die Lernkarte einzeln entschieden
+werden. Dazu kommen die Wiederholung in der eingefrorenen Rundenfolge, eine Karte mit vier Phasen und die
+Vergleichsregeln in TypeScript mit gemeinsamem Testfall-Satz.
+
+- **`wo: beides`** – Backend zuerst (Stufe, Erstbegegnung, Review mit zwei Ergebnissen, Wiederholung), dann die
+  Sohn-Karte (vier Phasen, Vorlesen der Lösung, Prüfung beim Abschreiben).
+- **`migration: nein`** – Stufen sind Zahlen (`PlanPositionEntities.cs:32`), die Rundenfolge ist eine Liste in
+  JSON (`PracticeSession.Order`, `StudyPlanEntities.cs:108`), eine Wiederholung hängt einen Index an. Die beiden
+  Ergebnisse der Karte werden als **zwei** `ItemReviewEvent`-Zeilen gespeichert (`ItemProgressEntities.cs:61-88`):
+  Schritt 2 auf der Stufe Selbsteinschätzung mit `WasCorrect` = gewusst, Schritt 4 auf der Lernkarten-Stufe mit
+  `GivenAnswer`; „aufgegeben“ ist `GivenAnswer = null`. Eine eigene Spalte wäre sauberer, braucht aber eine
+  Migration – Abwägung siehe Risiko 4.
+- **`vertragsbruch: nein`** – `ReviewDto` trägt `WasKnown` und `GivenAnswer` schon (`PracticeDtos.cs:101`). Neu und
+  additiv: die Vorlesesprache des Lösungsworts an der Karte und ein Hinweis „kommt am Rundenende wieder“ im
+  Ergebnis.
+
+### Risiken
+
+1. **Die Lernkarte ist keine Anzeige-Stufe, soll aber wie eine nichts zahlen.** Wird sie als `IsDisplayOnlyStage`
+   markiert, zeigt die Sohn-Karte nur „Weiter“ (`SohnPractice.tsx:512`) und der Review wertet `GivenAnswer` nicht.
+   Wird sie es nicht, zahlt `scored` (`PositionPracticeController.cs:465`). Gegenmittel: eine eigene Eigenschaft am
+   Typ („zählt nie als Treffer“), und jede der zwölf Stellen wird nach der pm-loop-Regel einzeln gelesen und
+   entschieden – je Stelle eine Zeile im `## Verlauf`.
+2. **Die Erstbegegnung wählt „die erste Anzeige-Stufe“** (`PositionPlayService.cs:127`). Die Lernkarte ist das
+   nicht. Gegenmittel: Der Typ nennt seine Einführungsstufe selbst; Test, dass eine neue Karte als Lernkarte kommt
+   und ein Typ ohne Lernkarte unverändert bleibt.
+3. **Wiederholung in der eingefrorenen Folge.** `Order` und `Cursor` tragen die Runde, `CardShownAt` stempelt die
+   aktuelle Karte (B-530). Ein angehängter Index darf weder den Cursor verschieben noch eine Karte ein drittes Mal
+   bringen. Gegenmittel: Grenze aus der Folge selbst ablesen (Index höchstens zweimal), Test über Wiederaufnahme
+   einer Runde.
+4. **Zwei Historien-Zeilen statt einer Spalte.** Auswertungen, die Zeilen zählen (Fehlerliste, Vokabel-Fortschritt
+   `by-word`), sähen eine Lernkarte als zwei Antworten. Gegenmittel: Beide Zeilen mit `countsForMastery: false`;
+   prüfen, welche Lesepfade Zeilen zählen statt `ItemProgress` zu lesen. Wenn einer das tut, ist eine Spalte mit
+   Migration die bessere Wahl – das entscheidet der Bau, nicht diese Schätzung.
+5. **Vergleichsregeln laufen auseinander.** Gegenmittel: eine Datei mit Testfällen (Eingabe, Lösung, erwartet),
+   gelesen von einem xUnit-Test gegen `StageMechanics.Normalize`/`AnswerGrader` und einem Vitest gegen die
+   TypeScript-Kopie.
+6. **Abhängigkeit von B-597.** Die Lernkarte schreibt die Lernsprache, also gilt die Drehung je Stufe. Gegenmittel:
+   B-597 zuerst bauen; die Lernkarte steht in dessen Liste der Schreibstufen.
+
+### Angriffsplan
+
+1. B-597 ist gebaut (Drehung je Stufe).
+2. **Backend, Stufe:** `TestStage.LearnCard` (Name im Bau), `StageOptions`, Eigenschaft „zählt nie als Treffer“,
+   Einführungsstufe nennt der Typ.
+3. **Backend, zwölf Stellen:** jede `IsDisplayOnlyStage`-Stelle lesen und für die Lernkarte entscheiden (Risiko 1).
+4. **Backend, Review:** bei der Lernkarte `WasKnown` und `GivenAnswer` auswerten, zwei Historien-Zeilen,
+   `IntroducedAt`, keine Münze, kein Treffer, keine Box; falsch/Abbruch → Index einmal ans Ende von `Order`.
+5. **Backend, Ausschlüsse:** Test, Klausur, Bonus, Info-Modus spielen keine Lernkarte.
+6. **Vergleichsregeln** in TypeScript mit gemeinsamem Testfall-Satz (Risiko 5).
+7. **Frontend:** Karte mit vier Phasen in `SohnPractice.tsx`/`Lektion.tsx`, Vorlesen des Lösungsworts in Phase 2
+   und 3, Sperre beim Abschreiben, Stufenname im Manifest.
+8. Reviewer: `pugling-reviewer`, dann `frontend-reviewer`; Rollengang als Sohn mit einer frischen Station.
+
+### Testweg
+
+- **Integrationstests** in `Pugling.Api.Tests`: `ErstbegegnungTests` (neue Karte kommt als Lernkarte; rote Probe:
+  ohne eigene Einführungsstufe kommt „Beide zeigen“), Review ohne Münze und Box (rote Probe: mit Treffer-Wertung
+  steigt die Box), zwei Historien-Zeilen mit „aufgegeben“/„falsch“, Wiederholung höchstens einmal auch über eine
+  wieder aufgenommene Runde (rote Probe: ohne Grenze kommt die Karte ein drittes Mal), keine Lernkarte in
+  `PositionTestsController`, im Bonus (`ExtraTrainingTests`) und im Info-Modus.
+- **Gemeinsamer Testfall-Satz** für die Vergleichsregeln: xUnit und Vitest lesen dieselbe Datei.
+- **Vitest:** Karte durchläuft die vier Phasen, [OK] in Phase 3 erst bei richtiger Eingabe, kein Vorlese-Knopf in
+  Phase 4.
+- **E2E:** eine Spec als Sohn mit einer frischen Station: neue Karte, aufdecken, abschreiben, erinnern, Abbruch →
+  Karte am Rundenende; `/smoke-test`. Der Klang des Vorlesens bleibt ein Gerätecheck (B-31).
+
 ## Verlauf
 
 - **2026-11-16** — angelegt aus der Diskussion über Regeln fürs Erstellen von Übungen.
@@ -163,3 +236,5 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen (6–10 auf �
   Antwort je Karte, Lösung schon beim Client, keine Normalisierung im Frontend), zehn offene Punkte mit Empfehlung.
   Empfehlung zur Wertung gegenüber der ersten Diskussion geändert (keine Münze). Im Refinement für Sprint 82.
 - **2026-11-16** — gegrillt mit dem Vater: zehn Entscheidungen, Akzeptanzkriterien final.
+- **2026-11-16** — geschätzt: L, beides, keine Migration (zwei Historien-Zeilen statt neuer Spalte, Risiko 4),
+  kein Vertragsbruch; zwölf Stellen der Regel „Anzeige-Stufe“ als Kern der Arbeit.
