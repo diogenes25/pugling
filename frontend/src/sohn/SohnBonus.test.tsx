@@ -234,7 +234,8 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
       runPercent: 100, cards: [{ itemIndex: 0, prompt: text, gapIndex: 1 }, { itemIndex: 1, prompt: text, gapIndex: 2 }],
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockResolvedValue({
-      runId: 300, form: "Typed", total: 2, correct: 1, coinsAwarded: 3, capReached: false, coinsToday: 3, dailyCoinCap: null,
+      runId: 300, form: "Typed", total: 2, correct: 1, coinsAwarded: 1, capReached: false, coinsToday: 1, dailyCoinCap: null,
+      coinsPerHit: 3, runPercent: 50, coinsEarned: 1,
       items: [
         { itemIndex: 0, prompt: text, expected: "doesn't she?", givenAnswer: "doesn't she?", wasCorrect: true, gapIndex: 1 },
         { itemIndex: 1, prompt: text, expected: "are we?", givenAnswer: "aren't we?", wasCorrect: false, gapIndex: 2 },
@@ -259,5 +260,14 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
     expect(screen.queryByText("Du: doesn't she?")).toBeNull();
     expect(screen.getByText("Richtig: are we?")).toBeTruthy();
     expect(screen.getByText("Richtig: doesn't she?")).toBeTruthy();
+
+    // Erlös je Aufgabe und die Rechnung bis zur Buchung. Rot, wenn die Zeile nicht nach richtig/falsch zahlt, wenn der
+    // Prozentschritt fehlt (dann bliebe offen, warum aus 3 🪙 nur 1 wurde) oder die Summe nicht den gebuchten Betrag nennt.
+    expect(screen.getByText("+3 🪙")).toBeTruthy();
+    expect(screen.getByText("+0 🪙")).toBeTruthy();
+    expect(screen.getByText("1 richtig × 3 🪙")).toBeTruthy();
+    expect(screen.getByText("Runde zählt heute 50 % (abgerundet): 1 🪙")).toBeTruthy();
+    expect(screen.getByText("Gesamt: +1 🪙")).toBeTruthy();
+    expect(screen.queryByText(/Tagesdeckel:/)).toBeNull();
   });
 });

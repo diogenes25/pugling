@@ -38853,11 +38853,14 @@
         "required": [
           "capReached",
           "coinsAwarded",
+          "coinsEarned",
+          "coinsPerHit",
           "coinsToday",
           "correct",
           "form",
           "items",
           "runId",
+          "runPercent",
           "total"
         ],
         "type": "object",
@@ -38922,9 +38925,33 @@
             "items": {
               "$ref": "#/components/schemas/ExtraItemOutcome"
             }
+          },
+          "coinsPerHit": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "runPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsEarned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run."
+        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run.\nThe breakdown lets the child follow the sum: CoinsPerHit is the full rate per right answer,\nRunPercent the share of it this run was worth at the submit (B-538), and\nCoinsEarned the rounded-down result before the daily cap."
       },
       "ExtraTrainingOverview": {
         "required": [

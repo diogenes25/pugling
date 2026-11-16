@@ -192,7 +192,9 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         // a run is booked on the day it is handed in, so a run started yesterday pays by today's count.
         var completedToday = await db.ExtraTrainingRuns.CountAsync(r => r.ChildId == childId && r.ExerciseId == run.ExerciseId
             && r.Day == today && r.CompletedAt != null, ct);
-        var earned = graded.Correct * CoinsPerHit(run.Form) * RunPercent(completedToday) / 100;
+        var perHit = CoinsPerHit(run.Form);
+        var percent = RunPercent(completedToday);
+        var earned = graded.Correct * perHit * percent / 100;
         var coins = Math.Min(earned, left);
 
         var now = time.GetUtcNow().UtcDateTime;
@@ -224,7 +226,8 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
         return new Outcome<ExtraRunResult>(new ExtraRunResult(run.Id, run.Form, graded.Total, graded.Correct, coins,
             coins < earned, coinsBefore + coins, dailyCap,
-            [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect, i.GapIndex))]));
+            [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect, i.GapIndex))],
+            perHit, percent, earned));
     }
 
     /// <summary>

@@ -186,6 +186,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var paid = new List<int>();
         var percents = new List<int>();
         var started = new List<int>();
+        var breakdown = new List<(int PerHit, int Percent, int Earned)>();
         for (var i = 0; i < 3; i++)
         {
             var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{mathId}/runs", null));
@@ -194,9 +195,13 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
                 $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = Right(run) }));
             Assert.Equal(2, result.GetProperty("correct").GetInt32());
             paid.Add(result.GetProperty("coinsAwarded").GetInt32());
+            breakdown.Add((result.GetProperty("coinsPerHit").GetInt32(), result.GetProperty("runPercent").GetInt32(),
+                result.GetProperty("coinsEarned").GetInt32()));
             percents.Add(PoolEntry(await JsonAsync(await s.Child.GetAsync(Base(s))), mathId).GetProperty("nextRunPercent").GetInt32());
         }
         Assert.Equal([6, 3, 1], paid);
+        // The result shows the sum it booked: 2 hits × 3 coins at 100, 50 and 25 %, rounded down (2 × 3 × 25 % = 1.5 → 1).
+        Assert.Equal([(3, 100, 6), (3, 50, 3), (3, 25, 1)], breakdown);
         Assert.Equal([50, 25, 0], percents);
         // The run tells the child what it is worth before the first card (review finding: the hint promised 100 %).
         Assert.Equal([100, 50, 25], started);
@@ -339,6 +344,8 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
 
         Assert.Equal(3, result.GetProperty("correct").GetInt32());
         Assert.Equal(4, result.GetProperty("coinsAwarded").GetInt32());
+        // Earned is before the cap: 3 hits × 3 coins = 9, of which the cap left 4 - both stand in the result.
+        Assert.Equal(9, result.GetProperty("coinsEarned").GetInt32());
         JsonAssert.True(result, "capReached");
         Assert.Equal(90, result.GetProperty("coinsToday").GetInt32());
     }

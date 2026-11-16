@@ -238,6 +238,8 @@ export function SohnBonusRun() {
       <div className="sohn-body"><div className="error-box" role="alert" tabIndex={-1} ref={errorBox}>{error}</div>
         <button type="button" className="btn ghost" onClick={() => nav("/sohn/bonus")}>{t("bonus.back")}</button></div>
     );
+    // Selbst eingeschätzte Runden zahlen nichts je Treffer – dort gäbe es keine Rechnung, nur Nullen.
+    const zahlt = result != null && result.coinsPerHit > 0;
     if (result) return (
       <div className="sohn-body">
         <div className="victory">
@@ -250,9 +252,21 @@ export function SohnBonusRun() {
           )}
           <div className="card" style={{ width: "100%", textAlign: "left" }}>
             {result.items.map((o) => (
+              // Je Zeile der volle Satz je Treffer; was davon heute zählt, rechnet die Summe darunter vor.
               <ErgebnisZeile key={o.itemIndex} prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
-                givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} zeigeAntwort={result.form !== "SelfAssess"} />
+                givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} zeigeAntwort={result.form !== "SelfAssess"}
+                erloes={zahlt ? t("bonus.rowCoins", { coins: o.wasCorrect ? result.coinsPerHit : 0 }) : undefined} />
             ))}
+            {zahlt && (
+              // Die Rechnung vom Satz bis zur Buchung, Schritt für Schritt – Prozent und Deckel nur, wo sie etwas abzogen.
+              <div className="erloes-summe">
+                <b>{t("bonus.sumTitle")}</b>
+                <span className="sub">{t("bonus.sumHits", { correct: result.correct, perHit: result.coinsPerHit })}</span>
+                {result.runPercent < 100 && <span className="sub">{t("bonus.sumPercent", { percent: result.runPercent, coins: result.coinsEarned })}</span>}
+                {result.capReached && <span className="sub">{t("bonus.sumCap", { coins: result.coinsAwarded })}</span>}
+                <span className="gesamt">{t("bonus.sumTotal", { coins: result.coinsAwarded })}</span>
+              </div>
+            )}
           </div>
           <button type="button" className="btn gold" onClick={() => nav("/sohn/bonus")}>{t("bonus.back")}</button>
         </div>
