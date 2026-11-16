@@ -24,8 +24,11 @@ auf (z. B. „Part A (1/3)“). Bestehende Übungen bleiben, bis jemand sie bear
 Aufteilen würde den Leitner-Fortschritt an den Karten zerreißen. Zu klären: Ob ein Ändern einer
 Bestandsübung mit 44 Wörtern dann abgewiesen wird oder nur nicht wachsen darf, wie das Verhältnis zur
 Tagesdosis ist (die schon die neuen Wörter je Tag begrenzt) und ob der Item-Endpunkt
-(`…/vocabulary/{id}/items`) dieselbe Grenze trägt.
+(`…/vocabulary/{id}/items`) dieselbe Grenze trägt. Aus [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md)
+(Entscheidung 8): Zählt die Grenze **Wörter oder Karten**? Eine Liste auf „beides“ spielt je Wort zwei Karten,
+10 Wörter sind dort 20 Karten in der Tagesdosis.
 
 ## Verlauf
 
 - **2026-11-16** — angelegt aus der Diskussion über Regeln fürs Erstellen von Übungen.
+- **2026-11-16** — offene Frage „Wörter oder Karten?“ aus dem Grillen von B-597 übernommen.
