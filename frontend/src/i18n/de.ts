@@ -210,6 +210,7 @@ export const de = {
       noCoins: "Diesmal ohne Münzen.",
       capCut: "Der Tagesdeckel hat gekappt.",
       sumHits: "{{correct}} richtig × {{perHit}} 🪙 = {{full}} 🪙",
+      sumMixedHits: "{{correct}} richtig = {{full}} 🪙 (Auswählen zählt weniger als Schreiben)",
       sumPercent: "heute {{percent}} %",
       sumCap: "Tagesdeckel",
       sumTotal: "+{{coins}} 🪙",

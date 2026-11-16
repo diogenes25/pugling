@@ -45,6 +45,20 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
     expect(rows[1].form).toBe("");
   });
 
+  // B-599: Die falschen Vorschläge je Lücke reisen hin und zurück; leer heißt „keine“ (fehlt in der Config). Rot, wenn
+  // einer der beiden Wege `distractors` vergisst – dann verlöre Bearbeiten die Vorschläge des Autors still.
+  it("Lückentext: falsche Vorschläge je Lücke überleben den Rundlauf", () => {
+    const { config, rows } = rundlauf("Cloze",
+      [{ index: 1, answer: "doesn't she", alternatives: [], vocabKey: null, form: "", distractors: ["don't she", " isn't she "] },
+       { index: 2, answer: "didn't they", alternatives: [], vocabKey: null, form: "", distractors: [] }],
+      { text: "{{1}} {{2}}" });
+
+    const gaps = (config as { gaps: { distractors: string[] | null }[] }).gaps;
+    expect(gaps[0].distractors).toEqual(["don't she", "isn't she"]);
+    expect(rows[0].distractors).toEqual(["don't she", "isn't she"]);
+    expect(rows[1].distractors).toEqual([]);
+  });
+
   // B-524: Die Ablenker des Wortkastens reisen hin und zurück; leer heißt „keine“ (fehlt in der Config). Rot, wenn
   // einer der beiden Wege `cueDistractors` vergisst.
   it("Lückentext: Ablenker im Wortkasten überleben den Rundlauf", () => {

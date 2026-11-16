@@ -486,14 +486,16 @@ Response — `HTTP 201`:
         "answer": "goes",
         "alternatives": null,
         "vocabKey": null,
-        "form": null
+        "form": null,
+        "distractors": null
       },
       {
         "index": 2,
         "answer": "meets",
         "alternatives": null,
         "vocabKey": null,
-        "form": null
+        "form": null,
+        "distractors": null
       }
     ],
     "wordBank": [

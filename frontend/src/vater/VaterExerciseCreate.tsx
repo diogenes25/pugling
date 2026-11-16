@@ -16,8 +16,8 @@ import { POS, POS_LABEL } from "../lib/vocab";
 // Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
 // und Zurücklesen (configToEditorState) müssen zueinander passen, sonst verliert Bearbeiten Inhalte.
 import {
-  AUTHORABLE_TYPES, ArticleRequiredCheck, ConfigEditor, RecognitionField, VOCAB_FORMS, buildTypeConfig, contentProblem,
-  emptyExtra, emptyRow, type Row,
+  AUTHORABLE_TYPES, ArticleRequiredCheck, ConfigEditor, DefaultStageSelect, RecognitionField, buildTypeConfig,
+  contentProblem, emptyExtra, emptyRow, hasDefaultStage, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { GrammarTopicPicker } from "../components/GrammarTopicChips";
@@ -169,7 +169,7 @@ export function VaterExerciseCreate() {
         source: source.trim() || null,
         defaultUseLeitner,
         defaultRequireTypedTest,
-        defaultStage: type === "Vocabulary" && defaultStage !== "" ? Number(defaultStage) : null,
+        defaultStage: hasDefaultStage(type) && defaultStage !== "" ? Number(defaultStage) : null,
         defaultItemCount: defaultItemCount === "" ? null : Number(defaultItemCount),
         executePublic,
         grammarTopicIds,
@@ -288,13 +288,10 @@ export function VaterExerciseCreate() {
           <input id="ex-default-item-count" type="number" min={1} value={defaultItemCount}
             placeholder="alle" onChange={(e) => setDefaultItemCount(e.target.value === "" ? "" : Number(e.target.value))} />
         </div>
-        {type === "Vocabulary" && (
+        {hasDefaultStage(type) && (
           <div className="field" style={{ marginTop: 10, maxWidth: 300 }}>
             <FieldLabel topic="defaultStage">Standard-Abfrageform</FieldLabel>
-            <select aria-label="Standard-Abfrageform" value={defaultStage}
-              onChange={(e) => setDefaultStage(e.target.value === "" ? "" : Number(e.target.value))}>
-              {VOCAB_FORMS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
-            </select>
+            <DefaultStageSelect stages={types.stages(type)} value={defaultStage} onChange={setDefaultStage} />
           </div>
         )}
         {/*

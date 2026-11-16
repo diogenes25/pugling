@@ -38961,9 +38961,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "coinsForHits": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run.\nThe breakdown lets the child follow the sum: CoinsPerHit is the full rate per right answer,\nRunPercent the share of it this run was worth at the submit (B-538), and\nCoinsEarned the rounded-down result before the daily cap."
+        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run.\nThe breakdown lets the child follow the sum: CoinsPerHit is the full rate per right answer,\nRunPercent the share of it this run was worth at the submit (B-538), and\nCoinsEarned the rounded-down result before the daily cap. CoinsForHits is the\nhits\u0027 worth at the full rate: each hit pays by the form its card was asked in (B-597, B-599), so in a run that mixes\npicks and written answers it is not \u0060Correct \u00D7 CoinsPerHit\u0060."
       },
       "ExtraTrainingOverview": {
         "required": [
@@ -39053,9 +39062,18 @@
               "null",
               "string"
             ]
+          },
+          "distractors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary.\nAnswer is required even with a store reference - send \u0060\u0022\u0022\u0060 there; \u0060null\u0060 is a validation error.\nForm is the word as the sentence needs it (\u0022patients\u0022, \u0022debates\u0022) when it differs from the\nstore entry\u0027s base form. If set and not blank it is the solution - with or without a store reference - and the\nbase form alone is wrong (B-524); the store entry still supplies the meaning and the link to the learning\nprogress. A gap whose store entry is missing stays unsolvable either way: without the entry it has no meaning."
+        "description": "A gap. If VocabKey is set, the solution comes from the vocabulary store\n(the entry\u0027s word), centrally maintainable; the inline Answer remains a fallback for\ngaps without a store reference. This allows building a cloze from the maintained vocabulary.\nAnswer is required even with a store reference - send \u0060\u0022\u0022\u0060 there; \u0060null\u0060 is a validation error.\nForm is the word as the sentence needs it (\u0022patients\u0022, \u0022debates\u0022) when it differs from the\nstore entry\u0027s base form. If set and not blank it is the solution - with or without a store reference - and the\nbase form alone is wrong (B-524); the store entry still supplies the meaning and the link to the learning\nprogress. A gap whose store entry is missing stays unsolvable either way: without the entry it has no meaning.Distractors (B-599) are the wrong options of this gap on the stage \u0022choice per gap\u0022 - the fine\ndifferences an author wants asked (\u0022doesn\u0027t she\u0022 beside \u0022don\u0027t she\u0022). Without them the other gaps\u0027 solutions are\noffered. Only that stage reads them."
       },
       "Gender": {
         "enum": [

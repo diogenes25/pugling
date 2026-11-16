@@ -14,7 +14,6 @@ import { ListenAusfall } from "../components/ListenAusfall";
 import { Pflicht } from "../components/Pflicht";
 import { authorText } from "./ExerciseAttribution";
 import { ratingSummary } from "./ExerciseRatingPanel";
-import { VOCAB_FORMS } from "./exerciseConfig";
 import {
   auswahlNachFilterwechsel, NICHT_ZUWEISBAR_GRUND, nurZuweisbare, unsichtbareAuswahl, wizardFilterKey, wizardSearchParams,
 } from "./wizardSearch";
@@ -678,10 +677,10 @@ export function VaterWizard() {
             {/* Nur Vokabelübungen kennen diese Skala; für alle anderen Typen wird die Stufe weggelassen
                 (siehe `wizardFinish.typeOf`) – darum sagt es hier auch dran, statt still zu wirken. */}
             <div className="field"><FieldLabel topic="defaultStage">Test-Stufe <span className="muted">(nur Vokabelübungen)</span></FieldLabel>
-              {/* Aus derselben Liste wie Anlegen und Bearbeiten – die dritte Handkopie hatte Stufe 6 und 7
-                  vergessen (Review B-05). Die Nummer bleibt davor, die Zusammenfassung unten nennt sie. */}
+              {/* Aus dem Manifest wie Anlegen und Bearbeiten. Die Nummer bleibt davor, die Zusammenfassung unten nennt sie. */}
               <select aria-label="Test-Stufe" value={defaultStage} onChange={(e) => setDefaultStage(Number(e.target.value))}>
-                {VOCAB_FORMS.filter((f) => f.value !== "").map((f) => (
+                {/* B-599: die Stufen der Vokabeln aus dem Server-Manifest; die Vorgabe des Assistenten (4) bleibt fest. */}
+                {types.stages("Vocabulary").map((f) => (
                   <option key={f.value} value={f.value}>{f.value} · {f.label}</option>
                 ))}
               </select>

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { RecognitionField, VOCAB_FORMS } from "./exerciseConfig";
+import { RecognitionField } from "./exerciseConfig";
 
 /*
  * B-597, Entscheidung 7 – das Feld heißt „Erkennen“, nennt die Richtungen in Wörtern und sagt fest dazu, dass immer das
@@ -30,10 +30,5 @@ describe("RecognitionField", () => {
     expect(feld.getAttribute("aria-describedby")).toBe(hinweis.id);
     // Ohne gespeicherten Wert die Vorgabe der Anlege-Wege (Entscheidung 8).
     expect((feld as HTMLSelectElement).value).toBe("front-to-back");
-  });
-
-  it("nennt die Hörstufe Diktat", () => {
-    // Rot, wenn die Stufe wieder „Hören → tippen“ hieße – das klang nach Übersetzen.
-    expect(VOCAB_FORMS.find((f) => f.value === 5)?.label).toMatch(/^Diktat/);
   });
 });

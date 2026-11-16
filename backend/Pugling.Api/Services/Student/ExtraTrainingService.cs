@@ -231,7 +231,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         return new Outcome<ExtraRunResult>(new ExtraRunResult(run.Id, run.Form, graded.Total, graded.Correct, coins,
             coins < earned, coinsBefore + coins, dailyCap,
             [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect, i.GapIndex))],
-            perHit, percent, earned));
+            perHit, percent, earned, hitCoins));
     }
 
     /// <summary>
@@ -387,8 +387,11 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         int? stage = exercise.DefaultStage is { } own && type.IsTypedStage(own) ? own
             : type.IsTypedStage(type.PreviewStage) ? type.PreviewStage : null;
         if (stage is not { } checkedStage) return null;
-        // A checked stage that offers options (a cloze word bank) is a pick, not a recall, and pays as one.
-        return (items.Any(i => type.Choices(exercise.ConfigJson, items, i, checkedStage) is not null) ? ExtraForm.Choice : ExtraForm.Typed,
+        // A checked stage whose cards offer options or letter tiles is a pick, not a recall, and pays as one (B-599: the
+        // scramble counts as a choice). Named for the run only where every card picks: a card falling back to letter
+        // boxes pays the typed rate on its own (CardRatesAsync), and a run advertised as a pick would undersell it.
+        return (items.All(i => type.Choices(exercise.ConfigJson, items, i, checkedStage) is not null
+                || type.LetterTileSource(i, checkedStage) is not null) ? ExtraForm.Choice : ExtraForm.Typed,
             checkedStage);
     }
 

@@ -74,11 +74,13 @@ public record SubmitExtraRunDto(List<ExtraAnswer> Answers);
 /// daily cap cut it short. <paramref name="CoinsToday"/> is the day's bonus total after this run.
 /// The breakdown lets the child follow the sum: <paramref name="CoinsPerHit"/> is the full rate per right answer,
 /// <paramref name="RunPercent"/> the share of it this run was worth at the submit (B-538), and
-/// <paramref name="CoinsEarned"/> the rounded-down result before the daily cap.
+/// <paramref name="CoinsEarned"/> the rounded-down result before the daily cap. <paramref name="CoinsForHits"/> is the
+/// hits' worth at the full rate: each hit pays by the form its card was asked in (B-597, B-599), so in a run that mixes
+/// picks and written answers it is not <c>Correct × CoinsPerHit</c>.
 /// </summary>
 public record ExtraRunResult(int RunId, ExtraForm Form, int Total, int Correct, int CoinsAwarded, bool CapReached,
     int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraItemOutcome> Items, int CoinsPerHit, int RunPercent,
-    int CoinsEarned);
+    int CoinsEarned, int CoinsForHits = 0);
 
 /// <summary>
 /// One graded card, revealed after the run (<paramref name="Expected"/> is the solution shown in hindsight).

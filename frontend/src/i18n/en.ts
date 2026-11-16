@@ -199,6 +199,7 @@ export const en = {
       noCoins: "No coins this time.",
       capCut: "The daily limit cut it short.",
       sumHits: "{{correct}} right × {{perHit}} 🪙 = {{full}} 🪙",
+      sumMixedHits: "{{correct}} right = {{full}} 🪙 (picking pays less than writing)",
       sumPercent: "today {{percent}} %",
       sumCap: "daily limit",
       sumTotal: "+{{coins}} 🪙",

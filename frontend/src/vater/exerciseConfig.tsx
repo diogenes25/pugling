@@ -45,7 +45,7 @@ interface ArithmeticDrillExtra {
   allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
 }
 
-interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string }
+interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string; distractors: string[] }
 interface ClozeExtra { text: string; wordBank: string[]; cueDistractors: string[] }
 
 interface MatchingRow { left: string; right: string }
@@ -105,17 +105,34 @@ export const isContentEditable = (type: ExerciseTypeKey): boolean => CONTENT_EDI
 /** Typen ohne Zeilenliste: ihr Inhalt sind reine Einstellungen. */
 const ROWLESS: ExerciseTypeKey[] = ["ArithmeticDrill"];
 
-/** Standard-Abfrageform einer Vokabelübung (TestStage-Werte; "" = Verfahrens-Standard: Selbstcheck → Tippen). */
-export const VOCAB_FORMS: { value: number | ""; label: string }[] = [
-  { value: "", label: "Standard (Selbstcheck → Tippen)" },
-  { value: 1, label: "Nur anzeigen" },
-  { value: 2, label: "Selbsteinschätzung" },
-  { value: 3, label: "Buchstabenkästchen" },
-  { value: 7, label: "Buchstaben ordnen" },
-  { value: 4, label: "Freitext (tippen)" },
-  { value: 6, label: "Multiple-Choice (Auswahl)" },
-  { value: 5, label: "Diktat (hören → Fremdwort tippen)" },
-];
+/**
+ * Typen mit einer „Standard-Abfrageform“ im Creator-Formular (B-599): Vokabeln und Lückentext. Die Stufen selbst kommen
+ * aus dem Server-Manifest (`types.stages`), nicht aus einer Liste hier – die frühere Handkopie für Vokabeln lief dem
+ * Server zweimal davon (Review B-05).
+ */
+export const hasDefaultStage = (type: string): boolean => type === "Vocabulary" || type === "Cloze";
+
+/**
+ * Auswahl der Standard-Abfrageform: „Standard“ (leer = die Vorgabe des Typs) und die Stufen des Manifests. Leer bleibt die
+ * Liste, solange das Manifest lädt oder sein Abruf scheiterte – dann steht nur „Standard“ da, keine geratene Stufe. Ein
+ * gespeicherter Wert, den die Liste (noch) nicht kennt, bleibt als „Stufe n“ sichtbar: sonst zeigte das Feld „Standard“,
+ * während die Übung etwas anderes gespeichert hat.
+ */
+export function DefaultStageSelect({ id, stages, value, onChange }: {
+  id?: string;
+  stages: readonly { value: number; label: string }[];
+  value: number | "";
+  onChange: (stage: number | "") => void;
+}) {
+  return (
+    <select id={id} aria-label={id ? undefined : "Standard-Abfrageform"} value={value}
+      onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}>
+      <option value="">Standard (Vorgabe des Typs)</option>
+      {value !== "" && !stages.some((s) => s.value === value) && <option value={value}>Stufe {value}</option>}
+      {stages.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+    </select>
+  );
+}
 
 export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string }[] = [
   { value: "Addition", label: "+ Addition" },
@@ -162,7 +179,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "" } satisfies ClozeRow;
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "", distractors: [] } satisfies ClozeRow;
     case "Matching": return { left: "", right: "" } satisfies MatchingRow;
     case "List": return { value: "", alternatives: [] } satisfies ListRow;
     case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" } satisfies BirkenbihlRow;
@@ -246,7 +263,9 @@ export function buildTypeConfig(
         gaps: items.map((r) => ({ index: Number(r.index), answer: r.answer,
           alternatives: nonEmpty(strList(r.alternatives)), vocabKey: r.vocabKey ?? null,
           // B-524: die Satzform („patients“) schlägt die Grundform des Speichers; leer heißt „keine“.
-          form: r.form?.trim() ? r.form.trim() : null })) };
+          form: r.form?.trim() ? r.form.trim() : null,
+          // B-599: eigene falsche Vorschläge der Lücke für die Auswahl je Lücke; leer heißt „die anderen Lücken“.
+          distractors: nonEmpty(strList(r.distractors)) })) };
     }
     case "Matching": {
       const items = rows as MatchingRow[];
@@ -376,7 +395,8 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return fallback(
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
-          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "" })),
+          alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "",
+          distractors: strList(g.distractors) })),
         { text: str(c.text), wordBank: strList(c.wordBank), cueDistractors: strList(c.cueDistractors) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
@@ -676,6 +696,10 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             <RowRepeatedField label="Auch richtig" values={r.alternatives} scope={`Zeile ${i + 1}`}
               placeholder="zählt auch als richtig" optional topic={i === 0 ? "alsoCorrect" : undefined}
               onChange={(v) => patchRow(i, { alternatives: v })} />
+            {/* B-599: falsche Vorschläge nur für diese Lücke („don't she“ neben „doesn't she“). */}
+            <RowRepeatedField label="Falsche Vorschläge" values={r.distractors ?? []} scope={`Zeile ${i + 1}`}
+              placeholder="doesn't he" optional topic={i === 0 ? "gapDistractors" : undefined}
+              onChange={(v) => patchRow(i, { distractors: v })} />
           </>}
           {type === "Matching" && <>
             <RowField label="Links" value={r.left} onChange={(v) => patchRow(i, { left: v })} />

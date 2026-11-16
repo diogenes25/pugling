@@ -26,7 +26,7 @@ public static class StageMechanics
     /// </summary>
     public static bool IsTyped(ClozeStage stage) =>
         stage is ClozeStage.TranslationWordBank or ClozeStage.TranslationFreeText or ClozeStage.FreeText
-            or ClozeStage.CueBoxFreeText;
+            or ClozeStage.CueBoxFreeText or ClozeStage.LetterBoxes or ClozeStage.LetterScramble or ClozeStage.Choice;
 
     /// <summary>
     /// Normalizes an answer for comparison (trim, lowercase, collapse repeated whitespace into one space, one spelling
@@ -53,7 +53,7 @@ public static class StageMechanics
     }
 
     // Right and left single quotation mark, modifier apostrophe, acute and grave accent as stand-alone characters.
-    private static string FoldApostrophes(string s) =>
+    internal static string FoldApostrophes(string s) =>
         s.Replace('’', '\'').Replace('‘', '\'').Replace('ʼ', '\'').Replace('´', '\'').Replace('`', '\'');
 
     // B-421: the articles a typed answer may leave out, per language of the expected answer. Product knowledge, kept

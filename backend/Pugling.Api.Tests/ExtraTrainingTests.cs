@@ -193,6 +193,59 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(Words.Length * 1 + Words.Length * 3, result.GetProperty("coinsEarned").GetInt32());
     }
 
+    private static async Task<int> AddClozeAsync(Setup s, ClozeStage stage, params string[] answers) =>
+        await TestApi.IdAsync(await s.Father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{s.SeriesId}/units/{s.UnitId}/cloze", new
+            {
+                title = TestApi.UniqueName("Bonus-Lücken"),
+                orderIndex = 3,
+                rewardPoints = 10,
+                defaultStage = (int)stage,
+                config = new
+                {
+                    text = string.Join(" ", answers.Select((_, i) => $"Satz {i + 1}: {{{{{i + 1}}}}}.")),
+                    gaps = answers.Select((a, i) => new { index = i + 1, answer = a }).ToArray(),
+                },
+            }));
+
+    // One cloze run answered right on every card; returns the run and its result.
+    private async Task<(JsonElement Run, JsonElement Result)> PlayClozeRightAsync(Setup s, int exerciseId, string[] answers)
+    {
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{exerciseId}/runs", null));
+        var given = run.GetProperty("cards").EnumerateArray().Select(c => new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            givenAnswer = answers[c.GetProperty("itemIndex").GetInt32()],
+            wasKnown = (bool?)null,
+        }).ToArray();
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = given }));
+        return (run, result);
+    }
+
+    /// <summary>
+    /// B-599 decision 7: on the cloze, a choice per gap and a scrambled word pay as a pick (1), letter boxes as a written
+    /// answer (3) - and a scramble card that fell back to boxes pays 3 on its own. Red when the tile source does not count
+    /// as a pick (the scrambled word pays 3) or when hits pay by the run instead of the card.
+    /// </summary>
+    [Theory]
+    [InlineData(ClozeStage.Choice, new[] { "isn't it", "can't you", "didn't he" }, "Choice", 3)]
+    [InlineData(ClozeStage.LetterBoxes, new[] { "tired", "aren't I" }, "Typed", 6)]
+    [InlineData(ClozeStage.LetterScramble, new[] { "tired", "hungry" }, "Choice", 2)]
+    [InlineData(ClozeStage.LetterScramble, new[] { "tired", "aren't I" }, "Typed", 4)]
+    public async Task Lueckentext_Zahlt_Auswahl_Und_Salat_Wie_Auswahl_Kaestchen_Wie_Tippen(ClozeStage stage, string[] answers,
+        string form, int coinsForHits)
+    {
+        var s = await SetupAsync();
+        var clozeId = await AddClozeAsync(s, stage, answers);
+
+        var (run, result) = await PlayClozeRightAsync(s, clozeId, answers);
+
+        Assert.Equal(form, run.GetProperty("form").GetString());
+        Assert.Equal(answers.Length, result.GetProperty("correct").GetInt32());
+        Assert.Equal(coinsForHits, result.GetProperty("coinsForHits").GetInt32());
+    }
+
     [Fact]
     public async Task Vor_Erfuellter_Tagespflicht_Ist_Das_Bonus_Training_Gesperrt()
     {

@@ -15,7 +15,7 @@ import type {
 } from "../lib/types";
 import { LANGUAGES } from "../lib/languages";
 import {
-  ArticleRequiredCheck, ConfigEditor, VOCAB_FORMS, buildTypeConfig, configToEditorState, contentProblem, emptyRow,
+  ArticleRequiredCheck, ConfigEditor, DefaultStageSelect, hasDefaultStage, buildTypeConfig, configToEditorState, contentProblem, emptyRow,
   isContentEditable, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
@@ -365,6 +365,8 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
 }) {
   // Namen der Kästchen-Gruppen (B-236): die Überschrift benennt die Gruppe per `aria-labelledby`.
   const groupId = useId();
+  // Die Stufen der Standard-Abfrageform kommen aus dem Manifest (B-599); der Modul-Cache lädt es nur einmal.
+  const types = useExerciseTypes();
 
   function up<K extends keyof MetaForm>(k: K, v: MetaForm[K]) {
     setForm((f) => ({ ...(f ?? form), [k]: v }));
@@ -437,15 +439,15 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
             onChange={(e) => up("defaultRequireTypedTest", e.target.checked)} /> nur getippte Tests</label>
         </div>
       </div>
+      {hasDefaultStage(type) && (
+        <div className="field" style={{ maxWidth: 300 }}>
+          <FieldLabel htmlFor="ed-stage" topic="defaultStage">Standard-Abfrageform</FieldLabel>
+          <DefaultStageSelect id="ed-stage" stages={types.stages(type)} value={form.defaultStage}
+            onChange={(v) => up("defaultStage", v)} />
+        </div>
+      )}
       {type === "Vocabulary" && (
         <>
-          <div className="field" style={{ maxWidth: 300 }}>
-            <FieldLabel htmlFor="ed-stage" topic="defaultStage">Standard-Abfrageform</FieldLabel>
-            <select id="ed-stage" value={form.defaultStage}
-              onChange={(e) => up("defaultStage", e.target.value === "" ? "" : Number(e.target.value))}>
-              {VOCAB_FORMS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
-            </select>
-          </div>
           <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div className="field" style={{ maxWidth: 180 }}>
               <label htmlFor="ed-src">Quellsprache</label>

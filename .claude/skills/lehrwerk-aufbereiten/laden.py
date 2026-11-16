@@ -38,7 +38,7 @@ MAX_PAGES = 20
 FIELDS = {
     "vocabulary": {"": ["direction", "sourceLang", "targetLang", "articleRequired", "refs", "items"],
                    "items": ["front", "back", "hint", "vocabularyId", "explanation"], "refs": ["vocabularyId", "key"]},
-    "cloze": {"": ["text", "gaps", "wordBank", "cueDistractors"], "gaps": ["index", "answer", "alternatives", "vocabKey", "form"]},
+    "cloze": {"": ["text", "gaps", "wordBank", "cueDistractors"], "gaps": ["index", "answer", "alternatives", "vocabKey", "form", "distractors"]},
     "grammar": {"": ["instruction", "tasks"], "tasks": ["prompt", "answer", "ruleHint"]},
     "matching": {"": ["instruction", "pairs"], "pairs": ["left", "right"]},
     "translation": {"": ["sourceLang", "targetLang", "items"],

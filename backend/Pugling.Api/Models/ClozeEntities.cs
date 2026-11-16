@@ -21,6 +21,18 @@ public enum ClozeStage
     /// one unordered box, the asked gap carries no hint of its own, and the word is typed freely.
     /// </summary>
     CueBoxFreeText = 5,
+    /// <summary>B-599: translation + letter boxes with the solution's length and separators.</summary>
+    LetterBoxes = 6,
+    /// <summary>
+    /// B-599: translation + the solution's letters as scrambled tiles. A solution that is not one word of 2 to 12 letters
+    /// cannot be scrambled and is played as letter boxes, card by card.
+    /// </summary>
+    LetterScramble = 7,
+    /// <summary>
+    /// B-599: translation + a choice for this one gap - its solution and up to four distractors, the gap's own or else
+    /// other gaps' solutions. With fewer than two distractors the card is played as letter boxes.
+    /// </summary>
+    Choice = 8,
 }
 
 /// <summary>A cloze text as learning material (reference base for study plans/exercises).</summary>

@@ -138,3 +138,49 @@ test("Kopfzeile des Tagestests am Handy: auch mit zehn Fragen bleibt „Später 
   const [weit, sichtbar] = await body.evaluate((el) => [el.scrollWidth, el.clientWidth]);
   expect(weit, "der Inhalt scrollt nicht seitlich").toBeLessThanOrEqual(sichtbar);
 });
+
+/*
+ * Fall 3 (B-599): die Auswahl je Lücke am Handy – Lösung und vier falsche Vorschläge, also fünf Knöpfe bei 375 px. Rot,
+ * sobald ein Knopf rechts aus dem Fenster ragt oder die Karte seitlich scrollt (fünf lange Tags in einer Reihe).
+ */
+test("Auswahl je Lücke am Handy: fünf Knöpfe passen ins Fenster", async ({ page, request }) => {
+  const login = await request.post("/api/v1/auth/adult", { data: { adultId: 1, pin: "0000" } });
+  expect(login.ok(), await login.text()).toBeTruthy();
+  const headers = { Authorization: `Bearer ${(await login.json()).token}` };
+
+  const childPin = "8644";
+  const childId = await postId(request, "/api/v1/supervisor/children", headers, { name: `Auswahl ${RUN}`, pin: childPin });
+  const subjectId = await postId(request, "/api/v1/creator/subjects", headers, { name: `Auswahl-Fach ${RUN}` });
+  const seriesId = await postId(request, "/api/v1/creator/textbook-series", headers, {
+    name: `Auswahl-Reihe ${RUN}`, publisherId: null, subjectName: null, subjectId, schoolTypes: null,
+    sourceLanguage: null, targetLanguage: null, notes: null,
+  });
+  const unitId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units`, headers, { label: "Unit 1", orderIndex: 1 });
+  const tags = ["doesn't she?", "haven't they?", "wouldn't you?", "isn't it?", "can't we?", "didn't he?"];
+  const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/cloze`, headers, {
+    title: `Auswahl je Lücke ${RUN}`, orderIndex: 1, rewardPoints: 10,
+    config: {
+      text: tags.map((_, i) => `${i + 1}. Satz, {{${i + 1}}}`).join("\n"),
+      gaps: tags.map((answer, i) => ({ index: i + 1, answer })),
+    },
+  });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
+    { childId, title: `Auswahl-Plan ${RUN}`, durationDays: 7, active: true });
+  await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
+    { exerciseId, stage: 8, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
+
+  await sohnLogin(page, { id: String(childId), pin: childPin });
+  await pfadStart(page, "test");
+
+  // Die Optionen tragen `aria-pressed` (markieren, dann „Prüfen“); so bleibt der Hauptknopf außen vor.
+  const knoepfe = page.locator(".lektion-antwort button[aria-pressed]");
+  await expect(knoepfe).toHaveCount(5);
+  for (const knopf of await knoepfe.all()) {
+    const box = await knopf.boundingBox();
+    expect(box, "der Knopf hat eine Fläche").not.toBeNull();
+    expect(box!.x + box!.width, `rechter Rand von „${await knopf.innerText()}“ im Fenster`).toBeLessThanOrEqual(375);
+  }
+  const body = page.locator(".sohn-body");
+  const [weit, sichtbar] = await body.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+  expect(weit, "der Inhalt scrollt nicht seitlich").toBeLessThanOrEqual(sichtbar);
+});

@@ -185,8 +185,31 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Cloze;
-    /// <summary>The word bank is one pool for the whole text, sorted on purpose - see <see cref="Choices"/>.</summary>
-    public override bool ChoicesShareOnePool => true;
+    /// <summary>
+    /// The word bank is one pool for the whole text, sorted on purpose - see <see cref="Choices"/>. The choice per gap
+    /// (B-599) is the options of one question and is shuffled like any other.
+    /// </summary>
+    public override bool ChoicesShareOnePool(int stage) => (ClozeStage)stage == ClozeStage.TranslationWordBank;
+
+    /// <summary>B-599: a choice per gap with fewer than two distractors is played as letter boxes, card by card.</summary>
+    public override int? ChoiceFallbackStage(int stage) =>
+        (ClozeStage)stage == ClozeStage.Choice ? (int)ClozeStage.LetterBoxes : null;
+
+    /// <summary>
+    /// B-599: letter boxes on their own stage, and on the scramble and choice stages for a card that falls back to them
+    /// (the choice's fallback arrives here as the letter-box stage, see <see cref="ChoiceFallbackStage"/>). The boxes
+    /// mask the solution's letters and keep its separators ("didn't he": apostrophe and space fixed).
+    /// </summary>
+    public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) =>
+        AsLetterBoxes(item, stage) ? (item.Answer.Length, null, null, StageMechanics.LetterBoxPattern(item.Answer)) : (null, null, null, null);
+
+    private static bool AsLetterBoxes(ContentItem item, int stage) =>
+        (ClozeStage)stage == ClozeStage.LetterBoxes
+        || ((ClozeStage)stage == ClozeStage.LetterScramble && !StageMechanics.IsScramblable(item.Answer));
+
+    /// <summary>B-599: the solution's letters on the scramble stage, when it is one word of 2 to 12 letters.</summary>
+    public override string? LetterTileSource(ContentItem item, int stage) =>
+        (ClozeStage)stage == ClozeStage.LetterScramble && StageMechanics.IsScramblable(item.Answer) ? item.Answer : null;
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
@@ -239,6 +262,7 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// </summary>
     public override IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage)
     {
+        if ((ClozeStage)stage == ClozeStage.Choice) return GapChoices(Deserialize<ClozeConfig>(configJson), items, item);
         if ((ClozeStage)stage != ClozeStage.TranslationWordBank) return null;
         var config = Deserialize<ClozeConfig>(configJson);
         var pool = AnswerChecking.Tiles(config.WordBank ?? []);
@@ -259,6 +283,69 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
         }
         return [.. pool.OrderBy(w => w, StringComparer.OrdinalIgnoreCase)];
     }
+
+    /// <summary>Most options of a choice per gap besides the solution (B-599, decision 3).</summary>
+    public const int MaxGapDistractors = 4;
+
+    /// <summary>
+    /// The options of the choice per gap (B-599): the solution plus up to <see cref="MaxGapDistractors"/> distractors -
+    /// the gap's own first (decision 2: they take precedence), topped up with the other gaps' solutions in text order
+    /// only where fewer than two of them are left, so a gap with one own distractor still offers a choice. A distractor
+    /// the grader would accept for this gap is no distractor and falls out, as does a second spelling of one already
+    /// offered; under two left the card has no choice (<c>null</c>) and falls back to letter boxes.
+    /// <para>
+    /// Every option is shown in one form, so none names itself (risk 2): closing marks dropped (grading ignores them),
+    /// apostrophes and spaces folded to one spelling, a capital that only marks a sentence start lowered - but, as for
+    /// the word bank, only where every other option starts lower-case; "I'm" opening a sentence beside "I'll" keeps its
+    /// capital, or the solution would be the only one with one. Where the asked gap opens a sentence all are capitalised.
+    /// The card shuffles the list per session.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<string>? GapChoices(ClozeConfig config, IReadOnlyList<ContentItem> items, ContentItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Answer)) return null;
+        var opens = OpensSentence(config.Text, item.GapIndex);
+        // (text, its capital only marks a sentence start) - the solution first, then the candidates in priority order.
+        var own = AnswerChecking.Tiles(config.Gaps.ElementAtOrDefault(item.Index)?.Distractors ?? [])
+            .Select(d => (Text: Clean(d), Positional: false));
+        var derived = items.Where(o => o.Index != item.Index && !string.IsNullOrWhiteSpace(o.Answer))
+            .Select(o => (Text: Clean(o.Answer), Positional: OpensSentence(config.Text, o.GapIndex)));
+
+        var solution = (Text: Clean(item.Answer), Positional: opens);
+        var seen = new HashSet<string>(StringComparer.Ordinal) { StageMechanics.Normalize(solution.Text) };
+        var picked = new List<(string Text, bool Positional)>();
+        void Take(IEnumerable<(string Text, bool Positional)> candidates, int upTo)
+        {
+            foreach (var candidate in candidates)
+            {
+                if (picked.Count >= upTo) return;
+                if (candidate.Text.Length == 0 || Grader.Matches(candidate.Text, item)) continue;
+                if (!seen.Add(StageMechanics.Normalize(candidate.Text))) continue;
+                picked.Add(candidate);
+            }
+        }
+        Take(own, MaxGapDistractors);
+        if (picked.Count < 2) Take(derived, picked.Count == 0 ? MaxGapDistractors : 2);
+        if (picked.Count < 2) return null;
+
+        var options = new[] { solution }.Concat(picked).ToList();
+        // The bank's rule (B-501): lower a positional capital only where every other option starts lower-case.
+        var lowerRest = options.Where(o => !o.Positional && o.Text.Length > 0 && char.IsLetter(o.Text[0]))
+            .All(o => char.IsLower(o.Text[0]));
+        return [.. options.Select(o => o.Positional && lowerRest ? Lowered(o.Text) : o.Text)
+            .Select(o => opens ? Capitalized(o) : o)];
+    }
+
+    // One option in one spelling: trimmed, without closing marks or a pasted BOM, one apostrophe, single spaces.
+    private static string Clean(string option) =>
+        string.Join(' ', StageMechanics.FoldApostrophes(StageMechanics.WithoutClosingMarks(
+            option.Replace(((char)0xFEFF).ToString(), "").Trim())).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    private static string Lowered(string option) =>
+        option.Length > 0 && char.IsUpper(option[0]) ? char.ToLowerInvariant(option[0]) + option[1..] : option;
+
+    private static string Capitalized(string option) =>
+        option.Length > 0 && char.IsLower(option[0]) ? char.ToUpperInvariant(option[0]) + option[1..] : option;
 
     private static string InBankForm(string solution, bool lower, bool bareBank)
     {
@@ -308,6 +395,9 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
         new((int)ClozeStage.TranslationFreeText, "Übersetzung + Freitext"),
         new((int)ClozeStage.FreeText, "Freitext"),
         new((int)ClozeStage.CueBoxFreeText, "Wortkasten + Freitext"),
+        new((int)ClozeStage.LetterBoxes, "Übersetzung + Buchstabenkästchen"),
+        new((int)ClozeStage.LetterScramble, "Übersetzung + Buchstaben ordnen"),
+        new((int)ClozeStage.Choice, "Übersetzung + Auswahl je Lücke"),
     ];
 }
 

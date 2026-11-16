@@ -235,7 +235,7 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockResolvedValue({
       runId: 300, form: "Typed", total: 2, correct: 1, coinsAwarded: 1, capReached: false, coinsToday: 1, dailyCoinCap: null,
-      coinsPerHit: 3, runPercent: 50, coinsEarned: 1,
+      coinsPerHit: 3, runPercent: 50, coinsEarned: 1, coinsForHits: 3,
       items: [
         { itemIndex: 0, prompt: text, expected: "doesn't she?", givenAnswer: "doesn't she?", wasCorrect: true, gapIndex: 1 },
         { itemIndex: 1, prompt: text, expected: "are we?", givenAnswer: "aren't we?", wasCorrect: false, gapIndex: 2 },
@@ -267,5 +267,34 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
     expect(screen.queryByText("+3 🪙")).toBeNull();
     expect(screen.getByText("+1 🪙")).toBeTruthy();
     expect(document.querySelector(".erloes-summe")?.textContent).toBe("1 richtig × 3 🪙 = 3 🪙 · heute 50 % → +1 🪙");
+  });
+
+  // B-597/B-599: Jeder Treffer zahlt nach der Form seiner Karte. Mischt die Runde Auswahl (1) und Schreiben (3), ist die
+  // Summe kein „richtig × Satz“. Rot, wenn die Zeile weiter „2 richtig × 3 🪙 = 6 🪙“ rechnete, obwohl 4 verdient wurden.
+  it("nennt bei gemischten Karten die Summe der Treffer statt richtig × Satz", async () => {
+    startExtraRun.mockResolvedValue({
+      runId: 301, exerciseId: 5, title: "Beides", type: "Vocabulary", form: "Typed", stage: 4, typed: true, coinsPerHit: 3,
+      runPercent: 100, cards: [{ itemIndex: 0, prompt: "walk" }, { itemIndex: 1, prompt: "gehen" }],
+    } as unknown as ExtraRunResponse);
+    submitExtraRun.mockResolvedValue({
+      runId: 301, form: "Typed", total: 2, correct: 2, coinsAwarded: 4, capReached: false, coinsToday: 4, dailyCoinCap: null,
+      coinsPerHit: 3, runPercent: 100, coinsEarned: 4, coinsForHits: 4,
+      items: [
+        { itemIndex: 0, prompt: "walk", expected: "gehen", givenAnswer: "gehen", wasCorrect: true, gapIndex: null },
+        { itemIndex: 1, prompt: "gehen", expected: "walk", givenAnswer: "walk", wasCorrect: true, gapIndex: null },
+      ],
+    } as ExtraRunResult);
+    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], coinsToday: 4, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
+    sessionStorage.setItem("pugling.bonus.run.301", JSON.stringify([
+      { itemIndex: 0, givenAnswer: "gehen" }, { itemIndex: 1, givenAnswer: "walk" }]));
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/5"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("2 / 2 richtig");
+
+    expect(document.querySelector(".erloes-summe")?.textContent)
+      .toBe("2 richtig = 4 🪙 (Auswählen zählt weniger als Schreiben) → +4 🪙");
   });
 });

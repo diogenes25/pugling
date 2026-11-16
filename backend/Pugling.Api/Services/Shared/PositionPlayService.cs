@@ -378,7 +378,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         // The scramble stage (B-05): the type names the word, the shuffle needs the session's or attempt's id as
         // seed - frozen per session, new per session - and the item index, so two cards of one round differ.
         var tileSource = typed ? type.LetterTileSource(item, stage) : null;
-        var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, stage);
+        // Options only where the solution is withheld (see below). A stage that falls back when it has none (B-599)
+        // takes its fallback's facets, so a choice without distractors becomes letter boxes instead of a blank field.
+        var choices = typed ? ShuffledChoices(type, configJson, items, item, stage, seed) : null;
+        var facetStage = choices is null && type.ChoiceFallbackStage(stage) is { } fallback ? fallback : stage;
+        var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, facetStage);
         // The cue box replaces the per-atom hint (B-524): next to the box it would name the meaning to find.
         var cueBox = typed ? type.CueBox(configJson, items, stage) : null;
         // B-597, decision 9: without a recording the device reads the dictation aloud, and for that it needs the word -
@@ -394,7 +398,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // typed stage anyway, so this changes nothing - but it makes the rule structural instead of a
             // coincidence of three unrelated types. Without it, one added display stage would put the answer
             // next to the options and no test would notice.
-            typed ? ShuffledChoices(type, configJson, items, item, stage, seed) : null,
+            choices,
             audioUrl,
             imageUrl,
             // The alt text follows the image: no image, no alt text - otherwise the description ("a unicorn is
@@ -442,7 +446,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         IReadOnlyList<ContentItem> items, ContentItem item, int stage, int seed)
     {
         var choices = type.Choices(configJson, items, item, stage);
-        return choices is null || type.ChoicesShareOnePool
+        return choices is null || type.ChoicesShareOnePool(stage)
             ? choices
             : StageMechanics.ShuffleOptions(choices, unchecked((seed * 7919) + item.Index));
     }

@@ -373,7 +373,7 @@ export function settingsToUpdateDto(s: PositionSettings): UpdatePositionDto {
  * Die Felder selbst. Präsentational: den Zustand hält der Aufrufer (Anlegen bzw. Zeile im Edit-Modus).
  *
  * `stages` sind die Manifest-Stufen des Übungstyps (B-16) – leer heißt: der Typ kennt keine Stufenwahl (oder das Manifest
- * lädt noch), und dann gibt es kein Stufen-Feld. Keine Liste im Frontend (`VOCAB_FORMS` gehört dem Creator-Formular).
+ * lädt noch), und dann gibt es kein Stufen-Feld. Keine Liste im Frontend – alle Stufenfelder lesen das Manifest (B-599).
  */
 function PositionFields({ value, onChange, stages }: {
   value: PositionSettings; onChange: (next: PositionSettings) => void; stages: readonly ExercisePreviewStage[];

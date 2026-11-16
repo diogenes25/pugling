@@ -185,10 +185,13 @@ export const FIELD_HELP = {
   },
   defaultStage: {
     title: "Standard-Abfrageform",
-    text: "Wie das Kind antworten soll: nur anschauen, selbst einschätzen, in Buchstabenkästchen tippen, "
-      + "gemischte Buchstaben ordnen, frei tippen, aus Vorschlägen wählen oder nach Gehör tippen. "
-      + "Getippte Formen sind schwerer, aber "
-      + "fälschungssicher – nur bei ihnen zählt „nur getippte Tests“.",
+    text: "Wie das Kind antworten soll – welche Formen es gibt, hängt vom Übungstyp ab: etwa selbst einschätzen, aus "
+      + "Vorschlägen wählen, Buchstaben ordnen, in Buchstabenkästchen oder frei tippen, beim Lückentext auch mit Wortbank "
+      + "oder Wortkasten, bei Vokabeln als Diktat nach Gehör. "
+      + "Getippte Formen sind schwerer, aber fälschungssicher – nur bei ihnen zählt „nur getippte Tests“. "
+      + "Buchstaben ordnen geht nur bei einem Wort aus 2 bis 12 Buchstaben; jede andere Lösung (etwa „didn't he“) "
+      + "kommt als Buchstabenkästchen. Die Auswahl je Lücke braucht mindestens zwei falsche Vorschläge, sonst "
+      + "kommen ebenfalls Kästchen.",
   },
   exerciseSchoolTypes: {
     title: "Schularten",
@@ -318,6 +321,12 @@ export const FIELD_HELP = {
       + "zählen als „Auch richtig“. Ein Komma trennt nicht: „Abfall, Müll“ bleibt eine Übersetzung. Wörter, "
       + "die es im Vokabelspeicher schon gibt, werden wiederverwendet statt doppelt angelegt. Zeilen ohne "
       + "Trenner (eine Überschrift etwa) werden übersprungen und genannt.",
+  },
+  gapDistractors: {
+    title: "Falsche Vorschläge",
+    text: "Nur für die Abfrageform „Auswahl je Lücke“: falsche Antworten, die neben der Lösung dieser Lücke stehen – "
+      + "am besten ähnliche Formen („don't she“, „isn't she“ neben „doesn't she“). Ohne sie bietet die Lücke die "
+      + "Lösungen der anderen Lücken an. Bis zu vier werden gezeigt; mit weniger als zwei kommen Buchstabenkästchen.",
   },
   translationAlternatives: {
     title: "Auch richtig",

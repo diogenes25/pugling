@@ -265,7 +265,11 @@ export function SohnBonusRun() {
               // als Summe, auch wenn die Runde heute nur einen Bruchteil zählte. Prozent und Deckel stehen nur da, wo sie
               // etwas abzogen.
               <p className="erloes-summe">
-                {t("bonus.sumHits", { correct: result.correct, perHit: result.coinsPerHit, full: result.correct * result.coinsPerHit })}
+                {/* B-597/B-599: jeder Treffer zahlt nach der Form seiner Karte – mischt die Runde Auswahl und Schreiben,
+                    ist die Summe kein „richtig × Satz“ mehr, und die Zeile sagt das statt falsch zu rechnen. */}
+                {result.coinsForHits === result.correct * result.coinsPerHit
+                  ? t("bonus.sumHits", { correct: result.correct, perHit: result.coinsPerHit, full: result.coinsForHits })
+                  : t("bonus.sumMixedHits", { correct: result.correct, full: result.coinsForHits })}
                 {result.runPercent < 100 && <> · {t("bonus.sumPercent", { percent: result.runPercent })}</>}
                 {result.capReached && <> · {t("bonus.sumCap")}</>}
                 {" → "}<b className="gesamt">{t("bonus.sumTotal", { coins: result.coinsAwarded })}</b>

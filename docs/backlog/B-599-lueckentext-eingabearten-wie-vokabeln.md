@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
 aliases: [Lückentext-Eingabearten, Buchstabenkästen im Lückentext, Auswahl je Lücke]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -227,3 +227,84 @@ schon (`Lektion.tsx:154-167`).
   angelegt.
 - **2026-11-16** — geschätzt: M, beides, keine Migration, kein Vertragsbruch; fünf Risiken, das erste (Auswahl
   je Lücke ungemischt wegen `ChoicesShareOnePool`) am Code gefunden.
+- **2026-11-16** — in Arbeit (Sprint 82). **Gebaut:** drei `ClozeStage`-Werte angehängt (`LetterBoxes` 6,
+  `LetterScramble` 7, `Choice` 8; Bestandswerte unverändert, keine Migration), im Manifest als „Übersetzung + …“.
+  `ClozeExerciseType` füllt `StageFacets`/`LetterTileSource` (Kästen, Salat, Rückfall auf Kästen bei mehr als einem Wort)
+  und auf der Auswahl-Stufe `GapChoices`: eigene Ablenker der Lücke (neues optionales Feld `Gap.Distractors`), sonst die
+  Lösungen der anderen Lücken in Textfolge; höchstens 4; was der Grader für die Lücke annimmt und was doppelt ist, fällt
+  heraus; unter 2 kein Pool. Alle Optionen in einer Form (Schlusszeichen weg, Satzanfangs-Großschreibung angeglichen).
+  **Senke** ist `PositionPlayService.CardFacets`, durch die Üben, Test, Bonus und Vorschau laufen: Sie fragt neu
+  `IExerciseType.ChoiceFallbackStage` (Auswahl ohne Pool → Kästen-Facetten, Risiko 5 an der Karte) und mischt per
+  `ChoicesShareOnePool(stage)` stufenabhängig (Risiko 1: die gemeinsame Wortbank bleibt sortiert, die Auswahl je Lücke
+  wird gemischt). Bonus: der Salat zählt wie die Auswahl (`FormFor`, `CardRatesAsync` je Karte, Entscheidung 7), ein auf
+  Kästen zurückgefallener Salat zahlt 3; das Ergebnis trägt additiv `CoinsForHits`, damit die Summenzeile bei gemischten
+  Karten nicht „richtig × Satz“ rechnet. Frontend: Standard-Abfrageform aus dem Manifest für Vokabeln und Lückentext
+  (`DefaultStageSelect`, `VOCAB_FORMS` je Nutzer abgelöst – Anlegen, Bearbeiten, Assistent mit fester Vorgabe 4,
+  Risiko 4), „Falsche Vorschläge“ je Lücke mit Hin- und Rückweg, Feld-Erklärungen `gapDistractors` und `defaultStage`
+  (Rückfall auf Kästen). `laden.py`: nur die Feldliste (Kopie des Vertrags, `LadenFieldListTests`) kennt `distractors`,
+  keine neue Fähigkeit (Entscheidung 10).
+- **2026-11-16** — **Belege je Akzeptanzkriterium und Fall** (`backend/Pugling.Api.Tests/`):
+  - AK 1, Stufen im Manifest und geprüft: `LueckentextEingabeartenTests.cs:59` (je Stufe); Liste aus dem Manifest
+    `frontend/src/vater/DefaultStageSelect.test.tsx`; Lückentext bekommt das Feld ebd. (`hasDefaultStage`).
+  - AK 2, Übersetzung als Hinweis wo vorhanden: `LueckentextEingabeartenTests.cs:242` (je Stufe, mit und ohne).
+  - AK 3, Kästen mit Länge und Trennzeichen: `:73`.
+  - AK 4, Salat ein Wort, sonst Kästen: `:89`.
+  - AK 5, Auswahl: abgeleitet und gedeckelt `:112`; Untergrenze/Rückfall `:152`; nicht-verratende Position `:223`;
+    eine Form `:199`; Grader- und Doppel-Ausschluss `:173`.
+  - AK 6, eigene Ablenker: `:129`; Editor-Rundlauf `frontend/src/vater/exerciseConfig.test.ts`.
+  - AK 7, Test wie Üben: `:269`.
+  - AK 8, Bonus 1/1/3 und Rückfall: `ExtraTrainingTests.cs:236` (vier Fälle); Summenzeile
+    `frontend/src/sohn/SohnBonus.test.tsx` (gemischt).
+  - AK 9, B-489/B-486: `frontend/e2e/lueckentext-am-handy.spec.ts` (3 passed, neu: fünf Knöpfe bei 375 px),
+    `ClozePrompt.test.tsx`/`choices.test.ts` im vollen Vitest.
+- **2026-11-16** — **Rote Probe** nach dem letzten Edit, `.claude/scripts/mutant-probe.py` (Release bzw. Vitest). N10
+  (Grader-Ausschluss) war im ersten Lauf grün: Die Doppel-Prüfung fing den Fall schon, weil „Isn't it?“ normalisiert
+  der Lösung gleicht. Der Fall prüft jetzt eine *Alternative* der Lücke („is it not“), die nur der Grader kennt; N10/N11
+  danach gemessen.
+
+| Mutante | Stelle | erwartet | gemessen |
+|---|---|---|---|
+| N1 Auswahl nicht geprüft | `StageMechanics.cs:29` | red | red |
+| N2 Auswahl fehlt im Manifest | `BuiltInExerciseTypes.cs:382` | red | red |
+| N3 Auswahl ungemischt | `BuiltInExerciseTypes.cs:192` | red | red |
+| N4 kein Rückfall | `BuiltInExerciseTypes.cs:196` | red | red |
+| N5 keine Kästen | `BuiltInExerciseTypes.cs:207` | red | red |
+| N6 Salat ohne Rückfall | `BuiltInExerciseTypes.cs:208` | red | red |
+| N7 keine Kacheln | `BuiltInExerciseTypes.cs:212` | red | red |
+| N8 keine Auswahl je Lücke | `BuiltInExerciseTypes.cs:265` | red | red |
+| N9 eigene Ablenker ignoriert | `BuiltInExerciseTypes.cs:302` | red | red |
+| N10 Grader-Ausschluss weg | `BuiltInExerciseTypes.cs:313` | red | red |
+| N11 Doppelte bleiben | `BuiltInExerciseTypes.cs:314` | red | red |
+| N12 kein Deckel | `BuiltInExerciseTypes.cs:316` | red | red |
+| N13 Untergrenze 1 | `BuiltInExerciseTypes.cs:318` | red | red |
+| N14 Satzanfang nicht angeglichen | `BuiltInExerciseTypes.cs:305` | red | red |
+| N15 nicht großgeschrieben | `BuiltInExerciseTypes.cs:319` | red | red |
+| N16 Schlusszeichen bleiben | `BuiltInExerciseTypes.cs:325` | red | red |
+| N17 Laufform ohne Kacheln | `ExtraTrainingService.cs:394` | red | red |
+| N18 Kartensatz ohne Kacheln | `ExtraTrainingService.cs:411` | red | red |
+| N19 Facetten ohne Rückfall | `PositionPlayService.cs:384` | red | red |
+| N20 kein `CoinsForHits` | `ExtraTrainingService.cs:234` | red | red |
+| F1 Ablenker nicht geschrieben | `exerciseConfig.tsx:265` | red | red |
+| F2 Ablenker nicht gelesen | `exerciseConfig.tsx:396` | red | red |
+| F3 Lückentext ohne Stufenfeld | `exerciseConfig.tsx:113` | red | red |
+| F4 Summenzeile rechnet richtig × Satz | `SohnBonus.tsx:270` | red | red |
+- **2026-11-16** — **Reviews.** `pugling-reviewer` (1757/1757 grün, keine Blocker), drei Funde eingearbeitet:
+  (1) die Großschreibung am Satzanfang wurde auch gesenkt, wo das die Lösung als einzige Option mit Großbuchstaben
+  zurückließ („I'm“ neben gefragtem „I'll“) – jetzt die Regel der Wortbank: nur senken, wo alle übrigen klein beginnen
+  (`LueckentextEingabeartenTests.cs` `Auswahl_Senkt_Keinen_Grossbuchstaben_Der_Die_Loesung_Verriete`); (2) Apostroph-
+  und Leerzeichen-Formen der Optionen angeglichen, sonst verriete der gerade Apostroph der Lösung sie neben am Handy
+  getippten Ablenkern (`Auswahl_Zeigt_Apostrophe_In_Einer_Schreibweise`); (3) **Lesart von Entscheidung 2:** „Vorrang“
+  heißt, die eigenen Ablenker kommen zuerst; bleiben weniger als zwei, wird mit Lösungen anderer Lücken auf zwei
+  aufgefüllt, statt auf Kästchen zu fallen – ein kuratierter Satz wird dabei nicht verwässert
+  (`Auswahl_Fuellt_Einen_Eigenen_Ablenker_Mit_Einer_Anderen_Luecke_Auf`). Aufräum-Funde: Kästchen zeigen ein
+  Schlusszeichen der Lösung als Kästchen (wie bei Vokabeln, bewertet wird ohne), Bonus mischt jede Optionsliste je
+  Karte (nicht neu) – beides gelassen. `frontend-reviewer` (keine Blocker): ein gespeicherter Stufenwert bleibt sichtbar,
+  solange das Manifest lädt (`DefaultStageSelect.test.tsx`, Probe F5); der Bearbeiten-Dialog eines Lückentexts zeigt die
+  Manifest-Stufen und schickt die Wahl im Vollersatz (`frontend/src/vater/ExerciseEditStufe.test.tsx`); Feld-Erklärung
+  `defaultStage` neutral für alle Typen; veraltete Kommentare zu `VOCAB_FORMS` nachgezogen.
+- **2026-11-16** — **Neu gemessen nach dem letzten Edit** (`GapChoices` umgebaut): N9–N16 und neu N21 (Senken nur bei
+  kleiner Restliste), N22 (Apostrophe), N23/N24 (Auffüllen, aber nur auf zwei) – alle rot; N22 zunächst „kompiliert
+  nicht“ wegen einer falsch geklammerten Mutante, korrigiert und rot. F5 (gespeicherter Wert) rot. Grundlinie jeweils grün.
+- **2026-11-16** — **Verifikation:** `dotnet build Pugling.sln` und `dotnet format Pugling.sln` sauber;
+  `dotnet test Pugling.sln -c Release`: **1760 passed**; Vitest **1138 passed** (104 Dateien); `tsc -b` sauber;
+  E2E `lueckentext-am-handy.spec.ts` **3 passed** (Ausweichports). Abnahme wartet auf den Rollengang am Sprint-Ende.

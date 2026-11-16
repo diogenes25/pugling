@@ -107,11 +107,19 @@ public interface IExerciseType
     IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage);
 
     /// <summary>
-    /// Whether <see cref="Choices"/> is one pool shared by every card of the exercise (the cloze word bank) rather than
-    /// the options of one question. A shared pool keeps the order the type gives it - reshuffled per card it would be
-    /// unreadable; every other list is shuffled per card and session, so the child learns the value, not the position.
+    /// Whether <see cref="Choices"/> at <paramref name="stage"/> is one pool shared by every card of the exercise (the
+    /// cloze word bank) rather than the options of one question. A shared pool keeps the order the type gives it -
+    /// reshuffled per card it would be unreadable; every other list is shuffled per card and session, so the child learns
+    /// the value, not the position. Per stage since B-599: the cloze's choice per gap is one question's options.
     /// </summary>
-    bool ChoicesShareOnePool { get; }
+    bool ChoicesShareOnePool(int stage);
+
+    /// <summary>
+    /// The stage whose facets a card of <paramref name="stage"/> takes when <see cref="Choices"/> offers nothing for it
+    /// (B-599: a choice per gap with too few distractors is played as letter boxes), or <c>null</c> - then such a card
+    /// stays as it is, which on a typed stage means free text.
+    /// </summary>
+    int? ChoiceFallbackStage(int stage);
 
     /// <summary>
     /// The cue box of the stage (B-524): the meanings of all atoms plus curated distractors as one unordered list,

@@ -94,9 +94,14 @@ public class ClozeConfig
 /// base form alone is wrong (B-524); the store entry still supplies the meaning and the link to the learning
 /// progress. A gap whose store entry is missing stays unsolvable either way: without the entry it has no meaning.
 /// </para>
+/// <para>
+/// <paramref name="Distractors"/> (B-599) are the wrong options of this gap on the stage "choice per gap" - the fine
+/// differences an author wants asked ("doesn't she" beside "don't she"). Without them the other gaps' solutions are
+/// offered. Only that stage reads them.
+/// </para>
 /// </summary>
 public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null,
-    string? Form = null);
+    string? Form = null, List<string>? Distractors = null);
 
 /// <summary>Essay: writing prompt + constraints.</summary>
 public class EssayConfig

@@ -94,6 +94,20 @@ public class SchreibstufeLernspracheTests(PuglingWebAppFactory factory) : IClass
         Assert.Equal(writing, VocabularyExerciseType.IsWritingStage(stage));
 
     /// <summary>
+    /// AK 7: the hearing stage is offered as "Diktat" - the father picks it from the server manifest. Red if the label went
+    /// back to "Hören → tippen", which read like a translation task.
+    /// </summary>
+    [Fact]
+    public async Task Die_Hoerstufe_Heisst_Diktat()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var manifest = await father.GetFromJsonAsync<JsonElement>("/api/v1/creator/exercise-types");
+        var vocabulary = manifest.EnumerateArray().Single(m => m.GetProperty("type").GetString() == ExerciseTypeKeys.Vocabulary);
+        Assert.Equal("Diktat", vocabulary.GetProperty("stages").EnumerateArray()
+            .Single(s => s.GetProperty("value").GetInt32() == (int)TestStage.Audio).GetProperty("label").GetString());
+    }
+
+    /// <summary>
     /// AK 1 + AK 2 in practice: a front-to-back card on free text shows "gehen" and does not take "gehen"; its sibling
     /// takes "run". Red without the turn at the card (the prompt is "walk"), and red if only the display turns (then the
     /// German answer counts and the learnt one does not).
