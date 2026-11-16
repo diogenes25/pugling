@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
 aliases: [Lückentext-Eingabearten, Buchstabenkästen im Lückentext, Auswahl je Lücke]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -308,3 +308,4 @@ schon (`Lektion.tsx:154-167`).
 - **2026-11-16** — **Verifikation:** `dotnet build Pugling.sln` und `dotnet format Pugling.sln` sauber;
   `dotnet test Pugling.sln -c Release`: **1760 passed**; Vitest **1138 passed** (104 Dateien); `tsc -b` sauber;
   E2E `lueckentext-am-handy.spec.ts` **3 passed** (Ausweichports). Abnahme wartet auf den Rollengang am Sprint-Ende.
+- **2026-11-16** — abgenommen in Sprint 82 (bacb165d): Rollengang `frontend/e2e/sprint-82-rollengang.spec.ts` **5 passed** gegen frisch gestarteten Server (Ausweichports), volle Suiten am Endstand: `dotnet test` 1772 passed, Vitest 1144 passed, Playwright **166 passed**; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md` (Runde 82).

@@ -120,3 +120,4 @@ Automatisierung.
   selbst steht nach diesem Durchgang weiterhin aus und ist erst mit einem dokumentierten Ergebnis
   abschließbar.
 - **2026-11-14** — Abgleich Backlog-Lauf: Code-Ist-Stand gilt (`feedback.ts:53-109` unverändert: Töne, Vibrationsmuster, Stumm-/Reduced-Motion-Gate); Aufrufer-Zeilen waren verrutscht und sind berichtigt, vier neue Aufrufer (Objectives, Bonus-Training, Interessen). Die Geräteprüfung selbst steht weiter aus.
+- **2026-11-16** — Sprint 82 bringt zwei weitere Hörproben für dasselbe Gerät: das **Diktat** (B-597, Stufe „Diktat“: die Stimme liest das Fremdwort, Aufnahme oder `speechSynthesis` in der Lernsprache) und das **Vorlesen auf der Lernkarte** (B-598, nach „Aufdecken“). Maschinell belegt ist nur, dass Knopf, Sprache und Aufnahme-URL ankommen; ob Aussprache und Stimme am Handy taugen, hört erst ein Mensch.

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-16"
 ---
 
 # B-589 · Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch
@@ -154,3 +155,4 @@ Mutant mit roter Probe. Kein `dotnet`-Anteil, kein Server.
   „Prüfung abgeschaltet (`if False and …`)" → rot. Offen bis `abgenommen`: Review und ein Lauf gegen eine
   Wegwerf-Instanz.
 - **2026-11-16** — abgenommen (77b16cbc): Review gegen den echten Vertrag sauber (GET-Detail `bookPages`, typisierter PUT, Längenregel); 10/10 unittest, 6/6 Mutanten rot. Rollengang Creator nur offline gegen den Fake-Server – der nächste echte `laden.py --ersetzen`-Lauf ist die Probe an der App.
+- **2026-11-16** — Nachschau (Sprint 82): sauber gegen den heutigen Code, auch nach den Änderungen von Sprint 82 an den Aufrufern.

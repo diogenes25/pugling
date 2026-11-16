@@ -12,6 +12,7 @@ quelle: B-219 (Fix-Prüfung im Backlog-Lauf 2026-11-16)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-16"
 ---
 
 # B-591 · Löscht eine ungeprüfte „gewusst"-Antwort den Fehler-Merker der milden Abstufung?
@@ -117,3 +118,4 @@ statt 1.
   - AK 3, Gegenfall geprüfter Treffer löscht → `Mild_Treffer_Unterbricht_Die_Folge` (`:36`), M4 Löschzeile entfernt → rot (erster M4-Versuch `if (false)` kompilierte nicht, ungemessen; neu gemessen mit Kommentarzeile).
   - AK 4, Selbstauskunft über die Senke → `Mild_Selbstauskunft_Gewusst_…` (`:99`) und `Mild_Selbstauskunft_Nicht_Gewusst_…` (`:115`), M5 `verified: true` am `climbs`-Aufrufer → rot.
 - **2026-11-16** — abgenommen (d535d7b2): Review sauber (nur zwei Aufrufer, `verified` serverseitig aus der erzwungenen Stufe), volle Suite 1717/1717, 5/5 Mutanten rot. Rollengang Sohn über die Integrationstests; das Verhalten ist in der UI nicht sichtbar.
+- **2026-11-16** — Nachschau (Sprint 82): sauber gegen den heutigen Code, auch nach den Änderungen von Sprint 82 an den Aufrufern.

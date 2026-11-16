@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Zielsprache tippen, Tipprichtung, Lernsprache schreiben]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Rollengang Sprint 82"
+wartet_auf: ""
 ---
 
 # B-597 · Getippt wird immer die Zielsprache
@@ -357,3 +357,4 @@ Story, die auf der Drehung aufsetzt.
   Wiederholung der elf: **22 passed, 1 failed** – `feldhilfe.spec.ts:32` (Popover „Ziel-Rhythmus“, vom Diff nicht
   berührt) fällt einzeln in einem von drei Läufen und ist als
   [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) abgelegt. Abnahme wartet auf den Rollengang am Sprint-Ende.
+- **2026-11-16** — abgenommen in Sprint 82 (9602db8d): Rollengang `frontend/e2e/sprint-82-rollengang.spec.ts` **5 passed** gegen frisch gestarteten Server (Ausweichports), volle Suiten am Endstand: `dotnet test` 1772 passed, Vitest 1144 passed, Playwright **166 passed**; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md` (Runde 82). Geräteprüfung offen: Klang des Diktats am Handy.

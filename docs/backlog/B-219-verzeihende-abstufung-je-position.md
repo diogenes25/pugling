@@ -12,6 +12,7 @@ quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-16"
 ---
 
 # B-219 · Verzeihende Abstufung als Positions-Option
@@ -231,3 +232,4 @@ falsch tippen und die Box im Feedback sehen (oder E2E über die Planbau-Specs, f
   - Beide Fälle sichern den Merker selbst, nicht die Box: die Folge „getippt falsch → Selbstauskunft gewusst →
     getippt falsch ⇒ Box 1“ ist über die Stufenleiter nicht erreichbar (Begründung in Entscheidung 11).
 - **2026-11-16** — abgenommen in Sprint 81 (6e459ecb): Review-Funde behoben, volle Suite 1715/1715, Rollengang `sprint-81-rollengang.spec.ts` 2 passed; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md`.
+- **2026-11-16** — Nachschau (Sprint 82): sauber gegen den heutigen Code, auch nach den Änderungen von Sprint 82 an den Aufrufern.

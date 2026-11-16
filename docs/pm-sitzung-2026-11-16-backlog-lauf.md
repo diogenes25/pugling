@@ -200,3 +200,71 @@ gehört nicht in den Sprint.
 - *Migration:* keine; Abfrage vor einer Spalte für B-598 (Risiko 4).
 - *Testweg:* je Story `## Verlauf` mit Testdatei:Zeile und Mutanten-Tabelle; volle Suite, Vitest, E2E auf
   Ausweichports (5201/5174: auf 5200 läuft der Heimnetz-Server mit der echten DB).
+
+## Iteration 82 — umgesetzt
+
+| Story | Kern | Belege |
+| --- | --- | --- |
+| B-597 (`9602db8d`) | Schreibstufen fragen die Lernsprache ab: `IExerciseType.CardCeiling`/`CardForStage` als Senke aller Pfade (Üben, Test, Bonus, Vorschau), gedrehte Karte vom `ExerciseContentResolver`, `both` erkennt vorwärts, Diktat liest das Fremdwort | jede Aufrufstelle von `ItemsOfAsync` einzeln entschieden, Mutanten-Tabelle im Verlauf, 111 Tests auf die Lernsprache umgestellt |
+| B-599 (`bacb165d`) | Lückentext mit Kästchen (6), Buchstaben ordnen (7), Auswahl (8); eigene Ablenker zuerst, aufgefüllt aus anderen Lücken; Vorgabestufe aus dem Manifest | Mutanten-Tabelle im Verlauf, `lueckentext-am-handy` 3 passed |
+| B-598 (`17808c27`) | Lernkarte als Erstbegegnung (`TestStage.LearnCard`): sehen, aufdecken, abschreiben, erinnern; zwei Historien-Zeilen ohne Münze, einmal ans Rundenende; Test/Info nie Lernkarte | zwölf Anzeige-Stellen einzeln entschieden, 22 Backend- + 6 Frontend-Mutanten wie erwartet |
+
+Keine Migration (Risiko 4 von B-598 ohne Spalte gelöst: der einzige Leser der Historie zählt nicht). Qualitätsschwelle
+am Endstand: `dotnet test Pugling.sln -c Release` **1772 passed**, Vitest **1144 passed**, `dotnet build Pugling.sln`
+0 Fehler, `dotnet format Pugling.sln` ohne Änderung, `tsc -b` 0. Reviews je Story (`pugling-reviewer`,
+`frontend-reviewer`) im Verlauf der Stories; alle Korrektheitsfunde im Sprint eingearbeitet.
+
+## Runde 82 — Abnahme
+
+Maschineller Rollengang `frontend/e2e/sprint-82-rollengang.spec.ts` gegen echte UI und frisch gestarteten Server
+(Ausweichports 5201/5174), nach dem letzten Edit: **5 passed**. Übung Nr. 19 ist aus einer **Kopie** der echten
+`pugling.db` gelesen und wörtlich nachgebaut (Text und zehn Lücken), die echte DB blieb unberührt.
+
+- **Sohn — abgenommen:** „Im Test zeigt die Karte das deutsche Wort, und ich tippe ‚bridge‘ – richtig. Bei der Liste
+  in beide Richtungen schreibe ich zweimal Englisch und wähle zweimal das deutsche Wort, das ich nur erkennen muss.
+  Bei den Question tags tippe ich in Kästchen nur die Buchstaben, Apostroph, Leerzeichen und Fragezeichen stehen
+  schon da; auf ‚Buchstaben ordnen‘ kommen auch Kästchen, weil ‚doesn't she?‘ kein einzelnes Wort ist; bei der
+  Auswahl stehen fünf Anhängsel ohne Fragezeichen, keins verrät sich. Ein neues Wort sehe ich deutsch, decke es auf,
+  schreibe es ab – falsch abgeschrieben geht OK nicht –, und wenn ich es dann nicht weiß, kommt es am Ende noch
+  einmal.“ Gelassen: Stufe 7 zeigt bei Nr. 19 durchweg Kästchen (Entscheidung 4 von B-599, kein Mehrwort-Salat).
+- **Vater — Regressionszeuge:** keine Vater-Fläche geändert außer der Stufenwahl im Positions-Editor
+  (`DefaultStageSelect`, Vitest) und der Feldhilfe; volle Backend-Suite grün, volle Playwright-Suite **166 passed** (alle Vater-Specs darin).
+- **Creator — Regressionszeuge:** Ablenker-Feld je Lücke im Editor (Vitest `ExerciseEditStufe`, beidseitig); KI-Agent
+  erwartet die Vorderseite (`CreatorAgentTests` in der Suite grün); volle Playwright-Suite **166 passed** (Creator-Specs darin).
+- **Geliefert, Geräteprüfung offen:** wie das Diktat (B-597, Stimme liest das Fremdwort) und das Vorlesen auf der
+  Lernkarte (B-598) am Handy klingen – Sprache und Stimme wählt der Browser, die Spec prüft nur, dass Knopf und Sprache
+  ankommen.
+
+## Retrospektive 82
+
+- **Nachschau:** die fünf in Sprint 81 abgenommenen Stories (B-410, B-219, B-588, B-589, B-591) von einem unabhängigen
+  `pugling-reviewer` gegen ihre Commits **und** den heutigen Code gelesen (Sprint 82 hat `ApplyReview`-Aufrufer und
+  den Übungsrahmen berührt) – sauber, `nachgeschaut: 2026-11-16` gesetzt. Index: **Nachgeschaut 485 von 506**.
+  Nicht blockierend vermerkt: `laden.py --ersetzen` ersetzt die ganze Übung und leert, was es nicht schickt
+  (bestand vor B-589).
+- **Was die eigenen Tore durchließen – und was nicht von außen kam:** kein Fund von außerhalb der Schleife. Gerutscht
+  ist Werkzeug: Mutanten-Proben schreiben mutierte Quellen in denselben Baum, aus dem das Test-Tor, ein zweiter Lauf
+  und der E2E-Server bauen. Gemessen dreimal: das Tor meldete zweimal einen Mutanten als roten Test des echten Codes,
+  ein E2E-Server baute einen Mutanten mit (`buchstaben-ordnen` zeigte Selbsteinschätzung). Jedes Mal fiel es auf, weil
+  das Rot nicht zum Diff passte – Disziplin, kein Mechanismus.
+- **Der eine Mechanismus (neues Tor → der Lauf hält hier):** die Probe hält `.claude/.mutant-probe.lock`
+  (`mutant-probe.py`, gitignored), solange Quellen mutiert sind; eine zweite Probe bricht ab, das Test-Tor
+  (`test-gate.sh`) überspringt mit Meldung statt zu messen, und `playwright.config.ts` verweigert den Start – im
+  Config, weil der webServer vor dem globalSetup baut. Die eigenen Testbefehle der Probe tragen
+  `PUGLING_MUTANT_PROBE=1` und dürfen. Verwaist (älter als vier Stunden) zählt die Sperre nicht. Ausprobiert an einer
+  Wegwerfdatei: Sperre während der Probe da und danach weg, zweite Probe exit 1, Tor überspringt, Playwright wirft,
+  mit Flag und bei verwaister Sperre startet es. Keine Prosa dazu: `pm-loop/SKILL.md` liegt schon über Budget, und die Sperre nennt sich in jeder Meldung selbst.
+- **Was sonst rutschte:** eine Sperre über das Rundenende (`NACH_BLATT_MS` schluckte den ersten Tipp der nächsten
+  Runde) – gefunden von `karten-umdrehen`, nicht von einem Test der Lernkarte; zwei flackernde Fälle abgelegt
+  ([B-602](backlog/B-602-feldhilfe-ziel-rhythmus-flackert.md), [B-603](backlog/B-603-fokus-vitests-flackern-unter-last.md));
+  ein Hänger des Playwright-Workers ([B-605](backlog/B-605-e2e-worker-haengt-beim-beenden.md)).
+- **Eigene Fehlannahme im Rollengang:** die Spec erwartete die Auswahl-Optionen von Nr. 19 mit „?“; der Code nimmt
+  Schlusszeichen bewusst weg (B-599, Risiko 2). Die Spec prüft jetzt genau das (kein „?“ verrät die Lösung).
+- **Bewusst ungedeckt:** wer die Sperre von Hand löscht oder einen Build außerhalb der drei Leser startet (eigenes
+  `dotnet build` in der Shell), misst weiter einen Mutanten; ein Leser je Build-Weg wäre ein Hook auf jeden Befehl.
+
+## Abschluss 82
+
+Drei Stories abgenommen (B-597, B-599, B-598), keine Migration, nicht gepusht. Offen beim Menschen: die Hörprobe von
+Diktat und Lernkarte am Handy (in [B-31](backlog/B-31-geraete-vorbehalt-klang.md) mitgeführt). Neue Stories:
+B-602, B-603, B-605. Offene Roadmap: [docs/backlog/](backlog/README.md).

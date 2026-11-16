@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte, Kombi-Karte, Abschreiben und Erinnern]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -350,3 +350,4 @@ Vergleichsregeln in TypeScript mit gemeinsamem Testfall-Satz.
   `dotnet test Pugling.sln -c Release` **1772 passed**, Vitest **1144 passed**, `dotnet build Pugling.sln` 0 Fehler,
   `dotnet format Pugling.sln` ohne Änderung. E2E der zehn betroffenen Specs **10 passed** (vor dem `>`-Edit, der nur das
   Backend-Rennen zweier Runden betrifft; der Rollengang läuft gegen den Endstand).
+- **2026-11-16** — abgenommen in Sprint 82 (17808c27): Rollengang `frontend/e2e/sprint-82-rollengang.spec.ts` **5 passed** gegen frisch gestarteten Server (Ausweichports), volle Suiten am Endstand: `dotnet test` 1772 passed, Vitest 1144 passed, Playwright **166 passed**; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md` (Runde 82). Geräteprüfung offen: Klang des Vorlesens auf der Lernkarte am Handy.

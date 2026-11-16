@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-05.md#lauf-y
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-16"
 ---
 
 # B-410 · Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400
@@ -150,3 +151,4 @@ Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahm
 - **2026-11-16** — AK 4, `List<List<T>>` in Ausnahmeliste `KnownBlindShapes` mit Grund, Fund macht das Haupttor rot (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:71`); Erkennung belegt durch `Liste_In_Liste_Wird_Gemeldet` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:138`), M5 (Erkennung abgeschaltet, `backend/Pugling.Api.Tests/NullElementGuardTests.cs:209`) → rot.
 - **2026-11-16** — Mutanten-Probe (`mutant-probe.py`, Debug, an `73de5380` + Arbeitsbaum): M1–M8 erwartet rot, gemessen rot; Grundlinie nach dem Zurückspielen grün.
 - **2026-11-16** — abgenommen in Sprint 81 (6e459ecb): Review-Funde behoben, volle Suite 1715/1715, Rollengang `sprint-81-rollengang.spec.ts` 2 passed; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md`.
+- **2026-11-16** — Nachschau (Sprint 82): sauber gegen den heutigen Code, auch nach den Änderungen von Sprint 82 an den Aufrufern.

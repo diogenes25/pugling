@@ -12,6 +12,7 @@ quelle: Nutzer im Gespräch zum sofatutor-Vergleich (2026-11-15)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-16"
 ---
 
 # B-588 · Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite)
@@ -222,3 +223,4 @@ Vater-Plan und Lernstand (Entscheidungen 7, 8); (b) `lehrwerk-aufbereiten`/`lade
 - AK 9 bleibt Absichtserklärung ohne Test: `TestDtos.cs`/`PracticeDtos.cs` sind unverändert.
 - Mutanten-Probe (`.claude/scripts/mutant-probe.py`, Debug), gemessen an `58fec04b + Arbeitsbaum geändert`, 2026-11-16 08:29: M1–M15 erwartet rot, gemessen rot, jeweils am benannten Test; Grundlinie nach dem Zurückspielen grün.
 - **2026-11-16** — abgenommen in Sprint 81 (6e459ecb): Review-Funde behoben, volle Suite 1715/1715, Rollengang `sprint-81-rollengang.spec.ts` 2 passed; Protokoll `docs/pm-sitzung-2026-11-16-backlog-lauf.md`.
+- **2026-11-16** — Nachschau (Sprint 82): sauber gegen den heutigen Code, auch nach den Änderungen von Sprint 82 an den Aufrufern.
