@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { dbFile, mediaDir } from "./e2e/temp-paths";
@@ -25,6 +26,16 @@ const sidePorts = apiPort !== "5200" || webPort !== "5173";
 // Auch die Build-Konfiguration ist überschreibbar (B-525): ein laufender `dotnet run` hält die Debug-Ausgabe gesperrt,
 // und der Start hier scheiterte am Kopieren der DLLs. `PUGLING_E2E_CONFIGURATION=Release` baut daneben.
 const configuration = process.env.PUGLING_E2E_CONFIGURATION ? ` -c ${process.env.PUGLING_E2E_CONFIGURATION}` : "";
+
+// Läuft eine Mutanten-Probe (.claude/scripts/mutant-probe.py), liegen mutierte Quellen im Baum: `dotnet run` unten
+// baute einen Mutanten in den Server, und ein rotes Ergebnis hielte man für einen Fehler im echten Code (Sprint 82).
+// Hier und nicht im globalSetup – Playwright startet den webServer vor dem globalSetup. Die Probe selbst darf (ihr
+// Testbefehl trägt PUGLING_MUTANT_PROBE); eine Sperre älter als vier Stunden ist verwaist (wie im Skript).
+const probeLock = path.resolve(here, "../.claude/.mutant-probe.lock");
+if (!process.env.PUGLING_MUTANT_PROBE && fs.existsSync(probeLock)
+    && Date.now() - fs.statSync(probeLock).mtimeMs < 4 * 3600_000) {
+  throw new Error(`Eine Mutanten-Probe läuft (${probeLock}) – der Server würde einen Mutanten bauen. Nach ihrem Ende starten.`);
+}
 
 export default defineConfig({
   testDir: "./e2e",

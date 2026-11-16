@@ -66,7 +66,9 @@ def run(cmd, env=None):
     if not cmd:
         return 0, ""
     p = subprocess.run(cmd, shell=True, capture_output=True, text=True,
-                       encoding="utf-8", errors="replace", env={**os.environ, **(env or {})})
+                       encoding="utf-8", errors="replace",
+                       # The probe's own commands run past its lock (playwright.config.ts checks this flag).
+                       env={**os.environ, "PUGLING_MUTANT_PROBE": "1", **(env or {})})
     return p.returncode, p.stdout + p.stderr
 
 
@@ -120,11 +122,37 @@ def join_lines(lines, endings):
     return "".join(l + e for l, e in zip(lines, endings))
 
 
+# While a probe runs, the checkout holds mutated sources. Every other build in the same checkout - the test gate,
+# a second probe, the E2E server's `dotnet run` - would measure a mutant and report it as a defect of the real code
+# (Sprint 82: the gate reported a mutant twice, an E2E server was built with one). Those readers check this file.
+LOCK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".mutant-probe.lock")
+# A lock older than this is left over from a killed run, not a running one: the longest probe run measured took ~40 min.
+LOCK_STALE_SECONDS = 4 * 3600
+
+
+def lock_held():
+    try:
+        return time.time() - os.path.getmtime(LOCK) < LOCK_STALE_SECONDS
+    except OSError:
+        return False
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit(__doc__)
     sys.stdout.reconfigure(encoding="utf-8")  # the table goes into Markdown; the Windows console default mangles umlauts
     sys.stderr.reconfigure(encoding="utf-8")
+    if lock_held():
+        sys.exit(f"Eine andere Probe läuft (Sperre {os.path.normpath(LOCK)}) – zwei Proben mutieren dieselben Quellen. "
+                 "Abbruch; ist sie verwaist (Lauf abgeschossen), die Datei löschen.")
+    open(LOCK, "w", encoding="utf-8").write(f"{os.getpid()} {sys.argv[1]}\n")
+    try:
+        probe()
+    finally:
+        os.remove(LOCK)
+
+
+def probe():
     defaults, mutants = load(sys.argv[1])
     if not mutants:
         sys.exit("Keine Mutanten in der Eingabe.")

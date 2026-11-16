@@ -45,6 +45,8 @@ backend/Pugling.Api/media-uploads/
 
 # Fingerprint des letzten grünen Test-Tor-Laufs (.claude/hooks/test-gate.sh) – lokaler Zustand.
 .claude/.test-gate-state
+# Sperre einer laufenden Mutanten-Probe (.claude/scripts/mutant-probe.py) – lokaler Zustand.
+.claude/.mutant-probe.lock
 
 # Zuletzt gemessene Groessen des Startkontexts (.claude/scripts/context-budget.sh) – lokaler Zustand.
 .claude/.context-budget-state

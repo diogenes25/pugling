@@ -26,6 +26,15 @@ active=$(printf '%s' "$input" | python -c "import sys,json; print(json.load(sys.
 root="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$root" || exit 0
 
+# A running mutant probe (.claude/scripts/mutant-probe.py) holds mutated sources: a run now would report a mutant as
+# a defect of the real code and stamp no fingerprint. Skip loudly; the next stop after the probe measures. A lock older
+# than four hours is a leftover of a killed probe and does not count (same limit as the script).
+lock=.claude/.mutant-probe.lock
+if [ -f "$lock" ] && [ -n "$(find "$lock" -mmin -240 2>/dev/null)" ]; then
+  echo "Test-Tor übersprungen: eine Mutanten-Probe läuft ($lock) – gemessen wird nach ihrem Ende." >&2
+  exit 0
+fi
+
 # Welche .cs-Dateien weichen von HEAD ab (geändert oder unversioniert)? Nichts davon → nichts zu prüfen.
 changed=$( { git diff --name-only HEAD -- '*.cs'; git ls-files --others --exclude-standard -- '*.cs'; } 2>/dev/null | sort -u)
 [ -z "$changed" ] && exit 0
