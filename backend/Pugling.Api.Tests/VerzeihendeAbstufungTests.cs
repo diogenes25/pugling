@@ -91,6 +91,36 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(1, await ReviewOnDayAsync(s, 0, "falsch"));
     }
 
+    // AK 2, self-claim (decision 11): the miss marker follows checked answers only. A word introduced yesterday in box 2
+    // is asked as a choice; a wrong choice drops it to box 1 and sets the marker. Next day the ladder turns it over
+    // (box 1), the child claims "known" unchecked - box 2, but the marker must stay, or the claim would pardon the next
+    // checked miss. Red if the self-claim path lets ApplyReview clear LastMissed.
+    [Fact]
+    public async Task Mild_Selbstauskunft_Gewusst_Loescht_Den_Fehler_Merker_Nicht()
+    {
+        var s = await SetupAsync(forgiving: true, startBox: 2, ("flint", "Feuerstein"), ("moss", "Moos"), ("fern", "Farn"),
+            ("reed", "Schilf"));
+        IntroducedYesterday(s);
+
+        Assert.Equal(1, await ReviewOnDayAsync(s, 0, "falsch"));
+        Assert.True(Progress(s.PositionId).LastMissed);
+
+        Assert.Equal(2, await SelfClaimOnDayAsync(s, 1, known: true));
+        Assert.True(Progress(s.PositionId).LastMissed);
+    }
+
+    // Decision 11, the other direction: an unchecked "not known" does not set the marker either. Red if the
+    // self-claim path lets ApplyReview set LastMissed.
+    [Fact]
+    public async Task Mild_Selbstauskunft_Nicht_Gewusst_Setzt_Den_Fehler_Merker_Nicht()
+    {
+        var s = await SetupAsync(forgiving: true, startBox: 1, ("heath", "Heide"), ("dune", "Duene"));
+        IntroducedYesterday(s);
+
+        Assert.Equal(1, await SelfClaimOnDayAsync(s, 0, known: false));
+        Assert.False(Progress(s.PositionId).LastMissed);
+    }
+
     private async Task<Setup> SetupAsync(bool forgiving, int startBox, params (string Front, string Back)[] words)
     {
         // Noon UTC of the real day, so no day boundary sits inside a case.
@@ -131,6 +161,30 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         var box = outcome.GetProperty("box").GetInt32();
         Assert.Equal(box, Progress(s.PositionId).Box);
         return box;
+    }
+
+    // One self-assessed review (the ladder's turned-over card) of item 0 on plan day `day`; returns the box.
+    private async Task<int> SelfClaimOnDayAsync(Setup s, int day, bool known)
+    {
+        factory.Clock.FreezeAt(s.Start.AddDays(day));
+        var sessionId = await TestApi.StartPositionSessionAsync(s.Child, s.PlanId, s.PositionId);
+        var res = await TestApi.PositionReviewAsync(s.Child, s.PlanId, s.PositionId, sessionId, 0, wasKnown: known);
+        res.EnsureSuccessStatusCode();
+        var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32()); // a claim pays nothing: proves the self-claim path
+        var box = outcome.GetProperty("box").GetInt32();
+        Assert.Equal(box, Progress(s.PositionId).Box);
+        return box;
+    }
+
+    // Back onto the ladder (B-476): a word introduced yesterday is asked by its box - box 1 turned over, box 2 as a choice.
+    private void IntroducedYesterday(Setup s)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == 0).IntroducedAt =
+            DateOnly.FromDateTime(s.Start.UtcDateTime).AddDays(-1);
+        db.SaveChanges();
     }
 
     private PositionItemProgress Progress(int positionId)

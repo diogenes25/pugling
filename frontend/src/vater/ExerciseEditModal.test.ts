@@ -141,9 +141,6 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
     expect(initialForm(detail).interestTagIds).toEqual([3, 7]);
   });
 });
-
-/*
- * B-502: mit dem Eintrag geht der Lernstand der Kinder an ihm (Cascade). Rot, wenn die Frage nur „bleibt im Store" sagt.
  */
 /*
  * B-588 AK 7: die Buchseite reist durch das Formular – gelesen aus dem Detail, zurück im Vollersatz, leer als
@@ -163,6 +160,9 @@ describe("payloadFrom – die Buchseite (B-588)", () => {
   });
 });
 
+
+/*
+ * B-502: mit dem Eintrag geht der Lernstand der Kinder an ihm (Cascade). Rot, wenn die Frage nur „bleibt im Store" sagt.
 describe("Vokabel aus der Übung entfernen", () => {
   it("nennt den Lernstand, der mitgeht, und was bleibt", () => {
     const question = removeItemQuestion("dog", "Hund");

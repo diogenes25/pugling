@@ -564,9 +564,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             // The claim moves the box like a review, but it is not one for the score: ReviewCount counts graded reviews
             // only. The new-content points hang on NewBonusPaidAt (B-535), which a claim never sets.
+            // The miss marker of forgiving demotion (B-219) follows checked answers only: an unchecked "known" would
+            // otherwise erase a typed miss and pardon the next one, too.
             var reviewCount = prog.ReviewCount;
+            var lastMissed = prog.LastMissed;
             play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
             prog.ReviewCount = reviewCount;
+            prog.LastMissed = lastMissed;
         }
 
         // Server cursor: onto the card just answered (a valid one), one further, then skip removed ones.

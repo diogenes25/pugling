@@ -134,6 +134,15 @@ fehlt zusammen: ohne Merker lässt sich die Regel „erst der zweite Fehler setz
     Leitner gibt es keine Box, die Milde ist dann wirkungslos; schaltet der Vater Leitner wieder an, steht seine Wahl
     noch da. Die Positionszeile nennt die Milde im Leitner-Kästchen („an · max 5 · verzeihend“), damit der Vater sie
     sieht, ohne zu bearbeiten.
+11. **Der Fehler-Merker folgt nur geprüften Antworten.** Stakeholder-Entscheidung im Auftrag des Nutzers
+    (2026-11-16), präzisiert Entscheidung 6. Der Selbstauskunfts-Sprung (`climbs`) bewegt die Box weiter mild bzw.
+    hart, lässt `LastMissed` aber in **beide** Richtungen unverändert – gesichert und zurückgeschrieben wie dort schon
+    `ReviewCount` (`PositionPracticeController.cs:570-573`). Begründung: ein ungeprüftes „gewusst“ löschte sonst einen
+    getippten Fehler, und der nächste geprüfte Fehler wäre wieder mild. Kosten: ein ehrliches „kann ich noch nicht“
+    auf der Umdrehkarte zählt nicht als erster Fehler einer Folge. Am Code gemessen kein Vorteil für den Sohn: die
+    Umdrehkarte gibt es nur in Box ≤ 1 (`VocabularyExerciseType.CardStage`), danach steht die Karte in Box ≤ 2, und
+    Milde und harter Reset unterscheiden sich erst ab Box 3 – dorthin führt nur ein geprüfter Treffer, der den Merker
+    ohnehin löscht.
 
 ## Akzeptanzkriterien
 
@@ -211,3 +220,13 @@ falsch tippen und die Box im Feedback sehen (oder E2E über die Planbau-Specs, f
   - AK 7, Read-back → `PlanPositions.test.ts:452` „liest den gespeicherten Stand zurück“, M12 → rot; Senden → `:460` „schickt das Häkchen …“, M13 → rot; ausgegraut ohne Leitner → `PlanPositionsStufe.test.tsx:200`, M14 → rot.
   - AK 8, Modell ohne passende Migration → `SchemaGuardTests.Modell_Und_Migrationen_Stimmen_Ueberein` (`SchemaGuardTests.cs:33`), M11 Snapshot-Property umbenannt → rot.
   - Offen bis `abgenommen`: Probe der Migration gegen eine **Kopie** der echten `pugling.db` und der Rollengang (Vater setzt das Häkchen, Sohn tippt ein Wort aus hoher Box falsch).
+- **2026-11-16** — Defekt im Increment (Review): der Selbstauskunfts-Pfad löschte über `ApplyReview` den Merker
+  `LastMissed`. Behoben nach Entscheidung 11; Nachweis (`.claude/scripts/mutant-probe.py`, Debug, gemessen an
+  `63522e03` + Arbeitsbaum nach dem letzten Edit, Grundlinie nach dem Zurückspielen grün; der Mutant entspricht dem
+  Stand `63522e03`):
+  - AK 2, Selbstauskunft „gewusst“ → `VerzeihendeAbstufungTests.Mild_Selbstauskunft_Gewusst_Loescht_Den_Fehler_Merker_Nicht`
+    (`backend/Pugling.Api.Tests/VerzeihendeAbstufungTests.cs:99`), Mutant ohne Zurückschreiben → rot.
+  - AK 2, Selbstauskunft „nicht gewusst“ → `Mild_Selbstauskunft_Nicht_Gewusst_Setzt_Den_Fehler_Merker_Nicht` (`:115`),
+    derselbe Mutant → rot.
+  - Beide Fälle sichern den Merker selbst, nicht die Box: die Folge „getippt falsch → Selbstauskunft gewusst →
+    getippt falsch ⇒ Box 1“ ist über die Stufenleiter nicht erreichbar (Begründung in Entscheidung 11).
