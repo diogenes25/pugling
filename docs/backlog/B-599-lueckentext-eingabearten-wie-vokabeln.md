@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
 aliases: [Lückentext-Eingabearten, Buchstabenkästen im Lückentext, Auswahl je Lücke]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -67,44 +67,91 @@ Lücke steht schon in der Lernsprache.
 
 ## Offene Punkte
 
-1. **Welche Stufen kommen dazu?** Empfehlung: drei, je mit der Übersetzung als Hinweis wie die heutigen
+1. ~~**Welche Stufen kommen dazu?**~~ → Entscheidung 1. Empfehlung: drei, je mit der Übersetzung als Hinweis wie die heutigen
    „Übersetzung + …“-Stufen: **Buchstabenkästen**, **Buchstabensalat**, **Auswahl je Lücke**. Eine Lücke ohne
    Übersetzung (Question tags) zeigt dann einfach keinen Hinweis.
-2. **Woher kommen die Ablenker der Auswahl je Lücke?** Optionen: (a) die Antworten der anderen Lücken der Übung, wie
+2. ~~**Woher kommen die Ablenker der Auswahl je Lücke?**~~ → Entscheidung 2. Optionen: (a) die Antworten der anderen Lücken der Übung, wie
    bei Vokabeln (`DistractorPool`); (b) eigene Ablenker je Lücke, die der Autor schreibt (neues optionales Feld an
    `Gap`); (c) aus der gemeinsamen Wortbank. Empfehlung: **(a) als Standard, (b) als Ergänzung**. Für Question tags
    sind die anderen Lücken genau die richtigen Ablenker („isn't she“, „can't you“). Wo der Autor ähnliche Formen will
    („didn't he“ neben „doesn't he“), schreibt er sie an die Lücke. Das neue Feld ist additiv im Vertrag.
-3. **Wie viele Optionen?** Empfehlung: richtig + bis zu 4 wie bei der Verb-Übung Nr. 67, nicht 3 wie bei Vokabeln.
+3. ~~**Wie viele Optionen?**~~ → Entscheidung 3. Empfehlung: richtig + bis zu 4 wie bei der Verb-Übung Nr. 67, nicht 3 wie bei Vokabeln.
    Bei weniger Lücken und ohne eigene Ablenker entsprechend weniger, mindestens aber 2 Ablenker; sonst fällt die Karte
    auf Kästen zurück.
-4. **Buchstabensalat bei mehreren Wörtern:** „didn't he“ kann die heutige Mechanik nicht mischen (nur ein Wort,
+4. ~~**Buchstabensalat bei mehreren Wörtern:**~~ → Entscheidung 4. „didn't he“ kann die heutige Mechanik nicht mischen (nur ein Wort,
    2–12 Zeichen). Empfehlung: wie bei Vokabeln **auf Kästen zurückfallen**, Karte für Karte (B-05). Ein Salat aus
    ganzen Wörtern wäre eine eigene Story.
-5. **Stufenwahl im Creator-Formular:** Empfehlung: das Feld „Standard-Abfrageform“ auch für den Lückentext zeigen,
+5. ~~**Stufenwahl im Creator-Formular:**~~ → Entscheidung 5. Empfehlung: das Feld „Standard-Abfrageform“ auch für den Lückentext zeigen,
    mit den Stufen aus dem Manifest statt einer eigenen Liste im Frontend. Lehrplan-Station und Stufenplan je Tag
    funktionieren dann ohne weitere Arbeit.
-6. **Klettern je Lücke wie bei Vokabeln?** Empfehlung: **nein**, nicht in dieser Story. Der Lückentext hat keinen
+6. ~~**Klettern je Lücke wie bei Vokabeln?**~~ → Entscheidung 6. Empfehlung: **nein**, nicht in dieser Story. Der Lückentext hat keinen
    Lernstand je Lücke; der Weg von leicht nach schwer läuft über den Stufenplan je Tag.
-7. **Münzen im Bonus:** Empfehlung: Auswahl und Salat zahlen wie Auswahl (1 Münze), Kästen wie Tippen (3). Der Salat
+7. ~~**Münzen im Bonus:**~~ → Entscheidung 7. Empfehlung: Auswahl und Salat zahlen wie Auswahl (1 Münze), Kästen wie Tippen (3). Der Salat
    ist Ordnen, nicht Erinnern; ohne Regel würde er heute 3 zahlen (`ExtraTrainingService.cs:387`).
-8. **Test und Klausur:** Gilt die gewählte Stufe dort genauso? Empfehlung: ja, über dieselbe Kartenquelle. Die
+8. ~~**Test und Klausur:**~~ → Entscheidung 8. Gilt die gewählte Stufe dort genauso? Empfehlung: ja, über dieselbe Kartenquelle. Die
    Klausur-Stufe legt die Lehrplan-Station fest wie heute.
-9. **Regelaufgaben und Übersetzung**, die nur Freitext kennen: Empfehlung: **nicht in dieser Story.** Beide haben
+9. ~~**Regelaufgaben und Übersetzung**~~ → Entscheidung 9., die nur Freitext kennen: Empfehlung: **nicht in dieser Story.** Beide haben
    gar keine Stufen; das wäre ein zweiter Typ mit eigener Frage. Eigene Idee-Story anlegen, wenn gewünscht.
-10. **Anlege-Wege:** Brauchen KI-Creator und `laden.py` eine Änderung? Empfehlung: nein für die Stufen; die
+10. ~~**Anlege-Wege:**~~ → Entscheidung 10. Brauchen KI-Creator und `laden.py` eine Änderung? Empfehlung: nein für die Stufen; die
     optionalen Ablenker je Lücke (Punkt 2b) lernen sie erst, wenn sie gebraucht werden.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-- [ ] Ein Lückentext lässt sich in Creator-Formular, Lehrplan-Station und Stufenplan auf Buchstabenkästen,
-  Buchstabensalat oder Auswahl je Lücke stellen.
+Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
+
+1. **Drei neue Stufen: Buchstabenkästen, Buchstabensalat, Auswahl je Lücke**, jede mit der Übersetzung als Hinweis,
+   wo es eine gibt. *Begründung:* dieselbe Treppe wie bei Vokabeln (auswählen, ordnen, Kästen, frei); eine
+   Grammatik-Lücke ohne Übersetzung zeigt einfach keinen Hinweis. *Kosten:* drei neue `ClozeStage`-Werte, die Liste
+   an der Lehrplan-Station wächst von 4 auf 7.
+2. **Ablenker aus den anderen Lücken; eigene Ablenker an der Lücke haben Vorrang.** Neues optionales Feld an `Gap`.
+   *Begründung:* Jeder vorhandene Lückentext (auch Nr. 19) ist sofort spielbar; wo die feinen Unterschiede zählen
+   (*doesn't she* gegen *don't she*), schreibt sie der Autor an die Lücke – „1 richtig + 4 ähnliche“ wie bei Nr. 67.
+   *Kosten:* additives Feld im Vertrag (die Config ist JSON, keine Migration), Eingabe im Creator-Formular;
+   abgeleitete Ablenker können offensichtlich falsch sein.
+3. **Richtig + bis zu 4 Ablenker; unter 2 Ablenkern wird die Karte als Buchstabenkästen gespielt.** *Begründung:*
+   Vorgabe des Vaters (wie Nr. 67); eine 50:50-Auswahl wäre Raten; der Rückfall folgt dem Muster aus B-05.
+   *Kosten:* 5 Knöpfe brauchen am Handy Platz – B-489 ist Regressionszeuge, der Rollengang prüft es.
+4. **Ein Salat, den die Mechanik nicht mischen kann (mehrere Wörter, nicht 2–12 Zeichen), fällt Karte für Karte auf
+   Kästen zurück**; die Feld-Erklärung im Editor sagt das. *Begründung:* erprobte Regel ohne neue Mechanik, die Kästen
+   geben dieselbe Hilfe. *Kosten:* Bei Question tags ist der Salat praktisch wirkungslos; ein Wort-Salat wäre eine
+   eigene Story.
+5. **Die „Standard-Abfrageform“ gibt es auch beim Lückentext, ihre Liste kommt aus dem Server-Manifest; das
+   Vokabelfeld zieht mit.** *Begründung:* Der Creator legt die passende Eingabeart gleich mit an, der Vater
+   überstimmt je Station; Frontend-Regel „Übungstypen aus dem Server-Manifest“. *Kosten:* `VOCAB_FORMS`
+   (`exerciseConfig.tsx:109`) entfällt zugunsten des Manifests – ein kleiner Umbau mit eigenem Testfall.
+6. **Kein Klettern je Lücke;** von leicht nach schwer führt der Stufenplan je Tag. *Begründung:* Der Stufenplan ist
+   da und typ-neutral; Klettern je Lücke bräuchte Lernstand je Lücke, ein Umbau wie B-472. *Kosten:* Eine sichere
+   Lücke wird so lange mit Hilfe gefragt, wie der Plan es sagt, eine schwere zum Plan-Termin frei.
+7. **Bonus-Münzen: Auswahl und Salat 1, Kästen 3; der Salat zählt bei Lückentext und Vokabeln wie Auswahl.**
+   *Begründung:* Salat ist Ordnen, nicht Erinnern; mit 3 Münzen wäre er der bequemste Weg zu vollen Münzen.
+   *Kosten:* eine Regel mehr in `ExtraTrainingService.FormFor`; eine auf Kästen zurückgefallene Salat-Karte zahlt 3.
+   Für Vokabeln greift die Regel heute nicht, weil das Bonus-Training ihnen keinen Salat stellt
+   (`ExtraTrainingService.cs:376-379`) – sie ist als einheitliche Regel festgelegt.
+8. **Test und Klausur spielen die neuen Stufen wie das Üben; die Stufe legt die Lehrplan-Station fest.**
+   *Begründung:* Ein Test, der eine geübte Eingabeart nicht kennt, wäre ein Bruch; die Zielstufe bleibt die Wahl des
+   Vaters. *Kosten:* Eine Station auf Auswahl macht ihren Test leichter – wie heute bei der Wortbank.
+9. **Regelaufgaben und Übersetzung nicht hier**, sondern in
+   [B-600](B-600-eingabearten-fuer-regelaufgaben-und-uebersetzung.md). *Begründung:* Dort fehlt das ganze
+   Stufen-Gerüst, und ganze Sätze passen nicht in Kästen. *Kosten:* Auswahl gibt es bis dahin nur über Lückentext
+   oder Leseverständnis (wie Nr. 67).
+10. **KI-Creator und `laden.py` bleiben unverändert;** eigene Ablenker je Lücke durch den KI-Creator sind die
+    Folge-Idee [B-601](B-601-ki-creator-schreibt-ablenker-je-luecke.md). *Begründung:* Die Stufen funktionieren mit
+    jedem vorhandenen Lückentext. *Kosten:* KI-Lückentexte bekommen feine Ablenker erst durch Nachpflege.
+
+## Akzeptanzkriterien
+
+- [ ] Ein Lückentext lässt sich im Creator-Formular (Standard-Abfrageform), an der Lehrplan-Station und im
+  Stufenplan je Tag auf Buchstabenkästen, Buchstabensalat oder Auswahl je Lücke stellen; die Listen kommen aus dem
+  Manifest, auch die der Vokabeln.
+- [ ] Alle drei Stufen zeigen die Übersetzung der Lücke als Hinweis, wo es eine gibt, sonst keinen.
 - [ ] Buchstabenkästen zeigen Länge und Trennzeichen der Lösung („didn't he“ → Kästen mit Apostroph und Lücke).
-- [ ] Buchstabensalat mischt die Buchstaben eines Worts; eine Lösung aus mehreren Wörtern wird als Kästen gespielt.
-- [ ] Die Auswahl je Lücke zeigt die Lösung dieser Lücke und Ablenker nach Punkt 2, ohne dass die Position der
-  richtigen Antwort sie verrät.
-- [ ] Bewertung, Test, Klausur und Bonus behandeln die neuen Stufen wie die alten; Münzen nach Punkt 7.
-- [ ] Die abgenommenen Stories B-489 (Wortbank am Handy) und B-486 (Lückentext im Testmodus) bleiben grün.
+- [ ] Buchstabensalat mischt die Buchstaben eines Worts (2–12 Zeichen); jede andere Lösung wird als Kästen gespielt.
+- [ ] Die Auswahl je Lücke zeigt die Lösung und bis zu 4 Ablenker: die eigenen der Lücke, sonst Antworten anderer
+  Lücken; die Position der richtigen Antwort verrät nichts. Unter 2 Ablenkern wird die Karte als Kästen gespielt.
+- [ ] Eine Lücke trägt optional eigene Ablenker (additives Feld), das Creator-Formular kann sie pflegen.
+- [ ] Test und Klausur spielen die Stufe der Station; die Bewertung ist dieselbe wie beim Üben.
+- [ ] Im Bonus zahlen Auswahl und Salat 1 Münze je Treffer, Kästen 3; das gilt für Lückentext und Vokabeln.
+- [ ] B-489 (Wortbank am Handy) und B-486 (Lückentext im Testmodus) bleiben grün.
 
 ## Verlauf
 
@@ -112,3 +159,5 @@ Lücke steht schon in der Lernsprache.
 - **2026-11-16** — ausformuliert: Ist-Stand am Code belegt (vier Stufen, gemeinsame Bank, typ-neutrale Haken und
   Darstellung, Stufenwahl über das Manifest, Creator-Formular nur für Vokabeln), zehn offene Punkte mit Empfehlung.
   Im Refinement für Sprint 82.
+- **2026-11-16** — gegrillt mit dem Vater: zehn Entscheidungen, Akzeptanzkriterien final; Folge-Ideen B-600 und B-601
+  angelegt.

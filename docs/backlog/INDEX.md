@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (26)
+### Offen (28)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -42,6 +42,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
 | [B-590](B-590-lehrwerk-bezug-im-vater-plan.md) | Lehrwerk-Bezug und „schon durchgenommen" in Vater-Plan und Lernstand | Wunsch | `idee` | P3 | — | — | — |
 | [B-594](B-594-streak-schutz-und-malus-wiedergutmachung.md) | Streak-Schutz (mit Gems kaufbar) und Wiedergutmachung beim Malus | Wunsch | `idee` | P3 | — | — | — |
+| [B-600](B-600-eingabearten-fuer-regelaufgaben-und-uebersetzung.md) | Eingabearten für Regelaufgaben und Übersetzung | Wunsch | `idee` | P3 | — | — | — |
+| [B-601](B-601-ki-creator-schreibt-ablenker-je-luecke.md) | Der KI-Creator schreibt Ablenker je Lücke | Wunsch | `idee` | P3 | — | — | — |
 
 <details>
 <summary>Abgenommen (506)</summary>
