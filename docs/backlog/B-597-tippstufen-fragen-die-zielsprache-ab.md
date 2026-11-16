@@ -1,16 +1,17 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Zielsprache tippen, Tipprichtung, Lernsprache schreiben]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Vater: Risiko 1 (Diktat verrät die Lösung im Datenpaket)"
 ---
 
 # B-597 · Getippt wird immer die Zielsprache
@@ -163,6 +164,69 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
   Drehung erwartet die Karte „gehen“), eine `both`-Übung über die Kalender-Frist (rote Probe: ohne Obergrenze steht
   die Vorwärtskarte auf Freitext), das Diktat ohne Prompt-Text.
 
+## Schätzung
+
+**Größe L.** Am Anker gemessen: Die Drehung je Stufe allein wäre ein **S** (eine Funktion an der Kartenquelle, wie
+`childId` aus dem Testpfad ziehen, B-01). Die Obergrenze der Vorwärtskarte bei `both` (Entscheidung 3) ist ein **M**:
+Sie greift an drei Stellen, die heute nur die Zielstufe kennen – Stufenleiter (`PositionPlayService.CardStage`,
+`PositionPlayService.cs:159-166`), Kalender-Frist (`LadderDays`, `:164` und `:196`) und Teststufe – und muss im Bonus
+(`ExtraTrainingService.FormFor`) genauso gelten. Das Diktat (Entscheidung 4) ist ein weiteres **S–M** mit Frontend.
+Zusammen liegt das an einer Etappe wie E6. Wird es beim Bauen zu groß, ist die Teilungslinie das Diktat: eine eigene
+Story, die auf der Drehung aufsetzt.
+
+- **`wo: beides`** – Backend zuerst (Kartenquelle, Obergrenze, Diktat-Karte), dann Vater-Web (Feld „Erkennen“,
+  Hinweis, Stufenname „Diktat“ in `exerciseConfig.tsx:117`) und Sohn-Karte (Diktat ohne Text,
+  `Lektion.tsx:94-96`).
+- **`migration: nein`** – keine Schemaänderung: Richtung, Stufen und Lernstand bleiben, wie sie gespeichert sind
+  (Entscheidungen 2 und 6).
+- **`vertragsbruch: nein`** – `direction` und seine Werte bleiben (Entscheidung 7). Braucht das Diktat ein Feld für
+  den vorzulesenden Text (siehe Risiko 1), ist es **additiv** an `PracticeCard`/`TestItem`, also kein Bruch.
+
+### Risiken
+
+1. **Das Diktat über die Sprachausgabe des Geräts verrät die Lösung im Datenpaket.** Die Sprachausgabe braucht den
+   Text im Client (`SpeakButton text={karte.prompt}`, `Lektion.tsx:96`). Beim Diktat ist dieser Text genau die
+   Lösung. Mit Aufnahme wäre es nur eine URL, aber keine der 265 Vokabeln hat eine. Das Kind sieht das Wort nicht,
+   im Netzwerk-Tab stünde es aber. Das lag beim Grillen nicht auf dem Tisch. **Vor dem Bau** eine Rückfrage an den
+   Vater: hinnehmen (12-Jähriger, Hausgebrauch) oder das Diktat erst mit serverseitig erzeugten Aufnahmen bauen
+   (eigene Story, deutlich größer). Die Lösungsfeld-Regel (`ConventionGuardTests`) fängt das nicht, weil das Feld
+   nicht `Answer` heißt.
+2. **Anzeige und Bewertung auseinander.** Wird die Drehung nur in der Karten-Projektion gemacht, wertet der
+   Server-Vergleich noch die ungedrehte Antwort. Gegenmittel: Die Drehung sitzt an der `ContentItem`-Stufe, bevor
+   `CardFacets` und `Grader` sie sehen, und ein Test schickt die Lernsprache **und** die Muttersprache.
+3. **Die Obergrenze vergisst einen Pfad.** Vier Stellen wählen eine Stufe (Leiter, Frist, Test, Bonus). Gegenmittel:
+   eine Funktion „höchste Stufe der Karte“ am Typ, die alle vier fragen, und je Pfad ein Test.
+4. **Multiple Choice bei `both`.** Entscheidung 7 aus B-472 rotiert die Knöpfe nach Index. Ändert die Obergrenze, auf
+   welcher Stufe Karten stehen, ändert sich die Verteilung nicht – trotzdem im Test prüfen, dass die Position der
+   richtigen Antwort nicht die Richtung verrät.
+5. **Tests von `both`-Listen werden leichter** (Kosten von Entscheidung 5). Kein Risiko für den Code, aber für die
+   Pflicht – im Rollengang ansehen, ob 80 % noch eine echte Hürde sind.
+
+### Angriffsplan
+
+1. **Backend, Drehung:** `IExerciseType` bekommt „Karte für Stufe“ (Vokabeltyp: auf Schreibstufen gedreht, sonst
+   unverändert). Alle Spielpfade wenden sie an, bevor Karte und Bewertung entstehen. Tests rot, dann grün.
+2. **Backend, Obergrenze:** „höchste Stufe der Karte“ (Vorwärtskarte einer `both`-Liste = Auswahl) in
+   `CardStage`, Kalender-Frist, Teststufe und `ExtraTrainingService.FormFor`.
+3. **Rückfrage Risiko 1**, dann **Backend, Diktat:** Stufe zeigt keinen Text, Vorlesen über Aufnahme oder
+   Sprachausgabe, ohne Stimme Freitext. Stufenname „Diktat“ im Manifest.
+4. **Kommentar** an `TargetLanguage` (Muttersprache).
+5. **Frontend:** Feld „Erkennen“ mit drei Optionen und Hinweis in `exerciseConfig.tsx` und
+   `VaterExerciseCreate.tsx`; Diktat-Karte in `Lektion.tsx`; Positions-Bericht beschriftet gedrehte Karten.
+6. Reviewer: `pugling-reviewer`, dann `frontend-reviewer`; Rollengang als Sohn an einer `both`- und einer
+   `front-to-back`-Liste.
+
+### Testweg
+
+- **Integrationstests** in `Pugling.Api.Tests`: Drehung in Üben und Test an `BeideRichtungenTests` /
+  `ContentExercisePlayTests` (rote Probe: ohne Drehung erwartet die Freitext-Karte „gehen“), Bonus an
+  `ExtraTrainingTests`, Obergrenze über Leiter und Frist an `KartenstufeTests` (rote Probe: ohne Obergrenze steht
+  die Vorwärtskarte nach 7 Tagen auf Freitext), Diktat an `VorlesenTests` (rote Probe: Karte trägt einen Prompt-Text).
+- **Unit:** `StageMechanicsTests` für „ist Schreibstufe“ (Auswahl ausdrücklich nicht).
+- **Vitest:** Feld „Erkennen“ und Hinweis im Editor, Diktat-Karte ohne Text.
+- **E2E:** eine Spec als Sohn, die eine `front-to-back`-Liste auf Freitext spielt und *walk* zu „gehen“ tippt, nach
+  dem Muster von `bonus.spec.ts`; dazu `/smoke-test`.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt aus der Diskussion über Regeln fürs Erstellen von Übungen.
@@ -172,3 +236,5 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
 - **2026-11-16** — gegrillt mit dem Vater: acht Entscheidungen (Schreibstufen, Drehen je Stufe, Obergrenze der
   Vorwärtskarte bei `both`, Diktat, überall gleich, Boxen bleiben, Feld „Erkennen“, Vorgaben bleiben),
   Akzeptanzkriterien final.
+- **2026-11-16** — geschätzt: L, beides, keine Migration, kein Vertragsbruch; Risiko 1 (Diktat verrät die Lösung
+  im Datenpaket) braucht vor dem Bau eine Rückfrage beim Vater.
