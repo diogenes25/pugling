@@ -102,7 +102,7 @@ describe("Klausur auf Englisch", () => {
     expect(screen.getByText("Correct")).toBeTruthy();
     // Nutzerdaten (AK 2): rot, wenn Aufgabe oder Lösung durch `t` laufen.
     expect(screen.getByText("test.title")).toBeTruthy();
-    expect(screen.getByText("practice.task")).toBeTruthy();
+    expect(screen.getByText("Right: practice.task")).toBeTruthy();
   });
 
   it("nennt eine unbekannte Stufe mit Nummer statt mit einem Schlüsselnamen", async () => {

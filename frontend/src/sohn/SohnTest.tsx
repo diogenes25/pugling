@@ -6,7 +6,8 @@ import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
-import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
+import { TaskAnnouncer } from "../components/ClozePrompt";
+import { ErgebnisZeile } from "./ErgebnisZeile";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform } from "./aufgabenform";
 import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
@@ -361,31 +362,20 @@ export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry,
 
         <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>
           {sharedPrompt && <p className="sub" style={{ marginTop: 0 }}>{sharedPrompt}</p>}
-          {result.items.map((o) => (
+          {!sharedPrompt && result.items.map((o) => (
+            // Selbst eingeschätzte Karten tragen keine getippte Antwort (`givenAnswer` null) – dort nur die Lösung.
+            <ErgebnisZeile key={o.itemIndex} prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
+              givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} misspelled={o.misspelled}
+              zeigeAntwort={o.givenAnswer != null} />
+          ))}
+          {sharedPrompt && result.items.map((o) => (
+            // Das Zeichen ist die Optik, das Wort die Bedeutung: allein gelesen hieße „❌ Berlin" für das Kind „Berlin war
+            // falsch", während der Server „Berlin hast du nicht genannt" meint (B-77/E2). Die Lösung steht groß, weil der
+            // Aufgabentext schon oben steht.
             <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
-              {/* Das Zeichen ist die Optik, das Wort die Bedeutung: allein gelesen heißt „❌ Berlin" für das Kind
-                  „Berlin war falsch", während der Server „Berlin hast du nicht genannt" meint – und genau das ist
-                  bei einer Menge die Lehre der Übung (B-77/E2). */}
-              {/* B-524: „falsch geschrieben" ist eine eigene Lehre – das Wort war da, die Schreibweise nicht.
-                  Gewertet bleibt es falsch; nur das Zeichen und die Zeile darunter sagen, was zu üben ist. */}
-              <span aria-hidden="true">{o.wasCorrect ? "✅" : o.misspelled && !sharedPrompt ? "✏️" : "❌"}</span>
-              {!sharedPrompt && <span className="sr-only">
-                {o.wasCorrect ? t("test.correct") : o.misspelled ? t("test.misspelled") : t("test.incorrect")}</span>}
-              {sharedPrompt
-                // Die Lösung ist hier die Lehre – sie steht groß, wo der Aufgabentext oben schon steht.
-                ? <>
-                    <span className="test-prompt">{o.expected}</span>
-                    <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? t("test.named") : t("test.notNamed")}</span>
-                  </>
-                : <>
-                    {/* Auch hier die Lücke ausweisen: sonst stehen beim Lückentext lauter gleiche Zeilen –
-                        ausgerechnet auf dem Bildschirm, auf dem das Kind seine Fehler nachliest. */}
-                    <ClozePrompt text={o.prompt} gapIndex={o.gapIndex} className="test-prompt" />
-                    <span className="sub" style={{ marginLeft: "auto", textAlign: "right" }}>
-                      {o.expected}
-                      {o.misspelled && o.givenAnswer && <><br />{t("test.misspelled")} · {t("test.youWrote", { given: o.givenAnswer })}</>}
-                    </span>
-                  </>}
+              <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
+              <span className="test-prompt">{o.expected}</span>
+              <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? t("test.named") : t("test.notNamed")}</span>
             </div>
           ))}
         </div>

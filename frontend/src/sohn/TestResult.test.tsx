@@ -67,10 +67,31 @@ describe("TestResult", () => {
     ];
     const { container } = view({ ...base, totalItems: 2, correctItems: 0, scorePercent: 0, items });
 
-    expect(container.textContent).toContain("du: „clinik“");
-    expect(screen.getAllByText("Falsch geschrieben")).toHaveLength(1);
-    // Das falsche Wort bekommt keine Schreibfehler-Zeile und sein Getipptes nicht als Lehre.
-    expect(container.textContent).not.toContain("„dog“");
+    expect(screen.getByText("Du: clinik · Falsch geschrieben")).toBeTruthy();
+    // Das falsche Wort bekommt keine Schreibfehler-Kennung, aber seine Antwort steht da – das Kind soll sehen, was es
+    // geschrieben hat. Rot, wenn `misspelled` an der falschen Zeile hängt oder die Antwort fehlt.
+    expect(screen.getByText("Du: dog")).toBeTruthy();
+    expect(container.textContent?.match(/Falsch geschrieben/g)).toHaveLength(2); // sichtbar + Vorleser, nur Zeile 1
+  });
+
+  /**
+   * Jede Lückentext-Zeile trug den ganzen Absatz – bei zehn Aufgaben zehnmal, und die Antworten gingen darin unter.
+   * Rot, wenn die Zeile wieder den ganzen Text zeigt (dann stünde „We aren't late" zweimal da), wenn die eigene
+   * Antwort fehlt oder auch an der richtigen Zeile steht.
+   */
+  it("zeigt je Lücke nur ihren Satz, die falsche Antwort und die Lösung", () => {
+    const text = "1. Your sister plays the drums, {{1}} 2. We aren't late, {{2}}";
+    const items: ItemOutcome[] = [
+      { itemIndex: 0, prompt: text, expected: "doesn't she?", givenAnswer: "doesn't she?", wasCorrect: true, gapIndex: 1 },
+      { itemIndex: 1, prompt: text, expected: "are we?", givenAnswer: "aren't we?", wasCorrect: false, gapIndex: 2 },
+    ];
+    view({ ...base, totalItems: 2, correctItems: 1, scorePercent: 50, items });
+
+    expect(screen.getAllByText(/We aren't late/)).toHaveLength(1);
+    expect(screen.getByText("Du: aren't we?")).toBeTruthy();
+    expect(screen.queryByText("Du: doesn't she?")).toBeNull();
+    expect(screen.getByText("Richtig: are we?")).toBeTruthy();
+    expect(screen.getByText("Richtig: doesn't she?")).toBeTruthy();
   });
 
   /**
