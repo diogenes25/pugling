@@ -223,6 +223,13 @@ a { color: var(--cyan); }
 /* Aufgabentext der Klausur – wie zuvor das <b> an dieser Stelle. */
 .test-prompt { font-size: 17px; font-weight: 700; }
 
+/* Eine Zeile der Bonus-Auswertung: Aufgabe, darunter die eigene (falsche) Antwort und die Lösung. */
+.bonus-ergebnis { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0; }
+.bonus-ergebnis + .bonus-ergebnis { border-top: 1px solid var(--stroke); }
+.bonus-ergebnis .test-prompt { font-size: 15px; line-height: 1.45; }
+.bonus-ergebnis .falsch { color: var(--red); font-weight: 700; margin-top: 4px; }
+.bonus-ergebnis .richtig { color: var(--lime); font-weight: 700; margin-top: 2px; }
+
 /* Der Stoff, auf den sich eine Frage bezieht (Lesetext, Anweisung der Übung). Ruhiger gesetzt als die
    Frage: er ist Material, nicht die Aufgabe – und bei einem längeren Text scrollbar statt abgeschnitten. */
 .passage {

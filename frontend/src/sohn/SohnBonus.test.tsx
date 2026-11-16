@@ -221,3 +221,43 @@ describe("Bonus-Runde einer geänderten Übung", () => {
     expect(sessionStorage.getItem("pugling.bonus.run.42")).toBeNull();
   });
 });
+
+/*
+ * Die Auswertung eines Lückentexts: jede Zeile trug vorher den ganzen Absatz mit rohen `{{n}}`, und was das Kind
+ * geantwortet hatte, stand nirgends – nicht zu erkennen, was gefragt, geantwortet und richtig war.
+ */
+describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
+  it("zeigt je Lücke nur ihren Satz, die falsche Antwort und die Lösung", async () => {
+    const text = "1. Your sister plays the drums, {{1}} 2. We aren't late, {{2}}";
+    startExtraRun.mockResolvedValue({
+      runId: 300, exerciseId: 4, title: "Tags", type: "Cloze", form: "Typed", stage: 1, typed: true, coinsPerHit: 3,
+      runPercent: 100, cards: [{ itemIndex: 0, prompt: text, gapIndex: 1 }, { itemIndex: 1, prompt: text, gapIndex: 2 }],
+    } as unknown as ExtraRunResponse);
+    submitExtraRun.mockResolvedValue({
+      runId: 300, form: "Typed", total: 2, correct: 1, coinsAwarded: 3, capReached: false, coinsToday: 3, dailyCoinCap: null,
+      items: [
+        { itemIndex: 0, prompt: text, expected: "doesn't she?", givenAnswer: "doesn't she?", wasCorrect: true, gapIndex: 1 },
+        { itemIndex: 1, prompt: text, expected: "are we?", givenAnswer: "aren't we?", wasCorrect: false, gapIndex: 2 },
+      ],
+    } as ExtraRunResult);
+    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], coinsToday: 3, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
+    sessionStorage.setItem("pugling.bonus.run.300", JSON.stringify([
+      { itemIndex: 0, givenAnswer: "doesn't she?" }, { itemIndex: 1, givenAnswer: "aren't we?" }]));
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/4"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("1 / 2 richtig");
+
+    // Rot, wenn die Zeile wieder den ganzen Absatz trägt: dann käme „We aren't late" auch in der ersten Zeile vor.
+    expect(screen.getAllByText(/We aren't late/)).toHaveLength(1);
+    // Rot, wenn rohe Platzhalter durchschlagen (Lücke nicht gezeichnet).
+    expect(screen.queryByText(/\{\{/)).toBeNull();
+    // Rot, wenn die eigene falsche Antwort fehlt – oder auch bei der richtigen Zeile stünde.
+    expect(screen.getByText("Du: aren't we?")).toBeTruthy();
+    expect(screen.queryByText("Du: doesn't she?")).toBeNull();
+    expect(screen.getByText("Richtig: are we?")).toBeTruthy();
+    expect(screen.getByText("Richtig: doesn't she?")).toBeTruthy();
+  });
+});

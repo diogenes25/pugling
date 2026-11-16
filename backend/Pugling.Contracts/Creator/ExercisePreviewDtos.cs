@@ -39,10 +39,11 @@ public record PreviewAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);
 /// <summary>
 /// Individual evaluation including the expected solution (in test mode the solution is always disclosed).
 /// <c>Misspelled</c> marks a wrong typed answer that is the right word misspelled - display only, as in
-/// <c>ItemOutcome</c> (B-524).
+/// <c>ItemOutcome</c> (B-524). <c>GapIndex</c> names the asked placeholder of a cloze <c>Prompt</c>: every gap shares
+/// the whole text, and without it a result list repeats that text with nothing to tell the rows apart.
 /// </summary>
 public record PreviewItemOutcome(int ItemIndex, string Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
-    bool Misspelled = false);
+    bool Misspelled = false, int? GapIndex = null);
 
 /// <summary>Overall result of a test-mode run.</summary>
 public record PreviewResult(int Total, int Correct, int ScorePercent, IReadOnlyList<PreviewItemOutcome> Items);

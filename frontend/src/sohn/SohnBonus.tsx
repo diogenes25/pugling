@@ -7,7 +7,8 @@ import { useAsync } from "../lib/useAsync";
 import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { Mascot } from "../components/Mascot";
-import { TaskAnnouncer } from "../components/ClozePrompt";
+import { ClozePrompt, TaskAnnouncer } from "../components/ClozePrompt";
+import { clozeSentence } from "../lib/cloze";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { useSohn } from "./SohnApp";
 import { aufgabenform } from "./aufgabenform";
@@ -249,11 +250,20 @@ export function SohnBonusRun() {
           )}
           <div className="card" style={{ width: "100%", textAlign: "left" }}>
             {result.items.map((o) => (
-              <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
+              // Je Zeile drei Dinge untereinander: was gefragt war, was das Kind geantwortet hat, was richtig ist. Ein
+              // Lückentext zeigt nur den Satz um seine Lücke – sonst stünde der ganze Absatz in jeder Zeile.
+              <div className="bonus-ergebnis" key={o.itemIndex}>
                 <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
-                <span className="sr-only">{o.wasCorrect ? t("test.correct") : t("test.incorrect")}</span>
-                <span className="test-prompt">{o.prompt}</span>
-                <span className="sub" style={{ marginLeft: "auto", textAlign: "right" }}>{o.expected}</span>
+                <div>
+                  <span className="sr-only">{o.wasCorrect ? t("test.correct") : t("test.incorrect")}</span>
+                  <ClozePrompt text={o.prompt ? clozeSentence(o.prompt, o.gapIndex) : null} gapIndex={o.gapIndex}
+                    className="test-prompt" />
+                  {/* Selbst eingeschätzt gibt es keine getippte Antwort – dort ist nur die Lösung die Lehre. */}
+                  {result.form !== "SelfAssess" && !o.wasCorrect && (
+                    <div className="falsch">{o.givenAnswer?.trim() ? t("bonus.resultYou", { given: o.givenAnswer }) : t("bonus.resultNoAnswer")}</div>
+                  )}
+                  <div className="richtig">{t("bonus.resultRight", { expected: o.expected })}</div>
+                </div>
               </div>
             ))}
           </div>

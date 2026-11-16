@@ -87,7 +87,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
                 ? grader.Matches(answer?.GivenAnswer, item)
                 : answer?.WasKnown ?? false;
             var misspelled = typed && !correct && grader.IsMisspelled(answer?.GivenAnswer, item, items);
-            return new PreviewItemOutcome(item.Index, item.Prompt, item.Answer, answer?.GivenAnswer, correct, misspelled);
+            return new PreviewItemOutcome(item.Index, item.Prompt, item.Answer, answer?.GivenAnswer, correct, misspelled, item.GapIndex);
         }).ToList();
     }
 

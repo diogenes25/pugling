@@ -45,3 +45,30 @@ export function showsGaps(parts: ClozePart[], gapIndex: number | null | undefine
   if (gaps.length === 0) return false;
   return gapIndex == null || gaps.some((p) => "gap" in p && p.gap === gapIndex);
 }
+
+/**
+ * Der Satz um eine Lücke – für Ergebnislisten, in denen jede Zeile sonst den ganzen Text trägt.
+ *
+ * Alle Lücken eines Texts teilen denselben Aufgabentext. Auf der Karte ist das richtig (das Kind sieht den Zusammenhang),
+ * in der Auswertung aber stünde ein Absatz von zehn Aufgaben zehnmal untereinander, und die Antwort ginge darin unter.
+ * Grenzen sind Satzenden (`.`/`!`/`?` vor Leerraum), Zeilenumbrüche und Aufzählungsnummern (`3.`, `3)`) – die Nummer
+ * selbst ist kein Satzende, sie eröffnet die nächste Aufgabe und bleibt beim Ausschnitt.
+ *
+ * Kommt die Lücke im Text nicht vor, bleibt es beim ganzen Text: lieber zu viel Zusammenhang als ein leerer.
+ */
+export function clozeSentence(text: string, gapIndex: number | null | undefined): string {
+  if (gapIndex == null) return text;
+  const at = text.indexOf(`{{${gapIndex}}}`);
+  if (at < 0) return text;
+  const bounds: number[] = [];
+  for (const m of text.matchAll(/(^|\s)(\d+[.)])(?=\s)/g)) bounds.push(m.index + m[1].length);
+  for (const m of text.matchAll(/[.!?]+(?=\s|$)/g)) {
+    // „3." ist eine Nummer, kein Satzende – sonst risse die Grenze die Nummer von ihrer Aufgabe.
+    const word = text.slice(0, m.index).match(/(\S*)$/)?.[1] ?? "";
+    if (!/^\d+$/.test(word)) bounds.push(m.index + m[0].length);
+  }
+  for (const m of text.matchAll(/\n/g)) bounds.push(m.index + 1);
+  const start = Math.max(0, ...bounds.filter((b) => b <= at));
+  const end = Math.min(text.length, ...bounds.filter((b) => b > at));
+  return text.slice(start, end).trim();
+}

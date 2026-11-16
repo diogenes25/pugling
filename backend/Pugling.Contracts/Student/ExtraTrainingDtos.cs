@@ -68,5 +68,9 @@ public record SubmitExtraRunDto(List<ExtraAnswer> Answers);
 public record ExtraRunResult(int RunId, ExtraForm Form, int Total, int Correct, int CoinsAwarded, bool CapReached,
     int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraItemOutcome> Items);
 
-/// <summary>One graded card, revealed after the run (<paramref name="Expected"/> is the solution shown in hindsight).</summary>
-public record ExtraItemOutcome(int ItemIndex, string? Prompt, string Expected, string? GivenAnswer, bool WasCorrect);
+/// <summary>
+/// One graded card, revealed after the run (<paramref name="Expected"/> is the solution shown in hindsight).
+/// <paramref name="GapIndex"/> names the asked placeholder of a cloze <paramref name="Prompt"/>, as on the card.
+/// </summary>
+public record ExtraItemOutcome(int ItemIndex, string? Prompt, string Expected, string? GivenAnswer, bool WasCorrect,
+    int? GapIndex);

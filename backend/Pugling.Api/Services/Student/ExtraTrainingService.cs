@@ -224,7 +224,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
         return new Outcome<ExtraRunResult>(new ExtraRunResult(run.Id, run.Form, graded.Total, graded.Correct, coins,
             coins < earned, coinsBefore + coins, dailyCap,
-            [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect))]));
+            [.. graded.Items.Select(i => new ExtraItemOutcome(i.ItemIndex, i.Prompt, i.Expected, i.GivenAnswer, i.WasCorrect, i.GapIndex))]));
     }
 
     /// <summary>
