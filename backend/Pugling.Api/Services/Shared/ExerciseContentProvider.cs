@@ -107,7 +107,12 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     private static ContentItem Swap(ContentItem it) =>
         it with
         {
-            Prompt = it.Answer, Answer = it.Prompt, AcceptedAnswers = [it.Prompt], Hint = null, AudioUrl = null, Reversed = true,
+            Prompt = it.Answer,
+            Answer = it.Prompt,
+            AcceptedAnswers = [it.Prompt],
+            Hint = null,
+            AudioUrl = null,
+            Reversed = true,
             // B-252: the reversed prompt is the translation; reading the foreign word aloud here would speak the solution.
             SpeechLang = null,
         };
