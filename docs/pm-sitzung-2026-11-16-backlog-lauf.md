@@ -124,3 +124,49 @@ stehen. Stakeholder-Entscheidung 3: auch ein ungeprüftes „nicht gewusst" setz
    (u. a. die Seite ist vor einem Positionstest sichtbar, nicht in der Klausur).
 5. Weiter offen aus dem letzten Lauf: B-539/B-580 (P1, L) vor dem Bau teilen; B-31 am Handy gegenhören.
 6. Am echten Gerät anschauen: Häkchen „Ausrutscher verzeihen" im Positions-Editor und die Buchseiten-Pille beim Sohn.
+
+## Sprint 82 — geplant: Schreiben in der Lernsprache
+
+Geplant am 2026-11-16 nach der Diskussion mit dem Vater über Regeln fürs Erstellen von Übungen. **Noch nicht
+startbereit:** Nur B-597 steht auf `geschaetzt`; die übrigen brauchen erst das Refinement unten.
+
+**Sprint-Ziel (Sicht Sohn):** „Wo ich ein Wort schreiben muss – auf einer Vokabelkarte wie in einem Lückentext –,
+schreibe ich das englische Wort, in der Eingabeart, die mein Vater gewählt hat, und ein neues Wort lerne ich in einer
+Karte vom Sehen übers Abschreiben bis zum Erinnern.“ Widerlegbar im Rollengang: eine Freitext-Karte, die „gehen“
+erwartet, ein Lückentext ohne Buchstabenkästen, eine neue Karte ohne Abschreib-Schritt.
+
+**Roter Faden:** Die Eingabe der Lernsprache. B-597 legt fest, *was* geschrieben wird, B-599 *wie* im Lückentext,
+B-598 die Folge beim ersten Kontakt, B-596 die Menge je Übung, B-223 die Hilfe davor.
+
+| Id | Titel | Stufe | Größe | Rolle im Sprint |
+| --- | --- | --- | --- | --- |
+| [B-597](backlog/B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache | `geschaetzt` | L | Fundament: „Karte für Stufe“ und Schreibstufen; B-598 und B-599 bauen darauf |
+| [B-599](backlog/B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | `idee` | – | Buchstabenkästen, Buchstabensalat, Auswahl je Lücke für den Lückentext |
+| [B-598](backlog/B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) | Kombi-Lernkarte | `idee` | – | neue Stufe für die Erstbegegnung (B-419), schreibt nach B-597 die Lernsprache |
+| [B-596](backlog/B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Höchstens 10 Vokabeln je Übung | `idee` | – | unabhängig, klein; Frage „Wörter oder Karten?“ aus B-597 |
+| [B-223](backlog/B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort | `geschaetzt` | M | **aus dem Backlog dazugenommen:** Hilfe auf der Schreibstufe; ihre spätere Buchstaben-Stufe berührt B-599. Fällt als Erstes heraus, wenn der Sprint zu groß wird (P3, Migration + Vertrag) |
+
+**Geprüft und bewusst nicht dazugenommen:**
+
+- [B-587](backlog/B-587-einstufungstest-vor-der-vokabel-position.md) (Einstufungstest vor der Vokabel-Position, P3):
+  berührt die Erstbegegnung wie B-598, aber eine andere Frage (*ob* ein Wort eingeführt wird, nicht *wie*). Nach
+  B-598 neu ansehen, weil die Lernkarte die Einführung teurer macht und ein Überspringen dann mehr wert ist.
+- [B-536](backlog/B-536-aufbau-uebungen-statt-versagen.md) (Aufbau-Übungen, P1, `gegrillt`, XL): gleiche Richtung
+  (leichter Weg zum Stoff), aber XL und muss vor dem Bau geteilt werden. B-599 liefert einen Teil davon innerhalb
+  einer Übung (Wortbank → Kästen → Freitext); beim Teilen von B-536 prüfen, was danach übrig bleibt.
+- B-489, B-486 (Wortbank am Handy, Lückentext im Testmodus): schon abgenommen; B-599 muss ihr Verhalten erhalten
+  (Regressionszeugen).
+
+**Refinement vor dem Start** (eigene Phase, nicht Teil der Sprintgröße), in dieser Reihenfolge:
+
+1. **B-599** `idee` → `geschaetzt`: ausformulieren gegen `ClozeExerciseType` (Stufen, `Choices`, `ClozeStage`),
+   grillen mit dem Vater (eigene Ablenker je Lücke oder abgeleitet, Stufenwahl wie bei Vokabeln, Regelaufgaben und
+   Übersetzung dabei?), schätzen.
+2. **B-598** `idee` → `geschaetzt`: ausformulieren gegen B-419 (`PositionPlayService.CardStage`), grillen (Wertung,
+   „ja“ überspringt Abschreiben?, Abbruch, nur Erstbegegnung?), schätzen.
+3. **B-596** `idee` → `geschaetzt`: ausformulieren, grillen (Wörter oder Karten, Bestand, Item-Endpunkt), schätzen.
+4. Danach Gesamtgröße prüfen. Liegt sie über zwei L, wird B-223 herausgenommen; reicht das nicht, B-596 als eigener
+   kleiner Sprint.
+
+**Reihenfolge im Bau:** B-597 zuerst (die Drehung je Stufe ist die Senke, durch die B-598 und B-599 laufen), dann
+B-599 und B-598, B-596 und B-223 unabhängig daneben.
