@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/lueckentext]
 aliases: [Lückentext-Eingabearten, Buchstabenkästen im Lückentext, Auswahl je Lücke]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater, Beispiel Question tags)
 grund: ""
 ersetzt_durch: []
@@ -153,6 +153,70 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
 - [ ] Im Bonus zahlen Auswahl und Salat 1 Münze je Treffer, Kästen 3; das gilt für Lückentext und Vokabeln.
 - [ ] B-489 (Wortbank am Handy) und B-486 (Lückentext im Testmodus) bleiben grün.
 
+## Schätzung
+
+**Größe M**, am Anker B-03 (vokabel-basierter Batch-Pfad im `MediaSelector`): ein Typ bekommt bekannte Haken neu
+gefüllt, dazu eine Regel im Bonus und ein Formularfeld. Neue Mechanik entsteht nicht – Kästen-Muster, Salat und
+Ablenker-Pool sind geteilt (`StageMechanics.cs:96`, `:104-108`, `:177`), und die Sohn-Karte zeichnet alle drei
+schon (`Lektion.tsx:154-167`).
+
+- **`wo: beides`** – Backend zuerst (Stufen, Haken, Ablenker je Lücke, Bonus-Regel), dann Vater-Web
+  (Standard-Abfrageform aus dem Manifest, Ablenker-Eingabe je Lücke, Feld-Erklärung).
+- **`migration: nein`** – Stufen liegen als Zahl an Station und Übung (`PlanPositionEntities.cs:32`,
+  `LearnEntities.cs:109`, Stufenplan als JSON `:135`); neue `ClozeStage`-Werte werden angehängt, Bestandswerte
+  bleiben. Die Ablenker je Lücke leben in der Config (JSON), keine Spalte.
+- **`vertragsbruch: nein`** – `Gap` bekommt ein **optionales** Feld (`ExerciseConfigs.cs:98-99`), additiv. Die
+  Stufenliste kommt als Daten aus dem Manifest. `ClozeStage` liegt nicht im Vertragsprojekt.
+
+### Risiken
+
+1. **Die Auswahl je Lücke wird nicht gemischt.** `ChoicesShareOnePool` ist für den Lückentext typweit `true`
+   (`BuiltInExerciseTypes.cs:189`); dann gibt `PositionPlayService.cs:417` die Optionen **ungemischt** heraus. Für
+   die gemeinsame Wortbank ist das gewollt (sortiert, auf jeder Karte gleich), für die neue Stufe stünde die
+   richtige Antwort immer vorn. Gegenmittel: der Schalter wird stufenabhängig; Test mit roter Probe auf die Position
+   der Lösung.
+2. **Die Form der Lösung verrät sie.** Die Wortbank kennt dafür schon Regeln (Großschreibung am Satzanfang B-501,
+   Schlusszeichen, Vollständigkeit B-487). Eine Auswahl je Lücke mit „Doesn't she“ neben „isn't it“ hätte dasselbe
+   Leck. Gegenmittel: dieselbe Angleichung (`InBankForm`) auf die Optionen je Lücke anwenden.
+3. **Doppelte Ablenker.** Zwei Lücken mit gleicher Antwort („isn't it“ zweimal) wären ein Ablenker, der zugleich
+   richtig ist. Gegenmittel: Ablenker, die der Grader als Lösung der Lücke akzeptiert, fallen heraus (wie beim
+   Leseverständnis, `BuiltInExerciseTypes.cs:553ff`), danach erst die Untergrenze 2 prüfen.
+4. **`VOCAB_FORMS` hat fünf Nutzer** (`ExerciseEditModal.tsx`, `VaterExerciseCreate.tsx`, `VaterWizard.tsx:684`,
+   `PlanPositions.tsx`, `PlanPositionsStufe.test.tsx`). Der Assistent nutzt die Liste für seine Vorgaben; beim
+   Umstellen aufs Manifest darf er seine Stufen nicht verlieren. Gegenmittel: jeden Nutzer einzeln umstellen, der
+   Assistent behält seine festen Werte.
+5. **Bonus-Regel an der falschen Stelle.** Die Salat-Erkennung muss an der Karte hängen (Rückfall auf Kästen zahlt
+   3), nicht an der Stufe allein. Gegenmittel: `FormFor` fragt `LetterTileSource` je Lücke, Test mit einer
+   Mehrwort-Lücke.
+
+### Angriffsplan
+
+1. **Backend, Stufen:** drei `ClozeStage`-Werte, `StageOptions`, `IsTyped` (`StageMechanics.cs:27-29`).
+2. **Backend, Haken im Lückentext:** `StageFacets` (Kästen, auch als Rückfall), `LetterTileSource` (Salat, ein
+   Wort 2–12 Zeichen), `Choices` je Lücke (eigene Ablenker vor abgeleiteten, bis 4, unter 2 → Kästen), Mischen
+   stufenabhängig (Risiko 1), Form-Angleichung (Risiko 2), Doppelte raus (Risiko 3).
+3. **Vertrag:** optionales Feld für Ablenker an `Gap`, Swagger-Doku; `docs/openapi/v1.json` und `contract.ts`
+   neu erzeugen.
+4. **Bonus:** Salat zahlt wie Auswahl, für Lückentext und Vokabeln (`ExtraTrainingService.FormFor`).
+5. **Frontend:** Standard-Abfrageform aus dem Manifest für Lückentext und Vokabeln, `VOCAB_FORMS` je Nutzer
+   ablösen (Risiko 4); Ablenker-Eingabe je Lücke im Lückentext-Editor; Feld-Erklärung zum Salat-Rückfall in
+   `lib/fieldHelp.ts`.
+6. Reviewer: `pugling-reviewer`, dann `frontend-reviewer`; Rollengang als Sohn an Übung Nr. 19 auf allen drei
+   Stufen.
+
+### Testweg
+
+- **Integrationstests** in `Pugling.Api.Tests`: `ClozePlayTests` für Kästen mit Trennzeichen, Salat mit
+  Rückfall bei „didn't he“, Auswahl je Lücke mit eigenen und abgeleiteten Ablenkern, Untergrenze, Mischen (rote
+  Probe: ohne stufenabhängiges Mischen steht die Lösung immer auf Knopf 0), Doppelte; Test und Klausur über
+  dieselbe Station; `ExtraTrainingTests` für 1/1/3 Münzen und den Rückfall (rote Probe: ohne Regel zahlt Salat 3);
+  `SchulVokabeltestTests` bleiben grün.
+- **Unit:** `StageMechanicsTests` für `IsTyped` der neuen Stufen.
+- **Vitest:** `PlanPositionsStufe.test.tsx` und der Editor-Test für die Liste aus dem Manifest, auch beim Assistenten;
+  Ablenker-Eingabe je Lücke (Hin- und Rückweg).
+- **E2E:** `lueckentext-am-handy.spec.ts` (B-489) bleibt grün und bekommt die Auswahl je Lücke mit 5 Knöpfen bei
+  375 px dazu; `/smoke-test`.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt aus der Diskussion über Eingabearten (Beispiel Question tags, Übung Nr. 19).
@@ -161,3 +225,5 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
   Im Refinement für Sprint 82.
 - **2026-11-16** — gegrillt mit dem Vater: zehn Entscheidungen, Akzeptanzkriterien final; Folge-Ideen B-600 und B-601
   angelegt.
+- **2026-11-16** — geschätzt: M, beides, keine Migration, kein Vertragsbruch; fünf Risiken, das erste (Auswahl
+  je Lücke ungemischt wegen `ChoicesShareOnePool`) am Code gefunden.
