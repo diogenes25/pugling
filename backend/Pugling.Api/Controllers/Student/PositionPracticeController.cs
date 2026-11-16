@@ -535,7 +535,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
             // "already named" marker read back above. A second reading would put the stamp outside the window
             // a frozen test clock defines, and then every remaining card would accept the same answer again.
-            play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
+            play.ApplyReview(pos, prog, wasCorrect, verified: typed, session.Day, now);
 
             var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
                 pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
@@ -564,13 +564,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             // The claim moves the box like a review, but it is not one for the score: ReviewCount counts graded reviews
             // only. The new-content points hang on NewBonusPaidAt (B-535), which a claim never sets.
-            // The miss marker of forgiving demotion (B-219) follows checked answers only: an unchecked "known" would
-            // otherwise erase a typed miss and pardon the next one, too.
             var reviewCount = prog.ReviewCount;
-            var lastMissed = prog.LastMissed;
-            play.ApplyReview(pos, prog, wasCorrect, session.Day, now);
+            play.ApplyReview(pos, prog, wasCorrect, verified: false, session.Day, now);
             prog.ReviewCount = reviewCount;
-            prog.LastMissed = lastMissed;
         }
 
         // Server cursor: onto the card just answered (a valid one), one further, then skip removed ones.

@@ -489,9 +489,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// <summary>
     /// Records a Leitner review on the progress: correct → one box higher (longer
     /// interval), incorrect → back to box 1 and due again immediately. With <see cref="PlanPosition.ForgivingDemotion"/>
-    /// the first miss in a row only drops one box (B-219). The caller saves.
+    /// the first miss in a row only drops one box (B-219). Only a <c>verified</c> answer - one the server checked on a
+    /// typed stage rather than taking the child's word for it - moves the miss marker
+    /// <see cref="PositionItemProgress.LastMissed"/> (B-219 decision 11, B-591). The caller saves.
     /// </summary>
-    public void ApplyReview(PlanPosition pos, PositionItemProgress prog, bool correct, DateOnly today, DateTime nowUtc)
+    public void ApplyReview(PlanPosition pos, PositionItemProgress prog, bool correct, bool verified, DateOnly today,
+        DateTime nowUtc)
     {
         var intervals = BoxIntervals(pos);
         prog.ReviewCount++;
@@ -501,14 +504,15 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         {
             prog.Box = Math.Min(pos.MaxBox, Math.Max(1, prog.Box) + 1);
             prog.DueOn = today.AddDays(intervals[Math.Min(prog.Box, intervals.Count - 1)]);
-            prog.LastMissed = false;
+            // An unchecked "known" must not erase a checked miss, or it would pardon the next one, too.
+            if (verified) prog.LastMissed = false;
         }
         else
         {
             // Forgiving demotion pardons only the first miss in a row; never below box 1.
             prog.Box = pos.ForgivingDemotion && !prog.LastMissed ? Math.Max(1, prog.Box - 1) : 1;
             prog.DueOn = today; // same day: practice again right away
-            prog.LastMissed = true;
+            if (verified) prog.LastMissed = true;
         }
     }
 }

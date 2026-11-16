@@ -121,6 +121,42 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         Assert.False(Progress(s.PositionId).LastMissed);
     }
 
+    // B-591 AK 1 (user decision 2026-11-16): an unchecked "known" in the GRADED path leaves the marker standing. The
+    // position's day stage is switched to self-assessment (RequireTypedTest off), so "known" is graded on the child's
+    // word: 4 → typed miss (3) → unchecked "known" (4, scored) → typed miss → 1, not 3. Red if the graded path lets
+    // ApplyReview clear LastMissed on an unchecked answer (the state before B-591).
+    [Fact]
+    public async Task Mild_Ungepruefte_Wertung_Gewusst_Loescht_Den_Fehler_Merker_Nicht()
+    {
+        var s = await SetupAsync(forgiving: true, startBox: 4, ("bark", "Rinde"), ("pond", "Teich"));
+
+        Assert.Equal(3, await ReviewOnDayAsync(s, 0, "falsch"));
+
+        SetStage(s, TestStage.SelfAssess);
+        Assert.Equal(4, await UncheckedGradedOnDayAsync(s, 1, known: true));
+        Assert.True(Progress(s.PositionId).LastMissed);
+
+        // The hit sent the card to box 4, due seven days later (default intervals).
+        SetStage(s, TestStage.FreeText);
+        Assert.Equal(1, await ReviewOnDayAsync(s, 8, "falsch"));
+    }
+
+    // B-591 AK 2 (stakeholder decision 2): the other direction - an unchecked "not known" in the graded path does not
+    // set the marker; the box still drops as today (mild, the marker was clear). Red if the graded path lets ApplyReview
+    // set LastMissed on an unchecked answer.
+    [Fact]
+    public async Task Mild_Ungepruefte_Wertung_Nicht_Gewusst_Setzt_Den_Fehler_Merker_Nicht()
+    {
+        var s = await SetupAsync(forgiving: true, startBox: 4, ("loam", "Lehm"), ("silt", "Schlick"));
+        SetStage(s, TestStage.SelfAssess);
+
+        Assert.Equal(3, await UncheckedGradedOnDayAsync(s, 0, known: false));
+        Assert.False(Progress(s.PositionId).LastMissed);
+    }
+
+    // B-591 AK 3, the counter case: a CHECKED hit still clears the marker - covered by Mild_Treffer_Unterbricht_Die_Folge
+    // (typed hit between two typed misses → 3, not 1). Red if ApplyReview never clears it.
+
     private async Task<Setup> SetupAsync(bool forgiving, int startBox, params (string Front, string Back)[] words)
     {
         // Noon UTC of the real day, so no day boundary sits inside a case.
@@ -175,6 +211,32 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         var box = outcome.GetProperty("box").GetInt32();
         Assert.Equal(box, Progress(s.PositionId).Box);
         return box;
+    }
+
+    // One unchecked review of item 0 graded on the child's word (self-assessed day stage, RequireTypedTest off) on plan
+    // day `day`; returns the box. ReviewCount grows only in the graded path, never on a self-claim rung - that proves
+    // which path ran.
+    private async Task<int> UncheckedGradedOnDayAsync(Setup s, int day, bool known)
+    {
+        factory.Clock.FreezeAt(s.Start.AddDays(day));
+        var reviewsBefore = Progress(s.PositionId).ReviewCount;
+        var sessionId = await TestApi.StartPositionSessionAsync(s.Child, s.PlanId, s.PositionId);
+        var res = await TestApi.PositionReviewAsync(s.Child, s.PlanId, s.PositionId, sessionId, 0, wasKnown: known);
+        res.EnsureSuccessStatusCode();
+        var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(known, outcome.GetProperty("wasCorrect").GetBoolean());
+        var prog = Progress(s.PositionId);
+        Assert.Equal(reviewsBefore + 1, prog.ReviewCount);
+        Assert.Equal(prog.Box, outcome.GetProperty("box").GetInt32());
+        return prog.Box;
+    }
+
+    private void SetStage(Setup s, TestStage stage)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.PlanPositions.Single(p => p.Id == s.PositionId).Stage = (int)stage;
+        db.SaveChanges();
     }
 
     // Back onto the ladder (B-476): a word introduced yesterday is asked by its box - box 1 turned over, box 2 as a choice.
