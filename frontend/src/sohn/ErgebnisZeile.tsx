@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { clozeSentence } from "../lib/cloze";
@@ -9,12 +8,11 @@ import { clozeSentence } from "../lib/cloze";
  * Lücke: alle Lücken teilen denselben Text, und der ganze Absatz in jeder Zeile begrub die Antworten.
  *
  * `zeigeAntwort` ist aus, wo es keine getippte Antwort gibt (selbst eingeschätzt) – dort ist nur die Lösung die Lehre.
- * Eine richtige Antwort wird nicht wiederholt: sie steht ohnehin als Lösung da. `erloes` steht rechts daneben – was die
- * Zeile eingebracht hat, wo eine Runde Münzen je Treffer zahlt (Bonus).
+ * Eine richtige Antwort wird nicht wiederholt: sie steht ohnehin als Lösung da.
  */
-export function ErgebnisZeile({ prompt, gapIndex, expected, givenAnswer, wasCorrect, misspelled = false, zeigeAntwort, erloes }: {
+export function ErgebnisZeile({ prompt, gapIndex, expected, givenAnswer, wasCorrect, misspelled = false, zeigeAntwort }: {
   prompt?: string | null; gapIndex?: number | null; expected: string; givenAnswer?: string | null; wasCorrect: boolean;
-  misspelled?: boolean; zeigeAntwort: boolean; erloes?: ReactNode;
+  misspelled?: boolean; zeigeAntwort: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -32,7 +30,6 @@ export function ErgebnisZeile({ prompt, gapIndex, expected, givenAnswer, wasCorr
         )}
         <div className="richtig">{t("test.answerRight", { expected })}</div>
       </div>
-      {erloes != null && <span className={`erloes${wasCorrect ? "" : " leer"}`}>{erloes}</span>}
     </div>
   );
 }

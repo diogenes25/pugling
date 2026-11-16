@@ -261,13 +261,11 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
     expect(screen.getByText("Richtig: are we?")).toBeTruthy();
     expect(screen.getByText("Richtig: doesn't she?")).toBeTruthy();
 
-    // Erlös je Aufgabe und die Rechnung bis zur Buchung. Rot, wenn die Zeile nicht nach richtig/falsch zahlt, wenn der
-    // Prozentschritt fehlt (dann bliebe offen, warum aus 3 🪙 nur 1 wurde) oder die Summe nicht den gebuchten Betrag nennt.
-    expect(screen.getByText("+3 🪙")).toBeTruthy();
-    expect(screen.getByText("+0 🪙")).toBeTruthy();
-    expect(screen.getByText("1 richtig × 3 🪙")).toBeTruthy();
-    expect(screen.getByText("Runde zählt heute 50 % (abgerundet): 1 🪙")).toBeTruthy();
-    expect(screen.getByText("Gesamt: +1 🪙")).toBeTruthy();
-    expect(screen.queryByText(/Tagesdeckel:/)).toBeNull();
+    // Die Rechnung in einer Zeile bis zum gebuchten Betrag, und kein Betrag an den Aufgaben – „+3“ je Zeile las sich als
+    // Summe. Rot, wenn ein Zeilenbetrag zurückkommt, der Prozentschritt fehlt (dann bliebe offen, warum aus 3 🪙 nur 1
+    // wurde), die Summe nicht den gebuchten Betrag nennt oder der Deckel ohne Kappung erscheint.
+    expect(screen.queryByText("+3 🪙")).toBeNull();
+    expect(screen.getByText("+1 🪙")).toBeTruthy();
+    expect(document.querySelector(".erloes-summe")?.textContent).toBe("1 richtig × 3 🪙 = 3 🪙 · heute 50 % → +1 🪙");
   });
 });

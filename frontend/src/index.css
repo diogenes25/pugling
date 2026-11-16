@@ -224,12 +224,10 @@ a { color: var(--cyan); }
 .test-prompt { font-size: 17px; font-weight: 700; }
 
 /* Eine Zeile einer Auswertung (Test, Bonus): Aufgabe, darunter die eigene (falsche) Antwort und die Lösung. */
-.ergebnis-zeile { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 10px 0; }
-.ergebnis-zeile .erloes { color: var(--gold); font-weight: 800; white-space: nowrap; }
-.ergebnis-zeile .erloes.leer { color: var(--muted); font-weight: 600; }
-/* Die Rechnung unter der Bonus-Auswertung: vom Satz je Treffer bis zum gebuchten Betrag. */
-.erloes-summe { border-top: 2px solid var(--stroke); padding-top: 10px; margin-top: 4px; display: grid; gap: 2px; }
-.erloes-summe .gesamt { color: var(--gold); font-weight: 800; font-size: 17px; margin-top: 4px; }
+.ergebnis-zeile { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0; }
+/* Die Rechnung unter der Bonus-Auswertung: vom Satz je Treffer bis zum gebuchten Betrag, in einer Zeile. */
+.erloes-summe { border-top: 2px solid var(--stroke); padding-top: 10px; margin: 4px 0 0; color: var(--muted); }
+.erloes-summe .gesamt { color: var(--gold); font-weight: 800; font-size: 17px; white-space: nowrap; }
 .ergebnis-zeile + .ergebnis-zeile { border-top: 1px solid var(--stroke); }
 .ergebnis-zeile .test-prompt { font-size: 15px; line-height: 1.45; }
 .ergebnis-zeile .falsch { color: var(--red); font-weight: 700; margin-top: 4px; }

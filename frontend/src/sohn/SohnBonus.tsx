@@ -252,20 +252,19 @@ export function SohnBonusRun() {
           )}
           <div className="card" style={{ width: "100%", textAlign: "left" }}>
             {result.items.map((o) => (
-              // Je Zeile der volle Satz je Treffer; was davon heute zählt, rechnet die Summe darunter vor.
               <ErgebnisZeile key={o.itemIndex} prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
-                givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} zeigeAntwort={result.form !== "SelfAssess"}
-                erloes={zahlt ? t("bonus.rowCoins", { coins: o.wasCorrect ? result.coinsPerHit : 0 }) : undefined} />
+                givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} zeigeAntwort={result.form !== "SelfAssess"} />
             ))}
             {zahlt && (
-              // Die Rechnung vom Satz bis zur Buchung, Schritt für Schritt – Prozent und Deckel nur, wo sie etwas abzogen.
-              <div className="erloes-summe">
-                <b>{t("bonus.sumTitle")}</b>
-                <span className="sub">{t("bonus.sumHits", { correct: result.correct, perHit: result.coinsPerHit })}</span>
-                {result.runPercent < 100 && <span className="sub">{t("bonus.sumPercent", { percent: result.runPercent, coins: result.coinsEarned })}</span>}
-                {result.capReached && <span className="sub">{t("bonus.sumCap", { coins: result.coinsAwarded })}</span>}
-                <span className="gesamt">{t("bonus.sumTotal", { coins: result.coinsAwarded })}</span>
-              </div>
+              // Die Rechnung in einer Zeile, vom Satz bis zur Buchung. Kein Betrag an den Aufgaben: „+3“ je Zeile las sich
+              // als Summe, auch wenn die Runde heute nur einen Bruchteil zählte. Prozent und Deckel stehen nur da, wo sie
+              // etwas abzogen.
+              <p className="erloes-summe">
+                {t("bonus.sumHits", { correct: result.correct, perHit: result.coinsPerHit, full: result.correct * result.coinsPerHit })}
+                {result.runPercent < 100 && <> · {t("bonus.sumPercent", { percent: result.runPercent })}</>}
+                {result.capReached && <> · {t("bonus.sumCap")}</>}
+                {" → "}<b className="gesamt">{t("bonus.sumTotal", { coins: result.coinsAwarded })}</b>
+              </p>
             )}
           </div>
           <button type="button" className="btn gold" onClick={() => nav("/sohn/bonus")}>{t("bonus.back")}</button>
