@@ -370,7 +370,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // typed stage anyway, so this changes nothing - but it makes the rule structural instead of a
             // coincidence of three unrelated types. Without it, one added display stage would put the answer
             // next to the options and no test would notice.
-            typed ? type.Choices(configJson, items, item, stage) : null,
+            typed ? ShuffledChoices(type, configJson, items, item, stage, seed) : null,
             audioUrl,
             imageUrl,
             // The alt text follows the image: no image, no alt text - otherwise the description ("a unicorn is
@@ -405,6 +405,18 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             answerPattern,
             tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)),
             cueBox);
+    }
+
+    // The options in an order of their own per card and session: an author's list (reading questions) usually starts with
+    // the solution, and a fixed order teaches the button's position instead of the value. Seeded, so a reload within the
+    // session shows the same buttons; mixed with the item index, so two questions of the same length differ.
+    private static IReadOnlyList<string>? ShuffledChoices(IExerciseType type, string configJson,
+        IReadOnlyList<ContentItem> items, ContentItem item, int stage, int seed)
+    {
+        var choices = type.Choices(configJson, items, item, stage);
+        return choices is null || type.ChoicesShareOnePool
+            ? choices
+            : StageMechanics.ShuffleOptions(choices, unchecked((seed * 7919) + item.Index));
     }
 
     /// <summary>

@@ -108,6 +108,24 @@ public static class StageMechanics
         answer.Length is >= 2 and <= MaxScrambleLength && answer.All(char.IsLetterOrDigit);
 
     /// <summary>
+    /// The options of a card in a shuffled order, deterministic for one <paramref name="seed"/>: the same arrangement on
+    /// every fetch within a session or attempt, a new one in the next. Unlike the letter tiles a shuffle may leave the
+    /// list as it was - the order of options gives nothing away by itself, only a fixed one does.
+    /// </summary>
+    public static IReadOnlyList<string> ShuffleOptions(IReadOnlyList<string> options, int seed)
+    {
+        // Same legacy-generator reasoning as in ScrambleLetters: a seed gives one arrangement, frozen for the session.
+        var shuffled = options.ToArray();
+        var random = new Random(seed);
+        for (var i = shuffled.Length - 1; i > 0; i--)
+        {
+            var j = random.Next(i + 1);
+            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
+        }
+        return shuffled;
+    }
+
+    /// <summary>
     /// The letters of <paramref name="answer"/> in a shuffled order, deterministic for one <paramref name="seed"/>:
     /// the card shows the same arrangement every time it is fetched within a session or attempt (the seed comes
     /// from its id), and a new session shuffles anew. A shuffle that happens to give the solution back is rotated

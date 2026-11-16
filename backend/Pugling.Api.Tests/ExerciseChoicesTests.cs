@@ -63,11 +63,16 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     private static string[] ChoicesOf(JsonElement card) =>
         [.. card.GetProperty("choices").EnumerateArray().Select(c => c.GetString()!)];
 
+    // The options are shuffled per card and session (ChoiceShuffleTests), so these tests compare the set of buttons.
+    private static void AssertSameOptions(IEnumerable<string> expected, string[] actual) =>
+        Assert.Equal(expected.Order(StringComparer.Ordinal), actual.Order(StringComparer.Ordinal));
+
     // ---- Reading and listening: the creator's list, per question ----
 
     /// <summary>
-    /// The options arrive in the author's order. They are curated content, not a generated pool – a
-    /// rotation would scramble an order that can carry meaning (a timeline, a "none of these" at the end).
+    /// The options arrive as the author wrote them - all of them, nothing invented. Their order is shuffled per card
+    /// and session (ChoiceShuffleTests): authors tend to list the solution first, and a fixed order taught the
+    /// position instead of the value.
     /// </summary>
     [Fact]
     public async Task Leseverstehen_LiefertDieAntwortmoeglichkeiten()
@@ -78,7 +83,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where does B live?", choices = Cities, answer = "York" } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(Cities, ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(Cities, ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     [Fact]
@@ -90,7 +95,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where is B from?", choices = Cities, answer = "Leeds" } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(Cities, ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(Cities, ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     /// <summary>
@@ -111,7 +116,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
         }, (int)TestStage.FreeText);
 
         var byPrompt = cards.EnumerateArray().ToDictionary(c => c.GetProperty("prompt").GetString()!);
-        Assert.Equal(Cities, ChoicesOf(byPrompt["Where does B live?"]));
+        AssertSameOptions(Cities, ChoicesOf(byPrompt["Where does B live?"]));
         JsonAssert.Null(byPrompt["Spell the town."], "choices");
     }
 
@@ -131,7 +136,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     /// <summary>
@@ -156,7 +161,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
     // ---- B-490: the options always contain an answer the grader accepts ----
 
     /// <summary>
-    /// B-490: options without the answer get it, behind the author's own (their order is kept). Red if the list is passed
+    /// B-490: options without the answer get it, next to the author's own. Red if the list is passed
     /// through as written - the child could then pick nothing right.
     /// </summary>
     [Theory]
@@ -171,7 +176,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
 
         var cards = await PlayAsync(route, config, (int)TestStage.FreeText);
 
-        Assert.Equal(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     /// <summary>
@@ -188,7 +193,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where does B live?", choices = new[] { "york.", "Hull" }, answer = "York" } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(["york.", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["york.", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     /// <summary>
@@ -204,7 +209,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where does B live?", choices = new[] { "York", "Hull", "york" }, answer = "York" } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["York", "Hull"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     // ---- B-497: what the sink compares and adds ----
@@ -223,7 +228,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where does B live?", choices = new[] { "in\u00A0York", "in Hull" }, answer = "in York" } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(["in\u00A0York", "in Hull"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["in\u00A0York", "in Hull"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     /// <summary>
@@ -238,7 +243,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             questions = new[] { new { prompt = "Where does B live?", choices = new[] { "Leeds", "Hull" }, answer = " York " } },
         }, (int)TestStage.FreeText);
 
-        Assert.Equal(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
+        AssertSameOptions(["Leeds", "Hull", "York"], ChoicesOf(cards.EnumerateArray().Single()));
     }
 
     // ---- The exam and the supervisor's preview run the same projection ----
@@ -261,7 +266,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             await child.PostAsJsonAsync(testUrl, new { stage = (int)TestStage.FreeText }), "attemptId");
         var next = await child.GetFromJsonAsync<JsonElement>($"{testUrl}/{attemptId}/next");
 
-        Assert.Equal(Cities, ChoicesOf(next.GetProperty("item")));
+        AssertSameOptions(Cities, ChoicesOf(next.GetProperty("item")));
     }
 
     /// <summary>
@@ -280,7 +285,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
 
         var preview = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview");
 
-        Assert.Equal(Cities, ChoicesOf(preview.GetProperty("items").EnumerateArray().Single()));
+        AssertSameOptions(Cities, ChoicesOf(preview.GetProperty("items").EnumerateArray().Single()));
     }
 
     // ---- Matching: the pool is the other column, and only on the stage named after it ----
@@ -319,9 +324,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             JsonAssert.Null(card, "reveal");
         }
 
-        // That is what the rotation is for: with the solution always first, position alone would give it away.
-        var firsts = cards.EnumerateArray().Select(c => ChoicesOf(c)[0]).Distinct().Count();
-        Assert.True(firsts > 1, "the first option must not be the solution on every card");
+        // That the solution does not sit at a fixed place is the shuffle's guarantee, held in ChoiceShuffleTests.
     }
 
     /// <summary>
@@ -384,7 +387,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
         });
 
         var preview = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview");
-        Assert.Equal(Cities, ChoicesOf(preview.GetProperty("items").EnumerateArray().Single()));
+        AssertSameOptions(Cities, ChoicesOf(preview.GetProperty("items").EnumerateArray().Single()));
 
         var (planId, positionId) = TestApi.SeedLeitnerPosition(
             _factory, exerciseId, (int)TestStage.FreeText, requireTypedTest: true);
@@ -394,7 +397,7 @@ public class ExerciseChoicesTests(PuglingWebAppFactory factory) : IClassFixture<
             await child.PostAsJsonAsync(testUrl, new { stage = (int)TestStage.FreeText }), "attemptId");
         var next = await child.GetFromJsonAsync<JsonElement>($"{testUrl}/{attemptId}/next");
 
-        Assert.Equal(Cities, ChoicesOf(next.GetProperty("item")));
+        AssertSameOptions(Cities, ChoicesOf(next.GetProperty("item")));
     }
 
     /// <summary>The other stage keeps free text – <c>Direct</c> is the harder form and stays that way.</summary>

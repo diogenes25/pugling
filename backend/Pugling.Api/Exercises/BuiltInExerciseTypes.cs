@@ -185,6 +185,8 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
 {
     /// <inheritdoc/>
     public override string Key => ExerciseTypeKeys.Cloze;
+    /// <summary>The word bank is one pool for the whole text, sorted on purpose - see <see cref="Choices"/>.</summary>
+    public override bool ChoicesShareOnePool => true;
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
@@ -531,10 +533,10 @@ internal static class AnswerChecking
         [.. entries.Where(e => !string.IsNullOrWhiteSpace(e)).Select(e => e!.Trim()).DistinctBy(StageMechanics.Normalize)];
 
     /// <summary>
-    /// The answer choices the creator typed for the question this atom stands for, in their order and cleaned by
-    /// <see cref="Tiles"/>; <c>null</c> when nothing usable is left. Curated content, not a generated pool: it is
-    /// deliberately not reordered, because the author's order can carry meaning (a timeline, a "none of these" at the
-    /// end) and there is no cross-item correlation to break – every question owns its own list.
+    /// The answer choices the creator typed for the question this atom stands for, cleaned by <see cref="Tiles"/>;
+    /// <c>null</c> when nothing usable is left. Returned in the author's order - the card shuffles them per session
+    /// (<c>PositionPlayService.CardFacets</c>), because authors tend to list the solution first and a fixed order
+    /// teaches the position instead of the value.
     /// <para>
     /// Decided per item, not per exercise: one run may mix questions with options and questions without.
     /// </para>

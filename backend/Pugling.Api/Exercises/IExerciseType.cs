@@ -94,6 +94,13 @@ public interface IExerciseType
     IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage);
 
     /// <summary>
+    /// Whether <see cref="Choices"/> is one pool shared by every card of the exercise (the cloze word bank) rather than
+    /// the options of one question. A shared pool keeps the order the type gives it - reshuffled per card it would be
+    /// unreadable; every other list is shuffled per card and session, so the child learns the value, not the position.
+    /// </summary>
+    bool ChoicesShareOnePool { get; }
+
+    /// <summary>
     /// The cue box of the stage (B-524): the meanings of all atoms plus curated distractors as one unordered list,
     /// or <c>null</c> where the stage has none. Non-null also means the asked atom shows no hint of its own - the box
     /// replaces it, and a hint next to it would name the meaning the box is meant to make the child find.
