@@ -31,7 +31,7 @@ wird.
 
 - **Die Erstbegegnung gibt es schon (B-419).** Eine nie gesehene Karte wird in einer Lernrunde auf der
   `IntroductionStage` gespielt, der ersten reinen Anzeige-Stufe des Typs (`PositionPlayService.cs:126-127`,
-  Regel `IsIntroduction` `:137-139`, angewandt in `CardStage` `:159-166`). Beim Vokabeltyp ist das
+  Regel `IsIntroduction` `:136-138`, angewandt in `CardStage` `:159-166`). Beim Vokabeltyp ist das
   „Beide zeigen“ (`ShowBoth`, `VocabularyExerciseType.cs:73`, `StudyPlanEntities.cs:39-40`).
 - **Eine Anzeige-Stufe zahlt nichts und bewegt nichts.** `PositionPracticeController.cs:411` (`displayOnly`),
   `:465` (`scored` verlangt `!displayOnly`), `:516-517` (Lernstand ohne Treffer, `countsForMastery: scored`). Erster
