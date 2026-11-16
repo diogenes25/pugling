@@ -135,6 +135,9 @@ Seit Etappe B sind zu den vier B4-Wächtern weitere reflexive Tore hinzugekommen
   - Vier Selbsttests der beiden Doku-Scanner (`Leerraum_Zwischen_Elementen_…`, `Inline_Element_Im_Listenpunkt_…`) – sie belegen, dass die Scanner beißen.
 - **[ClientRouteGuardTests](../backend/Pugling.Api.Tests/ClientRouteGuardTests.cs)** – jede Route in `Pugling.Client` steht im OpenAPI-Dokument, jedes Typ-Segment des Manifests ergibt einen gültigen Pfad (B-40).
 - **[ProblemTextGuardTests](../backend/Pugling.Api.Tests/ProblemTextGuardTests.cs)** – jeder 409-Code in `ApiErrors` hat einen deutschen Text in `GERMAN_PROBLEM_TEXT` (`frontend/src/lib/api.ts`) oder eine begründete Ausnahme; jede Ausnahme wird noch gebraucht (B-411).
+- **[NullElementGuardTests](../backend/Pugling.Api.Tests/NullElementGuardTests.cs)** – jede Liste in jedem Request-Body (Aufzählung über den
+  `ApiExplorer`, 128 Body-Parameter, 90 Listen am 2026-11-16) meldet ein `null`-Element über `NullElementGuardFilter` mit genau ihrem Pfad;
+  `List<T?>` bleibt still, `List<List<T>>` steht als bewusst blinde Form in einer Ausnahmeliste und macht das Tor rot, sobald ein Vertrag sie trägt (B-410).
 - **[SlugRenameGuardTests](../backend/Pugling.Api.Tests/SlugRenameGuardTests.cs)** – Umbenennen von Verlag, Lehrwerksreihe und Interessen-Tag auf einen belegten Namen wird abgewiesen (B-124).
 - **[TagConventionTests](../backend/Pugling.Api.Tests/TagConventionTests.cs)** – `[Tags]` in den Ebenen-Ordnern tragen das passende Ebenen-Präfix.
 - **[ContractDocumentTests](../backend/Pugling.Api.Tests/ContractDocumentTests.cs)** + CI-Schritt „Vertragsdokument prüfen (OpenAPI)" in [ci.yml](../.github/workflows/ci.yml) – schreibt `docs/openapi/v1.json` byte-stabil; ein uncommitteter Unterschied macht CI rot (B-42).

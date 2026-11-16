@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend]
+tags: [typ/story, status/in-arbeit, bereich/backend]
 aliases: [Tor null-Element je Body-Liste]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Aufräumen
 groesse: M
@@ -139,3 +139,13 @@ Polymorphie in Configs) ist der teure Teil; dazu der Melde-Modus und die Ausnahm
 - **2026-11-13** — **geschaetzt**: M (über dem Ziel XS/S des Sprints), backend, keine Migration, kein Vertragsbruch; als neues Tor letzte
   Story eines Sprints.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt – Filter global (`Program.cs:37`), Ausnahme `List<List<T>>` (`NullElementGuardFilter.cs:19`), Tiefe 16 (`:25`), Body-Schleife `:37-47`; weiter 12 Fälle in `UnknownReferenceCodeTests.cs`, 5 ausdrückliche `[FromBody]`; ein Wächter über alle Body-Listen fehlt in `ConventionGuardTests.cs`.
+- **2026-11-16** — **in-arbeit**: Wächter als eigene Datei `backend/Pugling.Api.Tests/NullElementGuardTests.cs` (braucht die laufende Test-App, `ConventionGuardTests` hat keine).
+  Er ruft den am Action registrierten Filter direkt auf (Entscheidung 3) und läuft die Typen unabhängig vom Filter ab (jede Assembly, jede Tiefe).
+- **2026-11-16** — AK 5, Messung im Melde-Modus: **128** Body-Parameter (davon 5 mit `[FromBody]`), **110** Body-Typen, **90** Listen, **0** rote Pfade,
+  **0** `List<T?>` und **0** `List<List<T>>` in Body-Graphen, kein nicht baubarer Typ. Entscheidung 2 greift darum nicht (kein Filter-Fix, keine Teilung);
+  scharf gestellt mit Böden 100 Body-Parameter / 75 Listen gegen eine leere Aufzählung.
+- **2026-11-16** — AK 1, Aufzählung über `ApiExplorer` statt `[FromBody]` → `Jede_Body_Liste_Meldet_Ein_Null_Element` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:54`), Mutant M1 (Aufzählung nur über das Attribut) → rot.
+- **2026-11-16** — AK 2, jede nicht-nullbare Liste meldet ihren Pfad → derselbe Test (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:88`); M2 (Body-Liste selbst übersprungen, `NullElementGuardFilter.cs:44`), M3 (Registrierung `Program.cs:37` entfernt), M6 (`MaxDepth` 2), M7 (`IsContract` falsch) → je rot; Reihenfolge vor der automatischen 400 → `Null_Element_Filter_Laeuft_Vor_Der_Automatischen_400` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:103`), M8 (`Order` -1999) → rot.
+- **2026-11-16** — AK 3, `List<T?>` bleibt still → `Nullbare_Elementliste_Meldet_Keinen_Fehler` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:128`; kein Vertrag trägt heute `List<T?>`, darum über einen Listen-Body), M4 (`ElementNotNull` ignoriert die Nullability, `NullElementGuardFilter.cs:100`) → rot.
+- **2026-11-16** — AK 4, `List<List<T>>` in Ausnahmeliste `KnownBlindShapes` mit Grund, Fund macht das Haupttor rot (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:71`); Erkennung belegt durch `Liste_In_Liste_Wird_Gemeldet` (`backend/Pugling.Api.Tests/NullElementGuardTests.cs:138`), M5 (Erkennung abgeschaltet, `backend/Pugling.Api.Tests/NullElementGuardTests.cs:209`) → rot.
+- **2026-11-16** — Mutanten-Probe (`mutant-probe.py`, Debug, an `73de5380` + Arbeitsbaum): M1–M8 erwartet rot, gemessen rot; Grundlinie nach dem Zurückspielen grün.

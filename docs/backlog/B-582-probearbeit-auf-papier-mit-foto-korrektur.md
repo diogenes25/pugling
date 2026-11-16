@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/klassenarbeit, bereich/auswertung, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/klassenarbeit, bereich/auswertung, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Probearbeit auf Papier, Foto-Korrektur, Papier-Probearbeit]
-status: idee
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -10,7 +10,7 @@ migration: ""
 vertragsbruch: ""
 quelle: docs/rockettutor-vergleich-plan.md#wo-rockettutor-weiter-ist
 unverifiziert: true
-grund: ""
+grund: "Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): setzt die ungebaute Probeklausur B-249 voraus; wird mit B-249 neu angelegt, falls diese gebaut ist"
 ersetzt_durch: []
 ---
 
@@ -34,3 +34,4 @@ nicht).
 - **2026-11-15** — angelegt (Quelle: RocketTutor-Vergleich, Etappe 3 des Übernahmeplans; Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)).
 - **2026-11-15** — Prioritäts-Beleg von außen (sofatutor-Vergleich): sofatutor bewirbt Arbeitsblätter zum Ausdrucken mit Lösungsschlüssel als Vorbereitung auf Klassenarbeiten „unter Prüfungsbedingungen"; korrigiert wird dort vom Kind selbst am Schlüssel. Bestätigt die Papierform, nicht die Selbstkorrektur – die bleibt beim Vater. Vergleich in `docs/sofatutor-vergleich-plan.md` (Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
 - **2026-11-15** — umnummeriert von B-542 auf B-582: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-584). Inhalt unverändert.
+- **2026-11-16** — verworfen (Backlog-Lauf 2026-11-16): Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): setzt die ungebaute Probeklausur B-249 voraus; wird mit B-249 neu angelegt, falls diese gebaut ist
