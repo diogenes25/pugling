@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Risiko 1 (Diktat verrät die Lösung im Datenpaket)"
+wartet_auf: ""
 ---
 
 # B-597 · Getippt wird immer die Zielsprache
@@ -144,6 +144,13 @@ Gegrillt mit dem Vater am 2026-11-16, eine Frage nach der anderen.
    für Buch-Wortlisten war die Entscheidung aus B-472. *Kosten:* Buch-Listen zählen weiter doppelt in der Tagesdosis;
    ob die 10er-Grenze Wörter oder Karten zählt, ist als offener Punkt nach
    [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) gewandert.
+9. **Nachgereicht beim Schätzen: Das Diktat darf die Lösung im Datenpaket tragen.** Ohne Aufnahme liest die
+   Sprachausgabe des Geräts vor und braucht dafür den Text im Client; das Kind sieht ihn nicht, die
+   Entwicklerwerkzeuge zeigen ihn. *Begründung:* App im Hausgebrauch, ein 12-Jähriger mit Netzwerk-Tab ist
+   unwahrscheinlich, und ohne Sprachausgabe wäre das Diktat für keine der 265 Vokabeln spielbar. *Kosten:* Eine
+   bewusste Ausnahme vom Anti-Cheat-Grundsatz „keine Lösung vor der Antwort“; das Feld wird so benannt und
+   kommentiert, dass ein späterer Leser die Ausnahme erkennt. Serverseitig erzeugte Aufnahmen bleiben der Weg, sie
+   zurückzunehmen.
 
 ## Akzeptanzkriterien
 
@@ -184,7 +191,7 @@ Story, die auf der Drehung aufsetzt.
 
 ### Risiken
 
-1. **Das Diktat über die Sprachausgabe des Geräts verrät die Lösung im Datenpaket.** Die Sprachausgabe braucht den
+1. ~~**Das Diktat über die Sprachausgabe des Geräts verrät die Lösung im Datenpaket.**~~ → hingenommen, Entscheidung 9. Die Sprachausgabe braucht den
    Text im Client (`SpeakButton text={karte.prompt}`, `Lektion.tsx:96`). Beim Diktat ist dieser Text genau die
    Lösung. Mit Aufnahme wäre es nur eine URL, aber keine der 265 Vokabeln hat eine. Das Kind sieht das Wort nicht,
    im Netzwerk-Tab stünde es aber. Das lag beim Grillen nicht auf dem Tisch. **Vor dem Bau** eine Rückfrage an den
@@ -208,7 +215,7 @@ Story, die auf der Drehung aufsetzt.
    unverändert). Alle Spielpfade wenden sie an, bevor Karte und Bewertung entstehen. Tests rot, dann grün.
 2. **Backend, Obergrenze:** „höchste Stufe der Karte“ (Vorwärtskarte einer `both`-Liste = Auswahl) in
    `CardStage`, Kalender-Frist, Teststufe und `ExtraTrainingService.FormFor`.
-3. **Rückfrage Risiko 1**, dann **Backend, Diktat:** Stufe zeigt keinen Text, Vorlesen über Aufnahme oder
+3. **Backend, Diktat** (Risiko 1 hingenommen, Entscheidung 9): Stufe zeigt keinen Text, Vorlesen über Aufnahme oder
    Sprachausgabe, ohne Stimme Freitext. Stufenname „Diktat“ im Manifest.
 4. **Kommentar** an `TargetLanguage` (Muttersprache).
 5. **Frontend:** Feld „Erkennen“ mit drei Optionen und Hinweis in `exerciseConfig.tsx` und
@@ -238,3 +245,4 @@ Story, die auf der Drehung aufsetzt.
   Akzeptanzkriterien final.
 - **2026-11-16** — geschätzt: L, beides, keine Migration, kein Vertragsbruch; Risiko 1 (Diktat verrät die Lösung
   im Datenpaket) braucht vor dem Bau eine Rückfrage beim Vater.
+- **2026-11-16** — Risiko 1 vom Vater hingenommen (Entscheidung 9), `wartet_auf` geleert.

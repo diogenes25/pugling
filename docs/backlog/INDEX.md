@@ -556,7 +556,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (2)
+### Wartet auf Zutun von außen (1)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -564,7 +564,6 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
-| [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache | `geschaetzt` | Vater: Risiko 1 (Diktat verrät die Lösung im Datenpaket) |
 
 ### Nach der Abnahme entgangen (183)
 
