@@ -47,6 +47,7 @@ export const en = {
       test: "🎯 Test",
       close: "Close",
       goalMet: "goal met",
+      bookRef: "{{series}} · {{unit}} · p. {{pages}}",
       hoursLeft_one: "{{count}} hr left",
       hoursLeft_other: "{{count}} hrs left",
       untilSunday: "by Sunday",

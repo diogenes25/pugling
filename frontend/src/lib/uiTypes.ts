@@ -131,6 +131,8 @@ export interface CreateExercisePayload {
   gradeMax?: number | null;
   schoolTypes?: string;
   source?: string | null;
+  /** Buchseite(n) wie gedruckt (B-588), höchstens 20 Zeichen. Vollersatz: beim **Ändern** mitschicken, sonst gelöscht. */
+  bookPages?: string | null;
   categoryId?: number | null;
   defaultUseLeitner?: boolean;
   defaultRequireTypedTest?: boolean;

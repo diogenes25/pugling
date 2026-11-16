@@ -234,7 +234,8 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
             rating.Average, rating.Count,
             [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(x => x)],
             // B-20: the execute rule of the search projection above, on the loaded grants.
-            e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid)));
+            e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid)),
+            e.BookPages);
     }
 
     /// <summary>

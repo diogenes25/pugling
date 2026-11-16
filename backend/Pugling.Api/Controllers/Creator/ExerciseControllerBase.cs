@@ -243,6 +243,19 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     protected TConfig ConfigOf(Exercise exercise) =>
         JsonSerializer.Deserialize<TConfig>(exercise.ConfigJson, JsonOptions) ?? new TConfig();
 
+    /// <summary>Trims a page reference; blank means none (B-588).</summary>
+    private static string? NormalizeBookPages(string? bookPages) =>
+        string.IsNullOrWhiteSpace(bookPages) ? null : bookPages.Trim();
+
+    /// <summary>
+    /// Rejects a page reference longer than <see cref="Exercise.BookPagesMaxLength"/> after trimming - the field
+    /// names pages as printed, it is no place for a note. Both write paths call it, before the first assignment.
+    /// </summary>
+    private static string? BookPagesProblem(string? bookPages) =>
+        NormalizeBookPages(bookPages) is { Length: > Exercise.BookPagesMaxLength }
+            ? $"bookPages must be at most {Exercise.BookPagesMaxLength} characters."
+            : null;
+
     /// <summary>Writes the typed configuration back into the exercise (JSON) – for derived additional endpoints.</summary>
     protected void SetConfig(Exercise exercise, TConfig config) =>
         exercise.ConfigJson = JsonSerializer.Serialize(config, JsonOptions);
@@ -259,7 +272,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             // Ascending, so two exercises' dressings compare without sorting first. Expects the links
             // loaded - both read paths and both write paths do that.
             [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(id => id)],
-            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)]);
+            [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)],
+            e.BookPages);
     }
 
     /// <summary>
@@ -403,6 +417,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         // B-552: the pair itself must be reachable - every position that leaves both open inherits it.
         if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } createPairErr)
             return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, createPairErr);
+        if (BookPagesProblem(body.BookPages) is { } createPagesErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, createPagesErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } createTagErr)
             return this.ProblemWithCode(createTagErr.Error, createTagErr.Detail);
@@ -426,6 +442,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             GradeMax = body.GradeMax,
             SchoolTypes = body.SchoolTypes,
             Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim(),
+            BookPages = NormalizeBookPages(body.BookPages),
             CategoryId = body.CategoryId,
             DefaultUseLeitner = body.DefaultUseLeitner,
             DefaultRequireTypedTest = body.DefaultRequireTypedTest,
@@ -493,6 +510,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(ApiErrors.ValidationError, updateTypedErr);
         if (DefaultPairProblem(exerciseType, body.DefaultRequireTypedTest, body.DefaultStage) is { } updatePairErr)
             return this.ProblemWithCode(ApiErrors.TypedTestUnreachable, updatePairErr);
+        if (BookPagesProblem(body.BookPages) is { } updatePagesErr)
+            return this.ProblemWithCode(ApiErrors.ValidationError, updatePagesErr);
         var config = body.Config ?? new TConfig();
         if (await InterestTagsProblemAsync(body.InterestTagIds, ct) is { } updateTagErr)
             return this.ProblemWithCode(updateTagErr.Error, updateTagErr.Detail);
@@ -515,6 +534,7 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         exercise.GradeMax = body.GradeMax;
         exercise.SchoolTypes = body.SchoolTypes;
         exercise.Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim();
+        exercise.BookPages = NormalizeBookPages(body.BookPages);
         exercise.CategoryId = body.CategoryId;
         exercise.DefaultUseLeitner = body.DefaultUseLeitner;
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;

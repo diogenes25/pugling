@@ -629,6 +629,10 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("AuthorAdultId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BookPages")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("INTEGER");
 

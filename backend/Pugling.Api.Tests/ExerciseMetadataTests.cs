@@ -313,4 +313,119 @@ public class ExerciseMetadataTests(PuglingWebAppFactory factory) : IClassFixture
         res.EnsureSuccessStatusCode();
         return await res.Content.ReadFromJsonAsync<JsonElement>();
     }
+
+    // ---- B-588: textbook page reference ----
+
+    /// <summary>Creates a vocabulary series unit and returns the vocabulary authoring path of it.</summary>
+    private static async Task<string> VocabPathAsync(HttpClient father)
+    {
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Buchseite") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        return $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/vocabulary";
+    }
+
+    private static object VocabConfig() => new
+    {
+        direction = "front-to-back",
+        sourceLang = "en",
+        targetLang = "de",
+        items = new[] { new { front = "hello", back = "hallo" } },
+    };
+
+    // Always carries the key, `null` included - the body without the key is its own case (AK 4).
+    private static object VocabBody(string? bookPages) =>
+        new { title = "Seite", orderIndex = 1, rewardPoints = 10, config = VocabConfig(), bookPages };
+
+    private static async Task<JsonElement?> BookPagesAsync(HttpResponseMessage res)
+    {
+        var body = await res.Content.ReadFromJsonAsync<JsonElement>();
+        return body.GetProperty("bookPages");
+    }
+
+    /// <summary>
+    /// B-588 AK 1: a page reference given on creation comes back in the typed response and in the catalog detail
+    /// (the one the editor reads back from). Red when <c>Create</c>, <c>Map</c> or the detail drops the field.
+    /// </summary>
+    [Fact]
+    public async Task Buchseite_Beim_Anlegen_Steht_In_Antwort_Und_Detail()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var path = await VocabPathAsync(father);
+
+        var created = await father.PostAsJsonAsync(path, VocabBody("42–43"));
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var body = await created.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("42–43", body.GetProperty("bookPages").GetString());
+
+        var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{body.GetProperty("id").GetInt32()}");
+        Assert.Equal("42–43", detail.GetProperty("bookPages").GetString());
+    }
+
+    /// <summary>
+    /// B-588 AK 2: the page reference is trimmed, and a blank one is stored as none (<c>null</c>), never as <c>""</c>
+    /// - the child's sheet shows a pill for every non-null value. Red without the trim or without the blank rule.
+    /// </summary>
+    [Fact]
+    public async Task Buchseite_Wird_Getrimmt_Und_Leer_Heisst_Keine()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var path = await VocabPathAsync(father);
+
+        var trimmed = await BookPagesAsync(await father.PostAsJsonAsync(path, VocabBody(" 42 ")));
+        Assert.Equal("42", trimmed!.Value.GetString());
+
+        var blank = await BookPagesAsync(await father.PostAsJsonAsync(path, VocabBody("   ")));
+        Assert.Equal(JsonValueKind.Null, blank!.Value.ValueKind);
+    }
+
+    /// <summary>
+    /// B-588 AK 3: 20 characters are the limit, on POST and on PUT alike. Red without the length check or when it
+    /// sits on only one of the two write paths.
+    /// </summary>
+    [Fact]
+    public async Task Buchseite_Hoechstens_Zwanzig_Zeichen_Bei_Post_Und_Put()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var path = await VocabPathAsync(father);
+        var twenty = new string('7', 20);
+        var twentyOne = new string('7', 21);
+
+        var ok = await father.PostAsJsonAsync(path, VocabBody(twenty));
+        Assert.Equal(HttpStatusCode.Created, ok.StatusCode);
+        var id = (await ok.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        var tooLongPost = await father.PostAsJsonAsync(path, VocabBody(twentyOne));
+        Assert.Equal(HttpStatusCode.BadRequest, tooLongPost.StatusCode);
+        Assert.Equal("validation_error", (await tooLongPost.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        var tooLongPut = await father.PutAsJsonAsync($"{path}/{id}", VocabBody(twentyOne));
+        Assert.Equal(HttpStatusCode.BadRequest, tooLongPut.StatusCode);
+        Assert.Equal("validation_error", (await tooLongPut.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+
+        var okPut = await father.PutAsJsonAsync($"{path}/{id}", VocabBody(twenty));
+        Assert.Equal(HttpStatusCode.OK, okPut.StatusCode);
+    }
+
+    /// <summary>
+    /// B-588 AK 4: PUT is the full representation - a new value replaces the old one, and a PUT without the field
+    /// clears it (same as <c>source</c>). Red when <c>Update</c> ignores the field or reads a missing one as "keep".
+    /// </summary>
+    [Fact]
+    public async Task Buchseite_Put_Ersetzt_Und_Ohne_Feld_Leert()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var path = await VocabPathAsync(father);
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(path, VocabBody("42")));
+
+        var replaced = await BookPagesAsync(await father.PutAsJsonAsync($"{path}/{id}", VocabBody("7")));
+        Assert.Equal("7", replaced!.Value.GetString());
+
+        var cleared = await father.PutAsJsonAsync($"{path}/{id}",
+            new { title = "Seite", orderIndex = 1, rewardPoints = 10, config = VocabConfig() });
+        Assert.Equal(HttpStatusCode.OK, cleared.StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await BookPagesAsync(cleared))!.Value.ValueKind);
+        var detail = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{id}");
+        Assert.Equal(JsonValueKind.Null, detail.GetProperty("bookPages").ValueKind);
+    }
 }

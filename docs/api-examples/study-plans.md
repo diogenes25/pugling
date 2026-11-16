@@ -576,7 +576,9 @@ Response — `HTTP 200`:
         "introducedCount": 1,
         "penaltyCoins": 0,
         "seriesUnitId": 7,
-        "seriesUnitLabel": "Unit 1"
+        "seriesUnitLabel": "Unit 1",
+        "seriesName": "Doku-Reihe",
+        "bookPages": null
       }
     ],
     "rewardsUnlocked": true

@@ -140,6 +140,20 @@ describe("Das Blatt zu einem Knoten", () => {
     expect(frist.getAttribute("aria-hidden")).toBeNull();
   });
 
+  it("zeigt Reihe, Unit und Seite als Pille – und ohne Seite keine (B-588 AK 8)", () => {
+    // Rot, wenn die Pille nie erscheint (erste Zusicherung) oder immer, auch ohne Seite (zweite).
+    zeige([
+      position({ positionId: 17, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: "42" }),
+      position({ positionId: 18, exerciseTitle: "Wörter 2", seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: null }),
+    ]);
+    fireEvent.click(knoten("Wörter 1"));
+    expect(screen.getByRole("dialog").querySelector(".pfad-buchbezug")?.textContent).toBe("Access 3 · Unit 2 · S. 42");
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    fireEvent.click(knoten("Wörter 2"));
+    expect(screen.getByRole("dialog", { name: "Wörter 2" }).querySelector(".pfad-buchbezug")).toBeNull();
+  });
+
   it("startet mit „Los“ den Test, wenn nichts zu üben ist", () => {
     // Rot, wenn „Los“ in eine leere Übungsrunde führte.
     zeige([position({ positionId: 17, dueCount: 0, introducedCount: 10 })]);

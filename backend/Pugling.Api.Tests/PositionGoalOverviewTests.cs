@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -118,6 +119,49 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(unitId, position.GetProperty("seriesUnitId").GetInt32());
         Assert.Equal(unitLabel, position.GetProperty("seriesUnitLabel").GetString());
         Assert.Equal(0, freePosition.GetProperty("penaltyCoins").GetInt32());
+    }
+
+    /// <summary>
+    /// B-588 AK 5: the daily mission names the series and the printed page of a position's exercise, so the child
+    /// can look it up in its book. The second position's exercise has no page: it must read <c>null</c>, not the
+    /// neighbour's value, and still carry its series - the series is loaded for every position, not only paged ones.
+    /// The series names are unique per test, so an unloaded series (<c>""</c>) or a swapped one cannot pass.
+    /// </summary>
+    [Fact]
+    public async Task Tagesuebersicht_NenntReiheUndBuchseite_DerPosition()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var pagedExerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var plainExerciseId = await TestApi.CreateVocabExerciseAsync(father);
+        var (planId, pagedPositionId) = TestApi.SeedLeitnerPosition(_factory, pagedExerciseId, (int)TestStage.FreeText);
+        int plainPositionId;
+        string pagedSeries, plainSeries;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var paged = db.Exercises.Include(e => e.SeriesUnit).ThenInclude(u => u!.Series).Single(e => e.Id == pagedExerciseId);
+            var plain = db.Exercises.Include(e => e.SeriesUnit).ThenInclude(u => u!.Series).Single(e => e.Id == plainExerciseId);
+            paged.BookPages = "42";
+            pagedSeries = paged.SeriesUnit!.Series!.Name;
+            plainSeries = plain.SeriesUnit!.Series!.Name;
+            var position = new PlanPosition { StudyPlanId = planId, ExerciseId = plainExerciseId, Order = 98 };
+            db.PlanPositions.Add(position);
+            db.SaveChanges();
+            plainPositionId = position.Id;
+        }
+        Assert.False(string.IsNullOrEmpty(plainSeries));
+        var child = await TestApi.ChildAsync(_factory);
+
+        var overview = await (await child.GetAsync($"/api/v1/student/study-plans/{planId}/overview"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var positions = overview.GetProperty("today").GetProperty("positions").EnumerateArray().ToList();
+        var pagedStatus = positions.Single(p => p.GetProperty("positionId").GetInt32() == pagedPositionId);
+        var plainStatus = positions.Single(p => p.GetProperty("positionId").GetInt32() == plainPositionId);
+
+        Assert.Equal("42", pagedStatus.GetProperty("bookPages").GetString());
+        Assert.Equal(pagedSeries, pagedStatus.GetProperty("seriesName").GetString());
+        Assert.Equal(JsonValueKind.Null, plainStatus.GetProperty("bookPages").ValueKind);
+        Assert.Equal(plainSeries, plainStatus.GetProperty("seriesName").GetString());
     }
 
     /// <summary>

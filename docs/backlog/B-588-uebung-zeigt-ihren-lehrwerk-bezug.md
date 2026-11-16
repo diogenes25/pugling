@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/katalog, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/katalog, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Lehrwerk-Bezug, Buchseite zur Übung, schon durchgenommen]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -144,7 +144,7 @@ Jedes Kriterium nennt, welche Änderung es rot macht.
    Student-Route `positions[i].bookPages == "42"` und `seriesName ==` Name der Reihe; eine zweite Position ohne
    Seite im selben Plan → `bookPages == null`, `seriesName` gesetzt. **Rot**, wenn `PositionProgressService` das
    Feld nicht projiziert oder das `Include` der Reihe fehlt (`seriesName == ""`).
-6. **Bestand bleibt:** neue Migration hängt an `20261115215256_ExerciseItemExplanation`, Spalte nullable,
+6. **Bestand bleibt:** neue Migration hängt an `20261116065113_ForgivingDemotion` (B-219; bei der Schätzung war es noch `20261115215256_ExerciseItemExplanation`), Spalte nullable,
    Bestandsübungen lesen `bookPages: null`; `SchemaGuardTests` grün. **Rot** (G-Tore) bei Modell ohne Migration
    oder neu gefalteter Kette.
 7. **Editor beidseitig:** `ExerciseEditModal` liest `bookPages` aus dem Detail ins Formular und schickt es im
@@ -210,3 +210,14 @@ Vater-Plan und Lernstand (Entscheidungen 7, 8); (b) `lehrwerk-aufbereiten`/`lade
 
 - **2026-11-15** — angelegt (Quelle: Wunsch des Nutzers im Gespräch zum sofatutor-Vergleich; Anlass sofatutors Video-Hilfe, die von der Übung zur passenden Stelle springt).
 - **2026-11-16** — Backlog-Lauf 2026-11-16: ausformuliert (Ist-Stand nachgemessen; Fund: freies `Source` existiert, `laden.py:452` setzt nur Reihe+Unit, PUT löscht fehlende Felder), gegrillt (neun Stakeholder-Entscheidungen im Auftrag des Nutzers; „schon durchgenommen", Vater-Anzeige und Import zurückgestellt, Titel auf den gelieferten Teil verengt) und geschätzt: **S**, `beides`, Migration ja (eine nullable Spalte), kein Vertragsbruch.
+- **2026-11-16** — in-arbeit (Backlog-Lauf 2026-11-16). Gebaut: `Exercise.BookPages` (nullable, Länge 20 im Controller geprüft, Spalte per Konvention 200), Migration `20261116071258_ExerciseBookPages` hängt an `20261116065113_ForgivingDemotion` (B-219, nach der Schätzung entstanden; AK 6 entsprechend korrigiert); Vertrag additiv (`ExercisePayload`/`ExerciseResponse`/`ExerciseDetail` je `BookPages = null` am Ende, `PositionStatus` mit `SeriesName = ""`, `BookPages = null`); Editor-Feld „Buchseite(n)" mit Feldhilfe `exerciseBookPages`; Pille im Positions-Blatt (`pfad.bookRef`, de/en). Volle Suite 1713/1713 grün, Vitest 1121/1121. Die Tests AK 1–4 gehen über die Vokabel-Route (`…/vocabulary`), Validierung und Schreiben sitzen typunabhängig in `ExerciseControllerBase`.
+- AK 1, Anlegen mit Wert in Antwort und Katalog-Detail → `Buchseite_Beim_Anlegen_Steht_In_Antwort_Und_Detail` (`backend/Pugling.Api.Tests/ExerciseMetadataTests.cs:351`), M1 Detail ohne Feld (`ExerciseCatalogController.cs:238` → `null`) → rot.
+- AK 2, Trim → `Buchseite_Wird_Getrimmt_Und_Leer_Heisst_Keine` (`ExerciseMetadataTests.cs:370`), M2 ohne `Trim()` (`ExerciseControllerBase.cs:248`) → rot; Fall Whitespace → `null`: dieselbe Datei:Zeile, M3 `IsNullOrEmpty` statt `IsNullOrWhiteSpace` (speichert `""`) → rot.
+- AK 3, Länge bei POST → `Buchseite_Hoechstens_Zwanzig_Zeichen_Bei_Post_Und_Put` (`ExerciseMetadataTests.cs:387`), M4 Prüfung in Create aus (`ExerciseControllerBase.cs:420`) → rot; Fall PUT: dieselbe Datei:Zeile, M5 Prüfung in Update aus (`:513`) → rot.
+- AK 4, PUT ersetzt → `Buchseite_Put_Ersetzt_Und_Ohne_Feld_Leert` (`ExerciseMetadataTests.cs:415`), M6 `??=` in Update (`ExerciseControllerBase.cs:537`) → rot; Fall PUT ohne Feld leert: dieselbe Datei:Zeile, M7 `?? exercise.BookPages` („null = bleibt") → rot.
+- AK 5, Kind sieht Seite → `Tagesuebersicht_NenntReiheUndBuchseite_DerPosition` (`backend/Pugling.Api.Tests/PositionGoalOverviewTests.cs:131`), M8 Projektion `null` (`PositionProgressService.cs:244`) → rot; Fall Reihe geladen: dieselbe Datei:Zeile, M9 ohne `.ThenInclude(u => u!.Series)` (`:192`) → rot.
+- AK 6, Modell und Kette stimmen → `SchemaGuardTests.Modell_Und_Migrationen_Stimmen_Ueberein` (`backend/Pugling.Api.Tests/SchemaGuardTests.cs:33`), M10 Snapshot-Spalte umbenannt (`PuglingDbContextModelSnapshot.cs:632`) → rot; Bestandsübung liest `null`: abgedeckt durch die zweite Position in AK 5.
+- AK 7, Read-back ins Formular → „liest die Seite ins Formular und schickt eine Änderung zurück" (`frontend/src/vater/ExerciseEditModal.test.ts:153`), M11 `bookPages: ""` in `initialForm` (`ExerciseEditModal.tsx:316`) → rot (fällt mit der Voll-Nutzlast-Zusicherung `:54` zusammen); Fall Änderung wird geschickt: dieselbe Datei:Zeile, M12 `detail.bookPages` statt Formular (`:252`) → rot; Fall leer → `null`: `ExerciseEditModal.test.ts:160`, M13 ohne `|| null` (`:252`) → rot.
+- AK 8, Pille mit Seite → „zeigt Reihe, Unit und Seite als Pille – und ohne Seite keine" (`frontend/src/sohn/SohnHome.test.tsx:143`), M14 `{false && (` (`SohnHome.tsx:304`) → rot; Fall ohne Seite keine Pille: dieselbe Datei:Zeile, M15 `{true && (` → rot.
+- AK 9 bleibt Absichtserklärung ohne Test: `TestDtos.cs`/`PracticeDtos.cs` sind unverändert.
+- Mutanten-Probe (`.claude/scripts/mutant-probe.py`, Debug), gemessen an `58fec04b + Arbeitsbaum geändert`, 2026-11-16 08:29: M1–M15 erwartet rot, gemessen rot, jeweils am benannten Test; Grundlinie nach dem Zurückspielen grün.

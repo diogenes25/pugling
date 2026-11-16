@@ -146,7 +146,8 @@ Response — `HTTP 201`:
   "defaultStage": null,
   "defaultItemCount": null,
   "interestTagIds": [],
-  "grammarTopicIds": []
+  "grammarTopicIds": [],
+  "bookPages": null
 }
 ```
 

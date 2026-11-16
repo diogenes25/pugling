@@ -248,6 +248,8 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     gradeMax: form.gradeMax === "" ? null : Number(form.gradeMax),
     schoolTypes: form.schoolTypes.length > 0 ? form.schoolTypes.join(", ") : "None",
     source: form.source.trim() || null,
+    // B-588: aus dem Formular – der Vollersatz löschte die Seite sonst bei jedem Speichern.
+    bookPages: form.bookPages.trim() || null,
     // Seit B-407 aus dem FORMULAR: die Art ist im Dialog änderbar und entfernbar – der einzige Ausweg, wenn eine gespielte
     // Übung mit einer Art des alten Fachs den Fachwechsel ihrer Reihe sperrt. `initialForm` füllt sie mit der geladenen.
     categoryId: form.categoryId,
@@ -283,6 +285,8 @@ interface MetaForm {
   gradeMin: number | "";
   gradeMax: number | "";
   source: string;
+  /** Buchseite(n) wie gedruckt (B-588), leer = keine. */
+  bookPages: string;
   schoolTypes: SchoolType[];
   defaultUseLeitner: boolean;
   defaultRequireTypedTest: boolean;
@@ -309,6 +313,7 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     gradeMin: d.gradeMin ?? "",
     gradeMax: d.gradeMax ?? "",
     source: d.source ?? "",
+    bookPages: d.bookPages ?? "",
     // Der Server liefert Flags als kommaseparierten String ("Realschule, Gymnasium").
     schoolTypes: (d.schoolTypes ?? "").split(",").map((s) => s.trim())
       .filter((s): s is SchoolType => SCHOOL_TYPES.includes(s as SchoolType)),
@@ -381,6 +386,9 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
             onChange={(e) => up("gradeMax", e.target.value === "" ? "" : Number(e.target.value))} /></div>
         <div className="field"><FieldLabel htmlFor="ed-source" topic="exerciseSource">Quelle (Lehrbuch)</FieldLabel>
           <input id="ed-source" value={form.source} onChange={(e) => up("source", e.target.value)} /></div>
+        <div className="field"><FieldLabel htmlFor="ed-book-pages" topic="exerciseBookPages">Buchseite(n)</FieldLabel>
+          <input id="ed-book-pages" maxLength={20} placeholder="z. B. 42–43" value={form.bookPages}
+            onChange={(e) => up("bookPages", e.target.value)} /></div>
         <div className="field"><FieldLabel htmlFor="ed-item-count" topic="defaultItemCount">Standard-Menge</FieldLabel>
           <input id="ed-item-count" type="number" min={1} placeholder="alle" value={form.defaultItemCount}
             onChange={(e) => up("defaultItemCount", e.target.value === "" ? "" : Number(e.target.value))} /></div>

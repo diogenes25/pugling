@@ -35,6 +35,7 @@ const BASE: ExerciseDetail = {
   // Lesefelder (B-12): das Urteil anderer Creator, nie Teil des Vollersatzes.
   averageRating: 4.5, ratingCount: 2,
   grammarTopicIds: [],
+  bookPages: "42–43",
 };
 
 function detailWith(over: Partial<ExerciseDetail> = {}): ExerciseDetail {
@@ -68,6 +69,7 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
       gradeMax: 6,
       schoolTypes: "Gymnasium",
       source: "Green Line 1",
+      bookPages: "42–43",
       categoryId: 9,
       defaultUseLeitner: false,
       defaultRequireTypedTest: false,
@@ -143,6 +145,24 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
 /*
  * B-502: mit dem Eintrag geht der Lernstand der Kinder an ihm (Cascade). Rot, wenn die Frage nur „bleibt im Store" sagt.
  */
+/*
+ * B-588 AK 7: die Buchseite reist durch das Formular – gelesen aus dem Detail, zurück im Vollersatz, leer als
+ * `null`. Rot ohne Read-back in `initialForm` (dann löschte jedes Speichern die Seite) bzw. ohne die Leer-Regel.
+ */
+describe("payloadFrom – die Buchseite (B-588)", () => {
+  it("liest die Seite ins Formular und schickt eine Änderung zurück", () => {
+    const detail = detailWith({ bookPages: "7" });
+    const form = initialForm(detail);
+    expect(form.bookPages).toBe("7");
+    expect(payloadFrom(detail, { ...form, bookPages: " WB 12 " }, {}).bookPages).toBe("WB 12");
+  });
+
+  it("schickt eine geleerte Seite als null, nicht als leeren Text", () => {
+    const detail = detailWith({ bookPages: "7" });
+    expect(payloadFrom(detail, { ...initialForm(detail), bookPages: "   " }, {}).bookPages).toBeNull();
+  });
+});
+
 describe("Vokabel aus der Übung entfernen", () => {
   it("nennt den Lernstand, der mitgeht, und was bleibt", () => {
     const question = removeItemQuestion("dog", "Hund");

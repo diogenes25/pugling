@@ -125,6 +125,14 @@ public class Exercise
     public SchoolTypes SchoolTypes { get; set; } = SchoolTypes.None;
     /// <summary>Source of the exercise (e.g. the textbook "Green Line 3, Unit 4"); optional.</summary>
     public string? Source { get; set; }
+    /// <summary>
+    /// Textbook page(s) the exercise comes from, as printed ("42", "42–43", "WB 12"; at most
+    /// <see cref="BookPagesMaxLength"/> characters); optional. Separate from <see cref="Source"/>, which is a
+    /// catalog search field: this one reaches the child, so it can look the exercise up in its book.
+    /// </summary>
+    public string? BookPages { get; set; }
+    /// <summary>Upper bound of <see cref="BookPages"/>: a page reference, not a note.</summary>
+    public const int BookPagesMaxLength = 20;
     /// <summary>Subject-dependent category (FK to <see cref="ExerciseCategory"/>); optional.</summary>
     public int? CategoryId { get; set; }
     public ExerciseCategory? Category { get; set; }

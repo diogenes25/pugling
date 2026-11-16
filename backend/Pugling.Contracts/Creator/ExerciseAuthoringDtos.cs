@@ -22,6 +22,10 @@ namespace Pugling.Contracts.Creator;
 /// <paramref name="GrammarTopicIds"/> names the grammar topics the exercise practices (B-155), with the same
 /// full-representation semantics. An unknown id is an <c>invalid_reference</c>; a topic of another subject than the
 /// series' is a <c>validation_error</c>.
+///
+/// <paramref name="BookPages"/> (B-588) is the textbook page reference as printed ("42–43", "WB 12"), at most 20
+/// characters, trimmed, blank = none. Full representation like <paramref name="Source"/>: a PUT without it clears it.
+/// The child sees it on its daily overview, so it can look the exercise up in the book.
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,
@@ -29,7 +33,8 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
     string? Source = null, int? CategoryId = null, string? Description = null,
     bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
     int? DefaultItemCount = null, bool ExecutePublic = true,
-    IReadOnlyList<int>? InterestTagIds = null, IReadOnlyList<int>? GrammarTopicIds = null);
+    IReadOnlyList<int>? InterestTagIds = null, IReadOnlyList<int>? GrammarTopicIds = null,
+    string? BookPages = null);
 
 /// <summary>
 /// Exercise in the response. <paramref name="IsOwn"/> = the requesting creator may <b>change</b> it (owner or
@@ -39,14 +44,15 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
 /// <paramref name="InterestTagIds"/> is the dressing (B-46), <b>ascending</b> and therefore comparable
 /// between two exercises without sorting first - that comparison is the whole point of the field, and
 /// B-18 will build the child-fit filter on it. <paramref name="GrammarTopicIds"/> (B-155) follows the same
-/// ordering rule.
+/// ordering rule. <paramref name="BookPages"/> is the textbook page reference (B-588), <c>null</c> = none.
 /// </summary>
 public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest,
-    int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds, IReadOnlyList<int> GrammarTopicIds);
+    int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds, IReadOnlyList<int> GrammarTopicIds,
+    string? BookPages = null);
 
 /// <summary>
 /// Child's answers for a direct catalog check, position-based (index in the problem/pair list).

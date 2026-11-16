@@ -20,13 +20,16 @@ namespace Pugling.Contracts.Shared;
 /// always 0 for a free position (<c>Cadence = None</c>), which is never charged.
 /// <c>SeriesUnitId</c>/<c>SeriesUnitLabel</c> name the textbook unit of the exercise, so a client can group
 /// consecutive positions into the sections the child knows from the book.
+/// <c>SeriesName</c>/<c>BookPages</c> (B-588) add the series and the printed page reference (<c>null</c> = none), so
+/// the child can look the exercise up in its book. Deliberately only here and never in a test or practice payload:
+/// looking it up while practicing is the point, the class test stays without it.
 /// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
     bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
-    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel);
+    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null);
 
 /// <summary>
 /// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and

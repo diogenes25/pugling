@@ -215,6 +215,11 @@ export const FIELD_HELP = {
     text: "Woher der Stoff stammt, z. B. „Access 5, Unit 3“. Frei formulierbar – der Filter über den "
       + "Übungen sucht darin.",
   },
+  exerciseBookPages: {
+    title: "Buchseite(n)",
+    text: "Die Seite im Lehrbuch, wie gedruckt – „42“, „42–43“ oder „WB 12“ (höchstens 20 Zeichen). Anders als "
+      + "die Quelle sieht das Kind sie auf seinem Pfad und kann die Übung im Buch nachschlagen.",
+  },
   exerciseExecutePublic: {
     title: "Für andere Betreuer zuweisbar",
     text: "Der Startzustand beim Anlegen. Mit Haken darf jeder Betreuer die Übung sofort einem Kind "

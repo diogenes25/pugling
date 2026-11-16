@@ -300,6 +300,12 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
         <div className="row" style={{ flexWrap: "wrap", rowGap: 6 }}>
           <span className="pill">{t(cadenceKey(pos.cadence))}</span>
           {pflichtErfuellt(pos) && <span className="pill lime">✓ {t("pfad.goalMet")}</span>}
+          {/* B-588: nur mit Seite – „Unit 2“ allein schickte das Kind irgendwo in die Unit suchen. */}
+          {pos.bookPages && (
+            <span className="pill pfad-buchbezug">
+              {t("pfad.bookRef", { series: pos.seriesName ?? "", unit: pos.seriesUnitLabel, pages: pos.bookPages })}
+            </span>
+          )}
           <FristZeile pos={pos} jetzt={jetzt} />
         </div>
         {anteil !== null && (
