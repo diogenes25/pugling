@@ -55,7 +55,8 @@ public class BeideRichtungenTests(PuglingWebAppFactory factory) : IClassFixture<
     }
 
     /// <summary>
-    /// AK 1, the other two directions stay as they were: one card per word. Red if the doubling leaks into them.
+    /// AK 1, the other two directions stay as they were: one card per word. Red if the doubling leaks into them. On the
+    /// choice, where the direction still decides what is shown (B-597: writing stages always ask the learnt word).
     /// </summary>
     [Theory]
     [InlineData("front-to-back", "the city")]
@@ -65,7 +66,7 @@ public class BeideRichtungenTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.AdultAsync(factory);
         var (exerciseId, _) = await ExerciseAsync(father, direction);
 
-        var items = await PreviewItemsAsync(father, exerciseId, TestStage.FreeText);
+        var items = await PreviewItemsAsync(father, exerciseId, TestStage.MultipleChoice);
 
         Assert.Equal(Words.Length, items.Length);
         Assert.Equal(firstPrompt, items[0].GetProperty("prompt").GetString());

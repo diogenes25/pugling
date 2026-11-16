@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ExerciseFilter } from "./ExerciseFilterBar";
-import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText,
+import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText, schreibweise,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
   type PositionSettings,
 } from "./PlanPositions";
@@ -462,5 +462,15 @@ describe("Ausrutscher verzeihen (B-219)", () => {
     expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: true }).forgivingDemotion).toBe(true);
     // Abwählen ist eine Aussage: `false`, nicht `null` – im PATCH bliebe die Milde sonst stehen.
     expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: false }).forgivingDemotion).toBe(false);
+  });
+});
+
+describe("schreibweise (B-597)", () => {
+  it("beschriftet die gedrehte Karte und die reine Erkennungskarte, sonst nichts", () => {
+    // Rot, wenn eine der beiden Flaggen nicht gelesen würde oder eine ungedrehte Karte eine Zeile bekäme.
+    const zeile = { prompt: "walk", answer: "gehen", turnedWhenWritten: false, recognitionOnly: false };
+    expect(schreibweise({ ...zeile, turnedWhenWritten: true })).toBe("geschrieben: gehen → walk");
+    expect(schreibweise({ ...zeile, recognitionOnly: true })).toBe("nur erkennen – geschrieben wird die Gegenkarte");
+    expect(schreibweise(zeile)).toBeNull();
   });
 });

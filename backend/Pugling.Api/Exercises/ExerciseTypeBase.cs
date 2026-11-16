@@ -49,6 +49,12 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual int CardStage(int targetStage, int box) => targetStage;
 
     /// <inheritdoc/>
+    public virtual int CardCeiling(ContentItem item, int stage) => stage;
+
+    /// <inheritdoc/>
+    public virtual ContentItem CardForStage(ContentItem item, int stage) => item;
+
+    /// <inheritdoc/>
     public virtual IReadOnlyList<string>? Choices(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, int stage) => null;
     /// <inheritdoc/>
     public virtual bool ChoicesShareOnePool => false;

@@ -26,7 +26,7 @@ import type { Aufgabenform } from "./aufgabenform";
 export type LektionsKarte = Pick<PracticeCard, "itemIndex" | "prompt" | "gapIndex" | "passage" | "audioUrl"
   | "decoding" | "anyOrder" | "cueBox" | "choices" | "letterTiles" | "answerLength" | "answerPattern">
   // Die Testkarte nennt ihren Typ nur optional – und trägt keine Vorlese-Sprache (B-252: nur die Übungskarte).
-  & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang">>;
+  & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang" | "dictationSpokenAnswer" | "dictationLang">>;
 
 /**
  * Kopf und Arbeitsanweisung. Das ✕ trägt kein Wort, aber einen Vorlesenamen, der sagt, was es hier tut: im Üben
@@ -94,7 +94,13 @@ export function Aufgabe({ karte, form, skin, gedreht = false, bild, hinweis, auf
       {karte.audioUrl && <AudioButton url={karte.audioUrl} autoPlay={!karte.prompt} withControls={!!karte.prompt} />}
       {/* B-252: vorgelesen wird nur der Text, der ohnehin auf der Karte steht – ob und in welcher Sprache, sagt der Server. */}
       {karte.speechLang && karte.prompt && <SpeakButton text={karte.prompt} lang={karte.speechLang} />}
-      <ClozePrompt text={karte.prompt} gapIndex={karte.gapIndex} fitAsked />
+      {/*
+        B-597: Beim Diktat liest das Gerät das Fremdwort vor, und die Karte zeigt keinen Text – auch das deutsche Wort
+        nicht, sonst wäre es eine Übersetzung mit Hörhilfe. Ohne Stimme (form.diktat aus) steht das deutsche Wort da.
+      */}
+      {form.diktat && karte.dictationSpokenAnswer && karte.dictationLang
+        ? <SpeakButton text={karte.dictationSpokenAnswer} lang={karte.dictationLang} label={t("lektion.dictatePlay")} />
+        : <ClozePrompt text={karte.prompt} gapIndex={karte.gapIndex} fitAsked />}
       {/* Die Dekodierung steht direkt unter dem Satz: sie ist die Methode, nicht die Lösung (B-78, B-93). */}
       <BirkenbihlDecoding decoding={karte.decoding} />
       <ListRule type={karte.type} anyOrder={karte.anyOrder} itemIndex={karte.itemIndex} />

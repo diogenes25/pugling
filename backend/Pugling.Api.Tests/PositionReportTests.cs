@@ -25,8 +25,8 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
 
         // Practice: both contents correct once → one box up each and introduced.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
-        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "hallo");
-        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "tschüss");
+        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "hello");
+        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "goodbye");
 
         var report = await (await father.GetAsync(reportUrl)).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, report.GetProperty("totalItems").GetInt32());
@@ -45,7 +45,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },  // hello → hallo (richtig)
+            new { itemIndex = 0, givenAnswer = "hello" },  // hello → hallo (richtig)
             new { itemIndex = 1, givenAnswer = "falsch" }, // goodbye → falsch
         };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });

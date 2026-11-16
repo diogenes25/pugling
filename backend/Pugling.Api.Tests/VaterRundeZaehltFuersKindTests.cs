@@ -44,7 +44,7 @@ public class VaterRundeZaehltFuersKindTests(PuglingWebAppFactory factory) : ICla
             new { day = today.AddDays(dayOffset) });
         Assert.True(start.IsSuccessStatusCode, await start.Content.ReadAsStringAsync());
         var sessionId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
-        var review = await TestApi.PositionReviewAsync(father, planId, positionId, sessionId, 0, givenAnswer: "hallo");
+        var review = await TestApi.PositionReviewAsync(father, planId, positionId, sessionId, 0, givenAnswer: "hello");
         Assert.True(review.IsSuccessStatusCode, await review.Content.ReadAsStringAsync());
         Assert.True((await review.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("wasCorrect").GetBoolean());
 

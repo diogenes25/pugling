@@ -57,7 +57,7 @@ public class BelohnungenTagespflichtTests(PuglingWebAppFactory factory) : IClass
     {
         var testsUrl = $"/api/v1/student/study-plans/{s.PlanId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await s.Child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
-        var answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } };
+        var answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } };
         (await s.Child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers })).EnsureSuccessStatusCode();
     }
 
@@ -174,9 +174,9 @@ public class BelohnungenTagespflichtTests(PuglingWebAppFactory factory) : IClass
         SetProgress(positionId, 0, reviewCount: 1, newBonusPaidAt: null);
         SetProgress(positionId, 1, reviewCount: 1, newBonusPaidAt: paidBefore);
 
-        Assert.Equal(10, await ReviewAsync(child, planId, positionId, 0, "hallo"));
+        Assert.Equal(10, await ReviewAsync(child, planId, positionId, 0, "hello"));
         // Box 3 before the hit: the repetition value is max(2, 8 - 3) = 5.
-        Assert.Equal(5, await ReviewAsync(child, planId, positionId, 1, "tschüss"));
+        Assert.Equal(5, await ReviewAsync(child, planId, positionId, 1, "goodbye"));
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();

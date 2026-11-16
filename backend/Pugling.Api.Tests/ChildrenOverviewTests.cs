@@ -136,7 +136,7 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
         })).EnsureSuccessStatusCode();
 
         var today = await father.GetFromJsonAsync<JsonElement>($"{Url}?granularity=Day&childId={childId}");

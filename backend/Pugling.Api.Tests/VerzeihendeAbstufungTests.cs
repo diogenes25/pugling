@@ -38,7 +38,7 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         var s = await SetupAsync(forgiving: true, startBox: 4, ("ridge", "Grat"), ("marsh", "Sumpf"));
 
         Assert.Equal(3, await ReviewOnDayAsync(s, 0, "falsch"));
-        Assert.Equal(4, await ReviewOnDayAsync(s, 1, "Grat"));
+        Assert.Equal(4, await ReviewOnDayAsync(s, 1, "ridge"));
         Assert.Equal(3, await ReviewOnDayAsync(s, 8, "falsch"));
     }
 

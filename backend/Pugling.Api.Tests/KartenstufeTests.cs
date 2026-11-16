@@ -286,7 +286,10 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             var item = (await client.GetFromJsonAsync<JsonElement>($"{TestBase(s)}/{attemptId}/next")).GetProperty("item");
             var index = item.GetProperty("itemIndex").GetInt32();
             questions.Add((index, item.GetProperty("stage").GetInt32(), item.GetProperty("choices").ValueKind == JsonValueKind.Array));
-            (await client.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = index, givenAnswer = FourWords[index].Item2 }))
+            // A choice is answered with the German side, a writing stage with the learnt word (B-597).
+            var stageOf = item.GetProperty("stage").GetInt32();
+            var answer = stageOf == (int)TestStage.MultipleChoice ? FourWords[index].Item2 : FourWords[index].Item1;
+            (await client.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = index, givenAnswer = answer }))
                 .EnsureSuccessStatusCode();
         }
         return (attemptId, questions);

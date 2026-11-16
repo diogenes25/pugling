@@ -31,6 +31,14 @@ namespace Pugling.Api.Services.Shared;
 /// <paramref name="SpeechLang"/> (B-252) is the language the prompt may be read aloud in by the device's speech output:
 /// set only for a vocabulary card asked in its reading direction whose word has no recording - the prompt is then the
 /// foreign word itself, never the solution. A reversed card loses it (its prompt is the German side).
+/// <paramref name="Written"/> (B-597) is this card as asked on a writing stage: German shown, the learnt language expected.
+/// Set only on a vocabulary card that is asked the other way round elsewhere; <c>null</c> means the card is written as it
+/// is (it already expects the learnt language, or it is a recognition card that never reaches a writing stage).
+/// <paramref name="RecognitionOnly"/> (B-597) marks the forward card of a "both" word: its sibling card is the one that is
+/// written, so this one climbs no higher than the choice.
+/// <paramref name="DictationAudioUrl"/>/<paramref name="DictationLang"/> (B-597) are the recording resp. the speech language
+/// of the learnt word on a card whose answer is that word - the source of the dictation. Handed out only on the dictation
+/// stage, where hearing the answer is the task.
 /// </summary>
 public record ContentItem(
     int Index,
@@ -50,7 +58,11 @@ public record ContentItem(
     bool MeaningsSeparable = false,
     bool Reversed = false,
     string? Explanation = null,
-    string? SpeechLang = null)
+    string? SpeechLang = null,
+    ContentItem? Written = null,
+    bool RecognitionOnly = false,
+    string? DictationAudioUrl = null,
+    string? DictationLang = null)
 {
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
@@ -84,7 +96,8 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     public static IReadOnlyList<ContentItem> WithDirection(IReadOnlyList<ContentItem> canonical, string? direction) =>
         direction switch
         {
-            Both => [.. canonical.SelectMany(it => new[] { it with { Index = 2 * it.Index }, Swap(it) with { Index = 2 * it.Index + 1 } })],
+            // B-597: the forward card of a word asked both ways only recognises; the reversed one is the word to write.
+            Both => [.. canonical.SelectMany(it => new[] { it with { Index = 2 * it.Index, RecognitionOnly = true }, Swap(it) with { Index = 2 * it.Index + 1 } })],
             BackToFront => [.. canonical.Select(Swap)],
             _ => canonical,
         };
@@ -99,12 +112,14 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
     private const string BackToFront = "back-to-front";
 
     // Swap prompt/answer; the alternatives of the reverse case fall away (they applied to the old answer), as
-    // does the article hint (it belonged to the word now being asked). The pronunciation audio falls away too:
-    // it reads out the word that is the solution after the swap - the listening stage would otherwise speak the
-    // answer out loud (anti-cheat). Reverse items are therefore shown as text in the listening stage.
+    // does the article hint (it belonged to the word now being asked). The pronunciation audio leaves the card's own
+    // audio: it reads out the word that is the solution after the swap, so outside the dictation it would speak the
+    // answer out loud (anti-cheat).
     // The image stays: it shows the *meaning* and is thus direction-independent; whether it may be shown at
     // all is decided by the stage (StageFacets) anyway, not by the direction.
-    private static ContentItem Swap(ContentItem it) =>
+    // B-597: the recording and the speech language move to the dictation pair instead - there hearing the answer is the
+    // task, and only the dictation stage hands them out.
+    internal static ContentItem Swap(ContentItem it) =>
         it with
         {
             Prompt = it.Answer,
@@ -115,5 +130,9 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
             Reversed = true,
             // B-252: the reversed prompt is the translation; reading the foreign word aloud here would speak the solution.
             SpeechLang = null,
+            DictationAudioUrl = it.AudioUrl,
+            DictationLang = it.SpeechLang,
+            Written = null,
+            RecognitionOnly = false,
         };
 }

@@ -38,12 +38,12 @@ public class ReviewGradingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var child = await TestApi.ChildAsync(factory);
 
         // "hello" → translation "hallo"; normalization makes capitalization irrelevant.
-        var res = await TestApi.PositionReviewAsync(child, planId, positionId, sid, 0, givenAnswer: "hallo");
+        var res = await TestApi.PositionReviewAsync(child, planId, positionId, sid, 0, givenAnswer: "hello");
         res.EnsureSuccessStatusCode();
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
 
         JsonAssert.True(outcome, "wasCorrect");
-        Assert.Equal("hallo", outcome.GetProperty("expected").GetString());
+        Assert.Equal("hello", outcome.GetProperty("expected").GetString());
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
         Assert.Equal(TestApi.ClimbedBox + 1, outcome.GetProperty("box").GetInt32()); // one box up after a correct answer
     }

@@ -49,11 +49,19 @@ public record ExtraExercise(int ExerciseId, string Title, string Type, string Un
 public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string Type, ExtraForm Form, int Stage,
     bool Typed, int CoinsPerHit, IReadOnlyList<ExtraCard> Cards, int RunPercent);
 
-/// <summary>One card of a bonus run - the same facets a practice card carries, without an image.</summary>
+/// <summary>
+/// One card of a bonus run - the same facets a practice card carries, without an image.
+///
+/// <c>DictationSpokenAnswer</c>/<c>DictationLang</c> (B-597) are set only on the dictation stage of a vocabulary card
+/// without a recording: the learnt word the device reads aloud, and the language to read it in. <b>This is the answer,
+/// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
+/// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
+/// plays the card as free text from the German <c>Prompt</c>.
+/// </summary>
 public record ExtraCard(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage,
     bool AnyOrder, IReadOnlyList<WordPair>? Decoding, string? AnswerPattern, IReadOnlyList<string>? LetterTiles,
-    IReadOnlyList<string>? CueBox);
+    IReadOnlyList<string>? CueBox, string? DictationSpokenAnswer = null, string? DictationLang = null);
 
 /// <summary>One answer of a bonus run: typed or chosen (<paramref name="GivenAnswer"/>) or self-assessed (<paramref name="WasKnown"/>).</summary>
 public record ExtraAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);

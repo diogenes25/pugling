@@ -4,6 +4,7 @@ import { StatusBanner } from "../components/StatusBanner";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
+import { SpeakButton } from "../components/SpeakButton";
 import { ClozePrompt } from "../components/ClozePrompt";
 import { Passage } from "../components/Passage";
 import { RevealAlternatives } from "../components/RevealAlternatives";
@@ -16,7 +17,7 @@ import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult 
  * Testmodus („Ausprobieren"): Der Vater spielt eine einzelne Übung selbst durch – genau wie das Kind, aber
  * nebenwirkungsfrei (keine Punkte, kein Fortschritt). Bewertet wird server-autoritativ über den Preview-Endpunkt,
  * d. h. mit derselben Prüf-Logik wie im echten Test. Über den Stufen-Umschalter lässt sich jede Abfrageform
- * (Selbsteinschätzung, Multiple-Choice, Buchstabenkästchen, Freitext, Hören → tippen) durchprobieren, exakt so
+ * (Selbsteinschätzung, Multiple-Choice, Buchstabenkästchen, Freitext, Diktat) durchprobieren, exakt so
  * gerendert wie in der Sohn-App. So kann er die Übung verifizieren, bevor er sie zuweist.
  */
 export function ExercisePreviewModal({ exerciseId, title, onClose }: {
@@ -213,6 +214,11 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                         trägt jedes Item die Aufnahme, also lief der Frage-Zweig nie. Verschwiegen wird die
                         Frage nur, wo der Server sie weglässt (Vokabel-Hörstufe). */}
                     {it.audioUrl && !it.prompt && <AudioButton url={it.audioUrl} label="🔊 Anhören" />}
+                    {/* B-597: das Diktat ohne Aufnahme liest das Gerät vor – der Vater hört, was das Kind hört. Das deutsche
+                        Wort daneben sieht nur er, zur Orientierung; das Kind mit Stimme sieht es nicht. */}
+                    {it.dictationSpokenAnswer && it.dictationLang && (
+                      <SpeakButton text={it.dictationSpokenAnswer} lang={it.dictationLang} label="🔊 Diktat anhören" />
+                    )}
                     {/* Bei einer Liste steht die Anweisung oben, hier bleibt die Nummer: bei der Menge die des
                         Antwortfeldes (die Reihenfolge bedeutet nichts), bei der geordneten Liste die des
                         Eintrags – dieselbe Adressierung, die das Kind auf der Karte liest. */}

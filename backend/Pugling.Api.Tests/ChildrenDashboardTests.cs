@@ -35,8 +35,8 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
-            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+            new { itemIndex = 0, givenAnswer = "hello" },   // hallo → hello (B-597)
+            new { itemIndex = 1, givenAnswer = "goodbye" }, // tschüss → goodbye
         };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });
 

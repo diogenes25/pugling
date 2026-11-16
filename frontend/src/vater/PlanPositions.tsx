@@ -13,7 +13,7 @@ import { MasteryPill } from "../components/MasteryPill";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { auswahlNachFilterwechsel, auswahlNachUmsortieren, NICHT_ZUWEISBAR_GRUND } from "./wizardSearch";
 import type {
-  CreatePositionDto, ExercisePreviewStage, LearningCheck, ExerciseSummary, GoalCadence, ItemScope, PositionReport, PositionResponse, Paged,
+  CreatePositionDto, ExercisePreviewStage, ItemReport, LearningCheck, ExerciseSummary, GoalCadence, ItemScope, PositionReport, PositionResponse, Paged,
   PracticeOrder, ScoringTimeSlot, SubjectResponse, UpdatePositionDto,
 } from "../lib/types";
 import { ExerciseFilterBar, type ExerciseFilter } from "./ExerciseFilterBar";
@@ -962,6 +962,16 @@ function PositionRow({ planId, pos, onChanged, action }: {
   );
 }
 
+/**
+ * B-597: Was die Zeile beim Schreiben bedeutet. Der Bericht zeigt die Karte in der Richtung der Übung; wo das Kind
+ * schreibt, ist sie gedreht (es schreibt das Fremdwort), und die Vorwärtskarte einer „beides“-Liste wird nie geschrieben.
+ */
+export function schreibweise(it: Pick<ItemReport, "prompt" | "answer" | "turnedWhenWritten" | "recognitionOnly">): string | null {
+  if (it.recognitionOnly) return "nur erkennen – geschrieben wird die Gegenkarte";
+  if (it.turnedWhenWritten) return `geschrieben: ${it.answer} → ${it.prompt}`;
+  return null;
+}
+
 /** Lern-Report der Position: je Inhalt „sitzt/sitzt nicht" (Box/Beherrschung) + Test-Trefferquote. */
 function PositionReportPanel({ planId, positionId }: { planId: number; positionId: number }) {
   const report = useAsync<PositionReport>(() => api.positionReport(planId, positionId), [planId, positionId]);
@@ -981,15 +991,15 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
         <table className="table">
           <thead><tr><th>Inhalt</th><th>Lösung</th><th>Beherrschung</th><th className="num">Test</th><th>Fällig</th></tr></thead>
           <tbody>
-            {r.items.map((it) => (
+            {r.items.map((it) => { const sw = schreibweise(it); return (
               <tr key={it.itemIndex}>
-                <td>{it.prompt}</td>
+                <td>{it.prompt}{sw && <div className="muted" style={{ fontSize: 12 }}>{sw}</div>}</td>
                 <td className="muted">{it.answer}</td>
                 <td><MasteryPill it={it} maxBox={r.maxBox} /></td>
                 <td className="num">{it.testsSeen === 0 ? "—" : `${it.testsCorrect}/${it.testsSeen}`}</td>
                 <td className="muted">{it.dueOn ? formatDate(it.dueOn) : "—"}</td>
               </tr>
-            ))}
+            ); })}
           </tbody>
         </table>
       </div>

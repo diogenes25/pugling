@@ -5,7 +5,7 @@ import { useChromeT } from "../lib/chromeText";
  * Die Stimme des Geräts für eine Sprache – oder `null`, solange keine passende da ist. Die Stimmen laden asynchron (Chrome
  * liefert beim ersten `getVoices()` oft eine leere Liste), darum wird auf `voiceschanged` neu gelesen.
  */
-function useVoiceFor(lang: string): SpeechSynthesisVoice | null {
+export function useVoiceFor(lang: string): SpeechSynthesisVoice | null {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   useEffect(() => {
     const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
@@ -31,7 +31,7 @@ function useVoiceFor(lang: string): SpeechSynthesisVoice | null {
  * Ohne passende Stimme gibt es keinen Knopf – eine deutsche Stimme, die „la gare" liest, lehrt eine falsche Aussprache.
  * Wie beim `AudioButton` ist der sichtbare Text der zugängliche Name (WCAG 2.5.3).
  */
-export function SpeakButton({ text, lang }: { text: string; lang: string }) {
+export function SpeakButton({ text, lang, label }: { text: string; lang: string; label?: string }) {
   const t = useChromeT();
   const voice = useVoiceFor(lang);
   // Eine laufende Äußerung endet mit der Karte: sonst spräche das alte Wort über die nächste Karte hinweg.
@@ -50,7 +50,7 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
 
   return (
     <div className="row" style={{ gap: 8, alignItems: "center" }}>
-      <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={speak}>{t("play.speak")}</button>
+      <button type="button" className="btn ghost" style={{ width: "auto" }} onClick={speak}>{label ?? t("play.speak")}</button>
     </div>
   );
 }

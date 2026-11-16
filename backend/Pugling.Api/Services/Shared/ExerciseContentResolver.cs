@@ -113,6 +113,17 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
         {
             // A card whose store entry is missing keeps its placeholder; with "both" it still takes its two indices.
             if (card.ItemId is not { } itemId || !languages.TryGetValue(itemId, out var language)) return card;
+            var asked = Graded(card, language);
+            // B-597: wherever the child writes, it writes the learnt word - a card asked forward carries its reversed
+            // form for the writing stages. Built here, where the languages are known, so the reversed card forgives the
+            // article of the right language. A recognition card never reaches a writing stage and needs none.
+            return card.Reversed || card.RecognitionOnly
+                ? asked
+                : asked with { Written = Graded(ExerciseContentProvider.Swap(card), language) };
+        }).ToList();
+
+        ContentItem Graded(ContentItem card, (string Source, string Target, PartOfSpeech PartOfSpeech) language)
+        {
             // B-421: the answer's language decides which article may be left out - the target language, or the source
             // language where the card asks the other way round.
             var answerLanguage = card.Reversed ? language.Source : language.Target;
@@ -123,7 +134,7 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
                 // B-462: a store entry is a word-list entry in either direction ("sobald, sowie", "(to) reply (to)").
                 MeaningsSeparable = true,
             };
-        }).ToList();
+        }
     }
 
     /// <summary>

@@ -156,14 +156,27 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// stuck on a rung below the target for good. The ladder also ends by the calendar (<see cref="LadderDays"/>), in
     /// practice as in the test: a word the test asks in writing must have been asked in writing here as well.
     /// </summary>
+    /// <remarks>The card's own ceiling (B-597, <see cref="IExerciseType.CardCeiling"/>) caps whatever the rules above chose.</remarks>
     public static int CardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode, CardProgress? card,
-        DateOnly day)
+        DateOnly day, ContentItem item) =>
+        type.CardCeiling(item, UncappedCardStage(type, pos, dayStage, mode, card, day));
+
+    private static int UncappedCardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode,
+        CardProgress? card, DateOnly day)
     {
         if (IsIntroduction(type, dayStage, mode, card is not null)) return IntroductionStage(type)!.Value;
         if (mode != PlayMode.Lern || !pos.UseLeitner || card is not { } c || c.Box >= pos.MaxBox) return dayStage;
         if (c.IntroducedAt.AddDays(LadderDays) <= day) return dayStage;
         return type.CardStage(dayStage, c.Box);
     }
+
+    /// <summary>
+    /// The atoms as they are asked at <paramref name="stage"/> (B-597): every card through
+    /// <see cref="IExerciseType.CardForStage"/>, the same index at the same place. The one list a card's display and its
+    /// grading read - the asked card and its siblings alike, so a neighbour's word is compared in the same language.
+    /// </summary>
+    public static IReadOnlyList<ContentItem> AtStage(IExerciseType type, IReadOnlyList<ContentItem> items, int stage) =>
+        [.. items.Select(i => type.CardForStage(i, stage))];
 
     /// <summary>
     /// Days after its introduction from which a word is asked at the target in practice and test alike, whatever its
@@ -189,8 +202,13 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// beyond that.
     /// </para>
     /// </summary>
+    /// <remarks>The card's own ceiling (B-597) caps the result, like in practice.</remarks>
     public static int TestItemStage(IExerciseType type, PlanPosition pos, int target, int? box, DateOnly introducedOn,
-        DateOnly day)
+        DateOnly day, ContentItem item) =>
+        type.CardCeiling(item, UncappedTestItemStage(type, pos, target, box, introducedOn, day));
+
+    private static int UncappedTestItemStage(IExerciseType type, PlanPosition pos, int target, int? box,
+        DateOnly introducedOn, DateOnly day)
     {
         if (!pos.UseLeitner || !type.IsTypedStage(target)) return target;
         if (introducedOn.AddDays(LadderDays) <= day) return target;
@@ -352,7 +370,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static (string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices,
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
         bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding,
-        string? AnswerPattern, IReadOnlyList<string>? LetterTiles, IReadOnlyList<string>? CueBox)
+        string? AnswerPattern, IReadOnlyList<string>? LetterTiles, IReadOnlyList<string>? CueBox,
+        string? DictationSpokenAnswer, string? DictationLang)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed, int seed)
     {
@@ -362,6 +381,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         var (letterBoxLength, audioUrl, imageUrl, answerPattern) = type.StageFacets(item, stage);
         // The cue box replaces the per-atom hint (B-524): next to the box it would name the meaning to find.
         var cueBox = typed ? type.CueBox(configJson, items, stage) : null;
+        // B-597, decision 9: without a recording the device reads the dictation aloud, and for that it needs the word -
+        // which is the answer. A deliberate exception to "no solution before the answer", accepted by the father for a
+        // household app: the child does not see it, only the network tab would. A recording replaces it.
+        var dictation = type.AudioReplacesPrompt(stage) && string.IsNullOrWhiteSpace(audioUrl)
+            && !string.IsNullOrWhiteSpace(item.DictationLang) && !string.IsNullOrWhiteSpace(item.Answer);
         return (
             typed && cueBox is null ? item.Hint : null,
             letterBoxLength,
@@ -404,7 +428,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`.
             answerPattern,
             tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)),
-            cueBox);
+            cueBox,
+            // The prompt beside it stays: it is the German word, shown only where the device has no voice for the
+            // language and the dictation falls back to free text.
+            dictation ? item.Answer : null,
+            dictation ? item.DictationLang : null);
     }
 
     // The options in an order of their own per card and session: an author's list (reading questions) usually starts with

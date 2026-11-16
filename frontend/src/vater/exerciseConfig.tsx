@@ -114,7 +114,7 @@ export const VOCAB_FORMS: { value: number | ""; label: string }[] = [
   { value: 7, label: "Buchstaben ordnen" },
   { value: 4, label: "Freitext (tippen)" },
   { value: 6, label: "Multiple-Choice (Auswahl)" },
-  { value: 5, label: "Hören → tippen" },
+  { value: 5, label: "Diktat (hören → Fremdwort tippen)" },
 ];
 
 export const ARITHMETIC_OPERATIONS: { value: ArithmeticOperation; label: string }[] = [
@@ -457,6 +457,27 @@ function LanguageSelect({ id, label, value, onChange }: {
   );
 }
 
+/**
+ * B-597: Die Richtung steuert nur noch das Erkennen (Kennenlernen, Selbsteinschätzung, Auswahl). Wo das Kind schreibt,
+ * schreibt es immer das Fremdwort – der Hinweis steht darum fest am Feld, nicht in einem Popover.
+ */
+export function RecognitionField({ value, onChange }: { value: string | undefined; onChange: (direction: string) => void }) {
+  const hintId = useId();
+  const selectId = useId();
+  return (
+    <div className="field" style={{ maxWidth: 280 }}>
+      <label htmlFor={selectId}>Erkennen</label>
+      <select id={selectId} aria-describedby={hintId} value={value ?? "front-to-back"}
+        onChange={(e) => onChange(e.target.value)}>
+        <option value="front-to-back">Fremdwort → Deutsch</option>
+        <option value="back-to-front">Deutsch → Fremdwort</option>
+        <option value="both">beides</option>
+      </select>
+      <span id={hintId} className="muted" style={{ fontSize: 13 }}>Geschrieben wird immer das Fremdwort.</span>
+    </div>
+  );
+}
+
 /** Zeilen-Editor für alle Typen außer Vokabeln (die haben ihre eigene Item-Ebene). */
 export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, removeRow }: EditorProps) {
   const ex = (patch: Row) => setExtra((e) => ({ ...e, ...patch }));
@@ -466,14 +487,7 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Extra-Felder je Typ */}
       {type === "Vocabulary" && (
-        <div className="field" style={{ maxWidth: 260 }}>
-          <label>Abfragerichtung</label>
-          <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => ex({ direction: e.target.value })}>
-            <option value="front-to-back">vorne → hinten</option>
-            <option value="back-to-front">hinten → vorne</option>
-            <option value="both">beide (hin und zurück)</option>
-          </select>
-        </div>
+        <RecognitionField value={extra.direction} onChange={(direction) => ex({ direction })} />
       )}
       {type === "Cloze" && (
         <>

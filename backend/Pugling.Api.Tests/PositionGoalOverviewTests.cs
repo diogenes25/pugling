@@ -34,8 +34,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
-            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+            new { itemIndex = 0, givenAnswer = "hello" },   // hello → hallo
+            new { itemIndex = 1, givenAnswer = "goodbye" }, // goodbye → tschüss
         };
 
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
@@ -188,8 +188,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         {
             answers = new[]
             {
-                new { itemIndex = 0, givenAnswer = "hallo" },
-                new { itemIndex = 1, givenAnswer = "tschüss" },
+                new { itemIndex = 0, givenAnswer = "hello" },
+                new { itemIndex = 1, givenAnswer = "goodbye" },
             },
         })).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(submit, "passed");
@@ -234,8 +234,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },
-            new { itemIndex = 1, givenAnswer = "tschüss" },
+            new { itemIndex = 0, givenAnswer = "hello" },
+            new { itemIndex = 1, givenAnswer = "goodbye" },
         };
         (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers })).EnsureSuccessStatusCode();
 
@@ -293,8 +293,8 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },   // hello → hallo
-            new { itemIndex = 1, givenAnswer = "tschüss" }, // goodbye → tschüss
+            new { itemIndex = 0, givenAnswer = "hello" },   // hello → hallo
+            new { itemIndex = 1, givenAnswer = "goodbye" }, // goodbye → tschüss
         };
         var submit = await (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }))
             .Content.ReadFromJsonAsync<JsonElement>();

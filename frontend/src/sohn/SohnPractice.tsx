@@ -8,7 +8,8 @@ import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
-import { aufgabenform } from "./aufgabenform";
+import { aufgabenform, istDiktat } from "./aufgabenform";
+import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
 import { Mascot } from "../components/Mascot";
@@ -72,6 +73,8 @@ export function SohnPractice() {
   const [error, setError] = useState<string | null>(null);
   const [cards, setCards] = useState<PracticeCard[]>([]);
   const [idx, setIdx] = useState(0);
+  // B-597: Ob das Gerät die aktuelle Karte diktieren kann – hier oben, weil die Form erst nach den frühen Ausstiegen entsteht.
+  const diktatStimme = useVoiceFor(cards[idx]?.dictationLang ?? "");
   const [typedAnswer, setTypedAnswer] = useState("");
   const [combo, setCombo] = useState(0);
   const [earned, setEarned] = useState(0);
@@ -337,7 +340,9 @@ export function SohnPractice() {
   const asked = phase === "front" || phase === "back" || phase === "blatt" ? cards[idx] : null;
   return (
     <>
-      <TaskAnnouncer text={asked?.prompt} gapIndex={asked?.gapIndex} />
+      {/* B-597: beim Diktat sagt die Ansage die Aufgabe, nicht das deutsche Wort, das die Karte verbirgt. */}
+      <TaskAnnouncer text={asked && istDiktat(asked, diktatStimme !== null) ? t("lektion.listen") : asked?.prompt}
+        gapIndex={asked?.gapIndex} />
       {view()}
     </>
   );
@@ -405,7 +410,7 @@ export function SohnPractice() {
   const card = cards[idx];
   // Eine Quelle für „getippt“: dieselbe Form, die Anweisung und Darstellung wählt. Sonst Flip-Karte
   // (Selbsteinschätzung) oder ShowBoth (sofort offen, kein Urteil).
-  const form = aufgabenform(card);
+  const form = aufgabenform(card, diktatStimme !== null);
   const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
   // Steht die Meldung (B-532), schickt Enter im Feld nichts: was noch einmal geht, entscheiden die beiden Knöpfe darunter.
   const submitTyped = () => { if (typedAnswer.trim() && !failed) judge(card, { givenAnswer: typedAnswer }); };

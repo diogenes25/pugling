@@ -85,6 +85,27 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         return Difficulty(rung) < Difficulty((TestStage)targetStage) ? (int)rung : targetStage;
     }
 
+    /// <summary>
+    /// B-597: the forward card of a word asked both ways stops at the choice - its reversed sibling is the one that is
+    /// written, and two cards of one word must not ask the same thing.
+    /// </summary>
+    public override int CardCeiling(ContentItem item, int stage) =>
+        item.RecognitionOnly && IsWritingStage((TestStage)stage) ? (int)TestStage.MultipleChoice : stage;
+
+    /// <summary>
+    /// B-597: on a writing stage the child writes the learnt word, whatever the exercise's direction - German shown,
+    /// the foreign word expected. The direction keeps deciding recognition (getting acquainted, self-assessment, choice).
+    /// </summary>
+    public override ContentItem CardForStage(ContentItem item, int stage) =>
+        IsWritingStage((TestStage)stage) && item.Written is { } written ? written : item;
+
+    /// <summary>
+    /// The stages on which the child writes the word (B-597): letter boxes, letter tiles, free text and the dictation.
+    /// The choice is no writing stage - it taps, and "walk - what is that?" trains recognition.
+    /// </summary>
+    public static bool IsWritingStage(TestStage stage) =>
+        stage is TestStage.LetterBoxes or TestStage.LetterScramble or TestStage.FreeText or TestStage.Audio;
+
     // The enum values are not ordered by difficulty (multiple choice came last), so the ladder ranks them itself.
     // Everything the child produces from memory shares the top rank: none of it is a rung below another target.
     private static int Difficulty(TestStage stage) => stage switch
@@ -117,7 +138,8 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     /// </summary>
     public override (int? LetterBoxLength, string? AudioUrl, string? ImageUrl, string? AnswerPattern) StageFacets(ContentItem item, int stage) =>
         (AsLetterBoxes(item, stage) ? item.Answer.Length : null,
-         (TestStage)stage == TestStage.Audio ? item.AudioUrl : null,
+         // B-597: the dictation reads the learnt word, which is the answer of the card asked there.
+         (TestStage)stage == TestStage.Audio ? item.DictationAudioUrl : null,
          IsTypedStage(stage) ? null : item.ImageUrl,
          AsLetterBoxes(item, stage) ? StageMechanics.LetterBoxPattern(item.Answer) : null);
 
@@ -134,8 +156,8 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         (TestStage)stage == TestStage.LetterScramble && StageMechanics.IsScramblable(item.Answer) ? item.Answer : null;
 
     /// <summary>
-    /// At the listening stage the recording <b>is</b> the question: showing the word next to it would make
-    /// "listen, then type" a reading task. The card therefore arrives without a prompt.
+    /// At the dictation stage the recording <b>is</b> the question: showing the word next to it would make the dictation
+    /// a reading task. The card therefore arrives without a prompt.
     /// </summary>
     public override bool AudioReplacesPrompt(int stage) => (TestStage)stage == TestStage.Audio;
 
@@ -154,7 +176,7 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
         new((int)TestStage.LetterBoxes, "Buchstabenkästchen"),
         new((int)TestStage.LetterScramble, "Buchstaben ordnen"),
         new((int)TestStage.FreeText, "Freitext (tippen)"),
-        new((int)TestStage.Audio, "Hören → tippen"),
+        new((int)TestStage.Audio, "Diktat"),
     ];
 
     /// <inheritdoc/>

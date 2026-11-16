@@ -51,7 +51,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Choices, f.AudioUrl,
             f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles,
-            f.CueBox);
+            f.CueBox, f.DictationSpokenAnswer, f.DictationLang);
     }
 
     // The stage a question was frozen at on start (B-476); the attempt's stage for a row that carries none of its own.
@@ -182,13 +182,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             Order = [.. order],
             // The exercise sits on the attempt (through the position), not on every result row: ContentId was
             // an FK-less copy of PlanPosition.ExerciseId that nobody read.
-            // Each question frozen at its own rung (B-476); a stage the supervisor picks for a preview holds for all.
+            // Each question frozen at its own rung (B-476); a stage the supervisor picks for a preview holds for all - up to
+            // the card's own ceiling (B-597), which no path lifts.
             Results = order.Select(i => new TestItemResult
             {
                 ItemIndex = i,
-                StageValue = explicitStage ? stage : PositionPlayService.TestItemStage(type, pos, stage,
-                    atomProgress.GetValueOrDefault(i)?.Box,
-                    atomProgress.GetValueOrDefault(i)?.IntroducedAt ?? day, day),
+                StageValue = explicitStage ? type.CardCeiling(items[i], stage) : PositionPlayService.TestItemStage(type, pos,
+                    stage, atomProgress.GetValueOrDefault(i)?.Box,
+                    atomProgress.GetValueOrDefault(i)?.IntroducedAt ?? day, day, items[i]),
             }).ToList(),
         };
         db.TestAttempts.Add(attempt);
@@ -232,7 +233,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         var index = attempt.Order[cursor];
         var stage = StageAt(attempt, index);
-        var item = ToItem(pos.Exercise, items, items[index], type, stage, type.IsTypedStage(stage), attempt.Id);
+        // B-597: the question in the form its stage asks it - the same form Answer and Submit grade.
+        var staged = PositionPlayService.AtStage(type, items, stage);
+        var item = ToItem(pos.Exercise, staged, staged[index], type, stage, type.IsTypedStage(stage), attempt.Id);
         return new TestNextResponse(item, false, cursor, attempt.TotalItems);
     }
 
@@ -265,8 +268,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (cursor < attempt.Order.Count)
         {
             var index = attempt.Order[cursor];
-            var item = items[index];
-            // Graded in the form the question was asked in (B-476), not the attempt's target.
+            // Graded in the form the question was asked in (B-476, B-597), not the attempt's target.
+            var item = type.CardForStage(items[index], StageAt(attempt, index));
             var itemTyped = type.IsTypedStage(StageAt(attempt, index));
             // Set-graded exercise (an unordered list): the answer decides which entry it credits, not the card
             // it arrived on - any entry not yet credited in this attempt counts. A repeat therefore matches
@@ -390,7 +393,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     if (result.ItemIndex is not { } index || index < 0 || index >= items.Count) continue;
                     if (!answers.TryGetValue(index, out var answer)) continue;
                     await IntroduceAnsweredAsync(pos, attempt, [index], ct);
-                    var item = items[index];
+                    var item = type.CardForStage(items[index], result.StageValue);
                     result.GivenAnswer = answer.GivenAnswer;
                     result.WasCorrect = type.IsTypedStage(result.StageValue)
                         ? grader.Matches(answer.GivenAnswer, item)
@@ -419,8 +422,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             // Non-null by the filter above - the coalescing that used to stand here would have hidden a wrong
             // mention as an answer to entry 0.
             var index = r.ItemIndex!.Value;
-            var item = items[index];
-            var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, items);
+            // B-597: the result shows the question as it was asked, and its neighbours in the same language.
+            var staged = PositionPlayService.AtStage(type, items, r.StageValue);
+            var item = staged[index];
+            var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, staged);
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, r.WasCorrect, r.StageValue,
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);

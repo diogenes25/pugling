@@ -194,7 +194,11 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             && r.Day == today && r.CompletedAt != null, ct);
         var perHit = CoinsPerHit(run.Form);
         var percent = RunPercent(completedToday);
-        var earned = graded.Correct * perHit * percent / 100;
+        // Each hit pays by the form its card was asked in, not by the run's (B-597): a typed run on a "both" list asks
+        // every forward card as a choice, and a tap must not earn what writing earns.
+        var cardRates = await CardRatesAsync(run.Exercise, run.Stage, ct);
+        var hitCoins = graded.Items.Where(i => i.WasCorrect).Sum(i => cardRates.GetValueOrDefault(i.ItemIndex, perHit));
+        var earned = hitCoins * percent / 100;
         var coins = Math.Min(earned, left);
 
         var now = time.GetUtcNow().UtcDateTime;
@@ -388,6 +392,24 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             checkedStage);
     }
 
+    // The rate of each card of a run by item index, from the stage it is asked at: its ceiling (B-597) caps the run's stage,
+    // and a card offering options or letter tiles is a pick, everything else typed - the same facets the card showed.
+    private async Task<Dictionary<int, int>> CardRatesAsync(Exercise exercise, int runStage, CancellationToken ct)
+    {
+        if (registry.ByKey(exercise.Type) is not { } type) return [];
+        var items = await content.ItemsOfAsync(exercise, ct: ct);
+        return items.ToDictionary(raw => raw.Index, raw =>
+        {
+            var stage = type.CardCeiling(raw, runStage);
+            if (!type.IsTypedStage(stage)) return CoinsPerHit(ExtraForm.SelfAssess);
+            var staged = PositionPlayService.AtStage(type, items, stage);
+            var item = type.CardForStage(raw, stage);
+            var picks = type.Choices(exercise.ConfigJson, staged, item, stage) is not null
+                || type.LetterTileSource(item, stage) is not null;
+            return CoinsPerHit(picks ? ExtraForm.Choice : ExtraForm.Typed);
+        });
+    }
+
     private int CoinsPerHit(ExtraForm form) => form switch
     {
         ExtraForm.Choice => opts.CoinsPerChoiceHit,
@@ -403,12 +425,17 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var typed = type.IsTypedStage(run.Stage);
         var rng = new Random(run.Id);
         var ordered = exercise.Type == ExerciseTypeKeys.Vocabulary ? items.OrderBy(_ => rng.Next()).ToList() : [.. items];
-        var cards = ordered.Select(item =>
+        var cards = ordered.Select(raw =>
         {
-            var f = PositionPlayService.CardFacets(exercise.ConfigJson, items, item, type, run.Stage, typed, run.Id);
+            // B-597: each card at its own ceiling and in the form that stage asks it - the preview check grades the same way.
+            var stage = type.CardCeiling(raw, run.Stage);
+            var staged = PositionPlayService.AtStage(type, items, stage);
+            var item = type.CardForStage(raw, stage);
+            var f = PositionPlayService.CardFacets(exercise.ConfigJson, staged, item, type, stage, type.IsTypedStage(stage), run.Id);
             var choices = f.Choices is { } c ? c.OrderBy(_ => rng.Next()).ToList() : null;
             return new ExtraCard(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal, f.RevealAlternatives,
-                choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox);
+                choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox,
+                f.DictationSpokenAnswer, f.DictationLang);
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
             typed ? CoinsPerHit(run.Form) : 0, cards, runPercent);

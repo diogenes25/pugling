@@ -82,7 +82,11 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         .. run.GetProperty("cards").EnumerateArray().Select(c => (object)new
         {
             itemIndex = c.GetProperty("itemIndex").GetInt32(),
-            givenAnswer = Words.Single(w => w.Front == c.GetProperty("prompt").GetString()).Back,
+            // The card shows one side and expects the other: on free text the German word is shown and the learnt one
+            // written (B-597), on the choice and the self-assessment the learnt word is shown.
+            givenAnswer = Words.Single(w => w.Front == c.GetProperty("prompt").GetString()
+                || w.Back == c.GetProperty("prompt").GetString()) is var w && w.Front == c.GetProperty("prompt").GetString()
+                ? w.Back : w.Front,
             wasKnown = true,
         }),
     ];
@@ -92,6 +96,101 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         return db.ChildPointsEntries.Where(e => e.ChildId == childId && e.Kind == PointKind.ExtraTrainingCoins).Sum(e => e.Amount);
+    }
+
+    // Four runs completed yesterday: the next run of the exercise is the typed form (two self-assessed, two choices).
+    private void SeedCompletedRuns(Setup s)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var yesterday = factory.Clock.GetUtcNow().UtcDateTime.AddDays(-1);
+        for (var i = 0; i < 4; i++)
+        {
+            db.ExtraTrainingRuns.Add(new ExtraTrainingRun
+            {
+                ChildId = s.ChildId,
+                ExerciseId = s.VocabId,
+                Day = DateOnly.FromDateTime(yesterday),
+                Pass = i + 1,
+                Form = i < 2 ? ExtraForm.SelfAssess : ExtraForm.Choice,
+                Stage = i < 2 ? (int)TestStage.SelfAssess : (int)TestStage.MultipleChoice,
+                StartedAt = yesterday,
+                CompletedAt = yesterday,
+                ItemCount = Words.Length,
+            });
+        }
+        db.SaveChanges();
+    }
+
+    private void SetDirection(Setup s, string direction)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var exercise = db.Exercises.Single(e => e.Id == s.VocabId);
+        exercise.ConfigJson = exercise.ConfigJson.Replace("\"front-to-back\"", $"\"{direction}\"");
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// B-597 AK 1 + AK 2 in the bonus training: the typed run shows the German words and pays only for the learnt ones.
+    /// Red if the run's cards keep the exercise's direction (the prompts are English), or if the grading does (German
+    /// answers would count, English ones not).
+    /// </summary>
+    [Fact]
+    public async Task Getippte_Bonusrunde_Fragt_Und_Wertet_Das_Fremdwort()
+    {
+        var s = await SetupAsync();
+        SeedCompletedRuns(s);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        Assert.Equal("Typed", run.GetProperty("form").GetString());
+        var cards = run.GetProperty("cards").EnumerateArray().ToList();
+        Assert.All(cards, c => Assert.Contains(c.GetProperty("prompt").GetString(), Words.Select(w => w.Back)));
+
+        var answers = cards.Select(c => new
+        {
+            itemIndex = c.GetProperty("itemIndex").GetInt32(),
+            // Half in German, half in the learnt language: only the learnt half counts.
+            givenAnswer = c.GetProperty("itemIndex").GetInt32() % 2 == 0
+                ? Words[c.GetProperty("itemIndex").GetInt32()].Front : Words[c.GetProperty("itemIndex").GetInt32()].Back,
+            wasKnown = (bool?)null,
+        }).ToArray();
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers }));
+        Assert.Equal(2, result.GetProperty("correct").GetInt32());
+    }
+
+    /// <summary>
+    /// B-597 AK 4 in the bonus training: on a "both" list the typed run asks each forward card as a choice and only the
+    /// reversed one in writing - grades the choice as a choice and pays it as one. Red without the ceiling in the run (the
+    /// forward card comes without options), or when every hit pays the run's typed rate.
+    /// </summary>
+    [Fact]
+    public async Task Getippte_Bonusrunde_Fragt_Die_Vorwaertskarte_Bei_Beiden_Als_Auswahl()
+    {
+        var s = await SetupAsync();
+        SetDirection(s, "both");
+        SeedCompletedRuns(s);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        var cards = run.GetProperty("cards").EnumerateArray().ToList();
+        Assert.Equal(2 * Words.Length, cards.Count);
+        Assert.All(cards, c => Assert.Equal(c.GetProperty("itemIndex").GetInt32() % 2 == 0,
+            c.GetProperty("choices").ValueKind == JsonValueKind.Array));
+
+        // Every card right in its form: the forward card by choosing the German word, the reversed one by writing the word.
+        var answers = cards.Select(c =>
+        {
+            var index = c.GetProperty("itemIndex").GetInt32();
+            var word = Words[index / 2];
+            return new { itemIndex = index, givenAnswer = index % 2 == 0 ? word.Back : word.Front, wasKnown = (bool?)null };
+        }).ToArray();
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers }));
+        Assert.Equal(2 * Words.Length, result.GetProperty("correct").GetInt32());
+        // Each hit pays by the form of its card: four choices at 1, four written words at 3 - not eight at the run's
+        // typed rate (24). Red when the submit pays every hit by the run's form.
+        Assert.Equal(Words.Length * 1 + Words.Length * 3, result.GetProperty("coinsEarned").GetInt32());
     }
 
     [Fact]

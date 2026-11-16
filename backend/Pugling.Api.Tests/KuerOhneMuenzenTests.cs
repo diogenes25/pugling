@@ -28,7 +28,7 @@ public class KuerOhneMuenzenTests(PuglingWebAppFactory factory) : IClassFixture<
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, givenAnswer = "hallo" })).Content.ReadFromJsonAsync<JsonElement>();
+            new { itemIndex = 0, givenAnswer = "hello" })).Content.ReadFromJsonAsync<JsonElement>();
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();

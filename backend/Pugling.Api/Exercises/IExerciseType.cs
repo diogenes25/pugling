@@ -86,6 +86,19 @@ public interface IExerciseType
     int CardStage(int targetStage, int box);
 
     /// <summary>
+    /// The highest stage this one card may be asked at, given the <paramref name="stage"/> its path chose (B-597). Applied
+    /// after every other stage rule - ladder, calendar, test, bonus, preview - so no path asks a card above it. Default:
+    /// the stage itself.
+    /// </summary>
+    int CardCeiling(ContentItem item, int stage);
+
+    /// <summary>
+    /// The card as it is asked at <paramref name="stage"/> (B-597): the one form display and grading both use, so what
+    /// the child is shown and what the server accepts cannot part. Default: the card itself.
+    /// </summary>
+    ContentItem CardForStage(ContentItem item, int stage);
+
+    /// <summary>
     /// The options offered for the task, or <c>null</c> if the type/stage has none. Takes
     /// <paramref name="configJson"/> like <see cref="Check"/> does, because a pool need not be derivable from
     /// the atoms: vocabulary builds distractors out of the sibling items, the cloze reads the word bank the

@@ -42,7 +42,7 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // the exercise's default question form as picked by its author, otherwise the representative stage.
         var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
         var typed = type.IsTypedStage(stage);
-        var presented = items.Select(i => Present(exercise.ConfigJson, items, i, type, stage, typed, exercise.Id)).ToList();
+        var presented = items.Select(i => Present(exercise.ConfigJson, items, i, type, stage, exercise.Id)).ToList();
         return new PreviewData(exercise.Type, stage, typed, type.StageOptions, presented);
     }
 
@@ -58,14 +58,15 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
 
         if (registry.ByKey(exercise.Type) is not { } type) return null;
         // The same stage as when building (otherwise "typed" drifts apart here and in the client).
-        var typed = type.IsTypedStage(stageOverride ?? exercise.DefaultStage ?? type.PreviewStage);
+        var stage = stageOverride ?? exercise.DefaultStage ?? type.PreviewStage;
+        var typed = type.IsTypedStage(stage);
 
         // A set-graded exercise (an unordered list) is graded the way the child's exam grades it: each answer
         // credits the first entry still open, in the order the answers were given. Without this the supervisor's
         // trial run would contradict the exam - and the trial run is what they assign the exercise on.
         var outcomes = typed && type.GradesAsSet(exercise.ConfigJson)
             ? GradeAsSet(items, answers)
-            : GradeByIndex(items, answers, typed);
+            : GradeByIndex(type, items, answers, stage);
 
         var correctCount = outcomes.Count(o => o.WasCorrect);
         var percent = outcomes.Count == 0 ? 0 : (int)Math.Round(100.0 * correctCount / outcomes.Count);
@@ -74,19 +75,25 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
 
     // One outcome per atom, addressed by index. The last mention per index wins (robust against duplicate
     // indexes), as in ExerciseAnswerChecker.
-    private List<PreviewItemOutcome> GradeByIndex(IReadOnlyList<ContentItem> items,
-        IReadOnlyList<PreviewAnswer> answers, bool typed)
+    // Each card at its own stage (B-597): the run's stage, capped by the card's ceiling, and the card turned the way that
+    // stage asks it - the same rule the child's practice and test grade by, and the form Present showed it in.
+    private List<PreviewItemOutcome> GradeByIndex(IExerciseType type, IReadOnlyList<ContentItem> items,
+        IReadOnlyList<PreviewAnswer> answers, int stage)
     {
         var byIndex = new Dictionary<int, PreviewAnswer>();
         foreach (var a in answers) byIndex[a.ItemIndex] = a;
 
-        return items.Select(item =>
+        return items.Select(raw =>
         {
+            var cardStage = type.CardCeiling(raw, stage);
+            var staged = PositionPlayService.AtStage(type, items, cardStage);
+            var item = type.CardForStage(raw, cardStage);
+            var typed = type.IsTypedStage(cardStage);
             byIndex.TryGetValue(item.Index, out var answer);
             var correct = typed
                 ? grader.Matches(answer?.GivenAnswer, item)
                 : answer?.WasKnown ?? false;
-            var misspelled = typed && !correct && grader.IsMisspelled(answer?.GivenAnswer, item, items);
+            var misspelled = typed && !correct && grader.IsMisspelled(answer?.GivenAnswer, item, staged);
             return new PreviewItemOutcome(item.Index, item.Prompt, item.Answer, answer?.GivenAnswer, correct, misspelled, item.GapIndex);
         }).ToList();
     }
@@ -114,15 +121,19 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
     // "mirrors PositionTestsController.ToItem", and the copy fell behind the moment the original learned to
     // withhold the prompt: the supervisor then saw the word AND heard the recording on the listening stage,
     // so the one stage where the audio carries the whole task was the one they could not check.
-    private static PreviewItem Present(string configJson, IReadOnlyList<ContentItem> items, ContentItem item,
-        IExerciseType type, int stage, bool typed, int seed)
+    private static PreviewItem Present(string configJson, IReadOnlyList<ContentItem> items, ContentItem raw,
+        IExerciseType type, int stage, int seed)
     {
+        // B-597: the card at its own ceiling and in the form that stage asks it - what the child gets.
+        var cardStage = type.CardCeiling(raw, stage);
+        var staged = PositionPlayService.AtStage(type, items, cardStage);
+        var item = type.CardForStage(raw, cardStage);
         // The exercise id as shuffle seed (B-05): there is no session, and the same preview should not reshuffle.
-        var f = PositionPlayService.CardFacets(configJson, items, item, type, stage, typed, seed);
+        var f = PositionPlayService.CardFacets(configJson, staged, item, type, cardStage, type.IsTypedStage(cardStage), seed);
         // No image in preview mode: the selection hangs on a child's profile, but here the supervisor tries
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
             f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding, f.AnswerPattern, f.LetterTiles,
-            f.CueBox);
+            f.CueBox, f.DictationSpokenAnswer, f.DictationLang);
     }
 }

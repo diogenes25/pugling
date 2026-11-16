@@ -134,7 +134,7 @@ public class ExerciseItemsAndProgressTests(PuglingWebAppFactory factory) : IClas
         var scoped = $"/api/v1/student/children/1/vocabulary-progress?exerciseId={exerciseId}";
 
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
-        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "Apfel");    // correct
+        await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "apple");    // correct (B-597: the learnt word)
         await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "falsch");   // wrong
 
         // The supervisor view (narrowed to this exercise): the progress hangs on the child, weakest first.

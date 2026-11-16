@@ -304,15 +304,14 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     [Fact]
-    public async Task Hoerstufe_RueckwaertsRichtung_GibtKeineAudioquellePreis()
+    public async Task Hoerstufe_RueckwaertsRichtung_GibtDieAufnahmeNurImDiktat()
     {
         var father = await TestApi.AdultAsync(factory);
         var (id, key) = await TestApi.CreateStoreVocabAsync(father, "hello", "hallo");
         (await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}",
             new { pronunciationAudioUrl = "https://example.test/hello.mp3" })).EnsureSuccessStatusCode();
 
-        // A reverse exercise: after the swap the (spoken) word is the solution. The listening stage must then
-        // NOT include the audio source, otherwise it would speak the answer.
+        // A reverse exercise: after the swap the (spoken) word is the solution. Only the dictation may speak it.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = "Audio-Ref" }));
         var seriesId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             "/api/v1/creator/textbook-series", new { name = TestApi.UniqueName("Audio-Ref-Reihe"), subjectId }));
@@ -327,10 +326,16 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 config = new { direction = "back-to-front", refs = new[] { new { vocabularyId = id } } },
             }));
 
-        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=5");
-        Assert.Equal(5, data.GetProperty("stage").GetInt32());
-        var item = data.GetProperty("items").EnumerateArray().First();
-        Assert.Equal(JsonValueKind.Null, item.GetProperty("audioUrl").ValueKind);
+        // B-597: on the dictation the spoken learnt word IS the task - the recording comes, and the word is not shown.
+        var dictation = (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=5"))
+            .GetProperty("items").EnumerateArray().First();
+        Assert.Equal("https://example.test/hello.mp3", dictation.GetProperty("audioUrl").GetString());
+        Assert.Equal(JsonValueKind.Null, dictation.GetProperty("prompt").ValueKind);
+
+        // Everywhere else the recording would speak the answer of the reversed card - the choice carries none.
+        var choice = (await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=6"))
+            .GetProperty("items").EnumerateArray().First();
+        Assert.Equal(JsonValueKind.Null, choice.GetProperty("audioUrl").ValueKind);
     }
 
     // ───────────────────────────────────────────── The exercise brief must not carry the solution (B-80)

@@ -11,7 +11,8 @@ import { TaskAnnouncer } from "../components/ClozePrompt";
 import { ErgebnisZeile } from "./ErgebnisZeile";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { useSohn } from "./SohnApp";
-import { aufgabenform } from "./aufgabenform";
+import { aufgabenform, istDiktat } from "./aufgabenform";
+import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
 import type { ExtraAnswer, ExtraExercise, ExtraForm, ExtraRunResponse, ExtraRunResult, ExtraTrainingOverview } from "../lib/types";
@@ -226,9 +227,13 @@ export function SohnBonusRun() {
   }
 
   const card = run && !result && !error && cursor < run.cards.length ? run.cards[cursor] : null;
+  // B-597: Ob das Gerät die aktuelle Karte diktieren kann – vor view(), das die Form erst nach den frühen Ausstiegen baut.
+  const diktatStimme = useVoiceFor(card?.dictationLang ?? "");
   return (
     <>
-      <TaskAnnouncer text={card?.prompt} gapIndex={card?.gapIndex} />
+      {/* B-597: beim Diktat sagt die Ansage die Aufgabe, nicht das deutsche Wort, das die Karte verbirgt. */}
+      <TaskAnnouncer text={card && istDiktat(card, diktatStimme !== null) ? t("lektion.listen") : card?.prompt}
+        gapIndex={card?.gapIndex} />
       {view()}
     </>
   );
@@ -276,7 +281,7 @@ export function SohnBonusRun() {
         <button type="button" className="btn ghost" onClick={() => nav("/sohn/bonus")}>{t("bonus.back")}</button></div>
     );
 
-    const form = aufgabenform(card);
+    const form = aufgabenform(card, diktatStimme !== null);
     const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
     return (
       <LektionsRahmen

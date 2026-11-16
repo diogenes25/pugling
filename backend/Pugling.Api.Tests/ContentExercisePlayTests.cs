@@ -138,11 +138,13 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
     }
 
     /// <summary>
-    /// The safety net behind E3: without a recording the prompt stays, or the listening stage would hand out
-    /// a card that is blank on both counts – no word to read and nothing to hear.
+    /// The safety net behind E3, turned into the dictation by B-597: without a recording the device reads the learnt word
+    /// (<c>dictationSpokenAnswer</c> in the word's language), and the prompt left on the card is the German word - never
+    /// the word to write - for the device without a voice, which plays the card as free text. Red if the dictation pair is
+    /// missing (the card would be unplayable), or if the prompt is the learnt word (the dictation would show its answer).
     /// </summary>
     [Fact]
-    public async Task Hoerstufe_OhneAufnahme_BehaeltDenPrompt()
+    public async Task Hoerstufe_OhneAufnahme_DiktiertUeberDasGeraet_UndZeigtNurDasDeutscheWort()
     {
         var father = await TestApi.AdultAsync(_factory);
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("silent", "still"));
@@ -152,7 +154,11 @@ public class ContentExercisePlayTests(PuglingWebAppFactory factory) : IClassFixt
         var card = (await CardsAsync(child, planId, positionId)).EnumerateArray().Single();
 
         JsonAssert.Null(card, "audioUrl");
-        Assert.Equal("silent", card.GetProperty("prompt").GetString());
+        Assert.Equal("still", card.GetProperty("prompt").GetString());
+        Assert.Equal("silent", card.GetProperty("dictationSpokenAnswer").GetString());
+        Assert.Equal("en", card.GetProperty("dictationLang").GetString());
+        // The read-aloud button speaks the prompt; on the dictation it would speak nothing useful, and the prompt is German.
+        JsonAssert.Null(card, "speechLang");
     }
 
     /// <summary>

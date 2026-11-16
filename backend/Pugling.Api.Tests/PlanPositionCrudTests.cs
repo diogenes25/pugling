@@ -78,7 +78,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, givenAnswer = "Frühling" })).Content.ReadFromJsonAsync<JsonElement>();
+            new { itemIndex = 0, givenAnswer = "spring" })).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
     }
 
@@ -102,7 +102,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId2}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
-        await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "Winter" });
+        await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "winter" });
 
         var del2 = await father.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{posId2}");
         Assert.Equal(HttpStatusCode.Conflict, del2.StatusCode);

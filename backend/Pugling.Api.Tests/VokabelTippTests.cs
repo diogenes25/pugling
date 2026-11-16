@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -28,7 +29,10 @@ public class VokabelTippTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 rewardPoints = 10,
                 config = new { direction, refs = new[] { new { vocabularyId = id } } },
             }));
-        var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=4");
+        // The choice: there the German side is the answer the article hints at. A writing stage asks the learnt word and
+        // drops the German article with the turn (B-597).
+        var data = await father.GetFromJsonAsync<JsonElement>(
+            $"/api/v1/creator/exercises/{exerciseId}/preview?stage={(int)TestStage.MultipleChoice}");
         var hint = data.GetProperty("items").EnumerateArray().First().GetProperty("hint");
         return hint.ValueKind == JsonValueKind.Null ? null : hint.GetString();
     }

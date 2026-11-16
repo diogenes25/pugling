@@ -20,8 +20,8 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },
-            new { itemIndex = 1, givenAnswer = "tschüss" },
+            new { itemIndex = 0, givenAnswer = "hello" },
+            new { itemIndex = 1, givenAnswer = "goodbye" },
         };
         (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers })).EnsureSuccessStatusCode();
     }
@@ -294,8 +294,8 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hallo" },
-            new { itemIndex = 1, givenAnswer = "tschüss" },
+            new { itemIndex = 0, givenAnswer = "hello" },
+            new { itemIndex = 1, givenAnswer = "goodbye" },
         };
         (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers })).EnsureSuccessStatusCode();
 

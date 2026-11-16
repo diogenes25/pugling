@@ -114,11 +114,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (pos.Exercise is null || pos.StudyPlan is null || play.TypeOf(pos.Exercise) is not { } type) return order;
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, day, type);
         var introduced = await play.IntroducedCardsAsync(pos.Id, ct);
+        var items = await play.ItemsOfAsync(pos, ct: ct);
         return [.. order.OrderBy(i =>
         {
             var card = CardOf(introduced, i);
             if (PositionPlayService.IsIntroduction(type, dayStage, mode, card is not null)) return 0;
-            var stage = PositionPlayService.CardStage(type, pos, dayStage, mode, card, day);
+            // The order comes from the same item list; an index beyond it is skipped by the cursor anyway.
+            if (i >= items.Count) return 2;
+            var stage = PositionPlayService.CardStage(type, pos, dayStage, mode, card, day, items[i]);
             return IsSelfClaimRung(type, dayStage, stage) ? 1 : 2;
         })];
     }
@@ -189,11 +192,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int index)
     {
         var exercise = pos.Exercise!;
-        var item = items[index];
         var card = CardOf(introduced, index);
         var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode, card is not null);
-        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, card, session.Day);
-        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage,
+        var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, card, session.Day, items[index]);
+        // B-597: the card in the form its stage asks it - the same form Review grades.
+        var staged = PositionPlayService.AtStage(type, items, stage);
+        var item = staged[index];
+        var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), staged, item, type, stage,
             type.IsTypedStage(stage), session.Id);
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
@@ -201,7 +206,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             introduction, f.CueBox,
             // B-252: never on the listening stage - there hearing the word IS the task, and its text stands in only when
             // no recording came.
-            type.AudioReplacesPrompt(stage) ? null : item.SpeechLang);
+            type.AudioReplacesPrompt(stage) ? null : item.SpeechLang,
+            f.DictationSpokenAnswer, f.DictationLang);
     }
 
     /// <summary>
@@ -319,8 +325,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
         var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, itemIndex),
-            session.Day);
-        if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items, item, type, stage, type.IsTypedStage(stage), seed: 0).ImageUrl is null)
+            session.Day, item);
+        if (PositionPlayService.CardFacets(PositionPlayService.ConfigOf(pos.Exercise), items,
+                type.CardForStage(item, stage), type, stage, type.IsTypedStage(stage), seed: 0).ImageUrl is null)
             return this.ProblemWithCode(ApiErrors.MediaNotOnCard, "This card does not show an image.");
 
         var picked = await selector.ReshuffleForItemAsync(pos.StudyPlan.ChildId, itemId, vocabId, ct: ct);
@@ -396,7 +403,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // content the day has no room for, and the dose would be a suggestion.
         if (play.DailyDose(pos) > 0 && !session.Order.Contains(dto.ItemIndex))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content is not part of this practice round.");
-        var item = items[dto.ItemIndex];
 
         // Enforce the stage server-side (not selectable by the client) and grade type-agnostically.
         if (play.TypeOf(pos.Exercise) is not { } type)
@@ -406,7 +412,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // introduction earns nothing, a choice rung is checked as a choice - so the client cannot pick its form.
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
         var stage = PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
-            session.Day);
+            session.Day, items[dto.ItemIndex]);
+        // B-597: graded in the form the card was shown in - on a writing stage the learnt word, never the German one.
+        var staged = PositionPlayService.AtStage(type, items, stage);
+        var item = staged[dto.ItemIndex];
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
         var selfClaimRung = IsSelfClaimRung(type, dayStage, stage);
@@ -420,7 +429,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (setMode)
         {
             var named = await NamedInRoundAsync(positionId, session.Day, ct);
-            creditedIndex = PositionPlayService.MatchOpenEntry(items,
+            creditedIndex = PositionPlayService.MatchOpenEntry(staged,
                 session.Order.Where(i => !named.Contains(i)), dto.GivenAnswer, grader);
         }
 
@@ -430,7 +439,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // B-422: a wrong typed answer that is the right word misspelled is named, not forgiven - the review stays wrong,
         // as in the test (B-524). Set mode has no asked atom to measure against; the siblings keep a neighbouring word
         // from passing as a slip. Only on a miss: the distance runs over every atom of the exercise.
-        var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, items);
+        var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, staged);
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
         var prog = creditedIndex is { } credited ? await play.ProgressForAsync(positionId, credited, ct) : null;
@@ -513,7 +522,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A review without a verdict (B-433) leaves no history entry: the introduction it answers was recorded already.
         if (creditedIndex is { } recorded && !noVerdict)
         {
-            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, items[recorded], wasCorrect && !displayOnly,
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, staged[recorded], wasCorrect && !displayOnly,
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
         }
 
@@ -587,9 +596,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
         // the feedback stays empty instead of pointing at the card's own entry, which would both be arbitrary
         // and give away an entry that is still to be asked for.
-        return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? items[shown].Answer : null,
+        return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? staged[shown].Answer : null,
             awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
-            creditedIndex is { } explained ? items[explained].Explanation : null);
+            creditedIndex is { } explained ? staged[explained].Explanation : null);
     }
 
     /// <summary>

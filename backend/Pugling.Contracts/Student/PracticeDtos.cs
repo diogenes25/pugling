@@ -81,6 +81,12 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <c>SpeechLang</c> (B-252) is the language the <c>Prompt</c> may be read aloud in by the device - only for a vocabulary
 /// card in reading direction whose word has no recording, never on the listening stage. Only the prompt is ever spoken,
 /// so it gives away nothing the card does not already show; <c>null</c> = no read-aloud button.
+///
+/// <c>DictationSpokenAnswer</c>/<c>DictationLang</c> (B-597) are set only on the dictation stage of a vocabulary card
+/// without a recording: the learnt word the device reads aloud, and the language to read it in. <b>This is the answer,
+/// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
+/// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
+/// plays the card as free text from the German <c>Prompt</c>.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -88,7 +94,7 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     bool AnyOrder = false, IReadOnlyList<string>? RevealAlternatives = null,
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
-    string? SpeechLang = null);
+    string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

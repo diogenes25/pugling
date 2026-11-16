@@ -21,6 +21,10 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
     private static (string Front, string Back)[] Words(int count) =>
         [.. Enumerable.Range(0, count).Select(i => ($"mot {i}", $"Wort {i}"))];
 
+    // The right answer to word i at a stage: the choice asks the German side, every writing stage the learnt word (B-597).
+    private static string RightAnswer(int stage, int index) =>
+        stage == (int)TestStage.MultipleChoice ? $"Wort {index}" : $"mot {index}";
+
     private sealed record Setup(HttpClient Father, int ChildId, int PlanId, int PositionId);
 
     private async Task<Setup> SetupAsync(int poolSize, int newItemsPerDay, int durationDays = 28)
@@ -77,7 +81,7 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             var review = card.GetProperty("reveal").ValueKind == JsonValueKind.String
                 ? TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index, wasKnown: right)
                 : TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index,
-                    givenAnswer: right ? $"Wort {index}" : "faux");
+                    givenAnswer: right ? RightAnswer(card.GetProperty("stage").GetInt32(), index) : "faux");
             (await review).EnsureSuccessStatusCode();
         }
         return (introduced, asked);
@@ -95,7 +99,8 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         {
             var next = await child.GetFromJsonAsync<JsonElement>($"{TestBase(s)}/{attemptId}/next");
             var index = next.GetProperty("item").GetProperty("itemIndex").GetInt32();
-            (await child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = index, givenAnswer = $"Wort {index}" }))
+            var answer = RightAnswer(next.GetProperty("item").GetProperty("stage").GetInt32(), index);
+            (await child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/answer", new { itemIndex = index, givenAnswer = answer }))
                 .EnsureSuccessStatusCode();
         }
         var result = await (await child.PostAsJsonAsync($"{TestBase(s)}/{attemptId}/submit", new { }))

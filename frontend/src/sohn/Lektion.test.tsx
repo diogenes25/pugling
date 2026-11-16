@@ -135,7 +135,7 @@ describe("Antwortfläche, getippt", () => {
 
 describe("Aufgabe", () => {
   const zeige = (k: LektionsKarte, extra: object = {}) =>
-    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k, ...extra })} skin={DEFAULT_SKIN} />);
+    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k, ...extra }, false)} skin={DEFAULT_SKIN} />);
 
   it("steht als Wort in der Sprechblase am Maskottchen", () => {
     // Rot, wenn die Vokabelkarte ihr Maskottchen verlöre.
@@ -249,7 +249,7 @@ describe("Aufgabe – Vorlesen (B-252)", () => {
     return speak;
   };
   const zeige = (k: LektionsKarte) =>
-    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k })} skin={DEFAULT_SKIN} />);
+    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k }, false)} skin={DEFAULT_SKIN} />);
 
   // AK 5 und 7. Rot, wenn der Knopf fehlt, wenn er etwas anderes als den Prompt spricht (etwa die Lösung) oder ohne
   // Sprache, oder wenn sein Name nicht sichtbar ist.
@@ -301,5 +301,43 @@ describe("Aufgabe – Vorlesen (B-252)", () => {
     vi.stubGlobal("speechSynthesis", undefined);
     zeige(karte({ prompt: "la gare", speechLang: "fr" }));
     expect(screen.queryByRole("button", { name: /Vorlesen/ })).toBeNull();
+  });
+});
+
+/*
+ * B-597 – das Diktat ohne Aufnahme. Der Server schickt das deutsche Wort als Prompt (für Geräte ohne Stimme) und das
+ * Fremdwort zum Vorlesen; ob diktiert wird, entscheidet die Stimme des Geräts (`form.diktat`).
+ */
+describe("Aufgabe – Diktat (B-597)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  class Aeusserung { lang = ""; voice: unknown = null; constructor(public text: string) {} }
+  const diktatKarte = karte({ prompt: "still", dictationSpokenAnswer: "silent", dictationLang: "en" });
+
+  // Rot, wenn das deutsche Wort beim Diktat stehen bliebe (eine Übersetzung mit Hörhilfe), wenn der Knopf etwas anderes
+  // als das Fremdwort spräche, oder wenn er nicht in der Sprache des Servers spräche.
+  it("zeigt keinen Text und liest auf Antippen das Fremdwort vor", () => {
+    const speak = vi.fn();
+    vi.stubGlobal("SpeechSynthesisUtterance", Aeusserung);
+    vi.stubGlobal("speechSynthesis", {
+      getVoices: () => [{ lang: "en-GB", name: "Daniel" }], speak, cancel: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    });
+    render(<Aufgabe karte={diktatKarte} form={aufgabenform({ reveal: null, ...diktatKarte }, true)} skin={DEFAULT_SKIN} />);
+
+    expect(screen.queryByText("still")).toBeNull();
+    expect(screen.queryByText("silent")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "🔊 Wort anhören" }));
+    const gesagt = speak.mock.calls[0][0] as Aeusserung;
+    expect([gesagt.text, gesagt.lang]).toEqual(["silent", "en"]);
+  });
+
+  // Rot, wenn die Karte ohne Stimme leer bliebe (weder Wort noch Knopf) oder dann das Fremdwort zeigte.
+  it("fällt ohne Stimme auf Freitext mit dem deutschen Wort zurück", () => {
+    vi.stubGlobal("speechSynthesis", undefined);
+    render(<Aufgabe karte={diktatKarte} form={aufgabenform({ reveal: null, ...diktatKarte }, false)} skin={DEFAULT_SKIN} />);
+
+    expect(screen.getByText("still")).toBeTruthy();
+    expect(screen.queryByText("silent")).toBeNull();
+    expect(screen.queryByRole("button", { name: "🔊 Wort anhören" })).toBeNull();
   });
 });

@@ -92,11 +92,12 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   const counter = await setUp(request, page, "T", false);
 
   // ---------- Runde 2 fragt ab ----------
-  await expect(page.getByText(WORDS[0][0], { exact: true })).toBeVisible();
-  await expect(page.getByText(`→ ${WORDS[0][1]}`)).toHaveCount(0);
+  // B-597: Freitext zeigt das deutsche Wort und fragt das Fremdwort ab.
+  await expect(page.getByText(WORDS[0][1], { exact: true })).toBeVisible();
+  await expect(page.getByText(`→ ${WORDS[0][0]}`)).toHaveCount(0);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
   // B-421 (NP-25): ohne Artikel getippt – das Wort zählt. Seit B-526 zeigt das grüne Blatt den Treffer, bis „Weiter“.
-  await answer.fill("Stadt");
+  await answer.fill(WORDS[0][0].replace(/^la /, ""));
   await answer.press("Enter");
   await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
   await expect(page.getByRole("button", { name: "Weiter →" })).toBeFocused();
@@ -104,13 +105,13 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
 
   // ---------- B-420: ein Fehler hält die Karte an ----------
   await expect(counter).toHaveText("Karte 2 / 3");
-  await answer.fill("die Strasse");
+  await answer.fill("la ru");
   await answer.press("Enter");
   // B-439: im roten Blatt, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only), die Playwright
   // ebenfalls als sichtbar zählt.
   const held = page.locator(".lektion-blatt.falsch");
-  await expect(held.getByText("Lösung: die Straße", { exact: true })).toBeVisible();
-  await expect(held.locator("s", { hasText: "die Strasse" })).toBeVisible();
+  await expect(held.getByText(`Lösung: ${WORDS[1][0]}`, { exact: true })).toBeVisible();
+  await expect(held.locator("s", { hasText: "la ru" })).toBeVisible();
   // Die nächste Karte kommt NICHT von selbst – auch nach der Zeit, die der alte Toast stand (1,6 s).
   await page.waitForTimeout(2000);
   await expect(counter).toHaveText("Karte 2 / 3");
@@ -120,7 +121,7 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await expect(counter).toHaveText("Karte 3 / 3");
   // Und zurück ins Antwortfeld: das Kind tippt weiter, ohne erst hineinzuklicken (Review-Fund).
   await expect(answer).toBeFocused();
-  await answer.fill(WORDS[2][1]);
+  await answer.fill(WORDS[2][0]);
   await answer.press("Enter");
   await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
   await page.keyboard.press("Enter");

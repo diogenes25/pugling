@@ -321,9 +321,10 @@ export const FIELD_HELP = {
   },
   translationAlternatives: {
     title: "Auch richtig",
-    text: "Weitere Wörter, die für dieselbe Vokabel als richtig zählen – „huge“ etwa mit „riesig“ und "
-      + "„sehr groß“. Ohne sie wird die zweite richtige Antwort als Fehler gewertet, und das kostet über "
-      + "die Zielerreichung Münzen. Sie gelten nur in dieser Richtung (Wort → Übersetzung). Lege dafür "
+    text: "Weitere deutsche Wörter, die für dieselbe Vokabel als richtig zählen – „huge“ etwa mit „riesig“ und "
+      + "„sehr groß“. Sie zählen, wo das Kind die Bedeutung erkennt (Auswahl, Selbsteinschätzung): dort wird die "
+      + "zweite richtige Bedeutung nicht als Fehler gewertet und nie als falsche Option angeboten. Geschrieben "
+      + "wird immer das Fremdwort, dort spielen sie keine Rolle. Lege dafür "
       + "keine zweite Zeile mit demselben Wort an: zwei Zeilen heißen „zwei Bedeutungen“ (bank → Bank, "
       + "bank → Ufer), und die dürfen sich gerade nicht gegenseitig gelten lassen.",
   },

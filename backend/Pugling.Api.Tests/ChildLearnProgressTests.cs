@@ -107,7 +107,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
 
         // Practice ex1 only: one correct, one wrong → 2 of 4 items in total introduced.
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, pos1);
-        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Kurzschwanzkänguru"); // correct
+        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "quokka"); // correct (B-597: the learnt word is written)
         await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "daneben");             // wrong
 
         var basePath = "/api/v1/student/children/1/learn";
@@ -219,8 +219,8 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
         var child = await TestApi.ChildAsync(_factory);
 
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, pos1);
-        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "Wombat");
-        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "Kakapo");
+        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 0, givenAnswer: "wombat");
+        await TestApi.PositionReviewAsync(child, planId, pos1, sessionId, 1, givenAnswer: "kakapo");
 
         var url = $"/api/v1/student/children/1/learn/subjects/{subjectId}/series-units/{seriesUnitId}/vocabulary";
 

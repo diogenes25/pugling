@@ -32,12 +32,13 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var cards = await (await child.GetAsync($"{baseUrl}/{sessionId}/cards"))
             .Content.ReadFromJsonAsync<List<JsonElement>>();
         Assert.Equal(2, cards!.Count);
-        Assert.Equal("hello", cards[0].GetProperty("prompt").GetString());
+        // B-597: free text shows the German word and expects the learnt one.
+        Assert.Equal("hallo", cards[0].GetProperty("prompt").GetString());
         Assert.Equal(JsonValueKind.Null, cards[0].GetProperty("reveal").ValueKind);
 
         // A correct answer on item 0 → graded
         var review = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, givenAnswer = "hallo" });
+            new { itemIndex = 0, givenAnswer = "hello" });
         var outcome = await review.Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
         Assert.True(outcome.GetProperty("awarded").GetInt32() > 0);
@@ -95,9 +96,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
     public async Task LetterBoxes_MehrteiligeLoesung_TraegtDieMaskeMitFestenTrennzeichen()
     {
         var father = await TestApi.AdultAsync(_factory);
-        // Front/back swapped on purpose: direction is front-to-back, and the ANSWER (the typed side) is the
-        // one that needs a space to test the mask - "to grow up" as a translation, not the prompt.
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
+        // The learnt word is the typed side on letter boxes (B-597), and it is the one that needs a space to test the mask.
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("to grow up", "aufwachsen"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.LetterBoxes);
         var child = await TestApi.ChildAsync(_factory);
         var karte = await ErsteKarteAsync(child, planId, positionId);
@@ -265,12 +265,12 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
 
         // The first grading: 200 + a result
-        var first = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
+        var first = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hello" });
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
         // Grading the same card again on the same day: only recorded, no further points (anti-farming).
         // The cursor moves on (200), but no points flow.
-        var second = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hallo" });
+        var second = await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "hello" });
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
         var secondOutcome = await second.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, secondOutcome.GetProperty("awarded").GetInt32());
@@ -345,7 +345,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         async Task<int> LeftAsync() => (await child.GetFromJsonAsync<JsonElement>(sessionUrl)).GetProperty("testAttemptsLeft").GetInt32();
         async Task SubmitAsync(int attemptId) => (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
         })).EnsureSuccessStatusCode();
 
         Assert.Equal(2, await LeftAsync());
@@ -384,7 +384,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
             var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
             (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
             {
-                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
             })).EnsureSuccessStatusCode();
         }
 
@@ -411,7 +411,7 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
             var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
             (await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new
             {
-                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
             })).EnsureSuccessStatusCode();
         }
         var both = DualRoleClient(adultId: 1, childId: 1);

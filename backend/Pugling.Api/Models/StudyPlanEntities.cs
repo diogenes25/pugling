@@ -44,7 +44,7 @@ public enum TestStage
     LetterBoxes = 3,
     /// <summary>Type the translation freely.</summary>
     FreeText = 4,
-    /// <summary>The word is read out loud -> type the translation freely.</summary>
+    /// <summary>Dictation (B-597): the learnt word is read out loud -> type that word.</summary>
     Audio = 5,
     /// <summary>Choice from several options (one correct, the rest distractors from the exercise).</summary>
     MultipleChoice = 6,

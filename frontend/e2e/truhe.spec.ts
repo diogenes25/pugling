@@ -54,7 +54,8 @@ test("Tagesziel geschafft: das Kind öffnet die Truhe auf dem Pfad, die Münzen 
   const tests = `/api/v1/student/study-plans/${planId}/positions/${positionId}/tests`;
   const attemptId = await postId(request, tests, kind, {}, "attemptId");
   const submit = await request.post(`${tests}/${attemptId}/submit`, {
-    headers: kind, data: { answers: WORDS.map(([, back], itemIndex) => ({ itemIndex, givenAnswer: back })) },
+    // B-597: Freitext fragt das Fremdwort ab, die Vorderseite.
+    headers: kind, data: { answers: WORDS.map(([front], itemIndex) => ({ itemIndex, givenAnswer: front })) },
   });
   expect(submit.ok(), await submit.text()).toBeTruthy();
 

@@ -27,12 +27,13 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var cards = await (await child.GetAsync($"{baseUrl}/{sessionId}/cards"))
             .Content.ReadFromJsonAsync<List<JsonElement>>();
         Assert.Equal(2, cards!.Count);
-        Assert.Equal("hello", cards[0].GetProperty("prompt").GetString());
+        // B-597: free text shows the German word and expects the learnt one.
+        Assert.Equal("hallo", cards[0].GetProperty("prompt").GetString());
 
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, givenAnswer = "hallo" })).Content.ReadFromJsonAsync<JsonElement>();
+            new { itemIndex = 0, givenAnswer = "hello" })).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
-        Assert.Equal("hallo", outcome.GetProperty("expected").GetString());
+        Assert.Equal("hello", outcome.GetProperty("expected").GetString());
     }
 
     [Fact]
@@ -45,13 +46,13 @@ public class PositionVocabRefTests(PuglingWebAppFactory factory) : IClassFixture
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/practice-sessions";
 
-        // A central correction of the translation in the store …
-        await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { translation = "Mieze" });
+        // A central correction of the word in the store (the side free text asks, B-597) …
+        await father.PatchAsJsonAsync($"/api/v1/creator/vocabulary/{id}", new { word = "kitty" });
 
         // … shows through in the referencing exercise at once: the new solution is authoritative.
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         var outcome = await (await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review",
-            new { itemIndex = 0, givenAnswer = "Mieze" })).Content.ReadFromJsonAsync<JsonElement>();
+            new { itemIndex = 0, givenAnswer = "kitty" })).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(outcome, "wasCorrect");
     }
 }

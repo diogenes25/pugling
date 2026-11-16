@@ -9,7 +9,8 @@ import { Mascot } from "../components/Mascot";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { ErgebnisZeile } from "./ErgebnisZeile";
 import { RevealAlternatives } from "../components/RevealAlternatives";
-import { aufgabenform } from "./aufgabenform";
+import { aufgabenform, istDiktat } from "./aufgabenform";
+import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
@@ -51,6 +52,8 @@ export function SohnTest() {
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [item, setItem] = useState<TestItem | null>(null);
+  // B-597: Ob das Gerät die aktuelle Karte diktieren kann – hier oben, weil die Form erst nach den frühen Ausstiegen entsteht.
+  const diktatStimme = useVoiceFor(item?.dictationLang ?? "");
   // Der Name der Stufe, wie die letzte Karte ihn trug: das Ergebnis selbst kennt weder Typ noch Wortkasten (B-524).
   const [stageName, setStageName] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState("");
@@ -193,7 +196,9 @@ export function SohnTest() {
   const asked = !error && !result ? item : null;
   return (
     <>
-      <TaskAnnouncer text={asked?.prompt} gapIndex={asked?.gapIndex} />
+      {/* B-597: beim Diktat sagt die Ansage die Aufgabe, nicht das deutsche Wort, das die Karte verbirgt. */}
+      <TaskAnnouncer text={asked && istDiktat(asked, diktatStimme !== null) ? t("lektion.listen") : asked?.prompt}
+        gapIndex={asked?.gapIndex} />
       {view()}
     </>
   );
@@ -217,7 +222,7 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   // Getippte Stufe: Server liefert keine aufgedeckte Lösung (reveal === null) → Eingabefeld.
-  const form = aufgabenform(item);
+  const form = aufgabenform(item, diktatStimme !== null);
   const typed = form.antwort !== "selbst" && form.antwort !== "kennenlernen";
   const submitTyped = () => { if (typedAnswer.trim()) answerAndAdvance({ itemIndex: item.itemIndex, givenAnswer: typedAnswer }); };
 

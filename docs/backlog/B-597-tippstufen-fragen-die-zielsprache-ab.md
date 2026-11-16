@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Zielsprache tippen, Tipprichtung, Lernsprache schreiben]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
-wartet_auf: ""
+wartet_auf: "Rollengang Sprint 82"
 ---
 
 # B-597 · Getippt wird immer die Zielsprache
@@ -246,3 +246,114 @@ Story, die auf der Drehung aufsetzt.
 - **2026-11-16** — geschätzt: L, beides, keine Migration, kein Vertragsbruch; Risiko 1 (Diktat verrät die Lösung
   im Datenpaket) braucht vor dem Bau eine Rückfrage beim Vater.
 - **2026-11-16** — Risiko 1 vom Vater hingenommen (Entscheidung 9), `wartet_auf` geleert.
+- **2026-11-16** — in Arbeit (Sprint 82). **Gebaut** an einer Senke: `IExerciseType.CardCeiling` („höchste Stufe der
+  Karte“, Entscheidung 3) und `IExerciseType.CardForStage` („Karte für Stufe“, Entscheidung 2); die gedrehte Form
+  (`ContentItem.Written`) baut der `ExerciseContentResolver`, weil nur er die Sprachen kennt – so verzeiht die gedrehte
+  Karte den Artikel der Lernsprache (B-421) und trennt Bedeutungen (B-462). Die Vorwärtskarte einer `both`-Liste trägt
+  `RecognitionOnly`. Diktat: `Swap` reicht Aufnahme und Sprache als `DictationAudioUrl`/`DictationLang` weiter, die
+  Hörstufe gibt sie heraus; ohne Aufnahme trägt die Karte `DictationSpokenAnswer` (Entscheidung 9, so benannt und am
+  DTO kommentiert) und als Prompt das deutsche Wort für Geräte ohne Stimme.
+- **2026-11-16** — **Aufrufstellen einzeln entschieden** (Auftrag: jede Stelle über `ItemsOfAsync`):
+  - `PositionPracticeController` `IntroductionsFirstAsync` – Stufe mit Obergrenze (sortiert Selbsteinschätzungs-Sprossen
+    richtig); `Cards`/`Next` über `BuildCard` – Stufe mit Obergrenze, Karte und Geschwister über `AtStage`;
+    `ReshuffleImage` – Stufe mit Obergrenze, Bild-Prüfung an der gedrehten Karte (das Bild bleibt beim Drehen, die
+    Stufe entscheidet); `Review` – Stufe mit Obergrenze, Bewertung, Tippfehler-Nachbarn, Mengen-Treffer, Historie und
+    Lösung im Ergebnis über `AtStage`.
+  - `PositionTestsController` `Start` – Zeilenstufe über `TestItemStage` (mit Obergrenze), auch die frei gewählte
+    Stufe des Vaters; `Next` – Frage über `AtStage`; `Answer` und Sammel-`Submit` – Bewertung über `CardForStage` der
+    Zeilenstufe; Ergebnis-Karten über `AtStage` der Zeilenstufe.
+  - `ExtraTrainingService` `BuildRun` – je Karte Obergrenze und Drehung; Bewertung über `ExercisePreviewService.CheckAsync`
+    (dort `GradeByIndex` je Karte); `ContentFingerprint` liest die rohen Karten – unverändert richtig, weil die
+    Drehung aus denselben Zeilen folgt.
+  - `ExercisePreviewService` `BuildAsync`/`Present` und `CheckAsync`/`GradeByIndex` – je Karte; Mengen-Wertung
+    (`GradeAsSet`) unverändert, nur Listen werten als Menge, nie Vokabeln.
+  - `PositionReportService` – rohe Karte (die Richtung der Übung) plus die Kennzeichen `TurnedWhenWritten` und
+    `RecognitionOnly` an `ItemReport` (additiv).
+  - `PositionPlayService.DueItemIndicesAsync`, `PositionProgressService` (`:180`, `:228`, `:400`) – zählen nur Karten
+    (Poolgröße, Ziel), keine Stufe: unverändert.
+- **2026-11-16** — **Folgen am Bestand** (beim Bau sichtbar geworden, keine Entscheidung umgestoßen): 72 Integrationstests
+  und 39 KI-Creator-Tests tippten auf Freitext das deutsche Wort und sind nachgezogen. Der Selbsttest des KI-Creators
+  erwartet jetzt die Vorderseite (`VocabularyStrategy.ExpectedAnswers`). Deutsche Alternativen (B-65), die Artikel-Tipps
+  aus dem Speicher (B-446) und Autor-Tipps einer Zeile gelten jetzt nur noch dort, wo Deutsch die Antwort ist (Auswahl,
+  Selbsteinschätzung); die Tests prüfen sie dort. Die Hör-Stufe einer rückwärts gefragten Karte trägt jetzt die Aufnahme
+  – als Diktat ist sie die Aufgabe (Entscheidung 4), auf jeder anderen Stufe bleibt sie weg
+  (`AntiCheatTests.cs:307`).
+- **2026-11-16** — **Belege je Akzeptanzkriterium und Fall** (Testdatei:Zeile in `backend/Pugling.Api.Tests/`):
+  - AK 1/2, Üben: `SchreibstufeLernspracheTests.cs:102` (Freitext zeigt „gehen“, „gehen“ falsch, die Lernsprache
+    richtig); Artikel der Lernsprache verziehen `ArtikelToleranzTests.cs:47`, `:155`; Bedeutungen der Lernsprache
+    getrennt `PositionTestFlowTests.cs:215` (front-to-back-Fall).
+  - AK 1/2, Test (Einzel- und Sammelantwort, Ergebnis): `SchreibstufeLernspracheTests.cs:120`.
+  - AK 1/2, Bonus: `ExtraTrainingTests.cs:140`. Vorschau: `ExercisePreviewTests.cs:27`, `ArtikelToleranzTests.cs:115`.
+  - AK 1, Schreibstufen (Entscheidung 1): `SchreibstufeLernspracheTests.cs:93` (je Stufe, Auswahl ausdrücklich nicht).
+  - AK 3, Erkennen folgt der Richtung: Auswahl `BeideRichtungenTests.cs:64`, `:182`; Selbsteinschätzung/Vorlesen
+    `VorlesenTests.cs:64`, `:83`; Kennenlernen `PositionPracticeFlowTests.cs:114`.
+  - AK 4, Vorwärtskarte bei `both`: Frist `SchreibstufeLernspracheTests.cs:148`, oberstes Fach (Leiter) `:170`, Test
+    des Kindes und Stufe des Vaters `:186`, Vorschau `:212`, Bonus `ExtraTrainingTests.cs:169`.
+  - AK 5, Diktat: mit Aufnahme ohne Prompt `ContentExercisePlayTests.cs:117`; ohne Aufnahme Fremdwort zum Vorlesen,
+    deutsches Wort für Freitext `ContentExercisePlayTests.cs:147`; Aufnahme nur im Diktat `AntiCheatTests.cs:307`.
+    Frontend: `frontend/src/sohn/Lektion.test.tsx` (Diktat ohne Text / Rückfall ohne Stimme),
+    `frontend/src/sohn/aufgabenform.test.ts` (Diktat nur mit Stimme).
+  - AK 6, Zahl und Indizes unverändert: `BeideRichtungenTests.cs:40` (Indizes 0–7), ohne Umschreib-Skript.
+  - AK 7, Feld „Erkennen“, Hinweis, „Diktat“: `frontend/src/vater/RecognitionField.test.tsx`; Kommentar an
+    `Vocabulary.TargetLanguage`. Bericht: `SchreibstufeLernspracheTests.cs:230`,
+    `frontend/src/vater/PlanPositions.test.ts` (`schreibweise`).
+- **2026-11-16** — **Rote Probe** nach dem letzten Backend-Edit, `.claude/scripts/mutant-probe.py` (Release, weil die
+  E2E-Suite parallel Debug fuhr). Der erste Lauf kollidierte mit dem Test-Tor (paralleler Release-Build, 16 Zeilen
+  „kompiliert nicht“, M23 mit zu enger Erwartung); diese 18 Zeilen sind ohne Störung wiederholt, Grundlinie danach
+  grün. M22 ist eine äquivalente Mutante: Die Vorwärtskarte bleibt auf einer Schreibstufe ohnehin ungedreht, die
+  Bewertung ändert sich nicht – erwartet grün.
+
+| Mutante | Stelle | erwartet | gemessen |
+|---|---|---|---|
+| M1 Drehung weg | `VocabularyExerciseType.cs:100` | red | red |
+| M2 Obergrenze weg | `VocabularyExerciseType.cs:93` | red | red |
+| M3 Diktat keine Schreibstufe | `VocabularyExerciseType.cs:107` | red | red |
+| M4 Diktat liest Kartenaudio | `VocabularyExerciseType.cs:142` | red | red |
+| M5 Üben ohne Obergrenze | `PositionPlayService.cs:162` | red | red |
+| M6 Test ohne Obergrenze | `PositionPlayService.cs:208` | red | red |
+| M7 kein Vorlese-Wort | `PositionPlayService.cs:434` | red | red |
+| M8 keine Erkennungskarte | `ExerciseContentProvider.cs:100` | red | red |
+| M9 Tausch ohne Diktat-Aufnahme | `ExerciseContentProvider.cs:133` | red | red |
+| M10 Tausch ohne Diktat-Sprache | `ExerciseContentProvider.cs:134` | red | red |
+| M11 keine gedrehte Form | `ExerciseContentResolver.cs:122` | red | red |
+| M12 gedrehte Form ohne Artikel/Bedeutungen | `ExerciseContentResolver.cs:122` | red | red |
+| M13 Übungskarte ungedreht | `PositionPracticeController.cs:200` | red | red |
+| M14 Üben wertet ungedreht | `PositionPracticeController.cs:418` | red | red |
+| M15 Vater-Stufe ohne Obergrenze | `PositionTestsController.cs:190` | red | red |
+| M16 Testfrage ungedreht | `PositionTestsController.cs:238` | red | red |
+| M17 Einzelantwort ungedreht | `PositionTestsController.cs:272` | red | red |
+| M18 Sammelantwort ungedreht | `PositionTestsController.cs:396` | red | red |
+| M19 Ergebnis ungedreht | `PositionTestsController.cs:427` | red | red |
+| M20 Bonus ohne Obergrenze | `ExtraTrainingService.cs:409` | red | red |
+| M21 Bonuskarte ungedreht | `ExtraTrainingService.cs:411` | red | red |
+| M22 Vorschau-Wertung ohne Obergrenze | `ExercisePreviewService.cs:88` | green | green |
+| M23 Vorschau-Wertung ungedreht | `ExercisePreviewService.cs:90` | red | red |
+| M24 Vorschau-Karte ungedreht | `ExercisePreviewService.cs:130` | red | red |
+| M25 Vorschau-Karte ohne Obergrenze | `ExercisePreviewService.cs:128` | red | red |
+| M26 Bericht ohne Kennzeichen | `PositionReportService.cs:55` | red | red |
+| M27 KI-Selbsttest erwartet Rückseite | `VocabularyStrategy.cs:130` | red | red |
+| M28 Bonus zahlt den Laufsatz | `ExtraTrainingService.cs:201` | red | red |
+
+- **2026-11-16** — **Reviews.** `pugling-reviewer`: keine Blocker, Release-Build und 1737/1737 grün. Fund 1 (Bonus zahlte bei
+  `both` für jede Auswahl-Karte den Tipp-Satz) behoben: Ein Treffer zahlt nach der Form seiner Karte
+  (`ExtraTrainingService.CardRatesAsync`), belegt `ExtraTrainingTests.cs:169` und M28 oben. Fund 2 (ein vor der
+  Umstellung begonnener Test friert eine Vorwärtskarte auf Freitext ein und fragt sie einmal ungedreht) **bewusst
+  hingenommen**: Anzeige und Bewertung bleiben gleich, kein Betrug, und er betrifft nur Versuche, die beim Deploy offen
+  sind. Aufräum-Funde: doppelter Stufen-Ausdruck in der Vorschau zusammengefasst; die Kartenliste in
+  `IntroductionsFirstAsync` bleibt (zwei Abfragen je Rundenstart), die quadratische `AtStage`-Schleife bei ≤ 50 Karten
+  ebenso. `frontend-reviewer`: keine Blocker; Ansage für Screenreader beim Diktat, Pflicht-Parameter der Stimme und
+  Kleinkram werden nach dem E2E-Lauf eingearbeitet.
+- **2026-11-16** — **Frontend-Review eingearbeitet:** Die Ansage für den Screenreader sagt beim Diktat die Aufgabe,
+  nicht das verborgene deutsche Wort (`istDiktat`, eine Stelle für Karte und Ansage); `aufgabenform` verlangt die Stimme
+  als Pflicht-Argument; Stufenname „Diktat“/„Dictation“ auch in der Arcade; Feld-Erklärung „Auch richtig“ nach der neuen
+  Regel; Label des Felds „Erkennen“ per `htmlFor`. Bewusst gelassen: Auf der ersten Diktatkarte blitzt das deutsche Wort
+  kurz auf, bis Chrome die Stimmen nachgeladen hat (keine Lösung, im Code kommentiert). Die Verdrahtung der Ansage in den
+  drei Bildschirmen hat keinen eigenen Vitest – sie ist eine Zeile über `istDiktat`, das getestet ist.
+- **2026-11-16** — **Verifikation:** `dotnet build Pugling.sln` und `dotnet format Pugling.sln` sauber;
+  `dotnet test Pugling.sln -c Release`: **1737 passed**; Vitest **1133 passed** (102 Dateien); `tsc -b` sauber.
+  E2E (Ausweichports 5201/5174): voller Lauf **149 passed, 11 failed**; neun davon tippten das deutsche Wort
+  (nachgezogen: `belohnung-trotz-wochenziel`, `bonus`, `bonus-deckel-voll`, `buchstaben-ordnen`, `erfolge-woche-frist`,
+  `erstbegegnung`, `pfad`, `truhe`, `vater-zeitachse`), zwei liefen, während ich Spec-Dateien änderte und Vite neu lud.
+  Wiederholung der elf: **22 passed, 1 failed** – `feldhilfe.spec.ts:32` (Popover „Ziel-Rhythmus“, vom Diff nicht
+  berührt) fällt einzeln in einem von drei Läufen und ist als
+  [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) abgelegt. Abnahme wartet auf den Rollengang am Sprint-Ende.

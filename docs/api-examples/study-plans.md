@@ -203,7 +203,9 @@ Response — `HTTP 200`:
     "letterTiles": null,
     "introduction": true,
     "cueBox": null,
-    "speechLang": "en"
+    "speechLang": "en",
+    "dictationSpokenAnswer": null,
+    "dictationLang": null
   },
   "done": false,
   "cursor": 0,
@@ -260,7 +262,9 @@ Response — `HTTP 200`:
     "letterTiles": null,
     "introduction": true,
     "cueBox": null,
-    "speechLang": "en"
+    "speechLang": "en",
+    "dictationSpokenAnswer": null,
+    "dictationLang": null
   },
   "done": false,
   "misspelled": false,
@@ -316,7 +320,7 @@ Response — `HTTP 200`:
     "itemIndex": 0,
     "stage": 4,
     "type": "Vocabulary",
-    "prompt": "hello",
+    "prompt": "hallo",
     "hint": null,
     "answerLength": null,
     "reveal": null,
@@ -334,13 +338,15 @@ Response — `HTTP 200`:
     "letterTiles": null,
     "introduction": false,
     "cueBox": null,
-    "speechLang": "en"
+    "speechLang": null,
+    "dictationSpokenAnswer": null,
+    "dictationLang": null
   },
   {
     "itemIndex": 1,
     "stage": 4,
     "type": "Vocabulary",
-    "prompt": "goodbye",
+    "prompt": "tsch\u00FCss",
     "hint": null,
     "answerLength": null,
     "reveal": null,
@@ -358,7 +364,9 @@ Response — `HTTP 200`:
     "letterTiles": null,
     "introduction": false,
     "cueBox": null,
-    "speechLang": "en"
+    "speechLang": null,
+    "dictationSpokenAnswer": null,
+    "dictationLang": null
   }
 ]
 ```
@@ -438,7 +446,9 @@ Response — `HTTP 200`:
     "answerPattern": null,
     "decoding": null,
     "letterTiles": null,
-    "cueBox": null
+    "cueBox": null,
+    "dictationSpokenAnswer": null,
+    "dictationLang": null
   },
   "done": false,
   "cursor": 0,

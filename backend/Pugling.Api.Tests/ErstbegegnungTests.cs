@@ -151,7 +151,8 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             JsonAssert.False(c, "introduction");
             JsonAssert.False(c, "displayOnly");
         });
-        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "die Stadt"))
+        // The learnt word, written (B-597).
+        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "la ville"))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(10, outcome.GetProperty("awarded").GetInt32());
     }

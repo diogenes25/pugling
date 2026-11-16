@@ -5,8 +5,10 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Tests;
 
 /// <summary>
-/// B-421 end to end: "Stadt" for "die Stadt" counts in practice, in the test (both ways of answering) and in the
-/// supervisor's preview - one grader, one rule - unless the exercise trains the article (<c>articleRequired</c>).
+/// B-421 end to end: "ville" for "la ville" counts in practice, in the test (both ways of answering) and in the
+/// supervisor's preview - one grader, one rule - unless the exercise trains the article (<c>articleRequired</c>). Since
+/// B-597 the free-text card asks the learnt word whatever the direction, so the article forgiven there is the learnt
+/// language's - on a front-to-back exercise through the reversed card the resolver builds.
 /// </summary>
 public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
 {
@@ -42,10 +44,10 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
 
     // AK 1 in practice: the article may be left out.
     [Fact]
-    public async Task Ueben_Wertet_Stadt_Fuer_Die_Stadt_Als_Richtig()
+    public async Task Ueben_Wertet_Ville_Fuer_La_Ville_Als_Richtig()
     {
         var father = await TestApi.AdultAsync(factory);
-        Assert.True(await PracticeAsync(await ExerciseAsync(father), "Stadt"));
+        Assert.True(await PracticeAsync(await ExerciseAsync(father), "ville"));
     }
 
     // AK 5: an exercise that trains the article demands it again.
@@ -53,7 +55,7 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task ArticleRequired_Verlangt_Den_Artikel_Wieder()
     {
         var father = await TestApi.AdultAsync(factory);
-        Assert.False(await PracticeAsync(await ExerciseAsync(father, articleRequired: true), "Stadt"));
+        Assert.False(await PracticeAsync(await ExerciseAsync(father, articleRequired: true), "ville"));
     }
 
     // The answer's language follows the direction: asked back to front, the answer is French and its article is "la".
@@ -88,7 +90,7 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
 
         var res = await (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit",
-            new { answers = new[] { new { itemIndex = 0, givenAnswer = "Stadt" } } })).Content.ReadFromJsonAsync<JsonElement>();
+            new { answers = new[] { new { itemIndex = 0, givenAnswer = "ville" } } })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, res.GetProperty("correctItems").GetInt32());
     }
 
@@ -102,7 +104,7 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
 
-        (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/answer", new { itemIndex = 0, givenAnswer = "Stadt" })).EnsureSuccessStatusCode();
+        (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/answer", new { itemIndex = 0, givenAnswer = "ville" })).EnsureSuccessStatusCode();
         var res = await (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new { }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, res.GetProperty("correctItems").GetInt32());
@@ -115,20 +117,21 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await ExerciseAsync(father);
         var res = await (await father.PostAsJsonAsync($"/api/v1/creator/exercises/{exerciseId}/preview/check",
-            new { answers = new[] { new { itemIndex = 0, givenAnswer = "Stadt", wasKnown = (bool?)null } }, stage = (int)TestStage.FreeText }))
+            new { answers = new[] { new { itemIndex = 0, givenAnswer = "ville", wasKnown = (bool?)null } }, stage = (int)TestStage.FreeText }))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, res.GetProperty("correct").GetInt32());
     }
 
     /// <summary>
     /// B-437: a store-backed exercise with one entry of the given part of speech - the tolerance follows the entry's
-    /// part of speech, so the setup goes through the store rather than inline items (those are created as Other).
+    /// part of speech, so the setup goes through the store rather than inline items (those are created as Other). The
+    /// German side is made unique: the learnt word is the answer on free text (B-597) and must stay as typed.
     /// </summary>
     private static async Task<int> StoreExerciseAsync(HttpClient father, string src, string tgt, string word,
         string translation, PartOfSpeech partOfSpeech)
     {
         var res = await father.PostAsJsonAsync("/api/v1/creator/vocabulary",
-            new { sourceLanguage = src, targetLanguage = tgt, word = TestApi.UniqueName(word), translation, partOfSpeech });
+            new { sourceLanguage = src, targetLanguage = tgt, word, translation = TestApi.UniqueName(translation), partOfSpeech });
         res.EnsureSuccessStatusCode();
         var key = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("key").GetString()!;
         return await TestApi.CreateVocabRefExerciseAsync(father, key);
@@ -142,18 +145,18 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Nicht_Nomen_Wertet_Few_Fuer_A_Few_Als_Falsch(PartOfSpeech partOfSpeech)
     {
         var father = await TestApi.AdultAsync(factory);
-        var exerciseId = await StoreExerciseAsync(father, "de", "en", "einige", "a few", partOfSpeech);
+        var exerciseId = await StoreExerciseAsync(father, "en", "de", "a few", "einige", partOfSpeech);
         Assert.False(await PracticeAsync(exerciseId, "few"));
         Assert.True(await PracticeAsync(exerciseId, "a few"));
     }
 
     // B-437 AK 2: a noun keeps the tolerance of B-421. Red if the condition excludes Noun.
     [Fact]
-    public async Task Nomen_Wertet_Stadt_Fuer_Die_Stadt_Weiter_Als_Richtig()
+    public async Task Nomen_Wertet_Ville_Fuer_La_Ville_Weiter_Als_Richtig()
     {
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await StoreExerciseAsync(father, "fr", "de", "la ville", "die Stadt", PartOfSpeech.Noun);
-        Assert.True(await PracticeAsync(exerciseId, "Stadt"));
+        Assert.True(await PracticeAsync(exerciseId, "ville"));
     }
 
     // B-437 AK 3: an entry without a determined part of speech (the default on creation) stays tolerant. Red if the
@@ -163,7 +166,7 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
     {
         var father = await TestApi.AdultAsync(factory);
         var exerciseId = await StoreExerciseAsync(father, "fr", "de", "la rue", "die Straße", PartOfSpeech.Other);
-        Assert.True(await PracticeAsync(exerciseId, "Straße"));
+        Assert.True(await PracticeAsync(exerciseId, "rue"));
     }
 
     // B-437 AK 4: the bulk test grades "few" like practice - the rule is restricted at its source, not at one reader.
@@ -171,7 +174,7 @@ public class ArtikelToleranzTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Test_Gesammelt_Wertet_Few_Fuer_A_Few_Wie_Das_Ueben()
     {
         var father = await TestApi.AdultAsync(factory);
-        var exerciseId = await StoreExerciseAsync(father, "de", "en", "einige", "a few", PartOfSpeech.Pronoun);
+        var exerciseId = await StoreExerciseAsync(father, "en", "de", "a few", "einige", PartOfSpeech.Pronoun);
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText);
         var child = await TestApi.ChildAsync(factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";

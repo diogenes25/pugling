@@ -30,8 +30,8 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         {
             answers = new[]
             {
-                new { itemIndex = 0, givenAnswer = "hallo" },
-                new { itemIndex = 1, givenAnswer = "tschüss" },
+                new { itemIndex = 0, givenAnswer = "hello" },
+                new { itemIndex = 1, givenAnswer = "goodbye" },
             },
         });
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
@@ -53,7 +53,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
         });
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
@@ -74,7 +74,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
         });
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(50, res.GetProperty("scorePercent").GetInt32());
@@ -149,7 +149,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var submit = await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
         });
 
         var res = await submit.Content.ReadFromJsonAsync<JsonElement>();
@@ -165,19 +165,18 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
 
     /// <summary>
     /// B-65: a vocabulary entry may carry several equally valid translations, and <b>each</b> of them counts
-    /// as correct. Before that, an entry held exactly one translation – a child answering "sehr groß" for
-    /// "huge" was marked wrong although the father had entered that very wording as valid. The damage was not
-    /// cosmetic: the score decides the goal, and a missed goal costs coins (<c>PenaltyCoins</c>).
+    /// as correct where the German side is the answer. Before that, an entry held exactly one translation – a child
+    /// answering "sehr groß" for "huge" was marked wrong although the father had entered that very wording as valid.
     /// <para>
-    /// Both typed stages, because they differ in one respect: the letter boxes take their box count from the
-    /// <b>primary</b> translation (<c>VocabularyExerciseType.StageFacets</c>). An equally long alternative is
-    /// therefore typeable there – exactly the case reported in remark #13 – while a longer one only counts on
-    /// free text and listening.
+    /// Since B-597 the German side is the answer only where the child recognises, not where it writes: on every writing
+    /// stage the card asks the learnt word. So the checked stage left for the alternative is the choice, and there a
+    /// declared alternative must never stand as a wrong option either - which is what the choice's pool guards
+    /// (<c>ExerciseChoicesTests</c>). The typed answer here is graded on that stage.
     /// </para>
     /// </summary>
     [Theory]
-    [InlineData((int)TestStage.FreeText, "huge", "riesig", "sehr groß")]
-    [InlineData((int)TestStage.LetterBoxes, "nice", "nett", "lieb")]
+    [InlineData((int)TestStage.MultipleChoice, "huge", "riesig", "sehr groß")]
+    [InlineData((int)TestStage.MultipleChoice, "nice", "nett", "lieb")]
     public async Task Test_GleichwertigeUebersetzung_WirdAlsRichtigGewertet(
         int stage, string word, string translation, string alternative)
     {
@@ -203,13 +202,15 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// B-462: the store keeps a word-list entry as the book prints it ("sobald, sowie", "(to) reply (to)"). In the
-    /// child's test one typed meaning is the right answer - in both directions, because the entry is a list on
-    /// either side. Through the real test path on purpose: the rule only applies where the resolver marks the atom.
+    /// B-462: the store keeps a word-list entry as the book prints it ("dès que, aussitôt que", "(to) reply (to)"). In
+    /// the child's test one typed meaning is the right answer. Since B-597 the free-text card asks the learnt word in
+    /// either direction, so both directions grade the learnt side - and the front-to-back card does so through its
+    /// reversed form built in the resolver, which must carry the rule as well. Through the real test path on purpose:
+    /// the rule only applies where the resolver marks the atom.
     /// </summary>
     [Theory]
-    [InlineData("as soon as", "sobald, sowie", "front-to-back", "sowie")]
-    [InlineData("(to) reply (to)", "antworten (auf); erwidern, entgegnen", "front-to-back", "antworten")]
+    [InlineData("dès que, aussitôt que", "sobald", "front-to-back", "aussitôt que")]
+    [InlineData("(to) reply (to)", "antworten (auf); erwidern, entgegnen", "front-to-back", "reply")]
     [InlineData("(to) reply (to)", "antworten (auf); erwidern, entgegnen", "back-to-front", "reply")]
     public async Task Test_EineBedeutungDesEintrags_WirdAlsRichtigGewertet(
         string word, string translation, string direction, string given)
@@ -242,7 +243,9 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task Vorschau_EineBedeutungZaehlt_AberKeinSatzteilDerUebersetzung()
     {
         var father = await TestApi.AdultAsync(_factory);
-        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("as soon as"), "sobald, sowie");
+        // B-597: free text asks the learnt word, so the word-list entry sits on that side.
+        var meaning = TestApi.UniqueName("aussitot que");
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, $"dès que, {meaning}", "sobald");
         var vocabId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Satz-Fach") }));
@@ -266,7 +269,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
                 new { answers = new[] { new { itemIndex = 0, givenAnswer = given, wasKnown = (bool?)null } }, stage }))
                 .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("correct").GetInt32();
 
-        Assert.Equal(1, await CorrectAsync(vocabId, "sowie", (int)TestStage.FreeText));
+        Assert.Equal(1, await CorrectAsync(vocabId, meaning, (int)TestStage.FreeText));
         Assert.Equal(0, await CorrectAsync(translationId, "Excuse me", null));
         // Self-protection against a vacuous red: the translation exercise does grade - the whole sentence counts.
         Assert.Equal(1, await CorrectAsync(translationId, "Excuse me, how can I get to the station", null));
@@ -342,7 +345,8 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var (_, geld) = await TestApi.CreateStoreVocabAsync(father, "bank", "Bank");
         var (_, ufer) = await TestApi.CreateStoreVocabAsync(father, "bank", "Ufer");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, geld, ufer);
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        // Asked on the choice, where the German side is the answer (B-597): on a writing stage both cards ask "bank".
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.MultipleChoice);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
@@ -381,7 +385,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
 
         (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "falsch" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "falsch" } },
         })).EnsureSuccessStatusCode();
 
         var fertig = await (await child.GetAsync($"{baseUrl}/{attemptId}")).Content.ReadFromJsonAsync<JsonElement>();
@@ -397,7 +401,8 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     public async Task LetterBoxes_ImTest_TraegtDieselbeMaskeWieDieUebung()
     {
         var father = await TestApi.AdultAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("aufwachsen", "to grow up"));
+        // The learnt word is written (B-597), so it carries the separators the mask keeps.
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("to grow up", "aufwachsen"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.LetterBoxes);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
@@ -429,14 +434,14 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         var firstAttemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var firstSubmit = await (await child.PostAsJsonAsync($"{baseUrl}/{firstAttemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(1, firstSubmit.GetProperty("attemptsRemaining").GetInt32());
 
         var secondAttemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
         var secondSubmit = await (await child.PostAsJsonAsync($"{baseUrl}/{secondAttemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, secondSubmit.GetProperty("attemptsRemaining").GetInt32());
 
@@ -465,7 +470,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
             var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
             (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
             {
-                answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+                answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
             })).EnsureSuccessStatusCode();
         }
 
@@ -473,7 +478,7 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
             await father.PostAsJsonAsync(baseUrl, new { stage = (int)TestStage.FreeText }), "attemptId");
         var supervisorSubmit = await (await father.PostAsJsonAsync($"{baseUrl}/{supervisorAttemptId}/submit", new
         {
-            answers = new[] { new { itemIndex = 0, givenAnswer = "hallo" }, new { itemIndex = 1, givenAnswer = "tschüss" } },
+            answers = new[] { new { itemIndex = 0, givenAnswer = "hello" }, new { itemIndex = 1, givenAnswer = "goodbye" } },
         })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(2, supervisorSubmit.GetProperty("attemptsRemaining").GetInt32());
     }
@@ -503,7 +508,8 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
                     items = new[] { new { front = "hello", back = "hallo", hint = "beginnt mit h" }, new { front = "goodbye", back = "tschüss", hint = "beginnt mit t" } },
                 },
             }));
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        // The choice keeps the author's hint; a writing stage asks the learnt word and drops it with the turn (B-597).
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.MultipleChoice);
         var child = await TestApi.ChildAsync(_factory);
 
         var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);

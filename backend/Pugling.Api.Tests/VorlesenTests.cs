@@ -56,11 +56,14 @@ public class VorlesenTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     private static string? SpeechLang(JsonElement card) =>
         card.TryGetProperty("speechLang", out var l) && l.ValueKind == JsonValueKind.String ? l.GetString() : null;
 
-    /// <summary>AK 1: fr → de, no recording, typed stage → "fr". Red when the field is never set.</summary>
+    /// <summary>
+    /// AK 1: fr → de, no recording, typed stage → "fr". Red when the field is never set. On the choice: a writing stage
+    /// shows the German word since B-597, and only the learnt word is ever read aloud.
+    /// </summary>
     [Fact]
     public async Task Ohne_Aufnahme_In_Leserichtung_Darf_Vorgelesen_Werden()
     {
-        var card = await FirstCardAsync("front-to-back", (int)TestStage.FreeText, withRecording: false);
+        var card = await FirstCardAsync("front-to-back", (int)TestStage.MultipleChoice, withRecording: false);
         Assert.Equal("fr", SpeechLang(card));
     }
 
@@ -71,7 +74,7 @@ public class VorlesenTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Mit_Aufnahme_Wird_Nicht_Vorgelesen()
     {
-        var card = await FirstCardAsync("front-to-back", (int)TestStage.FreeText, withRecording: true);
+        var card = await FirstCardAsync("front-to-back", (int)TestStage.MultipleChoice, withRecording: true);
         Assert.Null(SpeechLang(card));
     }
 
@@ -79,7 +82,7 @@ public class VorlesenTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public async Task Umgekehrte_Richtung_Wird_Nicht_Vorgelesen()
     {
-        var card = await FirstCardAsync("back-to-front", (int)TestStage.FreeText, withRecording: false);
+        var card = await FirstCardAsync("back-to-front", (int)TestStage.MultipleChoice, withRecording: false);
         Assert.Null(SpeechLang(card));
     }
 

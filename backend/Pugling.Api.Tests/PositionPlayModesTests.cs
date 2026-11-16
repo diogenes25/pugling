@@ -16,7 +16,8 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
 {
     private readonly PuglingWebAppFactory _factory = factory;
 
-    private static readonly (string, string)[] ThreeWords = [("a", "1"), ("b", "2"), ("c", "3")];
+    // Learnt word first: on free text the card shows the German side ("a") and expects the learnt word ("1") (B-597).
+    private static readonly (string, string)[] ThreeWords = [("1", "a"), ("2", "b"), ("3", "c")];
 
     // ---- Learn mode: server cursor + "next card" ---- ----
 

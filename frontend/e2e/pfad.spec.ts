@@ -99,7 +99,7 @@ test("Der Pfad gliedert nach Unit, nennt Frist und Malus, und ein bestandener Te
   const kind = { Authorization: `Bearer ${(await kindLogin.json()).token}` };
   const tests = `/api/v1/student/study-plans/${planId}/positions/${posTag}/tests`;
   const attemptId = await postId(request, tests, kind, {}, "attemptId");
-  const submit = await request.post(`${tests}/${attemptId}/submit`, { headers: kind, data: { answers: [{ itemIndex: 0, givenAnswer: "Baum" }] } });
+  const submit = await request.post(`${tests}/${attemptId}/submit`, { headers: kind, data: { answers: [{ itemIndex: 0, givenAnswer: `tree ${RUN}` }] } }); // B-597: das Fremdwort
   expect(submit.ok(), await submit.text()).toBeTruthy();
   expect((await submit.json()).passed).toBe(true);
 

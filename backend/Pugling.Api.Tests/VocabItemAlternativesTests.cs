@@ -165,7 +165,8 @@ public class VocabItemAlternativesTests(PuglingWebAppFactory factory) : IClassFi
 
     /// <summary>
     /// AK 6: an alternative entered on this second way counts as correct in the position test – the grading
-    /// path is B-65's, reached here through the item endpoint instead of the store.
+    /// path is B-65's, reached here through the item endpoint instead of the store. Asked on the choice, where the German
+    /// side is the answer; a writing stage asks the learnt word (B-597).
     /// </summary>
     [Fact]
     public async Task Test_UeberDasItemHinterlegteAlternative_WirdAlsRichtigGewertet()
@@ -177,7 +178,7 @@ public class VocabItemAlternativesTests(PuglingWebAppFactory factory) : IClassFi
         (await father.PatchAsJsonAsync($"{itemsUrl}/{seed.GetProperty("id").GetInt32()}",
             new { translationAlternatives = new[] { "Samen" } })).EnsureSuccessStatusCode();
 
-        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.MultipleChoice);
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");

@@ -14,6 +14,7 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     // Twelve letters (e and t twice each): two shuffles with different seeds coincide with a chance of 1 in 12!/4 -
     // so "a new session shuffles anew" is checked against the word itself, not against luck. Capitalized like a
     // German noun, so the lower-case rule shows.
+    // The front side: the learnt word is the one laid out on the scramble stage (B-597).
     private const string Word = "Schmetterlin";
     private static readonly string Lower = Word.ToLowerInvariant();
 
@@ -58,7 +59,7 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("butterfly (B-05)", Word));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, (Word, "butterfly (B-05)"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var basis = TestApi.PracticeBase(planId, positionId);
 
@@ -103,7 +104,7 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
         // Same letters on purpose: the same permutation would then give the same tiles.
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("one (B-05)", Word), ("two (B-05)", Word));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, (Word, "one (B-05)"), (Word, "two (B-05)"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var sid = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         var cards = (await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sid}/cards"))
@@ -122,7 +123,7 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("moth (B-05)", Word));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, (Word, "moth (B-05)"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
 
@@ -162,7 +163,7 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     {
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("ice cream (B-05)", "das Speiseeis"), ("moon (B-05)", "Mond"));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("das Speiseeis", "ice cream (B-05)"), ("Mond", "moon (B-05)"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var sid = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         var cards = (await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sid}/cards"))

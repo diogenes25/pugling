@@ -18,11 +18,18 @@ namespace Pugling.Contracts.Creator;
 /// the way the child receives it. <c>AnswerPattern</c> (B-66) is the letter-box mask, same as the child's card -
 /// the preview must show the same fixed punctuation/spacing, not a bare length. <c>LetterTiles</c> (B-05) are the
 /// scrambled letters of the scramble stage, same as the child's card.
+///
+/// <c>DictationSpokenAnswer</c>/<c>DictationLang</c> (B-597) are set only on the dictation stage of a vocabulary card
+/// without a recording: the learnt word the device reads aloud, and the language to read it in. <b>This is the answer,
+/// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
+/// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
+/// plays the card as free text from the German <c>Prompt</c>.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
     IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null,
-    string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null, IReadOnlyList<string>? CueBox = null);
+    string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null, IReadOnlyList<string>? CueBox = null,
+    string? DictationSpokenAnswer = null, string? DictationLang = null);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

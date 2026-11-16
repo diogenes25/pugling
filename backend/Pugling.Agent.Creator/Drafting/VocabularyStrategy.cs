@@ -122,9 +122,12 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
         return violations.Messages;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// The front side: the self-test plays the type's preview stage, free text, and on every writing stage the child writes
+    /// the learnt word whatever the direction (B-597). The exercise sets no stage of its own, so that is what is asked.
+    /// </summary>
     protected override IReadOnlyList<string> ExpectedAnswers(VocabularyDraft draft) =>
-        [.. draft.Items.Select(i => i.Back.Trim())];
+        [.. draft.Items.Select(i => i.Front.Trim())];
 
     /// <inheritdoc/>
     protected override async Task<ExercisePayload<VocabularyConfig>> ToPayloadAsync(VocabularyDraft draft,

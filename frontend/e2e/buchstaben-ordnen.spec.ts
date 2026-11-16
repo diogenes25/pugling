@@ -18,12 +18,15 @@ import { introduceAndQuiz, sohnLogin, pfadStart } from "./helpers";
  */
 
 const RUN = Date.now().toString(36).slice(-5);
-/** In Katalog-Reihenfolge, so spielt `orderStrategy: "Serial"` sie aus. */
+/**
+ * In Katalog-Reihenfolge, so spielt `orderStrategy: "Serial"` sie aus. Gezeigt wird das deutsche Wort, gelegt das
+ * Fremdwort (B-597) – darum steht der Lauf-Stempel am deutschen Wort und die Antwort bleibt ein Wort.
+ */
 const CARDS: [prompt: string, answer: string, bedienung: "kaesten" | "tastatur" | "klick"][] = [
-  [`the town ${RUN}`, "die Stadt", "kaesten"],
-  [`to buy ${RUN}`, "kaufen", "tastatur"],
-  [`to eat ${RUN}`, "essen", "klick"],
-  [`to go ${RUN}`, "gehen", "tastatur"],
+  [`die Stadt ${RUN}`, "the town", "kaesten"],
+  [`kaufen ${RUN}`, "buy", "tastatur"],
+  [`essen ${RUN}`, "eat", "klick"],
+  [`gehen ${RUN}`, "go", "tastatur"],
 ];
 
 async function postId(request: APIRequestContext, url: string, headers: Record<string, string>, data: unknown, key = "id") {
@@ -48,7 +51,7 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
   const exerciseId = await postId(request, `/api/v1/creator/textbook-series/${seriesId}/units/${unitId}/vocabulary`, headers, {
     title: `Ordnen ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de",
-      items: CARDS.map(([front, back]) => ({ front, back })) },
+      items: CARDS.map(([prompt, answer]) => ({ front: answer, back: prompt })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
     { childId, title: `Ordnen-Plan ${RUN}`, durationDays: 7, active: true });

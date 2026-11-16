@@ -36,7 +36,8 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         JsonAssert.True(data, "typed");
         var items = data.GetProperty("items").EnumerateArray().ToList();
         Assert.Equal(2, items.Count);
-        Assert.Equal("hello", items[0].GetProperty("prompt").GetString());
+        // B-597: free text shows the German word and expects the learnt one.
+        Assert.Equal("hallo", items[0].GetProperty("prompt").GetString());
         Assert.Equal(JsonValueKind.Null, items[0].GetProperty("reveal").ValueKind);
 
         // POST check: the first answer correct, the second wrong → 50 %.
@@ -44,7 +45,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         {
             answers = new[]
             {
-                new { itemIndex = 0, givenAnswer = "hallo", wasKnown = (bool?)null },
+                new { itemIndex = 0, givenAnswer = "hello", wasKnown = (bool?)null },
                 new { itemIndex = 1, givenAnswer = "falsch", wasKnown = (bool?)null },
             },
         });
@@ -55,7 +56,7 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Equal(50, result.GetProperty("scorePercent").GetInt32());
         var outItems = result.GetProperty("items").EnumerateArray().ToList();
         JsonAssert.True(outItems[0], "wasCorrect");
-        Assert.Equal("hallo", outItems[0].GetProperty("expected").GetString()); // in the result the solution is disclosed
+        Assert.Equal("hello", outItems[0].GetProperty("expected").GetString()); // in the result the solution is disclosed
         JsonAssert.False(outItems[1], "wasCorrect");
 
         // The core of the assurance: nothing was persisted - no points, no attempt, no progress, no session.
@@ -198,15 +199,16 @@ public class ExercisePreviewTests(PuglingWebAppFactory factory) : IClassFixture<
     public async Task Preview_Ordnen_LiefertKacheln_FestJeUebung_OhneLoesung()
     {
         var father = await TestApi.AdultAsync(_factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("butterfly", "Schmetterlin"));
+        // The learnt word is laid out (B-597): one word of at most twelve letters.
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("butterfly", "Schmetterling"));
 
         var data = await father.GetFromJsonAsync<JsonElement>($"/api/v1/creator/exercises/{exerciseId}/preview?stage=7");
         Assert.Equal(7, data.GetProperty("stage").GetInt32());
         JsonAssert.True(data, "typed");
         var item = data.GetProperty("items").EnumerateArray().Single();
         var tiles = item.GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()).ToList();
-        Assert.Equal("schmetterlin".Order(), string.Concat(tiles).Order());
-        Assert.NotEqual("schmetterlin", string.Concat(tiles));
+        Assert.Equal("butterfly".Order(), string.Concat(tiles).Order());
+        Assert.NotEqual("butterfly", string.Concat(tiles));
         Assert.Equal(JsonValueKind.Null, item.GetProperty("reveal").ValueKind);
         Assert.Equal(JsonValueKind.Null, item.GetProperty("answerLength").ValueKind);
 

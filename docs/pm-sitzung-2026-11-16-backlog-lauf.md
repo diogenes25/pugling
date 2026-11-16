@@ -170,3 +170,33 @@ B-598 die Folge beim ersten Kontakt, B-596 die Menge je Übung, B-223 die Hilfe 
 
 **Reihenfolge im Bau:** B-597 zuerst (die Drehung je Stufe ist die Senke, durch die B-598 und B-599 laufen), dann
 B-599 und B-598, B-596 und B-223 unabhängig daneben.
+
+## Sprint 82 — Ziel & Umfang
+
+**Sprint-Ziel (Sicht Sohn):** „Wo ich ein Wort schreiben muss, auf einer Vokabelkarte wie in einem Lückentext, schreibe
+ich das englische Wort, in der Eingabeart, die mein Vater gewählt hat, und ein neues Wort lerne ich in einer Karte vom
+Sehen übers Abschreiben bis zum Erinnern.“
+
+**Umfang:** [B-597](backlog/B-597-tippstufen-fragen-die-zielsprache-ab.md) (L),
+[B-599](backlog/B-599-lueckentext-eingabearten-wie-vokabeln.md) (M),
+[B-598](backlog/B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) (L), alle `geschaetzt`.
+
+**Herausgenommen:** [B-223](backlog/B-223-gestufte-hinweise-vor-der-antwort.md) nach der Größen-Regel des Plans oben
+(Punkt 4: über zwei L wird B-223 herausgenommen; mit B-597 und B-598 sind zwei L erreicht). B-596 steht auf `idee` und
+gehört nicht in den Sprint.
+
+**Entwickler-Brief:**
+
+- *Ziel:* Die Eingabe der Lernsprache an einer Stelle festlegen, dann Lückentext und Erstbegegnung darauf setzen.
+- *Quelle der Wahrheit:* der Übungstyp. B-597 bekommt zwei Haken am `IExerciseType`: „höchste Stufe der Karte“
+  (`CardCeiling`, Obergrenze der Vorwärtskarte bei `both`) und „Karte für Stufe“ (`CardForStage`, Drehung auf
+  Schreibstufen). Die gedrehte Form baut der `ExerciseContentResolver`, weil nur er die Sprachen kennt (Artikel der
+  richtigen Sprache, B-421). **Senke:** jede Stufe, die ein Pfad wählt, läuft durch `CardCeiling`, jede Karte vor
+  Anzeige und Bewertung durch `CardForStage` – Üben (`CardStage`), Test (`TestItemStage` und die Stufe des Vaters),
+  Bonus (`BuildRun`) und Vorschau (`Present`/`GradeByIndex`, über die auch der Bonus wertet).
+- *Guards:* Kartenzahl und Indizes unverändert (keine Datenumschreibung), Diktat-Feld trägt die Lösung nur auf der
+  Hörstufe ohne Aufnahme (Entscheidung 9), Lösungsfeld-Regel bleibt grün.
+- *Reihenfolge:* B-597 → B-599 → B-598, je Story Backend zuerst.
+- *Migration:* keine; Abfrage vor einer Spalte für B-598 (Risiko 4).
+- *Testweg:* je Story `## Verlauf` mit Testdatei:Zeile und Mutanten-Tabelle; volle Suite, Vitest, E2E auf
+  Ausweichports (5201/5174: auf 5200 läuft der Heimnetz-Server mit der echten DB).

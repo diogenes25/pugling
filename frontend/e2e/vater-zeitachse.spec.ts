@@ -44,7 +44,7 @@ test("Der Vater sieht die erfüllte Tagespflicht seines Kindes auf der Zeitachse
   const kind = { Authorization: `Bearer ${(await kindLogin.json()).token}` };
   const tests = `/api/v1/student/study-plans/${planId}/positions/${positionId}/tests`;
   const attemptId = await postId(request, tests, kind, {}, "attemptId");
-  const submit = await request.post(`${tests}/${attemptId}/submit`, { headers: kind, data: { answers: [{ itemIndex: 0, givenAnswer: "Hund" }] } });
+  const submit = await request.post(`${tests}/${attemptId}/submit`, { headers: kind, data: { answers: [{ itemIndex: 0, givenAnswer: `dog ${RUN}` }] } }); // B-597: das Fremdwort
   expect(submit.ok(), await submit.text()).toBeTruthy();
 
   await vaterLogin(page, FATHER);

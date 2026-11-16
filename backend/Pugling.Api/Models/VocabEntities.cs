@@ -14,7 +14,12 @@ public class Vocabulary
     /// <summary>Stable, unique reference key (e.g. "en_run_verb_laufen").</summary>
     public string Key { get; set; } = "";
     public string Version { get; set; } = "1.0";
+    /// <summary>The language the child learns (en, fr, la) - the language of <see cref="Word"/>.</summary>
     public string SourceLanguage { get; set; } = "";
+    /// <summary>
+    /// The child's mother tongue (de), the language of <see cref="Translation"/>. Not the language being learnt despite
+    /// the name: "target" is the direction of the translation, and the child writes the source word (B-597).
+    /// </summary>
     public string TargetLanguage { get; set; } = "";
     /// <summary>Word in the source language.</summary>
     public string Word { get; set; } = "";

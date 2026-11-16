@@ -16,8 +16,8 @@ import { POS, POS_LABEL } from "../lib/vocab";
 // Die typ-spezifische Inhalts-Maschinerie ist mit dem Bearbeiten-Dialog geteilt: Schreiben (buildTypeConfig)
 // und Zurücklesen (configToEditorState) müssen zueinander passen, sonst verliert Bearbeiten Inhalte.
 import {
-  AUTHORABLE_TYPES, ArticleRequiredCheck, ConfigEditor, VOCAB_FORMS, buildTypeConfig, contentProblem, emptyExtra,
-  emptyRow, type Row,
+  AUTHORABLE_TYPES, ArticleRequiredCheck, ConfigEditor, RecognitionField, VOCAB_FORMS, buildTypeConfig, contentProblem,
+  emptyExtra, emptyRow, type Row,
 } from "./exerciseConfig";
 import { useExerciseTypes } from "../lib/exerciseTypes";
 import { GrammarTopicPicker } from "../components/GrammarTopicChips";
@@ -483,7 +483,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
   const byKey = new Map((store.data ?? []).map((v) => [v.key, v]));
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {/* Sprach-Kombination des Stores + Abfragerichtung. Der Sprachfilter verhindert, dass fremdsprachige
+      {/* Sprach-Kombination des Stores + Richtung des Erkennens. Der Sprachfilter verhindert, dass fremdsprachige
           Vokabeln (z. B. Französisch) in einer Übung anderer Sprache auftauchen. */}
       <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
         <div className="field" style={{ maxWidth: 180 }}>
@@ -499,14 +499,7 @@ function VocabRefPicker({ selected, setSelected, extra, setExtra }: {
             {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
           </select>
         </div>
-        <div className="field" style={{ maxWidth: 200 }}>
-          <label>Abfragerichtung</label>
-          <select aria-label="Abfragerichtung" value={extra.direction ?? "front-to-back"} onChange={(e) => setExtra((x) => ({ ...x, direction: e.target.value }))}>
-            <option value="front-to-back">vorne → hinten</option>
-            <option value="back-to-front">hinten → vorne</option>
-            <option value="both">beide (hin und zurück)</option>
-          </select>
-        </div>
+        <RecognitionField value={extra.direction} onChange={(direction) => setExtra((x) => ({ ...x, direction }))} />
       </div>
       <ArticleRequiredCheck checked={extra.articleRequired === true}
         onChange={(v) => setExtra((x) => ({ ...x, articleRequired: v }))} />

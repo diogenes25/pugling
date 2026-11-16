@@ -52,7 +52,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             var box = ip?.Box ?? 1;
             return new ItemReport(item.Index, item.Prompt, item.Answer, introduced,
                 box, introduced ? MasteryOf(box, maxBox) : 0, ip?.ReviewCount ?? 0,
-                ip?.DueOn, ip?.LastReviewedAt, tests.Seen, tests.Correct);
+                ip?.DueOn, ip?.LastReviewedAt, tests.Seen, tests.Correct, item.Written is not null, item.RecognitionOnly);
         }).ToList();
 
         return new Report(pos.Id, pos.ExerciseId, pos.Exercise.Title, pos.Exercise.Type.ToString(),

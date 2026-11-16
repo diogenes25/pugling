@@ -33,12 +33,18 @@ namespace Pugling.Contracts.Student;
 ///
 /// Unlike <see cref="PracticeCard"/> there is deliberately no hint (B-544): the exam measures, so a field that
 /// could carry help is not part of its contract.
+///
+/// <c>DictationSpokenAnswer</c>/<c>DictationLang</c> (B-597) are set only on the dictation stage of a vocabulary card
+/// without a recording: the learnt word the device reads aloud, and the language to read it in. <b>This is the answer,
+/// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
+/// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
+/// plays the card as free text from the German <c>Prompt</c>.
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
     string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
-    IReadOnlyList<string>? CueBox = null);
+    IReadOnlyList<string>? CueBox = null, string? DictationSpokenAnswer = null, string? DictationLang = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

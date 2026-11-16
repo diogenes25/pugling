@@ -31,7 +31,8 @@ public class VokabelErklaerungTests(PuglingWebAppFactory factory) : IClassFixtur
                 direction,
                 sourceLang = "fr",
                 targetLang = "de",
-                items = new[] { new { front = TestApi.UniqueName("la gare"), back = "der Bahnhof", explanation } },
+                // The German side is made unique: the learnt word is the answer on free text (B-597) and must stay as typed.
+                items = new[] { new { front = "la gare", back = TestApi.UniqueName("der Bahnhof"), explanation } },
             },
         }));
         return new Setup(father, $"{url}/{exerciseId}/items", exerciseId);
@@ -110,7 +111,7 @@ public class VokabelErklaerungTests(PuglingWebAppFactory factory) : IClassFixtur
         var s = await ExerciseAsync();
         var (child, planId, positionId, sessionId) = await PlayAsync(s);
 
-        var right = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "der Bahnhof"))
+        var right = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "la gare"))
             .Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(right, "wasCorrect");
         Assert.Equal(Why, right.GetProperty("explanation").GetString());
