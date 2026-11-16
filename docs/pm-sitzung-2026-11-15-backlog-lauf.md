@@ -214,6 +214,7 @@ ersten Schreiben, Schreiben in einer Transaktion. B-39: die vorhandene Tagesrech
 seiner Antwort sieht, und jedes veröffentlichte Artefakt wird vor dem Betrieb mechanisch gestartet und befragt.
 **Umfang:** B-583 (vorher B-556), B-47. B-410 (neues Tor) bleibt draußen – auf Wunsch des Nutzers endet der Lauf mit
 diesem Sprint.
+
 - B-583: Spalte `ExerciseItems.Explanation` (Migration angehängt, gegen eine Kopie der echten DB angewendet, 305 Items
   erhalten), Vertrag additiv, Feld im Bearbeiten-Dialog; der Lader-Feldabgleich (`laden.py`) kennt das Feld.
 - B-47: `scripts/artefakt-smoke.ps1` + CI-Job `artefakt` mit dauerhafter Gegenprobe (Exit 2 = rot an der Seitenprüfung).

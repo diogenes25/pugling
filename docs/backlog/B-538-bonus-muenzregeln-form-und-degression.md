@@ -64,7 +64,7 @@ Pflicht-Begriffs; mehr als `childId` aus dem Test-Pfad (B-01, S), weil Backend *
   (alle Übungen werden wiederholbar, `Done` heißt künftig „heute nichts mehr wert"). Additiv ist laut README kein
   Bruch; `contract.ts` wird trotzdem neu erzeugt.
 
-**Risiken**
+### Risiken
 
 - **Die Konfiguration übersteuert die Vorgaben.** `appsettings.json:35-39` setzt `DailyCoinCap: 30` und
   `CoinsPerTypedHit: 2` ausdrücklich – nur die Vorgaben in `ExtraTrainingOptions.cs` zu ändern, wirkt nicht. Beide
@@ -83,7 +83,7 @@ Pflicht-Begriffs; mehr als `childId` aus dem Test-Pfad (B-01, S), weil Backend *
   Der Faktor wird darum bei der Abgabe aus den heute abgeschlossenen Läufen berechnet, nicht beim Start eingefroren
   – sonst zahlt ein gestern gestarteter, heute abgegebener Lauf nach dem Stand von gestern.
 
-**Angriffsplan (Backend zuerst)**
+#### Angriffsplan (Backend zuerst)
 
 1. `PositionPracticeController`: bei `pos.Cadence == GoalCadence.None` keine `ChildPointsEntry` (Basis, Combo,
    Tempo, Neu-Bonus); Antwort meldet 0.
@@ -96,7 +96,7 @@ Pflicht-Begriffs; mehr als `childId` aus dem Test-Pfad (B-01, S), weil Backend *
    der Positions-Editor im Vater-Web blendet die Punkte-Felder bei `Cadence.None` aus.
 6. Doku: `docs/tutorial-student.md` / `docs/api-examples` (Doku-Capture) prüfen; `appsettings`-Kommentar anpassen.
 
-**Testweg**
+##### Testweg
 
 - `Pugling.Api.Tests/ExtraTrainingTests.cs`: getippt zahlt 3/Treffer; Läufe 1–4 derselben Übung am selben Tag
   zahlen 100/50/25/0 % (abgerundet); am Folgetag wieder 100 % (`TimeProvider` vorstellen); Deckel 90 und Deckel am

@@ -145,7 +145,7 @@ Migration nur anlegt und keine Bestandsdaten umformt.
 - **`vertragsbruch: nein`** – nur neue DTOs (`CreatePraiseDto`, `PraiseResponse`, `MyPraiseResponse`,
   `MarkPraiseSeenDto`) und neue Routen.
 
-**Risiken**
+### Risiken
 
 - **Zwei Cascade-Pfade auf eine Tabelle** (Kind und Adult). SQLite verträgt das; G2 verlangt je FK eine bewusste
   Zeile in der Liste – vor dem Build eintragen, sonst ist das Tor rot.
@@ -157,7 +157,7 @@ Migration nur anlegt und keine Bestandsdaten umformt.
 - **i18n:** Overlay-Rahmen („Lob von {name}", „Danke!") in `src/i18n/de.ts` und `en.ts` (Parität per `i18n.test.ts`);
   der Lobtext selbst reist als Platzhalter.
 
-**Angriffsplan (Backend zuerst, API-First)**
+#### Angriffsplan (Backend zuerst, API-First)
 
 1. Modell `Praise` (`Models/GamificationEntities.cs` oder eigene Datei), `DbSet`, G2/G3-Zeilen, Migration
    `AddPraise` anhängen, Snapshot-Diff lesen.
@@ -169,7 +169,7 @@ Migration nur anlegt und keine Bestandsdaten umformt.
 5. Frontend Sohn: Overlay in `SohnHome.tsx`, Stempel beim Schließen.
 6. Probe der Migration gegen eine Kopie der echten DB (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`).
 
-**Testweg**
+##### Testweg
 
 - Integration: neue Klasse `backend/Pugling.Api.Tests/PraiseTests.cs` (AK 1–6, je Fall die rote Probe oben);
   `SchemaGuardTests` (AK 9).

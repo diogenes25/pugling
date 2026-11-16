@@ -228,7 +228,8 @@ Response — `HTTP 201`:
   "translationAlternatives": null,
   "hint": null,
   "_self": "/api/v1/creator/textbook-series/5/units/7/vocabulary/13/items/15",
-  "vocabulary": "/api/v1/creator/vocabulary/16"
+  "vocabulary": "/api/v1/creator/vocabulary/16",
+  "explanation": null
 }
 ```
 

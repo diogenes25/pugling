@@ -100,6 +100,8 @@ Server-Endpunkt baut den Plan (28 Tage), Wizard und Agent rufen ihn; der Agent f
 Plan mit Unit aktiv, setzt der Server die aktuelle Unit des Lehrbuchs – nur vorwärts. Die folgenden setzen sie um
 (Nummern fortlaufend nach B-537).
 
+<!-- markdownlint-disable MD029 -->
+
 11. **Wöchentlich werden nur Lückentext (`Cloze`) und Grammatik (`Grammar`); jede andere prüfbare Übung wird Kür.**
     *Stakeholder-Entscheidung im Auftrag des Nutzers*, die den AK-Entwurf an Nutzer-Entscheidung 8 angleicht – dort
     steht wörtlich „der Rest Kür“, der Entwurf („jede andere prüfbare Übung wöchentlich“) widersprach ihr. Begründung:
@@ -143,6 +145,8 @@ Plan mit Unit aktiv, setzt der Server die aktuelle Unit des Lehrbuchs – nur vo
     Plan enthält alle Übungen der Unit, nicht nur die dieses Laufs – gewollt, der Plan ist das Kapitel; die Agent-Tests
     zu B-463 (`CreatorAgentTests.cs:1439-1450`) ziehen auf den Endpunkt um.
 
+<!-- markdownlint-enable MD029 -->
+
 ## Akzeptanzkriterien
 
 Final. Je Fall die Änderung, die seinen Test rot macht.
@@ -181,7 +185,7 @@ neues DTO, neuer Fehlercode – additiv). Vergleich: breiter als B-538 (M: Regel
 ein neuer Endpunkt mit Transaktion, ein neuer Wizard-Weg **und** der Umbau eines Agenten-Verbs kommen; kleiner als
 B-539 (keine Migration, kein Bruch).
 
-**Risiken**
+### Risiken
 
 - **Abhängigkeit B-539.** Ohne Fach-Pflicht und Abschaltung je Fach schaltet ein aktiv angelegter Unit-Plan heute
   **alle** anderen Pläne des Kindes ab. Nicht vor B-539 (Teil A) bauen.
@@ -198,7 +202,7 @@ B-539 (keine Migration, kein Bruch).
   wandern an den Endpunkt. Die Agent-`CLAUDE.md` (Abschnitt `PlanPlanner`) und der Skill `ki-creator` beschreiben das
   alte Verhalten.
 
-**Angriffsplan (Backend zuerst, nach B-539)**
+#### Angriffsplan (Backend zuerst, nach B-539)
 
 1. `ApiErrors.UnitNotPlannable`; Vertrag `CreatePlanFromUnitDto`, `PlanFromUnitResponse` (Plan, Positionen, `Bonus`,
    `Skipped`), Enum `PlanIntensity`.
@@ -210,7 +214,7 @@ B-539 (keine Migration, kein Bruch).
 6. Agent: `PlanPlanner` auf „erzeugen, dann Endpunkt“; `AgentCommands` `--days` 28; Agent-Tests, Agent-`CLAUDE.md`,
    Skill-Doku `ki-creator`.
 
-**Testweg**
+##### Testweg
 
 - Neue Datei `Pugling.Api.Tests/PlanAusUnitTests.cs`: AK 1–5 (eigene Unit je Fall, Muster `FreshUnitAsync` aus
   `CreatorAgentTests.cs:1453`), AK 4 über den Bonus-Vorrat.

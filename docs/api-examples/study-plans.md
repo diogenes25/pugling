@@ -201,7 +201,8 @@ Response — `HTTP 200`:
     "answerPattern": null,
     "letterTiles": null,
     "introduction": true,
-    "cueBox": null
+    "cueBox": null,
+    "speechLang": "en"
   },
   "done": false,
   "cursor": 0,
@@ -257,7 +258,8 @@ Response — `HTTP 200`:
     "answerPattern": null,
     "letterTiles": null,
     "introduction": true,
-    "cueBox": null
+    "cueBox": null,
+    "speechLang": "en"
   },
   "done": false,
   "misspelled": false,
@@ -330,7 +332,8 @@ Response — `HTTP 200`:
     "answerPattern": null,
     "letterTiles": null,
     "introduction": false,
-    "cueBox": null
+    "cueBox": null,
+    "speechLang": "en"
   },
   {
     "itemIndex": 1,
@@ -353,7 +356,8 @@ Response — `HTTP 200`:
     "answerPattern": null,
     "letterTiles": null,
     "introduction": false,
-    "cueBox": null
+    "cueBox": null,
+    "speechLang": "en"
   }
 ]
 ```

@@ -19,7 +19,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 79** Codes aus `ApiErrors`.
+Verifiziert: **34 / 82** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -98,10 +98,13 @@ Verifiziert: **34 / 79** Codes aus `ApiErrors`.
 - `purchase_not_open` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `rate_limited` — Login-Rate-Limit ist in der Test-Factory bewusst abgeschaltet (`RateLimiting:LoginEnabled=false`), sonst würden die vielen Test-Logins scheitern.
 - `remark_comment_not_found` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `review_already_in_plan` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `review_subject_mismatch` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `series_subject_in_use` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `series_without_subject` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `stage_not_testable` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `subject_in_use` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
+- `typed_test_unreachable` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `unit_content_in_use` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `unknown_exercise_type` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.
 - `vocabulary_not_assigned` — Von DocsCaptureTests nicht mitgeschnitten – ob ein anderer Test den Code über HTTP auslöst, ist hier nicht geprüft.

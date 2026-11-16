@@ -162,7 +162,7 @@ bleibt, der Vater sieht ihn rot“) ist übernommen.
 **Größe S**, `wo: beides`, `migration: nein`, `vertragsbruch: nein`. Vergleich: wie B-547 (S, beides) – eine geteilte
 Prüffunktion, drei Aufrufer, ein Satz im Wizard; kleiner als B-03 (M), weil kein neuer Pfad entsteht.
 
-**Risiken**
+### Risiken
 
 - **Bestehende Tests und Seeds legen die Kombination an.** Mindestens `LernkontrolleTests.cs:127-135`; per Suche nach
   `requireTypedTest = true` ohne `stage` in `Pugling.Api.Tests` und `frontend/e2e` nachziehen (die E2E
@@ -173,7 +173,7 @@ Prüffunktion, drei Aufrufer, ein Satz im Wizard; kleiner als B-03 (M), weil kei
   auseinander (Entscheidung 4) – darum zuerst die Extraktion.
 - **Doku-Capture:** neue `400`-Beispiele nur, wenn ein `DocsCaptureTests`-Fall den Weg fährt; sonst unverändert.
 
-**Angriffsplan (Backend zuerst)**
+#### Angriffsplan (Backend zuerst)
 
 1. Segment-Hilfsfunktion aus `PositionPlayService.LearningCheckOf` herausziehen; `RequireTypedTestValidation` bekommt
    eine Prüfung über (Typ, effektives `requireTypedTest`, Basisstufe, Stufenplan), `LadderProblemText` geht darin auf.
@@ -183,7 +183,7 @@ Prüffunktion, drei Aufrufer, ein Satz im Wizard; kleiner als B-03 (M), weil kei
 3. `ExerciseControllerBase` Anlegen/PUT: Paar `DefaultRequireTypedTest` × effektive `DefaultStage`.
 4. Tests AK 1–6 und 8; dann Frontend: `wizardFinish.ts` + Zusammenfassung, Satz in `fieldHelp.ts`, Vitest AK 7.
 
-**Testweg**
+##### Testweg
 
 - `Pugling.Api.Tests/LernkontrolleTests.cs`: AK 1–5 und 8 (Bestandszeile über den `AppDbContext` im Factory-Scope).
 - `Pugling.Api.Tests/BirkenbihlExerciseTests.cs` (Heimat des B-108-Tests, `:405-411`): AK 6.

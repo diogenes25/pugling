@@ -160,7 +160,7 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
 - **`vertragsbruch: nein`** – neues DTO `CreateReviewFromWordsDto` (Contracts/Supervisor), neuer Fehlercode
   additiv, neue Client-Methode; nichts Bestehendes ändert sich.
 
-**Risiken**
+### Risiken
 
 - **Zwei Schreib-Pfade für Übungen.** Der Creator-Pfad (`ExerciseControllerBase.Create`) prüft Config, Grammatik,
   Interessen; der neue Pfad darf diese Prüfungen nicht unterlaufen. Gegenmittel: nur die Vokabel-Config
@@ -175,7 +175,7 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
 - **Doku-Capture** (`DocsCaptureTests`): neuer Endpunkt braucht ggf. ein Beispiel; zeitabhängige Titel (Datum)
   maskieren.
 
-**Angriffsplan (Backend zuerst, API-First)**
+#### Angriffsplan (Backend zuerst, API-First)
 
 1. Contracts: `CreateReviewFromWordsDto(List<int> VocabularyIds)`; `ApiErrors.ReviewAlreadyInPlan` (409).
 2. `Services/Supervisor/WeakWordReviewService.cs`: Prüfungen (Anzahl, Lernstand beim Kind, Sprachpaar, Unit-Wahl,
@@ -187,7 +187,7 @@ Backend **und** Frontend nachziehen; keine Migration, darum kein L.
    Plan, Auswahl bei mehreren), Erfolgsbanner mit Link `/vater/plaene/{planId}`.
 6. Doku: `docs/tutorial-supervisor.md` und `docs/endpunkt-beziehungen.md` um den Weg ergänzen.
 
-**Testweg**
+##### Testweg
 
 - Integration: neue Klasse `backend/Pugling.Api.Tests/WeakWordReviewTests.cs` (Vorbild `PositionVocabRefTests.cs`,
   `ExerciseItemsAndProgressTests.cs`) – AK 1–7, je Fall die oben genannte rote Probe.

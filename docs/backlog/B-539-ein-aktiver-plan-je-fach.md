@@ -36,7 +36,7 @@ Tages an einer Stelle sehen, egal aus welchem Plan.
 Gemessen am 2026-11-15 (Stand `d41df00a`), Pfade relativ zu `backend/Pugling.Api/`, sofern nicht anders genannt.
 B-537 Punkte 1 und 3 sind nachgeprüft; die Zeilen haben sich seither verschoben.
 
-**Plan-Entität und Vertrag**
+### Plan-Entität und Vertrag
 
 - `Models/StudyPlanEntities.cs:73-75`: `SubjectId int?` („for classification/filtering only“), **keine** Unit-Spalte.
   FK zum Fach mit `SetNull` (`Data/PuglingDbContext.cs:635-637`) – ein gelöschtes Fach hinterlässt einen Plan ohne Fach.
@@ -46,7 +46,7 @@ B-537 Punkte 1 und 3 sind nachgeprüft; die Zeilen haben sich seither verschoben
 - `Controllers/Supervisor/StudyPlansController.cs:93` prüft ein mitgegebenes Fach nur auf Existenz, `:102` übernimmt es
   ungeprüft optional; PATCH `:145-149` ebenso.
 
-**Die Ein-Plan-Sperre – die einzige Stelle, die „ein aktiver Plan je Kind“ erzwingt**
+#### Die Ein-Plan-Sperre – die einzige Stelle, die „ein aktiver Plan je Kind“ erzwingt
 
 - `StudyPlansController.cs:112` (Anlegen) und `:155` (PATCH) rufen `DeactivateSiblingPlansAsync` (`:121-123`), das
   **alle** anderen aktiven Pläne des Kindes abschaltet.
@@ -56,7 +56,7 @@ B-537 Punkte 1 und 3 sind nachgeprüft; die Zeilen haben sich seither verschoben
   `frontend/src/lib/fieldHelp.ts:148-149`, `frontend/src/vater/VaterPlaene.tsx:24`, `:91`,
   `frontend/src/vater/VaterPlanDetail.tsx:67`.
 
-**Was schon über alle aktiven Pläne rechnet (bleibt)**
+##### Was schon über alle aktiven Pläne rechnet (bleibt)
 
 - Bonus-Sperre: `Services/Student/ExtraTrainingService.cs:243-260` (`GateAsync`) – alle aktiven, laufenden Pläne,
   offen erst, wenn jeder seine Belohnungs-Ziele erfüllt hat.
@@ -67,7 +67,7 @@ B-537 Punkte 1 und 3 sind nachgeprüft; die Zeilen haben sich seither verschoben
 - Schüler-Planliste: `Controllers/Student/StudentPlansController.cs:42` und `StudyPlansController.cs:58` liefern alle
   aktiven, laufenden Pläne.
 
-**Was je Plan rechnet und mit zwei aktiven Plänen falsch würde (die eigentliche Arbeit)**
+###### Was je Plan rechnet und mit zwei aktiven Plänen falsch würde (die eigentliche Arbeit)
 
 - **Tagesbox:** `Services/Shared/DailyBoxService.cs:34-39` verdient die Box aus der `DayOverview` **eines** Plans und
   dessen Serie (`progress.StreakBoundedAsync(plan, …)`). Aufgerufen nach jeder Übung/jedem Test mit dem gespielten
@@ -127,6 +127,8 @@ scheitert heute tatsächlich an der Ein-Plan-Regel (B-537, Lücke 5, damit beant
 Nutzer-Entscheidungen aus B-537 (im Dialog, nicht umzustoßen): **1** ein aktiver Plan je Fach; **2** Fach Pflicht am
 Plan, Unit optional, Fach bestehender Pläne aus der Mehrheit ihrer Positionen. Die folgenden setzen sie um.
 
+<!-- markdownlint-disable MD029 -->
+
 3. **Fach Pflicht im Vertrag, Spalte bleibt nullable.** `CreatePlanDto.SubjectId` wird `int` (Pflicht) bzw. aus der
    Unit abgeleitet; ein PATCH auf einen Plan **ohne** Fach muss eines mitbringen – Ausnahme: ein PATCH, der nur
    `active: false` setzt (Abschalten darf nie an einem Pflichtfeld scheitern). Die DB-Spalte bleibt `NULL`-fähig, weil
@@ -169,6 +171,8 @@ Plan, Unit optional, Fach bestehender Pläne aus der Mehrheit ihrer Positionen. 
    Teil A ohne Teil B öffnete die Box-Lücke (Lücke 3). Kosten: zwei Abnahmen, ein Rollengang mehr; die neue Story legt
    der Lauf an (diese Bearbeitung durfte keine Datei anlegen).
 
+<!-- markdownlint-enable MD029 -->
+
 ## Akzeptanzkriterien
 
 Final. Je Fall die Änderung, die seinen Test rot macht.
@@ -209,7 +213,7 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
 - **Teil A – bleibt B-539 (L):** AK 1–4. Die Frontmatter (`groesse: L`, `migration: ja`, `vertragsbruch: ja`, `wo:
   beides`) gilt für Teil A **und** für das Ganze, solange nicht geteilt ist.
 
-**Risiken**
+### Risiken
 
 - **Test-Welle:** 27 direkte Plan-POSTs, der Helfer `TestApi.cs:93`, `AssignAgentTests.cs`, 17 E2E-Dateien und der
   Seed (`Data/Seed.cs`, `new StudyPlan`) brauchen ein Fach. Zuerst der Helfer mit Vorgabe-Fach, dann die Einzelstellen;
@@ -226,7 +230,7 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
 - **Doku-Capture und Tutorials:** `docs/tutorial-supervisor.md`/`docs/api-examples` zeigen Pläne ohne Fach.
 - **Hinweistexte:** vier Stellen im Vater-Web nennen die alte Regel (Ist-Stand) – alle auf „je Fach“ umstellen.
 
-**Angriffsplan (Backend zuerst; Teil B vor Teil A)**
+#### Angriffsplan (Backend zuerst; Teil B vor Teil A)
 
 1. *Teil B:* `PositionProgressService` bekommt `ComputeChildDayAsync(childId, day)` (Vereinigung der Tages-Übersichten
    aller aktiven, laufenden Pläne; Pflicht/Belohnung = alle) und eine Kind-Serie nach Entscheidung 6;
@@ -240,7 +244,7 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
    ein Fach liefern – aus der Unit der erzeugten Übungen).
 5. *Teil A Frontend:* Plan-Formular und Wizard (Fach Pflicht, Unit optional), Hinweistexte, `contract.ts`.
 
-**Testweg**
+##### Testweg
 
 - `Pugling.Api.Tests/AntiCheatTests.cs`: AK 4 (neben `:233`).
 - Neue Datei `Pugling.Api.Tests/KindTagessichtTests.cs` (Teil B): AK 5 inkl. Box, Bonus-Sperre, Serie, Metrik.
