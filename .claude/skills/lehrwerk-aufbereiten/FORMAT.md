@@ -95,7 +95,7 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
 ```json
 [
   {
-    "unit": 1, "typ": "cloze", "titel": "Unité 1 · Passé composé mit être", "reihenfolge": 10,
+    "unit": 1, "typ": "cloze", "titel": "Unité 1 · Passé composé mit être", "reihenfolge": 10, "seiten": "24-25",
     "grammatik": ["Le passé composé avec être"], "beschreibung": "Setze das Verb im passé composé ein.",
     "config": {
       "markup": "Hier, nous [sommes allés|sommes allées] (aller) au cinéma.",
@@ -143,4 +143,8 @@ Aufgaben, Texte, Dialoge oder Beispielsätze des Buchs.
   Geprüft wird auf einer getippten Stufe, auch wenn die Übung auf Selbsteinschätzung steht. Typen ganz ohne
   getippte Stufe (`birkenbihl`) lassen sich so nicht prüfen; ihre Zeile sagt „nur Inhalt geprüft".
 - `reihenfolge` legt die Position in der Unit fest; die Wortlisten belegen 1, 2, 3 …, eigene Übungen ab 10.
+- `seiten` (optional) ist die Buchseite, auf die sich die Übung bezieht, wie gedruckt und wie im Frontmatter der
+  Seiten-Markdowns (`"24-25"`, `"WB 12"`, höchstens 20 Zeichen); das Kind sieht sie an der Übung („S. 24-25“).
+  Ohne `seiten` setzt das Laden keine Seite; bei `--ersetzen` bleibt eine schon gespeicherte (von Hand im Vater-Web
+  gepflegte) stehen, ein Wert hier überschreibt sie. Die Wortlisten aus den TSV-Dateien tragen keine Seite (B-589).
 - Felder, die der Vertrag nicht kennt, lehnt der Server mit `400 unknown_field` ab, statt sie zu verschlucken.

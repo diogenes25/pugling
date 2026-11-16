@@ -182,7 +182,8 @@ wurden, die Start-Übungen mit Titel. Erst nach seinem Ja, mit seiner PIN und se
 `http://localhost:5200`). `--child` nur, wenn das Kind auf dieses Buch umgestellt werden soll; das biegt sein
 vorhandenes Buch im Fach um, statt ein zweites danebenzulegen (der Agent wählt das Buch über die Reihe; passen
 mehrere Bücher, bricht er ab). Eine korrigierte Wortliste kommt mit
-`--ersetzen` nach; das überschreibt die Übungen gleichen Titels.
+`--ersetzen` nach; das überschreibt die Übungen gleichen Titels. Eine im Vater-Web gepflegte Buchseite
+bleibt dabei stehen, außer `uebungen.json` nennt für die Übung eine eigene (`seiten`, B-589).
 
 ### 7. Abschluss
 

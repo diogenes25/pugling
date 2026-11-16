@@ -28,6 +28,8 @@ TSV_COLUMNS = ["abschnitt", "wort", "uebersetzung", "hinweis", "notiz", "unsiche
 ROUTES = {"vocabulary", "cloze", "grammar", "matching", "translation", "reading", "list", "birkenbihl"}
 # Field limits of the Creator API (SeriesUnit/CreatorProfile); checked offline so a run never stops halfway.
 MAX_TOPIC, MAX_TEXT = 200, 2000
+# Exercise.BookPages (B-588): free text as printed ("42-43", "WB 12"), at most 20 characters after trimming.
+MAX_PAGES = 20
 # Config fields per route, mirrored from the config types in Pugling.Contracts: the server rejects an unknown one with
 # 400 unknown_field, which would stop a run halfway. Key "" is the top level; any other key is a list of objects, and
 # a dotted key ("sentences.decoding") is a list inside the entries of another. LadenFieldListTests reads the JSON
@@ -282,6 +284,10 @@ def check(book, words, exercises):
             for g in gaps:
                 if contains_word(re.sub(r"\([^()]*\)", " ", readable), g["answer"]):
                     warn.append(f"{name}: die Lösung '{g['answer']}' steht schon im Text")
+        # The page goes to the server as bookPages; checked here, a 400 would stop the run halfway (B-589).
+        if "seiten" in e and not (isinstance(e["seiten"], str) and 0 < len(e["seiten"].strip()) <= MAX_PAGES):
+            err.append(f'{name}: seiten ist die Buchseite wie gedruckt, ein Text mit 1 bis {MAX_PAGES} Zeichen, '
+                       f'z. B. "42-43"; ohne Seite das Feld weglassen')
         undeclared.update(ref for ref in e.get("grammatik", []) if ref.lower() not in declared)
     if undeclared:
         warn.append(f"nicht in buch.json deklariert, müssen also schon auf dem Server stehen: "
@@ -354,6 +360,23 @@ def build_config(e):
                 bank.setdefault(graded(word), word)
             config["wordBank"] = sorted(bank.values(), key=str.lower)
     return config
+
+
+def import_pages(e):
+    """The book page the folder names for an exercise (field "seiten"), or None when it names none."""
+    pages = e.get("seiten")
+    return (pages.strip() or None) if isinstance(pages, str) else None
+
+
+def save_exercise(api, route, old, body, pages):
+    """Creates the exercise, or replaces exercise old. PUT is a full replacement on the server: a missing bookPages
+    clears the page a creator kept by hand, so without a page of its own the import carries the stored one over
+    (B-589). A page from the folder wins over the stored one."""
+    if old and pages is None:
+        pages = api.call("GET", f"/creator/exercises/{old}").get("bookPages")
+    if pages is not None:
+        body = {**body, "bookPages": pages}
+    return api.call("PUT", f"{route}/{old}", body) if old else api.call("POST", route, body)
 
 
 def load(folder, book, words, exercises, args):
@@ -456,7 +479,7 @@ def load(folder, book, words, exercises, args):
             print(f"  = {e['titel']} (schon da)")
             touched.append((old, e["titel"]))
             continue
-        res = api.call("PUT", f"{route}/{old}", body) if old else api.call("POST", route, body)
+        res = save_exercise(api, route, old, body, import_pages(e))
         touched.append((res["id"], e["titel"]))
         print(f"  {'~' if old else '+'} {e['titel']} -> Übung {res['id']}")
 
