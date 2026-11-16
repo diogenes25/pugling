@@ -82,6 +82,9 @@ Positions-Editor, Leitner aus, Lehrwerk-Weg, Full-Flow): **8 passed**.
 - **Was es jetzt deckt:** eine Regel in Schritt 4 des `pm-loop`-Skills – wer in einem geteilten Helfer neuen Zustand
   schreibt, listet jeden Aufrufer und entscheidet je Aufrufer, ob dessen Eingabe vertrauenswürdig ist (geprüft vs.
   Selbstauskunft). Kein Tor: die Unterscheidung „geprüft" ist fachlich und nicht mechanisch erkennbar.
+- **Eigener Fehler beim Abschluss:** die Aufräum-Verschiebung eines Testkommentars (per `awk`, ohne anschließendes
+  `tsc`) zerbrach `ExerciseEditModal.test.ts`; CI fing es (Typecheck, Artefakt-Smoke). Behoben im Nachzug, `tsc -b`
+  0 und Vitest grün. Lehre: nach jedem Frontend-Edit `tsc -b`, auch bei „nur einem Kommentar".
 - **Halt:** B-410 ist ein neues Tor und das Review fand einen Defekt im Increment – beide Halt-Bedingungen des
   Backlog-Laufs greifen; Sprint 2 entfällt.
 
