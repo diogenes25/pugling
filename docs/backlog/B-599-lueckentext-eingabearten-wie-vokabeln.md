@@ -290,6 +290,7 @@ schon (`Lektion.tsx:154-167`).
 | F2 Ablenker nicht gelesen | `exerciseConfig.tsx:396` | red | red |
 | F3 Lückentext ohne Stufenfeld | `exerciseConfig.tsx:113` | red | red |
 | F4 Summenzeile rechnet richtig × Satz | `SohnBonus.tsx:270` | red | red |
+
 - **2026-11-16** — **Reviews.** `pugling-reviewer` (1757/1757 grün, keine Blocker), drei Funde eingearbeitet:
   (1) die Großschreibung am Satzanfang wurde auch gesenkt, wo das die Lösung als einzige Option mit Großbuchstaben
   zurückließ („I'm“ neben gefragtem „I'll“) – jetzt die Regel der Wortbank: nur senken, wo alle übrigen klein beginnen
