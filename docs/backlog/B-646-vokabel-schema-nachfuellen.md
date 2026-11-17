@@ -191,9 +191,23 @@ Am 2026-11-17 vom Vater im Dialog getroffen: Er hat alle acht Empfehlungen der O
    Begründung: Jeder Teil ist für sich abnehmbar. B-648 braucht die Grundform-Daten aus B-647. Kosten: drei
    Durchläufe durch die Kette statt einem.
 
+9. **`NounInfo` beschreibt das Wort der Lernsprache (`Word`), nicht die deutsche Übersetzung.** Diese
+   Entscheidung präzisiert 1 und 6 und wurde beim Schätzen von B-647 nachgeholt (Vater, 2026-11-17).
+   Hintergrund: Der Vertrag definiert Artikel, Genus und Plural bisher als die der Zielsprache, also Deutsch
+   (`backend/Pugling.Contracts/Common/VocabBaseTypes.cs:47-56`). Der Tipp aus B-446 liest den Artikel so
+   (`backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:148-163`), und der Seed setzt „die" zu
+   `la ville`. Für die Grammatik der Lernsprache gab es damit keinen Platz. Künftig gilt: `la ville` →
+   `Article = "la"`, `Genus = Feminine`; `pater` → `Genus = Masculine`, `Genitive = "patris"`. Den deutschen
+   Artikel für den Tipp liest der Code aus der Übersetzung („die Stadt"), über die vorhandene Artikelliste
+   (`backend/Pugling.Api/Services/Shared/StageMechanics.cs:62-67`). Begründung: Birkenbihl, Artikel- und
+   Beugungsübungen brauchen die Grammatik des Lernworts, und der deutsche Artikel steht schon in der
+   Übersetzung. Kosten: Die Bedeutung des Vertrags ändert sich (die Form nicht). Der B-446-Tipp wird umgebaut,
+   Seed und Editor-Beschriftung ziehen nach, der Eintrag `house` („das"/„Häuser") wird umgedreht.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Füllgrad-Messung des Vokabel-Schemas auf einer DB-Kopie, im Chat mit dem Vater).
 - **2026-11-17** — Anforderung des Vaters ergänzt (Felder vollständig, jedes Birkenbihl-Wort braucht eine Vokabel), Birkenbihl-Abdeckung auf der DB-Kopie gemessen; P3→P2, Aufräumen→Wunsch.
 - **2026-11-17** — ausformuliert: Ist-Stand am Code belegt. Korrektur der Idee: die 29 deutschen Einträge sind Übersetzungssätze (sechs Übungen mit `sourceLang: de`), keine vertauschten Vokabeln. Neu gefunden: CRUD-Anlage einer Birkenbihl-Übung verankert Glossen nicht im Speicher; der Artikel im `Word` trägt B-421.
 - **2026-11-17** — gegrillt im Dialog (Vater übernimmt alle acht Empfehlungen) und nach Entscheidung 8 geteilt: verworfen, ersetzt durch B-647, B-648, B-649.
+- **2026-11-17** — Entscheidung 9 nachgetragen (beim Schätzen von B-647 gefunden: `NounInfo` war im Vertrag deutsch); vom Vater im Dialog entschieden.
