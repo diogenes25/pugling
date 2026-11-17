@@ -135,13 +135,17 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// <c>false</c> = every miss resets to box 1. Applies within this position only - the cross-plan learning state per
 /// word always resets hard.
 /// </param>
+/// <param name="Remediation">
+/// Remediation (B-635, "Nacharbeit"): every round plays the tasks not yet done, each starting as free text; the child may
+/// make a card easier step by step, and a task is done only when typed freely right. Only for a type with an ease ladder.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
     List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null,
-    bool ForgivingDemotion = false);
+    bool ForgivingDemotion = false, bool Remediation = false);
 
 /// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
 public enum LearningCheckKind
@@ -204,12 +208,13 @@ public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 /// </param>
 /// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>null</c> = 0 (no cap). 0 to 200.</param>
 /// <param name="ForgivingDemotion">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c> (hard reset). Not inherited from the exercise.</param>
+/// <param name="Remediation">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c>.</param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    int? NewItemsPerDay = null, bool? ForgivingDemotion = null);
+    int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null);
 
 /// <summary>
 /// The weak words of the plan's child to review daily (B-584): ids of vocabulary store entries the child already has
@@ -276,10 +281,11 @@ public record CreateReviewFromWordsDto(List<int> VocabularyIds);
 /// value sent alongside is still range-checked.
 /// </param>
 /// <param name="ForgivingDemotion">Forgiving demotion (see <see cref="PositionResponse"/>); <c>false</c> switches it off.</param>
+/// <param name="Remediation">Remediation (see <see cref="PositionResponse"/>); <c>false</c> switches it off, the done tasks stay.</param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
     bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false,
-    bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null);
+    bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null, bool? Remediation = null);

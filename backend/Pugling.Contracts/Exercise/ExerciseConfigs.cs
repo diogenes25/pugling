@@ -99,9 +99,15 @@ public class ClozeConfig
 /// differences an author wants asked ("doesn't she" beside "don't she"). Without them the other gaps' solutions are
 /// offered. Only that stage reads them.
 /// </para>
+/// <para>
+/// <paramref name="Prompt"/> (B-633) is the author's own German prompt of this gap - the teacher's sentence ("Während des
+/// Films schlief ich ein.") or word ("Richtung Osten"). If set and not blank it is the gap's hint and beats the store's
+/// translation, and the card shows it openly above the text: it is the task, not help. A gap without a sentence (text
+/// just <c>{{1}}</c>) plus a prompt is a single-word task. A translation, not a solution: the child is meant to see it.
+/// </para>
 /// </summary>
 public record Gap(int Index, string Answer, List<string>? Alternatives = null, string? VocabKey = null,
-    string? Form = null, List<string>? Distractors = null);
+    string? Form = null, List<string>? Distractors = null, string? Prompt = null);
 
 /// <summary>Essay: writing prompt + constraints.</summary>
 public class EssayConfig

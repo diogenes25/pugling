@@ -27,12 +27,19 @@ import { useChromeT } from "../lib/chromeText";
  * Eine gelegte Kachel ist `aria-disabled`, nicht `disabled`: Ein Knopf, der mit dem Fokus darauf gesperrt wird, gibt
  * den Fokus im Browser an `body` ab – danach erreichten die getippten Buchstaben den Block nicht mehr (gemessen in
  * `e2e/buchstaben-ordnen.spec.ts`: von „kaufen“ kam „kauf“ an). jsdom kennt diese Regel nicht.
+ *
+ * **Mehrere Wörter (B-634):** Der Server mischt jedes Wort für sich und schickt die Kacheln Wort für Wort, die
+ * Wortgrenzen als `pattern` („__ ____ __“). Jedes Wort hat dann seinen eigenen Kachelblock und seine eigenen Felder;
+ * eine Kachel landet immer in ihrem Wort, und die Leerzeichen setzt die Komponente selbst – sie sind keine Kachel,
+ * die Lösung legt sie ja schon fest. Ohne `pattern` ist alles ein Wort wie bisher.
  */
-export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false }: {
+export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false, pattern }: {
   tiles: readonly string[];
   value: string;
   onChange: (v: string) => void;
   onSubmit?: () => void;
+  /** Die Wortgrenzen einer Lösung aus mehreren Wörtern (B-634), z. B. „__ ____ __“; ohne = ein Wort. */
+  pattern?: string | null;
   /** Nichts legen und nichts zurücknehmen (B-532) – als `aria-disabled`, aus demselben Fokus-Grund wie oben. */
   gesperrt?: boolean;
 }) {
@@ -48,10 +55,15 @@ export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false
     setPicked([]);
   }
 
+  const woerter = wortBereiche(tiles.length, pattern);
+  const wortVon = (i: number) => woerter.findIndex((w) => i >= w.start && i < w.start + w.laenge);
+  // Je Wort die gelegten Kacheln in Lege-Reihenfolge – das gelegte Wort ist ihre Folge, die Wörter mit Leerzeichen.
+  const gelegt = (p: readonly number[]) => woerter.map((_, w) => p.filter((i) => wortVon(i) === w).map((i) => tiles[i]).join(""));
+
   function update(next: number[]) {
     if (gesperrt) return;
     setPicked(next);
-    onChange(next.map((i) => tiles[i]).join(""));
+    onChange(gelegt(next).join(" ").trimEnd());
   }
 
   // Der Aufrufer hat geleert (nach dem Absenden): die gelegten Kacheln gehören zur alten Antwort.
@@ -80,23 +92,42 @@ export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false
       return;
     }
     if (e.key.length !== 1) return;
+    // Die erste freie passende Kachel. Bei mehreren Wörtern ist das von selbst eine im ersten noch nicht vollen Wort: die
+    // Wörter liegen der Reihe nach, und jedes Wort davor ist voll.
     const free = tiles.findIndex((t, i) => !picked.includes(i) && t.toLowerCase() === e.key.toLowerCase());
     if (free >= 0) { e.preventDefault(); pick(free); }
   }
 
-  const word = picked.map((i) => tiles[i]).join("");
+  const proWort = gelegt(picked);
+  const word = proWort.join("");
   return (
     // Die Tastatur greift überall im Block, auch wenn gerade eine Kachel den Fokus hat.
     <div className="lettertiles" onKeyDown={onKeyDown}>
       <div className="lettertiles-word" aria-hidden="true">
-        {tiles.map((_, i) => <span key={i} className="lettertiles-slot">{word[i] ?? ""}</span>)}
+        {woerter.map((w, n) => (
+          <span key={n} className="lettertiles-wort">
+            {Array.from({ length: w.laenge }, (_, i) => <span key={i} className="lettertiles-slot">{proWort[n][i] ?? ""}</span>)}
+          </span>
+        ))}
       </div>
       {/* Immer im DOM, nur der Inhalt wechselt (B-134): so wird jede gelegte Kachel angesagt. */}
-      <p className="sr-only" role="status" aria-live="polite">{word ? t("play.placed", { letters: word.split("").join(" ") }) : ""}</p>
+      {/* Je Wort buchstabiert, die Wörter durch „ / “ getrennt – sonst hörte man die Wortgrenze nicht (B-634). */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {word ? t("play.placed", { letters: proWort.filter(Boolean).map((w) => w.split("").join(" ")).join(" / ") }) : ""}
+      </p>
       <div ref={pool} className="lettertiles-pool" role="group" aria-label={t("play.tilesPool")}>
-        {tiles.map((tile, i) => (
-          <button type="button" key={i} className="btn ghost lettertiles-tile" aria-disabled={gesperrt || picked.includes(i)}
-            aria-label={t("play.tile", { letter: tile })} onClick={() => pick(i)}>{tile}</button>
+        {woerter.map((w, n) => (
+          // Mehrere Wörter: jedes ist eine benannte Gruppe, damit ein Screenreader Zahl und Länge der Wörter hört.
+          <span key={n} className="lettertiles-wort" role={woerter.length > 1 ? "group" : undefined}
+            aria-label={woerter.length > 1 ? t("play.tilesWord", { n: n + 1, count: w.laenge }) : undefined}>
+            {tiles.slice(w.start, w.start + w.laenge).map((tile, k) => {
+              const i = w.start + k;
+              return (
+                <button type="button" key={i} className="btn ghost lettertiles-tile" aria-disabled={gesperrt || picked.includes(i)}
+                  aria-label={t("play.tile", { letter: tile })} onClick={() => pick(i)}>{tile}</button>
+              );
+            })}
+          </span>
         ))}
       </div>
       <div className="row" style={{ gap: 8, justifyContent: "center" }}>
@@ -105,4 +136,15 @@ export function LetterTiles({ tiles, value, onChange, onSubmit, gesperrt = false
       </div>
     </div>
   );
+}
+
+/**
+ * Die Kachel-Bereiche je Wort (B-634): aus dem Muster die Länge jedes Worts, Kachel für Kachel aufaddiert. Passt das
+ * Muster nicht zur Kachelzahl (fehlt, oder alter Stand), ist alles ein Wort – lieber ein Block als falsch geteilte.
+ */
+export function wortBereiche(anzahl: number, pattern?: string | null): { start: number; laenge: number }[] {
+  const laengen = (pattern ?? "").split(" ").map((w) => w.length).filter((l) => l > 0);
+  if (laengen.length < 2 || laengen.reduce((a, b) => a + b, 0) !== anzahl) return [{ start: 0, laenge: anzahl }];
+  let start = 0;
+  return laengen.map((laenge) => { const w = { start, laenge }; start += laenge; return w; });
 }

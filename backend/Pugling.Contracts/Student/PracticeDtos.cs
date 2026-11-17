@@ -15,10 +15,26 @@ namespace Pugling.Contracts.Student;
 /// the child may still take it today. A token without the student role is exempt from the cap and always gets the
 /// daily maximum. It is <c>null</c> only in the heartbeat's answer: the heartbeat runs every few seconds and its
 /// answer is not a screen state, so it skips the count (start, read and end always carry it).
+/// <para>
+/// <paramref name="Remediation"/> (B-635) is set only on a remediation position: which round this is and how many of
+/// its tasks are done. <c>null</c> everywhere else.
+/// </para>
 /// </summary>
 public record SessionResponse(int Id, int PlanId, int PositionId, DateOnly Day,
     DateTime StartedAt, DateTime? EndedAt, int ActiveSeconds, int ReviewCount,
-    PlayMode Mode, int Cursor, int Total, bool Testable, int? TestAttemptsLeft);
+    PlayMode Mode, int Cursor, int Total, bool Testable, int? TestAttemptsLeft, RemediationState? Remediation = null);
+
+/// <summary>
+/// The state of a remediation position (B-635): <paramref name="Round"/> counts the learn rounds played on it, this one
+/// included; <paramref name="Done"/> of <paramref name="Total"/> tasks were typed freely right. Rounds repeat until all are.
+/// </summary>
+public record RemediationState(int Round, int Done, int Total);
+
+/// <summary>
+/// "Make this card easier" (B-635): <paramref name="ItemIndex"/> names the card the client shows - the server eases only
+/// the round's current card, one rung down its type's ease ladder, never back up.
+/// </summary>
+public record EaseCardDto(int ItemIndex);
 
 /// <summary>
 /// Start payload of a practice session. <paramref name="Mode"/> selects the playback mode (default
@@ -92,6 +108,10 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// uncovers, copies and then recalls; the answer carries both results (<c>WasKnown</c> of the uncovering,
 /// <c>GivenAnswer</c> of the recall, <c>null</c> = given up). <c>RevealSpeechLang</c>/<c>RevealAudioUrl</c> read that
 /// learnt word aloud - on the learn card only, where it is shown anyway, and only while it is shown.
+///
+/// <c>CanEase</c> (B-635) says the child may make this card easier (<c>POST …/easier</c>): a remediation task, or a learn
+/// card's recall, not yet at the easiest form. <c>Eased</c> marks a card made easier in this round: an answer to it shows
+/// right or wrong and the solution, but never marks the task done.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -100,7 +120,8 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     IReadOnlyList<WordPair>? Decoding = null, bool DisplayOnly = false, string? AnswerPattern = null,
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
     string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
-    bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null);
+    bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null,
+    bool CanEase = false, bool Eased = false);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
@@ -141,7 +162,10 @@ public record CardShownDto(int ItemIndex);
 /// <para>
 /// <see cref="RepeatsAtEnd"/> (B-598): a learn card given up or recalled wrong comes back once at the end of this round.
 /// </para>
+/// <para>
+/// <see cref="TaskDone"/> (B-635): this answer finished a remediation task - typed freely right, without easing.
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
     DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
-    string? Explanation = null, bool RepeatsAtEnd = false);
+    string? Explanation = null, bool RepeatsAtEnd = false, bool TaskDone = false);

@@ -93,6 +93,8 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // B-584: dieselbe Wortmenge zweimal wäre dieselbe Pflicht doppelt – auch, wenn es die Übung ist, aus der die Wörter stammen.
   review_already_in_plan: "Genau diese Wörter übt dieser Plan schon in einer Position.",
   review_subject_mismatch: "Diese Wörter gehören zu einem anderen Fach als dieser Plan.",
+  // B-635: nennt nur die Sperre – leichter geht nur die aktuelle Nacharbeits-Karte, und nur bis zur Auswahl.
+  cannot_ease: "Diese Karte lässt sich nicht noch leichter schalten.",
   // B-552: nennt nur die Sperre – welche Stufe getippt prüft, steht in der Feldhilfe.
   typed_test_unreachable: "„Nur getippte Tests zählen“ braucht eine getippte Stufe – auf Selbsteinschätzung wäre die Pflicht nie erreichbar.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
@@ -679,6 +681,10 @@ export const api = {
   review: (planId: number, positionId: number, sessionId: number, dto: ReviewInput) =>
     http<ReviewOutcome | undefined>(
       `${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/review`, "POST", dto),
+  // B-635: die aktuelle Karte eine Stufe leichter – der Server führt die Stufe und schickt die Karte in ihrer neuen Form.
+  easier: (planId: number, positionId: number, sessionId: number, itemIndex: number) =>
+    http<PracticeCard>(`${V1}/student/study-plans/${planId}/positions/${positionId}/practice-sessions/${sessionId}/easier`,
+      "POST", { itemIndex }),
   // B-530: „die nächste Karte ist jetzt sichtbar" – der Server stempelt mit seiner Uhr; der Client meldet nur das Wann
   // und welche Karte. Der Server stempelt nur, wenn sie seine aktuelle Karte ist.
   cardShown: (planId: number, positionId: number, sessionId: number, itemIndex: number) =>

@@ -530,4 +530,126 @@ public class ClozePlayTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.Equal(["go", "gone", "went"], Assert.Single(await BankChoicesAsync(exerciseId)));
     }
+
+    // ---- B-633: the author's own prompt per gap ----
+
+    /// <summary>
+    /// B-633 AK 1, inline gap: the prompt stands above the text as the card's material, and the tip button carries nothing
+    /// that is already there. Red if <c>Gap.Prompt</c> is not read (no passage) or if it is not lifted out of the hint.
+    /// </summary>
+    [Fact]
+    public async Task Vorgabe_der_Luecke_steht_ueber_dem_Text_ohne_Speicherschluessel()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "I fell {{1}} during the film.",
+            gaps = new[] { new { index = 1, answer = "asleep", prompt = "Während des Films schlief ich ein." } },
+        });
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationFreeText);
+
+        var card = Assert.Single((await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId)).EnumerateArray());
+
+        Assert.Equal("Während des Films schlief ich ein.", card.GetProperty("passage").GetString());
+        JsonAssert.Null(card, "hint");
+    }
+
+    /// <summary>
+    /// B-633 AK 1, store gap: the prompt beats the store's translation. Red if the store branch keeps <c>v.Translation</c>
+    /// as the only hint (no passage, the store's "die Burg" behind the tip button).
+    /// </summary>
+    [Fact]
+    public async Task Vorgabe_der_Luecke_schlaegt_die_Uebersetzung_aus_dem_Speicher()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("castle"), "die Burg");
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "The {{1}} is old.",
+            gaps = new[] { new { index = 1, answer = "", vocabKey = key, prompt = "Die Burg ist alt." } },
+        });
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationFreeText);
+
+        var card = Assert.Single((await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId)).EnumerateArray());
+
+        Assert.Equal("Die Burg ist alt.", card.GetProperty("passage").GetString());
+        JsonAssert.Null(card, "hint");
+    }
+
+    /// <summary>
+    /// B-633, unchanged neighbour: a store gap without a prompt keeps the store's translation as its tip and carries no
+    /// passage. Red if the prompt branch fires for a blank prompt or the hint suppression swallows a plain hint.
+    /// </summary>
+    [Fact]
+    public async Task Speicherluecke_ohne_Vorgabe_behaelt_den_Tipp()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, TestApi.UniqueName("castle"), "die Burg");
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "The {{1}} is old.",
+            gaps = new[] { new { index = 1, answer = "", vocabKey = key, prompt = "  " } },
+        });
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationFreeText);
+
+        var card = Assert.Single((await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId)).EnumerateArray());
+
+        Assert.Equal("die Burg", card.GetProperty("hint").GetString());
+        JsonAssert.Null(card, "passage");
+    }
+
+    /// <summary>
+    /// B-633 AK 3: a gap without a sentence (text just <c>{{1}}</c>) plus a prompt is a single-word task - the German prompt
+    /// above, the gap alone, and the typed word graded. Red if the prompt does not reach the card or the answer is not graded.
+    /// </summary>
+    [Fact]
+    public async Task Luecke_ohne_Satz_mit_Vorgabe_ist_eine_Einzelwortaufgabe()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "{{1}}",
+            gaps = new[] { new { index = 1, answer = "eastwards", prompt = "Richtung Osten" } },
+        });
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.TranslationFreeText);
+        var child = await TestApi.ChildAsync(_factory);
+        var sessionId = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+
+        var card = Assert.Single((await child.GetFromJsonAsync<JsonElement>(
+            $"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards")).EnumerateArray());
+        Assert.Equal("Richtung Osten", card.GetProperty("passage").GetString());
+        Assert.Equal("{{1}}", card.GetProperty("prompt").GetString());
+
+        var review = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 0, givenAnswer: "eastwards"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.True(review, "wasCorrect");
+    }
+
+    /// <summary>
+    /// B-633 with B-524: the cue box withholds the asked gap's meaning, so a gap prompt (which is also the hint) does not
+    /// stand above the text there. Red if the passage is handed out on the cue-box stage.
+    /// </summary>
+    [Fact]
+    public async Task Vorgabe_der_Luecke_bleibt_im_Wortkasten_verborgen()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var exerciseId = await CreateClozeAsync(father, new
+        {
+            text = "I go {{1}}. I go {{2}}.",
+            gaps = new[]
+            {
+                new { index = 1, answer = "eastwards", prompt = "Richtung Osten" },
+                new { index = 2, answer = "westwards", prompt = "Richtung Westen" },
+            },
+        });
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)ClozeStage.CueBoxFreeText);
+
+        var cards = await CardsAsync(await TestApi.ChildAsync(_factory), planId, positionId);
+
+        Assert.All(cards.EnumerateArray(), card =>
+        {
+            JsonAssert.Null(card, "passage");
+            Assert.Contains("Richtung Osten", card.GetProperty("cueBox").EnumerateArray().Select(w => w.GetString()));
+        });
+    }
 }

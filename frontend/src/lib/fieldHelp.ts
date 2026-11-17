@@ -115,6 +115,13 @@ export const FIELD_HELP = {
       + "erst nach längerer Pause wieder dran; ein Fehler wirft ihn zurück. Aus heißt: jede Sitzung "
       + "zeigt wieder alles. An ist für Vokabeln fast immer die bessere Wahl.",
   },
+  remediation: {
+    title: "Nacharbeit",
+    text: "Für einen verpatzten Test: Jede Runde geht der Reihe nach durch alle Aufgaben, die noch offen sind. Jede "
+      + "beginnt als Freitext; hängt das Kind fest, schaltet es selbst leichter – Kästchen, Buchstabensalat, Auswahl. "
+      + "Das kostet nichts, aber erledigt ist eine Aufgabe erst, wenn sie frei getippt richtig war. Offene Aufgaben "
+      + "kommen in der nächsten Runde wieder.",
+  },
   forgivingDemotion: {
     title: "Ausrutscher verzeihen",
     text: "Nur mit Leitner-Kasten: Ein Fehler wirft ein Wort nur ein Fach zurück statt auf Fach 1; erst ein zweiter "
@@ -332,6 +339,12 @@ export const FIELD_HELP = {
       + "zählen als „Auch richtig“. Ein Komma trennt nicht: „Abfall, Müll“ bleibt eine Übersetzung. Wörter, "
       + "die es im Vokabelspeicher schon gibt, werden wiederverwendet statt doppelt angelegt. Zeilen ohne "
       + "Trenner (eine Überschrift etwa) werden übersprungen und genannt.",
+  },
+  gapPrompt: {
+    title: "Deutsche Vorgabe",
+    text: "Die Aufgabe dieser Lücke auf Deutsch, so wie sie im Test stand – ein ganzer Satz („Während des Films "
+      + "schlief ich ein.“) oder ein Wort („Richtung Osten“). Das Kind sieht sie offen über dem Text. Ohne Vorgabe "
+      + "gibt es als Tipp die Übersetzung aus dem Vokabelspeicher. Für eine Einzelwort-Aufgabe ist der Text nur {{1}}.",
   },
   gapDistractors: {
     title: "Falsche Vorschläge",

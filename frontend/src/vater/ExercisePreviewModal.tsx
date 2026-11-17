@@ -248,7 +248,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                     // Buchstaben ordnen (B-05): dieselbe Komponente wie in der Sohn-App.
                     <div style={{ marginTop: 8 }}>
                       <LetterTiles tiles={it.letterTiles} value={a?.givenAnswer ?? ""}
-                        onChange={(v) => setText(it.itemIndex, v)} onSubmit={submit} />
+                        onChange={(v) => setText(it.itemIndex, v)} onSubmit={submit} pattern={it.answerPattern} />
                     </div>
                   ) : data.typed && it.answerLength ? (
                     // Buchstabenkästchen: dieselbe Komponente wie in der Sohn-App.

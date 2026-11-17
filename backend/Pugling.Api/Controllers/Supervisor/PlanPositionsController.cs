@@ -44,7 +44,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
             p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
             types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
-            p.ForgivingDemotion);
+            p.ForgivingDemotion, p.Remediation);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -126,6 +126,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         return null;
     }
 
+    // Remediation (B-635) plays a ladder of easier forms; a type without one would start as free text and stay there,
+    // with an "easier" button that can never work.
+    private static string? RemediationProblem(IExerciseType? type) =>
+        type is null || type.EaseLadder.Count == 0
+            ? "Remediation needs an exercise type that can be made easier step by step (currently: cloze)."
+            : null;
+
     // Why an invalid stage matters (it reveals the answer instead of breaking) and why the check is shared with
     // the creator's `DefaultStage`: see StageValidation. The schedule is checked step by step - one bad day would
     // be enough to hand out the solutions on that day.
@@ -179,6 +186,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? 0, dto.UseLeitner ?? exercise.DefaultUseLeitner)
                 ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? 0)) is { } doseProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
+        if (dto.Remediation == true && RemediationProblem(createType) is { } remediationProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
@@ -204,6 +213,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             MaxBox = dto.MaxBox is > 0 ? dto.MaxBox.Value : 5,
             // How hard a miss resets is a statement about this obligation, not the material: no exercise default.
             ForgivingDemotion = dto.ForgivingDemotion ?? false,
+            Remediation = dto.Remediation ?? false,
             // Empty means "method default" here as in the PATCH (B-547) - no third state next to "default" and "own".
             BoxIntervalDays = dto.BoxIntervalDays is { Count: > 0 } intervals ? intervals : null,
             StageSchedule = dto.StageSchedule is { Count: > 0 } schedule ? schedule : null,
@@ -302,6 +312,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // The set check only judges a dose being set now: a list the creator switched to any order after it was assigned
         // keeps its stored dose, which play ignores (PositionPlayService.DailyDose) - blocking every other edit of the
         // position over it would lock the father out of a setting he did not touch (B-478).
+        // Judged only when switched on now: a position keeps its setting through every other edit.
+        if (dto.Remediation == true && !pos.Remediation && RemediationProblem(types.ByKey(exercise.Type)) is { } remediationProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? pos.NewItemsPerDay, dto.UseLeitner ?? pos.UseLeitner)
                 ?? (dto.NewItemsPerDay is { } dose && dose != pos.NewItemsPerDay ? DoseOnSetProblem(exercise, dose) : null))
             is { } doseProblem)
@@ -322,6 +335,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.UseLeitner is not null) pos.UseLeitner = dto.UseLeitner.Value;
         if (dto.MaxBox is > 0) pos.MaxBox = dto.MaxBox.Value;
         if (dto.ForgivingDemotion is not null) pos.ForgivingDemotion = dto.ForgivingDemotion.Value;
+        if (dto.Remediation is not null) pos.Remediation = dto.Remediation.Value;
         // An empty list means "back to the method default" (B-547): no form sends these two, and storing an empty
         // schedule would be a third state next to "default" and "own" that play treats like the default anyway.
         if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays.Count > 0 ? dto.BoxIntervalDays : null;

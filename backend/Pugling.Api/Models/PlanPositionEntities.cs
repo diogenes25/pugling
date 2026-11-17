@@ -127,6 +127,12 @@ public class PlanPosition
     /// cross-plan learning state per word stays hard so it remains an honest measurement.
     /// </summary>
     public bool ForgivingDemotion { get; set; }
+    /// <summary>
+    /// Remediation (B-635, "Nacharbeit"): the round plays every task not yet done, in order, each starting as free text;
+    /// the child may make the current card easier step by step, and a task is done only when typed freely right. Rounds
+    /// repeat until every task is done. Only for a type with an ease ladder (<see cref="IExerciseType.EaseLadder"/>).
+    /// </summary>
+    public bool Remediation { get; set; }
     /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
     /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>
@@ -230,4 +236,14 @@ public class PositionItemProgress
     /// demotion off: switching it on mid-plan must see the real history, or a word missed yesterday would be forgiven twice.
     /// </summary>
     public bool LastMissed { get; set; }
+    /// <summary>
+    /// Remediation (B-635): the day the task was first typed freely right, without being made easier. <c>null</c> = still
+    /// open - the next round brings it again. Never set by an answer on an easier stage, whatever the client sends.
+    /// </summary>
+    public DateOnly? RemediationDoneAt { get; set; }
+    /// <summary>
+    /// Remediation (B-635, read by the father's view B-637): how often the task was solved right, per stage it was played
+    /// at (stage value → count). Kept across days; <c>null</c> = never solved. Reassign, do not mutate in place.
+    /// </summary>
+    public Dictionary<int, int>? SolvedByStage { get; set; }
 }

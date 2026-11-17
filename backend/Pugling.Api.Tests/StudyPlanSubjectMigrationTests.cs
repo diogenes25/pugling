@@ -99,6 +99,8 @@ public sealed class StudyPlanSubjectMigrationTests
                 var migrator = db.GetService<IMigrator>();
                 await migrator.MigrateAsync(Before);
                 await migrator.MigrateAsync(Target);
+                // The chain goes on after the step under test; the reads below use today's model, so they need today's schema.
+                await migrator.MigrateAsync();
             }
 
             await using (var db = new PuglingDbContext(options))

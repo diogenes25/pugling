@@ -105,6 +105,32 @@ public class LueckentextEingabeartenTests(PuglingWebAppFactory factory) : IClass
     }
 
     /// <summary>
+    /// B-634 AK 1 + AK 3: a solution of several short words comes as tiles, each word's own letters in its own block and
+    /// the word boundaries as the answer pattern; a word over 12 letters still falls back to letter boxes. The built
+    /// answer is graded like any typed one. Red if several words fall back to boxes (old single-word rule), if the
+    /// pattern is missing (the card could not show the boundaries) or if the long word is scrambled.
+    /// </summary>
+    [Fact]
+    public async Task Salat_Mischt_Mehrere_Woerter_Je_Wort()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await ClozeAsync(father, new
+        {
+            text = "Call me {{1}} you can. {{2}}",
+            gaps = new[] { new { index = 1, answer = "as soon as" }, new { index = 2, answer = "Western Mediterraneans" } },
+        });
+
+        var cards = await CardsAsync(exerciseId, ClozeStage.LetterScramble);
+
+        var tiles = cards[0].GetProperty("letterTiles").EnumerateArray().Select(t => t.GetString()!).ToList();
+        Assert.Equal("soon".Order(), string.Concat(tiles.Skip(2).Take(4)).Order());
+        Assert.Equal("__ ____ __", cards[0].GetProperty("answerPattern").GetString());
+        Assert.Equal(JsonValueKind.Null, cards[0].GetProperty("answerLength").ValueKind);
+        Assert.Equal(JsonValueKind.Null, cards[1].GetProperty("letterTiles").ValueKind);
+        Assert.Equal(22, cards[1].GetProperty("answerLength").GetInt32());
+    }
+
+    /// <summary>
     /// AK 5, derived distractors: the solution plus four other gaps' solutions, none twice. Red if the pool is not
     /// capped at four distractors (six options) or takes no other gaps' solutions (no options).
     /// </summary>

@@ -59,6 +59,21 @@ describe("Rundlauf über die umgestellten Listenfelder", () => {
     expect(rows[1].distractors).toEqual([]);
   });
 
+  // B-633 AK 2: Die deutsche Vorgabe je Lücke reist hin und zurück; leer heißt „keine“ (null in der Config). Rot, wenn
+  // einer der beiden Wege `prompt` vergisst – Speichern verlöre die Vorgabe, Bearbeiten zeigte ein leeres Feld.
+  it("Lückentext: die deutsche Vorgabe je Lücke überlebt den Rundlauf", () => {
+    const { config, rows } = rundlauf("Cloze",
+      [{ index: 1, answer: "eastwards", alternatives: [], vocabKey: null, form: "", prompt: " Richtung Osten " },
+       { index: 2, answer: "asleep", alternatives: [], vocabKey: null, form: "", prompt: "  " }],
+      { text: "{{1}} {{2}}" });
+
+    const gaps = (config as { gaps: { prompt: string | null }[] }).gaps;
+    expect(gaps[0].prompt).toBe("Richtung Osten");
+    expect(gaps[1].prompt).toBeNull();
+    expect(rows[0].prompt).toBe("Richtung Osten");
+    expect(rows[1].prompt).toBe("");
+  });
+
   // B-524: Die Ablenker des Wortkastens reisen hin und zurück; leer heißt „keine“ (fehlt in der Config). Rot, wenn
   // einer der beiden Wege `cueDistractors` vergisst.
   it("Lückentext: Ablenker im Wortkasten überleben den Rundlauf", () => {

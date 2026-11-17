@@ -5,8 +5,9 @@ import { introduceAndQuiz, sohnLogin, pfadStart } from "./helpers";
  * B-05 – Buchstaben ordnen, aus dem Sohn-Sitz. Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das
  * Anlegen): eine Vokabel-Übung mit einer Mehrwort- und drei Ein-Wort-Antworten, eine Position auf der Stufe
  * „Buchstaben ordnen“ (7) in **serieller** Reihenfolge – so ist jeder Kartenübergang vorhersagbar und prüfbar.
- * Der Sohn legt zwei Wörter per Tastatur, eines per Klick (AK 5: zwei gleichwertige Bedienarten), und die
- * Mehrwort-Antwort kommt als Buchstabenkästchen (AK 3).
+ * Der Sohn legt zwei Wörter per Tastatur, eines per Klick (AK 5: zwei gleichwertige Bedienarten), und eine Antwort
+ * mit Bindestrich kommt als Buchstabenkästchen (AK 3). Seit B-634 mischt die Stufe auch mehrere Wörter, je Wort für sich:
+ * „as soon as“ legt er per Tastatur, die Leerzeichen setzt die Komponente.
  *
  * Der Fokus muss nach JEDEM Übergang auf der ersten Kachel der neuen Karte stehen (Review Lauf D, Fund 6), sonst
  * landen getippte Buchstaben auf `body`. Seit B-526 liegt zwischen zwei Karten das Blatt: nach der Antwort steht der
@@ -23,7 +24,8 @@ const RUN = Date.now().toString(36).slice(-5);
  * Fremdwort (B-597) – darum steht der Lauf-Stempel am deutschen Wort und die Antwort bleibt ein Wort.
  */
 const CARDS: [prompt: string, answer: string, bedienung: "kaesten" | "tastatur" | "klick"][] = [
-  [`die Stadt ${RUN}`, "the town", "kaesten"],
+  [`das T-Shirt ${RUN}`, "T-shirt", "kaesten"],
+  [`sobald ${RUN}`, "as soon as", "tastatur"],
   [`kaufen ${RUN}`, "buy", "tastatur"],
   [`essen ${RUN}`, "eat", "klick"],
   [`gehen ${RUN}`, "go", "tastatur"],
@@ -80,26 +82,29 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
   }
 
   for (const [i, [prompt, answer, bedienung]] of CARDS.entries()) {
-    await expect(counter).toHaveText(new RegExp(`Karte ${i + 1} / 4`));
+    await expect(counter).toHaveText(new RegExp(`Karte ${i + 1} / ${CARDS.length}`));
     await expect(page.getByText(prompt, { exact: true })).toBeVisible();
     const pool = page.getByRole("group", { name: "Buchstaben zum Ordnen" });
 
     if (bedienung === "kaesten") {
-      // AK 3: keine Kacheln, sondern Buchstabenkästchen – das Leerzeichen steht schon fest.
+      // AK 3: keine Kacheln, sondern Buchstabenkästchen – der Bindestrich steht schon fest.
       await expect(pool).toHaveCount(0);
       const boxes = page.locator(".letterboxes input");
-      await expect(boxes).toHaveCount(answer.replace(" ", "").length);
+      await expect(boxes).toHaveCount(answer.replace("-", "").length);
       await boxes.first().click();
-      await page.keyboard.type(answer.replace(" ", ""));
+      await page.keyboard.type(answer.replace("-", ""));
       await pruefen(() => page.keyboard.press("Enter"));
       continue;
     }
 
-    await expect(pool.getByRole("button")).toHaveCount(answer.length);
+    // Je Wort ein eigener Block (B-634); die Leerzeichen sind keine Kachel.
+    const buchstaben = answer.replaceAll(" ", "");
+    await expect(pool.getByRole("button")).toHaveCount(buchstaben.length);
+    await expect(pool.locator(".lettertiles-wort")).toHaveCount(answer.split(" ").length);
     // Der Fokus ist schon da – niemand hat ihn gesetzt, die Karte hat ihn übernommen.
     await expect(pool.getByRole("button").first()).toBeFocused();
     if (bedienung === "tastatur") {
-      await page.keyboard.type(answer);
+      await page.keyboard.type(buchstaben);
     } else {
       // Klick: je Buchstabe die erste noch freie Kachel.
       for (const ch of answer) {
@@ -107,7 +112,7 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
       }
     }
     // Gelegt ist genau das Wort – angesagt in der Live-Region, Buchstabe für Buchstabe.
-    await expect(page.getByRole("status").filter({ hasText: /^Gelegt:/ })).toHaveText(`Gelegt: ${answer.split("").join(" ")}`);
+    await expect(page.getByRole("status").filter({ hasText: /^Gelegt:/ })).toHaveText(`Gelegt: ${answer.split(" ").map((w) => w.split("").join(" ")).join(" / ")}`);
     if (bedienung === "tastatur") await pruefen(() => page.keyboard.press("Enter"));
     else await pruefen(() => page.getByRole("button", { name: "Prüfen" }).click());
   }

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, rolle/student, lerntechnik/vokabeln]
 aliases: [Buchstabensalat bei mehreren Wörtern, Scramble je Wort]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: S
@@ -74,3 +74,18 @@ bei den Buchstabenkästen. Die Grenze von 12 Zeichen gilt je Wort.
 
 - **2026-11-17** — aus B-632 geteilt (Teil B), auf `geschaetzt` übernommen: Ist-Stand, Entscheidung und Schätzung
   stammen aus B-632.
+- **2026-11-17** — gebaut (Nachtlauf, Sprint 85). Regel an der Senke `StageMechanics`: `IsScramblable` nimmt Wörter mit
+  je 2–12 Buchstaben/Ziffern, durch einzelne Leerzeichen getrennt; `ScrambleLetters` mischt Wort für Wort (das erste Wort
+  mit dem Seed selbst, ein Ein-Wort-Salat bleibt also gleich); die Wortgrenzen reisen als `answerPattern`
+  (`ScrambleWordPattern`, additiv). `LetterTiles` legt je Wort einen Kachelblock und eigene Felder, eine Kachel landet nur
+  in ihrem Wort, die Leerzeichen setzt die Komponente. Gilt für alle Typen (Vokabel wie Lückentext). Die Story nennt
+  „a family of four“ als Beispiel; nach AK 1 (2–12 Buchstaben je Wort) fällt sie wegen „a“ auf Kästchen zurück – so gebaut,
+  wie das AK sagt.
+  - AK 1 → `LueckentextEingabeartenTests.Salat_Mischt_Mehrere_Woerter_Je_Wort`, `LetterScrambleTests.Mehrere_Woerter_Werden_Je_Wort_Gemischt`, M5/M6/M7 → rot; Vitest `LetterTiles` „legt mehrere Wörter je Wort“, F1 → rot.
+  - AK 2 → `Mehrere_Woerter_Werden_Je_Wort_Gemischt` (erstes Wort = Ein-Wort-Salat mit demselben Seed); Bestandstests `LetterScrambleTests` grün.
+  - AK 3 → `Nur_Kurze_Woerter_Werden_Gemischt` (13 Buchstaben, Apostroph, Doppel-Leerzeichen, „a family“) und `Antwort_Mit_Bindestrich_Kommt_Als_Buchstabenkaestchen`.
+  - AK 4 → `Mischen_Behaelt_Die_Buchstaben_Und_Ist_Je_Seed_Fest` und der Mehrwort-Fall (kein Wort steht schon richtig).
+  - Nachgezogen, weil sie den alten Rückfall „mehrere Wörter → Kästchen“ zusicherten: `LetterScrambleTests` (jetzt Bindestrich) und
+    `e2e/buchstaben-ordnen.spec.ts` (Kästchen jetzt mit „T-shirt“, dazu „as soon as“ per Tastatur je Wort).
+- **2026-11-17** — Review (Nachtlauf): Fünfer-Zähler von Sprint 85 überschritten (8 Funde 🟡/🔴), Lauf beendet; Funde offen, siehe `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md` → „Review Sprint 85 und Halt des Laufs“. Bleibt `in-arbeit`, nicht committet.
+- **2026-11-17** — Review-Funde behoben (Fortsetzung nach „Ja, weitermachen“ des Vaters): Fokus und Ruhe am Leichter-Knopf, Fehleransage, Fokus nach dem Schalten, Nacharbeit fällt beim Typwechsel, toter Tastatur-Zweig, Wort-Gruppen für Screenreader, offene Nacharbeits-Runde wird fortgesetzt und `Review` nimmt nur die Karte am Cursor, `EasierStage` nie zurück auf eine gezeigte Form. Belege und Mutanten-Tabelle im Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md`. Endstand: `dotnet test` 1820/1820, Vitest 1168/1168 am gestagten Stand, E2E `nacharbeit.spec.ts` + `buchstaben-ordnen.spec.ts` **2 passed**.

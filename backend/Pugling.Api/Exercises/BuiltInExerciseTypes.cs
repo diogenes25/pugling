@@ -191,6 +191,13 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     /// </summary>
     public override bool ChoicesShareOnePool(int stage) => (ClozeStage)stage == ClozeStage.TranslationWordBank;
 
+    /// <summary>
+    /// B-635 (decision 3 of B-632): free text with the translation, then letter boxes, scrambled letters and the choice
+    /// per gap - the order of the help, smallest first.
+    /// </summary>
+    public override IReadOnlyList<int> EaseLadder { get; } =
+        [(int)ClozeStage.TranslationFreeText, (int)ClozeStage.LetterBoxes, (int)ClozeStage.LetterScramble, (int)ClozeStage.Choice];
+
     /// <summary>B-599: a choice per gap with fewer than two distractors is played as letter boxes, card by card.</summary>
     public override int? ChoiceFallbackStage(int stage) =>
         (ClozeStage)stage == ClozeStage.Choice ? (int)ClozeStage.LetterBoxes : null;
@@ -207,14 +214,15 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
         (ClozeStage)stage == ClozeStage.LetterBoxes
         || ((ClozeStage)stage == ClozeStage.LetterScramble && !StageMechanics.IsScramblable(item.Answer));
 
-    /// <summary>B-599: the solution's letters on the scramble stage, when it is one word of 2 to 12 letters.</summary>
+    /// <summary>B-599: the solution's letters on the scramble stage, when its words have 2 to 12 letters each (B-634).</summary>
     public override string? LetterTileSource(ContentItem item, int stage) =>
         (ClozeStage)stage == ClozeStage.LetterScramble && StageMechanics.IsScramblable(item.Answer) ? item.Answer : null;
     /// <inheritdoc/>
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
-        ["wordBank", "translation", "letterHints", "vocabStore", "cueBox"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
+        // "remediation" (B-635): the type has an ease ladder, so a position may run as remediation - the father's form reads it.
+        ["wordBank", "translation", "letterHints", "vocabStore", "cueBox", "remediation"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
 
     /// <inheritdoc/>
     public override IReadOnlyList<ContentItem> ItemsOf(string configJson)
@@ -223,7 +231,8 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
         return [.. c.Gaps.Select((g, i) =>
         {
             var solution = ClozeGaps.SolutionOf(g, g.Answer);
-            return new ContentItem(i, c.Text, solution, Accepted(solution, g.Alternatives), Hint: null, GapIndex: g.Index);
+            return ClozeGaps.WithPrompt(g,
+                new ContentItem(i, c.Text, solution, Accepted(solution, g.Alternatives), Hint: null, GapIndex: g.Index));
         })];
     }
 
@@ -592,6 +601,14 @@ internal static class ClozeGaps
     /// <summary>The gap's solution: <see cref="Gap.Form"/> if set, else <paramref name="fallback"/> (store word or inline answer).</summary>
     public static string SolutionOf(Gap gap, string fallback) =>
         string.IsNullOrWhiteSpace(gap.Form) ? fallback : gap.Form.Trim();
+
+    /// <summary>
+    /// B-633: the author's own prompt of a gap is its hint (it beats the store's translation) and the material above the
+    /// text - it is the task as the test put it ("Richtung Osten"), so the card shows it openly instead of behind the
+    /// tip button. Blank is no prompt: the item stays as it was built.
+    /// </summary>
+    public static ContentItem WithPrompt(Gap gap, ContentItem item) =>
+        string.IsNullOrWhiteSpace(gap.Prompt) ? item : item with { Hint = gap.Prompt.Trim(), Passage = gap.Prompt.Trim() };
 }
 
 /// <summary>

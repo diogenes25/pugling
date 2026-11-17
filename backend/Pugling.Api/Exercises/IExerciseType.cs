@@ -85,6 +85,13 @@ public interface IExerciseType
     bool IsLearnCardStage(int stage);
 
     /// <summary>
+    /// The ease ladder (B-635): the stages a card can be made easier through, hardest first - the first is the free-text
+    /// stage a remediation task starts at and the only one that can mark it done. Empty = the type cannot be made easier
+    /// (no remediation). Default empty.
+    /// </summary>
+    IReadOnlyList<int> EaseLadder { get; }
+
+    /// <summary>
     /// The stage a never-seen card is shown at (B-419), or <c>null</c> for a type that cannot show a card without grading
     /// it. Default: the first free display stage among <see cref="StageOptions"/>; vocabulary names its learn card (B-598).
     /// </summary>

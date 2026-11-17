@@ -24,8 +24,9 @@ public enum ClozeStage
     /// <summary>B-599: translation + letter boxes with the solution's length and separators.</summary>
     LetterBoxes = 6,
     /// <summary>
-    /// B-599: translation + the solution's letters as scrambled tiles. A solution that is not one word of 2 to 12 letters
-    /// cannot be scrambled and is played as letter boxes, card by card.
+    /// B-599: translation + the solution's letters as scrambled tiles, word by word (B-634). A solution with a word that is
+    /// not 2 to 12 letters, or with other characters than letters, digits and spaces, cannot be scrambled and is played
+    /// as letter boxes, card by card.
     /// </summary>
     LetterScramble = 7,
     /// <summary>

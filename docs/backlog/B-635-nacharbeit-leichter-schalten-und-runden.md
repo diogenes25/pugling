@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Nacharbeit-Mechanik, leichter schalten, erledigt erst frei getippt]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: M
@@ -110,3 +110,21 @@ der **nächsten** Runde wieder, nicht in derselben.
 
 - **2026-11-17** — aus B-632 geteilt (Teil C), auf `geschaetzt` übernommen: Ist-Stand, Entscheidungen und Schätzung
   stammen aus B-632.
+- **2026-11-17** — gebaut (Nachtlauf, Sprint 85). Migration `Remediation` (Kette verlängert): `PlanPosition.Remediation`,
+  `PracticeSession.EasedStages` und `PositionItemProgress.SolvedByStage` als JSON mit `ValueComparer`,
+  `PositionItemProgress.RemediationDoneAt`; Bestand neutral (`false`/`null`). Leiter am Typ (`IExerciseType.EaseLadder`,
+  Lückentext: Freitext mit Übersetzung → Kästchen → Salat → Auswahl je Lücke); eine Stufe ohne eigene Form wird
+  übersprungen (`PositionPlayService.EasierStage`). `POST …/easier` nur für die aktuelle Karte, `409 cannot_ease` sonst.
+  `Review` liest die Stufe aus der Sitzung; „erledigt“ nur frei getippt, nur durch das Kind selbst. Eine leichter
+  geschaltete Karte zahlt nichts (auch mit Leitner). Die Runde ist die Liste der offenen Aufgaben in Reihenfolge
+  (`RemediationRoundAsync`); `SessionResponse.Remediation` trägt Runde/erledigt/gesamt. Der Schalter im Vater-Formular
+  kommt aus der Manifest-Fähigkeit `remediation`. Arcade: „Mach's mir leichter“, Runden-Pille, Blatt „noch nicht erledigt“.
+  - AK 1 → `RemediationPositionTests.Vater_schaltet_Nacharbeit_ein_nur_fuer_einen_Typ_mit_Leiter`, M15 → rot; Vitest `PlanPositionsStufe` „zeigt den Schalter nur beim Lückentext und schickt ihn“.
+  - AK 2 → `Leichter_geht_eine_Stufe_je_Druck_bis_zur_Auswahl` (Start Freitext, drei Drücke, dann 409), M10 → rot; `Eine_Stufe_ohne_eigene_Form_wird_uebersprungen`, M13 → rot; `Nur_die_aktuelle_Karte_wird_leichter`, M14 → rot.
+  - AK 3 + AK 5 → `Leichter_geschaltet_erledigt_nie_frei_getippt_schon` (richtig mit Lösung, `taskDone` false, kein Datum), M8/M9 → rot. Vor dem Bau rot: weder `easier` noch `taskDone` existierten (Kompilierfehler bzw. 404 am ersten Druck).
+  - AK 4 + AK 6 → `Naechste_Runde_bringt_nur_die_offenen_Aufgaben` (2 von 3 offen, Runde 2, Zähler je Stufe), M11/M12/M16 → rot.
+  - AK 7 → derselbe Test zählt die Buchungen vor/nach `easier` und nach der Antwort (gleich), M9 → rot.
+  - AK 8 → E2E `nacharbeit.spec.ts` (leichter, Blatt „Noch nicht erledigt“, Zähler, nächste Runde Karte 1/1).
+  - Wächter Nachbarn → `Ohne_Nacharbeit_bleibt_alles_wie_es_war`; `Manifest_nennt_Nacharbeit_genau_wo_eine_Leiter_ist`.
+- **2026-11-17** — Review (Nachtlauf): Fünfer-Zähler von Sprint 85 überschritten (8 Funde 🟡/🔴), Lauf beendet; Funde offen, siehe `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md` → „Review Sprint 85 und Halt des Laufs“. Bleibt `in-arbeit`, nicht committet.
+- **2026-11-17** — Review-Funde behoben (Fortsetzung nach „Ja, weitermachen“ des Vaters): Fokus und Ruhe am Leichter-Knopf, Fehleransage, Fokus nach dem Schalten, Nacharbeit fällt beim Typwechsel, toter Tastatur-Zweig, Wort-Gruppen für Screenreader, offene Nacharbeits-Runde wird fortgesetzt und `Review` nimmt nur die Karte am Cursor, `EasierStage` nie zurück auf eine gezeigte Form. Belege und Mutanten-Tabelle im Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md`. Endstand: `dotnet test` 1820/1820, Vitest 1168/1168 am gestagten Stand, E2E `nacharbeit.spec.ts` + `buchstaben-ordnen.spec.ts` **2 passed**.

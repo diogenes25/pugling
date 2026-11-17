@@ -128,6 +128,8 @@ export interface PositionSettings {
   useLeitner: boolean;
   /** B-219: ein Ausrutscher senkt nur ein Fach, erst der zweite in Folge setzt auf Fach 1. Nur mit Leitner wirksam. */
   forgivingDemotion: boolean;
+  /** B-635: Nacharbeit – jede offene Aufgabe als Freitext, „leichter“ schaltbar, Runden bis alles frei getippt ist. */
+  remediation: boolean;
   requireTypedTest: boolean;
   /*
    * Die Abfrageform des Tests (B-16) als String: "" = „Standard der Übung" (`null`), sonst ein Wert aus den
@@ -266,7 +268,7 @@ function defaultSettings(): PositionSettings {
     orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-    useLeitner: false, forgivingDemotion: false, requireTypedTest: false,
+    useLeitner: false, forgivingDemotion: false, remediation: false, requireTypedTest: false,
     stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
@@ -289,6 +291,7 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
     forgivingDemotion: pos.forgivingDemotion ?? false,
+    remediation: pos.remediation ?? false,
     requireTypedTest: pos.requireTypedTest,
     stage: pos.stage?.toString() ?? "",
     stageStored: pos.stage ?? null,
@@ -342,6 +345,7 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     comboBonusPoints: numOrNull(s.comboBonusPoints),
     useLeitner: s.useLeitner,
     forgivingDemotion: s.forgivingDemotion,
+    remediation: s.remediation,
     requireTypedTest: s.requireTypedTest,
     stage: numOrNull(s.stage),
     scope: s.scope,
@@ -375,8 +379,15 @@ export function settingsToUpdateDto(s: PositionSettings): UpdatePositionDto {
  * `stages` sind die Manifest-Stufen des Übungstyps (B-16) – leer heißt: der Typ kennt keine Stufenwahl (oder das Manifest
  * lädt noch), und dann gibt es kein Stufen-Feld. Keine Liste im Frontend – alle Stufenfelder lesen das Manifest (B-599).
  */
-function PositionFields({ value, onChange, stages }: {
+/** B-635: Kann eine Position dieses Typs als Nacharbeit laufen? Das sagt das Manifest, keine Liste hier. */
+function kannNacharbeit(types: ReturnType<typeof useExerciseTypes>, type: string): boolean {
+  return types.byType.get(type)?.capabilities.includes("remediation") ?? false;
+}
+
+function PositionFields({ value, onChange, stages, nacharbeit = false }: {
   value: PositionSettings; onChange: (next: PositionSettings) => void; stages: readonly ExercisePreviewStage[];
+  /** B-635: Der Typ kann leichter geschaltet werden (Manifest-Fähigkeit „remediation“) – nur dann gibt es den Schalter. */
+  nacharbeit?: boolean;
 }) {
   const uid = useId();
   const up = <K extends keyof PositionSettings>(k: K, v: PositionSettings[K]) => onChange({ ...value, [k]: v });
@@ -502,6 +513,15 @@ function PositionFields({ value, onChange, stages }: {
         </label>
         <InfoHint topic="requireTypedTest" />
       </span>
+      {/* Ein schon gesetzter Schalter bleibt sichtbar, auch wenn das Manifest noch lädt – sonst ließe er sich nicht abschalten. */}
+      {(nacharbeit || value.remediation) && (
+        <span className="label-row">
+          <label className="checkline">
+            <input type="checkbox" checked={value.remediation} onChange={(e) => up("remediation", e.target.checked)} /> Nacharbeit
+          </label>
+          <InfoHint topic="remediation" />
+        </span>
+      )}
       {/* Eingeklappt, damit die Felder nicht ein zwölftes Mal in die Zeile drängen – die meisten Pflichten
           brauchen kein eigenes Fenster. */}
       <details open={slotOpen} onToggle={(e) => setSlotOpen((e.currentTarget as HTMLDetailsElement).open)}
@@ -774,6 +794,8 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                       // B-16, Entscheidung 7: die Stufen gehören zum Typ – eine der vorigen Übung wäre hier womöglich
                       // ungültig (validation_error) oder, schlimmer, gültig und ungewollt.
                       stage: "",
+                      // B-635: die Nacharbeit gehört zum Typ wie die Stufe – ohne Leiter lehnte der Server sie ab.
+                      remediation: cur.remediation && kannNacharbeit(types, ex.type),
                     }));
                   }}
                   style={{ marginTop: 3 }} />
@@ -824,7 +846,8 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
           oben setzt `settings` dagegen direkt und läuft hier nicht durch. Damit braucht `PositionFields`
           keinen zusätzlichen Prop, und die Unterscheidung hängt an dem, was ohnehin verschieden ist:
           dem Weg, auf dem der Wert entsteht. */}
-      <PositionFields value={settings} stages={gewaehlt ? types.stages(gewaehlt.type) : []} onChange={(next) => {
+      <PositionFields value={settings} stages={gewaehlt ? types.stages(gewaehlt.type) : []}
+        nacharbeit={!!gewaehlt && kannNacharbeit(types, gewaehlt.type)} onChange={(next) => {
         if (next.pointsGoalMet !== settings.pointsGoalMet) setPunkteGetippt(true);
         setSettings(next);
       }} />
@@ -928,7 +951,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
               ))}
             </td>
           )}
-          <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}</td>
+          <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}
+            {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
               aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>
@@ -952,7 +976,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
       <td className="num">{pos.order + 1}</td>
       <td>{pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span></td>
       <td colSpan={3}>
-        <PositionFields value={settings} onChange={setSettings} stages={types.stages(pos.exerciseType)} />
+        <PositionFields value={settings} onChange={setSettings} stages={types.stages(pos.exerciseType)}
+          nacharbeit={kannNacharbeit(types, pos.exerciseType)} />
       </td>
       <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
         <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy} onClick={save}>OK</button>

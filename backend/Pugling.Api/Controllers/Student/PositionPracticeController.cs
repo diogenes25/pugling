@@ -38,7 +38,21 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         new(s.Id, s.StudyPlanId, s.PlanPositionId ?? 0, s.Day, s.StartedAt, s.EndedAt, s.ActiveSeconds,
             s.Reviews.Count, s.Mode, s.Cursor, s.Order.Count,
             s.PlanPosition is { } pos && pos.StudyPlan is { } plan && progress.IsTestable(pos, plan, s.Day),
-            withAttempts ? await TestAttemptsLeftAsync(s, ct) : null);
+            withAttempts ? await TestAttemptsLeftAsync(s, ct) : null,
+            withAttempts ? await RemediationOfAsync(s, ct) : null);
+
+    // B-635: the round count and the done tasks of a remediation position - its learn rounds up to this one, and the
+    // tasks of the pool typed freely right. Skipped by the heartbeat like the attempts count.
+    private async Task<RemediationState?> RemediationOfAsync(PracticeSession s, CancellationToken ct)
+    {
+        if (s.PlanPosition is not { Remediation: true } pos || s.Mode != PlayMode.Lern) return null;
+        var round = await db.PracticeSessions.CountAsync(
+            x => x.PlanPositionId == pos.Id && x.Mode == PlayMode.Lern && x.Id <= s.Id, ct);
+        var total = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
+        var done = await db.PositionItemProgress.CountAsync(
+            p => p.PlanPositionId == pos.Id && p.RemediationDoneAt != null && p.ItemIndex < total, ct);
+        return new RemediationState(round, done, total);
+    }
 
     // The same exemption as the exam start (PositionTestsController.Start): the cap binds every token with the student
     // role, so a token carrying both roles sees the count the start will enforce, not the supervisor's maximum.
@@ -81,6 +95,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         var day = dto.Day ?? today;
+        // B-635: an open remediation round of the day is continued, not replaced. A new round would bring a task the child
+        // just made easier back as free text - quitting after seeing the solution and starting over would finish it.
+        if (pos.Remediation && dto.Mode == PlayMode.Lern && await OpenRemediationRoundAsync(planId, positionId, day, ct) is { } open)
+            return Ok(await MapAsync(open, withAttempts: true, ct));
         // Assigned directly (not reloaded via GetSession) so MapAsync() can compute Testable right away - pos
         // already carries Exercise + StudyPlan from GetPosition above.
         var session = new PracticeSession
@@ -96,11 +114,29 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // cursor (learn) and batch (info/offline) use the same stable sequence.
         // Info = free practice: the whole scope-filtered pool (no Leitner due date), so that already learned
         // words can be repeated too. Learn = only the cards due today.
-        var due = await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct);
-        session.Order = [.. await IntroductionsFirstAsync(pos, day, dto.Mode, due, ct)];
+        // A remediation round (B-635) is the list of tasks still open, in order; free practice stays as it is.
+        if (pos.Remediation && dto.Mode == PlayMode.Lern)
+            session.Order = [.. await play.RemediationRoundAsync(pos, ct)];
+        else
+        {
+            var due = await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct);
+            session.Order = [.. await IntroductionsFirstAsync(pos, day, dto.Mode, due, ct)];
+        }
         db.PracticeSessions.Add(session);
         await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { planId, positionId, sessionId = session.Id }, await MapAsync(session, withAttempts: true, ct));
+    }
+
+    // B-635: the latest learn round of this remediation position on the day that still has cards to play.
+    private async Task<PracticeSession?> OpenRemediationRoundAsync(int planId, int positionId, DateOnly day,
+        CancellationToken ct)
+    {
+        var candidate = await db.PracticeSessions.AsNoTracking()
+            .Where(s => s.PlanPositionId == positionId && s.StudyPlanId == planId && s.Mode == PlayMode.Lern && s.Day == day)
+            .OrderByDescending(s => s.Id).FirstOrDefaultAsync(ct);
+        return candidate is not null && candidate.Cursor < candidate.Order.Count
+            ? await GetSession(planId, positionId, candidate.Id, ct)
+            : null;
     }
 
     /// <summary>
@@ -149,11 +185,19 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position)
     {
         var index = session.Order[position];
+        // B-635: a card the child made easier keeps that stage for this place in the round; a remediation task starts at
+        // the free-text rung of the ladder whatever the day says. Read from the session, never from the client.
+        if (session.EasedStages?.TryGetValue(position, out var eased) == true) return eased;
+        if (IsRemediationRound(pos, session, type)) return type.EaseLadder[0];
         if (IsRepeat(session, position) && type.IntroductionStage is { } learn && type.IsLearnCardStage(learn))
             return type.CardCeiling(items[index], learn);
         return PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, index), session.Day,
             items[index]);
     }
+
+    // B-635: a learn round on a remediation position of a type that can be made easier.
+    private static bool IsRemediationRound(PlanPosition pos, PracticeSession session, IExerciseType type) =>
+        pos.Remediation && session.Mode == PlayMode.Lern && type.EaseLadder.Count > 0;
 
     /// <summary>A practice session of the position.</summary>
     [HttpGet("{sessionId:int}")]
@@ -224,6 +268,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = staged[index];
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), staged, item, type, stage,
             type.IsTypedStage(stage), session.Id);
+        var canEase = IsRemediationRound(pos, session, type)
+            && PositionPlayService.EasierStage(type, PositionPlayService.ConfigOf(exercise), staged, item, stage) is not null;
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
             f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles,
@@ -233,7 +279,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             type.AudioReplacesPrompt(stage) ? null : item.SpeechLang,
             f.DictationSpokenAnswer, f.DictationLang,
             // B-598: the learn card reads its learnt word aloud while it shows it (decision 10) - the word is the reveal.
-            learnCard, learnCard ? item.DictationLang : null, learnCard ? item.DictationAudioUrl : null);
+            learnCard, learnCard ? item.DictationLang : null, learnCard ? item.DictationAudioUrl : null,
+            canEase, session.EasedStages?.ContainsKey(position) == true);
     }
 
     /// <summary>
@@ -398,6 +445,53 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
+    /// Makes the round's current card easier (B-635): one rung down its type's ease ladder - free text, letter boxes,
+    /// scrambled letters, choice - skipping a rung the card cannot take, and never back up. Free of charge (decision 4);
+    /// its only cost is that the task stays open. The stage is kept on the session for this place of the round, so the
+    /// answer is graded as what was shown whatever the client sends. Returns the card at its new stage.
+    /// </summary>
+    /// <remarks>
+    /// Only the current card: an index elsewhere in the round would let a client ease a card it has not reached and then
+    /// keep the free form for the one it is on. <c>409 cannot_ease</c> when the card is not current, is at its easiest
+    /// form already, or the position is no remediation.
+    /// </remarks>
+    [HttpPost("{sessionId:int}/easier")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PracticeCard>> Easier(int planId, int positionId, int sessionId, EaseCardDto dto,
+        CancellationToken ct = default)
+    {
+        var session = await GetSession(planId, positionId, sessionId, ct);
+        if (session is null) return NotFound();
+        var plan = (await GetPlan(planId, ct))!;
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+            return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
+        var pos = await GetPosition(planId, positionId, ct);
+        if (pos?.Exercise is null) return NotFound();
+        if (play.TypeOf(pos.Exercise) is not { } type)
+            return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
+        if (!IsRemediationRound(pos, session, type))
+            return this.ProblemWithCode(ApiErrors.CannotEase, "Only remediation tasks can be made easier.");
+        var position = session.Cursor;
+        if (position >= session.Order.Count || session.Order[position] != dto.ItemIndex)
+            return this.ProblemWithCode(ApiErrors.CannotEase, "Only the current card of the round can be made easier.");
+
+        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        if (dto.ItemIndex < 0 || dto.ItemIndex >= items.Count) return NotFound();
+        var dayStage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
+        var introduced = await play.IntroducedCardsAsync(positionId, ct);
+        var stage = StageAt(type, pos, dayStage, session, introduced, items, position);
+        var staged = PositionPlayService.AtStage(type, items, stage);
+        if (PositionPlayService.EasierStage(type, PositionPlayService.ConfigOf(pos.Exercise), staged, staged[dto.ItemIndex],
+                stage) is not { } easier)
+            return this.ProblemWithCode(ApiErrors.CannotEase, "This card is at its easiest form already.");
+
+        session.EasedStages = new Dictionary<int, int>(session.EasedStages ?? []) { [position] = easier };
+        await db.SaveChangesAsync(ct);
+        return BuildCard(pos, type, dayStage, session, introduced, items, position);
+    }
+
+    /// <summary>
     /// Accepts the answer to a practice card, grades it server-side against the item solution
     /// and logs the review. For Leitner positions the atom moves the box up/down,
     /// correct answers earn points (+ combo/speed bonus). Anti-farming: only one
@@ -444,6 +538,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // The card at the cursor when the answer is for it; otherwise (an offline batch) its first place in the round.
         var position = session.Cursor < session.Order.Count && session.Order[session.Cursor] == dto.ItemIndex
             ? session.Cursor : session.Order.IndexOf(dto.ItemIndex);
+        // B-635: a remediation round is played card by card - an answer for a card the round has not reached (the batch
+        // path) would let a task be typed while another one's solution is on the screen.
+        if (IsRemediationRound(pos, session, type) && position != session.Cursor)
+            return this.ProblemWithCode(ApiErrors.NotFound, "The content is not the current card of this remediation round.");
         var stage = position >= 0
             ? StageAt(type, pos, dayStage, session, introduced, items, position)
             : PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
@@ -466,6 +564,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
         var selfClaimRung = IsSelfClaimRung(type, dayStage, stage);
+        // B-635: a card the child made easier is answered with help - it shows right or wrong and the solution, and it
+        // neither pays nor finishes the task.
+        var eased = position >= 0 && session.EasedStages?.ContainsKey(position) == true;
 
         // A set-graded exercise (an unordered list) is not answered card by card: any entry not yet named today
         // counts, and the ANSWER decides which entry it credits - not the card it arrived on. A miss credits
@@ -519,7 +620,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A self-assessed rung of the ladder (B-476) is a claim, not a check: it pays nothing either. It still moves
         // the box (below), or the card would never reach the rungs where it is checked.
         var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday && !displayOnly
-            && !selfClaimRung && !noVerdict;
+            && !selfClaimRung && !noVerdict && !eased;
         var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday && !noVerdict;
 
         // Combo/answer time BEFORE adding the new review (EF fixup would otherwise count it in).
@@ -625,6 +726,23 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             prog.ReviewCount = reviewCount;
         }
 
+        // B-635: a remediation task counts its solutions per stage, and it is done only by a free answer that was right -
+        // the stage comes from the session (`eased`), never from what the client sent. Only the child's own answer counts,
+        // as only its own encounter introduces (B-433).
+        var taskDone = false;
+        if (IsRemediationRound(pos, session, type) && User.IsStudent() && prog is not null && wasCorrect)
+        {
+            prog.SolvedByStage = new Dictionary<int, int>(prog.SolvedByStage ?? [])
+            {
+                [stage] = (prog.SolvedByStage?.GetValueOrDefault(stage) ?? 0) + 1,
+            };
+            if (!eased && prog.RemediationDoneAt is null)
+            {
+                prog.RemediationDoneAt = session.Day;
+                taskDone = true;
+            }
+        }
+
         // Server cursor: onto the card just answered (a valid one), one further, then skip removed ones.
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
         if (cursor < session.Order.Count) cursor++;
@@ -645,7 +763,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // and give away an entry that is still to be asked for.
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? staged[shown].Answer : null,
             awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
-            creditedIndex is { } explained ? staged[explained].Explanation : null);
+            creditedIndex is { } explained ? staged[explained].Explanation : null, TaskDone: taskDone);
     }
 
     /// <summary>

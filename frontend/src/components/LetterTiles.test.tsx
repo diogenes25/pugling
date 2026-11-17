@@ -9,6 +9,8 @@ import { LetterTiles } from "./LetterTiles";
  * statt Kacheln verfolgt oder die Reihenfolge der Kacheln statt der Reihenfolge des Legens meldet.
  */
 const TILES = ["e", "K", "f", "a", "e", "f"];
+// B-634: „as soon as“, je Wort gemischt – referenzstabil wie vom Server (eine neue Liste je Render wäre eine neue Karte).
+const MEHRWORT = ["s", "a", "n", "o", "s", "o", "a", "s"];
 
 function Harness({ onSubmit = () => {} }: { onSubmit?: () => void }) {
   const [value, setValue] = useState("");
@@ -153,5 +155,34 @@ describe("LetterTiles", () => {
     fireEvent.click(kacheln("K")[0]);
     expect(screen.getByRole("status")).toBe(region);
     expect(region.textContent).toBe("Gelegt: K");
+  });
+
+  /*
+   * B-634 AK 1: mehrere Wörter. Die Kacheln kommen Wort für Wort („as“, „soon“, „as“ – je Wort gemischt), das Muster
+   * trägt die Grenzen. Rot, wenn die Komponente das Muster überhört: dann gibt es einen Block statt drei Wortgruppen, und
+   * das gelegte Wort käme als „assoonas“ ohne Leerzeichen an.
+   */
+  it("legt mehrere Wörter je Wort und setzt die Leerzeichen selbst", () => {
+    function Mehrwort() {
+      const [value, setValue] = useState("");
+      return <><LetterTiles tiles={MEHRWORT} value={value} onChange={setValue}
+        pattern="__ ____ __" /><span data-testid="wert">{value}</span></>;
+    }
+    const { container } = render(<Mehrwort />);
+    expect(container.querySelectorAll(".lettertiles-pool .lettertiles-wort")).toHaveLength(3);
+    // B-634, Review: jedes Wort ist eine benannte Gruppe – ein Screenreader hört Zahl und Länge der Wörter.
+    expect(screen.getByRole("group", { name: "Wort 2, 4 Buchstaben" })).toBeTruthy();
+    expect(container.querySelectorAll(".lettertiles-word .lettertiles-wort")).toHaveLength(3);
+    const block = kacheln("a")[0];
+    for (const key of "assoonas") fireEvent.keyDown(block, { key });
+    expect(wert()).toBe("as soon as");
+    expect(screen.getByRole("status").textContent).toBe("Gelegt: a s / s o o n / a s");
+  });
+
+  it("teilt ohne passendes Muster nicht", async () => {
+    const { wortBereiche } = await import("./LetterTiles");
+    expect(wortBereiche(4, null)).toEqual([{ start: 0, laenge: 4 }]);
+    expect(wortBereiche(4, "__ ___")).toEqual([{ start: 0, laenge: 4 }]);
+    expect(wortBereiche(6, "__ ____")).toEqual([{ start: 0, laenge: 2 }, { start: 2, laenge: 4 }]);
   });
 });

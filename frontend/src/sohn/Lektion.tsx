@@ -168,7 +168,8 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
           ))}
         </div>
       ) : karte.letterTiles ? (
-        <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} gesperrt={gesperrt} />
+        <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} gesperrt={gesperrt}
+          pattern={karte.answerPattern} />
       ) : karte.answerLength ? (
         <LetterBoxes length={karte.answerLength} value={wert} onChange={onWert} onSubmit={abschicken} pattern={karte.answerPattern ?? undefined} gesperrt={gesperrt} />
       ) : (
@@ -213,6 +214,11 @@ export interface Rueckmeldung {
   erklaerung?: string | null;
   /** B-598: eine Lernkarte, aufgegeben oder falsch erinnert, kommt am Ende der Runde noch einmal (der Server meldet es). */
   nochmal?: boolean;
+  /**
+   * B-635: eine Nacharbeits-Aufgabe, die diese Antwort nicht erledigt hat – falsch oder mit Hilfe gelöst. Sie kommt in der
+   * nächsten Runde wieder; das steht bei richtig UND falsch da, denn „richtig“ mit Hilfe ist noch nicht erledigt.
+   */
+  naechsteRunde?: boolean;
 }
 
 const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
@@ -261,6 +267,7 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
       )}
       {/* Bei richtig UND falsch (B-529, Entscheidung 5): richtig bestätigt sie, warum. Der Inhalt ist Nutzerdaten und
           reist als Platzhalter. */}
+      {r.naechsteRunde && <div className="sub">{t("lektion.nextRound")}</div>}
       {r.erklaerung && <div className="sub lektion-erklaerung">{t("lektion.rule", { text: r.erklaerung })}</div>}
       <button type="button" ref={weiterRef} className={`btn ${r.richtig ? "lime" : "red"}`} onClick={onWeiter}>{t("practice.next")}</button>
     </div>

@@ -182,13 +182,16 @@ public class ExerciseContentResolver(PuglingDbContext db, ExerciseContentProvide
             if (string.IsNullOrWhiteSpace(g.VocabKey))
             {
                 var inline = ClozeGaps.SolutionOf(g, g.Answer);
-                return new ContentItem(i, config.Text, inline, Accepted(inline, g.Alternatives), Hint: null, GapIndex: g.Index);
+                return ClozeGaps.WithPrompt(g,
+                    new ContentItem(i, config.Text, inline, Accepted(inline, g.Alternatives), Hint: null, GapIndex: g.Index));
             }
             if (byKey.TryGetValue(g.VocabKey, out var v))
             {
-                // The sentence form beats the store's base form (B-524); the meaning stays the store's.
+                // The sentence form beats the store's base form (B-524); the meaning stays the store's - unless the
+                // author wrote the gap's own prompt (B-633), which is the task as the test put it.
                 var solution = ClozeGaps.SolutionOf(g, v.Word);
-                return new ContentItem(i, config.Text, solution, Accepted(solution, g.Alternatives), v.Translation, g.Index);
+                return ClozeGaps.WithPrompt(g,
+                    new ContentItem(i, config.Text, solution, Accepted(solution, g.Alternatives), v.Translation, g.Index));
             }
             // Missing store key: a placeholder at the same index (no solution) so that nothing shifts.
             return new ContentItem(i, config.Text, "", [""], $"(Vokabel '{g.VocabKey}' fehlt)", g.Index);

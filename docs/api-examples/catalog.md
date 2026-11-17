@@ -487,7 +487,8 @@ Response — `HTTP 201`:
         "alternatives": null,
         "vocabKey": null,
         "form": null,
-        "distractors": null
+        "distractors": null,
+        "prompt": null
       },
       {
         "index": 2,
@@ -495,7 +496,8 @@ Response — `HTTP 201`:
         "alternatives": null,
         "vocabKey": null,
         "form": null,
-        "distractors": null
+        "distractors": null,
+        "prompt": null
       }
     ],
     "wordBank": [

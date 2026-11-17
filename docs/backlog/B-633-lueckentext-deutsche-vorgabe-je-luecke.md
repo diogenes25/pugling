@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Vorgabe je Lücke, Gap.Prompt, deutsche Vorgabe am Lückentext]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: S
@@ -74,3 +74,19 @@ Vorgaben werden wörtlich aus dem Test übernommen, die englischen Rahmensätze 
 
 - **2026-11-17** — aus B-632 geteilt (Teil A), auf `geschaetzt` übernommen: Ist-Stand, Entscheidungen und Schätzung
   stammen aus B-632.
+- **2026-11-17** — gebaut (Nachtlauf, Sprint 85). `Gap.Prompt` im Vertrag; `ClozeGaps.WithPrompt` ist die eine Regel
+  für Speicher- und Inline-Lücken (Resolver und `ClozeExerciseType.ItemsOf`): die Vorgabe wird Hinweis **und** `passage`,
+  steht also offen über dem Text (B-632 Entscheidung 1 „steht darüber“), und `CardFacets` gibt sie nicht noch einmal
+  hinter dem Tipp-Knopf aus. Auf der Wortkasten-Stufe bleibt die `passage` weg (B-524: die gefragte Bedeutung bleibt
+  verborgen). Editor: `exerciseConfig.tsx` Feld „Deutsche Vorgabe“ hin und zurück; `ClozeTexts.tsx` (Trägertexte) reicht
+  das Feld per Spread unverändert durch, ein eigenes Eingabefeld dort ist nicht gebaut – gespielt werden Übungen, nicht
+  Trägertexte. Lader `laden.py` kennt das Feld (`LadenFieldListTests`).
+  - AK 1, Inline-Lücke → `ClozePlayTests.Vorgabe_der_Luecke_steht_ueber_dem_Text_ohne_Speicherschluessel`, Mutanten M1/M3 → rot.
+  - AK 1, Speicher-Lücke → `ClozePlayTests.Vorgabe_der_Luecke_schlaegt_die_Uebersetzung_aus_dem_Speicher`, M2 → rot.
+  - AK 1, Speicher-Lücke ohne Vorgabe (Nachbar unverändert) → `Speicherluecke_ohne_Vorgabe_behaelt_den_Tipp`.
+  - AK 2 → Vitest `exerciseConfig.test.ts` „die deutsche Vorgabe je Lücke überlebt den Rundlauf“, F2 → rot.
+  - AK 3 → `Luecke_ohne_Satz_mit_Vorgabe_ist_eine_Einzelwortaufgabe` (Text `{{1}}`, Vorgabe als `passage`, getippt gewertet), M1 → rot.
+  - AK 4 → `ConventionGuardTests` (Lösungsfeld-Regel) grün mit `Prompt` im Vertrag.
+  - Wortkasten (B-524) → `Vorgabe_der_Luecke_bleibt_im_Wortkasten_verborgen`, M4 → rot.
+- **2026-11-17** — Review (Nachtlauf): Fünfer-Zähler von Sprint 85 überschritten (8 Funde 🟡/🔴), Lauf beendet; Funde offen, siehe `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md` → „Review Sprint 85 und Halt des Laufs“. Bleibt `in-arbeit`, nicht committet.
+- **2026-11-17** — Review-Funde behoben (Fortsetzung nach „Ja, weitermachen“ des Vaters): Fokus und Ruhe am Leichter-Knopf, Fehleransage, Fokus nach dem Schalten, Nacharbeit fällt beim Typwechsel, toter Tastatur-Zweig, Wort-Gruppen für Screenreader, offene Nacharbeits-Runde wird fortgesetzt und `Review` nimmt nur die Karte am Cursor, `EasierStage` nie zurück auf eine gezeigte Form. Belege und Mutanten-Tabelle im Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md`. Endstand: `dotnet test` 1820/1820, Vitest 1168/1168 am gestagten Stand, E2E `nacharbeit.spec.ts` + `buchstaben-ordnen.spec.ts` **2 passed**.

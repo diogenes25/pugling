@@ -674,6 +674,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(p => new { p.PlanPositionId, p.ItemIndex }).IsUnique();
             e.HasOne(p => p.PlanPosition).WithMany(pos => pos.ItemProgress).HasForeignKey(p => p.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // Remediation counters per stage (B-635) as a JSON object - the ValueComparer catches in-place changes.
+            e.Property(p => p.SolvedByStage).HasConversion(
+                v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                s => s == null ? null : JsonSerializer.Deserialize<Dictionary<int, int>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<Dictionary<int, int>?>());
         });
 
         // Cross-plan learning state per (child, item): exactly one row per (child, item); index (child, entry)
@@ -792,6 +797,11 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions) ?? new())
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<int>>());
+            // The cards made easier in this round (B-635), by place in the order.
+            e.Property(s => s.EasedStages).HasConversion(
+                v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),
+                s => s == null ? null : JsonSerializer.Deserialize<Dictionary<int, int>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<Dictionary<int, int>?>());
         });
         modelBuilder.Entity<TestAttempt>(e =>
         {

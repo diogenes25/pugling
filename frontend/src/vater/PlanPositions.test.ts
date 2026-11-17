@@ -23,7 +23,7 @@ const LEER: PositionSettings = {
   cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "", orderStrategy: "WeakestFirst",
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-  useLeitner: true, forgivingDemotion: false, requireTypedTest: false,
+  useLeitner: true, forgivingDemotion: false, remediation: false, requireTypedTest: false,
   stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };

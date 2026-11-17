@@ -46,7 +46,7 @@ interface ArithmeticDrillExtra {
   allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
 }
 
-interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string; distractors: string[] }
+interface ClozeRow { index: number; answer: string; alternatives: string[]; vocabKey: string | null; form: string; distractors: string[]; prompt: string }
 interface ClozeExtra { text: string; wordBank: string[]; cueDistractors: string[] }
 
 interface MatchingRow { left: string; right: string }
@@ -172,7 +172,7 @@ export function emptyRow(type: ExerciseTypeKey): Row {
     case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
-    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "", distractors: [] } satisfies ClozeRow;
+    case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "", distractors: [], prompt: "" } satisfies ClozeRow;
     case "Matching": return { left: "", right: "" } satisfies MatchingRow;
     case "List": return { value: "", alternatives: [] } satisfies ListRow;
     case "Birkenbihl": return { text: "", decoding: [], naturalTranslation: "" } satisfies BirkenbihlRow;
@@ -258,7 +258,9 @@ export function buildTypeConfig(
           // B-524: die Satzform („patients“) schlägt die Grundform des Speichers; leer heißt „keine“.
           form: r.form?.trim() ? r.form.trim() : null,
           // B-599: eigene falsche Vorschläge der Lücke für die Auswahl je Lücke; leer heißt „die anderen Lücken“.
-          distractors: nonEmpty(strList(r.distractors)) })) };
+          distractors: nonEmpty(strList(r.distractors)),
+          // B-633: die deutsche Vorgabe der Lücke (der Satz oder das Wort aus dem Test); leer heißt „keine“.
+          prompt: r.prompt?.trim() ? r.prompt.trim() : null })) };
     }
     case "Matching": {
       const items = rows as MatchingRow[];
@@ -389,7 +391,7 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
         // `vocabKey` wird nicht bearbeitet, aber mitgeführt (siehe buildTypeConfig).
         list(c.gaps).map((g): ClozeRow => ({ index: g.index ?? 1, answer: g.answer ?? "",
           alternatives: strList(g.alternatives), vocabKey: g.vocabKey ?? null, form: g.form ?? "",
-          distractors: strList(g.distractors) })),
+          distractors: strList(g.distractors), prompt: g.prompt ?? "" })),
         { text: str(c.text), wordBank: strList(c.wordBank), cueDistractors: strList(c.cueDistractors) } satisfies ClozeExtra);
     case "Matching":
       return fallback(
@@ -674,6 +676,9 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           </>}
           {type === "Cloze" && <>
             <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
+            {/* B-633: die Aufgabe, wie sie im Test stand – steht beim Kind offen über dem Text. */}
+            <RowField label="Deutsche Vorgabe" value={r.prompt ?? ""} onChange={(v) => patchRow(i, { prompt: v })}
+              placeholder="Richtung Osten" optional topic={i === 0 ? "gapPrompt" : undefined} />
             {/* Mit Speicherverweis kommt die Lösung aus dem Vokabel-Store; dann zählt nur die Satzform, falls der
                 Satz eine gebeugte Form verlangt (B-524). Ohne Verweis ist die Lösung selbst schon die Satzform. */}
             {r.vocabKey

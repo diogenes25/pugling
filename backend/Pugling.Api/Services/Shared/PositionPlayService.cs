@@ -275,6 +275,50 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// The round of a remediation position (B-635): every task of the pool not yet done, in the order of the exercise -
+    /// "der Reihe nach". No Leitner due date and no dose: a remediation round is the list of what is still open, and the
+    /// next round is the same rule read again, so a task made easier comes back there and not in this round.
+    /// </summary>
+    public async Task<IReadOnlyList<int>> RemediationRoundAsync(PlanPosition pos, CancellationToken ct)
+    {
+        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos, ct: ct)).Count);
+        var done = await db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPositionId == pos.Id && p.RemediationDoneAt != null)
+            .Select(p => p.ItemIndex).ToListAsync(ct);
+        return [.. Enumerable.Range(0, poolSize).Where(i => !done.Contains(i))];
+    }
+
+    /// <summary>
+    /// The next easier stage of a card (B-635): the next rung of the type's <see cref="IExerciseType.EaseLadder"/> whose
+    /// form the card has not shown yet on this ladder. A rung the card cannot take falls back to a form it already showed -
+    /// a scramble of an answer that cannot be scrambled is letter boxes again, a choice without distractors too - so it is
+    /// skipped: a press must always change the card, and never back to a harder form (decision 3). <c>null</c> = the card
+    /// is at its easiest form already.
+    /// </summary>
+    public static int? EasierStage(IExerciseType type, string configJson, IReadOnlyList<ContentItem> items,
+        ContentItem item, int current)
+    {
+        var ladder = type.EaseLadder;
+        var at = -1;
+        for (var i = 0; i < ladder.Count; i++) if (ladder[i] == current) at = i;
+        if (at < 0) return null;
+        // Every form up to the current rung counts as shown: a rung the card skipped had one of these forms anyway.
+        var shown = new HashSet<string>();
+        for (var i = 0; i <= at; i++) shown.Add(FormOf(type, configJson, items, item, ladder[i]));
+        for (var i = at + 1; i < ladder.Count; i++)
+            if (!shown.Contains(FormOf(type, configJson, items, item, ladder[i]))) return ladder[i];
+        return null;
+    }
+
+    // What the child sees as the answer area at a stage - the one thing a press on "easier" has to change.
+    private static string FormOf(IExerciseType type, string configJson, IReadOnlyList<ContentItem> items, ContentItem item,
+        int stage)
+    {
+        var f = CardFacets(configJson, items, item, type, stage, type.IsTypedStage(stage), seed: 0);
+        return f.Choices is not null ? "choice" : f.LetterTiles is not null ? "tiles" : f.AnswerLength is not null ? "boxes" : "free";
+    }
+
+    /// <summary>
     /// Applies the daily dose (B-04): of the never-shown contents only as many pass as the day still has room for,
     /// lowest index first - the order of the book. What was introduced earlier today counts against the dose, so a
     /// second round on the same day brings no further new ones. Known contents pass untouched.
@@ -413,7 +457,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         var dictation = type.AudioReplacesPrompt(stage) && string.IsNullOrWhiteSpace(audioUrl)
             && !string.IsNullOrWhiteSpace(item.DictationLang) && !string.IsNullOrWhiteSpace(item.Answer);
         return (
-            typed && cueBox is null ? item.Hint : null,
+            // A hint the card already shows as its material (an author's gap prompt, B-633) is no hint: behind the tip
+            // button it would only repeat what stands above the text.
+            typed && cueBox is null && item.Hint != item.Passage ? item.Hint : null,
             letterBoxLength,
             typed ? null : item.Answer,
             // Options only where the solution is withheld. Today every type that offers a pool does so on a
@@ -435,8 +481,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // audio URL is a free-text field, and "" would satisfy a null check while playing nothing.
             type.AudioReplacesPrompt(stage) && !string.IsNullOrWhiteSpace(audioUrl) ? null : item.Prompt,
             // What the question is about, unabridged: reading text, grammar instruction. No anti-cheat rule
-            // applies - it is the material, not the solution.
-            item.Passage,
+            // applies - it is the material, not the solution. One exception: a gap's own prompt (B-633) is also its
+            // hint, and the cue box withholds the asked gap's meaning (B-524) - shown above the text it would name it.
+            cueBox is not null && item.Passage == item.Hint ? null : item.Passage,
             // Whether any not-yet-named answer counts. Like the gap index this is an address, not a secret:
             // the rule lives in the config the child never sees, so withholding it makes the card a guess.
             // The `typed` proviso is the one both graders apply - it must not promise a rule on a stage that
@@ -451,8 +498,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // The word-for-word decoding, unconditional like the passage: it is the method the exercise is named
             // after, not the solution to withhold. Without it a Birkenbihl card is an ordinary translation card.
             item.Decoding,
-            // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`.
-            answerPattern,
+            // The letter-box mask (B-66) - null outside that stage, same condition as `letterBoxLength`. On the scramble
+            // stage it carries the word boundaries of an answer with several words (B-634); one word stays without.
+            answerPattern ?? (tileSource is null ? null : StageMechanics.ScrambleWordPattern(tileSource)),
             tileSource is null ? null : StageMechanics.ScrambleLetters(tileSource, unchecked((seed * 397) ^ item.Index)),
             cueBox,
             // The prompt beside it stays: it is the German word, shown only where the device has no voice for the

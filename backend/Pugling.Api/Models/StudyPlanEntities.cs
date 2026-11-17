@@ -49,8 +49,8 @@ public enum TestStage
     /// <summary>Choice from several options (one correct, the rest distractors from the exercise).</summary>
     MultipleChoice = 6,
     /// <summary>
-    /// Put the scrambled letters of the translation in order (B-05). A single word of 2-12 letters only; any other
-    /// answer is played as <see cref="LetterBoxes"/>, card by card.
+    /// Put the scrambled letters of the translation in order (B-05). Words of 2-12 letters each, scrambled word by word
+    /// (B-634); any other answer is played as <see cref="LetterBoxes"/>, card by card.
     /// </summary>
     LetterScramble = 7,
     /// <summary>
@@ -120,6 +120,13 @@ public class PracticeSession
     public List<int> Order { get; set; } = new();
     /// <summary>Current position within <see cref="Order"/> (the server-driven cursor in learn mode).</summary>
     public int Cursor { get; set; }
+    /// <summary>
+    /// The stage the child made a card easier to (B-635), by its place in <see cref="Order"/> - a place, not an item, so
+    /// a card that comes back later in the round starts over. Only the server writes it (the "easier" call, one rung at a
+    /// time); grading reads it, so a client cannot claim the free-text stage for an eased card. <c>null</c> = none eased.
+    /// Reassign, do not mutate in place.
+    /// </summary>
+    public Dictionary<int, int>? EasedStages { get; set; }
 
     /// <summary>
     /// When the card after the latest answer became visible (B-530), stamped by the server's clock on the client's

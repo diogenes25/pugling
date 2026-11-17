@@ -1698,6 +1698,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("PointsGoalMet")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("Remediation")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("RequireTypedTest")
                         .HasColumnType("INTEGER");
 
@@ -1831,8 +1834,14 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("PlanPositionId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateOnly?>("RemediationDoneAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ReviewCount")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("SolvedByStage")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -1858,6 +1867,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EasedStages")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("EndedAt")

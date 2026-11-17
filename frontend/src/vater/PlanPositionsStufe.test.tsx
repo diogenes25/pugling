@@ -11,9 +11,9 @@ import { PlanPositions, STAGE_DEFAULT_LABEL } from "./PlanPositions";
  * hier tragen alle Fälle dasselbe Manifest mit Stufen, die Nachbardateien ein leeres.
  */
 const MANIFEST = [
-  { type: "Cloze", label: "Lückentext", checkMode: "StudyPlanTest", selfAssessedTest: true,
+  { type: "Cloze", label: "Lückentext", checkMode: "StudyPlanTest", selfAssessedTest: true, capabilities: ["remediation"],
     stages: [{ value: 1, label: "Aufdecken" }, { value: 4, label: "Tippen" }] },
-  { type: "Essay", label: "Aufsatz", checkMode: "None", stages: [] },
+  { type: "Essay", label: "Aufsatz", checkMode: "None", stages: [], capabilities: [] },
 ] as unknown as ExerciseTypeManifest[];
 
 const ex = (id: number, type: string, title: string) => ({
@@ -215,5 +215,47 @@ describe("Positions-Formular – Ausrutscher verzeihen (B-219)", () => {
     const an = await screen.findByRole("checkbox", { name: /Ausrutscher verzeihen/ }) as HTMLInputElement;
     expect(an.checked).toBe(true);
     expect(an.disabled).toBe(false);
+  });
+});
+
+/*
+ * B-635 AK 1: Der Schalter „Nacharbeit“ steht nur bei einem Typ, den das Manifest als leichter schaltbar meldet, und reist
+ * mit dem PATCH. Rot, wenn das Formular den Schalter für jeden Typ zeigt (der Server lehnt den Aufsatz ab) oder ihn
+ * nicht schickt (das Häkchen wäre Dekoration).
+ */
+describe("Positions-Formular – Nacharbeit (B-635)", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("zeigt den Schalter nur beim Lückentext und schickt ihn", async () => {
+    const update = vi.spyOn(api, "updatePosition").mockResolvedValue(position({ remediation: true } as Partial<PositionResponse>));
+    rendere([position(), position({ id: 3, exerciseTitle: "Grammatik", exerciseType: "Essay", stage: null } as Partial<PositionResponse>)]);
+    const bearbeiten = await screen.findAllByRole("button", { name: "Bearbeiten" });
+
+    fireEvent.click(bearbeiten[1]);
+    await act(async () => {});
+    expect(screen.queryByRole("checkbox", { name: /Nacharbeit/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Bearbeiten" }))[0]);
+    await act(async () => {});
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Nacharbeit/ }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "OK" })); });
+
+    expect(update.mock.calls[0][2]).toMatchObject({ remediation: true });
+  });
+
+  // Review Sprint 85, Fund 4: ein Wechsel auf einen Typ ohne Leiter nimmt den Haken mit, sonst lehnte der Server das
+  // Anlegen mit validation_error ab. Rot, wenn der Übungswechsel `remediation` stehen lässt (der Haken bliebe sichtbar).
+  it("ein Wechsel auf einen Typ ohne Leiter nimmt die Nacharbeit zurück", async () => {
+    rendere([]);
+    fireEvent.click(await screen.findByRole("radio", { name: /Lückentext A/ }));
+    await act(async () => {});
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Nacharbeit/ }));
+    expect((screen.getByRole("checkbox", { name: /Nacharbeit/ }) as HTMLInputElement).checked).toBe(true);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Aufsatz C/ }));
+    expect(screen.queryByRole("checkbox", { name: /Nacharbeit/ })).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: /Lückentext B/ }));
+    expect((screen.getByRole("checkbox", { name: /Nacharbeit/ }) as HTMLInputElement).checked).toBe(false);
   });
 });

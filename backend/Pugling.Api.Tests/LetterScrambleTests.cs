@@ -41,10 +41,39 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     [InlineData("a", false)]
     [InlineData("abcdefghijkl", true)]
     [InlineData("abcdefghijklm", false)]
-    [InlineData("ice cream", false)]
     [InlineData("T-Shirt", false)]
-    public void Nur_Ein_Kurzes_Wort_Wird_Gemischt(string answer, bool scramblable) =>
+    // B-634 AK 1/3: several words count when each has 2-12 letters; the 12 holds per word, not for the whole answer.
+    [InlineData("ice cream", true)]
+    [InlineData("as soon as", true)]
+    [InlineData("abcdefghijkl abcdefghijkl", true)]
+    [InlineData("Western abcdefghijklm", false)]
+    [InlineData("a family", false)]
+    [InlineData("ice  cream", false)]
+    [InlineData("doesn't she", false)]
+    public void Nur_Kurze_Woerter_Werden_Gemischt(string answer, bool scramblable) =>
         Assert.Equal(scramblable, StageMechanics.IsScramblable(answer));
+
+    /// <summary>
+    /// B-634 AK 1/2: several words are shuffled word by word - word one's tiles first, each word's own letters, none
+    /// already spelling its word - and one word is shuffled exactly as before (the first word keeps the seed). Red if
+    /// the words are shuffled as one pool or the single word's arrangement changes.
+    /// </summary>
+    [Fact]
+    public void Mehrere_Woerter_Werden_Je_Wort_Gemischt()
+    {
+        foreach (var seed in Enumerable.Range(0, 30))
+        {
+            var tiles = StageMechanics.ScrambleLetters("as soon as", seed);
+            Assert.Equal(8, tiles.Count);
+            Assert.Equal("as".Order(), string.Concat(tiles.Take(2)).Order());
+            Assert.Equal("soon".Order(), string.Concat(tiles.Skip(2).Take(4)).Order());
+            Assert.Equal("as".Order(), string.Concat(tiles.Skip(6)).Order());
+            Assert.NotEqual("soon", string.Concat(tiles.Skip(2).Take(4)));
+            Assert.Equal(StageMechanics.ScrambleLetters("as", seed), tiles.Take(2));
+        }
+        Assert.Equal("__ ____ __", StageMechanics.ScrambleWordPattern("as soon as"));
+        Assert.Null(StageMechanics.ScrambleWordPattern("Schmetterlin"));
+    }
 
     [Fact]
     public void Die_Stufe_Zaehlt_Als_Getippt() => Assert.True(StageMechanics.IsTyped(TestStage.LetterScramble));
@@ -155,25 +184,26 @@ public class LetterScrambleTests(PuglingWebAppFactory factory) : IClassFixture<P
     }
 
     /// <summary>
-    /// AC 3: an answer of several words falls back to letter boxes for that card only - next to a scrambled card in
-    /// the same round. Red if the fallback is missing (no tiles and no boxes) or applies to the whole round.
+    /// AC 3: an answer that cannot be scrambled (a hyphen is a tile the solution fixes) falls back to letter boxes for
+    /// that card only - next to a scrambled card in the same round. Red if the fallback is missing (no tiles and no
+    /// boxes) or applies to the whole round. Several plain words scramble since B-634 (see the cloze tests).
     /// </summary>
     [Fact]
-    public async Task Mehrwortige_Antwort_Kommt_Als_Buchstabenkaestchen()
+    public async Task Antwort_Mit_Bindestrich_Kommt_Als_Buchstabenkaestchen()
     {
         var father = await TestApi.AdultAsync(factory);
         var child = await TestApi.ChildAsync(factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("das Speiseeis", "ice cream (B-05)"), ("Mond", "moon (B-05)"));
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, ("das T-Shirt", "shirt (B-05)"), ("Mond", "moon (B-05)"));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.LetterScramble);
         var sid = await TestApi.StartPositionSessionAsync(child, planId, positionId);
         var cards = (await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sid}/cards"))
             .EnumerateArray().ToList();
 
-        var boxes = Assert.Single(cards, c => c.GetProperty("prompt").GetString() == "ice cream (B-05)");
+        var boxes = Assert.Single(cards, c => c.GetProperty("prompt").GetString() == "shirt (B-05)");
         Assert.Equal(JsonValueKind.Null, boxes.GetProperty("letterTiles").ValueKind);
-        Assert.Equal("___ _________", boxes.GetProperty("answerPattern").GetString());
+        Assert.Equal("___ _-_____", boxes.GetProperty("answerPattern").GetString());
         // The length too: the Sohn app switches to letter boxes on `answerLength`, not on the pattern.
-        Assert.Equal(13, boxes.GetProperty("answerLength").GetInt32());
+        Assert.Equal(11, boxes.GetProperty("answerLength").GetInt32());
 
         var tiles = Assert.Single(cards, c => c.GetProperty("prompt").GetString() == "moon (B-05)");
         Assert.Equal(4, tiles.GetProperty("letterTiles").GetArrayLength());

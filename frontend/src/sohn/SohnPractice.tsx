@@ -89,6 +89,8 @@ export function SohnPractice() {
   // B-419: „Jetzt abfragen" startet eine neue Runde derselben Position – eine neue Sitzung, darum ein neuer Schlüssel
   // für den Start und ein neuer Lauf des Heartbeat-Effekts, der die alte Sitzung schließt.
   const [round, setRound] = useState(0);
+  // B-635: der Stand einer Nacharbeit (Runde, erledigt, gesamt) – vom Server beim Start, „erledigt“ wächst je Antwort.
+  const [nacharbeit, setNacharbeit] = useState<{ round: number; done: number; total: number } | null>(null);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
   const [hintShown, setHintShown] = useState(false);
   const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
@@ -123,7 +125,10 @@ export function SohnPractice() {
     },
     ({ sess, due }) => {
       session.current = sess;
+      setNacharbeit(sess.remediation ?? null);
       setCards(due);
+      // B-635: eine Nacharbeits-Runde des Tages wird fortgesetzt, nicht neu begonnen – an der Karte, an der sie stand.
+      if (sess.remediation && sess.cursor > 0 && sess.cursor < due.length) setIdx(sess.cursor);
       setPhase(due.length === 0 ? "empty" : "front");
     },
     // 404: Plan oder Position gibt es nicht mehr (Reload nach dem Löschen, B-326) – die Basis korrigiert die Wahl.
@@ -252,6 +257,9 @@ export function SohnPractice() {
         // B-598: eine aufgegebene oder falsch erinnerte Lernkarte kommt einmal ans Rundenende. Der Server hängt sie an seine
         // Folge; die Runde hier hat ihre Karten schon geladen und hängt dieselbe Karte an – als Wiederholung, nicht als neu.
         if (outcome?.repeatsAtEnd) setCards((prev) => [...prev, { ...card, introduction: false }]);
+        // B-635: frei getippt richtig – die Aufgabe ist erledigt. Alles andere kommt in der nächsten Runde wieder.
+        if (outcome?.taskDone) setNacharbeit((n) => (n ? { ...n, done: n.done + 1 } : n));
+        const naechsteRunde = nacharbeit !== null && !outcome?.taskDone;
         setCombo(outcome?.combo ?? 0);
         const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
         const getippt = payload.givenAnswer !== undefined;
@@ -273,9 +281,11 @@ export function SohnPractice() {
               comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
               // Eine Lernkarte bewegt keinen Kasten: ein Fälligkeitsdatum sähe wie ein Leitner-Termin aus, den es nicht gibt.
               faelligAm: card.learnCard ? null : outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
+              naechsteRunde,
             });
             // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
-            setToast(feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
+            setToast(outcome?.taskDone ? `${t("lektion.right")} ${t("practice.taskDone")}`
+              : feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
             setPhase("blatt");
           }
         } else if (feedback.kind === "wrong" && getippt) {
@@ -287,7 +297,7 @@ export function SohnPractice() {
           setBlatt({
             richtig: false, gegeben: payload.givenAnswer ?? "", loesung: feedback.expected, muenzen: 0, comboBonus: 0,
             tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled,
-            erklaerung: outcome?.explanation ?? null, nochmal: outcome?.repeatsAtEnd ?? false,
+            erklaerung: outcome?.explanation ?? null, nochmal: outcome?.repeatsAtEnd ?? false, naechsteRunde,
           });
           const absage = feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong");
           setToast(feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
@@ -308,6 +318,39 @@ export function SohnPractice() {
     });
     if (ran && !planStopped && !halted) next();
   }
+
+  /*
+   * B-635: „Mach's mir leichter“ – der Server schaltet die aktuelle Karte eine Stufe tiefer und schickt sie in der neuen
+   * Form; sie ersetzt die Karte an ihrer Stelle. Das Getippte gehört zur alten Form und wird verworfen. Dieselbe Sperre wie
+   * die Bewertung: beides ändert dieselbe Karte.
+   */
+  async function easier(card: PracticeCard) {
+    if (!planId || !session.current) return;
+    await action.run(async () => {
+      // Die Arcade zeigt `action.message` nicht – ein Fehlschlag (`cannot_ease`, Netz) geht darum in die Ansage-Region,
+      // wie beim Bildwechsel; sonst täte der Knopf sichtbar nichts.
+      try {
+        const eased = await api.easier(planId, positionId, session.current!.id, card.itemIndex);
+        fokusNachLeichter.current = true;
+        setCards((prev) => prev.map((c, i) => (i === idx ? eased : c)));
+        setTypedAnswer("");
+      } catch (e) {
+        setToast(errorMessage(e));
+      }
+    });
+  }
+
+  /*
+   * Nach dem Leichterschalten wechseln weder Phase noch Karte, also greift die Fokus-Regel oben nicht: der Knopf bliebe
+   * fokussiert (getippte Buchstaben gingen ins Leere) oder verschwände samt Fokus (letzte Stufe). Der Fokus geht in die
+   * neue Antwortform – Feld, erstes Kästchen, erste Kachel oder erste Option.
+   */
+  const fokusNachLeichter = useRef(false);
+  useEffect(() => {
+    if (!fokusNachLeichter.current) return;
+    fokusNachLeichter.current = false;
+    answerRef.current?.querySelector<HTMLElement>("input, .lettertiles-pool button, .lektion-option")?.focus();
+  }, [cards]);
 
   /*
    * Nach dem Blatt steht der erste Knopf der nächsten Karte dort, wo eben „Weiter" stand. Ein Doppeltipp (oder ein
@@ -462,6 +505,7 @@ export function SohnPractice() {
         <>
           {/* Combo und Tempo in einer eigenen Zeile: im Kopf neben Balken und Zähler stünde er bei 360 Pixeln über. */}
           <div className="row lektion-unterkopf">
+            {nacharbeit && <span className="pill cyan">{t("practice.remediation", nacharbeit)}</span>}
             {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
             <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} style={{ marginLeft: "auto" }} onClick={toggleTempo} aria-pressed={tempo}>
               {t("practice.tempo")}
@@ -522,11 +566,24 @@ export function SohnPractice() {
               // Dieselbe Stelle im Baum mit und ohne Meldung (B-532): sonst baute React die Fläche neu auf, und eine
               // gewählte Option verlöre ihre Markierung. Steht die Meldung, ist das Feld nur noch lesbar – „Noch einmal
               // senden" schickt, was nicht ankam, nicht, was danach im Feld stünde.
-              <Antwortflaeche
-                kartenId={`${round}-${idx}`} karte={card} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy || !!failed}
-                knopf={t("practice.check")} feldName={t("practice.yourAnswer")} platzhalter={t("practice.answerPlaceholder")}
-                onAbschicken={submitTyped}
-              />
+              <>
+                <Antwortflaeche
+                  kartenId={`${round}-${idx}-${card.stage}`} karte={card} wert={typedAnswer} onWert={setTypedAnswer} gesperrt={action.busy || !!failed}
+                  knopf={t("practice.check")} feldName={t("practice.yourAnswer")} platzhalter={t("practice.answerPlaceholder")}
+                  onAbschicken={submitTyped}
+                />
+                {/* B-635: nur wo der Server es anbietet (Nacharbeit, noch nicht die leichteste Form) – die Stufe wählt er.
+                    Hinter der Antwortfläche, damit der Fokus nach „Weiter" im Feld landet und nicht hier; dieselbe Ruhe
+                    nach dem Blatt wie bei „Aufdecken": ein gehaltenes Enter schaltet keine ungelesene Karte leichter. */}
+                {card.canEase && !failed && (
+                  <div className="lektion-fuss">
+                    <button type="button" className="btn ghost small" disabled={action.busy}
+                      onClick={() => { if (!zuFrueh()) easier(card); }}>
+                      {t("practice.easier")}
+                    </button>
+                  </div>
+                )}
+              </>
             ) : !failed && (
               <div className="lektion-fuss">
                 {card.displayOnly ? (

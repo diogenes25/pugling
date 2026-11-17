@@ -49,6 +49,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual bool IsLearnCardStage(int stage) => false;
 
     /// <inheritdoc/>
+    public virtual IReadOnlyList<int> EaseLadder => [];
+
+    /// <inheritdoc/>
     public virtual int? IntroductionStage =>
         StageOptions.Where(o => IsDisplayOnlyStage(o.Value)).Select(o => (int?)o.Value).FirstOrDefault();
 

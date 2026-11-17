@@ -205,6 +205,11 @@ public static class ApiErrors
     public static readonly ApiError PositionHasData = new("position_has_data", 409, "Position has practice/test data.");
     /// <summary>Study plan is currently not active/playable (403).</summary>
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
+    /// <summary>
+    /// The card cannot be made easier (B-635): it is not the round's current card, it is already at the easiest form, or
+    /// the position is no remediation and the card no learn card (409).
+    /// </summary>
+    public static readonly ApiError CannotEase = new("cannot_ease", 409, "This card cannot be made easier.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
     /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals without daily ones) (409).</summary>

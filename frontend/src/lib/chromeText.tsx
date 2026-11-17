@@ -51,6 +51,8 @@ const PROBLEM_KEYS = [
   "extra_training_locked", "extra_exercise_done", "extra_run_completed", "extra_cap_reached", "extra_run_stale",
   // B-527: die Tagestruhe ist schon offen (Doppeltipp, zweiter Tab).
   "daily_box_none",
+  // B-635: leichter geht nur die aktuelle Karte und nur bis zur leichtesten Form.
+  "cannot_ease",
 ] as const;
 type ProblemKey = (typeof PROBLEM_KEYS)[number];
 const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);

@@ -101,11 +101,12 @@ public static class StageMechanics
 
     /// <summary>
     /// Whether an answer can be played as scrambled letter tiles (B-05): one word of 2 to
-    /// <see cref="MaxScrambleLength"/> letters/digits. A space, hyphen or apostrophe would be a tile the child
-    /// has to place although the solution fixes it - the same reason letter boxes keep those literal (B-66).
+    /// <see cref="MaxScrambleLength"/> letters/digits - or, since B-634, several such words separated by single spaces
+    /// ("as soon as"), each scrambled on its own with the word boundaries kept. A hyphen or apostrophe would be a tile the
+    /// child has to place although the solution fixes it - the same reason letter boxes keep those literal (B-66).
     /// </summary>
     public static bool IsScramblable(string answer) =>
-        answer.Length is >= 2 and <= MaxScrambleLength && answer.All(char.IsLetterOrDigit);
+        answer.Split(' ').All(w => w.Length is >= 2 and <= MaxScrambleLength && w.All(char.IsLetterOrDigit));
 
     /// <summary>
     /// The options of a card in a shuffled order, deterministic for one <paramref name="seed"/>: the same arrangement on
@@ -135,7 +136,24 @@ public static class StageMechanics
     /// noun would give away which letter comes first. The "already the solution" check compares lower case too.
     /// </para>
     /// </summary>
-    public static IReadOnlyList<string> ScrambleLetters(string answer, int seed)
+    /// <remarks>
+    /// B-634: several words are shuffled word by word - each with a seed of its own, the first with
+    /// <paramref name="seed"/> itself, so a one-word answer keeps its arrangement - and the tiles come word after word.
+    /// The word boundaries travel as the card's answer pattern (<see cref="ScrambleWordPattern"/>); the tiles carry no
+    /// space, which would be a tile the solution already fixes.
+    /// </remarks>
+    public static IReadOnlyList<string> ScrambleLetters(string answer, int seed) =>
+        [.. answer.Split(' ').SelectMany((w, i) => ScrambleWord(w, unchecked(seed + i * 7919)))];
+
+    /// <summary>
+    /// The word boundaries of a scramble with several words (B-634): the letter-box mask of the answer ("__ ____ __"),
+    /// so the card shows each word's slots apart and lays out each word's tiles on their own. <c>null</c> for one word -
+    /// that card stays exactly as before.
+    /// </summary>
+    public static string? ScrambleWordPattern(string answer) =>
+        answer.Contains(' ') ? LetterBoxPattern(answer) : null;
+
+    private static IReadOnlyList<string> ScrambleWord(string answer, int seed)
     {
         var word = answer.ToLowerInvariant();
         var letters = word.Select(c => c.ToString()).ToArray();
