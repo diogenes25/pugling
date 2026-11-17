@@ -1,15 +1,15 @@
 ---
-tags: [typ/story, status/idee, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/auswertung, rolle/supervisor]
 aliases: [Zeitachse ohne alte Pläne]
-status: idee
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Backend-Review Sprint 79, Backlog-Lauf 2026-11-15 (docs/pm-sitzung-2026-11-15-backlog-lauf.md)"
-unverifiziert: true
+unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
@@ -28,10 +28,81 @@ einem vergangenen Tag „aktiv“ war, braucht eine Entscheidung (der Plan träg
 nie aktiv war – z. B. ein Entwurf des KI-Agenten –, darf nicht als verpasste Pflicht rot erscheinen). Mit B-539 (ein
 aktiver Plan je Fach) wird die Lücke kleiner, nicht null.
 
-Vorschlag zum Ausformulieren: für Tage vor heute alle Pläne zählen, die an dem Tag liefen **und** an dem Tag eine
-gewertete Antwort oder einen Testversuch des Kindes haben; oder eine Aktivierungs-Historie (Migration).
+## User Story
+
+Als *Vater* möchte ich in der Zeitachse auch die Wochen vor einem Kapitelwechsel sehen, damit ich den Verlauf meines
+Kindes über die Zeit beurteilen kann – ohne dass mir ein nie benutzter Entwurf als verpasste Pflicht angezeigt wird.
+
+## Ist-Stand am Code
+
+Gemessen am 2026-11-17 (Stand `4586e493`):
+
+- `backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:74-76` lädt nur Pläne mit `p.Active`;
+  `:81-88` summiert je Tag Ziele, erfüllte Ziele und Punkte über diese Pläne; `:90` setzt die Tagespflicht als „alle
+  Pläne mit Tagesziel erfüllt“, `null` ohne Tagesziel; `:96` macht eine Periode erfüllt, wenn ein Tag eine Pflicht trug
+  und kein Tag offen war.
+- Test: `backend/Pugling.Api.Tests/ChildrenOverviewTests.cs` (Zeitachse aus B-39).
+
+## Die echte Lücke
+
+Ein abgeschalteter Plan fällt aus allen Tagen heraus – auch aus denen, an denen das Kind in ihm gelernt hat. Ihn einfach
+mitzuzählen wäre falsch herum: ein nie aktivierter Entwurf erschiene dann als lauter offene Pflicht-Tage.
+
+## Entscheidungen
+
+Autonom gegrillt im Nachtlauf 2026-11-17 (`art: Defekt`, Freigabe 1). Die Regel ist nicht neu erfunden, sondern die
+Fairness-Regel aus [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md) Entscheidung 6 (= B-539 Entscheidung 6),
+übertragen auf die Zeitachse.
+
+1. **Inaktive Pläne zählen nur zu Gunsten des Kindes.** An einem Tag, an dem ein heute inaktiver Plan lief, zählen seine
+   **erfüllten** Ziele und seine **Punkte** mit, und hat er seine Tagespflicht erfüllt, zählt der Tag als erfüllt-fähig
+   wie bei einem aktiven Plan. Eine **offene** Pflicht eines inaktiven Plans macht den Tag nie offen. Begründung:
+   dieselbe Regel trägt schon der Malus (`PlanDueForPeriod`) und künftig die Kind-Serie; der Entwurf eines KI-Agenten
+   erscheint so nie rot.
+2. **Die Ziel-Summe (`GoalsTotal`) eines inaktiven Plans zählt nur an Tagen, an denen er mindestens ein Ziel erfüllt
+   oder Punkte gebracht hat.** Begründung: sonst zeigte die Zeitachse für einen Entwurf „0 von 6 Zielen“ – eine offene
+   Pflicht durch die Hintertür des Nenners. Kosten: an einem Tag, an dem das Kind im alten Plan nur teilweise gelernt
+   hat, steht der Nenner des alten Plans voll drin – das ist richtig, denn der Plan war da offenbar in Gebrauch.
+3. **Keine Migration, keine Aktivierungs-Historie.** Begründung: Entscheidung 6 von B-606 kommt ohne aus; eine Historie
+   wäre ein Wunsch mit Schema-Kosten, kein Defekt-Fix.
+
+## Akzeptanzkriterien
+
+1. Plan A (Kind lernt an Tag 1, erfüllt die Tagespflicht) wird abgeschaltet, Plan B ist aktiv ⇒ die Zeitachse zeigt
+   Tag 1 mit den Zielen und Punkten von Plan A und Pflicht erfüllt. *Rot mit dem heutigen Filter `p.Active`.*
+2. Ein nie benutzter, inaktiver Plan mit Tagesziel läuft über den Zeitraum ⇒ kein Tag wird durch ihn offen, und sein
+   Nenner erscheint nicht (`GoalsTotal` unverändert gegenüber ohne ihn). *Rot, wenn inaktive Pläne wie aktive gezählt
+   werden.*
+3. Ein inaktiver Plan, in dem das Kind an Tag 2 nur teilweise gelernt hat (Pflicht offen), während der aktive Plan seine
+   Pflicht erfüllt ⇒ Tag 2 gilt als erfüllt. *Rot, wenn eine offene Pflicht eines inaktiven Plans den Tag offen macht.*
+4. Aktive Pläne verhalten sich unverändert (Bestandstests in `ChildrenOverviewTests.cs` grün ohne inhaltliche
+   Änderung).
+
+## Schätzung
+
+**S** – eine Methode in `ChildrenDashboardService`, drei Integrationstests. Kein Vertrag, keine Migration, kein
+Frontend (die Zeitachse zeigt, was der Endpunkt liefert). Vergleich: B-219-Nachzug.
+
+### Risiken
+
+- Kosten: inaktive Pläne verlängern die Schleife Tage × Pläne (`MaxRangeDays` = 92 begrenzt). Pläne vorab auf solche
+  beschränken, die im Zeitraum laufen – wie heute.
+- B-606 baut eine Kind-Serie mit derselben Regel. Liegt dort ein wiederverwendbarer Baustein („Tag eines Plans zählt
+  zu Gunsten“), wird er benutzt statt nachgebaut (Regel an der Senke).
+
+#### Angriffsplan
+
+`TimelineAsync`: Pläne ohne `p.Active`-Filter laden, je Tag aktive wie heute summieren, inaktive nur nach
+Entscheidungen 1–2; Doku-Kommentar von `ChildPeriod`/`TimelineAsync` nachziehen („plans that are active now“).
+
+##### Testweg
+
+`ChildrenOverviewTests.cs`: drei neue Fälle (AK 1–3), Bestand als Gegenprobe (AK 4). Reviewer: `pugling-reviewer`.
 
 ## Verlauf
 
 - **2026-11-15** — angelegt aus dem Backend-Review von Sprint 79 (Backlog-Lauf 2026-11-15); die Doku von `ChildPeriod`
   nennt die Regel seither ehrlich („plans that are active now“).
+- **2026-11-17** — Nachtlauf 2026-11-17: `idee` → `geschaetzt` in einem Zug (autonom gegrillt, `art: Defekt`).
+  Ist-Stand am Code gemessen, drei Entscheidungen aus der Fairness-Regel von B-606/B-539 Entscheidung 6, AKs mit
+  Rot-Bedingung, S.

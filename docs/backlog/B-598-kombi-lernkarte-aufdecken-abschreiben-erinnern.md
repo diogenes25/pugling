@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: "2026-11-17: LearnCardReviewAsync (PositionPracticeController :661-711) bucht weder ApplyReview noch Punkte, ItemProgressService :51 kehrt vor der Box zurück; Wiederholung höchstens einmal (:694 gegen OrderIndices ohne Zurücklegen); Test/Info/Bonus spielen keine Lernkarte (TestTargetStage, IsIntroduction, FormFor nur getippt); LernkarteTests :110-119/:151 messen veränderliche Werte. Kein Fund im Diff; ohne eigenen Test bleibt nur „keine Lernkarte im Bonus" (strukturell)"
 ---
 
 # B-598 · Kombi-Lernkarte: aufdecken, einschätzen, abschreiben, aus dem Gedächtnis schreiben

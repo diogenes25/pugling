@@ -12,6 +12,8 @@ quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vate
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+entgangen_bei: []
+nachgeschaut: "2026-11-17: Drehung an jeder Karten-/Wertungsstelle nachgerechnet (CardFacets, grader.Matches, IsMisspelled, MatchOpenEntry gegen CardForStage/AtStage; PositionPracticeController :223/:461/:572, PositionTestsController :240/:275/:399, ExercisePreviewService :88/:128, ExtraTrainingService :434); Obergrenze auf jedem Stufen-Weg (PositionPlayService :180/:228, Tests :193); Rot-Probe SchreibstufeLernspracheTests :124/:170 gegen Mutante gerechnet. Funde: B-607 (Hinweis verschwindet), B-608 (Münz-Ansage)"
 ---
 
 # B-597 · Getippt wird immer die Zielsprache

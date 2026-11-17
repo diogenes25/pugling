@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater, Beispiel Question tags)
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: "2026-11-17: Kästchen-Rückfall nur in CardFacets (PositionPlayService :405) und dort von Üben/Test/Bonus/Vorschau erreicht; Ablenker-Zuordnung Gaps.ElementAtOrDefault(item.Index) gegen beide Index-Quellen (BuiltInExerciseTypes, ExerciseContentResolver :168); Mischen nur außerhalb TranslationWordBank (:445-451); Bonus-Sätze gegen Entscheidung 7 (ExtraTrainingOptions :16-18). Kein Fund im Diff"
 ---
 
 # B-599 · Lückentext: dieselben Eingabearten wie bei Vokabeln

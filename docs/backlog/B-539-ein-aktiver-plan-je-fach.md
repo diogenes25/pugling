@@ -21,9 +21,8 @@ dort. **Nach [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) (abgenommen
 [B-538](B-538-bonus-muenzregeln-form-und-degression.md) bauen** – alle drei ändern Tagesbox und Bonus-Sperre.
 **[B-580](B-580-plan-aus-unit.md) braucht diese Story** (Fach und Unit am Plan).
 
-> **Teilungsvorschlag (siehe Schätzung):** Als Ganzes liegt die Story über L. Vorgeschlagen ist, die Kind-Tagessicht
-> (AK 5, 6) als eigene Story **vor** dem Rest zu bauen; B-539 behält AK 1–4 (L). Die neue Story legt der Lauf an,
-> nicht diese Bearbeitung. Bis dahin stehen alle AKs hier.
+> **Geteilt am 2026-11-17 (Entscheidung 9):** Teil B (AK 5, 6) ist [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md)
+> und wird **vor** dieser Story gebaut. B-539 behält AK 1–4 (L). AK 5 und 6 stehen unten nur noch als Verweis.
 
 ## User Story
 
@@ -267,3 +266,10 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
   Stakeholder im Auftrag des Nutzers ergänzt; AKs präzisiert, Nutzer-Entscheidungen 1–2 unverändert.
 - 2026-11-15 · `geschaetzt` im Backlog-Lauf 2026-11-15: L (für Teil A), beides, Migration ja, Vertragsbruch ja; als Ganzes
   über L, Teilung in Teil B (Kind-Tagessicht, zuerst) und Teil A vorgeschlagen.
+- 2026-11-17 · Nachtlauf 2026-11-17: Teilung nach Entscheidung 9 vollzogen – Teil B als B-606 (`geschaetzt`, M) angelegt;
+  B-539 behält AK 1–4. Abweichend von README „Teilen" bleibt B-539 bestehen statt `verworfen`, weil Entscheidung 9 das
+  so festlegt und B-580 auf diese Id verweist.
+- 2026-11-17 · Aus dem Frontend-Review von B-606: die Startseite hat keinen Plan-Umschalter mehr (sie zeigt alle Pläne).
+  Die Fortschrittsseite der Arcade (`SohnProgress.tsx`, `useChosenPlan`) zeigt den gemerkten Plan, den „Los" setzt.
+  Solange je Kind ein Plan aktiv ist, betrifft das niemanden; **mit Teil A braucht die Fortschrittsseite eine eigene
+  Planwahl** – beim Bau von AK 4 mitnehmen.
