@@ -25,6 +25,22 @@ Plural oder Genitiv bzw. die Verbangaben strukturiert trägt, **und dass das auc
 gilt**. **Damit** können Übungen, die auf Vokabeln aufbauen (Birkenbihl, Artikel, Konjugation, Filter nach
 Wortart), auf diese Daten zählen.
 
+## Ist-Stand am Code
+
+Ausführlich in B-646. Das Wichtigste:
+
+- Gemessen am 2026-11-17 auf der DB-Kopie: 1.104 von 1.119 Vokabeln haben die Wortart `Other`, nur 12 Einträge
+  tragen `Noun`/`Verb`, Latein hat weder Genitiv noch Genus.
+- Alle Übungen legen Vokabeln über denselben Weg an, und der setzt nur Wort und Übersetzung
+  (`backend/Pugling.Api/Services/Creator/VocabularyStoreService.cs:37-46`).
+- Die TSV kennt nur `abschnitt`, `wort`, `uebersetzung`, `hinweis`, `notiz`, `unsicher`
+  (`.claude/skills/lehrwerk-aufbereiten/laden.py:26`).
+- `NounInfo` hat kein Feld für den Genitiv (`backend/Pugling.Contracts/Common/VocabBaseTypes.cs:48-56`).
+- Der Filter `?incomplete=true` prüft heute Wortart `Other` und Nomen/Verb ohne Angaben, aber keine Grundform
+  (`backend/Pugling.Api/Controllers/Creator/VocabularyStoreController.cs:116-119`).
+- Der Artikel im `Word` trägt die Wertung von B-421
+  (`backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:132`, `:146-147`).
+
 ## Entscheidungen
 
 Aus B-646 übernommen: **1** (Artikel/`to` bleiben im `Word`, zusätzlich strukturiert), **2** (Definition von

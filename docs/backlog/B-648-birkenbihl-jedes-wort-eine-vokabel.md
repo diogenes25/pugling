@@ -26,6 +26,19 @@ Als **Creator** möchte ich, dass jedes Wort eines Birkenbihl-Textes mit einer V
 auch bei gebeugten Formen und Wörtern, die im Speicher mit Artikel oder `to` stehen. **Damit** kann die
 Birkenbihl-Methode ausgebaut werden und auf den Vokabeln aufbauen.
 
+## Ist-Stand am Code
+
+Ausführlich in B-646. Das Wichtigste:
+
+- Die Dekodierung sucht nur die exakte Oberfläche, ohne Grundform und ohne Artikel/`to`
+  (`backend/Pugling.Api/Services/Creator/BirkenbihlDecodingService.cs:48-62`).
+- `POST …/sentences` speichert ein nicht gefundenes Wort ohne Glosse und ohne Vokabel
+  (`backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:551-562`).
+- Anlegen/Ersetzen der ganzen Übung normalisiert nur die Ids (`ExerciseControllers.cs:500-512`). Die
+  Übersetzungsübung verankert dagegen jedes Paar (`ExerciseControllers.cs:437-445`).
+- Nur der Einzeltausch mit freier Glosse legt eine Vokabel an (`ExerciseControllers.cs:613-619`).
+- DB-Kopie vom 2026-11-17: Übung #3 hat 8 Wörter, davon 0 verknüpft und 1 im Speicher auffindbar.
+
 ## Entscheidungen
 
 Aus B-646 übernommen: **1** (die Suche lässt Artikel und `to` beim Vergleichen weg), **4** (anlegen statt

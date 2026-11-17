@@ -1004,9 +1004,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | `idee` | `unverifiziert: true` |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
-| [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | `gegrillt` | Abschnitt „Ist-Stand…" |
-| [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | `gegrillt` | Abschnitt „Ist-Stand…" |
-| [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 
 <details>
 <summary>Verworfen (46)</summary>

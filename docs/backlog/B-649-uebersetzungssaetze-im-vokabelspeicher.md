@@ -39,6 +39,12 @@ Belegt in B-646, Abschnitt „Die 29 deutschen Einträge sind Übersetzungssätz
 Die Übersetzungsübung nutzt den Wortspeicher als Ablage für Satzpaare. Bei `sourceLang: de` widerspricht das der
 Festlegung zur Sprachrichtung (`backend/Pugling.Api/Models/VocabEntities.cs:17-23`).
 
+## Akzeptanzkriterien (Entwurf)
+
+- Nach der Bereinigung gibt es keine Vokabel mehr mit `SourceLanguage = de` (die Muttersprache).
+- Neue Übersetzungsübungen mit `sourceLang: de` legen keine Satzpaare als Vokabel an.
+- Lernstände, die an einem der 29 Einträge hängen, gehen nicht verloren. Probe auf einer Kopie der echten DB.
+
 ## Offene Punkte
 
 1. Sollen Übersetzungssätze überhaupt im Vokabelspeicher liegen? *Empfehlung:* nein. Die Übersetzungsübung hält
