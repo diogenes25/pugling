@@ -67,9 +67,9 @@ Gemessen am 2026-11-17 auf `main` (Stand `74d2f9f5`), Pfade relativ zu `backend/
 
 ## Offene Punkte
 
-Keine Produktfragen offen; entschieden in [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md). Zwei Annahmen dieser Schätzung sind vom Vater
-**nicht bestätigt** und stehen unter „Risiken“ (rückwirkende Wirkung einer Stundenplan-Änderung; Teilnahme an
-der Budget-Verteilung aus B-618).
+Keine Produktfragen offen; entschieden in [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md). Die rückwirkende Wirkung einer
+Stundenplan-Änderung hat der Vater am 2026-11-17 entschieden (Entscheidung 8). Eine Annahme dieser Schätzung ist
+weiter **nicht bestätigt** und steht unter „Risiken“ (Teilnahme an der Budget-Verteilung aus B-618).
 
 ## Entscheidungen
 
@@ -114,6 +114,13 @@ Entscheidung 12 abgelöst.
 7. (B-615 Entscheidung 13) **Keine Sortierung nach Stundenplan.** Die Pflicht aus Entscheidung 5 mit dem Hinweis aus AK 8 genügt;
    B-220 sortiert nicht nach Stundenplan. *Begründung:* eine Wirkung des Stundenplans statt zwei. *Kosten:*
    Positionen des morgigen Fachs ohne Taktung „Stundenplan“ rücken nicht nach vorn.
+8. **Eine Stundenplan-Änderung wirkt nur ab heute, nie rückwirkend.** Entschieden vom Vater am 2026-11-17 beim
+   Schätzen. Vor jedem Anlegen oder Löschen eines Stundenplan-Eintrags rechnet der Server die offenen Perioden
+   des Kindes mit dem alten Stand ab. *Begründung:* Der Stundenplan hat keine Geschichte, der Malus wird aber
+   nachträglich abgerechnet; ohne diese Regel kostete ein Tag Malus, an dem nichts verlangt war. Es ist dieselbe
+   Fairness wie bei einem abgeschalteten Plan. *Kosten:* Jede Stundenplan-Änderung löst eine Abrechnung aus, und
+   ein Vater kann eine verpasste Pflicht nicht mehr nachträglich durch einen Eintrag „scharf stellen“; ein
+   versehentlich gelöschter und neu angelegter Eintrag gilt für den Tag dazwischen als gelöscht.
 
 ## Akzeptanzkriterien
 
@@ -136,7 +143,7 @@ Final, übernommen aus B-615. Je Fall die Änderung, die seinen Test rot macht.
 - **AK 7.** (B-615 AK 14) Ein neuer Stundenplan-Eintrag, der einen Wochentag über die Obergrenze hebt ⇒ `400` mit demselben Code wie
   AK 7. Das Löschen eines Eintrags mit derselben Folge geht durch, und die Vater-Sicht des Kindes meldet die
   Überschreitung. *Rot, wenn der Eintrag durchgeht bzw. das Löschen abgewiesen wird.*
-- **AK 8.** (aus Risiko 1, vom Vater nicht bestätigt) Ein heute angelegter Stundenplan-Eintrag erzeugt keine
+- **AK 8.** (Entscheidung 8) Ein heute angelegter Stundenplan-Eintrag erzeugt keine
   Malus-Buchung für Tage vor heute; ein heute gelöschter Eintrag macht keinen vergangenen Tag nachträglich zum
   Pflichttag. *Rot, wenn die Abrechnung vergangene Tage mit dem heutigen Stundenplan rechnet.*
 
@@ -155,10 +162,10 @@ und ein Feld am Kind. Als Ganzes mit der Oberfläche wäre Teil (c) XL, darum de
 
 ### Risiken
 
-1. **Rückwirkende Malus durch Stundenplan-Änderungen** (siehe „Die echte Lücke“ 3). *Annahme dieser Schätzung,
-   vom Vater nicht bestätigt:* Vor jeder Änderung am Stundenplan rechnet der Server die offenen Perioden des
-   Kindes mit dem alten Stand ab, sodass die Änderung erst ab heute wirkt. Das ist dieselbe Fairness wie bei
-   einem abgeschalteten Plan (`PlanDueForPeriod`). Verwandt: [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md).
+1. **Rückwirkende Malus durch Stundenplan-Änderungen** (siehe „Die echte Lücke“ 3). Entschieden (Entscheidung 8): Vor
+   jeder Änderung am Stundenplan rechnet der Server die offenen Perioden des Kindes mit dem alten Stand ab,
+   sodass die Änderung erst ab heute wirkt. Das Risiko bleibt die Umsetzung: Die Abrechnung muss **vor** dem
+   Speichern der Änderung und in derselben Transaktion laufen (`PlanDueForPeriod` ist das Vorbild der Regel). Verwandt: [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md).
 2. **Belohnungs-Sperre und Serie.** `RewardObligations` behandelt Tages- und Wochenziele verschieden
    ([B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) ist dort ein offener Defekt). Die neue Taktung
    zählt an ihren Pflichttagen wie ein Tagesziel, an den übrigen Tagen gar nicht; ein Plan nur mit
@@ -207,3 +214,5 @@ und ein Feld am Kind. Als Ganzes mit der Oberfläche wäre Teil (c) XL, darum de
 - **2026-11-17** — angelegt als Backend-Hälfte von Teil (c) der Teilung von B-615. Entscheidungen und AKs von
   dort übernommen; AK 8 neu aus Risiko 1 (rückwirkende Malus), vom Vater nicht bestätigt. Geschätzt: L,
   `backend`, Migration ja, Vertragsbruch ja.
+- **2026-11-17** — **Entscheidung des Vaters:** Eine Stundenplan-Änderung wirkt nur ab heute, nie rückwirkend
+  (Entscheidung 8); AK 8 ist damit bestätigt. Weiter nicht bestätigt: die Annahme zur Budget-Verteilung (Risiko 6).
