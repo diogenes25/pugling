@@ -7,6 +7,8 @@ export const de = {
   sohn: {
     nav: { home: "Pfad", trophies: "Erfolge", account: "Konto", shop: "Shop", skins: "Skins" },
     hud: {
+      // Die Kopiersperre hat ein ganzes Wort auf einmal verworfen (iPhone-Wischtippen, Diktat, eingefügter Vorschlag).
+      typeLetters: "Bitte Buchstabe für Buchstabe tippen.",
       // `_one`/`_other`: i18next wählt die Form nach `count` (B-298) – die Chips werden vorgelesen.
       coins_one: "{{count}} Münze",
       coins_other: "{{count}} Münzen",

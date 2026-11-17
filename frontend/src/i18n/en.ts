@@ -6,6 +6,7 @@ export const en = {
   sohn: {
     nav: { home: "Path", trophies: "Trophies", account: "Account", shop: "Shop", skins: "Skins" },
     hud: {
+      typeLetters: "Please type it letter by letter.",
       coins_one: "{{count}} coin",
       coins_other: "{{count}} coins",
       gems_one: "{{count}} gem",

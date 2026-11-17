@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin, pfadStart } from "./helpers";
+import { sohnLogin, pfadStart, tippen } from "./helpers";
 
 /*
  * B-635 – die Nacharbeit eines verpatzten Tests, aus dem Sohn-Sitz (zugleich der Rollengang Sohn von Sprint 85). Der Stoff
@@ -96,7 +96,7 @@ test("Nacharbeit: leichter schalten erledigt nicht, frei getippt schon, die näc
   await expect(zaehler).toHaveText("Karte 1 / 1");
   await expect(stand).toHaveText("Runde 2 · 2 von 3 erledigt");
   await expect(page.getByRole("group", { name: "Text zur Aufgabe" })).toHaveText(`Richtung Osten ${RUN}`);
-  await feld.fill("eastwards");
+  await tippen(feld, "eastwards");
   await page.keyboard.press("Enter");
   await expect(stand).toHaveText("Runde 2 · 3 von 3 erledigt");
 });

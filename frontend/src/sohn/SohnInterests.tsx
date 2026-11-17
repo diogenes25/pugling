@@ -169,7 +169,8 @@ export function SohnInterests() {
           <div className="field">
             <label htmlFor="wish">{t("interests.wishLabel")}</label>
             <input
-              id="wish" value={wish} maxLength={60} disabled={action.busy}
+              // Ein Wunsch ist kein Lernstoff: hier darf eingefügt werden (kopierSperre.ts).
+              id="wish" data-einfuegen-erlaubt value={wish} maxLength={60} disabled={action.busy}
               onChange={(e) => setWish(e.target.value)}
               placeholder={t("interests.wishPlaceholder")}
             />

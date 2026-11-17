@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { sohnLogin, tippen } from "./helpers";
 
 /*
  * Bonus-Training – Extra-Übungen zum aktuellen Thema, offen erst nach der Tagespflicht. Die Regeln (Form je Durchgang,
@@ -76,7 +76,7 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
   await zeile(RECHNEN).getByRole("link", { name: `Spielen: ${RECHNEN}` }).click();
   for (let i = 0; i < 2; i++) {
     const frage = (await page.locator(".fcard").innerText()).includes("2 + 3") ? "5" : "16";
-    await page.getByRole("textbox", { name: "Lösung" }).fill(frage);
+    await tippen(page.getByRole("textbox", { name: "Lösung" }), frage);
     await page.getByRole("button", { name: "Weiter →" }).click();
   }
   await expect(page.getByText("2 / 2 richtig")).toBeVisible();

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { isLanguage, setLanguage } from "../lib/i18n";
@@ -20,7 +20,9 @@ import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import { RemarkWidget } from "../components/RemarkWidget";
 import { SavedNotice } from "../components/SavedNotice";
+import { StatusBanner } from "../components/StatusBanner";
 import { isMuted, setMuted } from "../lib/feedback";
+import { useKopierSperre } from "./kopierSperre";
 
 interface SohnContextValue {
   childId: number;
@@ -80,6 +82,18 @@ function SohnShell({ childId }: { childId: number }) {
   const [muted, setMutedState] = useState(isMuted());
   const { celebration, celebrate } = useCelebration();
   const { t, i18n } = useTranslation();
+  // Kein Kopieren aus der Arcade, kein Einfügen hinein: sonst schreibt man das Wort ab, solange es zu sehen ist, und
+  // fügt es im Gedächtnis-Schritt wieder ein. Der Login liegt bewusst außerhalb.
+  // Ein gesperrtes ganzes Wort (iPhone-Wischtippen, Diktat) sagt, warum es nicht ankam – sonst verschwände es stumm.
+  const wurzel = useRef<HTMLDivElement>(null);
+  const [tippHinweis, setTippHinweis] = useState(false);
+  const hinweisUhr = useRef<number | undefined>(undefined);
+  useKopierSperre(wurzel, () => {
+    setTippHinweis(true);
+    window.clearTimeout(hinweisUhr.current);
+    hinweisUhr.current = window.setTimeout(() => setTippHinweis(false), 3000);
+  });
+  useEffect(() => () => window.clearTimeout(hinweisUhr.current), []);
   const lang = isLanguage(i18n.language) ? i18n.language : "de";
 
   const refreshWallet = useCallback(() => {
@@ -112,7 +126,7 @@ function SohnShell({ childId }: { childId: number }) {
 
   return (
     <SohnContext.Provider value={value}>
-      <div className="app-sohn">
+      <div className="app-sohn" ref={wurzel}>
         <div className="sohn-hud">
           <div className="avatar-mini" style={{ background: skin.gradient }} aria-hidden="true">{skin.emoji}</div>
           <div className="chip" aria-live="polite"><span aria-hidden="true">🪙</span><b className="tabnum" aria-label={t("hud.coins", { count: coins })}>{coins}</b></div>
@@ -146,6 +160,8 @@ function SohnShell({ childId }: { childId: number }) {
         {/* Die Bestätigung einer Aktion, die ihren Bildschirm verlässt. Sie liegt hier und nicht in
             der Feier: die ist `aria-hidden` und fällt bei „Bewegung reduzieren" ganz weg (B-151). */}
         <SavedNotice />
+        <StatusBanner message={tippHinweis ? { ok: false, text: t("hud.typeLetters") } : null}
+          style={{ position: "fixed", left: 12, right: 12, bottom: 96, zIndex: 20 }} />
 
         <Routes>
           <Route index element={<SohnHome />} />

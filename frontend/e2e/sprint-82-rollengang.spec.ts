@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-import { LERNKARTE_DE, lernkarteDurchspielen, pfadStart, sohnLogin } from "./helpers";
+import { LERNKARTE_DE, lernkarteDurchspielen, pfadStart, sohnLogin, tippen } from "./helpers";
 
 /*
  * Sprint 82 „Schreiben in der Lernsprache“ – maschineller Rollengang des Sohns an der laufenden App.
@@ -88,7 +88,7 @@ test("B-597: im Freitext-Test schreibt der Sohn das englische Wort – eine both
     await expect(page.locator(".fcard", { hasText: de })).toBeVisible();
     // Kein Auswahl-Knopf: rot, sobald die Karte wieder auf Auswahl fiele (das Feld unten wäre dann nicht da).
     await expect(page.locator(".lektion-antwort button[aria-pressed]")).toHaveCount(0);
-    await page.locator(".lektion-feld").fill(en);
+    await tippen(page.locator(".lektion-feld"), en);
     await hauptknopf(page).click();
   }
   await expect(page.locator(".ring")).toContainText(`${paare.length} / ${paare.length}`);
@@ -112,7 +112,7 @@ test("B-597: im Freitext-Test schreibt der Sohn das englische Wort – eine both
       const paar = paareBeide.find(([, de]) => vorn.includes(de));
       expect(paar, `die Frage „${vorn}“ zeigt ein Wort der Liste`).toBeTruthy();
       await expect(auswahl).toHaveCount(0);
-      await page.locator(".lektion-feld").fill(paar![0]);
+      await tippen(page.locator(".lektion-feld"), paar![0]);
       getippt++;
     }
     await hauptknopf(page).click();
@@ -220,9 +220,9 @@ test("B-598: eine frische Station lehrt jedes Wort auf der Lernkarte – Aufgebe
     await expect(kopie).toBeVisible({ timeout: 1000 });
   }).toPass();
   // Abschreiben verlangt das Wort, wie es dasteht: falsch abgeschrieben bleibt „OK“ gesperrt.
-  await kopie.fill("lighthous");
+  await tippen(kopie, "lighthous");
   await expect(page.getByRole("button", { name: t.ok, exact: true })).toBeDisabled();
-  await kopie.fill(paare[1][0]);
+  await tippen(kopie, paare[1][0]);
   await page.getByRole("button", { name: t.ok, exact: true }).click();
   // Im Erinnern-Schritt steht das Wort nicht mehr da.
   await expect(wortFeld).toHaveCount(0);
@@ -240,7 +240,7 @@ test("B-598: eine frische Station lehrt jedes Wort auf der Lernkarte – Aufgebe
   for (const [i, [en, de]] of paare.entries()) {
     await expect(zaehler(page)).toHaveText(`Karte ${i + 1} / ${paare.length}`);
     await expect(page.getByText(de, { exact: true })).toBeVisible();
-    await page.locator(".lektion-feld").fill(en);
+    await tippen(page.locator(".lektion-feld"), en);
     const [res] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/review") && r.request().method() === "POST"),
       page.keyboard.press("Enter"),

@@ -182,7 +182,7 @@ export function RemarkWidget({ bottomOffset = 12 }: { bottomOffset?: number } = 
   return (
     // Kein Backdrop und kein `role="dialog"`: Das Widget soll die Seite *nicht* blockieren – man notiert
     // ja gerade etwas über das, was dahinter steht, und will weiterklicken können.
-    <section style={{ ...panel, bottom: bottomOffset }} aria-label="Anmerkung erfassen">
+    <section style={{ ...panel, bottom: bottomOffset }} aria-label="Anmerkung erfassen" data-einfuegen-erlaubt>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <strong style={{ fontSize: 14 }}>📝 Anmerkung</strong>
         <span className="muted" style={{ fontSize: 12 }}>Alt+A</span>

@@ -1,4 +1,13 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
+
+/**
+ * Types into an arcade field the way a child does: one key at a time. `fill()` sends the whole text as ONE multi-character
+ * `insertText`, which the arcade's copy-paste lock (kopierSperre.ts) drops as a clipboard insert from the keyboard strip.
+ */
+export async function tippen(feld: Locator, text: string) {
+  await feld.fill("");
+  await feld.pressSequentially(text);
+}
 
 /** Login credentials for the seeded father (`fid`/`pin`) or a child (`childId`/`pin`). */
 export interface LoginCredentials {
@@ -93,12 +102,12 @@ export async function lernkarteDurchspielen(page: Page, aufgeben = false, t: Ler
     await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
     await expect(kopie).toBeVisible({ timeout: 1000 });
   }).toPass();
-  await kopie.fill(wort);
+  await tippen(kopie, wort);
   await page.getByRole("button", { name: t.ok, exact: true }).click();
   if (aufgeben) {
     await page.getByRole("button", { name: t.aufgeben, exact: true }).click();
   } else {
-    await page.getByLabel(t.erinnern, { exact: true }).fill(wort);
+    await tippen(page.getByLabel(t.erinnern, { exact: true }), wort);
     await page.getByRole("button", { name: t.ok, exact: true }).click();
   }
   await page.getByRole("button", { name: t.weiter, exact: true }).click();

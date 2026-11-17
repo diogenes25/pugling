@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { lernkarteDurchspielen, LERNKARTE_DE, pfadStart, sohnLogin } from "./helpers";
+import { lernkarteDurchspielen, LERNKARTE_DE, pfadStart, sohnLogin, tippen } from "./helpers";
 
 /*
  * B-643 – die Lernkarte mit „Mach's mir leichter“, aus dem Sohn-Sitz (zugleich der Rollengang Sohn von Sprint 92). Der Stoff
@@ -65,7 +65,7 @@ test("Lernkarte: leichter schalten bis zur Auswahl, das Wort kommt als ganze Ler
     await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
     await expect(kopie).toBeVisible({ timeout: 1000 });
   }).toPass();
-  await kopie.fill("station");
+  await tippen(kopie, "station");
   await page.getByRole("button", { name: t.ok, exact: true }).click();
 
   const leichter = page.getByRole("button", { name: "Mach's mir leichter" });

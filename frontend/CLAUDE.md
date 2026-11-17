@@ -41,6 +41,10 @@ Regeln hier, Wege durch die App bei Playwright. Klicks per `fireEvent`, nie `nod
 einem `async`-Handler erst nach `await act(async () => {})` zusichern, sonst prüft die Zeile davor (B-284); ein
 Doppelklick gegen die Ref-Sperre feuert beide Klicks in **einem** `act`, sonst fängt `disabled` den zweiten (B-325).
 
+**Arcade-Felder per `tippen()` statt `fill()`** (`e2e/helpers.ts`): Die Kopier-/Einfügesperre der Arcade
+([src/sohn/kopierSperre.ts](src/sohn/kopierSperre.ts), Anti-Cheat) verwirft ein `insertText` mit mehr als einem Zeichen –
+genau das schickt `fill()`. Ein Feld ohne Lernstoff nimmt `data-einfuegen-erlaubt` aus.
+
 **Eine Fläche je E2E-Spec** – Neues als eigene Datei: eine Spec bricht beim ersten Rot ab und nimmt alles
 Nachfolgende mit ([B-109](../docs/backlog/B-109-full-flow-spec-flackert-bei-frage-3.md)). Der Durchstich bleibt **ein** Weg.
 

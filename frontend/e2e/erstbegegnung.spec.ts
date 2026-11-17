@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
-import { lernkarteDurchspielen, sohnLogin, pfadStart } from "./helpers";
+import { lernkarteDurchspielen, sohnLogin, pfadStart, tippen } from "./helpers";
 
 /*
  * NP-24 „Erst lesen, dann prüfen" als Rollengang des Sohnes – mit einem FRISCHEN Plan, denn nur dort gibt es Wörter, die
@@ -98,7 +98,7 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await expect(page.getByText(`→ ${WORDS[0][0]}`)).toHaveCount(0);
   const answer = page.getByRole("textbox", { name: "Deine Antwort" });
   // B-421 (NP-25): ohne Artikel getippt – das Wort zählt. Seit B-526 zeigt das grüne Blatt den Treffer, bis „Weiter“.
-  await answer.fill(WORDS[0][0].replace(/^la /, ""));
+  await tippen(answer, WORDS[0][0].replace(/^la /, ""));
   await answer.press("Enter");
   await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
   await expect(page.getByRole("button", { name: "Weiter →" })).toBeFocused();
@@ -106,7 +106,7 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
 
   // ---------- B-420: ein Fehler hält die Karte an ----------
   await expect(counter).toHaveText("Karte 2 / 3");
-  await answer.fill("la ru");
+  await tippen(answer, "la ru");
   await answer.press("Enter");
   // B-439: im roten Blatt, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only), die Playwright
   // ebenfalls als sichtbar zählt.
@@ -122,7 +122,7 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await expect(counter).toHaveText("Karte 3 / 3");
   // Und zurück ins Antwortfeld: das Kind tippt weiter, ohne erst hineinzuklicken (Review-Fund).
   await expect(answer).toBeFocused();
-  await answer.fill(WORDS[2][0]);
+  await tippen(answer, WORDS[2][0]);
   await answer.press("Enter");
   await expect(page.locator(".lektion-blatt.richtig")).toBeVisible();
   await page.keyboard.press("Enter");
