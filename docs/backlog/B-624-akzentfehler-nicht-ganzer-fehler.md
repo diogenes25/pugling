@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Akzent-Toleranz, Akzentfehler]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase mit Friedrich)"
 grund: ""
 ersetzt_durch: []
@@ -127,6 +127,65 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle sieben nach Empfehlung.
 7. Der Positions-Report bzw. Lernstand weist Akzent-Fälle als eigene Kategorie aus.
 8. Der Lernstand je Wort (`ItemProgressService`) wertet den Akzentfehler weiter als falsch.
 
+## Schätzung
+
+**Größe: L** — [B-219](B-219-verzeihende-abstufung-je-position.md) (Positions-Schalter + andere Kasten-Regel, M)
+plus ein **dritter Review-Ausgang**, der durch Combo, Punkte, Kasten, Lernstand und Report läuft, plus zwei
+Spalten mit Bestandsdaten. Kein XL: kein neuer Endpunkt, und jede Stelle hat ein Vorbild im Repo.
+
+- **`migration: ja`** — zwei Spalten, angehängt an die jüngste Migration der Kette (heute
+  `20261117061523_StudyPlanSeriesUnit`):
+  - `PlanPosition`: Schalter für die Akzent-Milde. Bestand **an** (E4) – per `migrationBuilder.Sql("UPDATE …")`,
+    **kein** DB-Default (Tor G9).
+  - `ReviewEvent` (`backend/Pugling.Api/Models/StudyPlanEntities.cs:146`–`:153`): Kennzeichen „halb“, Bestand
+    aus. Grund: Die Combo wird aus `WasCorrect` der gespeicherten Reviews gezählt
+    (`backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:526`–`:530`); ein „halb“ als
+    `WasCorrect = false` risse sie, als `true` zählte es in `MetricsService.cs:30` als Treffer.
+- **`vertragsbruch: nein`** — nur additive Felder: an `ReviewOutcome`
+  (`backend/Pugling.Contracts/Student/PracticeDtos.cs:146`, neben `Misspelled`), an `PositionResponse` und den
+  Create/Update-DTOs der Position (Vorbild `ForgivingDemotion`, `backend/Pugling.Contracts/Supervisor/StudyPlanDtos.cs:144`,
+  `:206`), am Positions-Report. Update ist nullable ohne Clear-Schalter (wie `ForgivingDemotion`).
+
+### Risiken
+
+1. **Die Combo.** „Reißt nicht“ heißt: Ein halbes Review wird beim Rückwärtszählen übersprungen, nicht als
+   Treffer gezählt (sonst stiege der Combo-Bonus durch Akzentfehler). Test: richtig, halb, richtig ⇒ Combo 2.
+2. **Pflicht und Tagestruhe.** Wo die Pflicht „gespielte Karten“ zählt, ist nicht über `ReviewEvent` gelöst
+   (kein Treffer in `PositionProgressService`); beim Bauen nachsehen, ob sie am Kasten, an `LastReviewedAt` oder
+   an Treffern hängt. Hängt sie an Treffern, braucht E3 („zählt als gespielt“) dort einen eigenen Zweig.
+3. **Kasten bleibt, aber Fälligkeit?** `ApplyReview` (`backend/Pugling.Api/Services/Shared/PositionPlayService.cs:557`–`:579`)
+   kennt nur richtig/falsch. „Kommt zum nächsten fälligen Termin wieder“ heißt: Kasten unverändert, neuer
+   Termin nach dem Intervall des **aktuellen** Kastens – sonst bliebe die Karte sofort fällig und würde in
+   derselben Runde erneut gezogen.
+4. **Die Faltung selbst.** Diakritika über Unicode-Zerlegung (`NormalizationForm.FormD`, Zeichen der Klasse
+   `NonSpacingMark` entfernen) – aber **ß** zerlegt sich nicht und bleibt (E2: Buchstabe), **œ/æ** ebenso.
+   Gilt nur, wenn die Antwort **ohne** Faltung falsch und **mit** Faltung richtig ist, also nach dem vollen
+   `Matches` (Artikel, Bedeutungen, Alternativen).
+5. **Test bleibt binär.** `AnswerGrader` wird erstmals zwischen Üben und Test getrennt; der Test-Pfad
+   (`PositionTestsController.cs:431`) darf die neue Methode nicht rufen.
+6. **Echte Kinder.** Die Migration schaltet Friedrichs und Theodors Positionen sofort milder (E4) – das ist
+   gewollt, gehört aber in den Rollengang als bewusster Blick auf eine echte Position (Kopie der DB).
+
+### Angriffsplan
+
+1. `AnswerGrader.IsAccentSlip(given, item)` + Unit-Tests der Faltung (é/ç/ü/ñ ja, ß/œ/fehlender Buchstabe nein).
+2. Migration (zwei Spalten, Bestand per `UPDATE`), Modell, Vertrag (additiv), Positions-CRUD nach dem Muster
+   `ForgivingDemotion` (`backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:47`, `:206`, `:324`).
+3. Review-Pfad: dritter Ausgang in `PositionPracticeController.Review` – kein `ApplyReview`-Abstieg, keine
+   Münzen, Combo übersprungen, `ItemProgressService.RecordAsync` mit `false` (E7), `ReviewEvent` halb.
+4. Positions-Report: Kategorie „Akzent“ (`backend/Pugling.Api/Services/Supervisor/PositionReportService.cs:41`–`:44`).
+5. Frontend: Blatt „Fast! Achte auf den Akzent“ in `frontend/src/sohn/SohnPractice.tsx` (neben der
+   `Misspelled`-Anzeige), Schalter im Positions-Formular des Vater-Webs, Spalte im Report.
+
+### Testweg
+
+- Integrationstests in `Pugling.Api.Tests` nach dem Vorbild der B-219-Tests: je AK ein Fall; AK1 misst Kasten,
+  Wallet, Combo und Pflicht vorher/nachher; AK3 über den echten Positions-Test; AK5 als Migrations-Test.
+- `SchemaGuardTests` (G9: kein DB-Default), `PatchSemanticsTests` laufen im Test-Tor mit.
+- Vitest für die Blatt-Anzeige und den Schalter; E2E: Erweiterung von `frontend/e2e/artikel-pflicht.spec.ts`
+  oder eine neue `akzent-milde.spec.ts` (Sohn tippt „ecole“ ⇒ „Fast!“, Kasten unverändert) – zugleich Rollengang.
+- Reviewer: `pugling-reviewer` und `frontend-reviewer`.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Chat mit dem Vater; Konflikt mit B-422/4 benannt.
@@ -135,3 +194,5 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle sieben nach Empfehlung.
   sieben offene Punkte mit Empfehlung.
 - **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; B-524/2 gilt nur noch
   für den Abschlusstest.
+- **2026-11-17** — geschätzt: L, beides, Migration ja (Schalter an der Position mit Bestand an, „halb“ am
+  `ReviewEvent` wegen der Combo), kein Vertragsbruch (nur additive Felder).
