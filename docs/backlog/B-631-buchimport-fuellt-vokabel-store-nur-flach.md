@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Vokabel-Store nur Wort und Übersetzung, Wortart beim Buchimport, Genus und Stammformen aus dem Lehrwerk]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -101,44 +101,71 @@ TSV-Spalte, kein Inline-Item-Feld, kein Store-Aufruf), und der Bestand wird von 
 Daneben fehlt dem Schema ein Ort für das, was beim Sprachenlernen am meisten zählt: das Genus des **Lernworts**.
 `NounInfo` hält nur das deutsche.
 
-## Akzeptanzkriterien (Entwurf)
-
-1. Nach einem Lauf von `laden.py` trägt jede Vokabel des Ordners eine Wortart ≠ `Other`, außer der Aufbereiter
-   hat sie ausdrücklich offen gelassen. `GET creator/vocabulary?incomplete=true&sourceLanguage=<sprache>` liefert
-   für den geladenen Ordner nur noch diese ausdrücklich offenen Wörter.
-2. Ein zweiter Lauf über einen schon geladenen Ordner ergänzt Wortart und Formangaben an den **vorhandenen**
-   Store-Einträgen (gleiche Ids, Lernstand und `ItemProgress` bleiben). Er legt keine Doppel an.
-3. Eine Buchvokabel, die kein Nomen ist („a few“, „un peu“), bekommt die Artikel-Toleranz nicht mehr: „few“ für
-   „a few“ ist falsch. Die Prüfung läuft durch `MayDropArticle`, ohne Änderung an der Regel.
-4. Angaben, die nur das Modell weiß und nicht das Foto (lateinisches Genus in VIVA 1), sind von gedruckten
-   unterscheidbar oder bleiben leer, je nach Entscheidung zu Punkt 3.
-5. `laden.py --pruefen` meldet eine Zeile ohne Wortart bzw. einen Wert außerhalb der erlaubten
-   Liste als Fehler, bevor etwas geladen wird.
-
 ## Offene Punkte
 
-1. **Woher kommt die Wortart:** neue TSV-Spalte `wortart`, die Opus beim Aufbereiten füllt, oder abgeleitet
-   (`(to) …` → Verb, Artikel vorne → Nomen)? *Empfehlung:* Spalte, von Opus gefüllt. Ableiten trifft Englisch
-   und Französisch halbwegs, Latein gar nicht („puer“). Fehler sind sichtbar und billig zu korrigieren, weil
-   sie in der TSV stehen.
-2. **Wie kommt sie in den Store:** (a) `laden.py` legt erst per `POST vocabulary/batch` an und verweist die
-   Übungen über `refs`; (b) `VocabItem` bekommt ein Feld `partOfSpeech` (Vertragsänderung); (c) `laden.py`
-   lädt wie bisher und patcht danach per `PATCH vocabulary/batch` nach Id. *Empfehlung:* (c). Ohne
-   Backend-Änderung, und derselbe Schritt heilt auch den Bestand (Akzeptanzkriterium 2). (a) bräche die
-   Hinweise am Item, die `refs` nicht tragen (`ExerciseItemService.cs:23`).
-3. **Genus des Lernworts:** `NounInfo` um `SourceGenus` (o. ä.) erweitern (Migration + Vertragsbruch), oder im
-   Hinweis-Freitext lassen? Und gilt Modellwissen dafür als Quelle, wenn das Buch es nicht druckt? *Empfehlung:*
-   Erst die Wortart (Punkte 1, 2) liefern, das Genus als eigene Story abspalten, sobald es eine Übung gibt, die
-   es liest. Heute liest niemand `Noun.Genus` (siehe Ist-Stand). Ein Feld ohne Leser ist Disziplin ohne Tor.
-4. **Bestand:** Gelten die 372 `Other`-Einträge als Teil dieser Story, auch die ohne TSV (Seed, KI-Creator,
-   Vater-Web)? *Empfehlung:* nur die aus den vier Buch-Ordnern unter `raw/` (dort liegt die TSV als Quelle). Den
-   Rest zeigt der `incomplete`-Filter, sobald er im Vater-Web sichtbar ist. Das wäre eine kleine eigene Story.
-5. **Homonyme und geteilte Einträge:** Ein Store-Eintrag kann von Übungen aus zwei Büchern genutzt werden. Wer
-   gewinnt, wenn zwei TSVs ihm verschiedene Wortarten geben? *Empfehlung:* Der erste gesetzte Wert ≠ `Other`
-   bleibt. Ein Widerspruch ist eine Warnung in `laden.py`, kein Überschreiben.
-6. **Verbformen und Stammformen:** einbeziehen (Latein-Perfekt, englische *irregular verbs* als eigene Einträge mit
-   `BaseFormKey`) oder zurückstellen? *Empfehlung:* zurückstellen. Die Bücher drucken sie in den erfassten Units
-   kaum, und kein Übungstyp liest `BaseFormId` beim Spielen.
+1. ~~**Woher kommt die Wortart:** neue TSV-Spalte `wortart`, die Opus beim Aufbereiten füllt, oder abgeleitet
+   (`(to) …` → Verb, Artikel vorne → Nomen)?~~ → Entscheidungen 2 und 7.
+2. ~~**Wie kommt sie in den Store:** (a) erst `POST vocabulary/batch`, Übungen über `refs`; (b) Feld
+   `partOfSpeech` am `VocabItem` (Vertragsänderung); (c) nach dem Laden per `PATCH vocabulary/batch`?~~ →
+   Entscheidung 4.
+3. ~~**Genus des Lernworts:** neues Feld (Migration + Vertragsbruch) oder Hinweis-Freitext?~~ → Entscheidung 1
+   (eigene Story, sobald eine Übung es liest).
+4. ~~**Bestand:** Welche der 372 `Other`-Einträge bekommen die Wortart nachgetragen?~~ → Entscheidung 6.
+5. ~~**Homonyme und geteilte Einträge:** Wer gewinnt, wenn zwei TSVs einem Eintrag verschiedene Wortarten
+   geben?~~ → Entscheidung 5.
+6. ~~**Verbformen und Stammformen:** einbeziehen oder zurückstellen?~~ → Entscheidung 1 (zurückgestellt).
+7. ~~**Mehrwort-Einträge** (beim Grillen aufgekommen): Wie ordnet Opus „le professeur principal“, „a few“,
+   „avoir l'air“, „necesse est“ ein?~~ → Entscheidung 3.
+
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
+
+1. **Nur die Wortart.** Das Genus des Lernworts wird eine eigene Story, sobald eine Übung es liest. Verb- und
+   Stammformen sind zurückgestellt. Heute liest beim Spielen nur die Wortart etwas aus dem Store, und das Genus
+   des Lernworts bräuchte ein neues Feld (`NounInfo` beschreibt die deutsche Seite), also Migration und
+   Vertragsbruch für einen Wert ohne Leser. *Kosten:* Das Genus aus dem Buch bleibt vorerst Freitext im
+   `hinweis`. Für die spätere Story: Das Genus des Lernworts braucht projektweit einen eigenen Namen, getrennt
+   von `Noun.Genus` (deutsche Seite).
+2. **Neue Pflichtspalte `wortart` in `vokabeln-unit<N>.tsv`, Opus füllt sie beim Aufbereiten.** Ableiten am Wort
+   trifft Latein gar nicht („puer“) und Adjektive oder Adverbien nie. In der TSV ist jeder Fehler sichtbar und
+   dort korrigierbar. *Kosten:* Nachtrag in den vorhandenen TSVs (siehe 6); `SKILL.md`, `FORMAT.md` und
+   `TSV_COLUMNS` (`laden.py:26`) ändern sich.
+3. **Mehrwort-Einträge nach dem Kern:** Artikel + Nomengruppe = `Noun` („le professeur principal“, „the Tube“;
+   die Artikel-Toleranz aus B-421 bleibt). Verb mit Ergänzung = `Verb` („avoir l'air“). `Phrase` nur für
+   Wendungen und Sätze („necesse est“, „And anyway, …“). „a few“ = `Pronoun` bzw. `Adjective`, also ohne
+   Toleranz. *Kosten:* eine kurze Einordnungsregel im Skill; Grenzfälle bleiben Urteil des Aufbereiters.
+4. **`laden.py` setzt die Wortart nach dem Laden per `PATCH creator/vocabulary/batch`.** Es liest nach dem
+   Anlegen die Items jeder Vokabelübung (mit Store-Id) und ordnet sie den TSV-Zeilen zu. Das läuft auch für
+   Übungen, die „schon da“ sind, und heilt so den Bestand ohne `--ersetzen`. *Kosten:* ein zusätzlicher
+   Aufruf je Übung; keine Backend-Änderung, keine Migration, kein Vertragsbruch.
+5. **Eine vorhandene Wortart ≠ `Other` bleibt.** `laden.py` setzt nur, wo `Other` steht. Widerspricht die TSV
+   einem gesetzten Wert, gibt es eine Warnung mit Wort und beiden Werten. Das schützt eine Korrektur des Vaters
+   im Vater-Web und verhindert, dass zwei Ordner sich gegenseitig umschreiben. *Kosten:* Eine falsche Wortart im
+   Store korrigiert die TSV nicht, nur das Vater-Web.
+6. **Nachtrag für die drei geladenen Ordner:** `raw/english/access-pugling` (Access Band 3, 124 Zeilen),
+   `raw/france/decouvertes-serie-bleue-2-pugling` (127), `raw/latin/viva-1-pugling` (88). Access 5 (732 Zeilen,
+   nicht geladen) bekommt die Spalte beim ersten Laden; die Pflichtspalte erzwingt das. Seed-, KI-Creator- und
+   Vater-Web-Vokabeln bleiben `Other`. Den `incomplete`-Filter im Vater-Web sichtbar zu machen ist eine eigene
+   kleine Story. *Kosten:* Dieser Restbestand bleibt beim Artikel so tolerant wie heute.
+7. **Werte sind die englischen Enum-Namen** (`Noun`, `Verb`, `Adjective`, `Adverb`, `Pronoun`, `Preposition`,
+   `Conjunction`, `Article`, `Numeral`, `Interjection`, `Phrase`, `Other`). Leer ist ein Fehler. `Other` ist die
+   bewusste Entscheidung „nicht einzuordnen“ und bleibt tolerant wie heute (`MayDropArticle` unverändert).
+   *Kosten:* englische Wörter in einer sonst deutschen TSV; dafür keine Übersetzungstabelle neben dem Enum.
+
+## Akzeptanzkriterien
+
+1. `laden.py --pruefen` meldet eine leere `wortart` und einen Wert außerhalb der Enum-Namen als Fehler, bevor
+   etwas geladen wird.
+2. Nach einem Lauf über die drei Ordner aus Entscheidung 6 liefert `GET creator/vocabulary?incomplete=true` für
+   deren Wörter nur noch die, die in der TSV ausdrücklich `Other` tragen.
+3. Ein zweiter Lauf über denselben Ordner ändert keine Store-Id und keinen `ItemProgress` und legt keine Vokabel
+   doppelt an.
+4. Eine Buchvokabel, die kein Nomen ist („a few“), bekommt keine Artikel-Toleranz mehr: „few“ ist falsch. Eine
+   Nomengruppe („le professeur principal“) behält sie: „professeur principal“ ist richtig.
+5. Hat eine Store-Vokabel schon eine Wortart ≠ `Other` und sagt die TSV etwas anderes, bleibt der Wert, und
+   `laden.py` gibt eine Warnung mit Wort und beiden Werten aus.
+6. Der Skill `lehrwerk-aufbereiten` beschreibt die Spalte samt Einordnungsregel aus Entscheidung 3.
 
 ## Verlauf
 
@@ -146,3 +173,5 @@ Daneben fehlt dem Schema ein Ort für das, was beim Sprachenlernen am meisten z�
 - **2026-11-17** — ausformuliert: Importweg, Store-API und Leser gegen `1ba66737` belegt, Buch-TSVs und
   VIVA-Seitenmarkdown auf Grammatikangaben gezählt. Neu dabei: `NounInfo` beschreibt die deutsche Seite, nicht
   das Lernwort.
+- **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung. Umfang auf die Wortart
+  verengt (keine Migration, kein Vertragsbruch), Genus des Lernworts als spätere eigene Story.
