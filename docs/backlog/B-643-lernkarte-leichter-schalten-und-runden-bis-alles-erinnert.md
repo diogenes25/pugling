@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte leichter, Mach's mir leichter in der Lernkarte]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: ja
+vertragsbruch: nein
 wartet_auf: B-635
 quelle: "Chat mit dem Vater, 2026-11-17 (Kombi-Lernkarte B-598, Leichter-Knopf aus B-635)"
 grund: ""
@@ -170,6 +170,82 @@ Gegrillt mit dem Vater am 2026-11-17.
 8. Test, Klausur, Bonus und Info-Modus spielen weiter keine Lernkarte (B-598, Entscheidung 9). Leichter schalten kostet
    keine Münzen, und die Lernkarte zahlt weiter nichts.
 
+## Schätzung
+
+**L.** Gleich groß wie B-598, an dem sie ansetzt: ein neuer Zustand je Wort mit Migration über die echte DB, eine
+Änderung im Kern der Kartenwahl (wann ist ein Wort neu?), eine Rundenfolge ohne Grenze, drei Abfrageformen in der
+Lernkarte und der Ring. Das Fundament (Stufe je Karte, `easier`) kommt aus B-635 und ist hier nicht mitgezählt; ohne
+B-635 wäre es mehr als L und müsste geteilt werden.
+
+- **`wo: beides`** – Backend zuerst (Zustand, Kartenwahl, Dosis, Wiederholung, Ring-Zahl), dann
+  `frontend/src/sohn/Lernkarte.tsx` und der Pfad.
+- **`migration: ja`:**
+  - Neue Spalte `ImprintedAt` (`DateOnly?`) an `PositionItemProgress`
+    (`backend/Pugling.Api/Models/PlanPositionEntities.cs:204-232`, neben `IntroducedAt` `:222`): „eingeprägt“.
+  - **Bestandszeilen:** Jede schon eingeführte Zeile bekommt `ImprintedAt = IntroducedAt`. Sonst kämen am Tag nach dem
+    Deploy alle Wörter, die Friedrich und Theodor schon lernen, wieder als Lernkarte, und ihre goldenen Ringe fielen auf
+    null. Die Lernkarte gibt es erst seit 2026-11-16 (`17808c27`); fast alle Bestandswörter sind vor ihr eingeführt.
+    Ein Wort, das seitdem aufgegeben wurde, gilt damit als eingeprägt. Das ist der Preis dafür, dass niemand Stoff
+    wiederholen muss, den er schon abgefragt bekommt.
+- **`vertragsbruch: nein`:**
+  - additiv: `PositionStatus.ImprintedCount` neben `IntroducedCount`
+    (`backend/Pugling.Contracts/Shared/ProgressDtos.cs:42`). Der Server füllt es für Übungen ohne Lernkarte mit der
+    Zahl eingeführter Wörter (Entscheidung 1). Das Frontend muss diese Regel dann nicht kennen.
+  - Die Kennzeichen „leichter möglich“ und die Stufe der Karte bringt B-635 an `PracticeCard` mit.
+- **Risiken:**
+  1. **„Neu“ wird an 42 Stellen über `IntroducedAt` gelesen** (Services und Controller, gezählt am 2026-11-17). Nur die
+     Kartenwahl darf auf „eingeprägt“ umstellen: `IntroducedCardsAsync` (`PositionPlayService.cs:165-168`) liefert
+     `card is not null` an `IsIntroduction` (`:156`, `:187`; `PositionPracticeController.cs:121`, `:219`). Neu-Bonus
+     (B-535), Kennzahlen (`MetricsService.cs:26`), Plan-Start (`PositionProgressService.cs:677`) und die Tagesdosis
+     müssen bei „eingeführt“ bleiben, sonst zahlt ein Wort seinen Neu-Bonus zweimal oder der Tagesbeginn verschiebt
+     sich.
+  2. **Tagesdosis doppelt gezählt.** Ein offenes Wort ist schon eingeführt; `DailyTestPortion`
+     (`PositionPlayService.cs:310-315`) zählt Neues über `IntroducedAt == day`. Die Rundenzusammenstellung muss offene
+     Lernkarten zuerst einplanen und nur den Rest mit neuen Wörtern füllen (Entscheidung 2, AK 5).
+  3. **Wiederholung ohne Grenze in der eingefrorenen Folge.** `IsRepeat` (`PositionPracticeController.cs:141-142`)
+     erkennt das zweite Vorkommen; das Anhängen (`:694-695`) hat heute die Grenze `< 2`. Ohne Grenze wächst `Order`
+     mit jedem Fehlversuch. Der Lernrunden-Teil der Pflicht (`PlayedEnough`, `PositionProgressService.cs:124-129`)
+     misst Cursor gegen `Order.Count`. Bei Vokabeln zählt dafür der Test (Entscheidung 7), aber an einem reinen
+     Anzeigetag läse dieselbe Regel eine wachsende Folge.
+  4. **Anti-Cheat.** Eine leichter geschaltete Karte darf nie `ImprintedAt` setzen, auch nicht über eine Antwort im
+     zweiten Tab oder ein doppelt geschicktes Review. Der Schutz aus B-598 gegen den zweiten Tab
+     (`PositionPracticeController.cs:455-461`) gilt für die Stufe, nicht für „eingeprägt“.
+  5. **Echte DB.** Die Migration läuft auf der `pugling.db`, mit der die Söhne lernen. Probe zuerst gegen eine Kopie.
+- **Angriffsplan** (nach B-635):
+  1. Migration `ImprintedAt` mit Backfill aus `IntroducedAt`; Probe gegen eine Kopie der echten DB (Ringe vorher und
+     nachher gleich).
+  2. `LearnCardReviewAsync` (`PositionPracticeController.cs:663-711`) setzt `ImprintedAt` nur bei richtiger Antwort im
+     freien Feld auf der von B-635 geführten Freitext-Stufe.
+  3. Die Kartenwahl spielt ein eingeführtes, nicht eingeprägtes Wort wieder als Lernkarte: `IntroducedCardsAsync`
+     oder ein eigener Abruf liefert „eingeprägt“ an `IsIntroduction`.
+  4. Wiederholung ohne Grenze: Leichter geschaltet, „Später nochmal“ und falsch hängen das Wort ans Rundenende;
+     `StageAt` (`:148-156`) spielt jede Wiederholung als ganze Lernkarte.
+  5. Tagesdosis: offene Lernkarten zuerst, neue Wörter nur bis zur Dosis.
+  6. `ImprintedCount` in `PositionStatus` (`PositionProgressService.cs:244` daneben), Client, OpenAPI.
+  7. Frontend: `Lernkarte.tsx` Schritt 4 mit „Mach's mir leichter“, den drei Formen (`LetterBoxes.tsx`,
+     `LetterTiles.tsx`, Auswahl) und „Später nochmal“; der goldene Ring liest `imprintedCount`
+     (`frontend/src/sohn/pfad.ts:47-50`), Beschriftung „N von M eingeprägt“ (`frontend/src/i18n/de.ts:39`, `en.ts`).
+- **Testweg:**
+  - **`LernkarteTests`** (`backend/Pugling.Api.Tests/LernkarteTests.cs`) erweitern, je Fall mit der Änderung, die ihn
+    rot macht:
+    - leichter geschaltet, dann Freitext geschickt → nicht eingeprägt (rot, wenn `Review` die geführte Stufe nicht
+      prüft);
+    - dritte Wiederholung desselben Worts in einer Runde (rot mit der heutigen Grenze `< 2`);
+    - abgebrochene Runde → am nächsten Tag kommt das Wort wieder als Lernkarte (rot mit dem heutigen
+      `IntroducedAt`-Gate);
+    - 6 neue pro Tag, 2 offene von gestern → 2 offene und 4 neue (rot, wenn offene nicht angerechnet werden);
+    - Neu-Bonus wird für ein wiederkehrendes offenes Wort nicht zweimal gezahlt (rot, wenn Risiko 1 eintritt);
+    - `ImprintedCount` zählt nur eingeprägte, bei einer Übung ohne Lernkarte die eingeführten.
+  - **Migrationsprobe** gegen eine Kopie der echten `pugling.db`: `ImprintedCount` gleich `IntroducedCount` je
+    Position direkt nach der Migration.
+  - **`DosisResteTests`** grün lassen (die Dosis-Regel für Abfragen bleibt).
+  - **Vitest:** `Lernkarte.test.tsx` (Knopf schaltet, „Später nochmal“, keine Wahl der Stufe im Client),
+    `SohnHome.test.tsx` (goldener Ring aus `imprintedCount`, Beschriftung).
+  - **E2E:** `frontend/e2e/erstbegegnung.spec.ts` erweitern: neue Karte, bis zur Auswahl leichter schalten, nächste
+    Karte, das erste Wort kommt am Rundenende als ganze Lernkarte wieder, frei erinnern, Ring „1 von N eingeprägt“.
+    Gezählt wird nach „N passed“, nicht nach dem Exit-Code.
+  - Reviewer: `pugling-reviewer`, dann `frontend-reviewer`; Rollengang als Sohn an der laufenden App.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Wunsch des Vaters im Chat; ändert B-598 Entscheidung 7, nutzt die Mechanik
@@ -181,3 +257,6 @@ Gegrillt mit dem Vater am 2026-11-17.
   Folgetag wieder und zählt auf die Tagesdosis, Leiter wie B-635, ans Rundenende als ganze Lernkarte, „Später
   nochmal“, ✕ ohne Rückfrage und Strafe, Pflicht bleibt der Test, keine Grenze, B-635 zuerst). Ist-Stand an
   `a28358d3` (zweiter Ring) nachgezogen; `wartet_auf: B-635`.
+- **2026-11-17** — geschätzt: L, beides, Migration ja (`ImprintedAt`, Backfill aus `IntroducedAt`), kein
+  Vertragsbruch (`ImprintedCount` additiv). Größtes Risiko: Nur die Kartenwahl darf „neu“ auf „eingeprägt“ umstellen,
+  die übrigen 42 Leser von `IntroducedAt` nicht.
