@@ -126,6 +126,12 @@ public sealed class StudentApi(HttpClient http)
     public Task<ExtraRunResult> SubmitExtraRunAsync(int childId, int runId, SubmitExtraRunDto dto, CancellationToken ct = default) =>
         Http.PostAsync<ExtraRunResult>($"{Root}/children/{childId}/extra-training/runs/{runId}/submit", dto, ct);
 
+    // ---------------------------------------------------------------- The child's day
+
+    /// <summary>Today's duties of all active plans of the child, with the streak and the daily chest (B-606).</summary>
+    public Task<TodayResponse> GetTodayAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<TodayResponse>($"{Root}/children/{childId}/today", ct);
+
     // ---------------------------------------------------------------- Daily reward chest
 
     /// <summary>Opens the oldest waiting reward chest and books its draw - the child's own seat only.</summary>

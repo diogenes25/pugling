@@ -253,27 +253,18 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
     private record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans);
 
-    // Open once every playable plan has met today's reward goals (its daily goals, B-535). A plan without any duty has
-    // nothing to come first.
+    // Open once every playable plan has met today's reward goals (its daily goals, B-535) - read from the child's one day
+    // view (B-606), the same that earns the daily box. A plan without any duty has nothing to come first, so it neither
+    // locks nor needs the box rule's "at least one goal".
     private async Task<Gate> GateAsync(int childId, DateOnly today, CancellationToken ct)
     {
-        var plans = await db.StudyPlans.AsNoTracking()
-            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= today && p.EndDate >= today)
-            .ToListAsync(ct);
+        var day = await progress.ComputeChildDayAsync(childId, today, ct);
+        var plans = day.Plans.Select(p => p.Plan).ToList();
         if (plans.Count == 0) return new Gate(false, LockNoPlan, [], plans);
 
-        var outstanding = new List<string>();
-        foreach (var plan in plans)
-        {
-            var day = await progress.ComputeDayAsync(plan, today, ct);
-            // The open reward goals, not the whole duty (B-535): an open weekly goal must not lock the bonus every
-            // day. A plan without goals adds nothing, so it has nothing to come first.
-            outstanding.AddRange(PositionProgressService.RewardObligations(day.Positions)
-                .Where(s => !s.GoalMet).Select(PositionProgressService.OutstandingLabel));
-        }
-        return outstanding.Count == 0
+        return day.RewardOutstanding.Count == 0
             ? new Gate(true, null, [], plans)
-            : new Gate(false, LockDutyOpen, outstanding, plans);
+            : new Gate(false, LockDutyOpen, day.RewardOutstanding, plans);
     }
 
     // The supervisor's cap for this child wins over the server default.

@@ -601,7 +601,10 @@ Response — `HTTP 200`:
         "seriesUnitId": 7,
         "seriesUnitLabel": "Unit 1",
         "seriesName": "Doku-Reihe",
-        "bookPages": null
+        "bookPages": null,
+        "planId": 4,
+        "planTitle": "Doku-Lehrplan",
+        "subjectName": "Doku-Fach"
       }
     ],
     "rewardsUnlocked": true

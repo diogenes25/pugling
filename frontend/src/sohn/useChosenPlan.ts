@@ -6,9 +6,10 @@ import type { PlanResponse } from "../lib/types";
 
 /**
  * Der Plan, mit dem die Arcade arbeitet: der gemerkte, solange es ihn unter den Plänen des Kindes noch gibt, sonst der
- * spielbare, sonst der erste (server-autoritative Affordance statt eigener Regel). Startseite und Weg teilen diese eine
- * Auswahl – der Weg lud vorher die gemerkte Id ungeprüft und zeigte bei einem gelöschten Plan die rohe Serverzeile
- * (B-254). Weicht die Wahl von der gemerkten Id ab, wird sie gemerkt.
+ * spielbare, sonst der erste (server-autoritative Affordance statt eigener Regel). Die Startseite zeigt alle Pläne
+ * (B-606); gemerkt wird der Plan mit „Los“ an einer Position, gelesen von Üben, Test und Fortschritt – der Weg lud
+ * vorher die gemerkte Id ungeprüft und zeigte bei einem gelöschten Plan die rohe Serverzeile (B-254). Weicht die Wahl
+ * von der gemerkten Id ab, wird sie gemerkt.
  */
 export function useChosenPlan() {
   const { planId, setPlanId } = useSohn();

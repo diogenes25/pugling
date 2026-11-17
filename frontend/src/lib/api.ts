@@ -10,7 +10,7 @@ import type {
   ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, CreateTeacherDto, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, UpdateMissionDto, MissionStatus, PlanResponse,
   ChildrenDashboard, ChildrenOverview, OverviewGranularity, CreatePositionDto, CreateReviewFromWordsDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
-  ProgressResponse, ReviewInput, ReviewOutcome,
+  ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
   ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
@@ -708,6 +708,10 @@ export const api = {
     http<ExtraRunResponse>(`${V1}/student/children/${childId}/extra-training/${exerciseId}/runs`, "POST"),
   submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>
     http<ExtraRunResult>(`${V1}/student/children/${childId}/extra-training/runs/${runId}/submit`, "POST", { answers }),
+
+  // ---- Sohn: Kind-Tagessicht (B-606) ----
+  // Die Pflichten aller aktiven Pläne an einer Stelle, mit Serie und Truhe – die Startseite der Arcade.
+  today: (childId: number) => http<TodayResponse>(`${V1}/student/children/${childId}/today`),
 
   // ---- Sohn: Tagestruhe (B-527) ----
   // Verdient beim Abschluss der Tagesziele, gebucht erst hier: der Server öffnet die älteste wartende Truhe.

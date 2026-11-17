@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../lib/api";
@@ -6,7 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
-import { useChosenPlan } from "./useChosenPlan";
+import { nachFach } from "./tagessicht";
 import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
@@ -20,7 +20,7 @@ import {
   abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad,
   type Frist, type Spielweg,
 } from "./pfad";
-import type { DailyBoxOpened, DailyBoxStatus, OverviewResponse, PlanResponse, PositionStatus } from "../lib/types";
+import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -33,16 +33,29 @@ const cadenceKey = (c: PositionStatus["cadence"]) =>
 /** Seitlicher Versatz der Knoten: eine Schlangenlinie, die sich alle acht Knoten wiederholt. */
 const SCHLANGE = [0, -56, -84, -56, 0, 56, 84, 56];
 
+/**
+ * Die Startseite der Arcade (B-606): die Kind-Tagessicht über **alle** aktiven Pläne, nach Fach gegliedert – nicht mehr
+ * die Übersicht des einen gewählten Plans. Pflicht, Truhe und Serie meldet der Server für das ganze Kind; eine Position
+ * führt in den Weg ihres eigenen Plans (`planId`). Der gemerkte Plan (`useChosenPlan`) gilt nur noch für Üben und Test.
+ */
 export function SohnHome() {
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const { setPlanId, skin, setStreak } = useSohn();
-  const { plans, chosen } = useChosenPlan();
+  const { childId, skin, setStreak } = useSohn();
+  const skinText = useSkinText();
+  const titelPraefix = useId();
+  const sicht = useAsync<TodayResponse>(() => api.today(childId), [childId]);
 
-  if (plans.loading) return <div className="sohn-body"><div className="loading">{t("home.loading")}</div></div>;
-  if (plans.error) return <div className="sohn-body"><div className="error-box">{plans.error}</div></div>;
+  useEffect(() => {
+    if (sicht.data) setStreak(sicht.data.currentStreak);
+  }, [sicht.data, setStreak]);
 
-  if (!plans.data || !chosen) {
+  // `showPlaceholder`, nicht `loading`: ein `reload` (Truhe nach `daily_box_none`) hängte sonst die ganze Startseite aus.
+  if (sicht.showPlaceholder) return <div className="sohn-body"><div className="loading">{t("home.loadingMission")}</div></div>;
+  if (!sicht.data) return <div className="sohn-body"><div className="error-box">{sicht.error ?? t("home.error")}</div></div>;
+
+  const today = sicht.data;
+  if (today.positions.length === 0) {
     return (
       <div className="sohn-body">
         <InterestIntroCard />
@@ -56,29 +69,6 @@ export function SohnHome() {
     );
   }
 
-  return <HomeForPlan planId={chosen.id} plans={plans.data} onPickPlan={setPlanId} onStreak={setStreak} />;
-}
-
-function HomeForPlan({
-  planId, plans, onPickPlan, onStreak,
-}: {
-  planId: number; plans: PlanResponse[]; onPickPlan: (id: number) => void; onStreak: (n: number) => void;
-}) {
-  const { t } = useTranslation();
-  const { skin } = useSohn();
-  const skinText = useSkinText();
-  const overview = useAsync<OverviewResponse>(() => api.overview(planId), [planId]);
-
-  useEffect(() => {
-    if (overview.data) onStreak(overview.data.currentStreak);
-  }, [overview.data, onStreak]);
-
-  // `showPlaceholder`, nicht `loading`: ein `reload` (Truhe nach `daily_box_none`) hängte sonst die ganze Startseite aus.
-  if (overview.showPlaceholder) return <div className="sohn-body"><div className="loading">{t("home.loadingMission")}</div></div>;
-  if (!overview.data) return <div className="sohn-body"><div className="error-box">{overview.error ?? t("home.error")}</div></div>;
-
-  const o = overview.data;
-  const today = o.today;
   const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
   // B-535: Tages- und Wochenziele getrennt zählen. Gemischt stünde „Ziele heute 1 / 2“ neben einem offenen
   // Bonus-Training, obwohl alles von heute geschafft ist – die Woche hat ihr eigenes Ende.
@@ -91,22 +81,21 @@ function HomeForPlan({
   const belohnung = belohnungsZiele(today.positions);
   const goalPct = belohnung.total > 0 ? Math.round((belohnung.met / belohnung.total) * 100) : 0;
 
+  const faecher = nachFach(today.positions);
+  // Ein einziger START über alle Fächer: der Pfad je Fach hebt sonst in jedem Fach einen „nächsten“ Knoten hervor.
+  const naechste = naechstePositionId(today.positions);
+  // Die Pläne von heute, einmal je Plan in der Reihenfolge des Servers – die Fächer nennen schon die Abschnitte.
+  const planTitel = [...new Set(today.positions.map((p) => p.planTitle).filter(Boolean))];
+
   return (
     <div className="sohn-body">
       <InterestIntroCard />
-      {plans.length > 1 && (
-        <div className="field">
-          <select value={planId} onChange={(e) => onPickPlan(Number(e.target.value))} aria-label={t("home.choosePlan")}>
-            {plans.map((pl) => <option key={pl.id} value={pl.id}>{pl.title}</option>)}
-          </select>
-        </div>
-      )}
 
       <div className="row">
         <Mascot skin={skin} mood={mood} size={84} />
         <div>
-          <div className="screen-title" style={{ margin: 0 }}>{t("home.dailyMission")}</div>
-          <div className="sub">{o.title}</div>
+          <h1 className="screen-title" style={{ margin: 0, fontWeight: "inherit" }}>{t("home.dailyMission")}</h1>
+          <div className="sub">{planTitel.join(" · ")}</div>
         </div>
       </div>
 
@@ -136,19 +125,19 @@ function HomeForPlan({
 
       {/* Scheitert das Neuladen (etwa nach `daily_box_none`), bleibt die alte Übersicht stehen – der Fehler muss
           trotzdem sichtbar sein, sonst wartet das Kind auf einen Stand, der nie kommt. */}
-      <NeuLadenFehler fehler={overview.error} laedt={overview.loading} onRetry={overview.reload} />
+      <NeuLadenFehler fehler={sicht.error} laedt={sicht.loading} onRetry={sicht.reload} />
 
-      {today.positions.length === 0 && (
-        <div className="card" style={{ textAlign: "center" }}>
-          <p className="sub">{t("home.noExercises")}</p>
-        </div>
-      )}
-
-      <Pfad positions={today.positions} />
+      {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad; der Fachname steht sichtbar darüber. */}
+      {faecher.map((f, i) => (
+        <section key={f.fach} className="fach-gruppe" aria-labelledby={`${titelPraefix}-fach-${i}`}>
+          <h2 id={`${titelPraefix}-fach-${i}`} className="screen-title fach-titel">{f.fach || t("home.noSubject")}</h2>
+          <Pfad positions={f.positions} naechsteId={naechste} />
+        </section>
+      ))}
 
       {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
-      <Truhe box={o.dailyBox} heute={today.day} ziele={belohnung.art} freigeschaltet={today.rewardsUnlocked}
-        onVeraltet={overview.reload} />
+      <Truhe box={today.dailyBox} heute={today.day} ziele={belohnung.art} freigeschaltet={today.rewardsUnlocked}
+        onVeraltet={sicht.reload} />
 
       {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`:
           die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
@@ -161,11 +150,15 @@ function HomeForPlan({
  * Der Lernpfad (B-525): die Positionen des Plans als Knoten in Schlangenlinie, in der Reihenfolge des Servers und
  * gegliedert nach der Unit. Kein Knoten ist gesperrt – der Pfad zeigt, was dran ist, er erzwingt keine Reihenfolge.
  */
-export function Pfad({ positions, jetzt = jetztGerade() }: { positions: PositionStatus[]; jetzt?: Date }) {
+export function Pfad({ positions, jetzt = jetztGerade(), naechsteId }: {
+  positions: PositionStatus[]; jetzt?: Date;
+  /** Der nächste Knoten über mehrere Pfade hinweg (B-606); ohne Angabe der erste offene dieses Pfads. */
+  naechsteId?: number | null;
+}) {
   const { t } = useTranslation();
   const { skin } = useSohn();
   const [offenId, setOffenId] = useState<number | null>(null);
-  const naechste = naechstePositionId(positions);
+  const naechste = naechsteId === undefined ? naechstePositionId(positions) : naechsteId;
   const offen = positions.find((p) => p.positionId === offenId) ?? null;
 
   let lauf = 0;
@@ -280,8 +273,11 @@ const WEG_TEXT = { practice: "pfad.practice", test: "pfad.test" } as const satis
 /** Das Blatt zu einem Knoten: Stand der Position und genau ein Hauptknopf; der andere Weg bleibt klein daneben. */
 function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt: Date; onSchliessen: () => void }) {
   const { t } = useTranslation();
+  const { setPlanId } = useSohn();
   const blatt = useRef<HTMLDivElement | null>(null);
   const los = useRef<HTMLAnchorElement | null>(null);
+  // B-606: die Startseite zeigt mehrere Pläne; Üben und Test spielen den gemerkten Plan – also erst den der Position merken.
+  const merkePlan = () => { if (pos.planId) setPlanId(pos.planId); };
   // Fokus auf „Los“, Tab im Blatt gefangen, Escape schließt, danach zurück zum Knoten – sonst wäre `aria-modal`
   // gelogen: Tab wanderte hinter den Schleier.
   useDialogFocus(blatt, onSchliessen, los);
@@ -314,11 +310,11 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
             {pos.useLeitner && pos.dueCount > 0 && <> · {t("pfad.due", { count: pos.dueCount })}</>}
           </div>
         )}
-        <Link ref={los} to={spielPfad(hauptweg(pos), pos.positionId)} className="btn gold" style={{ textDecoration: "none", textAlign: "center" }}>
+        <Link ref={los} to={spielPfad(hauptweg(pos), pos.positionId)} onClick={merkePlan} className="btn gold" style={{ textDecoration: "none", textAlign: "center" }}>
           {t("pfad.go")}
         </Link>
         {zweiter && (
-          <Link to={spielPfad(zweiter, pos.positionId)} className="btn ghost small" style={{ textDecoration: "none", textAlign: "center" }}>
+          <Link to={spielPfad(zweiter, pos.positionId)} onClick={merkePlan} className="btn ghost small" style={{ textDecoration: "none", textAlign: "center" }}>
             {t(WEG_TEXT[zweiter])}
           </Link>
         )}

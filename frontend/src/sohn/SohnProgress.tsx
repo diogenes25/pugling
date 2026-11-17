@@ -10,7 +10,8 @@ import type { OverviewResponse, ProgressResponse, WeekCoins } from "../lib/types
 
 export function SohnProgress() {
   const { t } = useTranslation();
-  // Dieselbe Auswahl wie die Startseite, nicht die gemerkte Id: die kann zu einem gelöschten Plan gehören (B-254).
+  // Der gemerkte Plan („Los“ auf der Startseite setzt ihn), geprüft gegen die Pläne des Kindes statt der rohen Id:
+  // die kann zu einem gelöschten Plan gehören (B-254).
   const { plans, chosen } = useChosenPlan();
 
   if (plans.loading) return <div className="sohn-body"><div className="loading">{t("progress.loading")}</div></div>;

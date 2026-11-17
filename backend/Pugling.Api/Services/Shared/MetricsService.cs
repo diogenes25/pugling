@@ -51,28 +51,19 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
     }
 
     /// <summary>
-    /// Days up to and including <paramref name="until"/> on which a child's study plan had its daily
-    /// mandatory goal fully completed – <b>the same</b> rule (<see cref="DayOverview.DutyDone"/>)
-    /// also used by the daily mission/overview streak on the student side. Deliberately routed through the
+    /// Days up to and including <paramref name="until"/> that are complete for the child – <b>the same</b> rule
+    /// (<see cref="PositionProgressService.CompleteChildDaysAsync"/>, B-606) as the streak of the daily box and the
+    /// day view: one plan done while another active plan is open is no complete day. Deliberately routed through the
     /// progress service rather than a plain reward query: "at least one goal booked" ≠ "day complete", and
     /// missions/awards must not fire on only partially completed days.
     /// </summary>
-    private async Task<IReadOnlyCollection<DateOnly>> CompleteDaysAsync(int childId, DateOnly until,
-        CancellationToken ct)
-    {
-        var plans = await db.StudyPlans.AsNoTracking().Where(p => p.ChildId == childId).ToListAsync(ct);
-        var complete = new HashSet<DateOnly>();
-        foreach (var plan in plans)
-            foreach (var day in await progress.ProgressAsync(plan, until, ct))
-                if (day.DutyDone) complete.Add(day.Day);
-        return complete;
-    }
+    private Task<IReadOnlySet<DateOnly>> CompleteDaysAsync(int childId, DateOnly until, CancellationToken ct) =>
+        progress.CompleteChildDaysAsync(childId, until, ct);
 
     /// <summary>Length of the current streak of complete days up to and including today or yesterday.</summary>
-    private static int CurrentStreak(IReadOnlyCollection<DateOnly> completeDays, DateOnly today)
+    private static int CurrentStreak(IReadOnlySet<DateOnly> set, DateOnly today)
     {
-        if (completeDays.Count == 0) return 0;
-        var set = completeDays as HashSet<DateOnly> ?? completeDays.ToHashSet();
+        if (set.Count == 0) return 0;
 
         // The streak may still be open today: count from today if today is already complete, otherwise from yesterday.
         var cursor = set.Contains(today) ? today : today.AddDays(-1);

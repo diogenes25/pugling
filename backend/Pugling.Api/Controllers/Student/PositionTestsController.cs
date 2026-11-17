@@ -447,11 +447,12 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         // Book the position's goal points (idempotent) BEFORE the gamification, so that coin-based missions
         // already see the fresh credit.
-        var dayOverview = await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
+        await progress.EvaluateAndAwardAsync(plan, attempt.Day, ct);
         // Also evaluate metric-based missions/awards (e.g. "tests passed") on test completion.
         await gamification.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
-        await dailyBox.EvaluateAndAwardAsync(plan, attempt.Day, dayOverview, ct);
+        // The daily reward box: same occasion as the goal reward above, once the daily goals of all the child's active
+        // plans are met (B-535, B-606) - not just those of the plan played here.
+        await dailyBox.EvaluateAndAwardAsync(plan.ChildId, attempt.Day, ct);
 
         // The same count Start uses for the cap (B-522) - this attempt's own row was inserted at Start and is
         // completed by now, so it counts as used (1st of 2 -> remaining 1, 2nd -> 0). A supervisor attempt is

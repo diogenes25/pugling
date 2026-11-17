@@ -8287,6 +8287,58 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/today": {
+      "get": {
+        "tags": [
+          "Student \u2013 Today"
+        ],
+        "summary": "Today\u0027s duties of all active, running plans of the child: goals met and open, whether the day\u0027s rewards are\nunlocked (the chest is earned only once every plan\u0027s daily goals are met), the child\u0027s streak and today\u0027s chest.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/children/{childId}/vocabulary-progress": {
       "get": {
         "tags": [
@@ -10529,7 +10581,7 @@
         "tags": [
           "Student \u2013 Plan Overview"
         ],
-        "summary": "Daily mission: positions due today with status, mandatory goal completion and current streak.",
+        "summary": "Daily mission: positions due today with status, mandatory goal completion and current streak. The streak is the\nchild\u0027s over all its plans (B-606), the same the daily chest scales with; the day itself is this plan\u0027s.",
         "parameters": [
           {
             "name": "planId",
@@ -42309,9 +42361,26 @@
               "null",
               "string"
             ]
+          },
+          "planId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "planTitle": {
+            "type": "string",
+            "default": ""
+          },
+          "subjectName": {
+            "type": "string",
+            "default": ""
           }
         },
-        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in.\nIntroducedCount of PoolSize is how far the child has come through the position\u0027s contents - with a\ndaily dose (B-04) the one figure that says how much of the material is still ahead.PenaltyCoins is the position\u0027s coin penalty for a missed goal (0 = none), shown to the child on purpose\n(B-525): a price that only appears as a booking the next morning cannot steer anything. It is the configured\namount, not a forecast - it is only booked for a closed daily/weekly period of a plan that was due, and it is\nalways 0 for a free position (Cadence = None), which is never charged.\nSeriesUnitId/SeriesUnitLabel name the textbook unit of the exercise, so a client can group\nconsecutive positions into the sections the child knows from the book.\nSeriesName/BookPages (B-588) add the series and the printed page reference (null = none), so\nthe child can look the exercise up in its book. Deliberately only here and never in a test or practice payload:\nlooking it up while practicing is the point, the class test stays without it."
+        "description": "Status of a single position for one day \u2013 enough for the student client to render the right action.\n\n\u0060Testable\u0060 is about **this day**, not merely about the exercise type: it is false on a free display\nstage (B-96), because the exam refuses that stage. A client therefore offers practice whenever the position\nuses Leitner or is not testable today \u2013 the two together always leave exactly one playable way in.\nIntroducedCount of PoolSize is how far the child has come through the position\u0027s contents - with a\ndaily dose (B-04) the one figure that says how much of the material is still ahead.PenaltyCoins is the position\u0027s coin penalty for a missed goal (0 = none), shown to the child on purpose\n(B-525): a price that only appears as a booking the next morning cannot steer anything. It is the configured\namount, not a forecast - it is only booked for a closed daily/weekly period of a plan that was due, and it is\nalways 0 for a free position (Cadence = None), which is never charged.\nSeriesUnitId/SeriesUnitLabel name the textbook unit of the exercise, so a client can group\nconsecutive positions into the sections the child knows from the book.\nSeriesName/BookPages (B-588) add the series and the printed page reference (null = none), so\nthe child can look the exercise up in its book. Deliberately only here and never in a test or practice payload:\nlooking it up while practicing is the point, the class test stays without it.PlanId/PlanTitle name the plan the position belongs to and SubjectName the subject of its\ncontent (taken from the exercise\u0027s textbook series, \u0022\u0022 = none) - B-606: the child\u0027s day view lists the positions of\nevery active plan side by side, and a position must still lead into the path of its own plan."
       },
       "PracticeCard": {
         "required": [
@@ -45736,6 +45805,91 @@
         },
         "description": "A textbook series (\u0022Access\u0022) including its own permission view. \u0060Slug\u0060 is the normalized, globally\nunique and immutable key of the series, \u0060IsOwn\u0060 says whether the calling account may\nchange it, \u0060UnitCount\u0060 counts the stored units across all volumes. \u0060GradeMin\u0060/\u0060GradeMax\u0060\naggregate the volumes actually present (\u0060SeriesUnit.Grade\u0060) - \u0060null\u0060 when no unit carries one."
       },
+      "TodayResponse": {
+        "required": [
+          "childId",
+          "currentStreak",
+          "dailyBox",
+          "day",
+          "dutyDone",
+          "goalsMet",
+          "goalsTotal",
+          "outstanding",
+          "positions",
+          "rewardsUnlocked"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The child the day belongs to.",
+            "format": "int32"
+          },
+          "day": {
+            "type": "string",
+            "description": "The server\u0027s calendar day (UTC).",
+            "format": "date"
+          },
+          "dutyDone": {
+            "type": "boolean",
+            "description": "Every goal of every active plan is met - and there is at least one."
+          },
+          "goalsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Goals (daily and weekly) over all active plans.",
+            "format": "int32"
+          },
+          "goalsMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Of those, the goals met.",
+            "format": "int32"
+          },
+          "outstanding": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The child-facing lines of the open goals, plan by plan."
+          },
+          "rewardsUnlocked": {
+            "type": "boolean",
+            "description": "The reward goals of every active plan are met: the daily chest and the bonus training open."
+          },
+          "currentStreak": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Consecutive complete days up to today over all plans (the child\u0027s streak).",
+            "format": "int32"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PositionStatus"
+            },
+            "description": "The positions of all active plans, each carrying its plan and subject."
+          },
+          "dailyBox": {
+            "description": "Today\u0027s reward chest.",
+            "$ref": "#/components/schemas/DailyBoxStatus"
+          }
+        },
+        "description": "The child\u0027s day across all of its active, running plans (B-606): the one place that says whether today\u0027s duty is\ndone, whether the day\u0027s rewards are unlocked, how long the streak is and whether the daily chest is earned. With a\nsingle active plan it reads the same as that plan\u0027s OverviewResponse."
+      },
       "TranslationConfig": {
         "required": [
           "items",
@@ -48508,6 +48662,9 @@
     },
     {
       "name": "Student \u2013 Shop"
+    },
+    {
+      "name": "Student \u2013 Today"
     },
     {
       "name": "Student \u2013 Vocabulary Progress"

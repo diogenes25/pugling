@@ -192,6 +192,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     // history, so a lookup per position would multiply with both.
     private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit).ThenInclude(u => u!.Series)
+            .ThenInclude(s => s!.Subject)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
             .ToListAsync(ct);
@@ -243,7 +244,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 // A free position is never charged, so it must not advertise a price either.
                 pos.Cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
                 pos.Exercise?.SeriesUnitId ?? 0, pos.Exercise?.SeriesUnit?.Label ?? "",
-                pos.Exercise?.SeriesUnit?.Series?.Name ?? "", pos.Exercise?.BookPages));
+                pos.Exercise?.SeriesUnit?.Series?.Name ?? "", pos.Exercise?.BookPages,
+                plan.Id, plan.Title, SubjectNameOf(pos)));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.
@@ -274,6 +276,134 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>The child-facing line for an open goal, shared by the day's list and the bonus lock.</summary>
     public static string OutstandingLabel(PositionStatus s) =>
         $"{s.ExerciseTitle} ({(s.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")}) offen";
+
+    // The subject of the position's content: the catalog subject of its textbook series, else the series' free text.
+    private static string SubjectNameOf(PlanPosition pos) =>
+        pos.Exercise?.SeriesUnit?.Series is { } series ? series.Subject?.Name ?? series.SubjectName ?? "" : "";
+
+    // ---- The child's day across all plans (B-606) ---- ----
+
+    /// <summary>
+    /// The child's day across every plan that is active and running on <paramref name="day"/> - the one source for the
+    /// day's duty, the reward lock (daily chest, bonus training) and the child-facing day view (B-606, decision 6).
+    /// <para>
+    /// Duty: every goal of every such plan. Rewards: each plan contributes its own <see cref="RewardObligations"/>, so a
+    /// plan of weekly goals keeps gating while another plan has daily ones - exactly the rule the bonus lock already
+    /// applied plan by plan. With a single active plan every figure equals that plan's <see cref="ComputeDayAsync"/>.
+    /// </para>
+    /// </summary>
+    public async Task<ChildDayRollup> ComputeChildDayAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var plans = await db.StudyPlans.AsNoTracking()
+            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && p.EndDate >= day)
+            .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
+            .ToListAsync(ct);
+
+        var planDays = new List<ChildPlanDay>(plans.Count);
+        foreach (var plan in plans)
+            planDays.Add(new ChildPlanDay(plan, await ComputeDayAsync(plan, day, ct)));
+
+        var goalsTotal = planDays.Sum(p => p.Overview.GoalsTotal);
+        var goalsMet = planDays.Sum(p => p.Overview.GoalsMet);
+        var rewardGoals = planDays.SelectMany(p => RewardObligations(p.Overview.Positions)).ToList();
+        var rewardOutstanding = rewardGoals.Where(s => !s.GoalMet).Select(OutstandingLabel).ToList();
+
+        return new ChildDayRollup(day, planDays,
+            goalsTotal > 0 && goalsMet == goalsTotal, goalsTotal, goalsMet,
+            planDays.SelectMany(p => p.Overview.Outstanding).ToList(),
+            rewardOutstanding,
+            rewardGoals.Count > 0 && rewardOutstanding.Count == 0,
+            planDays.SelectMany(p => p.Overview.Positions).ToList());
+    }
+
+    /// <summary>
+    /// Is a day complete for the child's streak (B-606, decision 6)? At least one plan with a duty that day met it,
+    /// and no plan that is active <b>now</b> left a duty of that day open. The model keeps no activation history, so a
+    /// plan switched off since only counts in the child's favour - the same fairness the penalty applies to an inactive
+    /// plan (<see cref="PlanDueForPeriod"/>): a chapter change must not break the streak backwards.
+    /// </summary>
+    private static bool IsCompleteDay(IEnumerable<PlanDutyState> plansOfDay)
+    {
+        var withDuty = plansOfDay.Where(p => p.HasDuty).ToList();
+        return withDuty.Any(p => p.Done) && !withDuty.Any(p => p.Active && !p.Done);
+    }
+
+    /// <summary>One plan's duty on one day, as far as the streak needs it.</summary>
+    private readonly record struct PlanDutyState(bool Active, bool HasDuty, bool Done);
+
+    /// <summary>
+    /// The duty part of <see cref="ComputeDayAsync"/> alone (<see cref="DayOverview.DutyDone"/> and whether there is a
+    /// duty at all), stopping at the first open goal. A streak runs this once per plan and day, so it must not pay for
+    /// the pool and due counts the day view shows.
+    /// </summary>
+    private async Task<PlanDutyState> DutyStateAsync(StudyPlan plan, IReadOnlyList<PlanPosition> positions, DateOnly day,
+        CancellationToken ct)
+    {
+        var obligations = positions.Where(p => p.Cadence != GoalCadence.None).ToList();
+        if (obligations.Count == 0) return new PlanDutyState(plan.Active, false, false);
+        foreach (var pos in obligations)
+            if (!await IsGoalMetAsync(pos, plan, day, ct))
+                return new PlanDutyState(plan.Active, true, false);
+        return new PlanDutyState(plan.Active, true, true);
+    }
+
+    /// <summary>
+    /// The child's streak (B-606): consecutive complete days (<see cref="IsCompleteDay"/>) up to and including
+    /// <paramref name="today"/>, walked backward over all of the child's plans and stopped at the first incomplete day or
+    /// after <paramref name="maxDays"/>. Active plans are judged first, so an open active duty stops the day without
+    /// reading the inactive ones.
+    /// </summary>
+    public async Task<int> ChildStreakAsync(int childId, DateOnly today, int maxDays, CancellationToken ct)
+    {
+        var plans = await db.StudyPlans.AsNoTracking()
+            .Where(p => p.ChildId == childId && p.StartDate <= today)
+            .OrderByDescending(p => p.Active).ThenBy(p => p.Id)
+            .ToListAsync(ct);
+        if (plans.Count == 0) return 0;
+
+        var positions = new Dictionary<int, List<PlanPosition>>();
+        var firstDay = plans.Min(p => p.StartDate);
+        var streak = 0;
+        for (var day = today; streak < maxDays && day >= firstDay; day = day.AddDays(-1))
+        {
+            var states = new List<PlanDutyState>();
+            foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
+            {
+                if (!positions.TryGetValue(plan.Id, out var list))
+                    positions[plan.Id] = list = await LoadPositionsAsync(plan.Id, ct);
+                var state = await DutyStateAsync(plan, list, day, ct);
+                states.Add(state);
+                // An open duty of an active plan already decides the day; an inactive one can only add to it.
+                if (state is { Active: true, HasDuty: true, Done: false }) break;
+            }
+            if (!IsCompleteDay(states)) break;
+            streak++;
+        }
+        return streak;
+    }
+
+    /// <summary>
+    /// Every complete day (<see cref="IsCompleteDay"/>) of the child up to and including <paramref name="until"/>, over
+    /// the whole runtime of all its plans - the day count and streak behind missions and achievements.
+    /// </summary>
+    public async Task<IReadOnlySet<DateOnly>> CompleteChildDaysAsync(int childId, DateOnly until, CancellationToken ct)
+    {
+        var plans = await db.StudyPlans.AsNoTracking()
+            .Where(p => p.ChildId == childId && p.StartDate <= until)
+            .ToListAsync(ct);
+
+        var byDay = new Dictionary<DateOnly, List<PlanDutyState>>();
+        foreach (var plan in plans)
+        {
+            var positions = await LoadPositionsAsync(plan.Id, ct);
+            for (var d = plan.StartDate; d <= plan.EndDate && d <= until; d = d.AddDays(1))
+            {
+                if (!byDay.TryGetValue(d, out var states)) byDay[d] = states = [];
+                states.Add(await DutyStateAsync(plan, positions, d, ct));
+            }
+        }
+        return byDay.Where(kv => IsCompleteDay(kv.Value)).Select(kv => kv.Key).ToHashSet();
+    }
 
     /// <summary>
     /// Evaluates the day and credits the goal points once for every position with a reached goal
@@ -542,19 +672,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return days;
     }
 
-    /// <summary>Current streak: consecutive completed days up to <paramref name="today"/> (counting backward).</summary>
-    public static int Streak(IEnumerable<ProgressDay> days, DateOnly today)
-    {
-        var streak = 0;
-        foreach (var d in days.Where(x => x.Day <= today).Reverse())
-        {
-            if (d.DutyDone) streak++; else break;
-        }
-        return streak;
-    }
-
     /// <summary>
-    /// How far back <see cref="StreakBoundedAsync"/> counts at most. The daily reward box's escalation
+    /// How far back <see cref="StreakBoundedAsync(int, DateOnly, CancellationToken)"/> counts at most. The daily reward box's escalation
     /// tiers (B-105) cap at 30 days, so a streak at or beyond this bound already sits in the highest tier -
     /// counting further would cost EF round-trips without ever changing the reward. Same reasoning as
     /// <see cref="MaxSettleLookbackDays"/> for the equally full-runtime-shaped penalty settlement.
@@ -562,28 +681,16 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private const int MaxStreakLookbackDays = 45;
 
     /// <summary>
-    /// Consecutive fully met days up to and including <paramref name="today"/>, walked backward and
-    /// short-circuited on the first open day - unlike <see cref="Streak"/>, this does NOT scan the plan's
-    /// entire runtime via <see cref="ProgressAsync"/>. Gives the identical result to
-    /// <c>Streak(await ProgressAsync(plan, today, ct), today)</c> for any streak within
-    /// <see cref="MaxStreakLookbackDays"/>; only exists for callers on a write path (the daily box) where
-    /// the exact value beyond that bound doesn't change the outcome.
+    /// The child's streak (<see cref="ChildStreakAsync"/>) for the write path (the daily box), counted back at most
+    /// <see cref="MaxStreakLookbackDays"/> days - beyond that bound the exact value doesn't change the reward.
     /// </summary>
-    public async Task<int> StreakBoundedAsync(StudyPlan plan, DateOnly today, CancellationToken ct = default)
-    {
-        var streak = 0;
-        for (var day = today; streak < MaxStreakLookbackDays && day >= plan.StartDate; day = day.AddDays(-1))
-        {
-            if (!(await ComputeDayAsync(plan, day, ct)).DutyDone) break;
-            streak++;
-        }
-        return streak;
-    }
+    public Task<int> StreakBoundedAsync(int childId, DateOnly today, CancellationToken ct) =>
+        ChildStreakAsync(childId, today, MaxStreakLookbackDays, ct);
 
     /// <summary>
     /// Processed history for the supervisor evaluation view: the key figures (<see cref="ProgressView.DaysComplete"/>
-    /// / <see cref="ProgressView.TotalPoints"/> / <see cref="ProgressView.CurrentStreak"/>) always relate to
-    /// the <b>entire</b> runtime; the filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)
+    /// / <see cref="ProgressView.TotalPoints"/>) always relate to the plan's <b>entire</b> runtime, while
+    /// <see cref="ProgressView.CurrentStreak"/> is the child's streak over all plans (B-606); the filter (<paramref name="from"/>/<paramref name="to"/>/<paramref name="dutyDone"/>)
     /// and sort (<paramref name="sort"/>: <c>day</c>/<c>-day</c>/<c>points</c>/<c>-points</c>) affect only
     /// the returned <see cref="ProgressView.Days"/>. The controller layers its HTTP-side paging on top of this.
     /// </summary>
@@ -606,8 +713,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             _ => filtered.OrderBy(d => d.Day),
         };
 
+        // The streak belongs to the child, not to this plan (B-606, decision 7) - the same value as overview and today.
+        var streak = await ChildStreakAsync(plan.ChildId, today, int.MaxValue, ct);
         return new ProgressView(days.Count(d => d.DutyDone), totalDays, days.Sum(d => d.PointsAwarded),
-            Streak(days, today), filtered.ToList());
+            streak, filtered.ToList());
     }
 
 }

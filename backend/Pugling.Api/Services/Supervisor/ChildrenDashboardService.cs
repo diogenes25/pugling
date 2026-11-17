@@ -25,25 +25,12 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         var rows = new List<ChildDay>(children.Count);
         foreach (var child in children)
         {
-            // Only plans active and running on that day count towards the day's obligation.
-            var plans = await db.StudyPlans.AsNoTracking()
-                .Where(p => p.ChildId == child.Id && p.Active && p.StartDate <= date && p.EndDate >= date)
-                .ToListAsync(ct);
-
-            int goalsTotal = 0, goalsMet = 0, points = 0, plansWithDuty = 0, plansDone = 0;
-            foreach (var plan in plans)
-            {
-                var day = await progress.ComputeDayAsync(plan, date, ct);
-                goalsTotal += day.GoalsTotal;
-                goalsMet += day.GoalsMet;
-                points += day.PointsAwarded;
-                if (day.GoalsTotal > 0) { plansWithDuty++; if (day.DutyDone) plansDone++; }
-            }
-
-            // Obligation met if there is a day's target AND all such plans reached it.
-            var dutyDone = plansWithDuty > 0 && plansDone == plansWithDuty;
-            rows.Add(new ChildDay(child.Id, child.Name, plans.Count, goalsTotal, goalsMet, points,
-                dutyDone, goalsMet > 0 || points > 0));
+            // The child's one day view (B-606): only plans active and running on that day count, and the obligation is
+            // met when there is a goal AND every goal of every such plan is met.
+            var day = await progress.ComputeChildDayAsync(child.Id, date, ct);
+            var points = day.Plans.Sum(p => p.Overview.PointsAwarded);
+            rows.Add(new ChildDay(child.Id, child.Name, day.Plans.Count, day.GoalsTotal, day.GoalsMet, points,
+                day.DutyDone, day.GoalsMet > 0 || points > 0));
         }
 
         return new Dashboard(date, rows);

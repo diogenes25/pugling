@@ -733,10 +733,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // The position's goal points (idempotent): this mainly covers pure content/reading exercises whose goal
         // is met by a round played far enough. BEFORE the gamification, so that missions see the credit.
-        var dayOverview = await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
+        await progress.EvaluateAndAwardAsync(plan, session.Day, ct);
         await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
-        // The daily reward box: same occasion as the goal reward above, once today's daily goals are met (B-535).
-        await dailyBox.EvaluateAndAwardAsync(plan, session.Day, dayOverview, ct);
+        // The daily reward box: same occasion as the goal reward above, once the daily goals of all the child's active
+        // plans are met (B-535, B-606) - not just those of the plan played here.
+        await dailyBox.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
         return await MapAsync(session, withAttempts: true, ct);
     }
 }

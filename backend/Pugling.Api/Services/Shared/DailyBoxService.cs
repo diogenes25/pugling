@@ -9,9 +9,10 @@ namespace Pugling.Api.Services.Shared;
 /// <summary>
 /// Grants the daily reward box (a chest the child opens, B-527) - the positive counterpart to
 /// <see cref="PositionProgressService.SettleClosedPeriodsAsync"/> (the "stick"). Awarded once per
-/// (child, day) when the day's reward goals are met (<see cref="DayOverview.RewardsUnlocked"/>, B-535), with a random
-/// coins/gems draw that scales with the child's current streak (<see cref="PositionProgressService.Streak"/>,
-/// reused rather than a separate login counter - see B-105, decision 2).
+/// (child, day) when the day's reward goals of all active plans are met (<see cref="ChildDayRollup.RewardsUnlocked"/>,
+/// B-535, B-606), with a random coins/gems draw that scales with the child's current streak
+/// (<see cref="PositionProgressService.ChildStreakAsync"/>, reused rather than a separate login counter - see B-105,
+/// decision 2).
 /// <para>
 /// Deliberately evaluated only at the same write seams as the position goal reward (practice-session end,
 /// test submit) - never on a GET, and never with an expiry: the box waits for the next completed duty day
@@ -24,19 +25,37 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
     private readonly DailyBoxOptions opts = options.Value;
 
     /// <summary>
-    /// Earns the box for <paramref name="day"/> (draw fixed, nothing booked yet) if <paramref name="dayOverview"/> reports the reward goals
-    /// met (<see cref="DayOverview.RewardsUnlocked"/>) and no box has been claimed yet that day. The idempotency pre-check (a single indexed lookup)
-    /// runs BEFORE the streak recomputation, so it only ever runs once per calendar day, not on every
-    /// practice/test completion; the streak itself uses the bounded, short-circuiting
-    /// <see cref="PositionProgressService.StreakBoundedAsync"/> rather than a full-runtime scan, since this
-    /// runs on the write path (unlike the supervisor's on-demand <c>overview/progress</c> read).
+    /// Earns the box for <paramref name="day"/> (draw fixed, nothing booked yet) once the reward goals of <b>every</b>
+    /// active plan of the child are met (<see cref="ChildDayRollup.RewardsUnlocked"/>, B-606) and no box has been claimed
+    /// yet that day - one plan done while another is open earns nothing, or the box would reward the easiest subject.
+    /// The idempotency pre-check (a single indexed lookup) runs BEFORE the day rollup over all plans and the streak, so
+    /// those run only until the day's box is earned, not on every later practice/test completion.
     /// </summary>
-    public async Task EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, DayOverview dayOverview, CancellationToken ct = default)
+    public async Task EvaluateAndAwardAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        if (await AlreadyClaimedAsync(childId, day, ct)) return;
+        if (!(await progress.ComputeChildDayAsync(childId, day, ct)).RewardsUnlocked) return;
+        await AwardAsync(childId, day, ct);
+    }
+
+    /// <summary>
+    /// Test seam: awards on a given rollup, skipping the child's rollup over all plans. Product write seams use
+    /// <see cref="EvaluateAndAwardAsync(int, DateOnly, CancellationToken)"/>.
+    /// </summary>
+    internal async Task AwardIfUnlockedAsync(int childId, DateOnly day, DayOverview dayOverview, CancellationToken ct)
     {
         if (!dayOverview.RewardsUnlocked) return;
-        if (await db.DailyBoxClaims.AnyAsync(c => c.ChildId == plan.ChildId && c.Day == day, ct)) return;
+        if (await AlreadyClaimedAsync(childId, day, ct)) return;
+        await AwardAsync(childId, day, ct);
+    }
 
-        var streak = await progress.StreakBoundedAsync(plan, day, ct);
+    private Task<bool> AlreadyClaimedAsync(int childId, DateOnly day, CancellationToken ct) =>
+        db.DailyBoxClaims.AnyAsync(c => c.ChildId == childId && c.Day == day, ct);
+
+    // The streak uses the bounded, short-circuiting child streak rather than a full-runtime scan: this runs on the write path.
+    private async Task AwardAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var streak = await progress.StreakBoundedAsync(childId, day, ct);
         var multiplier = opts.StreakTiers
             .Where(t => streak >= t.FromStreak)
             .OrderByDescending(t => t.FromStreak)
@@ -50,7 +69,7 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
         // a longer streak gains nothing. No ledger row here - the balance moves only when the child opens it.
         db.DailyBoxClaims.Add(new DailyBoxClaim
         {
-            ChildId = plan.ChildId,
+            ChildId = childId,
             Day = day,
             CoinsAwarded = coins,
             GemsAwarded = gems,

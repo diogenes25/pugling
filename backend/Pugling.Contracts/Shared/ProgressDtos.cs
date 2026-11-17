@@ -24,12 +24,18 @@ namespace Pugling.Contracts.Shared;
 /// the child can look the exercise up in its book. Deliberately only here and never in a test or practice payload:
 /// looking it up while practicing is the point, the class test stays without it.
 /// </para>
+/// <para>
+/// <c>PlanId</c>/<c>PlanTitle</c> name the plan the position belongs to and <c>SubjectName</c> the subject of its
+/// content (taken from the exercise's textbook series, "" = none) - B-606: the child's day view lists the positions of
+/// every active plan side by side, and a position must still lead into the path of its own plan.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
     bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
-    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null);
+    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
+    int PlanId = 0, string PlanTitle = "", string SubjectName = "");
 
 /// <summary>
 /// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and
@@ -45,6 +51,11 @@ public record DayOverview(
 public record ProgressDay(DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet, int PointsAwarded);
 
 /// <summary>Aggregated history: run-wide metrics plus a filtered/sorted list of days.</summary>
+/// <param name="DaysComplete">Days of this plan's run on which its duty was done.</param>
+/// <param name="TotalDays">Length of this plan's run in days.</param>
+/// <param name="TotalPoints">Points this plan's positions awarded over its run.</param>
+/// <param name="CurrentStreak">Consecutive complete days up to today over all plans (the child's streak, not this plan's).</param>
+/// <param name="Days">The filtered and sorted days of this plan's run.</param>
 public record ProgressView(int DaysComplete, int TotalDays, int TotalPoints, int CurrentStreak,
     IReadOnlyList<ProgressDay> Days);
 

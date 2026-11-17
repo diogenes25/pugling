@@ -111,7 +111,7 @@ public class BelohnungenTagespflichtTests(PuglingWebAppFactory factory) : IClass
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var plan = db.StudyPlans.AsNoTracking().Single(p => p.Id == s.PlanId);
         var day = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
-        Assert.Equal(0, await progress.StreakBoundedAsync(plan, day, CancellationToken.None));
+        Assert.Equal(0, await progress.StreakBoundedAsync(plan.ChildId, day, CancellationToken.None));
     }
 
     /// <summary>

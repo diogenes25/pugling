@@ -40,6 +40,11 @@
     <ProjectReference Include="..\Pugling.Contracts\Pugling.Contracts.csproj" />
   </ItemGroup>
 
+  <!-- Test-Nähte (internal) sind nur für die Integrationstests sichtbar, nicht als öffentliche API des Dienstes. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Pugling.Api.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Update="OpenApi\openapi-examples.generated.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('OpenApi\openapi-examples.generated.json')" />
   </ItemGroup>

@@ -511,6 +511,9 @@ export type DayOverview = S["DayOverview"];
 /** Tagesmission des Sohns bzw. Ein-Blick-Status eines Plans. */
 export type OverviewResponse = S["OverviewResponse"];
 
+/** Kind-Tagessicht über alle aktiven Pläne (B-606): Pflichten, Serie, Truhe. */
+export type TodayResponse = S["TodayResponse"];
+
 /** Ein Tag im Verlauf (Vater-Auswertung). */
 export type ProgressDay = S["ProgressDay"];
 

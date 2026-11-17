@@ -25,7 +25,10 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
         db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId, ct);
 
-    /// <summary>Daily mission: positions due today with status, mandatory goal completion and current streak.</summary>
+    /// <summary>
+    /// Daily mission: positions due today with status, mandatory goal completion and current streak. The streak is the
+    /// child's over all its plans (B-606), the same the daily chest scales with; the day itself is this plan's.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OverviewResponse>> Get(int planId, CancellationToken ct = default)
@@ -34,11 +37,11 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         if (plan is null) return NotFound();
 
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
-        var days = await progress.ProgressAsync(plan, today, ct);
         var todayOverview = await progress.ComputeDayAsync(plan, today, ct);
+        var streak = await progress.ChildStreakAsync(plan.ChildId, today, int.MaxValue, ct);
         var boxStatus = await dailyBox.StatusAsync(plan.ChildId, today, ct);
         return new OverviewResponse(plan.Id, plan.Title, plan.StartDate, plan.EndDate, plan.Active,
-            PositionProgressService.Streak(days, today), todayOverview, boxStatus);
+            streak, todayOverview, boxStatus);
     }
 
     /// <summary>

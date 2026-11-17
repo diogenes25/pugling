@@ -35,22 +35,21 @@ public class DailyBoxRangeTests(DailyBoxRangeFactory factory) : IClassFixture<Da
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var box = scope.ServiceProvider.GetRequiredService<DailyBoxService>();
 
+        // A fresh child without any plan: the streak is the child's across all its plans (B-606), and with none it
+        // is 0 for certain - below the first escalation tier (7), so the multiplier stays 1.0 for every trial and
+        // the raw [Min,Max] draw is what ends up on the claim. A seeded child's history could not promise that.
+        var child = new Child { Name = "DailyBoxRange" };
+        db.Children.Add(child);
+        await db.SaveChangesAsync();
+
         for (var i = 0; i < Trials; i++)
         {
             var day = today.AddDays(-i);
-            // Zero positions -> DutyDone can never come from a real duty; EvaluateAndAwardAsync only reads
-            // the DayOverview passed in for the award gate, so DutyDone is asserted true directly. The
-            // internal streak recomputation then sees zero positions too and settles at streak 0 either way
-            // - well below the first escalation tier (7), so the multiplier stays 1.0 for every trial and
-            // the raw [Min,Max] draw is what ends up on the claim.
-            var plan = new StudyPlan { ChildId = 1, Title = $"DailyBoxRange {i}", StartDate = day, EndDate = day };
-            db.StudyPlans.Add(plan);
-            await db.SaveChangesAsync();
-
+            // The award gate reads only the rollup passed in, so an unlocked rollup is handed over directly.
             var overview = new DayOverview(day, true, 0, 0, 0, [], [], true);
-            await box.EvaluateAndAwardAsync(plan, day, overview);
+            await box.AwardIfUnlockedAsync(child.Id, day, overview, CancellationToken.None);
 
-            var claim = await db.DailyBoxClaims.AsNoTracking().SingleAsync(c => c.ChildId == 1 && c.Day == day);
+            var claim = await db.DailyBoxClaims.AsNoTracking().SingleAsync(c => c.ChildId == child.Id && c.Day == day);
             coins.Add(claim.CoinsAwarded);
             gems.Add(claim.GemsAwarded);
         }

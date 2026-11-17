@@ -9,6 +9,25 @@ namespace Pugling.Contracts.Student;
 public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, DateOnly EndDate, bool Active,
     int CurrentStreak, DayOverview Today, DailyBoxStatus DailyBox);
 
+/// <summary>
+/// The child's day across all of its active, running plans (B-606): the one place that says whether today's duty is
+/// done, whether the day's rewards are unlocked, how long the streak is and whether the daily chest is earned. With a
+/// single active plan it reads the same as that plan's <see cref="OverviewResponse"/>.
+/// </summary>
+/// <param name="ChildId">The child the day belongs to.</param>
+/// <param name="Day">The server's calendar day (UTC).</param>
+/// <param name="DutyDone">Every goal of every active plan is met - and there is at least one.</param>
+/// <param name="GoalsTotal">Goals (daily and weekly) over all active plans.</param>
+/// <param name="GoalsMet">Of those, the goals met.</param>
+/// <param name="Outstanding">The child-facing lines of the open goals, plan by plan.</param>
+/// <param name="RewardsUnlocked">The reward goals of every active plan are met: the daily chest and the bonus training open.</param>
+/// <param name="CurrentStreak">Consecutive complete days up to today over all plans (the child's streak).</param>
+/// <param name="Positions">The positions of all active plans, each carrying its plan and subject.</param>
+/// <param name="DailyBox">Today's reward chest.</param>
+public record TodayResponse(int ChildId, DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet,
+    IReadOnlyList<string> Outstanding, bool RewardsUnlocked, int CurrentStreak, IReadOnlyList<PositionStatus> Positions,
+    DailyBoxStatus DailyBox);
+
 /// <summary>Day-by-day progress over the entire run (completed days, goals reached, points).</summary>
 public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly EndDate, int DaysComplete,
     int TotalDays, int TotalPoints, int CurrentStreak, IReadOnlyList<ProgressDay> Days);

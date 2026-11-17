@@ -28,17 +28,16 @@ export const de = {
       noMissionTitle: "Noch keine Mission",
       noMissionText: "Dein Vater hat noch keinen Lehrplan für dich erstellt. Sobald es losgeht, erscheint hier deine Tagesmission.",
       signOut: "Abmelden",
-      choosePlan: "Plan wählen",
       dailyMission: "Tagesmission",
       doneToday: "✓ Heute geschafft!",
       doneText: "Stark. Jede weitere Runde macht deinen {{skin}} nur stärker.",
       goalsToday: "🎯 Ziele heute",
       goalsWeek: "📅 Ziele diese Woche",
-      noExercises: "Dieser Plan hat noch keine Übungen. Dein Vater fügt sie gleich hinzu.",
       cadenceDaily: "Tagesziel",
       cadenceWeekly: "Wochenziel",
       cadenceNone: "frei · ohne Münzen",
       introduced: "{{count}} von {{total}} schon kennengelernt",
+      noSubject: "Ohne Fach",
     },
     // Der Lernpfad auf der Startseite (B-525).
     pfad: {
