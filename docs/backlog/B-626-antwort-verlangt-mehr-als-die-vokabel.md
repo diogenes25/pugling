@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Antwort zu umfangreich, umliegende Wörter abgefragt]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
@@ -120,6 +120,57 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
 
 Die Zerlegung „turn left/right“ → zwei Felder ist ein Akzeptanzkriterium von B-625, nicht von hier.
 
+## Schätzung
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector`: zwei kleine Eingriffe an geteilten Stellen (Vergleich und
+Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld.
+
+- **`migration: nein`** — die Berichtigung von „towards the station/Mr Bell“ (Entscheidung 5) ist eine
+  Datenänderung über die API (`creator/…/vocabulary`-Speicher), keine Schemaänderung.
+- **`vertragsbruch: nein`** — die Maske bleibt ein String im bisherigen Format (`_` = tippen, alles andere fest,
+  `backend/Pugling.Contracts/Student/PracticeDtos.cs:67`); sie markiert nur mehr Zeichen als fest.
+- **`wo: backend`** — die Sohn-App rendert feste Maskenzeichen schon als eigene, nicht fokussierbare Kästchen
+  (`frontend/src/components/LetterBoxes.tsx:77`–`:81`, Klasse `lbox-fixed`) und reicht sie im Wert mit
+  (`:36`–`:41`). Ob „(to)“ und „sth.“ dort deutlich genug als fest erkennbar sind (Entscheidung 2), klärt der
+  Rollengang; braucht es mehr als CSS, wird das eine eigene Frontend-Story.
+
+### Risiken
+
+1. **Maske und Vergleich müssen dasselbe Beiwerk kennen.** Die Maske setzt Platzhalter und Klammerteile fest
+   (`backend/Pugling.Api/Services/Shared/StageMechanics.cs:96`–`:97`), der Vergleich lässt sie weg oder zu
+   (`backend/Pugling.Api/Services/Shared/AnswerVariants.cs`). Eine gemeinsame Funktion „Beiwerk-Spannen eines
+   Eintrags“ für beide, sonst zeigt die Karte ein festes „sth.“, das der Vergleich verlangt.
+2. **Der Kästchen-Wert enthält das Beiwerk.** Die Sohn-App schickt die festen Zeichen mit
+   („(to) point sth. out (to sb.)“) – das ist der ganze Eintrag und damit schon heute richtig. Kein Pfad darf das
+   feste Beiwerk vor dem Vergleich abschneiden.
+3. **Platzhalter mitten im Wort.** „sth.“ steht auch als Teil echter Wörter? Nein – verglichen wird je Wort
+   (Wortgrenzen), sonst würde aus „something“ das „so“ (B-462-Liste enthält „so“) herausgeschnitten. Die
+   Platzhalter-Liste ist **nicht** die Abkürzungsliste von B-462 (`AnswerVariants.cs:19`–`:22`, mit „so“, „usw“,
+   „etc“) – zwei Listen mit verschiedenem Zweck, deutlich benannt.
+4. **Bildschirmleser.** Feste Kästchen tragen ein `aria-label` je Zeichen (`LetterBoxes.tsx:81`); „s“, „t“, „h“
+   einzeln vorgelesen ist ungeschickt. Im Rollengang mit prüfen, nicht hier bauen.
+5. **Echte Daten.** Die Korrektur trifft die laufende DB der Söhne; vorher an einer Kopie prüfen, welche
+   Einträge mehrwortige Schrägstrich-Seiten haben (AK7).
+
+### Angriffsplan
+
+1. Platzhalter-Liste und „Beiwerk-Spannen“ neben `AnswerVariants`, mit Unit-Tests über die 53 gemessenen
+   Einträge.
+2. Vergleich: Platzhalter dürfen fehlen (Varianten ergänzen).
+3. Maske: Beiwerk-Spannen fest (`StageMechanics.LetterBoxPattern`, Aufrufer
+   `backend/Pugling.Api/Exercises/VocabularyExerciseType.cs:156`, `backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs:204`).
+4. KI-Creator: Regel in `DraftRules`/`DraftPrompts`, abgestimmt mit B-604.
+5. Datenkorrektur über die API nach der Prüfung an der Kopie.
+
+### Testweg
+
+- Unit-Tests (`Pugling.Api.Tests`): Varianten und Maske je Beispiel aus den AKs; „something“ bleibt unberührt.
+- Integrationstests je Pfad (Üben, Test, Bonus, Vorschau-Check) für AK1/AK3/AK5.
+- Prompt-Test des Agenten für AK6.
+- Rollengang: Sohn spielt „(to) point sth. out (to sb.)“ auf der Kästchenstufe (E2E, etwa Erweiterung von
+  `frontend/e2e/artikel-pflicht.spec.ts`) – prüft auch die Erkennbarkeit des festen Texts.
+- Reviewer: `pugling-reviewer`; `frontend-reviewer` nur, falls CSS nötig wird.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Chat mit dem Vater.
@@ -128,3 +179,5 @@ Die Zerlegung „turn left/right“ → zwei Felder ist ein Akzeptanzkriterium v
   Punkte mit Empfehlung.
 - **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; Schrägstrich ohne
   Leerzeichen trennt zwei verlangte Formen (gebaut in B-625), Reihenfolge B-624 → B-626 → B-625.
+- **2026-11-17** — geschätzt: M, backend, keine Migration, kein Vertragsbruch; die Sohn-App zeigt feste
+  Maskenzeichen schon, Erkennbarkeit klärt der Rollengang.
