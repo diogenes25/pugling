@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/inhalt, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/inhalt, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Friedrich Englisch, zweites Fach für Friedrich, Englisch-Plan neben Plan 8]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-615
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Abnahme: einmal Friedrichs Startseite (student/today) ansehen – Pflichten aus Englisch und Französisch"
+wartet_auf: ""
 ---
 
 # B-620 · Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8
@@ -134,3 +134,7 @@ und Wortlisten je Unit, laden, Kind umstellen, Plan anlegen. Kein Code.
   80 %, 20/2; Kür 96–98 = Übungen 93–95. Plan 8 (Französisch) bleibt aktiv – in der DB nachgesehen. Offen für
   `abgenommen`: AK 1 durch einen Blick auf `student/today` von Child 3 (dafür fehlt mir ein Token; der Vater sieht
   es in der Sohn-App oder der Vorschau).
+- **2026-11-17** — `abgenommen`. AK 1 (Absichtserklärung, kein Regressionstest): **Rollengang durch den Vater** –
+  Friedrichs Startseite zeigt Pflichten aus Englisch und Französisch. Belegt: Selbsttest 27/27 Übungen mit 100 %
+  gegen die echte Instanz; in der DB nachgesehen: Plan 12 und Plan 8 aktiv, je eigenes Fach; Buch 4 an Child 3.
+  Kein Code, darum weder Testlauf noch Reviewer (`wo: doku`); Markdown-Lint grün. Commits `82712e6e`, `fe979722`.
