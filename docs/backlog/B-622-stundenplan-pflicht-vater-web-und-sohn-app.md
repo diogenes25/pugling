@@ -2,6 +2,7 @@
 tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/ui, rolle/supervisor, rolle/student]
 aliases: [Stundenplan-Pflicht Frontend, Taktung Stundenplan im Vater-Web, morgen Englisch]
 status: geschaetzt
+wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist"
 prio: P1
 art: Wunsch
 groesse: M
@@ -134,3 +135,4 @@ erst mit B-621 feststeht.
 - **2026-11-17** — angelegt als Frontend-Hälfte von Teil (c) der Teilung von B-615. Die AKs 2 bis 5 hat der
   Assistent aus den Entscheidungen abgeleitet, vom Vater nicht einzeln bestätigt. Geschätzt: M, `frontend`,
   keine Migration, kein Vertragsbruch; die Schätzung entstand ohne die fertige API aus B-621.
+- **2026-11-17** — **Entscheidung des Vaters (Grill-Runde B-644, Entscheidung 6): angehalten.** Die Story wird nicht gebaut, bis [B-644](B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist: der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Stufe und Entscheidungen bleiben bestehen; danach wird sie als Regel des Planers überführt oder verworfen.

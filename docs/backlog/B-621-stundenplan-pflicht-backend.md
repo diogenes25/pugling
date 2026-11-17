@@ -2,6 +2,7 @@
 tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Stundenplan als Pflicht, Taktung Stundenplan, Obergrenze Pflicht-Positionen]
 status: geschaetzt
+wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist"
 prio: P1
 art: Wunsch
 groesse: L
@@ -225,3 +226,4 @@ und ein Feld am Kind. Als Ganzes mit der Oberfläche wäre Teil (c) XL, darum de
   (Entscheidung 8); AK 8 ist damit bestätigt. Weiter nicht bestätigt: die Annahme zur Budget-Verteilung (Risiko 6).
 - **2026-11-17** — **Entscheidung des Vaters:** Eine Stundenplan-Position nimmt an jedem Tag an der Verteilung
   neuer Wörter teil (Entscheidung 9). Damit ist keine Annahme der Schätzung mehr unbestätigt.
+- **2026-11-17** — **Entscheidung des Vaters (Grill-Runde B-644, Entscheidung 6): angehalten.** Die Story wird nicht gebaut, bis [B-644](B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist: der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Stufe und Entscheidungen bleiben bestehen; danach wird sie als Regel des Planers überführt oder verworfen.

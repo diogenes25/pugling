@@ -2,6 +2,7 @@
 tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/ui, rolle/supervisor, rolle/student]
 aliases: [Fächer-Verteilung Frontend, Schieberegler Fächer, Regler im Vater-Web]
 status: gegrillt
+wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist"
 prio: P2
 art: Wunsch
 groesse: ""
@@ -86,3 +87,4 @@ Final. AK 1 und 2 sind B-616 AK 13 und 14; AK 3 und 4 folgen aus den Entscheidun
   Die Entscheidungen stammen aus der Grill-Runde zu B-616. Entscheidung 4 und die AKs 3 und 4 hat der Assistent
   aus den dortigen Entscheidungen 7, 8 und 12 abgeleitet; vom Vater nicht einzeln bestätigt. Die Schätzung steht
   aus, weil sie die Frontend-Messung und die fertige API aus B-618 braucht.
+- **2026-11-17** — **Entscheidung des Vaters (Grill-Runde B-644, Entscheidung 6): angehalten.** Die Story wird nicht gebaut, bis [B-644](B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist: der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Stufe und Entscheidungen bleiben bestehen; danach wird sie als Regel des Planers überführt oder verworfen.

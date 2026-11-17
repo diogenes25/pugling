@@ -160,6 +160,8 @@ mein Vater sieht die Meldung, erledigt sie, und ich sehe danach einen Hinweis, d
 
 ## Sprint 89 — Ziel & Umfang
 
+> **Angehalten am 2026-11-17 (Entscheidung des Vaters):** nicht starten, bis [B-644](backlog/B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist – der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Die Stories tragen `wartet_auf`.
+
 **Sprint-Ziel (Sicht Vater):** „Ich trage den Stundenplan ein, und an Schultagen des Fachs entsteht die Pflicht von
 selbst – nie mehr als die Obergrenze je Tag; mein Sohn sieht in der App, warum heute diese Pflicht gilt."
 
@@ -242,6 +244,8 @@ Mathe richtig."
 `Lektion.tsx`). Reviewer: beide.
 
 ## Sprint 95 — Ziel & Umfang (vorläufig)
+
+> **Angehalten am 2026-11-17 (Entscheidung des Vaters):** nicht starten, bis [B-644](backlog/B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist – der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Die Stories tragen `wartet_auf`.
 
 **Sprint-Ziel (Sicht Vater):** „Ich verteile das Tagesbudget neuer Wörter in Prozent auf die Fächer meines Kindes."
 

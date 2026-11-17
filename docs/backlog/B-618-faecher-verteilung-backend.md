@@ -2,6 +2,7 @@
 tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/auswertung, rolle/supervisor, rolle/student]
 aliases: [Fächer-Verteilung Backend, Tagesbudget neuer Wörter, Fächerliste des Kindes]
 status: geschaetzt
+wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist"
 prio: P2
 art: Wunsch
 groesse: L
@@ -287,3 +288,4 @@ kennen muss.
 - **2026-11-17** — **Entscheidung des Vaters** (B-621 Entscheidung 9): Eine Position mit Taktung „Stundenplan“
   nimmt an jedem Tag an der Verteilung teil, auch an pflichtfreien Tagen. Risiko 6 ist damit beantwortet: Die
   Verteilungsrechnung behandelt die Taktung nicht gesondert.
+- **2026-11-17** — **Entscheidung des Vaters (Grill-Runde B-644, Entscheidung 6): angehalten.** Die Story wird nicht gebaut, bis [B-644](B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist: der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Stufe und Entscheidungen bleiben bestehen; danach wird sie als Regel des Planers überführt oder verworfen.
