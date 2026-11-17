@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (55)
+### Offen (56)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
+| [B-646](B-646-vokabel-schema-nachfuellen.md) | Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, vertauschte Sprachen | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
 <summary>Abgenommen (518)</summary>
