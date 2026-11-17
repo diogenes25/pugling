@@ -28,3 +28,4 @@ Punkt 10) und wann ein Vorschlag entsteht. Voraussetzung: B-616 ist gebaut.
 
 - **2026-11-17** — angelegt aus der Grill-Runde zu B-616 (Entscheidung 9). Prio P3 vom Assistenten gesetzt,
   weil die Story erst nach B-616 baubar ist; vom Vater nicht bestätigt.
+- **2026-11-17** — B-616 ist beim Schätzen geteilt worden. Voraussetzung dieser Story ist jetzt [B-618](B-618-faecher-verteilung-backend.md) (Backend); die Oberfläche für einen Vorschlag setzt auf [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) auf.

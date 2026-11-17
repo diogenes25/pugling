@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/auswertung, rolle/supervisor, rolle/student]
+tags: [typ/story, status/verworfen, bereich/lehrplan, bereich/auswertung, rolle/supervisor, rolle/student]
 aliases: [Fächer-Gewichtung, Prozent-Aufteilung der Fächer, Schieberegler Fächer, Stärke aus den Daten]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Vater im Chat 2026-11-17, nach dem Grillen von B-615"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt – am Code gemessen XL (zwei Tabellen mit Migration, Verteilung an fünf Dosis-Stellen, 0-%-Pflichtregel, Endpunkte, Regler im Vater-Web, Anzeige in der Sohn-App); Schnitt vom Vater am 2026-11-17 gewählt: Backend zuerst, dann Frontend. Entscheidungen und AKs leben in den Teil-Stories weiter"
+ersetzt_durch: [B-618, B-619]
 ---
 
 # B-616 · Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand
@@ -240,3 +240,4 @@ Final. Je Fall die Änderung, die seinen Test rot macht.
   Die Prozente ersetzen die drei Stufen aus B-615 (dort Entscheidungen 4 und 10 abgelöst, Teil (b) geht hier
   auf). Der Vorschlag aus dem Lernstand ist nach [B-617](B-617-verteilung-aus-dem-lernstand-vorschlagen.md)
   ausgelagert.
+- **2026-11-17** — beim Schätzen als XL gemessen und **geteilt** (Schnitt vom Vater gewählt): [B-618](B-618-faecher-verteilung-backend.md) (Backend, AK 1 bis 12) und [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) (Vater-Web und Sohn-App, AK 13 und 14). Die zwölf Entscheidungen gelten in beiden unverändert; diese Datei bleibt als Beleg der Grill-Runde stehen.

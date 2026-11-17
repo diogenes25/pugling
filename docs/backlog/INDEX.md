@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (36)
+### Offen (37)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `idee` | P2 | — | — | — |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Ein rückdatierter oder wieder eingeschalteter Plan bricht die Serie nachträglich | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
+| [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -976,7 +977,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (41)</summary>
+<summary>Verworfen (42)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1015,6 +1016,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-581](B-581-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-582, B-583, B-584 führt der Index einzeln, der Plan liegt in docs/rockettutor-vergleich-plan.md → [B-582, B-583, B-584] |
 | [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): setzt die ungebaute Probeklausur B-249 voraus; wird mit B-249 neu angelegt, falls diese gebaut ist |
 | [B-585](B-585-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-586, B-587 führt der Index einzeln, der Plan liegt in docs/sofatutor-vergleich-plan.md → [B-586, B-587] |
+| [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | geteilt – am Code gemessen XL (zwei Tabellen mit Migration, Verteilung an fünf Dosis-Stellen, 0-%-Pflichtregel, Endpunkte, Regler im Vater-Web, Anzeige in der Sohn-App); Schnitt vom Vater am 2026-11-17 gewählt: Backend zuerst, dann Frontend. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-618, B-619] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |

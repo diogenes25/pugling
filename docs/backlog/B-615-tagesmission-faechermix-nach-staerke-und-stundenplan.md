@@ -287,3 +287,4 @@ desselben Tages) im Nachgrillen am selben Tag.
 - **2026-11-17** — [B-616](B-616-faecher-gewichtung-in-prozent.md) gegrillt: Die Prozent-Gewichtung ersetzt die
   drei Stufen. Entscheidungen 4 und 10 abgelöst, Teil (b) samt AKs 2, 3, 4, 9, 10 und 11 geht in B-616 auf.
   Diese Story trägt damit noch Teil (a) (Inhalt) und Teil (c) (Stundenplan-Pflicht).
+- **2026-11-17** — B-616 ist beim Schätzen geteilt worden: [B-618](B-618-faecher-verteilung-backend.md) (Backend) und [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) (Vater-Web und Sohn-App). Wo diese Story auf B-616 verweist, tragen jetzt diese beiden die Arbeit; die Entscheidungen stehen unverändert in B-616 und in B-618.
