@@ -18,9 +18,28 @@ type Schritt = "aufdecken" | "gewusst" | "abschreiben" | "erinnern";
 /**
  * Darf „OK“ beim Abschreiben gedrückt werden? Nach den Vergleichsregeln des Servers (Entscheidung 5): „Walk“ und
  * „don’t“ gelten für „walk“ und „don't“ – die Regel liegt in `normalizeAnswer`, die die gemeinsame Fallliste hält.
+ *
+ * Klammerteile sind wie beim Server (`AnswerVariants.OptionalParts`, B-462) einzeln weglassbar: „folk“ genügt für
+ * „folk (pl) (infml)“ – das Kürzel ist Wörterbuch-Angabe, kein Teil des Worts, und der Server wertet „folk“ in
+ * Schritt 4 ohnehin als richtig.
  */
 export function abgeschrieben(eingabe: string, wort: string): boolean {
-  return eingabe.trim() !== "" && normalizeAnswer(eingabe) === normalizeAnswer(wort);
+  if (eingabe.trim() === "") return false;
+  const gegeben = normalizeAnswer(eingabe);
+  return klammerFormen(wort).some((form) => normalizeAnswer(form) === gegeben);
+}
+
+// Der ganze Eintrag, dazu jede Klammer weggelassen oder ihr Inhalt behalten; ab 16 Formen nur „alle behalten“ und
+// „alle weg“ – wie MaxForms am Server.
+function klammerFormen(wort: string): string[] {
+  const klammer = /\(([^()]*)\)/g;
+  const anzahl = wort.match(klammer)?.length ?? 0;
+  if (anzahl === 0) return [wort];
+  if (2 ** anzahl > 16) return [wort, wort.replace(klammer, "$1"), wort.replace(klammer, " ")];
+  return [wort, ...Array.from({ length: 2 ** anzahl }, (_, maske) => {
+    let k = 0;
+    return wort.replace(klammer, (_t, inhalt: string) => ((maske >> k++) & 1 ? inhalt : " "));
+  })];
 }
 
 /**

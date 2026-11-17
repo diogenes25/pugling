@@ -79,6 +79,14 @@ describe("Lernkarte", () => {
     expect(abgeschrieben("la gare.", "la gare")).toBe(true);
     expect(abgeschrieben("talk", "walk")).toBe(false);
     expect(abgeschrieben("  ", "walk")).toBe(false);
+    // Klammerteile einzeln weglassbar wie am Server (B-462). Rot, wenn die Klammern wieder exakt verlangt werden.
+    expect(abgeschrieben("folk", "folk (pl) (infml)")).toBe(true);
+    expect(abgeschrieben("folk pl", "folk (pl) (infml)")).toBe(true);
+    expect(abgeschrieben("folk (pl) (infml)", "folk (pl) (infml)")).toBe(true);
+    expect(abgeschrieben("reply to", "(to) reply (to)")).toBe(true);
+    // Der Klammertext allein und ein Tippfehler im Kürzel bleiben falsch. Rot, wenn Klammern beliebig abgeschnitten werden.
+    expect(abgeschrieben("pl", "folk (pl) (infml)")).toBe(false);
+    expect(abgeschrieben("folk (pl) (inform)", "folk (pl) (infml)")).toBe(false);
   });
 
   // Rot, wenn die Lernkarte als Selbsteinschätzung erschiene (sie bringt `reveal` mit) – dann gäbe es „Gewusst?“
