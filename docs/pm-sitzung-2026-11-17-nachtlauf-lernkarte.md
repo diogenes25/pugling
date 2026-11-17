@@ -217,7 +217,7 @@ sauber, Vitest **1172/1172**, E2E volle Suite **169 passed, 1 failed** (`vater-v
   „kommt noch einmal“, ganze Lernkarte am Rundenende, frei erinnert, Ring „2 von 2 eingeprägt“. Offen für ein Gerät: wie
   sich die Leiter in Schritt 4 am Handy anfühlt.
 - **Vater:** Regressionszeuge – Pflicht bleibt der Test (AK 7, Bestandstests grün), Bestandsringe der Söhne unverändert
-  (Migrationsprobe). Offene Entscheidung: Testantwort frei getippt = eingeprägt.
+  (Migrationsprobe). Testantwort frei getippt = eingeprägt: vom Vater bestätigt, B-643 abgenommen (`e10cdd34`).
 - **Creator:** Regressionszeuge – kein Pfad des Creators im Diff; Suite grün.
 
 ## Retrospektive 92

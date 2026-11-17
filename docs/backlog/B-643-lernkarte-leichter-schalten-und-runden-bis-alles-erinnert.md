@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte leichter, Mach's mir leichter in der Lernkarte]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -270,7 +270,7 @@ B-635 wäre es mehr als L und müsste geteilt werden.
   `PositionStatus.ImprintedCount`; Ring und Beschriftung „N von M eingeprägt“; „Später nochmal“.
   - **Abweichung, hergeleitet aus Entscheidung 1:** ein im Test frei getipptes, richtiges Wort ist „einmal frei aus dem
     Gedächtnis richtig geschrieben“ und gilt als eingeprägt; eine richtige Auswahl im Test nicht. Ohne diese Regel käme
-    jedes im Test kalt getroffene Wort für immer als Lernkarte. Bitte bestätigen oder verwerfen.
+    jedes im Test kalt getroffene Wort für immer als Lernkarte. **Vom Vater bestätigt (2026-11-17).**
   - **Verworfen (Review-Fund 3):** den Tagestest um offene Lernkarten zu kürzen brach B-04 – wer nie übt, muss im Test
     jeden Tag mehr Wörter treffen (`VierWochenTests.Dosis_WerNieUebt…` fiel: 5/5/5 statt 5/10/15). Kalt getestete Wörter
     kommen am Folgetag als Lernkarte und nehmen dort ihren Dosis-Platz; das Tempo bleibt die Dosis.
@@ -289,3 +289,4 @@ B-635 wäre es mehr als L und müsste geteilt werden.
     VierWochen-Tests; `KartenstufeTests.Test_Fuehrt_Ungesehene…` erwartet jetzt die Lernkarte nach einem kalten Test.
   - E2E `lernkarte-leichter.spec.ts` (Rollengang Sohn) **1 passed**; volle Suite 169 passed, 1 failed
     (`vater-von-null.spec.ts`, einzeln **1 passed** – Last durch einen parallelen Testlauf).
+- **2026-11-17** — abgenommen (`e10cdd34`). Der Vater bestätigte die hergeleitete Regel „im Test frei getippt richtig = eingeprägt“. Gerätecheck am Handy (Gefühl der Leiter in Schritt 4) steht aus; bei den Söhnen wirksam erst nach einem neuen Publish des Heimnetz-Servers.
