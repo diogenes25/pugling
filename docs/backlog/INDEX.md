@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (52)
+### Offen (57)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -32,6 +32,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `idee` | P2 | — | — | — |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `idee` | P2 | — | — | — |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Ein rückdatierter oder wieder eingeschalteter Plan bricht die Serie nachträglich | Defekt | `idee` | P2 | — | — | — |
+| [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
@@ -50,6 +51,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `idee` | P2 | — | — | — |
 | [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `idee` | P2 | — | — | — |
 | [B-627](B-627-berechtigte-meldung-bucht-nach.md) | Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach | Wunsch | `idee` | P2 | — | — | — |
+| [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `idee` | P2 | — | — | — |
+| [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
@@ -67,6 +70,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-600](B-600-eingabearten-fuer-regelaufgaben-und-uebersetzung.md) | Eingabearten für Regelaufgaben und Übersetzung | Wunsch | `idee` | P3 | — | — | — |
 | [B-601](B-601-ki-creator-schreibt-ablenker-je-luecke.md) | Der KI-Creator schreibt Ablenker je Lücke | Wunsch | `idee` | P3 | — | — | — |
 | [B-617](B-617-verteilung-aus-dem-lernstand-vorschlagen.md) | Pugling schlägt die Verteilung der Fächer aus dem Lernstand vor | Wunsch | `idee` | P3 | — | — | — |
+| [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
+| [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
