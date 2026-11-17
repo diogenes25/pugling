@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, rolle/student, lerntechnik/vokabeln]
 aliases: [Buchstabensalat bei mehreren Wörtern, Scramble je Wort]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -89,3 +89,4 @@ bei den Buchstabenkästen. Die Grenze von 12 Zeichen gilt je Wort.
     `e2e/buchstaben-ordnen.spec.ts` (Kästchen jetzt mit „T-shirt“, dazu „as soon as“ per Tastatur je Wort).
 - **2026-11-17** — Review (Nachtlauf): Fünfer-Zähler von Sprint 85 überschritten (8 Funde 🟡/🔴), Lauf beendet; Funde offen, siehe `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md` → „Review Sprint 85 und Halt des Laufs“. Bleibt `in-arbeit`, nicht committet.
 - **2026-11-17** — Review-Funde behoben (Fortsetzung nach „Ja, weitermachen“ des Vaters): Fokus und Ruhe am Leichter-Knopf, Fehleransage, Fokus nach dem Schalten, Nacharbeit fällt beim Typwechsel, toter Tastatur-Zweig, Wort-Gruppen für Screenreader, offene Nacharbeits-Runde wird fortgesetzt und `Review` nimmt nur die Karte am Cursor, `EasierStage` nie zurück auf eine gezeigte Form. Belege und Mutanten-Tabelle im Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf-lernkarte.md`. Endstand: `dotnet test` 1820/1820, Vitest 1168/1168 am gestagten Stand, E2E `nacharbeit.spec.ts` + `buchstaben-ordnen.spec.ts` **2 passed**.
+- **2026-11-17** — abgenommen (`29df59d4`). Rollengang: **Sohn** maschinell per E2E `nacharbeit.spec.ts` gegen frisch gestarteten Server (Ausweichports 5211/5181; leichter → Kästchen, Fokus im Feld, „Noch nicht erledigt“, Zähler, nächste Runde 1/1) und `buchstaben-ordnen.spec.ts` (Salat je Wort); **Vater** über `RemediationPositionTests` (Schalter per PATCH) und Vitest `PlanPositionsStufe` (Schalter nur beim Lückentext, fällt beim Typwechsel); **Creator** über Vitest `exerciseConfig` (Vorgabe hin und zurück) und `ClozePlayTests`. Ein Gerätecheck am Handy durch einen Menschen steht aus (Gefühl der Leiter, Lesbarkeit langer Vorgaben).

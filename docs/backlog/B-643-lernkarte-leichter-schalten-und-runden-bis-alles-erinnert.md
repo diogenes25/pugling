@@ -8,7 +8,6 @@ groesse: L
 wo: beides
 migration: ja
 vertragsbruch: nein
-wartet_auf: B-635
 quelle: "Chat mit dem Vater, 2026-11-17 (Kombi-Lernkarte B-598, Leichter-Knopf aus B-635)"
 grund: ""
 ersetzt_durch: []
