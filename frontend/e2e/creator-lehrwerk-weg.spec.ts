@@ -81,6 +81,7 @@ test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({
   await page.locator("#plan-title").fill(`Plan ${RUN}`);
   const kindSelect = page.getByRole("combobox", { name: "Kind" });
   await kindSelect.selectOption(childId);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
 

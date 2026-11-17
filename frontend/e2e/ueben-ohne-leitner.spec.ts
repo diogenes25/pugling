@@ -30,7 +30,7 @@ test("Ohne Leitner-Kasten kann das Kind trotzdem erst üben, dann testen", async
     title: `Sans boîte ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "fr", targetLang: "de", items: [{ front: `le pont ${RUN}`, back: "die Brücke" }] },
   });
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers, { childId, title: `Ohne Kasten ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers, { childId, subjectId, title: `Ohne Kasten ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false });
 

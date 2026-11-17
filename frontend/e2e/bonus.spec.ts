@@ -8,7 +8,7 @@ import { sohnLogin } from "./helpers";
  * Pflicht, eine getippte Rechen-Übung, die Münzen bringt und danach heute noch die Hälfte wert ist (B-538), und eine
  * Vokabel-Runde zum Aufwärmen ohne Münzen.
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -44,7 +44,7 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
     config: { problems: [{ prompt: "2 + 3", answer: 5, tolerance: 0 }, { prompt: "4 × 4", answer: 16, tolerance: 0 }] },
   });
 
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: `Bonus-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Bonus-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId: exVokabeln, stage: 4, cadence: "Daily", useLeitner: false });
 

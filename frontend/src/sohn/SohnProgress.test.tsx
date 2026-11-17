@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
@@ -87,6 +87,31 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
     expect(overview).toHaveBeenCalledWith(STALE);
     expect(overview).not.toHaveBeenCalledWith(5);
     expect(setPlanId).not.toHaveBeenCalled();
+  });
+});
+
+// B-539: je Fach ein aktiver Plan – mit mehreren Plänen wählt das Kind auf den Erfolgen selbst, wessen Fortschritt es
+// sieht. Rot, wenn die Auswahl fehlt (kein Knopf je Plan) oder der Knopf die Wahl nicht merkt.
+describe("Erfolge mit mehreren Plänen", () => {
+  it("bietet je Plan einen Knopf und merkt die Wahl", async () => {
+    plans.mockResolvedValue([plan(5, true), plan(6, true)]);
+    renderProgress();
+
+    const group = await screen.findByRole("group", { name: "Plan wählen" });
+    const buttons = Array.from(group.querySelectorAll("button"));
+    expect(buttons.map((b) => b.textContent)).toEqual(["Plan 5", "Plan 6"]);
+    expect(buttons[0].getAttribute("aria-pressed")).toBe("true");
+    setPlanId.mockReset();
+    fireEvent.click(buttons[1]);
+    expect(setPlanId).toHaveBeenCalledWith(6);
+  });
+
+  // Rot, wenn die Auswahl auch bei einem einzigen Plan erscheint – dort gibt es nichts zu wählen.
+  it("zeigt bei einem Plan keine Auswahl", async () => {
+    plans.mockResolvedValue([plan(5, true)]);
+    renderProgress();
+    await screen.findByText("Missionen-Panel");
+    expect(screen.queryByRole("group", { name: "Plan wählen" })).toBeNull();
   });
 });
 

@@ -278,9 +278,13 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         {
             var c = await TestApi.AdultAsync(f);
             var childId = await NeuesKindAsync(c);
-            var id = await TestApi.CreateEmptyPlanAsync(c, childId);
+            // With a unit, so the switch has something to clear (B-539); its series supplies the subject.
+            var subjectId = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/creator/subjects", new { name = Eindeutig("Fach") }));
+            var (_, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(c, subjectId);
+            var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/study-plans",
+                new { childId, title = "Plan", seriesUnitId, durationDays = 5 }));
             return new Ziel(c, $"/api/v1/supervisor/study-plans/{id}");
-        }, []),
+        }, [new("clearSeriesUnit", "seriesUnitId")]),
 
         new(typeof(UpdatePositionDto), "stage", 3, async f =>
         {

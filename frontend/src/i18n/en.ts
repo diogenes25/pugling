@@ -207,6 +207,7 @@ export const en = {
     },
     progress: {
       noPlan: "First choose a mission on the path.",
+      choosePlan: "Choose plan",
       toHome: "Back to the path",
       loading: "Loading progress…",
       title: "Trophies",

@@ -41,10 +41,12 @@ Der `PlanPlanner` ist sein Zwilling für **Lehrpläne**: gleicher Ablauf, andere
 Test (B-463). Zwei Regeln tragen ihn: `--child` ist Pflicht und
 wird **vor** dem ersten Modellaufruf geprüft, und der Plan entsteht **inaktiv** – ungeprüfter KI-Inhalt
 darf nicht über Nacht zur Pflicht werden, und ein aktiv angelegter Plan würde den laufenden Plan des
-Kindes abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`).
+Kindes im selben Fach abschalten. Dafür trägt `CreatePlanDto` seit B-19 ein `Active`-Feld (Vorgabe `true`); Fach
+und Unit des Plans sind die der erzeugten Übungen (B-539: Fach Pflicht, ein aktiver Plan je Fach).
 
 `assign` (B-20) ist das einzige Verb **ohne** Sprachmodell: der `PlanAssigner` übernimmt vorhandene Übungen (Ids oder
-ein kind-skopierter Tag) als Positionen in den **spielbaren** Plan des Kindes (`IsPlayable`, nie bloß `Active`). Erst
+ein kind-skopierter Tag) als Positionen in den **spielbaren** Plan des Kindes (`IsPlayable`, nie bloß `Active`); sind
+es mehrere (ein aktiver Plan je Fach), ist `--plan-id` Pflicht – der Agent rät nie nach Fach (B-610). Erst
 alles lesen, dann schreiben; Dubletten prüft der Agent, weil der Server sie annimmt; der erste abgelehnte Schreibaufruf
 bricht ab (Exit 1), nichts Neues ist Exit 3 (2 bleibt „falsch aufgerufen“), ein Tag über dem Lesefenster bricht vor
 dem Schreiben ab.

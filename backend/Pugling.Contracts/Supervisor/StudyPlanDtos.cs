@@ -4,14 +4,29 @@ namespace Pugling.Contracts.Supervisor;
 // stage, Leitner) is carried by the individual position.
 
 /// <summary>A study plan container of a child.</summary>
+/// <param name="Id">Id of the plan.</param>
+/// <param name="ChildId">The child the plan belongs to.</param>
+/// <param name="Title">Name of the plan.</param>
+/// <param name="SubjectId">
+/// Subject the plan covers - the group of the activation rule: a child has at most one active plan per subject.
+/// <c>null</c> only for a legacy plan or one whose subject was deleted; the next edit must give it one.
+/// </param>
+/// <param name="StartDate">First day of the run.</param>
+/// <param name="EndDate">Last day of the run.</param>
+/// <param name="Active">Whether the plan is switched on.</param>
+/// <param name="PositionCount">Number of positions in the plan.</param>
+/// <param name="Description">Free note for the supervisor.</param>
+/// <param name="SeriesUnitId">Optional unit of a textbook series the plan works through; <c>null</c> = none.</param>
+/// <param name="SeriesUnitLabel">Label of that unit, so a list is readable without a second round trip.</param>
 public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
-    DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description)
+    DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description,
+    int? SeriesUnitId = null, string? SeriesUnitLabel = null)
 {
     /// <summary>
-    /// Server-authoritative affordance: whether this is the one currently playable plan of the child
-    /// (active <b>and</b> within its run today). For the student, only this one is ever visible; for the
-    /// supervisor, among several plans it shows the one the student can currently play – without
-    /// reimplementing the rule on the client.
+    /// Server-authoritative affordance: whether this plan is currently playable (active <b>and</b> within its run
+    /// today). A child has at most one active plan per subject, so several plans of different subjects can be
+    /// playable at once; the student sees exactly the playable ones. The supervisor reads the rule from here instead
+    /// of reimplementing it on the client.
     /// </summary>
     public bool IsPlayable { get; init; }
 }
@@ -19,23 +34,43 @@ public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
 /// <summary>Input for creating an empty study plan container.</summary>
 /// <param name="ChildId">The child the plan belongs to; must be one of the caller's own.</param>
 /// <param name="Title">Name of the plan.</param>
-/// <param name="SubjectId">Subject the plan covers; <c>null</c> = across subjects.</param>
+/// <param name="SubjectId">
+/// Subject the plan covers. <b>Mandatory</b> unless <paramref name="SeriesUnitId"/> is given, whose series then
+/// supplies it; a subject that differs from the unit's is rejected (<c>validation_error</c>).
+/// </param>
 /// <param name="StartDate">First day of the run; <c>null</c> = today.</param>
 /// <param name="DurationDays">Length of the run in days; <c>&lt;= 0</c> = 10.</param>
 /// <param name="Description">Free note for the supervisor.</param>
 /// <param name="Active">
-/// Whether the plan starts out active. <c>true</c> (the default) keeps the established behaviour: the new
-/// plan becomes the child's only playable one and every sibling is switched off. <c>false</c> is for a plan
-/// that must be <b>reviewed before it becomes an obligation</b> - a machine-generated one above all: without
-/// it, an agent run would silently replace the plan the child is currently playing, and unchecked content
-/// would start costing penalty coins the same night.
+/// Whether the plan starts out active. <c>true</c> (the default): the new plan becomes the child's playable plan of
+/// its subject, and an active plan of the <b>same</b> subject is switched off - plans of other subjects stay on.
+/// <c>false</c> is for a plan that must be <b>reviewed before it becomes an obligation</b> - a machine-generated one
+/// above all: without it, an agent run would silently replace the plan the child is currently playing, and
+/// unchecked content would start costing penalty coins the same night.
 /// </param>
+/// <param name="SeriesUnitId">Optional unit of a textbook series the plan works through.</param>
 public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays,
-    string? Description = null, bool Active = true);
+    string? Description = null, bool Active = true, int? SeriesUnitId = null);
 
-/// <summary>Partial change to the container. <see cref="ChildId"/> reassigns the plan to another of the caller's own children.</summary>
+/// <summary>
+/// Partial change to the container (PATCH: <c>null</c> = unchanged). <see cref="ChildId"/> reassigns the plan to
+/// another of the caller's own children. A plan without a subject must be given one with any change - except a
+/// change that only switches it off (<c>active: false</c>), which never fails on a mandatory field.
+/// </summary>
+/// <param name="Title">New name.</param>
+/// <param name="SubjectId">New subject; must match the unit's series if the plan has (or gets) a unit.</param>
+/// <param name="StartDate">New first day of the run.</param>
+/// <param name="EndDate">New last day of the run.</param>
+/// <param name="Active">Switches the plan on or off; switching on turns off the active plan of the same subject.</param>
+/// <param name="Description">New free note; empty removes it.</param>
+/// <param name="ChildId">Moves the plan to another of the caller's own children.</param>
+/// <param name="SeriesUnitId">New unit; its series fixes the plan's subject.</param>
+/// <param name="ClearSeriesUnit">
+/// Removes the plan's unit (the subject stays). Needed because <c>null</c> means "not specified". Wins over
+/// <c>seriesUnitId</c> if both arrive together.
+/// </param>
 public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active,
-    string? Description = null, int? ChildId = null);
+    string? Description = null, int? ChildId = null, int? SeriesUnitId = null, bool ClearSeriesUnit = false);
 
 /// <summary>A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings.</summary>
 /// <param name="Id">Id of the position.</param>

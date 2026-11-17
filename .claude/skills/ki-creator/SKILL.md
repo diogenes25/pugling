@@ -59,7 +59,8 @@ Originals. **Vorsicht:** Ein kleines lokales Vision-Modell liest dicht bedruckte
 Abgleich am Foto; ein ganzes Lehrwerk bereitet der Skill `lehrwerk-aufbereiten` auf (B-459).
 
 `assign` (B-20) übernimmt vorhandene Übungen (`--exercise-id`, wiederholbar, oder `--tag <name>` des Kindes) als
-Positionen in den **spielbaren** Plan des Kindes (`--plan-id` für einen anderen eigenen Plan) – ohne Sprachmodell,
+Positionen in den **spielbaren** Plan des Kindes – hat es mehrere (ein aktiver Plan je Fach), ist `--plan-id`
+Pflicht, sonst Exit 2 mit der Liste der spielbaren Pläne; `--plan-id` nimmt auch einen anderen eigenen Plan – ohne Sprachmodell,
 also auch ohne Ollama. Schon vorhandene Positionen werden übersprungen (nichts neu ⇒ Exit 3, nicht 2 – der Aufruf war ja richtig), Ziel und Punkte sind
 Server-Vorgaben, übersteuerbar mit `--points`, `--goal-threshold`, `--cadence Daily|Weekly`. Typischer Weg: `exam`
 oder `create` erzeugt, `assign --tag`/`--exercise-id` hängt es in den laufenden Plan.

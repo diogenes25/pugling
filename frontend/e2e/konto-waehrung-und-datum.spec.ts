@@ -57,8 +57,10 @@ test("Plan-Zeitraum und Tagesverlauf stehen deutsch – auf der Plan-Seite und i
   const childId = await createChild(page, `Datumskind ${RUN}`, "4827");
   const titel = `Datumsplan ${RUN}`;
   // Der Start liegt in der Vergangenheit, damit der Tagesverlauf Tage hat.
+  // Ein Plan braucht ein Fach (B-539); ein eigenes, damit kein anderer Plan desselben Fachs abgeschaltet wird.
+  const subjectId = await api(page, "/api/v1/creator/subjects", { name: `Datumsfach ${RUN}` }).then((s) => s.id as number);
   const plan = await api(page, "/api/v1/supervisor/study-plans", {
-    childId: Number(childId), title: titel, subjectId: null, durationDays: 14, startDate: "2026-11-08",
+    childId: Number(childId), title: titel, subjectId, durationDays: 14, startDate: "2026-11-08",
   });
 
   await page.goto(`/vater/plan/${plan.id}`);

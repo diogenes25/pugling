@@ -30737,7 +30737,7 @@
             "type": "boolean"
           }
         },
-        "description": "One period of a child\u0027s timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the\ndaily overview - per day, the goals of every cadence of the plans that are active now and run that day (a weekly goal\ncounts on each of its days). Start/End are the first and last day of the period\nthat lie in the range. DutyDone means: on every day of the period that had a goal, the duty was done\n- and there was at least one such day."
+        "description": "One period of a child\u0027s timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the\ndaily overview - per day, the goals of every cadence of the plans that run that day (a weekly goal counts on each of\nits days). A plan that is switched off now only counts in the child\u0027s favour (B-558): its met goals and points always,\nits goals total only on days it was used (a goal met or points earned), its duty only when met - a never used draft\nnever shows as missed. Start/End are the first and last day of the period\nthat lie in the range. DutyDone means: on every day of the period that had a goal, the duty was done\n- and there was at least one such day."
       },
       "ChildPointsResponse": {
         "required": [
@@ -31907,7 +31907,7 @@
               "integer",
               "string"
             ],
-            "description": "Subject the plan covers; \u0060null\u0060 = across subjects.",
+            "description": "Subject the plan covers. **Mandatory** unless SeriesUnitId is given, whose series then\nsupplies it; a subject that differs from the unit\u0027s is rejected (\u0060validation_error\u0060).",
             "format": "int32"
           },
           "startDate": {
@@ -31936,8 +31936,18 @@
           },
           "active": {
             "type": "boolean",
-            "description": "Whether the plan starts out active. \u0060true\u0060 (the default) keeps the established behaviour: the new\nplan becomes the child\u0027s only playable one and every sibling is switched off. \u0060false\u0060 is for a plan\nthat must be **reviewed before it becomes an obligation** - a machine-generated one above all: without\nit, an agent run would silently replace the plan the child is currently playing, and unchecked content\nwould start costing penalty coins the same night.",
+            "description": "Whether the plan starts out active. \u0060true\u0060 (the default): the new plan becomes the child\u0027s playable plan of\nits subject, and an active plan of the **same** subject is switched off - plans of other subjects stay on.\n\u0060false\u0060 is for a plan that must be **reviewed before it becomes an obligation** - a machine-generated one\nabove all: without it, an agent run would silently replace the plan the child is currently playing, and\nunchecked content would start costing penalty coins the same night.",
             "default": true
+          },
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Optional unit of a textbook series the plan works through.",
+            "format": "int32"
           }
         },
         "description": "Input for creating an empty study plan container."
@@ -41768,6 +41778,7 @@
               "integer",
               "string"
             ],
+            "description": "Id of the plan.",
             "format": "int32"
           },
           "childId": {
@@ -41776,10 +41787,12 @@
               "integer",
               "string"
             ],
+            "description": "The child the plan belongs to.",
             "format": "int32"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the plan."
           },
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -41788,18 +41801,22 @@
               "integer",
               "string"
             ],
+            "description": "Subject the plan covers - the group of the activation rule: a child has at most one active plan per subject.\n\u0060null\u0060 only for a legacy plan or one whose subject was deleted; the next edit must give it one.",
             "format": "int32"
           },
           "startDate": {
             "type": "string",
+            "description": "First day of the run.",
             "format": "date"
           },
           "endDate": {
             "type": "string",
+            "description": "Last day of the run.",
             "format": "date"
           },
           "active": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the plan is switched on."
           },
           "positionCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -41807,17 +41824,36 @@
               "integer",
               "string"
             ],
+            "description": "Number of positions in the plan.",
             "format": "int32"
           },
           "description": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Free note for the supervisor."
+          },
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Optional unit of a textbook series the plan works through; \u0060null\u0060 = none.",
+            "format": "int32"
+          },
+          "seriesUnitLabel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Label of that unit, so a list is readable without a second round trip."
           },
           "isPlayable": {
             "type": "boolean",
-            "description": "Server-authoritative affordance: whether this is the one currently playable plan of the child\n(active **and** within its run today). For the student, only this one is ever visible; for the\nsupervisor, among several plans it shows the one the student can currently play \u2013 without\nreimplementing the rule on the client."
+            "description": "Server-authoritative affordance: whether this plan is currently playable (active **and** within its run\ntoday). A child has at most one active plan per subject, so several plans of different subjects can be\nplayable at once; the student sees exactly the playable ones. The supervisor reads the rule from here instead\nof reimplementing it on the client."
           }
         },
         "description": "A study plan container of a child."
@@ -46781,7 +46817,8 @@
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "New name."
           },
           "subjectId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -46790,6 +46827,7 @@
               "integer",
               "string"
             ],
+            "description": "New subject; must match the unit\u0027s series if the plan has (or gets) a unit.",
             "format": "int32"
           },
           "startDate": {
@@ -46797,6 +46835,7 @@
               "null",
               "string"
             ],
+            "description": "New first day of the run.",
             "format": "date"
           },
           "endDate": {
@@ -46804,19 +46843,22 @@
               "null",
               "string"
             ],
+            "description": "New last day of the run.",
             "format": "date"
           },
           "active": {
             "type": [
               "null",
               "boolean"
-            ]
+            ],
+            "description": "Switches the plan on or off; switching on turns off the active plan of the same subject."
           },
           "description": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "New free note; empty removes it."
           },
           "childId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -46825,10 +46867,26 @@
               "integer",
               "string"
             ],
+            "description": "Moves the plan to another of the caller\u0027s own children.",
             "format": "int32"
+          },
+          "seriesUnitId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "New unit; its series fixes the plan\u0027s subject.",
+            "format": "int32"
+          },
+          "clearSeriesUnit": {
+            "type": "boolean",
+            "description": "Removes the plan\u0027s unit (the subject stays). Needed because \u0060null\u0060 means \u0022not specified\u0022. Wins over\n\u0060seriesUnitId\u0060 if both arrive together.",
+            "default": false
           }
         },
-        "description": "Partial change to the container. int? UpdatePlanDto.ChildId reassigns the plan to another of the caller\u0027s own children."
+        "description": "Partial change to the container (PATCH: \u0060null\u0060 = unchanged). int? UpdatePlanDto.ChildId reassigns the plan to\nanother of the caller\u0027s own children. A plan without a subject must be given one with any change - except a\nchange that only switches it off (\u0060active: false\u0060), which never fails on a mandatory field."
       },
       "UpdatePositionDto": {
         "type": "object",

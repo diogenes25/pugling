@@ -7,7 +7,7 @@ import { sohnLogin } from "./helpers";
  * nach dem Neuladen steht die Truhe offen. Die Regeln (gezogen beim Verdienen, gebucht beim Öffnen, älteste zuerst,
  * nur das Kind) hält der Server (`DailyBoxTests`). Aufbau wie `belohnung-trotz-wochenziel.spec.ts`.
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar, und die Truhe gehört dem Kind, nicht dem Plan.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar, und die Truhe gehört dem Kind, nicht dem Plan.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -37,7 +37,7 @@ test("Tagesziel geschafft: das Kind öffnet die Truhe auf dem Pfad, die Münzen 
     title: `Tiere ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: WORDS.map(([front, back]) => ({ front, back })) },
   });
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: `Truhen-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Truhen-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false });
 

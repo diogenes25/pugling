@@ -59,6 +59,7 @@ test("Die Punkte der Übung belegen das Ziel-Feld der neuen Position vor", async
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Plan ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
 
@@ -139,6 +140,7 @@ test("Eine unsinnige Empfehlung wird nicht vorbelegt - und leckt nicht in die na
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Grenzplan ${LAUF}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
 
@@ -215,6 +217,7 @@ test("Was der Vater selbst tippt, ueberlebt den Uebungswechsel - bis die Positio
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Tippplan ${LAUF}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
 

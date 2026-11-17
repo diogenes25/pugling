@@ -14,7 +14,7 @@ import { introduceAndQuiz, sohnLogin, pfadStart } from "./helpers";
  * 1. aus den Kästchen per Enter, 2. aus den Kacheln per Enter, 3. aus den Kacheln per Klick auf „Prüfen“.
  * Die Tastatur-Karten werden darum OHNE erneutes Fokussieren getippt.
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar, und `full-flow` belegt Kind #1.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar, und `full-flow` belegt Kind #1.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -54,7 +54,7 @@ test("Sohn ordnet Buchstaben per Tastatur und per Klick, der Fokus folgt jeder K
       items: CARDS.map(([prompt, answer]) => ({ front: answer, back: prompt })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Ordnen-Plan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Ordnen-Plan ${RUN}`, durationDays: 7, active: true });
   // Ohne Leitner (B-476): mit Leitner käme die Abfrage-Runde frisch eingeführter Wörter als Umdrehkarte (Fach 1), nicht
   // als Buchstaben ordnen. Diese Spec prüft die Bedienung der Stufe; die Leiter selbst prüft `erstbegegnung.spec.ts`.
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,

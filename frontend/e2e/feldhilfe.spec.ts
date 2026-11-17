@@ -25,6 +25,7 @@ async function vaterLogin(page: Page) {
 async function planAnlegen(page: Page, title: string) {
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(title);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: "Plan anlegen & Übungen hinzufügen" }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 }
@@ -100,7 +101,7 @@ test("Assistent und Plan-Seite erklären dieselbe Größe mit demselben Text", a
   await page.goto("/vater/wizard");
   const weiter = page.getByRole("button", { name: "Weiter" });
   await weiter.click();                                             // 1. Kind (das geseedete ist vorgewählt)
-  await page.getByLabel("Fach").selectOption({ label: "Englisch" }); // 2. Problemfeld
+  await page.getByLabel("Fach (Pflicht)", { exact: true }).selectOption({ label: "Englisch" }); // 2. Problemfeld
   await page.getByRole("radio", { name: /Regelmäßig üben/ }).click();
   await page.getByRole("radio", { name: /^Normal/ }).click();
   await weiter.click();

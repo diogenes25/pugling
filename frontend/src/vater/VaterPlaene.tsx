@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import type { ChildResponse, PlanResponse } from "../lib/types";
+import type { ChildResponse, PlanResponse, SubjectResponse } from "../lib/types";
 import { formatDateRange } from "../lib/datum";
 
 /**
@@ -19,14 +19,18 @@ export function VaterPlaene() {
 
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
   const plans = useAsync<PlanResponse[]>(() => api.plans(filterChildId ?? undefined), [filterChildId]);
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
 
   const childName = (id: number) => children.data?.find((c) => c.id === id)?.name ?? `#${id}`;
-  // Genau ein aktiver, laufender Plan je Kind ist spielbar (Anti-Cheat, server-seitig erzwungen). Darum
-  // ist „zwei aktive Pläne für ein Kind" ein Zustand, den der Vater sehen muss, statt ihn beim Sohn zu
-  // entdecken – die Liste hebt ihn hervor.
-  const activeCountByChild = new Map<number, number>();
+  const subjectName = (id: number | null | undefined) =>
+    id == null ? "ohne Fach" : subjects.data?.find((s) => s.id === id)?.name ?? `#${id}`;
+  // Je Kind ist ein aktiver Plan je Fach spielbar (B-539, server-seitig erzwungen). Zwei aktive Pläne eines
+  // Fachs für ein Kind sind darum ein Zustand, den der Vater sehen muss, statt ihn beim Sohn zu entdecken – die
+  // Liste hebt ihn hervor. Mehrere aktive Pläne verschiedener Fächer sind dagegen der Normalfall.
+  const groupKey = (p: PlanResponse) => `${p.childId}/${p.subjectId ?? "-"}`;
+  const activeCountByGroup = new Map<string, number>();
   for (const p of plans.data ?? []) {
-    if (p.active) activeCountByChild.set(p.childId, (activeCountByChild.get(p.childId) ?? 0) + 1);
+    if (p.active) activeCountByGroup.set(groupKey(p), (activeCountByGroup.get(groupKey(p)) ?? 0) + 1);
   }
   const hasPlans = (plans.data?.length ?? 0) > 0;
 
@@ -74,21 +78,22 @@ export function VaterPlaene() {
 
       {plans.loading && plans.data === null ? <div className="loading">Lade…</div> : plans.error ? <div className="banner err">{plans.error}</div> : (
         <table className="table">
-          <thead><tr><th>Titel</th><th>Kind</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
+          <thead><tr><th>Titel</th><th>Kind</th><th>Fach</th><th className="num">Übungen</th><th>Zeitraum</th><th>Status</th></tr></thead>
           <tbody>
             {plans.data?.map((p) => (
               <tr key={p.id}>
                 <td><Link to={`/vater/plan/${p.id}`}>{p.title}</Link></td>
                 <td>{childName(p.childId)}</td>
+                <td>{subjectName(p.subjectId)}{p.seriesUnitLabel && <span className="muted"> · {p.seriesUnitLabel}</span>}</td>
                 <td className="num">{p.positionCount}</td>
                 <td className="muted">{formatDateRange(p.startDate, p.endDate)}</td>
                 <td>
                   {p.active
                     ? <span className="pill lime">aktiv</span>
                     : <span className="pill">inaktiv</span>}
-                  {p.active && (activeCountByChild.get(p.childId) ?? 0) > 1 && (
+                  {p.active && (activeCountByGroup.get(groupKey(p)) ?? 0) > 1 && (
                     <span className="pill mag" style={{ marginLeft: 6 }}
-                      title="Nur ein aktiver, laufender Plan je Kind ist spielbar – die anderen bleiben liegen.">
+                      title="Je Kind ist nur ein aktiver Plan je Fach vorgesehen – zwei aktive Pläne desselben Fachs sollte es nicht geben.">
                       mehrfach aktiv
                     </span>
                   )}
@@ -96,7 +101,7 @@ export function VaterPlaene() {
               </tr>
             ))}
             {plans.data?.length === 0 && (
-              <tr><td colSpan={5} className="muted">
+              <tr><td colSpan={6} className="muted">
                 Noch keine Pläne. Starte den Assistenten oder lege einen leeren Plan an.
               </td></tr>
             )}

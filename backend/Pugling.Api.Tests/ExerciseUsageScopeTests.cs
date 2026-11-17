@@ -58,7 +58,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var childId = await TestApi.IdAsync(await other.PostAsJsonAsync(
             "/api/v1/supervisor/children", new { name = "Fremdkind", pin = "4444" }));
         var planId = await TestApi.IdAsync(await other.PostAsJsonAsync(
-            "/api/v1/supervisor/study-plans", new { childId, title = "Fremder Plan", durationDays = 10 }));
+            "/api/v1/supervisor/study-plans", new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(other), title = "Fremder Plan", durationDays = 10 }));
         (await other.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily" })).EnsureSuccessStatusCode();
 
@@ -94,7 +94,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "castle", "Burg");
         var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync(
-            "/api/v1/supervisor/study-plans", new { childId = 1, title = "Eigener Plan", durationDays = 10 }));
+            "/api/v1/supervisor/study-plans", new { childId = 1, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Eigener Plan", durationDays = 10 }));
         (await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily" })).EnsureSuccessStatusCode();
 
@@ -143,7 +143,7 @@ public class ExerciseUsageScopeTests(PuglingWebAppFactory factory) : IClassFixtu
         foreach (var title in new[] { "Plan A", "Plan B" })
         {
             var planId = await TestApi.IdAsync(await family.PostAsJsonAsync(
-                "/api/v1/supervisor/study-plans", new { childId, title, durationDays = 10 }));
+                "/api/v1/supervisor/study-plans", new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(family), title, durationDays = 10 }));
             (await family.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
                 new { exerciseId, cadence = "Daily" })).EnsureSuccessStatusCode();
         }

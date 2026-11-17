@@ -498,6 +498,7 @@ public class MediaSelectionTests(PuglingWebAppFactory factory) : IClassFixture<P
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
         {
             childId,
+            subjectId = await TestApi.DefaultSubjectIdAsync(father),
             title = $"{marker}-Plan",
             startDate = today.AddDays(-1).ToString("yyyy-MM-dd"),
             // The plan is meant to be running. This used to say `endDate`/`active` - fields that exist only in

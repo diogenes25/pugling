@@ -9,7 +9,7 @@ import { sohnLogin, vaterLogin } from "./helpers";
  * Rot, wenn der Knopf fehlt, gesperrt bleibt, der Server ablehnt (Wörter ohne Lernstand, falsches Fach) oder die neue
  * Position beim Kind nicht als spielbare Pflicht erscheint.
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const FATHER = { id: "1", pin: "0000" };
@@ -46,7 +46,7 @@ test("Der Vater macht schwache Wörter zur täglichen Wiederholung, das Kind sie
   const exA = await vokabeln(`Tiere ${RUN}`, WORDS_A);
   const exB = await vokabeln(`Hof ${RUN}`, WORDS_B);
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
-    { childId, title: `Schwachplan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Schwachplan ${RUN}`, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
   const posA = await postId(request, positions, vater, { exerciseId: exA, cadence: "Daily", stage: 4 });
   const posB = await postId(request, positions, vater, { exerciseId: exB, cadence: "Daily", stage: 4 });

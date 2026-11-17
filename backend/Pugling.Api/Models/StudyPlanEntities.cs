@@ -75,9 +75,16 @@ public class StudyPlan
     public string Title { get; set; } = "";
     /// <summary>Free description of the plan (optional): goal/scope, so it stays recognizable later.</summary>
     public string? Description { get; set; }
-    /// <summary>Optional link to the catalog subject (for classification/filtering only).</summary>
+    /// <summary>
+    /// The subject the plan covers: the group of the activation rule "one active plan per subject and child" (B-539).
+    /// Mandatory in the contract, nullable in the column: a deleted subject (SetNull) or a legacy plan whose positions
+    /// give no majority subject leaves a plan without one until the supervisor edits it.
+    /// </summary>
     public int? SubjectId { get; set; }
     public Subject? Subject { get; set; }
+    /// <summary>Optional unit of a textbook series the plan works through; its series fixes the plan's subject.</summary>
+    public int? SeriesUnitId { get; set; }
+    public SeriesUnit? SeriesUnit { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public bool Active { get; set; } = true;

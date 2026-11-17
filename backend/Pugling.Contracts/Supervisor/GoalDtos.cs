@@ -52,8 +52,10 @@ public enum OverviewGranularity
 
 /// <summary>
 /// One period of a child's timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the
-/// daily overview - per day, the goals of every cadence of the plans that are active now and run that day (a weekly goal
-/// counts on each of its days). <paramref name="Start"/>/<paramref name="End"/> are the first and last day of the period
+/// daily overview - per day, the goals of every cadence of the plans that run that day (a weekly goal counts on each of
+/// its days). A plan that is switched off now only counts in the child's favour (B-558): its met goals and points always,
+/// its goals total only on days it was used (a goal met or points earned), its duty only when met - a never used draft
+/// never shows as missed. <paramref name="Start"/>/<paramref name="End"/> are the first and last day of the period
 /// that lie in the range. <paramref name="DutyDone"/> means: on every day of the period that had a goal, the duty was done
 /// - and there was at least one such day.
 /// </summary>

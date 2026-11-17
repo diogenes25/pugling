@@ -388,7 +388,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         var plan = await Capture(father2, g, "Lehrplan für eigenes Kind anlegen", HttpMethod.Post,
             "/api/v1/supervisor/study-plans",
-            new { childId = foreignChildId, title = "Plan (fremd)", durationDays = 5 }, HttpStatusCode.Created);
+            new { childId = foreignChildId, title = "Plan (fremd)", seriesUnitId, durationDays = 5 }, HttpStatusCode.Created);
         var planId = plan.GetProperty("id").GetInt32();
 
         await Capture(father2, g, "Nicht ausführbare Übung zuweisen", HttpMethod.Post,
@@ -660,9 +660,13 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     {
         const string g = "study-plans";
 
+        // The unit names the subject as well (B-539): its series supplies it, and the response carries both.
         var plan = await Capture(father, g, "Lehrplan anlegen", HttpMethod.Post, "/api/v1/supervisor/study-plans",
-            new { childId = 1, title = "Doku-Lehrplan", durationDays = 10 }, HttpStatusCode.Created);
+            new { childId = 1, title = "Doku-Lehrplan", seriesUnitId = docSeriesUnitId, durationDays = 10 }, HttpStatusCode.Created);
         var planId = plan.GetProperty("id").GetInt32();
+
+        await Capture(father, g, "Lehrplan ohne Fach", HttpMethod.Post, "/api/v1/supervisor/study-plans",
+            new { childId = 1, title = "Ohne Fach", durationDays = 10 }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
 
         var pos = await Capture(father, g, "Position anlegen", HttpMethod.Post, $"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId = docExerciseId, useLeitner = true, stage = (int)TestStage.FreeText, cadence = "Daily" },

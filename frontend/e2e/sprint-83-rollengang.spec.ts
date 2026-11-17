@@ -39,7 +39,7 @@ test("Die Startseite zeigt die Pflichten nach Fach, und „Los“ führt in den 
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: [{ front: `dog ${RUN}`, back: "Hund" }] },
   });
   const PLAN = `Tagessicht-Plan ${RUN}`;
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: PLAN, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: PLAN, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false });
 

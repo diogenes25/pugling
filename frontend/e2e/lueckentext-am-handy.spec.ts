@@ -12,7 +12,7 @@ import { sohnLogin, pfadStart } from "./helpers";
  *    Mit dem Etikett eines Lückentexts („Tippen“) passte sie schon vor B-466 – darum steht die Prüfung nicht im ersten.
  * 3. Das Lösungsfeld hat mindestens 16 px Schrift → rot bei 15 px (iOS-Safari zoomt darunter beim Antippen).
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -50,7 +50,7 @@ test("Lückentext im Tagestest am Handy: eine Zeile je Satz, kein Zoom-Feld", as
     },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Handy-Plan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Handy-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
@@ -115,7 +115,7 @@ test("Kopfzeile des Tagestests am Handy: auch mit zehn Fragen bleibt „Später 
       items: words.map((w, i) => ({ front: `${w} ${RUN}`, back: `Zahl ${i + 1}` })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Kopf-Plan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Kopf-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 2, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
@@ -165,7 +165,7 @@ test("Auswahl je Lücke am Handy: fünf Knöpfe passen ins Fenster", async ({ pa
     },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Auswahl-Plan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Auswahl-Plan ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 8, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 

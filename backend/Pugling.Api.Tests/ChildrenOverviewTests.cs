@@ -150,4 +150,188 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         var open = await other.GetFromJsonAsync<JsonElement>($"{Url}?from=2026-03-29&to=2026-04-01&granularity=Week");
         Assert.All(open.GetProperty("children")[0].GetProperty("periods").EnumerateArray(), p => JsonAssert.False(p, "dutyDone"));
     }
+
+    // ---- B-558: plans switched off since count only in the child's favour ---- ----
+
+    private DateOnly Today => DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
+
+    // A fresh child with a vocabulary exercise; plans are seeded per test, two in parallel only work in the database.
+    private async Task<(HttpClient Father, int ChildId, int ExerciseId)> InactivePlanSetupAsync()
+    {
+        var (father, _) = await FreshAdultAsync();
+        var childId = await ChildAsync(father, TestApi.UniqueName("Kapitelwechsel"));
+        return (father, childId, await TestApi.CreateVocabExerciseAsync(father));
+    }
+
+    // A plan with one daily goal for the child, running from the given day, active or switched off.
+    private (int PlanId, int PositionId) SeedPlan(int childId, int exerciseId, DateOnly start, bool active)
+    {
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText, childId: childId);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var plan = db.StudyPlans.Single(p => p.Id == planId);
+        plan.StartDate = start;
+        plan.Active = active;
+        db.SaveChanges();
+        return (planId, positionId);
+    }
+
+    // A second daily goal in an existing plan, created on the plan's first day.
+    private int SeedSecondPosition(int planId, int exerciseId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var first = db.PlanPositions.Single(p => p.StudyPlanId == planId);
+        var pos = new PlanPosition
+        {
+            StudyPlanId = planId,
+            CreatedAt = first.CreatedAt,
+            ExerciseId = exerciseId,
+            Order = 1,
+            Stage = first.Stage,
+            Cadence = GoalCadence.Daily,
+            UseLeitner = true,
+            PointsGoalMet = 20,
+        };
+        db.PlanPositions.Add(pos);
+        db.SaveChanges();
+        return pos.Id;
+    }
+
+    // A passed test on a past day plus its goal reward, written straight into the database: the API only plays today.
+    private void SeedMetDay(int planId, int positionId, DateOnly day, int points = 20)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var at = day.ToDateTime(new TimeOnly(12, 0), DateTimeKind.Utc);
+        db.TestAttempts.Add(new TestAttempt
+        {
+            StudyPlanId = planId,
+            PlanPositionId = positionId,
+            Day = day,
+            StageValue = (int)TestStage.FreeText,
+            Graded = true,
+            StartedAt = at,
+            CompletedAt = at,
+            TotalItems = 2,
+            CorrectItems = 2,
+            ScorePercent = 100,
+            Passed = true,
+        });
+        db.PositionGoalRewards.Add(new PositionGoalReward
+        {
+            PlanPositionId = positionId,
+            Cadence = GoalCadence.Daily,
+            PeriodStart = day,
+            Day = day,
+            Points = points,
+            AwardedAt = at,
+        });
+        db.SaveChanges();
+    }
+
+    private async Task<List<JsonElement>> DaysAsync(HttpClient father, int childId, DateOnly from, DateOnly to) =>
+    [
+        .. (await father.GetFromJsonAsync<JsonElement>(
+                $"{Url}?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}&granularity=Day&childId={childId}"))
+            .GetProperty("children")[0].GetProperty("periods").EnumerateArray(),
+    ];
+
+    /// <summary>
+    /// B-558 AK 1: plan A was learned on day 1 and its duty met, then switched off for plan B (starting on day 2). Day 1
+    /// still shows A's goal, points and the met duty. Red with the <c>p.Active</c> filter in <c>TimelineAsync</c> (day 1
+    /// then has no plan: 0 goals, 0 points, duty not done).
+    /// </summary>
+    [Fact]
+    public async Task Abgeschalteter_Plan_Bleibt_In_Der_Zeitachse()
+    {
+        var (father, childId, exerciseId) = await InactivePlanSetupAsync();
+        var day1 = Today.AddDays(-2);
+        var (planA, positionA) = SeedPlan(childId, exerciseId, day1, active: false);
+        SeedPlan(childId, exerciseId, day1.AddDays(1), active: true);
+        SeedMetDay(planA, positionA, day1, points: 20);
+
+        var day = Assert.Single(await DaysAsync(father, childId, day1, day1));
+        Assert.Equal(1, day.GetProperty("goalsTotal").GetInt32());
+        Assert.Equal(1, day.GetProperty("goalsMet").GetInt32());
+        Assert.Equal(20, day.GetProperty("points").GetInt32());
+        JsonAssert.True(day, "dutyDone");
+    }
+
+    /// <summary>
+    /// B-558 AK 2: a never used, switched-off draft with a daily goal runs over the whole range next to an active plan met
+    /// every day. No day turns open and the goals total stays that of the active plan alone (measured before the draft
+    /// exists). Red when inactive plans count like active ones (total 2, duty open).
+    /// </summary>
+    [Fact]
+    public async Task Nie_Benutzter_Entwurf_Erscheint_Nicht_Als_Offene_Pflicht()
+    {
+        var (father, childId, exerciseId) = await InactivePlanSetupAsync();
+        var day1 = Today.AddDays(-2);
+        var day2 = Today.AddDays(-1);
+        var (planB, positionB) = SeedPlan(childId, exerciseId, day1, active: true);
+        SeedMetDay(planB, positionB, day1);
+        SeedMetDay(planB, positionB, day2);
+
+        var without = await DaysAsync(father, childId, day1, day2);
+        SeedPlan(childId, exerciseId, day1, active: false);
+        var with = await DaysAsync(father, childId, day1, day2);
+
+        Assert.Equal(2, with.Count);
+        Assert.Equal(without.Select(d => d.GetProperty("goalsTotal").GetInt32()), with.Select(d => d.GetProperty("goalsTotal").GetInt32()));
+        Assert.All(without, d => Assert.Equal(1, d.GetProperty("goalsTotal").GetInt32()));
+        Assert.All(with, d => JsonAssert.True(d, "dutyDone"));
+    }
+
+    /// <summary>
+    /// B-558 AK 3: on day 2 the child learned one of two goals of a switched-off plan (its duty open) while the active
+    /// plan's duty is met: day 2 counts as met, and the used inactive plan brings its full goals total. Red when an open
+    /// duty of an inactive plan makes the day open (the <c>p.Active</c> condition in <c>IsCompleteDay</c>).
+    /// </summary>
+    [Fact]
+    public async Task Offene_Pflicht_Eines_Abgeschalteten_Plans_Macht_Den_Tag_Nicht_Offen()
+    {
+        var (father, childId, exerciseId) = await InactivePlanSetupAsync();
+        var day2 = Today.AddDays(-1);
+        var (planA, positionA) = SeedPlan(childId, exerciseId, day2.AddDays(-1), active: true);
+        var (planC, positionC1) = SeedPlan(childId, exerciseId, day2.AddDays(-1), active: false);
+        SeedSecondPosition(planC, exerciseId);
+        SeedMetDay(planA, positionA, day2);
+        SeedMetDay(planC, positionC1, day2);
+
+        var day = Assert.Single(await DaysAsync(father, childId, day2, day2));
+        Assert.Equal(3, day.GetProperty("goalsTotal").GetInt32());
+        Assert.Equal(2, day.GetProperty("goalsMet").GetInt32());
+        JsonAssert.True(day, "dutyDone");
+    }
+
+    /// <summary>
+    /// B-558: with no active plan, an untouched day of a switched-off plan carries no duty (internally <c>null</c>, not
+    /// <c>false</c>), so the week it shares with a met day still reads done. Red when <c>TimelineDutyDone</c> drops
+    /// <c>(p.Active || p.Done)</c> and counts every plan with a duty (<c>Any(p =&gt; p.HasDuty)</c>): day 2 becomes an
+    /// open duty and breaks the week.
+    /// </summary>
+    [Fact]
+    public async Task Unberuehrter_Tag_Eines_Abgeschalteten_Plans_Ist_Keine_Pflicht()
+    {
+        var (father, childId, exerciseId) = await InactivePlanSetupAsync();
+        // Monday and Tuesday of last week: both days lie in one Monday-to-Sunday period, whatever today is.
+        var daysSinceMonday = ((int)Today.DayOfWeek + 6) % 7;
+        var monday = Today.AddDays(-daysSinceMonday - 7);
+        var day2 = monday.AddDays(1);
+        var (planA, positionA) = SeedPlan(childId, exerciseId, monday, active: false);
+        SeedMetDay(planA, positionA, monday);
+
+        var days = await DaysAsync(father, childId, monday, day2);
+        JsonAssert.True(days[0], "dutyDone");
+        // The contract's dutyDone is a plain bool: a single day without duty reads false, the same as an open one. The
+        // difference (no duty vs. open duty) only shows in the week below, where a duty-free day does not count.
+        JsonAssert.False(days[1], "dutyDone");
+        Assert.Equal(0, days[1].GetProperty("goalsTotal").GetInt32());
+
+        var week = Assert.Single((await father.GetFromJsonAsync<JsonElement>(
+                $"{Url}?from={monday:yyyy-MM-dd}&to={monday.AddDays(6):yyyy-MM-dd}&granularity=Week&childId={childId}"))
+            .GetProperty("children")[0].GetProperty("periods").EnumerateArray());
+        JsonAssert.True(week, "dutyDone");
+    }
 }

@@ -4,7 +4,7 @@ import { createChild, introduceAndQuiz, sohnLogin, vaterLogin, pfadStart } from 
 // B-35: beim Aufdecken dreht sich die Karte um – in der Übung und in der Klausur (beide „Aufdecken").
 // Eine eigene Spec statt eines Blocks im Durchstich (frontend/CLAUDE.md, „Eine Fläche je E2E-Spec"): eine
 // rein optische Zusicherung darf den Vater→Sohn-Weg nicht mitreißen.
-// Eigenes Kind, weil je Kind genau ein aktiver Plan spielbar ist und `full-flow` Kind #1 belegt.
+// Eigenes Kind, weil je Kind und Fach genau ein aktiver Plan spielbar ist und `full-flow` Kind #1 belegt.
 
 const FATHER = { id: "1", pin: "0000" };
 const EXERCISE = "Vokabeln: En ville";
@@ -25,6 +25,7 @@ test("Die Karte dreht sich beim Aufdecken um – beim Üben und in der Klausur",
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
   await kindSelect.selectOption(childId);
+  await vater.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
   const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });

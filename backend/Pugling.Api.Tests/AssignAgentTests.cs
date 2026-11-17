@@ -35,16 +35,20 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
     /// <summary>The child's playable plan: active, starting today.</summary>
     private async Task<int> PlayablePlanAsync(int childId) =>
-        (await Supervisor.CreatePlanAsync(new CreatePlanDto(childId, "Laufender Plan", null, null, 14))).Id;
+        (await Supervisor.CreatePlanAsync(new CreatePlanDto(childId, "Laufender Plan", await SubjectIdAsync(), null, 14))).Id;
+
+    /// <summary>The seeded subject every plan here carries (a plan needs one, B-539).</summary>
+    private async Task<int> SubjectIdAsync() =>
+        (await Creator.ListSubjectsAsync()).First(s => s.Name == "Englisch").Id;
 
     /// <summary>
     /// An ACTIVE plan whose run is over, created after the playable one so it lists first (newest first) - the trap for a
-    /// selection by <c>Active</c> instead of <c>IsPlayable</c>. Flipped in the DB, because the API would not keep two active.
+    /// selection by <c>Active</c> instead of <c>IsPlayable</c>. Flipped in the DB, because the API would not keep two active of one subject.
     /// </summary>
     private async Task<int> ExpiredActivePlanAsync(int childId)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var id = (await Supervisor.CreatePlanAsync(new CreatePlanDto(childId, "Abgelaufen", null, today.AddDays(-30), 5, Active: false))).Id;
+        var id = (await Supervisor.CreatePlanAsync(new CreatePlanDto(childId, "Abgelaufen", await SubjectIdAsync(), today.AddDays(-30), 5, Active: false))).Id;
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         db.StudyPlans.Single(p => p.Id == id).Active = true;
@@ -158,6 +162,31 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             Assigner.RunAsync(Parse("--child", $"{childId}", "--plan-id", $"{siblingPlan}", "--exercise-id", $"{exercise}"), default));
         Assert.Empty(await PositionsAsync(siblingPlan));
         Assert.DoesNotContain(await Supervisor.ListPlansAsync(childId), p => p.PositionCount > 0);
+    }
+
+    /// <summary>
+    /// B-610. One active plan per subject: a child can have two playable plans, and the agent must not guess the target.
+    /// Red with <c>FirstOrDefault(IsPlayable)</c>: the newest plan (the other subject's) would receive the position.
+    /// </summary>
+    [Fact]
+    public async Task Mehrere_Spielbare_Plaene_Ohne_Plan_Id_Sind_Fehlbedienung()
+    {
+        var childId = await ChildAsync("Assign-Zwei-Faecher");
+        var englisch = await PlayablePlanAsync(childId);
+        var otherSubject = (await Creator.ListSubjectsAsync()).First(s => s.Name != "Englisch").Id;
+        var other = (await Supervisor.CreatePlanAsync(new CreatePlanDto(childId, "Zweites Fach", otherSubject, null, 14))).Id;
+        Assert.Equal(2, (await Supervisor.ListPlansAsync(childId)).Count(p => p.IsPlayable));
+        var exercise = await ExerciseAsync();
+
+        var error = await Assert.ThrowsAsync<AgentUsageException>(() =>
+            Assigner.RunAsync(Parse("--child", $"{childId}", "--exercise-id", $"{exercise}"), default));
+
+        Assert.Contains("--plan-id", error.Message);
+        Assert.Contains($"{englisch}", error.Message);
+        Assert.Contains($"{other}", error.Message);
+        Assert.Contains("Zweites Fach", error.Message);
+        Assert.Empty(await PositionsAsync(englisch));
+        Assert.Empty(await PositionsAsync(other));
     }
 
     /// <summary>

@@ -37,7 +37,7 @@ async function reiheMitUnit(request: APIRequestContext, vater: Record<string, st
   const seriesId = await postId(request, "/api/v1/creator/textbook-series", vater, { name: reihe, subjectId });
   const units = `/api/v1/creator/textbook-series/${seriesId}/units`;
   const unitId = await postId(request, units, vater, { label: unit, orderIndex: 1 });
-  return { seriesId, units, unitId };
+  return { subjectId, seriesId, units, unitId };
 }
 
 function vokabeln(request: APIRequestContext, vater: Record<string, string>, url: string, title: string, front: string, back: string) {
@@ -50,12 +50,12 @@ function vokabeln(request: APIRequestContext, vater: Record<string, string>, url
 test("B-219: der Vater verzeiht Ausrutscher an einer Leitner-Position, ohne Leitner ist das Häkchen gesperrt", async ({ page, request }) => {
   const vater = await vaterHeaders(request);
   const childId = await postId(request, "/api/v1/supervisor/children", vater, { name: `Verzeih ${RUN}`, pin: "8656" });
-  const { units, unitId } = await reiheMitUnit(request, vater, `Verzeihreihe ${RUN}`, "Unit 1");
+  const { subjectId, units, unitId } = await reiheMitUnit(request, vater, `Verzeihreihe ${RUN}`, "Unit 1");
   const MIT = `Mit Leitner ${RUN}`, OHNE = `Ohne Leitner ${RUN}`;
   const exMit = await vokabeln(request, vater, `${units}/${unitId}/vocabulary`, MIT, `bird ${RUN}`, "Vogel");
   const exOhne = await vokabeln(request, vater, `${units}/${unitId}/vocabulary`, OHNE, `fish ${RUN}`, "Fisch");
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
-    { childId, title: `Verzeihplan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Verzeihplan ${RUN}`, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
   await postId(request, positions, vater, { exerciseId: exMit, cadence: "Daily", useLeitner: true });
   await postId(request, positions, vater, { exerciseId: exOhne, cadence: "Daily", useLeitner: false });
@@ -101,12 +101,12 @@ test("B-588: der Creator trägt die Buchseite ein, der Sohn sieht Reihe, Unit un
   const pin = "8657";
   const childId = await postId(request, "/api/v1/supervisor/children", vater, { name: `Buchseite ${RUN}`, pin });
   const REIHE = `Buchreihe ${RUN}`, UNIT = `Unit 3 ${RUN}`;
-  const { seriesId, units, unitId } = await reiheMitUnit(request, vater, REIHE, UNIT);
+  const { subjectId, seriesId, units, unitId } = await reiheMitUnit(request, vater, REIHE, UNIT);
   const MIT = `Mit Seite ${RUN}`, OHNE = `Ohne Seite ${RUN}`;
   const exMit = await vokabeln(request, vater, `${units}/${unitId}/vocabulary`, MIT, `tree ${RUN}`, "Baum");
   const exOhne = await vokabeln(request, vater, `${units}/${unitId}/vocabulary`, OHNE, `house ${RUN}`, "Haus");
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
-    { childId, title: `Buchplan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Buchplan ${RUN}`, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
   await postId(request, positions, vater, { exerciseId: exMit, stage: 4, cadence: "Daily", useLeitner: false });
   await postId(request, positions, vater, { exerciseId: exOhne, stage: 4, cadence: "Daily", useLeitner: false });

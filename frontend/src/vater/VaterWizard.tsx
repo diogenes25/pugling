@@ -22,6 +22,7 @@ import {
   terminProblem,
 } from "./wizardFinish";
 import type { WizardProgress } from "./wizardFinish";
+import { PlanUnitSelect } from "./PlanUnitSelect";
 import { radioGroupKeys } from "../lib/ui";
 import { formatDate } from "../lib/datum";
 import type {
@@ -79,6 +80,8 @@ export function VaterWizard() {
 
   // --- Schritt 2: Fragenkatalog ---
   const [subjectId, setSubjectId] = useState<number | "">("");
+  // Optional die Unit, die der Plan durcharbeitet (B-539); sie gehört zum gewählten Fach.
+  const [seriesUnitId, setSeriesUnitId] = useState<number | "">("");
   const [topic, setTopic] = useState("");
   const [goal, setGoal] = useState<Goal>("Klassenarbeit");
   const [intensity, setIntensity] = useState<Intensity>("Normal");
@@ -394,7 +397,9 @@ export function VaterWizard() {
         existingChildId: mode === "existing" ? Number(childId) : null,
         plan: {
           title: title.trim() || "Neuer Lehrplan",
+          // Pflicht (B-539): „Weiter" ist in Schritt 2 ohne Fach gesperrt, hier steht es also immer.
           subjectId: subjectId === "" ? null : Number(subjectId),
+          seriesUnitId: seriesUnitId === "" ? null : seriesUnitId,
           durationDays: vorgaben.durationDays,
           startDate: vorgaben.startDate,
         },
@@ -508,7 +513,7 @@ export function VaterWizard() {
           <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading}
             onRetry={subjects.reload} />
           <div className="form-grid">
-            <div className="field"><label htmlFor="wiz-fach">Fach <Pflicht /></label>
+            <div className="field"><FieldLabel htmlFor="wiz-fach" topic="planSubject">Fach <Pflicht /></FieldLabel>
               <select id="wiz-fach" value={subjectId} onChange={(e) => {
                 // Die Art gehört zum alten Fach – stehen gelassen filterte sie auf eine Kategorie, die es
                 // im neuen gar nicht gibt, und die Trefferliste bliebe ohne sichtbaren Grund leer. Hier
@@ -518,11 +523,15 @@ export function VaterWizard() {
                 // über Lehrwerke – beides fachunabhängig, ein Reset würde Eingabe wegwerfen.
                 setCategoryId("");
                 setGrammarTopicId("");
+                setSeriesUnitId("");
                 setSubjectId(e.target.value === "" ? "" : Number(e.target.value));
               }}>
                 <option value="">– Fach wählen –</option>
                 {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
+            </div>
+            <div className="field"><FieldLabel htmlFor="wiz-unit" topic="planUnit">Unit <span className="muted">(optional)</span></FieldLabel>
+              <PlanUnitSelect id="wiz-unit" subjectId={subjectId} value={seriesUnitId} onChange={setSeriesUnitId} />
             </div>
             <div className="field"><label htmlFor="wiz-topic">Thema / Kapitel (optional)</label><input id="wiz-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="z.B. Unité 2 – En ville" /></div>
           </div>

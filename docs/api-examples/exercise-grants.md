@@ -163,6 +163,7 @@ Request:
 {
   "childId": 3,
   "title": "Plan (fremd)",
+  "seriesUnitId": 7,
   "durationDays": 5
 }
 ```
@@ -174,12 +175,14 @@ Response — `HTTP 201`:
   "id": 3,
   "childId": 3,
   "title": "Plan (fremd)",
-  "subjectId": null,
+  "subjectId": 5,
   "startDate": "<date>",
   "endDate": "<date>",
   "active": true,
   "positionCount": 0,
   "description": null,
+  "seriesUnitId": 7,
+  "seriesUnitLabel": "Unit 1",
   "isPlayable": true
 }
 ```

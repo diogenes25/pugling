@@ -94,9 +94,23 @@ internal static class TestApi
         {
             childId,
             title = "Test-Plan",
+            subjectId = await DefaultSubjectIdAsync(father),
             durationDays = 5,
         });
         return await IdAsync(res);
+    }
+
+    /// <summary>
+    /// The seeded subject "Englisch" - the default subject of a test plan (B-539: a plan needs one). All plans made with
+    /// it share one subject, so creating one switches off the child's previous plan exactly as before the rule became
+    /// "one active plan per subject". Looked up by name: seeded ids depend on the seed's insert order.
+    /// </summary>
+    /// <param name="creator">A logged-in client with the creator role (reading subjects is creator-gated).</param>
+    public static async Task<int> DefaultSubjectIdAsync(HttpClient creator)
+    {
+        var subjects = await creator.GetFromJsonAsync<JsonElement>("/api/v1/creator/subjects");
+        return subjects.EnumerateArray().First(s => s.GetProperty("name").GetString() == "Englisch")
+            .GetProperty("id").GetInt32();
     }
 
     /// <summary>Creates (as the creator) a textbook series with a subject and one unit and returns their ids.</summary>
@@ -298,7 +312,16 @@ internal static class TestApi
         // deadline) that runs on the TimeProvider, and a test that froze or advanced it must see one calendar.
         var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime;
         var today = DateOnly.FromDateTime(now);
-        var plan = new StudyPlan { ChildId = childId, Title = "Positions-Plan", StartDate = today, EndDate = today.AddDays(5) };
+        // The default subject of a test plan (see DefaultSubjectIdAsync): a seeded plan is one the API could have made.
+        var subjectId = db.Subjects.Where(s => s.Name == "Englisch").Select(s => (int?)s.Id).FirstOrDefault();
+        var plan = new StudyPlan
+        {
+            ChildId = childId,
+            Title = "Positions-Plan",
+            SubjectId = subjectId,
+            StartDate = today,
+            EndDate = today.AddDays(5),
+        };
         var pos = new PlanPosition
         {
             CreatedAt = now,

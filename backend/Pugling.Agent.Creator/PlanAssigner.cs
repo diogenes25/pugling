@@ -199,7 +199,10 @@ public sealed class PlanAssigner(CreatorApi creator, SupervisorApi supervisor)
         return new AssignOutcome(request, plan, items, null, tagTotal);
     }
 
-    /// <summary>The explicit plan (must belong to the child) or the child's playable one (<c>IsPlayable</c>).</summary>
+    /// <summary>
+    /// The explicit plan (must belong to the child) or the child's only playable one (<c>IsPlayable</c>); several playable
+    /// plans are a usage error that lists them.
+    /// </summary>
     private async Task<PlanResponse> ResolvePlanAsync(AssignRequest request, CancellationToken ct)
     {
         if (request.PlanId is { } planId)
@@ -220,9 +223,16 @@ public sealed class PlanAssigner(CreatorApi creator, SupervisorApi supervisor)
         }
 
         // IsPlayable is the server's own rule (active AND within its run) - an active but expired plan is the wrong target.
-        var playable = (await supervisor.ListPlansAsync(request.ChildId, ct)).FirstOrDefault(p => p.IsPlayable);
+        var playable = (await supervisor.ListPlansAsync(request.ChildId, ct)).Where(p => p.IsPlayable).ToList();
+        // One active plan per subject: several can be playable, and guessing one would put the exercises into another
+        // subject's plan. The caller names the target; the agent never picks by subject.
+        if (playable.Count > 1)
+            throw new AgentUsageException(
+                $"Kind {request.ChildId} hat {playable.Count} spielbare Pläne – nenne den Zielplan mit --plan-id: "
+                + string.Join("; ", playable.Select(p => $"{p.Id} „{p.Title}“ (Fach {p.SubjectId?.ToString() ?? "–"})"))
+                + ".");
         // Not "create one with plan": that verb creates the plan inactive, so the hint would lead into the next lock.
-        return playable ?? throw new AgentUsageException(
+        return playable.Count == 1 ? playable[0] : throw new AgentUsageException(
             $"Kind {request.ChildId} hat keinen spielbaren Plan. Nenne einen seiner Pläne mit --plan-id, oder schalte einen "
             + "unter /vater/plaene scharf (ein mit plan erzeugter Plan entsteht inaktiv).");
     }

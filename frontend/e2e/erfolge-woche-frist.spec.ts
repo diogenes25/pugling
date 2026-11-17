@@ -48,7 +48,7 @@ test("Erfolge zeigt die Woche gegen die Vorwoche und die Frist jeder offenen Mis
     title: `Tiere ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: WORDS.map(([front, back]) => ({ front, back })) },
   });
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: `Erfolge-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Erfolge-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId: exVokabeln, stage: 4, cadence: "Daily", useLeitner: false });
 

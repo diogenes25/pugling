@@ -130,7 +130,7 @@ public class SharedLibraryScenarioTests(PuglingWebAppFactory factory) : IClassFi
 
         // 5) But they may take it into a study plan of their OWN (the catalog is globally usable).
         var planId = await TestApi.IdAsync(await other.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Toms Englisch-Plan", durationDays = 14 }));
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(other), title = "Toms Englisch-Plan", durationDays = 14 }));
         var posRes = await other.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, useLeitner = true });
         Assert.Equal(HttpStatusCode.Created, posRes.StatusCode);

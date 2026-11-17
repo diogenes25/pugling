@@ -14,7 +14,7 @@ import { lernkarteDurchspielen, sohnLogin, pfadStart } from "./helpers";
  *
  * Der Stoff entsteht über die API (Gegenstand ist das Spielen, nicht das Anlegen) – mit Stufe 4 (Freitext), der Stufe,
  * die der Assistent beim Ziel „Klassenarbeit" nach dem ersten Drittel schreibt (davor Selbsteinschätzung, B-423). Serielle Reihenfolge,
- * damit jeder Kartenübergang vorhersagbar ist. Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * damit jeder Kartenübergang vorhersagbar ist. Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -48,7 +48,7 @@ async function setUp(request: APIRequestContext, page: Page, tag: string, useLei
     config: { direction: "front-to-back", sourceLang: "fr", targetLang: "de", items: WORDS.map(([front, back]) => ({ front, back })) },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Klassenarbeit ${tag} ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Klassenarbeit ${tag} ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 4, cadence: "Daily", useLeitner, orderStrategy: "Serial" });
 

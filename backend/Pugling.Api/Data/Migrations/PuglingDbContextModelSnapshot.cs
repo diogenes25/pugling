@@ -2329,6 +2329,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("SeriesUnitId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("TEXT");
 
@@ -2343,6 +2346,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ChildId");
+
+                    b.HasIndex("SeriesUnitId");
 
                     b.HasIndex("SubjectId");
 
@@ -3656,12 +3661,19 @@ namespace Pugling.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pugling.Api.Models.SeriesUnit", "SeriesUnit")
+                        .WithMany()
+                        .HasForeignKey("SeriesUnitId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pugling.Api.Models.Subject", "Subject")
                         .WithMany()
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Child");
+
+                    b.Navigation("SeriesUnit");
 
                     b.Navigation("Subject");
                 });

@@ -218,6 +218,7 @@ export const de = {
     },
     progress: {
       noPlan: "Wähle zuerst eine Mission auf dem Pfad.",
+      choosePlan: "Plan wählen",
       toHome: "Zum Pfad",
       loading: "Lade Fortschritt…",
       title: "Erfolge",

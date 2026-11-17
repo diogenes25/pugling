@@ -50,7 +50,7 @@ public class ChildLearnProgressTests(PuglingWebAppFactory factory) : IClassFixtu
                 config = new { direction = "front-to-back", sourceLang = "en", targetLang = "de", items = items.Select(i => new { front = i.Front, back = i.Back }) },
             }));
 
-    // Bundles two existing exercises as positions in ONE active plan (one active plan per child).
+    // Bundles two existing exercises as positions in ONE active plan (one active plan per child and subject).
     private (int planId, int pos1, int pos2) SeedPlanWithTwoPositions(int exercise1, int exercise2, int childId = 1)
     {
         using var scope = _factory.Services.CreateScope();

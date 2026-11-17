@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/auswertung, rolle/supervisor]
 aliases: [Zeitachse ohne alte Pläne]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
@@ -106,3 +106,12 @@ Entscheidungen 1–2; Doku-Kommentar von `ChildPeriod`/`TimelineAsync` nachziehe
 - **2026-11-17** — Nachtlauf 2026-11-17: `idee` → `geschaetzt` in einem Zug (autonom gegrillt, `art: Defekt`).
   Ist-Stand am Code gemessen, drei Entscheidungen aus der Fairness-Regel von B-606/B-539 Entscheidung 6, AKs mit
   Rot-Bedingung, S.
+- 2026-11-17 · `in-arbeit` – Sprint 84 im Nachtlauf 2026-11-17.
+- 2026-11-17 · Gebaut (Subagent, Sprint 84): `TimelineAsync` lädt alle im Zeitraum laufenden Pläne; die Regel liegt als
+  `PositionProgressService.TimelineDutyDone` neben `IsCompleteDay` (B-606), die Serie bleibt unverändert.
+  AK-Fälle → Test, Mutante: AK 1 → `ChildrenOverviewTests.cs:246`, T1 (`p.Active` zurück) → rot; AK 2 → `:267`, T2
+  (Nenner inaktiver Pläne immer) → rot; AK 3 → `:292`; Review-Fund (`(p.Active || p.Done)` ungetestet) → `:315`, T3 → rot.
+  Tag 2 lässt sich nur über die Woche unterscheiden: `ChildPeriod.DutyDone` ist `bool`, „keine Pflicht" und „offen"
+  sehen am einzelnen Tag gleich aus (kein Vertragsbruch dafür). Gezählter Fund 🟡 (s. o.); 🟢 behoben: Satz „same daily
+  rollup" → „same per-plan rollup". Hingenommen (Entscheidung 1): ein Tag, an dem das Kind die Pflicht eines später
+  abgeschalteten Plans verpasst hat, steht danach neutral statt offen – der Malus dafür wurde trotzdem gebucht.

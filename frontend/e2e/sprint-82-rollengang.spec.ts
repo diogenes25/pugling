@@ -19,7 +19,7 @@ import { LERNKARTE_DE, lernkarteDurchspielen, pfadStart, sohnLogin } from "./hel
  * 3. B-598, frische Station: jede neue Karte ist eine Lernkarte (sehen → aufdecken → abschreiben → erinnern), ein
  *    „Weiß ich nicht“ bringt die Karte einmal ans Rundenende, danach fragt die Runde das englische Wort getippt ab.
  *
- * Eigene Kinder je Fall: je Kind ist genau ein aktiver Plan spielbar, die DB ist zwischen den Specs geteilt.
+ * Eigene Kinder je Fall: je Kind und Fach ist genau ein aktiver Plan spielbar, die DB ist zwischen den Specs geteilt.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -47,8 +47,10 @@ async function unitRoute(request: APIRequestContext, vater: Record<string, strin
 /** Kind mit einem aktiven Plan; liefert die Positions-Route. */
 async function kindMitPlan(request: APIRequestContext, vater: Record<string, string>, name: string, pin: string) {
   const childId = await postId(request, "/api/v1/supervisor/children", vater, { name, pin });
+  // Ein Plan braucht ein Fach (B-539); das Kind ist neu, welches es ist, spielt keine Rolle.
+  const subjectId = await postId(request, "/api/v1/creator/subjects", vater, { name: `${name} Plan-Fach` });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
-    { childId, title: `Plan ${name}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Plan ${name}`, durationDays: 7, active: true });
   return { childId, positions: `/api/v1/supervisor/study-plans/${planId}/positions` };
 }
 

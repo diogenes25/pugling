@@ -24,6 +24,7 @@ test("Solange die Kinderliste lädt, sagt das Kind-Feld „lädt…“ und ist g
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Kinderliste lädt ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
 

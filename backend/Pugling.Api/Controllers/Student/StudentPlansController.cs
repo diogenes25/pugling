@@ -7,7 +7,7 @@ using Pugling.Api.Data;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// Plan discovery for the logged-in child: finds its one currently playable study plan here,
+/// Plan discovery for the logged-in child: finds its currently playable study plans (at most one per subject) here,
 /// without having to guess the planId – the entry point before overview/practice/test. Namespace-faithful
 /// alias to the <see cref="StudyPlansController"/> list (which does read the student case too, but
 /// lives under <c>supervisor/</c>); returns the same <see cref="PlanResponse"/>.

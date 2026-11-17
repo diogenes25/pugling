@@ -36,7 +36,7 @@ test("Test mit Auswahl: markieren, umentscheiden, „Weiter“ – gewertet wird
     title: `Auswahl ${RUN}`, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: PAARE.map(([front, back]) => ({ front, back })) },
   });
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers, { childId, title: `Lektion-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", headers, { childId, subjectId, title: `Lektion-Plan ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 6, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 

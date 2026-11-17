@@ -102,7 +102,9 @@ Formulierung macht die Oberfläche.
 
 ## Lehrplan/Training
 
-`StudyPlan` ist ein **reiner Container** (`ChildId, Title, Start/End, Active`);
+`StudyPlan` ist ein **reiner Container** (`ChildId, Title, SubjectId, SeriesUnitId?, Start/End, Active`). Das Fach
+ist im Vertrag Pflicht (aus der Unit abgeleitet, wenn eine kommt) und die **Gruppe der Aktivierungsregel: je Kind ein
+aktiver Plan je Fach** (B-539); die Spalte bleibt nullable (Altbestand, gelöschtes Fach → `SetNull`);
 [Controllers/Supervisor/StudyPlansController.cs](Controllers/Supervisor/StudyPlansController.cs). Inhalt sind
 `PlanPosition`s ([PlanPositionsController.cs](Controllers/Supervisor/PlanPositionsController.cs)), die je auf
 eine Katalog-`Exercise` verweisen und **eigenes** Ziel, Punkte, Stufe und Leitner tragen. Route:

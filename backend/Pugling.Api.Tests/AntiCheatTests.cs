@@ -237,7 +237,8 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var (planA, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
         var (planB, _) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess);
 
-        // Both are seeded active directly; activating A must deactivate B (one active plan per child).
+        // Both are seeded active directly with the same subject; activating A must deactivate B (one active plan per
+        // subject and child, B-539 - the cases across subjects are in PlanSubjectTests).
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planA}", new { active = true })).EnsureSuccessStatusCode();
 
         var b = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planB}")).Content.ReadFromJsonAsync<JsonElement>();
@@ -257,7 +258,7 @@ public class AntiCheatTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         // An active plan whose runtime only starts in the future → not (yet) playable today.
         var future = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7).ToString("yyyy-MM-dd");
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId = 1, title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
+            new { childId = 1, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Zukunfts-Plan", startDate = future, durationDays = 5 }));
 
         var plan = await (await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}")).Content.ReadFromJsonAsync<JsonElement>();
         JsonAssert.True(plan, "active");

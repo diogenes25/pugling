@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/lehrplan, rolle/supervisor, rolle/student]
 aliases: [Ein Plan je Fach, Fach Pflicht am Plan, Unit am Plan]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -273,3 +273,30 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
   Die Fortschrittsseite der Arcade (`SohnProgress.tsx`, `useChosenPlan`) zeigt den gemerkten Plan, den „Los" setzt.
   Solange je Kind ein Plan aktiv ist, betrifft das niemanden; **mit Teil A braucht die Fortschrittsseite eine eigene
   Planwahl** – beim Bau von AK 4 mitnehmen.
+- 2026-11-17 · `in-arbeit` – Sprint 84 im Nachtlauf 2026-11-17.
+- 2026-11-17 · Gebaut (Subagent, Sprint 84). Migration `20261117061523_StudyPlanSeriesUnit` angehängt (Spalte, Index,
+  FK `SetNull`, Rückfüllung als SQL nur `WHERE SubjectId IS NULL`, Gleichstand bleibt leer); SchemaGuard-Zeile
+  `StudyPlan.SeriesUnitId → SetNull`. Probe gegen eine Kopie der echten DB (`heimnetz.ps1 -Database <kopie> -Port 5205`):
+  Migration läuft, Pläne 1/5/6/7/8 mit unverändertem Fach, 55 Positionen / 72 Sitzungen / 37 Versuche wie im Original,
+  `PRAGMA foreign_key_check` leer, Übersichten 5/6/8 antworten 200. Planwahl auf der Arcade-Fortschrittsseite mitgebaut
+  (Vermerk vom 2026-11-17).
+- 2026-11-17 · AK-Fälle → Test, Mutante (`mutant-probe.py`, Debug, nach der letzten Änderung, 09:15):
+  - AK 1 ohne Fach → `PlanSubjectTests.cs:71`; A3 (Pflichtprüfung weg) → rot. Unit + abweichendes Fach → `:101`;
+    A4 (Konsistenzzeile beim Anlegen weg) → **grün, äquivalent**: `ResolveSubject` liefert dann `(null, …)`, die
+    Pflichtzeile antwortet mit demselben `400 validation_error`, nur der `detail`-Text unterscheidet sich (Entscheidung 8:
+    kein eigener Code) – kein Beleg für die Zeile, die Regel selbst hält. PATCH nur `active:false` → `:139`; A5 → rot.
+  - AK 2 Unit setzen/entfernen → `:166`, `PatchSemanticsTests.cs:277`; Formular: `planSubject.test.tsx` (U2 B-170-Sperre,
+    U3 Pflichtfeld) → rot.
+  - AK 3 Migration (Mehrheit, Gleichstand, gesetztes Fach bleibt, abhängige Zeilen überleben den Tabellen-Neubau) →
+    `StudyPlanSubjectMigrationTests.cs:26`; A7 (Gleichstand rät), A8 (überschreibt gesetztes Fach) → rot.
+  - AK 4 → `:194` (A1: Abschaltung ohne Fach-Bedingung → rot), `:208` (A2: keine Abschaltung beim Anlegen → rot),
+    `:225` (A6: keine Abschaltung beim PATCH → rot), `:245`, `:262`, `:285`.
+  - Review-Fund „Aktivieren ohne Fach" → `planSubject.test.tsx:173`; U1 → rot.
+- 2026-11-17 · Reviews Sprint 84 (`frontend-reviewer`, `pugling-reviewer`): gezählt 🟡 Aktivieren ohne Fach, 🟡 zwei
+  ungetestete Stellen (B-170-Sperre, Unit-Reset), 🟡 `assign` wählt den ersten spielbaren Plan (→ B-610, im Sprint
+  behoben), 🟡 Migrationstest prüft die abhängigen Zeilen nicht. Nicht gezählt: fehlende `zwei-faecher.spec.ts` (ist der
+  Rollengang laut Testweg); 🟢 behoben ohne Zählung: Wizard-Feldhilfe, `responsive-vater` per Index, veraltete Kommentare
+  und Swagger-Satz; 🟢 hingenommen: ein erneut gesendeter `seriesUnitId` übernimmt ein inzwischen geändertes Reihen-Fach
+  (Entscheidung 4), ein gelöschtes Fach lässt einen aktiven Plan ohne Fach zurück (Entscheidung 3).
+- 2026-11-17 · Verifikation: `dotnet test -c Release` 1795/1795, Vitest 1160/1160 in drei von vier vollen Läufen (ein
+  Lauf 1 failed, nicht zuzuordnen – Muster B-603), `tsc -b` und `dotnet format` sauber.

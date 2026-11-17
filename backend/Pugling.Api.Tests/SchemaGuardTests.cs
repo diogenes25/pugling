@@ -307,6 +307,8 @@ public class SchemaGuardTests
             ["ShopPurchase.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ShopPurchase.ShopListingId"] = DeleteBehavior.SetNull, // -> ShopListing
             ["StudyPlan.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            // B-539: a plan outlives its catalog unit, like its subject; it just loses the optional unit.
+            ["StudyPlan.SeriesUnitId"] = DeleteBehavior.SetNull, // -> SeriesUnit
             ["StudyPlan.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             // B-13: the owner may go, the subject stays - every other creator's series and plans still name it.
             ["Subject.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult

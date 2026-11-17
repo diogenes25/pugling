@@ -42,7 +42,7 @@ test("Der Vater setzt Inhalte zurück auf Standard und kann keine unerreichbare 
     },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater,
-    { childId, title: `Standardplan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Standardplan ${RUN}`, durationDays: 7, active: true });
   await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater, { exerciseId, cadence: "Daily" });
 
   await vaterLogin(page, FATHER);

@@ -68,7 +68,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         var childId = await TestApi.IdAsync(await family.PostAsJsonAsync(
             "/api/v1/supervisor/children", new { name = "Kind", pin = "7777" }));
         var planId = await TestApi.IdAsync(await family.PostAsJsonAsync(
-            "/api/v1/supervisor/study-plans", new { childId, title = "Plan", durationDays = 10 }));
+            "/api/v1/supervisor/study-plans", new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(family), title = "Plan", durationDays = 10 }));
         return (planId, family);
     }
 
@@ -194,7 +194,7 @@ public class ExerciseSharingTests(PuglingWebAppFactory factory) : IClassFixture<
         {
             asker = await TestApi.AdminAdultAsync(_factory, "6262");
             var childId = await TestApi.IdAsync(await asker.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Kind", pin = "7777" }));
-            planId = await TestApi.IdAsync(await asker.PostAsJsonAsync("/api/v1/supervisor/study-plans", new { childId, title = "Plan", durationDays = 10 }));
+            planId = await TestApi.IdAsync(await asker.PostAsJsonAsync("/api/v1/supervisor/study-plans", new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(asker), title = "Plan", durationDays = 10 }));
         }
         else
         {

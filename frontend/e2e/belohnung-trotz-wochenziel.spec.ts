@@ -7,7 +7,7 @@ import { sohnLogin } from "./helpers";
  * laufende App zeigt: die Arcade liest `rewardsUnlocked`, statt die Sperre selbst aus `dutyDone` nachzurechnen –
  * vor dem Fix blieb der Einstieg auf dem Pfad gesperrt, obwohl der Server das Training schon freigab.
  *
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -40,7 +40,7 @@ test("Tagesziel geschafft, Wochenziel offen: Kiste verdient und Bonus-Training o
   const exTag = await vokabeln(`Tiere ${RUN}`, 1);
   const exWoche = await vokabeln(`Grammatik ${RUN}`, 2);
 
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: `Kisten-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Kisten-Plan ${RUN}`, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
   const tagId = await postId(request, positions, vater, { exerciseId: exTag, stage: 4, cadence: "Daily", useLeitner: false });
   await postId(request, positions, vater, { exerciseId: exWoche, stage: 4, cadence: "Weekly", useLeitner: false });

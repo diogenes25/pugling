@@ -37,7 +37,7 @@ Authorization: Bearer {{authToken}}
 ### Erste Exercise-ID merken
 @exerciseId = {{pickExercise.response.body.$[0].id}}
 
-### Lehrplan-Container anlegen (aktiviert automatisch, deaktiviert Geschwister-Pläne)
+### Lehrplan-Container anlegen (Fach Pflicht; aktiviert automatisch, schaltet den aktiven Plan desselben Fachs ab)
 ### Mit "active": false entsteht er still – der laufende Plan des Kindes bleibt dann unangetastet.
 ### Das nutzt der KI-Creator (pugling-creator plan), damit ungeprüfter Inhalt nicht sofort Pflicht wird.
 # @name createPlan
@@ -48,6 +48,7 @@ Content-Type: application/json
 {
   "childId": {{childId}},
   "title": "REST-Client Demo-Plan",
+  "subjectId": 1,
   "durationDays": 14
 }
 

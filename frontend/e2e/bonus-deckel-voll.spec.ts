@@ -10,7 +10,7 @@ import { sohnLogin } from "./helpers";
  * Gefahren wird der Deckel > 0 (Entscheidung 4, „morgen wieder“): Deckel 4, eine erste Rechen-Übung zahlt 2 × 2 🪙
  * und füllt ihn, die zweite Rechen-Übung wartet dann bis morgen.
  *
- * Eigene Datei (eine Fläche je Spec, B-109); eigenes Kind, weil je Kind genau ein aktiver Plan spielbar ist.
+ * Eigene Datei (eine Fläche je Spec, B-109); eigenes Kind, weil je Kind und Fach genau ein aktiver Plan spielbar ist.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -50,7 +50,7 @@ test("Bei vollem Bonus-Deckel wartet eine Übung fester Form bis morgen, Vokabel
     config: { problems: [{ prompt: "1 + 1", answer: 2, tolerance: 0 }] },
   });
 
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: `Deckel-Plan ${RUN}`, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Deckel-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId: exVokabeln, stage: 4, cadence: "Daily", useLeitner: false });
 

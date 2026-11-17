@@ -62,6 +62,7 @@ test("Die Übungsauswahl im Planbau zeigt die Bewertung und sortiert nach ihr", 
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Bewertungsplan ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: fach });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
   await page.locator('select[aria-label="Fach-Filter"]').selectOption({ label: fach });

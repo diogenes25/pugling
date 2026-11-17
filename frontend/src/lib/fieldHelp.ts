@@ -152,9 +152,20 @@ export const FIELD_HELP = {
   },
   planActive: {
     title: "Aktiver Plan",
-    text: "Je Kind ist immer nur ein aktiver, laufender Plan spielbar. Aktivierst du diesen, werden die "
-      + "anderen Pläne desselben Kindes automatisch deaktiviert – sonst könnte sich das Kind den "
-      + "bequemsten zum Punktesammeln aussuchen.",
+    text: "Je Kind ist ein aktiver Plan je Fach spielbar – Englisch und Französisch laufen nebeneinander. "
+      + "Aktivierst du diesen, wird der aktive Plan desselben Fachs desselben Kindes automatisch deaktiviert – "
+      + "sonst könnte sich das Kind innerhalb eines Fachs den bequemsten zum Punktesammeln aussuchen.",
+  },
+  planSubject: {
+    title: "Fach des Plans",
+    text: "Jeder Plan gehört zu einem Fach. Das Fach entscheidet, welchen Plan ein neuer aktiver Plan ablöst: "
+      + "nur den aktiven Plan desselben Fachs, die Pläne anderer Fächer laufen weiter. Übungen aus anderen "
+      + "Fächern darf der Plan trotzdem enthalten.",
+  },
+  planUnit: {
+    title: "Unit des Plans",
+    text: "Optional: die Unit des Lehrwerks, die der Plan durcharbeitet – zum Wiederfinden und als Grundlage "
+      + "für Vorschläge. Zur Wahl stehen die Units der Reihen des gewählten Fachs.",
   },
 
   // ---- Übung im Katalog ----

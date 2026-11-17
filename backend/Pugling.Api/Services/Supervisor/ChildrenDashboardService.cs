@@ -41,8 +41,13 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
 
     /// <summary>
     /// The timeline of the supervisor's children (B-39): per child the days from <paramref name="from"/> to
-    /// <paramref name="to"/>, computed with the same daily rollup as <see cref="BuildAsync"/> and summed per day, week
+    /// <paramref name="to"/>, computed with the same per-plan rollup as <see cref="BuildAsync"/> and summed per day, week
     /// (Monday to Sunday) or calendar month. Pages over the children, ordered by name; the total is the number of children.
+    /// <para>
+    /// Unlike the daily overview it also reads plans switched off since (B-558, the fairness rule of B-606 decision 6):
+    /// an active plan counts in full; an inactive one adds its met goals and points, its goals total only on days it
+    /// met a goal or earned points, and its duty only when met - its open duty never makes a day open.
+    /// </para>
     /// </summary>
     public async Task<(IReadOnlyList<ChildTimeline> Rows, int Total)> TimelineAsync(int supervisorId, DateOnly from, DateOnly to,
         OverviewGranularity granularity, int? childId, int skip, int take, CancellationToken ct)
@@ -57,24 +62,27 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         var rows = new List<ChildTimeline>(children.Count);
         foreach (var child in children)
         {
-            // The same plans as the daily overview: active ones, each counted only on the days it runs.
+            // Every plan running in the range, also one switched off since (B-558): a chapter change must not erase the
+            // weeks before it. Without an activation history an inactive plan only counts in the child's favour.
             var plans = await db.StudyPlans.AsNoTracking()
-                .Where(p => p.ChildId == child.Id && p.Active && p.StartDate <= to && p.EndDate >= from)
+                .Where(p => p.ChildId == child.Id && p.StartDate <= to && p.EndDate >= from)
                 .ToListAsync(ct);
             var days = new List<(DateOnly Day, int GoalsTotal, int GoalsMet, int Points, bool? DutyDone)>();
             for (var day = from; day <= to; day = day.AddDays(1))
             {
-                int goalsTotal = 0, goalsMet = 0, points = 0, withDuty = 0, done = 0;
+                int goalsTotal = 0, goalsMet = 0, points = 0;
+                var duties = new List<PositionProgressService.PlanDutyState>();
                 foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
                 {
                     var d = await progress.ComputeDayAsync(plan, day, ct);
-                    goalsTotal += d.GoalsTotal;
                     goalsMet += d.GoalsMet;
                     points += d.PointsAwarded;
-                    if (d.GoalsTotal > 0) { withDuty++; if (d.DutyDone) done++; }
+                    // An inactive plan's goals only enter the total on a day it was used, or a draft would read "0 of n".
+                    if (plan.Active || d.GoalsMet > 0 || d.PointsAwarded > 0) goalsTotal += d.GoalsTotal;
+                    duties.Add(new(plan.Active, d.GoalsTotal > 0, d.DutyDone));
                 }
-                // null = no daily goal that day: such a day neither fulfils nor breaks a period's duty.
-                days.Add((day, goalsTotal, goalsMet, points, withDuty == 0 ? null : done == withDuty));
+                // null = no duty that day: such a day neither fulfils nor breaks a period's duty.
+                days.Add((day, goalsTotal, goalsMet, points, PositionProgressService.TimelineDutyDone(duties)));
             }
 
             var periods = days

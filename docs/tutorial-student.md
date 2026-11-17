@@ -25,15 +25,15 @@ gegen die laufende API verifiziert — kürzere Vollfassungen stehen in
 
 Der Student **legt keine Inhalte an** und erstellt keine Pläne — er *spielt* nur, was für ihn
 bereitsteht. Damit überhaupt etwas zu tun ist, braucht es einen **spielbaren Plan**: aktiv, heute in
-Laufzeit (Start ≤ heute ≤ Ende) und mit **mindestens einer Position**. Genau **ein** solcher Plan pro
-Kind ist gleichzeitig spielbar (Anti-Cheat-Sperre).
+Laufzeit (Start ≤ heute ≤ Ende) und mit **mindestens einer Position**. Je Fach ist **ein** solcher Plan pro
+Kind gleichzeitig spielbar (Anti-Cheat-Sperre, B-539).
 
 Der Seed bringt einen **Katalog** mit (Fach → Reihe/Unit → Übung `exerciseId 1`), aber **keinen fertigen
 Plan**. Diesen legt zuerst ein **Supervisor (Vater)** an:
 
 ```http
 POST /api/v1/supervisor/study-plans
-{ "childId": 1, "title": "Englisch Woche 1", "durationDays": 10 }
+{ "childId": 1, "title": "Englisch Woche 1", "subjectId": 1, "durationDays": 10 }
 → { "id": 1, "positionCount": 0, ... }
 
 POST /api/v1/supervisor/study-plans/1/positions

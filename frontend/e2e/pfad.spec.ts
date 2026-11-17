@@ -8,7 +8,7 @@ import { sohnLogin } from "./helpers";
  * „START" weiterrückt.
  *
  * Stoff über die API: drei Positionen in zwei Units – ein Tagesziel mit Malus, ein Wochenziel ohne, eine freie.
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -50,7 +50,7 @@ test("Der Pfad gliedert nach Unit, nennt Frist und Malus, und ein bestandener Te
   const exFrei = await vokabeln(unitB, FREI, `dog ${RUN}`, "Hund");
 
   const PLAN = `Pfad-Plan ${RUN}`;
-  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, title: PLAN, durationDays: 7, active: true });
+  const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: PLAN, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
   // Stufe 4 (Freitext) ohne Karteikasten: prüfbar, und „Los" führt zuerst ins Üben (B-454).
   const posTag = await postId(request, positions, vater, { exerciseId: exTag, stage: 4, cadence: "Daily", useLeitner: false, penaltyCoins: 5 });

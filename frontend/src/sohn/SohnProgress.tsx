@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { useChosenPlan } from "./useChosenPlan";
+import { useSohn } from "./SohnApp";
 import { BadgesGallery, MissionsPanel } from "./GamificationPanels";
 import { MyObjectives } from "./MyObjectives";
 import type { OverviewResponse, ProgressResponse, WeekCoins } from "../lib/types";
@@ -13,14 +14,35 @@ export function SohnProgress() {
   // Der gemerkte Plan („Los“ auf der Startseite setzt ihn), geprüft gegen die Pläne des Kindes statt der rohen Id:
   // die kann zu einem gelöschten Plan gehören (B-254).
   const { plans, chosen } = useChosenPlan();
+  const { setPlanId } = useSohn();
 
   if (plans.loading) return <div className="sohn-body"><div className="loading">{t("progress.loading")}</div></div>;
   if (plans.error) return <div className="sohn-body"><div className="error-box">{plans.error}</div></div>;
   if (!chosen) return <div className="sohn-body"><div className="loading">{t("progress.noPlan")}</div>
     <Link to="/sohn" className="btn ghost" style={{ textDecoration: "none" }}>{t("progress.toHome")}</Link></div>;
-  // Eine eigene Komponente, erst mit der Wahl gemountet: ihr Laden beginnt mit `loading`, statt einen Render lang die
-  // Antwort für „kein Plan“ als fehlende Daten zu lesen und den Fehlerkasten aufblitzen zu lassen.
-  return <ProgressForPlan planId={chosen.id} />;
+  // Je Fach ein aktiver Plan (B-539): mit mehreren Plänen wählt das Kind hier, wessen Fortschritt es sieht, statt nur
+  // den zuletzt mit „Los“ gemerkten zu bekommen. Die Wahl wird gemerkt wie dort.
+  const all = plans.data ?? [];
+  return (
+    <>
+      {all.length > 1 && (
+        <div className="sohn-body" style={{ paddingBottom: 0 }}>
+          <div className="row" role="group" aria-label={t("progress.choosePlan")} style={{ gap: 8, flexWrap: "wrap" }}>
+            {all.map((p) => (
+              <button key={p.id} type="button" className={`btn ${p.id === chosen.id ? "" : "ghost"} small`}
+                style={{ width: "auto" }} aria-pressed={p.id === chosen.id} onClick={() => setPlanId(p.id)}>
+                {p.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Eine eigene Komponente, erst mit der Wahl gemountet: ihr Laden beginnt mit `loading`, statt einen Render lang
+          die Antwort für „kein Plan“ als fehlende Daten zu lesen und den Fehlerkasten aufblitzen zu lassen. Der
+          Schlüssel baut sie beim Planwechsel neu auf, statt die Zahlen des vorigen Plans stehen zu lassen. */}
+      <ProgressForPlan key={chosen.id} planId={chosen.id} />
+    </>
+  );
 }
 
 /**

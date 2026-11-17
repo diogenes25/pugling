@@ -63,6 +63,7 @@ test("Übungsauswahl nennt den Umfang und lässt ausprobieren – im Assistenten
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Umfangplan ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: fach });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
   await page.locator('select[aria-label="Fach-Filter"]').selectOption({ label: fach });

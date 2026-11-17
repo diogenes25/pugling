@@ -46,7 +46,7 @@ public class EmptyExerciseGuardTests(PuglingWebAppFactory factory) : IClassFixtu
 
     private static async Task<int> EmptyPlanAsync(HttpClient father, int childId = 1) =>
         await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Leer-Guard-Plan", durationDays = 10 }));
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Leer-Guard-Plan", durationDays = 10 }));
 
     [Fact]
     public async Task LeereVokabeluebung_LaesstSichNichtZuweisen()

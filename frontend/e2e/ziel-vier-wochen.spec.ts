@@ -53,6 +53,7 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   await vater.locator("#plan-title").fill(`Vier Wochen ${RUN}`);
   await vater.getByLabel("Dauer (Tage)", { exact: true }).fill("28");
   await vater.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await vater.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Französisch" });
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
   await vater.locator('select[aria-label="Fach-Filter"]').selectOption({ label: "Französisch" });

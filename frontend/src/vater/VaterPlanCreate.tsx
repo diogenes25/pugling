@@ -2,16 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, errorMessage } from "../lib/api";
 import { FieldLabel } from "../components/InfoHint";
+import { Pflicht } from "../components/Pflicht";
+import { ListenAusfall } from "../components/ListenAusfall";
 import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
-import type { ChildResponse, CreatePlanDto } from "../lib/types";
+import type { ChildResponse, CreatePlanDto, SubjectResponse } from "../lib/types";
+import { PlanUnitSelect } from "./PlanUnitSelect";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 /**
- * Lehrplan anlegen = reinen Container erstellen. Der Plan trägt nur Titel, Kind und Laufzeit; welche
+ * Lehrplan anlegen = reinen Container erstellen. Der Plan trägt Titel, Kind, Fach (Pflicht, B-539 – je Fach ist ein
+ * Plan des Kindes aktiv), optional eine Unit, und die Laufzeit; welche
  * Übungen mit welchem Ziel/Punkten/Stufe gelernt werden, stellt der Vater danach auf der Plan-Seite als
  * Positionen zusammen (jede Position bringt ihre eigenen Werte mit). Kein plan-weites Verfahren mehr.
  */
@@ -20,6 +24,10 @@ export function VaterPlanCreate() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const children = useAsync<ChildResponse[]>(() => api.children(), [session!.id]);
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
+  // `?subjectId=` reist mit wie das Kind (Auswahl als Query).
+  const [subjectId, setSubjectId] = useState<number | "">(Number(params.get("subjectId")) || "");
+  const [seriesUnitId, setSeriesUnitId] = useState<number | "">("");
 
   const [title, setTitle] = useState("Englisch – Unit 1");
   const [description, setDescription] = useState("");
@@ -40,8 +48,13 @@ export function VaterPlanCreate() {
     e.preventDefault();
     setError(null);
     if (!childId) { setError("Bitte ein Kind wählen."); return; }
+    // Pflichtfeld: der Knopf ist ohne Fach gesperrt, die Zeile kehrt nur stumm zurück (B-233).
+    if (subjectId === "") return;
     setBusy(true);
-    const dto: CreatePlanDto = { childId: Number(childId), title: title.trim(), description: description.trim() || null, durationDays, startDate };
+    const dto: CreatePlanDto = {
+      childId: Number(childId), title: title.trim(), description: description.trim() || null, durationDays, startDate,
+      subjectId, seriesUnitId: seriesUnitId === "" ? null : seriesUnitId,
+    };
     try {
       const plan = await api.createPlan(dto);
       nav(`/vater/plan/${plan.id}`);
@@ -68,6 +81,20 @@ export function VaterPlanCreate() {
               {children.data?.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
             </select>
           </div>
+          <div className="field"><FieldLabel htmlFor="plan-subject" topic="planSubject">Fach <Pflicht /></FieldLabel>
+            <select id="plan-subject" value={subjectId} onChange={(e) => {
+              // Die Unit gehört zum alten Fach – stehen gelassen wiese der Server die Kombination ab.
+              setSeriesUnitId("");
+              setSubjectId(e.target.value === "" ? "" : Number(e.target.value));
+            }}>
+              <option value="">– Fach wählen –</option>
+              {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+          </div>
+          <div className="field"><FieldLabel htmlFor="plan-unit" topic="planUnit">Unit <span className="muted">(optional)</span></FieldLabel>
+            <PlanUnitSelect id="plan-unit" subjectId={subjectId} value={seriesUnitId} onChange={setSeriesUnitId} />
+          </div>
           <div className="field"><label htmlFor="plan-start">Start</label><input id="plan-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
           <div className="field"><FieldLabel htmlFor="plan-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
         </div>
@@ -79,7 +106,7 @@ export function VaterPlanCreate() {
       </section>
 
       <div className={`live-region${error ? " banner err" : ""}`} role="status" aria-live="polite">{error}</div>
-      <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy}>
+      <button type="submit" className="btn" style={{ width: "auto", alignSelf: "flex-start" }} disabled={busy || subjectId === ""}>
         {busy ? "…" : "Plan anlegen & Übungen hinzufügen"}
       </button>
     </form>

@@ -99,7 +99,7 @@ public class BeideRichtungenTests(PuglingWebAppFactory factory) : IClassFixture<
         var father = await TestApi.AdultAsync(factory);
         var (exerciseId, _) = await ExerciseAsync(father, "both");
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId = 1, title = "Beide Richtungen", durationDays = 14 }));
+            new { childId = 1, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Beide Richtungen", durationDays = 14 }));
         var positionId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions",
             new { exerciseId, cadence = "Daily", stage = (int)TestStage.FreeText, useLeitner = true, newItemsPerDay = 2 }));

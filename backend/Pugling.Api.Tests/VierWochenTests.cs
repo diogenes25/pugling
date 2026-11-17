@@ -36,7 +36,7 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             new { name = TestApi.UniqueName("Neuntklaessler"), grade = 9, pin = ChildPin }));
         var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", Words(poolSize));
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Vier Wochen Französisch", durationDays }));
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Vier Wochen Französisch", durationDays }));
         var positionId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions", new
             {

@@ -14,6 +14,7 @@ Request:
 {
   "childId": 1,
   "title": "Doku-Lehrplan",
+  "seriesUnitId": 7,
   "durationDays": 10
 }
 ```
@@ -25,13 +26,44 @@ Response — `HTTP 201`:
   "id": 4,
   "childId": 1,
   "title": "Doku-Lehrplan",
-  "subjectId": null,
+  "subjectId": 5,
   "startDate": "<date>",
   "endDate": "<date>",
   "active": true,
   "positionCount": 0,
   "description": null,
+  "seriesUnitId": 7,
+  "seriesUnitLabel": "Unit 1",
   "isPlayable": true
+}
+```
+
+### Lehrplan ohne Fach — Fehlerfall
+
+`POST /api/v1/supervisor/study-plans`
+
+Rolle: **father** — `Authorization: Bearer <father-token>`
+
+Request:
+
+```json
+{
+  "childId": 1,
+  "title": "Ohne Fach",
+  "durationDays": 10
+}
+```
+
+Response — `HTTP 400`:
+
+```json
+{
+  "type": "https://pugling.app/errors/validation_error",
+  "title": "Invalid request.",
+  "status": 400,
+  "detail": "A subject is required: send subjectId or a seriesUnitId whose series has a subject.",
+  "code": "validation_error",
+  "traceId": "<trace-id>"
 }
 ```
 
@@ -572,7 +604,7 @@ Response — `HTTP 200`:
   "startDate": "<date>",
   "endDate": "<date>",
   "active": true,
-  "currentStreak": 1,
+  "currentStreak": 0,
   "today": {
     "day": "<date>",
     "dutyDone": true,
@@ -610,12 +642,12 @@ Response — `HTTP 200`:
     "rewardsUnlocked": true
   },
   "dailyBox": {
-    "claimedToday": true,
+    "claimedToday": false,
     "openedToday": false,
-    "waiting": 1,
+    "waiting": 0,
     "coinsAwarded": null,
     "gemsAwarded": null,
-    "streakAtClaim": 1
+    "streakAtClaim": 0
   }
 }
 ```
@@ -636,7 +668,7 @@ Response — `HTTP 200`:
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 10,
-  "currentStreak": 1,
+  "currentStreak": 0,
   "days": [
     {
       "day": "<date>",
@@ -679,7 +711,7 @@ Response — `HTTP 200`:
   "daysComplete": 1,
   "totalDays": 10,
   "totalPoints": 10,
-  "currentStreak": 1,
+  "currentStreak": 0,
   "days": [
     {
       "day": "<date>",

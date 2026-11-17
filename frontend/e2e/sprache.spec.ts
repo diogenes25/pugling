@@ -94,6 +94,7 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
   await kindSelect.selectOption(CHILD.id);
+  await vater.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
   const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });

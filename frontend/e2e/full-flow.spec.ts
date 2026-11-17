@@ -32,6 +32,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
   await kindSelect.selectOption(CHILD.id);
+  await vater.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
   await expect(vater.getByRole("heading", { name: /Übungen im Plan/ })).toBeVisible();

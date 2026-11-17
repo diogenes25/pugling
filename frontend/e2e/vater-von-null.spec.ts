@@ -314,6 +314,7 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   const kindSelect = vater.getByRole("combobox", { name: "Kind" });
   await expect(kindSelect.locator("option")).not.toHaveCount(0);
   await kindSelect.selectOption(childId);
+  await vater.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
 

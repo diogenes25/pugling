@@ -117,17 +117,19 @@ für die Bildauswahl haben ihren eigenen Endpunkt (`children/{id}/interests`).
 
 ## 2. Den Plan-Container anlegen
 
-Ein `StudyPlan` ist ein **reiner Container**: Kind, Titel, Laufzeit, aktiv/inaktiv, optional ein Fach. Das
-eigentliche Training hängt an den Positionen (Schritt 3).
+Ein `StudyPlan` ist ein **reiner Container**: Kind, Titel, **Fach (Pflicht)**, optional eine Unit, Laufzeit,
+aktiv/inaktiv. Das eigentliche Training hängt an den Positionen (Schritt 3).
 
 ```http
 POST /api/v1/supervisor/study-plans
-{ "childId": 1, "title": "Vokabel-Sprint", "durationDays": 10 }
+{ "childId": 1, "title": "Vokabel-Sprint", "subjectId": 1, "durationDays": 10 }
 → {
   "id": 1,
   "childId": 1,
   "title": "Vokabel-Sprint",
-  "subjectId": null,
+  "subjectId": 1,
+  "seriesUnitId": null,
+  "seriesUnitLabel": null,
   "startDate": "2026-07-09",
   "endDate": "2026-07-18",
   "active": true,
@@ -142,12 +144,15 @@ POST /api/v1/supervisor/study-plans
   (UTC — nahe Mitternacht lokal ggf. ein anderer Kalendertag).
 - `isPlayable` = **`active` UND heute innerhalb der Laufzeit**. Nur ein spielbarer Plan taucht in der
   Sohn-Sicht auf.
-- **Anti-Cheat:** Es ist **genau ein aktiver + laufender Plan je Kind** spielbar. Ein neuer aktiver Plan
-  deaktiviert automatisch andere aktive Pläne desselben Kindes — der Sohn kann nicht zwischen leichten
-  Plänen hin- und herwechseln. Deaktivierte Pläne bleiben zur Auswertung erhalten.
+- **Ein aktiver Plan je Fach** (B-539): Ein neuer aktiver Plan schaltet nur den aktiven Plan **desselben
+  Fachs** desselben Kindes ab — Englisch und Französisch laufen nebeneinander, innerhalb eines Fachs kann der
+  Sohn nicht zwischen leichten Plänen wechseln (Anti-Cheat). Deaktivierte Pläne bleiben zur Auswertung erhalten.
+- **Fach Pflicht:** ohne `subjectId` und ohne `seriesUnitId` → `400 validation_error`. Mit `seriesUnitId`
+  übernimmt der Plan das Fach der Reihe; ein abweichendes `subjectId` dazu ist ebenfalls `400`.
 
-Optionale Felder: `subjectId` (Katalog-Fach zur Einordnung/Filterung), `description`, `startDate`.
-Nachträglich ändern:
+Optionale Felder: `seriesUnitId` (Unit, die der Plan durcharbeitet), `description`, `startDate`, `active`.
+Nachträglich ändern (`clearSeriesUnit: true` entfernt die Unit; ein Plan ohne Fach braucht bei jedem PATCH
+eines – außer beim reinen Abschalten `{ "active": false }`):
 
 ```http
 PATCH /api/v1/supervisor/study-plans/1
@@ -550,7 +555,7 @@ GET  /api/v1/supervisor/children
 
 # 2) Plan-Container
 POST /api/v1/supervisor/study-plans
-{ "childId": 1, "title": "Vokabel-Sprint", "durationDays": 10 }
+{ "childId": 1, "title": "Vokabel-Sprint", "subjectId": 1, "durationDays": 10 }
 → { "id": 1, "positionCount": 0, "isPlayable": true, … }
 
 # 3) Position (getippte Klausur → Stufe 4 per stage/stageSchedule!; penaltyCoins = Münz-Malus bei gerissener Pflicht)

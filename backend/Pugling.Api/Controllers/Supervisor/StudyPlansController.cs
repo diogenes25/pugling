@@ -23,9 +23,10 @@ namespace Pugling.Api.Controllers.Supervisor;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimeProvider time) : ControllerBase
 {
-    /// <summary>In-memory projection for freshly created containers (positions still empty).</summary>
-    private static PlanResponse Map(StudyPlan p, DateOnly today) =>
-        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
+    /// <summary>In-memory projection of a tracked container, with the unit label and position count read separately.</summary>
+    private static PlanResponse Map(StudyPlan p, string? unitLabel, int positionCount, DateOnly today) =>
+        new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, positionCount, p.Description,
+            p.SeriesUnitId, unitLabel)
         {
             IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
         };
@@ -34,7 +35,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
     /// without materializing the position rows. <paramref name="today"/> flows in as a parameter for the
     /// playability computation (the same run-time condition as the child's visibility).</summary>
     internal static Expression<Func<StudyPlan, PlanResponse>> ToResponse(DateOnly today) =>
-        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description)
+        p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description,
+            p.SeriesUnitId, p.SeriesUnit == null ? null : p.SeriesUnit.Label)
         {
             IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
         };
@@ -53,8 +55,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsStudent())
         {
-            // The child only sees its one playable plan (active + within its runtime); inactive/expired ones
-            // stay hidden so it cannot pick an easy plan to farm points.
+            // The child only sees its playable plans (active + within their runtime, at most one per subject);
+            // inactive/expired ones stay hidden so it cannot pick an easy plan to farm points.
             scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && p.EndDate >= today);
         }
         else
@@ -91,6 +93,15 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         // Ownership check first: a uniform 404 for "does not exist" and "not my child".
         if (!await access.SupervisorOwnsChildAsync(User, dto.ChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+        UnitRef? unit = null;
+        if (dto.SeriesUnitId is { } unitId)
+        {
+            unit = await FindUnitAsync(unitId, ct);
+            if (unit is null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Series unit not found.");
+        }
+        var (subjectId, subjectError) = ResolveSubject(dto.SubjectId, unit);
+        if (subjectError is not null) return this.ProblemWithCode(ApiErrors.ValidationError, subjectError);
+        if (subjectId is null) return this.ProblemWithCode(ApiErrors.ValidationError, SubjectRequired);
 
         var start = dto.StartDate ?? DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         var duration = dto.DurationDays > 0 ? dto.DurationDays : 10;
@@ -99,28 +110,59 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             ChildId = dto.ChildId,
             Title = dto.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim(),
-            SubjectId = dto.SubjectId,
+            SubjectId = subjectId,
+            SeriesUnitId = unit?.Id,
             StartDate = start,
             EndDate = start.AddDays(duration - 1),
             Active = dto.Active,
         };
         db.StudyPlans.Add(plan);
         await db.SaveChangesAsync(ct);
-        // Invariant "at most one active plan per child": a new plan (active by default) becomes the only
-        // playable one - the child's existing plans are deactivated. Creating one inactive is the opt-out
-        // for a plan that must be reviewed first, and it deliberately leaves the running plan alone.
-        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
-        return CreatedAtAction(nameof(Get), new { planId = plan.Id }, Map(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)));
+        // Invariant "at most one active plan per subject and child": a new plan (active by default) replaces the
+        // active plan of its subject. Creating one inactive is the opt-out for a plan that must be reviewed first,
+        // and it deliberately leaves the running plan alone.
+        if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);
+        return CreatedAtAction(nameof(Get), new { planId = plan.Id },
+            Map(plan, unit?.Label, 0, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)));
+    }
+
+    private const string SubjectRequired =
+        "A subject is required: send subjectId or a seriesUnitId whose series has a subject.";
+
+    /// <summary>A catalog unit as far as the plan needs it: its label and the subject of its series.</summary>
+    private sealed record UnitRef(int Id, string Label, int? SubjectId);
+
+    // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
+    private Task<UnitRef?> FindUnitAsync(int unitId, CancellationToken ct) =>
+        db.SeriesUnits.AsNoTracking().Where(u => u.Id == unitId)
+            .Select(u => new UnitRef(u.Id, u.Label, u.Series!.SubjectId)).FirstOrDefaultAsync(ct);
+
+    /// <summary>
+    /// The plan's subject from the requested one and the unit: the unit's series fixes it, and a differing request is
+    /// rejected - no English plan with a French unit. Without a unit subject the requested one stands, possibly
+    /// <c>null</c>, which the caller judges.
+    /// </summary>
+    private static (int? SubjectId, string? Error) ResolveSubject(int? requested, UnitRef? unit)
+    {
+        if (unit?.SubjectId is not { } unitSubject) return (requested, null);
+        if (requested is { } r && r != unitSubject)
+            return (null, "subjectId does not match the subject of the unit's series.");
+        return (unitSubject, null);
     }
 
     /// <summary>
-    /// Enforces "at most one active plan per child": deactivates all other plans of the child.
-    /// This way the child cannot choose the easiest among several active plans (anti-cheating).
+    /// Enforces "at most one active plan per subject and child" (B-539): switches off the child's other active plans
+    /// of the plan's subject. Plans of other subjects stay on - each subject runs in its own rhythm; within one
+    /// subject the child cannot pick the easier of two plans (anti-cheating). Plans without a subject form one group.
     /// </summary>
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
-    private Task DeactivateSiblingPlansAsync(int childId, int keepPlanId, CancellationToken ct) =>
-        db.StudyPlans.Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active)
+    private Task DeactivateSameSubjectPlansAsync(StudyPlan plan, CancellationToken ct)
+    {
+        var (childId, keepPlanId, subjectId) = (plan.ChildId, plan.Id, plan.SubjectId);
+        return db.StudyPlans
+            .Where(p => p.ChildId == childId && p.Id != keepPlanId && p.Active && p.SubjectId == subjectId)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false), ct);
+    }
 
     /// <summary>Changes the study plan container (partial, father/own only). <see cref="UpdatePlanDto.ChildId"/> assigns the plan to another own child.</summary>
     [HttpPatch("{planId:int}")]
@@ -140,26 +182,41 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             if (!await access.SupervisorOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
             plan.ChildId = newChildId;
         }
+        if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+
+        // The unit after this change: cleared (the switch wins), newly set, or the one the plan already has.
+        var newUnitId = dto.ClearSeriesUnit ? null : dto.SeriesUnitId;
+        UnitRef? unit = null;
+        if (!dto.ClearSeriesUnit && (newUnitId ?? plan.SeriesUnitId) is { } unitId)
+        {
+            unit = await FindUnitAsync(unitId, ct);
+            if (unit is null && newUnitId is not null) return this.ProblemWithCode(ApiErrors.InvalidReference, "Series unit not found.");
+        }
+        var subjectId = plan.SubjectId;
+        // Consistency is judged only when the request touches subject or unit: an unrelated edit must not fail on a
+        // catalog that moved under the plan. A newly set unit brings its subject along unless one is sent.
+        if (dto.SubjectId is not null || newUnitId is not null)
+        {
+            var (resolved, subjectError) = ResolveSubject(dto.SubjectId ?? (newUnitId is null ? plan.SubjectId : null), unit);
+            if (subjectError is not null) return this.ProblemWithCode(ApiErrors.ValidationError, subjectError);
+            subjectId = resolved ?? plan.SubjectId;
+        }
+        // Switching off must never fail on a mandatory field: a request that only sets active:false is exempt.
+        var onlySwitchesOff = dto == new UpdatePlanDto(null, null, null, null, false);
+        if (subjectId is null && !onlySwitchesOff) return this.ProblemWithCode(ApiErrors.ValidationError, SubjectRequired);
+
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
-        if (dto.SubjectId is { } sid)
-        {
-            if (!await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
-            plan.SubjectId = sid;
-        }
+        plan.SubjectId = subjectId;
+        plan.SeriesUnitId = unit?.Id;
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
         await db.SaveChangesAsync(ct);
-        // After activating or moving, restore the invariant "one active plan per child".
-        if (plan.Active) await DeactivateSiblingPlansAsync(plan.ChildId, plan.Id, ct);
+        // After activating, moving to another child or changing the subject, restore "one active plan per subject".
+        if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId, ct);
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
-        return new PlanResponse(plan.Id, plan.ChildId, plan.Title, plan.SubjectId,
-            plan.StartDate, plan.EndDate, plan.Active, positionCount, plan.Description)
-        {
-            IsPlayable = plan.Active && plan.StartDate <= today && plan.EndDate >= today,
-        };
+        return Map(plan, unit?.Label, positionCount, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime));
     }
 
     /// <summary>

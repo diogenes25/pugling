@@ -211,13 +211,16 @@ public sealed class PlanPlanner(CreatorPipeline pipeline, SupervisorApi supervis
         var plan = await supervisor.CreatePlanAsync(new CreatePlanDto(
             ChildId: request.Base.ChildId.Value,
             Title: title,
+            // The plan carries the subject and unit the exercises were generated for (B-539): the subject groups the
+            // activation rule, so switching the plan on later only replaces the child's plan of that subject.
             SubjectId: request.Base.SubjectId,
+            SeriesUnitId: request.Base.SeriesUnitId,
             StartDate: request.StartDate,
             DurationDays: request.DurationDays,
             Description: $"Vom KI-Creator erzeugt ({string.Join(", ", request.Types)}, Intensität {request.Intensity}). "
                          + "Bitte prüfen und dann aktivieren.",
             // The run must not take over the child's evening: an unreviewed plan stays off until a human
-            // switches it on. Created active, it would additionally deactivate the plan being played today.
+            // switches it on. Created active, it would additionally deactivate the plan of its subject played today.
             Active: false), ct);
 
         var settings = Intensities[request.Intensity];

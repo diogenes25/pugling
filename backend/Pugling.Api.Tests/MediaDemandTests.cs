@@ -175,6 +175,7 @@ public class MediaDemandTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
         {
             childId,
+            subjectId = await TestApi.DefaultSubjectIdAsync(father),
             title = $"{marker}-Plan",
             startDate = today.AddDays(-1).ToString("yyyy-MM-dd"),
             durationDays = 31,

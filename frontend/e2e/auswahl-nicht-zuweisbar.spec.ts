@@ -67,6 +67,7 @@ test("Eine zurückgezogene Übung ist im Planbau eines Fremden gesperrt und nenn
   await page.goto("/vater/plan/new");
   await page.locator("#plan-title").fill(`Freigabeplan ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption(childId);
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: fach });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
   const planId = Number(/\/vater\/plan\/(\d+)$/.exec(page.url())![1]);

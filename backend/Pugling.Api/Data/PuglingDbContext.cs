@@ -632,9 +632,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .Metadata.SetValueComparer(JsonValueComparer.For<List<string>?>());
         });
 
-        // The study plan is optionally coupled to a catalog subject (for timetable control).
+        // The study plan's subject groups the activation rule (one active plan per subject). SetNull: a plan outlives
+        // its catalog subject and must get a new one when it is next edited.
         modelBuilder.Entity<StudyPlan>()
             .HasOne(p => p.Subject).WithMany().HasForeignKey(p => p.SubjectId)
+            .OnDelete(DeleteBehavior.SetNull);
+        // The optional unit the plan works through; SetNull for the same reason - the plan outlives the catalog.
+        modelBuilder.Entity<StudyPlan>()
+            .HasOne(p => p.SeriesUnit).WithMany().HasForeignKey(p => p.SeriesUnitId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Study plan position: belongs to a plan (cascade) and references a catalog exercise. The exercise must

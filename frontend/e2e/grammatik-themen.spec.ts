@@ -44,7 +44,7 @@ test("Der Creator ordnet Regelaufgaben einem Grammatik-Thema zu, und der Vater f
   const seriesA = await seriesOf(`Reihe A ${RUN}`, 5);
   const seriesB = await seriesOf(`Reihe B ${RUN}`, 7);
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId: 1, title: `Themen-Plan ${RUN}`, durationDays: 7, active: false });
+    { childId: 1, subjectId, title: `Themen-Plan ${RUN}`, durationDays: 7, active: false });
 
   await vaterLogin(page, FATHER);
 

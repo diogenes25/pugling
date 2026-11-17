@@ -81,6 +81,7 @@ test("Planbau: „Erneut suchen“ bleibt während der Wiederholung unter dem Fi
   await page.locator("#plan-title").fill(`Wiederholknopf ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
   await page.route(SUCHE, (route) => route.abort("failed"));
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
   await expect(page.getByText(/Die Übungssuche ist gescheitert/)).toBeVisible();

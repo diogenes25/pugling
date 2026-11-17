@@ -20,7 +20,7 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
         var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
             new { name = TestApi.UniqueName("Dosis"), pin = ChildPin }));
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = TestApi.UniqueName("Dosis-Plan"), durationDays = 7 }));
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = TestApi.UniqueName("Dosis-Plan"), durationDays = 7 }));
         return (father, childId, planId);
     }
 

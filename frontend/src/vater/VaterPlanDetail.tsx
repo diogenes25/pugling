@@ -7,8 +7,11 @@ import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { PlanPositions } from "./PlanPositions";
-import type { ChildResponse, PlanResponse, ProgressResponse, UpdatePlanDto } from "../lib/types";
+import type { ChildResponse, PlanResponse, ProgressResponse, SubjectResponse, UpdatePlanDto } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { FieldLabel } from "../components/InfoHint";
+import { Pflicht } from "../components/Pflicht";
+import { PlanUnitSelect } from "./PlanUnitSelect";
 import { formatDate, formatDateRange } from "../lib/datum";
 
 export function VaterPlanDetail() {
@@ -20,6 +23,8 @@ export function VaterPlanDetail() {
   // Der Plan trägt nur die childId; für den Namen (und den Weg zum Kind) braucht es den Datensatz.
   const child = useAsync<ChildResponse | null>(
     () => (plan.data ? api.child(plan.data.childId) : Promise.resolve(null)), [plan.data?.childId]);
+  // Für den Fachnamen im Kopf (`PlanResponse` trägt nur die Id).
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
 
   const [editing, setEditing] = useState(false);
   const action = useAction();
@@ -49,7 +54,9 @@ export function VaterPlanDetail() {
         {p.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}
         {/* Server-autoritativ: aktiv, aber heute außerhalb der Laufzeit → für das Kind nicht spielbar. */}
         {p.active && !p.isPlayable && <span className="pill" title="Aktiv, aber heute außerhalb der Laufzeit">nicht in Laufzeit</span>}
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
+        {/* Ohne Fach weist der Server das Aktivieren ab (B-539); Abschalten bleibt frei. Der Hinweis darunter nennt den Weg. */}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+          disabled={action.busy || (!p.active && p.subjectId == null)}
           onClick={() => mutate(() => api.updatePlan(id, { active: !p.active }), p.active ? "Plan deaktiviert." : "Plan aktiviert.")}>
           {p.active ? "Deaktivieren" : "Aktivieren"}
         </button>
@@ -61,10 +68,18 @@ export function VaterPlanDetail() {
         </button>
       </div>
       <p className="muted">
-        <Link to={`/vater/kind/${p.childId}`}>{child.data?.name ?? `Kind #${p.childId}`}</Link> · {formatDateRange(p.startDate, p.endDate)}
+        <Link to={`/vater/kind/${p.childId}`}>{child.data?.name ?? `Kind #${p.childId}`}</Link>
+        {" · "}{p.subjectId == null ? "ohne Fach" : subjects.data?.find((s) => s.id === p.subjectId)?.name ?? `Fach #${p.subjectId}`}
+        {p.seriesUnitLabel && <> · {p.seriesUnitLabel}</>}
+        {" · "}{formatDateRange(p.startDate, p.endDate)}
       </p>
+      {p.subjectId == null && (
+        <div className="banner" role="note">
+          Dieser Plan hat noch kein Fach. Wähle es unter „Bearbeiten“ – erst dann lässt er sich wieder aktivieren oder ändern.
+        </div>
+      )}
       <p className="sub" style={{ marginTop: -4 }}>
-        Nur der <strong>aktive</strong> Plan ist für dein Kind spielbar. Aktivierst du diesen, werden andere Pläne desselben Kindes automatisch deaktiviert – so kann es sich keine leichte Übung zum Punktesammeln aussuchen.
+        Je Fach ist <strong>ein</strong> aktiver Plan für dein Kind spielbar. Aktivierst du diesen, wird der aktive Plan desselben Fachs automatisch deaktiviert – Pläne anderer Fächer laufen weiter, und innerhalb eines Fachs kann sich dein Kind keinen leichten Plan zum Punktesammeln aussuchen.
       </p>
       {p.description && <p style={{ marginTop: -6 }}>{p.description}</p>}
 
@@ -111,8 +126,8 @@ export function VaterPlanDetail() {
   );
 }
 
-/** Formular zum Bearbeiten des Plan-Containers: Titel, Beschreibung, Laufzeit und Kind-Zuweisung. */
-function PlanEditForm({ plan, childName, busy, onSave }: {
+/** Formular zum Bearbeiten des Plan-Containers: Titel, Fach, Unit, Beschreibung, Laufzeit und Kind-Zuweisung. */
+export function PlanEditForm({ plan, childName, busy, onSave }: {
   plan: PlanResponse;
   /** Der Name des geladenen Kindes – aus dem Datensatz, den die Seite ohnehin lädt (`PlanResponse` trägt keinen). */
   childName: string | undefined;
@@ -120,14 +135,24 @@ function PlanEditForm({ plan, childName, busy, onSave }: {
   onSave: (dto: UpdatePlanDto) => void;
 }) {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
+  const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const [form, setForm] = useState({
     title: plan.title, description: plan.description ?? "",
     startDate: plan.startDate, endDate: plan.endDate, childId: plan.childId,
+    subjectId: (plan.subjectId ?? "") as number | "", seriesUnitId: (plan.seriesUnitId ?? "") as number | "",
   });
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Pflichtfeld: ohne Fach ist Speichern gesperrt, die Zeile kehrt nur stumm zurück (B-233).
+    if (form.subjectId === "") return;
     const dto: UpdatePlanDto = {};
+    if (form.subjectId !== plan.subjectId) dto.subjectId = form.subjectId;
+    // Die Unit: gesetzt schickt sie mit, geleert braucht den Schalter – `null` hieße „nicht angegeben" (PATCH).
+    if (form.seriesUnitId !== (plan.seriesUnitId ?? "")) {
+      if (form.seriesUnitId === "") dto.clearSeriesUnit = true;
+      else dto.seriesUnitId = form.seriesUnitId;
+    }
     if (form.title.trim() !== "" && form.title !== plan.title) dto.title = form.title.trim();
     // Beschreibung immer mitschicken (auch Leeren erlaubt → null), wenn geändert.
     if ((form.description ?? "") !== (plan.description ?? "")) dto.description = form.description.trim() || null;
@@ -157,6 +182,22 @@ function PlanEditForm({ plan, childName, busy, onSave }: {
             options={(children.data ?? []).map((c) => ({ value: String(c.id), label: `${c.name} (#${c.id})` }))}
           />
         </div>
+        <div className="field"><FieldLabel htmlFor="plan-edit-subject" topic="planSubject">Fach <Pflicht /></FieldLabel>
+          <select id="plan-edit-subject" value={form.subjectId} onChange={(e) => {
+            const subjectId = e.target.value === "" ? "" : Number(e.target.value);
+            // Die Unit gehört zum alten Fach – stehen gelassen wiese der Server die Kombination ab.
+            setForm((f) => ({ ...f, subjectId, seriesUnitId: "" }));
+          }}>
+            <option value="">– Fach wählen –</option>
+            {subjects.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />
+        </div>
+        <div className="field"><FieldLabel htmlFor="plan-edit-unit" topic="planUnit">Unit <span className="muted">(optional)</span></FieldLabel>
+          <PlanUnitSelect id="plan-edit-unit" subjectId={form.subjectId} value={form.seriesUnitId}
+            currentLabel={form.seriesUnitId === plan.seriesUnitId ? plan.seriesUnitLabel : null}
+            onChange={(seriesUnitId) => setForm((f) => ({ ...f, seriesUnitId }))} />
+        </div>
         <div className="field"><label htmlFor="plan-edit-start">Start</label>
           <input id="plan-edit-start" type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} /></div>
         <div className="field"><label htmlFor="plan-edit-end">Ende</label>
@@ -164,7 +205,7 @@ function PlanEditForm({ plan, childName, busy, onSave }: {
       </div>
       <div className="field"><label htmlFor="plan-edit-desc">Beschreibung <span className="muted">(optional)</span></label>
         <textarea id="plan-edit-desc" value={form.description} rows={2} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} /></div>
-      <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}>Speichern</button>
+      <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || form.subjectId === ""}>Speichern</button>
     </form>
   );
 }

@@ -75,6 +75,7 @@ test("Planbau: Ein Filterwechsel nach gescheiterter Suche zeigt die neue Suche, 
   await page.locator("#plan-title").fill(`Filterwechsel ${RUN}`);
   await page.getByRole("combobox", { name: "Kind" }).selectOption("1");
   await page.route(SUCHE, (route) => route.abort("failed"));
+  await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(page).toHaveURL(/\/vater\/plan\/\d+$/);
   await expect(page.getByText(/Die Übungssuche ist gescheitert/)).toBeVisible();

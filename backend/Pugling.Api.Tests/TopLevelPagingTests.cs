@@ -69,7 +69,7 @@ public class TopLevelPagingTests(PuglingWebAppFactory factory) : IClassFixture<P
                     var childId = await CreateChildAsync(adult, "Spiel-Kind", pin);
                     var a = await TestApi.CreateEmptyPlanAsync(adult, childId);
                     var b = await TestApi.CreateEmptyPlanAsync(adult, childId);
-                    // The product keeps one playable plan per child; two are forced in here only so a window over
+                    // The product keeps one playable plan per child and subject; two of one subject are forced in here only so a window over
                     // the student list has something to cut - the endpoint itself does not enforce the invariant.
                     using (var scope = factory.Services.CreateScope())
                     {

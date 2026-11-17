@@ -328,8 +328,16 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return withDuty.Any(p => p.Done) && !withDuty.Any(p => p.Active && !p.Done);
     }
 
-    /// <summary>One plan's duty on one day, as far as the streak needs it.</summary>
-    private readonly record struct PlanDutyState(bool Active, bool HasDuty, bool Done);
+    /// <summary>
+    /// The day's duty for the supervisor's timeline (B-558): <see cref="IsCompleteDay"/>, or <c>null</c> when no plan
+    /// carries a duty that may count - an open duty of a plan switched off since is no duty of the day, so a never used
+    /// draft neither breaks nor fulfils a period.
+    /// </summary>
+    internal static bool? TimelineDutyDone(IReadOnlyCollection<PlanDutyState> plansOfDay) =>
+        plansOfDay.Any(p => p.HasDuty && (p.Active || p.Done)) ? IsCompleteDay(plansOfDay) : null;
+
+    /// <summary>One plan's duty on one day, as far as the streak and the timeline need it.</summary>
+    internal readonly record struct PlanDutyState(bool Active, bool HasDuty, bool Done);
 
     /// <summary>
     /// The duty part of <see cref="ComputeDayAsync"/> alone (<see cref="DayOverview.DutyDone"/> and whether there is a

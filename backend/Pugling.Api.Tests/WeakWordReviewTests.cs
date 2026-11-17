@@ -19,7 +19,7 @@ public class WeakWordReviewTests(PuglingWebAppFactory factory) : IClassFixture<P
 
     // A child with two units of one subject: unit A holds an exercise with three words, unit B one with two. The child has
     // learning state for all five, attributed to the exercise it learned them in.
-    private async Task<Setup> SetupAsync(bool planWithSubject = false)
+    private async Task<Setup> SetupAsync()
     {
         var father = await TestApi.AdultAsync(factory);
         var pin = "4" + Random.Shared.Next(100, 999);
@@ -35,7 +35,7 @@ public class WeakWordReviewTests(PuglingWebAppFactory factory) : IClassFixture<P
         var wordsA = SeedProgress(childId, exA);
         var wordsB = SeedProgress(childId, exB);
         var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Plan", durationDays = 7, subjectId = planWithSubject ? subjectId : (int?)null }));
+            new { childId, title = "Plan", durationDays = 7, subjectId }));
         return new Setup(father, childId, planId, subjectId, unitA, unitB, wordsA, wordsB, pin);
     }
 
@@ -177,7 +177,7 @@ public class WeakWordReviewTests(PuglingWebAppFactory factory) : IClassFixture<P
     [Fact]
     public async Task Ein_Plan_Eines_Anderen_Fachs_Wird_Abgelehnt()
     {
-        var s = await SetupAsync(planWithSubject: true);
+        var s = await SetupAsync();
         var math = await TestApi.IdAsync(await s.Father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Mathe-Schwach") }));
         using (var scope = factory.Services.CreateScope())
         {

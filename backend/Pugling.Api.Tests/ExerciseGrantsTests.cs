@@ -69,7 +69,7 @@ public class ExerciseGrantsTests(PuglingWebAppFactory factory) : IClassFixture<P
         var f2 = await TestApi.AdultAsync(factory, id2, "2222");
         var childId = await TestApi.IdAsync(await f2.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "KindB" }));
         var planId = await TestApi.IdAsync(await f2.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "PlanB", durationDays = 5 }));
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(f2), title = "PlanB", durationDays = 5 }));
         return (f2, id2, childId, planId);
     }
 

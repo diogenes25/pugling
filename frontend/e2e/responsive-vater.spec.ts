@@ -86,7 +86,7 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
   await vaterLogin(page, FATHER);
 
   // Die Detailseite braucht einen Plan des eingeloggten Vaters, nicht eine geratene Id. Hat er keinen, legt
-  // die Spec einen inaktiven an (inaktiv, damit die Sperre „ein aktiver Plan je Kind" nicht greift).
+  // die Spec einen inaktiven an (inaktiv, damit die Sperre „ein aktiver Plan je Fach" nicht greift).
   const planId = await page.evaluate(async () => {
     const headers = { Authorization: `Bearer ${localStorage.getItem("pugling.token")}`, "Content-Type": "application/json" };
     const plans = (await (await fetch("/api/v1/supervisor/study-plans", { headers })).json()) as { id: number }[];
@@ -95,9 +95,15 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
     // Vater ohne Kind scheitert mit diesem Grund, nicht mit einem TypeError aus `kids[0]`.
     const kids = (await (await fetch("/api/v1/supervisor/children", { headers })).json()) as { id: number }[];
     if (kids.length === 0) throw new Error("Vater 1 hat weder einen Plan noch ein Kind – der Seed fehlt.");
+    // Ein Plan braucht ein Fach (B-539) – ein eigenes statt eines per Index gegriffenen aus der geteilten DB.
+    const subject = await fetch("/api/v1/creator/subjects", {
+      method: "POST", headers, body: JSON.stringify({ name: `Tablet-Fach ${Date.now()}` }),
+    });
+    if (!subject.ok) throw new Error(`Fach anlegen: ${subject.status}`);
+    const subjectId = ((await subject.json()) as { id: number }).id;
     const res = await fetch("/api/v1/supervisor/study-plans", {
       method: "POST", headers,
-      body: JSON.stringify({ childId: kids[0].id, title: "Tablet-Probe", durationDays: 7, active: false }),
+      body: JSON.stringify({ childId: kids[0].id, title: "Tablet-Probe", subjectId, durationDays: 7, active: false }),
     });
     return ((await res.json()) as { id: number }).id;
   });
@@ -135,7 +141,12 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
   // Verschiebung jedes Popover verrückt statt nur die überstehenden.
   await test.step("Ruhelage bleibt, wo Platz ist", async () => {
     await page.goto("/vater/plan/new");
-    const hint = page.locator(".vater-main .info-hint").first();
+    // Das ⓘ ganz links im Formular: dort ist sicher Platz. Seit B-539 steht vor „Dauer" das Fach, dessen ⓘ am rechten
+    // Rand liegt und zu Recht verschoben wird – `.first()` träfe es.
+    const hints = page.locator(".vater-main .info-hint");
+    await expect(hints.first()).toBeVisible();
+    const lefts = await hints.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().left));
+    const hint = hints.nth(lefts.indexOf(Math.min(...lefts)));
     await hint.locator(".info-hint-btn").click();
     const lage = await hint.evaluate((wrap) => {
       const pop = wrap.querySelector(".info-hint-pop") as HTMLElement;

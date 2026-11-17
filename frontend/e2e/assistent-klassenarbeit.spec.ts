@@ -6,7 +6,7 @@ import { pfadStart, sohnLogin, vaterLogin } from "./helpers";
  * Vokabel-Position die Stufenleiter (erstes Drittel Selbsteinschätzung, danach getippt) und legt die Klassenarbeit mit an.
  *
  * Der Stoff entsteht über die API (Gegenstand ist der Assistent, nicht das Anlegen): ein eigenes Fach mit genau einer
- * Vokabelübung und ein eigenes Kind je Fall – je Kind ist genau ein aktiver Plan spielbar, und ein geseedetes Kind trüge
+ * Vokabelübung und ein eigenes Kind je Fall – je Kind und Fach ist genau ein aktiver Plan spielbar, und ein geseedetes Kind trüge
  * fremde Pläne. Termin = heute + 8 Tage (UTC, wie der Server zählt): Plan 8 Tage, getippt ab Tag ceil(8/3)+1 = 4.
  */
 

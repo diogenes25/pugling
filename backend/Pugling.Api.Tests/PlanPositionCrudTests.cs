@@ -16,15 +16,15 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     private static async Task<int> EmptyPlanAsync(HttpClient father, int childId = 1)
     {
         var res = await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId, title = "Positions-Plan", durationDays = 10 });
+            new { childId, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Positions-Plan", durationDays = 10 });
         return await TestApi.IdAsync(res);
     }
 
     /// <summary>
     /// A plan created <b>inactive</b> leaves the child's running plan alone.
     /// <para>
-    /// Creating a plan otherwise makes it the child's only playable one and switches every sibling off –
-    /// deliberately, because "exactly one active plan" is an anti-cheat rule. That default is exactly wrong
+    /// Creating a plan otherwise makes it the child's only playable one in its subject and switches that subject's
+    /// sibling off – deliberately, because "exactly one active plan per subject" is an anti-cheat rule. That default is exactly wrong
     /// for a plan nobody has reviewed yet: the AI creator would replace the plan the child is playing
     /// tonight, and unchecked content would start booking penalty coins. Hence <c>active: false</c> on
     /// creation, and hence this case.
@@ -42,7 +42,7 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var laufend = await EmptyPlanAsync(father);
 
         var neu = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
-            new { childId = 1, title = "Ungeprüfter KI-Plan", durationDays = 10, active = false }));
+            new { childId = 1, subjectId = await TestApi.DefaultSubjectIdAsync(father), title = "Ungeprüfter KI-Plan", durationDays = 10, active = false }));
 
         // Without this line the case would also pass for a server that ignores `active` and simply hands
         // back what it was sent - the state has to be read back.

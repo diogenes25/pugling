@@ -7,7 +7,7 @@ import { sohnLogin, pfadStart } from "./helpers";
  * rot, sobald der Knopf auf eine andere Route oder eine andere Position führt.
  *
  * Stoff über die API: eine Vokabel, Stufe 2 (Selbstcheck) – „Nicht gewusst“ macht den Test sicher nicht bestanden.
- * Eigenes Kind: je Kind ist genau ein aktiver Plan spielbar.
+ * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
@@ -37,7 +37,7 @@ test("nicht bestandener Test: „▶ Üben“ öffnet die Übungsrunde dieser Po
       items: [{ front: `tree ${RUN}`, back: "Baum" }] },
   });
   const planId = await postId(request, "/api/v1/supervisor/study-plans", headers,
-    { childId, title: `Ueben-Plan ${RUN}`, durationDays: 7, active: true });
+    { childId, subjectId, title: `Ueben-Plan ${RUN}`, durationDays: 7, active: true });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, headers,
     { exerciseId, stage: 2, cadence: "Daily", useLeitner: false, orderStrategy: "Serial" });
 
