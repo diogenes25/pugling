@@ -35,3 +35,4 @@ B-615 Entscheidung 7?
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Chat mit dem Vater.
+- **2026-11-17** — **Entscheidung des Vaters** (B-615 Entscheidung 14): Teil (b) von B-615 (Stärke je Fach) wird erst geschätzt, wenn diese Story gegrillt ist, damit die Tabelle Kind × Fach nur eine Migration braucht. Diese Story blockiert also B-615 Teil (b).

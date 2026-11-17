@@ -101,7 +101,7 @@ In der echten DB (read-only, 2026-11-17):
   Termin statt an einem Wochentag.
 - [B-220](B-220-learning-queue-im-sohn-dashboard.md) (`idee`): Learning Queue im Sohn-Dashboard, die B-250 als
   Ort der Sortierung vorsah. Mit B-250 ist dieser Mitnutzer entfallen; ob die Queue trotzdem nach Stundenplan
-  sortiert, ist zurückgestellt (offener Punkt 13).
+  sortiert, beantwortet Entscheidung 13 (nein).
 - [B-536](B-536-aufbau-uebungen-statt-versagen.md) (`gegrillt`): Aufbau-Übungen. Ein schwaches Fach braucht
   vor allem *leichtere* Übungen, nicht nur *mehr*.
 
@@ -135,9 +135,8 @@ Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlun
    neue Wörter sind dann Kür. *Begründung:* Ein gutes Fach soll nur „auf dem Laufenden“ halten, ein schwaches
    mehr Stoff bekommen. *Kosten:* Die Pflicht-Rechnung je Position muss die Stärke des Fachs kennen, und die
    Fachzuordnung einer Position läuft über den Plan. Seit B-539 **kann** ein Plan ein Fach tragen,
-   `StudyPlan.SubjectId` ist aber nullable (`Models/StudyPlanEntities.cs:83`); der Plan ohne Fach ist
-   zurückgestellt (offener Punkt 9), ebenso der Tag ohne fällige Karten und die Nicht-Vokabel-Position
-   (offener Punkt 10).
+   `StudyPlan.SubjectId` ist aber nullable (`Models/StudyPlanEntities.cs:83`); den Plan ohne Fach
+   regelt Entscheidung 9, den Tag ohne fällige Karten und die Nicht-Vokabel-Position Entscheidung 10.
 5. **Der Stundenplan erzeugt eine Pflicht mit Malus.** Das **kehrt die Entscheidung G-7 aus B-250 um**
    (2026-10-23: nur Reihenfolge und Hervorhebung). B-250 wird `verworfen` mit `ersetzt_durch: [B-615]`.
    *Begründung:* Die Kernidee der App ist, dass der Vater Lernen erzwingt; die Vorbereitung auf die Schulstunde
@@ -150,23 +149,53 @@ Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlun
    Malus-Abrechnung muss den Stundenplan lesen.
    **Nachfrage:** Steht das Fach nicht im Stundenplan des Kindes, **weist der Server die Taktung ab**. Wird der
    Eintrag später gelöscht, gilt die Position wie `Daily`, damit sie nie lautlos pflichtfrei wird. *Kosten:*
-   eine Querprüfung beim Anlegen und eine Rückfallregel bei der Abrechnung. Der Schnitt der Perioden
-   (eine gemeinsame oder zwei getrennte, überlappende Tage) ist zurückgestellt (offener Punkt 11).
+   eine Querprüfung beim Anlegen und eine Rückfallregel bei der Abrechnung. Den Schnitt der Perioden
+   regelt Entscheidung 11.
 7. **Obergrenze: höchstens N Pflicht-Positionen pro Tag**, je Kind vom Vater gesetzt (Vorschlag 5). Der Server
    weist beim Anlegen oder Ändern ab, was die Grenze an **irgendeinem** Wochentag überschreiten würde (wegen der
    Stundenplan-Taktung ist die Zahl je Wochentag verschieden). *Begründung:* ohne Schätzmodell prüfbar.
    *Kosten:* Prüfung über alle aktiven Pläne des Kindes und alle sieben Wochentage, und ein Stundenplan-Eintrag,
-   der die Grenze nachträglich reißt, braucht eine eigene Regel (zurückgestellt, offener Punkt 12).
+   der die Grenze nachträglich reißt, braucht eine eigene Regel (Entscheidung 12).
 8. **Die Stärke setzt zuerst nur der Vater.** Ein Vorschlag aus Klassenarbeitsnoten und Trefferquoten wird eine
    Folge-Story. *Begründung:* Teil (b) bleibt klein. *Kosten:* Der Vater muss die Stärke selbst pflegen.
    Kandidat für die Folge-Story ist [B-616](B-616-faecher-gewichtung-in-prozent.md) (Prozent-Gewichtung, noch
-   `idee`). Sie konkurriert mit den drei Stufen aus Entscheidung 4 um dieselbe Tabelle Kind × Fach; das
-   Verhältnis ist vor dem Schätzen von Teil (b) zu klären (offener Punkt 14).
+   `idee`). Sie konkurriert mit den drei Stufen aus Entscheidung 4 um dieselbe Tabelle Kind × Fach; die
+   Reihenfolge regelt Entscheidung 14.
+
+Nachgrillen am 2026-11-17 mit dem Vater zu den sechs Lücken, die die Review der Grill-Fassung gefunden hat,
+jeweils die Empfehlung gewählt.
+
+9. **Ein Plan ohne Fach rechnet mit Stärke `normal`, und die Taktung „Stundenplan“ wird dort abgewiesen.**
+   *Begründung:* kein Umbau am Bestand, und die Abweisung ist dieselbe wie beim Fach ohne Stundenplan-Eintrag.
+   *Kosten:* Ein Plan ohne Fach nimmt an Stärke und Stundenplan nicht teil; der Vater muss dem Plan ein Fach
+   geben, um beides zu nutzen. Eine zweite Fachquelle (Fach der Übung) wird bewusst nicht eingeführt.
+10. **`stark` ohne fällige Karten gilt als erfüllt; Positionen ohne Tagesdosis berührt die Stärke nicht.** Die
+    erfüllte Pflicht wird als erfüllt angezeigt, kostet keinen Malus und zählt für Truhe und Serie.
+    *Begründung:* „auf dem Laufenden“ heißt an einem Tag ohne Fälliges: nichts zu tun. *Kosten:* An solchen
+    Tagen bekommt das Kind die Truhe für dieses Fach ohne Arbeit, und Grammatik-Positionen eines schwachen Fachs
+    bekommen nicht mehr Stoff (das bleibt bei B-536).
+11. **Je Pflichttag eine eigene Tagesperiode wie bei `Daily`.** Vortag verpasst kostet Malus, Fachtag verpasst
+    kostet noch einmal. Ein Tag, der zugleich Fachtag und Vortag ist, zählt einmal. Ein Sonntag als Vortag gilt;
+    ein Vortag vor Planbeginn oder nach Planende ist keine Periode. *Begründung:* dieselbe Abrechnung wie
+    `Daily`, nur an weniger Tagen; das Kind kann die Vorbereitung nicht auf den Fachtag schieben. *Kosten:* bis
+    zu zwei Malus je Schulstunde, und ein Fach mit vielen Wochenstunden wird fast zu `Daily`.
+12. **Ein Stundenplan-Eintrag, der die Obergrenze reißt, wird abgewiesen; das Löschen wird geduldet.** Hebt das
+    Löschen (Rückfall auf `Daily`) einen Wochentag über die Grenze, zeigt das Vater-Web die Überschreitung an.
+    *Begründung:* Der Vater muss einen falschen Stundenplan-Eintrag immer entfernen können. *Kosten:* Die Grenze
+    ist nach einem Löschen nicht mehr hart, und der Stundenplan-Controller braucht dieselbe Prüfung wie die
+    Position.
+13. **Keine Sortierung nach Stundenplan.** Die Pflicht aus Entscheidung 5 mit dem Hinweis aus AK 8 genügt;
+    B-220 sortiert nicht nach Stundenplan. *Begründung:* eine Wirkung des Stundenplans statt zwei. *Kosten:*
+    Positionen des morgigen Fachs ohne Taktung „Stundenplan“ rücken nicht nach vorn.
+14. **Teil (b) wird erst geschätzt, wenn [B-616](B-616-faecher-gewichtung-in-prozent.md) gegrillt ist.**
+    *Begründung:* Drei Stufen und Prozent wollen dieselbe Tabelle; so braucht sie nur eine Migration.
+    *Kosten:* Teil (b) wartet auf eine Grill-Runde; die Entscheidungen 3, 4, 8 und 10 können dort noch fallen.
+    Teil (a) und (c) laufen unabhängig weiter.
 
 ## Akzeptanzkriterien
 
-Final, nach Teilen. Je Fall die Änderung, die seinen Test rot macht. Die Fälle, die an den zurückgestellten
-Punkten 9 bis 12 hängen, kommen beim Schätzen dazu.
+Final, nach Teilen. Je Fall die Änderung, die seinen Test rot macht. Teil (b) steht unter dem Vorbehalt
+aus Entscheidung 14. Die Nummern 9 bis 14 stammen aus dem Nachgrillen und stehen bei ihrem Teil.
 
 **Teil (a), Inhalt, ohne Code**
 
@@ -186,6 +215,12 @@ Punkten 9 bis 12 hängen, kommen beim Schätzen dazu.
    Tagesdosis eingeht.*
 4. Bei `stark` ist die Tagespflicht mit den fälligen Wiederholungen erfüllt, ohne dass neue Wörter eingeführt
    werden. Neue Wörter bleiben spielbar. *Rot, wenn die Pflicht weiter neue Wörter verlangt.*
+9. Bei `stark` und null fälligen Karten meldet die Tagessicht die Pflicht als erfüllt, und der Tagesabschluss
+   bucht keinen Malus. *Rot, wenn die Pflicht offen bleibt oder Malus kostet.*
+10. Eine Position ohne Tagesdosis (Grammatik) verlangt bei `schwach`, `normal` und `stark` dasselbe. *Rot, wenn
+    die Stärke ihr Ziel verändert.*
+11. Eine Position in einem Plan ohne Fach rechnet wie `normal`, auch wenn für ein Fach des Kindes `schwach`
+    gesetzt ist. *Rot, wenn eine fremde Stärke durchschlägt.*
 
 **Teil (c), Stundenplan-Pflicht**
 
@@ -198,12 +233,19 @@ Punkten 9 bis 12 hängen, kommen beim Schätzen dazu.
    **einem** Wochentag, der nicht heute ist. *Rot ohne Prüfung über alle Wochentage.*
 8. Die Kind-Tagessicht zeigt Stundenplan-Pflichten mit Hinweis auf die Stunde („morgen Englisch“). *Rot, wenn die
    Pflicht ohne Grund erscheint.*
+12. Fach am Dienstag, Montag **und** Dienstag verpasst ⇒ zwei Malus-Buchungen. Fach am Montag **und** Dienstag,
+    alles verpasst ⇒ drei Buchungen (Sonntag, Montag, Dienstag), nicht vier. *Rot bei einer gemeinsamen Periode
+    bzw. wenn der Montag doppelt zählt.*
+13. Taktung „Stundenplan“ an einer Position in einem Plan ohne Fach ⇒ `400 validation_error`. *Rot ohne die
+    Prüfung auf das Plan-Fach.*
+14. Ein neuer Stundenplan-Eintrag, der einen Wochentag über die Obergrenze hebt ⇒ `400` mit demselben Code wie
+    AK 7. Das Löschen eines Eintrags mit derselben Folge geht durch, und die Vater-Sicht des Kindes meldet die
+    Überschreitung. *Rot, wenn der Eintrag durchgeht bzw. das Löschen abgewiesen wird.*
 
 ## Offene Punkte
 
-Die Punkte 1 bis 8 sind in der Grill-Runde vom 2026-11-17 entschieden. Die Punkte 9 bis 14 hat die Review
-desselben Tages gefunden; sie sind **ausdrücklich zurückgestellt** bis zum Schritt `geschaetzt` und brauchen
-dort je eine Entscheidung des Vaters. Ein Lauf, der Teil (b) oder (c) schätzt oder baut, hält an ihnen an.
+Alle entschieden: die Punkte 1 bis 8 in der Grill-Runde vom 2026-11-17, die Punkte 9 bis 14 (Funde der Review
+desselben Tages) im Nachgrillen am selben Tag.
 
 1. ~~**Teilen?**~~ → Entscheidung 1.
 2. ~~**Welche Fächer zuerst?**~~ → Entscheidung 2.
@@ -213,28 +255,12 @@ dort je eine Entscheidung des Vaters. Ein Lauf, der Teil (b) oder (c) schätzt o
 6. ~~**Fach eines guten Kindes**~~ → Entscheidung 4.
 7. ~~**Obergrenze pro Tag**~~ → Entscheidung 7.
 8. ~~**Woher kommt die Stärke?**~~ → Entscheidung 8.
-9. **Plan ohne Fach** (zurückgestellt, Teil b und c). `StudyPlan.SubjectId` ist nullable. Welche Stärke gilt
-   für seine Positionen, und darf eine davon die Taktung „Stundenplan“ tragen? *Empfehlung:* Stärke `normal`,
-   Taktung „Stundenplan“ wird abgewiesen wie beim Fach ohne Stundenplan-Eintrag.
-10. **`stark` ohne fällige Karten, und Nicht-Vokabel-Positionen** (zurückgestellt, Teil b). Ist die Tagespflicht
-    an einem Tag ohne fällige Wiederholung erfüllt, oder verlangt sie dann doch etwas? Und worauf wirkt die Stärke
-    bei einer Position ohne Tagesdosis (Grammatik)? *Empfehlung:* Ohne fällige Karten gilt die Pflicht als
-    erfüllt und wird so angezeigt; auf Positionen ohne Tagesdosis wirkt die Stärke nicht.
-11. **Periodenschnitt der Taktung „Stundenplan“** (zurückgestellt, Teil c). Sind Vortag und Fachtag **eine**
-    Periode (einmal erfüllen, einmal Malus) oder **zwei**? Was gilt, wenn das Fach an zwei aufeinanderfolgenden
-    Tagen steht, der Vortag ein Sonntag ist oder vor dem Planbeginn liegt? *Empfehlung:* je Pflichttag eine
-    eigene Tagesperiode wie bei `Daily`; ein Tag, der zugleich Fachtag und Vortag ist, zählt einmal.
-12. **Obergrenze nachträglich gerissen** (zurückgestellt, Teil c). Ein neuer Stundenplan-Eintrag oder die
-    Rückfallregel aus Entscheidung 6 (gelöschter Eintrag ⇒ `Daily` an sieben Tagen) kann die Grenze aus
-    Entscheidung 7 überschreiten, ohne dass eine Position angelegt wird. Abweisen, warnen oder dulden?
-    *Empfehlung:* den Stundenplan-Eintrag abweisen; das Löschen dulden und im Vater-Web anzeigen.
-13. **Reihenfolge nach Stundenplan** (zurückgestellt). Mit B-250 ist „Positionen des morgigen Fachs rücken in
-    der Queue nach vorn“ entfallen. Übernimmt B-220 das, oder ist es mit der Pflicht aus Entscheidung 5 erledigt?
-    *Empfehlung:* erledigt; AK 8 zeigt den Grund an der Pflicht.
-14. **Drei Stufen oder Prozent** (zurückgestellt, Teil b). [B-616](B-616-faecher-gewichtung-in-prozent.md) will
-    die Fächer prozentual gewichten und nutzt dieselbe Tabelle Kind × Fach. Wird Teil (b) mit drei Stufen gebaut
-    und B-616 später darübergelegt, oder ersetzt B-616 die Stufen vor dem Bau? *Empfehlung:* vor dem Schätzen
-    von Teil (b) B-616 grillen, damit die Tabelle nur eine Migration braucht.
+9. ~~**Plan ohne Fach**~~ → Entscheidung 9.
+10. ~~**`stark` ohne fällige Karten, und Nicht-Vokabel-Positionen**~~ → Entscheidung 10.
+11. ~~**Periodenschnitt der Taktung „Stundenplan“**~~ → Entscheidung 11.
+12. ~~**Obergrenze nachträglich gerissen**~~ → Entscheidung 12.
+13. ~~**Reihenfolge nach Stundenplan**~~ → Entscheidung 13.
+14. ~~**Drei Stufen oder Prozent**~~ → Entscheidung 14.
 
 ## Verlauf
 
@@ -249,3 +275,5 @@ dort je eine Entscheidung des Vaters. Ein Lauf, der Teil (b) oder (c) schätzt o
   Obergrenze, Reihenfolge nach Stundenplan, Verhältnis zu B-616), je mit Empfehlung, keine davon entschieden.
   Falsche Annahme „jeder Plan trägt ein Fach“ korrigiert, AK 1 als Absichtserklärung beschriftet, AK 2 in vier
   Fälle zerlegt, AK 7 mit Code-Vorschlag, veraltete Verweise auf B-250 nachgezogen.
+- **2026-11-17** — Nachgrillen mit dem Vater: die Punkte 9 bis 14 sind als Entscheidungen 9 bis 14 entschieden
+  (jeweils die Empfehlung), AKs 9 bis 14 ergänzt. Teil (b) wartet auf das Grillen von B-616 (Entscheidung 14).
