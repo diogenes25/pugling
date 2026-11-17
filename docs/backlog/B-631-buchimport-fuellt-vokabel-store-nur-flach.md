@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Vokabel-Store nur Wort und Übersetzung, Wortart beim Buchimport, Genus und Stammformen aus dem Lehrwerk]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: doku
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Frage: ist der Store mehr als eine 1:1-Übersetzung?)"
 grund: ""
 ersetzt_durch: []
@@ -161,11 +161,73 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
    deren Wörter nur noch die, die in der TSV ausdrücklich `Other` tragen.
 3. Ein zweiter Lauf über denselben Ordner ändert keine Store-Id und keinen `ItemProgress` und legt keine Vokabel
    doppelt an.
-4. Eine Buchvokabel, die kein Nomen ist („a few“), bekommt keine Artikel-Toleranz mehr: „few“ ist falsch. Eine
-   Nomengruppe („le professeur principal“) behält sie: „professeur principal“ ist richtig.
+4. Eine Buchvokabel, die kein Nomen ist, bekommt keine Artikel-Toleranz mehr: „fois“ für „une fois“ (einmal,
+   Découvertes 2, als `Adverb` eingeordnet) ist falsch. Eine Nomengruppe („le professeur principal“) behält sie:
+   „professeur principal“ ist richtig. („a few“ aus der Grill-Runde steht in keinem geladenen Ordner; „une fois“
+   ist derselbe Fall aus dem echten Bestand.)
 5. Hat eine Store-Vokabel schon eine Wortart ≠ `Other` und sagt die TSV etwas anderes, bleibt der Wert, und
    `laden.py` gibt eine Warnung mit Wort und beiden Werten aus.
 6. Der Skill `lehrwerk-aufbereiten` beschreibt die Spalte samt Einordnungsregel aus Entscheidung 3.
+
+## Schätzung
+
+Geschätzt am 2026-11-17 gegen `cc0ec770`.
+
+- **Größe M.** Code ist wenig (eine Spalte, eine Prüfung, ein Nachlauf in `laden.py`, Tests), dazu kommt der
+  Datennachtrag über drei Ordner mit rund 340 Zeilen, je Zeile ein Urteil. Größer als S („`childId` aus dem
+  Test-Pfad ziehen“), kleiner als L: keine Migration, kein Backend.
+- **wo: doku.** Geändert werden nur Skill-Dateien unter `.claude/skills/lehrwerk-aufbereiten/` (`laden.py`,
+  `test_laden.py`, `SKILL.md`, `FORMAT.md`) und die TSVs unter `raw/` (gitignored). Kein C#, kein Frontend,
+  darum kein Reviewer-Agent. Die Markdown-Dateien müssen durch den Markdown-Lint.
+- **migration: nein.** Die Wortart ist eine vorhandene Spalte (`Vocabulary.PartOfSpeech`).
+- **vertragsbruch: nein.** Genutzt werden nur vorhandene Endpunkte: `GET …/vocabulary/{exerciseId}/items`
+  (`backend/Pugling.Api/Controllers/Creator/ExerciseControllers.cs:175`, liefert `VocabularyId` je Item,
+  `backend/Pugling.Contracts/Creator/ExerciseAuthoringDtos.cs:78`) und `PATCH creator/vocabulary/batch`
+  (`VocabularyStoreController.cs:554`).
+
+### Risiken
+
+1. **Zuordnung Item → TSV-Zeile.** Die Items liefern `Front`/`Back` **live aus dem Store**. Hat der Vater ein
+   Wort im Vater-Web umbenannt, trifft ein Textvergleich nicht mehr. *Gegenmittel:* über die Position zuordnen
+   (je Abschnitt eine Übung, Items in TSV-Reihenfolge, `laden.py:447`–`:452`) und den Text nur gegenprüfen.
+   Bei Abweichung: Warnung, kein PATCH.
+2. **Spaltenprüfung ist exakt** (`laden.py:197`). Ab dem Umbau schlägt `--pruefen` für jeden Ordner ohne
+   Nachtrag fehl, auch für Access 5 und `access-pugling/alt`. Gewollt nach Entscheidung 6; `alt/` ist Archiv
+   und wird nicht geladen.
+3. **Falsche Einordnung durch Opus.** Ein Nomen als `Adjective` verliert still die Artikel-Toleranz und kostet
+   das Kind Punkte. *Gegenmittel:* Vor dem Lauf gegen die echte DB eine Liste je Wortart zum Durchsehen
+   ausgeben (`laden.py --pruefen` druckt die Verteilung und alle Nicht-Nomen mit Artikel vorne).
+4. **Lauf gegen die echte DB.** Die Söhne lernen darauf. Der PATCH ändert nur `PartOfSpeech`, sonst nichts;
+   trotzdem zuerst gegen eine Kopie (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`), das Startskript
+   legt zusätzlich bei jedem Start eine Sicherung an.
+
+### Angriffsplan
+
+1. `laden.py`: `wortart` in `TSV_COLUMNS`, Prüfung auf leer und auf die Enum-Namen, Verteilungsausgabe für
+   `--pruefen` (AK 1, Risiko 3).
+2. `laden.py`: Nachlauf nach dem Anlegen bzw. „schon da“: Items je Vokabelübung lesen, positionsweise zuordnen,
+   nur `Other` patchen, Widerspruch und Textabweichung warnen (AK 2, 3, 5; Risiko 1).
+3. `test_laden.py`: Fälle offline mit gemocktem `api.call` (siehe Testweg).
+4. `SKILL.md` und `FORMAT.md`: Spalte, Werte und Einordnungsregel aus Entscheidung 3 (AK 6).
+5. Nachtrag der Spalte in `raw/english/access-pugling`, `raw/france/decouvertes-serie-bleue-2-pugling`,
+   `raw/latin/viva-1-pugling`; Liste aus Schritt 1 mit dem Vater durchsehen.
+6. Lauf gegen eine DB-Kopie, dann gegen die echte DB.
+
+### Testweg
+
+- **Offline, in CI:** `test_laden.py` (läuft in `.github/workflows/ci.yml:93`). Neue Fälle: leere und unbekannte
+  `wortart` → Fehler; PATCH nur für `Other`; vorhandener abweichender Wert → kein PATCH, Warnung; umbenanntes
+  Store-Wort → kein PATCH, Warnung; zweiter Lauf schickt keinen PATCH mehr. Je Fall benennen, welche Änderung
+  ihn rot macht (Regel aus der Root-`CLAUDE.md`).
+- **Gegen eine DB-Kopie:** `laden.py` über die drei Ordner, danach
+  `GET creator/vocabulary?incomplete=true&sourceLanguage=<la|fr|en>` → nur die bewusst als `Other` markierten
+  Wörter (AK 2). Zweiter Lauf: keine Änderung an Ids, `ItemProgress`-Zeilenzahl gleich (AK 3).
+- **AK 4 am Server:** `POST creator/exercises/{id}/preview/check` auf der Kopie, auf einer getippten Stufe in
+  Richtung Französisch, mit „fois“ für „une fois“ (falsch) und „professeur principal“ für „le professeur
+  principal“ (richtig). Die Regel selbst deckt
+  `ArtikelToleranzTests` schon ab; geprüft wird hier nur, dass die Daten sie erreichen.
+- **Rollengang:** Friedrich bzw. Theodor spielen danach ohnehin weiter; vor der Abnahme eine Lektion als Sohn
+  auf der Kopie mit einer Nicht-Nomen-Vokabel.
 
 ## Verlauf
 
@@ -175,3 +237,5 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
   das Lernwort.
 - **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung. Umfang auf die Wortart
   verengt (keine Migration, kein Vertragsbruch), Genus des Lernworts als spätere eigene Story.
+- **2026-11-17** — geschätzt: M, doku, keine Migration, kein Vertragsbruch. Beispiel in AK 4 von „a few“ auf
+  „une fois“ getauscht (gleicher Fall, steht im geladenen Bestand; „a few“ in keinem Ordner).
