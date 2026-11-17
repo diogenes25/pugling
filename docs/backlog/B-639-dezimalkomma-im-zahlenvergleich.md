@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert]
+tags: [typ/story, status/gegrillt]
 aliases: []
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -52,26 +52,38 @@ Breiter als die Idee vermutete – das Komma ist nur das sichtbarste Symptom:
 
 ## Offene Punkte
 
-1. **Was ist „1.234“?** Empfehlung: Punkt und Komma beide als Dezimaltrenner lesen, Tausendertrenner gar nicht
-   annehmen – Schulaufgaben kommen ohne aus, und jede Mehrdeutigkeit entfällt.
-2. **Ein numerischer Vergleich für beide Pfade?** Empfehlung: ja – der Typ entscheidet, wie sein Atom verglichen
-   wird, damit Testmodus und Spielen nicht auseinanderlaufen. Das berührt den geteilten `AnswerGrader` und ist der
-   eigentliche Aufwand.
-3. **Gehört die Toleranz beim Spielen dazu oder in eine eigene Story?** Empfehlung: hier mit erledigen, es ist
-   dieselbe Ursache.
+1. ~~**Was ist „1.234“?**~~ → Entscheidung 1.
+2. ~~**Ein numerischer Vergleich für beide Pfade?**~~ → Entscheidung 2.
+3. ~~**Gehört die Toleranz beim Spielen dazu oder in eine eigene Story?**~~ Gegenstandslos: sie folgt aus
+   Entscheidung 2 – dieselbe Regel auf beiden Pfaden schließt die Toleranz ein.
+
+## Entscheidungen
+
+1. **Punkt und Komma sind beide Dezimaltrenner; Tausendertrenner gibt es nicht.** „1.234“ ist 1,234. Begründung:
+   Schulaufgaben kommen ohne Tausendertrenner aus, und jede Mehrdeutigkeit entfällt – auch die vom Taschenrechner
+   abgetippte „2.5“ stimmt. Kosten: wer „1.000“ für tausend tippt, liegt falsch.
+2. **Eine Zahlenantwort wird auf beiden Pfaden numerisch verglichen, nach einer Regel, die der Übungstyp vorgibt.**
+   Begründung: was im Testmodus des Vaters richtig ist, muss beim Kind richtig sein; „2.50“, „+3“ und „2,5“ sind
+   dieselbe Zahl. Folge: die `Tolerance` der Aufgabe wirkt auch beim Spielen. Kosten: Eingriff in den geteilten
+   `AnswerGrader`, den alle Typen nutzen – größere Änderung als eine Komma-Ersetzung, und die Regressionstests der
+   Text-Typen müssen unverändert grün bleiben.
 
 ## Akzeptanzkriterien
 
-Entwurf:
-
-1. Eine Rechenaufgabe mit Lösung 2,5 wertet „2,5“ und „2.5“ als richtig – im Katalog-Check und beim Spielen in einer
-   Position.
-2. „25“ ist für dieselbe Aufgabe falsch (die rote Probe: heute ist „2,5“ im Katalog-Check genau diese 25).
-3. Eine Aufgabe mit Toleranz 0,05 und Lösung 2,33 wertet „2,3“ beim Spielen als richtig, „2,2“ als falsch.
-4. Ganzzahlige Aufgaben verhalten sich unverändert.
+1. Eine Rechenaufgabe mit Lösung 2,5 wertet „2,5“, „2.5“ und „2.50“ als richtig – im Katalog-Check und beim Spielen
+   in einer Position.
+2. „25“ ist für dieselbe Aufgabe auf beiden Pfaden falsch (die rote Probe: heute ist „2,5“ im Katalog-Check genau
+   diese 25).
+3. Eine Aufgabe mit Lösung 1,234 wertet „1.234“ als richtig und „1234“ als falsch.
+4. Eine Aufgabe mit Toleranz 0,05 und Lösung 2,33 wertet „2,3“ beim Spielen als richtig, „2,2“ als falsch.
+5. Eine Aufgabe mit Lösung 3 wertet „+3“ als richtig; eine leere Eingabe und „drei“ bleiben falsch.
+6. Der Rechen-Drill wertet eine gerundete Lösung mit Komma wie mit Punkt.
+7. Die Text-Typen (Vokabel, Lückentext, Liste) vergleichen unverändert – „2,5“ als Vokabel-Antwort wird nicht zur Zahl.
 
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Konzept „Mathe in die App" aus dem Chat, Lambacher Schweizer 9, Kapitel IV).
 - **2026-11-17** — ausformuliert: Parse-Verhalten nachgestellt („2,5“ → 25), zweiter Pfad über `AnswerGrader` am Code
   gelesen; Lücke ist breiter (Textvergleich und wirkungslose Toleranz beim Spielen).
+- **2026-11-17** — gegrillt (Dialog): beide Trennzeichen dezimal, kein Tausendertrenner; ein numerischer Vergleich
+  für beide Pfade, Toleranz damit auch beim Spielen. Akzeptanzkriterien final (7).
