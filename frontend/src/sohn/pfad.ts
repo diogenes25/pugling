@@ -49,6 +49,17 @@ export function kennenlernAnteil(pos: PositionStatus): number | null {
   return Math.min(1, Math.max(0, pos.introducedCount / pos.poolSize));
 }
 
+/**
+ * Stand der laufenden Pflicht (0…1) für den inneren Ring; `null` für eine freie Position – sie hat kein Ziel, das
+ * sich füllen könnte. Voll ist der Ring genau dann, wenn der Haken steht: `goalMet` entscheidet, `goalProgress` füllt
+ * nur den Weg dorthin (bei einem Test-Ziel bleibt er bis zum Bestehen leer – ein gescheiterter Test ist kein Teil davon).
+ */
+export function zielAnteil(pos: PositionStatus): number | null {
+  if (!hatPflicht(pos)) return null;
+  if (pos.goalMet) return 1;
+  return Math.min(0.99, Math.max(0, pos.goalProgress));
+}
+
 export type Frist = { art: "stunden"; stunden: number } | { art: "sonntag" };
 
 /**

@@ -204,6 +204,39 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
+    /// The day view reports how far an open goal has come, so the path can fill the goal ring as the child plays
+    /// instead of flipping from empty to full. Four questions at the default 80 % require all four cards; two played
+    /// are half. Red when the value only mirrors <c>goalMet</c> (0.5 → 0) or is measured against the whole order
+    /// instead of its required part (with a threshold below 100 %, the full round would then read short of 1).
+    /// </summary>
+    [Fact]
+    public async Task LernModus_ReineInhaltsuebung_HalbeRunde_MeldetHalbenZielfortschritt()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (planId, positionId) = await SeedReadingPositionAsync(father, questions: 4);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+        async Task<double> ProgressAsync()
+        {
+            var overview = await child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{planId}/overview");
+            return overview.GetProperty("today").GetProperty("positions").EnumerateArray()
+                .Single(p => p.GetProperty("positionId").GetInt32() == positionId)
+                .GetProperty("goalProgress").GetDouble();
+        }
+
+        Assert.Equal(0, await ProgressAsync());
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
+        for (var i = 0; i < 2; i++)
+            await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, givenAnswer: $"A{i}");
+        Assert.Equal(0.5, await ProgressAsync(), precision: 3);
+
+        for (var i = 2; i < 4; i++)
+            await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, givenAnswer: $"A{i}");
+        Assert.Equal(1, await ProgressAsync());
+    }
+
+    /// <summary>
     /// An exercise WITHOUT any content atoms (a text without questions, an essay) always freezes an empty
     /// order – there is no cursor that could prove anything. Opening and closing a round must therefore not
     /// discharge the duty, otherwise the presence rule above would have a hole exactly where it cannot be

@@ -146,7 +146,7 @@ a { color: var(--cyan); }
 .pfad-banner b { font-family: var(--font-display); font-size: 17px; }
 .pfad-schlange { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 34px 0 18px; }
 .pfad-zeile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 150px; }
-.pfad-knoten { position: relative; width: 96px; height: 96px; display: grid; place-items: center; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
+.pfad-knoten { position: relative; width: 104px; height: 104px; display: grid; place-items: center; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
 .pfad-ring { position: absolute; inset: 0; }
 .pfad-kern {
   width: 70px; height: 70px; display: grid; place-items: center; border-radius: 50%; font-size: 30px;

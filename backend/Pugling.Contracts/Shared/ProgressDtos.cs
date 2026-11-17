@@ -29,11 +29,17 @@ namespace Pugling.Contracts.Shared;
 /// content (taken from the exercise's textbook series, "" = none) - B-606: the child's day view lists the positions of
 /// every active plan side by side, and a position must still lead into the path of its own plan.
 /// </para>
+/// <para>
+/// <c>GoalProgress</c> (0…1) is how far the goal of the current period has come, so the child sees a duty filling up
+/// rather than only flipping. It is 1 exactly when <c>GoalMet</c> is true. Only a goal measured by a played round
+/// (content exercises, free display stage) has a real partial value - the share of the round's required part already
+/// played; a goal measured by a passed test is 0 until the test is passed, because a failed attempt is no part of it.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
-    bool GoalMet, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
+    bool GoalMet, double GoalProgress, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
     int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
     int PlanId = 0, string PlanTitle = "", string SubjectName = "");
 

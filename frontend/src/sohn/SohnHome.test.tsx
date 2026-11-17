@@ -20,7 +20,7 @@ type TruhenZiele = import("./SohnHome").TruhenZiele;
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter 1", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
@@ -94,15 +94,32 @@ describe("Knoten auf dem Lernpfad", () => {
     expect(zeile("Ohne Malus")!.textContent).toBe("⏰ noch 2 Std.");
   });
 
-  it("zeichnet den Ring nur, wenn die Position Inhalte hat", () => {
-    // Rot, wenn eine Position ohne Pool (Aufsatz) einen Ring bekäme.
+  it("zeichnet den Stoff-Ring nur, wenn die Position Inhalte hat", () => {
+    // Rot, wenn eine Position ohne Pool (Aufsatz) einen Stoff-Ring bekäme. Ihr Ziel-Ring bleibt: die Pflicht hat sie.
     zeige([
       position({ positionId: 1, exerciseTitle: "Mit Pool" }),
       position({ positionId: 2, exerciseTitle: "Aufsatz", poolSize: 0, introducedCount: 0 }),
+      position({ positionId: 3, exerciseTitle: "Freier Aufsatz", cadence: "None", poolSize: 0, introducedCount: 0 }),
     ]);
-    expect(knoten("Mit Pool").querySelector(".pfad-ring")).not.toBeNull();
-    expect(knoten("Aufsatz").querySelector(".pfad-ring")).toBeNull();
     expect(knoten("Mit Pool").querySelector(".pfad-ring-anteil")).not.toBeNull();
+    expect(knoten("Aufsatz").querySelector(".pfad-ring-anteil-bahn")).toBeNull();
+    expect(knoten("Aufsatz").querySelector(".pfad-ring-ziel-bahn")).not.toBeNull();
+    // Ohne Stoff und ohne Pflicht gibt es nichts zu füllen – kein Ring überhaupt.
+    expect(knoten("Freier Aufsatz").querySelector(".pfad-ring")).toBeNull();
+  });
+
+  it("füllt den inneren Ring mit dem Stand der Pflicht und sagt ihn an", () => {
+    // Rot, wenn der innere Ring fehlt, nur goalMet spiegelt (kein Bogen bei 0.5) oder an einer Kür-Position erscheint.
+    zeige([
+      position({ positionId: 1, exerciseTitle: "Halb", goalProgress: 0.5 }),
+      position({ positionId: 2, exerciseTitle: "Offen", goalProgress: 0 }),
+      position({ positionId: 3, exerciseTitle: "Kür", cadence: "None", goalMet: true, goalProgress: 1 }),
+    ]);
+    expect(knoten("Halb").querySelector(".pfad-ring-ziel")).not.toBeNull();
+    expect(knoten("Halb").getAttribute("aria-label")).toContain("Ziel zu 50 % geschafft");
+    expect(knoten("Offen").querySelector(".pfad-ring-ziel-bahn")).not.toBeNull();
+    expect(knoten("Offen").querySelector(".pfad-ring-ziel")).toBeNull();
+    expect(knoten("Kür").querySelector(".pfad-ring-ziel-bahn")).toBeNull();
   });
 
   it("zeichnet bei null kennengelernten Inhalten nur die leere Bahn", () => {

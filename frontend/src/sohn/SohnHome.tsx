@@ -17,7 +17,7 @@ import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
 import { BonusEinstieg } from "./SohnBonus";
 import {
-  abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad,
+  abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, zielAnteil,
   type Frist, type Spielweg,
 } from "./pfad";
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
@@ -216,12 +216,37 @@ function FristZeile({ pos, jetzt, versteckt = false }: { pos: PositionStatus; je
   );
 }
 
+/** Kantenlänge des Knotens in px – muss zu `.pfad-knoten` in index.css passen. */
+const KNOTEN = 104;
+const RING_AUSSEN = 48;
+const RING_INNEN = 41;
+const RING_BREITE = 5;
+
+/** Ein Fortschrittsring: leere Spur plus der gefüllte Bogen ab zwölf Uhr. */
+function Ring({ r, anteil, farbe, klasse }: { r: number; anteil: number; farbe: string; klasse: string }) {
+  const mitte = KNOTEN / 2;
+  const umfang = 2 * Math.PI * r;
+  return (
+    <>
+      <circle className={`${klasse}-bahn`} cx={mitte} cy={mitte} r={r} fill="none" strokeWidth={RING_BREITE} stroke="rgba(255,255,255,.14)" />
+      {/* Erst ab einem Stand über 0: das runde Linienende malte bei 0 sonst einen Punkt. */}
+      {anteil > 0 && (
+        <circle
+          className={klasse} cx={mitte} cy={mitte} r={r} fill="none" strokeWidth={RING_BREITE} stroke={farbe}
+          strokeLinecap="round" strokeDasharray={`${umfang * anteil} ${umfang}`} transform={`rotate(-90 ${mitte} ${mitte})`}
+        />
+      )}
+    </>
+  );
+}
+
 function Knoten({ pos, naechste, jetzt, onOeffnen }: {
   pos: PositionStatus; naechste: boolean; jetzt: Date; onOeffnen: () => void;
 }) {
   const { t } = useTranslation();
   const fristText = useFristText();
   const anteil = kennenlernAnteil(pos);
+  const ziel = zielAnteil(pos);
   const erfuellt = pflichtErfuellt(pos);
   const f = frist(pos, jetzt);
 
@@ -232,13 +257,12 @@ function Knoten({ pos, naechste, jetzt, onOeffnen }: {
     naechste ? t("pfad.next") : null,
     t(cadenceKey(pos.cadence)),
     erfuellt ? t("pfad.goalMet") : null,
+    ziel !== null && ziel > 0 && !erfuellt ? t("pfad.goalProgress", { percent: Math.round(ziel * 100) }) : null,
     anteil !== null ? t("home.introduced", { count: pos.introducedCount, total: pos.poolSize }) : null,
     f ? fristText(f) : null,
     f && pos.penaltyCoins > 0 ? t("pfad.penalty", { count: pos.penaltyCoins }) : null,
   ].filter(Boolean).join(", ");
 
-  const R = 44;
-  const umfang = 2 * Math.PI * R;
   return (
     <>
       <button
@@ -247,16 +271,11 @@ function Knoten({ pos, naechste, jetzt, onOeffnen }: {
         aria-label={name} aria-haspopup="dialog" aria-current={naechste ? "step" : undefined}
         onClick={onOeffnen}
       >
-        {anteil !== null && (
-          <svg className="pfad-ring" width="96" height="96" aria-hidden="true">
-            <circle cx="48" cy="48" r={R} fill="none" strokeWidth="6" stroke="rgba(255,255,255,.14)" />
-            {/* Erst ab dem ersten kennengelernten Inhalt: das runde Linienende malte bei 0 sonst einen Punkt. */}
-            {anteil > 0 && (
-              <circle
-                className="pfad-ring-anteil" cx="48" cy="48" r={R} fill="none" strokeWidth="6" stroke="var(--gold)"
-                strokeLinecap="round" strokeDasharray={`${umfang * anteil} ${umfang}`} transform="rotate(-90 48 48)"
-              />
-            )}
+        {(anteil !== null || ziel !== null) && (
+          <svg className="pfad-ring" width={KNOTEN} height={KNOTEN} aria-hidden="true">
+            {/* Außen der Weg durch den Stoff (gold), innen die laufende Pflicht (grün, voll genau mit dem Haken). */}
+            {anteil !== null && <Ring r={RING_AUSSEN} anteil={anteil} farbe="var(--gold)" klasse="pfad-ring-anteil" />}
+            {ziel !== null && <Ring r={RING_INNEN} anteil={ziel} farbe="var(--lime)" klasse="pfad-ring-ziel" />}
           </svg>
         )}
         <span className="pfad-kern" aria-hidden="true">{typeIcon(pos.exerciseType)}</span>

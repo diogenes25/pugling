@@ -49,6 +49,7 @@ export const de = {
       test: "🎯 Test",
       close: "Schließen",
       goalMet: "Ziel erfüllt",
+      goalProgress: "Ziel zu {{percent}} % geschafft",
       // B-588: wo die Übung im Buch steht – Reihe · Unit · Seite(n).
       bookRef: "{{series}} · {{unit}} · S. {{pages}}",
       hoursLeft_one: "noch {{count}} Std.",

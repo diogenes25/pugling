@@ -46,6 +46,7 @@ export const en = {
       test: "🎯 Test",
       close: "Close",
       goalMet: "goal met",
+      goalProgress: "goal {{percent}}% done",
       bookRef: "{{series}} · {{unit}} · p. {{pages}}",
       hoursLeft_one: "{{count}} hr left",
       hoursLeft_other: "{{count}} hrs left",

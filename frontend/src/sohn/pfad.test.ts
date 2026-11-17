@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PositionStatus } from "../lib/types";
-import { abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt } from "./pfad";
+import { abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, zielAnteil } from "./pfad";
 
 /*
  * B-525 – die Regeln des Lernpfads. Je Fall steht dabei, welche Änderung ihn rot macht.
@@ -9,7 +9,7 @@ import { abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebe
 const pos = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
@@ -68,6 +68,20 @@ describe("Der Ring", () => {
     expect(kennenlernAnteil(pos({ introducedCount: 0, poolSize: 0 }))).toBeNull();
     // Ein geschrumpfter Pool darf den Ring nicht über voll hinaus treiben.
     expect(kennenlernAnteil(pos({ introducedCount: 12, poolSize: 10 }))).toBe(1);
+  });
+});
+
+describe("Der Zielring", () => {
+  it("füllt sich mit dem Stand der Pflicht und ist voll genau mit dem Haken", () => {
+    // Rot, wenn der innere Ring nur goalMet spiegelt (0.5 → 0) oder ein Teilstand ihn ohne Haken schließt.
+    expect(zielAnteil(pos({ goalMet: false, goalProgress: 0.5 }))).toBe(0.5);
+    expect(zielAnteil(pos({ goalMet: false, goalProgress: 1 }))).toBeLessThan(1);
+    expect(zielAnteil(pos({ goalMet: true, goalProgress: 0 }))).toBe(1);
+  });
+
+  it("fehlt an einer freien Position, auch wenn der Server sie als erfüllt meldet", () => {
+    // Rot, wenn eine Kür-Position einen vollen Zielring bekäme (B-467: frei heißt goalMet = true).
+    expect(zielAnteil(pos({ cadence: "None", goalMet: true, goalProgress: 1 }))).toBeNull();
   });
 });
 

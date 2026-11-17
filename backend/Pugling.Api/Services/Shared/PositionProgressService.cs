@@ -186,6 +186,28 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return emptyRounds.Any(r => r.EndedAt != null && r.ActiveSeconds >= MinSecondsForContentlessRound);
     }
 
+    /// <summary>
+    /// How far an <b>open</b> goal has come (0…1, never 1): the best learn round of the period, measured against the
+    /// part of its order <see cref="PlayedEnough"/> requires. A goal measured by a passed test has no partial state -
+    /// a failed attempt is not part of a pass - so it stays 0. Kept apart from <see cref="IsGoalMetAsync"/> so the
+    /// rule that books points and penalties does not depend on a display value.
+    /// </summary>
+    private async Task<double> OpenGoalProgressAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct)
+    {
+        if (CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
+        var (from, to) = PeriodRange(pos.Cadence, day);
+        var rounds = await db.PracticeSessions.AsNoTracking()
+            .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
+            .Select(s => new { s.Cursor, s.Order })
+            .ToListAsync(ct);
+        var percent = Math.Clamp(pos.GoalThreshold ?? DefaultPassPercent, 1, 100);
+        var best = rounds.Where(r => r.Order.Count > 0)
+            .Select(r => r.Cursor / Math.Ceiling(r.Order.Count * percent / 100.0))
+            .DefaultIfEmpty(0).Max();
+        // Below 1 on purpose: a full bar must mean "done", and only IsGoalMetAsync decides that.
+        return Math.Clamp(best, 0, 0.99);
+    }
+
     // ---- Rollup + points ---- ----
 
     // Unit and series ride along in the same query: the day rollup reads their names and runs once per day of a
@@ -232,6 +254,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var poolSize = play.PoolSize(pos, items.Count);
             var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day, ct: ct)).Count : 0;
             var goalMet = pos.Cadence == GoalCadence.None || await IsGoalMetAsync(pos, plan, day, ct);
+            var goalProgress = goalMet ? 1 : await OpenGoalProgressAsync(pos, plan, day, ct);
             // Testable is about TODAY, not just about the type: on a free display stage (B-96) the exam
             // answers 400, so a client that offered its test button would send the child into a dead end.
             var testable = IsTestable(pos, plan, day);
@@ -239,7 +262,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             statuses.Add(new PositionStatus(
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
-                testable, goalMet, dueCount, poolSize, pos.PointsGoalMet,
+                testable, goalMet, goalProgress, dueCount, poolSize, pos.PointsGoalMet,
                 introducedByPosition[pos.Id].Count(index => index < poolSize),
                 // A free position is never charged, so it must not advertise a price either.
                 pos.Cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,

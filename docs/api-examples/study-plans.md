@@ -625,6 +625,7 @@ Response — `HTTP 200`:
         "useLeitner": true,
         "testable": true,
         "goalMet": true,
+        "goalProgress": 1,
         "dueCount": 2,
         "poolSize": 2,
         "pointsGoalMet": 10,
