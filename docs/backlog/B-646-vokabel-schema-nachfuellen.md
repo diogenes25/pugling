@@ -2,8 +2,8 @@
 tags: [typ/story, status/idee]
 aliases: []
 status: idee
-prio: P3
-art: Aufräumen
+prio: P2
+art: Wunsch
 groesse: ""
 wo: ""
 migration: ""
@@ -31,6 +31,18 @@ den Seiten-Markdowns), Bestand per Creator-API nachziehen, die 29 Einträge rich
 bleibt bewusst leer, solange die Wertung Varianten aus `,`/`;` gelten lässt (B-462). Für das heutige Abfragen
 (`Word` ↔ `Translation`) folgenlos; nötig wird es für Artikel-/Konjugationsübungen und Filter nach Wortart.
 
+**Anforderung des Vaters (2026-11-17):** Die Felder sollen **vollständig** gefüllt sein, weil weitere
+Übungen auf den Vokabeln aufbauen. Konkret soll die Birkenbihl-Methode ausgebaut werden, und dafür braucht
+**jedes Wort, das in einem Birkenbihl-Text vorkommt, eine Vokabel**. Stand auf der DB-Kopie: die einzige
+Birkenbihl-Übung (#3 „Getting to know each other") hat 8 Wörter, **0** davon verknüpft (`vocabularyId: null`),
+nur **1** im Speicher auffindbar. Unbelegter Verdacht für die Lücke: die Dekodierung
+(`Services/Creator/BirkenbihlDecodingService.cs:49-62`) sucht nur die exakte Oberfläche – eine gebeugte Form
+(`is`) findet ihre Grundform (`be`) nicht, `live` findet nicht `(to) live`, `ville` nicht `la ville`. Die
+Vollständigkeit hängt also an zwei Dingen: gebeugte Formen als eigene Einträge mit `BaseFormId`/`Verb`
+(so ist das Schema gedacht, `Models/VocabEntities.cs:3-5`), und Wörter ohne eingebauten Artikel/`to`, die
+diese Angaben in `Noun`/`Verb` tragen.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Füllgrad-Messung des Vokabel-Schemas auf einer DB-Kopie, im Chat mit dem Vater).
+- **2026-11-17** — Anforderung des Vaters ergänzt (Felder vollständig, jedes Birkenbihl-Wort braucht eine Vokabel), Birkenbihl-Abdeckung auf der DB-Kopie gemessen; P3→P2, Aufräumen→Wunsch.
