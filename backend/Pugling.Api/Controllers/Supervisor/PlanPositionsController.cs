@@ -129,7 +129,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     // Remediation (B-635) plays a ladder of easier forms; a type without one would start as free text and stay there,
     // with an "easier" button that can never work.
     private static string? RemediationProblem(IExerciseType? type) =>
-        type is null || type.EaseLadder.Count == 0
+        type is null || !type.SupportsRemediation
             ? "Remediation needs an exercise type that can be made easier step by step (currently: cloze)."
             : null;
 

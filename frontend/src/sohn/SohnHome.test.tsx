@@ -20,7 +20,7 @@ type TruhenZiele = import("./SohnHome").TruhenZiele;
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter 1", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
@@ -98,8 +98,8 @@ describe("Knoten auf dem Lernpfad", () => {
     // Rot, wenn eine Position ohne Pool (Aufsatz) einen Stoff-Ring bekäme. Ihr Ziel-Ring bleibt: die Pflicht hat sie.
     zeige([
       position({ positionId: 1, exerciseTitle: "Mit Pool" }),
-      position({ positionId: 2, exerciseTitle: "Aufsatz", poolSize: 0, introducedCount: 0 }),
-      position({ positionId: 3, exerciseTitle: "Freier Aufsatz", cadence: "None", poolSize: 0, introducedCount: 0 }),
+      position({ positionId: 2, exerciseTitle: "Aufsatz", poolSize: 0, introducedCount: 0, imprintedCount: 0 }),
+      position({ positionId: 3, exerciseTitle: "Freier Aufsatz", cadence: "None", poolSize: 0, introducedCount: 0, imprintedCount: 0 }),
     ]);
     expect(knoten("Mit Pool").querySelector(".pfad-ring-anteil")).not.toBeNull();
     expect(knoten("Aufsatz").querySelector(".pfad-ring-anteil-bahn")).toBeNull();
@@ -125,7 +125,7 @@ describe("Knoten auf dem Lernpfad", () => {
   it("zeichnet bei null kennengelernten Inhalten nur die leere Bahn", () => {
     // Rot, wenn der Bogen auch bei 0 gezeichnet wird: sein rundes Linienende malt dann einen goldenen Punkt, der
     // wie ein erster Fortschritt aussieht (im Rollengang gesehen).
-    zeige([position({ exerciseTitle: "Neu", introducedCount: 0 })]);
+    zeige([position({ exerciseTitle: "Neu", introducedCount: 0, imprintedCount: 0 })]);
     expect(knoten("Neu").querySelector(".pfad-ring")).not.toBeNull();
     expect(knoten("Neu").querySelector(".pfad-ring-anteil")).toBeNull();
   });
@@ -142,6 +142,16 @@ describe("Knoten auf dem Lernpfad", () => {
 });
 
 describe("Das Blatt zu einem Knoten", () => {
+  // B-643 AK 6, Review: Blatt und Vorlesename des Knotens zählen eingeprägte, nicht gesehene Wörter. Rot, wenn eine der
+  // beiden Zeilen wieder `introducedCount` liest – dann stünde „10 von 10“ bei einem Ring, der nicht voll ist.
+  it("nennt eingeprägte Wörter, nicht gesehene (B-643)", () => {
+    zeige([position({ positionId: 17, introducedCount: 10, imprintedCount: 3 })]);
+    expect(knoten("Wörter 1").getAttribute("aria-label")).toContain("3 von 10 eingeprägt");
+    fireEvent.click(knoten("Wörter 1"));
+    expect(screen.getByRole("dialog", { name: "Wörter 1" }).textContent).toContain("3 von 10 eingeprägt");
+  });
+
+
   it("führt mit „Los“ ins Üben und bietet den Test als zweiten Weg", () => {
     // Rot, wenn „Los“ direkt in den Test führt, obwohl Karten fällig sind, oder wenn der Test aus dem Blatt fiele –
     // er ist der einzige Weg, das Ziel zu erfüllen.
@@ -150,7 +160,7 @@ describe("Das Blatt zu einem Knoten", () => {
     const blatt = screen.getByRole("dialog", { name: "Wörter 1" });
     expect(within(blatt).getByRole("link", { name: "▶ LOS" }).getAttribute("href")).toBe("/sohn/practice/17");
     expect(within(blatt).getByRole("link", { name: "🎯 Test" }).getAttribute("href")).toBe("/sohn/test/17");
-    expect(blatt.textContent).toContain("4 von 10 schon kennengelernt · 3 fällig");
+    expect(blatt.textContent).toContain("4 von 10 eingeprägt · 3 fällig");
     // Frist und Malus stehen auch im Blatt – dort lesbar für alle, nicht versteckt. Rot, wenn sie dort fehlen.
     const frist = blatt.querySelector(".pfad-frist")!;
     expect(frist.textContent).toBe("⏰ noch 2 Std. · sonst −5 Münzen");
@@ -173,7 +183,7 @@ describe("Das Blatt zu einem Knoten", () => {
 
   it("startet mit „Los“ den Test, wenn nichts zu üben ist", () => {
     // Rot, wenn „Los“ in eine leere Übungsrunde führte.
-    zeige([position({ positionId: 17, dueCount: 0, introducedCount: 10 })]);
+    zeige([position({ positionId: 17, dueCount: 0, introducedCount: 10, imprintedCount: 10 })]);
     fireEvent.click(knoten("Wörter 1"));
     const blatt = screen.getByRole("dialog");
     expect(within(blatt).getByRole("link", { name: "▶ LOS" }).getAttribute("href")).toBe("/sohn/test/17");

@@ -92,6 +92,13 @@ public interface IExerciseType
     IReadOnlyList<int> EaseLadder { get; }
 
     /// <summary>
+    /// Whether a position of this type may run as remediation (B-635): every round the open tasks as free text, made
+    /// easier along <see cref="EaseLadder"/>. A ladder alone is not enough - vocabulary has one for its learn card (B-643)
+    /// but no remediation round. Default <c>false</c>.
+    /// </summary>
+    bool SupportsRemediation { get; }
+
+    /// <summary>
     /// The stage a never-seen card is shown at (B-419), or <c>null</c> for a type that cannot show a card without grading
     /// it. Default: the first free display stage among <see cref="StageOptions"/>; vocabulary names its learn card (B-598).
     /// </summary>

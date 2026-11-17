@@ -227,6 +227,13 @@ public class PositionItemProgress
     /// <summary>When the content was first introduced as "new". Null = not introduced yet.</summary>
     public DateOnly? IntroducedAt { get; set; }
     /// <summary>
+    /// B-643: the day the word was first written from memory, right and without help, on its learn card ("eingeprägt").
+    /// Until then the word comes back as a learn card, every day and round after round. Only the card selection and the
+    /// daily dose read it; due dates, new-content points and metrics stay on <see cref="IntroducedAt"/>. A content whose
+    /// introduction is no learn card never needs it (see <c>PositionPlayService.NeedsImprint</c>).
+    /// </summary>
+    public DateOnly? ImprintedAt { get; set; }
+    /// <summary>
     /// When the content paid its one-time new-content points (B-535). Null = not paid yet: "new" lasts until the first
     /// graded HIT, not until the first contact - free rungs and a wrong first try must not use the bonus up.
     /// </summary>

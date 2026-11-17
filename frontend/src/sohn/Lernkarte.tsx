@@ -4,6 +4,7 @@ import { AudioButton } from "../components/AudioButton";
 import { SpeakButton } from "../components/SpeakButton";
 import { normalizeAnswer } from "../lib/answerNormalize";
 import type { PracticeCard } from "../lib/types";
+import { Antwortflaeche } from "./Lektion";
 
 /** Was die Lernkarte am Ende an den Server schickt: beide Ergebnisse in einem Aufruf (B-598, Entscheidung 6). */
 export interface LernkartenErgebnis {
@@ -29,8 +30,12 @@ export function abgeschrieben(eingabe: string, wort: string): boolean {
  *
  * Vorgelesen wird nur, solange das Wort zu sehen ist (Entscheidung 10): in Schritt 4 wäre der Ton die Lösung.
  * `gesperrt` gilt, solange die Antwort unterwegs ist – derselbe Wartepunkt wie bei jedem anderen Knopf der Runde.
+ *
+ * B-643: In Schritt 4 gibt es „Mach's mir leichter“, solange der Server `canEase` meldet. Er schaltet die Karte eine Stufe
+ * tiefer (Kästchen, Buchstabensalat, Auswahl) und schickt sie neu; die Karte bleibt dabei eingehängt und in Schritt 4,
+ * nur die Antwortfläche folgt der neuen Form (`eased`). „Später nochmal“ (vorher „Weiß ich nicht“) gibt ohne Hilfe auf.
  */
-export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig }: {
+export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, onLeichter }: {
   karte: PracticeCard;
   gesperrt: boolean;
   /**
@@ -39,6 +44,8 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig }: 
    */
   zuFrueh?: () => boolean;
   onFertig: (ergebnis: LernkartenErgebnis) => void;
+  /** B-643: die Karte eine Stufe leichter – der Aufrufer fragt den Server und reicht die neue Karte herein. */
+  onLeichter?: () => void;
 }) {
   const { t } = useTranslation();
   const [schritt, setSchritt] = useState<Schritt>("aufdecken");
@@ -106,7 +113,25 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig }: 
         </form>
       )}
 
-      {schritt === "erinnern" && (
+      {schritt === "erinnern" && karte.eased && (
+        <>
+          <p className="sub" style={{ margin: 0 }}>{t("lernkarte.recall")}</p>
+          <Antwortflaeche kartenId={`lernkarte-${karte.itemIndex}-${karte.stage}`} karte={karte} wert={erinnert}
+            onWert={setErinnert} gesperrt={gesperrt} knopf={t("lernkarte.ok")} feldName={t("lernkarte.recall")}
+            platzhalter="" onAbschicken={() => onFertig({ wasKnown: kannte, givenAnswer: erinnert })} />
+          <div className="lektion-fuss">
+            {karte.canEase && onLeichter && (
+              <button type="button" className="btn ghost" disabled={gesperrt} onClick={() => { setErinnert(""); onLeichter(); }}>
+                {t("lernkarte.easier")}
+              </button>
+            )}
+            <button type="button" className="btn ghost" disabled={gesperrt}
+              onClick={() => onFertig({ wasKnown: kannte, givenAnswer: null })}>{t("lernkarte.giveUp")}</button>
+          </div>
+        </>
+      )}
+
+      {schritt === "erinnern" && !karte.eased && (
         <form className="lektion-fuss" onSubmit={(e) => {
           e.preventDefault();
           if (erinnert.trim()) onFertig({ wasKnown: kannte, givenAnswer: erinnert });
@@ -116,6 +141,11 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig }: 
             spellCheck={false} ref={(el) => { fokus.current = el; }} value={erinnert}
             readOnly={gesperrt} onChange={(e) => setErinnert(e.target.value)} />
           <button type="submit" className="btn lime" disabled={gesperrt || !erinnert.trim()}>{t("lernkarte.ok")}</button>
+          {karte.canEase && onLeichter && (
+            <button type="button" className="btn ghost" disabled={gesperrt} onClick={() => { setErinnert(""); onLeichter(); }}>
+              {t("lernkarte.easier")}
+            </button>
+          )}
           <button type="button" className="btn ghost" disabled={gesperrt}
             onClick={() => onFertig({ wasKnown: kannte, givenAnswer: null })}>{t("lernkarte.giveUp")}</button>
         </form>

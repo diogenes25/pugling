@@ -258,7 +258,7 @@ function Knoten({ pos, naechste, jetzt, onOeffnen }: {
     t(cadenceKey(pos.cadence)),
     erfuellt ? t("pfad.goalMet") : null,
     ziel !== null && ziel > 0 && !erfuellt ? t("pfad.goalProgress", { percent: Math.round(ziel * 100) }) : null,
-    anteil !== null ? t("home.introduced", { count: pos.introducedCount, total: pos.poolSize }) : null,
+    anteil !== null ? t("home.introduced", { count: pos.imprintedCount ?? 0, total: pos.poolSize }) : null,
     f ? fristText(f) : null,
     f && pos.penaltyCoins > 0 ? t("pfad.penalty", { count: pos.penaltyCoins }) : null,
   ].filter(Boolean).join(", ");
@@ -325,7 +325,7 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
         </div>
         {anteil !== null && (
           <div className="sub">
-            {t("home.introduced", { count: pos.introducedCount, total: pos.poolSize })}
+            {t("home.introduced", { count: pos.imprintedCount ?? 0, total: pos.poolSize })}
             {pos.useLeitner && pos.dueCount > 0 && <> · {t("pfad.due", { count: pos.dueCount })}</>}
           </div>
         )}

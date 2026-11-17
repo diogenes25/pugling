@@ -198,6 +198,9 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override IReadOnlyList<int> EaseLadder { get; } =
         [(int)ClozeStage.TranslationFreeText, (int)ClozeStage.LetterBoxes, (int)ClozeStage.LetterScramble, (int)ClozeStage.Choice];
 
+    /// <inheritdoc/>
+    public override bool SupportsRemediation => true;
+
     /// <summary>B-599: a choice per gap with fewer than two distractors is played as letter boxes, card by card.</summary>
     public override int? ChoiceFallbackStage(int stage) =>
         (ClozeStage)stage == ClozeStage.Choice ? (int)ClozeStage.LetterBoxes : null;
@@ -221,7 +224,7 @@ public sealed class ClozeExerciseType : ExerciseTypeBase
     public override ExerciseTypeManifest Manifest { get; } = new(
         ExerciseTypeKeys.Cloze, "Lückentext", "cloze", 1, "cloze",
         ExerciseCheckMode.StudyPlanTest, "tests", LearningMethod.Cloze,
-        // "remediation" (B-635): the type has an ease ladder, so a position may run as remediation - the father's form reads it.
+        // "remediation" (B-635): a position of this type may run as remediation (SupportsRemediation) - the father's form reads it.
         ["wordBank", "translation", "letterHints", "vocabStore", "cueBox", "remediation"], ItemNoun: "Lücken", ItemNounOne: "Lücke");
 
     /// <inheritdoc/>

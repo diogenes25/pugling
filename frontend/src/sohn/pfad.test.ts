@@ -9,7 +9,7 @@ import { abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebe
 const pos = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
@@ -62,12 +62,17 @@ describe("Der nächste Knoten", () => {
 });
 
 describe("Der Ring", () => {
-  it("zeigt den Anteil kennengelernter Inhalte und fehlt ohne Pool", () => {
+  it("zeigt den Anteil eingeprägter Inhalte und fehlt ohne Pool", () => {
     // Rot, wenn eine Position ohne Inhalte einen (leeren oder vollen) Ring bekäme oder durch 0 geteilt würde.
-    expect(kennenlernAnteil(pos({ introducedCount: 4, poolSize: 10 }))).toBe(0.4);
-    expect(kennenlernAnteil(pos({ introducedCount: 0, poolSize: 0 }))).toBeNull();
+    expect(kennenlernAnteil(pos({ imprintedCount: 4, poolSize: 10 }))).toBe(0.4);
+    expect(kennenlernAnteil(pos({ imprintedCount: 0, poolSize: 0 }))).toBeNull();
     // Ein geschrumpfter Pool darf den Ring nicht über voll hinaus treiben.
-    expect(kennenlernAnteil(pos({ introducedCount: 12, poolSize: 10 }))).toBe(1);
+    expect(kennenlernAnteil(pos({ imprintedCount: 12, poolSize: 10 }))).toBe(1);
+  });
+
+  it("zählt eingeprägte, nicht nur gesehene Wörter (B-643)", () => {
+    // Rot, wenn der Ring wieder „eingeführt“ liest: zehn gesehen, drei aus dem Gedächtnis – der Ring ist nicht voll.
+    expect(kennenlernAnteil(pos({ introducedCount: 10, imprintedCount: 3, poolSize: 10 }))).toBe(0.3);
   });
 });
 

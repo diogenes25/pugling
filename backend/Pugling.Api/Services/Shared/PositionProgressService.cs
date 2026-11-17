@@ -242,13 +242,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         // pool must not count words beyond it (B-478).
         var introducedByPosition = (await db.PositionItemProgress.AsNoTracking()
                 .Where(p => p.PlanPosition!.StudyPlanId == plan.Id && p.IntroducedAt != null)
-                .Select(p => new { p.PlanPositionId, p.ItemIndex })
+                .Select(p => new { p.PlanPositionId, p.ItemIndex, Imprinted = p.ImprintedAt != null })
                 .ToListAsync(ct))
-            .ToLookup(p => p.PlanPositionId, p => p.ItemIndex);
+            .ToLookup(p => p.PlanPositionId, p => (p.ItemIndex, p.Imprinted));
 
         foreach (var pos in positions)
         {
-            var manifest = pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest : null;
+            var type = pos.Exercise is { } ex ? registry.ByKey(ex.Type) : null;
+            var manifest = type?.Manifest;
             var checkMode = CheckModeOf(pos);
             var items = await play.ItemsOfAsync(pos, ct: ct);
             var poolSize = play.PoolSize(pos, items.Count);
@@ -263,12 +264,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, pos.Cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, goalProgress, dueCount, poolSize, pos.PointsGoalMet,
-                introducedByPosition[pos.Id].Count(index => index < poolSize),
+                introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize),
                 // A free position is never charged, so it must not advertise a price either.
                 pos.Cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
                 pos.Exercise?.SeriesUnitId ?? 0, pos.Exercise?.SeriesUnit?.Label ?? "",
                 pos.Exercise?.SeriesUnit?.Series?.Name ?? "", pos.Exercise?.BookPages,
-                plan.Id, plan.Title, SubjectNameOf(pos)));
+                plan.Id, plan.Title, SubjectNameOf(pos),
+                // B-643: the golden ring - imprinted words, or introduced ones where a content needs no learn card.
+                introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize && (p.Imprinted
+                    || type is null || !PositionPlayService.NeedsImprint(type, items[p.ItemIndex])))));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.

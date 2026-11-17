@@ -122,7 +122,7 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   // Ihre Schritte sprechen ebenfalls Englisch.
   await lernkarteDurchspielen(page, false, {
     aufdecken: "Uncover", neu: "No, it's new", abschreiben: "Copy it", erinnern: "Now from memory", ok: "OK",
-    aufgeben: "I don't know", weiter: "Next →",
+    aufgeben: "Later again", weiter: "Next →",
   });
 
   // Nach der ersten Karte die zweite: die Seed-Übung hat mehrere Einträge. Ein Zweig „oder schon ROUND DONE!“ lief hier

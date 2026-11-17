@@ -154,9 +154,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return [.. order.OrderBy(i =>
         {
             var card = CardOf(introduced, i);
-            if (PositionPlayService.IsIntroduction(type, dayStage, mode, card is not null)) return 0;
             // The order comes from the same item list; an index beyond it is skipped by the cursor anyway.
             if (i >= items.Count) return 2;
+            if (PositionPlayService.IsIntroduction(type, dayStage, mode, PositionPlayService.Known(type, card, items[i]))) return 0;
             var stage = PositionPlayService.CardStage(type, pos, dayStage, mode, card, day, items[i]);
             return IsSelfClaimRung(type, dayStage, stage) ? 1 : 2;
         })];
@@ -172,7 +172,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     /// <summary>
     /// B-598: is the card at <paramref name="position"/> of the frozen order a learn card coming back? A learn card given
-    /// up or recalled wrong is appended once (see Review), so a second occurrence of an index is exactly that repeat.
+    /// up, recalled wrong or answered with help is appended again (see Review, B-643: as often as it takes), so any later
+    /// occurrence of an index is such a repeat.
     /// </summary>
     private static bool IsRepeat(PracticeSession session, int position) =>
         position >= 0 && position < session.Order.Count && session.Order.IndexOf(session.Order[position]) < position;
@@ -182,12 +183,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// card again where it is the repeat of one (B-598, decision 7) - the word was not learnt yet, so it is learnt again.
     /// </summary>
     private static int StageAt(IExerciseType type, PlanPosition pos, int dayStage, PracticeSession session,
-        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position)
+        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position, bool ignoreEased = false)
     {
         var index = session.Order[position];
         // B-635: a card the child made easier keeps that stage for this place in the round; a remediation task starts at
         // the free-text rung of the ladder whatever the day says. Read from the session, never from the client.
-        if (session.EasedStages?.TryGetValue(position, out var eased) == true) return eased;
+        // `ignoreEased` asks for the card's own stage before any easing - a learn card eased in its recall (B-643).
+        if (!ignoreEased && session.EasedStages?.TryGetValue(position, out var eased) == true) return eased;
         if (IsRemediationRound(pos, session, type)) return type.EaseLadder[0];
         if (IsRepeat(session, position) && type.IntroductionStage is { } learn && type.IsLearnCardStage(learn))
             return type.CardCeiling(items[index], learn);
@@ -197,7 +199,19 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     // B-635: a learn round on a remediation position of a type that can be made easier.
     private static bool IsRemediationRound(PlanPosition pos, PracticeSession session, IExerciseType type) =>
-        pos.Remediation && session.Mode == PlayMode.Lern && type.EaseLadder.Count > 0;
+        pos.Remediation && session.Mode == PlayMode.Lern && type.SupportsRemediation && type.EaseLadder.Count > 0;
+
+    /// <summary>
+    /// B-643: the stage a card can be made easier from, or <c>null</c> when it cannot - a remediation task at its stage, or a
+    /// learn card in its recall: not eased yet, the recall is the ladder's free-text rung. Shared by the card's flag and
+    /// the "easier" call, so the button the child sees and the call it makes cannot disagree.
+    /// </summary>
+    private static int? EaseFrom(PlanPosition pos, PracticeSession session, IExerciseType type, int baseStage, int stage)
+    {
+        if (IsRemediationRound(pos, session, type)) return stage;
+        if (session.Mode != PlayMode.Lern || type.EaseLadder.Count == 0 || !type.IsLearnCardStage(baseStage)) return null;
+        return type.IsLearnCardStage(stage) ? type.EaseLadder[0] : stage;
+    }
 
     /// <summary>A practice session of the position.</summary>
     [HttpGet("{sessionId:int}")]
@@ -260,16 +274,21 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var exercise = pos.Exercise!;
         var index = session.Order[position];
         var card = CardOf(introduced, index);
-        var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode, card is not null);
+        var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode,
+            PositionPlayService.Known(type, card, items[index]));
         var stage = StageAt(type, pos, dayStage, session, introduced, items, position);
-        var learnCard = type.IsLearnCardStage(stage);
+        // B-643: a learn card eased in its recall stays a learn card - in its own form (the learnt word written), only the
+        // answer area follows the easier stage.
+        var baseStage = StageAt(type, pos, dayStage, session, introduced, items, position, ignoreEased: true);
+        var learnCard = type.IsLearnCardStage(baseStage);
+        var eased = stage != baseStage;
         // B-597: the card in the form its stage asks it - the same form Review grades.
-        var staged = PositionPlayService.AtStage(type, items, stage);
+        var staged = PositionPlayService.AtStage(type, items, learnCard ? baseStage : stage);
         var item = staged[index];
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), staged, item, type, stage,
             type.IsTypedStage(stage), session.Id);
-        var canEase = IsRemediationRound(pos, session, type)
-            && PositionPlayService.EasierStage(type, PositionPlayService.ConfigOf(exercise), staged, item, stage) is not null;
+        var canEase = EaseFrom(pos, session, type, baseStage, stage) is { } from
+            && PositionPlayService.EasierStage(type, PositionPlayService.ConfigOf(exercise), staged, item, from) is not null;
         return new PracticeCard(index, stage, type.Key, f.Prompt,
             f.Hint, f.AnswerLength, f.Reveal, f.Choices, f.AudioUrl, f.ImageUrl, f.ImageAlt, f.GapIndex, f.Passage,
             f.AnyOrder, f.RevealAlternatives, f.Decoding, type.IsDisplayOnlyStage(stage), f.AnswerPattern, f.LetterTiles,
@@ -279,7 +298,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             type.AudioReplacesPrompt(stage) ? null : item.SpeechLang,
             f.DictationSpokenAnswer, f.DictationLang,
             // B-598: the learn card reads its learnt word aloud while it shows it (decision 10) - the word is the reveal.
-            learnCard, learnCard ? item.DictationLang : null, learnCard ? item.DictationAudioUrl : null,
+            // An eased recall asks for the word: reading it aloud there would be the answer.
+            learnCard, learnCard && !eased ? item.DictationLang : null, learnCard && !eased ? item.DictationAudioUrl : null,
             canEase, session.EasedStages?.ContainsKey(position) == true);
     }
 
@@ -470,8 +490,6 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (pos?.Exercise is null) return NotFound();
         if (play.TypeOf(pos.Exercise) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
-        if (!IsRemediationRound(pos, session, type))
-            return this.ProblemWithCode(ApiErrors.CannotEase, "Only remediation tasks can be made easier.");
         var position = session.Cursor;
         if (position >= session.Order.Count || session.Order[position] != dto.ItemIndex)
             return this.ProblemWithCode(ApiErrors.CannotEase, "Only the current card of the round can be made easier.");
@@ -481,9 +499,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var dayStage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         var introduced = await play.IntroducedCardsAsync(positionId, ct);
         var stage = StageAt(type, pos, dayStage, session, introduced, items, position);
-        var staged = PositionPlayService.AtStage(type, items, stage);
+        var baseStage = StageAt(type, pos, dayStage, session, introduced, items, position, ignoreEased: true);
+        // Only a remediation task or a learn card's recall (B-643) can be made easier.
+        if (EaseFrom(pos, session, type, baseStage, stage) is not { } from)
+            return this.ProblemWithCode(ApiErrors.CannotEase, "Only remediation tasks and learn cards can be made easier.");
+        var staged = PositionPlayService.AtStage(type, items, type.IsLearnCardStage(baseStage) ? baseStage : stage);
         if (PositionPlayService.EasierStage(type, PositionPlayService.ConfigOf(pos.Exercise), staged, staged[dto.ItemIndex],
-                stage) is not { } easier)
+                from) is not { } easier)
             return this.ProblemWithCode(ApiErrors.CannotEase, "This card is at its easiest form already.");
 
         session.EasedStages = new Dictionary<int, int>(session.EasedStages ?? []) { [position] = easier };
@@ -546,6 +568,16 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             ? StageAt(type, pos, dayStage, session, introduced, items, position)
             : PositionPlayService.CardStage(type, pos, dayStage, session.Mode, CardOf(introduced, dto.ItemIndex),
                 session.Day, items[dto.ItemIndex]);
+        // B-643: a learn card eased in its recall is answered as the learn card it is - in its own form, graded at the eased
+        // stage, and never imprinting. Before the B-598 guard below, which would turn it back into a plain learn card.
+        if (position >= 0 && session.EasedStages?.ContainsKey(position) == true
+            && StageAt(type, pos, dayStage, session, introduced, items, position, ignoreEased: true) is var learnBase
+            && type.IsLearnCardStage(learnBase))
+        {
+            var learnStaged = PositionPlayService.AtStage(type, items, learnBase);
+            return await LearnCardReviewAsync(plan, pos, session, type, dayStage, introduced, items, learnStaged,
+                learnStaged[dto.ItemIndex], dto, position, easedStage: stage, ct);
+        }
         // B-598: a learn card answered after its word was introduced meanwhile - by its own first answer (sent twice) or by
         // another round in a second tab - is still the learn card this round showed; graded as its rung, a recall made
         // seconds after seeing the solution would count. The learn card's history row written after this round started tells
@@ -560,7 +592,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var item = staged[dto.ItemIndex];
         if (type.IsLearnCardStage(stage))
             return await LearnCardReviewAsync(plan, pos, session, type, dayStage, introduced, items, staged, item, dto,
-                atCursor: position == session.Cursor, ct);
+                position, easedStage: null, ct);
         var typed = type.IsTypedStage(stage);
         var displayOnly = type.IsDisplayOnlyStage(stage);
         var selfClaimRung = IsSelfClaimRung(type, dayStage, stage);
@@ -755,7 +787,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // The atom just reviewed is introduced now; the set was read before, and the next card may be that atom when a
         // client answered a card other than the cursor's (offline batch).
-        if (prog?.IntroducedAt is { } introducedAt) introduced[prog.ItemIndex] = new CardProgress(prog.Box, introducedAt);
+        if (prog?.IntroducedAt is { } introducedAt) introduced[prog.ItemIndex] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt);
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
@@ -771,8 +803,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// uncovering it, <see cref="ReviewDto.GivenAnswer"/> from recalling it (<c>null</c> = given up). Neither scores nor
     /// moves a box (decision 2: the solution lay on the device); the word counts as introduced, and both results go into
     /// the learning history as two rows that count for no mastery - a recall given up keeps no answer, a wrong one keeps
-    /// what was written (decisions 6, 8). Given up or wrong, the card comes back once at the end of the round (decision 7):
-    /// a second occurrence in the order is that repeat, and a repeat is never appended again.
+    /// what was written (decisions 6, 8). B-643: a right free recall imprints the word; given up, wrong or answered in an
+    /// easier form (<paramref name="easedStage"/>), the card comes back at the end of the round, as often as it takes.
     /// </summary>
     /// <remarks>
     /// Only the card at the cursor is appended: an answer for an index outside the round, or a learn card answered again
@@ -781,10 +813,20 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     private async Task<ActionResult<ReviewOutcome>> LearnCardReviewAsync(StudyPlan plan, PlanPosition pos,
         PracticeSession session, IExerciseType type, int dayStage, Dictionary<int, CardProgress> introduced,
         IReadOnlyList<ContentItem> items, IReadOnlyList<ContentItem> staged, ContentItem item, ReviewDto dto,
-        bool atCursor, CancellationToken ct)
+        int position, int? easedStage, CancellationToken ct)
     {
         var index = dto.ItemIndex;
+        var atCursor = position == session.Cursor;
         var recalled = !string.IsNullOrWhiteSpace(dto.GivenAnswer) && grader.Matches(dto.GivenAnswer, item);
+        // B-643, risk 4: a recall counts only for the card the round stands on. An answer for a place the round has passed
+        // is a late copy (sent twice, second tab). And the repeat right after the word's own eased answer counts only once
+        // the client reported it visible (B-530): before that the same eased answer sent twice would land on it and imprint
+        // a word whose learn card the child never saw again.
+        var lastAnswerAt = session.Reviews.Count > 0 ? session.Reviews.Max(r => r.At) : (DateTime?)null;
+        var echoOfEased = atCursor && position > 0 && session.Order[position - 1] == index
+            && session.EasedStages?.ContainsKey(position - 1) == true
+            && !(session.CardShownAt is { } shownAt && lastAnswerAt is { } la && shownAt > la);
+        var recallCounts = recalled && easedStage is null && position >= session.Cursor && !echoOfEased;
         var prog = await play.ProgressForAsync(pos.Id, index, ct);
         // Only the child's own encounter introduces (B-433), as in every other review.
         if (User.IsStudent() && prog.IntroducedAt is null)
@@ -792,6 +834,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             prog.IntroducedAt = session.Day;
             prog.DueOn ??= session.Day;
         }
+        // B-643: imprinted only by the free recall, right and without help - the stage comes from the session, so an eased
+        // card sent as free text imprints nothing. Only the child's own answer counts (B-433).
+        if (User.IsStudent() && recallCounts) prog.ImprintedAt ??= session.Day;
 
         var now = time.GetUtcNow().UtcDateTime;
         // A review without a hit: the round counts as played, and the combo does not grow on a card that pays nothing.
@@ -804,12 +849,15 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, dto.WasKnown ?? false,
                 (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false,
                 ct: ct);
-            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, recalled, (int)TestStage.LearnCard,
+            // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, recalled, easedStage ?? (int)TestStage.LearnCard,
                 string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
                 session.Day, countsForMastery: false, ct: ct);
         }
 
-        var repeats = verdict && !recalled && atCursor && session.Order.Count(i => i == index) < 2;
+        // B-643 (decisions 4 and 8): given up, wrong or answered with help, the word comes back at the end of the round as a
+        // whole learn card - as often as it takes; the ✕ is the way out. Only the card at the cursor grows the round.
+        var repeats = verdict && !recallCounts && atCursor;
         if (repeats) session.Order = [.. session.Order, index];
 
         var cursor = PositionPlayService.SkipRemoved(session.Order, session.Cursor, items.Count);
@@ -817,7 +865,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
         await db.SaveChangesAsync(ct);
 
-        if (prog.IntroducedAt is { } introducedAt) introduced[index] = new CardProgress(prog.Box, introducedAt);
+        if (prog.IntroducedAt is { } introducedAt) introduced[index] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt);
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         var misspelled = !recalled && !string.IsNullOrWhiteSpace(dto.GivenAnswer)

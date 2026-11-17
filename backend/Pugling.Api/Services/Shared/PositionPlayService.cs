@@ -165,7 +165,23 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public async Task<Dictionary<int, CardProgress>> IntroducedCardsAsync(int positionId, CancellationToken ct) =>
         await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
-            .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value), ct);
+            .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value, p.ImprintedAt), ct);
+
+    /// <summary>
+    /// B-643: does this content have to be written from memory once before it counts as known? Exactly when its
+    /// introduction is a learn card - a recognition-only card (shown on both sides, B-597) and every type without a learn
+    /// card count as known once introduced, as before.
+    /// </summary>
+    public static bool NeedsImprint(IExerciseType type, ContentItem item) =>
+        type.IntroductionStage is { } intro && type.IsLearnCardStage(type.CardCeiling(item, intro));
+
+    /// <summary>
+    /// B-643: is the card known for the card selection - introduced and, where it needs one, imprinted? An introduced but
+    /// not imprinted word is met on the learn card again (decision 2). The one rule every caller of
+    /// <see cref="IsIntroduction"/> passes on; due dates and points keep reading the introduction.
+    /// </summary>
+    public static bool Known(IExerciseType type, CardProgress? card, ContentItem item) =>
+        card is { } c && (c.ImprintedAt is not null || !NeedsImprint(type, item));
 
     /// <summary>
     /// The stage one card is played at. A never-seen card is shown (B-419); an introduced one climbs the type's ladder
@@ -179,12 +195,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// <remarks>The card's own ceiling (B-597, <see cref="IExerciseType.CardCeiling"/>) caps whatever the rules above chose.</remarks>
     public static int CardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode, CardProgress? card,
         DateOnly day, ContentItem item) =>
-        type.CardCeiling(item, UncappedCardStage(type, pos, dayStage, mode, card, day));
+        type.CardCeiling(item, UncappedCardStage(type, pos, dayStage, mode, card, day, Known(type, card, item)));
 
     private static int UncappedCardStage(IExerciseType type, PlanPosition pos, int dayStage, PlayMode mode,
-        CardProgress? card, DateOnly day)
+        CardProgress? card, DateOnly day, bool known)
     {
-        if (IsIntroduction(type, dayStage, mode, card is not null)) return IntroductionStage(type)!.Value;
+        if (IsIntroduction(type, dayStage, mode, known)) return IntroductionStage(type)!.Value;
         // B-598, decision 9: free practice records nothing, so a learn-card day shows the word on its display stage there.
         if (mode == PlayMode.Info && type.IsLearnCardStage(dayStage)) return DisplayStage(type) ?? dayStage;
         if (mode != PlayMode.Lern || !pos.UseLeitner || card is not { } c || c.Box >= pos.MaxBox) return dayStage;
@@ -256,20 +272,27 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day,
         PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true, CancellationToken ct = default)
     {
-        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos, ct: ct)).Count);
+        var items = await ItemsOfAsync(pos, ct: ct);
+        var poolSize = PoolSize(pos, items.Count);
         if (poolSize == 0) return [];
 
         var progress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == pos.Id && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
-        var due = Enumerable.Range(0, poolSize)
+        IEnumerable<(int Index, PositionItemProgress? Prog)> due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
-            .Where(x => ScopeMatch(pos.Scope, x.Prog, day) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)));
+            .Where(x => ScopeMatch(pos.Scope, x.Prog, day) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)))
+            .ToList();
 
         // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
+        // B-643 (decision 2): a word met on an earlier day but not imprinted comes back as a learn card and takes a place of
+        // the day's new words - 6 a day with 2 open from yesterday are 2 open and 4 new. Counted from this round's own
+        // contents (a word the scope or its due date keeps out takes no place), and for the whole day: imprinted in the
+        // first round, it still took its place, or a second round would bring new words beyond the dose.
         if (dueOnly && DailyDose(pos) is > 0 and var dose)
-            due = WithinDailyDose(due, dose, progress.Values.Count(p => p.IntroducedAt == day));
+            due = WithinDailyDose(due, dose, progress.Values.Count(p => p.IntroducedAt == day)
+                + OpenLearnCards(pos, items, due.Select(x => x.Prog), day));
 
         return OrderIndices(due, strategy);
     }
@@ -319,6 +342,17 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// B-643: words introduced before <paramref name="day"/> that come back as learn cards that day - not imprinted yet, or
+    /// imprinted only today. They take places of the day's new words, in practice and in the test portion alike.
+    /// </summary>
+    public int OpenLearnCards(PlanPosition pos, IReadOnlyList<ContentItem> items, IEnumerable<PositionItemProgress?> progress,
+        DateOnly day) =>
+        pos.Exercise is { } ex && TypeOf(ex) is { } type
+            ? progress.Count(p => p is { IntroducedAt: { } at } && at < day && (p.ImprintedAt is null || p.ImprintedAt == day)
+                && p.ItemIndex < items.Count && NeedsImprint(type, items[p.ItemIndex]))
+            : 0;
+
+    /// <summary>
     /// Applies the daily dose (B-04): of the never-shown contents only as many pass as the day still has room for,
     /// lowest index first - the order of the book. What was introduced earlier today counts against the dose, so a
     /// second round on the same day brings no further new ones. Known contents pass untouched.
@@ -356,6 +390,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     {
         var introduced = progress.Where(p => p.IntroducedAt is not null && p.ItemIndex < poolSize).ToList();
         var known = introduced.Select(p => p.ItemIndex).ToHashSet();
+        // Not reduced by open learn cards (B-643): a child that skips practice must meet more words every day (B-04), and
+        // words met cold here come back as learn cards the next day, where they take their places of the dose.
         var room = Math.Max(0, newItemsPerDay - introduced.Count(p => p.IntroducedAt == day));
 
         var portion = introduced
@@ -632,4 +668,4 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 }
 
 /// <summary>The learning state one introduced card's stage depends on (B-476): its Leitner box and when it was introduced.</summary>
-public readonly record struct CardProgress(int Box, DateOnly IntroducedAt);
+public readonly record struct CardProgress(int Box, DateOnly IntroducedAt, DateOnly? ImprintedAt = null);

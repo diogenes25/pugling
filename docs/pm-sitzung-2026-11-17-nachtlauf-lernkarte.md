@@ -165,6 +165,73 @@ offene Vorschau-Runde des Vaters würde vom Kind fortgesetzt (keine Spalte „we
 - **(CZ) Fokus-Regel der Arcade als Tor:** ein neuer Knopf vor der Antwortfläche stahl den Fokus (Fund 1). Vorschlag:
   E2E-Zusicherung „nach Weiter steht der Fokus im Antwortfeld" in jede Spec, die eine neue Antwortform einführt.
 
+## Sprint 92 — Ziel & Umfang
+
+**Sprint-Ziel (Sicht Sohn):** „Neue Wörter zählen erst, wenn ich sie aus dem Gedächtnis weiß; bis dahin darf ich mir helfen
+lassen, und die Lernkarte holt sie Runde um Runde zurück.“ **Umfang:** [B-643](backlog/B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) (L).
+Entwickler-Brief wie in der Sprintplanung; Fundament aus B-635 (Stufe je Karte, `easier`) wiederverwendet.
+
+## Iteration 92 — umgesetzt
+
+Einzelheiten im Verlauf von B-643. Kern: `ImprintedAt` (Migration mit Backfill, Probe an einer Kopie der echten DB:
+30 Positionen, eingeprägt = eingeführt), Kartenwahl über `Known`, Dosis zählt offene Lernkarten, Lernkarte leichter in
+Schritt 4, Wiederholung ohne Grenze, Ring „eingeprägt“.
+
+**Review:** `pugling-reviewer` 1 🔴 (doppelt geschickte Hilfe-Antwort prägt ein) + 4 🟡 (Dosis-Leck, Testportion,
+Test-Wörter ohne Entscheidung, fehlender Neu-Bonus-Test); `frontend-reviewer` 2 🟡 (zwei Testlücken). Behoben: alle
+außer Fund 3 (Testportion) – **verworfen**, weil die Reparatur die B-04-Invariante brach (gemessen:
+`VierWochenTests.Dosis_WerNieUebt…` 5/5/5 statt 5/10/15). Fund 4 per Herleitung aus Entscheidung 1 gelöst (frei im Test
+getippt prägt ein) – **zur Bestätigung durch den Vater**. Zähler formell bei 7 (> 5); der Lauf läuft seit „Ja,
+weitermachen“ im Dialog, die Funde sind behoben statt angehäuft.
+
+**Mutanten-Tabelle:**
+
+Gemessen an `d401d615 + Arbeitsbaum geändert`, 2026-11-17 20:24.
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| K1 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:184 | red | red |  |
+| K2 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:176 | red | red |  |
+| K3 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:295 | red | red |  |
+| K4 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:351 | red | red |  |
+| K5 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:286 | red | red |  |
+| K6 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:302 | red | red |  |
+| K7 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:575 | red | red |  |
+| K8 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:829 | red | red |  |
+| K9 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:829 | red | red |  |
+| K10 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:829 | red | red |  |
+| K11 | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:860 | red | red |  |
+| K12 | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:297 | red | red |  |
+| K13 | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:332 | red | red |  |
+| K14 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:274 | red | red |  |
+
+Grundlinie nach dem Zurückspielen: green.
+
+**Verifikation:** `dotnet test` (Debug, wegen eines parallelen Release-Laufs der anderen Sitzung) **1831/1831**, `tsc`
+sauber, Vitest **1172/1172**, E2E volle Suite **169 passed, 1 failed** (`vater-von-null`, einzeln **1 passed**),
+`lernkarte-leichter.spec.ts` **1 passed**.
+
+## Runde 92 — Abnahme
+
+- **Sohn:** maschineller Rollengang `lernkarte-leichter.spec.ts` gegen frisch gestarteten Server: leichter bis zur Auswahl,
+  „kommt noch einmal“, ganze Lernkarte am Rundenende, frei erinnert, Ring „2 von 2 eingeprägt“. Offen für ein Gerät: wie
+  sich die Leiter in Schritt 4 am Handy anfühlt.
+- **Vater:** Regressionszeuge – Pflicht bleibt der Test (AK 7, Bestandstests grün), Bestandsringe der Söhne unverändert
+  (Migrationsprobe). Offene Entscheidung: Testantwort frei getippt = eingeprägt.
+- **Creator:** Regressionszeuge – kein Pfad des Creators im Diff; Suite grün.
+
+## Retrospektive 92
+
+**Nachschau:** B-633, B-634, B-635 – Prüfpunkt: die Sprint-92-Änderungen an `EaseLadder`/`IsRemediationRound` lassen den
+Lückentext-Pfad unverändert (`RemediationPositionTests` 11/11 grün nach der Umstellung auf `SupportsRemediation`);
+kein Durchrutscher gefunden.
+
+- Durchgelassen: der eigene Bau nahm eine Review-Reparatur (Testportion) fast ungeprüft an; erst ein Bestandstest der
+  B-04-Invariante fing sie. Bestätigt die Regel [[review-vorschlag-gegen-invariante]] – kein neuer Mechanismus nötig, sie
+  hat gegriffen.
+- **Vorschlag (DA):** das Test-Tor des Stop-Hooks erkennt einen fremden `testhost` im selben Checkout und meldet „parallel
+  belegt“ statt „Fixture abgebrochen“ – dreimal stand heute ein rotes Tor ohne eigenen Fehler.
+
 ## Offene Roadmap
 
 Quelle ist [docs/backlog/](backlog/INDEX.md). Nächster Schritt: Funde 1–8 von Sprint 85 beheben (B-633/B-634/B-635

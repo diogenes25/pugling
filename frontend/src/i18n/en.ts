@@ -34,7 +34,7 @@ export const en = {
       cadenceDaily: "daily goal",
       cadenceWeekly: "weekly goal",
       cadenceNone: "free · no coins",
-      introduced: "{{count}} of {{total}} met so far",
+      introduced: "{{count}} of {{total}} memorised",
       noSubject: "No subject",
     },
     pfad: {
@@ -329,7 +329,8 @@ export const en = {
       copy: "Copy it",
       recall: "Now from memory",
       ok: "OK",
-      giveUp: "I don't know",
+      giveUp: "Later again",
+      easier: "Make it easier",
       listen: "🔊 Listen",
     },
     lektion: {
@@ -344,7 +345,7 @@ export const en = {
       intro: "New – remember this",
       look: "Have another look",
       learn: "New word – learn it",
-      learnAgain: "The word comes back once more at the end of the round.",
+      learnAgain: "The word comes back at the end of the round.",
       nextRound: "Not done yet – only a freely typed answer counts. The task comes back in the next round.",
       inTest: "Test · {{task}}",
       praise1: "Great!",

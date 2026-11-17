@@ -17,7 +17,8 @@ import { LERNKARTE_DE, lernkarteDurchspielen, pfadStart, sohnLogin } from "./hel
  *    Lücken, alle ohne Schlusszeichen. Rot, sobald eine Stufe die falsche Eingabeart zeigt, nur die Lösung ein „?“
  *    trägt oder der Server eine richtige Antwort verwirft.
  * 3. B-598, frische Station: jede neue Karte ist eine Lernkarte (sehen → aufdecken → abschreiben → erinnern), ein
- *    „Weiß ich nicht“ bringt die Karte einmal ans Rundenende, danach fragt die Runde das englische Wort getippt ab.
+ *    „Später nochmal“ (bis B-643 „Weiß ich nicht“) bringt die Karte ans Rundenende, danach fragt die Runde das englische
+ *    Wort getippt ab.
  *
  * Eigene Kinder je Fall: je Kind und Fach ist genau ein aktiver Plan spielbar, die DB ist zwischen den Specs geteilt.
  */
@@ -205,7 +206,7 @@ test("B-598: eine frische Station lehrt jedes Wort auf der Lernkarte – Aufgebe
   await expect(page.getByText(paare[0][1], { exact: true })).toBeVisible();
   expect(await lernkarteDurchspielen(page)).toBe(paare[0][0]);
 
-  // Karte 2: im vierten Schritt „Weiß ich nicht“ – das Blatt sagt, dass das Wort wiederkommt, und die Runde wächst.
+  // Karte 2: im vierten Schritt „Später nochmal“ – das Blatt sagt, dass das Wort wiederkommt, und die Runde wächst.
   await expect(zaehler(page)).toHaveText("Karte 2 / 2");
   const wortFeld = page.locator(".lernkarte-wort .rev");
   await expect(async () => {

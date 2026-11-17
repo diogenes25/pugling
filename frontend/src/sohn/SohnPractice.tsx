@@ -89,6 +89,8 @@ export function SohnPractice() {
   // B-419: „Jetzt abfragen" startet eine neue Runde derselben Position – eine neue Sitzung, darum ein neuer Schlüssel
   // für den Start und ein neuer Lauf des Heartbeat-Effekts, der die alte Sitzung schließt.
   const [round, setRound] = useState(0);
+  // B-643: die Karte je Platz der Runde, bevor sie leichter geschaltet wurde – ihre Wiederholung beginnt wieder vorn.
+  const vorDemSchalten = useRef(new Map<number, PracticeCard>());
   // B-635: der Stand einer Nacharbeit (Runde, erledigt, gesamt) – vom Server beim Start, „erledigt“ wächst je Antwort.
   const [nacharbeit, setNacharbeit] = useState<{ round: number; done: number; total: number } | null>(null);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
@@ -223,6 +225,7 @@ export function SohnPractice() {
     focusAfterLoad.current = true;
     setPhase("loading");
     setCards([]);
+    vorDemSchalten.current = new Map();
     setIdx(0);
     setEarned(0);
     setCombo(0);
@@ -256,7 +259,9 @@ export function SohnPractice() {
         setFailed(null);
         // B-598: eine aufgegebene oder falsch erinnerte Lernkarte kommt einmal ans Rundenende. Der Server hängt sie an seine
         // Folge; die Runde hier hat ihre Karten schon geladen und hängt dieselbe Karte an – als Wiederholung, nicht als neu.
-        if (outcome?.repeatsAtEnd) setCards((prev) => [...prev, { ...card, introduction: false }]);
+        // B-643: eine leichter geschaltete Lernkarte kommt als GANZE Lernkarte wieder – also in ihrer Form vor dem Schalten.
+        const urKarte = vorDemSchalten.current.get(idx) ?? card;
+        if (outcome?.repeatsAtEnd) setCards((prev) => [...prev, { ...urKarte, introduction: false }]);
         // B-635: frei getippt richtig – die Aufgabe ist erledigt. Alles andere kommt in der nächsten Runde wieder.
         if (outcome?.taskDone) setNacharbeit((n) => (n ? { ...n, done: n.done + 1 } : n));
         const naechsteRunde = nacharbeit !== null && !outcome?.taskDone;
@@ -281,7 +286,7 @@ export function SohnPractice() {
               comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
               // Eine Lernkarte bewegt keinen Kasten: ein Fälligkeitsdatum sähe wie ein Leitner-Termin aus, den es nicht gibt.
               faelligAm: card.learnCard ? null : outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
-              naechsteRunde,
+              naechsteRunde, nochmal: outcome?.repeatsAtEnd ?? false,
             });
             // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
             setToast(outcome?.taskDone ? `${t("lektion.right")} ${t("practice.taskDone")}`
@@ -331,6 +336,7 @@ export function SohnPractice() {
       // wie beim Bildwechsel; sonst täte der Knopf sichtbar nichts.
       try {
         const eased = await api.easier(planId, positionId, session.current!.id, card.itemIndex);
+        if (!vorDemSchalten.current.has(idx)) vorDemSchalten.current.set(idx, card);
         fokusNachLeichter.current = true;
         setCards((prev) => prev.map((c, i) => (i === idx ? eased : c)));
         setTypedAnswer("");
@@ -560,7 +566,7 @@ export function SohnPractice() {
             {form.antwort === "lernkarte" ? (
               // Je Karte frisch eingehängt: die vier Schritte beginnen bei jeder Lernkarte (auch der Wiederholung) vorn.
               !failed && <Lernkarte key={`${round}-${idx}`} karte={card} gesperrt={action.busy} zuFrueh={zuFrueh}
-                onFertig={(ergebnis) => judge(card, ergebnis)} />
+                onFertig={(ergebnis) => judge(card, ergebnis)} onLeichter={() => easier(card)} />
             ) : typed ? (
               // Die Kennung trägt Runde und Karte: die Markierung einer Auswahl darf nicht auf die nächste Karte wandern.
               // Dieselbe Stelle im Baum mit und ohne Meldung (B-532): sonst baute React die Fläche neu auf, und eine

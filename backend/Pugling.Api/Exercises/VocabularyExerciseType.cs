@@ -79,6 +79,13 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
     public override int? IntroductionStage => (int)TestStage.LearnCard;
 
     /// <summary>
+    /// B-643 (decision 3): the recall of the learn card made easier - free text, letter boxes, scrambled letters, then the
+    /// choice. Played in the learn card's own form (the learnt word written), so the choice offers learnt words too.
+    /// </summary>
+    public override IReadOnlyList<int> EaseLadder { get; } =
+        [(int)TestStage.FreeText, (int)TestStage.LetterBoxes, (int)TestStage.LetterScramble, (int)TestStage.MultipleChoice];
+
+    /// <summary>
     /// The vocabulary ladder (B-476): box 1 turns the card over and asks "did you know it?", box 2 offers a choice,
     /// from box 3 on the card is asked at the target. Recognition before recall - typing a word the child has only
     /// seen once is the hardest form there is. The target stays the ceiling: a position set to self-assessment never

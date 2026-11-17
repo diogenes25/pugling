@@ -71,12 +71,12 @@ export interface LernkartenTexte {
 
 export const LERNKARTE_DE: LernkartenTexte = {
   aufdecken: "Aufdecken", neu: "Nein, neu", abschreiben: "Schreib es ab", erinnern: "Und jetzt aus dem Kopf", ok: "OK",
-  aufgeben: "Weiß ich nicht", weiter: "Weiter →",
+  aufgeben: "Später nochmal", weiter: "Weiter →",
 };
 
 /**
  * Plays one learn card (B-598) through: uncover, "new", copy, write from memory, continue. Returns the learnt word the card
- * showed. With `aufgeben` the fourth step ends with "Weiß ich nicht" instead.
+ * showed. With `aufgeben` the fourth step ends with "Später nochmal" instead (B-643; "Weiß ich nicht" before).
  *
  * The first two taps retry until the card reacts: right after a feedback sheet the round swallows taps for a moment
  * (`NACH_BLATT_MS`, so a held Enter cannot run through the card), and Playwright taps faster than a child.

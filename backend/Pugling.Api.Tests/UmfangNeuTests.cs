@@ -42,8 +42,10 @@ public class UmfangNeuTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private static async Task IntroduceAsync(HttpClient child, int planId, int positionId, params int[] indices)
     {
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { mode = "Lern" }));
+        // B-643: the learn card recalled right from memory - a word only seen would come back as a learn card.
         foreach (var i in indices)
-            (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i)).EnsureSuccessStatusCode();
+            (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, givenAnswer: ThreeWords[i].Item1,
+                wasKnown: true)).EnsureSuccessStatusCode();
     }
 
     // Runs the body one day later on the frozen test clock and puts the clock back afterwards.
@@ -110,6 +112,7 @@ public class UmfangNeuTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 PlanPositionId = positionId,
                 ItemIndex = 1,
                 IntroducedAt = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1),
+                ImprintedAt = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1), // B-643: known
             });
             db.SaveChanges();
         }

@@ -52,6 +52,9 @@ public abstract class ExerciseTypeBase : IExerciseType
     public virtual IReadOnlyList<int> EaseLadder => [];
 
     /// <inheritdoc/>
+    public virtual bool SupportsRemediation => false;
+
+    /// <inheritdoc/>
     public virtual int? IntroductionStage =>
         StageOptions.Where(o => IsDisplayOnlyStage(o.Value)).Select(o => (int?)o.Value).FirstOrDefault();
 

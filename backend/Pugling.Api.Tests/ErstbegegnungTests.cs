@@ -122,8 +122,9 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     {
         var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
         var first = await StartAsync(child, planId, positionId);
+        // B-643: the learn card's recall right from memory - only an imprinted word is asked in the next round.
         foreach (var i in new[] { 0, 1, 2 })
-            await TestApi.PositionReviewAsync(child, planId, positionId, first, i, wasKnown: true);
+            await TestApi.PositionReviewAsync(child, planId, positionId, first, i, givenAnswer: ThreeWords[i].Item1, wasKnown: true);
 
         var second = await StartAsync(child, planId, positionId);
         var cards = await CardsAsync(child, planId, positionId, second);
@@ -219,6 +220,8 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
                 PlanPositionId = positionId,
                 ItemIndex = 0,
                 IntroducedAt = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1),
+                // B-643: a known word is one written from memory once, not only seen.
+                ImprintedAt = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1),
             });
             db.SaveChanges();
         }
@@ -243,7 +246,8 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var sessionId = await StartAsync(child, planId, positionId);
 
         // The cursor stands on item 0; the client answers item 1, and the cursor moves on to item 1.
-        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, wasKnown: true))
+        // B-643: recalled right, so the word is imprinted and asked next - a word only seen would come as a learn card again.
+        var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, 1, givenAnswer: "la rue", wasKnown: true))
             .Content.ReadFromJsonAsync<JsonElement>();
         var next = outcome.GetProperty("next");
         Assert.Equal(1, next.GetProperty("itemIndex").GetInt32());
@@ -353,6 +357,7 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         SetProgress(positionId, 0, p =>
         {
             p.IntroducedAt = today.AddDays(introducedDaysAgo);
+            p.ImprintedAt = p.IntroducedAt; // B-643: known, not only seen
             p.ReviewCount = reviewCount;
             p.DueOn = today;
         });

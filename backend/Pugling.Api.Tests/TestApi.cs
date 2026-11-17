@@ -293,6 +293,8 @@ internal static class TestApi
             if (!existing.TryGetValue(i, out var prog))
                 db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i });
             prog.IntroducedAt ??= yesterday;
+            // B-643: a word seen in an earlier round counts as known only once imprinted - as the migration's backfill does.
+            prog.ImprintedAt ??= prog.IntroducedAt;
             if (climbed) prog.Box = Math.Max(prog.Box, ClimbedBox);
         }
         db.SaveChanges();

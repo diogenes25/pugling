@@ -35,13 +35,18 @@ namespace Pugling.Contracts.Shared;
 /// (content exercises, free display stage) has a real partial value - the share of the round's required part already
 /// played; a goal measured by a passed test is 0 until the test is passed, because a failed attempt is no part of it.
 /// </para>
+/// <para>
+/// <c>ImprintedCount</c> (B-643) counts the contents written from memory once, right and without help, on their learn card
+/// ("eingeprägt") - the golden ring. For contents without a learn card (recognition cards, other types) the server counts
+/// them once introduced, so the client needs no rule of its own.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
     bool GoalMet, double GoalProgress, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
     int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
-    int PlanId = 0, string PlanTitle = "", string SubjectName = "");
+    int PlanId = 0, string PlanTitle = "", string SubjectName = "", int ImprintedCount = 0);
 
 /// <summary>
 /// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and

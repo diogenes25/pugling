@@ -412,7 +412,8 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.All(RowStages(attemptId), stage => Assert.Equal((int)TestStage.MultipleChoice, stage));
         var today = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime);
         Assert.Equal([today, today, today, today], IntroducedOn(s.PositionId));
-        Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.SelfAssess, c.GetProperty("stage").GetInt32()));
+        // B-643: met cold in the test, never written from memory - practice brings each as a learn card first.
+        Assert.All(await CardsAsync(s, await StartAsync(s)), c => Assert.Equal((int)TestStage.LearnCard, c.GetProperty("stage").GetInt32()));
     }
 
     // Without a dose only an answer introduces, not the start: a start alone would count the whole pool as new words
@@ -539,7 +540,11 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         {
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
             foreach (var i in Enumerable.Range(0, FourWords.Length))
-                db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = yesterday });
+                db.PositionItemProgress.Add(new PositionItemProgress
+                {
+                    PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = yesterday,
+                    ImprintedAt = yesterday, // B-643: first practised yesterday means met on the learn card and recalled
+                });
             db.SaveChanges();
         }
 

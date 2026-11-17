@@ -256,6 +256,8 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
         <>
           {boni && <div className="sub">{boni}</div>}
           {r.faelligAm && <div className="sub">{t("practice.nextDue", { date: arcadeDatum(r.faelligAm, i18n.language) })}</div>}
+          {/* B-643: mit Hilfe richtig ist noch nicht eingeprägt – das Wort kommt als ganze Lernkarte wieder. */}
+          {r.nochmal && <div className="sub">{t("lektion.learnAgain")}</div>}
         </>
       ) : (
         <>

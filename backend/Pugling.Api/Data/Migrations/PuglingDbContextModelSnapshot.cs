@@ -1816,6 +1816,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateOnly?>("DueOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("ImprintedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly?>("IntroducedAt")
                         .HasColumnType("TEXT");
 

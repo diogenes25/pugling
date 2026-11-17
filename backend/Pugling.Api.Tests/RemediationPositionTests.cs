@@ -284,8 +284,8 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
         using var scope = factory.Services.CreateScope();
         var registry = scope.ServiceProvider.GetRequiredService<Pugling.Api.Exercises.ExerciseTypeRegistry>();
         Assert.All(registry.All, t =>
-            Assert.Equal(t.EaseLadder.Count > 0, t.Manifest.Capabilities.Contains("remediation")));
-        Assert.Contains(registry.All, t => t.EaseLadder.Count > 0);
+            Assert.Equal(t.SupportsRemediation && t.EaseLadder.Count > 0, t.Manifest.Capabilities.Contains("remediation")));
+        Assert.Contains(registry.All, t => t.SupportsRemediation);
     }
 
     /// <summary>

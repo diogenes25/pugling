@@ -280,6 +280,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             if (typed && type.GradesAsSet(PositionPlayService.ConfigOf(pos.Exercise)))
             {
                 CreditSetAnswer(attempt, items, CreditedEntries(attempt), dto.GivenAnswer, grader);
+                await IntroduceAnsweredAsync(pos, attempt, [index], ct);
             }
             else
             {
@@ -292,8 +293,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     result.GivenAnswer = dto.GivenAnswer;
                     result.WasCorrect = correct;
                 }
+                await IntroduceAnsweredAsync(pos, attempt, [index], ct);
+                if (correct) await ImprintAnsweredAsync(pos, attempt, type, index, StageAt(attempt, index), ct);
             }
-            await IntroduceAnsweredAsync(pos, attempt, [index], ct);
             // Deliberately NO cross-plan recording here: item progress and history are written ONCE on
             // completion (submit), so that aborted/repeated attempts do not distort the learning state
             // (otherwise every intermediate answer would count permanently, even without a submission).
@@ -317,6 +319,19 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     {
         if (attempt.BySupervisor || !User.IsStudent()) return;
         await play.IntroduceAsync(pos.Id, indices, attempt.Day, ct);
+    }
+
+    /// <summary>
+    /// B-643 (decision 1): a word typed right in the free field of the test is written from memory without help - it is
+    /// imprinted, as by the learn card's recall. Any easier form (letter boxes, choice) imprints nothing. The child's own
+    /// answer only, like the introduction. The caller saves.
+    /// </summary>
+    private async Task ImprintAnsweredAsync(PlanPosition pos, TestAttempt attempt, IExerciseType type, int index, int stage,
+        CancellationToken ct)
+    {
+        if (attempt.BySupervisor || !User.IsStudent() || type.EaseLadder.Count == 0 || stage != type.EaseLadder[0]) return;
+        var prog = await play.ProgressForAsync(pos.Id, index, ct);
+        prog.ImprintedAt ??= attempt.Day;
     }
 
     /// <summary>A test attempt together with individual results.</summary>
@@ -401,6 +416,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     result.WasCorrect = type.IsTypedStage(result.StageValue)
                         ? grader.Matches(answer.GivenAnswer, item)
                         : answer.WasKnown ?? false;
+                    if (result.WasCorrect) await ImprintAnsweredAsync(pos, attempt, type, index, result.StageValue, ct);
                 }
             }
         }

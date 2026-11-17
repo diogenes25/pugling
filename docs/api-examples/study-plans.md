@@ -243,7 +243,7 @@ Response — `HTTP 200`:
     "learnCard": true,
     "revealSpeechLang": "en",
     "revealAudioUrl": null,
-    "canEase": false,
+    "canEase": true,
     "eased": false
   },
   "done": false,
@@ -307,7 +307,7 @@ Response — `HTTP 200`:
     "learnCard": true,
     "revealSpeechLang": "en",
     "revealAudioUrl": null,
-    "canEase": false,
+    "canEase": true,
     "eased": false
   },
   "done": false,
@@ -649,7 +649,8 @@ Response — `HTTP 200`:
         "bookPages": null,
         "planId": 4,
         "planTitle": "Doku-Lehrplan",
-        "subjectName": "Doku-Fach"
+        "subjectName": "Doku-Fach",
+        "imprintedCount": 0
       }
     ],
     "rewardsUnlocked": true

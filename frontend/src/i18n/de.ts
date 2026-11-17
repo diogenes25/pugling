@@ -36,7 +36,7 @@ export const de = {
       cadenceDaily: "Tagesziel",
       cadenceWeekly: "Wochenziel",
       cadenceNone: "frei · ohne Münzen",
-      introduced: "{{count}} von {{total}} schon kennengelernt",
+      introduced: "{{count}} von {{total}} eingeprägt",
       noSubject: "Ohne Fach",
     },
     // Der Lernpfad auf der Startseite (B-525).
@@ -346,7 +346,8 @@ export const de = {
       copy: "Schreib es ab",
       recall: "Und jetzt aus dem Kopf",
       ok: "OK",
-      giveUp: "Weiß ich nicht",
+      giveUp: "Später nochmal",
+      easier: "Mach's mir leichter",
       listen: "🔊 Anhören",
     },
     // Der Lektionsbildschirm (B-526): die Arbeitsanweisung je Antwortform.

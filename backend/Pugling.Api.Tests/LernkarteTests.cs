@@ -120,12 +120,13 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
-    /// AK 4 + decisions 7/8: a recall given up comes back once at the end of the round as a learn card again; given up a
-    /// second time it does not come a third time. The history tells "given up" (no answer) from "wrong" (an answer). Red
-    /// without the repeat (two cards, then done), without the limit (a third time), or when the repeat came as another form.
+    /// B-643 AK 4 (decision 8 replaces B-598 decision 7): a recall given up or wrong comes back at the end of the round as a
+    /// learn card again - as often as it takes, a third time too; the round ends only when every word is recalled. The
+    /// history still tells "given up" (no answer) from "wrong". Red with the old limit of one repeat (the third occurrence
+    /// is missing and the round ends with word 0 unrecalled), without the repeat, or when a repeat came as another form.
     /// </summary>
     [Fact]
-    public async Task Abbruch_Bringt_Die_Karte_Einmal_Ans_Rundenende()
+    public async Task Nicht_Erinnertes_Wort_Kommt_Wieder_Bis_Es_Sitzt()
     {
         var s = await SetupAsync(TestStage.FreeText);
         var sessionId = await StartAsync(s);
@@ -136,22 +137,27 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var second = await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le tren");
         JsonAssert.False(second, "wasCorrect");
         JsonAssert.True(second, "repeatsAtEnd");
-        JsonAssert.False(second, "done");
 
-        // The two repeats, in the order they were appended, each a learn card again.
         var repeat = second.GetProperty("next");
         Assert.Equal(0, repeat.GetProperty("itemIndex").GetInt32());
         Assert.Equal((int)TestStage.LearnCard, repeat.GetProperty("stage").GetInt32());
         var again = await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: null);
-        JsonAssert.False(again, "repeatsAtEnd");
-        Assert.Equal(1, again.GetProperty("next").GetProperty("itemIndex").GetInt32());
-        var last = await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        JsonAssert.True(again, "repeatsAtEnd");
+        var trainRight = await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        JsonAssert.False(trainRight, "repeatsAtEnd");
+
+        // The third time word 0 comes back - still a learn card - and given up once more it comes a fourth time.
+        var third = trainRight.GetProperty("next");
+        Assert.Equal(0, third.GetProperty("itemIndex").GetInt32());
+        Assert.Equal((int)TestStage.LearnCard, third.GetProperty("stage").GetInt32());
+        JsonAssert.True(await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: null), "repeatsAtEnd");
+        var last = await AnswerAsync(s, sessionId, 0, wasKnown: true, givenAnswer: "la gare");
         JsonAssert.True(last, "done");
 
-        Assert.Equal([0, 1, 0, 1], Db(db => db.PracticeSessions.Single(p => p.Id == sessionId).Order));
+        Assert.Equal([0, 1, 0, 1, 0, 0], Db(db => db.PracticeSessions.Single(p => p.Id == sessionId).Order));
         var recalls = Db(db => db.ItemReviewEvents.Where(e => e.ChildId == s.ChildId && e.StageValue == (int)TestStage.LearnCard)
             .OrderBy(e => e.Id).Select(e => e.GivenAnswer).ToList());
-        Assert.Equal([null, "le tren", null, "le train"], recalls);
+        Assert.Equal([null, "le tren", null, "le train", null, "la gare"], recalls);
     }
 
     /// <summary>
@@ -309,5 +315,342 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             .GetProperty("stages").EnumerateArray().Select(o => o.GetProperty("value").GetInt32()).ToList();
         Assert.Contains((int)TestStage.LearnCard, stages);
         Assert.Contains((int)TestStage.ShowBoth, stages);
+    }
+
+    // ---- B-643: make it easier, imprinted only from memory, back until it sits ----
+
+    private async Task<JsonElement> EaseAsync(Setup s, int sessionId, int itemIndex)
+    {
+        var res = await s.Child.PostAsJsonAsync($"{Base(s)}/{sessionId}/easier", new { itemIndex });
+        Assert.True(res.IsSuccessStatusCode, $"{(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
+        return await res.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    private PositionItemProgress ProgressOf(Setup s, int itemIndex) =>
+        Db(db => db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == itemIndex));
+
+    /// <summary>
+    /// B-643 AK 1: the recall of a learn card is made easier step by step - boxes, scramble, choice - and stays a learn card
+    /// in its own form: the choice offers learnt words, and the eased card neither reveals nor reads the word aloud. Red
+    /// if the learn card cannot be eased (409), if a press skips or repeats a rung, or if the choice falls back to the
+    /// forward card's German meanings.
+    /// </summary>
+    [Fact]
+    public async Task Lernkarte_Wird_Im_Erinnern_Stufe_Fuer_Stufe_Leichter()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+        var card = await NextAsync(s, sessionId);
+        JsonAssert.True(card, "canEase");
+
+        var stages = new List<int>();
+        JsonElement eased = default;
+        for (var press = 0; press < 3; press++)
+        {
+            eased = await EaseAsync(s, sessionId, 0);
+            stages.Add(eased.GetProperty("stage").GetInt32());
+            JsonAssert.True(eased, "learnCard");
+            JsonAssert.True(eased, "eased");
+            JsonAssert.Null(eased, "reveal");
+            JsonAssert.Null(eased, "revealSpeechLang");
+        }
+        Assert.Equal([(int)TestStage.LetterBoxes, (int)TestStage.LetterScramble, (int)TestStage.MultipleChoice], stages);
+        Assert.Contains("la gare", eased.GetProperty("choices").EnumerateArray().Select(c => c.GetString()));
+        Assert.Contains("le train", eased.GetProperty("choices").EnumerateArray().Select(c => c.GetString()));
+        JsonAssert.False(eased, "canEase");
+    }
+
+    /// <summary>
+    /// B-643 AK 2 + AK 3 (anti-cheat): an eased recall answered right - even sent as free text - shows right and the word,
+    /// goes to the end of the round and imprints nothing; the free recall right imprints. Red if the review grades the
+    /// client's form (imprinted), if the eased hit is not repeated, or if the free recall does not imprint. Before the build
+    /// there was neither `easier` nor `ImprintedAt`.
+    /// </summary>
+    [Fact]
+    public async Task Leichter_Erinnert_Praegt_Nicht_Ein_Frei_Erinnert_Schon()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+        await EaseAsync(s, sessionId, 0);
+
+        var eased = await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: "la gare");
+        JsonAssert.True(eased, "wasCorrect");
+        Assert.Equal("la gare", eased.GetProperty("expected").GetString());
+        JsonAssert.True(eased, "repeatsAtEnd");
+        Assert.Equal(0, eased.GetProperty("awarded").GetInt32());
+        Assert.Null(ProgressOf(s, 0).ImprintedAt);
+
+        var free = await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        JsonAssert.False(free, "repeatsAtEnd");
+        Assert.NotNull(ProgressOf(s, 1).ImprintedAt);
+        // The repeat at the end of the round is the whole learn card again, not the eased form.
+        var repeat = free.GetProperty("next");
+        Assert.Equal((int)TestStage.LearnCard, repeat.GetProperty("stage").GetInt32());
+        JsonAssert.False(repeat, "eased");
+    }
+
+    /// <summary>
+    /// B-643 AK 5, the next day: a round closed with a word not imprinted brings it back as a learn card - it was
+    /// introduced, so the old rule asked it at its rung. Red with the introduction as the card selection's gate.
+    /// </summary>
+    [Fact]
+    public async Task Nicht_Eingepraegtes_Wort_Kommt_Am_Naechsten_Tag_Als_Lernkarte()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+        await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: null);
+        await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        // The ✕ ends the round here; then a day passes for both words.
+        Db(db =>
+        {
+            foreach (var p in db.PositionItemProgress.Where(p => p.PlanPositionId == s.PositionId))
+            {
+                p.IntroducedAt = p.IntroducedAt!.Value.AddDays(-1);
+                p.DueOn = p.IntroducedAt;
+                if (p.ImprintedAt is not null) p.ImprintedAt = p.IntroducedAt;
+            }
+            return db.SaveChanges();
+        });
+
+        var cards = (await s.Child.GetFromJsonAsync<List<JsonElement>>($"{Base(s)}/{await StartAsync(s)}/cards"))!
+            .ToDictionary(c => c.GetProperty("itemIndex").GetInt32());
+
+        Assert.Equal((int)TestStage.LearnCard, cards[0].GetProperty("stage").GetInt32());
+        JsonAssert.True(cards[0], "introduction");
+        Assert.NotEqual((int)TestStage.LearnCard, cards[1].GetProperty("stage").GetInt32());
+    }
+
+    /// <summary>
+    /// B-643 AK 5, the dose: six new words a day and two open learn cards from yesterday make two open and four new - not
+    /// two plus six. Red if open learn cards do not count on the day's dose.
+    /// </summary>
+    [Fact]
+    public async Task Offene_Lernkarten_Zaehlen_Auf_Die_Tagesdosis()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var pin = "6" + Random.Shared.Next(100, 999);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Dosis-Kind"), pin }));
+        var words = Enumerable.Range(0, 10).Select(i => ($"mot{i}", TestApi.UniqueName($"Wort{i}"))).ToArray();
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", words);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText, childId: childId,
+            introduced: false);
+        var yesterday = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1);
+        Db(db =>
+        {
+            db.PlanPositions.Single(p => p.Id == positionId).NewItemsPerDay = 6;
+            foreach (var i in new[] { 0, 1 })
+                db.PositionItemProgress.Add(new PositionItemProgress
+                { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+            return db.SaveChanges();
+        });
+        var child = await TestApi.ChildAsync(factory, childId, pin);
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { mode = "Lern" }));
+        var cards = (await child.GetFromJsonAsync<List<JsonElement>>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards"))!;
+
+        Assert.Equal([0, 1, 2, 3, 4, 5], cards.Select(c => c.GetProperty("itemIndex").GetInt32()).Order());
+        Assert.All(cards, c => Assert.Equal((int)TestStage.LearnCard, c.GetProperty("stage").GetInt32()));
+    }
+
+    /// <summary>
+    /// B-643 AK 6: the golden ring counts imprinted words - a word given up is introduced but not imprinted - while a card
+    /// without a learn card (the recognition card of a "both" word) counts once introduced. Red if the count reads the
+    /// introduction (2) or leaves the recognition card out (0).
+    /// </summary>
+    [Fact]
+    public async Task Ring_Zaehlt_Eingepraegte_Woerter()
+    {
+        var s = await SetupAsync(TestStage.FreeText, direction: "both");
+        var sessionId = await StartAsync(s);
+        var cards = (await s.Child.GetFromJsonAsync<List<JsonElement>>($"{Base(s)}/{sessionId}/cards"))!
+            .ToDictionary(c => c.GetProperty("itemIndex").GetInt32());
+        Assert.Equal((int)TestStage.ShowBoth, cards[0].GetProperty("stage").GetInt32());
+
+        (await s.Child.PostAsJsonAsync($"{Base(s)}/{sessionId}/review", new { itemIndex = 0 })).EnsureSuccessStatusCode();
+        await AnswerAsync(s, sessionId, 1, wasKnown: false, givenAnswer: null);
+
+        var overview = await s.Child.GetFromJsonAsync<JsonElement>($"/api/v1/student/study-plans/{s.PlanId}/overview");
+        var position = overview.GetProperty("today").GetProperty("positions").EnumerateArray()
+            .Single(p => p.GetProperty("positionId").GetInt32() == s.PositionId);
+        Assert.Equal(2, position.GetProperty("introducedCount").GetInt32());
+        Assert.Equal(1, position.GetProperty("imprintedCount").GetInt32());
+    }
+
+    // ---- B-643 review findings ----
+
+    /// <summary>
+    /// Review finding 1a (risk 4, a double send): the eased answer of the round's last word sent twice lands the second time
+    /// on its own repeat - it must not imprint there; the repeat counts once the client reported it visible (B-530). Red
+    /// without the echo check (the copy imprints the word) or if a visible repeat recalled right does not imprint.
+    /// </summary>
+    [Fact]
+    public async Task Doppelt_Geschickte_Hilfe_Antwort_Praegt_Nicht_Ein()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+        await AnswerAsync(s, sessionId, 0, wasKnown: true, givenAnswer: "la gare");
+        await EaseAsync(s, sessionId, 1);
+
+        await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        var echo = await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+
+        Assert.Null(ProgressOf(s, 1).ImprintedAt);
+        JsonAssert.True(echo, "repeatsAtEnd");
+        (await s.Child.PostAsJsonAsync($"{Base(s)}/{sessionId}/shown", new { itemIndex = 1 })).EnsureSuccessStatusCode();
+        await AnswerAsync(s, sessionId, 1, wasKnown: true, givenAnswer: "le train");
+        Assert.NotNull(ProgressOf(s, 1).ImprintedAt);
+    }
+
+    /// <summary>
+    /// Review finding 1b: an answer for a place the round has passed (a late copy) imprints nothing. Red if the recall
+    /// counts for any position of the word.
+    /// </summary>
+    [Fact]
+    public async Task Antwort_Fuer_Eine_Vergangene_Stelle_Praegt_Nicht_Ein()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+        await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: null);
+
+        await AnswerAsync(s, sessionId, 0, wasKnown: true, givenAnswer: "la gare");
+
+        Assert.Null(ProgressOf(s, 0).ImprintedAt);
+    }
+
+    // A fresh child with ten words, a dose of six and two words met yesterday on a learn card but not imprinted.
+    private async Task<(HttpClient Child, int ChildId, int PlanId, int PositionId)> DoseSetupAsync()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var pin = "6" + Random.Shared.Next(100, 999);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Dosis-Kind"), pin }));
+        var words = Enumerable.Range(0, 10).Select(i => ($"mot{i}", TestApi.UniqueName($"Wort{i}"))).ToArray();
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, "fr", "de", words);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.FreeText, childId: childId,
+            introduced: false);
+        var yesterday = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1);
+        Db(db =>
+        {
+            db.PlanPositions.Single(p => p.Id == positionId).NewItemsPerDay = 6;
+            foreach (var i in new[] { 0, 1 })
+                db.PositionItemProgress.Add(new PositionItemProgress
+                { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+            return db.SaveChanges();
+        });
+        return (await TestApi.ChildAsync(factory, childId, pin), childId, planId, positionId);
+    }
+
+    // Plays a learn round: every learn card recalled right ("mot{i}").
+    private static async Task PlayLearnRoundAsync(HttpClient child, int planId, int positionId)
+    {
+        var baseUrl = TestApi.PracticeBase(planId, positionId);
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { mode = "Lern" }));
+        foreach (var card in (await child.GetFromJsonAsync<List<JsonElement>>($"{baseUrl}/{sessionId}/cards"))!)
+        {
+            var i = card.GetProperty("itemIndex").GetInt32();
+            (await TestApi.PositionReviewAsync(child, planId, positionId, sessionId, i, givenAnswer: $"mot{i}", wasKnown: true))
+                .EnsureSuccessStatusCode();
+        }
+    }
+
+    /// <summary>
+    /// Review finding 2: the open learn cards keep their places for the whole day - imprinted in the first round, they do
+    /// not free places for new words in a second round. Red if only words still open count (words 6 and 7 come as new).
+    /// </summary>
+    [Fact]
+    public async Task Zweite_Runde_Am_Selben_Tag_Bringt_Keine_Neuen_Ueber_Die_Dosis()
+    {
+        var (child, _, planId, positionId) = await DoseSetupAsync();
+        await PlayLearnRoundAsync(child, planId, positionId);
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { mode = "Lern" }));
+        var cards = (await child.GetFromJsonAsync<List<JsonElement>>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards"))!;
+
+        Assert.DoesNotContain(cards, c => c.GetProperty("itemIndex").GetInt32() >= 6);
+        Assert.Equal(6, Db(db => db.PositionItemProgress.Count(p => p.PlanPositionId == positionId && p.IntroducedAt != null)));
+    }
+
+    // Takes the position's test and answers every item with its right answer in the stage's language.
+    private async Task TakeTestAsync(Setup s)
+    {
+        var tests = $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests";
+        var attempt = await (await s.Child.PostAsJsonAsync(tests, new { })).Content.ReadFromJsonAsync<JsonElement>();
+        var attemptId = attempt.GetProperty("attemptId").GetInt32();
+        for (var i = 0; i < attempt.GetProperty("totalItems").GetInt32(); i++)
+        {
+            var next = (await s.Child.GetFromJsonAsync<JsonElement>($"{tests}/{attemptId}/next")).GetProperty("item");
+            var index = next.GetProperty("itemIndex").GetInt32();
+            var answer = next.GetProperty("stage").GetInt32() == (int)TestStage.MultipleChoice
+                ? next.GetProperty("choices").EnumerateArray().Select(c => c.GetString()!).Single(c => c.StartsWith(Words[index].Back))
+                : Words[index].Front;
+            (await s.Child.PostAsJsonAsync($"{tests}/{attemptId}/answer", new { itemIndex = index, givenAnswer = answer }))
+                .EnsureSuccessStatusCode();
+        }
+    }
+
+    private void IntroduceDaysAgo(Setup s, int days)
+    {
+        var day = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-days);
+        Db(db =>
+        {
+            foreach (var i in Enumerable.Range(0, Words.Length))
+                db.PositionItemProgress.Add(new PositionItemProgress
+                { PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = day, DueOn = day });
+            return db.SaveChanges();
+        });
+    }
+
+    /// <summary>
+    /// Review finding 4, derived from decision 1 ("written from memory, right, without help"): a word typed right in the
+    /// test's free field is imprinted - past its ladder week the test asks in writing. Red if the test path never imprints
+    /// (the word comes back as a learn card for good).
+    /// </summary>
+    [Fact]
+    public async Task Frei_Getippt_Im_Test_Praegt_Ein()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        IntroduceDaysAgo(s, 8);
+
+        await TakeTestAsync(s);
+
+        Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
+        Assert.NotNull(ProgressOf(s, 1).ImprintedAt);
+    }
+
+    /// <summary>
+    /// The other half of finding 4: a word chosen right in the test (its ladder week asks a choice) is not written from
+    /// memory and imprints nothing. Red if every right test answer imprinted.
+    /// </summary>
+    [Fact]
+    public async Task Gewaehlt_Im_Test_Praegt_Nicht_Ein()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        IntroduceDaysAgo(s, 1);
+
+        await TakeTestAsync(s);
+
+        Assert.Null(ProgressOf(s, 0).ImprintedAt);
+        Assert.Null(ProgressOf(s, 1).ImprintedAt);
+    }
+
+    /// <summary>
+    /// Review finding 5 (story test plan, risk 1): an open learn card coming back pays no new-content points - neither on
+    /// its learn card nor by being "new" twice. Red if the learn card's recall started to pay or used the bonus up.
+    /// </summary>
+    [Fact]
+    public async Task Wiederkehrende_Lernkarte_Zahlt_Keinen_Neu_Bonus()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        IntroduceDaysAgo(s, 1);
+        var before = CoinsOf(s.ChildId);
+
+        var sessionId = await StartAsync(s);
+        var answer = await AnswerAsync(s, sessionId, 0, wasKnown: true, givenAnswer: "la gare");
+
+        Assert.Equal(0, answer.GetProperty("awarded").GetInt32());
+        Assert.Equal(before, CoinsOf(s.ChildId));
+        Assert.Null(ProgressOf(s, 0).NewBonusPaidAt);
+        Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
     }
 }

@@ -70,8 +70,9 @@ public class VierWochenTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             if (card.GetProperty("introduction").GetBoolean())
             {
                 introduced++;
-                (await TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index, wasKnown: true))
-                    .EnsureSuccessStatusCode();
+                // B-643: the learn card's recall right from memory - otherwise the word comes back as a learn card.
+                (await TestApi.PositionReviewAsync(child, s.PlanId, s.PositionId, sessionId, index,
+                    givenAnswer: RightAnswer((int)TestStage.LearnCard, index), wasKnown: true)).EnsureSuccessStatusCode();
                 continue;
             }
             asked++;

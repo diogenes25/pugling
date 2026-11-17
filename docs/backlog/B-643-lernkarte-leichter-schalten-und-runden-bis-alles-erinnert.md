@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte leichter, Mach's mir leichter in der Lernkarte]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -259,3 +259,33 @@ B-635 wäre es mehr als L und müsste geteilt werden.
 - **2026-11-17** — geschätzt: L, beides, Migration ja (`ImprintedAt`, Backfill aus `IntroducedAt`), kein
   Vertragsbruch (`ImprintedCount` additiv). Größtes Risiko: Nur die Kartenwahl darf „neu“ auf „eingeprägt“ umstellen,
   die übrigen 42 Leser von `IntroducedAt` nicht.
+- **2026-11-17** — gebaut (Sprint 92, nach „Ja, weitermachen“ des Vaters). Migration `ImprintedAt` mit Backfill
+  `ImprintedAt = IntroducedAt`; Probe an einer **Kopie** der echten `pugling.db` (Stand `StudyPlanSeriesUnit`): beide neuen
+  Migrationen liefen, 30 Positionen mit 216 eingeführten Wörtern, je Position eingeprägt = eingeführt, keine Abweichung.
+  Kartenwahl über `PositionPlayService.Known` (eingeprägt – oder die Karte braucht keine Lernkarte, `NeedsImprint`, etwa die
+  Erkennen-Karte einer „beide“-Vokabel); alle übrigen Leser von `IntroducedAt` unverändert (Reviewer: 44 Treffer
+  geprüft). Tagesdosis zählt offene Lernkarten der Runde, auch heute eingeprägte. Vokabel-`EaseLadder`, eigene
+  Typ-Eigenschaft `SupportsRemediation` (Vokabel-Positionen können nicht nebenbei Nacharbeit). Leichter geschaltet bleibt
+  die Lernkarte in ihrer Form (Auswahl bietet Wörter der Lernsprache), ohne Vorlese-Ton. Wiederholung ohne Grenze.
+  `PositionStatus.ImprintedCount`; Ring und Beschriftung „N von M eingeprägt“; „Später nochmal“.
+  - **Abweichung, hergeleitet aus Entscheidung 1:** ein im Test frei getipptes, richtiges Wort ist „einmal frei aus dem
+    Gedächtnis richtig geschrieben“ und gilt als eingeprägt; eine richtige Auswahl im Test nicht. Ohne diese Regel käme
+    jedes im Test kalt getroffene Wort für immer als Lernkarte. Bitte bestätigen oder verwerfen.
+  - **Verworfen (Review-Fund 3):** den Tagestest um offene Lernkarten zu kürzen brach B-04 – wer nie übt, muss im Test
+    jeden Tag mehr Wörter treffen (`VierWochenTests.Dosis_WerNieUebt…` fiel: 5/5/5 statt 5/10/15). Kalt getestete Wörter
+    kommen am Folgetag als Lernkarte und nehmen dort ihren Dosis-Platz; das Tempo bleibt die Dosis.
+  - AK 1 → `Lernkarte_Wird_Im_Erinnern_Stufe_Fuer_Stufe_Leichter`; Vitest `Lernkarte` (Knopf nur in Schritt 4 mit `canEase`).
+  - AK 2/3 → `Leichter_Erinnert_Praegt_Nicht_Ein_Frei_Erinnert_Schon`, `Doppelt_Geschickte_Hilfe_Antwort_Praegt_Nicht_Ein`,
+    `Antwort_Fuer_Eine_Vergangene_Stelle_Praegt_Nicht_Ein` (Risiko 4). Vor dem Bau rot: weder `easier` für die Lernkarte
+    noch `ImprintedAt` existierten.
+  - AK 4 → `Nicht_Erinnertes_Wort_Kommt_Wieder_Bis_Es_Sitzt` (dritte und vierte Wiederholung; mit der alten Grenze `< 2` rot).
+  - AK 5 → `Nicht_Eingepraegtes_Wort_Kommt_Am_Naechsten_Tag_Als_Lernkarte`, `Offene_Lernkarten_Zaehlen_Auf_Die_Tagesdosis`
+    (2 offen + 4 neu), `Zweite_Runde_Am_Selben_Tag_Bringt_Keine_Neuen_Ueber_Die_Dosis`.
+  - AK 6 → `Ring_Zaehlt_Eingepraegte_Woerter`, Vitest `pfad` und `SohnHome` (Blatt und Vorlesename; Gegenprobe von Hand:
+    mit `introducedCount` 1 failed, sonst 27/27).
+  - AK 7/8 → Bestandstests Test/Bonus/Info grün; `Wiederkehrende_Lernkarte_Zahlt_Keinen_Neu_Bonus`; Test-Pfad:
+    `Frei_Getippt_Im_Test_Praegt_Ein`, `Gewaehlt_Im_Test_Praegt_Nicht_Ein`.
+  - Nachgezogen (setzten „bekannt = gesehen“ voraus): `TestApi.MarkIntroduced`, Erstbegegnung-, UmfangNeu-, Kartenstufe-,
+    VierWochen-Tests; `KartenstufeTests.Test_Fuehrt_Ungesehene…` erwartet jetzt die Lernkarte nach einem kalten Test.
+  - E2E `lernkarte-leichter.spec.ts` (Rollengang Sohn) **1 passed**; volle Suite 169 passed, 1 failed
+    (`vater-von-null.spec.ts`, einzeln **1 passed** – Last durch einen parallelen Testlauf).

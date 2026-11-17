@@ -43,10 +43,14 @@ export function naechstePositionId(positions: PositionStatus[]): number | null {
   return (offen.find((p) => p.cadence === "Daily") ?? offen.find((p) => p.cadence === "Weekly"))?.positionId ?? null;
 }
 
-/** Anteil kennengelernter Inhalte (0…1) für den Ring; `null`, wenn die Position keinen Pool hat (kein Ring). */
+/**
+ * Anteil eingeprägter Inhalte (0…1) für den goldenen Ring; `null`, wenn die Position keinen Pool hat (kein Ring). B-643:
+ * eingeprägt heißt einmal frei aus dem Gedächtnis richtig geschrieben – bei einer Übung ohne Lernkarte füllt der Server
+ * die Zahl mit den eingeführten Wörtern, die Regel kennt nur er.
+ */
 export function kennenlernAnteil(pos: PositionStatus): number | null {
   if (pos.poolSize <= 0) return null;
-  return Math.min(1, Math.max(0, pos.introducedCount / pos.poolSize));
+  return Math.min(1, Math.max(0, (pos.imprintedCount ?? 0) / pos.poolSize));
 }
 
 /**

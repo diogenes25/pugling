@@ -67,7 +67,7 @@ describe("Lernkarte", () => {
     fireEvent.change(screen.getByLabelText("Schreib es ab"), { target: { value: "walk" } });
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Weiß ich nicht" }));
+    fireEvent.click(screen.getByRole("button", { name: "Später nochmal" }));
     expect(fertig).toHaveBeenCalledWith({ wasKnown: true, givenAnswer: null });
   });
 
@@ -86,5 +86,54 @@ describe("Lernkarte", () => {
   it("hat ihre eigene Form und Anweisung", () => {
     const form = aufgabenform(KARTE, false);
     expect([form.antwort, form.anweisung]).toEqual(["lernkarte", "lektion.learn"]);
+  });
+});
+
+describe("Lernkarte – leichter schalten (B-643)", () => {
+  // Bis Schritt 4 durchspielen, dann steht das Erinnern-Feld.
+  function bisZumErinnern() {
+    fireEvent.click(screen.getByRole("button", { name: "Aufdecken" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nein, neu" }));
+    fireEvent.change(screen.getByLabelText("Schreib es ab"), { target: { value: "walk" } });
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+  }
+
+  // AK 1: der Knopf steht nur, wo der Server ihn anbietet, und erst in Schritt 4. Rot, wenn das Frontend ihn selbst
+  // zeigte (ohne `canEase`) oder schon beim Aufdecken – dort hieße leichter, das Wort zu verstecken, das es gerade lernt.
+  it("zeigt „Mach's mir leichter“ nur in Schritt 4 und nur mit canEase", () => {
+    const leichter = vi.fn();
+    const { rerender } = render(<Lernkarte karte={{ ...KARTE, canEase: true }} gesperrt={false} onFertig={vi.fn()} onLeichter={leichter} />);
+    const knopf = () => screen.queryByRole("button", { name: "Mach's mir leichter" });
+    expect(knopf()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Aufdecken" }));
+    expect(knopf()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Nein, neu" }));
+    expect(knopf()).toBeNull();
+    fireEvent.change(screen.getByLabelText("Schreib es ab"), { target: { value: "walk" } });
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect(knopf()).toBeTruthy();
+
+    rerender(<Lernkarte karte={KARTE} gesperrt={false} onFertig={vi.fn()} onLeichter={leichter} />);
+    expect(knopf()).toBeNull();
+    rerender(<Lernkarte karte={{ ...KARTE, canEase: true }} gesperrt={false} onFertig={vi.fn()} onLeichter={leichter} />);
+    fireEvent.click(screen.getByRole("button", { name: "Mach's mir leichter" }));
+    expect(leichter).toHaveBeenCalledTimes(1);
+  });
+
+  // AK 1 + 2: die leichtere Form kommt vom Server (`eased`, hier Kästchen) und ersetzt das freie Feld; die Karte bleibt in
+  // Schritt 4, die Antwort geht wie jede andere an den Server. Rot, wenn die Karte nach dem Schalten von vorn begänne oder
+  // das freie Feld stehen bliebe.
+  it("spielt die leichtere Form des Servers in Schritt 4", () => {
+    const fertig = vi.fn();
+    const { rerender } = render(<Lernkarte karte={{ ...KARTE, canEase: true }} gesperrt={false} onFertig={fertig} onLeichter={vi.fn()} />);
+    bisZumErinnern();
+    const kaesten = { ...KARTE, stage: 3, reveal: null, eased: true, canEase: true, answerLength: 4, answerPattern: "____" } as PracticeCard;
+    rerender(<Lernkarte karte={kaesten} gesperrt={false} onFertig={fertig} onLeichter={vi.fn()} />);
+
+    expect(screen.queryByRole("button", { name: "Aufdecken" })).toBeNull();
+    expect(document.querySelectorAll(".letterboxes input")).toHaveLength(4);
+    expect(document.getElementById("lernkarte-erinnern")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Später nochmal" }));
+    expect(fertig).toHaveBeenCalledWith({ wasKnown: false, givenAnswer: null });
   });
 });
