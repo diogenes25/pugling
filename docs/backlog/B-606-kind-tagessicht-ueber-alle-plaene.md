@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-17: Truhe/Bonus/Dashboard/Serie/Metrik gegen ComputeChildDayAsync und IsCompleteDay nachgerechnet (DailyBoxService :35-38, ExtraTrainingService :259-268, ChildrenDashboardService :30-33, ChildStreakAsync :364-391), eine Serie für overview/progress/today/Truhe, Los merkt den Plan (SohnHome :280). Funde B-611, B-612, B-613 (🟡), B-614 (🟢)"
 ---
 
 # B-606 · Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie

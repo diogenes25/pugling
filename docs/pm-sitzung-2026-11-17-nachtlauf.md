@@ -101,3 +101,79 @@ gezeigt; Fund (2) fängt es nicht (neue Spec, nichts entfernt) – dafür bleibt
 **Bewusst ungedeckt:** Zwei aktive Pläne im echten Browser (erst mit B-539 Teil A herstellbar).
 
 **Halt-Prüfung:** kein neues Tor gelandet; 5 gezählte Funde (Endlosschleife erst bei mehr als 5) → der Lauf geht weiter.
+
+## Sprint 84 — Ziel & Umfang
+
+**Sprint-Ziel (Sicht Vater):** „Ich lege für jedes Fach meines Kindes einen eigenen Plan an, ohne dass ein Plan den
+anderen abschaltet; jeder Plan trägt sein Fach (und wahlweise die Unit), und in der Zeitachse sehe ich auch die Wochen
+vor einem Kapitelwechsel."
+
+**Umfang:** B-539 (Teil A, AK 1–4, L), B-558 (S).
+
+**Entwickler-Brief:** Reihenfolge B-539 → B-558 (sequenziell; nur B-539 bringt eine Migration). Quelle der Wahrheit für
+die Aktivierung ist `StudyPlansController` (Abschaltung nur in der Gruppe *Kind × Fach*, Pläne ohne Fach eine Gruppe);
+Fach-Pflicht und Unit-Konsistenz an genau der Stelle, durch die Anlegen und PATCH laufen. Migration nur angehängt,
+Rückfüllung als SQL, Probe gegen eine **Kopie** der echten DB. Vertragsbruch: Client, Agent (`PlanPlanner`), Wizard,
+Test-Welle und E2E-Specs ziehen nach. Box/Serie/Pflicht über mehrere Pläne trägt seit Sprint 83 B-606. B-558 nutzt
+dieselbe Fairness-Regel (inaktive Pläne nur zu Gunsten des Kindes) in `ChildrenDashboardService.TimelineAsync`.
+Lehre aus Retro 83: der Bau-Auftrag läuft die betroffenen E2E-Specs selbst (Ausweichports), nicht erst der Koordinator.
+
+## Iteration 84 — umgesetzt
+
+- **B-539 Teil A (Backend):** Fach Pflicht im Vertrag (aus der Unit abgeleitet), `StudyPlan.SeriesUnitId`
+  (Migration `20261117061523_StudyPlanSeriesUnit`, Rückfüllung des Mehrheitsfachs nur für Pläne ohne Fach, Gleichstand
+  bleibt leer), Abschaltung nur je Kind × Fach, `validation_error` bei fehlendem/widersprüchlichem Fach, Abschalten
+  bleibt immer frei. Probe auf einer Kopie der echten DB: Pläne und abhängige Zeilen unverändert.
+- **B-539 Teil A (Frontend):** Plan-Formular, Bearbeiten und Wizard mit Fach (Pflicht) und Unit (optional),
+  Fach-Spalte und „mehrfach aktiv" je Fach in der Planliste, „Aktivieren" ohne Fach gesperrt, Planwahl auf der
+  Arcade-Fortschrittsseite; Test- und E2E-Welle (35 Specs) auf das Pflichtfach.
+- **B-558:** Zeitachse zählt abgeschaltete Pläne nur zu Gunsten des Kindes (`TimelineDutyDone` neben `IsCompleteDay`).
+- **B-610:** `assign` bricht bei mehreren spielbaren Plänen ab und verlangt `--plan-id` (Review-Fund, im Sprint behoben).
+- **Verifikation:** `dotnet test` 1795/1795, Vitest 1160/1160 (ein voller Lauf von vier mit 1 nicht zuzuordnendem
+  Ausfall, Muster B-603), Playwright **168 passed**. Mutanten nach der letzten Änderung: 14 von 15 rot am benannten
+  Test; A4 grün und **äquivalent** (dieselbe Antwort über die Pflichtzeile, nur anderer `detail`) – kein Beleg, Regel hält.
+- **Reviews:** 5 gezählte Funde (4 aus B-539, 1 aus B-558; Grenze: mehr als 5), alle behoben; einzeln im Verlauf von
+  B-539 und B-558.
+- **Commit:** `30711266`.
+
+## Runde 84 — Abnahme
+
+- **Vater — abgenommen.** „Ich lege für Englisch und Französisch je einen Plan an, beide bleiben an; erst ein zweiter
+  Englisch-Plan schaltet den ersten ab. Ohne Fach kann ich nicht speichern, und ‚Aktivieren' ist bei einem alten Plan
+  ohne Fach gesperrt, statt mir einen englischen Fehler zu zeigen. In der Zeitachse bleiben die Wochen vor dem
+  Kapitelwechsel stehen." Belegt durch `zwei-faecher.spec.ts` (UI-Weg) und `vater-zeitachse.spec.ts`, beide in der vollen
+  Suite (168 passed).
+- **Sohn — abgenommen (Regressionsweg und neuer Fall).** „Ich sehe Englisch und Französisch getrennt, und die Truhe gibt
+  es erst, wenn beides geschafft ist." Belegt im selben Lauf von `zwei-faecher.spec.ts`; Fortschrittsseite mit Planwahl
+  durch `SohnProgress.test.tsx`.
+- **Creator — Regressionszeuge:** `assign` fragt bei mehreren Plänen nach (`AssignAgentTests`), `PlanPlanner` schickt
+  Fach und Unit; Creator-Specs grün in der vollen Suite.
+
+Sprint-Ziel gilt.
+
+## Retrospektive 84
+
+**Nachschau:** Sprint 83 (B-606) gelesen vom `pugling-reviewer` gegen den Stand nach B-539 – Truhe, Bonus-Sperre,
+Dashboard, Serie und Missions-Metrik gegen `ComputeChildDayAsync`/`IsCompleteDay` nachgerechnet, eine Serie für alle
+Anzeigen bestätigt, „Los" merkt den Plan. **Drei Defekte entgangen**, alle 🟡 und alle erst real, seit B-539 mehrere
+aktive Pläne zulässt: **B-611** (ein Wochenziel-Plan sperrt Truhe und Bonus über alle Pläne), **B-612** (Startseite zählt
+Belohnungsziele anders als der Server), **B-613** (rückdatierter/wieder eingeschalteter Plan bricht die Serie
+nachträglich); dazu 🟢 **B-614** (Gruppierung nach Übungs- statt Planfach). `nachgeschaut` an B-606 gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** In Sprint 83 waren zwei aktive Pläne nur per DB-Setup herstellbar, und die
+Tests von B-606 bauten genau den einen erdachten Fall (zwei Pläne, beide mit Tageszielen). Die Regel „über alle Pläne"
+wurde nie gegen **verschiedenartige** Pläne geprüft – gemischter Takt, rückdatierter Start, ein Plan ohne Pflicht. In
+Sprint 84 fanden die Reviews vier gezählte Funde in B-539 und einen in B-558; das Tor „Bau läuft betroffene E2E selbst"
+aus Retro 83 hat getragen (35 Specs vom Bau nachgezogen, die volle Suite war beim ersten Koordinator-Lauf grün).
+
+**Vorschlag (CZ), nicht gelandet (Freigabe 3):** ein Matrix-Test `KindTagessichtMatrixTests`, der für **jede**
+Kombination zweier Pläne aus {nur Tagesziele, nur Wochenziele, gemischt, ohne Pflicht} × {aktiv, abgeschaltet} prüft,
+dass `RewardsUnlocked`, `DutyDone` und die Serie der Kind-Sicht dieselbe Regel ergeben wie die eines einzigen Plans mit
+der Vereinigung der Positionen – oder, wo Entscheidung 6 bewusst abweicht, die benannte Abweichung. Er hätte B-611
+gefunden; B-613 nur mit einer Start-in-der-Vergangenheit-Dimension.
+
+**Bewusst ungedeckt:** B-613 Teil 2 (Wiedereinschalten) braucht eine Entscheidung (kein Aktivierungsverlauf).
+
+**Halt-Prüfung:** kein neues Tor gelandet; 5 gezählte Funde in Sprint 84 (Grenze: mehr als 5). Die drei Nachschau-Funde
+liegen im Increment von Sprint 83, nicht in dem von Sprint 84 → der Lauf geht weiter. Weil B-539 sie live gemacht hat,
+nimmt Sprint 85 die autonom grillbaren davon (B-611, B-612, B-614) auf.

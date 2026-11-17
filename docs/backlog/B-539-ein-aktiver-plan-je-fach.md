@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/supervisor, rolle/student]
 aliases: [Ein Plan je Fach, Fach Pflicht am Plan, Unit am Plan]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -12,6 +12,8 @@ quelle: B-537 (Teil b, Entscheidungen 1–2)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-539 · Ein aktiver Plan je Fach statt je Kind
@@ -300,3 +302,6 @@ ein Umbau der Pflicht-Rechnung in der Breite von B-535 (M). **Vorgeschlagene Tei
   (Entscheidung 4), ein gelöschtes Fach lässt einen aktiven Plan ohne Fach zurück (Entscheidung 3).
 - 2026-11-17 · Verifikation: `dotnet test -c Release` 1795/1795, Vitest 1160/1160 in drei von vier vollen Läufen (ein
   Lauf 1 failed, nicht zuzuordnen – Muster B-603), `tsc -b` und `dotnet format` sauber.
+- 2026-11-17 · abgenommen in Sprint 84 (30711266): Rollengang `frontend/e2e/zwei-faecher.spec.ts` in der vollen Suite
+  **168 passed** gegen frisch gestarteten Server (Ausweichports 5201/5174); `dotnet test` 1795, Vitest 1160; Mutanten-Tabelle
+  im Verlauf von B-539. Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf.md`.

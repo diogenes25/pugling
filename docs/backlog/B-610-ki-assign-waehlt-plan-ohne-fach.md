@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/agent, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/agent, rolle/creator, rolle/supervisor]
 aliases: [assign nimmt den ersten spielbaren Plan]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-610 · `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach
@@ -46,3 +47,6 @@ denselben Fall im Review von B-539, darum im selben Sprint behoben (siehe Verlau
   ab und listet die Pläne (Id, Titel, Fach-Id); es wählt **nie** nach Fach. Begründung: richtig herstellen heißt hier,
   nicht still in einen Plan zu schreiben; eine Fach-Zuordnung wäre eine Produktentscheidung. Genau ein spielbarer Plan
   bleibt wie bisher. Test `AssignAgentTests.cs:172`; A9 (`if (playable.Count > 1)` → `if (false)`) → rot.
+- 2026-11-17 · abgenommen in Sprint 84 (30711266): Rollengang `frontend/e2e/zwei-faecher.spec.ts` in der vollen Suite
+  **168 passed** gegen frisch gestarteten Server (Ausweichports 5201/5174); `dotnet test` 1795, Vitest 1160; Mutanten-Tabelle
+  im Verlauf von B-539. Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf.md`.

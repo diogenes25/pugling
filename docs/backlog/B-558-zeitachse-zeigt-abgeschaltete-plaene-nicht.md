@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/auswertung, rolle/supervisor]
 aliases: [Zeitachse ohne alte Pläne]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-558 · Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist
@@ -115,3 +116,6 @@ Entscheidungen 1–2; Doku-Kommentar von `ChildPeriod`/`TimelineAsync` nachziehe
   sehen am einzelnen Tag gleich aus (kein Vertragsbruch dafür). Gezählter Fund 🟡 (s. o.); 🟢 behoben: Satz „same daily
   rollup" → „same per-plan rollup". Hingenommen (Entscheidung 1): ein Tag, an dem das Kind die Pflicht eines später
   abgeschalteten Plans verpasst hat, steht danach neutral statt offen – der Malus dafür wurde trotzdem gebucht.
+- 2026-11-17 · abgenommen in Sprint 84 (30711266): Rollengang `frontend/e2e/zwei-faecher.spec.ts` in der vollen Suite
+  **168 passed** gegen frisch gestarteten Server (Ausweichports 5201/5174); `dotnet test` 1795, Vitest 1160; Mutanten-Tabelle
+  im Verlauf von B-539. Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf.md`.
