@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Eingabefeld je Bedeutung, mehrere Übersetzungen getrennt eingeben]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -62,38 +62,53 @@ vor allem die Produktfrage, ob dann **alle** Teile verlangt werden – im Freite
 
 ## Offene Punkte
 
-1. **Alle Teile oder einer?** Empfehlung: **alle** – je Feld ein Teil. Bei den gemessenen Fällen sind es
-   Formen eines Worts (quel/quelle/…, un/une), und genau die soll das Kind schreiben können. Kosten: Die Karte
-   wird schwerer als heute im Freitext; B-462/1 („eine genügt“) gilt dann nur noch für den Freitext.
-2. **Welche Stufen?** Empfehlung: **Kästchen und Freitext** gleich (je Teil ein Feld), dazu Diktat. Sonst
-   verlangt die eine Stufe alle Formen und die nächste nur eine. Kosten: Freitext wird für mehrteilige Einträge
-   strenger als heute.
-3. **Reihenfolge.** Empfehlung: **beliebig** – jedes Feld darf jeden noch nicht getroffenen Teil treffen.
-   Kosten: Bei Formen (quel → quelle) verliert die Reihenfolge ihre Ordnung; die Felder tragen keine Beschriftung.
-4. **Gleiche Teile.** „sévère / sévère“ ist männlich/weiblich gleich. Empfehlung: **gleiche Teile zu einem
-   Feld zusammenfassen**. Kosten: keine sichtbaren.
-5. **Teilweise richtig.** Drei von vier Formen richtig – was zählt? Empfehlung: Die Karte ist nur richtig, wenn
-   **alle** Felder stimmen; das Blatt zeigt je Feld richtig/falsch. Kosten: hart bei vier Formen; eine
-   Abstufung (halb wie in [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md)) wäre denkbar.
-6. **Was ist ein Teil?** Empfehlung: **dieselben Trenner wie B-462** (` / `, `;`, `,` außerhalb von Klammern,
-   nicht in Sätzen); Klammerteile bleiben im Feld und dürfen fehlen. Kosten: „connaître qn / qc“ wird zwei
-   Felder „connaître qn“ und „qc“ – die Heuristik trennt dort falsch und braucht einen Sonderfall oder die
-   Pflege des Eintrags.
-7. **Code oder Datenpflege?** Empfehlung: **Code**, wie B-462/1 (der Import zerlegt nicht). Alternative wäre,
-   die 22 Einträge im Speicher in einzelne Vokabeln zu teilen. Kosten: die Heuristik aus Punkt 6.
-8. **Im Abschlusstest auch?** Empfehlung: **ja**, nach der Regel von B-597/5 (überall gleich). Kosten: Tests
-   mit solchen Einträgen werden schwerer.
+Alle in der Grill-Runde vom 2026-11-17 entschieden – siehe Entscheidungen.
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~**Alle Teile oder einer?**~~ → Entscheidung 1.
+2. ~~**Welche Stufen?**~~ → Entscheidung 2.
+3. ~~**Reihenfolge.**~~ → Entscheidung 4.
+4. ~~**Gleiche Teile.**~~ → Entscheidung 5.
+5. ~~**Teilweise richtig.**~~ → Entscheidung 3 (abweichend vom Entwurf: halb statt ganz oder gar nicht).
+6. ~~**Was ist ein Teil?**~~ → Entscheidung 6.
+7. ~~**Code oder Datenpflege?**~~ → Entscheidung 7.
+8. ~~**Im Abschlusstest auch?**~~ → Entscheidung 2.
+
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
+
+1. **Alle Teile werden verlangt, je Feld einer.** Die mehrteiligen Einträge auf der getippten Seite sind fast
+   alle Formen eines Worts; wer „quelles“ nicht schreiben kann, kann das Wort nicht. *Kosten:* Diese Karten
+   werden schwerer als heute im Freitext; B-462/1 („eine genügt“) gilt für zerlegbare Einträge auf
+   Tipp-Stufen nicht mehr.
+2. **Überall, wo getippt wird:** Kästchen, Freitext und Diktat, in Üben, Abschlusstest, Bonus-Training und
+   Vorschau – die Regel von B-597/5. *Kosten:* Freitext wird für diese Einträge strenger; vier Oberflächen
+   (Lektion, Test, Bonus, Vorschau) brauchen mehrere Felder.
+3. **Teilweise richtig zählt halb** – mit dem Ausgang aus [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md)
+   (Kasten bleibt, keine Münzen, Combo hält), wenn **mindestens die Hälfte** der Felder stimmt; darunter falsch.
+   Das Blatt zeigt je Feld ✔/✘. Im Abschlusstest bleibt es binär (B-624/1). *Kosten:* **B-625 hängt an B-624**,
+   das zuerst gebaut wird; eine Schwelle (Hälfte) als Produktregel im Code.
+4. **Reihenfolge beliebig:** Jedes Feld darf jeden noch nicht getroffenen Teil treffen. *Kosten:* Die Felder
+   tragen keine Beschriftung.
+5. **Gleiche Teile werden ein Feld** („sévère / sévère“). *Kosten:* keine sichtbaren.
+6. **Ein Teil ist, was die B-462-Regel trennt** (` / `, `;`, `,` außerhalb von Klammern, nicht in Sätzen);
+   Klammerteile bleiben im Feld und dürfen fehlen. **Ausnahme:** Ein Teil, das nur aus Platzhalter-Kürzeln
+   besteht (qn, qc, sb, sth, jdn, jdm, etw …), wird nicht abgetrennt – „connaître qn / qc“ bleibt **ein** Feld.
+   *Kosten:* eine Kürzel-Liste im Code neben der Abkürzungsliste von B-462.
+7. **Gelöst im Code, nicht im Speicher.** Die Einträge bleiben, wie das Buch sie druckt. *Kosten:* Die Zerlegung
+   bleibt eine Heuristik; was sie als Teil erkennt, steht nirgends in den Daten.
+
+## Akzeptanzkriterien
 
 1. Eine Karte zu „quel / quelle / quels / quelles“ zeigt auf der Kästchenstufe vier Kästchenreihen, je eine
-   Form, ohne feste Trenner zwischen ihnen.
+   Form, ohne feste Trenner zwischen ihnen; im Freitext und im Diktat vier Textfelder.
 2. Die Antwort trägt die Teile einzeln; die Karte ist richtig, wenn jeder Teil genau einmal getroffen ist,
    Reihenfolge beliebig.
-3. „sévère / sévère“ zeigt ein Feld.
-4. Ein einteiliger Eintrag verhält sich wie heute (ein Feld, eine Maske).
-5. Im Freitext und im Abschlusstest gilt dieselbe Zerlegung.
-6. Das Blatt zeigt je Feld, ob es stimmt.
+3. Drei von vier richtig ⇒ Ausgang *halb* (B-624); einer von vier ⇒ falsch; im Abschlusstest ⇒ falsch.
+4. „sévère / sévère“ zeigt ein Feld; „connaître qn / qc“ zeigt ein Feld.
+5. Ein einteiliger Eintrag verhält sich wie heute (ein Feld, eine Maske).
+6. Üben, Abschlusstest, Bonus-Training und Vorschau zerlegen gleich (Integrationstest je Pfad).
+7. Das Blatt zeigt je Feld, ob es stimmt.
 
 ## Verlauf
 
@@ -101,3 +116,5 @@ vor allem die Produktfrage, ob dann **alle** Teile verlangt werden – im Freite
 - **2026-11-17** — ausformuliert: Ursache sind die Buchstabenkästchen (eine Maske über den ganzen Eintrag);
   an der DB-Kopie 22 mehrteilige Einträge auf der getippten Seite gemessen, fast alle französische Formen;
   acht offene Punkte mit Empfehlung.
+- **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; teilweise richtig
+  zählt halb wie in B-624, B-625 hängt damit an B-624.
