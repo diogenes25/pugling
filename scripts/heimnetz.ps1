@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Startet Pugling für das Heimnetz: Handy und Rechner im selben WLAN erreichen die App unter einer Adresse (B-468).
 

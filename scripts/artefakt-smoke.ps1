@@ -1,4 +1,4 @@
-#requires -Version 7
+﻿#requires -Version 7
 <#
 .SYNOPSIS
     Startet das veröffentlichte Artefakt (API + gebautes Frontend) gegen eine Wegwerf-DB und prüft, ob es antwortet (B-47).
