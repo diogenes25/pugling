@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student]
 aliases: [Wochenziel-Plan sperrt Truhe]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -97,27 +97,34 @@ Takt (B-621, Risiko 2) kommt eine dritte Taktart dazu, die dieselbe Regel brauch
 
 ## Offene Punkte
 
-1. **Welche Regel gilt über den Kind-Tag?** (a) Tagesziele **aller** Pläne, wenn es irgendwo welche gibt, sonst alle
-   Ziele mit Takt (die Idee); (b) bleibt je Plan (heute; dann ist B-611 kein Defekt, sondern als `verworfen` zu
-   begründen, und B-612 braucht die Serverzahlen erst recht); (c) nur Tagesziele, ein reiner Wochenziel-Tag hat keine
-   Truhe. **Empfehlung (a):** sie ist B-535 Entscheidung 1, nur über den ganzen Tag statt je Plan gelesen – der Grund
-   „sonst gäbe es die Truhe für nichts" bleibt gewahrt (ohne jedes Tagesziel gilt die alte Regel), und Plan-Grenzen
-   sind Ablage des Vaters, kein Belohnungsbegriff. (c) bräche B-535 AK 2 (`BelohnungenTagespflichtTests.cs:122`).
-2. **Zählt ein Wochenziel an einem Tag mit Tageszielen dann gar nicht für die Truhe – auch nicht am Sonntag, dem
-   letzten Tag seiner Woche?** **Empfehlung: ja, gar nicht.** Das ist innerhalb eines Plans seit B-535 schon so, die
-   Bremse ist der Wochen-Malus; eine Sonntagsausnahme wäre ein neuer, dritter Begriff von „Belohnungsziel", den das
-   Kind nicht vorhersehen kann. Kosten (wie B-535): ein Kind kann ein Wochenfach liegen lassen und trotzdem täglich
-   Truhen holen.
-3. **Gilt dieselbe Regel für das Bonus-Training wie für die Truhe?** **Empfehlung: ja**, beide lesen schon heute dieselbe
-   Senke (`DailyBoxService.cs:37`, `ExtraTrainingService.cs:261`), und B-535 Entscheidung 1 hat sie gemeinsam
-   entschieden. Eine Trennung wäre neue Fachlichkeit, keine Reparatur.
-4. **Eine Story mit B-612 oder zwei?** **Empfehlung: zwei Stories, ein Sprint, B-611 zuerst.** Mit Regel (a) stimmt die
-   Startseite in den heute sichtbaren Fällen von selbst wieder (sie rechnet flach genau (a), siehe B-612); die Regel
-   bleibt aber doppelt geführt, und das ist B-612s Teil.
+1. ~~**Welche Regel gilt über den Kind-Tag?**~~ → Entscheidung 1.
+2. ~~**Zählt ein Wochenziel an einem Tag mit Tageszielen gar nicht, auch nicht am Sonntag?**~~ → Entscheidung 2.
+3. ~~**Gilt dieselbe Regel für das Bonus-Training wie für die Truhe?**~~ → Entscheidung 3.
+4. ~~**Eine Story mit B-612 oder zwei?**~~ → Entscheidung 4.
+
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
+
+1. **Die Auswahl fällt über den Kind-Tag:** Gibt es in irgendeinem aktiven Plan Tagesziele, schließen die Tagesziele
+   **aller** Pläne Truhe und Bonus auf; gibt es nirgends Tagesziele, alle Ziele mit Takt. *Begründung:* B-535
+   Entscheidung 1 über den ganzen Tag statt je Plan gelesen; Plan-Grenzen sind Ablage des Vaters, kein
+   Belohnungsbegriff, und „die Truhe für nichts" bleibt ausgeschlossen. *Kosten:* eine Änderung an der Senke
+   (`ComputeChildDayAsync`/`RewardObligations`), Doku `PositionProgressService.cs:313-315` neu, ein neuer Test mit
+   gemischtem Takt über zwei Pläne.
+2. **Ein Wochenziel zählt an einem Tag mit Tageszielen nie für die Belohnung – auch nicht am Sonntag.** *Begründung:*
+   Die Bremse für das offene Wochenziel ist der Wochen-Malus; eine Sonntagsausnahme wäre ein dritter Begriff von
+   „Belohnungsziel", den Kind und Startseite nicht kennen. *Kosten:* Ein Kind, das den Malus hinnimmt, holt trotzdem
+   täglich seine Truhe.
+3. **Bonus-Training und Truhe folgen derselben Regel.** *Begründung:* eine Bedingung („Tagesziele geschafft") für das
+   Kind; beide lesen schon dieselbe Senke (`DailyBoxService.cs:37`, `ExtraTrainingService.cs:261`). *Kosten:* keine
+   zusätzlichen.
+4. **Zwei Stories, ein Sprint, B-611 zuerst.** B-611 ist die Server-Regel (`wo: backend`), [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md)
+   liefert die Zahlen an die Startseite und baut auf der fertigen API auf. *Kosten:* zwei Abnahmen statt einer.
 
 ## Akzeptanzkriterien
 
-Entwurf, geschrieben für Regel (a). Je Fall die Änderung, die ihn rot macht. Aufbau wie `KindTagessichtTests` (zwei
+Final (Entscheidungen 1–3). Je Fall die Änderung, die ihn rot macht. Aufbau wie `KindTagessichtTests` (zwei
 aktive Pläne per DB-Setup oder seit B-539 Teil A über zwei Fächer).
 
 1. Plan A mit zwei Tageszielen (beide erfüllt), Plan B nur mit einem Wochenziel (offen) ⇒ `student/children/{id}/today`
@@ -143,3 +150,4 @@ aktive Pläne per DB-Setup oder seit B-539 Teil A über zwei Fächer).
   ohne Vater-Entscheidung dazu); Truhe, Bonus und `today` hängen alle an `RewardsUnlocked`/`RewardOutstanding`; kein
   Test mit gemischtem Takt über Pläne (`KindTagessichtTests.cs:26-27`, beide `Daily`); echte Pläne heute nur mit
   Tagespflichten, also noch nicht sichtbar. Am Code gelesen, nicht per Test nachgestellt.
+- **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–4, alle nach Empfehlung; Akzeptanzkriterien final.

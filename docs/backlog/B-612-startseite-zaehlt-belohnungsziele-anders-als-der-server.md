@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
 aliases: [Ziele 2/2, Truhe zu]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -85,23 +85,30 @@ die Zahlen. Mit Regel (a) aus B-611 fiele der heute sichtbare Widerspruch von se
 
 ## Offene Punkte
 
-1. **Liefert der Server die Belohnungsziele in `TodayResponse` mit (Regel an der Senke)?** Etwa Anzahl, erfüllt und Art
-   (Tag/Woche/keine) als zusätzliche Felder. **Empfehlung: ja.** Genau der Kommentar „dieselbe Auswahl wie
-   `RewardObligations`" ist hier verrottet; additive Felder brechen keinen Client. Alternative wäre ein Kennzeichen je
-   Position („zählt für die Truhe") – nur nötig, wenn der Pfad diese Knoten eigens markieren soll, was niemand verlangt.
-2. **Bleibt B-612 nötig, wenn B-611 Regel (a) wählt?** **Empfehlung: ja**, aber nach B-611 im selben Sprint. Der sichtbare
-   Widerspruch verschwindet zwar, die doppelte Regel nicht. Wählt B-611 dagegen (b) (je Plan bleibt), ist B-612 die
-   einzige Reparatur des Widerspruchs.
-3. **Gehört die Bonus-Seite („Erst die Tagesziele" auch bei reinen Wochenzielen, `SohnBonus.tsx:95`) in diese Story?**
-   **Empfehlung: ja**, dieselbe Art aus derselben Senke; eine eigene Story für einen Textschlüssel wäre teurer als der
-   Fall hier.
-4. **Soll die geschlossene Truhe nennen, was ihr fehlt** (wie die Bonus-Seite mit ihrer Liste)? **Empfehlung: nein, nicht
-   in dieser Story.** Mit stimmigen Zahlen und richtiger Art ist der Widerspruch behoben; eine Liste an der Truhe ist ein
-   Wunsch und gehört, falls gewollt, als eigene Idee in den Backlog.
+1. ~~**Liefert der Server die Belohnungsziele in `TodayResponse` mit?**~~ → Entscheidung 1.
+2. ~~**Bleibt B-612 nötig, wenn B-611 Regel (a) wählt?**~~ → [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md)
+   Entscheidung 4 (zwei Stories, B-611 zuerst).
+3. ~~**Gehört die Bonus-Seite in diese Story?**~~ → Entscheidung 2.
+4. ~~**Soll die geschlossene Truhe nennen, was ihr fehlt?**~~ → Entscheidung 3.
+
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
+
+1. **Der Server liefert Anzahl, Erfüllte und Art (Tag/Woche/keine) der Belohnungsziele in `TodayResponse`;** die
+   Startseite rechnet nicht mehr selbst (`belohnungsZiele` entfällt bzw. liest nur noch die Felder). *Begründung:* Regel
+   an der Senke – genau die Nachrechnung im Client ist mit mehreren Plänen verrottet. *Kosten:* drei additive
+   Vertragsfelder, `Pugling.Client`, Frontend-Typen; kein Bruch.
+2. **Die Bonus-Seite nennt die richtige Art,** statt bei jeder Sperre „Erst die Tagesziele" (`SohnBonus.tsx:95`,
+   `de.ts:180`) – auch im Ein-Plan-Fall nur mit Wochenzielen. *Begründung:* dieselbe Serverangabe, dieselbe Story.
+   *Kosten:* ein Textschlüssel, ein Vitest-Fall.
+3. **Keine Liste fehlender Ziele an der Truhe in dieser Story.** *Begründung:* Mit stimmigen Zahlen und Art ist der
+   Widerspruch behoben; eine Liste ist ein neuer Wunsch, keine Reparatur. *Kosten:* Die Liste bleibt auf der
+   Bonus-Seite; der Vater hat keine eigene Idee dafür verlangt.
 
 ## Akzeptanzkriterien
 
-Entwurf, geschrieben für Punkt 1 (Serverfelder) und Regel (a) aus B-611. Je Fall die Änderung, die ihn rot macht.
+Final (Entscheidungen 1–2; vorher Entwurf), geschrieben für Punkt 1 (Serverfelder) und Regel (a) aus B-611. Je Fall die Änderung, die ihn rot macht.
 
 1. `student/children/{id}/today` liefert Anzahl, Erfüllte und Art der Belohnungsziele aus **derselben** Auswahl wie
    `rewardsUnlocked`: Plan A mit zwei Tageszielen, Plan B nur mit einem Wochenziel ⇒ Art Tag, 0/2 vorher und 2/2
@@ -125,3 +132,4 @@ Entwurf, geschrieben für Punkt 1 (Serverfelder) und Regel (a) aus B-611. Je Fal
   (`PositionProgressService.cs:331`) belegt, der Fall „2 / 2, voller Balken, Truhe und Bonus ‚erst die Tagesziele'" am
   Code durchgerechnet; `TodayResponse` trägt keine Belohnungszahlen; Zusatzfund: die Bonus-Seite sagt auch bei reinen
   Wochenzielen „Erst die Tagesziele" (`SohnBonus.tsx:95`). Nicht im Browser nachgestellt.
+- **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–3, alle nach Empfehlung; Punkt 2 durch B-611 Entscheidung 4 erledigt; Akzeptanzkriterien final.

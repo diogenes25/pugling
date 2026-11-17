@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student, rolle/supervisor]
-aliases: [Serie bricht nachträglich]
-status: ausformuliert
+tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+aliases: [Serie bricht nachträglich, Malus beim Wiedereinschalten, Kür wird Pflicht]
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -15,7 +15,7 @@ ersetzt_durch: []
 entgangen_bei: [B-606]
 ---
 
-# B-613 · Ein rückdatierter oder wieder eingeschalteter Plan bricht die Serie nachträglich
+# B-613 · Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich
 
 Die Kind-Serie (B-606, Entscheidung 6) wertet jede Pflicht-Position eines heute aktiven Plans an **jedem Tag seiner
 Laufzeit** – auch an Tagen, bevor es die Position gab oder an denen der Plan aus war. Anders als der Malus
@@ -129,7 +129,9 @@ Serie, Missionen und Zeitachse fragen „war die Pflicht an dem Tag offen?“, o
 **gab** (Anlegetag der Position) und ob das Kind sie an dem Tag **spielen durfte** (Plan aktiv). Der Malus prüft das
 Erste, aber nicht das Zweite. Für das Erste liegt die Antwort im Modell (`CreatedAt`), für das Zweite nicht.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
+
+Final (Entscheidungen 1–5). Je Fall die Änderung, die ihn rot macht.
 
 1. **Rückdatierter Plan:** Ein Kind hat Plan A seit drei Tagen täglich erfüllt; der Vater legt Plan B (anderes Fach) mit
    `StartDate` = heute − 3 an und trägt heute eine Tagespflicht ein. Nach Erfüllen beider Pläne heute zeigt
@@ -142,46 +144,52 @@ Erste, aber nicht das Zweite. Für das Erste liegt die Antwort im Modell (`Creat
 5. **Truhe:** Im Fall 1 öffnet das Kind am 7. Tag der Serie die Truhe mit Faktor 1,5. *Rot heute: 1,0.*
 6. **Zeitachse:** In der Aufsicht-Zeitachse (`ChildrenDashboardService`) hat ein Tag vor dem Anlegetag einer Position
    für diese Position keine offene Pflicht. *Rot heute.*
-7. **Wiedereinschalten – Serie** (Fassung hängt an Offenem Punkt 2): Plan B war aus, Plan A desselben Fachs aktiv und
+7. **Wiedereinschalten – Serie** (Entscheidung 2): Plan B war aus, Plan A desselben Fachs aktiv und
    täglich erfüllt; der Vater schaltet B wieder ein. Die Tage, an denen B aus war, bleiben vollständig. *Rot heute.*
-8. **Wiedereinschalten – Malus** (hängt an Offenem Punkt 3): Im Fall 7 mit `PenaltyCoins > 0` bucht die nächste
+8. **Wiedereinschalten – Malus** (Entscheidung 3): Im Fall 7 mit `PenaltyCoins > 0` bucht die nächste
    Abrechnung keine Strafe für Perioden, in denen B aus war. *Rot heute.*
-9. **Unverändert:** Ohne nachgetragene Position und ohne Wiedereinschalten verhält sich alles wie bisher – die
+9. **Kür wird Pflicht** (Entscheidung 5): Eine Kür-Position, angelegt vor drei Tagen, wird heute per PATCH auf
+   `Daily` gestellt ⇒ Serie und Missionstage der drei Vortage bleiben unverändert, und die nächste Abrechnung bucht für
+   sie keinen Malus; ab heute ist sie Pflicht. *Rot heute: Serie bricht, und der Malus zählt ab `CreatedAt`.* Der
+   umgekehrte Weg (Pflicht → Kür) ändert nichts Rückwirkendes.
+10. **Einschaltdatum im Bestand:** Nach der Migration trägt jeder aktive Plan sein `StartDate` als Einschaltdatum und
+   jede Pflicht-Position ihren Anlegetag als „Pflicht seit"; an einer Kopie der echten DB ändern sich Serie und
+   Malus-Stand der Kinder nicht. *Rot, wenn der Backfill fehlt oder das falsche Datum nimmt.*
+11. **Unverändert:** Ohne nachgetragene Position und ohne Wiedereinschalten verhält sich alles wie bisher – die
    B-606-Tests bleiben inhaltlich gleich, nur ihr Aufbau setzt `CreatedAt` auf den Planstart.
 
 ## Offene Punkte
 
-1. **Teil 1: Gilt für Serie, Missionen und Zeitachse dieselbe Untergrenze wie für den Malus (`FirstDueDay`)?**
-   Empfehlung: **ja**, und zwar an einer Stelle (`DutyStateAsync`/`ComputeDayAsync`), damit Serie, Missionen,
-   Zeitachse und Plan-Historie nicht auseinanderlaufen. Begründung: die Regel ist schon bezahlt (B-432), braucht keine
-   Migration, und eine Pflicht, die es nicht gab, kann nicht versäumt sein. Kosten: ein Tag vor dem Anlegetag hat keine
-   Pflicht – ein rückdatierter Plan ohne frühere Positionen zählt an diesen Tagen auch nicht **zu Gunsten** des Kindes.
-2. **Teil 2: Wie zählt ein wieder eingeschalteter Plan für die Tage, an denen er aus war?** Das Modell kennt keinen
-   Aktivierungsverlauf (B-539, Entscheidung 6). Optionen:
-   - **a) Aktivierungsdatum speichern** (`StudyPlan.ActivatedAt`, beim Einschalten auf heute gesetzt; Tage davor zählen
-     wie bei einem inaktiven Plan nur zu Gunsten). Kosten: **Migration** (Kette verlängern, Backfill `StartDate` für
-     aktive Pläne, damit sich für sie nichts ändert). Kennt nur das *letzte* Einschalten: ein Plan, der schon früher
-     einmal an war und offen blieb, bricht diese frühen Tage nicht mehr – nur zu Gunsten des Kindes.
-   - **b) Vollständiger Aktivierungsverlauf** (eigene Tabelle). Genau, aber mehr Schema und Code für einen seltenen Fall.
-   - **c) `StartDate` beim Einschalten auf heute schieben.** Keine Migration, aber es verfälscht die Laufzeit des Plans,
-     und erfüllte alte Tage dieses Plans fallen aus der Zählung – die Serie kann dadurch **auch** brechen. Verwirft sich
-     selbst.
-   - **d) Akzeptieren**, mit Warnhinweis beim Einschalten in der Vater-Oberfläche. Keine Kosten im Backend, der Defekt
-     bleibt.
+1. ~~**Teil 1: Gilt für Serie, Missionen und Zeitachse dieselbe Untergrenze wie für den Malus?**~~ → Entscheidung 1.
+2. ~~**Teil 2: Wie zählt ein wieder eingeschalteter Plan für die Tage, an denen er aus war?**~~ → Entscheidung 2.
+3. ~~**Gehört der rückwirkende Malus beim Wiedereinschalten in diese Story?**~~ → Entscheidung 3.
+4. ~~**Soll der Vertrag einen `StartDate` in der Vergangenheit verbieten oder warnen?**~~ → Entscheidung 4.
+5. ~~**Was gilt, wenn der Vater eine Kür-Position nachträglich zur Pflicht macht?**~~ → Entscheidung 5.
 
-   Empfehlung: **a)**. Sie heilt mit einem Feld beides, Serie und Malus (Punkt 3), und folgt der Fairness-Regel von
-   B-606 („inaktiv zählt nur zu Gunsten“). Die Unschärfe beim mehrfachen Ein- und Ausschalten geht nur zu Gunsten des
-   Kindes.
-3. **Gehört der rückwirkende Malus beim Wiedereinschalten in diese Story oder in eine eigene?** Empfehlung: **in diese**,
-   weil Ursache und Abhilfe dieselben sind (Punkt 2a) und Münzen den Sohn härter treffen als eine Serie. Kosten: die
-   Story wächst um die Abrechnung, die bisher nicht im Titel stand.
-4. **Soll der Vertrag einen `StartDate` in der Vergangenheit verbieten oder warnen?** Empfehlung: **nein**. Mit Punkt 1
-   ist ein rückdatierter Plan harmlos, und ein Verbot nähme dem Vater das Nachtragen (Runden für vergangene Tage,
-   `VaterRundeZaehltFuersKindTests`).
-5. **Was gilt, wenn der Vater eine Kür-Position nachträglich zur Pflicht macht** (Kadenz per PATCH,
-   `PlanPositionsController.cs:317`)? `CreatedAt` sieht das nicht; Serie **und** Malus würden die Tage seit dem
-   Anlegen als versäumt werten. Empfehlung: **zurückstellen und als eigene Idee ablegen** – sie braucht ihrerseits ein
-   Datum (Kadenz seit) und betrifft den Malus genauso; hier würde sie die Story ohne Not verdoppeln.
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. 1–4 nach Empfehlung, 5 gegen die Empfehlung.
+
+1. **Eine Pflicht zählt für Serie, Missionstage, Zeitachse und Plan-Historie erst ab ihrem ersten fälligen Tag –
+   dieselbe Untergrenze `FirstDueDay` wie der Malus,** an einer Stelle (`DutyStateAsync`/`IsGoalMetAsync`).
+   *Begründung:* Eine Pflicht, die es nicht gab, kann nicht versäumt sein; die Regel ist seit B-432 bezahlt. *Kosten:*
+   Tage vor dem Anlegen zählen auch nicht zu Gunsten; der Aufbau der B-606-Tests (`TestApi.cs:327`,
+   `KindTagessichtTests.cs:33`, `ChildrenOverviewTests.cs:167`) muss nachziehen.
+2. **Beim Einschalten speichert der Plan das Datum (`ActivatedAt`);** Tage davor zählen wie bei einem inaktiven Plan
+   nur zu Gunsten des Kindes (B-606). *Begründung:* ein Feld heilt Serie und Malus. *Kosten:* Migration (Kette
+   verlängern, Backfill `StartDate` für alle Pläne); nur das **letzte** Einschalten ist bekannt – die Unschärfe geht
+   immer zu Gunsten des Kindes.
+3. **Der rückwirkende Malus beim Wiedereinschalten gehört in diese Story** (Abrechnung `PositionProgressService.cs:587`,
+   `:614` beachtet `ActivatedAt`). *Begründung:* dieselbe Ursache, dieselbe Abhilfe, und Münzen treffen härter als die
+   Serie. *Kosten:* Titel und Umfang wachsen um die Malus-Abrechnung.
+4. **Ein `StartDate` in der Vergangenheit bleibt erlaubt, ohne Warnung.** *Begründung:* Mit Entscheidung 1 harmlos;
+   ein Verbot nähme das Nachtragen vergangener Runden (`VaterRundeZaehltFuersKindTests`). *Kosten:* keine.
+5. **Wird eine Kür-Position zur Pflicht, zählt sie erst ab dem Tag der Umstellung** – für Serie, Missionen, Zeitachse
+   **und** Malus. Die Position merkt sich dafür „Pflicht seit" (Vorschlag: Datumsfeld an `PlanPosition`, gesetzt beim
+   Wechsel von `None` auf einen Takt; `FirstDueDay` = max(Anlegetag, Pflicht seit, `StartDate`)). *Begründung
+   (Vater):* derselbe Fehler wie die nachgetragene Position, er soll nicht als eigene Idee liegen bleiben. *Kosten:*
+   ein zweites neues Feld – in **derselben** Migration wie Entscheidung 2, Backfill = Anlegetag; ein weiterer Pfad in
+   `PlanPositionsController.cs:317`; die Story wird größer (Schätzung vermutlich L statt M).
 
 ## Verlauf
 
@@ -191,3 +199,4 @@ Erste, aber nicht das Zweite. Für das Erste liegt die Antwort im Modell (`Creat
   zusätzlich rückwirkend Malus. Präzisiert: Serie fällt auf 0 bzw. 1, gebuchte Missionen und Truhen bleiben. Der
   Realfall Plan 12 (Start = heute) ist nicht betroffen. Die B-606-Tests beruhen auf dem Defekt (Aufbau mit
   `CreatedAt` = heute bei rückdatiertem Start).
+- **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–5 (5 gegen die Empfehlung: Kür → Pflicht kommt mit hinein); Titel um den Malus erweitert; Akzeptanzkriterien final (AK 9 und 10 neu).
