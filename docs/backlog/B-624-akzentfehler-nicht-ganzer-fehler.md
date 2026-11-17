@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Akzent-Toleranz, Akzentfehler]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -72,36 +72,60 @@ neu entscheiden. Danach fehlen (a) die Abgrenzung, *was* milder zählt (nur Akze
 
 ## Offene Punkte
 
-1. **Wird B-524/2 („falsch geschrieben ist falsch“) revidiert?** Empfehlung: **ja, eingeschränkt** – im Üben
-   wird gelockert, im Abschlusstest (Schulformat) bleibt es binär, damit der Test weiter misst, was die Schule
-   misst. Kosten: Üben und Test werten verschieden; `AnswerGrader` hält die Regel heute bewusst gleich.
-2. **Was zählt milder: nur Akzente oder jeder Beinahe-Treffer?** Empfehlung: **nur Diakritika** (é/è/ê/e,
-   à/a, ç/c, ï/i, ô/o, ü/u, ä/a …) – sonst nichts. Ein falscher Buchstabe ist bei LRS genau die Schwäche, die
-   geübt werden soll (Notiz zu B-524); ein Akzent ist auf dem Gerät oft eine Tastenfrage. Kosten: „Strase“ statt
-   „Straße“ bleibt ein ganzer Fehler.
-3. **Wie milder?** Optionen: (a) zählt als richtig, mit Hinweis „Achte auf den Akzent“; (b) zählt halb: Kasten
-   bleibt stehen (kein Auf-, kein Abstieg), keine Münzen; (c) Teilpunkte. Empfehlung: **(b)** – das Kind wird
-   nicht zurückgeworfen, steigt aber auch nicht auf, bevor die Schreibweise sitzt. Kosten: ein dritter Ausgang
-   im Review neben richtig/falsch; Combo, Truhe und Pflicht-Zählung müssen ihn kennen.
-4. **Global, je Position oder je Kind?** Empfehlung: **je Position, Default an** – wie `ForgivingDemotion`, der
-   Vater kann es für eine Rechtschreib-Position abschalten. Kosten: ein Feld an der Position (Migration) und im
-   Vater-Web.
-5. **Welche Sprachen?** Empfehlung: **jede Sprache**, die Faltung ist zeichenbasiert. Kosten: Deutsche Umlaute
-   fallen mit darunter („Mädchen“/„Madchen“) – für Englisch→Deutsch in Theodors Plänen selten getippt, seit
-   B-597 gar nicht.
-6. **Was sieht der Vater?** Empfehlung: im Lernstand bzw. Positions-Report eine eigene Kategorie „Akzent“
-   neben „falsch geschrieben“, damit er sieht, wo die Schreibweise noch fehlt. Kosten: ein Zähler im Report.
-7. **Plan-übergreifender Lernstand je Wort.** Empfehlung: **bleibt hart** wie bei B-219 (ehrliche Messung).
-   Kosten: Position und Wort-Lernstand können auseinanderlaufen.
+Alle in der Grill-Runde vom 2026-11-17 entschieden – siehe Entscheidungen.
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~**Wird B-524/2 revidiert?**~~ → Entscheidung 1.
+2. ~~**Nur Akzente oder jeder Beinahe-Treffer?**~~ → Entscheidung 2.
+3. ~~**Wie milder?**~~ → Entscheidung 3.
+4. ~~**Global, je Position oder je Kind?**~~ → Entscheidung 4.
+5. ~~**Welche Sprachen?**~~ → Entscheidung 5.
+6. ~~**Was sieht der Vater?**~~ → Entscheidung 6.
+7. ~~**Plan-übergreifender Lernstand je Wort.**~~ → Entscheidung 7.
 
-1. Im Üben einer Position mit eingeschalteter Akzent-Milde zählt „ecole“ für „école“ weder als richtig noch als
-   falsch im Sinne von Punkt 3; das Blatt zeigt „Achte auf den Akzent: école“.
-2. „ecolle“ für „école“ (Buchstabe falsch) bleibt falsch (und weiter „falsch geschrieben“).
-3. Im Abschlusstest ändert sich nichts (Integrationstest: dieselbe Antwort ist falsch).
-4. Ausgeschaltet an der Position, verhält sich das Üben wie heute.
-5. Der Vater sieht die Akzent-Fälle getrennt von den übrigen Schreibfehlern.
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle sieben nach Empfehlung.
+
+1. **B-524/2 wird für das Üben revidiert, der Abschlusstest bleibt binär.** Im Üben soll das Kind nicht für
+   Kleinigkeiten zurückgeworfen werden; der Test misst weiter, was die Schule misst, und hält damit den Grund
+   der Entscheidung vom 2026-11-13 (ehrlich zeigen, wo die Rechtschreibung fehlt). *Kosten:* Üben und Test werten
+   verschieden, `AnswerGrader` trennt beide erstmals (`AnswerGrader.cs:15` sagt heute das Gegenteil); B-422/4
+   gilt für den Test weiter.
+2. **Milder zählen nur Diakritika.** Antwort und Lösung sind nach dem Entfernen der Zeichen auf und unter dem
+   Buchstaben gleich (é/è/ê→e, à→a, ç→c, ï→i, ô→o, ü/ä/ö→u/a/o …), vorher nicht. Ein falscher, fehlender oder
+   vertauschter Buchstabe bleibt ein ganzer Fehler. Begründung: Ein Buchstabe ist bei LRS die Schwäche, die
+   geübt werden soll; ein Akzent ist oft eine Tastenfrage. *Kosten:* „ecolle“ und „Strase“ bleiben falsch (mit
+   Markierung „falsch geschrieben“).
+3. **Ein Akzentfehler zählt halb.** Die Karte bleibt im Kasten (kein Auf-, kein Abstieg) und kommt zum nächsten
+   fälligen Termin wieder; keine Münzen; die Combo reißt nicht; als Pflicht-Karte zählt sie als gespielt. Das
+   Blatt zeigt „Fast! Achte auf den Akzent: *Lösung*“. Begründung: nicht zurückwerfen, aber auch nicht
+   aufsteigen lassen, bevor die Schreibweise sitzt – sonst überrascht der strenge Test. *Kosten:* ein dritter
+   Ausgang neben richtig/falsch im Review; Combo, Tagestruhe und Pflicht-Zählung lernen ihn.
+4. **Je Position einstellbar, standardmäßig an** – auch für die bestehenden Positionen (die Migration setzt
+   den Haken). Der Vater schaltet es für eine Position ab, die gezielt Akzente übt. *Kosten:* ein Feld an
+   `PlanPosition` (Migration, Bestand → an), ein Schalter im Vater-Web, Vertragsfeld an den Positions-DTOs;
+   Friedrichs Plan 8 wertet ab dem Einspielen milder.
+5. **Für jede Sprache**, weil die Regel an Zeichen hängt. *Kosten:* deutsche Umlaute fallen mit darunter;
+   seit B-597 wird kaum Deutsch getippt.
+6. **Eigene Kategorie „Akzent“** im Lernstand bzw. Positions-Report neben „falsch geschrieben“ und „falsch“.
+   Begründung: Der Vater sieht, ob Wörter oder nur Akzente fehlen. *Kosten:* ein Zähler im Report.
+7. **Der plan-übergreifende Lernstand je Wort bleibt hart** (Akzentfehler = falsch), wie bei B-219.
+   Begründung: ehrliche Messung, ob das Wort samt Schreibweise sitzt. *Kosten:* Position und Wort-Lernstand
+   können auseinanderlaufen.
+
+## Akzeptanzkriterien
+
+1. Im Üben einer Position mit eingeschalteter Milde liefert „ecole“ für „école“ den Ausgang *halb*: Kasten
+   unverändert, keine Münzen, Combo unverändert, Karte als gespielt gezählt; das Blatt zeigt
+   „Fast! Achte auf den Akzent: école“.
+2. „ecolle“ für „école“ bleibt falsch und „falsch geschrieben“ (Kasten zurück wie heute bzw. nach
+   `ForgivingDemotion`).
+3. Im Abschlusstest ist „ecole“ für „école“ falsch, wie heute (Integrationstest).
+4. Mit ausgeschaltetem Haken verhält sich das Üben wie heute (Integrationstest).
+5. Nach der Migration tragen alle bestehenden Positionen den Haken *an*; neue Positionen ebenso.
+6. Ein Akzentfehler in einer anderen Sprache (Umlaut, spanisches ñ) wird gleich behandelt.
+7. Der Positions-Report bzw. Lernstand weist Akzent-Fälle als eigene Kategorie aus.
+8. Der Lernstand je Wort (`ItemProgressService`) wertet den Akzentfehler weiter als falsch.
 
 ## Verlauf
 
@@ -109,3 +133,5 @@ neu entscheiden. Danach fehlen (a) die Abgrenzung, *was* milder zählt (nur Akze
 - **2026-11-17** — ausformuliert: Ist-Stand gegen den Code (`Normalize` ohne Akzent-Faltung, `IsMisspelled` nur
   Anzeige, `ForgivingDemotion` als vorhandene Milde), Konflikt mit B-524/2 (Entscheidung des Vaters) benannt,
   sieben offene Punkte mit Empfehlung.
+- **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; B-524/2 gilt nur noch
+  für den Abschlusstest.
