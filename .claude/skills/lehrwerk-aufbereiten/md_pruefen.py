@@ -209,9 +209,11 @@ def check_word_lists(name: str, facts: str, errors: list[str]) -> None:
         word, _, hint = row
         if word.startswith(("– ", "- ")):
             errors.append(f"{name}: Untereintrag mit '↳ ' markieren, nicht '– ': {word[:40]}")
-        if re.search(r"\s\[[^\]\s][^\]]*\]$", word):
+        # Anywhere in the cell, not just at its end: "hold onto sth. [həʊld], held, held [held]" slipped past an
+        # end-anchored rule. IPA letters tell a transcription apart from brackets the book prints ("[un DVD]").
+        if re.search(r"\s\[[^\]\s][^\]]*\]$", word) or re.search(r"\[[^\]]*[ˈˌːəɪʊʌæɒɔɜθðʃʒŋ][^\]]*\]", word):
             errors.append(f"{name}: Lautschrift gehört an den Anfang von Hinweis, nicht ins Wort: {word[:40]}")
-        if re.match(r"^(↳ )?\*\*[^*]+\*\*$", word):
+        if "**" in word:
             errors.append(f"{name}: Stichwort nicht fett setzen (Druckbild, kein Inhalt): {word[:40]}")
         if "Unterzeile zu" in hint:
             errors.append(f"{name}: Untereintrag mit '↳ ' im Wort markieren statt 'Unterzeile zu': {word[:40]}")

@@ -8,7 +8,7 @@
   Ein Bild oder ein Ordner (alle .jpg/.jpeg/.png nach Namen). Die Kacheln heißen
   <name>-<zeilen>x<spalten>-d<drehung>-r<zeile>c<spalte>.jpg.
   Liegt das Buch auf dem Kopf: -Drehen 180 (oder 90/270 im Uhrzeigersinn); -Zeilen 1 -Spalten 1 dreht nur.
-  Das Ziel muss unter raw/ liegen (gitignored): Kacheln sind Ausschnitte des Buchs und kommen nie ins Repo.
+  Das Ziel liegt unter raw/ oder im Scratchpad (beides gitignored bzw. ausserhalb): Kacheln sind Ausschnitte des Buchs und kommen nie ins Repo.
 #>
 param(
     [Parameter(Mandatory)] [string] $Quelle,

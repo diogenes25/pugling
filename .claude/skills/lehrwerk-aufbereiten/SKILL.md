@@ -25,7 +25,8 @@ für andere Fächer (Mathematik) endet der Lauf nach Schritt 1, solange der Nutz
    in die **App** gelangt davon trotzdem nur, was diese Regel erlaubt.
 2. **Ein Wortpaar wird gelesen, nicht vermutet.** Ein falsches Paar lernt das Kind wochenlang. Was nicht sicher
    lesbar ist, bekommt in der Spalte `unsicher` einen Grund, statt geraten zu werden; `laden.py` lädt eine Unit
-   mit unsicheren Zeilen nicht. Erst eine Kachel (`kacheln.ps1`) versuchen, dann den Nutzer fragen.
+   mit unsicheren Zeilen nicht. Erst eine Kachel (`kacheln.ps1`) oder für ein einzelnes blasses Zeichen einen
+   Ausschnitt (`vergleich.ps1` ohne `-Neu`) versuchen, dann den Nutzer fragen.
 3. **Die PIN kommt vom Nutzer** und steht nie in einer Datei: `PUGLING_PIN` als Umgebungsvariable oder `--pin`.
    Nicht raten; ein `401 invalid_credentials` heißt nachfragen.
 4. **Erst Wegwerf-DB, dann echte.** Gegen die Instanz des Nutzers wird erst geladen, wenn der Lauf gegen eine
@@ -94,8 +95,10 @@ für andere Fächer (Mathematik) endet der Lauf nach Schritt 1, solange der Nutz
   vorhandenen Seitenarten Vokabel-/Merkseite, Aufgabenseite, Inhaltsverzeichnis (fehlt eine Art im Block:
   Register, Formentabelle oder Kapitelauftakt) – dafür die Kacheln **neu öffnen**, nicht aus der Erinnerung
   prüfen. Fehlt ein Element oder steht ein Fakt falsch, die ganze Seitenart nachbessern.
-- Nach dem letzten Fotoblock `## Abdeckung` in `_buch.md` schreiben (fotografierte Seiten, Lücken) und das
-  Tag-Vokabular auf Dubletten durchsehen.
+- Nach dem letzten Fotoblock `## Abdeckung` in `_buch.md` schreiben (fotografierte Seiten, Lücken, Seiten zum
+  Neufotografieren) und das Tag-Vokabular auf Dubletten durchsehen. Wer dem Nutzer eine Fotoliste gibt, nennt
+  je Seite zum Neufotografieren **Seiten, Grund und den Dateinamen des alten Fotos** – sonst weiß er nicht, welches
+  Foto weg kann. Tipp für ihn: Schutzfolie ab oder Buch schräg zum Licht, Fußzeile mit Seitenzahl im Bild.
 - Viele Seiten: auf Subagenten verteilen – nach **Dichte**, nicht nach Fotozahl: ein Block hat höchstens ~8
   dichte Doppelseiten (Vokabel-, Grammatik-, Aufgabenseiten) oder ~15 lockere (Lektion, Einstieg, Umschlag). Je
   Agent ein zusammenhängender Fotoblock mit ausdrücklich genanntem erstem und letztem Dateinamen (aus dem
@@ -107,13 +110,37 @@ für andere Fächer (Mathematik) endet der Lauf nach Schritt 1, solange der Nutz
   Ausgabe: <…-pugling/md/> · Kacheln: <…-pugling/kacheln/> · _buch.md lesen, nicht ändern (Kapitel, Aufbau, Tags)
   Prüfen: md_pruefen.py <md> --fotos <Ordner> --nur <erstes.jpg> <letztes.jpg> bis 0 FEHLER
   Bericht: Prüfzeile, Dateien mit seitentyp, unsichere Stellen, benutzte neue Tags, Unklarheiten im Skill.
-  ``` Der
+  ```
+
+  Der
   **Koordinator** schreibt vorher `_buch.md` mit Kapitelliste und einem großzügig aus dem Inhaltsverzeichnis
   vorbefüllten Tag-Vokabular, `## Abdeckung` vorläufig („vorläufig, nach Kontaktbogen“). Parallele Agenten
   ändern `_buch.md` **nicht**: braucht einer einen neuen Tag, nimmt er ihn trotzdem und nennt ihn im Bericht;
   der Koordinator trägt ihn nach (oder führt ihn mit einem vorhandenen zusammen), schreibt `## Abdeckung`
   final und lässt das Prüfskript über den ganzen Ordner laufen. Nacheinander laufende Agenten dürfen
   `_buch.md` selbst ergänzen.
+
+#### Neue Fotos zu einem schon erfassten Buch
+
+Neue Seiten (Lücken) laufen wie oben. Für **neu fotografierte** Seiten (Lichtreflex, Anschnitt) gilt
+(erprobt 2026-11-17 an Access 3: 12 Doppelseiten, unsichere Stellen 77 → 58):
+
+1. **Zuordnen:** nur die neuen Fotos in den Scratchpad kopieren und per `kontaktbogen.ps1` den Seiten zuordnen;
+   Doppelaufnahmen derselben Seite erkennen. Der Nutzer legt Fotos auch in neue Unterordner – Pfad nachsehen.
+2. **Vergleichen statt annehmen:** je Seite `vergleich.ps1 -Alt <alt> -Neu <neu> [-DrehNeu …]` (oben alt, unten
+   neu), im Grenzfall die unter „Unsicher“ der Seitendatei genannte Stelle als Ausschnitt (`-X0 -Y0 -X1 -Y1`).
+   Neu gewinnt, wenn es die gemeldeten Stellen löst und sonst nicht schlechter ist; bei Doppelaufnahmen das Foto
+   mit vollständigen Rändern.
+3. **Austauschen:** das alte Foto und verworfene Doppelaufnahmen in den Nachbarordner `<fotoordner> ersetzt`
+   verschieben – nicht löschen, und nicht in einen Unterordner des Fotoordners. Jetzt zeigt `md_pruefen.py` je
+   Seite zwei Fehler (neues Foto unerfasst, altes fehlt): das ist die Arbeitsliste.
+4. **Nachziehen, nicht neu schreiben:** die Seitendatei gegen das neue Foto prüfen – `fotos`, `drehung`,
+   `lesbarkeit`; jede Stelle unter „Unsicher“ am neuen Foto klären (geklärt = Inhalt korrigieren und Eintrag
+   streichen, ein Druckfehler des Buchs bleibt `Druckfehler?`), `unsicher` neu zählen, Wortlisten Zeile für Zeile
+   gegenlesen. Briefing je Agent: Liste `Datei ← neues Foto, Drehung`, höchstens ~6 dichte Doppelseiten, sonst
+   wie die Vorlage oben.
+5. **Abschluss:** `_buch.md` nachführen (`fotos-ordner`, falls der Ordner umzog; `## Abdeckung`), Prüfskript mit
+   `--index` über den ganzen Ordner, Fotoliste des Nutzers abhaken.
 
 ### 2. Stoff verstehen (Notizen in eigenen Worten)
 
