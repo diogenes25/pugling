@@ -132,7 +132,8 @@ gefunden hat, ebenfalls jeweils die Empfehlung.
    Vater fotografiert. Latein für Theodor und Mathe für Friedrich folgen später (Mathe fehlen passende Übungstypen).
 3. **Die Stärke lebt am Kind je Fach.** *Begründung:* Sie überdauert Unit- und Planwechsel, und der KI-Creator
    kann sie beim Erzeugen eines Plans lesen. *Kosten:* eine neue Tabelle (Kind × Fach) mit Migration an die Kette.
-4. **Wirkung der Stärke** in drei Stufen: `schwach` erhöht die Tagesdosis neuer Wörter (Richtwert ×1,5),
+4. **Abgelöst am 2026-11-17 durch [B-616](B-616-faecher-gewichtung-in-prozent.md) Entscheidung 2 (Prozente statt Stufen).** Ursprünglich:
+   **Wirkung der Stärke** in drei Stufen: `schwach` erhöht die Tagesdosis neuer Wörter (Richtwert ×1,5),
    `normal` lässt die eingestellte Dosis stehen, `stark` macht nur die **fälligen Wiederholungen** zur Pflicht,
    neue Wörter sind dann Kür. *Begründung:* Ein gutes Fach soll nur „auf dem Laufenden“ halten, ein schwaches
    mehr Stoff bekommen. *Kosten:* Die Pflicht-Rechnung je Position muss die Stärke des Fachs kennen, und die
@@ -167,7 +168,9 @@ gefunden hat, ebenfalls jeweils die Empfehlung.
    *Begründung:* kein Umbau am Bestand, und die Abweisung ist dieselbe wie beim Fach ohne Stundenplan-Eintrag.
    *Kosten:* Ein Plan ohne Fach nimmt an Stärke und Stundenplan nicht teil; der Vater muss dem Plan ein Fach
    geben, um beides zu nutzen. Eine zweite Fachquelle (Fach der Übung) wird bewusst nicht eingeführt.
-10. **`stark` ohne fällige Karten gilt als erfüllt; Positionen ohne Tagesdosis berührt die Stärke nicht.** Die
+10. **Abgelöst am 2026-11-17 durch [B-616](B-616-faecher-gewichtung-in-prozent.md) Entscheidung 2**, die dieselbe Regel für ein Fach mit
+    0 % übernimmt. Ursprünglich:
+    **`stark` ohne fällige Karten gilt als erfüllt; Positionen ohne Tagesdosis berührt die Stärke nicht.** Die
     erfüllte Pflicht wird als erfüllt angezeigt, kostet keinen Malus und zählt für Truhe und Serie.
     *Begründung:* „auf dem Laufenden“ heißt an einem Tag ohne Fälliges: nichts zu tun. *Kosten:* An solchen
     Tagen bekommt das Kind die Truhe für dieses Fach ohne Arbeit, und Grammatik-Positionen eines schwachen Fachs
@@ -188,7 +191,10 @@ gefunden hat, ebenfalls jeweils die Empfehlung.
 14. **Teil (b) wird erst geschätzt, wenn [B-616](B-616-faecher-gewichtung-in-prozent.md) gegrillt ist.**
     *Begründung:* Drei Stufen und Prozent wollen dieselbe Tabelle; so braucht sie nur eine Migration.
     *Kosten:* Teil (b) wartet auf eine Grill-Runde; die Entscheidungen 3, 4, 8 und 10 können dort noch fallen.
-    Teil (a) und (c) laufen unabhängig weiter.
+    Teil (a) und (c) laufen unabhängig weiter. **Eingelöst am 2026-11-17:** B-616 ist gegrillt, die
+    Prozente ersetzen die Stufen, und Teil (b) geht in B-616 auf. Entscheidung 3 (Tabelle Kind × Fach)
+    und 8 (zuerst setzt nur der Vater) gelten dort weiter; für die Stärke ist Entscheidung 9 durch
+    B-616 Entscheidung 12 abgelöst, für die Taktung „Stundenplan“ gilt sie unverändert.
 
 ## Akzeptanzkriterien
 
@@ -203,6 +209,9 @@ aus Entscheidung 14. Die Nummern 9 bis 14 stammen aus dem Nachgrillen und stehen
   Child 3 zeigt Pflichten aus beiden Fächern.
 
 ### Teil (b), Stärke je Fach
+
+**Abgelöst am 2026-11-17:** Teil (b) wird nicht hier gebaut, sondern als [B-616](B-616-faecher-gewichtung-in-prozent.md). Die AKs 2, 3, 4, 9, 10
+und 11 gelten nicht mehr; ihre Nachfolger sind dort die AKs 1 bis 14. Sie bleiben als Beleg stehen.
 
 - **AK 2.** Der Vater setzt je Kind und Fach `schwach`/`normal`/`stark`, per API lesbar und änderbar. Je Zusage ein Fall:
   - Ein Kind ohne gesetzte Stärke liest `normal`. *Rot ohne Vorgabe.*
@@ -275,3 +284,6 @@ desselben Tages) im Nachgrillen am selben Tag.
   Fälle zerlegt, AK 7 mit Code-Vorschlag, veraltete Verweise auf B-250 nachgezogen.
 - **2026-11-17** — Nachgrillen mit dem Vater: die Punkte 9 bis 14 sind als Entscheidungen 9 bis 14 entschieden
   (jeweils die Empfehlung), AKs 9 bis 14 ergänzt. Teil (b) wartet auf das Grillen von B-616 (Entscheidung 14).
+- **2026-11-17** — [B-616](B-616-faecher-gewichtung-in-prozent.md) gegrillt: Die Prozent-Gewichtung ersetzt die
+  drei Stufen. Entscheidungen 4 und 10 abgelöst, Teil (b) samt AKs 2, 3, 4, 9, 10 und 11 geht in B-616 auf.
+  Diese Story trägt damit noch Teil (a) (Inhalt) und Teil (c) (Stundenplan-Pflicht).

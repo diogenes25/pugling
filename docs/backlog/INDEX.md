@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (35)
+### Offen (36)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `idee` | P2 | — | — | — |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Ein rückdatierter oder wieder eingeschalteter Plan bricht die Serie nachträglich | Defekt | `idee` | P2 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -50,6 +50,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-594](B-594-streak-schutz-und-malus-wiedergutmachung.md) | Streak-Schutz (mit Gems kaufbar) und Wiedergutmachung beim Malus | Wunsch | `idee` | P3 | — | — | — |
 | [B-600](B-600-eingabearten-fuer-regelaufgaben-und-uebersetzung.md) | Eingabearten für Regelaufgaben und Übersetzung | Wunsch | `idee` | P3 | — | — | — |
 | [B-601](B-601-ki-creator-schreibt-ablenker-je-luecke.md) | Der KI-Creator schreibt Ablenker je Lücke | Wunsch | `idee` | P3 | — | — | — |
+| [B-617](B-617-verteilung-aus-dem-lernstand-vorschlagen.md) | Pugling schlägt die Verteilung der Fächer aus dem Lernstand vor | Wunsch | `idee` | P3 | — | — | — |
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
