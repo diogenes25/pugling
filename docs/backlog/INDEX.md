@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (29)
+### Offen (32)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -30,10 +30,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-595](B-595-rang-der-nie-sinkt.md) | Ein Rang, der nie sinkt – getrennt vom ausgebbaren Guthaben | Wunsch | `idee` | P2 | — | — | — |
 | [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `idee` | P2 | — | — | — |
 | [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `idee` | P2 | — | — | — |
-| [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist | Defekt | `idee` | P3 | — | — | — |
+| [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist | Defekt | `geschaetzt` | P3 | S | backend | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | Defekt | `idee` | P3 | — | — | — |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -45,9 +47,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-594](B-594-streak-schutz-und-malus-wiedergutmachung.md) | Streak-Schutz (mit Gems kaufbar) und Wiedergutmachung beim Malus | Wunsch | `idee` | P3 | — | — | — |
 | [B-600](B-600-eingabearten-fuer-regelaufgaben-und-uebersetzung.md) | Eingabearten für Regelaufgaben und Übersetzung | Wunsch | `idee` | P3 | — | — | — |
 | [B-601](B-601-ki-creator-schreibt-ablenker-je-luecke.md) | Der KI-Creator schreibt Ablenker je Lücke | Wunsch | `idee` | P3 | — | — | — |
+| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (509)</summary>
+<summary>Abgenommen (510)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,7 +59,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-04](B-04-adaptiver-vokabel-pool.md) | Adaptiver Vokabel-Pool je Position | Wunsch | `abgenommen` | P0 | M | beides | Migration |
 | [B-05](B-05-buchstaben-tausch.md) | Buchstaben-Tausch-Eingabe (Anagramm) | Wunsch | `abgenommen` | P5 | M | beides | — |
 | [B-08](B-08-xml-docs-englisch.md) | XML-Doc-Kommentare im Backend auf Englisch übersetzen | Aufräumen | `abgenommen` | P3 | S | doku | — |
-| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-100](B-100-vertragsdokument-unterdeklariert.md) | Das Vertragsdokument verschweigt 401, `X-Total-Count` und 24 Operationsnamen | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-101](B-101-fehlercodes-und-drei-waechter.md) | Drei generische Fehlercodes ersetzen — und die drei Wächter, die daraus reif geworden sind | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-102](B-102-token-vorgabewert-regel-schaerfen.md) | Die Token-Regel im Startkontext ist zu weit formuliert — 55 Signaturen „verstoßen" gegen eine Compilerregel | Aufräumen | `abgenommen` | P3 | XS | doku | — |
@@ -66,7 +68,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-107](B-107-dailybox-zufallswert-in-docs-capture.md) | `DailyBoxService` würfelt ohne Seed – der Doku-Capture-Snapshot ist dadurch nicht byte-stabil | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-108](B-108-requiretypedtest-default-am-uebungstyp.md) | `DefaultRequireTypedTest` am Übungstyp selbst ungeprüft — dieselbe Fehlerklasse eine Ebene höher als B-93 | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-109](B-109-full-flow-spec-flackert-bei-frage-3.md) | `full-flow.spec.ts` hängt reproduzierbar bei „Frage 3/5" der Klausur | Defekt | `abgenommen` | P3 | S | frontend | — |
-| [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `abgenommen` | P2 | S | frontend | — |
+| [B-10](B-10-zeitfenster-pro-kind.md) | Zeitfenster (Punkte-Faktor) je Pflicht statt global | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-112](B-112-kommentar-begruendet-das-gegenteil.md) | Ein Kommentar begründet das Gegenteil der Bedingung unter ihm | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
@@ -77,7 +79,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-117](B-117-uebungsbildschirm-bietet-test-trotz-anzeigestufe.md) | Nach der Übungsrunde bietet der Bildschirm einen Test an, den es für diese Stufe nicht gibt | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-118](B-118-dailybox-spanne-ohne-zusicherung.md) | Keine Zusicherung sieht die Ziehungsspanne der Tagesbox mehr | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-119](B-119-ratenbegrenzer-hinter-proxy.md) | Hinter einem Reverse Proxy partitioniert der Ratenbegrenzer alle Nutzer in einen Topf | Defekt | `abgenommen` | P2 | XS | backend | — |
-| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `abgenommen` | P3 | M | beides | Migration |
+| [B-11](B-11-uebungen-veroeffentlichen.md) | Übungen ausdrücklich veröffentlichen | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-120](B-120-waechter-anonym-heisst-gedrosselt.md) | „Anonym heißt gedrosselt" hängt an Disziplin, nicht an einem Tor | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-121](B-121-platzhalter-und-paging-tore.md) | Platzhalter-Rot-Liste und Paging-Tor aus B-101 | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-122](B-122-top-level-listen-bekommen-paging.md) | Sechs Top-Level-Sammlungen bekommen ein optionales `skip`/`take` | Wunsch | `abgenommen` | P3 | S | backend | — |
@@ -88,7 +90,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-127](B-127-verlag-loeschen-trifft-fremde.md) | Jeder Creator darf einen Verlag löschen, den alle benutzen | Frage | `abgenommen` | P3 | S | backend | — |
 | [B-128](B-128-katalogsuche-case-sensitiv.md) | Die Katalogsuche findet „KLETT" nicht, obwohl „Klett" da ist | Defekt | `abgenommen` | P3 | S | backend | Migration |
 | [B-129](B-129-themenfeld-committet-beim-verlassen.md) | Das Themenfeld legt an, was beim Wegklicken gerade dasteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `abgenommen` | P2 | M | backend | Migration |
+| [B-12](B-12-uebungen-kuratieren.md) | Geteilte Übungen bewerten und kuratieren | Wunsch | `abgenommen` | P3 | M | beides | Migration |
 | [B-130](B-130-unit-themen-ohne-grenze.md) | Aus einem 200-Zeichen-Feld wurde eine unbegrenzte Liste, ohne dass eine Grenze nachrückte | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-131](B-131-leere-story-faellt-aus-dem-index.md) | Eine leere Story-Datei verschwindet aus dem Index — auch aus der Mängelliste | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-132](B-132-hinweis-live-region-haengt-aus.md) | Der Hinweis „aus dem Lehrwerk übernommen" wird angesagt, indem seine Live-Region entsteht | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -98,6 +100,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-136](B-136-verlag-umbenennen-erzeugt-namensdublette.md) | Beim Verlag steht dieselbe Dublettenlücke wie bei der Reihe | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-138](B-138-markup-sickert-in-openapi.md) | Rohe HTML-Tags stehen in 70 Beschreibungen des Vertragsdokuments | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | Der Aufräum-Sweep der E2E löschte das Journal seiner eigenen Datenbank | Defekt | `abgenommen` | P1 | XS | frontend | — |
+| [B-13](B-13-fach-kapitel-eigentum.md) | Fach- und Kapitel-Eigentum | Wunsch | `abgenommen` | P2 | M | backend | Migration |
 | [B-140](B-140-freigabe-kennzeichen-in-der-uebungsauswahl.md) | Die Übungsauswahl verschweigt, dass eine Übung zurückgezogen ist | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-141](B-141-interest-tag-label-dublette.md) | Zwei Interessen-Tags dürfen dasselbe Label tragen | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-142](B-142-fachname-driftet-gegen-fach-id.md) | Ein Fachwechsel hinterlässt den alten Fachnamen | Defekt | `abgenommen` | P3 | M | beides | — |
@@ -108,7 +111,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-147](B-147-para-summaries-tragen-einrueckung-ins-dokument.md) | Ein `<para>` im `<summary>` trägt seine Quelltext-Einrückung ins OpenAPI-Dokument | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-148](B-148-lehrbuch-formular-zerstoert-fachnamen.md) | Das Lehrbuch-Formular am Kind zerstört den Fachnamen bei jedem Speichern | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-149](B-149-schularten-tabelle-statt-manifest.md) | Die Schularten-Liste ist eine handgepflegte Kopie eines Server-Enums | Aufräumen | `abgenommen` | P3 | S | beides | — |
-| [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `abgenommen` | P3 | S | beides | — |
 | [B-150](B-150-verlagssperre-unsichtbar-dialog-verspricht-gegenteil.md) | Die Verlags-Löschsperre war für den Vater unsichtbar — der Dialog versprach das Gegenteil | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-151](B-151-gespeichert-banner-verschwindet-mit-dem-formular.md) | „Gespeichert." ist im Lehrbuch- und Fachlehrer-Formular nie zu sehen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-152](B-152-schoolTypes-filter-und-attribut.md) | `SchoolTypes` ist Filter und Attribut zugleich — vier Stellen leiten daraus drei Antworten ab | Frage | `abgenommen` | P3 | XS | backend | — |
@@ -119,7 +121,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-157](B-157-kategorien-unter-fremdem-fach-ungeschuetzt.md) | Das Fach ist geschützt, seine „Arten" sind es nicht | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-158](B-158-subjectscontroller-drei-kleine-reste.md) | Drei kleine Reste im `SubjectsController` | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-159](B-159-reihe-ohne-owner-behauptet-fremden-ersteller.md) | Eine Reihe ohne Eigentümer behauptet, jemand anderes habe sie angelegt | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `abgenommen` | P3 | M | beides | — |
+| [B-15](B-15-testmodus-weitere-typen.md) | Vorschau für die nicht-prüfbaren Übungstypen | Wunsch | `abgenommen` | P3 | S | beides | — |
 | [B-160](B-160-gesperrter-knopf-nennt-den-grund-nie.md) | Der gesperrte Löschen-Knopf nennt seinen Grund nie — der `title` erscheint nicht | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-161](B-161-alle-waehlen-macht-die-auswahl-unsichtbar.md) | „Alle wählen" wählt bis zu 400 Übungen, die der Vater nie sieht und nicht abwählen kann | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-162](B-162-assistent-nennt-den-leeren-katalog-als-ursache.md) | Scheitert die Übungssuche im Assistenten, behauptet er einen leeren Katalog | Defekt | `abgenommen` | P2 | M | frontend | — |
@@ -130,7 +132,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-167](B-167-katalogliste-zeigt-beim-filterwechsel-alte-treffer.md) | Katalogliste im Planbau zeigt beim Filterwechsel die alten Treffer weiter | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-168](B-168-eigentuemer-zusicherung-prueft-eine-konstante.md) | „Anlegen macht den Aufrufer zum Eigentümer" prüft eine Konstante, keine Identität | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-169](B-169-ladefenster-macht-die-alten-zeilen-anklickbar.md) | Im Ladefenster sind die alten Zeilen anklickbar — und die Auswahl überlebt | Defekt | `abgenommen` | P1 | XS | frontend | — |
-| [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `abgenommen` | P3 | XS | frontend | — |
+| [B-16](B-16-positions-formular-umfang.md) | Prüfauftrag: deckt das Positions-Edit-Formular alle Felder ab? | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-170](B-170-selbst-angelegte-art-im-grundbestand-ist-unloeschbar.md) | Eine selbst angelegte Art im Grundbestands-Fach ist unlöschbar — und der Seitentext verspricht das Gegenteil | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-171](B-171-zwei-zusicherungen-pruefen-den-ausgangszustand.md) | Zwei Zusicherungen prüfen den Ausgangszustand mit — und können darum nicht fallen | Defekt | `abgenommen` | P2 | XS | beides | — |
 | [B-172](B-172-fachauswahl-loescht-wenn-ihre-optionen-fehlen.md) | Die Fachauswahl löscht das Fach, wenn ihre eigenen Optionen nicht geladen sind | Defekt | `abgenommen` | P1 | M | frontend | — |
@@ -141,7 +143,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-177](B-177-seitenschluessel-haengt-an-einer-batching-annahme.md) | Der Seitenschlüssel hängt an einer Batching-Annahme, die kein Tor hält | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-178](B-178-katalogtext-verspricht-mehr-als-der-server-erlaubt.md) | Der Katalogtext verspricht mehr als der Server erlaubt | Defekt | `abgenommen` | P1 | XS | beides | — |
 | [B-179](B-179-drei-fassungen-des-admin-testhelfers.md) | Drei Fassungen desselben Admin-Testhelfers, und die tragende Regel steht in jeder neu | Aufräumen | `abgenommen` | P3 | XS | backend | — |
-| [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `abgenommen` | P2 | S | beides | — |
+| [B-17](B-17-birkenbihl-sprachcodes.md) | Sprachcode-Normalisierung bei der Vokabel-Dekodierung | Frage | `abgenommen` | P3 | XS | frontend | — |
 | [B-180](B-180-zusicherung-haengt-an-scheduling-statt-am-gate.md) | Eine Zusicherung hing an 20 ms Scheduling statt am Gate | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-181](B-181-praemisse-der-rennen-klasse-stimmt-nicht.md) | Die Rennen-Klasse nennt nur einen von zwei Fehlermodi — welcher auftritt, entscheidet die Plattform | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-182](B-182-reichweite-nur-am-patch-festgenagelt.md) | Die Reichweite des Ventils war nur am PATCH festgenagelt | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -151,7 +153,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-187](B-187-unitform-verliert-seine-bestaetigung.md) | Auch das Unit-Formular schließt sich mit seiner eigenen Bestätigung | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-188](B-188-wizard-verschweigt-drei-weitere-ausfaelle.md) | Der Assistent verschweigt drei weitere Ausfälle — einer schickt den Vater ins Kind-Anlegen | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-189](B-189-teilstring-zusicherung-bricht-im-vollen-lauf.md) | Eine Teilstring-Zusicherung bricht, sobald der Leer-Text daneben stehen bleibt | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `abgenommen` | P2 | M | backend | Vertrag |
+| [B-18](B-18-auto-lehrplan-generator.md) | Lehrplan automatisch aus gefilterten Übungen bauen | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-190](B-190-backlog-index-schreibt-leeren-index.md) | Aus einem Unterverzeichnis aufgerufen, schreibt der Index-Generator einen leeren Index | Defekt | `abgenommen` | P2 | XS | doku | — |
 | [B-191](B-191-punktevorbelegung-traegt-den-wert-der-vorigen-uebung.md) | Die Punkte-Vorbelegung trägt den Wert der zuvor angeklickten Übung mit | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-192](B-192-obergrenze-schuetzt-nur-den-api-pfad.md) | Die Obergrenze der Punkte-Empfehlung schützt den Weg nicht, den der Vater geht | Defekt | `abgenommen` | P3 | M | beides | Vertrag |
@@ -162,7 +164,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-197](B-197-meldungsplatz-wird-beim-absenden-nicht-geraeumt.md) | Der Meldungsplatz wird beim Absenden nicht geräumt — und zeigt dann zwei Wahrheiten | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-198](B-198-teilstring-falle-im-selben-commit-neu-gebaut.md) | Die Teilstring-Falle aus B-189 wurde im selben Commit neu gebaut | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-199](B-199-drei-behauptungen-die-ihr-eigener-sprint-aufgehoben-hat.md) | Drei Behauptungen, die ihr eigener Sprint aufgehoben hat | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
-| [B-20](B-20-ki-supervisor-agent.md) | KI-Agent: Übungen per `assign` einem laufenden Plan zuweisen | Wunsch | `abgenommen` | P3 | M | backend | — |
+| [B-19](B-19-schuelerprofil-ki-lehrplan.md) | Schülerprofil-getriebener KI-Lehrplan | Wunsch | `abgenommen` | P2 | M | backend | Vertrag |
 | [B-200](B-200-drei-stumme-erfolgspfade.md) | Drei Löschwege melden gar nichts | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-201](B-201-feldhilfe-argumentiert-in-beide-richtungen.md) | Die Feldhilfe zu den Zielpunkten argumentiert seit Sprint 2 in beide Richtungen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-202](B-202-agent-vorgabewert-halbiert-die-zielbelohnung.md) | Der KI-Creator halbiert die Zielbelohnung jeder erzeugten Übung | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -173,7 +175,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-208](B-208-put-ohne-einkleidung-loescht-sie.md) | Ein Übungs-PUT ohne `interestTagIds` löscht die Einkleidung lautlos | Frage | `abgenommen` | P2 | XS | backend | — |
 | [B-209](B-209-savednotice-raeumt-nie.md) | „Gespeichert" bleibt über jedem folgenden Bildschirm der Arcade stehen | Defekt | `abgenommen` | P2 | S | frontend | — |
-| [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `abgenommen` | P3 | S | backend | — |
+| [B-20](B-20-ki-supervisor-agent.md) | KI-Agent: Übungen per `assign` einem laufenden Plan zuweisen | Wunsch | `abgenommen` | P3 | M | backend | — |
 | [B-210](B-210-dialog-haelt-zwei-wahrheiten-fuer-die-config.md) | „Beschreibung speichern" dreht den gerade gespeicherten Inhalt lautlos zurück | Defekt | `abgenommen` | P1 | M | frontend | — |
 | [B-211](B-211-interestchips-zusicherung-kann-nicht-fallen.md) | Eine Zusicherung prüft den Ausgangszustand und kann darum nie fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-212](B-212-fuenfter-meldungsplatz-in-lehrwerke.md) | Auf der Lehrwerke-Seite stehen rot und grün gleichzeitig — der Weg ist nur ein anderer | Defekt | `abgenommen` | P3 | M | frontend | — |
@@ -181,12 +183,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-215](B-215-typ-manifest-ohne-fehlerkanal.md) | Das Typ-Manifest schluckt seinen Ausfall — und niemand kann ihn anzeigen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-216](B-216-wiederholknopf-haengt-sich-aus.md) | Zwei Wiederhol-Knöpfe verschwinden im Moment des Klicks unter dem Finger | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-219](B-219-verzeihende-abstufung-je-position.md) | Verzeihende Abstufung als Positions-Option | Wunsch | `abgenommen` | P3 | M | beides | Migration |
-| [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `abgenommen` | P3 | M | backend | Migration |
+| [B-21](B-21-ki-creator-foerdermodus.md) | KI-Creator: Fördermodus (`--use-weak`) sprachrein und mit Tests absichern | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-224](B-224-verlagsbaustein-traegt-zweiten-meldungsplatz.md) | Der Verlags-Baustein trägt auf der Lehrwerke-Seite einen zweiten Meldungsplatz | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-225](B-225-reihe-anlegen-schweigt-bei-leerem-namen.md) | „Reihe anlegen“ ist bei leerem Namen klickbar und schweigt | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-227](B-227-fehlergedaechtnis-ueberlebt-den-filterwechsel.md) | Das Fehler-Gedächtnis überlebt auch den Start einer *anderen* Abfrage | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-228](B-228-mehr-laden-verliert-den-fokus.md) | „Mehr laden“ in der gefüllten Verlaufskarte verliert den Fokus | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-229](B-229-nicht-geladen-waehrend-des-ladens.md) | Das Kind-Feld im Plan-Formular sagt „(nicht geladen)“, solange die Liste erst lädt | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-22](B-22-unit-stoffnotizen-llm.md) | Unit-Stoffnotizen LLM-gestützt befüllen | Wunsch | `abgenommen` | P3 | M | backend | Migration |
 | [B-230](B-230-pin-hash-doppelt-gehalten.md) | Der PIN-Hash liegt doppelt: Profil und Konto halten denselben Wert | Aufräumen | `abgenommen` | P3 | — | — | — |
 | [B-231](B-231-fokus-ohne-fehlerkasten.md) | Wohin gehört der Fokus, wenn ein Knopf ohne Fehlerkasten gesperrt wird? | Frage | `abgenommen` | P3 | XS | frontend | — |
 | [B-232](B-232-bestaetigung-ausserhalb-des-sichtfelds.md) | Soll eine Bestätigung zum Meldungsplatz scrollen, wenn er weit vom Knopf entfernt liegt? | Frage | `abgenommen` | P3 | XS | frontend | — |
@@ -204,7 +207,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-244](B-244-publishers-create-baut-die-antwort-von-hand.md) | `PublishersController.Create` baut die Antwort von Hand, `Update` liest über `Project` zurück | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-245](B-245-token-mit-fid-auf-geloeschten-adult.md) | Ein Token, das vor `DELETE adults/{id}` ausgestellt wurde, trägt ein `fid` auf eine gelöschte Zeile – jeder `OwnerAdultId`-Schreiber liefe in die FK | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-246](B-246-b-241-zwei-saetze-falsch-und-sweep-zu-frueh.md) | B-241 hat zwei Sätze beim Wortwechsel falsch gemacht und den Sweep vor der letzten Änderung gemessen | Defekt | `abgenommen` | P3 | XS | doku | — |
-| [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-252](B-252-vorlesen-und-sprechen-bei-vokabeln.md) | Vokabeln vorlesen lassen und optional per Stimme beantworten | Wunsch | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-253](B-253-wochenvergleich-familie-statt-liga.md) | Wochenvergleich gegen die eigene Vorwoche (statt einer Liga) | Wunsch | `abgenommen` | P3 | S | beides | — |
 | [B-254](B-254-weg-zeigt-englischen-planfehler.md) | Der Trophäenweg zeigt dem Kind „Study plan not found." statt einer Erklärung | Defekt | `abgenommen` | P2 | S | frontend | — |
@@ -213,7 +215,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-257](B-257-zielfeier-verspaetet-jenseits-der-ersten-fuenf.md) | Ein schon erreichtes Ziel jenseits der ersten fünf wird später verspätet gefeiert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-258](B-258-unbekannte-fach-id-zwei-fehlercodes.md) | Eine unbekannte `SubjectId` meldet je nach Ressource zwei verschiedene Fehlercodes | Defekt | `abgenommen` | P3 | XS | backend | Vertrag |
 | [B-259](B-259-generator-verschluckt-leerzeichen-neben-xml-elementen.md) | Der XML-Doc-Generator verschluckt Leerzeichen zwischen zwei Elementen | Defekt | `abgenommen` | P3 | S | backend | — |
-| [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
+| [B-25](B-25-vite-pwa-peer-konflikt.md) | Peer-Konflikt `vite-plugin-pwa` ↔ `vite@8` lösen | Aufräumen | `abgenommen` | P3 | XS | frontend | — |
 | [B-260](B-260-normalisierer-setzt-absatz-mitten-im-satz.md) | Der OpenAPI-Normalisierer setzt einen Absatz mitten in einen Satz | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-261](B-261-produktionspfad-des-beispielkatalogs-ungetestet.md) | Der Produktionspfad des Beispielkatalogs hängt an keinem Test | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-262](B-262-vorwahl-bestehendes-kind-ohne-eigene-spec.md) | „Ohne Eingabe bleibt die Vorwahl ‚bestehendes Kind‘“ hält keine Spec gezielt | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -224,7 +226,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-267](B-267-entkoppeltes-lehrbuch-zeigt-katalogwert-im-freitextfeld.md) | Nach dem Entkoppeln zeigt das Freitextfeld den Katalogwert – gespeichert wird er nicht | Frage | `abgenommen` | P3 | S | beides | — |
 | [B-268](B-268-fokus-nach-inline-reihe.md) | Nach „Reihe anlegen & wählen“ fällt der Fokus auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-269](B-269-bewertungen-reihenfolge-und-updatedat-ungetestet.md) | Bewertungen: Reihenfolge der Liste und `UpdatedAt` beim Überschreiben sind ungetestet | Aufräumen | `abgenommen` | P3 | XS | backend | — |
-| [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-26](B-26-e2e-in-ci.md) | Der E2E-Nachtlauf ist rot – und niemand erfährt es | Defekt | `abgenommen` | P1 | S | frontend | — |
 | [B-270](B-270-bewertung-im-positions-formular.md) | Die Bewertung einer Übung beim Zusammenstellen des Plans sehen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-272](B-272-live-region-und-gruppen-tests-tragen-nicht-alles.md) | Tests zu B-134 und B-236 lassen Mutanten grün | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-273](B-273-feste-feldhilfe-resize-und-layoutverschiebung.md) | Das feste ⓘ-Popover: Resize ohne Prüfung, Layout-Verschiebung ohne Schließen | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -234,7 +236,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-277](B-277-schnellanlage-legt-doppelten-store-eintrag-an.md) | Der Schnellanleger im Assistenten legt für ein bekanntes Wort einen zweiten Store-Eintrag an | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-278](B-278-platzhalter-sieht-aus-wie-gespeicherter-wert.md) | Im leeren Verlagsfeld sieht der Platzhalter aus wie ein gespeicherter Wert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-279](B-279-general-use-weak-zieht-woerter-trotzdem.md) | `--child X --general --use-weak` zieht die schwachen Wörter weiter in den Pflicht-Wortschatz | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
+| [B-27](B-27-testsuite-grenzfaelle.md) | Die Grenzen des `ScoringService` als Tabelle statt als Flow | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-280](B-280-fokusziel-nicht-geleert-ungetestet.md) | Dass das Fokusziel nach dem Sprung geleert wird, prüft kein Test | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-281](B-281-pin-felder-pruefen-mindestlaenge-im-ui.md) | Eine zu kurze PIN meldet die Oberfläche auf Englisch | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-282](B-282-login-haertung-restpunkte.md) | Restpunkte der Login-Härtung (NP-3) | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -245,6 +247,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-287](B-287-fokus-test-prueft-den-ausgangszustand.md) | Der Fokus-Test in `LetterTiles.test.tsx` prüft eine Zusicherung, die nie fallen kann | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-288](B-288-pruefungstest-misst-neu-je-position.md) | Der Prüfungstest zu „Buchstaben ordnen“ verspricht „neu je Versuch“, misst aber „neu je Position“ | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-289](B-289-all-klausel-des-konten-sweeps-ohne-probe.md) | Die `All`-Hälfte des Konten-Sweeps in `AdultsController.Delete` hat keine rote Probe | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-28](B-28-login-name-sequenziell.md) | Sequenzielle IDs als Login-Name | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-290](B-290-themen-schluessel-haengt-am-fachnamen.md) | Der Idempotenz-Schlüssel eines Grammatik-Themas hängt am Fach**namen**, nicht am Fach | Defekt | `abgenommen` | P2 | S | backend | Migration |
 | [B-291](B-291-fachwechsel-der-reihe-laesst-themen-stehen.md) | Wechselt eine Reihe ihr Fach, bleiben die Grammatik-Themen des alten Fachs an Übungen und Units stehen | Frage | `abgenommen` | P3 | S | backend | — |
 | [B-292](B-292-agent-kuerzt-themen-still.md) | Der `fill`-Agent kürzt ein zu langes Thema still auf 200 Zeichen – die API lehnt genau das bewusst ab | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -273,7 +276,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-317](B-317-ziel-etappe-ohne-titel-zeigt-enum.md) | Eine Ziel-Etappe ohne Titel zeigt dem Kind den rohen Enum-Wert | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-318](B-318-null-element-ohne-fall-in-drei-strategien.md) | Ein `null`-Element in Vokabel-, Übersetzungs- und Grammatik-Entwürfen hält kein Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-319](B-319-zwei-zusicherungen-aus-b-305-tragen-nicht.md) | Zwei Zusicherungen aus B-305 können nicht fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-320](B-320-klausur-fehler-erreicht-den-bildschirm-nicht.md) | Scheitert das Beantworten in der Klausur, sieht das Kind keine Meldung | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-321](B-321-null-element-fall-ohne-pflichtwortschatz.md) | Die `null`-Fälle aus B-306/B-318 lesen den Pflicht-Wortschatz nie | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-322](B-322-briefing-verb-nennt-interessen-nicht.md) | Das Verb `briefing` verweist auf vorgegebene Interessen, ohne sie zu nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -284,6 +286,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-327](B-327-ziel-spaeter-jenseits-platz-fuenf-erreicht.md) | Ein Ziel, das nach dem ersten Besuch jenseits von Platz fünf erreicht wird, feiert die App verspätet | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-328](B-328-inline-typen-put-verschiebt-lernstand.md) | Sollen die Inhaltslisten gespielter Übungen anderer Typen (und der Wort-Tausch) gesperrt sein? | Frage | `abgenommen` | P3 | S | backend | — |
 | [B-329](B-329-uebung-unbekannte-referenz-validation-error.md) | Die Übungs-Validierung meldet eine unbekannte Id als `validation_error`, die Kategorie daneben als `invalid_reference` | Defekt | `abgenommen` | P3 | M | backend | Vertrag |
+| [B-32](B-32-father-tabellenname.md) | `Father` heißt noch `Father`, obwohl die Zeile `Adult` ist | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-330](B-330-plan-inactive-ohne-deutsche-fassung.md) | Ein deaktivierter Plan zeigt dem Kind nach einem Reload die englische Serverzeile | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-331](B-331-doppeltes-wort-im-uebungs-payload-500.md) | Ein Wort, das im Übungs-Payload zweimal steht, endet in `500` – nach dem Speichern des Kopfes | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-332](B-332-put-nur-mit-refs-ungetestet.md) | Ein `PUT` nur mit `refs`, der ein gespieltes Wort streicht, ist von keinem Fall gehalten | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -304,7 +307,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-347](B-347-store-speichert-wort-ungetrimmt.md) | Ein per PATCH geändertes Store-Wort trifft nur bis auf ASCII-Groß/Klein | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-348](B-348-assistent-pillen-ohne-aria-pressed.md) | Die Auswahl-Pillen im Assistenten sagen nicht, welche gewählt ist | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-349](B-349-batch-treffer-haengt-an-der-reihenfolge.md) | Im Vokabel-Batch hängt ein Treffer davon ab, was frühere Einträge desselben Batches geladen haben | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-350](B-350-wartebild-der-klausur-ohne-ausweg.md) | Im Wartebild der Klausur hat das Kind keinen Ausweg | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-351](B-351-synonym-regel-symmetrisch.md) | Ein Synonym darf nicht das Label oder den Slug eines anderen Schlagworts tragen | Wunsch | `abgenommen` | P3 | S | backend | — |
 | [B-352](B-352-radiogruppen-ohne-pfeiltasten.md) | Die Radiogruppen des Vater-Webs versprechen Pfeiltasten, die nicht kommen | Defekt | `abgenommen` | P3 | S | frontend | — |
@@ -315,7 +317,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-357](B-357-e2e-helfer-restkanten.md) | Restkanten des E2E-Helfers `createChild` und eine Kind-Auswahl per Index | Defekt | `abgenommen` | P4 | XS | frontend | — |
 | [B-358](B-358-beispielkatalog-proben-restkanten.md) | Restkanten der Beispielkatalog-Proben (Nachschau über `299d216`) | Defekt | `abgenommen` | P4 | XS | backend | — |
 | [B-359](B-359-live-region-waechter-uebersieht-echte-kommentare.md) | Der Live-Region-Wächter übersieht die Kommentare, die zwischen `&&` und Tag wirklich vorkommen | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
+| [B-35](B-35-karten-umdrehen-animation.md) | Karten drehen sich beim Aufdecken um | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-360](B-360-guthaben-nach-verlassener-klausur-ungetestet.md) | Dass die verlassene Klausur das Guthaben auffrischt, trägt kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-361](B-361-listenpunkte-verlieren-inline-markup.md) | In Listenpunkten verliert das Vertragsdokument `<c>` und `<b>` | Defekt | `abgenommen` | P4 | XS | backend | — |
 | [B-362](B-362-infohint-mit-crlf-und-einzelnem-cr-committet.md) | `InfoHint.tsx` ist mit CRLF und einem einzelnen CR committet – git hält es nicht mehr für Text | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -325,13 +327,14 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-366](B-366-klebestellen-tor-nennt-ungepruefte-zeile.md) | Das Klebestellen-Tor nennt eine Zeile, die kein Test prüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-367](B-367-story-datei-traegt-rohes-cr.md) | Die Story-Datei von B-362 trägt selbst rohe CR-Bytes | Defekt | `abgenommen` | P4 | XS | doku | — |
 | [B-368](B-368-stale-kommentar-und-zaehlung.md) | Nach B-164 behauptet ein Kommentar den entfernten Effekt, und die Story zählt falsch | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-36](B-36-motivations-animationen-teilziele.md) | Motivations-Animationen bei erreichten Teilzielen | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-370](B-370-zwei-behauptungen-aus-lauf-r-teil-2.md) | Zwei Behauptungen aus Lauf R, Teil 2 halten nicht | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-371](B-371-leere-pin-per-patch-nur-als-angenommen-geprueft.md) | Eine leere PIN per PATCH war nur als „angenommen" geprüft | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) | Ein Abbruch bei der Kontoprüfung landet als Fehler im Log, und zwei PIN-Prüfungen stehen hinter Änderungen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen | Wunsch | `abgenommen` | P2 | M | backend | — |
 | [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-37](B-37-uebung-abbruch-unvollendet.md) | Abgebrochene Runden: Pflicht härten, Klausur deckeln | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `abgenommen` | P3 | M | frontend | — |
 | [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-382](B-382-groessenangabe-und-zaehlungen-aus-sprint-1.md) | `frontend/CLAUDE.md` wuchs entgegen B-233 AK 3, und vier Angaben aus Sprint 1 stimmten nicht | Defekt | `abgenommen` | P3 | XS | doku | — |
@@ -341,7 +344,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-387](B-387-birkenbihl-speichert-unbekannte-vokabel-id.md) | Eine Birkenbihl-Übung speichert eine unbekannte `vocabularyId` an einem dekodierten Wort ohne Prüfung | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-388](B-388-id-null-faelle-ohne-test.md) | Zwei Fälle „Id 0 bleibt `validation_error`“ aus B-329 haben keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-389](B-389-leerzeichen-grundform-meldet-invalid-reference.md) | Ein `PATCH` im Vokabelspeicher mit `baseFormKey: "  "` meldet `invalid_reference` | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-390](B-390-unit-loeschen-bestaetigung-ausser-sicht.md) | „Unit … gelöscht." und „Gespeichert." einer Unit landen in einer langen Liste außer Sicht | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-392](B-392-uebersetzung-put-legt-paare-nicht-an.md) | Eine geänderte Übersetzung legt neue Paare nicht im Speicher an | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-393](B-393-uebersetzung-put-id-null-ohne-test.md) | B-386 AK 1 „Ändern mit `0`" hat keinen Test | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -351,7 +353,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-397](B-397-null-element-in-config-liste-ist-500.md) | Ein `null`-Element in einer Config-Liste endet in einer 500 | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-398](B-398-pflichtfelder-die-optional-gemeint-sind.md) | Zwei Felder sind im Vertrag Pflicht, im Code aber optional gemeint | Frage | `abgenommen` | P3 | XS | backend | — |
 | [B-399](B-399-b398-mutantenzeile-ungemessen-und-falsch.md) | Eine Belegzeile in B-398 nennt eine Mutante, die nicht kompiliert, und B-397 eine verrutschte Zeile | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
+| [B-39](B-39-supervisor-dashboard.md) | Supervisor-Dashboard über die Kinder | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-400](B-400-uebersetzung-sprachpaar-rueckweg-ungetestet.md) | Kein Test liest eine Übersetzung mit einem anderen Sprachpaar als en→de zurück | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-401](B-401-fach-leeren-laesst-uebungen-ohne-fach.md) | Eine Reihe mit Übungen darf ihr Fach leeren, obwohl eine Reihe ohne Fach keine Übung tragen darf | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-402](B-402-b291-mutantenzeilen-veraltet.md) | Zwei „gemessen"-Zeilen in B-291 gelten nicht mehr, seit der Review-Fall dazukam | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -362,7 +364,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-407](B-407-gespielte-uebung-sperrt-fachwechsel-dauerhaft.md) | Eine gespielte Übung mit einer Art des alten Fachs sperrt den Fachwechsel ihrer Reihe dauerhaft | Frage | `abgenommen` | P3 | S | beides | — |
 | [B-408](B-408-assistent-zeigt-keine-bewertung.md) | Der Plan-Assistent zeigt in seiner Übungsauswahl keine Bewertung – sein Zwilling im Planbau schon | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-409](B-409-verwendung-zeigt-keine-ziel-etappen.md) | „Verwendung" an der Übung zeigt keine Ziel-Etappen – der Verweis in der Fachwechsel-Meldung ist darum nur halb wahr | Defekt | `abgenommen` | P2 | S | beides | — |
-| [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
+| [B-40](B-40-client-routen-waechter.md) | Routen aus `Pugling.Client` gegen das OpenAPI-Dokument halten | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-410](B-410-tor-null-element-ueber-alle-body-listen.md) | Reflexiver Wächter: jede Liste in jedem `[FromBody]`-Graphen meldet ein `null`-Element als 400 | Aufräumen | `abgenommen` | P2 | M | backend | — |
 | [B-411](B-411-tor-409-codes-haben-deutschen-text.md) | Tor: jeder 409-Code einer Creator-/Supervisor-Action hat einen deutschen Text oder einen begründeten Ausnahmeeintrag | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-412](B-412-beste-zuerst-richtung-unbelegt.md) | „beste Bewertung zuerst" im Planbau ist nur gegen „nicht sortiert" belegt, nicht gegen „schlechteste zuerst" | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -373,7 +375,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-417](B-417-concurrency-conflict-doch-erreichbar.md) | `backend/Pugling.Api/CLAUDE.md` nennt `concurrency_conflict` „für Clients bewusst unerreichbar" – der Shop liefert ihn aber | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-418](B-418-position-entfernen-verspricht-verlust.md) | „Position entfernen" kündigt den Verlust des Fortschritts an – den es nie gibt, weil der Server dann ablehnt | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-419](B-419-erstbegegnung-neue-karte-erst-zeigen.md) | Erstbegegnung: eine nie gesehene Karte wird in der Übungsrunde erst gezeigt, dann abgefragt | Wunsch | `abgenommen` | P1 | M | beides | — |
-| [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
+| [B-41](B-41-produktions-startup-smoke.md) | Der Produktionspfad des Starts ist der einzige ohne Test | Aufräumen | `abgenommen` | P2 | S | backend | — |
 | [B-420](B-420-loesung-blitzt-als-toast.md) | Nach einer falschen Antwort blitzt die Lösung 1,6 s als Toast unter der nächsten Karte auf | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-421](B-421-antwort-toleranz-artikel.md) | Antwort-Toleranz: „Stadt" für „die Stadt" zählt als richtig | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-422](B-422-beinahe-treffer-tippfehler.md) | Prüfauftrag: soll ein Tippfehler („Beinahe-Treffer") verziehen werden – und wie? | Wunsch | `abgenommen` | P3 | S | beides | — |
@@ -384,7 +386,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-427](B-427-datumsformat-uneinheitlich.md) | Datumsformat: zwölf Stellen formatieren ohne Locale, daneben stehen ISO-Strings | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-428](B-428-unit-zeigt-uebungszahl-nicht.md) | Lehrwerke: eine Unit zeigt nicht, wie viele Übungen sie schon trägt | Wunsch | `abgenommen` | P3 | S | beides | — |
 | [B-429](B-429-seed-familie-widerspricht-dem-katalog.md) | Seed: die Demo-Familie widerspricht dem eigenen Katalog | Aufräumen | `abgenommen` | P3 | XS | backend | — |
-| [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
+| [B-42](B-42-openapi-typen-generieren.md) | TypeScript-Typen aus dem OpenAPI-Dokument erzeugen statt von Hand pflegen | Aufräumen | `abgenommen` | P2 | M | beides | — |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben | Wunsch | `abgenommen` | P3 | XS | frontend | — |
 | [B-431](B-431-uebungen-verwalten-startet-leer.md) | „Übungen verwalten" startet leer: erst ein Fach wählen, obwohl die Werkstatt „3 eigene Übungen" zählt | Wunsch | `abgenommen` | P3 | S | frontend | — |
 | [B-432](B-432-erster-tag-einer-position-ohne-malus.md) | Prüfauftrag: darf der erste Tag einer Position am Tagesziel vorbei ohne Malus enden? | Frage | `abgenommen` | P3 | S | backend | — |
@@ -394,7 +396,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-437](B-437-artikel-toleranz-nur-bei-nomen.md) | Die Artikel-Toleranz greift auch dort, wo das erste Wort kein Artikel eines Nomens ist | Wunsch | `abgenommen` | P3 | XS | backend | — |
 | [B-438](B-438-pinhasher-zeittest-flackert-unter-last.md) | `PinHasher_Verify_RechnetAuchOhneGespeichertenHash` fiel einmal unter Last | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-439](B-439-loesung-in-angehaltener-karte-ungetestet.md) | Die sichtbare Lösung in der angehaltenen Karte prüft kein Test | Defekt | `abgenommen` | P3 | XS | frontend | — |
-| [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
+| [B-43](B-43-frontend-komponententests.md) | Die Doppelklick-Lücke in `useAction` – und die fehlende Ebene für unsichtbare Zusicherungen | Defekt | `abgenommen` | P3 | M | frontend | — |
 | [B-440](B-440-typografischer-apostroph-wird-nicht-gefaltet.md) | Ein typografischer Apostroph („l’école") macht die vollständige Antwort falsch, die verkürzte richtig | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-441](B-441-editor-liest-articlerequired-nicht-zurueck.md) | Der Vokabel-Editor liest „Artikel verlangt" nicht aus der gespeicherten Config zurück | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -405,7 +407,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-447](B-447-arcade-zeigt-iso-daten.md) | Die Sohn-Arcade zeigt Daten als ISO-Text | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-448](B-448-umfang-nachschau-reste.md) | Umfang der Übung: „leer" ist am Server ungetestet, ein Zählfehler bleibt stumm, eine Summary hängt am falschen Helfer | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-449](B-449-zeitzonen-tests-greifen-nur-in-new-york.md) | Die Zeitzonen-Tests von `lib/datum.ts` greifen weder lokal noch in der CI | Defekt | `abgenommen` | P3 | S | frontend | — |
-| [B-45](B-45-creator-punkte-empfehlung.md) | Die Punkte-Empfehlung des Creators soll der Supervisor übernehmen können | Wunsch | `abgenommen` | P2 | S | beides | — |
+| [B-44](B-44-grundprinzip-rollennamen.md) | Grundprinzip auf Supervisor/Student umschreiben — „Vater" ist keine Ebene | Aufräumen | `abgenommen` | P2 | XS | doku | — |
 | [B-450](B-450-schalter-geteilte-uebungen-springt-zurueck.md) | „Geteilte Übungen anderer Väter anzeigen" springt nach dem Klick zurück | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-451](B-451-uhr-und-vier-wochen-simulation.md) | Die fachliche Uhr läuft über `TimeProvider`, und ein Test spielt vier Wochen | Aufräumen | `abgenommen` | P0 | M | backend | — |
 | [B-452](B-452-vokabelliste-einfuegen.md) | Eine Vokabelliste einfügen statt 150 Zeilen einzeln tippen | Wunsch | `abgenommen` | P1 | S | frontend | — |
@@ -416,7 +418,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-457](B-457-uebersetzung-scheitert-am-schlusspunkt.md) | Eine richtige Übersetzung ohne Schlusspunkt wird als falsch gewertet | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-458](B-458-grammatik-entwurf-verraet-die-loesung.md) | Ein KI-Entwurf vom Typ Grammar darf die Lösung schon in der Aufgabe nennen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-459](B-459-vision-modell-fuer-buchseiten.md) | `fill --images` warnt vor dicht bedruckten Buchseiten und verweist auf `lehrwerk-aufbereiten` | Wunsch | `abgenommen` | P3 | XS | doku | — |
-| [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `abgenommen` | P2 | L | beides | Migration |
+| [B-45](B-45-creator-punkte-empfehlung.md) | Die Punkte-Empfehlung des Creators soll der Supervisor übernehmen können | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-460](B-460-ki-aufgaben-programm-entscheidet.md) | Was nur eine richtige Antwort hat, entscheidet beim KI-Creator das Programm, nicht das Modell | Wunsch | `abgenommen` | P1 | M | backend | — |
 | [B-461](B-461-lueckentext-ablenker-zaehlen-als-loesung.md) | Ein KI-Lückentext wertet die Ablenker der Wortbank als richtige Lösung | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-462](B-462-mehrdeutige-uebersetzung-verlangt-alle-bedeutungen.md) | Eine Übersetzung mit mehreren Bedeutungen („sobald, sowie“) gilt getippt nur als Ganzes | Defekt | `abgenommen` | P1 | S | backend | — |
@@ -427,7 +429,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-467](B-467-leerzustaende-melden-erfolg.md) | Ohne eine einzige Antwort meldet der Lernstand „es sitzt alles 👍“, und freie Übungen tragen ein Häkchen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-468](B-468-sohn-erreicht-die-app-nur-am-pc.md) | Der Sohn erreicht die App nur am Rechner des Vaters – „jederzeit am Handy“ braucht einen Ort für den Server | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-469](B-469-lernkontrolle-selbsteinschaetzung-und-typen-ohne-test.md) | Prüfauftrag: Der Vokabeltest ist per Vorgabe eine Selbsteinschätzung, Grammatik und Übersetzung haben keinen Test | Frage | `abgenommen` | P2 | S | frontend | — |
-| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `abgenommen` | P3 | S | backend | — |
+| [B-46](B-46-interessenbasierte-uebungen.md) | Übungen entstehen für ein Interessenprofil, nicht für ein bestimmtes Kind | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-470](B-470-foto-zu-wortliste-als-werkzeug.md) | Aus Fotos der Vokabelseiten wird eine Wortliste – als wiederholbares Werkzeug statt als Handarbeit unter raw/ | Wunsch | `abgenommen` | P1 | S | doku | — |
 | [B-471](B-471-ki-lehrplan-grammatik-nach-neuem-stoff.md) | Die Grammatik-Teile des KI-Lehrplans nehmen die Themen alphabetisch statt den neuen Stoff zuerst | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-472](B-472-jedes-wort-in-beide-richtungen.md) | Jedes Wort einer Wortliste in beide Richtungen üben | Wunsch | `abgenommen` | P1 | M | beides | — |
@@ -438,7 +440,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-477](B-477-assistent-dosis-auf-ungeordneter-liste.md) | Der Assistent schickt die Tagesdosis auch an ungeordnete Listen – das Anlegen bricht mittendrin ab | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-478](B-478-nachschau-reste-sprint-29.md) | Nachschau-Reste Sprint 29: „eingeführt" nach dem Verkleinern, Dosis-Sperre über die Übung umgehbar, zwei Kommentare | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-479](B-479-nachschau-reste-sprint-31.md) | Nachschau-Reste Sprint 31: eine Zusicherung, die nicht fallen kann, und Grenzfälle der Schlusszeichen | Defekt | `abgenommen` | P3 | XS | beides | — |
-| [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
+| [B-47](B-47-deploy-artefakt-smoke.md) | Startet das veröffentlichte Artefakt überhaupt? | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-480](B-480-nachschau-reste-sprint-32.md) | Nachschau-Reste Sprint 32: eine Dosis, die nicht wirkt, steht weiter da | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-481](B-481-ki-creator-raet-unit-und-fach-beim-kind.md) | Der KI-Creator rät beim Kind weiter die Unit und das Fach | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-482](B-482-nachschau-reste-sprint-33.md) | Nachschau-Reste Sprint 33: Kleinigkeiten an Ablage und NEU-Marker | Defekt | `abgenommen` | P3 | S | backend | — |
@@ -449,7 +451,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-487](B-487-laden-wortbank-ohne-loesung.md) | Eine handgeschriebene Wortbank ohne die Lösung geht durch Prüfung und Selbsttest | Defekt | `abgenommen` | P2 | S | backend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-488](B-488-ki-creator-profil-fach-neben-genannter-reihe.md) | Ein werkunabhängiges Profil neben `--series` prüft das Fach nicht | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-489](B-489-sohn-wortbank-am-handy.md) | Sohn-App: Lückentext mit Wortbank am Handy kaum bedienbar | Defekt | `abgenommen` | P1 | S | frontend | — |
-| [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
+| [B-48](B-48-anonyme-registrierung-produktion.md) | Anonyme Registrierung ist auch in Produktion offen | Frage | `abgenommen` | P2 | S | backend | — |
 | [B-490](B-490-auswahl-ohne-richtige-antwort.md) | Eine Auswahlfrage, deren Optionen die Antwort nicht enthalten, ist unlösbar | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-491](B-491-wortbank-aus-leeren-kacheln.md) | Eine Wortbank aus leeren Einträgen wird zum Pool aus reinen Lösungen | Defekt | `abgenommen` | P2 | S | backend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-492](B-492-lader-test-in-ci.md) | Der Lehrwerk-Lader bekommt einen automatischen Test in CI | Aufräumen | `abgenommen` | P2 | S | .claude/skills/lehrwerk-aufbereiten, .github/workflows | — |
@@ -460,7 +462,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-497](B-497-nachschau-reste-sprint-40.md) | Nachschau-Reste Sprint 40: die angehängte Lösung ist ungetrimmt, und NBSP macht zwei gleiche Knöpfe | Defekt | `abgenommen` | P3 | S | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-498](B-498-reste-review-sprint-42.md) | Die Konsole entscheidet „Profil passt zum Fach" für Freitext-Profile noch anders als das Briefing | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-499](B-499-nachschau-reste-sprint-41.md) | Nachschau Sprint 41: der Leerfall des Lernstands misst noch immer nicht, was er sagt – und „Übung löschen" kündigt an, was nie passiert | Defekt | `abgenommen` | P2 | S | frontend | — |
-| [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
+| [B-49](B-49-sohn-app-schreib-primitive.md) | Die Sohn-App benutzt die geteilten Schreib-Primitive nicht | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-500](B-500-profil-meldung-fremdes-profil-korrigieren.md) | Die Profil-Meldung rät, ein fremdes Profil zu korrigieren – das darf nur sein Eigentümer | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-501](B-501-nachschau-reste-sprint-43.md) | Nachschau-Reste Sprint 43: Stellen, die noch anders vergleichen als `Normalize` | Defekt | `abgenommen` | P3 | S | backend, frontend, .claude/skills/lehrwerk-aufbereiten | — |
 | [B-502](B-502-reste-review-sprint-44.md) | Reste aus dem Review von Sprint 44: die Wortliste nach einem Kinderwechsel und das Entfernen einer Vokabel | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -470,7 +472,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-507](B-507-nachschau-reste-sprint-45-frontend.md) | Nachschau-Reste Sprint 45 (Frontend): ein Ausweg, der stehen blieb, und zwei Tests, die weniger tragen | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-508](B-508-konsole-reihe-ohne-fach-endet-am-400.md) | Konsole: eine Reihe ohne Fach endet bei `create`/`plan`/`exam` erst am rohen 400 des Servers | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-509](B-509-lernstand-kopfzahl-und-zeilen-des-vorigen-kindes.md) | Lernstand: Kopfzahl, Zeilen und Pager zeigen nach einem Kinderwechsel das vorige Kind | Defekt | `abgenommen` | P3 | S | frontend | — |
-| [B-51](B-51-admin-rolle-dokumentieren.md) | Die Admin-Rolle kommt in keinem Rollen-Dokument vor | Aufräumen | `abgenommen` | P3 | XS | doku | — |
+| [B-50](B-50-kind-beschreibt-sich-selbst.md) | Das Kind beschreibt sich selbst: Interessen in einem geführten Prozess | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-510](B-510-buchwahl-bietet-reihe-ohne-fach-zum-schreiben.md) | Die Buchwahl der Konsole bietet zum Schreiben eine Reihe ohne Fach an | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-511](B-511-gebundenes-profil-reihe-ohne-fach-ausweg-im-kreis.md) | Ein an eine Reihe ohne Fach gebundenes Profil schickt mit „--series" im Kreis | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-512](B-512-leerfall-waechter-uebersieht-formen.md) | Der Leerfall-Wächter übersieht gängige Formen der Seitenfrage | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -481,7 +483,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-517](B-517-datum-tests-in-utc-und-folgetag.md) | Datums-Tests greifen in der UTC-CI nicht, und östlich von UTC+11 steht der Folgetag | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-518](B-518-nachschau-reste-sprint-57.md) | Nachschau-Reste Sprint 57: „ganze Reihe" im Ziel-Wähler, zwei Verdrahtungen ohne Test | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-519](B-519-nachschau-reste-sprint-58.md) | Nachschau-Reste Sprint 58: die Meldung nennt eine Reihe, aber nicht, woher sie kommt | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket | Aufräumen | `abgenommen` | P2 | L | beides | — |
+| [B-51](B-51-admin-rolle-dokumentieren.md) | Die Admin-Rolle kommt in keinem Rollen-Dokument vor | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-520](B-520-nachschau-reste-sprint-59.md) | Nachschau-Reste Sprint 59: eine Zone, die als „undefined" zurückkommt, und eine Zusicherung ohne Wirkung | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-522](B-522-ueben-nach-test-landet-in-nichts-faellig.md) | „▶ Üben" nach einem verpatzten Test landet bei Leitner-Positionen oft in „Nichts fällig 🎉" | Wunsch | `abgenommen` | P3 | S | beides | — |
@@ -492,7 +494,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-527](B-527-belohnungsbox-als-truhe-zum-oeffnen.md) | Belohnungsbox als Truhe auf dem Pfad, die das Kind selbst öffnet | Wunsch | `abgenommen` | P3 | M | beides | Migration + Vertrag |
 | [B-528](B-528-missionen-als-eigener-tab.md) | Missionen mit Restzeit (statt eines eigenen Tabs) | Wunsch | `abgenommen` | P3 | XS | beides | — |
 | [B-529](B-529-erklaerung-nach-der-antwort.md) | Erklärung nach der Antwort | Wunsch | `abgenommen` | P2 | S | beides | — |
-| [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-52](B-52-testabdeckung-paket.md) | Sammel-Story: das Testabdeckungs-Paket | Aufräumen | `abgenommen` | P2 | L | beides | — |
 | [B-530](B-530-antwortzeit-ab-sichtbarer-karte.md) | Antwortzeit ab der sichtbaren Karte messen | Wunsch | `abgenommen` | P3 | S | beides | Migration |
 | [B-531](B-531-fokus-faellt-nach-aufdecken-auf-body.md) | Im Üben fällt der Fokus nach „Aufdecken“ und nach einer Selbsteinschätzung auf `body` | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-532](B-532-netzfehler-beim-bewerten-rueckt-still-weiter.md) | Ein Netzfehler beim Bewerten lässt eine getippte Karte still weiterrücken | Defekt | `abgenommen` | P2 | S | frontend | — |
@@ -500,7 +502,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-534](B-534-vater-ui-aufraeumen.md) | Das Vater-Web zeigt je Fläche höchstens ein Speichern | Wunsch | `abgenommen` | P1 | M | frontend | — |
 | [B-535](B-535-belohnungen-erreichen-friedrich-nicht.md) | Die Belohnungen, die Friedrich motivieren, erreichen ihn nicht | Wunsch | `abgenommen` | P1 | M | beides | Migration + Vertrag |
 | [B-538](B-538-bonus-muenzregeln-form-und-degression.md) | Bonus-Münzregeln: Form bestimmt den Wert, Wiederholung halbiert ihn | Wunsch | `abgenommen` | P1 | M | beides | — |
-| [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
+| [B-53](B-53-wizard-doppelklick.md) | Zwei Klicks im Lehrplan-Assistenten legen zwei Kinder und zwei Pläne an | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-540](B-540-planbau-sortierwechsel-verwirft-auswahl.md) | Im Planbau verwirft ein Sortierwechsel die gewählte Übung | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-541](B-541-test-fokus-faellt-nach-aufdecken-auf-body.md) | Im Abschlusstest fällt der Fokus nach dem Aufdecken auf `body` | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-542](B-542-vater-runde-schreibt-lernstand-des-kindes.md) | Soll eine Übungsrunde des Vaters überhaupt in Verlauf und Lernstand des Kindes schreiben? | Frage | `abgenommen` | P3 | XS | backend | — |
@@ -511,22 +513,24 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-547](B-547-positionsfelder-ohne-zurueck-auf-standard.md) | Vier Positionsfelder kommen nach dem Setzen nicht mehr auf „Standard“ zurück | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-548](B-548-bonus-sperre-texte-nennen-volle-pflicht.md) | Swagger und Texte nennen für Kiste und Bonus-Training noch die volle Pflicht | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | Die Swagger-Doku des Bonus-Trainings kennt die verworfene Runde nicht | Defekt | `abgenommen` | P3 | XS | backend | — |
-| [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
+| [B-54](B-54-objectivecard-schreib-primitive.md) | Fünf Knöpfe im Vater-Web gehen an den Schreib-Primitiven vorbei | Defekt | `abgenommen` | P2 | S | frontend | — |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | Defekt | `abgenommen` | P3 | — | — | — |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | Defekt | `abgenommen` | P3 | — | — | — |
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | Defekt | `abgenommen` | P1 | S | beides | — |
+| [B-55](B-55-wegwerf-dateien-aufraeumen.md) | Die Tests räumen ihre Wegwerf-Dateien nicht weg | Aufräumen | `abgenommen` | P3 | S | beides | — |
 | [B-56](B-56-problemdetails-required-extensions.md) | `ProblemDetails` fordert im Schema ein Feld, das es nicht beschreibt | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-57](B-57-beispielkatalog-schreib-lese-rennen.md) | Im Testlauf lesen und schreiben zwei Stellen gleichzeitig dieselbe Katalogdatei | Defekt | `abgenommen` | P3 | S | backend | — |
-| [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `abgenommen` | P2 | S | frontend | — |
 | [B-583](B-583-erklaerung-nach-falscher-antwort.md) | Nach einer falschen Antwort erklärt die Übung, warum | Wunsch | `abgenommen` | P3 | S | beides | Migration |
 | [B-584](B-584-schwache-woerter-werden-wiederholungs-position.md) | Die schwachen Wörter eines Kindes werden mit einem Griff zur Wiederholungs-Position | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-588](B-588-uebung-zeigt-ihren-lehrwerk-bezug.md) | Eine Übung zeigt ihren Bezug zum Lehrwerk (Reihe, Unit, Seite) | Wunsch | `abgenommen` | P2 | S | beides | Migration |
 | [B-589](B-589-import-setzt-buchseite.md) | Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch | Defekt | `abgenommen` | P2 | XS | doku | — |
-| [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
+| [B-58](B-58-assistent-e2e.md) | Der Lehrplan-Assistent hat keinen Durchstich | Aufräumen | `abgenommen` | P2 | S | frontend | — |
 | [B-591](B-591-ungepruefte-antwort-loescht-fehler-merker.md) | Löscht eine ungeprüfte „gewusst"-Antwort den Fehler-Merker der milden Abstufung? | Frage | `abgenommen` | P3 | XS | backend | — |
 | [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-598](B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) | Kombi-Lernkarte: aufdecken, einschätzen, abschreiben, aus dem Gedächtnis schreiben | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | Wunsch | `abgenommen` | P2 | M | beides | — |
+| [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
+| [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md) | Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
@@ -572,9 +576,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | --- | --- | --- | --- |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 
-### Nach der Abnahme entgangen (183)
+### Nach der Abnahme entgangen (185)
 
-**Nachgeschaut: 485 von 509 abgenommenen** — und in 173 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 24 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 488 von 510 abgenommenen** — und in 174 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 22 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -761,9 +765,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | [B-469, B-16] | `abgenommen` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | [B-16] | `abgenommen` |
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `idee` |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (24) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (22) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -791,9 +797,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-494](B-494-mutantenprobe-je-zusicherung.md) | `mutant-probe.py` misst je Zusicherung, nicht nur je Test |
 | [B-521](B-521-nachschau-reste-sprint-60-62.md) | Nachschau-Reste Sprint 60–62: eine Zone, die nicht zurückkommt, und Lücken der Fallliste |
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
-| [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache |
-| [B-598](B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) | Kombi-Lernkarte: aufdecken, einschätzen, abschreiben, aus dem Gedächtnis schreiben |
-| [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln |
+| [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md) | Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie |
 
 </details>
 
@@ -949,6 +953,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-549](B-549-swagger-bonus-training-ohne-extra-run-stale.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | `idee` | `unverifiziert: true` |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | `idee` | `unverifiziert: true` |
+| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (40)</summary>
@@ -967,12 +974,12 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-222](B-222-wochen-streak-als-default.md) | Prüfauftrag: ist der Tages-Streak der richtige Default? | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-6): der Tages-Streak bleibt. Bei Pugling kommt der Druck aus der Pflicht (PenaltyCoins), der Streak ist reines Zuckerbrot (DailyBoxOptions.cs:25, PositionProgressService.cs:405). Khans Argument gegen Tagesdruck trifft darum nicht |
 | [B-226](B-226-zwei-muenzstaende-im-shop-bildschirm.md) | Der Shop-Bildschirm zeigt zwei verschiedene Münzstände | gegenstandslos – beide Chips lesen dieselbe Context-Variable `coins` aus `api.wallet()` (SohnApp.tsx:52,64,96; SohnShop.tsx:29,152); zwei verschiedene Werte im selben Render sind unmöglich, abgelesen wurde vermutlich ein anderes Element |
 | [B-23](B-23-uebungstyp-plugins-dll.md) | Übungstyp-Plugins als externe DLLs (Stufe 2) | Entscheidung des Nutzers am 2026-10-23: eine Familien-App hat keine externen Plugin-Autoren; Stufe 1 (IExerciseType + Registry) genügt. Die Entscheidungen 2 und 3 schlossen sich zudem aus. Kommt der Bedarf, ist das eine neue Story |
-| [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
 | [B-247](B-247-knowunity-vergleich-sammel-story.md) | Knowunity-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/knowunity-vergleich-plan.md → [B-248, B-249, B-250, B-251, B-252, B-253] |
+| [B-24](B-24-frontend-unknown-field.md) | Frontend gegen `unknown_field` durchspielen | "Alle 34 untypisierten Schreib-Rümpfe in api.ts sind Feld für Feld gegen die Contracts-DTOs |
 | [B-251](B-251-foto-der-vokabelliste-in-den-store.md) | Ein Foto der Vokabelliste aus dem Buch landet im Vokabelspeicher | gegenstandslos durch B-470 (Buchfotos → geprüfte Wortliste → Vokabelspeicher über laden.py) und gemessen in B-459 (lokales Vision-Modell liest Buchseiten nicht verlässlich) → [B-470] |
 | [B-271](B-271-gewaehltes-profil-setzt-reihe.md) | Das zum Kind gewählte Profil setzt Reihe und Fach des KI-Creators | gegenstandslos durch B-473 (e94aa1e1): ohne --profile/--series nimmt der Agent das zum Kind beste Profil und dessen Reihe (AgentCommands.cs:507-513) |
-| [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | gegenstandslos seit der Neufaltung auf InitialCreate — die Migrationskette besteht (SchemaGuardTests, Tor G1b) aus genau einer Migration (Data/Migrations/20260803223259_InitialCreate.cs), keine Altmigration ist mehr vorhanden, die nicht-transaktional laufen könnte. Program.cs (Zeilen 471–484) behandelt eine DB der alten Kette ohnehin nicht als Migrationsfall, sondern wirft eine handlungsfähige Fehlermeldung — ein Upgrade-Pfad existiert bewusst nicht. |
 | [B-295](B-295-arcade-korpus-auf-englisch.md) | Der restliche Chrome-Korpus der Sohn-Arcade auf Englisch | geteilt (Lauf F): Rahmen-Bildschirme → B-304, Spielweg → B-305 → [B-304, B-305] |
+| [B-29](B-29-altmigration-transaktional.md) | Prüfauftrag: nicht-transaktionale Altmigration | gegenstandslos seit der Neufaltung auf InitialCreate — die Migrationskette besteht (SchemaGuardTests, Tor G1b) aus genau einer Migration (Data/Migrations/20260803223259_InitialCreate.cs), keine Altmigration ist mehr vorhanden, die nicht-transaktional laufen könnte. Program.cs (Zeilen 471–484) behandelt eine DB der alten Kette ohnehin nicht als Migrationsfall, sondern wirft eine handlungsfähige Fehlermeldung — ein Upgrade-Pfad existiert bewusst nicht. |
 | [B-30](B-30-i18n-rest.md) | i18n-Rest: Ledger-Texte, Platzhalter, interne Exceptions | "Der vermutete Rest existiert nicht: kein einziger `///`- oder `//`-Doku-Kommentar im Backend ist |
 | [B-314](B-314-fehlermeldungen-der-arcade-bleiben-deutsch.md) | Fehlermeldungen in der englischen Arcade bleiben deutsch | zusammengelegt: B-305 nennt GERMAN_PROBLEM_TEXT, soweit die Arcade ihn zeigt, schon in seinem Umfang → [B-305] |
 | [B-33](B-33-azure-publish-profile.md) | Azure-Secret `AZURE_WEBAPP_PUBLISH_PROFILE` fehlt | bewusste Nicht-Aufgabe für eine Code-Sitzung (Nutzer-Entscheidung) |
@@ -980,8 +987,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-374](B-374-baobab-vergleich-sammel-story.md) | Baobab-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; B-375 abgenommen, B-378 verworfen, die offenen Teil-Stories führt der Index einzeln, der Plan liegt in docs/baobab-vergleich-plan.md → [B-376, B-377] |
 | [B-376](B-376-sammelalbum-fuer-gems.md) | Ein Sammelalbum mit Karten-Sets für Gems statt einzelner Skins | Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): ein Sammelalbum für Gems trägt nichts zur Pflicht-Kernidee bei und überschneidet sich mit den Skins und B-221 |
 | [B-378](B-378-muendliche-abfrage-als-selbsteinschaetzung.md) | Prüfauftrag: eine mündliche Abfrage als Selbsteinschätzung ohne KI-Bewertung? | gegenstandslos: die Selbsteinschätzungs-Stufe gibt es schon (B-70), Vorlesen kommt mit B-252; eine Selbsteinschätzung, die auf den Leitner-Stand zählt, wäre ein Selbstbetrugs-Weg (Entscheidung im Auftrag des Nutzers, 2026-11-05) |
-| [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
 | [B-384](B-384-reihe-anlegen-bestaetigung-auf-dem-handy.md) | Prüfauftrag: sieht man „steht im Katalog" auf dem Handy, wenn man unten auf „Reihe anlegen" drückt? | gemessen 2026-11-13: bei 393x830 liegt die Unterkante des Meldungsplatzes nach 'Reihe anlegen' bei 507,75 px, also im Bild - die Vorbedingung der Entscheidung trifft nicht zu, kein Code noetig |
+| [B-38](B-38-mehrsprachige-oberflaeche.md) | Mehrsprachige Oberfläche (Deutsch, Englisch, Französisch) | "geteilt — ein Programm, keine Story (Entscheidung 8); siehe die recherchierte Grundlage unten und → [B-85, B-86, B-87] |
 | [B-391](B-391-birkenbihl-decoding-null-ist-500.md) | Ein Birkenbihl-Satz mit `"decoding": null` endet in einer 500 statt einer 400 | Für null-MEMBER widerlegt (implizites [Required] antwortet 400 validation_error mit dem Pfad in errors); für null-ELEMENTE einer Liste bestätigt – weiter in B-397. |
 | [B-434](B-434-schnellbonus-misst-die-lesezeit-der-loesung-mit.md) | Nach einem Fehler zählt die Lesezeit der Lösung als Antwortzeit der nächsten Karte | zusammengelegt mit B-530 – dieselbe Messstelle (elapsedSeconds ab der vorigen Review, PositionPracticeController.cs:418-420); B-530 ist die allgemeinere Fassung (seit B-526 jede Antwort mit Blatt, nicht nur Fehler) → [B-530] |
 | [B-503](B-503-lernstand-ueberlebt-loeschen.md) | Prüfauftrag: soll der Lernstand der Kinder das Löschen einer Übung oder Vokabel überleben? | Nutzer-Entscheidung 2026-11-12: Löschen bleibt hart. Nur ein Lehrplan-freier Inhalt ist löschbar, die Lösch-Fragen nennen den Verlust (B-499/B-502), und die Antwort-Historie je Wort (ItemReviewEvent, SetNull) überlebt – ein späterer Lernstand je Wort ließe sich aus ihr nachrechnen. |

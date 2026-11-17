@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/student, rolle/supervisor]
 aliases: [Kind-Tagessicht, student/today, Tagesbox über alle Pläne]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -12,6 +12,8 @@ quelle: B-539 (Teil B, Entscheidung 9)
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-606 · Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie
@@ -142,3 +144,9 @@ für den Weg von der Startseite in die Position. Reviewer: `pugling-reviewer`, `
 - 2026-11-17 · Verifikation: `dotnet build` 0/0, `dotnet test -c Release` 1776/1776, `dotnet format --verify-no-changes`
   still, `tsc -b` sauber, Vitest 1150/1150. Ein roter Lauf des Test-Tors (`SecurityHardeningTests.Login_mit_unbekannter_Id…`,
   Zeitvergleich) fiel unter doppelter Last (zwei volle Suiten parallel, 8 min); einzeln 3/3 grün.
+- 2026-11-17 · abgenommen in Sprint 83 (14fd6ae6): Rollengang `frontend/e2e/sprint-83-rollengang.spec.ts` mit `pfad.spec.ts`
+  und `truhe.spec.ts` **3 passed** gegen frisch gestarteten Server (Ausweichports 5201/5174); volle Playwright-Suite am
+  Endstand vor der Spec-Korrektur **166 passed, 1 failed** (die neue Spec selbst: sie suchte den Übungstitel auf der
+  Übungsseite, die ihn nicht zeigt – Fund 5 von 5, Zusicherung auf die Karte umgestellt); `dotnet test` 1776, Vitest 1150.
+  Zwei Pläne sind im Browser erst mit B-539 Teil A sichtbar – bis dahin tragen `KindTagessichtTests` und
+  `tagessichtWeg.test.tsx` die Zwei-Pläne-Fälle. Protokoll `docs/pm-sitzung-2026-11-17-nachtlauf.md`.
