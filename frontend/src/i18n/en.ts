@@ -377,6 +377,7 @@ export const en = {
       onToTest: "🎯 On to the test",
       comboBonus: "+{{bonus}} 🪙 bonus",
       solution: "Answer: {{expected}}",
+      solutionLabel: "Answer:",
       wrong: "Not quite.",
       cardOf: "Card {{n}} / {{total}}",
       easier: "Make it easier",

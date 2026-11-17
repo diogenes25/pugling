@@ -676,4 +676,5 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .lektion-blatt.richtig .lektion-blatt-titel { color: var(--lime); }
 .lektion-blatt.falsch .lektion-blatt-titel { color: #ff96aa; }
 .lektion-blatt .rev { font-size: 18px; font-weight: 800; }
+.lektion-fehlerstelle { background: none; color: var(--gold); text-decoration: underline 3px; text-underline-offset: 4px; }
 .lektion-blatt .sub { color: var(--ink); opacity: .85; }

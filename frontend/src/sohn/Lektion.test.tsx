@@ -186,15 +186,34 @@ describe("Blatt", () => {
     expect(blatt.textContent).toContain("Nächste Fälligkeit: 16.11.2026");
   });
 
-  it("zeigt bei falsch die eigene Antwort durchgestrichen und die Lösung, aber keine Münzen", () => {
+  it("zeigt bei falsch die eigene Antwort lesbar und die Lösung, aber keine Münzen", () => {
     // Rot, wenn die eigene Antwort oder die Lösung fehlte – das ist die Lehre der Karte (B-420).
     // `muenzen: 2` mit Absicht: nur so trägt die Zusicherung „keine Münzen“ etwas – sie fällt, wenn ein falsches Blatt
     // einen Betrag zeigte, den der Server (aus welchem Grund auch immer) mitlieferte.
     const blatt = zeige(r({ richtig: false, gegeben: "die Strasse", loesung: "die Straße", muenzen: 2 }));
     expect(blatt.className).toContain("falsch");
-    expect(blatt.querySelector("s")!.textContent).toBe("die Strasse");
+    // Rot, wenn die Antwort wieder durchgestrichen dastünde – das machte sie schwer lesbar.
+    expect(blatt.querySelector("s")).toBeNull();
+    expect(blatt.textContent).toContain("Deine Antwort: die Strasse");
     expect(blatt.textContent).toContain("Lösung: die Straße");
     expect(blatt.textContent).not.toContain("🪙");
+  });
+
+  // Bei einem Schreibfehler sagt das rote Blatt schon „falsch geschrieben“; die eigene Antwort fällt weg, die Lösung
+  // markiert die Stelle. Rot, wenn die Antwortzeile stehen bliebe oder der falsche Buchstabe nicht markiert wäre.
+  it("lässt bei einem Schreibfehler die eigene Antwort weg und markiert die Stelle in der Lösung", () => {
+    const blatt = zeige(r({ richtig: false, gegeben: "vet", loesung: "wet", falschGeschrieben: true }));
+    expect(blatt.textContent).toContain("Falsch geschrieben");
+    expect(blatt.textContent).not.toContain("Deine Antwort");
+    expect(blatt.textContent).toContain("Lösung: wet");
+    expect([...blatt.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["w"]);
+  });
+
+  // Rot, wenn ein nicht als Schreibfehler gemeldetes falsches Wort Markierungen bekäme – dort wären sie Rauschen.
+  it("markiert nichts, wenn die Antwort ein anderes Wort ist", () => {
+    const blatt = zeige(r({ richtig: false, gegeben: "vet", loesung: "wet" }));
+    expect(blatt.querySelector("mark")).toBeNull();
+    expect(blatt.textContent).toContain("Deine Antwort: vet");
   });
 
   it("sagt ohne Lösung vom Server nur ab", () => {

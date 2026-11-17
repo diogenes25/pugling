@@ -12,6 +12,7 @@ import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { CueBox } from "../components/CueBox";
 import { choicesClass } from "../lib/choices";
 import { arcadeDatum } from "../lib/datum";
+import { markiereSchreibfehler } from "../lib/schreibfehler";
 import type { PracticeCard } from "../lib/types";
 import type { Skin } from "../lib/skins";
 import type { Aufgabenform } from "./aufgabenform";
@@ -191,7 +192,7 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
 /** Was das Blatt nach einer vom Server geprüften Antwort zeigt. */
 export interface Rueckmeldung {
   richtig: boolean;
-  /** Die eigene Antwort – bei falsch durchgestrichen neben der Lösung. */
+  /** Die eigene Antwort – bei falsch neben der Lösung, außer sie ist nur falsch geschrieben (dann markiert die Lösung den Fehler). */
   gegeben: string;
   /** `null`, wenn der Server keine nennt: in einer Menge wäre sie willkürlich und verriete einen offenen Eintrag. */
   loesung: string | null;
@@ -219,6 +220,13 @@ export interface Rueckmeldung {
    * nächsten Runde wieder; das steht bei richtig UND falsch da, denn „richtig“ mit Hilfe ist noch nicht erledigt.
    */
   naechsteRunde?: boolean;
+}
+
+/** Die Lösung; bei einem einfachen Verschreiben sind die Buchstaben hervorgehoben, an denen es lag. */
+function Loesung({ r, loesung }: { r: Rueckmeldung; loesung: string }) {
+  const stuecke = r.falschGeschrieben ? markiereSchreibfehler(r.gegeben, loesung) : null;
+  if (!stuecke) return <>{loesung}</>;
+  return <>{stuecke.map((s, k) => (s.falsch ? <mark key={k} className="lektion-fehlerstelle">{s.text}</mark> : s.text))}</>;
 }
 
 const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.praise4"] as const;
@@ -261,9 +269,10 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
         </>
       ) : (
         <>
-          {/* Aufgegeben (B-598) gibt es keine eigene Antwort zum Durchstreichen. */}
-          {r.gegeben && <div className="sub">{t("practice.yourAnswerWas")} <s>{r.gegeben}</s></div>}
-          <div className="rev">{r.loesung ? t("practice.solution", { expected: r.loesung }) : t("practice.wrong")}</div>
+          {/* Nicht durchgestrichen: das machte das Wort schwer lesbar, und „falsch“ sagt schon das rote Blatt. Bei einem
+              Schreibfehler fällt die Zeile ganz weg – die Lösung markiert dann die Stelle. Aufgegeben (B-598) gibt es keine. */}
+          {r.gegeben && !r.falschGeschrieben && <div className="sub">{t("practice.yourAnswerWas")} {r.gegeben}</div>}
+          <div className="rev">{r.loesung ? <>{t("practice.solutionLabel")} <Loesung r={r} loesung={r.loesung} /></> : t("practice.wrong")}</div>
           {r.nochmal && <div className="sub">{t("lektion.learnAgain")}</div>}
         </>
       )}

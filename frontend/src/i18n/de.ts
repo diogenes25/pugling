@@ -395,6 +395,7 @@ export const de = {
       onToTest: "🎯 Weiter zum Test",
       comboBonus: "+{{bonus}} 🪙 Bonus",
       solution: "Lösung: {{expected}}",
+      solutionLabel: "Lösung:",
       wrong: "Leider nicht.",
       cardOf: "Karte {{n}} / {{total}}",
       easier: "Mach's mir leichter",

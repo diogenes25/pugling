@@ -407,11 +407,11 @@ describe("SohnPractice, falsche Antwort", () => {
 
     expect(screen.getByText("eins")).toBeTruthy();
     expect(screen.queryByText("zwei")).toBeNull();
-    expect(screen.getByText("die Strasse").tagName).toBe("S");
     // B-439: die Lösung steht IN der Karte neben der eigenen Antwort – nicht nur in der Ansage-Region, die hier sr-only ist.
     const held = mistakeCard();
     expect(within(held).getByText("Lösung: die Straße")).toBeTruthy();
-    expect(within(held).getByText("die Strasse").tagName).toBe("S");
+    // Lesbar, nicht durchgestrichen – „falsch“ sagt schon das rote Blatt.
+    expect(within(held).getByText("Deine Antwort: die Strasse").tagName).not.toBe("S");
     expect(toastRegion().classList.contains("sr-only")).toBe(true);
     // Der Fokus steht auf „Weiter" – Enter trägt das Kind weiter, ohne erst zu zielen.
     const weiter = screen.getByRole("button", { name: de.sohn.practice.next });
@@ -419,7 +419,7 @@ describe("SohnPractice, falsche Antwort", () => {
 
     fireEvent.click(weiter);
     expect(await screen.findByText("zwei")).toBeTruthy();
-    expect(screen.queryByText("die Strasse")).toBeNull();
+    expect(screen.queryByText("Deine Antwort: die Strasse")).toBeNull();
     // Zurück ins Antwortfeld der nächsten Karte – sonst müsste das Kind erst hineinklicken (Review-Fund).
     expect(document.activeElement).toBe(screen.getByRole("textbox"));
   });
@@ -505,7 +505,10 @@ describe("SohnPractice, falsche Antwort", () => {
 
     const held = mistakeCard();
     expect(within(held).getByText(de.sohn.test.misspelled)).toBeTruthy();
-    expect(within(held).getByText("Lösung: clinic")).toBeTruthy();
+    // Die eigene Antwort fällt weg; die Lösung markiert den verschriebenen Buchstaben.
+    expect(held.querySelector(".rev")!.textContent).toBe("Lösung: clinic");
+    expect(held.querySelector("mark")!.textContent).toBe("c");
+    expect(within(held).queryByText(/Deine Antwort/)).toBeNull();
     expect(within(held).queryByText(de.sohn.lektion.almost)).toBeNull();
     expect(toastRegion().textContent).toBe("Falsch geschrieben. Lösung: clinic");
   });
