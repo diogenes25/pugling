@@ -68,8 +68,8 @@ Gemessen am 2026-11-17 auf `main` (Stand `74d2f9f5`), Pfade relativ zu `backend/
 ## Offene Punkte
 
 Keine Produktfragen offen; entschieden in [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md). Die rückwirkende Wirkung einer
-Stundenplan-Änderung hat der Vater am 2026-11-17 entschieden (Entscheidung 8). Eine Annahme dieser Schätzung ist
-weiter **nicht bestätigt** und steht unter „Risiken“ (Teilnahme an der Budget-Verteilung aus B-618).
+Stundenplan-Änderung hat der Vater am 2026-11-17 entschieden (Entscheidung 8). Die Teilnahme an der
+Budget-Verteilung aus B-618 ebenso (Entscheidung 9). Damit ist keine Annahme dieser Schätzung mehr unbestätigt.
 
 ## Entscheidungen
 
@@ -121,6 +121,12 @@ Entscheidung 12 abgelöst.
    Fairness wie bei einem abgeschalteten Plan. *Kosten:* Jede Stundenplan-Änderung löst eine Abrechnung aus, und
    ein Vater kann eine verpasste Pflicht nicht mehr nachträglich durch einen Eintrag „scharf stellen“; ein
    versehentlich gelöschter und neu angelegter Eintrag gilt für den Tag dazwischen als gelöscht.
+9. **Eine Stundenplan-Position nimmt an jedem Tag an der Verteilung neuer Wörter teil**, auch an ihren
+   pflichtfreien Tagen ([B-618](B-618-faecher-verteilung-backend.md)). Entschieden vom Vater am 2026-11-17 beim
+   Schätzen. *Begründung:* Sie bleibt an diesen Tagen spielbar (Entscheidung 2), und die Dosis regelt das
+   Spielen, nicht die Pflicht; so ändert sich die Verteilung nicht von Wochentag zu Wochentag. *Kosten:* An
+   pflichtfreien Tagen hält die Position ihren Teil am Anteil des Fachs, auch wenn das Kind sie nicht spielt;
+   diese neuen Wörter werden an dem Tag nicht eingeführt und nicht auf andere Positionen umgelegt.
 
 ## Akzeptanzkriterien
 
@@ -177,9 +183,10 @@ und ein Feld am Kind. Als Ganzes mit der Oberfläche wäre Teil (c) XL, darum de
 5. **Obergrenze über alle aktiven Pläne und sieben Wochentage.** Die Prüfung muss Positionen mit Taktung
    „Stundenplan“ je Wochentag zählen und `Daily` an allen; `Weekly` zählt nicht als Tagespflicht (Annahme,
    aus „höchstens N Pflicht-Positionen pro Tag“ gelesen).
-6. **Wechselwirkung mit B-618.** *Annahme, vom Vater nicht bestätigt:* Eine Stundenplan-Position bleibt an
-   ihren pflichtfreien Tagen spielbar (B-615 Entscheidung 6) und nimmt deshalb an jedem Tag an der
-   Budget-Verteilung neuer Wörter teil. Wird B-618 zuerst gebaut, ist diese Stelle nachzusehen.
+6. **Wechselwirkung mit B-618.** Entschieden (Entscheidung 9): Eine Stundenplan-Position nimmt an
+   jedem Tag an der Budget-Verteilung neuer Wörter teil. Das Risiko bleibt die Reihenfolge des Baus: Wird
+   B-618 zuerst gebaut, muss seine Verteilungsrechnung die neue Taktung wie jede andere Position behandeln;
+   wird diese Story zuerst gebaut, gibt es noch nichts zu verteilen.
 7. **Zeit/UTC.** „Wochentag des Fachs“ rechnet in UTC wie die übrige Tageslogik; nahe Mitternacht weicht der
    lokale Kalendertag ab.
 
@@ -216,3 +223,5 @@ und ein Feld am Kind. Als Ganzes mit der Oberfläche wäre Teil (c) XL, darum de
   `backend`, Migration ja, Vertragsbruch ja.
 - **2026-11-17** — **Entscheidung des Vaters:** Eine Stundenplan-Änderung wirkt nur ab heute, nie rückwirkend
   (Entscheidung 8); AK 8 ist damit bestätigt. Weiter nicht bestätigt: die Annahme zur Budget-Verteilung (Risiko 6).
+- **2026-11-17** — **Entscheidung des Vaters:** Eine Stundenplan-Position nimmt an jedem Tag an der Verteilung
+  neuer Wörter teil (Entscheidung 9). Damit ist keine Annahme der Schätzung mehr unbestätigt.

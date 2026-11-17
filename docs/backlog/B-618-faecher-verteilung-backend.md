@@ -284,3 +284,6 @@ kennen muss.
   AK 1 bis 12 von dort übernommen, Ist-Stand um die Lesestellen der Tagesdosis ergänzt (Stand `bf5fd841`).
   Geschätzt: L, `backend`, Migration ja, Vertragsbruch nein.
 - **2026-11-17** — B-615 ist geteilt worden; sein Teil (c), auf den Risiko 6 verweist, ist jetzt [B-621](B-621-stundenplan-pflicht-backend.md) (Backend) und [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) (Frontend). Die dort offene Frage, ob eine Stundenplan-Position an pflichtfreien Tagen an der Verteilung teilnimmt, steht in B-621 als Annahme (ja), vom Vater nicht bestätigt.
+- **2026-11-17** — **Entscheidung des Vaters** (B-621 Entscheidung 9): Eine Position mit Taktung „Stundenplan“
+  nimmt an jedem Tag an der Verteilung teil, auch an pflichtfreien Tagen. Risiko 6 ist damit beantwortet: Die
+  Verteilungsrechnung behandelt die Taktung nicht gesondert.
