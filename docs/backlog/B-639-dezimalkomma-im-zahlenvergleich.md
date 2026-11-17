@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt]
+tags: [typ/story, status/geschaetzt]
 aliases: []
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Mathe in die App; Material raw/Math/lambacher-schweizer-9-sh-pugling/md)"
 entgangen_bei: []
 grund: ""
@@ -80,6 +80,52 @@ Breiter als die Idee vermutete – das Komma ist nur das sichtbarste Symptom:
 6. Der Rechen-Drill wertet eine gerundete Lösung mit Komma wie mit Punkt.
 7. Die Text-Typen (Vokabel, Lückentext, Liste) vergleichen unverändert – „2,5“ als Vokabel-Antwort wird nicht zur Zahl.
 
+## Schätzung
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector`: ein Eingriff an einer geteilten Stelle (`AnswerGrader`), ein
+gemeinsamer Zahlen-Parser, kein Schema, kein neues Vertragsfeld.
+
+- **`migration: nein`** — die Lösung steht weiter als `decimal` im `ConfigJson`; nichts am Schema.
+- **`vertragsbruch: nein`** — das Atom `ContentItem` ist intern (`backend/Pugling.Api/Services/Shared/ExerciseContentProvider.cs:43`),
+  in `Pugling.Contracts` kommt es nicht vor. Ein Zahlen-Kennzeichen daran ändert keinen Vertrag.
+- **`wo: backend`** — die Sohn-App schickt die Eingabe als Text; es gibt dort kein Zahlenfeld, das ein Komma
+  verschluckt (`type="number"` nur im Shop, `frontend/src/sohn/SohnShop.tsx:297`).
+
+### Risiken
+
+- **Alle Spielpfade laufen durch `AnswerGrader.Matches(given, item)`** – Üben
+  (`PositionPracticeController.cs:484`, `:669`), Test (`PositionTestsController.cs:288`, `:402`), Vorschau
+  (`ExercisePreviewService.cs:94`), Mengen-Zuordnung (`PositionPlayService.cs:379`). Das ist der Hebel (eine Stelle
+  genügt) und die Gefahr (ein Fehler trifft jeden Typ). AK 7 schützt die Text-Typen.
+- **`IsMisspelled` misst Buchstabenabstand** (`AnswerGrader.cs:47`): „2,4“ statt „2,5“ gälte als „richtig, nur
+  verschrieben“. Für Zahlen-Atome muss das ausgeschaltet sein – eine falsche Zahl ist kein Tippfehler.
+- **Minuszeichen:** eine Tablet-Tastatur kann das typografische „−“ (U+2212) liefern. Der Parser nimmt es an, wie
+  `Normalize` es für den Apostroph tut (B-440). Kein eigenes Akzeptanzkriterium, aber ein Testfall.
+- **Nicht enthalten:** eine Zifferntastatur in der Sohn-App (`inputMode="decimal"`). Zeigt der Rollengang, dass sie
+  fehlt, wird das eine eigene Frontend-Story.
+
+### Angriffsplan
+
+1. Ein Zahlen-Parser an einer Stelle (Punkt und Komma dezimal, kein Tausendertrenner, Vorzeichen, U+2212);
+   `NumericMatch` nutzt ihn – damit sind Katalog-Check und Rechen-Drill erledigt (AK 1–3, 5, 6 für Pfad 1).
+2. `ContentItem` bekommt die Zahl und ihre Toleranz als optionales Kennzeichen; `ArithmeticExerciseType.ItemsOf`
+   setzt es.
+3. `AnswerGrader.Matches(given, item)` vergleicht ein Zahlen-Atom über denselben Parser; `IsMisspelled` gibt für
+   Zahlen-Atome `false` zurück.
+4. `dotnet build Pugling.sln` und `dotnet format Pugling.sln` vor dem Commit.
+
+### Testweg
+
+- `AnswerGraderTests` – Theorie über die Schreibweisen („2,5“, „2.5“, „2.50“, „+3“, „−0,4“, „1.234“, „25“, leer,
+  „drei“) gegen ein Zahlen-Atom, dazu Toleranz-Grenzfälle und `IsMisspelled`. Rote Probe: jeder Fall fällt heute
+  einzeln, außer „2.5“ und „25“ – die beiden sind als Absichtserklärung zu beschriften.
+- `ExerciseCheckEndpointTests` – Katalog-Check mit Komma (AK 1, 2) und Rechen-Drill (AK 6).
+- `PositionPracticeFlowTests` und `PositionTestFlowTests` – eine Rechen-Position mit Lösung 2,5 und mit Toleranz
+  wird mit Komma gespielt (AK 1, 4); Aufbau über `TestApi.CreateArithmeticExerciseAsync`.
+- AK 7: die vorhandenen Vokabel-, Lückentext- und Listen-Tests bleiben unverändert grün; dazu ein Fall, der „2,5“
+  als Vokabel-Antwort gegen die Lösung „2.5“ weiter ablehnt.
+- Vor der Abnahme: Agent `pugling-reviewer` und der Rollengang als Sohn an einer Rechen-Position.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Konzept „Mathe in die App" aus dem Chat, Lambacher Schweizer 9, Kapitel IV).
@@ -87,3 +133,5 @@ Breiter als die Idee vermutete – das Komma ist nur das sichtbarste Symptom:
   gelesen; Lücke ist breiter (Textvergleich und wirkungslose Toleranz beim Spielen).
 - **2026-11-17** — gegrillt (Dialog): beide Trennzeichen dezimal, kein Tausendertrenner; ein numerischer Vergleich
   für beide Pfade, Toleranz damit auch beim Spielen. Akzeptanzkriterien final (7).
+- **2026-11-17** — geschaetzt: M, backend, keine Migration, kein Vertragsbruch; ein Eingriff im `AnswerGrader`, der alle
+  Spielpfade trägt.
