@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student, rolle/creator]
 aliases: [Fächermix, Tagesmission über Fächer, Fach-Förderstufe, Stundenplan als Pflicht]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
 groesse: ""
@@ -115,50 +115,87 @@ In der echten DB (read-only, 2026-11-17):
 4. **Ein Gesamtrahmen pro Tag.** Mit mehreren Fächern addieren sich die Pflichten. Ohne Obergrenze wird die
    Tagesmission zu lang, und an Tagen mit drei Fächern im Stundenplan stapelt sich alles.
 
-## Entwurf der Akzeptanzkriterien
+## Entscheidungen
 
-Vorläufig. Sie hängen an den Entscheidungen zu den offenen Punkten.
+Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlung gewählt.
 
-1. Der Vater setzt je Kind und Fach eine Förderstufe (Vorschlag: `schwach` / `normal` / `stark`). Sie ist per
-   API lesbar und änderbar und im Vater-Web am Kind sichtbar.
-2. Die Förderstufe wirkt auf die **Tagesdosis** des Fachs, zum Beispiel über einen Faktor auf `NewItemsPerDay`
-   und darauf, wie viele Positionen des Fachs täglich Pflicht sind. Ein Regressionstest zeigt bei gleichem Plan
-   für `schwach` mehr neue Wörter pro Tag als für `stark`.
-3. Eine Position kann die Taktung „Stundenplan“ tragen: Pflicht nur an den Wochentagen, an denen das Fach im
-   Stundenplan des Kindes steht, und am Tag davor. An anderen Tagen keine Pflicht und kein Malus.
-   Regressionstest: Fach am Dienstag ⇒ Pflicht Montag und Dienstag, Mittwoch kein Malus.
-4. Kein Stundenplan-Eintrag für das Fach ⇒ die Position verhält sich wie `Daily` (oder wird abgewiesen,
-   je nach Entscheidung), aber nie lautlos pflichtfrei.
-5. Die Kind-Tagessicht (`ComputeChildDayAsync`) zeigt die Pflichten nach Fach gruppiert, mit dem Hinweis
-   „morgen Englisch“ für Stundenplan-Pflichten.
+1. **Dreiteilung.** (a) Inhalt und Plan für ein weiteres Fach, (b) Stärke je Fach, (c) Pflicht nach Stundenplan.
+   Sie werden getrennt gebaut. *Begründung:* (a) bringt den Fächermix sofort und ohne Code, weil die Mechanik seit
+   B-539/B-606 steht. *Kosten:* drei Stories, deren Wechselwirkung (Dosis × Taktung × Obergrenze) beim Schätzen von
+   (b) und (c) abgestimmt werden muss. Die Teil-Stories legt der Schritt `geschaetzt` an, nicht diese Bearbeitung.
+2. **Als Nächstes Friedrich Englisch.** *Begründung:* seine zweite Baustelle, und die Sprach-Übungstypen passen.
+   Weg: Englischbuch fotografieren, `lehrwerk-aufbereiten`, dann ein Englisch-Plan neben Plan 8. *Kosten:* der
+   Vater fotografiert. Latein für Theodor und Mathe für Friedrich folgen später (Mathe fehlen passende Übungstypen).
+3. **Die Stärke lebt am Kind je Fach.** *Begründung:* Sie überdauert Unit- und Planwechsel, und der KI-Creator
+   kann sie beim Erzeugen eines Plans lesen. *Kosten:* eine neue Tabelle (Kind × Fach) mit Migration an die Kette.
+4. **Wirkung der Stärke** in drei Stufen: `schwach` erhöht die Tagesdosis neuer Wörter (Richtwert ×1,5),
+   `normal` lässt die eingestellte Dosis stehen, `stark` macht nur die **fälligen Wiederholungen** zur Pflicht,
+   neue Wörter sind dann Kür. *Begründung:* Ein gutes Fach soll nur „auf dem Laufenden“ halten, ein schwaches
+   mehr Stoff bekommen. *Kosten:* Die Pflicht-Rechnung je Position muss die Stärke des Fachs kennen, und die
+   Fachzuordnung einer Position läuft über den Plan (seit B-539 trägt jeder Plan ein Fach).
+5. **Der Stundenplan erzeugt eine Pflicht mit Malus.** Das **kehrt die Entscheidung G-7 aus B-250 um**
+   (2026-10-23: nur Reihenfolge und Hervorhebung). B-250 wird `verworfen` mit `ersetzt_durch: [B-615]`.
+   *Begründung:* Die Kernidee der App ist, dass der Vater Lernen erzwingt; die Vorbereitung auf die Schulstunde
+   ist genau so eine Pflicht. *Kosten:* eine weitere Pflichtquelle, die den Tag verlängert (siehe Entscheidung 7)
+   und Malus kosten kann.
+6. **Eigene Taktung „Stundenplan“** an der Position, neben `None`/`Daily`/`Weekly`: Pflicht am Wochentag des
+   Fachs laut Stundenplan und am Tag davor, an den übrigen Tagen bleibt die Position spielbar ohne Pflicht.
+   *Begründung:* eigene Periode, ehrlich abrechenbar, `Daily` bleibt unverändert. *Kosten:* neuer Enum-Wert im
+   Vertrag (Vertragsbruch für Clients, die die Liste fest kennen), eigene Perioden in `ClosedPeriods`, und die
+   Malus-Abrechnung muss den Stundenplan lesen.
+   **Nachfrage:** Steht das Fach nicht im Stundenplan des Kindes, **weist der Server die Taktung ab**. Wird der
+   Eintrag später gelöscht, gilt die Position wie `Daily`, damit sie nie lautlos pflichtfrei wird. *Kosten:*
+   eine Querprüfung beim Anlegen und eine Rückfallregel bei der Abrechnung.
+7. **Obergrenze: höchstens N Pflicht-Positionen pro Tag**, je Kind vom Vater gesetzt (Vorschlag 5). Der Server
+   weist beim Anlegen oder Ändern ab, was die Grenze an **irgendeinem** Wochentag überschreiten würde (wegen der
+   Stundenplan-Taktung ist die Zahl je Wochentag verschieden). *Begründung:* ohne Schätzmodell prüfbar.
+   *Kosten:* Prüfung über alle aktiven Pläne des Kindes und alle sieben Wochentage, und ein Stundenplan-Eintrag,
+   der die Grenze nachträglich reißt, braucht eine eigene Regel (beim Schätzen klären).
+8. **Die Stärke setzt zuerst nur der Vater.** Ein Vorschlag aus Klassenarbeitsnoten und Trefferquoten wird eine
+   Folge-Story. *Begründung:* Teil (b) bleibt klein. *Kosten:* Der Vater muss die Stärke selbst pflegen.
+
+## Akzeptanzkriterien
+
+Final, nach Teilen. Je Fall die Änderung, die seinen Test rot macht.
+
+**Teil (a), Inhalt, ohne Code**
+
+1. Friedrichs Englischbuch liegt als Reihe mit Units und Wortlisten in der echten DB, das Lehrwerk hängt am Kind,
+   und ein aktiver Englisch-Plan läuft neben Plan 8. `student/today` für Child 3 zeigt Pflichten aus beiden
+   Fächern. *Rot, wenn nur ein Fach erscheint.*
+
+**Teil (b), Stärke je Fach**
+
+2. Der Vater setzt je Kind und Fach `schwach`/`normal`/`stark` (Vorgabe `normal`). Sie ist per API lesbar und
+   änderbar, im Vater-Web am Kind sichtbar, und ein fremdes Kind liefert 404. *Rot ohne Eigentumsprüfung.*
+3. Bei gleichem Plan führt `schwach` mehr neue Wörter pro Tag ein als `normal`. *Rot, wenn die Stärke nicht in die
+   Tagesdosis eingeht.*
+4. Bei `stark` ist die Tagespflicht mit den fälligen Wiederholungen erfüllt, ohne dass neue Wörter eingeführt
+   werden. Neue Wörter bleiben spielbar. *Rot, wenn die Pflicht weiter neue Wörter verlangt.*
+
+**Teil (c), Stundenplan-Pflicht**
+
+5. Fach am Dienstag ⇒ eine Position mit Taktung „Stundenplan“ ist Montag und Dienstag Pflicht; ein am Montag
+   verpasstes Ziel kostet Malus, Mittwoch kostet nichts. *Rot ohne eigene Perioden.*
+6. Taktung „Stundenplan“ für ein Fach ohne Stundenplan-Eintrag ⇒ `400 validation_error`. Wird der Eintrag danach
+   gelöscht, rechnet die Position wie `Daily`. *Rot, wenn sie dann pflichtfrei wird.*
+7. Überschreitet ein neuer Pflicht-Eintrag die Obergrenze an einem Wochentag ⇒ `400` mit maschinenlesbarem Code.
+   *Rot ohne Prüfung über alle Wochentage.*
+8. Die Kind-Tagessicht zeigt Stundenplan-Pflichten mit Hinweis auf die Stunde („morgen Englisch“). *Rot, wenn die
+   Pflicht ohne Grund erscheint.*
 
 ## Offene Punkte
 
-Jeweils mit meiner Empfehlung.
+Alle in der Grill-Runde vom 2026-11-17 entschieden.
 
-1. **Teilen?** Die Idee hat drei unabhängige Teile: (a) Inhalt und Pläne für die weiteren Fächer,
-   (b) Förderstufe je Fach, (c) Stundenplan-Pflicht. *Empfehlung:* teilen. (a) ist sofort machbar und bringt
-   den Mix schon morgen. (b) und (c) werden je eine Story, (c) zusammen mit B-250 und B-248.
-2. **Welche Fächer zuerst?** *Empfehlung:* Friedrich Englisch (zweite Baustelle, Lehrwerk fotografieren und
-   mit `lehrwerk-aufbereiten` laden). Mathe passt schlecht zu den heutigen Übungstypen, die auf Sprache
-   zugeschnitten sind. Für Theodor erst das Fach Latein anlegen.
-3. **Wo lebt die Stärke?** Am Kind je Fach (neue Tabelle `ChildSubject` o. ä.) oder am Plan (der Plan eines
-   schwachen Fachs bekommt mehr Dosis)? *Empfehlung:* am Kind je Fach. Sie überdauert den Wechsel der Unit,
-   und der KI-Creator kann sie beim Erzeugen eines Plans lesen.
-4. **Stundenplan als Pflicht oder nur als Reihenfolge?** Das kehrt die Entscheidung G-7 aus B-250 um.
-   *Empfehlung:* als Pflicht, wie jetzt gewünscht. Dann wird B-250 durch diese Story ersetzt
-   (`verworfen` mit `ersetzt_durch`).
-5. **Was heißt „Pflicht am Fachtag und am Vortag“?** Eine eigene Taktung an einer Position, oder ein Zuschlag
-   (zum Beispiel doppelte Dosis) auf eine ohnehin tägliche Position? *Empfehlung:* eigene Taktung. Sie lässt
-   sich mit eigener Periode ehrlich abrechnen, und `Daily` bleibt wie es ist.
-6. **Fach eines guten Kindes:** Reicht dort eine Wiederholung der fälligen Leitner-Karten ohne neue Wörter
-   („auf dem Laufenden bleiben“)? *Empfehlung:* ja, `stark` heißt: nur fällige Wiederholungen sind Pflicht,
-   neue Wörter sind Kür.
-7. **Obergrenze pro Tag:** feste Zahl Pflicht-Positionen (zum Beispiel höchstens 5) oder eine Zeitschätzung
-   (zum Beispiel 20 Minuten)? *Empfehlung:* Zahl der Positionen, weil sie sich ohne Schätzmodell prüfen lässt.
-8. **Woher kommt die Stärke?** Nur vom Vater gesetzt, oder später auch aus Noten (Klassenarbeiten tragen schon
-   Noten) und Trefferquoten vorgeschlagen? *Empfehlung:* zuerst nur vom Vater. Ein Vorschlag aus den Daten
-   wird eine Folge-Story.
+1. ~~**Teilen?**~~ → Entscheidung 1.
+2. ~~**Welche Fächer zuerst?**~~ → Entscheidung 2.
+3. ~~**Wo lebt die Stärke?**~~ → Entscheidung 3.
+4. ~~**Stundenplan als Pflicht oder nur als Reihenfolge?**~~ → Entscheidung 5.
+5. ~~**Was heißt „Pflicht am Fachtag und am Vortag“?**~~ → Entscheidung 6.
+6. ~~**Fach eines guten Kindes**~~ → Entscheidung 4.
+7. ~~**Obergrenze pro Tag**~~ → Entscheidung 7.
+8. ~~**Woher kommt die Stärke?**~~ → Entscheidung 8.
 
 ## Verlauf
 
@@ -167,3 +204,4 @@ Jeweils mit meiner Empfehlung.
   gebaut. Die Lücken sind Inhalt, Stärke je Fach und Stundenplan-Pflicht. Widerspruch zur Entscheidung G-7 in
   B-250 als offener Punkt 4 aufgenommen.
 - **2026-11-17** — Id von B-611 auf B-615 geändert (B-611 war gleichzeitig von einer parallelen Sitzung vergeben).
+- **2026-11-17** — gegrillt im Chat mit dem Vater: acht Entscheidungen plus eine Nachfrage, AKs final; G-7 aus B-250 umgekehrt, B-250 verworfen.

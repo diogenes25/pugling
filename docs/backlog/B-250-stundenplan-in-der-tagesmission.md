@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Stundenplan in der Tagesmission]
-status: idee
+status: verworfen
 prio: P3
 art: Wunsch
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: docs/knowunity-vergleich-plan.md#wo-knowunity-weiter-ist
 unverifiziert: true
-grund: ""
-ersetzt_durch: []
+grund: "ersetzt – Entscheidung G-7 (Stundenplan nur Reihenfolge) am 2026-11-17 vom Vater umgekehrt: der Stundenplan erzeugt jetzt eine Pflicht mit Malus, siehe B-615 Entscheidungen 5 und 6"
+ersetzt_durch: [B-615]
 ---
 
 # B-250 · Der Stundenplan gewichtet die Tagesmission
@@ -30,3 +30,4 @@ Sortierlogiken entstehen. Voraussetzung: die Position kennt ihr Fach (über die 
 - **2026-10-23** — Nachprüfung in der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)): besteht (`Timetable` außer im eigenen Controller nur im `SubjectsController` referenziert). Haken: das Fach hängt nur optional an der Reihe (`CurriculumEntities.cs:42`) – Positionen ohne Fach fallen aus der Gewichtung.
 - **2026-10-23** — **Entscheidung des Nutzers** in der Grill-Runde der Backlog-Sichtung 2026-10-23 ([Protokoll](../pm-sitzung-2026-10-23-backlog-sichtung.md)) (G-7): Der Stundenplan bewirkt **nur Reihenfolge und Hervorhebung**. Positionen, deren Fach morgen auf dem Plan steht, rücken in der Queue (B-220) nach vorn. An der Pflicht ändert er nichts. Die Sortierung sitzt im Queue-Endpunkt aus B-220, sodass keine zweite Sortierlogik entsteht. Positionen ohne Fach an der Reihe fallen aus der Gewichtung. **Freigabe des Nutzers (Autonomer Modus, Opt-in, erteilt am 2026-10-23 für alle an diesem Tag im Dialog entschiedenen Stories):** ein Nachtlauf darf diese Story auf Grundlage der Entscheidungen selbst ausformulieren, schätzen und bauen (Paket NP-20); trifft er auf eine Produktfrage, die die Entscheidungen nicht hergeben, hält er an.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt: `Timetable` wird außer in `TimetableController`/`TimetableEntities` nur in `SubjectsController` referenziert, kein Service liest ihn; Fach an der Reihe weiter optional (`Models/CurriculumEntities.cs:42`). Voraussetzung B-220 (Queue-Endpunkt) ist noch `idee`, ein Queue-Endpunkt existiert nicht.
+- **2026-11-17** — `verworfen`, ersetzt durch [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md): Der Vater hat G-7 umgekehrt, der Stundenplan erzeugt eine Pflicht mit Malus (Taktung „Stundenplan“).
