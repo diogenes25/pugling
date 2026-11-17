@@ -13,7 +13,7 @@ grund: ""
 ersetzt_durch: []
 ---
 
-# B-611 · Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan
+# B-615 · Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan
 
 Beobachtung des Vaters: Friedrich lernt in Pugling nur Französisch, Theodor nur Englisch. Jeder Plan
 trägt genau ein Fach, weil ihn der Fachlehrer (Creator-Profil) dieses Fachs erzeugt hat. Eine Tagesmission
@@ -166,3 +166,4 @@ Jeweils mit meiner Empfehlung.
 - **2026-11-17** — ausformuliert gegen `main` `30711266`: Mehrfach-Pläne und Tagessicht sind seit B-539/B-606
   gebaut. Die Lücken sind Inhalt, Stärke je Fach und Stundenplan-Pflicht. Widerspruch zur Entscheidung G-7 in
   B-250 als offener Punkt 4 aufgenommen.
+- **2026-11-17** — Id von B-611 auf B-615 geändert (B-611 war gleichzeitig von einer parallelen Sitzung vergeben).
