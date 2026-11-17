@@ -52,6 +52,21 @@ Ungeprüft, je mit erster Empfehlung. Die Entscheidung trifft erst die Grill-Run
    *Empfehlung:* Satz an der Vokabel hinterlegen und vom KI-Creator vorschlagen lassen, mit Durchsicht durch den
    Creator. Der Wortschatz des Satzes sollte aus der Unit kommen. Abgrenzen gegen
    [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md): Sätze gehören nicht als Einträge in den Wortspeicher.
+
+   **Vorab nachgesehen (2026-11-17)**, weil der Vater ein Beispielsatz-Feld im Vokabelschema vermutete:
+
+   - Die App hat **kein** solches Feld. `Vocabulary` trägt Wort, Übersetzung, Alternativen, Wortart, Nomen- und
+     Verbangaben, Grundform und Aussprache-Audio, aber keinen Satz (`backend/Pugling.Api/Models/VocabEntities.cs:13-64`).
+   - Das Feld gibt es **im Seiten-Markdown des Lehrwerks**. Dort steht der Beispielsatz der Randspalte in der Spalte
+     `Hinweis` (`.claude/skills/lehrwerk-aufbereiten/MARKDOWN.md:204-217`). Das ist eine private Notiz unter `raw/`,
+     und `laden.py` übernimmt daraus nur Wort und Übersetzung (`MARKDOWN.md:217`).
+   - Das `hinweis`-Feld der TSV, das als `hint` bis in die Vokabelübung reicht (`laden.py:450-451`), trägt
+     Aussprache und Stolpersteine, keine Sätze (`FORMAT.md:83`, geprüft an `raw/english/*/vokabeln-unit*.tsv`).
+   - Die Sätze des Buchs **dürfen nicht** in die App, weil sie urheberrechtlich geschützt sind
+     (`.claude/skills/lehrwerk-aufbereiten/SKILL.md:20-25`, `backend/Pugling.Agent.Creator/PageReader.cs:109-111`).
+     Der Satz der Randspalte kann also als Vorbild für einen eigenen Satz dienen, er kann aber nicht übernommen
+     werden. Damit ist ein neues Feld (oder eine eigene Tabelle) für eigene Beispielsätze wahrscheinlich nötig,
+     und die Story bekommt eine Migration.
 4. **Gebeugte Form:** Im Satz steht *runs*, die Vokabel heißt *run*. Was wird erwartet?
    *Empfehlung:* die Form, die der Satz verlangt. Das ist die Schulrealität, braucht aber ein Feld mit der
    erwarteten Lösung je Satz.
@@ -69,3 +84,4 @@ Ungeprüft, je mit erster Empfehlung. Die Entscheidung trifft erst die Grill-Run
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Chat mit dem Vater; Beispiel „Tom runs ___ / Tom rennt heim“).
+- **2026-11-17** — Frage 3 vorab geprüft: Das Vokabelschema hat kein Beispielsatz-Feld. Beispielsätze gibt es nur in der privaten Lehrwerk-Notiz, und wegen des Urheberrechts dürfen sie nicht in die App.
