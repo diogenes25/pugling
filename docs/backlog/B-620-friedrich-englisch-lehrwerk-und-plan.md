@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-615
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Friedrichs Englischbuch fotografieren (es gibt noch keinen Ordner dafür unter raw/english)"
+wartet_auf: "Vater: Freigabe und PIN fürs Laden in die echte DB; Unit, mit der Friedrichs Englisch-Plan startet"
 ---
 
 # B-620 · Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8
@@ -120,3 +120,9 @@ und Wortlisten je Unit, laden, Kind umstellen, Plan anlegen. Kein Code.
 
 - **2026-11-17** — angelegt als Teil (a) der Teilung von B-615. Geschätzt: M, `doku`, keine Migration, kein
   Vertragsbruch; wartet auf die Fotos des Buchs.
+- **2026-11-17** — Fotos liegen vor: `raw/english/access/Access 5` (90 Fotos, English G Access G9 Band 5,
+  Klasse 9), aufbereitet unter `raw/english/access-5-pugling` (90/90 Seiten, `md_pruefen.py` 0 Fehler;
+  `laden.py --pruefen` bestanden, 4 Units, 732 Wörter, 12 Start-Übungen, keine `unsicher`-Zeile in den TSVs).
+  Probelauf gegen eine Wegwerf-DB auf `:5280`: 27 Übungen, jede 100 % im Selbsttest, zweiter Lauf nur „schon da".
+  In der echten DB fehlt die Reihe noch (Kopie vom selben Tag: Child 3 hat nur Découvertes; Klasse 9/Gymnasium
+  passt zum Buch). Offen: Laden in die echte Instanz nach Freigabe, dann der Englisch-Plan neben Plan 8.

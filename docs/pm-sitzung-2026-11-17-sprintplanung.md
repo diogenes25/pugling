@@ -217,7 +217,7 @@ kommt dazu, sobald es geschätzt ist. **Vor dem Start** B-618s Schätzung gegen 
 
 | Id | Grund | Was es freigibt |
 | --- | --- | --- |
-| [B-620](backlog/B-620-friedrich-englisch-lehrwerk-und-plan.md) | wartet auf den Vater: Friedrichs Englischbuch fotografieren | Fotos unter `raw/english`, dann Skill `lehrwerk-aufbereiten` – kein Sprint nötig |
+| [B-620](backlog/B-620-friedrich-englisch-lehrwerk-und-plan.md) | kein Code, läuft **sofort** neben Sprint 85: Access 5 ist fotografiert, aufbereitet und gegen eine Wegwerf-DB geprüft (27 Übungen, je 100 %) | Freigabe und PIN des Vaters fürs echte Laden, dann der Englisch-Plan neben Plan 8 |
 | [B-31](backlog/B-31-geraete-vorbehalt-klang.md) | Gerätecheck durch einen Menschen am Handy | Gegenhören, dann abnehmen |
 | [B-619](backlog/B-619-faecher-verteilung-vater-web-und-sohn-app.md) | erst `gegrillt` | `/backlog B-619` (schätzen) |
 | [B-536](backlog/B-536-aufbau-uebungen-statt-versagen.md) | `gegrillt`, XL – muss vor dem Schätzen geteilt werden | Teilung im Dialog |
