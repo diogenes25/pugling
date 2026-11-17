@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, bereich/katalog, rolle/student, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/training, bereich/katalog, bereich/agent, rolle/student, rolle/creator, rolle/supervisor]
 aliases: [Feedback-Knopf, Rückmeldung zur Übung]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
 groesse: ""
@@ -100,56 +100,108 @@ Creatorn und kennt keinen Grund. Es fehlen:
 
 ## Offene Punkte
 
-1. **Neue Entität oder `Remark` erweitern?** Empfehlung: **neue Entität** (Arbeitsname `ExerciseFeedback`)
-   unter `student/…`. `Remark` trägt den Antwort-Workflow für Claude Code und den Export nach
-   `docs/anmerkungen/`; Rückmeldungen der Lernenden dort zu mischen, verwässert beides. Kosten: eine
-   Migration, ein Eigentums-Check nach dem Muster von `RemarksController.cs:171`.
-2. **Woran hängt sie: Übung, Karte oder beides?** Empfehlung: Übung und Position **Pflicht**, Karte
-   (`ItemId`, damit auch `VocabularyId`) **optional**. „Falsch übersetzt“ betrifft ein Wort, „zu schwer“
-   oft die ganze Übung.
-3. **Feste Gründe.** Empfehlung: eine geschlossene Liste im Vertrag, Mehrfachauswahl, Freitext optional,
-   aber mindestens ein Grund **oder** ein Text. Vorschlag: `TooHard`, `TooEasy`, `AheadOfClass` (weiter als
-   der Unterricht), `WrongTranslation`, `TooMuchAsked` (mehr als die Vokabel verlangt), `TooStrict` (Akzent,
-   ein Buchstabe), `SeveralMeanings`, `Liked` (gut so). Ein neuer Grund ist eine Vertragsänderung – gewollt,
-   damit die Gründe auswertbar bleiben.
-4. **Auch im Abschlusstest?** Empfehlung: im Üben jederzeit, im Test **erst nach der Antwort** auf die
-   Karte (die Klausur ist strikt eins nach dem anderen), außerdem auf dem Ergebnisblatt.
-5. **Wirkung auf Lernstand und Pflicht.** Empfehlung: **keine** – kein Überspringen, keine Wertung, kein
-   Kasten. „Zu schwer“ darf keine Karte loswerden (Anti-Cheat). Kosten: Dass sich etwas tut, merkt das Kind
-   erst über den Vater.
-6. **Wer sieht sie?** Empfehlung: **alle Supervisor** des Kindes (Multi-Supervisor) im Vater-Web, mit Kind,
-   Übung, Karte, Antwort des Kindes, Zeitpunkt und Status *offen/erledigt*. Eine Creator-Sicht je Übung
-   lohnt erst, wenn fremde Kinder fremde Übungen spielen (Lehrer-Konto) – zurückstellen.
-7. **Bekommt das Kind eine Antwort?** Empfehlung: **nein**, das ist
-   [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md). Höchstens ein „Papa hat's gesehen“, wenn der Vater
-   die Rückmeldung auf *erledigt* setzt. Zwei Knöpfe an der Karte sind einer zu viel: B-586 käme später als
-   dritte Möglichkeit in denselben Dialog.
-8. **Wie erreicht sie das Erstellen neuer Übungen?** Empfehlung: **abspalten.** B-623 liefert Erfassen,
-   Vater-Sicht und einen lesbaren Endpunkt. Eine Folge-Story bringt die Rückmeldungen als Regeln ins Briefing
-   des KI-Creators (`CreatorBriefing.cs:17`, etwa „nicht über Unit X hinaus“, „Antworten kürzer“) und als
-   Hinweis an die Übung im Creator-Editor. Grund: Wie sie im Prompt wirken (nur für dieses Kind oder für
-   alle), ist eine eigene Produktfrage und würde die Story sonst verdoppeln.
-9. **Mehrfach-Abgabe.** Empfehlung: erlaubt, aber je Kind, Karte und Grund nur einmal *offen*. Ein zweites
-   „zu schwer“ an derselben Karte wird zusammengelegt statt verdoppelt.
+Alle in der Grill-Runde vom 2026-11-17 entschieden – siehe Entscheidungen.
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~**Neue Entität oder `Remark` erweitern?**~~ → Entscheidung 9.
+2. ~~**Woran hängt sie: Übung, Karte oder beides?**~~ → Entscheidung 9.
+3. ~~**Feste Gründe.**~~ → Entscheidung 4.
+4. ~~**Auch im Abschlusstest?**~~ → Entscheidung 5 (abweichend von der Empfehlung „nach der Antwort“: nur
+   Ergebnisblatt).
+5. ~~**Wirkung auf Lernstand und Pflicht.**~~ → Entscheidung 6.
+6. ~~**Wer sieht sie?**~~ → Entscheidung 7 (Creator-Sicht nicht zurückgestellt, sondern Teil der Story).
+7. ~~**Bekommt das Kind eine Antwort?**~~ → Entscheidung 8.
+8. ~~**Wie erreicht sie das Erstellen neuer Übungen?**~~ → Entscheidungen 1–3 (abweichend von der Empfehlung
+   „abspalten“: gehört in diese Story).
+9. ~~**Mehrfach-Abgabe.**~~ → Entscheidung 9.
 
-1. An jeder Karte im Üben gibt es einen Knopf „Rückmeldung“. Er öffnet die festen Gründe zur Mehrfachauswahl
-   und ein optionales Textfeld; Absenden ohne Grund **und** ohne Text ist gesperrt.
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17.
+
+1. **Erfassen, Sehen und Wirken sind eine Story.** Der Vater will, dass Rückmeldungen das Erstellen neuer
+   Übungen erreichen, und nicht nur über ihn wirken. Abweichend von der Empfehlung „abspalten“.
+   *Kosten:* Die Story wird etwa doppelt so groß (Backend, Vater-Web, Sohn-App **und** `Pugling.Agent.Creator`);
+   die Wirkung im Prompt wird ohne Erfahrungswerte aus echten Rückmeldungen entworfen.
+2. **Die Reichweite hängt am Grund.** Gründe, die am Kind liegen (zu schwer, zu leicht, hatten wir noch
+   nicht, gut so), wirken nur, wenn für **dieses Kind** erstellt wird (`--child`). Gründe, die an der Übung
+   liegen (falsch übersetzt, zu viel verlangt, zu streng bewertet, mehrere Bedeutungen), wirken für
+   **alle**, auch beim Erstellen für ein Profil. Begründung: Theodor und Friedrich lernen verschiedene Bücher
+   in verschiedenem Tempo; ein Übersetzungsfehler ist dagegen für jeden einer. *Kosten:* Jeder Grund trägt
+   fest eine Reichweite; ein neuer Grund braucht diese Zuordnung mit.
+3. **„Wirken“ heißt: beim Erstellen neuer Übungen und als Hinweis im Creator-Editor.** Der KI-Creator nimmt
+   die passenden Rückmeldungen in sein Briefing (`CreatorBriefing.cs:17`) und leitet daraus Regeln ab; an der
+   Übung im Creator-Editor steht, was gemeldet wurde. Bestehende Übungen ändert niemand automatisch – kein
+   Reparatur-Modus des Agenten, keine Sperre der Karte. Begründung: Der Agent läuft nur auf Aufruf, eine
+   Sperre wäre ein Selbstbetrug-Hebel. *Kosten:* Eine falsch übersetzte Karte bleibt im Plan, bis der Vater
+   sie von Hand korrigiert.
+4. **Acht feste Gründe, Mehrfachauswahl, Freitext optional;** abschicken geht mit mindestens einem Grund
+   **oder** Text. Die Liste ist geschlossen im Vertrag:
+
+   | Knopf (Text für das Kind) | Arbeitsname | Reichweite |
+   | --- | --- | --- |
+   | Zu schwer | `TooHard` | nur dieses Kind |
+   | Zu leicht | `TooEasy` | nur dieses Kind |
+   | Hatten wir noch nicht im Unterricht | `AheadOfClass` | nur dieses Kind |
+   | Falsch übersetzt | `WrongTranslation` | alle |
+   | Zu viel verlangt (mehr als die Vokabel) | `TooMuchAsked` | alle |
+   | Zu streng bewertet (Akzent, ein Buchstabe) | `TooStrict` | alle |
+   | Wort hat mehrere Bedeutungen | `SeveralMeanings` | alle |
+   | Gut so 👍 | `Liked` | nur dieses Kind |
+
+   „Zu streng bewertet“ wirkt für alle, obwohl die Strenge eine Server-Regel ist (B-422/4): Die Meldungen
+   sind dann der Beleg für [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md), und der KI-Creator wählt
+   Antworten mit wenig Akzent-Fallen. *Kosten:* Ein neuer Grund ist eine Vertragsänderung.
+5. **Im Abschlusstest nur auf dem Ergebnisblatt,** je Karte neben der Lösung; im Üben jederzeit. Begründung:
+   Die ärgerlichsten Fälle sieht das Kind erst mit der Lösung, und ein Knopf mitten im Test lenkt ab.
+   *Kosten:* „Zu schwer“ lässt sich erst nach dem Test melden.
+6. **Keine Wirkung auf Lernstand, Punkte, Pflicht, Malus oder Sitzungs-Cursor.** Anti-Cheat: Eine Meldung
+   darf keine Antwort und keine Karte loswerden. Das nachträgliche Umbuchen nach Bestätigung durch den Vater
+   („berechtigt“) ist eine eigene Story: [B-627](B-627-berechtigte-meldung-bucht-nach.md). *Kosten:* Bis zur
+   Korrektur zahlt das Kind für einen Fehler, den es nicht gemacht hat.
+7. **Zwei Sichten.** Alle **Supervisor** des Kindes (Multi-Supervisor) sehen dessen Rückmeldungen vollständig
+   im Vater-Web – Kind, Übung, Karte, Antwort, Freitext, Zeitpunkt – und setzen sie auf *erledigt* (gilt für
+   alle Betreuer). Der **Ersteller** der Übung sieht im Creator-Editor an seiner Übung die gezählten Gründe
+   **ohne** Freitext und **ohne** Kind. Begründung: Ein Lehrer-Konto darf den Freitext fremder Kinder nicht
+   lesen, braucht aber die Gründe zum Reparieren. *Kosten:* zwei Sichten auf dieselben Daten.
+8. **Das Kind bekommt eine Bestätigung, keine Antwort.** Nach dem Absenden „Danke, ist angekommen“; setzt ein
+   Betreuer die Meldung auf *erledigt*, sieht das Kind einen kurzen Hinweis („Papa hat deine Meldung zu
+   *voyage* erledigt ✔“). Antworttext bleibt [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md).
+   Begründung: Ohne Rückkanal hört das Kind auf zu melden. *Kosten:* ein Hinweis-Platz in der Sohn-App und ein
+   Lesestatus je Kind.
+9. **Technik nach Empfehlung.** Eine **neue Entität** (Arbeitsname `ExerciseFeedback`) statt `Remark`, weil
+   `Remark` der Antwort-Workflow für Claude Code ist; Migration additiv. Übung und Position sind **Pflicht**,
+   die Karte (`ItemId`, damit `VocabularyId`) **optional**. Derselbe Grund desselben Kindes an derselben Karte
+   wird, solange er offen ist, **zusammengelegt** (Zähler hoch, neuer Freitext angehängt). *Kosten:* eine
+   Migration; die Häufigkeit steht im Zähler, nicht in der Zeilenzahl.
+
+## Akzeptanzkriterien
+
+1. An jeder Karte im Üben gibt es einen Knopf „Rückmeldung“. Er öffnet die acht Gründe aus Entscheidung 4 zur
+   Mehrfachauswahl und ein optionales Textfeld; Absenden ohne Grund **und** ohne Text ist gesperrt.
 2. Ein `POST` unter `student/…` legt die Rückmeldung mit Kind, Plan, Position, Übung und – falls angegeben –
    Karte an. Kontext-Ids, die nicht zum Kind gehören, werden abgewiesen (Integrationstest: fremdes Kind,
-   fremde Position).
-3. Die Rückmeldung ändert weder Kasten, Punkte, Pflicht noch den Sitzungs-Cursor (Integrationstest: Zustand
-   vorher gleich nachher).
-4. Im Abschlusstest ist der Knopf erst nach der Antwort auf die Karte aktiv.
-5. Jeder Supervisor des Kindes sieht die Rückmeldungen im Vater-Web, filterbar nach Kind und Status, mit
-   Übung, Karte und Antwort. Er kann sie auf *erledigt* setzen und von dort die Übung öffnen.
-6. Ein Endpunkt liefert die Rückmeldungen je Übung bzw. Unit für den Supervisor lesbar – die Grundlage der
-   Folge-Story für den KI-Creator.
-7. Nach dem Absenden zeigt die Sohn-App eine kurze Bestätigung und bleibt auf derselben Karte.
+   fremde Position, fremde Karte).
+3. Die Rückmeldung ändert weder Kasten, Punkte, Pflicht, Malus noch den Sitzungs-Cursor (Integrationstest:
+   Zustand vorher gleich nachher).
+4. Im Abschlusstest gibt es den Knopf nur auf dem Ergebnisblatt, je Karte; während des Tests nicht.
+5. Ein zweiter gleicher Grund desselben Kindes an derselben Karte erzeugt keine zweite offene Zeile, sondern
+   erhöht den Zähler und hängt einen neuen Freitext an.
+6. Jeder Supervisor des Kindes sieht die Rückmeldungen im Vater-Web, filterbar nach Kind und Status, mit
+   Übung, Karte, Antwort und Freitext; er kann sie auf *erledigt* setzen und von dort die Übung öffnen. Ein
+   Supervisor eines anderen Kindes sieht sie nicht.
+7. Der Ersteller sieht im Creator-Editor an seiner Übung die Gründe gezählt, ohne Freitext und ohne Kind.
+8. Das Briefing des KI-Creators enthält die Rückmeldungen nach Entscheidung 2: beim Erstellen für ein Kind
+   dessen kindbezogene **und** alle übungsbezogenen Gründe der Unit, beim Erstellen für ein Profil nur die
+   übungsbezogenen; der Prompt leitet daraus Regeln ab (Testfall: „Hatten wir noch nicht“ von Kind A erscheint
+   nicht im Briefing für Kind B, „Falsch übersetzt“ erscheint in beiden).
+9. Nach dem Absenden zeigt die Sohn-App „Danke, ist angekommen“ und bleibt auf derselben Karte; nach
+   *erledigt* sieht das Kind einen einmaligen Hinweis.
 
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Chat mit dem Vater.
 - **2026-11-17** — ausformuliert: Ist-Stand gegen den Code (`Remark`, `ExerciseRating`, Karten-Adresse,
   Briefing des KI-Creators), neun offene Punkte mit Empfehlung.
+- **2026-11-17** — gegrillt mit dem Vater: neun Entscheidungen; abweichend von den Empfehlungen gehört das
+  Wirken beim Erstellen in diese Story (E1) und der Test bekommt den Knopf nur auf dem Ergebnisblatt (E5).
+  Folge-Story B-627 (Nachbuchen nach „berechtigt“) angelegt.
