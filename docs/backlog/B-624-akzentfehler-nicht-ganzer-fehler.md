@@ -54,7 +54,7 @@ Recherchiert am 2026-11-17 gegen `5938fc12`.
 - **Eine mildere Abstufung gibt es schon – je Position, für jeden Fehler.** `PlanPosition.ForgivingDemotion`
   (B-219, `backend/Pugling.Api/Models/PlanPositionEntities.cs:125`–`:129`): ein einzelner Fehler senkt um einen
   Kasten statt auf Kasten 1; der plan-übergreifende Lernstand je Wort bleibt hart.
-- **Friedrich tippt Französisch.** Seit [B-597](B-597-getippt-wird-immer-die-zielsprache.md) wird getippt immer
+- **Friedrich tippt Französisch.** Seit [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) wird getippt immer
   die Zielsprache; in Plan 8 sind das französische Wörter mit Akzenten.
 - **Zwei frühere Entscheidungen stehen dagegen.** [B-524](B-524-vokabeltest-wie-in-der-schule.md)/2 (Grill-Runde
   **mit dem Vater**, 2026-11-13): „Die Wertung bleibt binär … wertet falsch geschrieben als falsch“ – gegen die
