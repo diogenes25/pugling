@@ -218,7 +218,7 @@ nicht, die Form entscheidet der Bau.
   Rollengang dieser Story.
 - **Reviewer:** `pugling-reviewer` (Vertrag, Rollup) **und** `frontend-reviewer` (Startseite, Bonus-Seite, i18n).
 
-### Annahme (unbestätigt)
+### Annahme (vom Vater bestätigt am 2026-11-17)
 
 - **Die Bonus-Seite bekommt ihre Art über ein Feld an `ExtraTrainingOverview`,** nicht über einen zweiten Abruf von
   `today`. Entscheidung 1 nennt nur `TodayResponse`, Entscheidung 2 „dieselbe Serverangabe"; ein viertes additives
@@ -237,3 +237,4 @@ nicht, die Form entscheidet der Bau.
   Vertragsbruch (additive Antwortfelder aus `rewardGoals`, `PositionProgressService.cs:331`); Annahme offen: die
   Bonus-Seite bekommt ihre Art über ein Feld an `ExtraTrainingOverview`, weil sie `today` nicht liest
   (`SohnBonus.tsx:70`). Setzt B-611 voraus; Reviewer `pugling-reviewer` und `frontend-reviewer`.
+- **2026-11-17** — Annahme der Schätzung vom Vater bestätigt: die Bonus-Seite bekommt die Zielart über ein Feld an `ExtraTrainingOverview`.

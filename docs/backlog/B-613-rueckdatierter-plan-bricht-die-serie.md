@@ -244,7 +244,7 @@ einer Stelle.
        nur den heutigen Tag, und an dem gilt jede Pflicht schon (`FirstDueDay <= heute`).
   3. **Wochenpflicht und Einschalttag.** Für die Serie reicht die Tagesgrenze. In der Abrechnung liefert
      `ClosedPeriods(Weekly, …)` die Woche ab `WeekMonday(windowStart)` (`:519`). Die Woche, in der eine Position
-     angelegt **oder** ein Plan eingeschaltet wurde, wird dadurch heute schon ganz abgerechnet. **Annahme, unbestätigt:**
+     angelegt **oder** ein Plan eingeschaltet wurde, wird dadurch heute schon ganz abgerechnet. **Annahme, vom Vater bestätigt (2026-11-17):**
      Für `ActivatedAt` gilt eine Periode nur als fällig, wenn sie ganz nach dem Einschalten liegt (`from >= ActivatedAt`).
      Das entspricht „zu Gunsten des Kindes“. Bei Tagespflicht ist `from == to`, die Annahme betrifft also nur Wochen.
      Das Verhalten von B-432 für eine nachgetragene Wochen-Position bleibt, wie es ist.
@@ -258,7 +258,7 @@ einer Stelle.
   5. **Alle Schreibpfade.**
      - Erzeugt wird an `StudyPlansController.Create` (`:108`), `PlanPositionsController.Create` (`:187`),
        `WeakWordReviewService.cs:133` und `Data/Seed.cs:380`–`:492`.
-     - **Annahme, unbestätigt:** `Create` setzt `ActivatedAt = StartDate`, nicht heute. Das entspricht dem Backfill.
+     - **Annahme, vom Vater bestätigt (2026-11-17):** `Create` setzt `ActivatedAt = StartDate`, nicht heute. Das entspricht dem Backfill.
        Ein rückdatierter Plan gilt seit seinem Start als eingeschaltet, und die Positionen begrenzt `FirstDueDay` ohnehin.
        So bleibt das Nachtragen vergangener Runden (`VaterRundeZaehltFuersKindTests`) unverändert. Mit „heute“ würden
        die rückdatierten Tage nur zu Gunsten zählen; für AK 1 macht das keinen Unterschied.
@@ -268,7 +268,7 @@ einer Stelle.
   6. **Pflicht → Kür → Pflicht.** Der zweite Wechsel setzt „Pflicht seit“ wieder auf heute. Die Pflicht-Tage davor fallen
      damit rückwirkend aus Serie und offener Abrechnung. Das geht zu Gunsten des Kindes, und nur der Vater kann es
      auslösen. Gebuchte Strafen bleiben (B-432). Laut Entscheidung 2 ist „die Unschärfe immer zu Gunsten des Kindes“ –
-     als Annahme notiert, nicht eigens entschieden.
+     als Annahme notiert, vom Vater am 2026-11-17 bestätigt.
   7. **UTC-Tagesgrenze.** Beide Daten kommen aus `time.GetUtcNow()` (`TimeProvider`), wie `CreatedAt` an
      `PlanPositionsController.cs:191`, nicht aus `DateTime.UtcNow` der Entitäts-Defaults (`StudyPlanEntities.cs:91`). Unter
      Test mischt `DailyBoxTests.cs:267` beide Uhren. Ein Plan, den der Vater abends nach 1 Uhr MEZ einschaltet, zählt
@@ -345,3 +345,4 @@ einer Stelle.
   `CreatedAt` = heute bei rückdatiertem Start).
 - **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–5 (5 gegen die Empfehlung: Kür → Pflicht kommt mit hinein); Titel um den Malus erweitert; Akzeptanzkriterien final (AK 9 und 10 neu).
 - **2026-11-17** — geschätzt: L wie E6/B-643 (eine Migration mit zwei Feldern und Backfill, Untergrenze im Kern der Tagesregel; kein Frontend, kein Vertragsfeld), keine Teilung. Untergrenze als Pflichtfilter in `DutyStateAsync` und `ComputeDayAsync`, nicht in `IsGoalMetAsync`; Datum nur beim Zustandswechsel setzen; `DailyBoxTests.cs:274` beruht ebenfalls auf dem Defekt; AK 10 gilt nur ohne schon nachgetragene Positionen.
+- **2026-11-17** — Annahmen der Schätzung vom Vater bestätigt: `Create` setzt `ActivatedAt = StartDate`; eine Malus-Woche zählt nur ganz nach dem Einschalten; Pflicht → Kür → Pflicht setzt „Pflicht seit" neu.
