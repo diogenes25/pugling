@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Schultest nacharbeiten, Nacharbeit, leichter schalten, Hilfe-Leiter]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17, zu Theodors Vokabeltest Unit 1 (9/20), Auswertung in raw/english/real_tests/2026-11-09-theodor-vokabeltest.md (gitignored)"
 grund: ""
 ersetzt_durch: []
@@ -217,6 +217,110 @@ Gegrillt mit dem Vater am 2026-11-17.
 7. Der Vater sieht je Aufgabe, wie oft sie auf welcher Stufe gelöst wurde und ob sie erledigt ist.
 8. Leichter schalten kostet keine Münzen.
 
+## Schätzung
+
+**Größe: L, an der oberen Kante.** Die Story ist ein Bündel aus fünf Teilen. Jeder Teil lässt sich einzeln
+liefern, aber erst alle zusammen tragen die Nacharbeit. Einzeln geschätzt:
+
+| Teil | Entscheidung | Größe | wo |
+| --- | --- | --- | --- |
+| A · deutsche Vorgabe je Lücke (`Gap.Prompt`), Hinweis und Editor | 1, 6, 7 | S | beides |
+| B · Buchstabensalat je Wort bei mehreren Wörtern | 2 | S | beides |
+| C · Nacharbeit-Mechanik: „leichter“, Stufe je Karte, erledigt erst frei getippt, Runden | 3, 4, 6 | M | beides |
+| D · Taktung „bis erledigt“, Pflicht-Regel, Malus-Ende, Abschlussbonus | 5 | M | backend |
+| E · Vater-Sicht: Stufen und erledigt je Aufgabe | 4 | S | beides |
+
+Die Story ist breiter als B-524 (L) und hat dazu eine Migration und einen neuen Anti-Cheat-Zustand. Ich schätze
+sie trotzdem als L und nicht als XL, weil kein Teil Bestandsdaten umbauen muss. Ist das zu viel für eine Sitzung,
+ist der saubere Weg, nach den fünf Zeilen zu teilen (README → „Teilen und Zusammenlegen“). Das entscheidet der
+Mensch.
+
+**`migration: ja`**, nachgesehen:
+
+- Die Einstellung „Nacharbeit“ und der Abschlussbonus sind neue Spalten an `PlanPosition`
+  (`backend/Pugling.Api/Models/PlanPositionEntities.cs:17`, Nachbarn `Cadence` `:51`, `PenaltyCoins` `:91`).
+- „Erledigt“ je Aufgabe und die Zähler je Stufe brauchen einen Ort, der über Tage bleibt. Das ist entweder eine
+  Spalte an `PositionItemProgress` (`PlanPositionEntities.cs:204`) oder eine eigene Tabelle für die Zähler je
+  Stufe. Welche Form es wird, entscheidet der Bau. Beides ist eine Schemaänderung.
+- Die Stufe, auf die das Kind in der laufenden Sitzung leichter geschaltet hat, ist Sitzungszustand. Sie kommt als
+  JSON-Spalte an `PracticeSession` (`backend/Pugling.Api/Models/StudyPlanEntities.cs:100-122`, neben `Order`/`Cursor`)
+  und braucht einen `ValueComparer` (Tor G7).
+- Für Bestandszeilen ist keine Datenübernahme nötig: Alle neuen Spalten haben einen neutralen Wert („keine
+  Nacharbeit“, Bonus 0, nicht erledigt). Ob ein Wert als Default in der Migration landen darf, entscheidet Tor G9.
+  Andernfalls setzt ihn ein `UPDATE`.
+- `GoalCadence` und `PointKind` liegen als String in der DB. Neue Werte (`UntilDone`, ein `PointKind` für den
+  Abschlussbonus) brauchen darum keine Schemaänderung.
+
+**`vertragsbruch: nein`**: Alle Vertragsänderungen sind additiv und optional, nach README also kein Bruch.
+
+- `Gap` bekommt `Prompt` (`backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs:103-104`).
+- Die Positions-DTOs bekommen die Einstellung „Nacharbeit“ und den Bonus. `GoalCadence` bekommt einen Wert
+  (`backend/Pugling.Contracts/Common/PlanPositionBaseTypes.cs:7-11`), `PointKind` ebenfalls
+  (`backend/Pugling.Contracts/Common/AdminBaseTypes.cs:38`).
+- `PracticeCard` bekommt das Kennzeichen „leichter möglich“ und die Angabe, ob die Aufgabe erledigt ist. Dazu kommt
+  ein neuer Endpunkt `POST …/practice/{sessionId}/easier` neben `review`
+  (`backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:410`).
+- Eine Oberfläche, die `GoalCadence` aufzählt (`frontend/src/vater/PlanPositions.tsx`), muss den neuen Wert kennen,
+  sonst zeigt sie ihn leer. `Pugling.Client` bekommt eine Zeile für den neuen Endpunkt.
+
+**Risiken:**
+
+- **Anti-Cheat ist der Kern.** Bisher wählt nur der Server die Stufe (`PositionPracticeController.cs:437-442`).
+  Mit „leichter“ entsteht ein Zustand, den das Kind ändert. Der Server muss die Stufe jeder Karte selbst führen und
+  `Review` gegen diese Stufe prüfen, nie gegen eine Angabe des Clients. Sonst ist ein „frei getippt“ auf einer
+  leichter geschalteten Karte die Hintertür zum Erledigt. Akzeptanzkriterium 6 verlangt dafür einen
+  Integrationstest, der vorher rot sein muss.
+- **Die Auswahl verrät die Lösung.** Nach dem Leichterschalten bis zur Auswahl kennt das Kind die Lösung. Kommt
+  die Karte in derselben Runde frei wieder, wäre das Abschreiben. Darum kommt sie erst in der **nächsten** Runde
+  wieder, also frühestens nach den übrigen offenen Aufgaben (Akzeptanzkriterium 4).
+- **Pflicht-Regel beim Lückentext:** Lückentexte sind `StudyPlanTest` und gelten heute nur durch einen bestandenen
+  Test als erfüllt (`PositionProgressService.cs:144-153`). Die Nacharbeit gilt durch eine gespielte Runde als
+  erfüllt (`:165-187`). Dieser Zweig darf die Regel der übrigen Positionen nicht aufweichen.
+- **Malus nach dem Ende:** `SettleClosedPeriodsAsync` (`PositionProgressService.cs:558`) rechnet Perioden lazy ab.
+  Eine erledigte Nacharbeit darf rückwirkend keine Periode mehr reißen, auch nicht für Tage vor dem Login.
+  `PeriodRange` (`:35-39`) behandelt jeden unbekannten Wert als Tag. Für `UntilDone` stimmt das, das Ende muss
+  aber dazukommen.
+- **Doppelte Bonusbuchung:** Der Abschlussbonus wird über eine idempotente Zeile gebucht, nach dem Vorbild von
+  `PositionGoalReward` (`PlanPositionEntities.cs:160`).
+- **Buchstabensalat je Wort** ändert `StageMechanics.IsScramblable` (`StageMechanics.cs:107-108`), und das für alle
+  Typen. Ein Einzelwort muss genau wie heute gespielt werden.
+
+**Angriffsplan (Backend zuerst):**
+
+1. **A:** `Gap.Prompt` im Vertrag. `ExerciseContentResolver.ResolveClozeRefsAsync`
+   (`backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:172-196`) nimmt die Vorgabe als Hinweis, wenn sie
+   gesetzt ist, und sonst wie bisher den Speicher. Dazu der Editor `frontend/src/vater/ClozeTexts.tsx`.
+2. **B:** Buchstabensalat je Wort in `StageMechanics` und `LetterTileSource` (`BuiltInExerciseTypes.cs:211-212`),
+   Kacheln je Wort in `frontend/src/components/LetterTiles.tsx`.
+3. **D:** `GoalCadence.UntilDone`, der Pflicht-Zweig „gespielte Runde“, das Ende bei „alles erledigt“ in
+   `IsGoalMetAsync`, in der Tagesmission und in `SettleClosedPeriodsAsync`, der Abschlussbonus mit neuem `PointKind`
+   und idempotenter Zeile. Migration an die Kette und Probe gegen eine Kopie der echten DB.
+4. **C:** Spalte „Nacharbeit“ an `PlanPosition`, Stufe je Karte als Sitzungszustand, `POST …/easier` (eine Stufe
+   tiefer, nie zurück), `Review` prüft gegen die geführte Stufe und setzt „erledigt“ nur bei Freitext richtig. Die
+   nächste Runde enthält nur offene Aufgaben in ihrer Reihenfolge. Dazu Knopf, Rundenanzeige und Erledigt-Zustand in
+   `frontend/src/sohn/SohnPractice.tsx` und `frontend/src/components/ClozePrompt.tsx`.
+5. **E:** Zähler je Stufe und „erledigt“ im `PositionReportService`
+   (`backend/Pugling.Api/Services/Supervisor/PositionReportService.cs`), angezeigt in der Vater-Sicht der Position.
+
+**Testweg:**
+
+- **Integrationstests** in `backend/Pugling.Api.Tests`, eine neue Klasse `RemediationPositionTests` neben
+  `PositionPracticeFlowTests.cs`:
+  - Leichter geht nur eine Stufe tiefer und nie zurück.
+  - Eine Antwort, die als Freitext ankommt, aber zu einer leichter geschalteten Karte gehört, erledigt nichts.
+    Dieser Test muss vor dem Bau rot sein.
+  - Die nächste Runde enthält nur die offenen Aufgaben.
+  - Eine ganze Runde erfüllt die Tagespflicht.
+  - Ein Tag ohne Runde kostet Malus, ein Tag nach dem Ende nicht.
+  - Der Bonus wird genau einmal gebucht.
+- **Die Satzform** liegt in `ClozePlayTests.cs`, die Wort-Grenzen in `StageMechanicsTests.cs`. Dort steht auch, dass
+  ein Einzelwort unverändert gespielt wird.
+- **Vitest:** `SohnPractice.test.tsx` und `LetterTiles.test.tsx`.
+- **E2E:** Eine neue Playwright-Spec `frontend/e2e/nacharbeit.spec.ts` fährt den Weg Vater → Sohn: Der Vater legt die
+  Nacharbeit an, der Sohn schaltet bei einer Aufgabe leichter, tippt eine andere frei, und die erste kommt in der
+  nächsten Runde wieder. Gezählt wird nach „N passed“, nicht nach dem Exit-Code.
+- **Danach:** `/smoke-test` und eine Migrationsprobe gegen eine Kopie der echten `pugling.db`.
+
 ## Verlauf
 
 - **2026-11-17** — aufgenommen (`idee`) aus dem Chat mit dem Vater zu Theodors Test.
@@ -225,3 +329,4 @@ Gegrillt mit dem Vater am 2026-11-17.
   täglich und wöchentlich. Die Leiter selbst gibt es beim Lückentext schon (B-599). Acht offene Punkte mit
   Empfehlung.
 - **2026-11-17** — gegrillt mit dem Vater: acht Entscheidungen (alle wie empfohlen, dazu ein Abschlussbonus), Akzeptanzkriterien final.
+- **2026-11-17** — geschätzt: L (fünf Teile A–E, einzeln S/S/M/M/S), `wo: beides`, Migration ja (Spalten an `PlanPosition`, Erledigt-Stand je Aufgabe, Sitzungsstufe als JSON), kein Vertragsbruch (alles additiv). Teilen nach A–E ist möglich, die Entscheidung liegt beim Menschen.
