@@ -160,7 +160,7 @@ und `RateLimiting__LoginEnabled=false` (aus `backend/Pugling.Api`, `--no-launch-
 PIN `0000` und Kind 1.
 
 ```bash
-python -I -X utf8 .claude/skills/lehrwerk-aufbereiten/laden.py raw/<fach>/<werk-slug>-pugling --base http://localhost:5280 --pin 0000 --child 1
+python -I -X utf8 .claude/skills/lehrwerk-aufbereiten/laden.py raw/<fach>/<werk-slug>-pugling --base http://127.0.0.1:5280 --pin 0000 --child 1
 ```
 
 Erwartet: jede Übung 100 % im Selbsttest; ein zweiter Lauf meldet nur „schon da“. Danach das Briefing ohne
@@ -179,8 +179,9 @@ Aufräumen: Server auf 5280 beenden, `backend/Pugling.Api/pugling_lehrwerk.db*` 
 
 Dem Nutzer vorlegen: Units, Zahl der Wörter je Unit, alle Zeilen, die einmal `unsicher` waren, und wie sie geklärt
 wurden, die Start-Übungen mit Titel. Erst nach seinem Ja, mit seiner PIN und seiner Adresse (`--base`, Vorgabe
-`http://localhost:5200`). `--child` nur, wenn das Kind auf dieses Buch umgestellt werden soll; das biegt sein
-vorhandenes Buch im Fach um, statt ein zweites danebenzulegen (der Agent wählt das Buch über die Reihe; passen
+`http://127.0.0.1:5200`; nicht `localhost`: Python versucht zuerst IPv6, der Heimnetz-Server hört nur auf IPv4 –
+das kostet 2 s je Anfrage, ein Lauf dauert dann eine halbe Stunde). `--child` nur, wenn das Kind auf dieses Buch
+umgestellt werden soll; das biegt sein vorhandenes Buch im Fach um, statt ein zweites danebenzulegen (der Agent wählt das Buch über die Reihe; passen
 mehrere Bücher, bricht er ab). Eine korrigierte Wortliste kommt mit
 `--ersetzen` nach; das überschreibt die Übungen gleichen Titels. Eine im Vater-Web gepflegte Buchseite
 bleibt dabei stehen, außer `uebungen.json` nennt für die Übung eine eigene (`seiten`, B-589).

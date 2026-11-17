@@ -7,7 +7,7 @@ Ein Lehrwerk ist ein Ordner unter raw/ (gitignored, Urheberrecht) mit
 Das Format beschreibt FORMAT.md neben diesem Skript.
 
     python -I -X utf8 laden.py <ordner> --pruefen                  # nur prüfen, ohne API
-    python -I -X utf8 laden.py <ordner> --base http://localhost:5200 --account 1 --pin <PIN> [--child 1]
+    python -I -X utf8 laden.py <ordner> --base http://127.0.0.1:5200 --account 1 --pin <PIN> [--child 1]
 
 Idempotent: Reihe, Units, Profil und Grammatik-Themen werden gefunden und aktualisiert; eine Übung mit gleichem
 Titel in der Unit bleibt stehen (mit --ersetzen wird sie überschrieben). Jede Übung des Ordners – neu, ersetzt
@@ -560,7 +560,7 @@ def main():
     ap = argparse.ArgumentParser(description="Lehrwerk-Ordner prüfen und über die API laden.")
     ap.add_argument("ordner")
     ap.add_argument("--pruefen", action="store_true", help="nur prüfen, keine API")
-    ap.add_argument("--base", default="http://localhost:5200")
+    ap.add_argument("--base", default="http://127.0.0.1:5200")  # not "localhost": urllib tries ::1 first, the home server listens on IPv4 only (~2 s per request)
     ap.add_argument("--account", type=int, default=1)
     ap.add_argument("--pin", default=os.environ.get("PUGLING_PIN"))
     ap.add_argument("--child", type=int, help="Kind auf dieses Buch umstellen (Klasse, Schulart, Buch, Klassenarbeit)")
