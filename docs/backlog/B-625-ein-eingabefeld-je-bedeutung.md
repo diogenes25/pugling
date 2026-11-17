@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [Eingabefeld je Bedeutung, mehrere Übersetzungen getrennt eingeben]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
@@ -110,6 +110,70 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
 6. Üben, Abschlusstest, Bonus-Training und Vorschau zerlegen gleich (Integrationstest je Pfad).
 7. Das Blatt zeigt je Feld, ob es stimmt.
 
+## Schätzung
+
+**Größe: L** — kein Schema, aber ein Schnitt quer durch alle vier Tipp-Pfade: Zerlegung, Bewertung mit Zuordnung
+und Schwelle, Karten- und Antwortfelder in Üben, Test, Bonus und Vorschau, dazu die Oberfläche. Kein XL, weil die
+Sohn-App alle drei Spielwege über **eine** Komponente fährt (`frontend/src/sohn/Lektion.tsx`, eingebunden in
+`SohnPractice.tsx`, `SohnTest.tsx`, `SohnBonus.tsx`) und die Vorschau ihr Muster nur nachzieht
+(`frontend/src/vater/ExercisePreviewModal.tsx:253`–`:257`).
+
+**Hängt an [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md)** (Ausgang *halb*, Entscheidung 3): erst bauen,
+wenn B-624 abgenommen ist.
+
+- **`migration: nein`** — die gegebenen Teile werden für Verlauf und Historie wie bisher als **ein** Text
+  gespeichert (`GivenAnswer` in `backend/Pugling.Api/Models/StudyPlanEntities.cs:211` und
+  `backend/Pugling.Api/Models/ItemProgressEntities.cs:84`), mit ` / ` verbunden – das ist auch die Schreibweise des
+  Eintrags. Keine neue Spalte, kein JSON-Feld (Tor G7).
+- **`vertragsbruch: nein`** — nur additive Felder:
+  - Karte: eine Liste von Masken neben `AnswerPattern` (`backend/Pugling.Contracts/Student/PracticeDtos.cs:100`),
+    gefüllt nur bei zerlegbaren Einträgen; die einzelne Maske bleibt für alle übrigen.
+  - Antwort: eine Liste der Teile neben `GivenAnswer` in `ReviewDto` (`PracticeDtos.cs:113`), `AnswerDto`
+    (`backend/Pugling.Contracts/Student/TestDtos.cs:73`), `ExtraAnswer`
+    (`backend/Pugling.Contracts/Student/ExtraTrainingDtos.cs:67`) und `PreviewAnswer`
+    (`backend/Pugling.Contracts/Creator/ExercisePreviewDtos.cs:44`).
+  - Ergebnis: je Feld ✔/✘ an `ReviewOutcome`, `ItemResultDto`, `ExtraItemOutcome`, `PreviewItemOutcome`.
+
+### Risiken
+
+1. **Lösungsfeld-Regel.** Die Karte gibt je Teil eine Maske heraus (Länge, feste Zeichen) – wie heute die eine
+   Maske, also kein neues Leck. Ein neues Feld darf aber nicht `Answer`/`Solution`/`CorrectAnswer`/`Translation`
+   heißen, sonst wird `ConventionGuardTests.Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated` rot.
+2. **Zuordnung bei beliebiger Reihenfolge.** Zwei Felder dürfen nicht denselben Teil treffen („quel“, „quel“
+   gegen vier Formen ist einmal richtig, nicht zweimal). Greedy reicht nicht, wenn ein Feld auf zwei Teile passt
+   (Klammerteile, Artikel-Toleranz) – eine kleine bipartite Zuordnung, bei höchstens einer Handvoll Teile billig.
+3. **Zwei Zerlegungen, die auseinanderlaufen.** Die Anzeige zerlegt jetzt auch (Masken), der Vergleich tat es
+   schon (`AnswerVariants`). Beide müssen **dieselbe** Funktion nutzen, sonst zeigt die Karte drei Felder und der
+   Vergleich erwartet vier.
+4. **Die Kürzel-Ausnahme** (Entscheidung 6) ändert auch, was `AnswerVariants` heute als Bedeutung zählt
+   („qc“ allein gilt dann nicht mehr) – ein Verhaltenswechsel für den bisherigen Freitext, den ein Test festhält.
+5. **Combo, Truhe, Pflicht** kommen über den Ausgang *halb* aus B-624 – hier nichts Neues, solange B-624 sie
+   richtig führt.
+6. **Gespeicherter Client-Zustand.** Die Sohn-App merkt sich keine Antworten über die Sitzung hinaus; kein
+   Altbestand zu heilen (README: „was mit dem schon gespeicherten geschieht“).
+
+### Angriffsplan
+
+1. Zerlegung als eine Funktion neben `AnswerVariants` (Teile der getippten Seite, gleiche Teile zusammengefasst,
+   Kürzel-Ausnahme) mit Unit-Tests über die 22 gemessenen Einträge.
+2. `AnswerGrader`: Teile-Liste gegen Teile, Zuordnung, Schwelle Hälfte ⇒ *halb* (B-624), im Test binär.
+3. Karten-Masken in `VocabularyExerciseType` (`backend/Pugling.Api/Exercises/VocabularyExerciseType.cs:156`) und
+   `BuiltInExerciseTypes` (`backend/Pugling.Api/Exercises/BuiltInExerciseTypes.cs:204`); Freitext und Diktat
+   bekommen die Teile-Zahl.
+4. Vertrag und die vier Pfade (Üben, Test, Bonus, Vorschau); Ergebnis je Feld.
+5. Frontend: `Lektion` rendert je Teil eine `LetterBoxes`-Reihe bzw. ein Textfeld, Ergebnisblatt je Feld;
+   `ExercisePreviewModal` zieht nach.
+
+### Testweg
+
+- Unit-Tests der Zerlegung und der Zuordnung (`Pugling.Api.Tests`), je Entscheidung ein Fall (quel/…: 4 Felder;
+  sévère: 1; connaître qn / qc: 1; einteilig: wie heute).
+- Integrationstests je Pfad (Üben, Test, Bonus, Vorschau-Check): 4/4 ⇒ richtig, 3/4 ⇒ halb, 1/4 ⇒ falsch,
+  im Test 3/4 ⇒ falsch.
+- Vitest für `Lektion` mit mehreren Feldern; E2E: neue `mehrere-formen.spec.ts` (Sohn tippt vier Formen in vier
+  Reihen) – zugleich Rollengang.
+- Reviewer: `pugling-reviewer` und `frontend-reviewer`.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Chat mit dem Vater.
@@ -118,3 +182,5 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
   acht offene Punkte mit Empfehlung.
 - **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; teilweise richtig
   zählt halb wie in B-624, B-625 hängt damit an B-624.
+- **2026-11-17** — geschätzt: L, beides, keine Migration, kein Vertragsbruch (nur additive Felder);
+  hängt an B-624.
