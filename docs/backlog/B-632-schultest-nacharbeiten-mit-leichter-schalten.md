@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
+tags: [typ/story, status/verworfen, bereich/klassenarbeit, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Schultest nacharbeiten, Nacharbeit, leichter schalten, Hilfe-Leiter]
-status: geschaetzt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: L
@@ -9,8 +9,8 @@ wo: beides
 migration: ja
 vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17, zu Theodors Vokabeltest Unit 1 (9/20), Auswertung in raw/english/real_tests/2026-11-09-theodor-vokabeltest.md (gitignored)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt (Entscheidung des Vaters 2026-11-17): Teile A–E einzeln lieferbar"
+ersetzt_durch: [B-633, B-634, B-635, B-636, B-637]
 ---
 
 # B-632 · Einen geschriebenen Schultest als Pflicht nacharbeiten, mit „leichter" je Aufgabe
@@ -330,3 +330,4 @@ Mensch.
   Empfehlung.
 - **2026-11-17** — gegrillt mit dem Vater: acht Entscheidungen (alle wie empfohlen, dazu ein Abschlussbonus), Akzeptanzkriterien final.
 - **2026-11-17** — geschätzt: L (fünf Teile A–E, einzeln S/S/M/M/S), `wo: beides`, Migration ja (Spalten an `PlanPosition`, Erledigt-Stand je Aufgabe, Sitzungsstufe als JSON), kein Vertragsbruch (alles additiv). Teilen nach A–E ist möglich, die Entscheidung liegt beim Menschen.
+- **2026-11-17** — `verworfen`, geteilt auf Wunsch des Vaters: A → B-633 (Vorgabe je Lücke), B → B-634 (Buchstabensalat je Wort), C → B-635 (leichter schalten, Runden), D → B-636 (Pflicht bis erledigt, Abschlussbonus), E → B-637 (Vater-Sicht). Spielbar ist die Nacharbeit erst mit allen fünf; empfohlene Reihenfolge A, B, C, D, E.

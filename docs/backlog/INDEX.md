@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (48)
+### Offen (52)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-628](B-628-rueckmeldung-backend.md) | Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-629](B-629-rueckmeldung-frontend.md) | Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend) | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
-| [B-632](B-632-schultest-nacharbeiten-mit-leichter-schalten.md) | Einen geschriebenen Schultest als Pflicht nacharbeiten, mit „leichter" je Aufgabe | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
+| [B-633](B-633-lueckentext-deutsche-vorgabe-je-luecke.md) | Lückentext: eine eigene deutsche Vorgabe je Lücke | Wunsch | `geschaetzt` | P1 | S | beides | — |
+| [B-634](B-634-buchstabensalat-je-wort.md) | Buchstabensalat auch bei Lösungen aus mehreren Wörtern, je Wort gemischt | Wunsch | `geschaetzt` | P1 | S | beides | — |
+| [B-635](B-635-nacharbeit-leichter-schalten-und-runden.md) | Nacharbeit: selbst leichter schalten, erledigt erst frei getippt, Runden bis alles erledigt | Wunsch | `geschaetzt` | P1 | M | beides | Migration |
+| [B-636](B-636-pflicht-bis-erledigt-mit-abschlussbonus.md) | Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
+| [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand | Wunsch | `geschaetzt` | P1 | S | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `idee` | P2 | — | — | — |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `idee` | P2 | — | — | — |
@@ -989,7 +993,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (44)</summary>
+<summary>Verworfen (45)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1031,6 +1035,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md) | Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan | geteilt – Entscheidung 1 (Dreiteilung) beim Schätzen am 2026-11-17 eingelöst: Teil (a) Inhalt, Teil (c) Stundenplan-Pflicht in Backend und Frontend (als Ganzes XL), Teil (b) war schon nach B-616 und von dort nach B-618/B-619 gegangen. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-620, B-621, B-622, B-618, B-619] |
 | [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | geteilt – am Code gemessen XL (zwei Tabellen mit Migration, Verteilung an fünf Dosis-Stellen, 0-%-Pflichtregel, Endpunkte, Regler im Vater-Web, Anzeige in der Sohn-App); Schnitt vom Vater am 2026-11-17 gewählt: Backend zuerst, dann Frontend. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-618, B-619] |
 | [B-623](B-623-feedback-knopf-an-der-karte.md) | Der Lernende gibt zur Karte eine Rückmeldung, und neue Übungen berücksichtigen sie | geteilt beim Schätzen am 2026-11-17 – als Ganzes XL (Backend L + Frontend M + KI-Creator M). Entscheidungen und AKs leben hier und werden von den Teil-Stories nach Nummer zitiert → [B-628, B-629, B-630] |
+| [B-632](B-632-schultest-nacharbeiten-mit-leichter-schalten.md) | Einen geschriebenen Schultest als Pflicht nacharbeiten, mit „leichter" je Aufgabe | geteilt (Entscheidung des Vaters 2026-11-17): Teile A–E einzeln lieferbar → [B-633, B-634, B-635, B-636, B-637] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |
