@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (56)
+### Offen (58)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -38,7 +38,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-631](B-631-buchimport-fuellt-vokabel-store-nur-flach.md) | Der Buchimport füllt vom Vokabel-Store nur Wort und Übersetzung | Wunsch | `geschaetzt` | P2 | M | doku | — |
 | [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `geschaetzt` | P2 | L | beides | Migration + Vertrag |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
-| [B-646](B-646-vokabel-schema-nachfuellen.md) | Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, jedes Birkenbihl-Wort eine Vokabel | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | Vokabeln vollständig: Definition, Ladeweg und Bestand | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | Birkenbihl: jedes Wort eines Textes hat eine Vokabel | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -71,6 +72,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-617](B-617-verteilung-aus-dem-lernstand-vorschlagen.md) | Pugling schlägt die Verteilung der Fächer aus dem Lernstand vor | Wunsch | `idee` | P3 | — | — | — |
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
+| [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
@@ -1002,9 +1004,12 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | `idee` | `unverifiziert: true` |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
+| [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | `gegrillt` | Abschnitt „Ist-Stand…" |
+| [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | `gegrillt` | Abschnitt „Ist-Stand…" |
+| [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | `ausformuliert` | Abschnitt „Akzeptanzkriterien" |
 
 <details>
-<summary>Verworfen (45)</summary>
+<summary>Verworfen (46)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1047,6 +1052,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | geteilt – am Code gemessen XL (zwei Tabellen mit Migration, Verteilung an fünf Dosis-Stellen, 0-%-Pflichtregel, Endpunkte, Regler im Vater-Web, Anzeige in der Sohn-App); Schnitt vom Vater am 2026-11-17 gewählt: Backend zuerst, dann Frontend. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-618, B-619] |
 | [B-623](B-623-feedback-knopf-an-der-karte.md) | Der Lernende gibt zur Karte eine Rückmeldung, und neue Übungen berücksichtigen sie | geteilt beim Schätzen am 2026-11-17 – als Ganzes XL (Backend L + Frontend M + KI-Creator M). Entscheidungen und AKs leben hier und werden von den Teil-Stories nach Nummer zitiert → [B-628, B-629, B-630] |
 | [B-632](B-632-schultest-nacharbeiten-mit-leichter-schalten.md) | Einen geschriebenen Schultest als Pflicht nacharbeiten, mit „leichter" je Aufgabe | geteilt (Entscheidung des Vaters 2026-11-17): Teile A–E einzeln lieferbar → [B-633, B-634, B-635, B-636, B-637] |
+| [B-646](B-646-vokabel-schema-nachfuellen.md) | Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, jedes Birkenbihl-Wort eine Vokabel | geteilt (Entscheidung 8) → [B-647, B-648, B-649] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |

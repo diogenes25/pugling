@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert]
+tags: [typ/story, status/verworfen]
 aliases: []
-status: ausformuliert
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-17 (Messung auf einer Kopie der echten pugling.db)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt (Entscheidung 8)"
+ersetzt_durch: [B-647, B-648, B-649]
 ---
 
 # B-646 · Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, jedes Birkenbihl-Wort eine Vokabel
@@ -118,36 +118,82 @@ Wortart) auf diesen Daten aufbauen können, statt sie aus dem Wortlaut zu raten.
 
 ## Offene Punkte
 
-1. **Artikel und `to` im `Word` – bleiben oder herausziehen?** Herausziehen ist sauberer und macht die Birkenbihl-
+1. ~~**Artikel und `to` im `Word` – bleiben oder herausziehen?**~~ (→ Entscheidung 1) Herausziehen ist sauberer und macht die Birkenbihl-
    Suche einfach, bricht aber B-421/B-446 und ändert, was die Kinder in laufenden Plänen sehen und tippen.
    *Empfehlung:* **bleiben lassen**, zusätzlich strukturiert in `Noun.Article`/`Verb.Infinitive` ablegen, und die
    Dekodierung faltet Artikel/`to` beim Suchen weg. Kein Bruch an laufenden Plänen.
-2. **Was heißt „vollständig" je Wortart?** *Empfehlung:* Nomen = Artikel/Genus (+ Plural; Latein + Genitiv), Verb =
+2. ~~**Was heißt „vollständig" je Wortart?**~~ (→ Entscheidung 2) *Empfehlung:* Nomen = Artikel/Genus (+ Plural; Latein + Genitiv), Verb =
    `IsBaseForm` und bei Formen `BaseFormId` + Zeit/Person/Zahl, sonst nur die Wortart. Kein Audio, keine Tags,
    keine `TranslationAlternatives` (die Wertung zerlegt `,`/`;`, B-462). Den Filter `incomplete` entsprechend
    schärfen.
-3. **Woher kommen die Werte für den Bestand (1.104 Einträge)?** Von Hand ist das zu viel. *Empfehlung:* Opus
+3. ~~**Woher kommen die Werte für den Bestand (1.104 Einträge)?**~~ (→ Entscheidung 3) Von Hand ist das zu viel. *Empfehlung:* Opus
    füllt sie aus den Seiten-Markdowns der Bücher (Vokabelseiten tragen Wortart/Genus/Plural, im Latein den
    Genitiv) in neue TSV-Spalten; ein Skript zieht sie per PATCH nach; der Vater prüft eine Stichprobe. Nicht
    `gemma4:e2b` (B-459).
-4. **Birkenbihl-Pflicht: hart abweisen oder weich markieren?** Hart heißt: Satz ohne vollständige Verknüpfung →
+4. ~~**Birkenbihl-Pflicht: hart abweisen oder weich markieren?**~~ (→ Entscheidung 4) Hart heißt: Satz ohne vollständige Verknüpfung →
    `400`. Weich heißt: speichern, aber als unvollständig ausweisen. *Empfehlung:* **anlegen statt abweisen** –
    ein nicht gefundenes Wort mit Glosse wird wie bei der Übersetzungsübung im Speicher verankert; ein Wort ohne
    Glosse lässt die Übung als unvollständig gelten (sichtbar im Editor), nicht spielbar-gesperrt.
-5. **Gebeugte Formen: wer legt sie an?** *Empfehlung:* beim Birkenbihl-Satz bei Bedarf – die Dekodierung schlägt
+5. ~~**Gebeugte Formen: wer legt sie an?**~~ (→ Entscheidung 5) *Empfehlung:* beim Birkenbihl-Satz bei Bedarf – die Dekodierung schlägt
    die Grundform vor, der Creator bestätigt, die Form entsteht mit `BaseFormId`. Kein vorab erzeugtes
    Konjugationsparadigma.
-6. **Latein-Genitiv: neues Feld in `NounInfo` oder in `Plural` zweckentfremden?** *Empfehlung:* neues Feld
+6. ~~**Latein-Genitiv: neues Feld in `NounInfo` oder in `Plural` zweckentfremden?**~~ (→ Entscheidung 6) *Empfehlung:* neues Feld
    `Genitive` (JSON-Spalte, also **keine Migration**, aber Vertragsänderung).
-7. **Die 29 Übersetzungssätze im Speicher – so lassen, umdrehen oder aus dem Speicher nehmen?** *Empfehlung:*
+7. ~~**Die 29 Übersetzungssätze im Speicher – so lassen, umdrehen oder aus dem Speicher nehmen?**~~ (→ Entscheidung 7) *Empfehlung:*
    eigene Story; Sätze gehören nicht in den Wort-Speicher. Für B-646 nur aus der Vollständigkeitsprüfung
    ausnehmen (Wortart `Phrase`).
-8. **Schnitt:** Die Story ist groß (Bestand, Ladeweg, Birkenbihl, Latein). *Empfehlung:* teilen in
+8. ~~**Schnitt:**~~ (→ Entscheidung 8) Die Story ist groß (Bestand, Ladeweg, Birkenbihl, Latein). *Empfehlung:* teilen in
    (a) Vollständigkeit definieren + Ladeweg + Bestand nachfüllen, (b) Birkenbihl-Pflicht + Dekodierung,
    (c) Übersetzungssätze. Reihenfolge a → b.
+
+## Entscheidungen
+
+Am 2026-11-17 vom Vater im Dialog getroffen: Er hat alle acht Empfehlungen der Offenen Punkte übernommen
+(„Nimm immer deine Empfehlung"). Hier stehen sie mit Begründung und Kosten.
+
+1. **Artikel und `to` bleiben im `Word`, zusätzlich strukturiert.** `la ville` behält seinen Wortlaut und trägt
+   außerdem `Noun.Article = "la"` und `Genus`; `(to) live` trägt `Verb.IsBaseForm = true`. Die Birkenbihl-Suche
+   lässt Artikel und `to` beim Vergleichen weg. Begründung: B-421/B-446 und die laufenden Pläne der Söhne bleiben
+   unberührt, kein Lernstand wandert. Kosten: die Angabe steht doppelt. Eine Prüfung beim Speichern muss
+   sicherstellen, dass ein `Word` mit führendem Artikel denselben Artikel in `Noun.Article` trägt. Dazu kommt
+   eine sprachabhängige Artikelliste für die Suche (en/fr/la).
+2. **„Vollständig" je Wortart.** Ein Nomen braucht Artikel und Genus, wo die Sprache sie hat, dazu den Plural; im
+   Latein Genitiv und Genus. Bei einem Verb steht `IsBaseForm` fest; eine gebeugte Form trägt `BaseFormId` und
+   Zeit/Person/Zahl. Jede andere Wortart braucht nur die Wortart selbst (`≠ Other`). Audio, Tags und
+   `TranslationAlternatives` zählen nicht (die Wertung zerlegt `,`/`;`, B-462). Der Filter `?incomplete=true`
+   wird darauf geschärft. Begründung: ein messbares Ziel statt „alles gefüllt". Kosten: Der Filter wird
+   sprachabhängig (Englisch hat kein Genus), und der Vertrag beschreibt das.
+3. **Werte für den Bestand liest Opus aus den Seiten-Markdowns.** Sie kommen in neue TSV-Spalten, ein Skript zieht
+   sie per PATCH nach, und der Vater prüft eine Stichprobe. Begründung: 1.104 Einträge sind von Hand zu viel,
+   und `gemma4:e2b` liest zu ungenau (B-459). Kosten: Opus-Tokens je Buch. Einträge ohne Buchquelle (Seed,
+   KI-Übungen) brauchen einen eigenen Durchgang, und die Stichprobe ist Handarbeit des Vaters.
+4. **Birkenbihl: anlegen statt abweisen.** Ein nicht gefundenes Wort mit Glosse wird im Speicher verankert, wie
+   bei der Übersetzungsübung, beim Satz-Hinzufügen **und** beim Anlegen/Ersetzen der ganzen Übung. Ein Wort ohne
+   Glosse markiert die Übung im Editor als unvollständig; sie bleibt spielbar. Begründung: Ein `400` würde das
+   Anlegen eines Textes blockieren, solange der Speicher lückenhaft ist. Kosten: Die Pflicht ist weich, eine
+   unvollständige Übung kann bestehen bleiben, und der Editor braucht eine Anzeige.
+5. **Gebeugte Formen entstehen bei Bedarf.** Die Dekodierung schlägt zu `is` die Grundform `be` vor, der Creator
+   bestätigt, und die Form wird mit `BaseFormId` angelegt. Kein vorab erzeugtes Paradigma. Begründung: Nur
+   Formen, die in Texten vorkommen, kosten Pflege. Kosten: Die Grundform-Erkennung braucht eine Regel je Sprache
+   oder eine Liste unregelmäßiger Formen, und der Creator hat einen Bestätigungsschritt mehr.
+6. **Latein-Genitiv als neues Feld `NounInfo.Genitive`.** Begründung: `Plural` zweckzuentfremden würde jede
+   Sprache verwirren. Kosten: Vertragsänderung (`Pugling.Contracts`, Client, Frontend-Editor). Keine Migration,
+   weil `Noun` eine JSON-Spalte ist.
+7. **Die 29 Übersetzungssätze sind eine eigene Story (B-649).** Bis dahin tragen sie die Wortart `Phrase` und
+   fallen damit aus der Vollständigkeitsprüfung. Begründung: Sätze im Wortspeicher sind ein eigenes Thema und
+   nicht nötig, damit B-647/B-648 ihr Ziel erreichen. Kosten: Der Speicher bleibt bis dahin gemischt.
+8. **Geteilt in drei Stories, Reihenfolge B-647 → B-648.**
+   - [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md): Vollständigkeit, Ladeweg, Bestand, Latein-Genitiv
+     (Entscheidungen 1–3, 6, 7).
+   - [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md): Birkenbihl-Pflicht und Dekodierung (Entscheidungen 1, 4, 5).
+   - [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md): Übersetzungssätze im Wortspeicher (Entscheidung 7).
+
+   Begründung: Jeder Teil ist für sich abnehmbar. B-648 braucht die Grundform-Daten aus B-647. Kosten: drei
+   Durchläufe durch die Kette statt einem.
 
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Füllgrad-Messung des Vokabel-Schemas auf einer DB-Kopie, im Chat mit dem Vater).
 - **2026-11-17** — Anforderung des Vaters ergänzt (Felder vollständig, jedes Birkenbihl-Wort braucht eine Vokabel), Birkenbihl-Abdeckung auf der DB-Kopie gemessen; P3→P2, Aufräumen→Wunsch.
 - **2026-11-17** — ausformuliert: Ist-Stand am Code belegt. Korrektur der Idee: die 29 deutschen Einträge sind Übersetzungssätze (sechs Übungen mit `sourceLang: de`), keine vertauschten Vokabeln. Neu gefunden: CRUD-Anlage einer Birkenbihl-Übung verankert Glossen nicht im Speicher; der Artikel im `Word` trägt B-421.
+- **2026-11-17** — gegrillt im Dialog (Vater übernimmt alle acht Empfehlungen) und nach Entscheidung 8 geteilt: verworfen, ersetzt durch B-647, B-648, B-649.
