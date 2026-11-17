@@ -97,10 +97,8 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
    *Kosten:* eine Kürzel-Liste im Code neben der Abkürzungsliste von B-462.
 7. **Gelöst im Code, nicht im Speicher.** Die Einträge bleiben, wie das Buch sie druckt. *Kosten:* Die Zerlegung
    bleibt eine Heuristik; was sie als Teil erkennt, steht nirgends in den Daten.
-
-**Nachtrag aus [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md) (Grill-Runde 2026-11-17):**
-
-8. **Auch ein Schrägstrich ohne Leerzeichen trennt Teile** – er verbindet je ein Wort links und rechts:
+8. *(Nachtrag aus [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md), Grill-Runde 2026-11-17.)*
+   **Auch ein Schrägstrich ohne Leerzeichen trennt Teile** – er verbindet je ein Wort links und rechts:
    „(to) turn left/right“ ⇒ „turn left“, „turn right“; „(to) turn sth. up/down“ ⇒ „turn sth. up“,
    „turn sth. down“. In Klammern bleibt er eine Wahl („stay (at/with)“), zwischen zwei Platzhaltern („qn/qc“) ist
    er Beiwerk (B-626/1). Je Teil gilt der Kern aus B-626 (Platzhalter dürfen fehlen). Begründung und Kosten:
