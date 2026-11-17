@@ -40,6 +40,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md) | Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-631](B-631-buchimport-fuellt-vokabel-store-nur-flach.md) | Der Buchimport füllt vom Vokabel-Store nur Wort und Übersetzung | Wunsch | `geschaetzt` | P2 | M | doku | — |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-643](B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) | Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -53,7 +54,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-627](B-627-berechtigte-meldung-bucht-nach.md) | Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach | Wunsch | `idee` | P2 | — | — | — |
 | [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `idee` | P2 | — | — | — |
 | [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `idee` | P2 | — | — | — |
-| [B-643](B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) | Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
