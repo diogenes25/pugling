@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/katalog, bereich/agent, rolle/student, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/training, bereich/katalog, bereich/agent, rolle/student, rolle/creator, rolle/supervisor]
 aliases: [Feedback-Knopf, Rückmeldung zur Übung]
-status: gegrillt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase mit Friedrich und Theodor)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt beim Schätzen am 2026-11-17 – als Ganzes XL (Backend L + Frontend M + KI-Creator M). Entscheidungen und AKs leben hier und werden von den Teil-Stories nach Nummer zitiert"
+ersetzt_durch: [B-628, B-629, B-630]
 ---
 
 # B-623 · Der Lernende gibt zur Karte eine Rückmeldung, und neue Übungen berücksichtigen sie
@@ -205,3 +205,6 @@ Grill-Runde mit dem Vater, 2026-11-17.
 - **2026-11-17** — gegrillt mit dem Vater: neun Entscheidungen; abweichend von den Empfehlungen gehört das
   Wirken beim Erstellen in diese Story (E1) und der Test bekommt den Knopf nur auf dem Ergebnisblatt (E5).
   Folge-Story B-627 (Nachbuchen nach „berechtigt“) angelegt.
+- **2026-11-17** — beim Schätzen geteilt in [B-628](B-628-rueckmeldung-backend.md) (Backend, L),
+  [B-629](B-629-rueckmeldung-frontend.md) (Frontend, M) und [B-630](B-630-rueckmeldung-im-ki-creator.md)
+  (KI-Creator, M). Diese Datei bleibt die Quelle der Entscheidungen E1–E9 und der AKs.
