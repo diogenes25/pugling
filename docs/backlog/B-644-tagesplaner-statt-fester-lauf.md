@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
+tags: [typ/story, status/ausformuliert, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
 aliases: [Tagesplaner, Tagesauswertung, Leistungsprofil, adaptiver Tagesplan]
-status: idee
+status: ausformuliert
 prio: P1
 art: Wunsch
 groesse: ""
@@ -9,7 +9,6 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Vater im Chat 2026-11-17: statt eines fest geplanten Laufs je Kapitel nur noch Tages- und Bonusaufgaben, jeden Morgen um 6 Uhr aus der Auswertung der Vortage, dem Leistungsprofil und dem Stundenplan erzeugt"
-unverifiziert: true
 grund: ""
 ersetzt_durch: []
 ---
@@ -23,9 +22,9 @@ noch **Tagesaufgaben** (Pflicht) und **Bonusaufgaben**. Jeden Morgen um 6 Uhr we
 aus, schreibt mit, was gelernt wurde und wo es hakte, und erzeugt daraus je Kind die Aufgaben des Tages –
 nach Leistungsprofil, bisherigen Daten und Stundenplan.
 
-Dies ist ein **Entwurf auf Stufe `idee`**. Die Belege unten stammen zum Teil aus B-615 (dort am 2026-11-17
-gemessen) und sind beim Ausformulieren neu zu prüfen. Das Vorhaben passt nicht in eine Sitzung und sollte
-nach dem Grillen als Karte (`/wayfinder`) laufen.
+Das Vorhaben passt nicht in eine Sitzung und sollte nach dem Grillen als Karte (`/wayfinder`) laufen. Die
+Grill-Runde mit dem Vater lief **vor** dem Ausformulieren (siehe `## Entscheidungen`); der Ist-Stand unten
+hat daraus sechs neue offene Punkte gemacht.
 
 ## User Story
 
@@ -34,24 +33,166 @@ damit die Pflicht zum tatsächlichen Lernstand passt und ich keinen Lauf mehr vo
 *Vater* möchte ich außerdem je Tag nachlesen, was gelernt wurde und wo es Probleme gab. Als *Sohn* möchte
 ich Aufgaben, die zu dem passen, was ich gestern konnte und was morgen in der Schule dran ist.
 
-## Ist-Stand am Code (Teilbefund, 2026-11-17)
+## Ist-Stand am Code
 
-- **Die Pflicht hängt an der Position und ist statisch.** `PlanPosition` trägt `NewItemsPerDay`, `Cadence`,
-  `GoalThreshold`, `PenaltyCoins` (`backend/Pugling.Api/Models/PlanPositionEntities.cs:40`, `:51`, `:75`, `:91`).
-  Malus und Belohnung werden je Position und Periode gebucht (`PositionGoalReward` `:168`,
-  `PositionGoalPenalty` `:191`).
-- **Die Rohdaten für eine Auswertung sind da:** `ItemReviewEvent`, `ReviewEvent`, `PracticeSession`,
-  `TestAttempt`/`TestItemResult`, `ItemProgress` (plan-übergreifend je Vokabel) und `PositionItemProgress`.
-  Eine **gespeicherte Tagesauswertung** oder ein **Leistungsprofil je Fach** gibt es nicht (laut B-615:
-  Schwäche existiert nur je Wort, Schwelle 50 %).
-- **Eine Tagessicht über alle aktiven Pläne gibt es schon** (B-606, `PositionProgressService.ComputeChildDayAsync`);
-  ein aktiver Plan je Kind und Fach (B-539).
-- **Es gibt keinen Hintergrunddienst.** Im Backend existiert kein `BackgroundService`/`IHostedService`; der
-  Malus wird träge beim nächsten Zugriff abgerechnet. Ein „6-Uhr-Lauf" wäre das erste zeitgesteuerte Stück.
-- **Der Stundenplan ist gespeichert, aber wirkungslos** (`TimetableEntry`, kein Service liest ihn; laut B-615
-  ist für kein Kind ein Eintrag gepflegt).
-- **Kein LLM im Backend** (bewusste Entscheidung); der KI-Creator ist ein externer Konsolen-Agent und kann
-  mit `--use-weak` schon Übungen aus schwachen Wörtern bauen (B-21).
+Gemessen am 2026-11-17 auf `main` (Stand `36185a56`). Pfade relativ zu `backend/`, wenn nicht anders
+genannt. Im selben Checkout baute währenddessen eine zweite Sitzung an den Lernkarten; die hier belegten
+Stellen liegen außerhalb ihres Umbaus, die Zeilennummern in `PositionProgressService.cs` können sich aber
+verschoben haben und sind beim Schätzen nachzusehen.
+
+### Die Pflicht hängt an der Position und ist statisch
+
+- `PlanPosition` trägt `NewItemsPerDay`, `Cadence`, `GoalThreshold` und `PenaltyCoins`
+  (`Pugling.Api/Models/PlanPositionEntities.cs:40`, `:51`, `:75`, `:91`). Die Taktung kennt nur `None`,
+  `Daily`, `Weekly` (`Pugling.Contracts/Common/PlanPositionBaseTypes.cs:4-12`).
+- Belohnung und Malus werden je Position und Periode gebucht (`PositionGoalReward`
+  `PlanPositionEntities.cs:166`, `PositionGoalPenalty` `:189`), jeweils mit Fremdschlüssel auf die Position.
+- Der Malus wird **träge** abgerechnet: `SettleClosedPeriodsAsync`
+  (`Pugling.Api/Services/Shared/PositionProgressService.cs:585`) läuft nur beim Kind-Login
+  (`Pugling.Api/Controllers/AuthController.cs:85`) und an einer Stelle in
+  `Controllers/Student/MeController.cs:296`, höchstens 14 Tage zurück (`MaxSettleLookbackDays`, `:25`).
+  Der Doc-Kommentar der Methode sagt ausdrücklich „There is no scheduler".
+
+### Es gibt keinen Zeitgeber und keine Ortszeit
+
+- Kein `BackgroundService`, `IHostedService`, `AddHostedService` oder `PeriodicTimer` im ganzen Backend
+  (Suche ohne Treffer). Der 6-Uhr-Lauf wäre das erste zeitgesteuerte Stück.
+- „Heute" wird an **35 Stellen in 15 Dateien** als `DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)`
+  gebildet (z. B. `Controllers/Student/ChildTodayController.cs:31`, `AuthController.cs:84`). Die Uhr ist
+  überall ein injizierter `TimeProvider` – eine Naht für Tests gibt es also. `TimeZoneInfo` kommt im
+  Backend **nicht** vor; es gibt keine zentrale „Heute"-Funktion.
+
+### Serie und Malus kennen keinen freien Tag
+
+- Die Serie läuft Kalendertag für Kalendertag rückwärts (`ChildStreakAsync`,
+  `PositionProgressService.cs:391`, Schleife `:402` `day.AddDays(-1)`) und bricht am ersten unvollständigen
+  Tag (`IsCompleteDay`, `:352`). Einen Wochentag fragt sie nicht ab.
+- Die Malus-Perioden (`ClosedPeriods`, `:517`) zerlegen nur nach Taktung. `DayOfWeek` wird im Backend nur
+  im Shop (Auffülltag) und im Stundenplan-Controller benutzt.
+- **Folge:** Ein freier Sonntag (Entscheidung 2) und eine Pause (Entscheidung 8) existieren heute nicht –
+  ein Sonntag ohne Lernen reißt die Serie und kostet Malus. Eine Suche nach Pause/Ferien/Krank in Modell,
+  Services und Vertrag hat keinen Treffer.
+
+### Rohdaten für die Auswertung: Mengen ja, Fehlerart nein
+
+- Jede Antwort im Üben liegt als `ItemReviewEvent` vor (`Models/ItemProgressEntities.cs:61`): Kind, Item,
+  Übung, Vokabel, Position, Quelle (`:80`), Stufe (`:82`), **gegebene Antwort** (`:84`), richtig/falsch
+  (`:86`), Zeitpunkt (`:88`).
+- Jede Testantwort liegt als `TestItemResult` vor (`Models/StudyPlanEntities.cs:202`): gegebene Antwort
+  (`:218`), richtig/falsch (`:219`), benutzte Hilfen (`:226`). Der Versuch selbst trägt Tag, Stufe, Quote
+  und Bestanden (`TestAttempt`, `:163-188`).
+- Geübte Zeit: `PracticeSession.ActiveSeconds` (`StudyPlanEntities.cs:112`), je Sitzung mit Tag (`:108`).
+- Lernstand je Vokabel über alle Pläne: `ItemProgress` (`ItemProgressEntities.cs:18`) mit Fach (`:35`),
+  Beherrschung in Prozent (`:41`), gesehen/richtig (`:44`, `:46`), Einführungstag (`:49`). „Schwach" ist
+  Beherrschung unter der Schwelle `ItemProgress.WeakBelowPercent`
+  (`Controllers/Student/ChildVocabularyProgressController.cs:27`, `:47`).
+- **Eine Fehlerart wird nirgends gespeichert.** Es gibt kein Feld und keinen Typ dafür; eine Suche nach
+  Akzent/Diakritik/Verdict findet nur einen Kommentar zur Zeichen-Normalisierung
+  (`Services/Shared/StageMechanics.cs:55`). Wo die Regel „Akzentfehler zählt im Üben halb" (B-624) sitzt,
+  habe ich unter diesen Suchwörtern **nicht gefunden** – beim Schätzen nachzusehen. Weil die gegebene
+  Antwort gespeichert ist, lässt sich die Fehlerart für getippte Antworten **nachträglich** bestimmen; für
+  Auswahl-Antworten nicht.
+- Eine gespeicherte Tagesauswertung oder ein Leistungsprofil je Fach gibt es nicht (keine Entität).
+
+### Der Plan ist schon fast ein Stoffrahmen
+
+- `StudyPlan` trägt Fach (`Models/StudyPlanEntities.cs:83`) und optional die **Unit der Reihe** (`:86`),
+  dazu `StartDate`/`EndDate` (`:88-89`) und `Active` (`:90`). `EndDate` ist **Pflicht** – „Stoff ohne
+  Termin" (Entscheidung 1) lässt sich so nicht ausdrücken.
+- Ein aktiver Plan je Kind und Fach (B-539) und eine Tagessicht über alle aktiven Pläne
+  (`ComputeChildDayAsync`, `PositionProgressService.cs:322`, B-606) sind gebaut. Die Sohn-App liest den Tag
+  über `student/children/{childId}/today` (`Controllers/Student/ChildTodayController.cs:14`,
+  `frontend/src/lib/api.ts:720`).
+
+### Termin und Teilprüfung: die Klassenarbeit trägt beides, wirkt aber nicht
+
+- `Klassenarbeit` (`Models/KlassenarbeitEntities.cs:67`) hat Kind, Fach, Titel, Thema und ein
+  **Pflicht-Datum** (`ScheduledDate`, `:79`). Ihr Stoff ist ein Bündel aus Übungen
+  (`KlassenarbeitExercise`, `:92`) und Tags (`KlassenarbeitTag`, `:106`).
+- Eine Teilprüfung („Vokabeltest über einen Teil") ist damit als zweite Klassenarbeit mit kleinerem Bündel
+  abbildbar – aber nur **auf Ebene ganzer Übungen oder Tags**, nicht als Wortbereich innerhalb einer Übung.
+- Kein Student-Endpunkt und kein Service liest die Klassenarbeit für die Pflicht (Befund aus B-248,
+  2026-11-14; hier nicht neu gemessen).
+
+### Stundenplan: gespeichert, ohne Wirkung
+
+- `TimetableEntry` (`Models/TimetableEntities.cs:7`): Kind, Fach, Wochentag (`:14`), optionale Uhrzeit.
+  Gelesen wird er nur im eigenen Controller (`Controllers/Supervisor/TimetableController.cs:25-51`).
+
+### Einstellungen je Kind
+
+- `Child` (`Models/AdminEntities.cs:63-139`) trägt Klasse, Schulart, Interessen, Notizen und als einzige
+  Lern-Stellgröße `BonusDailyCoinCap` (`:96`). Boden/Deckel für Aufgaben oder Wörter, ein Malus-Betrag je
+  Kind und eine Pause fehlen.
+
+### „Bonus" gibt es schon dreimal
+
+- **Bonus-Training:** `ExtraTrainingRun` (`Models/GamificationEntities.cs:124`), gespielt über
+  `student/children/{childId}/extra-training` (`Controllers/Student/ExtraTrainingController.cs:17`, `:38`,
+  `:57`), gedeckelt über `BonusDailyCoinCap`.
+- **Tagesbox:** `DailyBoxClaim` (`GamificationEntities.cs:98`) mit dem Serien-Stand beim Öffnen (`:107`).
+- **Missionen** mit eigener Punktart (`PointKind.Mission`, `Pugling.Contracts/Common/AdminBaseTypes.cs:49`).
+- Alle drei hängen an der Regel „erst die Pflicht, dann die Belohnung" aus der Tagessicht.
+
+### Der Reset ist für das Guthaben unkritisch
+
+- `ChildPointsEntry` (`Models/AdminEntities.cs:211-220`) trägt Kind, Betrag, Art, **Begründung als Text**
+  und Zeit – **keinen** Fremdschlüssel auf Plan oder Position. Löscht man Pläne und Positionen, bleibt das
+  Kassenbuch vollständig lesbar. Die Sorge aus Entscheidung 12 („Buchungen verweisen auf Positionen, die es
+  nicht mehr gibt") trifft nur den Text der Begründung, keine Verknüpfung.
+- Mit den Positionen verschwinden `PositionGoalReward`/`PositionGoalPenalty` (Fremdschlüssel). Das sind nur
+  die Sperren gegen Doppelbuchung; die Münzen selbst stehen im Kassenbuch.
+
+### KI-Creator kann Förder-Übungen schon bauen
+
+- `--use-weak` (`Pugling.Agent.Creator/AgentCommands.cs:509`, `:575`; `GenerationRequest.cs:36`) nimmt die
+  schwach beherrschten Wörter eines Kindes als Wortschatz. Der Agent läuft außerhalb der API; im Backend
+  gibt es kein Sprachmodell.
+
+## Die echte Lücke
+
+Kleiner als gedacht ist die **Datenseite**: Antworten, Zeiten und Lernstand je Wort liegen vollständig vor,
+der Plan kennt Fach und Unit, die Klassenarbeit kennt Termin und Stoffbündel, das Kassenbuch übersteht den
+Reset. Größer als gedacht ist die **Zeitseite**. Es fehlen:
+
+1. **Ein Tagesbegriff in Ortszeit.** 35 Stellen bilden „heute" in UTC, ohne gemeinsame Funktion. Vor dem
+   Planer muss „heute" an einer Stelle entstehen (deutsche Zeit, Tagesende Mitternacht).
+2. **Lerntage.** Serie und Malus kennen weder den freien Sonntag noch eine Pause.
+3. **Ein Zeitgeber** – oder ersatzweise der träge Aufruf beim ersten Zugriff nach 6 Uhr.
+4. **Die Tagesaufgabe** als Träger der Pflicht (statt `Cadence`/`PenaltyCoins` an der Position), samt
+   Abrechnung je Aufgabe und Begründung.
+5. **Tagesauswertung und Leistungsprofil** als gespeicherte Größen, einschließlich der **Fehlerart**, die
+   heute nirgends festgehalten wird.
+6. **Der Planer** selbst mit seinen Regeln.
+7. **Einstellungen je Kind:** zwei Zahlenpaare, Malus-Betrag, Pause.
+8. **Stoff ohne Termin:** `StudyPlan.EndDate` und `Klassenarbeit.ScheduledDate` sind Pflichtfelder.
+
+## Akzeptanzkriterien (Entwurf)
+
+1. „Heute" entsteht an genau einer Stelle in deutscher Zeit; ein Tor verhindert neue direkte
+   UTC-Tagesbildung. Tests decken den Tag der Umstellung und die Zeitumstellung im März und Oktober.
+2. Für jedes Kind entsteht an jedem Lerntag (Montag bis Samstag, nicht in einer Pause) genau ein
+   Tagesplan – um 6 Uhr durch den Zeitgeber oder beim ersten Zugriff danach; zweimaliges Auslösen erzeugt
+   keinen zweiten Plan.
+3. Der Tagesplan enthält mindestens den Boden und höchstens den Deckel an Pflichtaufgaben und an neuen
+   Wörtern; auch wenn kein neuer Stoff ansteht, ist er nie leer.
+4. Jede Aufgabe trägt eine für Vater und Kind lesbare Begründung.
+5. Derselbe Datenstand ergibt denselben Plan (der Planer ist deterministisch).
+6. Eine bis Mitternacht nicht erledigte Pflichtaufgabe kostet genau einmal den Malus-Betrag des Kindes;
+   eine erledigte nichts. Der verpasste Stoff erscheint am nächsten Lerntag wieder, ohne den Deckel zu
+   überschreiten.
+7. Sonntag und Pause reißen die Serie nicht und kosten keinen Malus.
+8. Ein nachgetragener Termin (Klassenarbeit oder Teilprüfung) verändert den Plan des Folgetags; liegt das
+   nötige Tempo über dem Deckel, sieht der Vater eine Meldung mit der fehlenden Menge.
+9. Fach von heute und morgen laut Stundenplan hat im Plan Vorrang.
+10. Der Vater kann eine nicht begonnene Aufgabe streichen und eine eigene dazulegen; beides ist in der
+    Auswertung des Folgetags als Eingriff erkennbar.
+11. Die Tagesauswertung ist je Kind, Tag und Fach gespeichert (Mengen und Fehlerarten); das Vater-Web zeigt
+    Verlauf und Problemwörter, die Sohn-App nur die eigene Kurve und die Begründung an der Aufgabe.
+12. Im Schattenmodus entsteht der Plan täglich, wirkt aber auf Pflicht, Malus und Sohn-App nicht.
+13. Nach dem Stichtag sind Lernstand, Pläne und Positionen beider Kinder leer; Münzen, Gems, Skins und
+    Shop-Einlösungen sind unverändert, das Kassenbuch ist vollständig.
+14. Fällt das Sprachmodell aus, entsteht der Tagesplan trotzdem.
 
 ## Entwurf
 
@@ -109,18 +250,19 @@ Zeitzone.
 - Verpasste Pflicht kostet wie bisher Münzen; der Stoff kommt am Folgetag wieder, aber gedeckelt, damit
   keine Schuldenspirale entsteht.
 
-## Etappen (Vorschlag)
+## Etappen (Vorschlag, nach Entscheidung 11 und 14)
 
 | Etappe | Inhalt | Wirkung auf die Kinder |
 | --- | --- | --- |
-| E1 | Tagesauswertung und Leistungsprofil, Vater-Ansicht mit Verlauf | keine, nur lesen |
-| E2 | Planer im **Schattenmodus**: erzeugt täglich einen Plan, der Vater sieht ihn neben dem echten | keine; ein bis zwei Wochen an Theodor und Friedrich kalibrieren |
-| E3 | Planer scharf, **je Kind einschaltbar**: Tagesaufgaben tragen Pflicht und Malus, alte Pläne laufen weiter | Pflicht kommt aus dem Planer |
-| E4 | Bonusaufgaben, Stundenplan- und Klassenarbeits-Regeln, Sohn-App zeigt die Begründung | voll |
-| E5 | Lehrer liefert nur noch den Stoffrahmen; KI-Creator baut nachts Förder-Übungen | Inhalt wächst mit |
-| E6 | Feste Pflicht an der Position entfernen (das „Ersetzen") | altes Modell weg |
+| E0 | Ein Tagesbegriff in deutscher Zeit, Lerntage (Sonntag frei), Pause je Kind | Tag endet um Mitternacht, Sonntag frei |
+| E1 | Tagesauswertung mit Fehlerart, Leistungsprofil, Vater-Ansicht mit Verlauf | keine, nur lesen |
+| E2 | Planer im **Schattenmodus**, eine Woche; Vater sieht die Tagespläne | keine |
+| E3 | **Stichtag:** Reset von Lernstand und Plänen, Tagesaufgaben tragen Pflicht und Malus, die feste Pflicht an der Position entfällt | Pflicht kommt aus dem Planer |
+| E4 | Bonusaufgaben, Termin- und Stundenplan-Regeln, Eingriffe des Vaters, Sohn-App zeigt die Begründung | voll |
+| E5 | KI-Creator baut nachts Förder-Übungen; Zusammenfassung in Sätzen | Inhalt wächst mit |
 
-Jede Etappe bringt eine anhängende Migration; E1 und E2 ändern am Verhalten für die Söhne nichts.
+E0 ist neu und steht bewusst vorn: Es ist der einzige Teil, der schon vor dem Stichtag das Verhalten für
+die Söhne ändert, und er ist auch ohne Planer richtig. Jede Etappe bringt eine anhängende Migration.
 
 ## Berührte Stories
 
@@ -267,8 +409,26 @@ ist nachzuprüfen, bevor sie weiterwandert.
    → Entscheidung 13.
 10. ~~**B-618/B-621/B-622 jetzt anhalten?** Siehe „Berührte Stories".~~ → Entscheidung 6.
 
+### Nach dem Ausformulieren neu offen
+
+11. **Was ist eine Bonusaufgabe?** Bonus gibt es schon dreimal (Bonus-Training, Tagesbox, Missionen).
+    Empfehlung: Eine Bonusaufgabe ist ein vom Planer **vorgeschlagenes Bonus-Training** mit Begründung –
+    dieselbe Mechanik, kein vierter Weg; Tagesbox und Missionen bleiben, wie sie sind.
+12. **Wie fein ist eine Teilprüfung?** Die Klassenarbeit bündelt ganze Übungen oder Tags. Reicht das
+    („Vokabeltest über Unit 1, Teil A" = eine Übung), oder braucht es einen Wortbereich innerhalb einer
+    Übung? Empfehlung: Übungen und Tags reichen, solange die Wortlisten je Buchabschnitt geschnitten sind.
+13. **Stoff ohne Termin im Modell:** `EndDate` am Plan optional machen, oder der Stoffrahmen wird eine
+    eigene, schlankere Größe und der `StudyPlan` entfällt mit dem Stichtag? Empfehlung: beim Schneiden der
+    Karte entscheiden, weil es die Migration bestimmt.
+14. **Fehlerart: nachträglich oder beim Antworten?** Empfehlung: beim Antworten bestimmen und speichern
+    (stabil gegen spätere Regeländerungen); die Altdaten entfallen durch den Reset ohnehin.
+15. **Ein Tag ganz ohne Server** zählt wie eine Pause und wird dem Vater gemeldet (Vorschlag aus
+    Entscheidung 9, noch nicht bestätigt).
+16. **Begonnene Aufgaben sind nicht mehr streichbar** (Vorschlag aus Entscheidung 7, noch nicht bestätigt).
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Wunsch des Vaters im Chat, mit Entwurf, Etappen und offenen Punkten.
   Ist-Stand nur als Teilbefund; `unverifiziert` bleibt bis zum Ausformulieren.
 - **2026-11-17** — **Grill-Runde mit dem Vater im Dialog:** 14 Entscheidungen (siehe `## Entscheidungen`), alle zehn offenen Punkte erledigt. B-618, B-619, B-621 und B-622 angehalten (`wartet_auf`). Die Stufe bleibt `idee`: Der Ist-Stand ist noch nicht Zeile für Zeile belegt, und mehrere Entscheidungen nennen Prüfpunkte am Code (freier Sonntag in Serie und Malus, Fehlerart je Übungstyp, Münz-Verlauf nach dem Reset, UTC-Umstellung). Nächster Schritt: ausformulieren, dann als Karte schneiden.
+- **2026-11-17** — `idee` → `ausformuliert`: Ist-Stand am Code belegt (Stand `36185a56`). Kern: Die Daten für Auswertung und Reset liegen vollständig vor, das Kassenbuch hat keinen Fremdschlüssel auf Positionen; es fehlen Ortszeit (35 UTC-Stellen ohne gemeinsame Funktion), Lerntage (Serie und Malus kennen keinen freien Sonntag und keine Pause), ein Zeitgeber und die Fehlerart. Etappe E0 neu, Etappentabelle an Entscheidung 11 und 14 angepasst, sechs neue offene Punkte (11–16).
