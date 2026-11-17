@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/inhalt, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/inhalt, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Friedrich Englisch, zweites Fach für Friedrich, Englisch-Plan neben Plan 8]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: M
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-615
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Freigabe und PIN fürs Laden in die echte DB; Unit, mit der Friedrichs Englisch-Plan startet"
+wartet_auf: "Abnahme: einmal Friedrichs Startseite (student/today) ansehen – Pflichten aus Englisch und Französisch"
 ---
 
 # B-620 · Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8
@@ -126,3 +126,11 @@ und Wortlisten je Unit, laden, Kind umstellen, Plan anlegen. Kein Code.
   Probelauf gegen eine Wegwerf-DB auf `:5280`: 27 Übungen, jede 100 % im Selbsttest, zweiter Lauf nur „schon da".
   In der echten DB fehlt die Reihe noch (Kopie vom selben Tag: Child 3 hat nur Découvertes; Klasse 9/Gymnasium
   passt zum Buch). Offen: Laden in die echte Instanz nach Freigabe, dann der Englisch-Plan neben Plan 8.
+- **2026-11-17** — `in-arbeit`: Vater gibt frei (Unit 1, 5 neue Wörter/Tag). Echte Instanz, je mit Sicherung
+  (`pugling.db.bak-vor-access5-20261117`, `…-vor-friedrich-englisch-20261117`), PIN vom Vater im Terminal getippt:
+  `laden.py --child 3` legt Reihe 8 (Units 24–27) und Übungen 78–104 an, Selbsttest 27/27 mit 100 %, Child 3 hat
+  Buch 4 (Access G9 Band 5, Unit 1). **Plan 12** „Englisch: Unit 1 Wörter mit Lernkarte“ (17.11.–28.12., Fach 1,
+  Unit 24, aktiv): Pflicht täglich Positionen 93–95 = Übungen 78/79/80 mit 2/1/2 neuen Wörtern, Stufe 4 getippt,
+  80 %, 20/2; Kür 96–98 = Übungen 93–95. Plan 8 (Französisch) bleibt aktiv – in der DB nachgesehen. Offen für
+  `abgenommen`: AK 1 durch einen Blick auf `student/today` von Child 3 (dafür fehlt mir ein Token; der Vater sieht
+  es in der Sohn-App oder der Vorschau).
