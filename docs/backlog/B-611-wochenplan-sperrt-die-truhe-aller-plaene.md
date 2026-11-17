@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
 aliases: [Wochenziel-Plan sperrt Truhe]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 83 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 unverifiziert: false
 grund: ""
@@ -143,6 +143,97 @@ aktive Pläne per DB-Setup oder seit B-539 Teil A über zwei Fächer).
 6. Mit einem aktiven Plan unverändert: `BelohnungenTagespflichtTests`, `DailyBoxTests`, `ExtraTrainingTests` und
    `KindTagessichtTests` bleiben ohne inhaltliche Änderung grün.
 
+## Schätzung
+
+**Größe: S** — wie „`childId` aus dem Test-Pfad ziehen" (B-01): ein Eingriff an **einer** Stelle, deren Wirkung
+schon vorher klar ist. Die Auswahl wandert von „je Plan, dann vereinigen" (`PositionProgressService.cs:331`) zu „über
+die vereinigte Positionsliste" – `RewardObligations` kann dafür unverändert bleiben, sie bekommt nur die flache Liste
+aller Pläne statt einer Liste je Plan. Der Aufwand liegt in der Doku an fünf Stellen und im neuen Test mit gemischtem
+Takt über zwei Pläne, nicht im Code. Kleiner als M (B-03), weil kein neuer Pfad entsteht, sondern ein bestehender
+anders aggregiert.
+
+- **`migration: nein`** — die Belohnungsauswahl wird bei jedem Aufruf aus `PlanPosition.Cadence` und dem Spielstand
+  gerechnet; nichts wird gespeichert, kein Feld kommt hinzu. Gebuchte `DailyBoxClaim`-Zeilen bleiben gültig.
+- **`vertragsbruch: nein`** — kein Feld ändert Form oder Namen. `TodayResponse.RewardsUnlocked` und
+  `ExtraTrainingOverview.Unlocked`/`Outstanding` behalten ihren Typ; es ändert sich, *wann* sie `true`/leer sind – das
+  ist der Fix. Geändert wird nur der Doku-Text am Vertrag (`backend/Pugling.Contracts/Student/ProgressDtos.cs:23`
+  „The reward goals of every active plan are met", `backend/Pugling.Contracts/Student/ExtraTrainingDtos.cs:22-23`
+  „all goals in a plan without daily ones"); das zieht `docs/openapi/v1.json` nach (schreibt
+  `ContractDocumentTests`), `frontend/src/lib/contract.ts` ist erzeugt und nicht eingecheckt.
+- **`wo: backend`** — die Startseite liest `rewardsUnlocked` schon am Server (`frontend/src/sohn/SohnHome.tsx:139`,
+  `:144`); ihre Balken-Nachrechnung ist Gegenstand von B-612. Mit Regel (a) rechnet der Client flach dieselbe Auswahl
+  (`SohnHome.tsx:353-361`), also verschwindet der sichtbare Widerspruch mit B-611 schon von selbst.
+
+### Aufrufer der Senke
+
+`ComputeChildDayAsync` hat genau vier Aufrufer (`grep ComputeChildDayAsync`); die neue Auswahl wirkt nur über die
+Felder `RewardOutstanding`/`RewardsUnlocked` des `ChildDayRollup`
+(`backend/Pugling.Api/Services/Shared/ChildDayRollup.cs:20-21`):
+
+| Aufrufer | liest | bekommt die neue Auswahl? |
+| --- | --- | --- |
+| Truhe `DailyBoxService.EvaluateAndAwardAsync` (`backend/Pugling.Api/Services/Shared/DailyBoxService.cs:37`) | `RewardsUnlocked` | **ja** – gewollt (AK 1, 3, 4) |
+| Bonus `ExtraTrainingService.GateAsync` (`backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:261-267`) | `RewardOutstanding` | **ja** – gewollt (Entscheidung 3) |
+| Startseite `ChildTodayController.Get` (`backend/Pugling.Api/Controllers/Student/ChildTodayController.cs:32-36`) | `RewardsUnlocked`, dazu `DutyDone`/`Goals*`/`Outstanding` | **ja** für `rewardsUnlocked`; der Rest bleibt |
+| Vater-Dashboard `ChildrenDashboardService.BuildAsync` (`backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:30-33`) | nur `Plans`, `GoalsTotal`, `GoalsMet`, `DutyDone` | **nein** – liest kein Belohnungsfeld |
+
+Nicht über die Senke, also **unberührt**: die Plan-Übersicht `ComputeDayAsync` (`PositionProgressService.cs:279-283`,
+`RewardsUnlocked` je Plan, gelesen von `PlanOverviewController.cs:40`), die Serie (`IsCompleteDay`, `:348-352`), die
+Zeitleiste (`TimelineDutyDone`) und der Malus. Ebenso unberührt bleibt die Test-Naht
+`DailyBoxService.AwardIfUnlockedAsync` (`DailyBoxService.cs:45-50`), die eine Plan-`DayOverview` nimmt
+(`backend/Pugling.Api.Tests/DailyBoxRangeTests.cs:50`).
+
+### Risiken
+
+1. **`DutyDone`/`Outstanding` dürfen nicht mitwandern.** Sie stehen in derselben Methode zwei Zeilen daneben
+   (`PositionProgressService.cs:329-337`). Wer die Rechnung „aufräumt" und beides aus derselben flachen Liste zieht,
+   verengt die Pflicht auf die Tagesziele – Serie, Dashboard und `dutyDone` kippten. AK 5 hält das; der Test muss
+   `dutyDone: false` **und** eine nicht gewachsene Serie im selben Fall prüfen.
+2. **Bonus-Sperre und Truhe unterscheiden sich am Rand weiter, und das ist richtig.** Die Truhe verlangt mindestens
+   ein Belohnungsziel (`rewardGoals.Count > 0`, `:338`), der Bonus öffnet bei leerem `RewardOutstanding`
+   (`ExtraTrainingService.cs:265`), also auch ganz ohne Pflicht. AK 4 prüft nur die Truhe; beim Umbau nicht „vereinheitlichen".
+3. **Die Doku sagt heute ausdrücklich das Gegenteil** und muss an fünf Stellen neu: `ComputeChildDayAsync`
+   (`PositionProgressService.cs:313-315`), `RewardObligations` (`:286-291`, „when the plan has none"),
+   `DailyBoxService.cs:26-30` („one plan done while another is open earns nothing" – stimmt für Tagesziele weiter,
+   nicht mehr für Wochenziele eines anderen Plans), `ExtraTrainingService.cs:256-258` („every playable plan has met
+   today's reward goals") und die zwei Vertragsstellen oben samt `ChildTodayController.cs:22-23` („once every plan's
+   daily goals are met"). Die Vertragsdoku landet in `docs/openapi/v1.json`; die Doku-Tore in `ConventionGuardTests`
+   (`:675`, `:752`) prüfen, dass sie dort ankommt.
+4. **Die offene-Ziele-Liste des Bonus ändert ihren Inhalt.** Im Fall der Idee listet sie heute „… (Wochenziel) offen",
+   danach nichts (AK 1). Gewollt – aber die Bonus-Seite zeigt bei einem Wochenziel-only-Tag weiter „Erst die
+   Tagesziele" (`frontend/src/sohn/SohnBonus.tsx:95`); das ist B-612 Entscheidung 2, nicht hier.
+5. **Stundenplan-Takt (B-621).** Eine dritte Taktart fiele in `RewardObligations` heute in „alle Ziele"; die
+   Zwei-Wege-Auswahl bleibt eine Stelle, an der B-621 wieder ansetzen muss. Kein Bau hier, nur Hinweis.
+
+### Angriffsplan
+
+1. Roter Test zuerst: neue Klasse mit dem Aufbau aus `KindTagessichtTests` (zwei Pläne per DB-Setup,
+   `backend/Pugling.Api.Tests/KindTagessichtTests.cs:17-37`), Plan B über
+   `TestApi.SeedLeitnerPosition(…, cadence: GoalCadence.Weekly)` (`backend/Pugling.Api.Tests/TestApi.cs:259-266`);
+   AK 1 muss heute an `rewardsUnlocked` fallen (rote Probe am richtigen Ort: an der Zusicherung, nicht im Aufbau).
+2. `ComputeChildDayAsync`: `rewardGoals = RewardObligations(alle Positionen aller Pläne)` statt `SelectMany` je Plan
+   (`PositionProgressService.cs:331`); `RewardObligations` bleibt `public static` und unverändert, nur ihre Doku sagt
+   „eine Positionsliste – je Plan oder über den Kind-Tag".
+3. Doku an den fünf Stellen aus Risiko 3, englisch.
+4. AK 2–5 als weitere Fälle derselben Klasse; AK 6 = bestehende Suite unverändert grün.
+5. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, `docs/openapi/v1.json` mit committen.
+
+### Testweg
+
+- **Neue Integrationstestklasse** in `backend/Pugling.Api.Tests` (etwa `BelohnungUeberPlaeneTests`), je AK ein Fall mit
+  benannter Rot-Änderung: `today` (`rewardsUnlocked`, `dutyDone`, `currentStreak`), Truhe über einen echten
+  Abschluss (Übungsrunde oder Test, Muster `PassTestAsync`, `KindTagessichtTests.cs:41-47`) und `DailyBoxClaims`
+  zählen, Bonus über `student/children/{id}/extra-training` (`unlocked`, `outstanding`). Für AK 5 die Serie mit
+  einem vorher bestandenen Tag aufbauen (`SeedPassedTest`, `KindTagessichtTests.cs:50ff`), sonst prüft „wächst nicht"
+  nur einen Ausgangszustand von 0.
+- **AK 6:** `BelohnungenTagespflichtTests`, `DailyBoxTests`, `DailyBoxRangeTests`, `ExtraTrainingTests`,
+  `KindTagessichtTests` ohne Änderung grün (Test-Tor `dotnet test Pugling.sln -c Release`).
+- **Rollengang:** eine **eigene** E2E-Spec (eine Fläche je Spec, `frontend/CLAUDE.md`) nach dem Vorbild von
+  `frontend/e2e/belohnung-trotz-wochenziel.spec.ts` (B-535, ein Plan), aber mit **zwei Fächern** – seit B-539 Teil A
+  über die API anlegbar: Tagesziel-Plan erfüllt, Wochenziel-Plan offen ⇒ Truhe verdient, Bonus-Einstieg offen. Zählt
+  als Rollengang; nur „N passed" zählt.
+- **Reviewer:** `pugling-reviewer`.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 83 (🟡, `pugling-reviewer`), `entgangen_bei: [B-606]`.
@@ -151,3 +242,7 @@ aktive Pläne per DB-Setup oder seit B-539 Teil A über zwei Fächer).
   Test mit gemischtem Takt über Pläne (`KindTagessichtTests.cs:26-27`, beide `Daily`); echte Pläne heute nur mit
   Tagespflichten, also noch nicht sichtbar. Am Code gelesen, nicht per Test nachgestellt.
 - **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–4, alle nach Empfehlung; Akzeptanzkriterien final.
+- **2026-11-17** — geschätzt: S (wie B-01, eine Aggregation an der Senke `PositionProgressService.cs:331`), backend,
+  keine Migration, kein Vertragsbruch (nur Doku-Text am Vertrag); vier Aufrufer der Senke geprüft – Truhe, Bonus und
+  `today` bekommen die neue Auswahl, das Dashboard liest kein Belohnungsfeld; Testweg neue Integrationstestklasse plus
+  eigene E2E mit zwei Fächern, Reviewer `pugling-reviewer`.

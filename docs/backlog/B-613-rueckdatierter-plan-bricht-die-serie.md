@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Serie bricht nachträglich, Malus beim Wiedereinschalten, Kür wird Pflicht]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: backend
+migration: ja
+vertragsbruch: nein
 quelle: "Nachschau Sprint 83 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 unverifiziert: false
 grund: ""
@@ -191,6 +191,150 @@ Grill-Runde mit dem Vater, 2026-11-17. 1–4 nach Empfehlung, 5 gegen die Empfeh
    ein zweites neues Feld – in **derselben** Migration wie Entscheidung 2, Backfill = Anlegetag; ein weiterer Pfad in
    `PlanPositionsController.cs:317`; die Story wird größer (Schätzung vermutlich L statt M).
 
+## Schätzung
+
+**L.** So groß wie die Anker-Etappe E6 und wie B-643: eine Migration über die echte DB mit zwei Feldern und Backfill
+samt Migrationstest, dazu ein Eingriff im Kern der Tagesregel (`PositionProgressService`), von dem Serie, Truhe,
+Missionen, Zeitachse, Plan-Historie und Malus abhängen. Kleiner als B-643 an der Oberfläche: kein Frontend, kein
+Vertragsfeld. Mehr als M (B-03), weil fünf Schreibpfade das Datum setzen müssen und fünf Testaufbauten nachziehen.
+**Keine Teilung:** Entscheidung 5 verlangt beide Felder in **einer** Migration. Ein Schnitt „Teil 1 / Teil 2“ hieße
+zwei Migrationen auf derselben echten DB und zweimal dieselbe Untergrenze anfassen. Alles hat eine Ursache und liegt an
+einer Stelle.
+
+- **`wo: backend`** – `PositionProgressService`, `ChildrenDashboardService`, zwei Supervisor-Controller,
+  `WeakWordReviewService`, `Seed`, Migration. Das Frontend sendet nichts Neues und liest nichts Neues.
+- **`migration: ja`** – eine Migration (Kette verlängern, nach `20261117061523_StudyPlanSeriesUnit`):
+  - `StudyPlan.ActivatedAt` (`DateOnly`, nicht nullbar) neben `Active` (`Models/StudyPlanEntities.cs:90`), Backfill
+    `UPDATE StudyPlans SET ActivatedAt = StartDate` für **alle** Pläne (Entscheidung 2).
+  - „Pflicht seit“ an `PlanPosition` (Arbeitsname `DutySince`, `DateOnly`, nicht nullbar) neben `CreatedAt`
+    (`Models/PlanPositionEntities.cs:137`), Backfill `UPDATE PlanPositions SET DutySince = date(CreatedAt)` für **alle**
+    Positionen. Eine Kür-Position bekommt damit auch ihren Anlegetag. Das schadet nicht, denn der Wechsel None → Takt
+    überschreibt ihn. AK 10 verlangt den Anlegetag nur für Pflicht-Positionen.
+  - `AddColumn(defaultValue: …)` ist für G9 unschädlich: G9 prüft das Modell, nicht die Migration (Vorbild
+    `20261116065113_ForgivingDemotion`). Kein `HasDefaultValue` im Modell.
+- **`vertragsbruch: nein`** – beide Felder bleiben intern. `PlanResponse` (`Pugling.Contracts/Supervisor/StudyPlanDtos.cs:21`)
+  und `PositionResponse` (`:138`) tragen schon heute kein `CreatedAt`. Der Vater stellt weder das Einschaltdatum noch
+  „Pflicht seit“ von Hand ein; beides setzt der Server beim Zustandswechsel. Kein DTO-Feld, kein Client, keine OpenAPI.
+- **Risiken:**
+  1. **Die Untergrenze gehört in den Pflichtfilter, nicht in `IsGoalMetAsync`.** Entscheidung 1 nennt
+     „`DutyStateAsync`/`IsGoalMetAsync`“. Würde `IsGoalMetAsync` (`PositionProgressService.cs:144`) vor dem ersten
+     fälligen Tag `true` liefern, zählte ein solcher Tag **zu Gunsten** (Pflicht „erfüllt“). Das widerspricht den Kosten
+     derselben Entscheidung („Tage vor dem Anlegen zählen auch nicht zu Gunsten“). Richtig ist: Die Position ist an dem
+     Tag **keine Pflicht** (`HasDuty`). `IsGoalMetAsync` bleibt unverändert, denn es liest auch die Belohnung (`:454`)
+     und die Abrechnung (`:622`). Die Regel braucht **zwei** Leser mit einem gemeinsamen Helfer (etwa
+     `IsObligationOn(pos, plan, day)` = Takt ≠ None und `day >= FirstDueDay`):
+     - `DutyStateAsync` (`:372`, Filter `obligations`) – Serie und Missionen;
+     - `ComputeDayAsync` (`:256`, `:274`) – Zeitachse (`ChildrenDashboardService.cs:77`) und Plan-Historie
+       (`ProgressAsync` `:700`).
+     In `ComputeDayAsync` muss die Position an einem Tag vor ihrer Pflicht aus `obligations` fallen. Dafür
+     entweder `Cadence` im `PositionStatus` maskieren oder getrennt filtern. Das ändert nur vergangene Tage der
+     Historie, nicht den Vertrag.
+  2. **Wer sich ändern muss und wer nicht** (grep am 2026-11-17):
+     - **muss:** `FirstDueDay` (`:533`) = max(`date(CreatedAt)`, `DutySince`, `StartDate`).
+     - **muss:** `DutyStateAsync` (`:370`–`:380`) – Pflichtfilter (Risiko 1) und `Active` als „aktiv **an dem Tag**“ =
+       `plan.Active && day >= ActivatedAt`. Darüber erben `IsCompleteDay` (`:348`), `ChildStreakAsync` (`:387`, mit
+       `StreakBoundedAsync` `:719` für die Truhe, `DailyBoxService.cs:58`), `CompleteChildDaysAsync` (`:420`) und damit
+       `MetricsService.cs:44`/`:47`/`:61`.
+     - **muss:** `ChildrenDashboardService.cs:82` und `:84` lesen `plan.Active` selbst. Beide Stellen brauchen „aktiv an
+       dem Tag“, sonst bleibt AK 6/7 in der Zeitachse rot.
+     - **muss:** `PlanDueForPeriod` (`:505`, gerufen `:614`) prüft `ActivatedAt`.
+     - **unverändert:** `IsGoalMetAsync` (`:144`), `EvaluateAndAwardAsync` (`:448`). Eine Belohnung für einen Tag vor
+       der Pflicht, etwa über die Vaterrunde, geht zu Gunsten des Kindes und gehört nicht zu Entscheidung 1.
+       `PlanPlayableForChild` (`PositionPlayService.cs:66`) prüft nur heute. `ComputeChildDayAsync` (`:318`) rechnet
+       nur den heutigen Tag, und an dem gilt jede Pflicht schon (`FirstDueDay <= heute`).
+  3. **Wochenpflicht und Einschalttag.** Für die Serie reicht die Tagesgrenze. In der Abrechnung liefert
+     `ClosedPeriods(Weekly, …)` die Woche ab `WeekMonday(windowStart)` (`:519`). Die Woche, in der eine Position
+     angelegt **oder** ein Plan eingeschaltet wurde, wird dadurch heute schon ganz abgerechnet. **Annahme, unbestätigt:**
+     Für `ActivatedAt` gilt eine Periode nur als fällig, wenn sie ganz nach dem Einschalten liegt (`from >= ActivatedAt`).
+     Das entspricht „zu Gunsten des Kindes“. Bei Tagespflicht ist `from == to`, die Annahme betrifft also nur Wochen.
+     Das Verhalten von B-432 für eine nachgetragene Wochen-Position bleibt, wie es ist.
+  4. **Setzen nur beim Zustandswechsel.** `VaterPlanDetail.tsx:60` schaltet um. Das Positions-Formular schickt `cadence`
+     aber bei **jedem** Speichern mit (`frontend/src/vater/PlanPositions.tsx:332`). Würde jedes PATCH mit `cadence:
+     Daily` „Pflicht seit“ neu setzen, verschöbe ein bloßes Speichern die Untergrenze. Dasselbe gilt für ein wiederholtes
+     `active: true`.
+     - `DutySince` = heute nur bei `pos.Cadence == None` → Takt (`PlanPositionsController.cs:317`).
+     - `ActivatedAt` = heute nur bei `Active` false → true (`StudyPlansController.cs:214`).
+     - Daily ↔ Weekly und Pflicht → Kür ändern nichts (AK 9).
+  5. **Alle Schreibpfade.**
+     - Erzeugt wird an `StudyPlansController.Create` (`:108`), `PlanPositionsController.Create` (`:187`),
+       `WeakWordReviewService.cs:133` und `Data/Seed.cs:380`–`:492`.
+     - **Annahme, unbestätigt:** `Create` setzt `ActivatedAt = StartDate`, nicht heute. Das entspricht dem Backfill.
+       Ein rückdatierter Plan gilt seit seinem Start als eingeschaltet, und die Positionen begrenzt `FirstDueDay` ohnehin.
+       So bleibt das Nachtragen vergangener Runden (`VaterRundeZaehltFuersKindTests`) unverändert. Mit „heute“ würden
+       die rückdatierten Tage nur zu Gunsten zählen; für AK 1 macht das keinen Unterschied.
+     - Ein Eintrag, der das Feld nicht setzt (`default` = `0001-01-01`), fällt über das `max(…)` auf das heutige
+       Verhalten zurück. Das ist ein stiller Rückfall, kein Fehler. Darum muss jeder Schreibpfad einen eigenen Testfall
+       bekommen.
+  6. **Pflicht → Kür → Pflicht.** Der zweite Wechsel setzt „Pflicht seit“ wieder auf heute. Die Pflicht-Tage davor fallen
+     damit rückwirkend aus Serie und offener Abrechnung. Das geht zu Gunsten des Kindes, und nur der Vater kann es
+     auslösen. Gebuchte Strafen bleiben (B-432). Laut Entscheidung 2 ist „die Unschärfe immer zu Gunsten des Kindes“ –
+     als Annahme notiert, nicht eigens entschieden.
+  7. **UTC-Tagesgrenze.** Beide Daten kommen aus `time.GetUtcNow()` (`TimeProvider`), wie `CreatedAt` an
+     `PlanPositionsController.cs:191`, nicht aus `DateTime.UtcNow` der Entitäts-Defaults (`StudyPlanEntities.cs:91`). Unter
+     Test mischt `DailyBoxTests.cs:267` beide Uhren. Ein Plan, den der Vater abends nach 1 Uhr MEZ einschaltet, zählt
+     ab dem UTC-Tag; das ist dieselbe Unschärfe wie überall (Fallstrick „Zeit/UTC“).
+  8. **AK 10 gegen Entscheidung 1.** Der Backfill allein ändert nichts: `DutySince = date(CreatedAt)` ergibt dasselbe
+     `FirstDueDay`, und `ActivatedAt = StartDate` heißt „aktiv seit Start“ wie heute. Die **Code**-Änderung heilt aber
+     jede Serie, in der in der echten DB schon eine Position nachgetragen wurde (`CreatedAt` nach `StartDate`, Plan
+     aktiv). Die Serie steigt dort, sie fällt nie. AK 10 („Serie ändert sich nicht“) gilt daher nur für Kinder ohne
+     solche Positionen. Die Probe muss diese Positionen vorher per SQL auflisten und darf nur dort eine **höhere** Serie
+     zulassen. Den Malus-Stand ändert die Story nicht, denn gebuchte Strafen bleiben.
+  9. **Tests, die auf dem Defekt beruhen – einer mehr als in der Story.** Neben `TestApi.cs:327`,
+     `KindTagessichtTests.cs:33` und `ChildrenOverviewTests.cs:173` gibt es noch `DailyBoxTests.cs:274`
+     (`SiebenTageStreak_SkaliertDieBoxUeberDieBasisspanneHinaus`). Der Test legt die Position heute an, schiebt den
+     Start 10 Tage zurück und erwartet eine 7-Tage-Serie. Nach der Korrektur ist die Serie 1, und der Test wird rot.
+     Er muss `CreatedAt` zurücksetzen (Muster `ChildrenOverviewTests.SeedSecondPosition`, `:188`).
+     - Vermutlich unberührt, beim Lauf zu prüfen: `VaterRundeZaehltFuersKindTests.cs:39` (Belohnung, nicht Serie),
+       `VerzeihendeAbstufungTests.cs:173` und `KartenstufeTests.cs:514` (Box bzw. eigenes `CreatedAt`),
+       `TopLevelPagingTests.cs:81`.
+     - `PflichtMalusTests.SeedPenaltyPlan` (`:35`) legt `new StudyPlan` ohne `ActivatedAt` an. Über den `max`-Rückfall
+       (Risiko 5) bleibt das grün; `InaktiverPlan_ErzeugtKeinenMalus` (`:375`) ebenso.
+  10. **Echte DB.** Die Migration läuft auf der `pugling.db`, mit der Friedrich und Theodor lernen. Die Probe läuft
+      zuerst gegen eine Kopie (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`).
+- **Angriffsplan:**
+  1. Modell: zwei Felder, `migrations add`. Snapshot-Diff lesen: nur die zwei Spalten, kein Neubau. Backfill per
+     `migrationBuilder.Sql` in `Up`. `SchemaGuardTests` grün.
+  2. Migrationstest nach Vorbild `DailyBoxOpenedAtMigrationTests` (Kette bis zur Migration, einen Schritt zurück und
+     wieder vor). Dann die Probe gegen eine Kopie der echten DB: Serie je Kind (`student/today`) und Summe der
+     `GoalPenalty`-Buchungen vor und nach dem Start mit dem neuen Code, Abweichungen nur nach Risiko 8.
+  3. `FirstDueDay` erweitern, Helfer `IsObligationOn`, Pflichtfilter in `DutyStateAsync` und `ComputeDayAsync`
+     (Risiko 1).
+  4. „Aktiv an dem Tag“ in `DutyStateAsync`, `ChildrenDashboardService.cs:82`/`:84`, `PlanDueForPeriod` (Risiko 3).
+  5. Schreibpfade: `StudyPlansController` Create/PATCH, `PlanPositionsController` Create/PATCH (nur beim Übergang),
+     `WeakWordReviewService`, `Seed`.
+  6. Testaufbauten nachziehen (Risiko 9) und die neuen Fälle schreiben. Englische Kommentare an `IsCompleteDay`
+     (`:343`–`:346`) und `PlanDueForPeriod` (`:501`–`:503`) anpassen: „keine Aktivierungshistorie“ stimmt dann nicht mehr.
+- **Testweg:**
+  - **Neue Klasse `RueckwirkendePflichtTests`** (`backend/Pugling.Api.Tests/`), je AK ein Fall, jeweils mit der
+    Änderung, die ihn rot macht:
+    - AK 1: Plan B rückdatiert, Pflicht heute → Serie 4 (rot ohne Pflichtfilter in `DutyStateAsync`).
+    - AK 2: Pflicht in Plan A nachgetragen, einmal per `POST …/positions`, einmal per `…/positions/from-words` → Serie 4
+      (rot, wenn `WeakWordReviewService` „Pflicht seit“ nicht setzt und der `max`-Rückfall greift – nur sichtbar, wenn
+      der Fall `CreatedAt` **nicht** zurückdatiert, also über die API anlegt).
+    - AK 3: gestern angelegt, gestern offen → Serie bricht gestern (rot bei `FirstDueDay + 1`).
+    - AK 4: `MetricsService` `DaysComplete`/`StreakDays` vor und nach dem Anlegen von Plan B gleich.
+    - AK 5: siebter Serientag → Truhe Faktor 1,5 (über `DailyBoxService`, Stufen aus `appsettings.json:30`).
+    - AK 6: Zeitachse `supervisor/…/timeline`: Tag vor dem Anlegetag hat keine offene Pflicht (rot ohne Filter in
+      `ComputeDayAsync`).
+    - AK 7: B aus, A gleiches Fach aktiv und erfüllt, B per PATCH wieder an → Tage bleiben vollständig, in Serie
+      **und** Zeitachse (rot ohne `ActivatedAt` in `DutyStateAsync` bzw. `ChildrenDashboardService.cs:84`).
+    - AK 8: Fall 7 mit `PenaltyCoins > 0`, `SettleClosedPeriodsAsync` → keine Buchung für die Aus-Tage (rot ohne
+      `ActivatedAt` in `PlanDueForPeriod`).
+    - AK 9: Kür vor drei Tagen angelegt, heute PATCH `cadence: Daily` → Serie, Missionstage und Malus der Vortage
+      unverändert. Zweiter Fall: ein Speichern mit `cadence: Daily` auf einer schon täglichen Pflicht verschiebt „Pflicht
+      seit“ **nicht** (rot, wenn der Setter den Übergang nicht prüft, Risiko 4). Dritter Fall: Pflicht → Kür lässt die
+      Vortage unverändert.
+    - Gegenprobe zu AK 7: ein zweites `active: true` auf einem aktiven Plan verschiebt `ActivatedAt` nicht.
+  - **AK 10:** `ActivatedAtMigrationTests` (Muster `DailyBoxOpenedAtMigrationTests`): ein Plan mit Start vor dem
+    Anlegen und eine Pflicht-Position mit bekanntem `CreatedAt` → nach der Migration `ActivatedAt = StartDate` und
+    `DutySince = date(CreatedAt)`. Rot ohne das `UPDATE`, weil dann `0001-01-01` drinsteht. Dazu die Probe gegen die
+    DB-Kopie (Angriffsplan 2).
+  - **AK 11:** `KindTagessichtTests`, `ChildrenOverviewTests`, `DailyBoxTests` mit nachgezogenem Aufbau, Zusicherungen
+    unverändert. Der Diff dieser Dateien darf nur die Aufbau-Zeilen zeigen. `PlanSubjectTests.cs:225` bleibt grün.
+  - **Frontend/E2E:** nicht betroffen (kein Vertragsfeld, keine Anzeige neu). Kein Vitest, kein Playwright.
+  - Reviewer: `pugling-reviewer` (Schwerpunkt Risiko 1, 4 und 5). Danach `/smoke-test` und ein Rollengang als Vater:
+    Position nachtragen, Sohn-Startseite zeigt dieselbe Serie.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 83 (🟡, `pugling-reviewer`), `entgangen_bei: [B-606]`.
@@ -200,3 +344,4 @@ Grill-Runde mit dem Vater, 2026-11-17. 1–4 nach Empfehlung, 5 gegen die Empfeh
   Realfall Plan 12 (Start = heute) ist nicht betroffen. Die B-606-Tests beruhen auf dem Defekt (Aufbau mit
   `CreatedAt` = heute bei rückdatiertem Start).
 - **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–5 (5 gegen die Empfehlung: Kür → Pflicht kommt mit hinein); Titel um den Malus erweitert; Akzeptanzkriterien final (AK 9 und 10 neu).
+- **2026-11-17** — geschätzt: L wie E6/B-643 (eine Migration mit zwei Feldern und Backfill, Untergrenze im Kern der Tagesregel; kein Frontend, kein Vertragsfeld), keine Teilung. Untergrenze als Pflichtfilter in `DutyStateAsync` und `ComputeDayAsync`, nicht in `IsGoalMetAsync`; Datum nur beim Zustandswechsel setzen; `DailyBoxTests.cs:274` beruht ebenfalls auf dem Defekt; AK 10 gilt nur ohne schon nachgetragene Positionen.

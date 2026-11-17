@@ -17,7 +17,7 @@ selben Tag).
 
 **Ausgangswert:** 58 offen (Index vom 2026-11-17, Stand `8fb3b69b`). Letzter gebauter Sprint: 84
 ([Nachtlauf 2026-11-17](pm-sitzung-2026-11-17-nachtlauf.md)). Der dort genannte „Sprint 85" (B-611, B-612, B-614)
-ist nie gestartet; die Nummer wird hier neu vergeben, die drei Defekte stehen unter „Refinement".
+ist nie gestartet; die Nummer wird hier neu vergeben. Die Defekte B-611–B-613 sind am selben Tag zu Sprint 87 gereift.
 
 ## Schnitt-Regeln
 
@@ -37,20 +37,23 @@ ist nie gestartet; die Nummer wird hier neu vergeben, die drei Defekte stehen un
 | --- | --- | --- | --- | --- | --- |
 | 85 | Schultest nacharbeiten I: das Kind spielt die Nacharbeit | B-635, B-633, B-634 | M + S + S | B-635 Migration | P1 |
 | 86 | Schultest nacharbeiten II: Pflicht bis erledigt, Vater sieht den Stand | B-636, B-637 | M + S | B-636 Migration | P1 |
-| 87 | Rückmeldung zur Karte: Sohn meldet, Vater erledigt | B-628, B-629 | L + M | B-628 Migration | P1 |
-| 88 | Der Stundenplan erzeugt die Pflicht | B-621, B-622 | L + M | Migration **und** Vertragsbruch | P1 |
-| 89 | Plan aus Unit in einem Schritt | B-580 | L | — | P1 |
-| 90 | Der KI-Creator bekommt bessere Eingaben | B-630, B-631 | M + M | — | P1 / P2 |
-| 91 | Lernkarte: Runden, bis jedes Wort aus dem Gedächtnis sitzt | B-643 | L | Migration | P2 |
-| 92 | Antwortvergleich I: Akzent halb, Platzhalter dürfen fehlen | B-624, B-626 | L + M | B-624 Migration | P2 |
-| 93 | Antwortvergleich II: ein Feld je Bedeutung, Dezimalkomma | B-625, B-639 | L + M | — | P2 |
-| 94 | Fächer teilen ein Tagesbudget | B-618 (+ B-619 nach Schätzung) | L (+ ?) | Migration | P2 |
+| 87 | Truhe, Startseite und Serie stimmen über alle Pläne (Defekte) | B-611, B-612, B-613 | S + M + L | B-613 Migration | P2 Defekt |
+| 88 | Rückmeldung zur Karte: Sohn meldet, Vater erledigt | B-628, B-629 | L + M | B-628 Migration | P1 |
+| 89 | Der Stundenplan erzeugt die Pflicht | B-621, B-622 | L + M | Migration **und** Vertragsbruch | P1 |
+| 90 | Plan aus Unit in einem Schritt | B-580 | L | — | P1 |
+| 91 | Der KI-Creator bekommt bessere Eingaben | B-630, B-631 | M + M | — | P1 / P2 |
+| 92 | Lernkarte: Runden, bis jedes Wort aus dem Gedächtnis sitzt | B-643 | L | Migration | P2 |
+| 93 | Antwortvergleich I: Akzent halb, Platzhalter dürfen fehlen | B-624, B-626 | L + M | B-624 Migration | P2 |
+| 94 | Antwortvergleich II: ein Feld je Bedeutung, Dezimalkomma | B-625, B-639 | L + M | — | P2 |
+| 95 | Fächer teilen ein Tagesbudget | B-618 (+ B-619 nach Schätzung) | L (+ ?) | Migration | P2 |
 
 **Begründung der Reihenfolge:** Die Nacharbeit (85–86) zuerst, weil sie vier P1-Stories trägt und Theodors
 verpatzten Unit-1-Test (9/20; Ursprung [B-632](backlog/B-632-schultest-nacharbeiten-mit-leichter-schalten.md))
-sofort nutzbar macht. Die Rückmeldung (87) vor dem Stundenplan (88), weil sie keinen Vertragsbruch trägt und die
-Kinder ab dem ersten Tag schlechte Karten melden können – das speist später B-630. B-643 (91) zieht vor die beiden
-anderen P2-Sprints, weil sie auf B-635 aufsetzt und sonst deren Mechanik neu gelesen werden müsste. B-618 (94)
+sofort nutzbar macht. Der Defekt-Sprint (87) danach und vor allen neuen Funktionen: Korrektheit im Kernkreis
+Truhe/Serie schlägt neue Funktion (pm-loop Step 3), und B-613 muss vor dem nächsten Unit-Wechsel stehen. Die
+Rückmeldung (88) vor dem Stundenplan (89), weil sie keinen Vertragsbruch trägt und die
+Kinder ab dem ersten Tag schlechte Karten melden können – das speist später B-630. B-643 (92) zieht vor die beiden
+anderen P2-Sprints, weil sie auf B-635 aufsetzt und sonst deren Mechanik neu gelesen werden müsste. B-618 (95)
 zuletzt: ihre Schätzung ist nach B-621 nachzusehen (B-618, Risiko 6), und B-619 ist noch nicht geschätzt.
 
 ## Sprint 85 — Ziel & Umfang
@@ -106,6 +109,39 @@ erledigt ist."
 
 ## Sprint 87 — Ziel & Umfang
 
+**Sprint-Ziel (Sicht Sohn):** „Mit zwei Fächern sagen Truhe, Bonus und Startseite dasselbe, und meine Serie bricht nicht,
+wenn Papa eine Pflicht nachträgt oder einen alten Plan wieder einschaltet."
+
+**Umfang:** [B-611](backlog/B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) (S),
+[B-612](backlog/B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) (M),
+[B-613](backlog/B-613-rueckdatierter-plan-bricht-die-serie.md) (L). Im Refinement vom selben Tag gegrillt und geschätzt.
+
+**Entwickler-Brief:**
+
+- **Reihenfolge:** B-613 → B-611 → B-612. B-613 zuerst, weil es die einzige Migration trägt und weil der nächste
+  Unit-Wechsel in Plan 8 oder 12 (eine nachgetragene Pflicht) die Serie der echten Kinder sonst bricht. B-611 vor
+  B-612 (B-611 Entscheidung 4, API-First).
+- **Quelle der Wahrheit:** B-611/B-612: `ComputeChildDayAsync` – `RewardObligations` über die flache Liste aller
+  Pläne (`PositionProgressService.cs:331`); `rewardsUnlocked` und die neuen Zielfelder aus **derselben** Liste, nie im
+  Controller neu gerechnet. B-613: die Untergrenze als Pflichtfilter in `DutyStateAsync` und `ComputeDayAsync`
+  (nicht in `IsGoalMetAsync`, B-613 Risiko 1); `ActivatedAt` nur beim Übergang aus→an, „Pflicht seit" nur bei
+  `None`→Takt setzen.
+- **Guards:** `DutyDone`/Serie ändern sich durch B-611 nicht (B-611 AK 5 mit einem vorher bestandenen Tag); Truhe
+  verlangt weiter mindestens ein Belohnungsziel, der Bonus nicht (`ExtraTrainingService.cs:265`) – nicht
+  vereinheitlichen. Jeder Schreibpfad des neuen Datums (beide Controller, `WeakWordReviewService`, Seed) mit eigenem
+  Testfall.
+- **Migration:** B-613, zwei Felder in einer Migration, Backfill `ActivatedAt = StartDate`, „Pflicht seit" = Anlegetag;
+  Probe gegen eine **Kopie** der echten DB, nachgetragene Positionen vorher per SQL auflisten (B-613 Risiko 5).
+- **Vertrag:** additiv (B-612: Zielfelder an `TodayResponse`, ggf. Zielart an `ExtraTrainingOverview` – Annahme,
+  siehe B-612); `tsc` der Test-Attrappen zieht nach.
+- **Testweg:** `RueckwirkendePflichtTests` und `ActivatedAtMigrationTests` (neu, B-613), neue Klasse mit gemischtem Takt
+  über zwei Pläne (B-611/B-612 AK 1), Vitest `tagessichtWeg`/`SohnBonus`, E2E mit zwei Fächern nach dem Vorbild
+  `belohnung-trotz-wochenziel.spec.ts` als Rollengang Sohn; die Tests, die auf dem Defekt beruhen
+  (`KindTagessichtTests`, `ChildrenOverviewTests`, `DailyBoxTests.cs:274`), ziehen im Aufbau nach.
+- **Reviewer:** `pugling-reviewer` (alle drei), `frontend-reviewer` (B-612).
+
+## Sprint 88 — Ziel & Umfang
+
 **Sprint-Ziel (Sicht Sohn → Vater):** „Ist eine Karte falsch oder unklar, melde ich das mit einem Knopf und Grund;
 mein Vater sieht die Meldung, erledigt sie, und ich sehe danach einen Hinweis, dass sie bearbeitet wurde."
 
@@ -122,7 +158,7 @@ mein Vater sieht die Meldung, erledigt sie, und ich sehe danach einen Hinweis, d
 - **Testweg:** `ExerciseFeedbackTests` (neu), `/smoke-test`, E2E `rueckmeldung.spec.ts` (zugleich Rollengang).
 - **Reviewer:** `pugling-reviewer`, dann `frontend-reviewer`.
 
-## Sprint 88 — Ziel & Umfang
+## Sprint 89 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Vater):** „Ich trage den Stundenplan ein, und an Schultagen des Fachs entsteht die Pflicht von
 selbst – nie mehr als die Obergrenze je Tag; mein Sohn sieht in der App, warum heute diese Pflicht gilt."
@@ -144,7 +180,7 @@ selbst – nie mehr als die Obergrenze je Tag; mein Sohn sieht in der App, warum
 - **Testweg:** wie in den Stories; Rollengang Vater **und** Sohn (beide Ebenen ändern sich).
 - **Reviewer:** beide.
 
-## Sprint 89 — Ziel & Umfang
+## Sprint 90 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Vater):** „Ich wähle eine Unit aus dem Lehrwerk, und in einem Schritt steht ein aktiver
 Vier-Wochen-Plan im richtigen Fach, ohne dass meine Pläne in anderen Fächern abgeschaltet werden."
@@ -155,7 +191,7 @@ Vier-Wochen-Plan im richtigen Fach, ohne dass meine Pläne in anderen Fächern a
 **in einen gemeinsamen Dienst ziehen** statt doppeln (B-580 Risiko „Prüfungen doppelt"); Wizard-Weg und das
 Agenten-Verb ziehen nach. Kein Schema, kein Bruch. Reviewer: beide.
 
-## Sprint 90 — Ziel & Umfang
+## Sprint 91 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Creator):** „Wenn ich für ein Kind Übungen erzeugen lasse, kennt der Agent dessen gemeldete
 Probleme, und die Wortlisten aus dem Buchimport tragen die Wortart."
@@ -169,7 +205,7 @@ nur den Skill `lehrwerk-aufbereiten` und die TSVs unter `raw/` (gitignored), Nac
 API – an der echten DB nur mit Sicherung und nach Freigabe des Vaters. Reviewer: `pugling-reviewer` für B-630;
 B-631 braucht grünen Markdown-Lint und `test_laden.py`.
 
-## Sprint 91 — Ziel & Umfang
+## Sprint 92 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Sohn):** „Neue Wörter zählen erst, wenn ich sie aus dem Gedächtnis weiß; bis dahin darf ich
 mir helfen lassen, und die Lernkarte holt sie Runde um Runde zurück."
@@ -180,7 +216,7 @@ mir helfen lassen, und die Lernkarte holt sie Runde um Runde zurück."
 `ImprintedAt` an `PositionItemProgress` mit **Backfill aus `IntroducedAt`** (Bestand der Söhne!). Kernänderung an
 der Kartenwahl („wann ist ein Wort neu?") – jeder Aufrufer einzeln. Ring zählt „eingeprägt". Reviewer: beide.
 
-## Sprint 92 — Ziel & Umfang
+## Sprint 93 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Sohn):** „Ein vergessener Akzent kostet mich im Üben nur einen halben Fehler, und ‚sth.' oder
 ‚jdn.' muss ich nicht mittippen."
@@ -193,7 +229,7 @@ Lernstand und Report; der **Test bleibt binär** (Friedrichs Schulformat). Migra
 `PlanPosition` (Bestand **an** per `UPDATE`, kein DB-Default, Tor G9) und Kennzeichen an `ReviewEvent`. B-626:
 Vergleich und Maske an der geteilten Stelle, Datenkorrektur über die API. Reviewer: beide bzw. `pugling-reviewer`.
 
-## Sprint 93 — Ziel & Umfang
+## Sprint 94 — Ziel & Umfang
 
 **Sprint-Ziel (Sicht Sohn):** „Hat ein Wort zwei Bedeutungen, tippe ich jede in ihr eigenes Feld; und ‚2,5' ist bei
 Mathe richtig."
@@ -205,12 +241,12 @@ Mathe richtig."
 **sequenziell** (B-639 zuerst, klein und reiner Backend-Eingriff; danach B-625 quer durch alle vier Tipp-Pfade über
 `Lektion.tsx`). Reviewer: beide.
 
-## Sprint 94 — Ziel & Umfang (vorläufig)
+## Sprint 95 — Ziel & Umfang (vorläufig)
 
 **Sprint-Ziel (Sicht Vater):** „Ich verteile das Tagesbudget neuer Wörter in Prozent auf die Fächer meines Kindes."
 
 **Umfang:** [B-618](backlog/B-618-faecher-verteilung-backend.md) (L); [B-619](backlog/B-619-faecher-verteilung-vater-web-und-sohn-app.md)
-kommt dazu, sobald es geschätzt ist. **Vor dem Start** B-618s Schätzung gegen den Stand nach Sprint 88 nachsehen
+kommt dazu, sobald es geschätzt ist. **Vor dem Start** B-618s Schätzung gegen den Stand nach Sprint 89 nachsehen
 (ihr Risiko 6).
 
 ## Nicht eingeplant – mit Grund
@@ -221,19 +257,15 @@ kommt dazu, sobald es geschätzt ist. **Vor dem Start** B-618s Schätzung gegen 
 | [B-31](backlog/B-31-geraete-vorbehalt-klang.md) | Gerätecheck durch einen Menschen am Handy | Gegenhören, dann abnehmen |
 | [B-619](backlog/B-619-faecher-verteilung-vater-web-und-sohn-app.md) | erst `gegrillt` | `/backlog B-619` (schätzen) |
 | [B-536](backlog/B-536-aufbau-uebungen-statt-versagen.md) | `gegrillt`, XL – muss vor dem Schätzen geteilt werden | Teilung im Dialog |
-| B-223, B-377 | P3 | nach Sprint 94 |
+| B-223, B-377 | P3 | nach Sprint 95 |
 | Ideen B-638, B-640–B-642 (Mathe) | `idee` | Ausformulieren; B-639 ist der Defekt davon |
 
 ## Refinement (eigene Phase, nicht im Sprint gezählt)
 
-Die P2-Defekte aus der Nachschau von Sprint 83 sind noch `idee`, betreffen aber den Kernkreis Truhe/Serie/Startseite:
-[B-611](backlog/B-611-wochenplan-sperrt-die-truhe-aller-plaene.md),
-[B-612](backlog/B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md),
-[B-613](backlog/B-613-rueckdatierter-plan-bricht-die-serie.md), dazu P3
-[B-614](backlog/B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) und B-607–B-609. Als `Defekt` sind
-sie unter Freigabe autonom grillbar. **Empfehlung:** sie bis `geschaetzt` bringen, solange Sprint 85 läuft; stehen
-sie, zieht ein Defekt-Sprint „Truhe und Serie stimmen über alle Pläne" (B-611, B-612, B-613, ggf. B-614) **vor**
-Sprint 87 – Korrektheit im Kernkreis schlägt neue Funktion (pm-loop Step 3).
+- **Erledigt am 2026-11-17:** B-611, B-612, B-613 ausformuliert, mit dem Vater gegrillt (12 Entscheidungen) und
+  geschätzt – sie bilden Sprint 87.
+- **Offen:** [B-614](backlog/B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) und B-607–B-609 (P3, `idee`),
+  dazu B-619 (schätzen) und B-536 (teilen).
 
 ## Offene Roadmap
 

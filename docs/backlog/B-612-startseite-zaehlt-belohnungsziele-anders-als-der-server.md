@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
 aliases: [Ziele 2/2, Truhe zu]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 83 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 unverifiziert: false
 grund: ""
@@ -125,6 +125,106 @@ Final (Entscheidungen 1–2; vorher Entwurf), geschrieben für Punkt 1 (Serverfe
 5. Mit einem aktiven Plan sieht die Startseite aus wie heute: die bestehenden Fälle aus `SohnHome.test.tsx:337-362`
    bleiben inhaltlich gleich (die Auswahl-Fälle wandern an den Server-Test, nicht ersatzlos weg).
 
+## Schätzung
+
+**Größe: M** — wie der vokabel-basierte Batch-Pfad im `MediaSelector` (B-03): ein neuer Weg durch beide Seiten des
+Vertrags (Server liefert, Client liest statt zu rechnen), aber an bekannten Stellen und ohne Schema. Größer als S
+(B-01), weil Backend, Vertrag, zwei Sohn-Seiten, beide Sprachdateien und drei Testebenen mitgehen; kleiner als L (E6),
+weil keine Bestandsdaten berührt werden.
+
+- **`migration: nein`** — Anzahl, Erfüllte und Art werden je Anfrage aus derselben Auswahl gerechnet wie
+  `rewardsUnlocked`; nichts wird gespeichert.
+- **`vertragsbruch: nein`** — drei **additive** Antwortfelder an `TodayResponse`
+  (`backend/Pugling.Contracts/Student/ProgressDtos.cs:27-29`). Die `unknown_field`-Sperre gilt nur für Eingaben
+  (`backend/Pugling.Api/Program.cs:47`), nicht für Antworten. `Pugling.Client` teilt die Vertragstypen
+  (`backend/Pugling.Client/StudentApi.cs:132-133` liest `TodayResponse` aus `Pugling.Contracts`) – dort ist nichts
+  nachzuziehen außer dem Bau; der Agent liest `today` gar nicht. Der positionale Record wird nur an einer Stelle
+  gebaut (`backend/Pugling.Api/Controllers/Student/ChildTodayController.cs:35-36`). Im Frontend kommen die Typen aus
+  `docs/openapi/v1.json` (`frontend/src/lib/types.ts:515`, `contract.ts` erzeugt); neue Pflichtfelder zwingen nur
+  die Test-Attrappen nach (Risiko 4).
+- **`wo: beides`** — Server liefert (Entscheidung 1), Startseite und Bonus-Seite lesen (AK 2–4).
+
+### Woher die Felder kommen müssen
+
+Aus **derselben Liste**, aus der `rewardsUnlocked` entsteht: `rewardGoals` in `ComputeChildDayAsync`
+(`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:331`, nach B-611 über den Kind-Tag gewählt). Der
+`ChildDayRollup` (`backend/Pugling.Api/Services/Shared/ChildDayRollup.cs:23-26`) bekommt dafür Anzahl, Erfüllte und
+Art neben `RewardOutstanding`/`RewardsUnlocked`, der Controller reicht sie durch. **Nicht** im Controller oder in
+`ChildTodayController` aus `day.Positions` neu filtern – genau diese zweite Rechnung ist der Defekt (AK 1). Für die
+Art bietet sich das vorhandene `GoalCadence` (`Daily`/`Weekly`/`None`) an, das der Vertrag schon an
+`PositionStatus.Cadence` trägt (`backend/Pugling.Contracts/Shared/ProgressDtos.cs:41`); eine Festlegung ist das
+nicht, die Form entscheidet der Bau.
+
+### Risiken
+
+1. **Die Bonus-Seite kennt `today` nicht.** Sie liest nur `student/children/{id}/extra-training`
+   (`frontend/src/sohn/SohnBonus.tsx:70`), und `ExtraTrainingOverview` trägt keine Art
+   (`backend/Pugling.Contracts/Student/ExtraTrainingDtos.cs:26`; gebaut in
+   `backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:59-60`). Für AK 4 braucht es **entweder** ein
+   viertes additives Feld an `ExtraTrainingOverview` aus demselben Rollup (`GateAsync`, `ExtraTrainingService.cs:261`,
+   liest ihn schon) **oder** einen zweiten Abruf von `today` auf der Bonus-Seite. Entscheidung 2 sagt „dieselbe
+   Serverangabe", nicht welcher Weg – siehe Annahme unten. Empfehlung für den Bau: das Feld an der Übersicht, weil
+   der Gate denselben Rollup schon hat und die Seite keinen zweiten Ladezustand bekommt.
+2. **Die Zeilen „Ziele heute" / „Ziele diese Woche" bleiben Client-Zählung** (`frontend/src/sohn/SohnHome.tsx:75-79`,
+   `:110-121`) – AK 3 verlangt das. Wer `belohnungsZiele` entfernt, darf `zaehle` nicht mitnehmen; nur der Balken
+   (`:81-82`, `:122`) und das `ziele`-Argument an `Truhe`/`BonusEinstieg` (`:139`, `:144`) wechseln auf die
+   Serverfelder. `TruhenZiele` bleibt als Typ, weil `SohnBonus.tsx:1`, `:50` und `ZU_TEXT` (`SohnHome.tsx:382`) ihn
+   tragen; nur die Abbildung Server-Art → `tag`/`woche`/`keine` kommt dazu.
+3. **Der Bonus-Einstieg rechnet „offen" weiter selbst** aus `today.rewardsUnlocked || today.goalsTotal === 0`
+   (`SohnHome.tsx:144`). Das spiegelt die Regel „ohne Pflicht nichts davor" des Gates (`ExtraTrainingService.cs:265`)
+   und ist nicht Gegenstand der Story; mit der neuen Art `keine` läge eine Vereinfachung nahe – nur mitnehmen, wenn
+   der Fall „Plan ohne Pflicht" danach denselben Text zeigt.
+4. **Pflichtfelder im erzeugten Vertrag** brechen die Test-Attrappen beim Typcheck (`npm run build` = `tsc -b`):
+   `frontend/src/sohn/tagessichtWeg.test.tsx:64-68` (`TodayResponse`) und – bei Weg 1 aus Risiko 1 –
+   `frontend/src/sohn/SohnBonus.test.tsx:39-45` (`ExtraTrainingOverview`). Vitest prüft keine Typen; erst `tsc` fällt.
+5. **Neuer Textschlüssel in beiden Sprachen** (`bonus.lockedDuty` bekommt ein Wochen-Gegenstück neben
+   `frontend/src/i18n/de.ts:180` und `frontend/src/i18n/en.ts:169`); die Parität hält `frontend/src/lib/i18n.test.ts`. Vorbild ist
+   das schon vorhandene Paar `teaserLocked`/`teaserLockedWeek` (`de.ts:177-178`).
+6. **Vertragsdoku muss die Felder tragen**, sonst fällt das Doku-Tor (`backend/Pugling.Api.Tests/ConventionGuardTests.cs:675`,
+   `:752`): je `<param>` an `TodayResponse` (und ggf. `ExtraTrainingOverview`). `docs/openapi/v1.json` schreibt
+   `ContractDocumentTests` neu – mit committen. `docs/api-examples` erfasst `today` heute nicht (der `today`-Block in
+   `docs/api-examples/study-plans.md:608ff` ist die **Plan**-Übersicht `DayOverview`, die unverändert bleibt), die
+   `DocsCaptureTests` ziehen also nur nach, wenn der Bau `DayOverview` anfasst – das soll er nicht.
+
+### Angriffsplan
+
+1. **Voraussetzung:** B-611 abgenommen (Auswahl über den Kind-Tag), sonst liefern die neuen Felder die je-Plan-Auswahl.
+2. Backend: `ChildDayRollup` um Anzahl/Erfüllte/Art aus `rewardGoals` erweitern; `TodayResponse` um drei additive
+   Felder samt englischer `<param>`-Doku; `ChildTodayController` reicht durch. Bei Weg 1 (Risiko 1) dasselbe für
+   `ExtraTrainingOverview` über `GateAsync`.
+3. Integrationstest (AK 1) rot → grün; `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Testlauf schreibt
+   `docs/openapi/v1.json`.
+4. Frontend: `npm run gen:contract`; `SohnHome.tsx` liest Balken und `ziele` aus den Feldern, `belohnungsZiele`
+   entfällt samt falschem Kommentar (`SohnHome.tsx:349-351`); `SohnBonus.tsx:95` wählt den Text nach Art; neuer
+   Schlüssel in `de.ts`/`en.ts`.
+5. Vitest: Attrappen nachziehen, AK 2 und AK 4 als neue Fälle, AK 5 bestehende Fälle; die drei `belohnungsZiele`-
+   Zusicherungen (`frontend/src/sohn/SohnHome.test.tsx:346-352`) wandern als Fälle an den Server-Test.
+6. `npm run build` (Typcheck) und `npm test`.
+
+### Testweg
+
+- **Backend:** Fälle für AK 1 in der Integrationstestklasse aus B-611 (gleicher Aufbau: Plan A zwei Tagesziele,
+  Plan B ein Wochenziel) – Felder vor und nach dem Erfüllen gegen `rewardsUnlocked`. Dazu die drei Auswahl-Fälle aus
+  `SohnHome.test.tsx:346-352` als Server-Fälle mit **einem** Plan (Tag+Woche ⇒ Tag 1/1; Woche+ohne ⇒ Woche 1/1; nur
+  ohne ⇒ keine 0/0), damit AK 5 „nicht ersatzlos weg" belegt ist. Bei Weg 1 ein Fall an `ExtraTrainingTests`
+  (Plan nur mit Wochenzielen ⇒ Art Woche).
+- **Vitest:** `frontend/src/sohn/tagessichtWeg.test.tsx` rendert die ganze Startseite gegen eine `today`-Antwort
+  (`:63-68`) – dort AK 2 (Positionen flach „alle Tagesziele erfüllt", Server „Woche 0/1" ⇒ Balken 0 %, „Schaffe deine
+  Wochenziele…") und AK 3 (die zwei Zeilen zählen weiter je Takt). AK 4 in `frontend/src/sohn/SohnBonus.test.tsx`
+  (Sperre mit Art Woche ⇒ „Erst die Wochenziele…"). AK 5: `SohnHome.test.tsx:337-362` bis auf den gewanderten
+  Auswahl-Fall unverändert grün.
+- **E2E:** die zwei Pläne mit verschiedenem Takt fährt schon die Rollengang-Spec aus B-611; um eine Zusicherung auf
+  den Balken bzw. den Truhen-Text erweitern statt einer weiteren Spec – sie zeigt dieselbe Fläche. Das ist der
+  Rollengang dieser Story.
+- **Reviewer:** `pugling-reviewer` (Vertrag, Rollup) **und** `frontend-reviewer` (Startseite, Bonus-Seite, i18n).
+
+### Annahme (unbestätigt)
+
+- **Die Bonus-Seite bekommt ihre Art über ein Feld an `ExtraTrainingOverview`,** nicht über einen zweiten Abruf von
+  `today`. Entscheidung 1 nennt nur `TodayResponse`, Entscheidung 2 „dieselbe Serverangabe"; ein viertes additives
+  Feld an einem zweiten DTO steht in keiner Entscheidung und keinem Kostenpunkt. Kein Bruch, aber vor dem Bau kurz
+  bestätigen lassen.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 83 (🟡, `pugling-reviewer`), `entgangen_bei: [B-606]`.
@@ -133,3 +233,7 @@ Final (Entscheidungen 1–2; vorher Entwurf), geschrieben für Punkt 1 (Serverfe
   Code durchgerechnet; `TodayResponse` trägt keine Belohnungszahlen; Zusatzfund: die Bonus-Seite sagt auch bei reinen
   Wochenzielen „Erst die Tagesziele" (`SohnBonus.tsx:95`). Nicht im Browser nachgestellt.
 - **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–3, alle nach Empfehlung; Punkt 2 durch B-611 Entscheidung 4 erledigt; Akzeptanzkriterien final.
+- **2026-11-17** — geschätzt: M (wie B-03, ein neuer Weg durch beide Seiten des Vertrags), beides, keine Migration, kein
+  Vertragsbruch (additive Antwortfelder aus `rewardGoals`, `PositionProgressService.cs:331`); Annahme offen: die
+  Bonus-Seite bekommt ihre Art über ein Feld an `ExtraTrainingOverview`, weil sie `today` nicht liest
+  (`SohnBonus.tsx:70`). Setzt B-611 voraus; Reviewer `pugling-reviewer` und `frontend-reviewer`.
