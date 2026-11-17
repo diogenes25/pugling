@@ -177,3 +177,39 @@ gefunden; B-613 nur mit einer Start-in-der-Vergangenheit-Dimension.
 **Halt-Prüfung:** kein neues Tor gelandet; 5 gezählte Funde in Sprint 84 (Grenze: mehr als 5). Die drei Nachschau-Funde
 liegen im Increment von Sprint 83, nicht in dem von Sprint 84 → der Lauf geht weiter. Weil B-539 sie live gemacht hat,
 nimmt Sprint 85 die autonom grillbaren davon (B-611, B-612, B-614) auf.
+
+## Abschluss
+
+**Halt nach Sprint 84** – nicht durch eine Halt-Bedingung der Freigaben, sondern weil um 09:32 eine **parallele Sitzung**
+im selben Checkout im Dialog mit dem Vater die Fächermix-Story anlegte (zuerst als B-611, nach der Id-Kollision von ihr
+selbst auf **B-615** verschoben, `90251900`). Sie arbeitet an der Tagesmission über mehrere Pläne – genau der Fläche,
+die Sprint 85 (B-611, B-612, B-614) angefasst hätte. Zwei schreibende Läufe im selben Bereich wären die Lage aus
+„Parallele Sitzungen stören sich". Ein Schaden ist nicht entstanden: der Commit `224632d6` nahm die damals ungetrackte
+Story-Datei der anderen Sitzung mit; eine eigene Umnummerierung wurde vor dem Commit zurückgenommen.
+
+### Zähltabelle
+
+| | Wert |
+| --- | --- |
+| Offen zu Beginn | 29 |
+| Abgenommen | 4: B-606, B-539 (Teil A), B-558, B-610 |
+| Neu angelegt | B-606 (Teilung), B-607, B-608, B-609, B-610, B-611, B-612, B-613, B-614 |
+| Sprints | 83 (B-606), 84 (B-539, B-558, B-610) |
+| Gezählte Review-Funde | 5 + 5 (Grenze je Sprint: mehr als 5) |
+| Entgangen (Nachschau) | Sprint 82: B-607, B-608 · Sprint 83: B-611, B-612, B-613, B-614 |
+| Commits | `0901b4c8`, `14fd6ae6`, `ca13bb5f`, `30711266`, `224632d6` (alle auf `main`, ungepusht) |
+
+### Liste für den Menschen
+
+1. **Migration `20261117061523_StudyPlanSeriesUnit`** wartet auf den nächsten Start des Heimnetz-Servers (`heimnetz.ps1`
+   sichert vorher). Probe auf einer Kopie war sauber; die echten Pläne 1/5/6/7/8 behalten ihr Fach.
+2. **Seit B-539 kann ein Kind je Fach einen aktiven Plan haben.** Bevor du Theodor oder Friedrich einen zweiten Fach-Plan
+   gibst: B-611 (ein Wochenziel-Plan sperrt die Truhe für alle) und B-612 („2/2" neben geschlossener Truhe) sind dann
+   sichtbar – mit reinen Tagesziel-Plänen nicht.
+3. **B-613 Teil 2 braucht deine Entscheidung:** Wenn ein alter Plan wieder eingeschaltet wird, sollen seine offenen
+   Tage die Serie nachträglich brechen? (Das Modell kennt keinen Aktivierungsverlauf.)
+4. **Retro-Vorschläge zum Entscheiden:** (CY) Skript, das zu einem Frontend-Diff die E2E-Specs mit entfernten Texten
+   nennt; (CZ) Matrix-Test der Kind-Tagessicht über verschiedenartige Pläne.
+5. **B-607** (Hinweis verschwindet auf Schreibstufen bei „Fremdwort → Deutsch") ist im Kern eine Produktfrage: soll der
+   Creator den Hinweis dort sehen, oder genügt ein Satz in der Feldhilfe?
+6. Push von `main` (seit Sprint 82 rund 32 Commits voraus).
