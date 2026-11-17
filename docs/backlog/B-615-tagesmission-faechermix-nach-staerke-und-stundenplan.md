@@ -119,7 +119,9 @@ In der echten DB (read-only, 2026-11-17):
 
 ## Entscheidungen
 
-Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlung gewählt.
+Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlung gewählt. Die Entscheidungen
+9 bis 14 stammen aus dem Nachgrillen am selben Tag zu den sechs Lücken, die die Review der Grill-Fassung
+gefunden hat, ebenfalls jeweils die Empfehlung.
 
 1. **Dreiteilung.** (a) Inhalt und Plan für ein weiteres Fach, (b) Stärke je Fach, (c) Pflicht nach Stundenplan.
    Sie werden getrennt gebaut. *Begründung:* (a) bringt den Fächermix sofort und ohne Code, weil die Mechanik seit
@@ -161,10 +163,6 @@ Gegrillt im Chat am 2026-11-17 mit dem Vater, neun Fragen, jeweils die Empfehlun
    Kandidat für die Folge-Story ist [B-616](B-616-faecher-gewichtung-in-prozent.md) (Prozent-Gewichtung, noch
    `idee`). Sie konkurriert mit den drei Stufen aus Entscheidung 4 um dieselbe Tabelle Kind × Fach; die
    Reihenfolge regelt Entscheidung 14.
-
-Nachgrillen am 2026-11-17 mit dem Vater zu den sechs Lücken, die die Review der Grill-Fassung gefunden hat,
-jeweils die Empfehlung gewählt.
-
 9. **Ein Plan ohne Fach rechnet mit Stärke `normal`, und die Taktung „Stundenplan“ wird dort abgewiesen.**
    *Begründung:* kein Umbau am Bestand, und die Abweisung ist dieselbe wie beim Fach ohne Stundenplan-Eintrag.
    *Kosten:* Ein Plan ohne Fach nimmt an Stärke und Stundenplan nicht teil; der Vater muss dem Plan ein Fach
@@ -197,50 +195,50 @@ jeweils die Empfehlung gewählt.
 Final, nach Teilen. Je Fall die Änderung, die seinen Test rot macht. Teil (b) steht unter dem Vorbehalt
 aus Entscheidung 14. Die Nummern 9 bis 14 stammen aus dem Nachgrillen und stehen bei ihrem Teil.
 
-**Teil (a), Inhalt, ohne Code**
+### Teil (a), Inhalt, ohne Code
 
-1. **Absichtserklärung, kein Regressionstest** (es gibt keinen Code, den eine Änderung rot machen könnte):
-   Friedrichs Englischbuch liegt als Reihe mit Units und Wortlisten in der echten DB, das Lehrwerk hängt am Kind,
-   und ein aktiver Englisch-Plan läuft neben Plan 8. Abnahme durch einmaliges Nachsehen: `student/today` für
-   Child 3 zeigt Pflichten aus beiden Fächern.
+- **AK 1.** **Absichtserklärung, kein Regressionstest** (es gibt keinen Code, den eine Änderung rot machen könnte):
+  Friedrichs Englischbuch liegt als Reihe mit Units und Wortlisten in der echten DB, das Lehrwerk hängt am Kind,
+  und ein aktiver Englisch-Plan läuft neben Plan 8. Abnahme durch einmaliges Nachsehen: `student/today` für
+  Child 3 zeigt Pflichten aus beiden Fächern.
 
-**Teil (b), Stärke je Fach**
+### Teil (b), Stärke je Fach
 
-2. Der Vater setzt je Kind und Fach `schwach`/`normal`/`stark`, per API lesbar und änderbar. Je Zusage ein Fall:
-   - Ein Kind ohne gesetzte Stärke liest `normal`. *Rot ohne Vorgabe.*
-   - Ein gesetzter Wert kommt beim nächsten Lesen zurück. *Rot, wenn das Schreiben nicht speichert.*
-   - Ein fremdes Kind liefert 404. *Rot ohne Eigentumsprüfung.*
-   - Das Vater-Web zeigt die Stärke am Kind und ändert sie. *Rot, wenn die Seite den Wert nicht rendert.*
-3. Bei gleichem Plan führt `schwach` mehr neue Wörter pro Tag ein als `normal`. *Rot, wenn die Stärke nicht in die
-   Tagesdosis eingeht.*
-4. Bei `stark` ist die Tagespflicht mit den fälligen Wiederholungen erfüllt, ohne dass neue Wörter eingeführt
-   werden. Neue Wörter bleiben spielbar. *Rot, wenn die Pflicht weiter neue Wörter verlangt.*
-9. Bei `stark` und null fälligen Karten meldet die Tagessicht die Pflicht als erfüllt, und der Tagesabschluss
-   bucht keinen Malus. *Rot, wenn die Pflicht offen bleibt oder Malus kostet.*
-10. Eine Position ohne Tagesdosis (Grammatik) verlangt bei `schwach`, `normal` und `stark` dasselbe. *Rot, wenn
-    die Stärke ihr Ziel verändert.*
-11. Eine Position in einem Plan ohne Fach rechnet wie `normal`, auch wenn für ein Fach des Kindes `schwach`
-    gesetzt ist. *Rot, wenn eine fremde Stärke durchschlägt.*
+- **AK 2.** Der Vater setzt je Kind und Fach `schwach`/`normal`/`stark`, per API lesbar und änderbar. Je Zusage ein Fall:
+  - Ein Kind ohne gesetzte Stärke liest `normal`. *Rot ohne Vorgabe.*
+  - Ein gesetzter Wert kommt beim nächsten Lesen zurück. *Rot, wenn das Schreiben nicht speichert.*
+  - Ein fremdes Kind liefert 404. *Rot ohne Eigentumsprüfung.*
+  - Das Vater-Web zeigt die Stärke am Kind und ändert sie. *Rot, wenn die Seite den Wert nicht rendert.*
+- **AK 3.** Bei gleichem Plan führt `schwach` mehr neue Wörter pro Tag ein als `normal`. *Rot, wenn die Stärke nicht in die
+  Tagesdosis eingeht.*
+- **AK 4.** Bei `stark` ist die Tagespflicht mit den fälligen Wiederholungen erfüllt, ohne dass neue Wörter eingeführt
+  werden. Neue Wörter bleiben spielbar. *Rot, wenn die Pflicht weiter neue Wörter verlangt.*
+- **AK 9.** Bei `stark` und null fälligen Karten meldet die Tagessicht die Pflicht als erfüllt, und der Tagesabschluss
+  bucht keinen Malus. *Rot, wenn die Pflicht offen bleibt oder Malus kostet.*
+- **AK 10.** Eine Position ohne Tagesdosis (Grammatik) verlangt bei `schwach`, `normal` und `stark` dasselbe. *Rot, wenn
+  die Stärke ihr Ziel verändert.*
+- **AK 11.** Eine Position in einem Plan ohne Fach rechnet wie `normal`, auch wenn für ein Fach des Kindes `schwach`
+  gesetzt ist. *Rot, wenn eine fremde Stärke durchschlägt.*
 
-**Teil (c), Stundenplan-Pflicht**
+### Teil (c), Stundenplan-Pflicht
 
-5. Fach am Dienstag ⇒ eine Position mit Taktung „Stundenplan“ ist Montag und Dienstag Pflicht; ein am Montag
-   verpasstes Ziel kostet Malus, Mittwoch kostet nichts. *Rot ohne eigene Perioden.*
-6. Taktung „Stundenplan“ für ein Fach ohne Stundenplan-Eintrag ⇒ `400 validation_error`. Wird der Eintrag danach
-   gelöscht, rechnet die Position wie `Daily`. *Rot, wenn sie dann pflichtfrei wird.*
-7. Überschreitet ein neuer Pflicht-Eintrag die Obergrenze an einem Wochentag ⇒ `400` mit eigenem Code
-   (Vorschlag `daily_duty_limit_exceeded`, beim Schätzen festzulegen). Der Testfall reißt die Grenze nur an
-   **einem** Wochentag, der nicht heute ist. *Rot ohne Prüfung über alle Wochentage.*
-8. Die Kind-Tagessicht zeigt Stundenplan-Pflichten mit Hinweis auf die Stunde („morgen Englisch“). *Rot, wenn die
-   Pflicht ohne Grund erscheint.*
-12. Fach am Dienstag, Montag **und** Dienstag verpasst ⇒ zwei Malus-Buchungen. Fach am Montag **und** Dienstag,
-    alles verpasst ⇒ drei Buchungen (Sonntag, Montag, Dienstag), nicht vier. *Rot bei einer gemeinsamen Periode
-    bzw. wenn der Montag doppelt zählt.*
-13. Taktung „Stundenplan“ an einer Position in einem Plan ohne Fach ⇒ `400 validation_error`. *Rot ohne die
-    Prüfung auf das Plan-Fach.*
-14. Ein neuer Stundenplan-Eintrag, der einen Wochentag über die Obergrenze hebt ⇒ `400` mit demselben Code wie
-    AK 7. Das Löschen eines Eintrags mit derselben Folge geht durch, und die Vater-Sicht des Kindes meldet die
-    Überschreitung. *Rot, wenn der Eintrag durchgeht bzw. das Löschen abgewiesen wird.*
+- **AK 5.** Fach am Dienstag ⇒ eine Position mit Taktung „Stundenplan“ ist Montag und Dienstag Pflicht; ein am Montag
+  verpasstes Ziel kostet Malus, Mittwoch kostet nichts. *Rot ohne eigene Perioden.*
+- **AK 6.** Taktung „Stundenplan“ für ein Fach ohne Stundenplan-Eintrag ⇒ `400 validation_error`. Wird der Eintrag danach
+  gelöscht, rechnet die Position wie `Daily`. *Rot, wenn sie dann pflichtfrei wird.*
+- **AK 7.** Überschreitet ein neuer Pflicht-Eintrag die Obergrenze an einem Wochentag ⇒ `400` mit eigenem Code
+  (Vorschlag `daily_duty_limit_exceeded`, beim Schätzen festzulegen). Der Testfall reißt die Grenze nur an
+  **einem** Wochentag, der nicht heute ist. *Rot ohne Prüfung über alle Wochentage.*
+- **AK 8.** Die Kind-Tagessicht zeigt Stundenplan-Pflichten mit Hinweis auf die Stunde („morgen Englisch“). *Rot, wenn die
+  Pflicht ohne Grund erscheint.*
+- **AK 12.** Fach am Dienstag, Montag **und** Dienstag verpasst ⇒ zwei Malus-Buchungen. Fach am Montag **und** Dienstag,
+  alles verpasst ⇒ drei Buchungen (Sonntag, Montag, Dienstag), nicht vier. *Rot bei einer gemeinsamen Periode
+  bzw. wenn der Montag doppelt zählt.*
+- **AK 13.** Taktung „Stundenplan“ an einer Position in einem Plan ohne Fach ⇒ `400 validation_error`. *Rot ohne die
+  Prüfung auf das Plan-Fach.*
+- **AK 14.** Ein neuer Stundenplan-Eintrag, der einen Wochentag über die Obergrenze hebt ⇒ `400` mit demselben Code wie
+  AK 7. Das Löschen eines Eintrags mit derselben Folge geht durch, und die Vater-Sicht des Kindes meldet die
+  Überschreitung. *Rot, wenn der Eintrag durchgeht bzw. das Löschen abgewiesen wird.*
 
 ## Offene Punkte
 
