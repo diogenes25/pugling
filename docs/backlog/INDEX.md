@@ -12,13 +12,15 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (37)
+### Offen (39)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
+| [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 | Wunsch | `geschaetzt` | P1 | M | doku | — |
+| [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
+| [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
-| [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md) | Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `idee` | P2 | — | — | — |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `idee` | P2 | — | — | — |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Ein rückdatierter oder wieder eingeschalteter Plan bricht die Serie nachträglich | Defekt | `idee` | P2 | — | — | — |
@@ -575,7 +577,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (1)
+### Wartet auf Zutun von außen (2)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -583,6 +585,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
+| [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 | `geschaetzt` | Vater: Friedrichs Englischbuch fotografieren (es gibt noch keinen Ordner dafür unter raw/english) |
 
 ### Nach der Abnahme entgangen (189)
 
@@ -977,7 +980,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (42)</summary>
+<summary>Verworfen (43)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1016,6 +1019,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-581](B-581-rockettutor-vergleich-sammel-story.md) | RocketTutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-582, B-583, B-584 führt der Index einzeln, der Plan liegt in docs/rockettutor-vergleich-plan.md → [B-582, B-583, B-584] |
 | [B-582](B-582-probearbeit-auf-papier-mit-foto-korrektur.md) | Eine Probearbeit wird auf Papier geschrieben, fotografiert und mit Note zurückgemeldet | Stakeholder-Entscheidung im Auftrag des Nutzers (2026-11-16): setzt die ungebaute Probeklausur B-249 voraus; wird mit B-249 neu angelegt, falls diese gebaut ist |
 | [B-585](B-585-sofatutor-vergleich-sammel-story.md) | sofatutor-Vergleich: die Verbesserungen übernehmen (Sammel-Story) | geteilt – Sammel-Story ohne eigene Arbeit; die Teil-Stories B-586, B-587 führt der Index einzeln, der Plan liegt in docs/sofatutor-vergleich-plan.md → [B-586, B-587] |
+| [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md) | Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan | geteilt – Entscheidung 1 (Dreiteilung) beim Schätzen am 2026-11-17 eingelöst: Teil (a) Inhalt, Teil (c) Stundenplan-Pflicht in Backend und Frontend (als Ganzes XL), Teil (b) war schon nach B-616 und von dort nach B-618/B-619 gegangen. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-620, B-621, B-622, B-618, B-619] |
 | [B-616](B-616-faecher-gewichtung-in-prozent.md) | Die Fächer eines Kindes werden prozentual gewichtet und verschieben sich mit dem Lernstand | geteilt – am Code gemessen XL (zwei Tabellen mit Migration, Verteilung an fünf Dosis-Stellen, 0-%-Pflichtregel, Endpunkte, Regler im Vater-Web, Anzeige in der Sohn-App); Schnitt vom Vater am 2026-11-17 gewählt: Backend zuerst, dann Frontend. Entscheidungen und AKs leben in den Teil-Stories weiter → [B-618, B-619] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |

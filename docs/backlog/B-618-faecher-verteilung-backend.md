@@ -283,3 +283,4 @@ kennen muss.
 - **2026-11-17** — angelegt als Teil 1 der Teilung von B-616 (Schnitt vom Vater gewählt). Entscheidungen und
   AK 1 bis 12 von dort übernommen, Ist-Stand um die Lesestellen der Tagesdosis ergänzt (Stand `bf5fd841`).
   Geschätzt: L, `backend`, Migration ja, Vertragsbruch nein.
+- **2026-11-17** — B-615 ist geteilt worden; sein Teil (c), auf den Risiko 6 verweist, ist jetzt [B-621](B-621-stundenplan-pflicht-backend.md) (Backend) und [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) (Frontend). Die dort offene Frage, ob eine Stundenplan-Position an pflichtfreien Tagen an der Verteilung teilnimmt, steht in B-621 als Annahme (ja), vom Vater nicht bestätigt.

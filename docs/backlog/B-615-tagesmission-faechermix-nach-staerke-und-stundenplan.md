@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student, rolle/creator]
 aliases: [Fächermix, Tagesmission über Fächer, Fach-Förderstufe, Stundenplan als Pflicht]
-status: gegrillt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Vater im Chat 2026-11-17: Tagesmission braucht einen gesunden Mix aus mehreren Fächern, gewichtet nach Schwäche, mit dem Stundenplan (Fachtag und Vortag)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt – Entscheidung 1 (Dreiteilung) beim Schätzen am 2026-11-17 eingelöst: Teil (a) Inhalt, Teil (c) Stundenplan-Pflicht in Backend und Frontend (als Ganzes XL), Teil (b) war schon nach B-616 und von dort nach B-618/B-619 gegangen. Entscheidungen und AKs leben in den Teil-Stories weiter"
+ersetzt_durch: [B-620, B-621, B-622, B-618, B-619]
 ---
 
 # B-615 · Die Tagesmission mischt die Fächer – gewichtet nach Stärke und Stundenplan
@@ -288,3 +288,4 @@ desselben Tages) im Nachgrillen am selben Tag.
   drei Stufen. Entscheidungen 4 und 10 abgelöst, Teil (b) samt AKs 2, 3, 4, 9, 10 und 11 geht in B-616 auf.
   Diese Story trägt damit noch Teil (a) (Inhalt) und Teil (c) (Stundenplan-Pflicht).
 - **2026-11-17** — B-616 ist beim Schätzen geteilt worden: [B-618](B-618-faecher-verteilung-backend.md) (Backend) und [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) (Vater-Web und Sohn-App). Wo diese Story auf B-616 verweist, tragen jetzt diese beiden die Arbeit; die Entscheidungen stehen unverändert in B-616 und in B-618.
+- **2026-11-17** — beim Schätzen **geteilt** (Entscheidung 1): Teil (a) ist [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md), Teil (c) ist [B-621](B-621-stundenplan-pflicht-backend.md) (Backend) und [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) (Vater-Web und Sohn-App); der Schnitt Backend/Frontend folgt dem, den der Vater für B-616 gewählt hat. Teil (b) tragen [B-618](B-618-faecher-verteilung-backend.md) und [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md). Diese Datei bleibt als Beleg der Grill-Runden stehen.

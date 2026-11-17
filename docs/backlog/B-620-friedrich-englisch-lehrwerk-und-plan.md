@@ -1,0 +1,122 @@
+---
+tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/inhalt, rolle/creator, rolle/supervisor, rolle/student]
+aliases: [Friedrich Englisch, zweites Fach für Friedrich, Englisch-Plan neben Plan 8]
+status: geschaetzt
+prio: P1
+art: Wunsch
+groesse: M
+wo: doku
+migration: nein
+vertragsbruch: nein
+quelle: B-615
+grund: ""
+ersetzt_durch: []
+wartet_auf: "Vater: Friedrichs Englischbuch fotografieren (es gibt noch keinen Ordner dafür unter raw/english)"
+---
+
+# B-620 · Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8
+
+Teil (a) aus [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md) (dort gegrillt, beim Schätzen geteilt). Friedrich lernt in Pugling nur
+Französisch. Sein Englischbuch wird aus Fotos aufbereitet und geladen, und ein aktiver Englisch-Plan läuft neben
+Plan 8, sodass seine Tagesmission zwei Fächer zeigt. Das ist Inhaltsarbeit, kein Code: Die Mechanik für mehrere
+Fächer steht seit B-539 und B-606.
+
+## User Story
+
+Als *Vater* möchte ich, dass Friedrich neben Französisch auch Englisch in Pugling übt, damit seine Tagesmission
+aus mehr als einem Fach besteht. Als *Sohn* möchte ich eine Tagesmission aus zwei Fächern sehen, damit ich nicht
+immer nur dasselbe Fach übe.
+
+## Ist-Stand am Code
+
+Gemessen am 2026-11-17 auf `main` (Stand `74d2f9f5`); die Angaben zur echten DB stammen aus der Messung für
+B-615 vom selben Tag (read-only).
+
+- **Mehrere aktive Pläne je Kind gehen:** Aktivieren schaltet nur Pläne desselben Fachs ab
+  (`backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:159` `DeactivateSameSubjectPlansAsync`),
+  und die Tagessicht vereinigt alle aktiven Pläne
+  (`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:295` `ComputeChildDayAsync`).
+- **Friedrich (Child 3)** hat einen aktiven Plan (Plan 8, Französisch) und ein Lehrwerk am Kind (Découvertes
+  Série bleue 2). Für Englisch hat er weder Lehrwerk noch Übungen noch Plan.
+- **Aufbereitete Bücher unter `raw/`:** `raw/english/access-pugling` (55 Seiten-Markdown, Access 3, Theodors
+  Buch), `raw/france/decouvertes-serie-bleue-2-pugling` (58), `raw/latin/viva-1-pugling` (49),
+  `raw/Math/lambacher-schweizer-9-sh-pugling` (19). **Ein Englischbuch für Friedrich ist nicht dabei.**
+- Der Weg vom Foto in die App steht als Skill `lehrwerk-aufbereiten` (Seiten-Markdown, `md_pruefen.py`,
+  Stoffnotizen, Wortlisten, Start-Übungen, `laden.py`, Kind umstellen); den Plan erzeugt `ki-creator plan`
+  bzw. „Plan aus Unit“ ([B-580](B-580-plan-aus-unit.md), `geschaetzt`, noch nicht gebaut).
+
+## Die echte Lücke
+
+Es fehlen die Fotos von Friedrichs Englischbuch. Alles danach ist ein bekannter Weg, der für zwei Bücher schon
+gegangen wurde.
+
+Beobachtung beim Schätzen, keine Entscheidung: Für Theodors Latein liegt das Buch (Viva 1) schon als
+Seiten-Markdown vor. Latein für Theodor wäre also ohne neue Fotos machbar, ist nach B-615 Entscheidung 2 aber
+erst nach Friedrichs Englisch dran.
+
+## Offene Punkte
+
+Keine. Entschieden in [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md).
+
+## Entscheidungen
+
+Übernommen aus [B-615](B-615-tagesmission-faechermix-nach-staerke-und-stundenplan.md) (gegrillt am 2026-11-17 mit dem Vater), wörtlich.
+
+1. (B-615 Entscheidung 1) **Dreiteilung.** (a) Inhalt und Plan für ein weiteres Fach, (b) Stärke je Fach, (c) Pflicht nach Stundenplan.
+   Sie werden getrennt gebaut. *Begründung:* (a) bringt den Fächermix sofort und ohne Code, weil die Mechanik seit
+   B-539/B-606 steht. *Kosten:* drei Stories, deren Wechselwirkung (Dosis × Taktung × Obergrenze) beim Schätzen von
+   (b) und (c) abgestimmt werden muss. Die Teil-Stories legt der Schritt `geschaetzt` an, nicht diese Bearbeitung.
+2. (B-615 Entscheidung 2) **Als Nächstes Friedrich Englisch.** *Begründung:* seine zweite Baustelle, und die Sprach-Übungstypen passen.
+   Weg: Englischbuch fotografieren, `lehrwerk-aufbereiten`, dann ein Englisch-Plan neben Plan 8. *Kosten:* der
+   Vater fotografiert. Latein für Theodor und Mathe für Friedrich folgen später (Mathe fehlen passende Übungstypen).
+
+## Akzeptanzkriterien
+
+Final, übernommen aus B-615.
+
+- **AK 1.** (B-615 AK 1) **Absichtserklärung, kein Regressionstest** (es gibt keinen Code, den eine Änderung rot machen könnte):
+  Friedrichs Englischbuch liegt als Reihe mit Units und Wortlisten in der echten DB, das Lehrwerk hängt am Kind,
+  und ein aktiver Englisch-Plan läuft neben Plan 8. Abnahme durch einmaliges Nachsehen: `student/today` für
+  Child 3 zeigt Pflichten aus beiden Fächern.
+
+## Schätzung
+
+**Größe: M** — ein ganzes Buch durch den Weg von `lehrwerk-aufbereiten` zu führen ist mehr als ein Werkzeug
+(S, B-470) und weniger als ein Umbau: Fotos lesen und je Foto eine Markdown-Datei schreiben, prüfen, Stoffnotizen
+und Wortlisten je Unit, laden, Kind umstellen, Plan anlegen. Kein Code.
+
+- **`migration: nein`**, **`vertragsbruch: nein`** — es wird nur Inhalt über die bestehende API geladen.
+- **`wo: doku`** — kein Backend- und kein Frontend-Code; die Seiten-Markdown liegen unter `raw/` (gitignored,
+  Copyright).
+
+### Risiken
+
+1. **Wartet auf die Fotos.** Ohne sie beginnt nichts; Reflexe und Anschnitte kosten eine zweite Fotorunde (so
+   bei Access und Découvertes, siehe `raw/fotoliste.md`).
+2. **Es wird in die echte DB geladen.** Vorher sichern (das Startskript `scripts/heimnetz.ps1` sichert beim
+   Start); `laden.py` zuerst gegen eine Kopie, dann gegen die laufende Instanz.
+3. **Zwei Fächer heißt doppelte Pflicht.** Ohne Obergrenze (B-621) und ohne Verteilung (B-618) addieren sich die
+   Pflichten aus Plan 8 und dem Englisch-Plan. Der Englisch-Plan startet deshalb klein; wie klein, legt der Vater
+   beim Anlegen fest.
+4. **Der Stoff kann zu schwer sein.** Bei Französisch war er es (B-536). Englisch ist Friedrichs stärkeres Fach,
+   das Risiko ist kleiner, aber nicht null.
+
+### Angriffsplan
+
+1. Der Vater fotografiert das Buch (Doppelseite je Foto, Fußzeile im Bild) nach `raw/english/<buch>`.
+2. `lehrwerk-aufbereiten`: Seiten-Markdown, `md_pruefen.py` grün, Stoffnotizen und Wortlisten je Unit.
+3. `laden.py` gegen eine Kopie der DB, dann gegen die echte Instanz; Lehrwerk an Child 3 hängen.
+4. Englisch-Plan für die aktuelle Unit anlegen (`ki-creator plan` oder von Hand) und aktivieren; Plan 8 bleibt
+   aktiv, weil er ein anderes Fach trägt.
+
+### Testweg
+
+- `md_pruefen.py` und der Prüflauf von `laden.py` (beide aus dem Skill `lehrwerk-aufbereiten`).
+- Abnahme durch einmaliges Nachsehen an der echten Instanz: `student/today` für Child 3 zeigt Pflichten aus
+  beiden Fächern (AK 1, als Absichtserklärung beschriftet).
+- Rollengang: Friedrich spielt eine Runde Englisch in der Sohn-App.
+
+## Verlauf
+
+- **2026-11-17** — angelegt als Teil (a) der Teilung von B-615. Geschätzt: M, `doku`, keine Migration, kein
+  Vertragsbruch; wartet auf die Fotos des Buchs.
