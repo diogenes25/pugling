@@ -1,13 +1,14 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/training, bereich/frontend, rolle/student, lerntechnik/vokabeln]
 aliases: [Lernkarte leichter, Mach's mir leichter in der Lernkarte]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
 wo: ""
 migration: ""
 vertragsbruch: ""
+wartet_auf: B-635
 quelle: "Chat mit dem Vater, 2026-11-17 (Kombi-Lernkarte B-598, Leichter-Knopf aus B-635)"
 grund: ""
 ersetzt_durch: []
@@ -56,17 +57,19 @@ Gelesen am 2026-11-17 (`135957b6`).
   `IntroducedAt`, ob erinnert oder aufgegeben (`:673-677`). Ab dann gilt das Wort als eingeführt und spielt in der
   nächsten Runde seine Leiter-Stufe, nicht mehr die Lernkarte (`PositionPlayService.cs:187`).
 
-**Der gelbe Kreis im Pfad:**
+**Die Ringe im Pfad** (Stand `a28358d3`, „zweiter Ring für den Stand der Pflicht“, am 2026-11-17 aus einer
+parallelen Sitzung):
 
-- Der Ring ist der Anteil eingeführter Wörter am Pool: `kennenlernAnteil = introducedCount / poolSize`
-  (`frontend/src/sohn/pfad.ts:47-50`), gezeichnet in Gold (`frontend/src/sohn/SohnHome.tsx:250-259`).
+- Außen, gold: der Anteil eingeführter Wörter am Pool, `kennenlernAnteil = introducedCount / poolSize`
+  (`frontend/src/sohn/pfad.ts:47-50`, gezeichnet `frontend/src/sohn/SohnHome.tsx:277`), beschriftet „N von M schon
+  kennengelernt“ (`frontend/src/i18n/de.ts:39`).
 - `introducedCount` zählt die Fortschrittszeilen mit `IntroducedAt != null`
-  (`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:222`). Ein aufgegebenes Wort füllt den Ring also
-  heute schon genauso wie ein erinnertes.
-- Der Haken „geschafft“ am Knoten ist etwas anderes: `goalMet` (`pfad.ts:34`, `SohnHome.tsx:263`). Für eine prüfbare
-  Übung wie Vokabeln ist das Ziel ein **bestandener Test** im Zeitraum, nicht die Lernrunde
-  (`PositionProgressService.cs:147-151`). Nur Übungen ohne Prüfung oder an einem reinen Anzeigetag messen die
-  gespielte Runde, und zwar über 80 % der eingefrorenen Folge (`PlayedEnough`, `:124-129`, `DefaultPassPercent` `:18`).
+  (`backend/Pugling.Api/Services/Shared/PositionProgressService.cs:244`). Ein aufgegebenes Wort füllt den goldenen
+  Ring also heute schon genauso wie ein erinnertes.
+- Innen, grün: der Stand der Pflicht, `zielAnteil` (`pfad.ts:57`, `SohnHome.tsx:278`), voll genau mit `goalMet`. Für
+  eine prüfbare Übung wie Vokabeln ist das Ziel ein **bestandener Test** im Zeitraum, nicht die Lernrunde
+  (`PositionProgressService.cs:147-151`); bis dahin bleibt der grüne Ring leer. Nur Übungen ohne Prüfung oder an einem
+  reinen Anzeigetag messen die gespielte Runde (`PlayedEnough`, `:124-129`, `DefaultPassPercent` `:18`).
 
 **Leichter schalten:**
 
@@ -84,59 +87,88 @@ Gelesen am 2026-11-17 (`135957b6`).
 1. In Schritt 4 gibt es nur „schreib es“ oder „gib auf“, keine Zwischenhilfe.
 2. Die Runde gibt ein nicht erinnertes Wort nach einer Wiederholung frei. Danach gilt es als eingeführt und kommt
    nicht mehr als Lernkarte.
-3. Der Kreis zählt „gesehen“, nicht „einmal aus dem Gedächtnis geschrieben“. Ein Kind, das jede Karte aufgibt, hat
+3. Der goldene Ring zählt „gesehen“, nicht „einmal aus dem Gedächtnis geschrieben“. Ein Kind, das jede Karte aufgibt, hat
    denselben vollen Kreis wie eines, das alle erinnert.
 4. Kein Zustand hält fest, dass ein Wort aus dem Gedächtnis „geschafft“ ist.
 
-## Akzeptanzkriterien (Entwurf)
-
-1. In Schritt 4 der Lernkarte gibt es „Mach's mir leichter“. Jeder Druck schaltet genau eine Stufe tiefer, wieder
-   schwerer geht nicht. Der Server führt die Stufe; das Frontend kann sie nicht selbst wählen.
-2. Eine Antwort auf einer leichteren Stufe zeigt, ob sie richtig war, und die Lösung. Das Wort ist damit nicht
-   geschafft.
-3. Geschafft ist ein Wort erst mit einer richtigen Antwort im freien Feld von Schritt 4. Ein Integrationstest belegt,
-   dass eine leichter geschaltete Karte nie „geschafft“ setzt, auch wenn der Client sie als Freitext schickt; er war
-   vor dem Bau rot.
-4. Nicht geschaffte Wörter kommen in derselben Runde wieder, bis jedes Wort der Runde geschafft ist. Die Grenze
-   „höchstens einmal“ aus B-598 fällt.
-5. Bricht das Kind die Runde ab, bleiben die nicht geschafften Wörter offen. Der gelbe Kreis zählt nur geschaffte
-   Wörter und ist dann nicht voll.
-6. Test, Klausur, Bonus und Info-Modus spielen weiter keine Lernkarte (B-598, Entscheidung 9).
-7. Leichter schalten kostet keine Münzen, und die Lernkarte zahlt weiter nichts.
-
 ## Offene Punkte
 
-1. **Welche Stufen hat „leichter“ in Schritt 4?** Empfehlung: dieselbe Leiter wie B-635 – Buchstabenkästen,
-   Buchstabensalat, Auswahl –, damit Kind und Code nur eine Leiter kennen. Alternative: zuerst „Wort noch einmal
-   zeigen“ (zurück zu Schritt 3, abschreiben). Das ist näher an der Lernkarte, aber es verrät die Lösung ganz.
-2. **Wann kommt ein leichter geschaltetes Wort wieder?** Empfehlung: ans Ende der Runde, nicht sofort. Nach der
-   Auswahl hat das Kind die Lösung eben gesehen; sofort noch einmal abgefragt, wäre das Abschreiben aus dem
-   Kurzzeitgedächtnis. B-635 entscheidet das genauso.
-3. **Bleibt [Aufgeben] je Karte?** Empfehlung: ja, als „später nochmal“. Das Wort geht ans Rundenende, die nächste
-   Vokabel kommt. Ohne den Knopf kann das Kind nur noch leichter schalten oder die ganze Runde abbrechen.
-4. **Was heißt [Abbrechen]?** Du hast vom Abbrechen der Übung gesprochen. Gemeint ist vermutlich das Schließen der
-   Runde (✕ in der Lektion), nicht der Knopf je Karte. Empfehlung: ja, so lesen. Schließt das Kind, bleiben die
-   offenen Wörter offen, ohne Malus über die Pflicht-Regel hinaus.
-5. **Was misst der gelbe Kreis künftig?** Empfehlung: „geschafft“ (einmal frei erinnert) statt „gesehen“. Folge:
-   Ein aufgegebenes Wort ist zwar eingeführt, füllt den Kreis aber nicht. Kosten: Der Kreis bedeutet dann bei
-   Vokabeln etwas anderes als bei Übungen ohne Lernkarte, wo er weiter „gesehen“ zählt. Die Beschriftung
-   (`home.introduced`, „N von M kennengelernt“) müsste mitwandern.
-6. **Kommt ein offenes Wort am nächsten Tag wieder als Lernkarte?** Heute nicht: Die erste Antwort setzt
-   `IntroducedAt`, danach spielt das Wort seine Leiter-Stufe (Selbsteinschätzung in Box 1). Empfehlung: ja, bis es
-   geschafft ist. Sonst wandert ein abgebrochenes Wort in die Abfrage, ohne je erinnert worden zu sein, und der
-   Kreis bliebe dauerhaft offen. Kosten: Der Tageszähler neuer Wörter (`DailyTestPortion`,
-   `PositionPlayService.cs:310-315`) muss offene Lernkarten mitzählen, sonst wächst die Dosis an Tagen mit
-   Abbrüchen.
-7. **Was heißt „Übung nicht geschafft“?** Der Haken am Knoten hängt bei Vokabeln am bestandenen Test, nicht an der
-   Lernrunde (`PositionProgressService.cs:147-151`). Empfehlung: das so lassen. „Nicht geschafft“ zeigt der offene
-   Kreis; der Test bleibt die Pflicht. Alternative: Die Pflicht verlangt zusätzlich, dass alle neuen Wörter des
-   Tages geschafft sind. Das ist strenger, aber ein Malus für ein Wort, das das Kind tapfer leichter geschaltet hat.
-8. **Gibt es eine Notbremse gegen eine endlose Runde?** Mit unbegrenzter Wiederholung und einem Kind, das ein Wort
-   einfach nicht schreiben kann, endet die Runde nur über Abbrechen. Empfehlung: keine Grenze, denn Abbrechen ist
-   die Notbremse und der Kreis zeigt das Ergebnis ehrlich. Alternative: nach drei Durchgängen ohne Erfolg geht das
-   Wort für heute aus der Runde.
-9. **Reihenfolge zu B-635.** Beide brauchen die Stufe je Karte am Server und den Endpunkt `easier`. Empfehlung: B-635
-   zuerst bauen (P1) und B-643 auf dessen Mechanik setzen, nicht umgekehrt und nicht doppelt.
+1. ~~**Welche Stufen hat „leichter“ in Schritt 4?**~~ → Entscheidung 3.
+2. ~~**Wann kommt ein leichter geschaltetes Wort wieder?**~~ → Entscheidung 4.
+3. ~~**Bleibt [Aufgeben] je Karte?**~~ → Entscheidung 5.
+4. ~~**Was heißt [Abbrechen]?**~~ → Entscheidung 6.
+5. ~~**Was misst der gelbe Kreis künftig?**~~ → Entscheidung 1.
+6. ~~**Kommt ein offenes Wort am nächsten Tag wieder als Lernkarte?**~~ → Entscheidung 2.
+7. ~~**Was heißt „Übung nicht geschafft“?**~~ → Entscheidung 7.
+8. ~~**Gibt es eine Notbremse gegen eine endlose Runde?**~~ → Entscheidung 8.
+9. ~~**Reihenfolge zu B-635.**~~ → Entscheidung 9.
+
+## Entscheidungen
+
+Gegrillt mit dem Vater am 2026-11-17.
+
+1. **Zwei Begriffe statt eines: „eingeführt“ und „eingeprägt“. Der goldene Ring zählt eingeprägte Wörter, beschriftet
+   „N von M eingeprägt“.** *Eingeführt* heißt wie heute: Die Lernkarte wurde beantwortet (`IntroducedAt`), das steuert
+   weiter die Fälligkeit. *Eingeprägt* heißt: einmal frei aus dem Gedächtnis richtig geschrieben, ohne leichter
+   geschaltet zu haben. Übungen ohne Lernkarte (Erkennen, andere Typen) zählen im Ring weiter „eingeführt“.
+   *Begründung:* Der Ring soll zeigen, was sitzt, nicht was vorbeigezogen ist; nach einem Abbruch ist er nicht voll.
+   *Kosten:* Der goldene Ring bedeutet je nach Übung leicht Verschiedenes; ein neuer Zustand je Wort und Position,
+   `PositionStatus` braucht eine zweite Zahl neben `IntroducedCount`, und die Beschriftung wandert mit.
+2. **Ein noch nicht eingeprägtes Wort kommt am nächsten Tag wieder als Lernkarte, bis es eingeprägt ist; offene
+   Lernkarten zählen auf die Tagesdosis neuer Wörter.** Bei 6 neuen am Tag und 2 offenen von gestern kommen 2 offene
+   und 4 neue. *Begründung:* Sonst wandert ein abgebrochenes Wort in die Abfrage, ohne je erinnert worden zu sein, und
+   der Ring bliebe für immer offen. *Kosten:* `CardStage`/`IsIntroduction` (`PositionPlayService.cs:187`) fragen künftig
+   „eingeprägt?“ statt „eingeführt?“; die Tagesdosis (`DailyTestPortion`, `:310-315`, und die Rundenzusammenstellung)
+   rechnet offene Lernkarten an.
+3. **Die Leiter im letzten Schritt ist die aus B-635: Buchstabenkästen, Buchstabensalat, Auswahl.** Ein Druck auf
+   „Mach's mir leichter“ = eine Stufe, nie zurück. Wo der Buchstabensalat nicht geht (mehr als ein Wort, mehr als
+   12 Buchstaben; `TestStage.LetterScramble`, `StudyPlanEntities.cs:52-55`), wird er übersprungen. *Begründung:* eine
+   Leiter für Kind und Code; alle drei Formen gibt es bei Vokabeln schon. *Kosten:* Die Lernkarte rendert in Schritt 4
+   drei Abfrageformen, die sie heute nicht kennt.
+4. **Ein leichter geschaltetes Wort geht ans Rundenende und kommt dort als ganze Lernkarte wieder** (aufdecken,
+   abschreiben, erinnern). *Begründung:* Sofort nach der Auswahl getippt, wäre es Abschreiben aus dem Kurzzeitgedächtnis;
+   ein gescheiterter Versuch profitiert vom Abschreiben. B-635 entscheidet die Rundenfolge genauso. *Kosten:* Runden
+   werden länger.
+5. **[Aufgeben] bleibt und heißt „Später nochmal“:** das Wort geht ohne Hilfe ans Rundenende. Die Historie speichert es
+   weiter als „aufgegeben“ (B-598, Entscheidung 8). *Begründung:* ein Ausweg ohne Durchklicken bis zur Auswahl, wenn
+   gerade nichts kommt. *Kosten:* ein Knopf mehr neben „leichter“ und [OK].
+6. **„Abbrechen“ ist das ✕ der Lektion: ohne Rückfrage, ohne eigene Strafe.** Eingeprägte Wörter bleiben eingeprägt,
+   die übrigen bleiben offen und kommen morgen wieder (Entscheidung 2). *Begründung:* „noch nicht drin“ ist ein Grund
+   für Wiederholung, nicht für Strafe (B-598, Entscheidung 7); den Preis zahlt nur eine verpasste Pflicht. *Kosten:*
+   kein Schubs zum Weitermachen.
+7. **Die Pflicht bleibt der bestandene Test;** grüner Ring und Haken ändern sich nicht. *Begründung:* Die Lernkarte
+   bleibt strafenfrei, und die Pflicht-Regel aller laufenden Vokabel-Positionen (Pläne 8, 9, 10) bleibt stehen.
+   *Kosten:* Ein Kind kann die Pflicht erfüllen, ohne alle neuen Wörter eingeprägt zu haben; das zeigt nur der
+   goldene Ring.
+8. **Keine Grenze für Wiederholungen in einer Runde.** B-598, Entscheidung 7 („höchstens einmal“) entfällt. Das ✕ ist
+   die Notbremse. *Begründung:* Eine Grenze nähme ein Wort heraus, das beim nächsten Versuch vielleicht sitzt; der
+   Ring zeigt ehrlich, was fehlt. *Kosten:* Eine Runde endet ohne Abbruch erst, wenn alles eingeprägt ist; kein
+   „fertig“-Erlebnis für ein Kind, das an einem Wort hängt. `IsRepeat` (`PositionPracticeController.cs:141-142`) erkennt
+   die Wiederholung über das zweite Vorkommen und muss beliebig viele tragen.
+9. **B-635 zuerst; B-643 setzt auf dessen Stufe je Karte und `easier` auf** (`wartet_auf: B-635`). *Begründung:* B-635
+   ist P1 und geschätzt, das Fundament wird nur einmal gebaut. *Kosten:* Die Lernkarte wartet auf die
+   Lückentext-Nacharbeit.
+
+## Akzeptanzkriterien
+
+1. In Schritt 4 der Lernkarte gibt es „Mach's mir leichter“. Jeder Druck schaltet genau eine Stufe tiefer –
+   Buchstabenkästen, Buchstabensalat (übersprungen, wo er nicht geht), Auswahl –, wieder schwerer geht nicht. Der
+   Server führt die Stufe; das Frontend kann sie nicht selbst wählen.
+2. Eine Antwort auf einer leichteren Stufe zeigt, ob sie richtig war, und die Lösung. Das Wort ist damit nicht
+   eingeprägt und geht ans Rundenende, wo es als ganze Lernkarte wiederkommt.
+3. Eingeprägt ist ein Wort erst mit einer richtigen Antwort im freien Feld von Schritt 4, ohne leichter geschaltet zu
+   haben. Ein Integrationstest belegt, dass eine leichter geschaltete Karte nie „eingeprägt“ setzt, auch wenn der
+   Client sie als Freitext schickt; er war vor dem Bau rot.
+4. „Später nochmal“ (vorher [Aufgeben]) und ein falsches Wort schicken das Wort ans Rundenende. Es gibt keine Grenze:
+   Die Runde endet von selbst erst, wenn jedes Wort eingeprägt ist. Ein Test belegt eine dritte Wiederholung desselben
+   Worts (heute rot: höchstens eine).
+5. Das ✕ schließt die Runde ohne Rückfrage und ohne Münzabzug. Nicht eingeprägte Wörter kommen am nächsten Tag wieder
+   als Lernkarte und zählen auf die Tagesdosis neuer Wörter (Test: 6 am Tag, 2 offene → 2 offene + 4 neue).
+6. Der goldene Ring zählt eingeprägte Wörter und ist beschriftet „N von M eingeprägt“; nach einem Abbruch ist er nicht
+   voll. Übungen ohne Lernkarte zählen weiter eingeführte Wörter.
+7. Grüner Ring und Haken bleiben unverändert am bestandenen Test.
+8. Test, Klausur, Bonus und Info-Modus spielen weiter keine Lernkarte (B-598, Entscheidung 9). Leichter schalten kostet
+   keine Münzen, und die Lernkarte zahlt weiter nichts.
 
 ## Verlauf
 
@@ -145,3 +177,7 @@ Gelesen am 2026-11-17 (`135957b6`).
 - **2026-11-17** — ausformuliert: Ist-Stand am Code (Lernkarte, Wiederholung, `IntroducedAt`, Ring, Ziel-Regel),
   neun offene Punkte mit Empfehlung. Kern: Der Kreis zählt heute „gesehen“, und ein Wort ist nach der ersten Antwort
   eingeführt, auch aufgegeben.
+- **2026-11-17** — gegrillt mit dem Vater: neun Entscheidungen (Ring zählt „eingeprägt“, offene Lernkarte kommt am
+  Folgetag wieder und zählt auf die Tagesdosis, Leiter wie B-635, ans Rundenende als ganze Lernkarte, „Später
+  nochmal“, ✕ ohne Rückfrage und Strafe, Pflicht bleibt der Test, keine Grenze, B-635 zuerst). Ist-Stand an
+  `a28358d3` (zweiter Ring) nachgezogen; `wartet_auf: B-635`.
