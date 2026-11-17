@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Antwort zu umfangreich, umliegende Wörter abgefragt]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -61,38 +61,64 @@ Kästchen-Maske gar nicht. Der KI-Creator kennt die Regel ebenfalls nicht.
 
 ## Offene Punkte
 
-1. **Was ist Beiwerk?** Empfehlung: **Platzhalter** (sth., sb., qn, qc, jdn., jdm., etw.), **Klammerteile**
-   (schon heute) und **Auslassungspunkte** (schon heute). Alles darf fehlen **oder** stehen. Kosten: eine
-   Platzhalter-Liste im Code, dieselbe wie die Kürzel aus B-625/6.
-2. **Wie zeigen die Kästchen das Beiwerk?** Empfehlung: **als festen Text** in der Reihe, wie heute Leerzeichen
-   und Satzzeichen – „____ sth. ___“ für „point sth. out“; Klammerteile fallen aus der Reihe weg. Das Kind sieht
-   so die Stellung des Objekts, tippt aber nur den Kern. Kosten: Die Maske braucht ein zweites festes Zeichen-
-   Kriterium neben „kein Buchstabe“.
-3. **Schrägstrich ohne Leerzeichen** („left/right“, „qn/qc“, „the station/Mr Bell“). Empfehlung: **jede Seite
-   gilt**, wie die Wahl in einer Klammer („stay (at/with)“); in den Kästchen steht die erste. Kosten: „turn left“
-   und „turn right“ zählen je allein – dass beides gelernt wird, sichert nur B-625, und das trennt an „/“ ohne
-   Leerzeichen bewusst nicht.
-4. **Wo gilt es?** Empfehlung: **überall, wo getippt wird** (Üben, Test, Bonus, Vorschau), die Regel von B-597/5.
-   Kosten: keine weiteren.
-5. **Code oder Datenpflege?** Empfehlung: **Code**, wie B-462/1 – die 53 Einträge bleiben wie gedruckt. Kosten:
-   Heuristik statt Daten.
-6. **KI-Creator.** Empfehlung: **ja, eine Regel**: Antworten neuer Übungen sind der Kern eines
-   Wortlisten-Eintrags; in Lückentexten wird nur der Kern ausgespart. Kosten: eine Regel in
-   `backend/Pugling.Agent.Creator/Drafting/DraftRules.cs`/`DraftPrompts.cs`; B-604 will dort Ähnliches.
-7. **Reihenfolge zu B-625.** Empfehlung: **B-626 vor B-625** – B-625 zerlegt in Teile und braucht je Teil den
-   Kern; die Kürzel-Liste entsteht hier und wird dort wiederverwendet. Kosten: B-625 wartet auf B-624 **und**
-   B-626.
+Alle in der Grill-Runde vom 2026-11-17 entschieden – siehe Entscheidungen.
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~**Was ist Beiwerk?**~~ → Entscheidung 1 (nur Platzhalter neu).
+2. ~~**Wie zeigen die Kästchen das Beiwerk?**~~ → Entscheidung 2 (abweichend vom Entwurf: auch Klammerteile als
+   fester Text).
+3. ~~**Schrägstrich ohne Leerzeichen.**~~ → Entscheidung 3 (abweichend vom Entwurf: beide Seiten verlangt).
+4. ~~**Wo gilt es?**~~ → Entscheidung 4.
+5. ~~**Code oder Datenpflege?**~~ → Entscheidung 5.
+6. ~~**KI-Creator.**~~ → Entscheidung 6.
+7. ~~**Reihenfolge zu B-625.**~~ → Entscheidung 7.
 
-1. „marcher sur“ und „marcher sur qc“ sind beide richtig für „marcher sur qc“; „point out“, „point sth. out“
-   und „to point sth. out to sb.“ für „(to) point sth. out (to sb.)“.
-2. Die Kästchen zu „(to) point sth. out (to sb.)“ zeigen „point“ und „out“ als Kästchen, „sth.“ als festen Text,
-   keine Klammerteile.
-3. „turn left“ und „turn right“ sind richtig für „(to) turn left/right“.
+## Entscheidungen
+
+Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
+
+1. **Beiwerk sind die Platzhalter** sth., sb., qn, qc, jdn., jdm., etw. (mit oder ohne Punkt); sie dürfen fehlen
+   **oder** stehen. Klammerteile und „...“ dürfen schon heute fehlen (`AnswerVariants.cs:37`, `:91`–`:108`).
+   Ein „to“ ohne Klammern und Beispiel-Ergänzungen sind **kein** Beiwerk. *Kosten:* eine Platzhalter-Liste im
+   Code (dieselbe wie die Kürzel aus B-625/6), die mit jedem Lehrwerk wachsen kann.
+2. **Die Kästchen zeigen den ganzen Eintrag; getippt wird nur der Kern.** Platzhalter und Klammerteile stehen als
+   fester Text in der Reihe: „(to) \_\_\_\_\_ sth. \_\_\_ (to sb.)“. Begründung: Das Kind sieht den Eintrag wie im
+   Buch, „(to sb.)“ zeigt den Gebrauch. *Kosten:* längere Reihe; die Oberfläche muss fest und tippbar deutlich
+   unterscheiden (Frontend-Review).
+3. **Ein Schrägstrich ohne Leerzeichen trennt zwei Formen, die beide verlangt werden** – je ein Feld nach
+   [B-625](B-625-ein-eingabefeld-je-bedeutung.md) („turn left“, „turn right“). Er **verbindet je ein Wort** links
+   und rechts („left/right“, „up/down“); in Klammern bleibt er eine Wahl („stay (at/with)“). Begründung: Wer nur
+   „turn up“ kann, kann die Wendung nicht. *Kosten:* Ein Eintrag, dessen Seiten mehr als ein Wort haben
+   („towards the station/Mr Bell“), lässt sich so nicht zerlegen – siehe Entscheidung 5; gebaut wird die Trennung
+   in B-625.
+4. **Überall, wo getippt wird:** Üben, Abschlusstest, Bonus-Training, Vorschau (Regel von B-597/5).
+   *Kosten:* keine weiteren.
+5. **Gelöst im Code; die Einträge bleiben wie gedruckt.** **Ausnahme:** „towards the station/Mr Bell“ wird im
+   Vokabelspeicher von Hand berichtigt (über die API, nicht per Skript); beim Bauen wird geprüft, ob weitere
+   Einträge einen Schrägstrich zwischen mehrwortigen Seiten tragen. *Kosten:* eine Datenänderung an der echten
+   DB, Heuristik statt Daten für den Rest.
+6. **Der KI-Creator bekommt eine Regel:** Neue Übungen fragen nur den Kern eines Wortlisten-Eintrags ab, nie
+   Platzhalter; in Lückentexten wird nur der Kern ausgespart. *Kosten:* eine Regel in
+   `backend/Pugling.Agent.Creator/Drafting/DraftRules.cs`/`DraftPrompts.cs`, abzustimmen mit
+   [B-604](B-604-sprachuebungen-fragen-nur-sprache.md).
+7. **Reihenfolge B-624 → B-626 → B-625.** B-626 liefert Kern und Platzhalter-Liste, B-625 die Zerlegung in Felder
+   (auch am Schrägstrich ohne Leerzeichen) und nutzt den Ausgang *halb* aus B-624. *Kosten:* B-625 wartet auf zwei
+   Stories.
+
+## Akzeptanzkriterien
+
+1. „marcher sur“ und „marcher sur qc“ sind beide richtig für „marcher sur qc“; „point out“, „point sth. out“ und
+   „to point sth. out to sb.“ für „(to) point sth. out (to sb.)“.
+2. Die Kästchen zu „(to) point sth. out (to sb.)“ zeigen „point“ und „out“ als Kästchen, „(to)“, „sth.“ und
+   „(to sb.)“ als festen Text.
+3. „(to) be home to sth.“ verlangt „be home to“ – das „to“ ohne Klammern bleibt Pflicht.
 4. Ein Eintrag ohne Beiwerk verhält sich wie heute.
-5. Üben, Test, Bonus und Vorschau werten gleich.
-6. Der KI-Creator erzeugt keine Antwort mit Platzhaltern (Briefing-/Prompt-Test).
+5. Üben, Abschlusstest, Bonus-Training und Vorschau werten gleich (Integrationstest je Pfad).
+6. Der KI-Creator erzeugt keine Antwort mit Platzhaltern und spart in Lückentexten nur den Kern aus
+   (Prompt-Test).
+7. „towards the station/Mr Bell“ ist im Vokabelspeicher berichtigt; die Liste weiterer Einträge mit
+   mehrwortigen Schrägstrich-Seiten ist geprüft und im Verlauf vermerkt.
+
+Die Zerlegung „turn left/right“ → zwei Felder ist ein Akzeptanzkriterium von B-625, nicht von hier.
 
 ## Verlauf
 
@@ -100,3 +126,5 @@ Kästchen-Maske gar nicht. Der KI-Creator kennt die Regel ebenfalls nicht.
 - **2026-11-17** — ausformuliert: Ursache sind Platzhalter (sth., qc …), die der Vergleich nicht verzeiht und
   die Kästchen-Maske mitzählt; an der DB-Kopie 53 von 265 Einträgen betroffen, Lücken nicht; sieben offene
   Punkte mit Empfehlung.
+- **2026-11-17** — gegrillt mit dem Vater: sieben Entscheidungen, alle nach Empfehlung; Schrägstrich ohne
+  Leerzeichen trennt zwei verlangte Formen (gebaut in B-625), Reihenfolge B-624 → B-626 → B-625.

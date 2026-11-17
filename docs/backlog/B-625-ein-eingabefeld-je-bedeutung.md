@@ -98,6 +98,14 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
 7. **Gelöst im Code, nicht im Speicher.** Die Einträge bleiben, wie das Buch sie druckt. *Kosten:* Die Zerlegung
    bleibt eine Heuristik; was sie als Teil erkennt, steht nirgends in den Daten.
 
+**Nachtrag aus [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md) (Grill-Runde 2026-11-17):**
+
+8. **Auch ein Schrägstrich ohne Leerzeichen trennt Teile** – er verbindet je ein Wort links und rechts:
+   „(to) turn left/right“ ⇒ „turn left“, „turn right“; „(to) turn sth. up/down“ ⇒ „turn sth. up“,
+   „turn sth. down“. In Klammern bleibt er eine Wahl („stay (at/with)“), zwischen zwei Platzhaltern („qn/qc“) ist
+   er Beiwerk (B-626/1). Je Teil gilt der Kern aus B-626 (Platzhalter dürfen fehlen). Begründung und Kosten:
+   B-626/3. **Bauen erst nach B-626**, das Kern und Platzhalter-Liste liefert (B-626/7).
+
 ## Akzeptanzkriterien
 
 1. Eine Karte zu „quel / quelle / quels / quelles“ zeigt auf der Kästchenstufe vier Kästchenreihen, je eine
@@ -109,6 +117,8 @@ Grill-Runde mit dem Vater, 2026-11-17. Alle nach Empfehlung.
 5. Ein einteiliger Eintrag verhält sich wie heute (ein Feld, eine Maske).
 6. Üben, Abschlusstest, Bonus-Training und Vorschau zerlegen gleich (Integrationstest je Pfad).
 7. Das Blatt zeigt je Feld, ob es stimmt.
+8. (Nachtrag B-626/3) „(to) turn left/right“ zeigt zwei Felder; „turn left“ und „turn right“ ⇒ richtig, nur
+   „turn left“ ⇒ halb.
 
 ## Schätzung
 
@@ -118,8 +128,10 @@ Sohn-App alle drei Spielwege über **eine** Komponente fährt (`frontend/src/soh
 `SohnPractice.tsx`, `SohnTest.tsx`, `SohnBonus.tsx`) und die Vorschau ihr Muster nur nachzieht
 (`frontend/src/vater/ExercisePreviewModal.tsx:253`–`:257`).
 
-**Hängt an [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md)** (Ausgang *halb*, Entscheidung 3): erst bauen,
-wenn B-624 abgenommen ist.
+**Hängt an [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md)** (Ausgang *halb*, Entscheidung 3) **und an
+[B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md)** (Kern und Platzhalter, Nachtrag 8): erst bauen, wenn
+beide abgenommen sind. Der Nachtrag 8 (Trenner `/` ohne Leerzeichen) ändert die Größe nicht: ein Trenner mehr in
+derselben Zerlegung.
 
 - **`migration: nein`** — die gegebenen Teile werden für Verlauf und Historie wie bisher als **ein** Text
   gespeichert (`GivenAnswer` in `backend/Pugling.Api/Models/StudyPlanEntities.cs:211` und
@@ -184,3 +196,5 @@ wenn B-624 abgenommen ist.
   zählt halb wie in B-624, B-625 hängt damit an B-624.
 - **2026-11-17** — geschätzt: L, beides, keine Migration, kein Vertragsbruch (nur additive Felder);
   hängt an B-624.
+- **2026-11-17** — Nachtrag aus B-626/3: Schrägstrich ohne Leerzeichen trennt Teile (Entscheidung 8, AK8);
+  hängt jetzt an B-624 und B-626. Größe unverändert L.
