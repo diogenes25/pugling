@@ -72,8 +72,10 @@ Jeder Punkt für sich wäre M; zusammen und mit Betriebsfolgen sind sie L.
 
 **Risiken**
 
-1. **SSO sperrt die Anmeldung** mit Benutzername und Passwort (Entscheidung 6). Dann kommt der Weg mit dem
-   QR-Code-Schlüssel dazu (TOTP), und die Story wird neu geschätzt. Deshalb ist Schritt 0 die Probe.
+1. ~~**SSO sperrt die Anmeldung** mit Benutzername und Passwort (Entscheidung 6). Dann kommt der Weg mit dem
+   QR-Code-Schlüssel dazu (TOTP), und die Story wird neu geschätzt. Deshalb ist Schritt 0 die Probe.~~
+   **Ausgeräumt am 2026-11-18** (siehe Verlauf): Die Anmeldeseite bietet SSO **oder** Passwort, und der Login
+   per JSON-RPC ohne Browser klappt.
 2. **Die Schnittstelle ist inoffiziell** und kann sich ändern. Gegenmaßnahme: Das Parsen steckt hinter
    `IWebUntisConnector`, unbekannte Felder werden ignoriert. Eine Formabweichung meldet `school_unreachable`
    bzw. einen eigenen Code statt `500`.
@@ -127,3 +129,8 @@ Jeder Punkt für sich wäre M; zusammen und mit Betriebsfolgen sind sie L.
 - **2026-11-18** — angelegt durch Teilen von B-651 beim Schätzen (Vater: Variante A, drei Stories nach
   Schicht); Entscheidungen 1–8 aus B-651 übernommen, damit auf `gegrillt`.
 - **2026-11-18** — geschätzt: L, backend, Migration ja, Vertragsbruch nein; Probe-Login als Schritt 0.
+- **2026-11-18** — Schritt 0, Probe-Login: Wegwerfskript im Scratchpad, den Zugang hat der Vater im eigenen
+  Terminal eingegeben. JSON-RPC `authenticate` gegen die Schule `altesgymnasium-flensburg` klappt mit dem
+  Elternzugang (`personType` 12, Sitzung erhalten). `homeworks/lessons` liefert danach allein mit dem
+  Sitzungs-Cookie 15 Aufgaben (±30 Tage), mit den gesichteten Feldern und einer einzigen `elementId`.
+  `token/new` gibt ein JWT, `logout` klappt. Entscheidung 6 hält, die Schätzung bleibt L.
