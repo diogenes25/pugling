@@ -38,6 +38,7 @@ export const de = {
       cadenceDaily: "Tagesziel",
       cadenceWeekly: "Wochenziel",
       cadenceNone: "frei · ohne Münzen",
+      cadenceUntilDone: "Nacharbeit · bis erledigt",
       introduced: "{{count}} von {{total}} eingeprägt",
       noSubject: "Ohne Fach",
     },
@@ -171,6 +172,7 @@ export const de = {
       DailyBoxCoins: "Tägliche Belohnungsbox",
       DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
       ExtraTrainingCoins: "Bonus-Training",
+      RemediationBonus: "Nacharbeit geschafft",
     },
     // Bonus-Training: Extra-Übungen zum aktuellen Thema, offen nach der Tagespflicht.
     bonus: {
@@ -403,6 +405,8 @@ export const de = {
       easier: "Mach's mir leichter",
       remediation: "Runde {{round}} · {{done}} von {{total}} erledigt",
       taskDone: "Erledigt ✓",
+      allTasksDone: "Nacharbeit geschafft!",
+      completionBonus: "+{{bonus}} 🪙 Abschlussbonus",
       tempo: "⚡ Tempo",
       endRound: "Runde beenden",
       task: "Aufgabe",

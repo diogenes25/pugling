@@ -120,7 +120,9 @@ Response — `HTTP 201`:
     "typedFromDay": null
   },
   "forgivingDemotion": false,
-  "remediation": false
+  "remediation": false,
+  "completionBonus": 0,
+  "completedOn": null
 }
 ```
 
@@ -314,7 +316,8 @@ Response — `HTTP 200`:
   "misspelled": true,
   "explanation": null,
   "repeatsAtEnd": true,
-  "taskDone": false
+  "taskDone": false,
+  "completionBonus": 0
 }
 ```
 

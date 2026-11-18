@@ -165,7 +165,12 @@ public record CardShownDto(int ItemIndex);
 /// <para>
 /// <see cref="TaskDone"/> (B-635): this answer finished a remediation task - typed freely right, without easing.
 /// </para>
+/// <para>
+/// <see cref="CompletionBonus"/> (B-636): coins booked because this answer finished the last task of a remediation
+/// "daily, until done"; 0 otherwise.
+/// </para>
 /// </summary>
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
     DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
-    string? Explanation = null, bool RepeatsAtEnd = false, bool TaskDone = false);
+    string? Explanation = null, bool RepeatsAtEnd = false, bool TaskDone = false,
+    int CompletionBonus = 0);

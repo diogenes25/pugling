@@ -32295,6 +32295,16 @@
               "boolean"
             ],
             "description": "As in PositionResponse; \u0060null\u0060 = \u0060false\u0060."
+          },
+          "completionBonus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "As in PositionResponse; \u0060null\u0060 = 0. 0 to 1000.",
+            "format": "int32"
           }
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
@@ -39374,10 +39384,11 @@
         "enum": [
           "None",
           "Daily",
-          "Weekly"
+          "Weekly",
+          "UntilDone"
         ],
         "type": "string",
-        "description": "Target cadence of a study plan position: at what interval it must be fulfilled.\n\nAllowed values: None, Daily, Weekly."
+        "description": "Target cadence of a study plan position: at what interval it must be fulfilled.\n\nAllowed values: None, Daily, Weekly, UntilDone."
       },
       "GoalStatus": {
         "enum": [
@@ -40150,6 +40161,16 @@
           "recognitionOnly": {
             "type": "boolean",
             "default": false
+          },
+          "remediation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RemediationTaskReport"
+              }
+            ]
           }
         },
         "description": "Report row for a single content item, including its solution. \u0060Prompt\u0060/\u0060Answer\u0060 are the card as the exercise\u0027s\ndirection asks it. B-597: \u0060TurnedWhenWritten\u0060 marks a card that is asked the other way round wherever the child\nwrites (German shown, the learnt word expected); \u0060RecognitionOnly\u0060 marks the forward card of a word asked both\nways, which is never written - its sibling is."
@@ -42051,10 +42072,11 @@
           "ObjectiveGems",
           "DailyBoxCoins",
           "DailyBoxGems",
-          "ExtraTrainingCoins"
+          "ExtraTrainingCoins",
+          "RemediationBonus"
         ],
         "type": "string",
-        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins."
+        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus."
       },
       "PointsEntryDto": {
         "required": [
@@ -42400,6 +42422,24 @@
             "type": "boolean",
             "description": "Remediation (B-635, \u0022Nacharbeit\u0022): every round plays the tasks not yet done, each starting as free text; the child may\nmake a card easier step by step, and a task is done only when typed freely right. Only for a type with an ease ladder.",
             "default": false
+          },
+          "completionBonus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "One-off coins when the last task of a position \u0022daily, until done\u0022 (GoalCadence.UntilDone) is done\n(B-636); \u00600\u0060 = none.",
+            "format": "int32",
+            "default": 0
+          },
+          "completedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The day the last remediation task was done (B-636); \u0060null\u0060 = still open. A position \u0022daily, until done\u0022 carries\nno duty from the day after.",
+            "format": "date"
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -43862,6 +43902,37 @@
         },
         "description": "The state of a remediation position (B-635): Round counts the learn rounds played on it, this one\nincluded; Done of Total tasks were typed freely right. Rounds repeat until all are."
       },
+      "RemediationTaskReport": {
+        "required": [
+          "solvedByStage"
+        ],
+        "type": "object",
+        "properties": {
+          "cue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The German cue the child translates; \u0060null\u0060 where the gap carries none."
+          },
+          "doneAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The day the task was first typed freely right; \u0060null\u0060 = still open.",
+            "format": "date"
+          },
+          "solvedByStage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageSolveCount"
+            },
+            "description": "How often it was solved right per stage, in the order of the ease ladder (free text first)."
+          }
+        },
+        "description": "One task of a remediation position as the father sees it (B-637): helping costs the child no coins, so this is where\nthe help shows. Set only on a remediation position."
+      },
       "RepeatResponse": {
         "required": [
           "exercises",
@@ -43966,9 +44037,20 @@
             "items": {
               "$ref": "#/components/schemas/ItemReport"
             }
+          },
+          "remediation": {
+            "type": "boolean",
+            "default": false
+          },
+          "completedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         },
-        "description": "Report of a position including headline metrics (introduced/mastered)."
+        "description": "Report of a position including headline metrics (introduced/mastered). \u0060Remediation\u0060/\u0060CompletedOn\u0060 (B-637,\nB-636): whether the position runs as remediation, and the day its last task was done."
       },
       "ReshuffleMediaDto": {
         "type": "object",
@@ -44121,9 +44203,18 @@
           "taskDone": {
             "type": "boolean",
             "default": false
+          },
+          "completionBonus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);\nnull where no atom was hit; null for content that has no explanation.bool ReviewOutcome.RepeatsAtEnd (B-598): a learn card given up or recalled wrong comes back once at the end of this round.bool ReviewOutcome.TaskDone (B-635): this answer finished a remediation task - typed freely right, without easing."
+        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);\nnull where no atom was hit; null for content that has no explanation.bool ReviewOutcome.RepeatsAtEnd (B-598): a learn card given up or recalled wrong comes back once at the end of this round.bool ReviewOutcome.TaskDone (B-635): this answer finished a remediation task - typed freely right, without easing.int ReviewOutcome.CompletionBonus (B-636): coins booked because this answer finished the last task of a remediation\n\u0022daily, until done\u0022; 0 otherwise."
       },
       "RubricCriterion": {
         "required": [
@@ -45012,6 +45103,32 @@
           }
         },
         "description": "A query form that can be switched in test mode (stage value \u002B display label)."
+      },
+      "StageSolveCount": {
+        "required": [
+          "count",
+          "stage"
+        ],
+        "type": "object",
+        "properties": {
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Solutions of a remediation task on one stage (B-637); the stage label comes from the type manifest."
       },
       "StageStep": {
         "required": [
@@ -47350,6 +47467,16 @@
               "boolean"
             ],
             "description": "Remediation (see PositionResponse); \u0060false\u0060 switches it off, the done tasks stay."
+          },
+          "completionBonus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Completion bonus (see PositionResponse); \u00600\u0060 = none. 0 to 1000.",
+            "format": "int32"
           }
         },
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nfour fields have one: bool UpdatePositionDto.ClearTimeSlots, bool UpdatePositionDto.ClearStage, bool UpdatePositionDto.ClearItemCount and\nbool UpdatePositionDto.ClearGoalThreshold. The two list fields \u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 take an\n**empty** list as \u0022back to the method default\u0022 instead (like \u0060TimeSlots\u0060). The other fields cannot be\nemptied: they are mandatory or carry \u0022off\u0022 as a value of their own (0)."

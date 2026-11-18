@@ -29,6 +29,12 @@ export function abschnitte(positions: PositionStatus[]): PfadAbschnitt[] {
   return out;
 }
 
+/**
+ * Eine Pflicht, die jeden Tag fällig ist: das Tagesziel und die Nacharbeit „täglich, bis erledigt“ (B-636) – dieselbe
+ * Auswahl wie `PositionProgressService.IsDailyDuty` am Server.
+ */
+export const istTagespflicht = (cadence: PositionStatus["cadence"]) => cadence === "Daily" || cadence === "UntilDone";
+
 /** Eine freie Position hat keine Pflicht – der Server meldet sie als erfüllt, auch ungespielt (B-467). */
 export const hatPflicht = (pos: PositionStatus) => pos.cadence !== "None";
 export const pflichtErfuellt = (pos: PositionStatus) => hatPflicht(pos) && pos.goalMet;
@@ -40,7 +46,7 @@ export const pflichtOffen = (pos: PositionStatus) => hatPflicht(pos) && !pos.goa
  */
 export function naechstePositionId(positions: PositionStatus[]): number | null {
   const offen = positions.filter(pflichtOffen);
-  return (offen.find((p) => p.cadence === "Daily") ?? offen.find((p) => p.cadence === "Weekly"))?.positionId ?? null;
+  return (offen.find((p) => istTagespflicht(p.cadence)) ?? offen.find((p) => p.cadence === "Weekly"))?.positionId ?? null;
 }
 
 /**

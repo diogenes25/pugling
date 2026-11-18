@@ -1661,6 +1661,12 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ComboThreshold")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateOnly?>("CompletedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CompletionBonus")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -1736,6 +1742,32 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("StudyPlanId", "Order", "Id");
 
                     b.ToTable("PlanPositions");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.PositionCompletionBonus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AwardedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanPositionId")
+                        .IsUnique();
+
+                    b.ToTable("PositionCompletionBonuses");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.PositionGoalPenalty", b =>
@@ -3470,6 +3502,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Exercise");
 
                     b.Navigation("StudyPlan");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.PositionCompletionBonus", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
+                        .WithMany()
+                        .HasForeignKey("PlanPositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlanPosition");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.PositionGoalPenalty", b =>

@@ -12,7 +12,7 @@ vi.mock("./SohnApp", () => ({
 vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
 const refreshWallet = vi.fn();
 
-const { belohnungsZiele, NeuLadenFehler, Pfad, Truhe } = await import("./SohnHome");
+const { belohnungsZiele, cadenceKey, NeuLadenFehler, Pfad, Truhe, zielZaehler } = await import("./SohnHome");
 const { BonusEinstieg } = await import("./SohnBonus");
 const { api, ApiError } = await import("../lib/api");
 type TruhenZiele = import("./SohnHome").TruhenZiele;
@@ -360,6 +360,26 @@ describe("Belohnungen – dieselben Ziele wie der Server", () => {
     expect(belohnungsZiele([position({ cadence: "Weekly", goalMet: true }), position({ positionId: 2, cadence: "None" })]))
       .toEqual({ art: "woche", met: 1, total: 1 });
     expect(belohnungsZiele([position({ cadence: "None" })])).toEqual({ art: "keine", met: 0, total: 0 });
+    // B-636: die Nacharbeit „bis erledigt“ ist eine Tagespflicht wie am Server (IsDailyDuty) – rot, wenn sie nur als
+    // Ziel mit Takt zählt (dann „woche“ und das Wochenziel im Balken).
+    expect(belohnungsZiele([position({ cadence: "UntilDone" }), position({ positionId: 2, cadence: "Weekly", goalMet: true })]))
+      .toEqual({ art: "tag", met: 0, total: 1 });
+  });
+
+  // B-636: rot, wenn die Nacharbeit ohne eigenen Zweig als „frei · ohne Münzen“ auf dem Pfad steht – sie kostet Malus.
+  it("nennt die Nacharbeit „bis erledigt“ beim Namen", () => {
+    expect(cadenceKey("UntilDone")).toBe("home.cadenceUntilDone");
+    expect(cadenceKey("None")).toBe("home.cadenceNone");
+  });
+
+  // B-636: rot, wenn „Ziele heute“ nur Tagesziele zählt – die offene Nacharbeit fehlte dann im Zähler.
+  it("zählt die Nacharbeit „bis erledigt“ zu den Zielen von heute", () => {
+    const { tag, woche } = zielZaehler([
+      position({ positionId: 1, goalMet: true }), position({ positionId: 2, cadence: "UntilDone" }),
+      position({ positionId: 3, cadence: "Weekly" }), position({ positionId: 4, cadence: "None" }),
+    ]);
+    expect(tag).toEqual({ met: 1, total: 2 });
+    expect(woche).toEqual({ met: 0, total: 1 });
   });
 
   // Rot, wenn der Bonus-Einstieg bei einem Plan nur mit Wochenzielen „Erst die Tagesziele“ verlangt.

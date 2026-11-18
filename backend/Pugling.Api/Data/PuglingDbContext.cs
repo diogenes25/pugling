@@ -70,6 +70,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<PositionItemProgress> PositionItemProgress => Set<PositionItemProgress>();
     public DbSet<PositionGoalReward> PositionGoalRewards => Set<PositionGoalReward>();
     public DbSet<PositionGoalPenalty> PositionGoalPenalties => Set<PositionGoalPenalty>();
+    /// <summary>One-off completion bonus of a remediation position "daily, until done" (B-636).</summary>
+    public DbSet<PositionCompletionBonus> PositionCompletionBonuses => Set<PositionCompletionBonus>();
     public DbSet<PracticeSession> PracticeSessions => Set<PracticeSession>();
     public DbSet<ReviewEvent> ReviewEvents => Set<ReviewEvent>();
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
@@ -719,6 +721,15 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         modelBuilder.Entity<PositionGoalPenalty>(e =>
         {
             e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
+            e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Completion bonus of a remediation position (B-636): a position finishes once, so one row per position is the
+        // guarantee against a double booking when two final answers race. Cascade with the position.
+        modelBuilder.Entity<PositionCompletionBonus>(e =>
+        {
+            e.HasIndex(r => r.PlanPositionId).IsUnique();
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });

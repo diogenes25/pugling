@@ -44,6 +44,10 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             .ToDictionary(g => g.Key, g => (Seen: g.Count(), Correct: g.Count(x => x.WasCorrect)));
 
         var maxBox = pos.MaxBox;
+        // B-637: the stages in the order the child steps down them; a stage off the ladder (none today) sorts last.
+        var ladder = pos.Remediation ? play.TypeOf(pos.Exercise)?.EaseLadder ?? [] : [];
+        // Only tasks of the pool are remediated; an item beyond a position's item count would show as open forever.
+        var pool = play.PoolSize(pos, items.Count);
         var rows = items.Select(item =>
         {
             progress.TryGetValue(item.Index, out var ip);
@@ -52,10 +56,19 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             var box = ip?.Box ?? 1;
             return new ItemReport(item.Index, item.Prompt, item.Answer, introduced,
                 box, introduced ? MasteryOf(box, maxBox) : 0, ip?.ReviewCount ?? 0,
-                ip?.DueOn, ip?.LastReviewedAt, tests.Seen, tests.Correct, item.Written is not null, item.RecognitionOnly);
+                ip?.DueOn, ip?.LastReviewedAt, tests.Seen, tests.Correct, item.Written is not null, item.RecognitionOnly,
+                pos.Remediation && item.Index < pool ? RemediationOf(item, ip, ladder) : null);
         }).ToList();
 
         return new Report(pos.Id, pos.ExerciseId, pos.Exercise.Title, pos.Exercise.Type.ToString(),
-            maxBox, rows.Count, rows.Count(r => r.Introduced), rows.Count(r => r.Box >= maxBox), rows);
+            maxBox, rows.Count, rows.Count(r => r.Introduced), rows.Count(r => r.Box >= maxBox), rows,
+            pos.Remediation, pos.CompletedOn);
     }
+
+    // The cue is the gap's German prompt, which the content item carries as its hint (ClozeGaps.WithPrompt).
+    private static RemediationTaskReport RemediationOf(ContentItem item, PositionItemProgress? ip, IReadOnlyList<int> ladder) =>
+        new(item.Hint, ip?.RemediationDoneAt,
+            [.. (ip?.SolvedByStage ?? [])
+                .OrderBy(kv => ladder.Contains(kv.Key) ? ladder.TakeWhile(s => s != kv.Key).Count() : int.MaxValue).ThenBy(kv => kv.Key)
+                .Select(kv => new StageSolveCount(kv.Key, kv.Value))]);
 }

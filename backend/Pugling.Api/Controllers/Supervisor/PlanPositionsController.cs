@@ -23,7 +23,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types,
-    TimeProvider time) : ControllerBase
+    TimeProvider time, PositionProgressService progress) : ControllerBase
 {
     /// <summary>
     /// Is the exercise <b>not yet filled</b>? Applies only to types that carry their content as an item table
@@ -44,7 +44,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
             p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
             types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
-            p.ForgivingDemotion, p.Remediation);
+            p.ForgivingDemotion, p.Remediation, p.CompletionBonus, p.CompletedOn);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -133,6 +133,17 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             ? "Remediation needs an exercise type that can be made easier step by step (currently: cloze)."
             : null;
 
+    // B-636: "daily, until done" ends with the last remediation task - on any other position nothing would ever end it, and
+    // the duty would cost its penalty forever. The bonus range keeps a typo from paying a fortune.
+    private const int MaxCompletionBonus = 1000;
+
+    private static string? UntilDoneProblem(GoalCadence cadence, bool remediation, int? bonus) =>
+        cadence == GoalCadence.UntilDone && !remediation
+            ? "The cadence \"daily, until done\" needs remediation switched on; nothing else can ever finish it."
+            : bonus is < 0 or > MaxCompletionBonus
+                ? $"The completion bonus must be between 0 and {MaxCompletionBonus} (got {bonus})."
+                : null;
+
     // Why an invalid stage matters (it reveals the answer instead of breaking) and why the check is shared with
     // the creator's `DefaultStage`: see StageValidation. The schedule is checked step by step - one bad day would
     // be enough to hand out the solutions on that day.
@@ -188,6 +199,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
         if (dto.Remediation == true && RemediationProblem(createType) is { } remediationProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
+        if (UntilDoneProblem(dto.Cadence ?? GoalCadence.None, dto.Remediation ?? false, dto.CompletionBonus) is { } untilDoneProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, untilDoneProblem);
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
@@ -214,6 +227,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // How hard a miss resets is a statement about this obligation, not the material: no exercise default.
             ForgivingDemotion = dto.ForgivingDemotion ?? false,
             Remediation = dto.Remediation ?? false,
+            CompletionBonus = dto.CompletionBonus ?? 0,
             // Empty means "method default" here as in the PATCH (B-547) - no third state next to "default" and "own".
             BoxIntervalDays = dto.BoxIntervalDays is { Count: > 0 } intervals ? intervals : null,
             StageSchedule = dto.StageSchedule is { Count: > 0 } schedule ? schedule : null,
@@ -315,6 +329,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // Judged only when switched on now: a position keeps its setting through every other edit.
         if (dto.Remediation == true && !pos.Remediation && RemediationProblem(types.ByKey(exercise.Type)) is { } remediationProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
+        // Judged on the state after the patch: switching remediation off must take "until done" with it.
+        if (UntilDoneProblem(dto.Cadence ?? pos.Cadence, dto.Remediation ?? pos.Remediation, dto.CompletionBonus) is { } untilDoneProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, untilDoneProblem);
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? pos.NewItemsPerDay, dto.UseLeitner ?? pos.UseLeitner)
                 ?? (dto.NewItemsPerDay is { } dose && dose != pos.NewItemsPerDay ? DoseOnSetProblem(exercise, dose) : null))
             is { } doseProblem)
@@ -336,6 +353,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.MaxBox is > 0) pos.MaxBox = dto.MaxBox.Value;
         if (dto.ForgivingDemotion is not null) pos.ForgivingDemotion = dto.ForgivingDemotion.Value;
         if (dto.Remediation is not null) pos.Remediation = dto.Remediation.Value;
+        if (dto.CompletionBonus is not null) pos.CompletionBonus = dto.CompletionBonus.Value;
         // An empty list means "back to the method default" (B-547): no form sends these two, and storing an empty
         // schedule would be a third state next to "default" and "own" that play treats like the default anyway.
         if (dto.BoxIntervalDays is not null) pos.BoxIntervalDays = dto.BoxIntervalDays.Count > 0 ? dto.BoxIntervalDays : null;
@@ -353,6 +371,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.TimeSlots is not null) pos.TimeSlots = dto.TimeSlots.Count > 0 ? dto.TimeSlots : null;
         if (dto.ClearTimeSlots) pos.TimeSlots = null;
         if (dto.NewItemsPerDay is not null) pos.NewItemsPerDay = dto.NewItemsPerDay.Value;
+        // B-636: a remediation already finished when it becomes "until done" ends at once, or it never could.
+        await progress.StampFinishedRemediationAsync(pos, ct);
 
         await db.SaveChangesAsync(ct);
         return Map(pos);

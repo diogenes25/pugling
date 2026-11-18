@@ -17,7 +17,7 @@ import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
 import { BonusEinstieg } from "./SohnBonus";
 import {
-  abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, zielAnteil,
+  abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, zielAnteil,
   type Frist, type Spielweg,
 } from "./pfad";
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
@@ -27,8 +27,9 @@ const TYPE_ICON: Record<string, string> = {
   List: "📋", Birkenbihl: "🎧", Reading: "📖", Grammar: "🔤", Translation: "🌍", Essay: "✍️", Listening: "🎧",
 };
 const typeIcon = (type: string) => TYPE_ICON[type] ?? "🎯";
-const cadenceKey = (c: PositionStatus["cadence"]) =>
-  c === "Daily" ? "home.cadenceDaily" : c === "Weekly" ? "home.cadenceWeekly" : "home.cadenceNone";
+export const cadenceKey = (c: PositionStatus["cadence"]) =>
+  c === "Daily" ? "home.cadenceDaily" : c === "Weekly" ? "home.cadenceWeekly"
+    : c === "UntilDone" ? "home.cadenceUntilDone" : "home.cadenceNone";
 
 /** Seitlicher Versatz der Knoten: eine Schlangenlinie, die sich alle acht Knoten wiederholt. */
 const SCHLANGE = [0, -56, -84, -56, 0, 56, 84, 56];
@@ -70,13 +71,7 @@ export function SohnHome() {
   }
 
   const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
-  // B-535: Tages- und Wochenziele getrennt zählen. Gemischt stünde „Ziele heute 1 / 2“ neben einem offenen
-  // Bonus-Training, obwohl alles von heute geschafft ist – die Woche hat ihr eigenes Ende.
-  const zaehle = (cadence: string) => {
-    const ziele = today.positions.filter((p) => p.cadence === cadence);
-    return { met: ziele.filter((p) => p.goalMet).length, total: ziele.length };
-  };
-  const tag = zaehle("Daily"), woche = zaehle("Weekly");
+  const { tag, woche } = zielZaehler(today.positions);
   // Der Balken zählt dieselben Ziele wie Truhe und Bonus (Review B-535): die Tagesziele, ohne sie alle.
   const belohnung = belohnungsZiele(today.positions);
   const goalPct = belohnung.total > 0 ? Math.round((belohnung.met / belohnung.total) * 100) : 0;
@@ -342,6 +337,19 @@ function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt:
   );
 }
 
+/**
+ * „Ziele heute“ und „Ziele diese Woche“ (B-535): getrennt gezählt – gemischt stünde „1 / 2“ neben einem offenen
+ * Bonus-Training, obwohl alles von heute geschafft ist. Die Nacharbeit „bis erledigt“ ist jeden Tag fällig und zählt
+ * darum zu heute (B-636).
+ */
+export function zielZaehler(positions: readonly PositionStatus[]) {
+  const zaehle = (gilt: (p: PositionStatus) => boolean) => {
+    const ziele = positions.filter(gilt);
+    return { met: ziele.filter((p) => p.goalMet).length, total: ziele.length };
+  };
+  return { tag: zaehle((p) => istTagespflicht(p.cadence)), woche: zaehle((p) => p.cadence === "Weekly") };
+}
+
 /** Welche Ziele die Truhe freischalten: die Tagesziele, ohne sie alle (Wochen-)Ziele, ohne Pflicht gar keine (B-535). */
 export type TruhenZiele = "tag" | "woche" | "keine";
 
@@ -352,7 +360,7 @@ export type TruhenZiele = "tag" | "woche" | "keine";
  */
 export function belohnungsZiele(positions: readonly PositionStatus[]): { art: TruhenZiele; met: number; total: number } {
   const mitTakt = positions.filter((p) => p.cadence !== "None");
-  const tag = mitTakt.filter((p) => p.cadence === "Daily");
+  const tag = mitTakt.filter((p) => istTagespflicht(p.cadence));
   const ziele = tag.length > 0 ? tag : mitTakt;
   return {
     art: tag.length > 0 ? "tag" : mitTakt.length > 0 ? "woche" : "keine",

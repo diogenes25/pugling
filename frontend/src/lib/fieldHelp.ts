@@ -22,7 +22,9 @@ export const FIELD_HELP = {
     title: "Ziel-Rhythmus",
     text: "Wie oft diese Übung Pflicht ist. „Tagesziel“ muss jeden Tag erledigt werden, „Wochenziel“ "
       + "einmal pro Woche (Mo–So). „frei“ heißt: darf geübt werden, muss aber nicht – dann bringt die Position "
-      + "nichts: weder Ziel-Punkte noch Übungspunkte, Combo oder Tempo-Bonus, und es gibt keinen Münz-Malus.",
+      + "nichts: weder Ziel-Punkte noch Übungspunkte, Combo oder Tempo-Bonus, und es gibt keinen Münz-Malus. "
+      + "„täglich, bis erledigt“ gibt es nur mit Nacharbeit: jeden Tag eine ganze Runde, bis alle Aufgaben frei getippt "
+      + "sind – dann endet die Pflicht von selbst, ohne weiteren Malus.",
   },
   goalThreshold: {
     title: "Bestehen ab %",
@@ -121,6 +123,11 @@ export const FIELD_HELP = {
       + "beginnt als Freitext; hängt das Kind fest, schaltet es selbst leichter – Kästchen, Buchstabensalat, Auswahl. "
       + "Das kostet nichts, aber erledigt ist eine Aufgabe erst, wenn sie frei getippt richtig war. Offene Aufgaben "
       + "kommen in der nächsten Runde wieder.",
+  },
+  completionBonus: {
+    title: "Abschlussbonus",
+    text: "Münzen, die es genau einmal gibt, wenn die letzte Aufgabe der Nacharbeit frei getippt richtig war. Danach "
+      + "verschwindet die Position aus der Tagesmission. 0 = kein Bonus.",
   },
   forgivingDemotion: {
     title: "Ausrutscher verzeihen",

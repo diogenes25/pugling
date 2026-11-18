@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PositionStatus } from "../lib/types";
-import { abschnitte, frist, hauptweg, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, zielAnteil } from "./pfad";
+import { abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, zielAnteil } from "./pfad";
 
 /*
  * B-525 – die Regeln des Lernpfads. Je Fall steht dabei, welche Änderung ihn rot macht.
@@ -144,5 +144,15 @@ describe("„Los“", () => {
     // Rot, wenn ohne Leitner nur der Test bliebe – das Kind würde Wörter gefragt, die es nie gesehen hat (B-454).
     const p = pos({ useLeitner: false, dueCount: 0, introducedCount: 0, poolSize: 8 });
     expect([hauptweg(p), nebenweg(p)]).toEqual(["practice", "test"]);
+  });
+});
+
+describe("Nacharbeit bis erledigt (B-636)", () => {
+  // Rot, wenn die Nacharbeit wie ein Wochenziel behandelt wird: dann wäre das offene Wochenziel davor der nächste Knoten.
+  it("ist eine Tagespflicht und wird vor dem Wochenziel hervorgehoben", () => {
+    expect(istTagespflicht("UntilDone")).toBe(true);
+    expect(istTagespflicht("Weekly")).toBe(false);
+    const liste = [pos({ positionId: 1, cadence: "Weekly" }), pos({ positionId: 2, cadence: "UntilDone" })];
+    expect(naechstePositionId(liste)).toBe(2);
   });
 });

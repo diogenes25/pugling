@@ -139,13 +139,21 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// Remediation (B-635, "Nacharbeit"): every round plays the tasks not yet done, each starting as free text; the child may
 /// make a card easier step by step, and a task is done only when typed freely right. Only for a type with an ease ladder.
 /// </param>
+/// <param name="CompletionBonus">
+/// One-off coins when the last task of a position "daily, until done" (<see cref="GoalCadence.UntilDone"/>) is done
+/// (B-636); <c>0</c> = none.
+/// </param>
+/// <param name="CompletedOn">
+/// The day the last remediation task was done (B-636); <c>null</c> = still open. A position "daily, until done" carries
+/// no duty from the day after.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
     List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null,
-    bool ForgivingDemotion = false, bool Remediation = false);
+    bool ForgivingDemotion = false, bool Remediation = false, int CompletionBonus = 0, DateOnly? CompletedOn = null);
 
 /// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
 public enum LearningCheckKind
@@ -209,12 +217,13 @@ public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 /// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>null</c> = 0 (no cap). 0 to 200.</param>
 /// <param name="ForgivingDemotion">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c> (hard reset). Not inherited from the exercise.</param>
 /// <param name="Remediation">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c>.</param>
+/// <param name="CompletionBonus">As in <see cref="PositionResponse"/>; <c>null</c> = 0. 0 to 1000.</param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null);
+    int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null, int? CompletionBonus = null);
 
 /// <summary>
 /// The weak words of the plan's child to review daily (B-584): ids of vocabulary store entries the child already has
@@ -282,10 +291,12 @@ public record CreateReviewFromWordsDto(List<int> VocabularyIds);
 /// </param>
 /// <param name="ForgivingDemotion">Forgiving demotion (see <see cref="PositionResponse"/>); <c>false</c> switches it off.</param>
 /// <param name="Remediation">Remediation (see <see cref="PositionResponse"/>); <c>false</c> switches it off, the done tasks stay.</param>
+/// <param name="CompletionBonus">Completion bonus (see <see cref="PositionResponse"/>); <c>0</c> = none. 0 to 1000.</param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
     bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false,
-    bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null, bool? Remediation = null);
+    bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null, bool? Remediation = null,
+    int? CompletionBonus = null);

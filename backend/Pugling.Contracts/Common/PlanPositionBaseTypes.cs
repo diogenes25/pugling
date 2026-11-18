@@ -9,6 +9,11 @@ public enum GoalCadence
     Daily = 1,
     /// <summary>Must be fulfilled once per week (weekly goal).</summary>
     Weekly = 2,
+    /// <summary>
+    /// Daily until done (B-636): a remediation position must be played through once a day until every task is done;
+    /// from the day after that it carries no duty any more. Only valid on a remediation position.
+    /// </summary>
+    UntilDone = 3,
 }
 
 /// <summary>Selection scope of a position's content from the exercise pool.</summary>

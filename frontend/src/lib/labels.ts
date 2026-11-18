@@ -22,6 +22,7 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   DailyBoxCoins: "Tägliche Belohnungsbox",
   DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
   ExtraTrainingCoins: "Bonus-Training",
+  RemediationBonus: "Nacharbeit geschafft",
 };
 export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
 

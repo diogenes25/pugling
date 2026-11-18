@@ -46,6 +46,18 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private static DateOnly PeriodStart(GoalCadence cadence, DateOnly day) =>
         cadence == GoalCadence.Weekly ? WeekMonday(day) : day;
 
+    /// <summary>
+    /// Does the position carry a duty on <paramref name="day"/>? The one rule behind every "is this an obligation" branch
+    /// (B-636): a free position never does, and a position "daily, until done" stops after the day its last task was done
+    /// - no penalty, no reward and no place in the day's mission from then on, also for days settled only later.
+    /// </summary>
+    public static bool HasDutyOn(PlanPosition pos, DateOnly day) =>
+        pos.Cadence != GoalCadence.None
+        && !(pos.Cadence == GoalCadence.UntilDone && pos.CompletedOn is { } end && day > end);
+
+    /// <summary>A duty due every day: daily goals and the daily remediation until it is done (B-636).</summary>
+    public static bool IsDailyDuty(GoalCadence cadence) => cadence is GoalCadence.Daily or GoalCadence.UntilDone;
+
     // ---- Done rule per check mode ---- ----
 
     /// <summary>Check mode of this position's exercise (default <see cref="ExerciseCheckMode.None"/>).</summary>
@@ -143,6 +155,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     public async Task<bool> IsGoalMetAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
+        if (pos.Cadence == GoalCadence.UntilDone) return await RemediationDayMetAsync(pos, day, ct);
         var (from, to) = PeriodRange(pos.Cadence, day);
         if (CheckModeOf(pos) == ExerciseCheckMode.None || IsDisplayOnlyDay(pos, plan, day))
             return await PlayedRoundMeetsGoalAsync(pos, from, to, ct);
@@ -150,6 +163,21 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return await db.TestAttempts.AnyAsync(t =>
             t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
             && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
+    }
+
+    /// <summary>
+    /// The day's duty of a remediation "daily, until done" (B-636, decision 5 of B-632): one round played through all the
+    /// tasks it brought meets it, even with tasks still open - the threshold and the test do not apply, the round is the
+    /// duty. From the day the last task was done on, the duty is met by definition.
+    /// </summary>
+    private async Task<bool> RemediationDayMetAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
+    {
+        if (pos.CompletedOn is { } end && day >= end) return true;
+        var rounds = await db.PracticeSessions.AsNoTracking()
+            .Where(s => s.PlanPositionId == pos.Id && s.Day == day && s.Mode == PlayMode.Lern)
+            .Select(s => new { s.Cursor, s.Order })
+            .ToListAsync(ct);
+        return rounds.Any(r => r.Order.Count > 0 && r.Cursor >= r.Order.Count);
     }
 
     /// <summary>
@@ -194,13 +222,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     private async Task<double> OpenGoalProgressAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct)
     {
-        if (CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
+        var untilDone = pos.Cadence == GoalCadence.UntilDone;
+        if (!untilDone && CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
         var (from, to) = PeriodRange(pos.Cadence, day);
         var rounds = await db.PracticeSessions.AsNoTracking()
             .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
             .Select(s => new { s.Cursor, s.Order })
             .ToListAsync(ct);
-        var percent = Math.Clamp(pos.GoalThreshold ?? DefaultPassPercent, 1, 100);
+        // A remediation round is measured against its whole order (B-636), like RemediationDayMetAsync.
+        var percent = untilDone ? 100 : Math.Clamp(pos.GoalThreshold ?? DefaultPassPercent, 1, 100);
         var best = rounds.Where(r => r.Order.Count > 0)
             .Select(r => r.Cursor / Math.Ceiling(r.Order.Count * percent / 100.0))
             .DefaultIfEmpty(0).Max();
@@ -246,7 +276,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 .ToListAsync(ct))
             .ToLookup(p => p.PlanPositionId, p => (p.ItemIndex, p.Imprinted));
 
-        foreach (var pos in positions)
+        // A remediation that ended before this day has left the mission (B-636); on its last day it still shows as met.
+        foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.UntilDone || HasDutyOn(p, day)))
         {
             var type = pos.Exercise is { } ex ? registry.ByKey(ex.Type) : null;
             var manifest = type?.Manifest;
@@ -296,7 +327,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public static IReadOnlyList<PositionStatus> RewardObligations(IReadOnlyList<PositionStatus> statuses)
     {
         var obligations = statuses.Where(s => s.Cadence != GoalCadence.None).ToList();
-        var daily = obligations.Where(s => s.Cadence == GoalCadence.Daily).ToList();
+        var daily = obligations.Where(s => IsDailyDuty(s.Cadence)).ToList();
         return daily.Count > 0 ? daily : obligations;
     }
 
@@ -374,7 +405,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private async Task<PlanDutyState> DutyStateAsync(StudyPlan plan, IReadOnlyList<PlanPosition> positions, DateOnly day,
         CancellationToken ct)
     {
-        var obligations = positions.Where(p => p.Cadence != GoalCadence.None).ToList();
+        var obligations = positions.Where(p => HasDutyOn(p, day)).ToList();
         if (obligations.Count == 0) return new PlanDutyState(plan.Active, false, false);
         foreach (var pos in obligations)
             if (!await IsGoalMetAsync(pos, plan, day, ct))
@@ -453,7 +484,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var now = time.GetUtcNow().UtcDateTime;
-        foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.None && p.PointsGoalMet > 0))
+        foreach (var pos in positions.Where(p => HasDutyOn(p, day) && p.PointsGoalMet > 0))
         {
             if (!await IsGoalMetAsync(pos, plan, day, ct)) continue;
             var periodStart = PeriodStart(pos.Cadence, day);
@@ -496,6 +527,82 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             db.ChangeTracker.Clear();
         }
         return await ComputeDayAsync(plan, day, ct);
+    }
+
+    /// <summary>
+    /// Finishes a remediation once its last task is done (B-636): stamps <see cref="PlanPosition.CompletedOn"/> and, on a
+    /// position "daily, until done", books the <see cref="PlanPosition.CompletionBonus"/> exactly once. Called after the
+    /// answer that marked a task done was saved, so the count reads the task just finished. The unique index on
+    /// <see cref="PositionCompletionBonus"/> is the guarantee for the bonus; the null check on <c>CompletedOn</c> is only the
+    /// fast path. Without a bonus two racing answers both stamp the same day, which is harmless. The end is final: tasks
+    /// added to the pool later do not reopen the duty (the father assigns a new position for them).
+    /// </summary>
+    /// <returns>The coins booked now (0 = not finished yet, already finished, or no bonus).</returns>
+    public async Task<int> CompleteRemediationIfDoneAsync(PlanPosition pos, StudyPlan plan, DateOnly day,
+        CancellationToken ct)
+    {
+        if (!pos.Remediation || pos.CompletedOn is not null || await LastTaskDoneOnAsync(pos, ct) is null) return 0;
+
+        pos.CompletedOn = day;
+        var bonus = pos.Cadence == GoalCadence.UntilDone ? pos.CompletionBonus : 0;
+        if (bonus > 0)
+        {
+            var now = time.GetUtcNow().UtcDateTime;
+            db.PositionCompletionBonuses.Add(new PositionCompletionBonus
+            {
+                PlanPositionId = pos.Id,
+                Day = day,
+                Points = bonus,
+                AwardedAt = now,
+            });
+            db.ChildPointsEntries.Add(new ChildPointsEntry
+            {
+                ChildId = plan.ChildId,
+                Kind = PointKind.RemediationBonus,
+                Amount = bonus,
+                Reason = $"[{plan.Title} · {pos.Exercise?.Title}] Nacharbeit geschafft",
+                CreatedAt = now,
+            });
+        }
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Two final answers raced and the loser hit the unique index: the bonus is booked once already.
+            db.ChangeTracker.Clear();
+            return 0;
+        }
+        return bonus;
+    }
+
+    /// <summary>
+    /// The day the last remediation task was done, or <c>null</c> while one is open (or the pool is empty) - the one
+    /// count behind the finish of an answer and the stamp of a switch.
+    /// </summary>
+    private async Task<DateOnly?> LastTaskDoneOnAsync(PlanPosition pos, CancellationToken ct)
+    {
+        var total = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
+        if (total == 0) return null;
+        var doneDays = await db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPositionId == pos.Id && p.RemediationDoneAt != null && p.ItemIndex < total)
+            .Select(p => p.RemediationDoneAt!.Value)
+            .ToListAsync(ct);
+        return doneDays.Count < total ? null : doneDays.Max();
+    }
+
+    /// <summary>
+    /// Stamps the end of a remediation "daily, until done" whose tasks are all done without an answer having finished it
+    /// (B-636): done before the switch to "until done", or the pool shrank past the last open task. No answer is left to
+    /// finish it, so without the stamp the duty would charge its penalty forever. No bonus - neither the father's switch nor
+    /// a shrunk pool is the child's achievement. Does not save; the caller's save carries it.
+    /// </summary>
+    public async Task StampFinishedRemediationAsync(PlanPosition pos, CancellationToken ct)
+    {
+        if (pos is { Remediation: true, Cadence: GoalCadence.UntilDone, CompletedOn: null })
+            pos.CompletedOn = await LastTaskDoneOnAsync(pos, ct);
     }
 
     // ---- Penalty for not learning (lazy settlement) ---- ----

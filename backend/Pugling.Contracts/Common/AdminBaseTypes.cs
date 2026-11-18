@@ -76,4 +76,6 @@ public enum PointKind
     /// Coins from the bonus training (extra exercises beyond the day's duty): paid per checked hit only, capped per day.
     /// </summary>
     ExtraTrainingCoins = 16,
+    /// <summary>One-off bonus when the last task of a remediation position "daily, until done" is done (B-636).</summary>
+    RemediationBonus = 17,
 }

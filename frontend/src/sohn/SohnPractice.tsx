@@ -264,13 +264,18 @@ export function SohnPractice() {
         if (outcome?.repeatsAtEnd) setCards((prev) => [...prev, { ...urKarte, introduction: false }]);
         // B-635: frei getippt richtig – die Aufgabe ist erledigt. Alles andere kommt in der nächsten Runde wieder.
         if (outcome?.taskDone) setNacharbeit((n) => (n ? { ...n, done: n.done + 1 } : n));
+        // B-636: die letzte Aufgabe ist erledigt – die Nacharbeit endet mit ihrem Abschlussbonus. Er steht dauerhaft im Blatt,
+        // in der Ansage und in der Rundensumme: der Jubel allein ist aria-hidden und fehlt bei reduzierter Bewegung.
+        const abschluss = outcome?.completionBonus ?? 0;
         const naechsteRunde = nacharbeit !== null && !outcome?.taskDone;
         setCombo(outcome?.combo ?? 0);
         const feedback = reviewFeedback(outcome, card.displayOnly ?? false);
         const getippt = payload.givenAnswer !== undefined;
         if (feedback.kind === "correct") {
-          setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus);
-          if (feedback.comboBonus > 0) {
+          setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus + abschluss);
+          if (abschluss > 0) {
+            celebrate("big", "🏆", t("practice.allTasksDone"), t("practice.completionBonus", { bonus: abschluss }));
+          } else if (feedback.comboBonus > 0) {
             const tier = feedback.combo >= 10 ? "big" : "medium";
             celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, t("practice.comboBonus", { bonus: feedback.comboBonus }));
           } else {
@@ -282,14 +287,16 @@ export function SohnPractice() {
             // Die Lernkarte wertet nichts (B-598, Entscheidung 2) – sie zählt nicht in die Genauigkeit der Runde.
             if (!card.learnCard) setGeprueft((g) => ({ richtig: g.richtig + 1, gesamt: g.gesamt + 1 }));
             setBlatt({
-              richtig: true, gegeben: payload.givenAnswer ?? "", loesung: null, muenzen: feedback.awarded,
+              richtig: true, gegeben: payload.givenAnswer ?? "", loesung: null, muenzen: feedback.awarded + abschluss,
               comboBonus: feedback.comboBonus, tempoBonus: feedback.speedBonus, lob: feedback.combo,
               // Eine Lernkarte bewegt keinen Kasten: ein Fälligkeitsdatum sähe wie ein Leitner-Termin aus, den es nicht gibt.
               faelligAm: card.learnCard ? null : outcome?.dueOn ?? null, erklaerung: outcome?.explanation ?? null,
               naechsteRunde, nochmal: outcome?.repeatsAtEnd ?? false,
             });
             // Die Ansage für die Region, die schon dasteht – das Blatt selbst ist keine (B-134).
-            setToast(outcome?.taskDone ? `${t("lektion.right")} ${t("practice.taskDone")}`
+            setToast(abschluss > 0
+              ? `${t("lektion.right")} ${t("practice.allTasksDone")} ${t("practice.completionBonus", { bonus: abschluss })}`
+              : outcome?.taskDone ? `${t("lektion.right")} ${t("practice.taskDone")}`
               : feedback.awarded > 0 ? `${t("lektion.right")} +${feedback.awarded} 🪙` : t("lektion.right"));
             setPhase("blatt");
           }

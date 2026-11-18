@@ -348,4 +348,379 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
         JsonAssert.False(answer, "taskDone");
         Assert.Null(Progress(positionId, 0)?.RemediationDoneAt);
     }
+
+    // ---- B-636: "daily, until done" with a completion bonus ---- ----
+
+    // The remediation position as a duty "daily, until done": coins for the round, a penalty for a missed day, a bonus.
+    private async Task<(HttpClient Father, int PlanId, int PositionId)> UntilDoneAsync(int bonus = 50, int penalty = 5)
+    {
+        var (father, planId, positionId) = await RemediationPositionAsync();
+        var patch = await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}",
+            new { cadence = "UntilDone", completionBonus = bonus, penaltyCoins = penalty });
+        patch.EnsureSuccessStatusCode();
+        return (father, planId, positionId);
+    }
+
+    private async Task<T> WithServiceAsync<T>(Func<PuglingDbContext, PositionProgressService, Task<T>> body)
+    {
+        using var scope = factory.Services.CreateScope();
+        var sp = scope.ServiceProvider;
+        return await body(sp.GetRequiredService<PuglingDbContext>(), sp.GetRequiredService<PositionProgressService>());
+    }
+
+    private DateOnly Today() =>
+        DateOnly.FromDateTime(factory.Services.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime);
+
+    private Task<bool> GoalMetAsync(int positionId, DateOnly day) => WithServiceAsync(async (db, progress) =>
+    {
+        var pos = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan).SingleAsync(p => p.Id == positionId);
+        return await progress.IsGoalMetAsync(pos, pos.StudyPlan!, day);
+    });
+
+    // Plays one round to the end, answering every card freely with the answer given for its task.
+    private static async Task PlayRoundAsync(HttpClient child, int planId, int positionId, params string[] answers)
+    {
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        while (true)
+        {
+            var next = await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/next");
+            if (next.GetProperty("card").ValueKind == JsonValueKind.Null) break;
+            var index = next.GetProperty("card").GetProperty("itemIndex").GetInt32();
+            await ReviewAsync(child, planId, positionId, sessionId, index, answers[index]);
+        }
+    }
+
+    /// <summary>
+    /// AK 1 + AK 5: the father picks "daily, until done" and the bonus on a remediation position, and the response carries
+    /// both; without remediation (on create and on patch) and with a bonus out of range it is refused. Red if the cadence is
+    /// accepted on a position nothing can finish, if the bonus is not stored, or if the range check is dropped.
+    /// </summary>
+    [Fact]
+    public async Task Bis_erledigt_nur_mit_Nacharbeit_und_Bonus_einstellbar()
+    {
+        var (father, planId, positionId) = await UntilDoneAsync(bonus: 40);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        var position = await father.GetFromJsonAsync<JsonElement>(url);
+        Assert.Equal("UntilDone", position.GetProperty("cadence").GetString());
+        Assert.Equal(40, position.GetProperty("completionBonus").GetInt32());
+
+        await AssertProblemAsync(await father.PatchAsJsonAsync(url, new { remediation = false }),
+            HttpStatusCode.BadRequest, "validation_error");
+        await AssertProblemAsync(await father.PatchAsJsonAsync(url, new { completionBonus = 5000 }),
+            HttpStatusCode.BadRequest, "validation_error");
+
+        var exerciseId = position.GetProperty("exerciseId").GetInt32();
+        await AssertProblemAsync(await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+                new { exerciseId, cadence = "UntilDone" }),
+            HttpStatusCode.BadRequest, "validation_error");
+
+        // Created in one step, with remediation: the bonus is stored on create as well.
+        var created = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId, cadence = "UntilDone", remediation = true, completionBonus = 15 });
+        created.EnsureSuccessStatusCode();
+        Assert.Equal(15, (await created.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("completionBonus").GetInt32());
+    }
+
+    /// <summary>
+    /// The reward lock (daily box, bonus training) treats "until done" as a daily duty like the server's day view: an open
+    /// remediation gates the box although a met weekly goal stands beside it. Red if only <c>Daily</c> counts as daily
+    /// (the weekly goal would gate alone and the box open with the remediation undone).
+    /// </summary>
+    [Fact]
+    public void Nacharbeit_bis_erledigt_sperrt_die_Belohnungen_wie_ein_Tagesziel()
+    {
+        static PositionStatus Status(int id, GoalCadence cadence, bool met) =>
+            new(id, 1, "x", "Cloze", "cloze", 0, cadence, ExerciseCheckMode.StudyPlanTest, false, true, met, met ? 1 : 0,
+                0, 3, 20, 0, 0, 1, "", "", null, 1, "", "", 0);
+
+        var gating = PositionProgressService.RewardObligations(
+            [Status(1, GoalCadence.UntilDone, met: false), Status(2, GoalCadence.Weekly, met: true)]);
+        Assert.Equal([1], gating.Select(s => s.PositionId));
+    }
+
+    /// <summary>
+    /// AK 2: a round played through all its tasks meets the day's duty although tasks stay open; a round broken off does
+    /// not. Red if the until-done branch falls through to the test rule (a cloze needs a passed test - never met) or to
+    /// the 80 % threshold (the broken-off round at 2 of 3 would count).
+    /// </summary>
+    [Fact]
+    public async Task Ganz_gespielte_Runde_erfuellt_die_Tagespflicht_auch_mit_offenen_Aufgaben()
+    {
+        var (father, planId, positionId) = await UntilDoneAsync();
+        // A low threshold the round must ignore: at 50 % the broken-off round would count, and its bar would look full.
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}",
+            new { goalThreshold = 50 })).EnsureSuccessStatusCode();
+        var child = await TestApi.ChildAsync(factory);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+        await ReviewAsync(child, planId, positionId, sessionId, 1, "asleep");
+        Assert.False(await GoalMetAsync(positionId, Today()));
+        // The bar shows the part of the whole round (2 of 3), not 0 like a test goal and not full like the threshold.
+        var progress = await WithServiceAsync(async (db, service) =>
+        {
+            var plan = await db.StudyPlans.SingleAsync(p => p.Id == planId);
+            return (await service.ComputeDayAsync(plan, Today())).Positions.Single(s => s.PositionId == positionId).GoalProgress;
+        });
+        Assert.Equal(2 / 3.0, progress, 3);
+
+        await ReviewAsync(child, planId, positionId, sessionId, 2, "as long as");
+        Assert.True(await GoalMetAsync(positionId, Today()));
+        Assert.Null(Progress(positionId, 0)?.RemediationDoneAt);
+
+        // Ending the round books the day's goal points as the period of this cadence (review finding Y3).
+        (await child.PostAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/end", null)).EnsureSuccessStatusCode();
+        var reward = await WithServiceAsync((db, _) =>
+            db.PositionGoalRewards.SingleAsync(r => r.PlanPositionId == positionId));
+        Assert.Equal((GoalCadence.UntilDone, Today()), (reward.Cadence, reward.Day));
+    }
+
+    /// <summary>
+    /// AK 3: a day without a round costs the penalty; once the last task is done, no later day costs anything, even when
+    /// the settlement catches up only days later. Red if the settlement ignores the end (days after it are charged) or if
+    /// the until-done duty is never charged at all.
+    /// </summary>
+    [Fact]
+    public async Task Malus_fuer_den_Tag_ohne_Runde_nicht_nach_dem_Ende()
+    {
+        var (_, planId, positionId) = await UntilDoneAsync(penalty: 7);
+        var today = Today();
+        var child = await TestApi.ChildAsync(factory);
+
+        // Only one card today (B-535: the first answer starts the penalty clock), so the round is not through and
+        // tomorrow's settlement charges today.
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, today.AddDays(1), CancellationToken.None));
+        Assert.Equal([today], await PenaltyDaysAsync(positionId));
+
+        // The open round continues behind the missed card; the next round brings it back and finishes it.
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as soon as");
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as soon as");
+        await WithServiceAsync(async (db, _) =>
+        {
+            var pos = await db.PlanPositions.AsNoTracking().SingleAsync(p => p.Id == positionId);
+            Assert.Equal(today, pos.CompletedOn);
+            // Pretend the end lay in the past, so the days after it are closed periods for the settlement.
+            await db.PlanPositions.Where(p => p.Id == positionId)
+                .ExecuteUpdateAsync(u => u.SetProperty(p => p.CompletedOn, today.AddDays(-3)));
+            await db.PositionGoalPenalties.Where(p => p.PlanPositionId == positionId).ExecuteDeleteAsync();
+            return 0;
+        });
+
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, today.AddDays(5), CancellationToken.None));
+        Assert.Empty(await PenaltyDaysAsync(positionId));
+    }
+
+    private Task<List<DateOnly>> PenaltyDaysAsync(int positionId) => WithServiceAsync((db, _) =>
+        db.PositionGoalPenalties.Where(p => p.PlanPositionId == positionId).Select(p => p.PeriodStart).ToListAsync());
+
+    /// <summary>
+    /// AK 4: the answer that finishes the last task books the bonus once, with its own kind, and says so; a second run of
+    /// the completion books nothing. On the last day the position still shows as met, from the next day on it has left the
+    /// mission. Red if the completion is not triggered by the last answer, if the bonus books twice, if it is booked as a
+    /// goal reward, or if the ended position stays in tomorrow's mission (or leaves today's early).
+    /// </summary>
+    [Fact]
+    public async Task Letzte_Aufgabe_bucht_den_Bonus_einmal_und_beendet_die_Pflicht()
+    {
+        var (_, planId, positionId) = await UntilDoneAsync(bonus: 30);
+        var child = await TestApi.ChildAsync(factory);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        var first = await ReviewAsync(child, planId, positionId, sessionId, 0, "eastwards");
+        Assert.Equal(0, first.GetProperty("completionBonus").GetInt32());
+        await ReviewAsync(child, planId, positionId, sessionId, 1, "asleep");
+        var last = await ReviewAsync(child, planId, positionId, sessionId, 2, "as soon as");
+        Assert.Equal(30, last.GetProperty("completionBonus").GetInt32());
+
+        var again = await WithServiceAsync(async (db, progress) =>
+        {
+            var pos = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan).SingleAsync(p => p.Id == positionId);
+            pos.CompletedOn = null; // the fast path off: only the unique index may stop the second booking
+            return await progress.CompleteRemediationIfDoneAsync(pos, pos.StudyPlan!, Today(), CancellationToken.None);
+        });
+        Assert.Equal(0, again);
+        var bonuses = await WithServiceAsync((db, _) => db.ChildPointsEntries
+            .Where(e => e.ChildId == 1 && e.Kind == PointKind.RemediationBonus && e.Amount == 30).CountAsync());
+        Assert.Equal(1, bonuses);
+
+        var (todayIn, tomorrowIn) = await WithServiceAsync(async (db, progress) =>
+        {
+            var plan = await db.StudyPlans.SingleAsync(p => p.Id == planId);
+            var todayView = await progress.ComputeDayAsync(plan, Today());
+            var tomorrowView = await progress.ComputeDayAsync(plan, Today().AddDays(1));
+            return (todayView.Positions.SingleOrDefault(s => s.PositionId == positionId),
+                tomorrowView.Positions.SingleOrDefault(s => s.PositionId == positionId));
+        });
+        Assert.NotNull(todayIn);
+        Assert.True(todayIn.GoalMet);
+        Assert.Null(tomorrowIn);
+
+        // An ended duty pays no goal points on a later day, though its rule reads "met" from the end on.
+        var laterRewards = await WithServiceAsync(async (db, progress) =>
+        {
+            var plan = await db.StudyPlans.SingleAsync(p => p.Id == planId);
+            await progress.EvaluateAndAwardAsync(plan, Today().AddDays(2));
+            return await db.PositionGoalRewards.CountAsync(r => r.PlanPositionId == positionId && r.Day == Today().AddDays(2));
+        });
+        Assert.Equal(0, laterRewards);
+    }
+
+    // ---- B-637: the father sees the help per task ---- ----
+
+    /// <summary>
+    /// AK 1: the report of a remediation position names per task the German cue, whether it is done, and how often it was
+    /// solved per stage - free text first, in ladder order, although the boxes came first in time. AK 3: the child cannot
+    /// read it (it carries the solutions). Red if the counters or the done day are not projected, if the cue is the passage
+    /// instead of the gap's prompt, if the stages come in insertion order, or if the role wall lets the child in.
+    /// </summary>
+    [Fact]
+    public async Task Auswertung_zeigt_je_Aufgabe_Vorgabe_Erledigt_und_Stufen()
+    {
+        var (father, planId, positionId) = await RemediationPositionAsync();
+        var child = await TestApi.ChildAsync(factory);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "eastwards");
+        (await EasierAsync(child, planId, positionId, sessionId, 1)).EnsureSuccessStatusCode();
+        await ReviewAsync(child, planId, positionId, sessionId, 1, "asleep");
+        await ReviewAsync(child, planId, positionId, sessionId, 2, "as long as");
+        var (secondId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, secondId, 1, "asleep");
+
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report";
+        var report = await father.GetFromJsonAsync<JsonElement>(url);
+        JsonAssert.True(report, "remediation");
+        var items = report.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("remediation")).ToList();
+
+        Assert.Equal("Richtung Osten", items[0].GetProperty("cue").GetString());
+        Assert.Equal(Today().ToString("yyyy-MM-dd"), items[0].GetProperty("doneAt").GetString());
+        Assert.Equal(Today().ToString("yyyy-MM-dd"), items[1].GetProperty("doneAt").GetString());
+        Assert.Equal(JsonValueKind.Null, items[2].GetProperty("doneAt").ValueKind);
+        Assert.Empty(items[2].GetProperty("solvedByStage").EnumerateArray());
+
+        var task2 = items[1].GetProperty("solvedByStage").EnumerateArray()
+            .Select(c => (c.GetProperty("stage").GetInt32(), c.GetProperty("count").GetInt32())).ToList();
+        Assert.Equal([((int)ClozeStage.TranslationFreeText, 1), ((int)ClozeStage.LetterBoxes, 1)], task2);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await child.GetAsync(url)).StatusCode);
+    }
+
+    /// <summary>Guard: a position without remediation carries no remediation part in its report. Red if it is always set.</summary>
+    [Fact]
+    public async Task Auswertung_ohne_Nacharbeit_ohne_Nacharbeitsteil()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await NacharbeitAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.TranslationWordBank);
+        var report = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report");
+        JsonAssert.False(report, "remediation");
+        Assert.All(report.GetProperty("items").EnumerateArray(),
+            i => Assert.Equal(JsonValueKind.Null, i.GetProperty("remediation").ValueKind));
+    }
+
+    /// <summary>
+    /// Migration probe finding: a remediation finished before B-636 (no end stamp), then switched to "until done" - no
+    /// answer is left to finish it, so the switch stamps the end at once, without a bonus. Red if the stamp is dropped (the
+    /// duty would charge its penalty forever) or if finishing a plain daily remediation pays the bonus.
+    /// </summary>
+    [Fact]
+    public async Task Schon_fertige_Nacharbeit_endet_beim_Umstellen_ohne_Bonus()
+    {
+        var (father, planId, positionId) = await RemediationPositionAsync();
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        // The bonus is set while the position is still a plain daily goal: finishing then pays nothing (only "until done" does).
+        (await father.PatchAsJsonAsync(url, new { completionBonus = 77 })).EnsureSuccessStatusCode();
+        var child = await TestApi.ChildAsync(factory);
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as soon as");
+        // Finished before B-636 existed: the real database holds such positions without an end stamp (migration probe).
+        await WithServiceAsync((db, _) => db.PlanPositions.Where(p => p.Id == positionId)
+            .ExecuteUpdateAsync(u => u.SetProperty(p => p.CompletedOn, (DateOnly?)null)));
+
+        var patched = await (await father.PatchAsJsonAsync(url, new { cadence = "UntilDone" }))
+            .Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(Today().ToString("yyyy-MM-dd"), patched.GetProperty("completedOn").GetString());
+        Assert.Equal(0, await WithServiceAsync((db, _) =>
+            db.ChildPointsEntries.CountAsync(e => e.ChildId == 1 && e.Kind == PointKind.RemediationBonus && e.Amount == 77)));
+    }
+
+    /// <summary>
+    /// An ended remediation is no duty any more, so it cannot carry the streak: a child whose only duty it was has no
+    /// complete day after the end. Red if the duty state counts the ended position as a met duty - the streak would then
+    /// grow every day without playing. Own child, so no other plan of the fixture decides the day.
+    /// </summary>
+    [Fact]
+    public async Task Beendete_Nacharbeit_traegt_die_Serie_nicht_weiter()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Serie"), pin = "4711" }));
+        var exerciseId = await NacharbeitAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.TranslationWordBank,
+            childId: childId, useLeitner: false);
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}",
+            new { remediation = true, cadence = "UntilDone" })).EnsureSuccessStatusCode();
+        var child = await TestApi.ChildAsync(factory, childId, "4711");
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as soon as");
+
+        var (today, dayAfter) = await WithServiceAsync(async (_, progress) =>
+            (await progress.ChildStreakAsync(childId, Today(), 10, CancellationToken.None),
+             await progress.ChildStreakAsync(childId, Today().AddDays(1), 10, CancellationToken.None)));
+        Assert.Equal(1, today);
+        Assert.Equal(0, dayAfter);
+    }
+
+    /// <summary>
+    /// Review finding Y1 + G2: the pool shrinks past the last open task without the father's form (here the item count is
+    /// set directly) - the next round start finds nothing open and stamps the end, without a bonus; the report shows no
+    /// remediation part for the task outside the pool. Red if the start leaves the end unstamped (the duty would charge its
+    /// penalty every day with nothing to play) or if the report lists the task outside the pool as open.
+    /// </summary>
+    [Fact]
+    public async Task Geschrumpfter_Pool_beendet_die_Nacharbeit_beim_Start()
+    {
+        var (father, planId, positionId) = await UntilDoneAsync(bonus: 33);
+        var child = await TestApi.ChildAsync(factory);
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as long as");
+        await WithServiceAsync((db, _) => db.PlanPositions.Where(p => p.Id == positionId)
+            .ExecuteUpdateAsync(u => u.SetProperty(p => p.ItemCount, (int?)2)));
+
+        var (_, session) = await StartAsync(child, planId, positionId);
+
+        Assert.Equal(0, session.GetProperty("total").GetInt32());
+        var pos = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}");
+        Assert.Equal(Today().ToString("yyyy-MM-dd"), pos.GetProperty("completedOn").GetString());
+        Assert.Equal(0, await WithServiceAsync((db, _) =>
+            db.ChildPointsEntries.CountAsync(e => e.Kind == PointKind.RemediationBonus && e.Amount == 33)));
+        var report = await father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}/report");
+        Assert.Equal(JsonValueKind.Null, report.GetProperty("items")[2].GetProperty("remediation").ValueKind);
+    }
+
+    /// <summary>
+    /// Review finding Y2 (B-538 rule): an ended remediation has no duty, so a Leitner hit on a task added after the end pays
+    /// no coins. Red if the coin rule keeps reading only the cadence (then the hit pays its base points).
+    /// </summary>
+    [Fact]
+    public async Task Nach_dem_Ende_zahlt_die_Position_keine_Muenzen()
+    {
+        var (father, planId, positionId) = await RemediationPositionAsync(useLeitner: true);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        (await father.PatchAsJsonAsync(url, new { cadence = "UntilDone", itemCount = 2 })).EnsureSuccessStatusCode();
+        var child = await TestApi.ChildAsync(factory);
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep");
+        Assert.Equal(Today(), Progress(positionId, 1)!.RemediationDoneAt);
+        // A third task joins after the end (the item count grows behind the form), and the end lies a day back - on the
+        // last day itself the duty still runs: the end stays final.
+        await WithServiceAsync((db, _) => db.PlanPositions.Where(p => p.Id == positionId)
+            .ExecuteUpdateAsync(u => u.SetProperty(p => p.ItemCount, (int?)3).SetProperty(p => p.CompletedOn, Today().AddDays(-1))));
+        var coinsBefore = await WithServiceAsync((db, _) =>
+            db.ChildPointsEntries.CountAsync(e => e.ChildId == 1 && e.Kind == PointKind.Base));
+
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        var answer = await ReviewAsync(child, planId, positionId, sessionId, 2, "as soon as");
+
+        JsonAssert.True(answer, "wasCorrect");
+        Assert.Equal(0, answer.GetProperty("awarded").GetInt32());
+        Assert.Equal(coinsBefore, await WithServiceAsync((db, _) =>
+            db.ChildPointsEntries.CountAsync(e => e.ChildId == 1 && e.Kind == PointKind.Base)));
+    }
 }

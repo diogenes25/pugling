@@ -133,6 +133,16 @@ public class PlanPosition
     /// repeat until every task is done. Only for a type with an ease ladder (<see cref="IExerciseType.EaseLadder"/>).
     /// </summary>
     public bool Remediation { get; set; }
+    /// <summary>
+    /// One-off coins for the last remediation task done (B-636), booked once via <see cref="PositionCompletionBonus"/> and
+    /// only on <see cref="GoalCadence.UntilDone"/>. 0 = none.
+    /// </summary>
+    public int CompletionBonus { get; set; }
+    /// <summary>
+    /// The day the last remediation task was done (B-636). On <see cref="GoalCadence.UntilDone"/> the duty ends after this
+    /// day: no penalty and no place in the day's mission from the next day on, also for days settled only later.
+    /// </summary>
+    public DateOnly? CompletedOn { get; set; }
     /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
     /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>
@@ -174,6 +184,23 @@ public class PositionGoalReward
     public DateOnly PeriodStart { get; set; }
     /// <summary>Calendar day the goal was reached on (the basis of the daily/streak metrics).</summary>
     public DateOnly Day { get; set; }
+    public int Points { get; set; }
+    public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>
+/// The one-off completion bonus of a remediation position "daily, until done" (B-636). A position finishes only once, so
+/// the unique index on <see cref="PlanPositionId"/> is the guarantee against a second booking - the same role
+/// <see cref="PositionGoalReward"/> plays per period.
+/// </summary>
+public class PositionCompletionBonus
+{
+    public int Id { get; set; }
+    public int PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
+    /// <summary>The day the last task was done.</summary>
+    public DateOnly Day { get; set; }
+    /// <summary>Coins booked (the position's <see cref="PlanPosition.CompletionBonus"/> at that moment).</summary>
     public int Points { get; set; }
     public DateTime AwardedAt { get; set; } = DateTime.UtcNow;
 }

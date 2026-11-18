@@ -164,6 +164,10 @@ def probe():
         if actual != m["old"]:
             sys.exit(f"{m['id']}: Zeile {m['f']}:{m['l']} stimmt nicht.\n"
                      f"  erwartet: {m['old']!r}\n  gefunden: {actual!r}")
+        # A mutant equal to its line changes nothing: it would read as "green (abweichend)" and look like a test gap
+        # (Sprint 86: a failed string replace built exactly that, and the run cost a full build and test for nothing).
+        if m["new"] == m["old"]:
+            sys.exit(f"{m['id']}: 'new' ist gleich 'old' – die Mutante ändert nichts ({m['f']}:{m['l']}).")
 
     # One baseline per distinct (build, test) pair: a list mixing dotnet, vitest and playwright needs each one green.
     baselines = list(dict.fromkeys((m["build"], m["test"], json.dumps(m.get("env") or {}, sort_keys=True))

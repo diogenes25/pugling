@@ -116,7 +116,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // words can be repeated too. Learn = only the cards due today.
         // A remediation round (B-635) is the list of tasks still open, in order; free practice stays as it is.
         if (pos.Remediation && dto.Mode == PlayMode.Lern)
+        {
             session.Order = [.. await play.RemediationRoundAsync(pos, ct)];
+            // B-636: nothing open any more although no answer finished it (the pool shrank) - the end is stamped here, or a
+            // duty "until done" would cost its penalty every day with nothing left to play.
+            if (session.Order.Count == 0) await progress.StampFinishedRemediationAsync(pos, ct);
+        }
         else
         {
             var due = await play.DueItemIndicesAsync(pos, day, pos.OrderStrategy, dueOnly: dto.Mode != PlayMode.Info, ct);
@@ -715,8 +720,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             combo = wasCorrect ? prevStreak + 1 : 0;
             var preBox = prog.Box;
             // B-538: a position without a duty pays no coins at all - otherwise it were a second, uncapped way to coins
-            // next to the bonus training, open before the duty. The box and the learning state move as before.
-            var paysCoins = pos.Cadence != GoalCadence.None;
+            // next to the bonus training, open before the duty. The box and the learning state move as before. An ended
+            // remediation "until done" (B-636) has no duty either.
+            var paysCoins = PositionProgressService.HasDutyOn(pos, session.Day);
             // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later. A
             // hit that pays nothing leaves them too: a later duty on the same position still pays them.
             var isNew = paysCoins && wasCorrect && prog.NewBonusPaidAt is null;
@@ -782,6 +788,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         await db.SaveChangesAsync(ct);
 
+        // B-636: the task just done may be the last one - only then does the remediation finish and pay its bonus.
+        var completionBonus = taskDone ? await progress.CompleteRemediationIfDoneAsync(pos, plan, session.Day, ct) : 0;
+
         if (leitnerScored)
             await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
 
@@ -795,7 +804,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // and give away an entry that is still to be asked for.
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? staged[shown].Answer : null,
             awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
-            creditedIndex is { } explained ? staged[explained].Explanation : null, TaskDone: taskDone);
+            creditedIndex is { } explained ? staged[explained].Explanation : null, TaskDone: taskDone,
+            CompletionBonus: completionBonus);
     }
 
     /// <summary>

@@ -14,8 +14,25 @@ namespace Pugling.Contracts.Supervisor;
 /// </summary>
 public record ItemReport(int ItemIndex, string Prompt, string Answer, bool Introduced,
     int Box, int MasteryPercent, int ReviewCount, DateOnly? DueOn, DateTime? LastReviewedAt,
-    int TestsSeen, int TestsCorrect, bool TurnedWhenWritten = false, bool RecognitionOnly = false);
+    int TestsSeen, int TestsCorrect, bool TurnedWhenWritten = false, bool RecognitionOnly = false,
+    RemediationTaskReport? Remediation = null);
 
-/// <summary>Report of a position including headline metrics (introduced/mastered).</summary>
+/// <summary>
+/// One task of a remediation position as the father sees it (B-637): helping costs the child no coins, so this is where
+/// the help shows. Set only on a remediation position.
+/// </summary>
+/// <param name="Cue">The German cue the child translates; <c>null</c> where the gap carries none.</param>
+/// <param name="DoneAt">The day the task was first typed freely right; <c>null</c> = still open.</param>
+/// <param name="SolvedByStage">How often it was solved right per stage, in the order of the ease ladder (free text first).</param>
+public record RemediationTaskReport(string? Cue, DateOnly? DoneAt, IReadOnlyList<StageSolveCount> SolvedByStage);
+
+/// <summary>Solutions of a remediation task on one stage (B-637); the stage label comes from the type manifest.</summary>
+public record StageSolveCount(int Stage, int Count);
+
+/// <summary>
+/// Report of a position including headline metrics (introduced/mastered). <c>Remediation</c>/<c>CompletedOn</c> (B-637,
+/// B-636): whether the position runs as remediation, and the day its last task was done.
+/// </summary>
 public record Report(int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType,
-    int MaxBox, int TotalItems, int IntroducedItems, int MasteredItems, IReadOnlyList<ItemReport> Items);
+    int MaxBox, int TotalItems, int IntroducedItems, int MasteredItems, IReadOnlyList<ItemReport> Items,
+    bool Remediation = false, DateOnly? CompletedOn = null);

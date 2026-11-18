@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Kombi-Lernkarte B-598, Leichter-Knopf aus B-635)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-18
 ---
 
 # B-643 · Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt
@@ -290,3 +291,9 @@ B-635 wäre es mehr als L und müsste geteilt werden.
   - E2E `lernkarte-leichter.spec.ts` (Rollengang Sohn) **1 passed**; volle Suite 169 passed, 1 failed
     (`vater-von-null.spec.ts`, einzeln **1 passed** – Last durch einen parallelen Testlauf).
 - **2026-11-17** — abgenommen (`e10cdd34`). Der Vater bestätigte die hergeleitete Regel „im Test frei getippt richtig = eingeprägt“. Gerätecheck am Handy (Gefühl der Leiter in Schritt 4) steht aus; bei den Söhnen wirksam erst nach einem neuen Publish des Heimnetz-Servers.
+- **2026-11-18** — nachgeschaut (PM-Sitzung 2026-11-18, nur über die Git-Historie gelesen): ein Durchrutscher,
+  [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) (P3, `ItemScope.New` kennt „eingeführt, nicht
+  eingeprägt“ nicht). Gehalten haben: Stufe der Hilfe aus der Sitzung, nicht vom Client; nur die Kartenwahl liest
+  „eingeprägt“; Dosis ohne Doppelzählung; Einprägen im Test nur frei getippt; Ring und Rückfüllung. Grenzfall: das
+  Einfügen aus der Zwischenablage prägte ein (Lücke aus B-598, behoben in `0f8f0328`) – nicht als Durchrutscher von
+  B-643 gezählt.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExerciseFilter } from "./ExerciseFilterBar";
 import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText, schreibweise,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
+  cadencesFor, stufenZaehler, withRemediation,
   type PositionSettings,
 } from "./PlanPositions";
 import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
@@ -23,7 +24,7 @@ const LEER: PositionSettings = {
   cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "", orderStrategy: "WeakestFirst",
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-  useLeitner: true, forgivingDemotion: false, remediation: false, requireTypedTest: false,
+  useLeitner: true, forgivingDemotion: false, remediation: false, completionBonus: 0, requireTypedTest: false,
   stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
@@ -33,6 +34,12 @@ const MIT_FENSTER: PositionSettings = {
 };
 
 /** Ein gespeicherter Stand als Formular-Zustand – der Weg, den ein Positions-Edit wirklich nimmt. */
+const gespeichertRoh = {
+  timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+  pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+  useLeitner: true, requireTypedTest: false, newItemsPerDay: 0,
+  stage: null, scope: "All", speedThresholdSeconds: 0, speedBonusPoints: 0,
+};
 const gespeichert = (...timeSlots: ScoringTimeSlot[]) =>
   settingsFrom({
     timeSlots, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
@@ -472,5 +479,38 @@ describe("schreibweise (B-597)", () => {
     expect(schreibweise({ ...zeile, turnedWhenWritten: true })).toBe("geschrieben: gehen → walk");
     expect(schreibweise({ ...zeile, recognitionOnly: true })).toBe("nur erkennen – geschrieben wird die Gegenkarte");
     expect(schreibweise(zeile)).toBeNull();
+  });
+});
+
+/*
+ * B-636/B-637: „täglich, bis erledigt“ hängt an der Nacharbeit, und die Stufen-Zähler werden lesbar. Je Fall steht, welche
+ * Änderung ihn rot macht.
+ */
+describe("Nacharbeit bis erledigt", () => {
+  // Rot, wenn der Rhythmus auch ohne Nacharbeit wählbar ist (der Server antwortete validation_error).
+  it("bietet „bis erledigt“ nur mit Nacharbeit an", () => {
+    expect(cadencesFor(false)).not.toContain("UntilDone");
+    expect(cadencesFor(true)).toContain("UntilDone");
+  });
+
+  // Rot, wenn das Abwählen der Nacharbeit den Rhythmus stehen lässt – oder ein anderer Rhythmus mit zurückfällt.
+  it("fällt beim Abwählen der Nacharbeit auf das Tagesziel zurück, nur von „bis erledigt“", () => {
+    const bisErledigt = { ...LEER, remediation: true, cadence: "UntilDone" as const };
+    expect(withRemediation(bisErledigt, false)).toMatchObject({ remediation: false, cadence: "Daily" });
+    expect(withRemediation({ ...LEER, remediation: true, cadence: "Weekly" }, false).cadence).toBe("Weekly");
+    expect(withRemediation(bisErledigt, true).cadence).toBe("UntilDone");
+  });
+
+  // Rot, wenn der Bonus nicht in den Vertrag reist (gespeichert wäre dann 0) oder beim Laden verloren geht.
+  it("trägt den Abschlussbonus hin und zurück", () => {
+    expect(settingsToDto({ ...LEER, remediation: true, cadence: "UntilDone", completionBonus: 40 }).completionBonus).toBe(40);
+    expect(settingsFrom({ ...gespeichertRoh, cadence: "UntilDone", remediation: true, completionBonus: 25 } as unknown as PositionResponse).completionBonus).toBe(25);
+  });
+
+  // Rot, wenn die Zähler ohne Stufennamen oder in anderer Reihenfolge als vom Server gesendet erscheinen.
+  it("nennt die gelösten Stufen mit Namen und Anzahl, in der Reihenfolge des Servers", () => {
+    const name = (st: number) => ({ 1: "Freitext", 4: "Kästchen" } as Record<number, string>)[st] ?? `Stufe ${st}`;
+    expect(stufenZaehler([{ stage: 1, count: 2 }, { stage: 4, count: 1 }], name)).toBe("Freitext ×2 · Kästchen ×1");
+    expect(stufenZaehler([], name)).toBe("—");
   });
 });

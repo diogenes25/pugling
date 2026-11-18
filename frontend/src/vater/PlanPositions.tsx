@@ -30,8 +30,19 @@ import { leiterText } from "./wizardFinish";
 
 const CADENCE_LABEL: Record<GoalCadence, string> = {
   None: "frei (kein Ziel, keine Punkte)", Daily: "Tagesziel", Weekly: "Wochenziel",
+  UntilDone: "täglich, bis erledigt",
 };
-const CADENCES: GoalCadence[] = ["Daily", "Weekly", "None"];
+const CADENCES: GoalCadence[] = ["Daily", "Weekly", "UntilDone", "None"];
+
+/**
+ * B-636: „täglich, bis erledigt“ endet nur mit der letzten Nacharbeits-Aufgabe – ohne Nacharbeit endete sie nie, und der
+ * Server lehnt sie ab. Darum gibt es den Rhythmus nur mit Nacharbeit, und wer die Nacharbeit abwählt, fällt aufs
+ * Tagesziel zurück, statt einen Stand zu bauen, den erst das Speichern als Fehler meldet.
+ */
+export const cadencesFor = (remediation: boolean): GoalCadence[] =>
+  CADENCES.filter((c) => c !== "UntilDone" || remediation);
+export const withRemediation = (s: PositionSettings, remediation: boolean): PositionSettings =>
+  ({ ...s, remediation, cadence: !remediation && s.cadence === "UntilDone" ? "Daily" : s.cadence });
 const ORDER_LABEL: Record<PracticeOrder, string> = {
   WeakestFirst: "Schwächste zuerst", Serial: "Reihenfolge", Random: "Zufällig", NewestWeighted: "Neue bevorzugt",
 };
@@ -130,6 +141,8 @@ export interface PositionSettings {
   forgivingDemotion: boolean;
   /** B-635: Nacharbeit – jede offene Aufgabe als Freitext, „leichter“ schaltbar, Runden bis alles frei getippt ist. */
   remediation: boolean;
+  /** B-636: einmalige Münzen, wenn die letzte Aufgabe einer Nacharbeit „bis erledigt“ geschafft ist; 0 = keiner. */
+  completionBonus: number;
   requireTypedTest: boolean;
   /*
    * Die Abfrageform des Tests (B-16) als String: "" = „Standard der Übung" (`null`), sonst ein Wert aus den
@@ -268,7 +281,7 @@ function defaultSettings(): PositionSettings {
     orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-    useLeitner: false, forgivingDemotion: false, remediation: false, requireTypedTest: false,
+    useLeitner: false, forgivingDemotion: false, remediation: false, completionBonus: 0, requireTypedTest: false,
     stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
@@ -292,6 +305,7 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     useLeitner: pos.useLeitner,
     forgivingDemotion: pos.forgivingDemotion ?? false,
     remediation: pos.remediation ?? false,
+    completionBonus: pos.completionBonus ?? 0,
     requireTypedTest: pos.requireTypedTest,
     stage: pos.stage?.toString() ?? "",
     stageStored: pos.stage ?? null,
@@ -346,6 +360,7 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     useLeitner: s.useLeitner,
     forgivingDemotion: s.forgivingDemotion,
     remediation: s.remediation,
+    completionBonus: s.completionBonus,
     requireTypedTest: s.requireTypedTest,
     stage: numOrNull(s.stage),
     scope: s.scope,
@@ -404,7 +419,7 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
         <FieldLabel htmlFor={`${uid}-cadence`} topic="cadence">Ziel-Rhythmus</FieldLabel>
         <select id={`${uid}-cadence`} aria-label="Ziel-Rhythmus" value={value.cadence}
           onChange={(e) => up("cadence", e.target.value as GoalCadence)}>
-          {CADENCES.map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
+          {cadencesFor(value.remediation).map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
         </select>
       </div>
       {/* Der Server wertet die Schwelle als Bestehens-Prozentsatz des Abschlusstests aus (Standard 80). */}
@@ -464,6 +479,13 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
           <input id={`${uid}-penalty`} aria-label="Münz-Malus bei gerissener Pflicht" type="number" min={0}
             value={value.penaltyCoins} onChange={(e) => up("penaltyCoins", Number(e.target.value))} />
         </div>
+        {value.cadence === "UntilDone" && (
+          <div className="field" style={{ maxWidth: 150 }}>
+            <FieldLabel htmlFor={`${uid}-completion`} topic="completionBonus">Abschlussbonus 🪙</FieldLabel>
+            <input id={`${uid}-completion`} type="number" min={0} max={1000}
+              value={value.completionBonus} onChange={(e) => up("completionBonus", Number(e.target.value))} />
+          </div>
+        )}
         {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
         <div className="field" style={{ maxWidth: 130 }}>
           <FieldLabel htmlFor={`${uid}-new`} topic="newContentPoints">Punkte neuer Inhalt</FieldLabel>
@@ -517,7 +539,8 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
       {(nacharbeit || value.remediation) && (
         <span className="label-row">
           <label className="checkline">
-            <input type="checkbox" checked={value.remediation} onChange={(e) => up("remediation", e.target.checked)} /> Nacharbeit
+            <input type="checkbox" checked={value.remediation}
+              onChange={(e) => onChange(withRemediation(value, e.target.checked))} /> Nacharbeit
           </label>
           <InfoHint topic="remediation" />
         </span>
@@ -785,7 +808,7 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                   // ganz außen vor – für ihn gibt es keine Empfehlung, er ist eine Aussage des Vaters.
                   onChange={() => {
                     setExerciseId(ex.id);
-                    setSettings((cur) => ({
+                    setSettings((cur) => withRemediation({
                       ...cur,
                       useLeitner: ex.defaultUseLeitner || Number(cur.newItemsPerDay) > 0,
                       requireTypedTest: ex.defaultRequireTypedTest,
@@ -795,8 +818,7 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                       // ungültig (validation_error) oder, schlimmer, gültig und ungewollt.
                       stage: "",
                       // B-635: die Nacharbeit gehört zum Typ wie die Stufe – ohne Leiter lehnte der Server sie ab.
-                      remediation: cur.remediation && kannNacharbeit(types, ex.type),
-                    }));
+                    }, cur.remediation && kannNacharbeit(types, ex.type)));
                   }}
                   style={{ marginTop: 3 }} />
                 <span style={{ display: "flex", flexDirection: "column" }}>
@@ -943,6 +965,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
           {pos.cadence === "None" ? <td className="num muted">keine Punkte</td> : (
             <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
               {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
+              {pos.cadence === "UntilDone" && (pos.completionBonus ?? 0) > 0 && <span className="muted"> · Abschluss +{pos.completionBonus}🪙</span>}
               {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
               {pos.timeSlots?.map((s) => (
                 <span key={`${s.start}-${s.end}`} className="muted">
@@ -952,7 +975,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
             </td>
           )}
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}
-            {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}</td>
+            {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}
+            {pos.completedOn && <> <span className="pill lime">geschafft am {formatDate(pos.completedOn)}</span></>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
               aria-expanded={showReport} onClick={() => setShowReport((s) => !s)}>📊 Report</button>
@@ -963,7 +987,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
         {showReport && (
           <tr>
             <td colSpan={6} style={{ background: "rgba(255,255,255,.02)" }}>
-              <PositionReportPanel planId={planId} positionId={pos.id} />
+              <PositionReportPanel planId={planId} positionId={pos.id}
+                stufenName={(st) => types.stages(pos.exerciseType).find((o) => o.value === st)?.label ?? `Stufe ${st}`} />
             </td>
           </tr>
         )}
@@ -998,7 +1023,9 @@ export function schreibweise(it: Pick<ItemReport, "prompt" | "answer" | "turnedW
 }
 
 /** Lern-Report der Position: je Inhalt „sitzt/sitzt nicht" (Box/Beherrschung) + Test-Trefferquote. */
-function PositionReportPanel({ planId, positionId }: { planId: number; positionId: number }) {
+function PositionReportPanel({ planId, positionId, stufenName }: {
+  planId: number; positionId: number; stufenName: (stage: number) => string;
+}) {
   const report = useAsync<PositionReport>(() => api.positionReport(planId, positionId), [planId, positionId]);
 
   if (report.loading) return <div className="loading">Lade Report…</div>;
@@ -1006,6 +1033,8 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
   const r = report.data;
 
   if (r.totalItems === 0) return <div className="muted">Diese Übung hat keine einzeln auswertbaren Inhalte.</div>;
+
+  if (r.remediation) return <NacharbeitReport report={r} stufenName={stufenName} />;
 
   return (
     <div style={{ padding: "6px 2px" }}>
@@ -1025,6 +1054,44 @@ function PositionReportPanel({ planId, positionId }: { planId: number; positionI
                 <td className="muted">{it.dueOn ? formatDate(it.dueOn) : "—"}</td>
               </tr>
             ); })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * B-637: wie oft eine Nacharbeits-Aufgabe auf welcher Stufe gelöst wurde, in der Reihenfolge der Leiter (Freitext
+ * zuerst, sortiert der Server). Leichter schalten kostet keine Münzen – hier sieht der Vater, wo es Hilfe brauchte.
+ */
+export function stufenZaehler(solved: readonly { stage: number; count: number }[], name: (stage: number) => string): string {
+  return solved.length === 0 ? "—" : solved.map((c) => `${name(c.stage)} ×${c.count}`).join(" · ");
+}
+
+/** B-637: die Auswertung einer Nacharbeit – je Aufgabe Vorgabe, Lösung, erledigt oder offen und die Hilfe-Stufen. */
+function NacharbeitReport({ report, stufenName }: { report: PositionReport; stufenName: (stage: number) => string }) {
+  const erledigt = report.items.filter((it) => it.remediation?.doneAt).length;
+  return (
+    <div style={{ padding: "6px 2px" }}>
+      <p className="muted" style={{ marginTop: 0 }}>
+        Nacharbeit: {erledigt}/{report.totalItems} erledigt
+        {report.completedOn && <> · geschafft am {formatDate(report.completedOn)}</>}
+      </p>
+      <div style={{ overflowX: "auto" }}>
+        <table className="table">
+          <thead><tr><th>Vorgabe</th><th>Lösung</th><th>Stand</th><th>Gelöst je Stufe</th></tr></thead>
+          <tbody>
+            {report.items.map((it) => (
+              <tr key={it.itemIndex}>
+                <td>{it.remediation?.cue ?? <span className="muted">—</span>}</td>
+                <td className="muted">{it.answer}</td>
+                <td>{it.remediation?.doneAt
+                  ? <span className="pill lime">erledigt {formatDate(it.remediation.doneAt)}</span>
+                  : <span className="pill amber">offen</span>}</td>
+                <td>{stufenZaehler(it.remediation?.solvedByStage ?? [], stufenName)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
