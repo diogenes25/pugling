@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { api, ApiError } from "../lib/api";
@@ -7,6 +7,7 @@ import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
 import { fachStand, nachFach } from "./tagessicht";
+import { fachMotiv, STERNE, svgUrl, type FachMotiv } from "./fachMotiv";
 import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
@@ -161,12 +162,17 @@ export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = fa
   const [zusatzOffen, setZusatzOffen] = useState(stand.pflicht.length === 0);
   const inhaltId = `${id}-inhalt`;
   const zusatzId = `${id}-zusatz`;
+  const motiv = fachMotiv(titel);
+  // Ein Fach mit eigenem Motiv trägt dessen Farbe (Englisch immer rot, egal an welcher Stelle); sonst die Reihenfarbe.
+  const farbStil = motiv ? ({ "--fach": motiv.farbe[0], "--fach-2": motiv.farbe[1] } as CSSProperties) : undefined;
 
   return (
-    <section className={`fach-karte farbe-${farbe % FACH_FARBEN}${offen ? " offen" : ""}`} aria-labelledby={`${id}-name`}>
+    <section className={`fach-karte farbe-${farbe % FACH_FARBEN}${offen ? " offen" : ""}`} style={farbStil}
+      aria-labelledby={`${id}-name`}>
       <h2 className="fach-kopf-h">
         <button type="button" id={id} className="fach-kopf" aria-expanded={offen} aria-controls={inhaltId}
           onClick={() => setOffen((o) => !o)}>
+          <FachHintergrund motiv={motiv} />
           <span id={`${id}-name`} className="fach-name">{titel}</span>
           <span className="fach-stand">
             {stand.heute.total > 0 && (
@@ -210,6 +216,20 @@ export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = fa
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * Das Motiv hinter dem Fachkopf: eine Flagge (Sprachen) oder ein Themenmuster, beides flach und nach rechts in die
+ * Fachfarbe ausgeblendet. Rein dekorativ (`aria-hidden`).
+ */
+function FachHintergrund({ motiv }: { motiv: FachMotiv | null }) {
+  if (motiv?.art === "flagge") {
+    return <span className="fach-motiv flagge" aria-hidden="true" data-motiv={motiv.key} style={{ backgroundImage: svgUrl(motiv.svg) }} />;
+  }
+  return (
+    <span className="fach-motiv muster" aria-hidden="true" data-motiv={motiv?.key ?? "sterne"}
+      style={{ "--motiv-bild": svgUrl(motiv?.svg ?? STERNE), "--kachel": `${motiv?.kachel ?? 64}px` } as CSSProperties} />
   );
 }
 
