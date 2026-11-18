@@ -345,3 +345,61 @@ mit benannten Prüfpunkten. `nachgeschaut: 2026-11-18` an B-611, B-612, B-613, B
   Belohnungszeile (B-666 Entscheidung 3).
 
 Kein neues Tor gelandet, Zähler 1 ≤ 5 – der Lauf geht weiter mit Sprint 88.
+
+## Runde 7 — Nachtlauf, Sprint 88: Rückmeldung zur Karte (abgebrochen)
+
+Nach Sprint 93 ohne Halt weiter mit der Folge der [Sprintplanung vom 2026-11-17](pm-sitzung-2026-11-17-sprintplanung.md):
+[B-628](backlog/B-628-rueckmeldung-backend.md) (L) und [B-629](backlog/B-629-rueckmeldung-frontend.md) (M), beide
+`geschaetzt` (`Wunsch`, baubar nach Freigabe 8; ihre Entscheidungen stehen in B-623).
+
+**Sprint-Ziel (Sicht Sohn → Vater):** „Ist eine Karte falsch oder unklar, melde ich das mit einem Knopf und Grund; mein
+Vater sieht die Meldung, erledigt sie, und ich sehe danach einen Hinweis, dass sie bearbeitet wurde.“
+
+**Entwickler-Brief:** wie in der Sprintplanung. Die Senke ist `ExerciseFeedbackService` – der einzige Ort, der Meldungen
+schreibt und liest; Guards je Ebene „fremd sieht nichts“, die Meldung ändert nichts am Spiel (AK 2, Vorher/Nachher).
+
+## Iteration 88 — gebaut, nicht abgenommen
+
+- **Backend (B-628):** Entität `ExerciseFeedback`, Migration `20261118215442_ExerciseFeedback` (rein additiv, Probe an
+  einer Kopie der echten DB über die Sicherungs-API: alle Zeilen erhalten, keine FK-Verletzung; Kopie gelöscht), Vertrag,
+  Dienst, Endpunkte auf allen drei Ebenen, Fehlercode `feedback_during_test`, Client, Doku-Capture. 12 Integrationsfälle
+  grün. Gefunden beim Bauen: `SelectMany` über Testergebnisse braucht in SQLite `APPLY` → skalare Unterabfrage.
+- **Frontend (B-629):** Knopf und Formular an jeder Übungskarte und je Zeile des Test-Ergebnisblatts, Hinweis auf der
+  Startseite, Vater-Seite „Rückmeldungen“, Zählung an eigenen Übungen. Vitest 5/5, E2E `rueckmeldung.spec.ts` 1 passed.
+
+## Review Sprint 88 — der Zähler läuft über
+
+| Fund | Quelle | Behandlung | Zähler |
+| --- | --- | --- | --- |
+| 🟡 „offen zuerst“ sortierte den Text-Status („Done“ < „Open“), `take` schnitt offene ab | pugling-reviewer | behoben + Fall | 1 |
+| 🟡 Konto mit Supervisor- und Student-Rolle meldete/quittierte für ein betreutes Kind | pugling-reviewer | behoben + Fall | 2 |
+| 🟡 Karte nur über den Index verankert | pugling-reviewer | nicht übernommen: derselbe Anker wie der Lernstand, B-328 sperrt Kürzen/Umsortieren; am Dienst dokumentiert | – |
+| Rotes Tor: Dank und Hinweis entstanden mit ihrer Live-Region | `liveRegions.test.ts` | behoben | 3 |
+| 🟡 Fokus/`aria-expanded` · Gründe-Liste nicht erschöpfend typisiert · alte Zeilen beim Filterwechsel · E2E „Hinweis nur einmal“ kann nicht fallen · keine Zusicherung „kein Knopf im laufenden Test“ | frontend-reviewer | **offen** | 4–8 |
+| 🟡 „Sprung zur Übung“ ist ein Link zum Plan | frontend-reviewer | offen – braucht eine Entscheidung (es gibt keinen Tiefenlink auf eine Übung) | – |
+
+**Halt (Freigabe 3):** mehr als fünf behebbare Funde in einem Sprint gelten als Endlosschleife – der **gesamte Lauf endet
+hier**, ohne die offenen Funde einzuarbeiten, ohne Mutanten-Probe, volle Suite nach dem letzten Stand und Rollengang-Urteil.
+Der gebaute Stand liegt auf **`refs/heads/auto/sprint-88-rueckmeldung`** (ein Commit über `main`), nicht auf `main`: er ist
+nicht abgenommen, und `main` soll den Heimnetz-Server nicht mit einer halb geprüften Migration starten. B-628 und B-629
+stehen auf `in-arbeit` mit `wartet_auf`.
+
+## Retrospektive (Sprint 88, verkürzt)
+
+**Nachschau:** in Runde 5 schon geführt (Sprint 87, B-661) – kein weiterer abgenommener Stand seither außer Sprint 93,
+dessen Nachschau der nächste Lauf führt.
+
+- **Was die eigenen Tore durchließen:** nichts Ausgeliefertes – der Sprint ist nicht abgenommen. Aber die Größe: ein L+M
+  mit drei Oberflächen ergibt in einem Lauf zwangsläufig viele kleine Review-Funde; der Zähler maß hier eher die
+  Fläche als eine Schleife. Fünf der acht Funde sind a11y/UI-Feinschliff an neuen Oberflächen.
+- **Vorschlag (nicht gelandet):** den Fünfer-Zähler je Story statt je Sprint führen, oder L-Stories mit drei Oberflächen
+  vor dem Nachtlauf teilen (B-629 in „Arcade-Knopf“ und „Vater-Seite + Zählung“). Entscheidung beim Nutzer.
+- **Bewusst ungedeckt:** der Rollengang (es gibt eine grüne E2E, aber kein Urteil nach der Einarbeitung).
+
+## Offene Roadmap (Stand Ende des Nachtlaufs)
+
+1. **Sprint 88 fertigstellen** auf `auto/sprint-88-rueckmeldung`: die sechs offenen 🟡 (B-629-Verlauf), Entscheidung zu
+   „Sprung zur Übung“, Mutanten-Probe, volle Suite, Rollengang, dann nach `main`.
+2. **[B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md)** (P2, Defekt): ein zurückverlegter
+   Planstart kann Serie und Münzen kosten – bis dahin einen Planstart nicht zurück in die Vergangenheit verlegen.
+3. Danach die Folge der Sprintplanung (Sprint 90); B-670, B-671, B-673 (P3) in die nächste Sichtung.

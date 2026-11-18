@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/frontend, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Rückmeldung Frontend, Feedback-Knopf Sohn-App]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-623
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Review-Funde Sprint 88 einarbeiten (Nachtlauf-Halt, Zähler 8)"
 ---
 
 # B-629 · Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend)
@@ -86,3 +87,7 @@ Mustern (`ExerciseRatingPanel`, Vater-Listen mit `ListControls`).
 ## Verlauf
 
 - **2026-11-17** — angelegt beim Schätzen von B-623 (Teil 2 von 3: Frontend), geschätzt M.
+- **2026-11-18** — Nachtlauf, Sprint 88: gebaut. `frontend/src/sohn/KartenMeldung.tsx` (Knopf, acht Gründe mit `aria-pressed`, Text, Sperre ohne Grund/Text, Dank; `MeldungsHinweis` auf der Startseite), eingehängt in `SohnPractice` (je Karte) und `TestResult` (je Zeile, nur mit Plan/Position); Vater-Seite `/vater/rueckmeldungen` (Navigation „Betreuen“); `ExerciseFeedbackPanel` hinter „💬 Rückmeldungen“ an eigenen Übungen; i18n `feedback.*` de/en, `problem.feedback_during_test`. Vitest `KartenMeldung.test.tsx` 5/5; E2E `frontend/e2e/rueckmeldung.spec.ts` **1 passed** (Sohn meldet → Vater erledigt → Ersteller zählt → Sohn sieht den Hinweis; Ausweichports 5211/5181).
+- **2026-11-18** — Live-Region-Tor (`src/liveRegions.test.ts`) rot: Dank und Hinweis entstanden mit ihrem Text → Regionen dauerhaft, `MeldungsHinweis` in `REGION_BAUSTEINE` (zählt).
+- **2026-11-18** — Review `frontend-reviewer`, **offen** (Lauf beendet, bevor eingearbeitet): 🟡1 Fokus fällt beim Öffnen/Abbrechen/Absenden auf `body`, `aria-expanded` fest `false`; 🟡3 `GRUENDE` nicht erschöpfend typisiert, `api.feedbackReasons` ungenutzt; 🟡4 Filterwechsel zeigt alte Zeilen mit aktiven Knöpfen (`list.stale`); 🟡5 E2E „Hinweis nur einmal“ kann nach `reload` nicht fallen (`waitForResponse` fehlt); 🟡6 keine Zusicherung „kein Knopf während des Tests“; 🟡7 AK 4 „Sprung zur Übung“ ist ein Link zum Plan (es gibt keinen Tiefenlink auf eine Übung) – Entscheidung nötig; 🟢 Vater-Labels Kurzform statt „dieselben Worte“, Tastatur-Fall-Kommentar, Knopf an `isOwn` statt Schreibrecht, `ListenAusfall` ohne `schluessel`, `children.error` stumm, CSS-Klassen ohne Regeln.
+- **2026-11-18** — **Halt des Nachtlaufs (Freigabe 3):** der Zähler des Sprints stand nach dem Frontend-Review bei **8** (Backend 2, Live-Region-Tor 1, Frontend-Review 5) – mehr als fünf. Code liegt ungemergt auf `refs/heads/auto/sprint-88-rueckmeldung`; nicht abgenommen, kein Rollengang-Urteil.

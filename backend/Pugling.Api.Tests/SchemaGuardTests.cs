@@ -225,6 +225,12 @@ public class SchemaGuardTests
             // B-170: losing the account must not take the category with it - every other household
             // plans against that pre-filter entry. Same shape as the subject one level up.
             ["ExerciseCategory.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            // A child's feedback (B-628): child and exercise bind it; position, card and handler may fade.
+            ["ExerciseFeedback.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ExerciseFeedback.DoneByAdultId"] = DeleteBehavior.SetNull, // -> Adult
+            ["ExerciseFeedback.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["ExerciseFeedback.ExerciseItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
+            ["ExerciseFeedback.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             // B-12: a rating is an opinion of one creator about one exercise - without either it says nothing.

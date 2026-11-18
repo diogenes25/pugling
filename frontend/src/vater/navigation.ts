@@ -61,6 +61,7 @@ export const PERSPECTIVES: Perspective[] = [
     entries: [
       { to: "/vater", label: "🏠 Kinder & Heute", end: true },
       { to: "/vater/class-tests", label: "📝 Klassenarbeiten" },
+      { to: "/vater/rueckmeldungen", label: "💬 Rückmeldungen" },
       { to: "/vater/rewards", label: "🏆 Belohnungen" },
       { to: "/vater/shop", label: "🛒 Shop" },
       { to: "/vater/konto", label: "💰 Kontostand" },

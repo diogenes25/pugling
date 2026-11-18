@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Rückmeldung Backend, ExerciseFeedback]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-623
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Review-Funde Sprint 88 einarbeiten (Nachtlauf-Halt, Zähler 8)"
 ---
 
 # B-628 · Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend)
@@ -110,3 +111,7 @@ ein Eigentums-Check über Kind/Plan/Position/Karte und ein Rückkanal an das Kin
 ## Verlauf
 
 - **2026-11-17** — angelegt beim Schätzen von B-623 (Teil 1 von 3: Backend), geschätzt L.
+- **2026-11-18** — Nachtlauf, Sprint 88: gebaut. Entität `ExerciseFeedback` + Migration `20261118215442_ExerciseFeedback` (rein additiv; Probe an einer Kopie der echten DB über die Sicherungs-API: von `DutySinceActivatedAt` hochgezogen, Kinder 4 / Positionen 204 / Lernstand 385 / Buchungen 319 unverändert, `foreign_key_check` leer, Kopie gelöscht). Vertrag `FeedbackReason`/`FeedbackReach`/`FeedbackStatus` + `FeedbackReasons.ReachOf` (Contracts), Dienst `ExerciseFeedbackService`, Endpunkte student `…/positions/{id}/feedback`, `feedback-reasons`, `children/{id}/feedback-notices(/{id}/seen)`, supervisor `feedback` (+`take`, PATCH), creator `exercises/{id}/feedback` (Schreibrecht), Fehlercode `feedback_during_test`, Client-Methoden, Doku-Capture-Gruppe `feedback` (zweimal byte-gleich).
+- **2026-11-18** — Tests `backend/Pugling.Api.Tests/ExerciseFeedbackTests.cs` (12): AK 1 Melden mit zwei Gründen + Abweisungen, AK 2 Kasten/Ledger/Cursor vorher = nachher, AK 3 Testsperre und offener Test von gestern, AK 4 Zusammenlegen, AK 5 Multi-Supervisor/fremd, AK 6 Ersteller-Zählung ohne Kind/Text, AK 7 Hinweis einmal, AK 8 Reichweite; dazu offen-vor-erledigt und Doppelrolle. `dotnet test Pugling.sln -c Release` vor dem Review-Einbau 1889/1891 (zwei Tore, behoben), danach Klasse 12/12. **Keine Mutanten-Probe, keine volle Suite nach dem letzten Stand** – der Lauf hielt vorher.
+- **2026-11-18** — Review `pugling-reviewer`: 🟡 offen-zuerst sortierte den Text-Status („Done“ < „Open“) → behoben + Fall (zählt); 🟡 Doppelrollen-Konto meldete/quittierte für ein betreutes Kind → behoben + Fall (zählt); 🟡 Karte nur über den Index verankert → **nicht übernommen**: derselbe Anker wie der Lernstand (`PositionItemProgress.ItemIndex`), eine gespielte Übung darf ihre Liste nicht kürzen oder umsortieren (B-328) – als Absatz am Dienst dokumentiert; 🟢 Hinweis-Cache, Merge ohne Index begründet, Vater-Lesen im AK-7-Fall ergänzt (ohne Zählung).
+- **2026-11-18** — **Halt des Nachtlaufs (Freigabe 3):** der Zähler des Sprints stand nach dem Frontend-Review bei **8** (Backend 2, Live-Region-Tor 1, Frontend-Review 5) – mehr als fünf. Code liegt ungemergt auf `refs/heads/auto/sprint-88-rueckmeldung`; nicht abgenommen, kein Rollengang-Urteil.

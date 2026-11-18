@@ -187,7 +187,9 @@ public class ConventionGuardTests
     // as the grants list beside it.
     // 29 since B-122: the six top-level collections (subjects, tags, vocabulary tags, children, study plans,
     // student plans) gained an optional `take` without a default.
-    private const int UnpaginatedArrayGetCount = 29;
+    // 31 since B-628: the fixed feedback reasons (eight, closed in the contract) and the child's unseen notices (only
+    // entries a supervisor marked done and the child has not acknowledged). The supervisor's feedback list takes `take`.
+    private const int UnpaginatedArrayGetCount = 31;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

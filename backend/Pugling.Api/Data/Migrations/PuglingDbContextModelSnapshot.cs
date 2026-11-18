@@ -742,6 +742,74 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ExerciseCategories");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DoneAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DoneByAdultId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ExerciseItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ItemIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastReportedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SeenByChildAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("VocabularyId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoneByAdultId");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("ExerciseItemId");
+
+                    b.HasIndex("PlanPositionId");
+
+                    b.HasIndex("ChildId", "Status");
+
+                    b.ToTable("ExerciseFeedbacks");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ExerciseGrammarTopic", b =>
                 {
                     b.Property<int>("Id")
@@ -3112,6 +3180,46 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Owner");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ExerciseFeedback", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Adult", "DoneByAdult")
+                        .WithMany()
+                        .HasForeignKey("DoneByAdultId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ExerciseItem", "ExerciseItem")
+                        .WithMany()
+                        .HasForeignKey("ExerciseItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
+                        .WithMany()
+                        .HasForeignKey("PlanPositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Child");
+
+                    b.Navigation("DoneByAdult");
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("ExerciseItem");
+
+                    b.Navigation("PlanPosition");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseGrammarTopic", b =>

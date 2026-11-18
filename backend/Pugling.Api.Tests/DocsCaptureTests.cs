@@ -218,6 +218,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             await CaptureTimetableAsync(father, docSubjectId);
             await CaptureShopAsync(father, child);
             await CaptureRemarksAsync(father, child, docExerciseId);
+            await CaptureFeedbackAsync(father, father2, child, docSeriesUnitId, docExerciseId);
             completed = true;
         }
         finally
@@ -1016,6 +1017,51 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         await Capture(father, g, "Artikel löschen", HttpMethod.Delete,
             $"/api/v1/supervisor/shop/articles/{articleId}", null, HttpStatusCode.NoContent);
+    }
+
+    // ── feedback (B-628): the child reports a card, the supervisor handles it, the creator counts ───
+    // Last on purpose: its plan takes the subject of the documentation plan, which one active plan per subject (B-539)
+    // switches off - no later capture reads that plan.
+    private async Task CaptureFeedbackAsync(HttpClient father, HttpClient father2, HttpClient child, int docSeriesUnitId,
+        int docExerciseId)
+    {
+        const string g = "feedback";
+
+        var plan = await Capture(father, g, "Lehrplan für die Rückmeldung", HttpMethod.Post, "/api/v1/supervisor/study-plans",
+            new { childId = 1, title = "Rückmelde-Plan", seriesUnitId = docSeriesUnitId, durationDays = 10 }, HttpStatusCode.Created);
+        var planId = plan.GetProperty("id").GetInt32();
+        var pos = await Capture(father, g, "Position für die Rückmeldung", HttpMethod.Post,
+            $"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId = docExerciseId, stage = (int)TestStage.FreeText, cadence = "Daily" }, HttpStatusCode.Created);
+        var feedbackUrl = $"/api/v1/student/study-plans/{planId}/positions/{pos.GetProperty("id").GetInt32()}/feedback";
+
+        await Capture(child, g, "Gründe mit Reichweite lesen", HttpMethod.Get, "/api/v1/student/feedback-reasons",
+            null, HttpStatusCode.OK);
+        var receipt = await Capture(child, g, "Karte melden (zwei Gründe, Text)", HttpMethod.Post, feedbackUrl,
+            new { reasons = new[] { "WrongTranslation", "TooHard" }, text = "Das heißt doch anders.", itemIndex = 0 },
+            HttpStatusCode.Created);
+        await Capture(child, g, "Meldung ohne Grund und Text", HttpMethod.Post, feedbackUrl,
+            new { reasons = Array.Empty<string>() }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
+        // A running test locks reporting on the position until it is submitted (B-623, decision 5).
+        await Capture(child, g, "Test starten", HttpMethod.Post, feedbackUrl.Replace("/feedback", "/tests"), new { },
+            HttpStatusCode.Created);
+        await Capture(child, g, "Meldung während des Tests", HttpMethod.Post, feedbackUrl,
+            new { reasons = new[] { "TooStrict" }, itemIndex = 0 }, HttpStatusCode.Conflict, ApiErrors.FeedbackDuringTest.Code);
+
+        await Capture(father, g, "Rückmeldungen der Kinder (offen)", HttpMethod.Get, "/api/v1/supervisor/feedback?status=Open",
+            null, HttpStatusCode.OK);
+        var id = receipt.GetProperty("ids")[0].GetInt32();
+        await Capture(father2, g, "Fremder Betreuer erledigt", HttpMethod.Patch, $"/api/v1/supervisor/feedback/{id}",
+            new { status = "Done" }, HttpStatusCode.NotFound, ApiErrors.NotFound.Code);
+        await Capture(father, g, "Rückmeldung erledigen", HttpMethod.Patch, $"/api/v1/supervisor/feedback/{id}",
+            new { status = "Done" }, HttpStatusCode.OK);
+        await Capture(father, g, "Gezählte Gründe an der Übung (Ersteller)", HttpMethod.Get,
+            $"/api/v1/creator/exercises/{docExerciseId}/feedback", null, HttpStatusCode.OK);
+
+        await Capture(child, g, "Hinweise des Kindes", HttpMethod.Get, "/api/v1/student/children/1/feedback-notices",
+            null, HttpStatusCode.OK);
+        await Capture(child, g, "Hinweis gesehen", HttpMethod.Post, $"/api/v1/student/children/1/feedback-notices/{id}/seen",
+            null, HttpStatusCode.NoContent);
     }
 
     // ── remarks (captured while testing - a tier-neutral resource) ───────────────────────────────

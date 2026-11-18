@@ -2518,6 +2518,202 @@
         }
       }
     },
+    "/api/v1/supervisor/feedback": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Feedback"
+        ],
+        "summary": "The feedback of the caller\u0027s children, open first and newest report first; filtered by \u0060childId\u0060 (one of the\ncaller\u0027s children, else 404) and \u0060status\u0060; \u0060take\u0060 bounds the list (no default - a family\u0027s list is short,\nand a silent cut would hide reports).",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/FeedbackStatus"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/feedback/{feedbackId}": {
+      "patch": {
+        "tags": [
+          "Supervisor \u2013 Feedback"
+        ],
+        "summary": "Marks a feedback done - for every supervisor of the child, and the child gets a notice once - or open again.",
+        "parameters": [
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedbackDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedbackDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedbackDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/objectives/{objectiveId}/key-results": {
       "post": {
         "tags": [
@@ -8783,6 +8979,274 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/study-plans/{planId}/positions/{positionId}/feedback": {
+      "post": {
+        "tags": [
+          "Student \u2013 Feedback"
+        ],
+        "summary": "Reports the card \u0060itemIndex\u0060 (or, without it, the whole exercise) with one or more reasons and/or a text. A\nreason already reported on the same card and still open is merged into (count up, text appended). While the child\u0027s\ntest on the position runs today, the report is refused - in a test it belongs on the result sheet.",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "positionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/feedback-reasons": {
+      "get": {
+        "tags": [
+          "Student \u2013 Feedback"
+        ],
+        "summary": "The fixed reasons in the order the child sees them, each with its reach.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackReasonInfo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/feedback-notices": {
+      "get": {
+        "tags": [
+          "Student \u2013 Feedback"
+        ],
+        "summary": "The child\u0027s feedback that a supervisor marked done and the child has not acknowledged yet.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackNotice"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/feedback-notices/{feedbackId}/seen": {
+      "post": {
+        "tags": [
+          "Student \u2013 Feedback"
+        ],
+        "summary": "The child acknowledges a notice; it is shown once. Only the child itself - a supervisor reading the list must not\nswallow the notice before the child saw it.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
@@ -21708,6 +22172,68 @@
         }
       }
     },
+    "/api/v1/creator/exercises/{exerciseId}/feedback": {
+      "get": {
+        "tags": [
+          "Creator \u2013 Exercise Feedback"
+        ],
+        "summary": "The counted reasons of the exercise. Only for a creator who may change it (write permission): the counts are a\nrepair list, and repairing is what write permission is for.",
+        "parameters": [
+          {
+            "name": "exerciseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExerciseFeedbackSummary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/creator/exercises/{exerciseId}/grants": {
       "get": {
         "tags": [
@@ -31625,6 +32151,39 @@
         },
         "description": "Input for entering a subject on a weekday."
       },
+      "CreateFeedbackDto": {
+        "type": "object",
+        "properties": {
+          "reasons": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FeedbackReason"
+            },
+            "description": "One or more fixed reasons (multiple choice); may be empty when a text is given."
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional free text (at most 500 characters)."
+          },
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The card within the position\u0027s exercise; \u0060null\u0060 = the exercise as a whole.",
+            "format": "int32"
+          }
+        },
+        "description": "A child\u0027s feedback on a card or on the whole exercise of a position. At least one reason or a text is required."
+      },
       "CreateGrammarTopicDto": {
         "required": [
           "label",
@@ -33845,6 +34404,50 @@
           }
         },
         "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them.\n\u0060CanAssign\u0060: the same rule as on ExerciseSummary (B-140) - may the requester put the exercise\ninto a study plan or class test? Lets a caller holding only an id (the agent\u0027s \u0060assign\u0060, B-20) refuse it\nbefore the first write instead of failing halfway with \u0060exercise_not_executable\u0060.\n\u0060BookPages\u0060 (B-588): the textbook page reference; the editor reads it back here, because the PUT replaces it."
+      },
+      "ExerciseFeedbackSummary": {
+        "required": [
+          "byCard",
+          "byReason",
+          "exerciseId",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The exercise.",
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of reports with a reason.",
+            "format": "int32"
+          },
+          "byReason": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedbackReasonCount"
+            },
+            "description": "Counted reasons over the whole exercise, most reported first."
+          },
+          "byCard": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedbackCardCount"
+            },
+            "description": "Counted reasons per card, in card order (whole-exercise feedback first)."
+          }
+        },
+        "description": "The feedback on an exercise, counted per reason - in total and per card."
       },
       "ExercisePayloadOfArithmeticConfig": {
         "required": [
@@ -39233,6 +39836,359 @@
         },
         "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals of all active\nplans are met - every goal when no plan has a daily one (B-535/B-611; not \u0060DutyDone\u0060, which also counts weekly\ngoals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding and their kind in RewardCadence (\u0060Daily\u0060, \u0060Weekly\u0060, or \u0060None\u0060\nwithout any goal - B-612). DailyCoinCap is \u0060null\u0060 when there is no cap."
       },
+      "FeedbackCardCount": {
+        "required": [
+          "reasons"
+        ],
+        "type": "object",
+        "properties": {
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The card, or \u0060null\u0060 for feedback on the whole exercise.",
+            "format": "int32"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedbackReasonCount"
+            },
+            "description": "Counted reasons, most reported first."
+          }
+        },
+        "description": "The counted reasons of one card (or of the whole exercise)."
+      },
+      "FeedbackNotice": {
+        "required": [
+          "doneAt",
+          "exerciseId",
+          "exerciseTitle",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The feedback entry.",
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The exercise it was about.",
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string",
+            "description": "Title of that exercise."
+          },
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The card, or \u0060null\u0060 for the whole exercise.",
+            "format": "int32"
+          },
+          "cue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What the card showed the child (its prompt), or \u0060null\u0060 for the whole exercise."
+          },
+          "reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The reported reason, or \u0060null\u0060 for a text-only feedback.",
+                "$ref": "#/components/schemas/FeedbackReason"
+              }
+            ]
+          },
+          "doneAt": {
+            "type": "string",
+            "description": "When a supervisor marked it done.",
+            "format": "date-time"
+          }
+        },
+        "description": "A feedback of the child that a supervisor has marked done and the child has not acknowledged yet (B-623, decision 8)."
+      },
+      "FeedbackReach": {
+        "enum": [
+          "ThisChild",
+          "Everyone"
+        ],
+        "type": "string",
+        "description": "Allowed values: ThisChild, Everyone."
+      },
+      "FeedbackReason": {
+        "enum": [
+          "TooHard",
+          "TooEasy",
+          "AheadOfClass",
+          "WrongTranslation",
+          "TooMuchAsked",
+          "TooStrict",
+          "SeveralMeanings",
+          "Liked"
+        ],
+        "type": "string",
+        "description": "Allowed values: TooHard, TooEasy, AheadOfClass, WrongTranslation, TooMuchAsked, TooStrict, SeveralMeanings, Liked."
+      },
+      "FeedbackReasonCount": {
+        "required": [
+          "count",
+          "reach",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "description": "The reason.",
+            "$ref": "#/components/schemas/FeedbackReason"
+          },
+          "reach": {
+            "description": "Its fixed reach.",
+            "$ref": "#/components/schemas/FeedbackReach"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of reports (all children, open and done).",
+            "format": "int32"
+          }
+        },
+        "description": "How often a reason was reported."
+      },
+      "FeedbackReasonInfo": {
+        "required": [
+          "reach",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "description": "The reason.",
+            "$ref": "#/components/schemas/FeedbackReason"
+          },
+          "reach": {
+            "description": "Whom it concerns when new content is created.",
+            "$ref": "#/components/schemas/FeedbackReach"
+          }
+        },
+        "description": "A reason with its fixed reach, for the child\u0027s dialog and for the creating agent."
+      },
+      "FeedbackReceipt": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "description": "The feedback entries written or merged into, one per reason (one for a text-only feedback)."
+          }
+        },
+        "description": "Receipt of a feedback: one entry per reason (a repeated open reason on the same card is merged into its entry)."
+      },
+      "FeedbackResponse": {
+        "required": [
+          "childId",
+          "childName",
+          "count",
+          "createdAt",
+          "exerciseId",
+          "exerciseTitle",
+          "id",
+          "lastReportedAt",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The feedback entry.",
+            "format": "int32"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The reporting child.",
+            "format": "int32"
+          },
+          "childName": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "studyPlanId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The plan of the position, or \u0060null\u0060 if the position was deleted since.",
+            "format": "int32"
+          },
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The position played, or \u0060null\u0060 if it was deleted since.",
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The exercise.",
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string",
+            "description": "Its title."
+          },
+          "itemIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The card, or \u0060null\u0060 for the whole exercise.",
+            "format": "int32"
+          },
+          "cue": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The card\u0027s prompt as it is now, or \u0060null\u0060 (whole exercise, or the card no longer exists)."
+          },
+          "solution": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The card\u0027s expected answer as it is now, or \u0060null\u0060."
+          },
+          "childAnswer": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The child\u0027s most recent stored answer to that card, or \u0060null\u0060 when none is stored."
+          },
+          "reason": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The reason, or \u0060null\u0060 for a text-only feedback.",
+                "$ref": "#/components/schemas/FeedbackReason"
+              }
+            ]
+          },
+          "reach": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The reason\u0027s reach, or \u0060null\u0060 without a reason.",
+                "$ref": "#/components/schemas/FeedbackReach"
+              }
+            ]
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How often the child reported this reason on this card while it was open.",
+            "format": "int32"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The child\u0027s free text, several reports joined by line breaks."
+          },
+          "status": {
+            "description": "Open or done.",
+            "$ref": "#/components/schemas/FeedbackStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "First report.",
+            "format": "date-time"
+          },
+          "lastReportedAt": {
+            "type": "string",
+            "description": "Latest report.",
+            "format": "date-time"
+          },
+          "doneAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it was marked done, or \u0060null\u0060.",
+            "format": "date-time"
+          }
+        },
+        "description": "A child\u0027s feedback as the supervisor sees it."
+      },
+      "FeedbackStatus": {
+        "enum": [
+          "Open",
+          "Done"
+        ],
+        "type": "string",
+        "description": "Processing state of a feedback: open until a supervisor marks it done (for all supervisors of the child).\n\nAllowed values: Open, Done."
+      },
       "Gap": {
         "required": [
           "answer",
@@ -43261,6 +44217,7 @@
               "extra_run_completed",
               "extra_run_stale",
               "extra_training_locked",
+              "feedback_during_test",
               "forbidden",
               "grammar_topic_in_use",
               "http_error",
@@ -46793,6 +47750,19 @@
         },
         "description": "Partial change to a profile; omitted fields remain unchanged.\n\nA \u0060null\u0060 means \u0022not specified\u0022 in a PATCH \u2013 so it cannot **clear** a field.\nThe \u0060Clear\u2026\u0060 switches (like \u0060ClearGrade\u0060 on the class test) exist for that: only with them\ncan a profile become subject-neutral, series-independent, or grade-open again.\n\n\u0060ClearSubject\u0060 makes the profile subject-neutral (subject id and name drop away), \u0060ClearSeries\u0060\nmakes it series-independent, \u0060ClearGradeMin\u0060/\u0060ClearGradeMax\u0060 lift the respective grade-level limit.\n\nSending \u0060SubjectId\u0060 alone is enough: the server derives \u0060SubjectName\u0060 from it, so the two\nhalves cannot contradict each other (B-142). A \u0060SubjectName\u0060 sent alongside an id is therefore\nignored \u2013 the free text only carries meaning while *no* catalog subject is bound."
       },
+      "UpdateFeedbackDto": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "description": "The new state.",
+            "$ref": "#/components/schemas/FeedbackStatus"
+          }
+        },
+        "description": "Changes the processing state of a feedback; done holds for all supervisors of the child."
+      },
       "UpdateGrammarTopicDto": {
         "type": "object",
         "properties": {
@@ -48973,6 +49943,9 @@
       "name": "Creator \u2013 Exercise Categories"
     },
     {
+      "name": "Creator \u2013 Exercise Feedback"
+    },
+    {
       "name": "Creator \u2013 Exercise Grants"
     },
     {
@@ -49051,6 +50024,9 @@
       "name": "Supervisor \u2013 Class Tests"
     },
     {
+      "name": "Supervisor \u2013 Feedback"
+    },
+    {
       "name": "Supervisor \u2013 Missions"
     },
     {
@@ -49085,6 +50061,9 @@
     },
     {
       "name": "Student \u2013 Daily Box"
+    },
+    {
+      "name": "Student \u2013 Feedback"
     },
     {
       "name": "Student \u2013 Interests"

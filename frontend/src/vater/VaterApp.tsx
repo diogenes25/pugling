@@ -31,6 +31,7 @@ import { VaterProfil } from "./VaterProfil";
 import { VaterLernstand } from "./VaterLernstand";
 import { VaterZiele } from "./VaterZiele";
 import { VaterAnmerkungen } from "./VaterAnmerkungen";
+import { VaterRueckmeldungen } from "./VaterRueckmeldungen";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
@@ -158,6 +159,7 @@ export function VaterApp() {
           <Route path="shop" element={<VaterShop />} />
           <Route path="konto" element={<VaterKonto />} />
           <Route path="class-tests" element={<VaterClassTests />} />
+          <Route path="rueckmeldungen" element={<VaterRueckmeldungen />} />
           <Route path="plan/new" element={<VaterPlanCreate />} />
           <Route path="plan/:planId" element={<VaterPlanDetail />} />
           {import.meta.env.DEV && <Route path="anmerkungen" element={<VaterAnmerkungen />} />}

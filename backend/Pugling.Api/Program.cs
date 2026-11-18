@@ -175,6 +175,7 @@ builder.Services.Configure<ExtraTrainingOptions>(builder.Configuration.GetSectio
 builder.Services.AddScoped<ExtraTrainingService>();
 // The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
+builder.Services.AddScoped<ExerciseFeedbackService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
 // Learning report per position: "which word sits and which does not" (box/mastery + test hit rate).

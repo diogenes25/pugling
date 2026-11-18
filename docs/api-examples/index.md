@@ -1,6 +1,6 @@
 # API-Beispiele – Übersicht
 
-Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **144** Beispiele in **12** Gruppen.
+Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesamt **157** Beispiele in **13** Gruppen.
 
 | Gruppe | Beispiele | Fehlerfälle | Datei |
 | --- | ---: | ---: | --- |
@@ -9,6 +9,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 | children | 7 | 2 | [`children.md`](./children.md) |
 | class-tests | 3 | 2 | [`class-tests.md`](./class-tests.md) |
 | exercise-grants | 7 | 3 | [`exercise-grants.md`](./exercise-grants.md) |
+| feedback | 13 | 3 | [`feedback.md`](./feedback.md) |
 | me | 15 | 5 | [`me.md`](./me.md) |
 | remarks | 19 | 7 | [`remarks.md`](./remarks.md) |
 | shop | 28 | 8 | [`shop.md`](./shop.md) |
@@ -19,7 +20,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 83** Codes aus `ApiErrors`.
+Verifiziert: **35 / 84** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |
@@ -30,6 +31,7 @@ Verifiziert: **34 / 83** Codes aus `ApiErrors`.
 | `exercise_empty` | study-plans – Ungefüllte Übung zuweisen |
 | `exercise_in_use` | catalog – Verwendete Übung löschen |
 | `exercise_not_executable` | exercise-grants – Nicht ausführbare Übung zuweisen |
+| `feedback_during_test` | feedback – Meldung während des Tests |
 | `forbidden` | me – Vater greift auf Sohn-Route zu |
 | `insufficient_coins` | shop – Shop-Angebot kaufen (kein Guthaben) |
 | `insufficient_gems` | me – Skin kaufen ohne Gems |
