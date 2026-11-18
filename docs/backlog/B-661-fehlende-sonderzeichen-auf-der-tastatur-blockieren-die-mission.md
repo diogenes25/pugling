@@ -12,7 +12,7 @@ quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedric
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-598]
-wartet_auf: "Probe auf Friedrichs Handy (Android: d, î aus der Leiste, ner ergibt genau dîner)"
+wartet_auf: ""
 ---
 
 # B-661 · Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission
@@ -240,3 +240,5 @@ Keines davon taugt als Quelle für die Leiste.
   leere + Test; 🟢 leere Zusicherung entfernt; 🟢 NFC für zerlegt gespeicherte Wörter; 🟢 `disabled` an den
   Leistenknöpfen bewusst gelassen (der Fokus steht dort praktisch nie). **Offen** (`wartet_auf`): Android-
   Komposition ist nur am echten Gerät prüfbar – die E2E läuft in Desktop-Chromium.
+- 2026-11-18 · abgenommen · Heimnetz-Server vom Vater neu gestartet; Rückmeldung nach der Probe auf dem Handy:
+  „funktioniert“. `wartet_auf` geleert.
