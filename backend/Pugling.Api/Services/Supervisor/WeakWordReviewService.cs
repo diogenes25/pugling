@@ -133,6 +133,7 @@ public class WeakWordReviewService(PuglingDbContext db, ExerciseItemService item
         var position = new PlanPosition
         {
             CreatedAt = now,
+            DutySince = DateOnly.FromDateTime(now),
             StudyPlanId = plan.Id,
             ExerciseId = exercise.Id,
             Order = order,

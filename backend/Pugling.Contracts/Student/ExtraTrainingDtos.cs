@@ -19,12 +19,14 @@ public enum ExtraForm
 }
 
 /// <summary>
-/// The bonus training of a child for today. <paramref name="Unlocked"/> is false until today's daily goals are met -
-/// all goals in a plan without daily ones (B-535; not <c>DutyDone</c>, which also counts weekly goals). <paramref
-/// name="LockReason"/>: <c>no_plan</c> or <c>duty_open</c>, with the goals still open in <paramref name="Outstanding"/>. <paramref name="DailyCoinCap"/> is <c>null</c> when there is no cap.
+/// The bonus training of a child for today. <paramref name="Unlocked"/> is false until today's daily goals of all active
+/// plans are met - every goal when no plan has a daily one (B-535/B-611; not <c>DutyDone</c>, which also counts weekly
+/// goals). <paramref name="LockReason"/>: <c>no_plan</c> or <c>duty_open</c>, with the goals still open in <paramref
+/// name="Outstanding"/> and their kind in <paramref name="RewardCadence"/> (<c>Daily</c>, <c>Weekly</c>, or <c>None</c>
+/// without any goal - B-612). <paramref name="DailyCoinCap"/> is <c>null</c> when there is no cap.
 /// </summary>
 public record ExtraTrainingOverview(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding,
-    int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraExercise> Exercises);
+    int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraExercise> Exercises, GoalCadence RewardCadence);
 
 /// <summary>
 /// One exercise of the bonus pool. Every exercise may be played again (B-538). <paramref name="Repeatable"/> marks the

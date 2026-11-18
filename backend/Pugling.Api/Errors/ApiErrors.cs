@@ -212,7 +212,7 @@ public static class ApiErrors
     public static readonly ApiError CannotEase = new("cannot_ease", 409, "This card cannot be made easier.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
-    /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals without daily ones) (409).</summary>
+    /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals when no plan has daily ones, B-611) (409).</summary>
     public static readonly ApiError ExtraTrainingLocked = new("extra_training_locked", 409, "Bonus training is locked.");
     /// <summary>
     /// The fixed-form bonus exercise is worth nothing more today: three runs of it were completed today (B-538). Its worth

@@ -272,6 +272,8 @@ public class DailyBoxTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             var plan = db.StudyPlans.First(p => p.Id == planId);
             // Widen the plan's runtime backward far enough for the 6 seeded past days plus today.
             plan.StartDate = today.AddDays(-10);
+            // The goal exists since the plan's start (B-613: a duty counts only from the day it was created).
+            db.PlanPositions.First(p => p.Id == positionId).CreatedAt = today.AddDays(-10).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
             for (var i = 1; i <= 6; i++)
             {
                 db.TestAttempts.Add(new TestAttempt

@@ -36,9 +36,34 @@ const uebung = (over: Partial<ExtraExercise>): ExtraExercise => ({
   completedRuns: 0, done: false, nextForm: "Typed", coinsPerHit: 3, openRunId: null, nextRunPercent: 100, ...over,
 });
 
+/*
+ * B-612 AK 4 – die Sperre nennt die Zielart, an der sie hängt. Rot mit dem festen `bonus.lockedDuty`: dann hieße es auch
+ * bei reinen Wochenzielen „Erst die Tagesziele“.
+ */
+describe("Bonus-Sperre – Zielart (B-612)", () => {
+  const gesperrt = async (rewardCadence: ExtraTrainingOverview["rewardCadence"]) => {
+    extraTraining.mockResolvedValue({
+      unlocked: false, lockReason: "duty_open", outstanding: ["Wörter (Wochenziel) offen"], coinsToday: 0,
+      dailyCoinCap: null, exercises: [], rewardCadence,
+    } as ExtraTrainingOverview);
+    render(<MemoryRouter><SohnBonus /></MemoryRouter>);
+    await screen.findByText("Wörter (Wochenziel) offen");
+  };
+
+  it("sagt bei Wochenzielen „Erst die Wochenziele“", async () => {
+    await gesperrt("Weekly");
+    expect(screen.getByText("Erst die Wochenziele – dann öffnet das Bonus-Training.")).toBeTruthy();
+  });
+
+  it("sagt bei Tageszielen weiter „Erst die Tagesziele“", async () => {
+    await gesperrt("Daily");
+    expect(screen.getByText("Erst die Tagesziele – dann öffnet das Bonus-Training.")).toBeTruthy();
+  });
+});
+
 const zeige = async (coinsToday: number, dailyCoinCap: number | null) => {
   extraTraining.mockResolvedValue({
-    unlocked: true, lockReason: null, outstanding: [], coinsToday, dailyCoinCap,
+    unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday, dailyCoinCap,
     exercises: [
       uebung({ exerciseId: 1, title: "Tiere" }),
       uebung({ exerciseId: 2, title: "Rechnen", type: "Arithmetic", repeatable: false }),
@@ -58,7 +83,7 @@ describe("Bonus-Übersicht – Wert des nächsten Laufs (B-538)", () => {
     // Rot, wenn die Zeile `nextRunPercent` nicht zeigt (dann fehlte „heute noch 50 % wert“), ihn auch bei 100 % zeigte,
     // oder wenn eine erledigte Übung weiter einen Link hätte.
     extraTraining.mockResolvedValue({
-      unlocked: true, lockReason: null, outstanding: [], coinsToday: 9, dailyCoinCap: 90,
+      unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 9, dailyCoinCap: 90,
       exercises: [
         uebung({ exerciseId: 1, title: "Tiere" }),
         uebung({ exerciseId: 2, title: "Rechnen", type: "Arithmetic", repeatable: false, nextRunPercent: 50 }),
@@ -79,7 +104,7 @@ describe("Bonus-Übersicht – Wert des nächsten Laufs (B-538)", () => {
   // Münzen weiterspielen), oder wenn am vollen Deckel noch ein Prozentwert steht, der dort nichts mehr bedeutet.
   it("lässt Vokabeln bei 0 % weiterspielen und nennt am vollen Deckel keinen Prozentwert", async () => {
     extraTraining.mockResolvedValue({
-      unlocked: true, lockReason: null, outstanding: [], coinsToday: 90, dailyCoinCap: 90,
+      unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 90, dailyCoinCap: 90,
       exercises: [
         uebung({ exerciseId: 1, title: "Tiere", nextRunPercent: 0, done: true, completedRuns: 3 }),
         uebung({ exerciseId: 2, title: "Wörter", nextRunPercent: 50 }),
@@ -241,7 +266,7 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
         { itemIndex: 1, prompt: text, expected: "are we?", givenAnswer: "aren't we?", wasCorrect: false, gapIndex: 2 },
       ],
     } as ExtraRunResult);
-    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], coinsToday: 3, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
+    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 3, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
     sessionStorage.setItem("pugling.bonus.run.300", JSON.stringify([
       { itemIndex: 0, givenAnswer: "doesn't she?" }, { itemIndex: 1, givenAnswer: "aren't we?" }]));
     render(
@@ -284,7 +309,7 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
         { itemIndex: 1, prompt: "gehen", expected: "walk", givenAnswer: "walk", wasCorrect: true, gapIndex: null },
       ],
     } as ExtraRunResult);
-    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], coinsToday: 4, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
+    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 4, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
     sessionStorage.setItem("pugling.bonus.run.301", JSON.stringify([
       { itemIndex: 0, givenAnswer: "gehen" }, { itemIndex: 1, givenAnswer: "walk" }]));
     render(

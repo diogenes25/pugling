@@ -63,7 +63,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         foreach (var child in children)
         {
             // Every plan running in the range, also one switched off since (B-558): a chapter change must not erase the
-            // weeks before it. Without an activation history an inactive plan only counts in the child's favour.
+            // weeks before it. A plan off on a day (off now, or switched on only later - B-613) counts in the child's favour.
             var plans = await db.StudyPlans.AsNoTracking()
                 .Where(p => p.ChildId == child.Id && p.StartDate <= to && p.EndDate >= from)
                 .ToListAsync(ct);
@@ -77,9 +77,10 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
                     var d = await progress.ComputeDayAsync(plan, day, ct);
                     goalsMet += d.GoalsMet;
                     points += d.PointsAwarded;
+                    var active = PositionProgressService.ActiveOn(plan, day);
                     // An inactive plan's goals only enter the total on a day it was used, or a draft would read "0 of n".
-                    if (plan.Active || d.GoalsMet > 0 || d.PointsAwarded > 0) goalsTotal += d.GoalsTotal;
-                    duties.Add(new(plan.Active, d.GoalsTotal > 0, d.DutyDone));
+                    if (active || d.GoalsMet > 0 || d.PointsAwarded > 0) goalsTotal += d.GoalsTotal;
+                    duties.Add(new(active, d.GoalsTotal > 0, d.DutyDone));
                 }
                 // null = no duty that day: such a day neither fulfils nor breaks a period's duty.
                 days.Add((day, goalsTotal, goalsMet, points, PositionProgressService.TimelineDutyDone(duties)));

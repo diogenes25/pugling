@@ -18,10 +18,12 @@ import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
 import { BonusEinstieg } from "./SohnBonus";
 import {
-  abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, zielAnteil,
+  abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, truhenZiele,
+  zielAnteil,
   type Frist, type Spielweg,
 } from "./pfad";
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
+import type { TruhenZiele } from "./pfad";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -73,9 +75,10 @@ export function SohnHome() {
 
   const mood = today.dutyDone ? "hyped" : today.goalsMet > 0 ? "happy" : "sleepy";
   const { tag, woche } = zielZaehler(today.positions);
-  // Der Balken zählt dieselben Ziele wie Truhe und Bonus (Review B-535): die Tagesziele, ohne sie alle.
-  const belohnung = belohnungsZiele(today.positions);
-  const goalPct = belohnung.total > 0 ? Math.round((belohnung.met / belohnung.total) * 100) : 0;
+  // Der Balken zählt dieselben Ziele wie Truhe und Bonus (B-612): der Server liefert sie aus derselben Auswahl wie
+  // `rewardsUnlocked` – über alle Pläne gewählt (B-611); nachgerechnet liefe sie bei mehreren Plänen auseinander.
+  const zielArt = truhenZiele(today.rewardCadence);
+  const goalPct = today.rewardGoalsTotal > 0 ? Math.round((today.rewardGoalsMet / today.rewardGoalsTotal) * 100) : 0;
 
   const faecher = nachFach(today.positions);
   // Ein einziger START über alle Fächer: der Pfad je Fach hebt sonst in jedem Fach einen „nächsten“ Knoten hervor.
@@ -131,12 +134,13 @@ export function SohnHome() {
       ))}
 
       {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
-      <Truhe box={today.dailyBox} heute={today.day} ziele={belohnung.art} freigeschaltet={today.rewardsUnlocked}
+      <Truhe box={today.dailyBox} heute={today.day} ziele={zielArt} freigeschaltet={today.rewardsUnlocked}
         onVeraltet={sicht.reload} />
 
-      {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`:
-          die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
-      <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} ziele={belohnung.art} />
+      {/* Nach dem Pfad, nicht davor: erst die Pflicht, dann die Kür. Offen liest der Server (`rewardsUnlocked`: die
+          Belohnungsziele über alle Pläne, Tag oder Woche – B-535/B-611) statt es nachzurechnen; ein Plan ohne Pflicht hat
+          nichts davor. Die Sperre hält der Server. */}
+      <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} ziele={zielArt} />
     </div>
   );
 }
@@ -442,23 +446,7 @@ export function zielZaehler(positions: readonly PositionStatus[]) {
   return { tag: zaehle((p) => istTagespflicht(p.cadence)), woche: zaehle((p) => p.cadence === "Weekly") };
 }
 
-/** Welche Ziele die Truhe freischalten: die Tagesziele, ohne sie alle (Wochen-)Ziele, ohne Pflicht gar keine (B-535). */
-export type TruhenZiele = "tag" | "woche" | "keine";
-
-/**
- * Die Ziele, an denen Truhe und Bonus-Training hängen, mit ihrem Stand – dieselbe Auswahl wie
- * `PositionProgressService.RewardObligations` am Server: die Tagesziele, ohne sie alle Ziele mit Takt. Ob sie
- * **erfüllt** sind, liest die Seite trotzdem am Server (`rewardsUnlocked`); hier geht es um Wortlaut und Balken.
- */
-export function belohnungsZiele(positions: readonly PositionStatus[]): { art: TruhenZiele; met: number; total: number } {
-  const mitTakt = positions.filter((p) => p.cadence !== "None");
-  const tag = mitTakt.filter((p) => istTagespflicht(p.cadence));
-  const ziele = tag.length > 0 ? tag : mitTakt;
-  return {
-    art: tag.length > 0 ? "tag" : mitTakt.length > 0 ? "woche" : "keine",
-    met: ziele.filter((p) => p.goalMet).length, total: ziele.length,
-  };
-}
+export type { TruhenZiele } from "./pfad";
 
 /**
  * Ein gescheitertes Neuladen der Übersicht (Review B-527). Der Fehler überlebt den Start der Wiederholung

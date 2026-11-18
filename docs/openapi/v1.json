@@ -8292,7 +8292,7 @@
         "tags": [
           "Student \u2013 Today"
         ],
-        "summary": "Today\u0027s duties of all active, running plans of the child: goals met and open, whether the day\u0027s rewards are\nunlocked (the chest is earned only once every plan\u0027s daily goals are met), the child\u0027s streak and today\u0027s chest.",
+        "summary": "Today\u0027s duties of all active, running plans of the child: goals met and open, whether the day\u0027s rewards are\nunlocked (the chest is earned once the daily goals of all plans are met, or every goal when no plan has a daily\none) with their count and kind, the child\u0027s streak and today\u0027s chest.",
         "parameters": [
           {
             "name": "childId",
@@ -39178,6 +39178,7 @@
           "coinsToday",
           "exercises",
           "outstanding",
+          "rewardCadence",
           "unlocked"
         ],
         "type": "object",
@@ -39219,9 +39220,12 @@
             "items": {
               "$ref": "#/components/schemas/ExtraExercise"
             }
+          },
+          "rewardCadence": {
+            "$ref": "#/components/schemas/GoalCadence"
           }
         },
-        "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals are met -\nall goals in a plan without daily ones (B-535; not \u0060DutyDone\u0060, which also counts weekly goals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding. DailyCoinCap is \u0060null\u0060 when there is no cap."
+        "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals of all active\nplans are met - every goal when no plan has a daily one (B-535/B-611; not \u0060DutyDone\u0060, which also counts weekly\ngoals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding and their kind in RewardCadence (\u0060Daily\u0060, \u0060Weekly\u0060, or \u0060None\u0060\nwithout any goal - B-612). DailyCoinCap is \u0060null\u0060 when there is no cap."
       },
       "Gap": {
         "required": [
@@ -46183,6 +46187,9 @@
           "goalsTotal",
           "outstanding",
           "positions",
+          "rewardCadence",
+          "rewardGoalsMet",
+          "rewardGoalsTotal",
           "rewardsUnlocked"
         ],
         "type": "object",
@@ -46232,7 +46239,7 @@
           },
           "rewardsUnlocked": {
             "type": "boolean",
-            "description": "The reward goals of every active plan are met: the daily chest and the bonus training open."
+            "description": "The day\u0027s reward goals are met: the daily chest and the bonus training open. Reward goals are\nthe daily goals of all active plans, or every goal when no plan has a daily one."
           },
           "currentStreak": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -46253,6 +46260,28 @@
           "dailyBox": {
             "description": "Today\u0027s reward chest.",
             "$ref": "#/components/schemas/DailyBoxStatus"
+          },
+          "rewardGoalsTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many reward goals the day has - the list behind RewardsUnlocked.",
+            "format": "int32"
+          },
+          "rewardGoalsMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Of those, the goals met; the chest\u0027s progress bar.",
+            "format": "int32"
+          },
+          "rewardCadence": {
+            "description": "\u0060Daily\u0060 when the reward goals are the daily goals, \u0060Weekly\u0060 when there are only\nweekly ones, \u0060None\u0060 without any goal - what the child is told still stands before the chest.",
+            "$ref": "#/components/schemas/GoalCadence"
           }
         },
         "description": "The child\u0027s day across all of its active, running plans (B-606): the one place that says whether today\u0027s duty is\ndone, whether the day\u0027s rewards are unlocked, how long the streak is and whether the daily chest is earned. With a\nsingle active plan it reads the same as that plan\u0027s OverviewResponse."

@@ -33,6 +33,9 @@ public class KindTagessichtTests(PuglingWebAppFactory factory) : IClassFixture<P
             plan.StartDate = Today.AddDays(-2);
             plan.Title = plan.Id == planA ? "Plan A" : "Plan B";
         }
+        // The goals exist since the plans' start (B-613: a duty counts only from the day it was created).
+        foreach (var pos in db.PlanPositions.Where(p => p.Id == positionA || p.Id == positionB))
+            pos.CreatedAt = Today.AddDays(-2).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         db.SaveChanges();
         return new Setup(await TestApi.ChildAsync(factory, childId, pin), childId, planA, positionA, planB, positionB);
     }

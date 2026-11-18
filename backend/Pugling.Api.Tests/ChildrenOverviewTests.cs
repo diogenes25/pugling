@@ -172,6 +172,8 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         var plan = db.StudyPlans.Single(p => p.Id == planId);
         plan.StartDate = start;
         plan.Active = active;
+        // The goal exists since the plan's start (B-613: a duty counts only from the day it was created).
+        db.PlanPositions.Single(p => p.Id == positionId).CreatedAt = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         db.SaveChanges();
         return (planId, positionId);
     }

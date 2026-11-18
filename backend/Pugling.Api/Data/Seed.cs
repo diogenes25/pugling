@@ -498,8 +498,10 @@ public static class Seed
             StartDate = today,
             EndDate = today.AddYears(1),
             Active = true,
+            ActivatedAt = today,
             Positions = positions,
         };
+        foreach (var position in positions) position.DutySince = today;
 
         db.StudyPlans.Add(plan);
         db.SaveChanges();

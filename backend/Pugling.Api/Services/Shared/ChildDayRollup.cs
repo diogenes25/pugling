@@ -20,7 +20,10 @@ public sealed record ChildPlanDay(StudyPlan Plan, DayOverview Overview);
 /// <param name="RewardOutstanding">Child-facing lines of the open reward goals (what still locks chest and bonus).</param>
 /// <param name="RewardsUnlocked">There are reward goals and all of them are met: the daily chest may be earned.</param>
 /// <param name="Positions">The positions of all plans, plan by plan in the server's order.</param>
+/// <param name="RewardGoalsTotal">How many reward goals the day has (the list behind <paramref name="RewardsUnlocked"/>).</param>
+/// <param name="RewardGoalsMet">Of those, the goals met.</param>
+/// <param name="RewardCadence">Their kind (<see cref="PositionProgressService.RewardCadence"/>).</param>
 public sealed record ChildDayRollup(
     DateOnly Day, IReadOnlyList<ChildPlanDay> Plans, bool DutyDone, int GoalsTotal, int GoalsMet,
     IReadOnlyList<string> Outstanding, IReadOnlyList<string> RewardOutstanding, bool RewardsUnlocked,
-    IReadOnlyList<PositionStatus> Positions);
+    IReadOnlyList<PositionStatus> Positions, int RewardGoalsTotal, int RewardGoalsMet, GoalCadence RewardCadence);

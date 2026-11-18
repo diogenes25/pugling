@@ -21,7 +21,8 @@ public class ChildTodayController(PositionProgressService progress, DailyBoxServ
 {
     /// <summary>
     /// Today's duties of all active, running plans of the child: goals met and open, whether the day's rewards are
-    /// unlocked (the chest is earned only once every plan's daily goals are met), the child's streak and today's chest.
+    /// unlocked (the chest is earned once the daily goals of all plans are met, or every goal when no plan has a daily
+    /// one) with their count and kind, the child's streak and today's chest.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -33,6 +34,6 @@ public class ChildTodayController(PositionProgressService progress, DailyBoxServ
         var streak = await progress.ChildStreakAsync(childId, today, int.MaxValue, ct);
         var box = await dailyBox.StatusAsync(childId, today, ct);
         return new TodayResponse(childId, today, day.DutyDone, day.GoalsTotal, day.GoalsMet, day.Outstanding,
-            day.RewardsUnlocked, streak, day.Positions, box);
+            day.RewardsUnlocked, streak, day.Positions, box, day.RewardGoalsTotal, day.RewardGoalsMet, day.RewardCadence);
     }
 }

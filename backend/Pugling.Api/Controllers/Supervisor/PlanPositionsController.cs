@@ -206,11 +206,13 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
         var sb = exercise.SuggestedBonus;
 
+        var createdAt = time.GetUtcNow().UtcDateTime;
         var pos = new PlanPosition
         {
             // The same clock as the day logic that reads it (B-476: a word's ladder counts from the day its position
             // joined the plan); the entity's wall-clock default would put the two on different calendars under test.
-            CreatedAt = time.GetUtcNow().UtcDateTime,
+            CreatedAt = createdAt,
+            DutySince = DateOnly.FromDateTime(createdAt),
             StudyPlanId = planId,
             ExerciseId = dto.ExerciseId,
             Order = order,
@@ -344,6 +346,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.ItemCount is not null) pos.ItemCount = dto.ItemCount;
         if (dto.ClearItemCount) pos.ItemCount = null;
         if (dto.Scope is not null) pos.Scope = dto.Scope.Value;
+        // B-613: a free position that becomes a duty counts from today; a mere save or Daily <-> Weekly keeps the date.
+        if (dto.Cadence is { } cadence && cadence != GoalCadence.None && pos.Cadence == GoalCadence.None)
+            pos.DutySince = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;
         if (dto.OrderStrategy is not null) pos.OrderStrategy = dto.OrderStrategy.Value;
         if (dto.GoalThreshold is not null) pos.GoalThreshold = dto.GoalThreshold;

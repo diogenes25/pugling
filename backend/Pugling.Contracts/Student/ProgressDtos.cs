@@ -20,13 +20,18 @@ public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, Dat
 /// <param name="GoalsTotal">Goals (daily and weekly) over all active plans.</param>
 /// <param name="GoalsMet">Of those, the goals met.</param>
 /// <param name="Outstanding">The child-facing lines of the open goals, plan by plan.</param>
-/// <param name="RewardsUnlocked">The reward goals of every active plan are met: the daily chest and the bonus training open.</param>
+/// <param name="RewardsUnlocked">The day's reward goals are met: the daily chest and the bonus training open. Reward goals are
+/// the daily goals of all active plans, or every goal when no plan has a daily one.</param>
 /// <param name="CurrentStreak">Consecutive complete days up to today over all plans (the child's streak).</param>
 /// <param name="Positions">The positions of all active plans, each carrying its plan and subject.</param>
 /// <param name="DailyBox">Today's reward chest.</param>
+/// <param name="RewardGoalsTotal">How many reward goals the day has - the list behind <paramref name="RewardsUnlocked"/>.</param>
+/// <param name="RewardGoalsMet">Of those, the goals met; the chest's progress bar.</param>
+/// <param name="RewardCadence"><c>Daily</c> when the reward goals are the daily goals, <c>Weekly</c> when there are only
+/// weekly ones, <c>None</c> without any goal - what the child is told still stands before the chest.</param>
 public record TodayResponse(int ChildId, DateOnly Day, bool DutyDone, int GoalsTotal, int GoalsMet,
     IReadOnlyList<string> Outstanding, bool RewardsUnlocked, int CurrentStreak, IReadOnlyList<PositionStatus> Positions,
-    DailyBoxStatus DailyBox);
+    DailyBoxStatus DailyBox, int RewardGoalsTotal, int RewardGoalsMet, GoalCadence RewardCadence);
 
 /// <summary>Day-by-day progress over the entire run (completed days, goals reached, points).</summary>
 public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly EndDate, int DaysComplete,

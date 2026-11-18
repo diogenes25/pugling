@@ -12,7 +12,8 @@ vi.mock("./SohnApp", () => ({
 vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
 const refreshWallet = vi.fn();
 
-const { belohnungsZiele, cadenceKey, NeuLadenFehler, Pfad, Truhe, zielZaehler } = await import("./SohnHome");
+const { cadenceKey, NeuLadenFehler, Pfad, Truhe, zielZaehler } = await import("./SohnHome");
+const { truhenZiele } = await import("./pfad");
 const { BonusEinstieg } = await import("./SohnBonus");
 const { api, ApiError } = await import("../lib/api");
 type TruhenZiele = import("./SohnHome").TruhenZiele;
@@ -354,17 +355,14 @@ describe("Belohnungen – dieselben Ziele wie der Server", () => {
     expect(within(truhe()).queryByRole("button")).toBeNull();
   });
 
-  // Rot, wenn der Balken wieder alle Ziele mischt (dann 1 / 2 statt 1 / 1) oder ohne Tagesziele nichts zählt.
-  it("zählt die Tagesziele, ohne sie alle Ziele mit Takt", () => {
-    expect(belohnungsZiele([position({ positionId: 1, goalMet: true }), position({ positionId: 2, cadence: "Weekly" })]))
-      .toEqual({ art: "tag", met: 1, total: 1 });
-    expect(belohnungsZiele([position({ cadence: "Weekly", goalMet: true }), position({ positionId: 2, cadence: "None" })]))
-      .toEqual({ art: "woche", met: 1, total: 1 });
-    expect(belohnungsZiele([position({ cadence: "None" })])).toEqual({ art: "keine", met: 0, total: 0 });
-    // B-636: die Nacharbeit „bis erledigt“ ist eine Tagespflicht wie am Server (IsDailyDuty) – rot, wenn sie nur als
-    // Ziel mit Takt zählt (dann „woche“ und das Wochenziel im Balken).
-    expect(belohnungsZiele([position({ cadence: "UntilDone" }), position({ positionId: 2, cadence: "Weekly", goalMet: true })]))
-      .toEqual({ art: "tag", met: 0, total: 1 });
+  // B-612: welche Ziele zählen, wählt der Server (die Auswahl-Fälle stehen in `BelohnungUeberPlaeneTests`); hier nur
+  // der Wortlaut zur gelieferten Art. Rot, wenn eine Art auf den falschen Text fällt.
+  it("bildet die Zielart des Servers auf den Wortlaut ab", () => {
+    expect(truhenZiele("Daily")).toBe("tag");
+    expect(truhenZiele("Weekly")).toBe("woche");
+    expect(truhenZiele("None")).toBe("keine");
+    // B-636: die Nacharbeit ist eine Tagespflicht – rot, wenn sie auf „keine Pflicht“ fiele.
+    expect(truhenZiele("UntilDone")).toBe("tag");
   });
 
   // B-636: rot, wenn die Nacharbeit ohne eigenen Zweig als „Zusatzübung“ auf dem Pfad steht – sie kostet Malus.

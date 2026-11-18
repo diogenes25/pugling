@@ -28,6 +28,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 const { FachKarte, Pfad, SohnHome } = await import("./SohnHome");
+type Belohnung = Pick<TodayResponse, "rewardGoalsTotal" | "rewardGoalsMet" | "rewardCadence" | "rewardsUnlocked">;
 
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter", exerciseType: "Vocabulary", renderer: "flashcards",
@@ -61,10 +62,33 @@ describe("Weg von der Kind-Tagessicht", () => {
  * zeigt einen einzigen START und führt jede Position in den Weg ihres Plans.
  */
 describe("Startseite über zwei Pläne", () => {
-  const sicht = (positions: PositionStatus[]): TodayResponse => ({
+  const sicht = (positions: PositionStatus[], belohnung?: Belohnung): TodayResponse => ({
     childId: 7, day: "2026-11-17", dutyDone: false, goalsTotal: positions.length, goalsMet: 0, outstanding: [],
     rewardsUnlocked: false, currentStreak: 0, positions,
     dailyBox: { claimedToday: false, openedToday: false, waiting: 0, coinsAwarded: null, gemsAwarded: null, streakAtClaim: 0 },
+    rewardGoalsTotal: positions.length, rewardGoalsMet: 0, rewardCadence: "Daily", ...belohnung,
+  });
+
+  /*
+   * B-612 AK 2 und 3: Balken und Truhen-Text kommen aus den Belohnungsfeldern des Servers, die Zeilen „Ziele heute“ und
+   * „Ziele diese Woche“ zählen weiter je Takt. Die Positionen sind so gewählt, dass flach nachgerechnet „Tagesziele 2/2“
+   * herauskäme – der Server meldet aber „Woche 0/1“ (etwa weil er über Pläne anders wählt).
+   */
+  it("nimmt Balken und Truhen-Text vom Server, zählt die Zeilen aber je Takt", async () => {
+    today.mockResolvedValue(sicht([
+      position({ positionId: 1, goalMet: true, exerciseTitle: "Eins" }),
+      position({ positionId: 2, goalMet: true, exerciseTitle: "Zwei" }),
+    ], { rewardGoalsTotal: 1, rewardGoalsMet: 0, rewardCadence: "Weekly", rewardsUnlocked: false }));
+    const { container } = render(<MemoryRouter><SohnHome /></MemoryRouter>);
+
+    // Rot, solange der Balken aus `today.positions` rechnet: dann 100 % statt 0 %.
+    await screen.findByText("Schaffe deine Wochenziele, dann öffnet sich die Truhe.");
+    expect((container.querySelector(".bar.lime i") as HTMLElement).style.width).toBe("0%");
+    // Rot, wenn der Bonus-Einstieg seine Zielart wieder selbst bestimmt (dann „Erst die Tagesziele“).
+    expect(screen.getByText("🔒 Erst die Wochenziele – dann öffnet das Bonus-Training.")).toBeTruthy();
+    // AK 3 – rot, wenn die Zeile „Ziele heute“ durch die Belohnungszahlen ersetzt wird (dann 0 / 1).
+    const heute = screen.getByText("🎯 Ziele heute").closest(".row") as HTMLElement;
+    expect(heute.textContent).toContain("2 / 2");
   });
 
   it("zeigt je Fach einen Abschnitt, einen START über beide und führt in den Plan der Position", async () => {

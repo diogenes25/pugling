@@ -143,6 +143,13 @@ public class PlanPosition
     /// day: no penalty and no place in the day's mission from the next day on, also for days settled only later.
     /// </summary>
     public DateOnly? CompletedOn { get; set; }
+    /// <summary>
+    /// The UTC day the position became a duty (B-613): its creation day, or the day a free position was switched to a
+    /// cadence. A duty counts for streak, missions, timeline and penalty only from then on - a free day before cannot
+    /// have been missed. Set only on the switch from <see cref="GoalCadence.None"/>; a mere save keeps it.
+    /// <c>default</c> (never set) falls back to <see cref="CreatedAt"/>.
+    /// </summary>
+    public DateOnly DutySince { get; set; }
     /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
     /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>

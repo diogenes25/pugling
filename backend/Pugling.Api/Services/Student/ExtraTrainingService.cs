@@ -36,7 +36,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
 
     /// <summary>Lock reason: the child has no playable plan, so there is neither a duty nor a topic.</summary>
     public const string LockNoPlan = "no_plan";
-    /// <summary>Lock reason: today's daily goals (or, in a plan without daily goals, all goals) are not met yet.</summary>
+    /// <summary>Lock reason: today's daily goals (or, when no active plan has daily goals, all goals) are not met yet.</summary>
     public const string LockDutyOpen = "duty_open";
 
     /// <summary>Outcome of a start or submit: either the value or the error to answer with.</summary>
@@ -57,7 +57,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var cap = CapOf(await db.Children.AsNoTracking().Where(c => c.Id == childId).Select(c => c.BonusDailyCoinCap).FirstAsync(ct));
         var pool = gate.Plans.Count == 0 ? [] : await PoolAsync(childId, gate.Plans, ct);
         return new ExtraTrainingOverview(gate.Unlocked, gate.LockReason, gate.Outstanding, coinsToday, cap,
-            [.. pool.Select(p => p.Row)]);
+            [.. pool.Select(p => p.Row)], gate.RewardCadence);
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var gate = await GateAsync(childId, today, ct);
         if (!gate.Unlocked)
             return Outcome<ExtraRunResponse>.Fail(ApiErrors.ExtraTrainingLocked,
-                "The bonus training opens once today's daily goals are done.");
+                "The bonus training opens once the goals it waits for are done: today's daily goals, or the weekly goals when no plan has a daily one.");
 
         var pool = await PoolAsync(childId, gate.Plans, ct);
         if (pool.FirstOrDefault(p => p.Row.ExerciseId == exerciseId) is not { } entry)
@@ -173,7 +173,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var today = Today;
         if (!(await GateAsync(childId, today, ct)).Unlocked)
             return Outcome<ExtraRunResult>.Fail(ApiErrors.ExtraTrainingLocked,
-                "The bonus training opens once today's daily goals are done.");
+                "The bonus training opens once the goals it waits for are done: today's daily goals, or the weekly goals when no plan has a daily one.");
 
         var coinsBefore = await CoinsTodayAsync(childId, today, ct);
         var dailyCap = CapOf(child.BonusDailyCoinCap);
@@ -251,20 +251,21 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
     }
 
-    private record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans);
+    private record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans,
+        GoalCadence RewardCadence);
 
-    // Open once every playable plan has met today's reward goals (its daily goals, B-535) - read from the child's one day
-    // view (B-606), the same that earns the daily box. A plan without any duty has nothing to come first, so it neither
+    // Open once the reward goals of the child's day are met (the daily goals of all plans, B-535/B-611) - read from
+    // the child's one day view (B-606), the same that earns the daily box. A plan without any duty has nothing to come first, so it neither
     // locks nor needs the box rule's "at least one goal".
     private async Task<Gate> GateAsync(int childId, DateOnly today, CancellationToken ct)
     {
         var day = await progress.ComputeChildDayAsync(childId, today, ct);
         var plans = day.Plans.Select(p => p.Plan).ToList();
-        if (plans.Count == 0) return new Gate(false, LockNoPlan, [], plans);
+        if (plans.Count == 0) return new Gate(false, LockNoPlan, [], plans, GoalCadence.None);
 
         return day.RewardOutstanding.Count == 0
-            ? new Gate(true, null, [], plans)
-            : new Gate(false, LockDutyOpen, day.RewardOutstanding, plans);
+            ? new Gate(true, null, [], plans, day.RewardCadence)
+            : new Gate(false, LockDutyOpen, day.RewardOutstanding, plans, day.RewardCadence);
     }
 
     // The supervisor's cap for this child wins over the server default.

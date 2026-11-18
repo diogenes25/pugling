@@ -1,4 +1,4 @@
-import type { TruhenZiele } from "./SohnHome";
+import { truhenZiele, type TruhenZiele } from "./pfad";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -46,7 +46,7 @@ function clearAnswers(runId: number) {
   try { sessionStorage.removeItem(answersKey(runId)); } catch { /* nichts zu räumen */ }
 }
 
-/** Der Einstieg auf dem Pfad: gesperrt, bis die Tagespflicht erledigt ist – die Sperre selbst hält der Server. */
+/** Der Einstieg auf dem Pfad: gesperrt, bis die Belohnungsziele (Tag oder Woche) erfüllt sind – die Sperre hält der Server. */
 export function BonusEinstieg({ offen, ziele = "tag" }: { offen: boolean; ziele?: TruhenZiele }) {
   const { t } = useTranslation();
   return (
@@ -92,7 +92,9 @@ export function SohnBonus() {
 
       {!o.unlocked ? (
         <div className="card">
-          <p className="sub" style={{ marginTop: 0 }}>{o.lockReason === "no_plan" ? t("bonus.lockedNoPlan") : t("bonus.lockedDuty")}</p>
+          <p className="sub" style={{ marginTop: 0 }}>{o.lockReason === "no_plan" ? t("bonus.lockedNoPlan")
+            // B-612: die Sperre nennt die Zielart, an der sie hängt – auch bei einem Plan nur mit Wochenzielen.
+            : truhenZiele(o.rewardCadence) === "woche" ? t("bonus.lockedDutyWeek") : t("bonus.lockedDuty")}</p>
           {o.outstanding.length > 0 && (
             <>
               <b style={{ fontSize: 13 }}>{t("bonus.stillOpen")}</b>

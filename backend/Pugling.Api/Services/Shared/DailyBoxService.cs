@@ -25,9 +25,10 @@ public class DailyBoxService(PuglingDbContext db, PositionProgressService progre
     private readonly DailyBoxOptions opts = options.Value;
 
     /// <summary>
-    /// Earns the box for <paramref name="day"/> (draw fixed, nothing booked yet) once the reward goals of <b>every</b>
-    /// active plan of the child are met (<see cref="ChildDayRollup.RewardsUnlocked"/>, B-606) and no box has been claimed
-    /// yet that day - one plan done while another is open earns nothing, or the box would reward the easiest subject.
+    /// Earns the box for <paramref name="day"/> (draw fixed, nothing booked yet) once the reward goals of the child's day
+    /// are met (<see cref="ChildDayRollup.RewardsUnlocked"/>, B-606/B-611: the daily goals of all active plans, or every goal
+    /// when no plan has a daily one) and no box has been claimed yet that day - one plan's daily goals done while another
+    /// plan's are open earns nothing, or the box would reward the easiest subject.
     /// The idempotency pre-check (a single indexed lookup) runs BEFORE the day rollup over all plans and the streak, so
     /// those run only until the day's box is earned, not on every later practice/test completion.
     /// </summary>

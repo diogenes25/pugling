@@ -88,6 +88,13 @@ public class StudyPlan
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public bool Active { get; set; } = true;
+    /// <summary>
+    /// The UTC day the plan was last switched on (B-613): <see cref="StartDate"/> on creation, today on a switch from
+    /// inactive to active. Days before it count like days of an inactive plan - only in the child's favour - for the
+    /// streak and the penalty, because the child could not play the plan then. Only the last switch is known; the
+    /// blur always goes in the child's favour. <c>default</c> (never set) means "active since the start".
+    /// </summary>
+    public DateOnly ActivatedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>The plan's positions: referenced catalog exercises with their own goal/points/Leitner.</summary>

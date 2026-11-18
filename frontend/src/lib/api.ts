@@ -88,7 +88,8 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
     "Diese Übung hat noch keine Inhalte.",
   no_checkable_content: "Diese Übung hat keine einzeln prüfbaren Aufgaben.",
   // Bonus-Training: die Sperre nennt, was zuerst kommt – sonst wäre sie ein Schloss ohne Weg hinaus.
-  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Tagesziele erfüllt sind.",
+  // Ohne Zielart in der Antwort neutral: bei reinen Wochenzielen hängt die Sperre an ihnen (B-612).
+  extra_training_locked: "Das Bonus-Training öffnet, sobald deine Ziele erfüllt sind.",
   extra_exercise_done: "Diese Bonus-Übung bringt heute nichts mehr.",
   // B-584: dieselbe Wortmenge zweimal wäre dieselbe Pflicht doppelt – auch, wenn es die Übung ist, aus der die Wörter stammen.
   review_already_in_plan: "Genau diese Wörter übt dieser Plan schon in einer Position.",

@@ -115,6 +115,9 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             StartDate = start,
             EndDate = start.AddDays(duration - 1),
             Active = dto.Active,
+            // B-613: a plan counts as switched on since its start - a backdated plan keeps its past rounds (the positions
+            // carry their own lower bound), and a plan created inactive gets today once it is switched on.
+            ActivatedAt = start,
         };
         db.StudyPlans.Add(plan);
         await db.SaveChangesAsync(ct);
@@ -205,13 +208,25 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         var onlySwitchesOff = dto == new UpdatePlanDto(null, null, null, null, false);
         if (subjectId is null && !onlySwitchesOff) return this.ProblemWithCode(ApiErrors.ValidationError, SubjectRequired);
 
+        var startMoved = dto.StartDate is { } movedTo && movedTo != plan.StartDate;
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         plan.SubjectId = subjectId;
         plan.SeriesUnitId = unit?.Id;
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
+        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        // B-613: only the switch from off to on moves the date; a repeated "active: true" must not shift it.
+        if (dto.Active == true && !plan.Active) plan.ActivatedAt = today;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
+        // A moved start changes the first day the child can play an active plan: the new start, but never before today
+        // (days before it were not playable then, so they stay in the child's favour). Without this, a future plan pulled
+        // forward to today would keep its old start as switch-on day and owe nothing until then.
+        if (startMoved && plan.Active)
+        {
+            var playableFrom = plan.StartDate > today ? plan.StartDate : today;
+            if (playableFrom < plan.ActivatedAt) plan.ActivatedAt = playableFrom;
+        }
         await db.SaveChangesAsync(ct);
         // After activating, moving to another child or changing the subject, restore "one active plan per subject".
         if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);

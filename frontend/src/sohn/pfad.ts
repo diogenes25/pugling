@@ -35,6 +35,18 @@ export function abschnitte(positions: PositionStatus[]): PfadAbschnitt[] {
  */
 export const istTagespflicht = (cadence: PositionStatus["cadence"]) => cadence === "Daily" || cadence === "UntilDone";
 
+/** Welche Ziele die Truhe freischalten: die Tagesziele, ohne sie alle (Wochen-)Ziele, ohne Pflicht gar keine (B-535). */
+export type TruhenZiele = "tag" | "woche" | "keine";
+
+/**
+ * Die Art der Ziele, an denen Truhe und Bonus-Training hängen, für ihren Wortlaut (B-612). Gewählt wird sie am Server
+ * (`rewardCadence`, aus `PositionProgressService.RewardObligations` über alle Pläne) – die Seite rechnet sie nicht nach.
+ * Die Nacharbeit „bis erledigt“ ist eine Tagespflicht, wie am Server.
+ */
+export function truhenZiele(cadence: PositionStatus["cadence"]): TruhenZiele {
+  return istTagespflicht(cadence) ? "tag" : cadence === "Weekly" ? "woche" : "keine";
+}
+
 /** Eine freie Position hat keine Pflicht – der Server meldet sie als erfüllt, auch ungespielt (B-467). */
 export const hatPflicht = (pos: PositionStatus) => pos.cadence !== "None";
 export const pflichtErfuellt = (pos: PositionStatus) => hatPflicht(pos) && pos.goalMet;

@@ -1670,6 +1670,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly>("DutySince")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ExerciseId")
                         .HasColumnType("INTEGER");
 
@@ -2359,6 +2362,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("ActivatedAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
