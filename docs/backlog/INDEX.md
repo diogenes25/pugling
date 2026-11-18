@@ -12,18 +12,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (59)
+### Offen (60)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-636](B-636-pflicht-bis-erledigt-mit-abschlussbonus.md) | Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus | Wunsch | `in-arbeit` | P1 | M | backend | Migration |
+| [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand | Wunsch | `in-arbeit` | P1 | S | beides | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-628](B-628-rueckmeldung-backend.md) | Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-629](B-629-rueckmeldung-frontend.md) | Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend) | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
-| [B-636](B-636-pflicht-bis-erledigt-mit-abschlussbonus.md) | Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
-| [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand | Wunsch | `geschaetzt` | P1 | S | beides | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `ausformuliert` | P1 | — | — | — |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `geschaetzt` | P2 | S | backend | — |
@@ -54,6 +54,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `idee` | P2 | — | — | — |
 | [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `idee` | P2 | — | — | — |
 | [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | Wunsch | `idee` | P2 | — | — | — |
+| [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | Schul-Hausaufgaben aus WebUntis abrufen und als Pflicht mit Münz-Malus abbilden | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
