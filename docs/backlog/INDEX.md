@@ -12,11 +12,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (64)
+### Offen (63)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `idee` | P1 | — | — | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
@@ -82,7 +81,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (520)</summary>
+<summary>Abgenommen (521)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -579,6 +578,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-643](B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) | Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
+| [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `abgenommen` | P3 | M | frontend | — |
@@ -624,7 +624,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (190)
 
-**Nachgeschaut: 493 von 520 abgenommenen** — und in 176 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 27 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 493 von 521 abgenommenen** — und in 176 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 28 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -820,7 +820,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (27) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (28) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -854,6 +854,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
 | [B-636](B-636-pflicht-bis-erledigt-mit-abschlussbonus.md) | Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus |
 | [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand |
+| [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
 
 </details>
 
@@ -1017,7 +1018,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | `idee` | Abschnitt „Verlauf" |
-| [B-658](B-658-positionstest-abgabe-500-unique.md) | `idee` | Abschnitt „Verlauf" |
+| [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 
 <details>
 <summary>Verworfen (47)</summary>
