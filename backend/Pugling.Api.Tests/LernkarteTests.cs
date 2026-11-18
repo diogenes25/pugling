@@ -18,7 +18,8 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     private sealed record Setup(HttpClient Father, HttpClient Child, int ChildId, int PlanId, int PositionId, int ExerciseId);
 
     // A fresh child per case: the cases read its learning history and its coins.
-    private async Task<Setup> SetupAsync(TestStage stage, string direction = "front-to-back", bool introduced = false)
+    private async Task<Setup> SetupAsync(TestStage stage, string direction = "front-to-back", bool introduced = false,
+        bool useLeitner = true)
     {
         var father = await TestApi.AdultAsync(factory);
         var pin = "6" + Random.Shared.Next(100, 999);
@@ -42,7 +43,7 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
                 },
             }));
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)stage, childId: childId,
-            introduced: introduced);
+            introduced: introduced, useLeitner: useLeitner);
         return new Setup(father, await TestApi.ChildAsync(factory, childId, pin), childId, planId, positionId, exerciseId);
     }
 
@@ -616,6 +617,47 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
         Assert.NotNull(ProgressOf(s, 1).ImprintedAt);
+    }
+
+    /// <summary>
+    /// B-658: a test that asks cold words and gets them typed right introduces and imprints them in ONE request. Both
+    /// steps look up the word's progress row; the second must find the row the first added but has not saved yet. Red if
+    /// the lookup only asks the database - the submission then adds the row twice and ends in a 500 (unique index).
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Kalter_Test_Frei_Getippt_Fuehrt_Ein_Und_Praegt_Ein(bool bulk)
+    {
+        // Without a card box the test asks every word at the position's own stage - a cold word, too, in the free field.
+        var s = await SetupAsync(TestStage.FreeText, useLeitner: false);
+        var tests = $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests";
+        var start = await s.Child.PostAsJsonAsync(tests, new { });
+        var attemptId = (await start.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attemptId").GetInt32();
+
+        if (bulk)
+        {
+            var answers = Words.Select((w, i) => new { itemIndex = i, givenAnswer = w.Front });
+            var submit = await s.Child.PostAsJsonAsync($"{tests}/{attemptId}/submit", new { answers });
+            Assert.True(submit.IsSuccessStatusCode, $"{(int)submit.StatusCode}: {await submit.Content.ReadAsStringAsync()}");
+        }
+        else
+        {
+            for (var i = 0; i < Words.Length; i++)
+            {
+                var index = (await s.Child.GetFromJsonAsync<JsonElement>($"{tests}/{attemptId}/next"))
+                    .GetProperty("item").GetProperty("itemIndex").GetInt32();
+                var res = await s.Child.PostAsJsonAsync($"{tests}/{attemptId}/answer", new { itemIndex = index, givenAnswer = Words[index].Front });
+                Assert.True(res.IsSuccessStatusCode, $"{(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
+            }
+        }
+
+        Assert.All(Enumerable.Range(0, Words.Length), i =>
+        {
+            Assert.NotNull(ProgressOf(s, i).IntroducedAt);
+            Assert.NotNull(ProgressOf(s, i).ImprintedAt);
+        });
+        Assert.Equal(Words.Length, Db(db => db.PositionItemProgress.Count(p => p.PlanPositionId == s.PositionId)));
     }
 
     /// <summary>

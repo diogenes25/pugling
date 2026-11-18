@@ -626,8 +626,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public async Task<PositionItemProgress> ProgressForAsync(int positionId, int itemIndex,
         CancellationToken ct = default)
     {
-        var prog = await db.PositionItemProgress
-            .FirstOrDefaultAsync(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex, ct);
+        // The tracker first: a row added earlier in the same request (introduce, then imprint - B-658) is not in the
+        // database yet, and a second Add would violate the unique (position, item) index on save.
+        var prog = db.PositionItemProgress.Local
+                .FirstOrDefault(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex)
+            ?? await db.PositionItemProgress
+                .FirstOrDefaultAsync(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex, ct);
         if (prog is null)
         {
             prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = itemIndex };
