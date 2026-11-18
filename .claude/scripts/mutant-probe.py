@@ -168,6 +168,13 @@ def probe():
         # (Sprint 86: a failed string replace built exactly that, and the run cost a full build and test for nothing).
         if m["new"] == m["old"]:
             sys.exit(f"{m['id']}: 'new' ist gleich 'old' – die Mutante ändert nichts ({m['f']}:{m['l']}).")
+        # A 'fails' name that exists nowhere can never be found in the output: the mutant reads as "abweichend" and looks
+        # like a test gap (Sprint 87: a typo "Bricht" for "Bucht" cost a second full run). A dotted xUnit name is looked up
+        # by its method; a Vitest/Playwright title or message part by its text.
+        for name in m.get("fails", []):
+            needle = name.rsplit(".", 1)[-1] if "." in name and " " not in name else name
+            if subprocess.run(["git", "grep", "-q", "-F", "--untracked", "-e", needle], capture_output=True).returncode != 0:
+                sys.exit(f"{m['id']}: 'fails' nennt '{name}', aber '{needle}' steht in keiner Datei des Repos – Tippfehler?")
 
     # One baseline per distinct (build, test) pair: a list mixing dotnet, vitest and playwright needs each one green.
     baselines = list(dict.fromkeys((m["build"], m["test"], json.dumps(m.get("env") or {}, sort_keys=True))

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Ziele 2/2, Truhe zu]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -238,3 +238,17 @@ nicht, die Form entscheidet der Bau.
   Bonus-Seite bekommt ihre Art über ein Feld an `ExtraTrainingOverview`, weil sie `today` nicht liest
   (`SohnBonus.tsx:70`). Setzt B-611 voraus; Reviewer `pugling-reviewer` und `frontend-reviewer`.
 - **2026-11-17** — Annahme der Schätzung vom Vater bestätigt: die Bonus-Seite bekommt die Zielart über ein Feld an `ExtraTrainingOverview`.
+- **2026-11-18** — in Arbeit (Sprint 87). `TodayResponse.rewardGoalsTotal/-Met/-Cadence` und
+  `ExtraTrainingOverview.rewardCadence` aus derselben Liste wie `rewardsUnlocked`; Startseite liest sie (`belohnungsZiele`
+  entfällt, `truhenZiele` nach `pfad.ts`), Bonus-Seite „Erst die Wochenziele…“, neuer Schlüssel `bonus.lockedDutyWeek`.
+  Dazu jede Sperr-Meldung derselben Art (pm-loop Step 5): `extra_training_locked` sagte am Server und im Client fest
+  „daily goals“/„Tagesziele“ – jetzt ohne feste Zielart.
+- **2026-11-18** — Fälle: AK 1 → `backend/Pugling.Api.Tests/BelohnungUeberPlaeneTests.cs:126`, R1/R2 (Zahlen neben der Auswahl) → rot; Art → R3/R5 → rot · AK 2 →
+  `frontend/src/sohn/tagessichtWeg.test.tsx:77`, F1 (Balken aus Positionen)/F2/F3 → rot · AK 3 → dieselbe Stelle, F6
+  (Zeile aus Belohnungszahlen) → rot · AK 4 → `frontend/src/sohn/SohnBonus.test.tsx:53`/`:58`, F4 → rot; Server
+  `backend/Pugling.Api.Tests/BelohnungUeberPlaeneTests.cs:286`, R4 → rot · AK 5 Auswahl-Fälle an den Server gewandert → `backend/Pugling.Api.Tests/BelohnungUeberPlaeneTests.cs:247` (drei Fälle) und `:265` (Nacharbeit),
+  R3 → rot; Wortlaut `SohnHome.test.tsx:360`, F5 → rot.
+- **2026-11-18** — Review `frontend-reviewer`: keine 🔴; übernommen: Bonus-Text im Startseiten-Fall, neutrale Sperrmeldung,
+  `truhenZiele` nach `pfad.ts` (Laufzeit-Kreis), `UntilDone` → „tag“, Kommentare. `pugling-reviewer`: 🟢 Testtext.
+  Rollengang Sohn: `frontend/e2e/belohnung-ueber-faecher.spec.ts` passed (Balken 100 % aus 1/1, Zeilen je Takt).
+- **2026-11-18** — abgenommen: `fe13531c`.

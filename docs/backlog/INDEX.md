@@ -12,10 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (62)
+### Offen (69)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | Defekt | `geschaetzt` | P1 | M | beides | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
@@ -24,10 +25,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `ausformuliert` | P1 | — | — | — |
-| [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `geschaetzt` | P2 | S | backend | — |
-| [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `geschaetzt` | P2 | M | beides | — |
-| [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | Defekt | `geschaetzt` | P2 | L | backend | Migration |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
@@ -55,6 +54,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `idee` | P2 | — | — | — |
 | [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `idee` | P2 | — | — | — |
 | [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | Wunsch | `idee` | P2 | — | — | — |
+| [B-660](B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) | Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0 | Wunsch | `idee` | P2 | — | beides | — |
+| [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | Wunsch | `idee` | P2 | — | frontend | — |
+| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `idee` | P2 | — | beides | — |
+| [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `idee` | P2 | — | frontend | — |
+| [B-665](B-665-vater-loest-aus-dem-inventar-des-kindes-ein.md) | Der Vater löst direkt aus dem Inventar des Kindes ein | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
@@ -62,6 +66,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `idee` | P3 | — | — | — |
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | Defekt | `idee` | P3 | — | — | — |
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `idee` | P3 | — | backend | — |
+| [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | Wird eine Pflicht zur Kür (oder gelöscht), bricht die Serie rückwirkend | Defekt | `idee` | P3 | — | backend | — |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | Defekt | `idee` | P3 | — | frontend | — |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | Defekt | `idee` | P3 | — | backend | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -80,7 +87,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (522)</summary>
+<summary>Abgenommen (525)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -566,6 +573,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md) | Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach | Defekt | `abgenommen` | P2 | XS | agent | — |
+| [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `abgenommen` | P2 | M | beides | — |
+| [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | Defekt | `abgenommen` | P2 | L | backend | Migration |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 | Wunsch | `abgenommen` | P1 | M | doku | — |
 | [B-63](B-63-lehrwerk-hierarchie.md) | Das Lehrwerk ist eine Ebene aus Freitext, gebraucht wird eine Hierarchie mit Listen | Wunsch | `abgenommen` | P2 | L | beides | Migration + Vertrag |
@@ -622,9 +632,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 
-### Nach der Abnahme entgangen (190)
+### Nach der Abnahme entgangen (194)
 
-**Nachgeschaut: 493 von 522 abgenommenen** — und in 176 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 29 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 495 von 525 abgenommenen** — und in 179 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -813,14 +823,18 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
 | [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `idee` |
 | [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `idee` |
-| [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | [B-606] | `geschaetzt` |
-| [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | [B-606] | `geschaetzt` |
-| [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | [B-606] | `geschaetzt` |
+| [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | [B-606] | `abgenommen` |
+| [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | [B-606] | `abgenommen` |
+| [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | [B-606] | `abgenommen` |
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `idee` |
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `idee` |
+| [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | [B-598] | `geschaetzt` |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | [B-636] | `idee` |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | [B-637] | `idee` |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | [B-636] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (29) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (30) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -851,9 +865,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind |
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
+| [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne |
+| [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe |
+| [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
-| [B-636](B-636-pflicht-bis-erledigt-mit-abschlussbonus.md) | Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus |
-| [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
 
@@ -1020,6 +1035,10 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
+| [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | `idee` | Abschnitt „Verlauf" |
 
 <details>
 <summary>Verworfen (47)</summary>

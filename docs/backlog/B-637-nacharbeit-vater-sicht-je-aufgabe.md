@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-632
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-18
 ---
 
 # B-637 · Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand
@@ -103,3 +104,4 @@ Vater-Sicht.
   Grundlinie nach dem Zurückspielen: green. Der 2-s-Jubel selbst ist kein Beleg (aria-hidden, sensorisch) – der Bonus
   steht seit dem Review dauerhaft in Ansage, Blatt und Rundensumme (E4).
 - **2026-11-18** — abgenommen (`177027d9`): Rollengang Vater maschinell (`nacharbeit-bis-erledigt.spec.ts`, Server nach der letzten Bearbeitung gestartet), Sohn und Creator als Regressionszeugen; Protokoll [PM-Sitzung 2026-11-18](../pm-sitzung-2026-11-18.md).
+- **2026-11-18** — nachgeschaut (Sprint-87-Lauf, `pugling-reviewer` über `177027d9`): Durchrutscher [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) (Report zählt Aufgaben außerhalb des Pools).

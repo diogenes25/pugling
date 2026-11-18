@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-632
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-18
 ---
 
 # B-636 · Eine Pflicht „täglich, bis erledigt“ mit Abschlussbonus
@@ -180,3 +181,4 @@ einmalig gibt es den Abschlussbonus.
   `nacharbeit-bis-erledigt.spec.ts` + `nacharbeit.spec.ts` **2 passed** (Ausweichports, Wegwerf-DB, Server von Playwright
   nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — abgenommen (`177027d9`): Rollengang Vater maschinell (`nacharbeit-bis-erledigt.spec.ts`, Server nach der letzten Bearbeitung gestartet), Sohn und Creator als Regressionszeugen; Protokoll [PM-Sitzung 2026-11-18](../pm-sitzung-2026-11-18.md). Offen als Gerätecheck (kein Abnahmehindernis, AK 1–5 halten): ob der große Jubel „Nacharbeit geschafft!“ am Handy wie ein TADAA wirkt.
+- **2026-11-18** — nachgeschaut (Sprint-87-Lauf, `pugling-reviewer` über `177027d9`): Durchrutscher [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) (doppelter Malus beim Umstellen auf „bis erledigt“) und [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) (leerer Pool endet nie).

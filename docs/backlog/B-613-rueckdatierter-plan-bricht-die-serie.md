@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Serie bricht nachträglich, Malus beim Wiedereinschalten, Kür wird Pflicht]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: L
@@ -346,3 +346,78 @@ einer Stelle.
 - **2026-11-17** — gegrillt mit dem Vater: Entscheidungen 1–5 (5 gegen die Empfehlung: Kür → Pflicht kommt mit hinein); Titel um den Malus erweitert; Akzeptanzkriterien final (AK 9 und 10 neu).
 - **2026-11-17** — geschätzt: L wie E6/B-643 (eine Migration mit zwei Feldern und Backfill, Untergrenze im Kern der Tagesregel; kein Frontend, kein Vertragsfeld), keine Teilung. Untergrenze als Pflichtfilter in `DutyStateAsync` und `ComputeDayAsync`, nicht in `IsGoalMetAsync`; Datum nur beim Zustandswechsel setzen; `DailyBoxTests.cs:274` beruht ebenfalls auf dem Defekt; AK 10 gilt nur ohne schon nachgetragene Positionen.
 - **2026-11-17** — Annahmen der Schätzung vom Vater bestätigt: `Create` setzt `ActivatedAt = StartDate`; eine Malus-Woche zählt nur ganz nach dem Einschalten; Pflicht → Kür → Pflicht setzt „Pflicht seit" neu.
+- **2026-11-18** — in Arbeit (Sprint 87, [PM-Sitzung Runde 3](../pm-sitzung-2026-11-18.md)). Gebaut wie im
+  Angriffsplan: Migration `20261118181817_DutySinceActivatedAt` (zwei Spalten, Backfill), Senken `DutyBegins`,
+  `IsObligationOn`, `ActiveOn` in `PositionProgressService`; Takt-Maske in `ComputeDayAsync`; `PlanDueForPeriod` schuldet
+  nach einem Wiedereinschalten nur Perioden ganz danach, **nur wenn `ActivatedAt > StartDate`** – die Annahme aus Risiko 3
+  wörtlich (`from >= ActivatedAt` immer) hätte die erste angebrochene Woche **jedes** Plans straffrei gestellt (Create und
+  Backfill setzen `ActivatedAt = StartDate`) und AK 10/11 gebrochen.
+- **2026-11-18** — Fälle (alle in `backend/Pugling.Api.Tests/RueckwirkendePflichtTests.cs`, Mutanten-Tabelle unten, gemessen nach der letzten Bearbeitung):
+  AK 1 rückdatierter Plan → `:165`, U1 → rot · AK 2 nachgetragen per `POST positions` → `:181`, U1 → rot; per `from-words`
+  → `:195`, U1 → rot (ein fehlendes `DutySince` dort ist verhaltensgleich – `CreatedAt` sagt auch „heute“ –, W8 hält es als
+  Datenzusicherung) · AK 3 Grenze am Anlegetag → `:223`, U2 (`>` statt `>=`) → rot · AK 4 Missionstage → `:239`, U1 → rot ·
+  AK 5 Truhe am 7. Tag (`StreakAtClaim` 7) → `:258`, U1 → rot · AK 6 Zeitachse → `:280`, U3 (Maske weg) → rot · AK 7
+  Wiedereinschalten Serie und Zeitachse → `:302`, U4 (`DutyStateAsync`) und U5 (Zeitachse) → rot · AK 8 kein rückwirkender
+  Malus → `:325`, U6 und W2 → rot · Gegenprobe zweites `active: true` → `:346`, W1 → rot · AK 9 Kür → Pflicht (Serie,
+  Missionstage, Malus) → `:370`, U8/U9/W7 → rot; Speichern mit gleichem Takt → `:398`, W6 → rot · AK 10 Backfill →
+  `ActivatedAtMigrationTests.cs:28`, M1/M2 → rot; erste angebrochene Woche bleibt fällig → `:417`, U7 (Guard weg) → rot ·
+  AK 11 Aufbau von `KindTagessichtTests`, `ChildrenOverviewTests`, `DailyBoxTests` zieht `CreatedAt` auf den Planstart,
+  Zusicherungen unverändert; vor dem Nachziehen genau diese 7 Fälle rot (gemessen) · Schreibpfade anlegen → `:498`, W4/W5/W9/W10 → rot.
+- **2026-11-18** — **AK 9, letzter Satz nicht gehalten:** „Pflicht → Kür ändert nichts Rückwirkendes“ stimmt nicht, wenn
+  es die letzte Pflicht eines Plans war – die vergangenen Tage verlieren ihre Pflicht, die Serie fällt (bestand schon vor
+  dem Sprint). Bewusst nicht hier: braucht eine Pflicht-Historie (zweite Migration) → [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md).
+- **2026-11-18** — Review `pugling-reviewer`: keine 🔴. 🟡1 (ein vorgezogener Start eines Zukunftsplans ließ
+  `ActivatedAt` auf dem alten Start, verpasste Tage danach kosteten nichts) behoben – `Update` zieht das Einschaltdatum eines
+  aktiven Plans bei verlegtem Start auf `max(Start, heute)` vor; Fall `:465`, W3 → rot (und mein erster Einbau verglich
+  gegen den schon überschriebenen Start – derselbe Fall war rot, bevor er stimmte). 🟡2 → B-659. 🟢 Texte nachgezogen.
+- **2026-11-18** — Probe an einer **Kopie** der echten DB (Sicherungs-API, nur lesend; alter Code im Wegwerf-Worktree gegen
+  neuen): eine nachgetragene Pflicht-Position im Bestand (Position 49, Plan 7, Testjunge, inaktiv); Serie aller vier Kinder
+  gleich, vollständige Tage nur beim Testjungen 1 → 3 (Risiko 8), kein neuer Malus.
+- **2026-11-18** — Rollengang: **nicht an der Oberfläche gefahren** – die Fälle brauchen vergangene Tage, die nur die
+  Datenbank herstellt. Statt dessen die API-Fälle oben (Vater-Schreibpfade über die echten Endpunkte, Sohn-Serie über
+  `student/children/{id}/today`) und als Regressionszeugen die E2E `vater-zeitachse`, `schwache-woerter-zuweisen`,
+  `zwei-faecher`, `pfad`, `full-flow` (alle grün). Ein Mensch prüft beim nächsten Unit-Wechsel in einem echten Plan, dass
+  die Serie des Kindes stehen bleibt. **Vor dem nächsten Heimnetz-Start:** der Neustart spielt die Migration ein (das
+  Startskript sichert vorher).
+- **2026-11-18** — abgenommen: `fe13531c`. `dotnet test Pugling.sln -c Release` 1872/1872, Vitest 1228/1228, E2E 11 passed;
+  Mutanten 26/26 rot am richtigen Ort (Tabelle unten).
+
+**Mutanten (Backend, nach der letzten Bearbeitung):**
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+| U1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:452 | red | red |  |
+| U2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:75 | red | red |  |
+| U3 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:312 | red | red |  |
+| U4 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:451 | red | red |  |
+| U5 | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:80 | red | red |  |
+| U6 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:664 | red | red |  |
+| U7 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:664 | red | red |  |
+| U8 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:694 | red | red |  |
+| U9 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:66 | red | red |  |
+| W1 | backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:220 | red | red |  |
+| W2 | backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:220 | red | red |  |
+| W3 | backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:228 | red | red |  |
+| W4 | backend/Pugling.Api/Controllers/Supervisor/StudyPlansController.cs:120 | red | red |  |
+| W5 | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:215 | red | red |  |
+| W6 | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:350 | red | red |  |
+| W7 | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:351 | red | red |  |
+| W8 | backend/Pugling.Api/Services/Supervisor/WeakWordReviewService.cs:136 | red | red |  |
+| W9 | backend/Pugling.Api/Data/Seed.cs:501 | red | red |  |
+| W10 | backend/Pugling.Api/Data/Seed.cs:504 | red | red |  |
+| M1 | backend/Pugling.Api/Data/Migrations/20261118181817_DutySinceActivatedAt.cs:30 | red | red |  |
+| M2 | backend/Pugling.Api/Data/Migrations/20261118181817_DutySinceActivatedAt.cs:31 | red | red |  |
+| R1 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:408 | red | red |  |
+| R2 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:417 | red | red |  |
+| R3 | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:369 | red | red |  |
+| R4 | backend/Pugling.Api/Services/Student/ExtraTrainingService.cs:268 | red | red |  |
+| R5 | backend/Pugling.Api/Controllers/Student/ChildTodayController.cs:37 | red | red |  |
+
+Frontend (B-612):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+| F1 | frontend/src/sohn/SohnHome.tsx:81 | red | red |  |
+| F2 | frontend/src/sohn/SohnHome.tsx:80 | red | red |  |
+| F3 | frontend/src/sohn/SohnHome.tsx:143 | red | red |  |
+| F4 | frontend/src/sohn/SohnBonus.tsx:97 | red | red |  |
+| F5 | frontend/src/sohn/pfad.ts:47 | red | red |  |
+| F6 | frontend/src/sohn/SohnHome.tsx:112 | red | red |  |

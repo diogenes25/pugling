@@ -135,3 +135,114 @@ Quelle ist [docs/backlog/](backlog/INDEX.md). Nach der Sprintplanung vom 2026-11
 B-613 – Truhe, Startseite und Serie über alle Pläne; Defekte vor neuer Funktion). Neu aus dieser Sitzung:
 [B-652](backlog/B-652-abschlussbonus-feld-nachschliff.md) (P3, Aufräumen), [B-653](backlog/B-653-nur-neue-inhalte-verliert-offene-lernkarte.md)
 (P3, Defekt).
+
+## Runde 3 — Sprint 87: Truhe, Startseite und Serie über alle Pläne
+
+Zweiter Aufruf `/pm-loop` am selben Tag, ohne eigenes Ziel. Die Agenda ist die Folge der
+[Sprintplanung vom 2026-11-17](pm-sitzung-2026-11-17-sprintplanung.md): Sprint 87 mit
+[B-613](backlog/B-613-rueckdatierter-plan-bricht-die-serie.md) (L),
+[B-611](backlog/B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) (S) und
+[B-612](backlog/B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) (M), alle im Refinement vom 17.11.
+gegrillt und geschätzt. Kein neuer Befund unter `docs/anmerkungen/`. Der Heimnetz-Server auf `:5200` läuft (echte DB)
+und blieb unberührt; Messungen nur an einer Kopie und an Wegwerf-DBs.
+
+Die Rollenstimmen sind die der Grill-Runde vom 17.11., nicht neu erfunden:
+
+- **Sohn:** „Mit zwei Fächern sagt die Startseite 2/2, und die Truhe bleibt zu – und wenn Papa etwas nachträgt, ist
+  meine Serie weg."
+- **Vater:** „Ich will Pläne anpassen und alte wieder einschalten können, ohne mein Kind rückwirkend zu bestrafen."
+- **Creator:** kein Pfad in diesem Sprint.
+
+**Sprint-Ziel (Sicht Sohn):** „Mit zwei Fächern sagen Truhe, Bonus und Startseite dasselbe, und meine Serie bricht nicht,
+wenn Papa eine Pflicht nachträgt oder einen alten Plan wieder einschaltet."
+
+**Entwickler-Brief:** wie in der Sprintplanung (Reihenfolge B-613 → B-611 → B-612). Senken dieses Sprints:
+`PositionProgressService.IsObligationOn`/`DutyBegins`/`ActiveOn` für jeden vergangenen Tag (B-613) und die eine
+Liste `RewardObligations(alle Positionen des Kind-Tags)` für Truhe, Bonus und die neuen Zielfelder (B-611/B-612).
+
+## Iteration 87 — umgesetzt
+
+- **B-613 (Backend, Migration `20261118181817_DutySinceActivatedAt`, Kette verlängert):** `StudyPlan.ActivatedAt` und
+  `PlanPosition.DutySince`, Backfill `StartDate` bzw. `date(CreatedAt)`. Eine Pflicht zählt für Serie, Missionen,
+  Zeitachse und Historie erst ab `DutyBegins` (`IsObligationOn` in `DutyStateAsync`, Takt-Maske in `ComputeDayAsync`);
+  ein Plan gilt an einem Tag nur als eingeschaltet ab `ActivatedAt` (`ActiveOn` in `DutyStateAsync` und der Zeitachse);
+  der Malus schuldet nach einem Wiedereinschalten nur Perioden ganz danach (`PlanDueForPeriod`, nur wenn
+  `ActivatedAt > StartDate` – sonst bliebe die erste angebrochene Woche jedes Plans straffrei). Schreibpfade:
+  Plan anlegen/PATCH (nur aus→an; ein verlegter Start eines aktiven Plans zieht das Einschaltdatum auf
+  `max(Start, heute)` vor), Position anlegen/PATCH (nur Kür→Takt), Schwächen-Wiederholung, Seed.
+- **B-611 (Backend):** `ComputeChildDayAsync` wählt die Belohnungsziele über die flache Liste aller Pläne; `DutyDone`,
+  Ziele und Serie bleiben je Plan summiert.
+- **B-612 (beides):** `TodayResponse` trägt `rewardGoalsTotal`/`rewardGoalsMet`/`rewardCadence`, `ExtraTrainingOverview`
+  `rewardCadence` – aus derselben Liste. Startseite: Balken und Truhen-/Bonus-Text aus den Feldern (`belohnungsZiele`
+  entfällt, `truhenZiele` in `pfad.ts`), die Zeilen „Ziele heute/Woche" zählen weiter je Takt. Bonus-Seite: „Erst die
+  Wochenziele…" bei Wochen-Sperre. Die Sperrmeldung `extra_training_locked` (Server und Client) nennt keine feste
+  Zielart mehr.
+- **Probe an einer Kopie der echten DB** (Sicherungs-API, nur lesend geöffnet; alter Code in einem Wegwerf-Worktree
+  gegen neuen): eine nachgetragene Pflicht-Position im Bestand (Position 49, Plan 7, Testjunge, Plan inaktiv); Serie aller
+  vier Kinder unverändert, vollständige Tage nur beim Testjungen 1 → 3 (Risiko 8: darf nur steigen), kein neuer Malus.
+
+## Review Sprint 87
+
+Beide Reviewer liefen nur lesend. **Keine 🔴.**
+
+| Fund | Quelle | Behandlung |
+| --- | --- | --- |
+| 🟡 Ein Zukunftsplan, dessen Start der Vater auf heute vorzieht, behielt den alten Start als Einschalttag – verpasste Tage danach kosteten keinen Malus, die Zeitachse zeigte nichts | pugling-reviewer | Behoben: ein verlegter Start eines aktiven Plans zieht `ActivatedAt` auf `max(Start, heute)` vor; Fall `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet` |
+| 🟡 B-613 AK 9, letzter Satz: Pflicht → Kür (die letzte Pflicht eines Plans) bricht die Serie rückwirkend | pugling-reviewer | Bestand schon vor dem Sprint, braucht eine Pflicht-Historie (zweite Migration) → [B-659](backlog/B-659-pflicht-wird-kuer-bricht-die-serie.md), bewusst nicht in diesem Sprint |
+| 🟡 Startseiten-Fall prüfte den Bonus-Text nicht · Sperrmeldung `extra_training_locked` sagte fest „Tagesziele" · E2E-Kommentar zum Balken versprach mehr, als er hält | frontend-reviewer | Zusicherung ergänzt; Meldung am Server und im Client ohne feste Zielart; Kommentar ehrlich |
+| 🟢 Laufzeit-Kreis `SohnBonus` ↔ `SohnHome`, `UntilDone` → „keine", Kommentare, Testtexte | beide | `truhenZiele` nach `pfad.ts` mit `istTagespflicht`, Texte nachgezogen |
+
+**Mutanten:** Endmessung nach der letzten Bearbeitung – Backend **26/26** rot am richtigen Ort, Frontend **6/6**
+(Tabellen im Verlauf von B-613). Erster Lauf: U6/W2 „abweichend" (Tippfehler im erwarteten Testnamen, nicht im Test),
+U7 grün – eine echte Lücke: kein Fall hielt, dass die erste angebrochene Woche eines Plans fällig bleibt. Fall
+`Erste_Angebrochene_Woche_Bleibt_Faellig` ergänzt, im zweiten Lauf rot.
+
+**Verifikation:** `dotnet test Pugling.sln -c Release` **1872/1872**, `npm run build` sauber, Vitest **1228/1228**,
+E2E **11 passed** (`belohnung-ueber-faecher` neu, dazu `belohnung-trotz-wochenziel`, `zwei-faecher`, `truhe`, `bonus`,
+`pfad`, `vater-zeitachse`, `schwache-woerter-zuweisen`, `nacharbeit-bis-erledigt`, `full-flow`, `sprint-83-rollengang`).
+Commit `fe13531c`.
+
+## Runde 4 — Abnahme
+
+Der Server des Rollengangs wurde von Playwright **nach der letzten Bearbeitung** gestartet (Ausweichports 5211/5181,
+Release, Wegwerf-DB); der Heimnetz-Server auf `:5200` blieb unberührt.
+
+- **Sohn — abgenommen (B-611, B-612).** Maschineller Rollengang `belohnung-ueber-faecher.spec.ts`: Französisch mit
+  Tagesziel, Mathe nur mit Wochenziel; vorher „Schaffe deine Tagesziele…" und Bonus gesperrt, nach dem Französisch-Test
+  wartet die Truhe, der Bonus ist offen, der Balken steht auf 100 % (1/1), die Zeilen zählen „heute 1/1, Woche 0/1". In
+  seinen Worten: „Wenn ich Französisch geschafft habe, krieg ich meine Truhe – auch wenn Mathe noch offen ist."
+- **Sohn/Vater — B-613 abgenommen, Rollengang an der Oberfläche ausgefallen.** Die Fälle brauchen vergangene Tage, die
+  nur die Datenbank herstellt. Belegt über die echten Endpunkte (`RueckwirkendePflichtTests`, 15 Fälle: Vater trägt nach,
+  datiert zurück, schaltet wieder ein, macht Kür zur Pflicht; das Kind liest seine Serie über `today`) und an einer Kopie
+  der echten DB. **Offen für einen Menschen:** beim nächsten Unit-Wechsel in einem echten Plan nachsehen, dass die Serie
+  stehen bleibt. **Vor dem nächsten Heimnetz-Start:** der Neustart spielt die Migration `DutySinceActivatedAt` ein.
+- **Creator — Regressionszeuge.** Kein Pfad des Creators im Diff; Suite grün.
+
+## Retrospektive (Sprint 87)
+
+**Nachschau:** Sprint 86 (`177027d9`, B-636/B-637) von einem frischen `pugling-reviewer` gelesen – drei Durchrutscher,
+zwei am Code bestätigt: [B-666](backlog/B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) (P2: das Umstellen
+einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal – die
+Doppelbuchungs-Sperre hängt am Takt), [B-667](backlog/B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md)
+(P3, Report „2/3 erledigt“ bei fertiger Nacharbeit), [B-668](backlog/B-668-leerer-pool-beendet-nacharbeit-nie.md) (P3,
+ungeprüft: leerer Pool endet nie). `nachgeschaut: 2026-11-18` an B-636 und B-637. Index: 495 von 525.
+
+- **Was die eigenen Tore durchließen:** ein Tippfehler im erwarteten Testnamen einer Mutante (`Bricht` statt `Bucht`). Die
+  Probe meldete U6/W2 „abweichend" – das sah wie eine Testlücke aus und kostete einen zweiten vollen Lauf (~25 Min.).
+  Dieselbe Fehlerklasse wie die No-op-Mutante aus Sprint 86: ein Fehler **in der Mutanten-Liste**, den erst das Ergebnis
+  verrät. Nicht durchgelassen hat die Probe dagegen U7 – die echte Lücke (erste angebrochene Woche) kam dadurch ans Licht.
+- **Von außerhalb der Schleife:** nichts vom Nutzer. Eine parallele Sitzung committete während der Probe (`3f7f0b92`, nur
+  Plan-Skripte); die Probe nennt den Stand, an dem sie maß – so fiel es auf. Kein Schaden.
+- **Der eine Mechanismus (neues Tor):** `.claude/scripts/mutant-probe.py` bricht vor dem ersten Bau ab, wenn ein
+  `fails`-Name in keiner Datei des Repos steht (bei `Klasse.Methode` die Methode, sonst der Text). Probe: dieselbe Liste
+  mit dem Tippfehler endet mit Exit 1 und der Meldung, nichts wird gebaut; mit richtigen Namen läuft sie bis zur
+  Grundlinie. **Weil es ein neues Tor ist, endet der Lauf hier.**
+- **Bewusst ungedeckt:** der Rollengang von B-613 an der Oberfläche (vergangene Tage); die Prüfung sieht nur, ob ein Name
+  *existiert*, nicht, ob er zum richtigen Fall gehört.
+
+## Offene Roadmap (priorisiert)
+
+Quelle ist [docs/backlog/](backlog/INDEX.md). **Vor allem anderen [B-666](backlog/B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md)**
+(P2, Defekt): es kostet echte Kinder Münzen, sobald der Vater eine laufende Nacharbeit auf „bis erledigt“ stellt – bis
+dahin eine Nacharbeit lieber neu als „bis erledigt“ anlegen statt umzustellen. Danach die Folge der Sprintplanung
+(Sprint 88). Neu aus dieser Runde: B-659 (P3), B-667 (P3), B-668 (P3).

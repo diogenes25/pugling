@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [Wochenziel-Plan sperrt Truhe]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -246,3 +246,12 @@ Zeitleiste (`TimelineDutyDone`) und der Malus. Ebenso unberührt bleibt die Test
   keine Migration, kein Vertragsbruch (nur Doku-Text am Vertrag); vier Aufrufer der Senke geprüft – Truhe, Bonus und
   `today` bekommen die neue Auswahl, das Dashboard liest kein Belohnungsfeld; Testweg neue Integrationstestklasse plus
   eigene E2E mit zwei Fächern, Reviewer `pugling-reviewer`.
+- **2026-11-18** — in Arbeit (Sprint 87). `ComputeChildDayAsync` wählt `RewardObligations` über die flache Liste aller
+  Positionen; `DutyDone`/Ziele bleiben je Plan summiert (Risiko 1). Doku an den fünf Stellen, Vertragsdoku in `v1.json`.
+- **2026-11-18** — Fälle in `backend/Pugling.Api.Tests/BelohnungUeberPlaeneTests.cs`: AK 1 → `:126`, R1 (Auswahl je Plan) → rot · AK 2 → `:152` · AK 3 → `:175` · AK 4 →
+  `:195` (AK 2–4 sind Grenzfälle, die die heutige und die neue Auswahl gleich behandeln – sie halten, dass die Reparatur
+  nicht über das Ziel schießt; keine Mutante dafür gemessen) · AK 5 Pflicht/Serie unberührt → `:214` (Serie 0 statt 2 mit
+  einem bestandenen Vortag) · AK 6 bestehende Suite unverändert grün.
+- **2026-11-18** — Review `pugling-reviewer`: zu B-611 kein Fund. Rollengang Sohn: `frontend/e2e/belohnung-ueber-faecher.spec.ts`
+  (Französisch Tagesziel erfüllt, Mathe Wochenziel offen ⇒ Truhe wartet, Bonus offen) – passed.
+- **2026-11-18** — abgenommen: `fe13531c`.
