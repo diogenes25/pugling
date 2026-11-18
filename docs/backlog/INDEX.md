@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (73)
+### Offen (68)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -24,8 +24,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-536](B-536-aufbau-uebungen-statt-versagen.md) | Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran | Wunsch | `gegrillt` | P1 | XL | beides | — |
 | [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `ausformuliert` | P1 | — | — | — |
-| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | Defekt | `in-arbeit` | P2 | S | backend | — |
-| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | Defekt | `in-arbeit` | P2 | XS | backend | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
@@ -60,8 +58,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `idee` | P2 | — | frontend | — |
-| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | Defekt | `in-arbeit` | P3 | XS | frontend | — |
-| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | Defekt | `in-arbeit` | P3 | XS | backend | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
@@ -86,12 +82,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-617](B-617-verteilung-aus-dem-lernstand-vorschlagen.md) | Pugling schlägt die Verteilung der Fächer aus dem Lernstand vor | Wunsch | `idee` | P3 | — | — | — |
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
-| [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `in-arbeit` | P3 | S | frontend | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (526)</summary>
+<summary>Abgenommen (531)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -591,10 +586,15 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-643](B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) | Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt | Wunsch | `abgenommen` | P2 | L | beides | Migration |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
+| [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
@@ -639,7 +639,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (198)
 
-**Nachgeschaut: 499 von 526 abgenommenen** — und in 181 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 27 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 499 von 531 abgenommenen** — und in 181 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -834,16 +834,16 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `idee` |
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `idee` |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | [B-598] | `abgenommen` |
-| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | [B-636] | `in-arbeit` |
-| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | [B-637] | `in-arbeit` |
-| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | [B-636] | `in-arbeit` |
-| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | [B-636] | `in-arbeit` |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | [B-636] | `abgenommen` |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | [B-637] | `abgenommen` |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | [B-636] | `abgenommen` |
+| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | [B-636] | `abgenommen` |
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | [B-661] | `idee` |
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `idee` |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (27) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (32) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -875,8 +875,13 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
+| [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
+| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal |
+| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte |
+| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter |
+| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende |
 
 </details>
 

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Beendete Nacharbeit zurückgestellt kostet Malus]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -75,3 +75,4 @@ Bedingung, grün. Testweg: `RemediationPositionTests.Beendete_Nacharbeit_zurueck
 - **2026-11-18** — Review `pugling-reviewer` (Nachreview): kein 🔴/🟡; kein Konflikt mit `StampFinishedRemediationAsync` im selben PATCH; 🟢 auch Tage *vor* dem Ende verlassen die Historie (zugunsten des Kindes) → Satz im Kommentar ergänzt (ohne Zählung).
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang: kein UI-Pfad; Ersatz der Integrationstest über den echten PATCH und die Abrechnung.
+- **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).

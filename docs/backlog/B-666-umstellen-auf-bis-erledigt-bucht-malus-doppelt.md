@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Malus doppelt nach Umstellen, Daily und UntilDone teilen keine Periode]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -121,3 +121,4 @@ Ersatz ist der Integrationstest über die echten Endpunkte (Vater-PATCH, Kind-An
 - **2026-11-18** — Review `pugling-reviewer`: kein 🔴. 🟡1 (erfüllter Tag ohne Belohnungszeile bei Ziel-Punkten 0) – Vorschlag Nullzeile **verworfen**: bricht `PositionGoalOverviewTests.ZielOhnePunkte_ErfuelltDiePflicht_BuchtAberNichts` (gemessen: 1 failed von 1881), Lücke als Entscheidung 3 dokumentiert (ohne Zählung, kein Code bleibt). 🟡2 außerhalb des Diffs → [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md). 🟢 Doku des Index korrigiert, Gegenrichtung als AK 4 ergänzt (ohne Zählung).
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang: kein UI-Pfad ändert sich (das Formular schickt denselben PATCH). Ersatz: die Fälle laufen über die echten Endpunkte (Vater-PATCH, Kind-Antworten, Abrechnung); die Rollengang-E2E `nacharbeit-bis-erledigt` (Vater stellt um, Kind spielt) ist grün.
+- **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).

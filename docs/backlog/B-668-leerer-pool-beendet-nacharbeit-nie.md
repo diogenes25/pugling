@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [Nacharbeit ohne Inhalte kostet täglich Malus]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -82,3 +82,4 @@ neuer Text), `wo: backend`. Testweg: `RemediationPositionTests.Nacharbeit_ohne_A
 - **2026-11-18** — Review `pugling-reviewer` (Nachreview): kein Fund; kein anderer Weg legt eine Nacharbeit an (Seed, `WeakWordReviewService`, Agent über die API); 🟢 bestehende leere Nacharbeiten in der echten DB werden nicht repariert – in Entscheidung 1 als Kosten benannt.
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang: kein UI-Pfad (Meldung über das bestehende Banner); Ersatz der Integrationstest über den echten PATCH/POST.
+- **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).

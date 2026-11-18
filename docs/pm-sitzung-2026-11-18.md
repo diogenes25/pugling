@@ -246,3 +246,102 @@ Quelle ist [docs/backlog/](backlog/INDEX.md). **Vor allem anderen [B-666](backlo
 (P2, Defekt): es kostet echte Kinder Münzen, sobald der Vater eine laufende Nacharbeit auf „bis erledigt“ stellt – bis
 dahin eine Nacharbeit lieber neu als „bis erledigt“ anlegen statt umzustellen. Danach die Folge der Sprintplanung
 (Sprint 88). Neu aus dieser Runde: B-659 (P3), B-667 (P3), B-668 (P3).
+
+## Runde 5 — Nachtlauf, Sprint 93: Nacharbeit-Defekte
+
+Aufruf `nachtlauf` (Freigaben nach [nachtlauf.md](nachtlauf.md)). Die Roadmap der Runde 4 stellt
+[B-666](backlog/B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) vor alles andere; zusammen mit den übrigen
+Nacharbeits-Funden der Nachschau (B-667, B-668) und dem Aufräumen B-652 ergibt das einen roten Faden. Kein neuer Befund
+unter `docs/anmerkungen/`. Der Heimnetz-Server auf `:5200` blieb unberührt (E2E auf 5211/5181, Wegwerf-DBs). Die
+unversionierte Datei `B-665` (Wunsch, `ausformuliert`, um 21:16 von außerhalb dieses Laufs angelegt) bleibt unangetastet und
+uncommittet.
+
+Rollenstimmen aus der Nachschau von Runde 4, nicht neu erfunden:
+
+- **Sohn:** „Papa stellt meine Nacharbeit um, und ich zahle denselben Tag zweimal.“
+- **Vater:** „Der Report sagt 2/3, obwohl die Nacharbeit fertig ist.“
+- **Creator:** kein Pfad in diesem Sprint.
+
+**Sprint-Ziel (Sicht Vater):** „Ich kann eine Nacharbeit umstellen – auf ‚bis erledigt‘ und zurück –, ohne dass mein Kind
+einen Tag doppelt oder für pflichtlose Tage zahlt, und der Report zeigt genau die Aufgaben der Nacharbeit.“
+
+**Umfang:** B-666 (S), B-667 (XS), B-668 (XS), B-652 (S, Aufräumen); im Sprint dazugekommen
+[B-669](backlog/B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) (XS, Review-Fund außerhalb des Diffs).
+
+**Refinement (eigene Phase):** alle vier von `idee` bis `geschaetzt` in diesem Lauf, autonom gegrillt (`Defekt`/`Aufräumen`,
+Freigabe 1). B-668 war `unverifiziert`: am Code fand sich, dass ein Lückentext **ohne Lücken** anlegbar ist (die Prüfung
+„At least one gap“ gilt nur für die Entität `ClozeText`) – der einzige Eingang zu einem leeren Pool.
+
+**Entwickler-Brief:** Senke ist die Frage „ist diese Periode schon abgerechnet?“ (`SamePeriodCadences`, drei Prüfungen in
+`PositionProgressService`); die Pflicht-Grenze bleibt `DutySince` (B-613), jetzt auch nach dem Ende einer „bis
+erledigt“-Nacharbeit; im Frontend die Senke `settingsToDto`/`positionSettingsProblem` für beide Speicherwege. Keine Migration,
+kein Vertragsbruch.
+
+## Iteration 93 — umgesetzt
+
+- **Backend:** `SamePeriodCadences` (Daily + UntilDone eine Familie, Weekly getrennt) an den drei Existenzprüfungen; Doku
+  des Index korrigiert. `RemediationProblem` lehnt eine Übung ohne Aufgaben ab (Anlegen und PATCH). PATCH setzt `DutySince`
+  auf heute, wenn eine beendete „bis erledigt“-Position in einen anderen Takt wechselt.
+- **Frontend:** `NacharbeitReport` zeigt und zählt nur Pool-Aufgaben; `completionBonus` reist nur bei „bis erledigt“;
+  `positionSettingsProblem` (Bonus ganzzahlig 0–1000, dann Zeitfenster) an beiden Speicherwegen; 🪙 `aria-hidden`, der E2E
+  fragt den zugänglichen Namen.
+- **Rote Proben** (Zahlen in den Stories): B-666 3/3 rot (Malus `[18.11., 18.11.]` statt `[18.11.]`, 2 statt 1 Belohnung),
+  B-668 PATCH 200 statt 400, B-669 sechs Malus-Tage statt keiner, B-667 1 failed / 1 passed gegen den alten Stand.
+
+## Review Sprint 93
+
+| Fund | Quelle | Behandlung | Zähler |
+| --- | --- | --- | --- |
+| 🟡 Erfüllter Tag ohne Belohnungszeile (Ziel-Punkte 0) wird nach dem Umstellen streng gewertet | pugling-reviewer | Vorschlag „Nullzeile als Markierung“ gebaut, **gemessen gegen die Invariante**: `ZielOhnePunkte_ErfuelltDiePflicht_BuchtAberNichts` fällt (1 von 1881). Zurückgenommen, Lücke als B-666 Entscheidung 3 dokumentiert | 0 (kein Code bleibt) |
+| 🟡 Beendete Nacharbeit zurück auf Tagesziel kostet Malus seit dem Ende | pugling-reviewer | außerhalb des Diffs → B-669, im Sprint gebaut | 0 (außerhalb) |
+| 🟡 Kommazahl im Bonus erreicht beim Bearbeiten den Server (englischer Fehler) | frontend-reviewer | Ganzzahl-Prüfung + Fall `2.5` | **1** |
+| 🟢 Gegenrichtung UntilDone → Daily ohne Test · Index-Doku veraltet · Kommentare verrutscht · Hinweis „Tage vor dem Ende verlassen die Historie“ | beide | behoben | ohne Zählung |
+| 🟢 Browser-Prüfung im Hinzufügen-Formular hält 1001 vor der deutschen Meldung auf | frontend-reviewer | bewusst so (B-652 Entscheidung 3) | ohne Zählung |
+
+Zähler des Sprints: **1** von 5.
+
+**Mutanten** (nach der letzten Bearbeitung, gemessen an `6b961cb5 + Arbeitsbaum`, 22:37): **13/13 rot am richtigen Ort**
+(U1–U4 B-666, R1 B-668, D1 B-669, F1 B-667, F2–F6 und E1 B-652; Tabelle je Story im Verlauf). Der erste Lauf brach an der
+E2E-Grundlinie ab (Selektor, siehe B-652), der zweite **stürzte beim Zurückschreiben ab** (`OSError 22` auf
+`PlanPositions.tsx`, Windows-Dateisperre) und ließ Mutante F2 im Quelltext stehen – von Hand zurückgesetzt und per Vitest
+59/59 geprüft; der dritte lief mit einer Scratchpad-Kopie des Skripts, die das Schreiben wiederholt.
+
+**Verifikation:** `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber,
+`dotnet format` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen. Commit `f5b04d26`.
+
+## Runde 6 — Abnahme Sprint 93
+
+Server des Rollengangs von Playwright **nach der letzten Bearbeitung** gestartet (5211/5181, Wegwerf-DB).
+
+- **Vater — abgenommen.** `nacharbeit-bis-erledigt.spec.ts`: stellt „täglich, bis erledigt“ mit Abschlussbonus 30 über das
+  Feld „Abschlussbonus“ ein, der Report sagt „Nacharbeit: 2/2 erledigt“. Umstellen ohne Doppelbuchung (B-666/B-669) und die
+  Ablehnung der leeren Nacharbeit (B-668) sind am Server über die echten Endpunkte belegt, nicht an der Oberfläche – dort
+  ändert sich kein Pfad. In seinen Worten: „Ich kann umstellen, ohne dass er doppelt zahlt.“
+- **Sohn — Regressionszeuge.** Kind-Teil derselben Spec und `nacharbeit.spec.ts` grün, `full-flow` grün; kein Arcade-Pfad im
+  Diff.
+- **Creator — Regressionszeuge.** Kein Creator-Pfad im Diff; Suite grün.
+
+## Retrospektive (Sprint 93)
+
+**Nachschau:** Sprint 87 (`fe13531c`) und B-661 (`96a3491d`), je ein frischer Reviewer, nur lesend. Durchrutscher:
+[B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) (P2, `entgangen_bei: B-613`, am Code
+bestätigt: ein zurückverlegter Start hebt `ActivatedAt` nie an), [B-670](backlog/B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md)
+(P3, `entgangen_bei: B-661`, bestätigt: Leiste je Übung statt je getippter Sprache),
+[B-671](backlog/B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) (P3, B-661, ungeprüft im Browser); älter und ohne
+Zuordnung [B-673](backlog/B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md). B-611 und B-612 ohne Befund,
+mit benannten Prüfpunkten. `nachgeschaut: 2026-11-18` an B-611, B-612, B-613, B-661. Index: **499 von 531**.
+
+- **Was die eigenen Tore durchließen:** die Mutanten-Probe selbst. Ein `OSError` beim **Zurückschreiben** endet im
+  `finally` mit einer Ausnahme – die Mutante bleibt im Quelltext, die Tabelle fehlt, und nichts sagt laut „Datei ist
+  mutiert“. Gefunden nur, weil ich die Zeilen danach von Hand gelesen habe. Ein Commit danach hätte die Mutante
+  ausgeliefert (F2: der Bonus wäre wieder unsichtbar gespeichert worden).
+- **Von außerhalb der Schleife:** nichts vom Nutzer. Der Reparaturvorschlag 🟡1 des Reviewers brach eine bewusst getestete
+  Invariante – [[review-vorschlag-gegen-invariante]] hat gegriffen, diesmal durch die Suite gemessen statt gelesen.
+- **Der eine Mechanismus (Vorschlag, Nachtlauf-Freigabe 3 – nicht gelandet):** `mutant-probe.py` schreibt Mutante und
+  Original mit Wiederholung (Windows hält eine eben gebaute Datei kurz gesperrt) und prüft nach dem Zurückschreiben, dass die
+  Datei **byte-gleich** dem Original ist; gelingt das nicht, Exit ≠ 0 mit der Meldung „Datei X trägt noch Mutante Y“. Erprobt
+  als Scratchpad-Kopie (nur die Wiederholung), der Lauf ging durch.
+- **Bewusst ungedeckt:** der Rollengang für B-666/B-668/B-669 an der Oberfläche (kein UI-Pfad ändert sich); erfüllte Tage ohne
+  Belohnungszeile (B-666 Entscheidung 3).
+
+Kein neues Tor gelandet, Zähler 1 ≤ 5 – der Lauf geht weiter mit Sprint 88.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, rolle/supervisor]
 aliases: [Abschlussbonus-Feld, Nacharbeit-Nachschliff]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -92,3 +92,4 @@ Bonus (`wizardFinish.ts`), geprüft im Review. Testweg: `PlanPositions.test.ts`,
 - **2026-11-18** — Erster E2E-Lauf rot: `getByLabel("Abschlussbonus", exact)` liest den Label-Text samt 🪙; der Selektor fragt jetzt den zugänglichen Namen (`getByRole("spinbutton")`) – das ist, was AK 4 meint.
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang Vater: `nacharbeit-bis-erledigt.spec.ts` stellt „bis erledigt“ mit Bonus 30 ein – passed.
+- **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).
