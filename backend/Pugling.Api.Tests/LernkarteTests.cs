@@ -801,4 +801,40 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Equal(0, again.GetProperty("awarded").GetInt32());
         Assert.Equal(before + 10, CoinsOf(s.ChildId));
     }
+
+    /// <summary>
+    /// A cold word typed right in a test asked in the free field (no Leitner, so no ladder) is introduced AND imprinted by
+    /// the same answer. Both go through the same progress row, created and not yet saved: the second lookup must find the
+    /// tracked one, or the save inserts the row twice and the submission fails with a 500 (UNIQUE PlanPositionId+ItemIndex).
+    /// Red if <c>ProgressForAsync</c> only queries the database.
+    /// </summary>
+    [Fact]
+    public async Task Kaltes_Wort_Frei_Getippt_Im_Sammel_Abgabe_Test_Wird_Einmal_Angelegt()
+    {
+        var s = await SetupAsync(TestStage.FreeText, useLeitner: false);
+        var tests = $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await s.Child.PostAsJsonAsync(tests, new { }), "attemptId");
+
+        var submit = await s.Child.PostAsJsonAsync($"{tests}/{attemptId}/submit",
+            new { answers = Words.Select((w, itemIndex) => new { itemIndex, givenAnswer = w.Front }) });
+
+        Assert.True(submit.IsSuccessStatusCode, $"{(int)submit.StatusCode}: {await submit.Content.ReadAsStringAsync()}");
+        Assert.NotNull(ProgressOf(s, 0).IntroducedAt);
+        Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
+    }
+
+    /// <summary>
+    /// The step-wise twin of the case above: the same cold word answered right through <c>/answer</c>. Red if
+    /// <c>ProgressForAsync</c> only queries the database (the answer fails with a 500).
+    /// </summary>
+    [Fact]
+    public async Task Kaltes_Wort_Frei_Getippt_Im_Schritt_Test_Wird_Einmal_Angelegt()
+    {
+        var s = await SetupAsync(TestStage.FreeText, useLeitner: false);
+
+        await TakeTestAsync(s);
+
+        Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
+        Assert.NotNull(ProgressOf(s, 1).ImprintedAt);
+    }
 }
