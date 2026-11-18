@@ -15,6 +15,8 @@
       Pflicht (2 Wörter am Tag, 20 Wörter bis zum 4.12. eingeführt).
     - Plan 16: Generalprobe als Wochenpflicht für die Englisch-Klassenarbeit am 4.12. (Part A und B, 80 %, kein
       Malus). 80 statt 90 %, weil Part A bis dahin nicht vollständig eingeführt ist.
+    - Mathe-Plan (Kapitel III, aus mathe-kapitel3-2026-11-18.ps1): Die Scheitelpunktform wird tägliche Pflicht
+      (4 neue Aufgaben am Tag) für die Klassenarbeit am 16.12. Damit hat Friedrich vier Tagespflichten.
 
     Gelöscht wird nichts. Die PIN des Vater-Kontos wird verdeckt abgefragt und nirgends gespeichert.
 
@@ -74,6 +76,12 @@ if ((Pos 15 165).cadence -eq 'None') { throw 'Pos. 165 ist schon Kür – Paket 
 if (@($positions[16] | Where-Object { $_.cadence -eq 'Weekly' }).Count -gt 0) { throw 'Plan 16 hat schon eine Generalprobe – Paket B ist gelaufen, nichts geändert.' }
 $rehearsalC = @($positions[13] | Where-Object { $_.exerciseId -eq 15 -and $_.cadence -eq 'Weekly' })
 if ($rehearsalC.Count -ne 1) { throw 'Generalprobe Part C in Plan 13 nicht gefunden – erst Paket A ausführen. Abbruch, nichts geändert.' }
+# Friedrichs Mathe-Plan kommt aus mathe-kapitel3-2026-11-18.ps1; seine Id steht nicht fest, darum über Fach und Titel.
+$mathPlan = @(Invoke-Api GET 'supervisor/study-plans?childId=3&take=200' $null | Where-Object { $_.subjectId -eq 2 -and $_.active })
+if ($mathPlan.Count -ne 1) { throw 'Friedrichs aktiver Mathe-Plan nicht eindeutig gefunden – erst mathe-kapitel3-2026-11-18.ps1 ausführen. Abbruch, nichts geändert.' }
+$vertexForm = @(Invoke-Api GET "supervisor/study-plans/$($mathPlan[0].id)/positions" $null |
+    Where-Object { $_.exerciseTitle -eq 'Kapitel III · Scheitelpunktform ablesen und verschieben' })
+if ($vertexForm.Count -ne 1) { throw 'Position Scheitelpunktform im Mathe-Plan nicht eindeutig gefunden – Abbruch, nichts geändert.' }
 
 # --- Sicherung ----------------------------------------------------------------------------------------------------
 if ($BaseUrl -match ':5200$') {
@@ -115,10 +123,14 @@ Patch 15 202 (Duty 4)                   # Atelier B
 Write-Host 'Friedrich – Plan 16 Englisch (Klassenarbeit 4.12.):'
 Show (Invoke-Api POST 'supervisor/study-plans/16/positions' (Rehearsal 78 80))
 Show (Invoke-Api POST 'supervisor/study-plans/16/positions' (Rehearsal 79 80))
+Write-Host "Friedrich – Plan $($mathPlan[0].id) Mathe (Klassenarbeit 16.12.):"
+# Rechenaufgaben haben keine Stufen und sind immer getippt: darum ohne stage und requireTypedTest.
+Patch $mathPlan[0].id $vertexForm[0].id @{ cadence = 'Daily'; newItemsPerDay = 4; goalThreshold = 80; useLeitner = $true
+    pointsGoalMet = 20; penaltyCoins = 2 }
 
 Write-Host ''
 Write-Host 'Pflichten danach:'
-foreach ($planId in 13, 14, 15, 16) {
+foreach ($planId in 13, 14, 15, 16, $mathPlan[0].id) {
     Invoke-Api GET "supervisor/study-plans/$planId/positions" $null | Where-Object { $_.cadence -ne 'None' } | ForEach-Object {
         Write-Host ("  Plan {0}  {1,4}  {2,-7} Dosis {3,2}  {4}" -f $planId, $_.id, $_.cadence, $_.newItemsPerDay, $_.exerciseTitle)
     }
