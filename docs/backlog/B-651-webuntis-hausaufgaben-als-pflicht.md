@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, bereich/agent, bereich/auth, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/backend, bereich/frontend, bereich/agent, bereich/auth, rolle/supervisor, rolle/creator]
 aliases: [WebUntis-Connector, WebUntis-Hausaufgaben, Schul-Hausaufgaben importieren]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-18 (Sichtung der WebUntis-Seite student-homework im Elternkonto)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt"
+ersetzt_durch: [B-654, B-655, B-656]
 ---
 
 # B-651 · WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut
@@ -170,3 +170,4 @@ Alle neun am 2026-11-18 im Dialog mit dem Vater entschieden; siehe Entscheidunge
   Ist-Stand am Code (keine ausgehenden Aufrufe, kein `DataProtection`, die PIN nur gehasht), WebUntis-Felder aus
   der Sichtung, neun offene Punkte mit Empfehlung, vom Vater im Chat übernommen.
 - **2026-11-18** — gegrillt: neun Entscheidungen mit Begründung und Kosten, vom Vater bestätigt (1–7 als übernommene Empfehlungen, 8 und 9 einzeln: je Variante A). Akzeptanzkriterien final.
+- **2026-11-18** — beim Schätzen geteilt (über L: Backend L, Vater-Web M, KI-Creator M; Vater: Variante A nach Schicht) in B-654 (Backend, AC 1–5 und 8), B-655 (Vater-Web, AC 6), B-656 (KI-Creator, AC 7). Ist-Stand und Entscheidungen bleiben hier und werden von dort verlinkt.

@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (60)
+### Offen (62)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -36,9 +36,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-631](B-631-buchimport-fuellt-vokabel-store-nur-flach.md) | Der Buchimport füllt vom Vokabel-Store nur Wort und Übersetzung | Wunsch | `geschaetzt` | P2 | M | doku | — |
 | [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `geschaetzt` | P2 | L | beides | Migration + Vertrag |
 | [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | Vokabeln vollständig: Definition, Ladeweg und Bestand | Wunsch | `geschaetzt` | P2 | L | beides | Vertrag |
+| [B-654](B-654-webuntis-connector-backend.md) | WebUntis-Connector im Backend: Schulzugang am Kind, Hausaufgaben je Kind abrufen | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | Birkenbihl: jedes Wort eines Textes hat eine Vokabel | Wunsch | `gegrillt` | P2 | — | — | — |
-| [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |
@@ -1014,7 +1016,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 
 <details>
-<summary>Verworfen (46)</summary>
+<summary>Verworfen (47)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1058,6 +1060,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-623](B-623-feedback-knopf-an-der-karte.md) | Der Lernende gibt zur Karte eine Rückmeldung, und neue Übungen berücksichtigen sie | geteilt beim Schätzen am 2026-11-17 – als Ganzes XL (Backend L + Frontend M + KI-Creator M). Entscheidungen und AKs leben hier und werden von den Teil-Stories nach Nummer zitiert → [B-628, B-629, B-630] |
 | [B-632](B-632-schultest-nacharbeiten-mit-leichter-schalten.md) | Einen geschriebenen Schultest als Pflicht nacharbeiten, mit „leichter" je Aufgabe | geteilt (Entscheidung des Vaters 2026-11-17): Teile A–E einzeln lieferbar → [B-633, B-634, B-635, B-636, B-637] |
 | [B-646](B-646-vokabel-schema-nachfuellen.md) | Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, jedes Birkenbihl-Wort eine Vokabel | geteilt (Entscheidung 8) → [B-647, B-648, B-649] |
+| [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut | geteilt → [B-654, B-655, B-656] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |
