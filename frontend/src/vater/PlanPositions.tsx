@@ -463,10 +463,8 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
           </select>
         </div>
       )}
-      {/* B-538: eine Position ohne Pflicht zahlt keine Münzen – Ziel-Punkte, Malus und Boni wären hier wirkungslos. */}
-      {value.cadence === "None" ? (
-        <p className="sub" style={{ margin: 0, alignSelf: "center" }}>Ohne Pflicht bringt diese Position keine Punkte.</p>
-      ) : (
+      {/* B-657: auch eine Position ohne Pflicht zahlt fürs Üben – nur Ziel-Punkte und Malus hängen an einer Pflicht. */}
+      {value.cadence !== "None" && (
         <>
         <div className="field" style={{ maxWidth: 140 }}>
           <FieldLabel htmlFor={`${uid}-points`} topic="pointsGoalMet">Punkte (Ziel erreicht)</FieldLabel>
@@ -486,6 +484,8 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
               value={value.completionBonus} onChange={(e) => up("completionBonus", Number(e.target.value))} />
           </div>
         )}
+        </>
+      )}
         {/* Leer lassen = Bonus-Vorschlag der Übung übernehmen (Platzhalter „erbt"). */}
         <div className="field" style={{ maxWidth: 130 }}>
           <FieldLabel htmlFor={`${uid}-new`} topic="newContentPoints">Punkte neuer Inhalt</FieldLabel>
@@ -512,8 +512,6 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
           <input id={`${uid}-speed-p`} aria-label="Tempo-Bonuspunkte" type="number" min={0} placeholder="erbt"
             value={value.speedBonusPoints} onChange={(e) => up("speedBonusPoints", e.target.value)} />
         </div>
-        </>
-      )}
       <span className="label-row">
         <label className="checkline">
           <input type="checkbox" checked={value.useLeitner}
@@ -961,9 +959,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
               </>
             )}
           </td>
-          {/* B-538: eine freie Position bucht nichts – ihre gespeicherten Punkte sind wirkungslos und stehen darum nicht da. */}
-          {pos.cadence === "None" ? <td className="num muted">keine Punkte</td> : (
-            <td className="num">Ziel {pos.pointsGoalMet} · neu {pos.newContentPoints}
+          {/* B-657: eine freie Position zahlt fürs Üben wie jede andere; nur ein Ziel (und damit Ziel-Punkte) hat sie nicht. */}
+          <td className="num">{pos.cadence !== "None" && <>Ziel {pos.pointsGoalMet} · </>}neu {pos.newContentPoints}
               {pos.penaltyCoins > 0 && <span className="pill amber"> · Malus −{pos.penaltyCoins}🪙</span>}
               {pos.cadence === "UntilDone" && (pos.completionBonus ?? 0) > 0 && <span className="muted"> · Abschluss +{pos.completionBonus}🪙</span>}
               {pos.comboThreshold > 0 && pos.comboBonusPoints > 0 && <span className="muted"> · Combo +{pos.comboBonusPoints}</span>}
@@ -972,8 +969,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
                   {" · "}{hhmm(s.start)}–{hhmm(s.end)} ×{s.multiplier.toLocaleString("de-DE")}
                 </span>
               ))}
-            </td>
-          )}
+          </td>
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}
             {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}
             {pos.completedOn && <> <span className="pill lime">geschafft am {formatDate(pos.completedOn)}</span></>}</td>

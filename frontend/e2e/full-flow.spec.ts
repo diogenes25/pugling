@@ -69,7 +69,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(sohn.getByRole("button", { name: "Runde beenden" })).toBeVisible();
   const total = Number((await counter.textContent())!.match(/\/ (\d+)/)![1]);
   // B-419/B-598: die Position ist neu, also lernt der Sohn die Wörter zuerst auf der Lernkarte – sehen, abschreiben,
-  // erinnern, ohne Münzen.
+  // erinnern; das erste Erinnern aus dem Gedächtnis bringt die Neu-Punkte (B-657).
   for (let i = 0; i < total; i++) {
     await expect(counter).toHaveText(`Karte ${i + 1} / ${total}`);
     await lernkarteDurchspielen(sohn);

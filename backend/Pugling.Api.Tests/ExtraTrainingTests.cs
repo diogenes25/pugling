@@ -261,15 +261,16 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     }
 
     [Fact]
-    public async Task Vokabeln_Werden_Je_Durchgang_Schwerer_Und_Zahlen_Nur_Geprueft()
+    public async Task Vokabeln_Werden_Je_Durchgang_Schwerer_Und_Zahlen_Je_Form()
     {
         var s = await SetupAsync();
         // The form climbs per completed run, whatever the day; the halving (B-538) counts the runs of the day only. Day one
-        // ends after three runs (a fourth would be worth 0 % and does not start): the first choice run is the third of the
-        // day and pays 4 × 1 × 25 % = 1. Day two starts at 100 % again: choice 4, then typed 4 × 3 × 50 % = 6 and 25 % = 3.
+        // ends after three runs (a fourth would be worth 0 % and does not start): the self-assessed runs pay the token coin
+        // (B-657) - 4 × 1 = 4, then 50 % = 2 - and the first choice run is the third of the day, 4 × 1 × 25 % = 1. Day two
+        // starts at 100 % again: choice 4, then typed 4 × 3 × 50 % = 6 and 25 % = 3.
         var expected = new[]
         {
-            ("SelfAssess", 0, 0), ("SelfAssess", 0, 0), ("Choice", 1, 0),
+            ("SelfAssess", 4, 0), ("SelfAssess", 2, 0), ("Choice", 1, 0),
             ("Choice", 4, 1), ("Typed", 6, 1), ("Typed", 3, 1),
         };
 

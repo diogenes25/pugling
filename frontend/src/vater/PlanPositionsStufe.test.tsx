@@ -171,22 +171,23 @@ describe("Positionszeile – zweimal bearbeiten (B-547)", () => {
 /*
  * B-538 AK 7: eine Position ohne Pflicht zahlt keine Münzen – der Editor blendet ihre Punkte-Felder aus und sagt warum.
  */
-describe("Positions-Formular – ohne Pflicht keine Punkte-Felder (B-538)", () => {
+describe("Positions-Formular – ohne Pflicht keine Ziel-Felder, aber Übungs-Punkte (B-657)", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  // Rot, wenn die Felder bei `cadence: "None"` stehen bleiben (dann gäbe es „Punkte bei erreichtem Ziel“), oder wenn sie
-  // auch bei einer Pflicht fehlen.
-  it("zeigt die Punkte-Felder nur bei einer Pflicht", async () => {
+  // Rot, wenn bei `cadence: "None"` Ziel-Punkte stehen (es gibt kein Ziel) oder die Übungs-Punkte fehlen (seit B-657
+  // zahlt auch eine freie Position fürs Üben) – oder wenn einer Pflicht die Ziel-Punkte fehlen.
+  it("zeigt Ziel-Punkte nur bei einer Pflicht, die Punkte fürs Üben immer", async () => {
     rendere([position({ id: 1, exerciseTitle: "Frei", cadence: "None" }), position({ id: 2, exerciseTitle: "Pflicht" })]);
     const frei = (await screen.findByText("Frei")).closest("tr") as HTMLElement;
     fireEvent.click(within(frei).getByRole("button", { name: "Bearbeiten" }));
     expect(screen.queryByRole("spinbutton", { name: "Punkte bei erreichtem Ziel" })).toBeNull();
-    expect(screen.getByText("Ohne Pflicht bringt diese Position keine Punkte.")).toBeTruthy();
+    expect(screen.getByRole("spinbutton", { name: "Punkte für neuen Inhalt" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
 
     const pflicht = (await screen.findByText("Pflicht")).closest("tr") as HTMLElement;
     fireEvent.click(within(pflicht).getByRole("button", { name: "Bearbeiten" }));
     expect(screen.getByRole("spinbutton", { name: "Punkte bei erreichtem Ziel" })).toBeTruthy();
+    expect(screen.getByRole("spinbutton", { name: "Punkte für neuen Inhalt" })).toBeTruthy();
   });
 });
 

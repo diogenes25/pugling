@@ -121,11 +121,12 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
         Assert.All(cards, c => Assert.Equal((int)expected, c.GetProperty("stage").GetInt32()));
     }
 
-    // AK 4: "known" on the self-assessed rung moves the box and pays nothing - also under RequireTypedTest, which on a
-    // position-wide self-assessment stage freezes the box. The review count stays, so the first checked hit is still
-    // "new content". Red if the claim pays, if it does not move the box, or if it counts as a review.
+    // AK 4: "known" on the self-assessed rung moves the box - also under RequireTypedTest, which on a position-wide
+    // self-assessment stage freezes the box. B-657: the claim pays one token coin, once a day per card. The review count
+    // stays, so the first checked hit is still "new content". Red if the claim pays nothing or more than the token, if a
+    // second claim the same day pays again, if it does not move the box, or if it counts as a review.
     [Fact]
-    public async Task Umdrehkarte_Gewusst_Steigt_Ein_Fach_Ohne_Muenzen_Auch_Mit_RequireTypedTest()
+    public async Task Umdrehkarte_Gewusst_Steigt_Ein_Fach_Fuer_Eine_Muenze_Auch_Mit_RequireTypedTest()
     {
         var s = await SetupAsync(TestStage.FreeText, requireTypedTest: true);
         SetBoxes(s.PositionId, 1, 1, 1, 1);
@@ -133,9 +134,14 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         var outcome = await ReviewAsync(s, sessionId, 0, wasKnown: true);
         JsonAssert.True(outcome, "wasCorrect");
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(1, outcome.GetProperty("awarded").GetInt32());
         Assert.Equal(2, outcome.GetProperty("box").GetInt32());
-        Assert.Equal(0, CoinsOf(s.ChildId));
+        Assert.Equal(1, CoinsOf(s.ChildId));
+        // "Not known" on the next card pays nothing.
+        Assert.Equal(0, (await ReviewAsync(s, sessionId, 1, wasKnown: false)).GetProperty("awarded").GetInt32());
+        // The same card claimed again today, in a new round: no second coin.
+        Assert.Equal(0, (await ReviewAsync(s, await StartAsync(s), 0, wasKnown: true)).GetProperty("awarded").GetInt32());
+        Assert.Equal(1, CoinsOf(s.ChildId));
 
         var prog = Progress(s.PositionId, 0);
         Assert.Equal(2, prog.Box);

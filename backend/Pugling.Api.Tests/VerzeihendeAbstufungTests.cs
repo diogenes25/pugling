@@ -207,7 +207,9 @@ public class VerzeihendeAbstufungTests(PuglingWebAppFactory factory) : IClassFix
         var res = await TestApi.PositionReviewAsync(s.Child, s.PlanId, s.PositionId, sessionId, 0, wasKnown: known);
         res.EnsureSuccessStatusCode();
         var outcome = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32()); // a claim pays nothing: proves the self-claim path
+        // A claim pays the token coin when "known", nothing otherwise (B-657) - a checked hit pays at least 2: proves the
+        // self-claim path.
+        Assert.Equal(known ? 1 : 0, outcome.GetProperty("awarded").GetInt32());
         var box = outcome.GetProperty("box").GetInt32();
         Assert.Equal(box, Progress(s.PositionId).Box);
         return box;

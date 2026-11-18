@@ -41,7 +41,9 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var title = db.PlanPositions.Where(p => p.Id == positionId).Select(p => p.StudyPlan!.Title + " · " + p.Exercise!.Title).Single();
-        return db.ChildPointsEntries.Where(e => e.Reason.StartsWith(title)).Sum(e => e.Amount);
+        // Ledger reasons read "[plan · exercise] …" - without the bracket the prefix never matched and every sum was 0.
+        var prefix = "[" + title + "]";
+        return db.ChildPointsEntries.Where(e => e.Reason.StartsWith(prefix)).Sum(e => e.Amount);
     }
 
     /// <summary>
@@ -75,11 +77,14 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     }
 
     // AK 1, since B-598: a never-seen atom comes as a learn card on a typed stage - German shown, the learnt word as the
-    // solution it uncovers - and earns nothing, while its review introduces it for today.
+    // solution it uncovers - and its review introduces it for today. B-657: the right recall from memory pays the
+    // new-content points (10), and only those.
     [Fact]
-    public async Task NieGesehenesWort_KommtAufTippstufe_AlsLernkarte_MitLoesung_UndOhnePunkte()
+    public async Task NieGesehenesWort_KommtAufTippstufe_AlsLernkarte_MitLoesung_UndNeuBonus()
     {
         var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
+        // Plan and exercise titles repeat across this class's cases - the ledger is read as a difference.
+        var pointsBefore = PointsOf(positionId);
         var sessionId = await StartAsync(child, planId, positionId);
 
         var cards = await CardsAsync(child, planId, positionId, sessionId);
@@ -99,13 +104,13 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var next = await child.GetFromJsonAsync<JsonElement>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/next");
         JsonAssert.True(next.GetProperty("card"), "introduction");
 
-        // Even the right word recalled on a learn card earns nothing: it was shown first.
+        // The right word recalled from memory on a learn card pays the new-content points (B-657).
         var outcome = await (await child.PostAsJsonAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/review",
             new { itemIndex = 0, givenAnswer = "la ville", wasKnown = true })).Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(10, outcome.GetProperty("awarded").GetInt32());
         // The next card of this round is still an introduction.
         JsonAssert.True(outcome.GetProperty("next"), "introduction");
-        Assert.Equal(0, PointsOf(positionId));
+        Assert.Equal(pointsBefore + 10, PointsOf(positionId));
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var prog = Progress(positionId, 0);
@@ -115,12 +120,13 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     }
 
     // AK 2, since B-476: the second round on the same day asks the introduced words - on the lowest rung of the
-    // ladder, turned over and judged, not typed. The claim moves the box but pays nothing; the new-content points wait
-    // for the first checked hit (KartenstufeTests).
+    // ladder, turned over and judged, not typed. The claim moves the box and pays the token coin (B-657) - on top of the
+    // three learn cards' new-content points, which the claim leaves as they are.
     [Fact]
     public async Task ZweiteRunde_FragtDieEingefuehrtenWoerter_Ab_AlsUmdrehkarte()
     {
         var (child, planId, positionId) = await SetupAsync(TestStage.FreeText, introduced: false);
+        var pointsBefore = PointsOf(positionId);
         var first = await StartAsync(child, planId, positionId);
         // B-643: the learn card's recall right from memory - only an imprinted word is asked in the next round.
         foreach (var i in new[] { 0, 1, 2 })
@@ -138,9 +144,9 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
 
         var outcome = await (await TestApi.PositionReviewAsync(child, planId, positionId, second, 0, wasKnown: true))
             .Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(1, outcome.GetProperty("awarded").GetInt32());
         Assert.Equal(2, outcome.GetProperty("box").GetInt32());
-        Assert.Equal(0, PointsOf(positionId));
+        Assert.Equal(pointsBefore + 3 * 10 + 1, PointsOf(positionId));
     }
 
     // AK 3: an introduced atom is never shown as an introduction on a typed stage - existing plans play as before.

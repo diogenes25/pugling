@@ -91,12 +91,13 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
     /// <summary>
     /// AK 5: one call carries both results, the server keeps both in the history (the uncovering on the self-assessment
-    /// stage, the recall with what was written) and books no coin, no hit and no box movement; the word counts as
-    /// introduced. Red when the learn card is scored like a typed card (the box climbs, coins are booked) or when only one
+    /// stage, the recall with what was written) and moves no box and counts no hit; the word counts as introduced. B-657
+    /// replaces "books no coin": the first right recall from memory pays the new-content points (10) - nothing else, no
+    /// combo. Red when the learn card is scored like a typed card (the box climbs), when it stops paying, or when only one
     /// of the two results is kept.
     /// </summary>
     [Fact]
-    public async Task Lernkarte_Speichert_Beide_Ergebnisse_Und_Zahlt_Nichts()
+    public async Task Lernkarte_Speichert_Beide_Ergebnisse_Und_Zahlt_Den_Neu_Bonus()
     {
         var s = await SetupAsync(TestStage.FreeText);
         var sessionId = await StartAsync(s);
@@ -104,9 +105,9 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var outcome = await AnswerAsync(s, sessionId, 0, wasKnown: false, givenAnswer: "la gare");
 
         JsonAssert.True(outcome, "wasCorrect");
-        Assert.Equal(0, outcome.GetProperty("awarded").GetInt32());
+        Assert.Equal(10, outcome.GetProperty("awarded").GetInt32());
         JsonAssert.False(outcome, "repeatsAtEnd");
-        Assert.Equal(0, CoinsOf(s.ChildId));
+        Assert.Equal(10, CoinsOf(s.ChildId));
         var prog = Db(db => db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == 0));
         Assert.Equal(1, prog.Box);
         Assert.Equal(0, prog.ReviewCount);
@@ -235,19 +236,25 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
-    /// A learn card the father plays in the child's round introduces nothing (B-433: only the child's own encounter does).
-    /// Red when the learn card's review stamps the introduction for any caller.
+    /// A learn card the father plays in the child's round introduces nothing (B-433: only the child's own encounter does)
+    /// and pays nothing (B-657: the new-content points are for the child's own recall). Red when the learn card's review
+    /// stamps the introduction for any caller, or when the father's preview books the child's new-content points.
     /// </summary>
     [Fact]
-    public async Task Eine_Lernkarte_Des_Vaters_Fuehrt_Nichts_Ein()
+    public async Task Eine_Lernkarte_Des_Vaters_Fuehrt_Nichts_Ein_Und_Zahlt_Nichts()
     {
         var s = await SetupAsync(TestStage.FreeText);
         var sessionId = await TestApi.IdAsync(await s.Father.PostAsJsonAsync(Base(s), new { mode = "Lern" }));
 
-        (await s.Father.PostAsJsonAsync($"{Base(s)}/{sessionId}/review",
-            new { itemIndex = 0, wasKnown = true, givenAnswer = "la gare" })).EnsureSuccessStatusCode();
+        var res = await s.Father.PostAsJsonAsync($"{Base(s)}/{sessionId}/review",
+            new { itemIndex = 0, wasKnown = true, givenAnswer = "la gare" });
+        res.EnsureSuccessStatusCode();
 
-        Assert.Null(Db(db => db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == 0)).IntroducedAt);
+        Assert.Equal(0, (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("awarded").GetInt32());
+        Assert.Equal(0, CoinsOf(s.ChildId));
+        var prog = Db(db => db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == 0));
+        Assert.Null(prog.IntroducedAt);
+        Assert.Null(prog.NewBonusPaidAt);
     }
 
     /// <summary>
@@ -677,22 +684,31 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
-    /// Review finding 5 (story test plan, risk 1): an open learn card coming back pays no new-content points - neither on
-    /// its learn card nor by being "new" twice. Red if the learn card's recall started to pay or used the bonus up.
+    /// Review finding 5 (story test plan, risk 1), turned by B-657: an open learn card coming back pays its new-content
+    /// points when it is finally recalled - and only once per word, never "new" twice. The second recall below finds the
+    /// word not imprinted again (reset by hand) but the bonus spent. Red if the learn card stopped paying, or paid again.
     /// </summary>
     [Fact]
-    public async Task Wiederkehrende_Lernkarte_Zahlt_Keinen_Neu_Bonus()
+    public async Task Wiederkehrende_Lernkarte_Zahlt_Den_Neu_Bonus_Nur_Einmal()
     {
         var s = await SetupAsync(TestStage.FreeText);
         IntroduceDaysAgo(s, 1);
         var before = CoinsOf(s.ChildId);
 
-        var sessionId = await StartAsync(s);
-        var answer = await AnswerAsync(s, sessionId, 0, wasKnown: true, givenAnswer: "la gare");
+        var answer = await AnswerAsync(s, await StartAsync(s), 0, wasKnown: true, givenAnswer: "la gare");
 
-        Assert.Equal(0, answer.GetProperty("awarded").GetInt32());
-        Assert.Equal(before, CoinsOf(s.ChildId));
-        Assert.Null(ProgressOf(s, 0).NewBonusPaidAt);
+        Assert.Equal(10, answer.GetProperty("awarded").GetInt32());
+        Assert.Equal(before + 10, CoinsOf(s.ChildId));
+        Assert.NotNull(ProgressOf(s, 0).NewBonusPaidAt);
         Assert.NotNull(ProgressOf(s, 0).ImprintedAt);
+
+        Db(db =>
+        {
+            db.PositionItemProgress.Single(p => p.PlanPositionId == s.PositionId && p.ItemIndex == 0).ImprintedAt = null;
+            return db.SaveChanges();
+        });
+        var again = await AnswerAsync(s, await StartAsync(s), 0, wasKnown: true, givenAnswer: "la gare");
+        Assert.Equal(0, again.GetProperty("awarded").GetInt32());
+        Assert.Equal(before + 10, CoinsOf(s.ChildId));
     }
 }

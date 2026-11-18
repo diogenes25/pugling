@@ -29,6 +29,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | Defekt | `geschaetzt` | P2 | L | backend | Migration |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht | Wunsch | `in-arbeit` | P2 | M | beides | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
 | [B-625](B-625-ein-eingabefeld-je-bedeutung.md) | Ein Eintrag mit mehreren Formen oder Bedeutungen bekommt je Teil ein eigenes Eingabefeld | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -55,7 +56,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `idee` | P2 | — | — | — |
 | [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `idee` | P2 | — | — | — |
 | [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | Wunsch | `idee` | P2 | — | — | — |
-| [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
@@ -1017,7 +1017,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | `idee` | `unverifiziert: true` |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
-| [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | `idee` | Abschnitt „Verlauf" |
+| [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 
 <details>

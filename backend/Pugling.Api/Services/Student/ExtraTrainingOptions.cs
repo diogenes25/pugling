@@ -1,9 +1,9 @@
 namespace Pugling.Api.Services.Student;
 
 /// <summary>
-/// Bonus training settings from the configuration (section <c>Gamification:ExtraTraining</c>). The bonus pays
-/// for checked hits only and is capped per day, so extra practice is worth more coins without turning easy
-/// forms into a coin farm.
+/// Bonus training settings from the configuration (section <c>Gamification:ExtraTraining</c>). Every right card pays
+/// (B-657), a checked one more than a self-assessed one, and the day is capped, so extra practice is worth more coins
+/// without turning easy forms into a coin farm.
 /// </summary>
 public class ExtraTrainingOptions
 {
@@ -12,6 +12,8 @@ public class ExtraTrainingOptions
 
     /// <summary>Most bonus coins a child earns per day; <c>null</c> = no cap.</summary>
     public int? DailyCoinCap { get; set; } = 90;
+    /// <summary>Coins per card claimed as known on the self-assessment form - a token, nothing is checked (B-657).</summary>
+    public int CoinsPerSelfAssessHit { get; set; } = 1;
     /// <summary>Coins per correct card on the choice form.</summary>
     public int CoinsPerChoiceHit { get; set; } = 1;
     /// <summary>Coins per correct card on the typed form.</summary>

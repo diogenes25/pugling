@@ -696,11 +696,12 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
     }
 
     /// <summary>
-    /// Review finding Y2 (B-538 rule): an ended remediation has no duty, so a Leitner hit on a task added after the end pays
-    /// no coins. Red if the coin rule keeps reading only the cadence (then the hit pays its base points).
+    /// Review finding Y2, turned by B-657: an ended remediation has no duty any more, and a Leitner hit on a task added after
+    /// the end still pays - every exercise pays now, with or without a duty. Red if a position without a duty is fenced off
+    /// from coins again.
     /// </summary>
     [Fact]
-    public async Task Nach_dem_Ende_zahlt_die_Position_keine_Muenzen()
+    public async Task Nach_dem_Ende_zahlt_die_Position_weiter_Muenzen()
     {
         var (father, planId, positionId) = await RemediationPositionAsync(useLeitner: true);
         var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
@@ -719,8 +720,8 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
         var answer = await ReviewAsync(child, planId, positionId, sessionId, 2, "as soon as");
 
         JsonAssert.True(answer, "wasCorrect");
-        Assert.Equal(0, answer.GetProperty("awarded").GetInt32());
-        Assert.Equal(coinsBefore, await WithServiceAsync((db, _) =>
+        Assert.True(answer.GetProperty("awarded").GetInt32() > 0);
+        Assert.Equal(coinsBefore + 1, await WithServiceAsync((db, _) =>
             db.ChildPointsEntries.CountAsync(e => e.ChildId == 1 && e.Kind == PointKind.Base)));
     }
 }

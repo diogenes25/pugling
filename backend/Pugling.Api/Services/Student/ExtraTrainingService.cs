@@ -13,7 +13,7 @@ namespace Pugling.Api.Services.Student;
 /// <para>
 /// Three rules keep it from becoming a coin farm. It opens only once today's daily goals are met (B-535; all goals in a
 /// plan without daily ones) - the path comes first.
-/// Coins are paid for checked hits only (choice 1, typed 3), never for a self-assessment, and capped per day. And every
+/// Every right card pays - a claimed self-assessment a token 1, choice 1, typed 3 (B-657) - capped per day. And every
 /// further completed run of the same exercise on the same day halves its worth - 100, 50, 25, then 0 % (B-538); the next
 /// day it pays in full again, because daily repetition is the core of learning words. A vocabulary exercise also asks
 /// harder with every completed run - self-assessment, then choice, then typed for good; any other exercise plays its
@@ -408,7 +408,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     {
         ExtraForm.Choice => opts.CoinsPerChoiceHit,
         ExtraForm.Typed => opts.CoinsPerTypedHit,
-        _ => 0,
+        _ => opts.CoinsPerSelfAssessHit,
     };
 
     // The cards in an order of their own per run, and the options shuffled per run as well: the shared projection
@@ -432,6 +432,6 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
                 f.DictationSpokenAnswer, f.DictationLang);
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
-            typed ? CoinsPerHit(run.Form) : 0, cards, runPercent);
+            CoinsPerHit(run.Form), cards, runPercent);
     }
 }

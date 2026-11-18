@@ -294,9 +294,10 @@ export function SohnBonusRun() {
         schliessenName={t("bonus.later")} onSchliessen={() => nav("/sohn/bonus")}
         zaehler={t("bonus.cardOf", { n: cursor + 1, total: run.cards.length })} anteil={cursor / run.cards.length}
         anweisung={t(form.anweisung)}
-        hinweis={run.coinsPerHit === 0 ? t("bonus.hintSelf")
+        hinweis={run.runPercent === 0 ? t("bonus.hintNoWorth")
+          // B-657: auch die Karteikarte zahlt – ihr Hinweis bittet trotzdem um eine ehrliche Einschätzung.
+          : run.form === "SelfAssess" && run.runPercent === 100 ? t("bonus.hintSelf", { coins: run.coinsPerHit })
           // B-538: die Runde nennt ihren heutigen Wert, nicht den vollen Satz – sonst verspräche der Hinweis zu viel.
-          : run.runPercent === 0 ? t("bonus.hintNoWorth")
           : run.runPercent < 100 ? t("bonus.hintPaidReduced", { percent: run.runPercent, coins: run.coinsPerHit })
           : t("bonus.hintPaid", { coins: run.coinsPerHit })}
       >

@@ -68,9 +68,11 @@ public class ScoringService(IOptions<ScoringOptions> options)
             return new ReviewScore(contributions, combo);
 
         var basePoints = BasePoints(cfg, isNew, box, nowLocal);
+        // A position without a card box (B-657) has no box to name.
         if (basePoints > 0)
-            contributions.Add(new Contribution(PointKind.Base, basePoints,
-                $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"));
+            contributions.Add(new Contribution(PointKind.Base, basePoints, postBox > 0
+                ? $"[{cfg.Label}] Leitner-Wiederholung richtig → Box {postBox}"
+                : $"[{cfg.Label}] Richtig beantwortet"));
 
         var comboBonus = ComboBonus(cfg, combo);
         if (comboBonus > 0)
@@ -83,6 +85,25 @@ public class ScoringService(IOptions<ScoringOptions> options)
 
         return new ReviewScore(contributions, combo);
     }
+
+    /// <summary>
+    /// Coins for a self-assessed "I knew it" on a rung of the ladder (B-657): the server checks nothing there, so the claim
+    /// pays a token coin - something for every answer, but less than any checked hit. Once per word and day (the box).
+    /// </summary>
+    public const int ClaimCoins = 1;
+
+    /// <summary>The token coin of a self-assessed "I knew it" (B-657) as a ledger contribution.</summary>
+    public static Contribution ScoreClaim(ScoreConfig cfg) =>
+        new(PointKind.Base, ClaimCoins, $"[{cfg.Label}] Selbst eingeschätzt: gewusst");
+
+    /// <summary>
+    /// The new-content points for a word written from memory on its learn card for the first time (B-657): the learn card
+    /// is where a new word is learnt, so it pays what the first checked hit of a new word pays - weighted by the time slot,
+    /// without combo or speed (the card is no drill).
+    /// </summary>
+    public Contribution ScoreNewWordRecall(ScoreConfig cfg, DateTime nowLocal) =>
+        new(PointKind.Base, BasePoints(cfg, isNew: true, box: 0, nowLocal),
+            $"[{cfg.Label}] Neues Wort aus dem Gedächtnis geschrieben");
 
     /// <summary>
     /// Fast enough for the bonus? Only if the feature is on (threshold &amp; bonus &gt; 0) and the measured

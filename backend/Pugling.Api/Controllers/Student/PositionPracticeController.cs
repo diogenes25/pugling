@@ -171,9 +171,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         introduced.TryGetValue(index, out var card) ? card : null;
 
     // A card the ladder lowered to self-assessment (B-476): the child only claims to know it, nothing is checked.
-    // A learn card (B-598) is neither: it is shown with its solution and never scores.
+    // A learn card (B-598) is neither: it is shown with its solution and is no graded hit.
     private static bool IsSelfClaimRung(IExerciseType type, int dayStage, int stage) =>
         stage != dayStage && !type.IsTypedStage(stage) && !type.IsDisplayOnlyStage(stage) && !type.IsLearnCardStage(stage);
+
+    /// <summary>The position's point settings for <see cref="ScoringService"/>; the label names plan and exercise in the ledger.</summary>
+    private static ScoringService.ScoreConfig ScoreConfigOf(StudyPlan plan, PlanPosition pos) =>
+        new($"{plan.Title} · {pos.Exercise!.Title}", pos.NewContentPoints, pos.ComboThreshold, pos.ComboBonusPoints,
+            pos.SpeedThresholdSeconds, pos.SpeedBonusPoints, pos.TimeSlots);
 
     /// <summary>
     /// B-598: is the card at <paramref name="position"/> of the frozen order a learn card coming back? A learn card given
@@ -520,12 +525,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     /// <summary>
     /// Accepts the answer to a practice card, grades it server-side against the item solution
-    /// and logs the review. For Leitner positions the atom moves the box up/down,
-    /// correct answers earn points (+ combo/speed bonus). Anti-farming: only one
+    /// and logs the review. For Leitner positions the atom moves the box up/down; correct answers earn points
+    /// (+ combo/speed bonus) on every position, with or without a duty or a box (B-657). Anti-farming: only a
     /// due card is scored and at most once per day; non-typed self-assessment does not count with
     /// <see cref="PlanPosition.RequireTypedTest"/>. A card the vocabulary ladder lowered to self-assessment
-    /// (B-476) never pays, but "known" moves its box once a day - also under RequireTypedTest - so it can reach
-    /// the checked rungs. The server cursor then advances one card
+    /// (B-476) pays only a token coin for "known", which moves its box once a day - also under RequireTypedTest - so
+    /// it can reach the checked rungs. A learn card pays the new-content points for the first recall from memory. The server cursor then advances one card
     /// and returns the next one right away. In <see cref="PlayMode.Info"/> no feedback flows (204).
     /// </summary>
     [HttpPost("{sessionId:int}/review")]
@@ -654,8 +659,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var alreadyScoredToday = prog?.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
         // A free display stage (B-96) counts as practiced (session/heartbeat/missions still see it) but never
         // as a graded hit: no points, no Leitner movement - "Kennenlernen" must not be the cheapest way to coins.
-        // A self-assessed rung of the ladder (B-476) is a claim, not a check: it pays nothing either. It still moves
-        // the box (below), or the card would never reach the rungs where it is checked.
+        // A self-assessed rung of the ladder (B-476) is a claim, not a check: it is no graded hit and pays only the
+        // token coin (B-657, below). It still moves the box, or the card would never reach the rungs where it is checked.
         var scored = prog is not null && (typed || !pos.RequireTypedTest) && due && !alreadyScoredToday && !displayOnly
             && !selfClaimRung && !noVerdict && !eased;
         var climbs = selfClaimRung && pos.UseLeitner && prog is not null && due && !alreadyScoredToday && !noVerdict;
@@ -711,42 +716,35 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
         }
 
-        // Points/box only on Leitner positions and only for graded cards (anti-farming). Otherwise 0.
+        // Points only for graded cards (anti-farming), the box only on Leitner positions. Otherwise 0.
         int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
-        var leitnerScored = pos.UseLeitner && scored;
+        // B-657: every exercise pays - with or without a duty (reverses B-538's decision 4), with or without a card box.
         // `scored` already implies a credited atom; the null check is the compiler's proof, not a second rule.
-        if (leitnerScored && prog is not null)
+        if (scored && prog is not null)
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
             var preBox = prog.Box;
-            // B-538: a position without a duty pays no coins at all - otherwise it were a second, uncapped way to coins
-            // next to the bonus training, open before the duty. The box and the learning state move as before. An ended
-            // remediation "until done" (B-636) has no duty either.
-            var paysCoins = PositionProgressService.HasDutyOn(pos, session.Day);
-            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later. A
-            // hit that pays nothing leaves them too: a later duty on the same position still pays them.
-            var isNew = paysCoins && wasCorrect && prog.NewBonusPaidAt is null;
+            // B-535: the first graded hit pays the new-content points, once - a wrong first try leaves them for later.
+            var isNew = wasCorrect && prog.NewBonusPaidAt is null;
             if (isNew) prog.NewBonusPaidAt = now;
             // The shared clock, not the wall one: ApplyReview stamps LastReviewedAt, which in set mode is the
             // "already named" marker read back above. A second reading would put the stamp outside the window
             // a frozen test clock defines, and then every remaining card would accept the same answer again.
-            play.ApplyReview(pos, prog, wasCorrect, verified: typed, session.Day, now);
+            if (pos.UseLeitner) play.ApplyReview(pos, prog, wasCorrect, verified: typed, session.Day, now);
+            // Without a box the stamp alone bounds the pay: a hit scores once per word and day (`alreadyScoredToday`),
+            // as the box does on a Leitner position. A miss leaves no stamp - the word may still be got right today.
+            else if (wasCorrect) prog.LastReviewedAt = now;
 
-            var cfg = new ScoringService.ScoreConfig($"{plan.Title} · {pos.Exercise.Title}", pos.NewContentPoints,
-                pos.ComboThreshold, pos.ComboBonusPoints, pos.SpeedThresholdSeconds, pos.SpeedBonusPoints,
-                pos.TimeSlots);
+            var cfg = ScoreConfigOf(plan, pos);
             var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
                 time.GetLocalNow().DateTime, elapsedSeconds);
-            if (paysCoins)
-            {
-                foreach (var c in score.Contributions)
-                    db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
-                awarded = score.BasePoints;
-                comboBonus = score.ComboBonus;
-                speedBonus = score.SpeedBonus;
-            }
+            foreach (var c in score.Contributions)
+                db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
+            awarded = score.BasePoints;
+            comboBonus = score.ComboBonus;
+            speedBonus = score.SpeedBonus;
 
-            if (paysCoins && score.Total > 0)
+            if (score.Total > 0)
                 // The CREDITED entry, not the card it arrived on: in set mode those differ, and the card index is
                 // the one value the booking has nothing to do with.
                 logger.LogInformation(
@@ -762,6 +760,16 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             var reviewCount = prog.ReviewCount;
             play.ApplyReview(pos, prog, wasCorrect, verified: false, session.Day, now);
             prog.ReviewCount = reviewCount;
+            // B-657: "I knew it" pays a token coin. Bounded like a review: the claim climbs only when due and not yet
+            // reviewed today, and ApplyReview has just stamped today. The combo does not grow on a claim. Like a checked
+            // hit it pays on a supervisor's catch-up too (B-542: the catch-up records for the child) - unlike the learn
+            // card, whose preview by the supervisor introduces nothing and so learns nothing to pay for.
+            if (wasCorrect)
+            {
+                var claim = ScoringService.ScoreClaim(ScoreConfigOf(plan, pos));
+                db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = claim.Kind, Amount = claim.Amount, Reason = claim.Reason, CreatedAt = now });
+                awarded = claim.Amount;
+            }
         }
 
         // B-635: a remediation task counts its solutions per stage, and it is done only by a free answer that was right -
@@ -791,7 +799,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // B-636: the task just done may be the last one - only then does the remediation finish and pay its bonus.
         var completionBonus = taskDone ? await progress.CompleteRemediationIfDoneAsync(pos, plan, session.Day, ct) : 0;
 
-        if (leitnerScored)
+        if (scored)
             await gamification.EvaluateAndAwardAsync(plan.ChildId, session.Day, ct);
 
         // The atom just reviewed is introduced now; the set was read before, and the next card may be that atom when a
@@ -810,8 +818,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
     /// <summary>
     /// The answer to a learn card (B-598): both results of the card in one call - <see cref="ReviewDto.WasKnown"/> from
-    /// uncovering it, <see cref="ReviewDto.GivenAnswer"/> from recalling it (<c>null</c> = given up). Neither scores nor
-    /// moves a box (decision 2: the solution lay on the device); the word counts as introduced, and both results go into
+    /// uncovering it, <see cref="ReviewDto.GivenAnswer"/> from recalling it (<c>null</c> = given up). Neither counts as a
+    /// graded hit nor moves a box (decision 2: the solution lay on the device) - only the first right recall from memory
+    /// pays the new-content points, once per word (B-657); the word counts as introduced, and both results go into
     /// the learning history as two rows that count for no mastery - a recall given up keeps no answer, a wrong one keeps
     /// what was written (decisions 6, 8). B-643: a right free recall imprints the word; given up, wrong or answered in an
     /// easier form (<paramref name="easedStage"/>), the card comes back at the end of the round, as often as it takes.
@@ -844,11 +853,23 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             prog.IntroducedAt = session.Day;
             prog.DueOn ??= session.Day;
         }
+        var now = time.GetUtcNow().UtcDateTime;
+        // B-657: the first time a new word is written from memory is where it is learnt - it pays the new-content points
+        // the first checked hit would pay, once per word (NewBonusPaidAt; a later ladder hit then pays repetition only).
+        var awarded = 0;
+        if (User.IsStudent() && recallCounts && prog.ImprintedAt is null && prog.NewBonusPaidAt is null)
+        {
+            var learnt = scoring.ScoreNewWordRecall(ScoreConfigOf(plan, pos), time.GetLocalNow().DateTime);
+            // A position may set its new-content points to 0, and a time slot may round them down to 0: no empty row.
+            if (learnt.Amount > 0)
+                db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = learnt.Kind, Amount = learnt.Amount, Reason = learnt.Reason, CreatedAt = now });
+            prog.NewBonusPaidAt = now;
+            awarded = learnt.Amount;
+        }
         // B-643: imprinted only by the free recall, right and without help - the stage comes from the session, so an eased
         // card sent as free text imprints nothing. Only the child's own answer counts (B-433).
         if (User.IsStudent() && recallCounts) prog.ImprintedAt ??= session.Day;
 
-        var now = time.GetUtcNow().UtcDateTime;
         // A review without a hit: the round counts as played, and the combo does not grow on a card that pays nothing.
         db.ReviewEvents.Add(new ReviewEvent { PracticeSessionId = session.Id, WasCorrect = false, At = now });
         // The card always sends whether the word was known; an answer carrying neither result is no verdict (B-433) - it
@@ -880,7 +901,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         var misspelled = !recalled && !string.IsNullOrWhiteSpace(dto.GivenAnswer)
             && grader.IsMisspelled(dto.GivenAnswer, item, staged);
-        return new ReviewOutcome(recalled, item.Answer, 0, prog.Box, prog.DueOn, 0, 0, 0, next, done, misspelled,
+        return new ReviewOutcome(recalled, item.Answer, awarded, prog.Box, prog.DueOn, 0, 0, 0, next, done, misspelled,
             item.Explanation, repeats);
     }
 

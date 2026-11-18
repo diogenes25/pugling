@@ -10,7 +10,7 @@ namespace Pugling.Contracts.Student;
 /// </summary>
 public enum ExtraForm
 {
-    /// <summary>Turn the card over and judge yourself - a claim, so it pays nothing.</summary>
+    /// <summary>Turn the card over and judge yourself - a claim, so it pays only a token coin per "known" (B-657).</summary>
     SelfAssess = 1,
     /// <summary>Pick the meaning from several options - checked, pays a little.</summary>
     Choice = 2,

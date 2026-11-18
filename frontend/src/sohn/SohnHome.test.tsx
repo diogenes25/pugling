@@ -46,14 +46,15 @@ describe("Knoten auf dem Lernpfad", () => {
     expect(knoten("Pflicht erledigt").getAttribute("aria-label")).toContain("Ziel erfüllt");
   });
 
-  it("sagt an einer freien Position, dass sie keine Münzen bringt (B-538 AK 7)", () => {
-    // Rot, wenn die Kür-Position weiter nur „frei“ heißt – seit B-538 zahlt sie nichts, und das Kind soll es vorher sehen.
+  it("nennt eine freie Position Zusatzübung und verspricht keine Münz-Sperre mehr (B-657)", () => {
+    // Rot, wenn die Kür-Position wieder „ohne Münzen“ ansagt – seit B-657 zahlt sie wie eine Pflicht.
     zeige([
       position({ positionId: 1, exerciseTitle: "Frei geübt", cadence: "None" }),
       position({ positionId: 2, exerciseTitle: "Pflicht", cadence: "Daily" }),
     ]);
-    expect(knoten("Frei geübt").getAttribute("aria-label")).toContain("ohne Münzen");
-    expect(knoten("Pflicht").getAttribute("aria-label")).not.toContain("ohne Münzen");
+    expect(knoten("Frei geübt").getAttribute("aria-label")).toContain("Zusatzübung");
+    expect(knoten("Frei geübt").getAttribute("aria-label")).not.toContain("ohne Münzen");
+    expect(knoten("Pflicht").getAttribute("aria-label")).not.toContain("Zusatzübung");
   });
 
   it("hebt genau einen Knoten als nächsten hervor und keinen, wenn die Pflicht erfüllt ist", () => {
@@ -366,7 +367,7 @@ describe("Belohnungen – dieselben Ziele wie der Server", () => {
       .toEqual({ art: "tag", met: 0, total: 1 });
   });
 
-  // B-636: rot, wenn die Nacharbeit ohne eigenen Zweig als „frei · ohne Münzen“ auf dem Pfad steht – sie kostet Malus.
+  // B-636: rot, wenn die Nacharbeit ohne eigenen Zweig als „Zusatzübung“ auf dem Pfad steht – sie kostet Malus.
   it("nennt die Nacharbeit „bis erledigt“ beim Namen", () => {
     expect(cadenceKey("UntilDone")).toBe("home.cadenceUntilDone");
     expect(cadenceKey("None")).toBe("home.cadenceNone");
