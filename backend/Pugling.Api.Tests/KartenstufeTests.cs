@@ -542,7 +542,9 @@ public class KartenstufeTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             foreach (var i in Enumerable.Range(0, FourWords.Length))
                 db.PositionItemProgress.Add(new PositionItemProgress
                 {
-                    PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = yesterday,
+                    PlanPositionId = s.PositionId,
+                    ItemIndex = i,
+                    IntroducedAt = yesterday,
                     ImprintedAt = yesterday, // B-643: first practised yesterday means met on the learn card and recalled
                 });
             db.SaveChanges();
