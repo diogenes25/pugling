@@ -38,7 +38,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | Vokabeln vollständig: Definition, Ladeweg und Bestand | Wunsch | `geschaetzt` | P2 | L | beides | Vertrag |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | Birkenbihl: jedes Wort eines Textes hat eine Vokabel | Wunsch | `gegrillt` | P2 | — | — | — |
-| [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `idee` | P2 | — | — | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `idee` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `idee` | P2 | — | — | — |

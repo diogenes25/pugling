@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, bereich/frontend, bereich/agent, bereich/auth, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/backend, bereich/frontend, bereich/agent, bereich/auth, rolle/supervisor, rolle/creator]
 aliases: [WebUntis-Connector, WebUntis-Hausaufgaben, Schul-Hausaufgaben importieren]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -86,54 +86,80 @@ ohne den Aufgabentext aus WebUntis abzuschreiben.
 
 ## Offene Punkte
 
-Der Vater hat die Empfehlungen am 2026-11-18 im Chat übernommen („Ja, ausformulieren“). Beim Grillen werden sie
-als Entscheidungen mit Kosten festgehalten.
+Alle neun am 2026-11-18 im Dialog mit dem Vater entschieden; siehe Entscheidungen.
 
-1. **Welcher Zugang wird beim Kind hinterlegt?** Empfehlung: ein Zugang je Kind, entweder der Elternzugang oder
-   das Schülerkonto des Kindes, plus die WebUntis-Schüler-ID für die Zuordnung über `elementIds`. Grund: Der
-   Elternzugang deckt Theodor nicht ab.
-2. **Wer darf ihn setzen und sehen?** Empfehlung: nur der Supervisor. Das Geheimnis kann nur gesetzt werden und
-   wird nie herausgegeben. Die API meldet nur „eingerichtet“, den letzten Abruf und dessen Ergebnis. Der Student
-   sieht nichts.
-3. **Wie wird gespeichert?** Empfehlung: ASP.NET Core Data Protection in einer eigenen Tabelle 1:1 zum Kind;
-   neue Migration an der Kette. Der Schlüsselbund liegt dauerhaft neben `pugling.db` im Heimnetz. Geht er
-   verloren, wird der Zugang neu eingegeben; die Lerndaten bleiben unberührt.
-4. **Wann wird abgerufen?** Empfehlung: zuerst nur auf Anfrage, wenn der Vater die Liste öffnet. Kein
-   Hintergrunddienst, keine Kopie der Hausaufgaben in der DB. Ein täglicher Abruf mit Zwischenspeicher kommt
-   erst, wenn daraus Pflichtziele mit Malus werden (eigene Story).
-5. **Wo liegt der Lese-Endpunkt?** Empfehlung: in der Supervisor-Ebene
-   (`supervisor/children/{childId}/school-homework`), nicht beim Creator. Der Katalog des Creators ist bewusst
-   nicht an ein Kind gebunden, die Hausaufgaben sind es. Der Vater ist beides, und der KI-Creator nutzt mit
-   `--child` ohnehin Daten des Kindes.
-6. **Wie meldet sich der Connector an?** Empfehlung: zuerst Benutzername und Passwort per JSON-RPC. Der
-   QR-Code-Schlüssel kommt nur dazu, falls ein SSO den Login sperrt. Erste Bauhandlung ist ein Probe-Login, der
-   das klärt.
-7. **Welcher Umfang zuerst?** Empfehlung: nur Hausaufgaben. Prüfungen → `Klassenarbeit` und Hausaufgaben als
-   Pflicht mit Malus werden je eine Folge-Story.
-8. **Wie werden die Fächer zugeordnet?** WebUntis liefert das Fach als Text („Französisch“), Pugling hat
-   `Subject`. Empfehlung: in Stufe 1 nur anzeigen, nicht zuordnen. Ein Abgleich nach Namen kommt erst, wenn
-   Übungen automatisch in ein Fach sollen.
-9. **Was tut der KI-Creator?** Empfehlung: ein Befehl, der mit `--child` die offenen Hausaufgaben lädt und je
-   gewählter Aufgabe eine Übung über die bestehende `create`-Pipeline erzeugt. Der Text der Aufgabe geht als
-   Stoffnotiz ins Briefing. Über die Pipeline entscheidet weiter C#.
+1. ~~Welcher Zugang wird beim Kind hinterlegt?~~ → Entscheidung 1
+2. ~~Wer darf ihn setzen und sehen?~~ → Entscheidung 2
+3. ~~Wie wird gespeichert?~~ → Entscheidung 3
+4. ~~Wann wird abgerufen?~~ → Entscheidung 4
+5. ~~Wo liegt der Lese-Endpunkt?~~ → Entscheidung 5
+6. ~~Wie meldet sich der Connector an?~~ → Entscheidung 6
+7. ~~Welcher Umfang zuerst?~~ → Entscheidung 7
+8. ~~Wie werden die Fächer zugeordnet?~~ → Entscheidung 8
+9. ~~Was tut der KI-Creator?~~ → Entscheidung 9
+
+## Entscheidungen
+
+1. **Ein WebUntis-Zugang je Kind, am Kinderprofil (`Child`), nicht am Login-Konto (`Account`).** Er kann der
+   Elternzugang oder das Schülerkonto des Kindes sein. Dazu kommt die WebUntis-Schüler-ID. Begründung: Der
+   Elternzugang deckt nur Friedrich ab, Theodor nicht. Die Schüler-ID trennt die Aufgaben über `elementIds`,
+   wenn ein Elternzugang mehrere Kinder sieht. Kosten: Derselbe Elternzugang steht bei zwei Kindern doppelt und
+   wird doppelt gepflegt.
+2. **Nur der Supervisor setzt, ändert und löscht den Zugang. Das Geheimnis kann nur geschrieben werden.** Die
+   API meldet „eingerichtet“, den Zeitpunkt des letzten Abrufs und dessen Ergebnis; der Student sieht nichts.
+   Begründung: Die Schulzugangsdaten des Kindes sind das empfindlichste Datum im System, und niemand muss sie
+   zurücklesen. Kosten: Wer das Passwort vergessen hat, liest es nicht in Pugling nach, sondern setzt es neu.
+3. **Verschlüsselt mit ASP.NET Core Data Protection, eigene Tabelle 1:1 zum Kind, neue Migration an der
+   Kette.** Der Schlüsselbund liegt dauerhaft neben `pugling.db`. Begründung: Der Server muss das Passwort
+   wieder lesen, ein Hash wie bei der PIN geht nicht. Data Protection gehört zum Framework und braucht keine
+   eigene Kryptografie. Kosten: Ein neues Betriebsartefakt (Schlüsselordner), das `scripts/heimnetz.ps1`
+   mitsichern muss. Geht es verloren, wird der Zugang neu eingegeben; die Lerndaten sind nicht betroffen.
+4. **Abruf nur auf Anfrage, keine Kopie der Hausaufgaben in der DB.** Begründung: Für die Übungserstellung
+   genügt der Abruf beim Öffnen. Ohne Hintergrunddienst entstehen weder Zwischenspeicher noch Schemadaten, die
+   veralten. Kosten: Jedes Öffnen fragt WebUntis live ab und ist langsamer. Ist die Schule nicht erreichbar,
+   sieht der Vater nichts. Der spätere Malus braucht trotzdem einen Speicher (Folge-Story).
+5. **Lese-Endpunkt in der Supervisor-Ebene: `supervisor/children/{childId}/school-homework`,** nach dem Muster
+   von `TimetableController`, geprüft mit `SupervisorOwnsChildAsync`. Begründung: Der Creator-Katalog ist bewusst
+   an kein Kind gebunden, Hausaufgaben sind es. Der Vater ist beides. Kosten: Ein Lehrer-Konto, das nur Creator
+   ist, kommt nicht an Hausaufgaben. Das ist gewollt.
+6. **Anmeldung zuerst mit Benutzername und Passwort per JSON-RPC. Der QR-Code-Schlüssel kommt nur, wenn ein SSO
+   das sperrt.** Erste Bauhandlung ist ein Probe-Login gegen die Schule. Begründung: Das ist der einfachste
+   Weg, und die Bibliotheken der Community nutzen ihn. Kosten: Sperrt ein SSO, wächst die Story um den
+   Einmalcode-Weg (TOTP) und muss neu geschätzt werden.
+7. **Umfang: nur Hausaufgaben.** Prüfungstermine → `Klassenarbeit` und Hausaufgaben als Pflicht mit Malus werden
+   je eine eigene Story. Begründung: So beweist der Connector zuerst, dass er im Alltag stabil läuft, bevor
+   Münzen an ihm hängen. Kosten: Der ursprüngliche Hebel (verpasst kostet Münzen) kommt erst später.
+8. **Fach nach Namen beim Abruf zuordnen.** Der Abgleich ignoriert Groß- und Kleinschreibung. Das DTO trägt
+   `subjectId?` neben dem WebUntis-Text; ohne Treffer wird die Aufgabe nur angezeigt. Begründung: Der KI-Creator
+   braucht ein Fach, um über das Buch des Kindes die Reihe zu finden. Die Fächer mit Büchern heißen in WebUntis
+   gleich. Kosten: Ein abweichend geschriebenes Fach („Franz.“) findet still keinen Treffer. Eine
+   Zuordnungstabelle je Kind wäre dann eine eigene Story.
+9. **KI-Creator: Die Hausaufgabe wird Eingabe der bestehenden `create`-Pipeline.** `homework --child <id>`
+   listet die offenen Aufgaben mit WebUntis-Id. `create --type <Typ> --child <id> --homework <id>` übernimmt den
+   Aufgabentext als Thema ins Briefing und die Reihe über das zugeordnete Fach. Der Vater wählt den Typ; die
+   Übung landet nur im Katalog, in den Plan kommt sie mit `assign`. Begründung: Das ist die kleinste
+   Erweiterung, und Typ und Pflicht bleiben in der Hand des Vaters (Linie aus B-460: C# entscheidet). Kosten:
+   Eine Aufgabe, die nur auf eine Seite verweist („S. 80 Nr. 1+2“), gibt dem Modell keinen Stoff. Seitenverweise
+   über das Buch-Markdown aufzulösen, wäre eine Folge-Story.
 
 ## Akzeptanzkriterien
 
-Entwurf, wird beim Grillen final.
-
 1. Ein Supervisor kann für ein betreutes Kind einen WebUntis-Zugang setzen, ändern und löschen. Für ein fremdes
-   Kind gibt es `404`/`403` wie bei den übrigen Kind-Unterressourcen. Ein Student erreicht den Endpunkt nicht.
+   Kind gibt es `404`/`403` wie bei den übrigen Kind-Unterressourcen. Ein Student erreicht die Endpunkte nicht.
 2. Keine Antwort der API enthält das Geheimnis, auch kein GET des Zugangs. Prüfbar über einen Test, der jede
    Antwort nach dem gesetzten Wert durchsucht.
 3. In der DB liegt das Geheimnis nicht im Klartext. Ein Test liest die Zeile roh und findet den Wert nicht.
-4. `GET …/school-homework?from=&to=` liefert die Aufgaben des Kindes mit Fach, Lehrkraft, Aufgabedatum,
-   Fälligkeit, Text, erledigt und verpasst. Aufgaben anderer `elementIds` werden herausgefiltert. Getestet gegen
-   einen Fake-Connector mit aufgezeichneter, namenfreier Antwort.
+4. `GET …/school-homework?from=&to=` liefert die Aufgaben des Kindes mit WebUntis-Id, Fach (Text und
+   `subjectId?` nach Entscheidung 8), Lehrkraft, Aufgabedatum, Fälligkeit, Text, erledigt und verpasst.
+   Aufgaben anderer `elementIds` werden herausgefiltert. Getestet gegen einen Fake-Connector mit
+   aufgezeichneter, namenfreier Antwort.
 5. Schlägt der Login fehl oder ist WebUntis nicht erreichbar, kommt ein `ProblemDetails` mit eigenem `code`
    (z. B. `school_login_failed`, `school_unreachable`), kein `500`.
 6. Im Vater-Web kann der Zugang je Kind eingerichtet und die Hausaufgabenliste angesehen werden. Aus einer
    Aufgabe führt ein Weg zur Übungserstellung, deren Felder mit Fach und Aufgabentext vorbefüllt sind.
-7. Der KI-Creator erzeugt mit `--child` aus einer gewählten Hausaufgabe eine Übung im Katalog.
+7. Der KI-Creator listet mit `homework --child <id>` die offenen Aufgaben. `create --type <Typ> --child <id>
+   --homework <id>` erzeugt die Übung in der Reihe, die zum zugeordneten Fach gehört. Eine Aufgabe ohne
+   zugeordnetes Fach bricht mit einer verständlichen Meldung ab und erzeugt nichts.
 8. Ein echter Abruf gegen die Schule mit Friedrichs Zugang zeigt im Heimnetz dieselben Aufgaben wie die Seite
    `student-homework`.
 
@@ -143,3 +169,4 @@ Entwurf, wird beim Grillen final.
 - **2026-11-18** — ausformuliert: Ziel ist jetzt der Connector für die Übungserstellung, nicht der Malus.
   Ist-Stand am Code (keine ausgehenden Aufrufe, kein `DataProtection`, die PIN nur gehasht), WebUntis-Felder aus
   der Sichtung, neun offene Punkte mit Empfehlung, vom Vater im Chat übernommen.
+- **2026-11-18** — gegrillt: neun Entscheidungen mit Begründung und Kosten, vom Vater bestätigt (1–7 als übernommene Empfehlungen, 8 und 9 einzeln: je Variante A). Akzeptanzkriterien final.
