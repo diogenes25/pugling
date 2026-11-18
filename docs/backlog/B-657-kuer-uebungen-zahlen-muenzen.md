@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/student]
 aliases: [Alles gibt Münzen, Zusatzübungen mit Münzen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -52,7 +52,7 @@ Wiederholung. Positionen **ohne Karteikasten** zahlen ebenfalls, einmal je Wort 
 Tagesstempel). **Weiter ohne Münzen:** Kennenlernen (reine Anzeige), mit Hilfe erleichterte Antworten, die
 Lernkarte im Vorschau-/Nachtrags-Spiel des Vaters.
 
-## Bau
+## Bau (`8165c1dd`, 2026-11-18)
 
 - `PositionPracticeController.Review`: die Pflicht-Sperre entfällt; ohne Kasten zahlt ein Treffer und stempelt den Tag;
   der Claim-Zweig bucht `ScoringService.ClaimCoins` (1); `LearnCardReviewAsync` bucht `ScoreNewWordRecall`.
