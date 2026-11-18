@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, rolle/student, rolle/supervisor]
 aliases: [Taktung bis erledigt, UntilDone, Abschlussbonus]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -179,3 +179,4 @@ einmalig gibt es den Abschlussbonus.
   Verifikation: `dotnet test Pugling.sln -c Release` **1843/1843**, `tsc` sauber, Vitest **1211/1211**, E2E
   `nacharbeit-bis-erledigt.spec.ts` + `nacharbeit.spec.ts` **2 passed** (Ausweichports, Wegwerf-DB, Server von Playwright
   nach der letzten Bearbeitung gestartet).
+- **2026-11-18** — abgenommen (`177027d9`): Rollengang Vater maschinell (`nacharbeit-bis-erledigt.spec.ts`, Server nach der letzten Bearbeitung gestartet), Sohn und Creator als Regressionszeugen; Protokoll [PM-Sitzung 2026-11-18](../pm-sitzung-2026-11-18.md). Offen als Gerätecheck (kein Abnahmehindernis, AK 1–5 halten): ob der große Jubel „Nacharbeit geschafft!“ am Handy wie ein TADAA wirkt.

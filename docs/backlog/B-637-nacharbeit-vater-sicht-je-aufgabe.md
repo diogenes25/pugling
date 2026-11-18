@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/auswertung, rolle/supervisor]
 aliases: [Nacharbeit-Auswertung, Stufen je Aufgabe]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -102,3 +102,4 @@ Vater-Sicht.
 
   Grundlinie nach dem Zurückspielen: green. Der 2-s-Jubel selbst ist kein Beleg (aria-hidden, sensorisch) – der Bonus
   steht seit dem Review dauerhaft in Ansage, Blatt und Rundensumme (E4).
+- **2026-11-18** — abgenommen (`177027d9`): Rollengang Vater maschinell (`nacharbeit-bis-erledigt.spec.ts`, Server nach der letzten Bearbeitung gestartet), Sohn und Creator als Regressionszeugen; Protokoll [PM-Sitzung 2026-11-18](../pm-sitzung-2026-11-18.md).
