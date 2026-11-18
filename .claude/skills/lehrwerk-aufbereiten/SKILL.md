@@ -107,7 +107,7 @@ für andere Fächer (Mathematik) endet der Lauf nach Schritt 1, solange der Nutz
   ```text
   Skill lehrwerk-aufbereiten, NUR Schritt 1. Lies SKILL.md (Regeln + Schritt 1) und MARKDOWN.md ganz.
   Buch: <Titel> · Fotos: <Ordner> · Dein Block: <erstes.jpg> bis einschließlich <letztes.jpg> (<n> Fotos)
-  Ausgabe: <…-pugling/md/> · Kacheln: <…-pugling/kacheln/> · _buch.md lesen, nicht ändern (Kapitel, Aufbau, Tags)
+  Ausgabe: <…-pugling/md/> (Seitenzahlen im Dateinamen dreistellig: s074-075.md) · Kacheln: <…-pugling/kacheln/> · _buch.md lesen, nicht ändern (Kapitel, Aufbau, Tags)
   Prüfen: md_pruefen.py <md> --fotos <Ordner> --nur <erstes.jpg> <letztes.jpg> bis 0 FEHLER
   Bericht: Prüfzeile, Dateien mit seitentyp, unsichere Stellen, benutzte neue Tags, Unklarheiten im Skill.
   ```
