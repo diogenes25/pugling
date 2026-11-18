@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [î nicht tippbar, Wort überspringen, Tastatur-Blocker]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Defekt
-groesse: ""
+groesse: M
 wo: beides
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedrich"
 grund: ""
 ersetzt_durch: []
@@ -149,6 +149,68 @@ der Ausformulierung ab, weil die Leiste aus Entscheidung 1 den Grund für die To
 6. **Friedrich lernt auf dem Handy** – darum zusätzlich ein Hinweis aufs lange Drücken an der Leiste, nur
    auf Touch-Geräten. *Kosten:* eine Zeile, Erkennung über `pointer: coarse`.
 
+## Schätzung
+
+**Größe M** – am Anker „vokabel-basierter Batch-Pfad im `MediaSelector`“ (B-03): ein kleiner Backend-Schritt
+(ein additives Feld durch die Kartenbildung) und eine neue Frontend-Komponente an vier Flächen samt drei
+Testebenen. Kleiner als L, weil nichts am Schema und nichts an der Wertung.
+
+- **`wo: beides`** – das Frontend kennt die getippte Sprache heute nicht (siehe unten), also Backend zuerst.
+- **`migration: nein`** – kein Schema. Die Sprache liegt schon in der DB: `TextbookSeries.SourceLanguage`
+  ist „die gelernte Sprache“ (`backend/Pugling.Api/Models/CurriculumEntities.cs:46`–`:47`), und jede Übung
+  hängt zwingend an einer Unit dieser Reihe (B-106).
+- **`vertragsbruch: nein`** – ein **additives** Feld an den Kartentypen (`PracticeCard`,
+  `backend/Pugling.Contracts/Student/PracticeDtos.cs:116`; `TestItem`, `TestDtos.cs:43`; `ExtraCard` des
+  Bonus-Trainings, `ExtraTrainingDtos.cs:63`). Bestehende Clients ignorieren es.
+
+### Was der Vertrag heute nicht trägt
+
+Die Karte nennt die Sprache der Antwort nicht. `SpeechLang` ist die Sprache des **Prompts** und nur gesetzt,
+wenn das Wort keine Aufnahme hat (`ExerciseContentResolver.cs:108`); beim Umdrehen fällt es weg
+(`ExerciseContentProvider.cs:132`). `DictationLang` gibt es nur auf der Diktatstufe, `RevealSpeechLang` nur
+auf der Lernkarte. Die Testkarte trägt gar keine Vorlese-Sprache (`frontend/src/sohn/Lektion.tsx:29`).
+Keines davon taugt als Quelle für die Leiste.
+
+### Risiken
+
+1. **Reihe ohne Sprache.** `SourceLanguage` ist nullable. Fehlt sie an Friedrichs Französisch-Reihe in der
+   echten DB, erscheint keine Leiste und der Blocker bleibt. Vor dem Bau an einer **DB-Kopie** nachsehen;
+   als Rückfall die `SourceLanguage` der Store-Vokabel (dieselbe Quelle wie `SpeechLang`).
+2. **Einsetzen ohne Fokusverlust.** Ein Leisten-Knopf nimmt den Fokus, am Handy klappt dann die Tastatur
+   zu (dieselbe Falle wie Review B-526). Der Knopf muss `onPointerDown` mit `preventDefault` abfangen und
+   das Zeichen an der Schreibmarke (`selectionStart`) einsetzen.
+3. **Kopiersperre.** Setzt die Leiste über React (`onWert`) statt über ein `beforeinput`, greift
+   `kopierSperre.ts:39` nicht – gewollt, aber durch einen Test festzuhalten, damit niemand später „die
+   Leiste über `insertText` vereinfacht“ und sie damit stumm sperrt.
+4. **`LetterBoxes`** verteilt Buchstaben auf Kästchen und verwaltet die Schreibmarke selbst
+   (`frontend/src/components/LetterBoxes.tsx`). Das Einsetzen dort braucht einen eigenen Weg.
+5. **Wort-Ergänzung leckt in den Test** (E3). Die Leiste bekommt die Wortzeichen nur als ausdrückliche
+   Eigenschaft, die allein die Lernkarte in Schritt 3 setzt – nie aus `reveal` der Karte abgeleitet.
+
+### Angriffsplan
+
+1. **Backend:** `ContentItem` bzw. die Kartenbildung bekommt die Lernsprache der Reihe
+   (`Exercise.SeriesUnit.Series.SourceLanguage`, Rückfall Store-Vokabel); neues Feld `KeyboardLang` an
+   `PracticeCard`, `TestItem` und `ExtraCard`. Gesetzt auf jeder Karte, deren Antwort getippt wird;
+   es verrät nichts (eine Zeichenmenge, keine Lösung). Integrationstest, OpenAPI-Dokument neu
+   (Testlauf), `npm run gen:contract`.
+2. **Frontend, Baustein:** `lib/sonderzeichen.ts` (Zeichenmenge je Sprache, Diakritika-Faltung für den
+   Hinweis) und `components/Sonderzeichen.tsx` (Leiste, Einsetzen an der Schreibmarke, Touch-Hinweis über
+   `matchMedia("(pointer: coarse)")`).
+3. **Frontend, Flächen:** Antwortfläche (`Lektion.tsx`, dient Üben, Test und Bonus), `LetterBoxes`,
+   Lernkarte Schritt 3 (mit Wortzeichen und Akzent-Hinweis) und Schritt 4. Texte über `t()` in `de.ts`/`en.ts`.
+4. **Reviewer:** `pugling-reviewer` für Schritt 1, `frontend-reviewer` für 2–3.
+
+### Testweg
+
+- **Backend:** `LernkarteTests` und ein Fall im Positions-Test: `keyboardLang` ist `fr` auf einer
+  französischen Karte, auch in umgedrehter Richtung – rot, wenn das Feld nur bei `SpeechLang` mitkommt.
+- **Vitest:** `sonderzeichen.test.ts` (Menge je Sprache, Ergänzung aus dem Wort, Faltung für den Hinweis);
+  `Lernkarte.test.tsx` und `Lektion.test.tsx` nach AK 8 (a)–(c); `LetterBoxes.test.tsx` für das Einsetzen.
+- **E2E:** neue Spec `e2e/sonderzeichen.spec.ts` (eine Fläche je Spec): Lernkarte mit einem Wort mit „î“,
+  Abschrift über die Leiste, Runde läuft durch – das ist zugleich der Rollengang. Felder per `tippen()`.
+- **Vor dem Bau:** `SourceLanguage` der Reihen in einer Kopie der echten DB prüfen (Risiko 1).
+
 ## Verlauf
 
 - 2026-11-18 · idee · aufgenommen aus dem Feedback des Vaters
@@ -158,3 +220,5 @@ der Ausformulierung ab, weil die Leiste aus Entscheidung 1 den Grund für die To
 - 2026-11-18 · gegrillt · sechs Entscheidungen mit dem Vater: Sonderzeichen-Leiste überall (auch Test),
   Abschreiben exakt mit Hinweis, Leiste ergänzt in Schritt 3 die Zeichen des Wortes, Wertung bleibt bei
   B-624, kein Überspringen, Handy → Hinweis aufs lange Drücken.
+- 2026-11-18 · geschaetzt · M, beides, keine Migration, kein Vertragsbruch (additives `KeyboardLang` aus
+  `TextbookSeries.SourceLanguage`); Hauptrisiken Reihe ohne Sprache in der echten DB und Fokusverlust am Handy.
