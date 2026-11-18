@@ -1,0 +1,182 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "backend/Pugling.Api",
+        "--",
+        "--urls=http://localhost:5210",
+        "--ConnectionStrings:Default=Data Source=pugling_dev.db"
+      ],
+      "port": 5210,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
+      "port": 5173,
+      "env": {
+        "PUGLING_API_URL": "http://localhost:5210"
+      }
+    },
+    {
+      "name": "frontend-b485",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "env": {
+        "PUGLING_API_URL": "http://localhost:5280"
+      },
+      "port": 5175
+    },
+    {
+      "name": "frontend-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173,
+      "env": {
+        "PUGLING_API_URL": "http://localhost:5210"
+      }
+    },
+    {
+      "name": "backend-walk",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "backend/Pugling.Api",
+        "--",
+        "--urls=http://localhost:5211",
+        "--ConnectionStrings:Default=Data Source=pugling_walk.db"
+      ],
+      "port": 5211,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "backend-ziel",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "backend/Pugling.Api",
+        "--",
+        "--urls=http://localhost:5212",
+        "--ConnectionStrings:Default=Data Source=pugling_ziel.db",
+        "--RateLimiting:LoginEnabled=false"
+      ],
+      "port": 5212,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "ui-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "backend/Pugling.Api",
+        "--",
+        "--urls=http://localhost:5395",
+        "--ConnectionStrings:Default=Data Source=pugling_ui.db",
+        "--RateLimiting:LoginEnabled=false"
+      ],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "port": 5395
+    },
+    {
+      "name": "ui-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5196",
+        "--strictPort"
+      ],
+      "env": {
+        "PUGLING_API_URL": "http://localhost:5395"
+      },
+      "port": 5196
+    },
+    {
+      "name": "b524-api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "-c",
+        "Release",
+        "--no-build",
+        "--no-launch-profile",
+        "--project",
+        "backend/Pugling.Api",
+        "--",
+        "--urls=http://localhost:5390",
+        "--ConnectionStrings:Default=Data Source=pugling_b524.db",
+        "--RateLimiting:LoginEnabled=false"
+      ],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "port": 5390
+    },
+    {
+      "name": "b524-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5191",
+        "--strictPort"
+      ],
+      "env": {
+        "PUGLING_API_URL": "http://localhost:5390"
+      },
+      "port": 5191
+    }
+  ]
+}
