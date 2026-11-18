@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [î nicht tippbar, Wort überspringen, Tastatur-Blocker]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: M
@@ -12,6 +12,7 @@ quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedric
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-598]
+wartet_auf: "Probe auf Friedrichs Handy (Android: d, î aus der Leiste, ner ergibt genau dîner)"
 ---
 
 # B-661 · Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission
@@ -222,3 +223,20 @@ Keines davon taugt als Quelle für die Leiste.
   B-624, kein Überspringen, Handy → Hinweis aufs lange Drücken.
 - 2026-11-18 · geschaetzt · M, beides, keine Migration, kein Vertragsbruch (additives `KeyboardLang` aus
   `TextbookSeries.SourceLanguage`); Hauptrisiken Reihe ohne Sprache in der echten DB und Fokusverlust am Handy.
+- 2026-11-18 · in-arbeit · Risiko 1 an einer Kopie der echten DB geprüft: alle Sprachreihen tragen ihre Lernsprache
+  (Friedrichs „Découvertes Série bleue 2“ = `fr`), sechs seiner Wörter haben î/ï/œ (u. a. „connaître“, „gîte“,
+  „dîner“). Darum kein Rückfall auf die Sprache der Store-Vokabel; keine der 1629 Vokabeln ist zerlegt (NFD) gespeichert.
+- 2026-11-18 · abgenommen · Commit `96a3491d`. Backend: `keyboardLang` an `PracticeCard`/`TestItem`/`ExtraCard` aus
+  `TextbookSeries.SourceLanguage`; Frontend: `SonderzeichenLeiste` an Antwortfläche, `LetterBoxes`, Lernkarte 3 und 4,
+  Akzent-Hinweis beim Abschreiben. Belege: `dotnet test` 1876/1876 grün (neu `TastaturSpracheTests` ×3,
+  `Bonuskarten_Nennen_Die_Tastatursprache_Der_Reihe`); Vitest 1244/1244; E2E `sonderzeichen.spec.ts` und
+  `lernkarte-leichter.spec.ts` „2 passed“ (Ausweichports, Wegwerf-DB) – die neue Spec ist der Rollengang Sohn.
+  Rote Proben am richtigen Ort: Include im Test-Controller weg → nur `Testfrage_…` rot; Sprache aus `SpeechLang` →
+  nur `Uebungskarte_…_Umgedreht` rot; Wortzeichen auch in Schritt 4 → nur Lernkarte-Fall 3 rot; Leiste setzt
+  doppelt ein → die zwei Einsetz-Fälle rot; NFC weg → nur der NFD-Fall rot. Reviewer: `pugling-reviewer` keine 🔴
+  (🟢 überflüssiger Include in `GetSession` entfernt; 🟢 `PreviewItem` ohne Feld bleibt so, die Vater-Vorschau zeigt
+  keine Leiste), `frontend-reviewer` keine 🔴: 🟡 Fokus-Schutz war von keiner Probe gedeckt → Komponententest
+  `pointerDown`/`mouseDown` + `onMouseDown`; 🟡 gemerktes Kästchen überlebte den Kartenwechsel → Rückfall aufs erste
+  leere + Test; 🟢 leere Zusicherung entfernt; 🟢 NFC für zerlegt gespeicherte Wörter; 🟢 `disabled` an den
+  Leistenknöpfen bewusst gelassen (der Fokus steht dort praktisch nie). **Offen** (`wartet_auf`): Android-
+  Komposition ist nur am echten Gerät prüfbar – die E2E läuft in Desktop-Chromium.
