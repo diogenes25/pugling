@@ -411,6 +411,8 @@ ist nachzuprüfen, bevor sie weiterwandert.
 
 ### Nach dem Ausformulieren neu offen
 
+<!-- markdownlint-disable MD029 -->
+
 11. **Was ist eine Bonusaufgabe?** Bonus gibt es schon dreimal (Bonus-Training, Tagesbox, Missionen).
     Empfehlung: Eine Bonusaufgabe ist ein vom Planer **vorgeschlagenes Bonus-Training** mit Begründung –
     dieselbe Mechanik, kein vierter Weg; Tagesbox und Missionen bleiben, wie sie sind.
@@ -425,6 +427,8 @@ ist nachzuprüfen, bevor sie weiterwandert.
 15. **Ein Tag ganz ohne Server** zählt wie eine Pause und wird dem Vater gemeldet (Vorschlag aus
     Entscheidung 9, noch nicht bestätigt).
 16. **Begonnene Aufgaben sind nicht mehr streichbar** (Vorschlag aus Entscheidung 7, noch nicht bestätigt).
+
+<!-- markdownlint-enable MD029 -->
 
 ## Verlauf
 

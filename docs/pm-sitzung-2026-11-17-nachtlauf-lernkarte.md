@@ -88,6 +88,8 @@ Der `frontend-reviewer` meldete **1 🔴 und 5 🟡**, deren Behebung jeweils Co
 
 Der `pugling-reviewer` (nur lesend, kein Build – die Probe lief) meldete dazu **2 🟡** mit Code-/Test-Änderung:
 
+<!-- markdownlint-disable MD029 -->
+
 7. 🟡 Anti-Cheat am Rundenende vorbei: eine Karte bis zur Auswahl leichter schalten, sofort eine neue Runde starten und
    die gesehene Lösung dort frei tippen – `RemediationDoneAt` wird gesetzt (Stufe je Sitzung, `Review` nimmt über den
    Batch-Weg auch eine Karte außerhalb des Cursors). Vorschlag: offene Nacharbeits-Runde fortsetzen statt neu starten,
@@ -95,6 +97,8 @@ Der `pugling-reviewer` (nur lesend, kein Build – die Probe lief) meldete dazu 
 8. 🟡 `EasierStage` vergleicht nur mit der aktuellen Form: bei einer Lücke ohne Ablenker fällt die Auswahl auf Kästchen
    zurück, und vom Salat aus ginge es wieder auf Kästchen – schwerer, gegen Entscheidung 3. Fix: alle schon gezeigten
    Formen vergleichen, Testfall „eine Lücke, kein Ablenker“.
+
+<!-- markdownlint-enable MD029 -->
 
 🟢 ohne Zählung: Rundenzähler zählt auch Vorschau- und Vor-Nacharbeits-Sitzungen; `UnlimitedByDesign` nur für einen
 der beiden Dict-Spalten; Testlücken (Vater-Antwort erledigt nichts, Batch-Weg, Anlegen mit Vokabeltyp); Wortkasten
