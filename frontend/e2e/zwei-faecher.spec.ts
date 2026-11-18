@@ -72,8 +72,13 @@ test("Ein Plan je Fach: zwei Fächer bleiben aktiv, der Sohn sieht beide, die Tr
 
   // Der Sohn sieht beide Pflichten, je Fach ein Abschnitt; die Truhe ist zu.
   await sohnLogin(page, { id: childId, pin: PIN });
+  // Je Fach ein aufklappbarer Reiter: offen steht nur das Fach mit dem START, das andere klappt das Kind auf.
   await expect(page.getByRole("region", { name: ENGLISCH }).locator(".pfad-knoten")).toHaveCount(1);
-  await expect(page.getByRole("region", { name: FRANZ }).locator(".pfad-knoten")).toHaveCount(1);
+  const franz = page.getByRole("region", { name: FRANZ });
+  await expect(franz.locator(".pfad-knoten")).toHaveCount(0);
+  await expect(franz.getByRole("heading")).toContainText("Heute 0/1");
+  await franz.getByRole("button", { expanded: false }).click();
+  await expect(franz.locator(".pfad-knoten")).toHaveCount(1);
   const truhe = page.getByRole("region", { name: "Tagestruhe" });
   await expect(truhe).toContainText("Schaffe deine Tagesziele");
 

@@ -60,11 +60,14 @@ test("Der Pfad gliedert nach Unit, nennt Frist und Malus, und ein bestandener Te
   await sohnLogin(page, { id: String(childId), pin });
   await expect(page.getByText(PLAN)).toBeVisible();
 
-  // Zwei Abschnitte in Plan-Reihenfolge, je unter dem Titel ihrer Unit.
+  // Zwei Abschnitte in Plan-Reihenfolge, je unter dem Titel ihrer Unit; die freie Position steht nicht im
+  // Pflicht-Pfad, sondern zugeklappt unter den Zusatzübungen des Fachs.
   const abschnittA = page.getByRole("region", { name: `Unit A ${RUN}` });
   const abschnittB = page.getByRole("region", { name: `Unit B ${RUN}` });
   await expect(abschnittA.locator(".pfad-knoten")).toHaveCount(1);
-  await expect(abschnittB.locator(".pfad-knoten")).toHaveCount(2);
+  await expect(abschnittB.locator(".pfad-knoten")).toHaveCount(1);
+  await expect(page.locator(".pfad-zeile", { hasText: FREI })).toHaveCount(0);
+  await page.getByRole("button", { name: /1 Zusatzübung/ }).click();
 
   const knoten = (titel: string) => page.locator(".pfad-zeile", { hasText: titel }).locator(".pfad-knoten");
   // Genau ein START, und er steht am offenen Tagesziel.

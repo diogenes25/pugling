@@ -6,7 +6,7 @@ import { useAsync } from "../lib/useAsync";
 import { useAuth } from "../lib/auth";
 import { Mascot } from "../components/Mascot";
 import { useSohn } from "./SohnApp";
-import { nachFach } from "./tagessicht";
+import { fachStand, nachFach } from "./tagessicht";
 import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
 import { useDialogFocus } from "../lib/useDialogFocus";
@@ -122,12 +122,11 @@ export function SohnHome() {
           trotzdem sichtbar sein, sonst wartet das Kind auf einen Stand, der nie kommt. */}
       <NeuLadenFehler fehler={sicht.error} laedt={sicht.loading} onRetry={sicht.reload} />
 
-      {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad; der Fachname steht sichtbar darüber. */}
+      {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad – als aufklappbarer Reiter, damit das zweite Fach nicht
+          erst nach dem ganzen ersten kommt. Offen startet das Fach mit dem START – und ein einziges Fach immer. */}
       {faecher.map((f, i) => (
-        <section key={f.fach} className="fach-gruppe" aria-labelledby={`${titelPraefix}-fach-${i}`}>
-          <h2 id={`${titelPraefix}-fach-${i}`} className="screen-title fach-titel">{f.fach || t("home.noSubject")}</h2>
-          <Pfad positions={f.positions} naechsteId={naechste} />
-        </section>
+        <FachKarte key={f.fach} id={`${titelPraefix}-fach-${i}`} farbe={i} titel={f.fach || t("home.noSubject")}
+          positions={f.positions} naechsteId={naechste} einzig={faecher.length === 1} />
       ))}
 
       {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
@@ -138,6 +137,79 @@ export function SohnHome() {
           die Tagesziele, B-535) statt es nachzurechnen; ein Plan ohne Pflicht hat nichts davor. Die Sperre hält der Server. */}
       <BonusEinstieg offen={today.rewardsUnlocked || today.goalsTotal === 0} ziele={belohnung.art} />
     </div>
+  );
+}
+
+/** Anzahl der Reiterfarben in index.css (`.fach-karte.farbe-N`); danach beginnt die Reihe von vorn. */
+const FACH_FARBEN = 5;
+
+/**
+ * Ein Fach der Startseite als aufklappbarer Reiter: im Kopf, was die Pflicht dieses Fachs noch will (heute/Woche, offene
+ * Ziel-Münzen), aufgeklappt erst der Pflicht-Pfad, darunter – selbst zugeklappt – die Zusatzübungen ohne Takt.
+ * Zugeklappt rendert der Inhalt nicht: ein verstecktes Fach soll weder Tab-Stopps noch Vorlesetext tragen.
+ */
+export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = false }: {
+  id: string; farbe: number; titel: string; positions: PositionStatus[]; naechsteId: number | null;
+  /** Das einzige Fach des Tages: Zuklappen trennt dann nichts, es kostet nur einen Tipp. */
+  einzig?: boolean;
+}) {
+  const { t } = useTranslation();
+  const stand = fachStand(positions);
+  const mitStart = naechsteId !== null && positions.some((p) => p.positionId === naechsteId);
+  const [offen, setOffen] = useState(mitStart || einzig);
+  // Nur Zusatz, keine Pflicht: dann ist der Zusatz der Inhalt, nicht ein zweites Zuklappen darin.
+  const [zusatzOffen, setZusatzOffen] = useState(stand.pflicht.length === 0);
+  const inhaltId = `${id}-inhalt`;
+  const zusatzId = `${id}-zusatz`;
+
+  return (
+    <section className={`fach-karte farbe-${farbe % FACH_FARBEN}${offen ? " offen" : ""}`} aria-labelledby={`${id}-name`}>
+      <h2 className="fach-kopf-h">
+        <button type="button" id={id} className="fach-kopf" aria-expanded={offen} aria-controls={inhaltId}
+          onClick={() => setOffen((o) => !o)}>
+          <span id={`${id}-name`} className="fach-name">{titel}</span>
+          <span className="fach-stand">
+            {stand.heute.total > 0 && (
+              <span className={`fach-chip${stand.heute.met === stand.heute.total ? " fertig" : ""}`}>
+                {t("home.subjectToday", { met: stand.heute.met, total: stand.heute.total })}
+              </span>
+            )}
+            {stand.woche.total > 0 && (
+              <span className={`fach-chip${stand.woche.met === stand.woche.total ? " fertig" : ""}`}>
+                {t("home.subjectWeek", { met: stand.woche.met, total: stand.woche.total })}
+              </span>
+            )}
+            {stand.geschafft
+              ? <span className="fach-chip fertig">{t("home.subjectDone")}</span>
+              : stand.offeneMuenzen > 0 && <span className="fach-chip muenzen">{t("home.subjectCoins", { count: stand.offeneMuenzen })}</span>}
+            {stand.pflicht.length === 0 && <span className="fach-chip">{t("home.subjectNoDuty")}</span>}
+          </span>
+          <span className="fach-pfeil" aria-hidden="true">▾</span>
+        </button>
+      </h2>
+      <div id={inhaltId} className="fach-inhalt" hidden={!offen}>
+        {offen && (
+          <>
+            {stand.pflicht.length > 0 && <Pfad positions={stand.pflicht} naechsteId={naechsteId} />}
+            {stand.zusatz.length > 0 && (
+              <div className="fach-zusatz">
+                {stand.pflicht.length > 0 && (
+                  <button type="button" className="fach-zusatz-kopf" aria-expanded={zusatzOffen} aria-controls={zusatzId}
+                    onClick={() => setZusatzOffen((o) => !o)}>
+                    <span>{t("home.extraTitle", { count: stand.zusatz.length })}</span>
+                    <span className="sub">{t("home.extraHint")}</span>
+                    <span className="fach-pfeil" aria-hidden="true">▾</span>
+                  </button>
+                )}
+                <div id={zusatzId} hidden={!zusatzOffen}>
+                  {zusatzOffen && <Pfad positions={stand.zusatz} naechsteId={naechsteId} />}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 

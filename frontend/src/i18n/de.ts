@@ -41,6 +41,16 @@ export const de = {
       cadenceUntilDone: "Nacharbeit · bis erledigt",
       introduced: "{{count}} von {{total}} eingeprägt",
       noSubject: "Ohne Fach",
+      // Der Reiter je Fach auf der Startseite: was die Pflicht dieses Fachs noch will.
+      subjectToday: "Heute {{met}}/{{total}}",
+      subjectWeek: "Woche {{met}}/{{total}}",
+      subjectCoins_one: "🪙 noch {{count}}",
+      subjectCoins_other: "🪙 noch {{count}}",
+      subjectDone: "✓ Pflicht geschafft",
+      subjectNoDuty: "nur Zusatz",
+      extraTitle_one: "➕ {{count}} Zusatzübung",
+      extraTitle_other: "➕ {{count}} Zusatzübungen",
+      extraHint: "freiwillig, ohne Pflicht",
     },
     // Der Lernpfad auf der Startseite (B-525).
     pfad: {

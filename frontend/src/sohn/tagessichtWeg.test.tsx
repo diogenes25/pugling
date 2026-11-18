@@ -27,7 +27,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-const { Pfad, SohnHome } = await import("./SohnHome");
+const { FachKarte, Pfad, SohnHome } = await import("./SohnHome");
 
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter", exerciseType: "Vocabulary", renderer: "flashcards",
@@ -75,10 +75,12 @@ describe("Startseite über zwei Pläne", () => {
     ]));
     render(<MemoryRouter><SohnHome /></MemoryRouter>);
 
-    // Rot, wenn die Startseite wieder der Übersicht eines Plans folgt: dann gibt es keine Fach-Überschriften.
-    const faecher = await screen.findAllByRole("heading", { level: 2 });
-    expect(faecher.map((h) => h.textContent)).toEqual(["Englisch", "Französisch"]);
-    expect(within(screen.getByRole("region", { name: "Französisch" })).getByRole("button", { name: /^Französisch 1/ })).toBeTruthy();
+    // Rot, wenn die Startseite wieder der Übersicht eines Plans folgt: dann gibt es keine Fach-Abschnitte.
+    expect(await screen.findByRole("region", { name: "Englisch" })).toBeTruthy();
+    const franzoesisch = screen.getByRole("region", { name: "Französisch" });
+    // Das Fach ohne START ist zugeklappt; aufgeklappt zeigt es seinen Pfad.
+    fireEvent.click(within(franzoesisch).getByRole("button", { expanded: false }));
+    expect(within(franzoesisch).getByRole("button", { name: /^Französisch 1/ })).toBeTruthy();
     // Rot, wenn die Zeile unter „Tagesmission“ die Fächer wiederholt statt die Pläne zu nennen.
     expect(screen.getByText("Englisch-Plan · Französisch-Plan")).toBeTruthy();
     // Rot, wenn SohnHome `naechsteId` nicht weiterreicht: jeder Fach-Pfad zeigte dann seinen eigenen START.
@@ -88,5 +90,64 @@ describe("Startseite über zwei Pläne", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Französisch 1/ }));
     fireEvent.click(screen.getByRole("link", { name: /LOS/ }));
     expect(setPlanId).toHaveBeenCalledWith(22);
+  });
+});
+
+/*
+ * Die Fächer als aufklappbare Reiter: der Kopf sagt, was die Pflicht des Fachs noch will, aufgeklappt kommt erst die
+ * Pflicht, die Zusatzübungen stehen getrennt und zugeklappt darunter – sonst scrollt das Kind am ersten Fach vorbei.
+ */
+describe("Fach-Reiter", () => {
+  const zeige = (positions: PositionStatus[], naechsteId: number | null) =>
+    render(<MemoryRouter><FachKarte id="f" farbe={0} titel="Englisch" positions={positions} naechsteId={naechsteId} /></MemoryRouter>);
+  const kopf = () => screen.getAllByRole("button")[0];
+
+  it("klappt ein Fach ohne START zu und mit START auf", () => {
+    // Rot, wenn jedes Fach offen startet (das lange Scrollen) oder auch das Fach mit dem START zu ist.
+    const { unmount } = zeige([position({ positionId: 1, exerciseTitle: "Pflicht" })], null);
+    expect(kopf().getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("button", { name: /^Pflicht/ })).toBeNull();
+    unmount();
+    zeige([position({ positionId: 1, exerciseTitle: "Pflicht" })], 1);
+    expect(kopf().getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: /^Pflicht/ })).toBeTruthy();
+  });
+
+  it("nennt im Kopf Tages- und Wochenstand und die Münzen der offenen Ziele", () => {
+    // Rot, wenn der Kopf erfüllte Ziele mitzählt, die Woche in „heute“ mischt oder die Münzen weglässt.
+    zeige([
+      position({ positionId: 1, cadence: "Daily", goalMet: true, pointsGoalMet: 20 }),
+      position({ positionId: 2, cadence: "Daily", goalMet: false, pointsGoalMet: 30 }),
+      position({ positionId: 3, cadence: "Weekly", goalMet: false, pointsGoalMet: 15 }),
+      position({ positionId: 4, cadence: "None", goalMet: true, pointsGoalMet: 0 }),
+    ], null);
+    const text = kopf().textContent ?? "";
+    expect(text).toContain("Heute 1/2");
+    expect(text).toContain("Woche 0/1");
+    expect(text).toContain("noch 45");
+  });
+
+  it("klappt ein einziges Fach auch ohne START auf", () => {
+    // Rot, wenn ein Kind mit nur einem Fach nach erfüllter Pflicht einen leeren, zugeklappten Reiter sieht.
+    render(<MemoryRouter><FachKarte id="f" farbe={0} titel="Englisch" positions={[position({ goalMet: true })]} naechsteId={null} einzig /></MemoryRouter>);
+    expect(kopf().getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("trennt die Zusatzübungen von der Pflicht und klappt sie erst auf Wunsch auf", () => {
+    // Rot, wenn freie Positionen wieder zwischen den Pflichten im Pfad stehen.
+    zeige([
+      position({ positionId: 1, exerciseTitle: "Pflicht", cadence: "Daily" }),
+      position({ positionId: 2, exerciseTitle: "Kür", cadence: "None", goalMet: true }),
+    ], 1);
+    expect(screen.queryByRole("button", { name: /^Kür/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /1 Zusatzübung/ }));
+    expect(screen.getByRole("button", { name: /^Kür/ })).toBeTruthy();
+  });
+
+  it("sagt „Pflicht geschafft“, wenn alle Ziele des Fachs erfüllt sind", () => {
+    // Rot, wenn ein Fach mit erfüllter Pflicht weiter offene Münzen verspricht.
+    zeige([position({ positionId: 1, cadence: "Daily", goalMet: true })], null);
+    expect(kopf().textContent).toContain("Pflicht geschafft");
+    expect(kopf().textContent).not.toContain("noch");
   });
 });

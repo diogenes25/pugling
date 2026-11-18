@@ -141,6 +141,36 @@ a { color: var(--cyan); }
 /* B-606: je Fach ein Abschnitt der Startseite; der Fachname steht über den Units seines Pfads. */
 .fach-gruppe { display: flex; flex-direction: column; gap: 10px; }
 .fach-titel { color: var(--gold); letter-spacing: .02em; }
+/* Ein Fach als aufklappbarer Reiter: die Farbe trennt die Fächer, der Kopf sagt, was die Pflicht noch will. */
+.fach-karte { --fach: #ff4d6d; --fach-2: #c92a4a; display: flex; flex-direction: column; border-radius: 20px; background: var(--bg-2); border: 2px solid var(--fach); overflow: hidden; }
+.fach-karte.farbe-1 { --fach: #2f6bff; --fach-2: #1d47c4; }
+.fach-karte.farbe-2 { --fach: #23b84a; --fach-2: #168234; }
+.fach-karte.farbe-3 { --fach: #b14bff; --fach-2: #7a2bc4; }
+.fach-karte.farbe-4 { --fach: #ff9e2c; --fach-2: #c46a10; }
+.fach-kopf-h { margin: 0; font: inherit; }
+.fach-kopf {
+  width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 14px 16px; border: 0; cursor: pointer;
+  color: #fff; text-align: left; background: linear-gradient(180deg, var(--fach), var(--fach-2));
+}
+.fach-kopf:focus-visible, .fach-zusatz-kopf:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
+.fach-name { font: 900 20px/1.1 var(--font-display); letter-spacing: .02em; }
+.fach-stand { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; justify-content: flex-end; }
+.fach-chip { font: 800 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: rgba(4, 6, 26, .32); white-space: nowrap; }
+.fach-chip.fertig { background: rgba(60, 232, 92, .9); color: #0b2a12; }
+.fach-chip.muenzen { background: rgba(255, 199, 56, .95); color: #3a2400; }
+.fach-pfeil { font-size: 16px; transition: transform .15s ease; }
+.fach-karte:not(.offen) .fach-kopf .fach-pfeil { transform: rotate(-90deg); }
+.fach-inhalt[hidden] { display: none; }
+.fach-inhalt { display: flex; flex-direction: column; gap: 10px; padding: 12px 12px 6px; }
+.fach-zusatz { display: flex; flex-direction: column; gap: 10px; border-top: 2px dashed var(--stroke); padding-top: 12px; }
+.fach-zusatz-kopf {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 12px 14px; border-radius: 14px; cursor: pointer;
+  background: var(--card); border: 1.5px solid var(--stroke); color: var(--ink); font: 800 14px/1.2 var(--font-body); text-align: left;
+}
+.fach-zusatz-kopf .fach-pfeil { margin-left: auto; }
+.fach-zusatz-kopf[aria-expanded="false"] .fach-pfeil { transform: rotate(-90deg); }
+/* Im Reiter tragen die Unit-Banner die Fachfarbe nur als Kante – der Kopf ist die laute Fläche. */
+.fach-karte .pfad-banner { background: var(--card); box-shadow: none; border-left: 6px solid var(--fach); }
 .pfad-banner {
   display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; border-radius: 18px;
   background: linear-gradient(180deg, #2f6bff, #2148c9); box-shadow: 0 5px 0 0 #142f8c;
@@ -204,7 +234,7 @@ a { color: var(--cyan); }
 }
 @media (prefers-reduced-motion: reduce) {
   .pfad-start, .pfad-blatt { animation: none; }
-  .pfad-kern { transition: none; }
+  .pfad-kern, .fach-pfeil { transition: none; }
   .truhe.bereit .truhe-kiste, .truhe-kiste.oeffnet { animation: none; }
 }
 
