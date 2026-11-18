@@ -35,7 +35,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
-        db.PlanPositions.Include(p => p.Exercise)
+        db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit).ThenInclude(u => u!.Series)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct) =>
@@ -51,7 +51,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         var f = PositionPlayService.CardFacets(PositionPlayService.ConfigOf(exercise), items, item, type, stage, typed, attemptId);
         return new TestItem(item.Index, f.Prompt, stage, f.Reveal, f.AnswerLength, f.Choices, f.AudioUrl,
             f.GapIndex, f.Passage, f.AnyOrder, type.Key, f.RevealAlternatives, f.AnswerPattern, f.Decoding, f.LetterTiles,
-            f.CueBox, f.DictationSpokenAnswer, f.DictationLang);
+            f.CueBox, f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
     }
 
     // The stage a question was frozen at on start (B-476); the attempt's stage for a row that carries none of its own.

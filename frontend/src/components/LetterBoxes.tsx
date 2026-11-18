@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useChromeT } from "../lib/chromeText";
+import { SonderzeichenLeiste } from "./Sonderzeichen";
 
 /**
  * Buchstaben-Kästchen für ein Wort bekannter Länge: eine Reihe Einzelfelder, die sich wie ein Feld tippt
@@ -15,8 +16,11 @@ import { useChromeT } from "../lib/chromeText";
  * Der gemeldete Wert ist darum **stellengetreu und immer `length` Zeichen lang** (siehe `compose`): nur so
  * bezeichnet `value[i]` dasselbe Kästchen wie `i`. Serverseitig kostet das nichts – `StageMechanics.Normalize`
  * trimmt und faltet Leerzeichen vor dem Vergleich.
+ *
+ * `sonderzeichen` (B-661): die Zeichen einer Leiste unter den Kästchen. Ein Zeichen landet im zuletzt fokussierten
+ * Kästchen, sonst im ersten leeren – wie ein Tastendruck, mit Weiterspringen.
  */
-export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesperrt = false }: {
+export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesperrt = false, sonderzeichen = [] }: {
   length: number;
   value: string;
   onChange: (v: string) => void;
@@ -24,9 +28,11 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesper
   pattern?: string;
   /** Nur lesen: `readOnly` statt `disabled`, damit ein fokussiertes Kästchen den Fokus behält (B-532). */
   gesperrt?: boolean;
+  sonderzeichen?: readonly string[];
 }) {
   const t = useChromeT();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const zuletzt = useRef<number | null>(null);
   const isFixed = (i: number) => pattern != null && pattern[i] !== "_";
   // An einer TIPPBAREN Stelle heißt ein Leerzeichen "noch leer", nicht "Leerzeichen getippt": die Maske
   // erklärt jedes Zeichen, das kein Buchstabe/keine Ziffer ist, für fest (`StageMechanics.LetterBoxPattern`) –
@@ -71,7 +77,19 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesper
     }
   }
 
+  function zeichenEinsetzen(z: string) {
+    // Die Kästchen werden beim Kartenwechsel nicht neu eingehängt (B-526): ein gemerktes Kästchen der vorigen Karte kann
+    // hier fehlen oder fest sein – dann das erste leere, sonst ginge der Druck stumm verloren.
+    const z0 = zuletzt.current;
+    const ziel = z0 != null && z0 < length && !isFixed(z0) ? z0 : chars.findIndex((c, i) => !isFixed(i) && !c);
+    if (ziel < 0 || ziel >= length || isFixed(ziel)) return;
+    setChar(ziel, z);
+    const weiter = nextEditable(ziel, 1);
+    if (weiter >= length) refs.current[ziel]?.focus();
+  }
+
   return (
+    <>
     <div className="letterboxes" role="group" aria-label={t("play.letterBoxes")}>
       {chars.map((ch, i) => (
         isFixed(i) ? (
@@ -95,9 +113,12 @@ export function LetterBoxes({ length, value, onChange, onSubmit, pattern, gesper
             aria-label={t("play.letterOf", { n: i + 1, total: length })}
             onChange={(e) => setChar(i, e.target.value)}
             onKeyDown={(e) => onKeyDown(i, e)}
+            onFocus={() => { zuletzt.current = i; }}
           />
         )
       ))}
     </div>
+    <SonderzeichenLeiste zeichen={sonderzeichen} onZeichen={zeichenEinsetzen} gesperrt={gesperrt} />
+    </>
   );
 }

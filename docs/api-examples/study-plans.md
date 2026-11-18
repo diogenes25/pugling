@@ -246,7 +246,8 @@ Response — `HTTP 200`:
     "revealSpeechLang": "en",
     "revealAudioUrl": null,
     "canEase": true,
-    "eased": false
+    "eased": false,
+    "keyboardLang": null
   },
   "done": false,
   "cursor": 0,
@@ -310,7 +311,8 @@ Response — `HTTP 200`:
     "revealSpeechLang": "en",
     "revealAudioUrl": null,
     "canEase": true,
-    "eased": false
+    "eased": false,
+    "keyboardLang": null
   },
   "done": false,
   "misspelled": true,
@@ -395,7 +397,8 @@ Response — `HTTP 200`:
     "revealSpeechLang": null,
     "revealAudioUrl": null,
     "canEase": false,
-    "eased": false
+    "eased": false,
+    "keyboardLang": null
   },
   {
     "itemIndex": 1,
@@ -426,7 +429,8 @@ Response — `HTTP 200`:
     "revealSpeechLang": null,
     "revealAudioUrl": null,
     "canEase": false,
-    "eased": false
+    "eased": false,
+    "keyboardLang": null
   }
 ]
 ```
@@ -508,7 +512,8 @@ Response — `HTTP 200`:
     "letterTiles": null,
     "cueBox": null,
     "dictationSpokenAnswer": null,
-    "dictationLang": null
+    "dictationLang": null,
+    "keyboardLang": null
   },
   "done": false,
   "cursor": 0,

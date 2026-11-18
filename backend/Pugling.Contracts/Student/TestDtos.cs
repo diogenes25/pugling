@@ -39,12 +39,17 @@ namespace Pugling.Contracts.Student;
 /// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
 /// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
 /// plays the card as free text from the German <c>Prompt</c>.
+///
+/// <c>KeyboardLang</c> (B-661) is the language the learner types in on this exercise: the learnt language of its
+/// textbook series. The client offers the special characters of that language as an on-screen bar, so a phone keyboard
+/// without "î" never blocks a word. It names a character set, not an answer; <c>null</c> = no bar.
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
     string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
-    IReadOnlyList<string>? CueBox = null, string? DictationSpokenAnswer = null, string? DictationLang = null);
+    IReadOnlyList<string>? CueBox = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
+    string? KeyboardLang = null);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

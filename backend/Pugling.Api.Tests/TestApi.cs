@@ -117,8 +117,9 @@ internal static class TestApi
     /// <param name="father">Logged-in creator/supervisor client.</param>
     /// <param name="subjectId">Subject the series is anchored to (a series without one can't host exercises).</param>
     /// <param name="unitLabel">Label of the single unit created for the series.</param>
+    /// <param name="sourceLanguage">Learnt language of the series (native language then <c>de</c>); <c>null</c> = none.</param>
     public static async Task<(int seriesId, int seriesUnitId)> CreateSeriesAndUnitAsync(
-        HttpClient father, int subjectId, string unitLabel = "Unit 1")
+        HttpClient father, int subjectId, string unitLabel = "Unit 1", string? sourceLanguage = null)
     {
         var seriesId = await IdAsync(await father.PostAsJsonAsync("/api/v1/creator/textbook-series", new
         {
@@ -127,8 +128,8 @@ internal static class TestApi
             subjectName = (string?)null,
             subjectId,
             schoolTypes = (object?)null,
-            sourceLanguage = (string?)null,
-            targetLanguage = (string?)null,
+            sourceLanguage,
+            targetLanguage = sourceLanguage is null ? null : "de",
             notes = (string?)null,
         }));
         var seriesUnitId = await IdAsync(await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units", new

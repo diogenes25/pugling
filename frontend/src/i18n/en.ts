@@ -333,6 +333,9 @@ export const en = {
       listEntry: "Entry {{n}}",
       passage: "Text for the task",
       alsoRight: "also correct: {{list}}",
+      specialChars: "Special characters",
+      specialChar: "Insert {{char}}",
+      longPressHint: "Tip: a long press on a key works too",
     },
     lernkarte: {
       uncover: "Uncover",
@@ -345,6 +348,7 @@ export const en = {
       giveUp: "Later again",
       easier: "Make it easier",
       listen: "🔊 Listen",
+      accentHint: "Almost – watch the accents",
     },
     lektion: {
       choose: "Choose the right answer",

@@ -28,7 +28,7 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             new { name = TestApi.UniqueName("Bonus-Kind"), pin }));
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Englisch-Bonus") }));
-        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId, sourceLanguage: "en");
         var vocabId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/vocabulary", new
             {
@@ -129,6 +129,22 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         var exercise = db.Exercises.Single(e => e.Id == s.VocabId);
         exercise.ConfigJson = exercise.ConfigJson.Replace("\"front-to-back\"", $"\"{direction}\"");
         db.SaveChanges();
+    }
+
+    /// <summary>
+    /// B-661: every bonus card names the language typed on it - the learnt language of the series - so the client can
+    /// offer its special characters. Red if <c>ExtraCard</c> drops the field or the bonus query stops loading the series.
+    /// </summary>
+    [Fact]
+    public async Task Bonuskarten_Nennen_Die_Tastatursprache_Der_Reihe()
+    {
+        var s = await SetupAsync();
+        SeedCompletedRuns(s);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        var cards = run.GetProperty("cards").EnumerateArray().ToList();
+        Assert.NotEmpty(cards);
+        Assert.All(cards, c => Assert.Equal("en", c.GetProperty("keyboardLang").GetString()));
     }
 
     /// <summary>

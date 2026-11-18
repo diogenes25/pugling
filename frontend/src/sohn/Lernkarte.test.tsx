@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "../lib/i18n";
 import type { PracticeCard } from "../lib/types";
-import { abgeschrieben, Lernkarte } from "./Lernkarte";
+import { abgeschrieben, Lernkarte, nurAkzenteFalsch } from "./Lernkarte";
 import { aufgabenform } from "./aufgabenform";
 
 /*
@@ -143,5 +143,58 @@ describe("Lernkarte – leichter schalten (B-643)", () => {
     expect(document.getElementById("lernkarte-erinnern")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Später nochmal" }));
     expect(fertig).toHaveBeenCalledWith({ wasKnown: false, givenAnswer: null });
+  });
+});
+
+describe("Lernkarte – Sonderzeichen (B-661)", () => {
+  const FR = { ...KARTE, reveal: "dîner", revealSpeechLang: "fr", keyboardLang: "fr" } as unknown as PracticeCard;
+  const zuSchritt3 = (karte: PracticeCard) => {
+    render(<Lernkarte karte={karte} gesperrt={false} onFertig={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Aufdecken" }));
+    fireEvent.click(screen.getByRole("button", { name: "Nein, neu" }));
+    return screen.getByLabelText("Schreib es ab") as HTMLInputElement;
+  };
+  const ok = () => screen.getByRole("button", { name: "OK" }) as HTMLButtonElement;
+
+  // Entscheidung 2. Rot, wenn „i“ statt „î“ doch „OK“ freigäbe (Toleranz) oder der Hinweis fehlte bzw. auch bei einem
+  // falschen Buchstaben käme.
+  it("lässt „diner“ nicht durch, sagt aber „Fast – achte auf die Akzente“", () => {
+    const kopie = zuSchritt3(FR);
+    fireEvent.change(kopie, { target: { value: "diner" } });
+    expect(ok().disabled).toBe(true);
+    expect(screen.getByRole("status").textContent).toBe("Fast – achte auf die Akzente");
+
+    fireEvent.change(kopie, { target: { value: "dinar" } });
+    expect(screen.getByRole("status").textContent).toBe("");
+  });
+
+  // Entscheidungen 1 und 3, der eigentliche Blocker. Rot, wenn die Leiste in Schritt 3 fehlt oder ihr Zeichen nicht an
+  // der Schreibmarke im Feld landet.
+  it("schreibt „dîner“ über die Leiste ab, ohne dass die Tastatur ein „î“ haben muss", () => {
+    const kopie = zuSchritt3(FR);
+    fireEvent.change(kopie, { target: { value: "dner" } });
+    kopie.setSelectionRange(1, 1);
+    fireEvent.click(screen.getByRole("button", { name: "î einsetzen" }));
+    expect(kopie.value).toBe("dîner");
+    expect(ok().disabled).toBe(false);
+  });
+
+  // Entscheidung 3. Rot, wenn die Wort-Ergänzung in Schritt 4 durchsickert – dann zeigte die Leiste dort, welche
+  // Sonderzeichen die Lösung trägt – oder wenn sie in Schritt 3 fehlt.
+  it("bietet die Zeichen des Wortes nur beim Abschreiben an, nicht aus dem Kopf", () => {
+    const kopie = zuSchritt3({ ...FR, reveal: "le cañon" } as unknown as PracticeCard);
+    expect(screen.getByRole("button", { name: "ñ einsetzen" })).toBeTruthy();
+    fireEvent.change(kopie, { target: { value: "le cañon" } });
+    fireEvent.click(ok());
+
+    expect(screen.getByLabelText("Und jetzt aus dem Kopf")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "ñ einsetzen" })).toBeNull();
+    expect(screen.getByRole("button", { name: "î einsetzen" })).toBeTruthy();
+  });
+
+  it("erkennt „nur Akzente falsch“ auch mit Klammerteilen und nicht bei richtiger Abschrift", () => {
+    expect(nurAkzenteFalsch("connaitre", "connaître (qn)")).toBe(true);
+    expect(nurAkzenteFalsch("connaître", "connaître (qn)")).toBe(false);
+    expect(nurAkzenteFalsch("conaitre", "connaître (qn)")).toBe(false);
   });
 });

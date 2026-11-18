@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type Ref } from "react";
+import { useRef, useState, type ReactNode, type Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { Mascot } from "../components/Mascot";
 import { LetterBoxes } from "../components/LetterBoxes";
@@ -10,9 +10,11 @@ import { ListRule } from "../components/ListRule";
 import { Passage } from "../components/Passage";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { CueBox } from "../components/CueBox";
+import { SonderzeichenLeiste } from "../components/Sonderzeichen";
 import { choicesClass } from "../lib/choices";
 import { arcadeDatum } from "../lib/datum";
 import { markiereSchreibfehler } from "../lib/schreibfehler";
+import { einsetzen, leistenZeichen } from "../lib/sonderzeichen";
 import type { PracticeCard } from "../lib/types";
 import type { Skin } from "../lib/skins";
 import type { Aufgabenform } from "./aufgabenform";
@@ -27,7 +29,7 @@ import type { Aufgabenform } from "./aufgabenform";
 export type LektionsKarte = Pick<PracticeCard, "itemIndex" | "prompt" | "gapIndex" | "passage" | "audioUrl"
   | "decoding" | "anyOrder" | "cueBox" | "choices" | "letterTiles" | "answerLength" | "answerPattern">
   // Die Testkarte nennt ihren Typ nur optional – und trägt keine Vorlese-Sprache (B-252: nur die Übungskarte).
-  & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang" | "dictationSpokenAnswer" | "dictationLang">>;
+  & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang" | "dictationSpokenAnswer" | "dictationLang" | "keyboardLang">>;
 
 /**
  * Kopf und Arbeitsanweisung. Das ✕ trägt kein Wort, aber einen Vorlesenamen, der sagt, was es hier tut: im Üben
@@ -131,6 +133,9 @@ export function Aufgabe({ karte, form, skin, gedreht = false, bild, hinweis, auf
  * `kartenId` nennt die Karte. Wechselt sie, fällt die Markierung – aber die Fläche wird NICHT neu eingehängt: ein
  * `key` von außen risse das Eingabefeld aus dem DOM, der Fokus fiele auf `body`, und am Handy klappte nach jeder
  * Antwort die Tastatur zu (Review B-526; dieselbe Warnung steht an `LetterTiles`).
+ *
+ * B-661: unter Freitext und Kästchen steht die Sonderzeichen-Leiste der getippten Sprache (`keyboardLang`) – nur die
+ * feste Menge der Sprache, nie die Zeichen der Lösung: hier wird aus dem Kopf geschrieben, auch im Test.
  */
 export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf, feldName, platzhalter, onAbschicken }: {
   karte: LektionsKarte;
@@ -156,6 +161,8 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
   const [gesehen, setGesehen] = useState(kartenId);
   if (gesehen !== kartenId) { setGesehen(kartenId); setMarkiert(null); }
   const abschicken = () => { if (wert.trim()) onAbschicken(); };
+  const feld = useRef<HTMLInputElement | null>(null);
+  const zeichen = leistenZeichen(karte.keyboardLang);
   return (
     <>
       {karte.choices ? (
@@ -172,14 +179,18 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
         <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} gesperrt={gesperrt}
           pattern={karte.answerPattern} />
       ) : karte.answerLength ? (
-        <LetterBoxes length={karte.answerLength} value={wert} onChange={onWert} onSubmit={abschicken} pattern={karte.answerPattern ?? undefined} gesperrt={gesperrt} />
+        <LetterBoxes length={karte.answerLength} value={wert} onChange={onWert} onSubmit={abschicken} pattern={karte.answerPattern ?? undefined} gesperrt={gesperrt}
+          sonderzeichen={zeichen} />
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); abschicken(); }}>
           <input
+            ref={feld}
             className="lektion-feld" aria-label={feldName} name={`answer-${karte.itemIndex}`} placeholder={platzhalter}
             autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
             value={wert} onChange={(e) => onWert(e.target.value)} readOnly={gesperrt}
           />
+          <SonderzeichenLeiste zeichen={zeichen} gesperrt={gesperrt}
+            onZeichen={(z) => einsetzen(feld.current, wert, z, onWert)} />
         </form>
       )}
       <div className="lektion-fuss">

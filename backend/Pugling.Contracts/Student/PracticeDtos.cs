@@ -112,6 +112,10 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <c>CanEase</c> (B-635) says the child may make this card easier (<c>POST …/easier</c>): a remediation task, or a learn
 /// card's recall, not yet at the easiest form. <c>Eased</c> marks a card made easier in this round: an answer to it shows
 /// right or wrong and the solution, but never marks the task done.
+///
+/// <c>KeyboardLang</c> (B-661) is the language the learner types in on this exercise: the learnt language of its
+/// textbook series. The client offers the special characters of that language as an on-screen bar, so a phone keyboard
+/// without "î" never blocks a word. It names a character set, not an answer; <c>null</c> = no bar.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -121,7 +125,7 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
     string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
     bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null,
-    bool CanEase = false, bool Eased = false);
+    bool CanEase = false, bool Eased = false, string? KeyboardLang = null);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

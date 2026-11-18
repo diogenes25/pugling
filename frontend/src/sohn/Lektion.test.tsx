@@ -370,3 +370,31 @@ describe("Aufgabe – Diktat (B-597)", () => {
     expect(screen.queryByRole("button", { name: "🔊 Wort anhören" })).toBeNull();
   });
 });
+
+describe("Antwortfläche, Sonderzeichen-Leiste (B-661)", () => {
+  // Entscheidung 1: im Üben wie im Test dieselbe Fläche. Rot, wenn die Leiste trotz `keyboardLang` fehlt, ihr Zeichen
+  // nicht im Feld landet oder ein Druck darauf abschickt.
+  it("setzt im Freitext ein Zeichen der Sprache ein, ohne abzuschicken", () => {
+    const abschicken = vi.fn();
+    render(<Flaeche k={karte({ keyboardLang: "fr" })} onAbschicken={abschicken} />);
+    const feld = screen.getByLabelText("Deine Antwort") as HTMLInputElement;
+    fireEvent.change(feld, { target: { value: "ma" } });
+    fireEvent.click(screen.getByRole("button", { name: "ï einsetzen" }));
+    expect(feld.value).toBe("maï");
+    expect(abschicken).not.toHaveBeenCalled();
+  });
+
+  // Rot, wenn eine Sprache ohne Sonderzeichen (oder eine Karte ohne Sprache) doch eine Leiste bekäme.
+  it("zeigt ohne Sonderzeichen-Sprache keine Leiste", () => {
+    render(<Flaeche k={karte({ keyboardLang: "en" })} onAbschicken={vi.fn()} />);
+    expect(screen.queryByRole("group", { name: "Sonderzeichen" })).toBeNull();
+  });
+
+  // Rot, wenn die Kästchen die Leiste nicht bekommen oder das Zeichen nicht ins fokussierte Kästchen setzen.
+  it("setzt in den Kästchen ins fokussierte Kästchen ein", () => {
+    render(<Flaeche k={karte({ keyboardLang: "fr", answerLength: 3 })} onAbschicken={vi.fn()} />);
+    fireEvent.focus(screen.getByLabelText("Buchstabe 2 von 3"));
+    fireEvent.click(screen.getByRole("button", { name: "ç einsetzen" }));
+    expect((screen.getByLabelText("Buchstabe 2 von 3") as HTMLInputElement).value).toBe("ç");
+  });
+});

@@ -323,7 +323,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             .ToListAsync(ct)).ToHashSet();
         var assigned = positionExercises.Select(p => p.ExerciseId).ToHashSet();
 
-        var exercises = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit)
+        var exercises = await db.Exercises.AsNoTracking().Include(e => e.SeriesUnit).ThenInclude(u => u!.Series)
             .Where(e => units.Contains(e.SeriesUnitId) && (e.ExecutePublic || assigned.Contains(e.Id)))
             .OrderBy(e => e.SeriesUnitId).ThenBy(e => e.OrderIndex).ThenBy(e => e.Id)
             .ToListAsync(ct);
@@ -430,7 +430,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             var choices = f.Choices is { } c ? c.OrderBy(_ => rng.Next()).ToList() : null;
             return new ExtraCard(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal, f.RevealAlternatives,
                 choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox,
-                f.DictationSpokenAnswer, f.DictationLang);
+                f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
             CoinsPerHit(run.Form), cards, runPercent);

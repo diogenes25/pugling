@@ -67,8 +67,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     // The plan comes along because the imagery needs the child (the selection hangs on its profile).
+    // B-661: the series comes along for the keyboard language of the cards.
     private Task<PlanPosition?> GetPosition(int planId, int positionId, CancellationToken ct) =>
-        db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
+        db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit).ThenInclude(u => u!.Series)
+            .Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct) =>
@@ -310,7 +312,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // B-598: the learn card reads its learnt word aloud while it shows it (decision 10) - the word is the reveal.
             // An eased recall asks for the word: reading it aloud there would be the answer.
             learnCard, learnCard && !eased ? item.DictationLang : null, learnCard && !eased ? item.DictationAudioUrl : null,
-            canEase, session.EasedStages?.ContainsKey(position) == true);
+            canEase, session.EasedStages?.ContainsKey(position) == true, PositionPlayService.KeyboardLangOf(exercise));
     }
 
     /// <summary>

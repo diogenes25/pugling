@@ -59,11 +59,16 @@ public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string T
 /// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
 /// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
 /// plays the card as free text from the German <c>Prompt</c>.
+///
+/// <c>KeyboardLang</c> (B-661) is the language the learner types in on this exercise: the learnt language of its
+/// textbook series. The client offers the special characters of that language as an on-screen bar, so a phone keyboard
+/// without "î" never blocks a word. It names a character set, not an answer; <c>null</c> = no bar.
 /// </summary>
 public record ExtraCard(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage,
     bool AnyOrder, IReadOnlyList<WordPair>? Decoding, string? AnswerPattern, IReadOnlyList<string>? LetterTiles,
-    IReadOnlyList<string>? CueBox, string? DictationSpokenAnswer = null, string? DictationLang = null);
+    IReadOnlyList<string>? CueBox, string? DictationSpokenAnswer = null, string? DictationLang = null,
+    string? KeyboardLang = null);
 
 /// <summary>One answer of a bonus run: typed or chosen (<paramref name="GivenAnswer"/>) or self-assessed (<paramref name="WasKnown"/>).</summary>
 public record ExtraAnswer(int ItemIndex, string? GivenAnswer, bool? WasKnown);

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { LetterBoxes } from "./LetterBoxes";
+import { SonderzeichenLeiste } from "./Sonderzeichen";
 
 /**
  * Das Buchstabenkästchen mit Trennzeichen-Maske (B-66): Leer-/Satzzeichen stehen laut `pattern` schon fest
@@ -86,5 +87,38 @@ describe("LetterBoxes", () => {
     expect(screen.getAllByRole("textbox")).toHaveLength(3);
     fireEvent.change(screen.getByLabelText("Buchstabe 1 von 3"), { target: { value: "a" } });
     expect(document.activeElement).toBe(screen.getByLabelText("Buchstabe 2 von 3"));
+  });
+});
+
+describe("LetterBoxes – Sonderzeichen (B-661)", () => {
+  // Rot, wenn das Zeichen nicht im fokussierten Kästchen landet oder nicht weiterspringt.
+  it("setzt ins fokussierte Kästchen ein und springt weiter", () => {
+    const onChange = vi.fn();
+    render(<LetterBoxes length={3} value="" onChange={onChange} sonderzeichen={["î"]} />);
+    fireEvent.focus(screen.getByLabelText("Buchstabe 2 von 3"));
+    fireEvent.click(screen.getByRole("button", { name: "î einsetzen" }));
+    expect(onChange).toHaveBeenLastCalledWith(" î ");
+  });
+
+  // Review B-661: die Kästchen überleben einen Kartenwechsel. Rot, wenn ein gemerktes Kästchen der längeren Vorkarte
+  // den Druck auf der kürzeren stumm verschluckt, statt ins erste leere zu setzen.
+  it("setzt nach einem Wechsel auf eine kürzere Karte ins erste leere Kästchen", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<LetterBoxes length={5} value="" onChange={onChange} sonderzeichen={["î"]} />);
+    fireEvent.focus(screen.getByLabelText("Buchstabe 5 von 5"));
+    rerender(<LetterBoxes length={2} value="" onChange={onChange} sonderzeichen={["î"]} />);
+    fireEvent.click(screen.getByRole("button", { name: "î einsetzen" }));
+    expect(onChange).toHaveBeenLastCalledWith("î ");
+  });
+});
+
+describe("SonderzeichenLeiste", () => {
+  // Rot, wenn ein Knopf das Fokussieren nicht mehr abfängt – am Handy klappte dann nach jedem Zeichen die Tastatur zu.
+  // Die E2E kann das nicht sehen: `einsetzen` fokussiert das Feld danach ohnehin wieder.
+  it("nimmt dem Feld beim Antippen nicht den Fokus", () => {
+    render(<SonderzeichenLeiste zeichen={["î"]} onZeichen={vi.fn()} />);
+    const knopf = screen.getByRole("button", { name: "î einsetzen" });
+    expect(fireEvent.pointerDown(knopf)).toBe(false);
+    expect(fireEvent.mouseDown(knopf)).toBe(false);
   });
 });

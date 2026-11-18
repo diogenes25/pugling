@@ -2,7 +2,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AudioButton } from "../components/AudioButton";
 import { SpeakButton } from "../components/SpeakButton";
+import { SonderzeichenLeiste } from "../components/Sonderzeichen";
 import { normalizeAnswer } from "../lib/answerNormalize";
+import { einsetzen, leistenZeichen, ohneDiakritika } from "../lib/sonderzeichen";
 import type { PracticeCard } from "../lib/types";
 import { Antwortflaeche } from "./Lektion";
 
@@ -27,6 +29,14 @@ export function abgeschrieben(eingabe: string, wort: string): boolean {
   if (eingabe.trim() === "") return false;
   const gegeben = normalizeAnswer(eingabe);
   return klammerFormen(wort).some((form) => normalizeAnswer(form) === gegeben);
+}
+
+/**
+ * B-661, Entscheidung 2: die Abschrift stimmt bis auf die Zeichen auf und unter den Buchstaben. Das gibt „OK“ NICHT
+ * frei – es steuert nur den Hinweis „Fast – achte auf die Akzente“.
+ */
+export function nurAkzenteFalsch(eingabe: string, wort: string): boolean {
+  return !abgeschrieben(eingabe, wort) && abgeschrieben(ohneDiakritika(eingabe), ohneDiakritika(wort));
 }
 
 // Der ganze Eintrag, dazu jede Klammer weggelassen oder ihr Inhalt behalten; ab 16 Formen nur „alle behalten“ und
@@ -72,10 +82,16 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
   const [kopie, setKopie] = useState("");
   const [erinnert, setErinnert] = useState("");
   const fokus = useRef<HTMLElement | null>(null);
+  const kopieFeld = useRef<HTMLInputElement | null>(null);
+  const erinnertFeld = useRef<HTMLInputElement | null>(null);
   const ersterSchritt = useRef(true);
   const wortId = useId();
   const frageId = useId();
   const wort = karte.reveal ?? "";
+  // B-661, Entscheidung 3: beim Abschreiben steht das Wort da – die Leiste darf seine Zeichen anbieten, und so ist jedes
+  // Wort abschreibbar. Aus dem Kopf nur die feste Menge der Sprache: dort verriete die Wort-Ergänzung die Akzente.
+  const abschreibZeichen = leistenZeichen(karte.keyboardLang, wort);
+  const erinnerZeichen = leistenZeichen(karte.keyboardLang);
 
   // Jeder weitere Schritt bringt den Fokus mit – sonst stünde er auf einem Knopf, den es nicht mehr gibt (B-231). Den
   // ersten nicht: beim Laden der Seite setzt die Runde bewusst keinen Fokus (B-443), beim Kartenwechsel tut sie es selbst.
@@ -126,8 +142,12 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
           {/* `readOnly` statt `disabled`, und keine Autokorrektur – wie in der Antwortfläche (Lektion.tsx): ein gesperrtes
               Feld gäbe den Fokus ab und klappte am Handy die Tastatur zu, und iOS „korrigierte“ das Fremdwort. */}
           <input id="lernkarte-kopie" className="lektion-feld" autoComplete="off" autoCapitalize="off" autoCorrect="off"
-            spellCheck={false} aria-describedby={wortId} ref={(el) => { fokus.current = el; }} value={kopie}
+            spellCheck={false} aria-describedby={wortId} ref={(el) => { fokus.current = el; kopieFeld.current = el; }} value={kopie}
             readOnly={gesperrt} onChange={(e) => setKopie(e.target.value)} />
+          <SonderzeichenLeiste zeichen={abschreibZeichen} gesperrt={gesperrt}
+            onZeichen={(z) => einsetzen(kopieFeld.current, kopie, z, setKopie)} />
+          {/* Die Region steht immer, nur ihr Text wechselt: eine erst eingehängte Live-Region liest mancher Screenreader nicht vor (B-134). */}
+          <p className="sub lernkarte-akzent" role="status">{nurAkzenteFalsch(kopie, wort) ? t("lernkarte.accentHint") : ""}</p>
           <button type="submit" className="btn lime" disabled={gesperrt || !abgeschrieben(kopie, wort)}>{t("lernkarte.ok")}</button>
         </form>
       )}
@@ -157,8 +177,10 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
         }}>
           <label className="sub" htmlFor="lernkarte-erinnern">{t("lernkarte.recall")}</label>
           <input id="lernkarte-erinnern" className="lektion-feld" autoComplete="off" autoCapitalize="off" autoCorrect="off"
-            spellCheck={false} ref={(el) => { fokus.current = el; }} value={erinnert}
+            spellCheck={false} ref={(el) => { fokus.current = el; erinnertFeld.current = el; }} value={erinnert}
             readOnly={gesperrt} onChange={(e) => setErinnert(e.target.value)} />
+          <SonderzeichenLeiste zeichen={erinnerZeichen} gesperrt={gesperrt}
+            onZeichen={(z) => einsetzen(erinnertFeld.current, erinnert, z, setErinnert)} />
           <button type="submit" className="btn lime" disabled={gesperrt || !erinnert.trim()}>{t("lernkarte.ok")}</button>
           {karte.canEase && onLeichter && (
             <button type="button" className="btn ghost" disabled={gesperrt} onClick={() => { setErinnert(""); onLeichter(); }}>

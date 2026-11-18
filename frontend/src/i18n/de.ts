@@ -351,6 +351,9 @@ export const de = {
       listEntry: "Eintrag {{n}}",
       passage: "Text zur Aufgabe",
       alsoRight: "auch richtig: {{list}}",
+      specialChars: "Sonderzeichen",
+      specialChar: "{{char}} einsetzen",
+      longPressHint: "Tipp: Taste lange drücken geht auch",
     },
     // Die Lernkarte (B-598): ein neues Wort in vier Schritten.
     lernkarte: {
@@ -364,6 +367,7 @@ export const de = {
       giveUp: "Später nochmal",
       easier: "Mach's mir leichter",
       listen: "🔊 Anhören",
+      accentHint: "Fast – achte auf die Akzente",
     },
     // Der Lektionsbildschirm (B-526): die Arbeitsanweisung je Antwortform.
     lektion: {

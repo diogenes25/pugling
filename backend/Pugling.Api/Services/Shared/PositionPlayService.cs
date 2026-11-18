@@ -442,6 +442,12 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static string ConfigOf(Exercise exercise) => exercise.ConfigJson;
 
     /// <summary>
+    /// The language typed on <paramref name="exercise"/> (B-661): the learnt language of its textbook series. The caller
+    /// must load <c>SeriesUnit.Series</c> - a missing include would silently drop the special-character bar.
+    /// </summary>
+    public static string? KeyboardLangOf(Exercise exercise) => exercise.SeriesUnit?.Series?.SourceLanguage;
+
+    /// <summary>
     /// The entry a given answer credits in a <b>set-graded</b> exercise: the first candidate whose accepted
     /// answers match, or <c>null</c> if none does (a wrong answer, or one already credited – the caller keeps
     /// those out of <paramref name="candidates"/>). Candidates are walked in ascending index order, so two

@@ -718,6 +718,15 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .lektion-fuss { margin-top: auto; padding-top: 6px; }
 .lektion-option.gewaehlt { color: #04122a; background: linear-gradient(180deg, var(--cyan), var(--cyan-2)); box-shadow: 0 6px 0 0 #1550b8; }
 .lektion-feld { width: 100%; background: #0c0e2c; border: 1.5px solid var(--stroke); border-radius: 12px; color: var(--ink); padding: 12px; font-size: 16px; }
+/* B-661: Sonderzeichen an der Geräte-Tastatur vorbei. Große Ziele (44px), damit ein Finger sie trifft. */
+.sonderzeichen { display: flex; flex-direction: column; gap: 4px; }
+.sonderzeichen-leiste { display: flex; flex-wrap: wrap; gap: 6px; }
+.sonderzeichen-taste { min-width: 44px; min-height: 44px; border-radius: 10px; border: 1.5px solid var(--stroke);
+  background: #0c0e2c; color: var(--ink); font-size: 20px; cursor: pointer; }
+.sonderzeichen-taste:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.sonderzeichen-taste:disabled { opacity: .5; cursor: default; }
+.sonderzeichen-tipp { font-size: 12px; }
+.lernkarte-akzent { color: var(--gold); margin: 0; }
 /* Das Blatt: die Rückmeldung des Übens an einer Stelle, am unteren Rand der Antwortzone (B-526). */
 .lektion-blatt {
   margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px;
