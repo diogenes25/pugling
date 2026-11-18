@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-606]
+nachgeschaut: 2026-11-18
 ---
 
 # B-611 · Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne
@@ -255,3 +256,4 @@ Zeitleiste (`TimelineDutyDone`) und der Malus. Ebenso unberührt bleibt die Test
 - **2026-11-18** — Review `pugling-reviewer`: zu B-611 kein Fund. Rollengang Sohn: `frontend/e2e/belohnung-ueber-faecher.spec.ts`
   (Französisch Tagesziel erfüllt, Mathe Wochenziel offen ⇒ Truhe wartet, Bonus offen) – passed.
 - **2026-11-18** — abgenommen: `fe13531c`.
+- **2026-11-18** — nachgeschaut (Nachtlauf 2026-11-18, `pugling-reviewer` über `fe13531c`): kein Befund. Geprüft: `ComputeChildDayAsync` wählt `RewardObligations` einmal über die flache Positionsliste (`PositionProgressService.cs:420-421`); Truhe (`DailyBoxService.cs:38`) und Bonus (`ExtraTrainingService.cs:266`) lesen dieselbe Rollup-Liste; AK 1, 3, 4, 5 gegen den Code nachgerechnet.

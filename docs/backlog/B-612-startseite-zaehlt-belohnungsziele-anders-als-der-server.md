@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-606]
+nachgeschaut: 2026-11-18
 ---
 
 # B-612 · Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe
@@ -252,3 +253,4 @@ nicht, die Form entscheidet der Bau.
   `truhenZiele` nach `pfad.ts` (Laufzeit-Kreis), `UntilDone` → „tag“, Kommentare. `pugling-reviewer`: 🟢 Testtext.
   Rollengang Sohn: `frontend/e2e/belohnung-ueber-faecher.spec.ts` passed (Balken 100 % aus 1/1, Zeilen je Takt).
 - **2026-11-18** — abgenommen: `fe13531c`.
+- **2026-11-18** — nachgeschaut (Nachtlauf 2026-11-18, `pugling-reviewer` + `frontend-reviewer` über `fe13531c`): kein Befund. Geprüft: `rewardGoalsTotal/Met/Cadence` (`ChildTodayController.cs:37`) stammen aus derselben Liste wie `RewardsUnlocked`; Balken `SohnHome.tsx:81` und Truhe/Bonus `:137`, `:143` lesen die Serverfelder, `belohnungsZiele` ist restlos entfernt (grep); `truhenZiele` (`pfad.ts:46`) bildet `RewardCadence` (`PositionProgressService.cs:381`) gleich ab. Hinweis ohne Befund: `BonusEinstieg` liest `goalsTotal` statt `rewardGoalsTotal` (derzeit gleichwertig).

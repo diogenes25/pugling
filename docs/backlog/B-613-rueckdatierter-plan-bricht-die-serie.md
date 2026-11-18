@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-606]
+nachgeschaut: 2026-11-18
 ---
 
 # B-613 · Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich
@@ -421,3 +422,4 @@ Frontend (B-612):
 | F4 | frontend/src/sohn/SohnBonus.tsx:97 | red | red |  |
 | F5 | frontend/src/sohn/pfad.ts:47 | red | red |  |
 | F6 | frontend/src/sohn/SohnHome.tsx:112 | red | red |  |
+- **2026-11-18** — nachgeschaut (Nachtlauf 2026-11-18, `pugling-reviewer` über `fe13531c`): ein Durchrutscher, [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) (zurückverlegter Start hebt `ActivatedAt` nie an – Serie bricht, Malus für Ferientage). Geprüft ohne Befund: alle Schreibwege von `DutySince`/`ActivatedAt` (grep `new PlanPosition`/`new StudyPlan`/`.Active =`), Migrations-Rückfüllung, Leser `DutyStateAsync`/`ComputeDayAsync:325`/`ChildrenDashboardService:80-83`/`FirstDueDay`. Älterer Nebenbefund ohne Zuordnung: [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md).

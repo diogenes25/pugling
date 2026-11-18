@@ -127,11 +127,15 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     }
 
     // Remediation (B-635) plays a ladder of easier forms; a type without one would start as free text and stay there,
-    // with an "easier" button that can never work.
-    private static string? RemediationProblem(IExerciseType? type) =>
+    // with an "easier" button that can never work. An exercise without tasks (a cloze without gaps) has an empty pool: no
+    // answer can ever finish the remediation, and "until done" would charge its penalty forever (B-668). The pool cannot
+    // shrink to empty later - a played exercise's list may not get shorter (B-328) - so this is the one entry.
+    private static string? RemediationProblem(IExerciseType? type, Exercise exercise) =>
         type is null || !type.SupportsRemediation
             ? "Remediation needs an exercise type that can be made easier step by step (currently: cloze)."
-            : null;
+            : type.ItemsOf(exercise.ConfigJson).Count == 0
+                ? "Remediation needs an exercise with at least one task; this one has none."
+                : null;
 
     // B-636: "daily, until done" ends with the last remediation task - on any other position nothing would ever end it, and
     // the duty would cost its penalty forever. The bonus range keeps a typo from paying a fortune.
@@ -197,7 +201,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? 0, dto.UseLeitner ?? exercise.DefaultUseLeitner)
                 ?? DoseOnSetProblem(exercise, dto.NewItemsPerDay ?? 0)) is { } doseProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, doseProblem);
-        if (dto.Remediation == true && RemediationProblem(createType) is { } remediationProblem)
+        if (dto.Remediation == true && RemediationProblem(createType, exercise) is { } remediationProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
         if (UntilDoneProblem(dto.Cadence ?? GoalCadence.None, dto.Remediation ?? false, dto.CompletionBonus) is { } untilDoneProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, untilDoneProblem);
@@ -329,7 +333,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // keeps its stored dose, which play ignores (PositionPlayService.DailyDose) - blocking every other edit of the
         // position over it would lock the father out of a setting he did not touch (B-478).
         // Judged only when switched on now: a position keeps its setting through every other edit.
-        if (dto.Remediation == true && !pos.Remediation && RemediationProblem(types.ByKey(exercise.Type)) is { } remediationProblem)
+        if (dto.Remediation == true && !pos.Remediation && RemediationProblem(types.ByKey(exercise.Type), exercise) is { } remediationProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
         // Judged on the state after the patch: switching remediation off must take "until done" with it.
         if (UntilDoneProblem(dto.Cadence ?? pos.Cadence, dto.Remediation ?? pos.Remediation, dto.CompletionBonus) is { } untilDoneProblem)
@@ -347,7 +351,12 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.ClearItemCount) pos.ItemCount = null;
         if (dto.Scope is not null) pos.Scope = dto.Scope.Value;
         // B-613: a free position that becomes a duty counts from today; a mere save or Daily <-> Weekly keeps the date.
-        if (dto.Cadence is { } cadence && cadence != GoalCadence.None && pos.Cadence == GoalCadence.None)
+        // B-669: a finished "until done" remediation has no duty after its end either, so a switch to another cadence is a
+        // new duty from today - otherwise the settlement would judge the dutiless days since the end by the new rule. The
+        // days before the end leave the history with it (no penalty for unsettled ones), which only favours the child.
+        if (dto.Cadence is { } cadence && cadence != GoalCadence.None
+            && (pos.Cadence == GoalCadence.None
+                || (pos is { Cadence: GoalCadence.UntilDone, CompletedOn: not null } && cadence != GoalCadence.UntilDone)))
             pos.DutySince = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;
         if (dto.OrderStrategy is not null) pos.OrderStrategy = dto.OrderStrategy.Value;

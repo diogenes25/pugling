@@ -231,6 +231,18 @@ function timeSlotOf(s: PositionSettings): ScoringTimeSlot[] | null {
   }, ...rest];
 }
 
+/** Dieselbe Grenze wie am Server (`MaxCompletionBonus`) – ohne sie käme die englische Server-Meldung an (B-652). */
+export const MAX_COMPLETION_BONUS = 1000;
+
+/** Was das Speichern einer Position vorab ablehnt – eine Stelle für beide Formulare (Hinzufügen, Bearbeiten). */
+export function positionSettingsProblem(s: PositionSettings): string | null {
+  // Ganzzahlig: der Vertrag nimmt `int`, eine Kommazahl käme als englischer Deserialisierungsfehler zurück.
+  if (s.cadence === "UntilDone"
+    && !(Number.isInteger(s.completionBonus) && s.completionBonus >= 0 && s.completionBonus <= MAX_COMPLETION_BONUS))
+    return `Abschlussbonus: bitte eine ganze Zahl von 0 bis ${MAX_COMPLETION_BONUS}.`;
+  return timeSlotProblem(s);
+}
+
 /*
  * Warum das hier und nicht erst am Server scheitert: Halb gefüllt ist kein Fenster, sondern ein Versehen –
  * und „13 bis 13 Uhr" wäre ein Fenster, das nie zutrifft. Beides sähe nach „gespeichert" aus und würde
@@ -360,7 +372,9 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     useLeitner: s.useLeitner,
     forgivingDemotion: s.forgivingDemotion,
     remediation: s.remediation,
-    completionBonus: s.completionBonus,
+    // B-652: der Bonus zahlt nur bei „bis erledigt“; bei anderem Rhythmus ist das Feld verborgen, und ein verborgener
+    // Wert würde unsichtbar gespeichert. Gespeichert wird, was zu sehen ist.
+    completionBonus: s.cadence === "UntilDone" ? s.completionBonus : 0,
     requireTypedTest: s.requireTypedTest,
     stage: numOrNull(s.stage),
     scope: s.scope,
@@ -479,8 +493,8 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
         </div>
         {value.cadence === "UntilDone" && (
           <div className="field" style={{ maxWidth: 150 }}>
-            <FieldLabel htmlFor={`${uid}-completion`} topic="completionBonus">Abschlussbonus 🪙</FieldLabel>
-            <input id={`${uid}-completion`} type="number" min={0} max={1000}
+            <FieldLabel htmlFor={`${uid}-completion`} topic="completionBonus">Abschlussbonus <span aria-hidden="true">🪙</span></FieldLabel>
+            <input id={`${uid}-completion`} type="number" min={0} max={MAX_COMPLETION_BONUS}
               value={value.completionBonus} onChange={(e) => up("completionBonus", Number(e.target.value))} />
           </div>
         )}
@@ -701,8 +715,8 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (exerciseId === "") { action.fail("Bitte eine Übung aus der Liste wählen."); return; }
-    const slotProblem = timeSlotProblem(settings);
-    if (slotProblem) { action.fail(slotProblem); return; }
+    const settingsProblem = positionSettingsProblem(settings);
+    if (settingsProblem) { action.fail(settingsProblem); return; }
     const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
     if (!await action.run(() => api.addPosition(planId, dto), "Übung als Position hinzugefügt.")) return;
     setExerciseId("");
@@ -924,8 +938,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
   }
 
   async function save() {
-    const slotProblem = timeSlotProblem(settings);
-    if (slotProblem) { action.fail(slotProblem); return; }
+    const settingsProblem = positionSettingsProblem(settings);
+    if (settingsProblem) { action.fail(settingsProblem); return; }
     if (!await action.run(() => api.updatePosition(planId, pos.id, settingsToUpdateDto(settings)), "Position gespeichert.")) return;
     setEditing(false);
     onChanged();
@@ -1065,20 +1079,25 @@ export function stufenZaehler(solved: readonly { stage: number; count: number }[
   return solved.length === 0 ? "—" : solved.map((c) => `${name(c.stage)} ×${c.count}`).join(" · ");
 }
 
-/** B-637: die Auswertung einer Nacharbeit – je Aufgabe Vorgabe, Lösung, erledigt oder offen und die Hilfe-Stufen. */
-function NacharbeitReport({ report, stufenName }: { report: PositionReport; stufenName: (stage: number) => string }) {
-  const erledigt = report.items.filter((it) => it.remediation?.doneAt).length;
+/**
+ * B-637: die Auswertung einer Nacharbeit – je Aufgabe Vorgabe, Lösung, erledigt oder offen und die Hilfe-Stufen. Sie zeigt nur die Aufgaben des Pools – der Server liefert für Zeilen
+ * dahinter `remediation: null`, und die werden nie abgefragt; als „offen“ gezählt, stünde eine fertige Nacharbeit auf
+ * „2/3“ (B-667).
+ */
+export function NacharbeitReport({ report, stufenName }: { report: PositionReport; stufenName: (stage: number) => string }) {
+  const aufgaben = report.items.filter((it) => it.remediation);
+  const erledigt = aufgaben.filter((it) => it.remediation?.doneAt).length;
   return (
     <div style={{ padding: "6px 2px" }}>
       <p className="muted" style={{ marginTop: 0 }}>
-        Nacharbeit: {erledigt}/{report.totalItems} erledigt
+        Nacharbeit: {erledigt}/{aufgaben.length} erledigt
         {report.completedOn && <> · geschafft am {formatDate(report.completedOn)}</>}
       </p>
       <div style={{ overflowX: "auto" }}>
         <table className="table">
           <thead><tr><th>Vorgabe</th><th>Lösung</th><th>Stand</th><th>Gelöst je Stufe</th></tr></thead>
           <tbody>
-            {report.items.map((it) => (
+            {aufgaben.map((it) => (
               <tr key={it.itemIndex}>
                 <td>{it.remediation?.cue ?? <span className="muted">—</span>}</td>
                 <td className="muted">{it.answer}</td>

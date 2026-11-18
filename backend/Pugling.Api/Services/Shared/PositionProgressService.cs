@@ -84,6 +84,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>A duty due every day: daily goals and the daily remediation until it is done (B-636).</summary>
     public static bool IsDailyDuty(GoalCadence cadence) => cadence is GoalCadence.Daily or GoalCadence.UntilDone;
 
+    /// <summary>
+    /// The cadences whose booked rows close the same period as <paramref name="cadence"/> (B-666): a daily goal and
+    /// "daily, until done" both settle one day, so a row booked under one of them closes that day for the other - the
+    /// father switching a running remediation must not charge or reward a settled day twice. Rows keep the cadence they
+    /// were booked with (a snapshot); only the existence checks read the family, so the unique index guards one cadence
+    /// only - a race needs the switch and the booking in the same instant, which is accepted. A day met without a row (a goal
+    /// paying no points books none, by design) is still judged by the rule in force at settlement - accepted as well: it
+    /// needs a goal without points, a penalty and a switch before the next settlement. Daily and weekly stay apart: their
+    /// periods differ.
+    /// </summary>
+    private static GoalCadence[] SamePeriodCadences(GoalCadence cadence) =>
+        IsDailyDuty(cadence) ? [GoalCadence.Daily, GoalCadence.UntilDone] : [cadence];
+
     // ---- Done rule per check mode ---- ----
 
     /// <summary>Check mode of this position's exercise (default <see cref="ExerciseCheckMode.None"/>).</summary>
@@ -519,8 +532,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// Evaluates the day and credits the goal points once for every position with a reached goal
     /// (idempotent per period via <see cref="PositionGoalReward"/>). Returns the current daily status.
     /// <para>
-    /// The existence check below is only the fast pre-check; the <b>guarantee</b> lives in the filtered
-    /// unique index on <c>(PlanPositionId, PeriodKey)</c>. Exactly as with the penalty
+    /// The existence check below is only the fast pre-check; the <b>guarantee</b> lives in the unique index on
+    /// <c>(PlanPositionId, Cadence, PeriodStart)</c> - per cadence only, see <see cref="SamePeriodCadences"/>. Exactly as with the penalty
     /// (<see cref="SettleClosedPeriodsAsync"/>), the concurrent loser must not break on this.
     /// </para>
     /// </summary>
@@ -533,8 +546,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             if (!await IsGoalMetAsync(pos, plan, day, ct)) continue;
             var periodStart = PeriodStart(pos.Cadence, day);
             var cadence = pos.Cadence;
+            var samePeriod = SamePeriodCadences(cadence);
             if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
-                    && r.Cadence == cadence && r.PeriodStart == periodStart, ct))
+                    && samePeriod.Contains(r.Cadence) && r.PeriodStart == periodStart, ct))
                 continue;
 
             db.PositionGoalRewards.Add(new PositionGoalReward
@@ -768,14 +782,16 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var windowStart = new[] { firstDue, firstPlay, lookbackFloor }.Max();
 
             var cadence = pos.Cadence;
+            var samePeriod = SamePeriodCadences(cadence);
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
-                // Goal rewarded (reached) in the period, or already punished? → nothing to catch up on.
+                // Goal rewarded (reached) in the period, or already punished - also under the other daily cadence
+                // (B-666)? → nothing to catch up on.
                 if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
-                        && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
+                        && samePeriod.Contains(r.Cadence) && r.PeriodStart == from, ct)) continue;
                 if (await db.PositionGoalPenalties.AnyAsync(r => r.PlanPositionId == pos.Id
-                        && r.Cadence == cadence && r.PeriodStart == from, ct)) continue;
+                        && samePeriod.Contains(r.Cadence) && r.PeriodStart == from, ct)) continue;
                 // Safeguard against a race with the reward path (PointsGoalMet == 0 books no reward, yet the
                 // goal can still be met): punish only when the period was actually missed.
                 if (await IsGoalMetAsync(pos, plan, to, ct)) continue;

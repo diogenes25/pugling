@@ -724,4 +724,195 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
         Assert.Equal(coinsBefore + 1, await WithServiceAsync((db, _) =>
             db.ChildPointsEntries.CountAsync(e => e.ChildId == 1 && e.Kind == PointKind.Base)));
     }
+
+    // ---- B-666: a daily goal and "daily, until done" share one period ---- ----
+
+    // A remediation with a daily goal whose today is already settled as given (penalty or reward, booked under Daily),
+    // then switched to "daily, until done" by the father - the switch B-636 recommends for the eleven real remediations.
+    private async Task<(HttpClient Child, int PlanId, int PositionId)> SettledDailyThenUntilDoneAsync(bool rewarded)
+    {
+        var (father, planId, positionId) = await RemediationPositionAsync();
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        (await father.PatchAsJsonAsync(url, new { penaltyCoins = 5 })).EnsureSuccessStatusCode();
+        var today = Today();
+        await WithServiceAsync(async (db, _) =>
+        {
+            if (rewarded)
+                db.PositionGoalRewards.Add(new PositionGoalReward
+                {
+                    PlanPositionId = positionId,
+                    Cadence = GoalCadence.Daily,
+                    PeriodStart = today,
+                    Day = today,
+                    Points = 3,
+                });
+            else
+                db.PositionGoalPenalties.Add(new PositionGoalPenalty
+                {
+                    PlanPositionId = positionId,
+                    Cadence = GoalCadence.Daily,
+                    PeriodStart = today,
+                    Day = today,
+                    Points = 5,
+                });
+            return await db.SaveChangesAsync();
+        });
+        (await father.PatchAsJsonAsync(url, new { cadence = "UntilDone" })).EnsureSuccessStatusCode();
+        return (await TestApi.ChildAsync(factory), planId, positionId);
+    }
+
+    /// <summary>
+    /// B-666 AK 1: a day already charged under the daily goal is not charged again after the switch to "until done", although
+    /// the new rule (a whole round) is not met either. Red if the penalty existence check matches only the current cadence -
+    /// a second row under <c>UntilDone</c> for the same day.
+    /// </summary>
+    [Fact]
+    public async Task Umstellen_auf_bis_erledigt_bucht_den_Malus_eines_Tages_nicht_doppelt()
+    {
+        var (child, planId, positionId) = await SettledDailyThenUntilDoneAsync(rewarded: false);
+        // One card only: the penalty clock runs (B-535), the round is not through.
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, Today().AddDays(1), CancellationToken.None));
+
+        Assert.Equal([Today()], await PenaltyDaysAsync(positionId));
+    }
+
+    /// <summary>
+    /// B-666 AK 2: a day rewarded under the daily goal (threshold reached) stays free of a penalty after the switch, although
+    /// it carries no whole round. Red if the reward existence check of the settlement matches only the current cadence.
+    /// </summary>
+    [Fact]
+    public async Task Umstellen_auf_bis_erledigt_bestraft_keinen_belohnten_Tag()
+    {
+        var (child, planId, positionId) = await SettledDailyThenUntilDoneAsync(rewarded: true);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, Today().AddDays(1), CancellationToken.None));
+
+        Assert.Empty(await PenaltyDaysAsync(positionId));
+    }
+
+    /// <summary>
+    /// B-666 AK 3: a day rewarded under the daily goal earns no second goal reward when the child then plays a whole round
+    /// under "until done" the same day. Red if the existence check of the reward path matches only the current cadence.
+    /// </summary>
+    [Fact]
+    public async Task Umstellen_auf_bis_erledigt_belohnt_einen_Tag_nicht_doppelt()
+    {
+        var (child, planId, positionId) = await SettledDailyThenUntilDoneAsync(rewarded: true);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+        await ReviewAsync(child, planId, positionId, sessionId, 1, "asleep");
+        await ReviewAsync(child, planId, positionId, sessionId, 2, "as long as");
+        Assert.True(await GoalMetAsync(positionId, Today()));
+
+        (await child.PostAsync($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/end", null)).EnsureSuccessStatusCode();
+
+        Assert.Equal(1, await WithServiceAsync((db, _) => db.PositionGoalRewards.CountAsync(r => r.PlanPositionId == positionId)));
+    }
+
+    /// <summary>
+    /// B-666, the other direction (review hint): a day charged under "until done" is not charged again after the father
+    /// switches the running remediation back to a daily goal. Red if the period family is one-sided (Daily does not look at
+    /// UntilDone rows).
+    /// </summary>
+    [Fact]
+    public async Task Zurueck_auf_Tagesziel_bucht_den_Malus_eines_Tages_nicht_doppelt()
+    {
+        var (father, planId, positionId) = await UntilDoneAsync(penalty: 5);
+        var today = Today();
+        await WithServiceAsync((db, _) =>
+        {
+            db.PositionGoalPenalties.Add(new PositionGoalPenalty
+            {
+                PlanPositionId = positionId,
+                Cadence = GoalCadence.UntilDone,
+                PeriodStart = today,
+                Day = today,
+                Points = 5,
+            });
+            return db.SaveChangesAsync();
+        });
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}",
+            new { cadence = "Daily" })).EnsureSuccessStatusCode();
+        var child = await TestApi.ChildAsync(factory);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "westwards");
+
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, today.AddDays(1), CancellationToken.None));
+
+        Assert.Equal([today], await PenaltyDaysAsync(positionId));
+    }
+
+    /// <summary>
+    /// B-669: a finished "until done" remediation carries no duty after its end; when the father switches it back to a daily
+    /// goal, the days between the end and the switch stay free - the duty starts anew on the day of the switch. Red if the
+    /// switch keeps the old duty start: the settlement then judges every day since the start by the daily rule and charges
+    /// the dutiless days.
+    /// </summary>
+    [Fact]
+    public async Task Beendete_Nacharbeit_zurueck_auf_Tagesziel_bestraft_keine_Tage_davor()
+    {
+        var (father, planId, positionId) = await UntilDoneAsync(bonus: 0, penalty: 4);
+        var child = await TestApi.ChildAsync(factory);
+        await PlayRoundAsync(child, planId, positionId, "eastwards", "asleep", "as soon as");
+        var today = Today();
+        // Shift the story into the past: plan and position began six days ago, the remediation ended four days ago.
+        await WithServiceAsync(async (db, _) =>
+        {
+            var start = today.AddDays(-6);
+            await db.StudyPlans.Where(p => p.Id == planId)
+                .ExecuteUpdateAsync(u => u.SetProperty(p => p.StartDate, start).SetProperty(p => p.ActivatedAt, start));
+            await db.PlanPositions.Where(p => p.Id == positionId).ExecuteUpdateAsync(u => u
+                .SetProperty(p => p.CreatedAt, start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc))
+                .SetProperty(p => p.DutySince, start)
+                .SetProperty(p => p.CompletedOn, today.AddDays(-4)));
+            return await db.PositionItemProgress.Where(p => p.PlanPositionId == positionId)
+                .ExecuteUpdateAsync(u => u.SetProperty(p => p.IntroducedAt, start));
+        });
+
+        (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}",
+            new { cadence = "Daily" })).EnsureSuccessStatusCode();
+        await WithServiceAsync((_, progress) => progress.SettleClosedPeriodsAsync(1, today.AddDays(1), CancellationToken.None));
+
+        Assert.DoesNotContain(await PenaltyDaysAsync(positionId), d => d < today);
+    }
+
+    // ---- B-668: a remediation needs at least one task ---- ----
+
+    /// <summary>
+    /// B-668: a cloze without gaps can be created, and a remediation on it has an empty pool - nothing can ever finish it, so
+    /// "until done" would charge its penalty every day. Switching remediation on is refused for such an exercise, on patch
+    /// and on create. Red if the remediation check ignores the content (201/200 instead of validation_error).
+    /// </summary>
+    [Fact]
+    public async Task Nacharbeit_ohne_Aufgaben_wird_abgelehnt()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Leere-Nacharbeit") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var created = await father.PostAsJsonAsync($"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/cloze",
+            new
+            {
+                title = TestApi.UniqueName("Ohne Lücken"),
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new { text = "Nichts zu tun.", gaps = Array.Empty<object>() },
+            });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var exerciseId = await TestApi.IdAsync(created);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.TranslationWordBank,
+            useLeitner: false);
+
+        await AssertProblemAsync(await father.PatchAsJsonAsync(
+                $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}", new { remediation = true }),
+            HttpStatusCode.BadRequest, "validation_error");
+        await AssertProblemAsync(await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+                new { exerciseId, remediation = true, cadence = "UntilDone" }),
+            HttpStatusCode.BadRequest, "validation_error");
+    }
 }

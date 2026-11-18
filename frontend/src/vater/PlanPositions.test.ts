@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExerciseFilter } from "./ExerciseFilterBar";
 import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText, schreibweise,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
-  cadencesFor, stufenZaehler, withRemediation,
+  cadencesFor, stufenZaehler, withRemediation, positionSettingsProblem,
   type PositionSettings,
 } from "./PlanPositions";
 import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
@@ -505,6 +505,28 @@ describe("Nacharbeit bis erledigt", () => {
   it("trägt den Abschlussbonus hin und zurück", () => {
     expect(settingsToDto({ ...LEER, remediation: true, cadence: "UntilDone", completionBonus: 40 }).completionBonus).toBe(40);
     expect(settingsFrom({ ...gespeichertRoh, cadence: "UntilDone", remediation: true, completionBonus: 25 } as unknown as PositionResponse).completionBonus).toBe(25);
+  });
+
+  // B-652 (1): rot, wenn ein Bonus aus der Zeit vor dem Rhythmuswechsel mitreist – das Feld ist dann verborgen.
+  it("speichert keinen verborgenen Bonus, wenn der Rhythmus nicht „bis erledigt“ ist", () => {
+    expect(settingsToDto({ ...LEER, remediation: true, cadence: "Daily", completionBonus: 40 }).completionBonus).toBe(0);
+  });
+
+  // B-652 (3): rot, wenn das Formular einen Bonus über der Server-Grenze abschickt (englischer validation_error) oder die
+  // Grenze selbst ablehnt; ein verborgenes Feld lehnt es nicht ab, weil es nicht mitreist.
+  it("lehnt einen Bonus über 1000 vor dem Speichern ab, nur bei „bis erledigt“", () => {
+    const bis = { ...LEER, remediation: true, cadence: "UntilDone" as const };
+    expect(positionSettingsProblem({ ...bis, completionBonus: 1001 })).toMatch(/Abschlussbonus: bitte eine ganze Zahl von 0 bis 1000/);
+    // Review-Fund: der Vertrag nimmt `int` – rot, wenn eine Kommazahl durchgeht (englischer Fehler vom Server).
+    expect(positionSettingsProblem({ ...bis, completionBonus: 2.5 })).not.toBeNull();
+    expect(positionSettingsProblem({ ...bis, completionBonus: 1000 })).toBeNull();
+    expect(positionSettingsProblem({ ...bis, completionBonus: -1 })).not.toBeNull();
+    expect(positionSettingsProblem({ ...LEER, cadence: "Daily", completionBonus: 5000 })).toBeNull();
+  });
+
+  // Rot, wenn das Zeitfenster nicht mehr mitgeprüft wird, seit die Prüfung eine gemeinsame Stelle hat.
+  it("prüft weiter das Zeitfenster", () => {
+    expect(positionSettingsProblem({ ...LEER, timeSlotStart: "13:00" })).toMatch(/Zeitfenster/);
   });
 
   // Rot, wenn die Zähler ohne Stufennamen oder in anderer Reihenfolge als vom Server gesendet erscheinen.

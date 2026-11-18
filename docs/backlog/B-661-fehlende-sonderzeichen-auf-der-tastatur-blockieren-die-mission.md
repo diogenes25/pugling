@@ -12,6 +12,7 @@ quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedric
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-598]
+nachgeschaut: 2026-11-18
 wartet_auf: ""
 ---
 
@@ -242,3 +243,4 @@ Keines davon taugt als Quelle für die Leiste.
   Komposition ist nur am echten Gerät prüfbar – die E2E läuft in Desktop-Chromium.
 - 2026-11-18 · abgenommen · Heimnetz-Server vom Vater neu gestartet; Rückmeldung nach der Probe auf dem Handy:
   „funktioniert“. `wartet_auf` geleert.
+- **2026-11-18** — nachgeschaut (Nachtlauf 2026-11-18, `frontend-reviewer` über `96a3491d`): Durchrutscher [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) (Leiste je Übung statt je getippter Sprache, widerspricht AK 1) und [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) (Bonusrunde: Zeichen ins Kästchen der vorigen Karte, ungeprüft im Browser). Geprüft ohne Befund: jedes Tippfeld der Arcade trägt die Leiste (grep `<input|<textarea` unter `sohn/`, `components/`), Einfügen an der Cursorstelle (`sonderzeichen.ts:39`), Kopiersperre unberührt (`kopierSperre.ts:37-42`), Abschreiben bleibt exakt (`Lernkarte.tsx:38`).
