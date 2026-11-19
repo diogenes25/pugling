@@ -2,7 +2,7 @@
 tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/ui, rolle/supervisor, rolle/student]
 aliases: [Fächer-Verteilung Frontend, Schieberegler Fächer, Regler im Vater-Web]
 status: geschaetzt
-wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist; Bestätigung der Sonnet-Annahmen unter Schätzung"
+wartet_auf: "B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist"
 prio: P2
 art: Wunsch
 groesse: M
@@ -178,3 +178,4 @@ Voraussetzung: **B-618 gebaut** (API, OpenAPI-Dokument neu erzeugt, `npm run gen
   aus, weil sie die Frontend-Messung und die fertige API aus B-618 braucht.
 - **2026-11-17** — **Entscheidung des Vaters (Grill-Runde B-644, Entscheidung 6): angehalten.** Die Story wird nicht gebaut, bis [B-644](B-644-tagesplaner-statt-fester-lauf.md) gegrillt ist: der Tagesplaner verlegt die Pflicht von der Position an die Tagesaufgabe. Stufe und Entscheidungen bleiben bestehen; danach wird sie als Regel des Planers überführt oder verworfen.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch. AK 1 bis 5 neu gefasst, je mit einer benannten roten Änderung (die alten AK 1 und 2 trugen im Ausgangszustand nichts). Drei Annahmen stellvertretend und unbestätigt (anteilige Regler-Umrechnung, Reiter „Schule“, Sohn-Block im Lernstand). Lücken in B-618: Budget-Entfernen und Budget-Spanne fehlen. `wartet_auf` um die Bestätigung ergänzt; der Halt auf B-644 gilt unverändert.
+- **2026-11-19** — Die drei Annahmen vom Nutzer bestätigt: anteilige Regler-Umrechnung, Vater-Ort Reiter „Schule“, Sohn-Block im Lernstand. `wartet_auf: B-644` bleibt, nur die Bestätigung der Sonnet-Annahmen ist erledigt.
