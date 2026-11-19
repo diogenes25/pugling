@@ -14,7 +14,7 @@ import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
 import { Mascot } from "../components/Mascot";
-import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
+import type { PracticeCard, PositionSession, ReviewInput, ReviewOutcome } from "../lib/types";
 import { KartenMeldung } from "./KartenMeldung";
 
 /** So lange nimmt die nächste Karte nach „Weiter" auf dem Blatt keinen Knopfdruck an (Doppeltipp, gehaltenes Enter). */
@@ -28,6 +28,8 @@ const SMALL_EMOJI = ["👍", "⭐", "🔥", "💪", "✨"];
  * Kind „Weiter" drückt – bei falsch, um die Lösung zu lesen, bei richtig, weil die Rückmeldung an einer Stelle sitzt.
  */
 type Phase = "loading" | "front" | "back" | "blatt" | "done" | "empty" | "error";
+/** Was eine Bewertung schickt: die Antwort ohne den Index, den `judge` aus der Karte nimmt (Vertragstyp, nicht von Hand). */
+type ReviewAntwort = Omit<ReviewInput, "itemIndex">;
 
 /**
  * Wie eine Review-Antwort dargestellt wird – als reine Regel statt inline in `judge()`, damit sie ohne
@@ -94,6 +96,20 @@ export function SohnPractice() {
   const vorDemSchalten = useRef(new Map<number, PracticeCard>());
   // B-635: der Stand einer Nacharbeit (Runde, erledigt, gesamt) – vom Server beim Start, „erledigt“ wächst je Antwort.
   const [nacharbeit, setNacharbeit] = useState<{ round: number; done: number; total: number } | null>(null);
+  // B-686: der Buchbezug (B-588) stand auf dem Blatt vor dem Start; das Blatt ist weg, also steht er im Kopf der Runde.
+  // Beiwerk: scheitert das Lesen, fehlt nur die Pille.
+  const [buchbezug, setBuchbezug] = useState<string | null>(null);
+  useEffect(() => {
+    setBuchbezug(null);
+    if (!planId || !positionId) return;
+    let aktiv = true;
+    api.overview(planId).then((o) => {
+      const pos = o.today.positions.find((p) => p.positionId === positionId);
+      if (aktiv && pos?.bookPages)
+        setBuchbezug(t("pfad.bookRef", { series: pos.seriesName ?? "", unit: pos.seriesUnitLabel, pages: pos.bookPages }));
+    }).catch(() => {});
+    return () => { aktiv = false; };
+  }, [planId, positionId, t]);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
   const [hintShown, setHintShown] = useState(false);
   const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
@@ -216,7 +232,7 @@ export function SohnPractice() {
    * merken, dass nichts gezählt hat. `payload` ist genau das, was nicht angekommen ist: „Noch einmal senden" schickt es
    * unverändert, auch wenn das Feld inzwischen anders aussähe.
    */
-  const [failed, setFailed] = useState<{ payload: { wasKnown?: boolean; givenAnswer?: string | null }; text: string } | null>(null);
+  const [failed, setFailed] = useState<{ payload: ReviewAntwort; text: string } | null>(null);
   const resendRef = useRef<HTMLButtonElement>(null);
   // Der Knopf, der die Bewertung schickte, ist gesperrt oder verschwunden – der Fokus geht an „Noch einmal senden" (B-531).
   useEffect(() => { if (failed) resendRef.current?.focus(); }, [failed]);
@@ -244,7 +260,7 @@ export function SohnPractice() {
    * schickten sonst zwei `review` auf denselben `itemIndex` **und** zwei `next()`, der Zähler sprang von
    * 1/5 auf 3/5 und Karte 2 kam nie.
    */
-  async function judge(card: PracticeCard, payload: { wasKnown?: boolean; givenAnswer?: string | null }) {
+  async function judge(card: PracticeCard, payload: ReviewAntwort) {
     if (!planId || !session.current) return;
     // `next()` läuft bewusst außerhalb von `action.run`: das innere `try/catch` fängt jeden Fehler selbst, und
     // `action.run` bekommt darum nie eine Ablehnung zu sehen. `false` heißt hier also nur „von der Sperre verworfen" –
@@ -519,6 +535,7 @@ export function SohnPractice() {
         <>
           {/* Combo und Tempo in einer eigenen Zeile: im Kopf neben Balken und Zähler stünde er bei 360 Pixeln über. */}
           <div className="row lektion-unterkopf">
+            {buchbezug && <span className="pill pfad-buchbezug">{buchbezug}</span>}
             {nacharbeit && <span className="pill cyan">{t("practice.remediation", nacharbeit)}</span>}
             {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}
             <button type="button" className={`pill toggle-pill ${tempo ? "lime" : ""}`} style={{ marginLeft: "auto" }} onClick={toggleTempo} aria-pressed={tempo}>
@@ -572,7 +589,7 @@ export function SohnPractice() {
         ) : (
           <>
             {form.antwort === "lernkarte" ? (
-              // Je Karte frisch eingehängt: die vier Schritte beginnen bei jeder Lernkarte (auch der Wiederholung) vorn.
+              // Je Karte frisch eingehängt: die Schritte beginnen bei jeder Lernkarte (auch der Wiederholung) vorn.
               !failed && <Lernkarte key={`${round}-${idx}`} karte={card} gesperrt={action.busy} zuFrueh={zuFrueh}
                 onFertig={(ergebnis) => judge(card, ergebnis)} onLeichter={() => easier(card)} />
             ) : typed ? (

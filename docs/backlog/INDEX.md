@@ -12,10 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (69)
+### Offen (70)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ | Wunsch | `in-arbeit` | P1 | S | beides | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
@@ -1055,6 +1056,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | `idee` | Abschnitt „Verlauf" |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | `idee` | `unverifiziert: true` |
+| [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | `in-arbeit` | Abschnitt „Schätzung" |
 
 <details>
 <summary>Verworfen (48)</summary>

@@ -29,7 +29,7 @@ const position = (over: Partial<PositionStatus>): PositionStatus => ({
 const JETZT = new Date(Date.UTC(2026, 10, 11, 22, 30));
 const zeige = (positions: PositionStatus[]) =>
   render(<MemoryRouter><Pfad positions={positions} jetzt={JETZT} /></MemoryRouter>);
-const knoten = (titel: string) => screen.getByRole("button", { name: new RegExp(`^${titel}`) });
+const knoten = (titel: string) => screen.getByRole("link", { name: new RegExp(`^${titel}`) });
 
 /*
  * B-525 – der Lernpfad auf der Startseite. Die Regeln selbst prüft `pfad.test.ts`; hier steht, dass der Knoten sie
@@ -139,84 +139,35 @@ describe("Knoten auf dem Lernpfad", () => {
       position({ positionId: 2, exerciseTitle: "Wörter 2", seriesUnitId: 3, seriesUnitLabel: "Unit 3 – Au marché" }),
     ]);
     expect(screen.getByRole("region", { name: "Unit 2 – En ville" })).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "Unit 3 – Au marché" })).getByRole("button", { name: /^Wörter 2/ })).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Unit 3 – Au marché" })).getByRole("link", { name: /^Wörter 2/ })).toBeTruthy();
   });
 });
 
-describe("Das Blatt zu einem Knoten", () => {
-  // B-643 AK 6, Review: Blatt und Vorlesename des Knotens zählen eingeprägte, nicht gesehene Wörter. Rot, wenn eine der
-  // beiden Zeilen wieder `introducedCount` liest – dann stünde „10 von 10“ bei einem Ring, der nicht voll ist.
+describe("Der Knoten startet die Übung direkt (B-686)", () => {
+  // B-643 AK 6, Review: der Vorlesename des Knotens zählt eingeprägte, nicht gesehene Wörter. Rot, wenn er wieder
+  // `introducedCount` liest – dann stünde „10 von 10“ bei einem Ring, der nicht voll ist.
   it("nennt eingeprägte Wörter, nicht gesehene (B-643)", () => {
     zeige([position({ positionId: 17, introducedCount: 10, imprintedCount: 3 })]);
     expect(knoten("Wörter 1").getAttribute("aria-label")).toContain("3 von 10 eingeprägt");
-    fireEvent.click(knoten("Wörter 1"));
-    expect(screen.getByRole("dialog", { name: "Wörter 1" }).textContent).toContain("3 von 10 eingeprägt");
   });
 
-
-  it("führt mit „Los“ ins Üben und bietet den Test als zweiten Weg", () => {
-    // Rot, wenn „Los“ direkt in den Test führt, obwohl Karten fällig sind, oder wenn der Test aus dem Blatt fiele –
-    // er ist der einzige Weg, das Ziel zu erfüllen.
+  it("führt ohne Zwischenblatt ins Üben, auch wenn heute ein Test ginge", () => {
+    // Rot, wenn der Knoten wieder ein Knopf würde, der ein Blatt öffnet (dann trägt er kein `href`), oder direkt in den
+    // Test führte, obwohl Karten fällig sind (B-686: der Test ist am Start kein Abkürzungsweg).
     zeige([position({ positionId: 17 })]);
-    fireEvent.click(knoten("Wörter 1"));
-    const blatt = screen.getByRole("dialog", { name: "Wörter 1" });
-    expect(within(blatt).getByRole("link", { name: "▶ LOS" }).getAttribute("href")).toBe("/sohn/practice/17");
-    expect(within(blatt).getByRole("link", { name: "🎯 Test" }).getAttribute("href")).toBe("/sohn/test/17");
-    expect(blatt.textContent).toContain("4 von 10 eingeprägt · 3 fällig");
-    // Frist und Malus stehen auch im Blatt – dort lesbar für alle, nicht versteckt. Rot, wenn sie dort fehlen.
-    const frist = blatt.querySelector(".pfad-frist")!;
-    expect(frist.textContent).toBe("⏰ noch 2 Std. · sonst −5 Münzen");
-    expect(frist.getAttribute("aria-hidden")).toBeNull();
+    expect(knoten("Wörter 1").getAttribute("href")).toBe("/sohn/practice/17");
   });
 
-  it("zeigt Reihe, Unit und Seite als Pille – und ohne Seite keine (B-588 AK 8)", () => {
-    // Rot, wenn die Pille nie erscheint (erste Zusicherung) oder immer, auch ohne Seite (zweite).
-    zeige([
-      position({ positionId: 17, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: "42" }),
-      position({ positionId: 18, exerciseTitle: "Wörter 2", seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: null }),
-    ]);
-    fireEvent.click(knoten("Wörter 1"));
-    expect(screen.getByRole("dialog").querySelector(".pfad-buchbezug")?.textContent).toBe("Access 3 · Unit 2 · S. 42");
-    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
-
-    fireEvent.click(knoten("Wörter 2"));
-    expect(screen.getByRole("dialog", { name: "Wörter 2" }).querySelector(".pfad-buchbezug")).toBeNull();
-  });
-
-  it("startet mit „Los“ den Test, wenn nichts zu üben ist", () => {
-    // Rot, wenn „Los“ in eine leere Übungsrunde führte.
+  it("startet den Test, wenn nichts zu üben ist", () => {
+    // Rot, wenn der Knoten in eine leere Übungsrunde führte.
     zeige([position({ positionId: 17, dueCount: 0, introducedCount: 10, imprintedCount: 10 })]);
-    fireEvent.click(knoten("Wörter 1"));
-    const blatt = screen.getByRole("dialog");
-    expect(within(blatt).getByRole("link", { name: "▶ LOS" }).getAttribute("href")).toBe("/sohn/test/17");
-    expect(within(blatt).getByRole("link", { name: "▶ Üben" }).getAttribute("href")).toBe("/sohn/practice/17");
+    expect(knoten("Wörter 1").getAttribute("href")).toBe("/sohn/test/17");
   });
 
-  it("bietet an einem nicht prüfbaren Tag keinen Test an", () => {
-    // Rot, wenn `testable = false` trotzdem einen Test-Knopf zeigte – der Test antwortete mit 400 (B-96).
-    zeige([position({ positionId: 17, testable: false })]);
-    fireEvent.click(knoten("Wörter 1"));
-    const blatt = screen.getByRole("dialog");
-    expect(within(blatt).getByRole("link", { name: "▶ LOS" }).getAttribute("href")).toBe("/sohn/practice/17");
-    expect(within(blatt).queryByRole("link", { name: "🎯 Test" })).toBeNull();
-  });
-
-  it("hält den Fokus im Blatt, schließt mit Escape und gibt den Fokus an den Knoten zurück", () => {
-    // Rot, wenn das Blatt nur per Maus zu schließen wäre, der Fokus danach im Nichts stünde – oder wenn Tab hinter
-    // den Schleier wanderte, während `aria-modal` den Hintergrund für Screenreader ausblendet.
-    zeige([position({})]);
-    knoten("Wörter 1").focus();
-    fireEvent.click(knoten("Wörter 1"));
-    const blatt = screen.getByRole("dialog");
-    const los = within(blatt).getByRole("link", { name: "▶ LOS" });
-    expect(document.activeElement).toBe(los);
-    const letzter = within(blatt).getByRole("link", { name: "🎯 Test" });
-    letzter.focus();
-    fireEvent.keyDown(window, { key: "Tab" });
-    expect(document.activeElement).toBe(within(blatt).getByRole("button", { name: "Schließen" }));
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(knoten("Wörter 1"));
+  it("führt an einem nicht prüfbaren Tag ins Üben", () => {
+    // Rot, wenn `testable = false` trotzdem in den Test führte – der Test antwortete mit 400 (B-96).
+    zeige([position({ positionId: 17, testable: false, dueCount: 0, introducedCount: 10, imprintedCount: 10 })]);
+    expect(knoten("Wörter 1").getAttribute("href")).toBe("/sohn/practice/17");
   });
 });
 

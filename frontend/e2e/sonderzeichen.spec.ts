@@ -57,10 +57,7 @@ test("Sonderzeichen: „dîner“ lässt sich über die Leiste abschreiben und a
     await expect(wortFeld).toBeVisible({ timeout: 1000 });
   }).toPass();
   const kopie = page.getByLabel(t.abschreiben, { exact: true });
-  await expect(async () => {
-    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
-    await expect(kopie).toBeVisible({ timeout: 1000 });
-  }).toPass();
+  await expect(kopie).toBeVisible();
   const ok = page.getByRole("button", { name: t.ok, exact: true });
   const i = page.getByRole("button", { name: "î einsetzen" });
 

@@ -819,13 +819,15 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     /// <summary>
-    /// The answer to a learn card (B-598): both results of the card in one call - <see cref="ReviewDto.WasKnown"/> from
-    /// uncovering it, <see cref="ReviewDto.GivenAnswer"/> from recalling it (<c>null</c> = given up). Neither counts as a
-    /// graded hit nor moves a box (decision 2: the solution lay on the device) - only the first right recall from memory
-    /// pays the new-content points, once per word (B-657); the word counts as introduced, and both results go into
-    /// the learning history as two rows that count for no mastery - a recall given up keeps no answer, a wrong one keeps
-    /// what was written (decisions 6, 8). B-643: a right free recall imprints the word; given up, wrong or answered in an
-    /// easier form (<paramref name="easedStage"/>), the card comes back at the end of the round, as often as it takes.
+    /// The answer to a learn card (B-598): <see cref="ReviewDto.GivenAnswer"/> from recalling it, or <see
+    /// cref="ReviewDto.GaveUp"/> when the child gave up (B-686), and - only from an older client, the card no longer
+    /// asks it - <see cref="ReviewDto.WasKnown"/> from uncovering it. Neither counts as a graded hit nor moves a box
+    /// (decision 2: the solution lay on the device) - only the first right recall from memory pays the new-content
+    /// points, once per word (B-657); the word counts as introduced, and the recall (plus a sent WasKnown) goes into
+    /// the learning history as rows that count for no mastery - a recall given up keeps no answer, a wrong one keeps
+    /// what was written (decisions 6, 8). B-643: a right free recall imprints the word; given up, wrong or answered in
+    /// an easier form (<paramref name="easedStage"/>), the card comes back at the end of the round, as often as it
+    /// takes.
     /// </summary>
     /// <remarks>
     /// Only the card at the cursor is appended: an answer for an index outside the round, or a learn card answered again
@@ -874,15 +876,19 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // A review without a hit: the round counts as played, and the combo does not grow on a card that pays nothing.
         db.ReviewEvents.Add(new ReviewEvent { PracticeSessionId = session.Id, WasCorrect = false, At = now });
-        // The card always sends whether the word was known; an answer carrying neither result is no verdict (B-433) - it
-        // introduces the word and leaves neither a history row nor a repeat.
-        var verdict = dto.WasKnown is not null || !string.IsNullOrWhiteSpace(dto.GivenAnswer);
-        if (verdict)
+        // An answer carrying no result at all is no verdict (B-433) - it introduces the word and leaves neither a history
+        // row nor a repeat. B-686: the card no longer asks whether the word was known (answered "yes" by reflex, read by
+        // nothing), so giving up says so explicitly with GaveUp; WasKnown only still arrives from an older client.
+        var verdict = dto.GaveUp || dto.WasKnown is not null || !string.IsNullOrWhiteSpace(dto.GivenAnswer);
+        if (dto.WasKnown is { } wasKnown)
         {
-            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, dto.WasKnown ?? false,
+            await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, wasKnown,
                 (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false,
                 ct: ct);
-            // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
+        }
+        // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
+        if (verdict)
+        {
             await itemProgress.RecordAsync(plan.ChildId, pos.ExerciseId, item, recalled, easedStage ?? (int)TestStage.LearnCard,
                 string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
                 session.Day, countsForMastery: false, ct: ct);

@@ -60,9 +60,8 @@ test("Die Startseite zeigt die Pflichten nach Fach, und „Los“ führt in den 
   await expect(abschnitt.locator(".pfad-knoten")).toHaveCount(1);
   await expect(page.locator(".pfad-start")).toHaveCount(1);
 
-  // „Los“ führt in die Position – und das Üben findet sie im gemerkten Plan, also ohne Rücksprung auf die Startseite.
+  // Der Knoten führt in die Position (B-686: direkt) – und das Üben findet sie im gemerkten Plan, also ohne Rücksprung.
   await abschnitt.locator(".pfad-zeile", { hasText: TITEL }).locator(".pfad-knoten").click();
-  await page.getByRole("dialog", { name: TITEL }).getByRole("link", { name: "▶ LOS", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/sohn/practice/${positionId}$`));
   // Die Übungsseite nennt keinen Titel; ihr Inhalt ist die Karte der Position – das einzige Wort dieser Übung.
   await expect(page.getByRole("heading", { level: 1, name: "Neues Wort – lerne es" })).toBeVisible();

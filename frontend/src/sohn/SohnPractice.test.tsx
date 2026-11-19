@@ -16,6 +16,7 @@ const cards = vi.fn();
 const endSession = vi.fn();
 const heartbeat = vi.fn();
 const cardShown = vi.fn();
+const overview = vi.fn();
 
 vi.mock("./SohnApp", () => ({
   // `skin`: die Aufgabe steht seit B-526 in der Sprechblase am Maskottchen.
@@ -32,7 +33,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       heartbeat: (...a: unknown[]) => heartbeat(...a),
       endSession: (...a: unknown[]) => endSession(...a),
       cardShown: (...a: unknown[]) => cardShown(...a),
-      overview: () => Promise.resolve({ currentStreak: 0 }),
+      overview: (...a: unknown[]) => overview(...a),
     },
   };
 });
@@ -50,6 +51,7 @@ beforeEach(() => {
   endSession.mockReset().mockResolvedValue(undefined);
   heartbeat.mockReset().mockResolvedValue(undefined);
   cardShown.mockReset().mockResolvedValue(undefined);
+  overview.mockReset().mockResolvedValue({ currentStreak: 0, today: { positions: [] } });
   cards.mockReset().mockImplementation(() => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))));
 });
 
@@ -975,17 +977,46 @@ describe("SohnPractice, Lernkarte am Rundenende", () => {
     renderPractice();
 
     fireEvent.click(await screen.findByRole("button", { name: de.sohn.lernkarte.uncover }));
-    fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.new }));
     fireEvent.change(screen.getByLabelText(de.sohn.lernkarte.copy), { target: { value: "walk" } });
     fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.ok }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: de.sohn.lernkarte.giveUp })); });
 
     expect(review).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(),
-      { itemIndex: 0, wasKnown: false, givenAnswer: null });
+      { itemIndex: 0, givenAnswer: null, gaveUp: true });
     expect(screen.getByText(de.sohn.lektion.learnAgain)).toBeTruthy();
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next })); });
 
     expect(screen.getByText(/Karte 2 \/ 2/)).toBeTruthy();
     expect(screen.getByRole("button", { name: de.sohn.lernkarte.uncover })).toBeTruthy();
+  });
+});
+
+/*
+ * B-686 (Entscheidung 1): der Buchbezug (B-588) stand auf dem weggefallenen Blatt vor dem Start und steht jetzt im Kopf
+ * der Runde – gelesen aus der Plan-Übersicht, nur mit Seite.
+ */
+describe("SohnPractice, Buchbezug im Kopf", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+  const mitPosition = (bookPages: string | null) => overview.mockResolvedValue({
+    currentStreak: 0,
+    today: { positions: [{ positionId: 5, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages }] },
+  });
+
+  // Rot, wenn die Runde den Buchbezug nicht zeigt (er wäre mit dem Blatt verschwunden) oder die Pille anders gebaut wird.
+  it("zeigt Reihe, Unit und Seite der Position", async () => {
+    mitPosition("42");
+    renderPractice();
+    expect((await screen.findByText("Access 3 · Unit 2 · S. 42")).classList).toContain("pfad-buchbezug");
+  });
+
+  // Rot, wenn die Pille auch ohne Seite erscheint – als halbe „Reihe · Unit“ (B-588 AK 8). Erst nach der Antwort der
+  // Übersicht geprüft, sonst stünde die Abwesenheit schon vor dem Lesen fest.
+  it("zeigt ohne Seite keine Pille", async () => {
+    mitPosition(null);
+    renderPractice();
+    await screen.findByText(/Karte 1 \/ 3/);
+    await act(async () => { await overview.mock.results[0]?.value; });
+    expect(overview).toHaveBeenCalledWith(3);
+    expect(document.querySelector(".pfad-buchbezug")).toBeNull();
   });
 });

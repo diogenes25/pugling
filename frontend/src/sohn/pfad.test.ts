@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PositionStatus } from "../lib/types";
-import { abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, zielAnteil } from "./pfad";
+import { abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, pflichtErfuellt, zielAnteil } from "./pfad";
 
 /*
  * B-525 – die Regeln des Lernpfads. Je Fall steht dabei, welche Änderung ihn rot macht.
@@ -114,17 +114,15 @@ describe("Die Frist", () => {
   });
 });
 
-describe("„Los“", () => {
-  it("führt ins Üben, solange etwas fällig oder neu ist, und lässt den Test als Nebenweg", () => {
-    // Rot, wenn „Los“ das Kind in den Test schickt, bevor es geübt hat.
-    const p = pos({ dueCount: 3, introducedCount: 4, poolSize: 10 });
-    expect([hauptweg(p), nebenweg(p)]).toEqual(["practice", "test"]);
+describe("Tipp auf den Knoten", () => {
+  it("führt ins Üben, solange etwas fällig oder neu ist – auch wenn heute ein Test ginge", () => {
+    // Rot, wenn der Knoten das Kind in den Test schickt, bevor es geübt hat (B-686: der Test schließt das Üben ab).
+    expect(hauptweg(pos({ dueCount: 3, introducedCount: 4, poolSize: 10 }))).toBe("practice");
   });
 
-  it("startet den Test direkt, wenn nichts zu üben ist, und lässt das Üben als Nebenweg", () => {
-    // Rot, wenn „Los“ in eine leere Übungsrunde führte – dort stünde nur „Nichts fällig“.
-    const p = pos({ dueCount: 0, introducedCount: 10, poolSize: 10 });
-    expect([hauptweg(p), nebenweg(p)]).toEqual(["test", "practice"]);
+  it("startet den Test direkt, wenn nichts zu üben ist", () => {
+    // Rot, wenn der Knoten in eine leere Übungsrunde führte – dort stünde nur „Nichts fällig“.
+    expect(hauptweg(pos({ dueCount: 0, introducedCount: 10, poolSize: 10 }))).toBe("test");
   });
 
   it("startet den Test auch, wenn die Tagesdosis verbraucht, aber noch nicht alles kennengelernt ist", () => {
@@ -133,17 +131,14 @@ describe("„Los“", () => {
     expect(hauptweg(pos({ dueCount: 0, introducedCount: 4, poolSize: 40 }))).toBe("test");
   });
 
-  it("bietet an einem nicht prüfbaren Tag keinen Test an und bleibt spielbar", () => {
-    // Rot, wenn `testable = false` den Test trotzdem anböte (er antwortete mit 400, B-96) oder die Position
-    // ohne jeden Knopf dastünde.
-    const p = pos({ testable: false, dueCount: 0, introducedCount: 10, poolSize: 10 });
-    expect([hauptweg(p), nebenweg(p)]).toEqual(["practice", null]);
+  it("führt an einem nicht prüfbaren Tag ins Üben, nie in den Test", () => {
+    // Rot, wenn `testable = false` trotzdem in den Test führte (er antwortete mit 400, B-96).
+    expect(hauptweg(pos({ testable: false, dueCount: 0, introducedCount: 10, poolSize: 10 }))).toBe("practice");
   });
 
   it("lässt eine prüfbare Position ohne Karteikasten erst üben", () => {
     // Rot, wenn ohne Leitner nur der Test bliebe – das Kind würde Wörter gefragt, die es nie gesehen hat (B-454).
-    const p = pos({ useLeitner: false, dueCount: 0, introducedCount: 0, poolSize: 8 });
-    expect([hauptweg(p), nebenweg(p)]).toEqual(["practice", "test"]);
+    expect(hauptweg(pos({ useLeitner: false, dueCount: 0, introducedCount: 0, poolSize: 8 }))).toBe("practice");
   });
 });
 

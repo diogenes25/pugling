@@ -60,7 +60,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   // Basis: Tagesmission sichtbar
   await expect(sohn.getByText("Tagesmission")).toBeVisible();
 
-  // Übung starten und alle fälligen Karten "gewusst": Knoten auf dem Pfad antippen, im Blatt „Los".
+  // Übung starten und alle fälligen Karten "gewusst": Knoten auf dem Pfad antippen (startet direkt, B-686).
   await pfadStart(sohn, "practice");
   const counter = sohn.locator(".pill.cyan", { hasText: /Karte \d+ \/ \d+/ });
   await expect(counter).toBeVisible();

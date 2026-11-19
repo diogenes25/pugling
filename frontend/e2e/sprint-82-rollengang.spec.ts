@@ -215,10 +215,7 @@ test("B-598: eine frische Station lehrt jedes Wort auf der Lernkarte – Aufgebe
   }).toPass();
   expect((await wortFeld.innerText()).replace(/^→\s*/, "").trim()).toBe(paare[1][0]);
   const kopie = page.getByLabel(t.abschreiben, { exact: true });
-  await expect(async () => {
-    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
-    await expect(kopie).toBeVisible({ timeout: 1000 });
-  }).toPass();
+  await expect(kopie).toBeVisible();
   // Abschreiben verlangt das Wort, wie es dasteht: falsch abgeschrieben bleibt „OK“ gesperrt.
   await tippen(kopie, "lighthous");
   await expect(page.getByRole("button", { name: t.ok, exact: true })).toBeDisabled();

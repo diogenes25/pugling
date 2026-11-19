@@ -39,14 +39,13 @@ const position = (over: Partial<PositionStatus>): PositionStatus => ({
 
 /*
  * B-606 AK 2 – eine Position der Startseite führt in den Weg ihres eigenen Plans. Üben und Test spielen den gemerkten
- * Plan, also muss „Los“ den Plan der Position merken.
+ * Plan, also muss der Tipp auf den Knoten (seit B-686 der Start selbst) den Plan der Position merken.
  */
 describe("Weg von der Kind-Tagessicht", () => {
-  it("merkt beim Los den Plan der Position, nicht den bisher gemerkten", () => {
-    // Rot, wenn „Los“ nur navigiert: Üben öffnete dann die Position im falschen (gemerkten) Plan.
+  it("merkt beim Start den Plan der Position, nicht den bisher gemerkten", () => {
+    // Rot, wenn der Knoten nur navigiert: Üben öffnete dann die Position im falschen (gemerkten) Plan.
     render(<MemoryRouter><Pfad positions={[position({ positionId: 9, planId: 42, exerciseTitle: "Französisch 1" })]} /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: /^Französisch 1/ }));
-    fireEvent.click(screen.getByRole("link", { name: /LOS/ }));
+    fireEvent.click(screen.getByRole("link", { name: /^Französisch 1/ }));
     expect(setPlanId).toHaveBeenCalledWith(42);
   });
 
@@ -104,15 +103,14 @@ describe("Startseite über zwei Pläne", () => {
     const franzoesisch = screen.getByRole("region", { name: "Französisch" });
     // Das Fach ohne START ist zugeklappt; aufgeklappt zeigt es seinen Pfad.
     fireEvent.click(within(franzoesisch).getByRole("button", { expanded: false }));
-    expect(within(franzoesisch).getByRole("button", { name: /^Französisch 1/ })).toBeTruthy();
+    expect(within(franzoesisch).getByRole("link", { name: /^Französisch 1/ })).toBeTruthy();
     // Rot, wenn die Zeile unter „Tagesmission“ die Fächer wiederholt statt die Pläne zu nennen.
     expect(screen.getByText("Englisch-Plan · Französisch-Plan")).toBeTruthy();
     // Rot, wenn SohnHome `naechsteId` nicht weiterreicht: jeder Fach-Pfad zeigte dann seinen eigenen START.
     expect(screen.getAllByText("START")).toHaveLength(1);
 
-    // Rot, wenn „Los“ den gemerkten Plan nicht auf den der Position umstellt (Üben spielte dann Plan 11).
-    fireEvent.click(screen.getByRole("button", { name: /^Französisch 1/ }));
-    fireEvent.click(screen.getByRole("link", { name: /LOS/ }));
+    // Rot, wenn der Knoten den gemerkten Plan nicht auf den der Position umstellt (Üben spielte dann Plan 11).
+    fireEvent.click(screen.getByRole("link", { name: /^Französisch 1/ }));
     expect(setPlanId).toHaveBeenCalledWith(22);
   });
 });
@@ -130,11 +128,11 @@ describe("Fach-Reiter", () => {
     // Rot, wenn jedes Fach offen startet (das lange Scrollen) oder auch das Fach mit dem START zu ist.
     const { unmount } = zeige([position({ positionId: 1, exerciseTitle: "Pflicht" })], null);
     expect(kopf().getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByRole("button", { name: /^Pflicht/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Pflicht/ })).toBeNull();
     unmount();
     zeige([position({ positionId: 1, exerciseTitle: "Pflicht" })], 1);
     expect(kopf().getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("button", { name: /^Pflicht/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^Pflicht/ })).toBeTruthy();
   });
 
   it("nennt im Kopf Tages- und Wochenstand und die Münzen der offenen Ziele", () => {
@@ -163,9 +161,9 @@ describe("Fach-Reiter", () => {
       position({ positionId: 1, exerciseTitle: "Pflicht", cadence: "Daily" }),
       position({ positionId: 2, exerciseTitle: "Kür", cadence: "None", goalMet: true }),
     ], 1);
-    expect(screen.queryByRole("button", { name: /^Kür/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Kür/ })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /1 Zusatzübung/ }));
-    expect(screen.getByRole("button", { name: /^Kür/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /^Kür/ })).toBeTruthy();
   });
 
   it("sagt „Pflicht geschafft“, wenn alle Ziele des Fachs erfüllt sind", () => {

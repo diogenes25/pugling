@@ -130,19 +130,20 @@ test("B-588: der Creator trägt die Buchseite ein, der Sohn sieht Reihe, Unit un
   await expect(seite).toHaveValue("42–43");
   await dialog.getByRole("button", { name: "Schließen" }).click();
 
-  // Sohn: das Blatt des Knotens nennt, wo die Übung im Buch steht.
+  // Sohn: der Kopf der Übungsrunde nennt, wo die Übung im Buch steht (B-686: dort statt im weggefallenen Blatt).
   await sohnLogin(page, { id: String(childId), pin });
   const knoten = (titel: string) => page.locator(".pfad-zeile", { hasText: titel }).locator(".pfad-knoten");
+  const zaehler = page.locator(".pill.cyan", { hasText: /^Karte \d+ \/ \d+$/ });
   await knoten(MIT).click();
-  const blattMit = page.getByRole("dialog", { name: MIT });
-  await expect(blattMit.getByText(`${REIHE} · ${UNIT} · S. 42–43`, { exact: true })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".pfad-buchbezug")).toHaveText(`${REIHE} · ${UNIT} · S. 42–43`);
 
-  // Ohne Seite keine Pille – auch nicht die halbe „Reihe · Unit“. Erst wenn das Blatt steht (der Titel ist da).
+  // Ohne Seite keine Pille – auch nicht die halbe „Reihe · Unit“. Erst wenn die Übersicht geantwortet hat und die Runde
+  // steht: vorher stünde die Abwesenheit schon fest, bevor überhaupt gelesen wurde.
+  await page.goto("/sohn");
+  const uebersicht = page.waitForResponse((r) => /\/study-plans\/\d+\/overview$/.test(new URL(r.url()).pathname));
   await knoten(OHNE).click();
-  const blattOhne = page.getByRole("dialog", { name: OHNE });
-  await expect(blattOhne.getByRole("link", { name: "▶ LOS", exact: true })).toBeVisible();
-  await expect(blattOhne.locator(".pfad-buchbezug")).toHaveCount(0);
-  await expect(blattOhne.getByText(REIHE)).toHaveCount(0);
+  await uebersicht;
+  await expect(zaehler).toBeVisible();
+  await expect(page.locator(".pfad-buchbezug")).toHaveCount(0);
+  await expect(page.locator(".lektion-unterkopf").getByText(REIHE)).toHaveCount(0);
 });

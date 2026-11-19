@@ -81,8 +81,7 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
 
   // Die Startseite sagt, wie weit der Stoff ist – und die zweite Runde bringt keine weiteren neuen Wörter.
   await sohn.goto("/sohn");
-  await sohn.locator(".pfad-knoten").click();
-  await expect(sohn.getByRole("dialog")).toContainText(`${DOSE} von ${PAIRS.length} eingeprägt · ${DOSE} fällig`);
+  await expect(sohn.locator(".pfad-knoten")).toHaveAccessibleName(new RegExp(`${DOSE} von ${PAIRS.length} eingeprägt`));
 
   // ---------- Vater: der Fortschritt steht in der Oberfläche ----------
   await vater.reload();

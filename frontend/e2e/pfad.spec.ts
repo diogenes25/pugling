@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from "@playwright/test";
 import { sohnLogin } from "./helpers";
 
 /*
- * B-525 – die Startseite des Sohns ist ein Lernpfad. Die Regeln (nächster Knoten, Frist, „Los") prüfen `pfad.test.ts`
+ * B-525 – die Startseite des Sohns ist ein Lernpfad. Die Regeln (nächster Knoten, Frist, Startweg) prüfen `pfad.test.ts`
  * und `SohnHome.test.tsx`; hier liegt, was nur die laufende App zeigt: dass der Server Malus und Unit wirklich
  * liefert, dass der Pfad sie in seiner Reihenfolge zeichnet und dass ein bestandener Test den Knoten abhakt und
  * „START" weiterrückt.
@@ -52,7 +52,7 @@ test("Der Pfad gliedert nach Unit, nennt Frist und Malus, und ein bestandener Te
   const PLAN = `Pfad-Plan ${RUN}`;
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: PLAN, durationDays: 7, active: true });
   const positions = `/api/v1/supervisor/study-plans/${planId}/positions`;
-  // Stufe 4 (Freitext) ohne Karteikasten: prüfbar, und „Los" führt zuerst ins Üben (B-454).
+  // Stufe 4 (Freitext) ohne Karteikasten: prüfbar, und der Knoten führt zuerst ins Üben (B-454).
   const posTag = await postId(request, positions, vater, { exerciseId: exTag, stage: 4, cadence: "Daily", useLeitner: false, penaltyCoins: 5 });
   await postId(request, positions, vater, { exerciseId: exWoche, stage: 4, cadence: "Weekly", useLeitner: false, penaltyCoins: 0 });
   await postId(request, positions, vater, { exerciseId: exFrei, stage: 4, cadence: "None", useLeitner: false });
@@ -87,14 +87,8 @@ test("Der Pfad gliedert nach Unit, nennt Frist und Malus, und ein bestandener Te
   await expect(page.locator(".pfad-zeile", { hasText: TAG }).locator(".pfad-frist")).toHaveText(/noch \d+ Std\. · sonst −5 Münzen/);
   await expect(page.locator(".pfad-zeile", { hasText: FREI }).locator(".pfad-frist")).toHaveCount(0);
 
-  // Das Blatt: ein Hauptknopf ins Üben, der Test als zweiter Weg; Escape schließt und gibt den Fokus zurück.
-  await knoten(TAG).click();
-  const blatt = page.getByRole("dialog", { name: TAG });
-  await expect(blatt.getByRole("link", { name: "▶ LOS", exact: true })).toHaveAttribute("href", `/sohn/practice/${posTag}`);
-  await expect(blatt.getByRole("link", { name: "🎯 Test", exact: true })).toHaveAttribute("href", `/sohn/test/${posTag}`);
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(knoten(TAG)).toBeFocused();
+  // B-686: kein Blatt mehr – der Knoten selbst startet ins Üben, obwohl die Position heute prüfbar ist.
+  await expect(knoten(TAG)).toHaveAttribute("href", `/sohn/practice/${posTag}`);
 
   // Der Test des Tagesziels wird bestanden (über die API – den Klickweg trägt full-flow.spec.ts).
   const kindLogin = await request.post("/api/v1/auth/child", { data: { childId, pin } });

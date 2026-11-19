@@ -75,19 +75,19 @@ export async function createChild(page: Page, name: string, pin: string): Promis
 
 /** The learn card's labels, German by default (Playwright pins German, B-294); `sprache.spec` plays it in English. */
 export interface LernkartenTexte {
-  aufdecken: string; neu: string; abschreiben: string; erinnern: string; ok: string; aufgeben: string; weiter: string;
+  aufdecken: string; abschreiben: string; erinnern: string; ok: string; aufgeben: string; weiter: string;
 }
 
 export const LERNKARTE_DE: LernkartenTexte = {
-  aufdecken: "Aufdecken", neu: "Nein, neu", abschreiben: "Schreib es ab", erinnern: "Und jetzt aus dem Kopf", ok: "OK",
+  aufdecken: "Aufdecken", abschreiben: "Schreib es ab", erinnern: "Und jetzt aus dem Kopf", ok: "OK",
   aufgeben: "Später nochmal", weiter: "Weiter →",
 };
 
 /**
- * Plays one learn card (B-598) through: uncover, "new", copy, write from memory, continue. Returns the learnt word the card
- * showed. With `aufgeben` the fourth step ends with "Später nochmal" instead (B-643; "Weiß ich nicht" before).
+ * Plays one learn card (B-598) through: uncover, copy, write from memory, continue. Returns the learnt word the card
+ * showed. With `aufgeben` the last step ends with "Später nochmal" instead (B-643; "Weiß ich nicht" before).
  *
- * The first two taps retry until the card reacts: right after a feedback sheet the round swallows taps for a moment
+ * The first tap retries until the card reacts: right after a feedback sheet the round swallows taps for a moment
  * (`NACH_BLATT_MS`, so a held Enter cannot run through the card), and Playwright taps faster than a child.
  */
 export async function lernkarteDurchspielen(page: Page, aufgeben = false, t: LernkartenTexte = LERNKARTE_DE): Promise<string> {
@@ -98,10 +98,7 @@ export async function lernkarteDurchspielen(page: Page, aufgeben = false, t: Ler
   }).toPass();
   const wort = (await wortFeld.innerText()).replace(/^→\s*/, "").trim();
   const kopie = page.getByLabel(t.abschreiben, { exact: true });
-  await expect(async () => {
-    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
-    await expect(kopie).toBeVisible({ timeout: 1000 });
-  }).toPass();
+  await expect(kopie).toBeVisible();
   await tippen(kopie, wort);
   await page.getByRole("button", { name: t.ok, exact: true }).click();
   if (aufgeben) {
@@ -131,10 +128,10 @@ export async function introduceAndQuiz(page: Page, total: number) {
 }
 
 /**
- * Starts play from the learning path on the child's home screen (B-525): taps the node of a position and follows the
- * sheet's link into practice or the test. The link is picked by its target, not by its label - which of the two is
- * the big "Los" button depends on what the server reports as due, and a spec that only wants to get into a round
- * should not break when that changes.
+ * Starts play from the learning path on the child's home screen (B-525). Since B-686 the node itself starts the round -
+ * into practice, and straight into the test only when nothing is left to practise today. A child reaches the test
+ * otherwise at the end of the practice round; a spec that is about the test itself opens the test route of the node's
+ * position directly (the server still serves it - B-686 removed only the shortcut on the screen).
  *
  * Without `title` the plan must carry exactly one position; Playwright's strict mode fails otherwise.
  */
@@ -142,6 +139,19 @@ export async function pfadStart(page: Page, weg: "practice" | "test", title?: st
   const knoten = title
     ? page.locator(".pfad-zeile", { hasText: title }).locator(".pfad-knoten")
     : page.locator(".pfad-knoten");
-  await knoten.click();
-  await page.getByRole("dialog").locator(`a[href^="/sohn/${weg}/"]`).click();
+  const ziel = await knoten.getAttribute("href");
+  if (!ziel) throw new Error("pfadStart: the path node carries no link target");
+  if (ziel.startsWith(`/sohn/${weg}/`)) {
+    await knoten.click();
+    await expect(page).toHaveURL(new RegExp(`/sohn/${weg}/`));
+    return;
+  }
+  // The node leads the other way. Its tap handler still has to remember the node's plan (B-606), but nothing may follow
+  // the link: a click cancelled in the capture phase runs React's onClick, and both the router (`defaultPrevented`) and
+  // the browser leave it there. A ctrl-click instead opened the link in a second tab that played a round on its own.
+  await knoten.evaluate((el: HTMLElement) => {
+    window.addEventListener("click", (e) => e.preventDefault(), { capture: true, once: true });
+    el.click();
+  });
+  await page.goto(`/sohn/${weg}/${ziel.split("/").pop()}`);
 }

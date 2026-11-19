@@ -57,10 +57,6 @@ export const de = {
       section: "Abschnitt {{number}}",
       start: "START",
       next: "als Nächstes dran",
-      go: "▶ LOS",
-      practice: "▶ Üben",
-      test: "🎯 Test",
-      close: "Schließen",
       goalMet: "Ziel erfüllt",
       goalProgress: "Ziel zu {{percent}} % geschafft",
       // B-588: wo die Übung im Buch steht – Reihe · Unit · Seite(n).
@@ -70,8 +66,6 @@ export const de = {
       untilSunday: "bis Sonntag",
       penalty_one: "sonst −{{count}} Münze",
       penalty_other: "sonst −{{count}} Münzen",
-      due_one: "{{count}} fällig",
-      due_other: "{{count}} fällig",
     },
     // Die Tagestruhe am Ende des Pfads (B-527).
     truhe: {
@@ -358,12 +352,9 @@ export const de = {
       specialChar: "{{char}} einsetzen",
       longPressHint: "Tipp: Taste lange drücken geht auch",
     },
-    // Die Lernkarte (B-598): ein neues Wort in vier Schritten.
+    // Die Lernkarte (B-598): ein neues Wort in drei Schritten (B-686).
     lernkarte: {
       uncover: "Aufdecken",
-      knewIt: "Kanntest du das Wort schon?",
-      known: "Ja, kannte ich",
-      new: "Nein, neu",
       copy: "Schreib es ab",
       recall: "Und jetzt aus dem Kopf",
       ok: "OK",

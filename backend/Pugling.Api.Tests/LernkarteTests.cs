@@ -163,6 +163,33 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
+    /// B-686: the card no longer asks "did you know it?", so an answer arrives without <c>WasKnown</c>; giving up says
+    /// <c>gaveUp</c>. Given up, the word still comes back at the end of the round and the history keeps the recall row
+    /// alone; recalled, it pays as before. Red when <c>GaveUp</c> is not read as a verdict (the given-up word would not
+    /// repeat and leave no history row), or when a self-assessment row is invented for an answer that did not send one.
+    /// </summary>
+    [Fact]
+    public async Task Lernkarte_Ohne_Kannte_Ich_Frage_Wiederholt_Und_Speichert_Das_Erinnern()
+    {
+        var s = await SetupAsync(TestStage.FreeText);
+        var sessionId = await StartAsync(s);
+
+        var res = await s.Child.PostAsJsonAsync($"{Base(s)}/{sessionId}/review", new { itemIndex = 0, gaveUp = true });
+        Assert.True(res.IsSuccessStatusCode, $"{(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
+        var givenUp = await res.Content.ReadFromJsonAsync<JsonElement>();
+        JsonAssert.True(givenUp, "repeatsAtEnd");
+        var recalled = await AnswerAsync(s, sessionId, 1, wasKnown: null, givenAnswer: "le train");
+        JsonAssert.True(recalled, "wasCorrect");
+        Assert.Equal(10, recalled.GetProperty("awarded").GetInt32());
+
+        Assert.Equal([0, 1, 0], Db(db => db.PracticeSessions.Single(p => p.Id == sessionId).Order));
+        var history = Db(db => db.ItemReviewEvents.Where(e => e.ChildId == s.ChildId).OrderBy(e => e.Id)
+            .Select(e => new { e.StageValue, e.GivenAnswer }).ToList());
+        Assert.Equal([((int)TestStage.LearnCard, (string?)null), ((int)TestStage.LearnCard, "le train")],
+            history.Select(h => (h.StageValue, h.GivenAnswer)).ToList());
+    }
+
+    /// <summary>
     /// Decision 9: the test never plays a learn card - a station whose day is the learn card is tested at its target, and
     /// so is a learn card the supervisor picks for a preview attempt. Red when the test takes the learn card as its stage.
     /// </summary>

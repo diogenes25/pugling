@@ -110,10 +110,9 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
   await sohnLogin(page, CHILD);
   await page.getByRole("button", { name: "EN – auf Englisch umschalten (Sprache ist Deutsch)" }).click();
 
-  // Der Knopf ist Chrome. (AK 2 – Nutzerdaten bleiben – belegt `arcadeSpielweg.test.tsx` mit Schlüsseln als Daten;
-  // hier wäre es nicht messbar, `t` gäbe „Vokabeln: En ville“ fast unverändert zurück.)
+  // Der Knoten startet die Runde direkt (B-686). (AK 2 – Nutzerdaten bleiben – belegt `arcadeSpielweg.test.tsx` mit
+  // Schlüsseln als Daten; hier wäre es nicht messbar, `t` gäbe „Vokabeln: En ville“ fast unverändert zurück.)
   await page.locator(".pfad-zeile", { hasText: EXERCISE }).locator(".pfad-knoten").click();
-  await page.getByRole("dialog").getByRole("link", { name: "▶ GO", exact: true }).click();
   await expect(page.locator(".pill.cyan", { hasText: /^Card \d+ \/ \d+$/ })).toBeVisible();
   // Die Arbeitsanweisung ist Chrome: die erste Karte eines neuen Plans ist eine Lernkarte (B-598).
   await expect(page.getByRole("heading", { name: "New word – learn it" })).toBeVisible();
@@ -121,7 +120,7 @@ test("Der Sohn spielt eine Übungsrunde in der englischen Arcade", async ({ brow
 
   // Ihre Schritte sprechen ebenfalls Englisch.
   await lernkarteDurchspielen(page, false, {
-    aufdecken: "Uncover", neu: "No, it's new", abschreiben: "Copy it", erinnern: "Now from memory", ok: "OK",
+    aufdecken: "Uncover", abschreiben: "Copy it", erinnern: "Now from memory", ok: "OK",
     aufgeben: "Later again", weiter: "Next →",
   });
 

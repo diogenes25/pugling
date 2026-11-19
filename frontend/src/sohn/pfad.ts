@@ -3,7 +3,7 @@ import type { PositionStatus } from "../lib/types";
 
 /*
  * Die Regeln des Lernpfads (B-525) als reine Funktionen: was ein Abschnitt ist, welcher Knoten der nächste ist,
- * welche Frist er zeigt und wohin „Los" führt. Sie stehen hier und nicht in der Komponente, weil jede davon eine
+ * welche Frist er zeigt und wohin der Tipp auf den Knoten führt. Sie stehen hier und nicht in der Komponente, weil jede davon eine
  * Entscheidung der Story trägt und einzeln prüfbar sein soll. Der Server bleibt die Wahrheit – hier wird nur
  * gelesen, was die Tagesübersicht meldet.
  */
@@ -103,23 +103,18 @@ const kannUeben = (pos: PositionStatus) => pos.useLeitner || !pos.testable || po
 /**
  * Im Karteikasten ist heute nichts zu tun. `dueCount` zählt schon mit, was neu dazukäme – der Server rechnet nie
  * Gezeigtes als fällig und kappt es an der Tagesdosis. „Noch nicht alles kennengelernt" ist darum kein Grund zu
- * üben: mit einer Dosis von 4 aus 40 Wörtern führte „Los" nach der ersten Runde sonst in eine leere.
+ * üben: mit einer Dosis von 4 aus 40 Wörtern führte der Knoten nach der ersten Runde sonst in eine leere.
  */
 const kastenLeer = (pos: PositionStatus) => pos.useLeitner && pos.dueCount === 0;
 
 /**
- * Wohin „Los" führt: ins Üben (an dessen Ende der Test angeboten wird), und nur dann direkt in den Test, wenn es
- * heute einen gibt und nichts zu üben ist. Eine heute nicht prüfbare Position bleibt immer über das Üben spielbar.
+ * Wohin der Tipp auf den Knoten führt: ins Üben (an dessen Ende der Test angeboten wird), und nur dann direkt in den
+ * Test, wenn es heute einen gibt und nichts zu üben ist. Eine heute nicht prüfbare Position bleibt immer über das Üben
+ * spielbar. Einen zweiten Weg am Start gibt es nicht mehr (B-686): der Test soll das Üben abschließen, nicht ersetzen.
  */
 export function hauptweg(pos: PositionStatus): Spielweg {
   if (pos.testable && (!kannUeben(pos) || kastenLeer(pos))) return "test";
   return "practice";
-}
-
-/** Der andere Weg als kleiner zweiter Knopf – der Test nur, wenn der Server ihn heute anbietet. */
-export function nebenweg(pos: PositionStatus): Spielweg | null {
-  if (hauptweg(pos) === "practice") return pos.testable ? "test" : null;
-  return kannUeben(pos) ? "practice" : null;
 }
 
 export const spielPfad = (weg: Spielweg, positionId: number) => `/sohn/${weg}/${positionId}`;

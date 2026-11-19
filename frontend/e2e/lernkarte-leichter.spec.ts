@@ -61,10 +61,7 @@ test("Lernkarte: leichter schalten bis zur Auswahl, das Wort kommt als ganze Ler
     await expect(wortFeld).toBeVisible({ timeout: 1000 });
   }).toPass();
   const kopie = page.getByLabel(t.abschreiben, { exact: true });
-  await expect(async () => {
-    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
-    await expect(kopie).toBeVisible({ timeout: 1000 });
-  }).toPass();
+  await expect(kopie).toBeVisible();
   await tippen(kopie, "station");
   await page.getByRole("button", { name: t.ok, exact: true }).click();
 
@@ -101,6 +98,5 @@ test("Lernkarte: leichter schalten bis zur Auswahl, das Wort kommt als ganze Ler
 
   // Der goldene Ring zählt eingeprägte Wörter.
   await page.goto("/sohn");
-  await page.locator(".pfad-knoten").click();
-  await expect(page.getByRole("dialog")).toContainText("2 von 2 eingeprägt");
+  await expect(page.locator(".pfad-knoten")).toHaveAccessibleName(/2 von 2 eingeprägt/);
 });

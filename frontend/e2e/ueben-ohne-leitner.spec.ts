@@ -35,12 +35,10 @@ test("Ohne Leitner-Kasten kann das Kind trotzdem erst üben, dann testen", async
     { exerciseId, stage: 4, cadence: "Daily", useLeitner: false });
 
   await sohnLogin(page, { id: String(childId), pin });
+  // Der Kern: der Knoten führt zuerst ins Üben, nicht in den Test, obwohl die Position prüfbar ist – und zeigt das Wort
+  // mit Lösung, bevor gefragt wird: die Lernkarte (B-598) zeigt das deutsche Wort und deckt das Fremdwort auf.
   await page.locator(".pfad-knoten").click();
-  const blatt = page.getByRole("dialog");
-  await expect(blatt.getByRole("link", { name: "🎯 Test", exact: true })).toBeVisible();
-  // Der Kern: „Los" führt zuerst ins Üben, nicht in den Test – und zeigt das Wort mit Lösung, bevor gefragt wird: die
-  // Lernkarte (B-598) zeigt das deutsche Wort und deckt das Fremdwort auf.
-  await blatt.getByRole("link", { name: "▶ LOS", exact: true }).click();
+  await expect(page).toHaveURL(/\/sohn\/practice\//);
   await expect(page.getByText("die Brücke", { exact: true })).toBeVisible();
   expect(await lernkarteDurchspielen(page)).toBe(`le pont ${RUN}`);
 });

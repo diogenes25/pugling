@@ -82,10 +82,7 @@ test("Lernkarte: das Wort lässt sich nicht kopieren, und einfügen lässt sich 
 
   // 3. Das abgeschriebene Wort im Feld ist markierbar – kopieren bringt es trotzdem nicht in die Zwischenablage.
   const kopie = page.getByLabel(t.abschreiben, { exact: true });
-  await expect(async () => {
-    await page.getByRole("button", { name: t.neu, exact: true }).click({ timeout: 2000 });
-    await expect(kopie).toBeVisible({ timeout: 1000 });
-  }).toPass();
+  await expect(kopie).toBeVisible();
   await ablageSetzen("vorher");
   await kopie.pressSequentially("station");
   await kopie.press("ControlOrMeta+A");

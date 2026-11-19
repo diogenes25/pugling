@@ -8,14 +8,20 @@ import { einsetzen, leistenZeichen, ohneDiakritika } from "../lib/sonderzeichen"
 import type { PracticeCard } from "../lib/types";
 import { Antwortflaeche } from "./Lektion";
 
-/** Was die Lernkarte am Ende an den Server schickt: beide Ergebnisse in einem Aufruf (B-598, Entscheidung 6). */
-export interface LernkartenErgebnis {
-  wasKnown: boolean;
-  /** Die Eingabe aus dem Gedächtnis; `null` heißt „aufgegeben“ (Entscheidung 8). */
-  givenAnswer: string | null;
-}
+/**
+ * Was die Lernkarte am Ende an den Server schickt: das Erinnern (B-598, Entscheidung 6). Die Frage „Kanntest du das
+ * Wort schon?“ ist gestrichen (B-686) – sie wurde aus Reflex mit „ja“ beantwortet und von nichts gelesen.
+ */
+export type LernkartenErgebnis =
+  /** Die Eingabe aus dem Gedächtnis. */
+  | { givenAnswer: string }
+  /**
+   * Aufgegeben (Entscheidung 8): keine Antwort, aber ausdrücklich gesagt – ohne `wasKnown` wäre eine leere Antwort für
+   * den Server sonst „kein Urteil“ (B-433), und das Wort käme nicht wieder.
+   */
+  | { givenAnswer: null; gaveUp: true };
 
-type Schritt = "aufdecken" | "gewusst" | "abschreiben" | "erinnern";
+type Schritt = "aufdecken" | "abschreiben" | "erinnern";
 
 /**
  * Darf „OK“ beim Abschreiben gedrückt werden? Nach den Vergleichsregeln des Servers (Entscheidung 5): „Walk“ und
@@ -23,7 +29,7 @@ type Schritt = "aufdecken" | "gewusst" | "abschreiben" | "erinnern";
  *
  * Klammerteile sind wie beim Server (`AnswerVariants.OptionalParts`, B-462) einzeln weglassbar: „folk“ genügt für
  * „folk (pl) (infml)“ – das Kürzel ist Wörterbuch-Angabe, kein Teil des Worts, und der Server wertet „folk“ in
- * Schritt 4 ohnehin als richtig.
+ * im Erinnern ohnehin als richtig.
  */
 export function abgeschrieben(eingabe: string, wort: string): boolean {
   if (eingabe.trim() === "") return false;
@@ -53,23 +59,24 @@ function klammerFormen(wort: string): string[] {
 }
 
 /**
- * Die Lernkarte (B-598): ein neues Wort in vier Schritten. Das deutsche Wort steht schon in der Karte darüber.
- * 1. aufdecken; 2. das Fremdwort sehen und hören, „kannte ich“ oder „neu“; 3. abschreiben – „OK“ erst, wenn es stimmt;
- * 4. das Wort ist weg, aus dem Kopf schreiben oder aufgeben. Gewertet wird erst der letzte Schritt, beim Server.
+ * Die Lernkarte (B-598): ein neues Wort in drei Schritten. Das deutsche Wort steht schon in der Karte darüber.
+ * 1. aufdecken; 2. das Fremdwort sehen, hören und abschreiben – „OK“ erst, wenn es stimmt; 3. das Wort ist weg, aus
+ * dem Kopf schreiben oder aufgeben. Gewertet wird erst der letzte Schritt, beim Server. Die Zwischenfrage „Kanntest du
+ * das Wort schon?“ ist seit B-686 weg: sie kostete bei jedem Wort einen Klick und trug nichts.
  *
- * Vorgelesen wird nur, solange das Wort zu sehen ist (Entscheidung 10): in Schritt 4 wäre der Ton die Lösung.
+ * Vorgelesen wird nur, solange das Wort zu sehen ist (Entscheidung 10): im letzten Schritt wäre der Ton die Lösung.
  * `gesperrt` gilt, solange die Antwort unterwegs ist – derselbe Wartepunkt wie bei jedem anderen Knopf der Runde.
  *
- * B-643: In Schritt 4 gibt es „Mach's mir leichter“, solange der Server `canEase` meldet. Er schaltet die Karte eine Stufe
- * tiefer (Kästchen, Buchstabensalat, Auswahl) und schickt sie neu; die Karte bleibt dabei eingehängt und in Schritt 4,
+ * B-643: Im letzten Schritt gibt es „Mach's mir leichter“, solange der Server `canEase` meldet. Er schaltet die Karte eine Stufe
+ * tiefer (Kästchen, Buchstabensalat, Auswahl) und schickt sie neu; die Karte bleibt dabei eingehängt und im Erinnern,
  * nur die Antwortfläche folgt der neuen Form (`eased`). „Später nochmal“ (vorher „Weiß ich nicht“) gibt ohne Hilfe auf.
  */
 export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, onLeichter }: {
   karte: PracticeCard;
   gesperrt: boolean;
   /**
-   * Die Sperre der Runde nach einem Blatt (NACH_BLATT_MS): ein gehaltenes Enter darf nicht durch „Aufdecken“ und
-   * „Kannte ich?“ laufen und ein „neu“ buchen, das das Kind nie gesehen hat.
+   * Die Sperre der Runde nach einem Blatt (NACH_BLATT_MS): ein gehaltenes Enter darf nicht durch „Aufdecken“ laufen
+   * und ein Wort aufdecken, das das Kind nie gesehen hat.
    */
   zuFrueh?: () => boolean;
   onFertig: (ergebnis: LernkartenErgebnis) => void;
@@ -78,7 +85,6 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
 }) {
   const { t } = useTranslation();
   const [schritt, setSchritt] = useState<Schritt>("aufdecken");
-  const [kannte, setKannte] = useState(false);
   const [kopie, setKopie] = useState("");
   const [erinnert, setErinnert] = useState("");
   const fokus = useRef<HTMLElement | null>(null);
@@ -86,7 +92,6 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
   const erinnertFeld = useRef<HTMLInputElement | null>(null);
   const ersterSchritt = useRef(true);
   const wortId = useId();
-  const frageId = useId();
   const wort = karte.reveal ?? "";
   // B-661, Entscheidung 3: beim Abschreiben steht das Wort da – die Leiste darf seine Zeichen anbieten, und so ist jedes
   // Wort abschreibbar. Aus dem Kopf nur die feste Menge der Sprache: dort verriete die Wort-Ergänzung die Akzente.
@@ -100,7 +105,7 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
     fokus.current?.focus();
   }, [schritt]);
 
-  // Steht nur im Block der Schritte 2 und 3, also nur, solange das Wort zu sehen ist.
+  // Steht nur im Abschreib-Schritt, also nur, solange das Wort zu sehen ist.
   const vorlesenKnopf = (karte.revealAudioUrl
     ? <AudioButton url={karte.revealAudioUrl} label={t("lernkarte.listen")} autoPlay={false} />
     : karte.revealSpeechLang && <SpeakButton text={wort} lang={karte.revealSpeechLang} label={t("lernkarte.listen")} />);
@@ -110,26 +115,14 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
       {schritt === "aufdecken" && (
         <div className="lektion-fuss">
           <button type="button" className="btn lime" ref={(el) => { fokus.current = el; }} disabled={gesperrt}
-            onClick={() => { if (!zuFrueh()) setSchritt("gewusst"); }}>{t("lernkarte.uncover")}</button>
+            onClick={() => { if (!zuFrueh()) setSchritt("abschreiben"); }}>{t("lernkarte.uncover")}</button>
         </div>
       )}
 
-      {(schritt === "gewusst" || schritt === "abschreiben") && (
+      {schritt === "abschreiben" && (
         <div className="lernkarte-wort">
           <div className="rev" id={wortId}>→ {wort}</div>
           {vorlesenKnopf}
-        </div>
-      )}
-
-      {schritt === "gewusst" && (
-        // Die Gruppe heißt wie ihre sichtbare Frage und beschreibt sich mit dem Wort: ein Screenreader hört, was er
-        // beurteilen soll, ohne es zu suchen.
-        <div className="lektion-fuss" role="group" aria-labelledby={frageId} aria-describedby={wortId}>
-          <p className="sub" id={frageId} style={{ margin: 0 }}>{t("lernkarte.knewIt")}</p>
-          <button type="button" className="btn ghost" ref={(el) => { fokus.current = el; }} disabled={gesperrt}
-            onClick={() => { if (zuFrueh()) return; setKannte(false); setSchritt("abschreiben"); }}>{t("lernkarte.new")}</button>
-          <button type="button" className="btn lime" disabled={gesperrt}
-            onClick={() => { if (zuFrueh()) return; setKannte(true); setSchritt("abschreiben"); }}>{t("lernkarte.known")}</button>
         </div>
       )}
 
@@ -157,7 +150,7 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
           <p className="sub" style={{ margin: 0 }}>{t("lernkarte.recall")}</p>
           <Antwortflaeche kartenId={`lernkarte-${karte.itemIndex}-${karte.stage}`} karte={karte} wert={erinnert}
             onWert={setErinnert} gesperrt={gesperrt} knopf={t("lernkarte.ok")} feldName={t("lernkarte.recall")}
-            platzhalter="" onAbschicken={() => onFertig({ wasKnown: kannte, givenAnswer: erinnert })} />
+            platzhalter="" onAbschicken={() => onFertig({ givenAnswer: erinnert })} />
           <div className="lektion-fuss">
             {karte.canEase && onLeichter && (
               <button type="button" className="btn ghost" disabled={gesperrt} onClick={() => { setErinnert(""); onLeichter(); }}>
@@ -165,7 +158,7 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
               </button>
             )}
             <button type="button" className="btn ghost" disabled={gesperrt}
-              onClick={() => onFertig({ wasKnown: kannte, givenAnswer: null })}>{t("lernkarte.giveUp")}</button>
+              onClick={() => onFertig({ givenAnswer: null, gaveUp: true })}>{t("lernkarte.giveUp")}</button>
           </div>
         </>
       )}
@@ -173,7 +166,7 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
       {schritt === "erinnern" && !karte.eased && (
         <form className="lektion-fuss" onSubmit={(e) => {
           e.preventDefault();
-          if (erinnert.trim()) onFertig({ wasKnown: kannte, givenAnswer: erinnert });
+          if (erinnert.trim()) onFertig({ givenAnswer: erinnert });
         }}>
           <label className="sub" htmlFor="lernkarte-erinnern">{t("lernkarte.recall")}</label>
           <input id="lernkarte-erinnern" className="lektion-feld" autoComplete="off" autoCapitalize="off" autoCorrect="off"
@@ -188,7 +181,7 @@ export function Lernkarte({ karte, gesperrt, zuFrueh = () => false, onFertig, on
             </button>
           )}
           <button type="button" className="btn ghost" disabled={gesperrt}
-            onClick={() => onFertig({ wasKnown: kannte, givenAnswer: null })}>{t("lernkarte.giveUp")}</button>
+            onClick={() => onFertig({ givenAnswer: null, gaveUp: true })}>{t("lernkarte.giveUp")}</button>
         </form>
       )}
     </div>

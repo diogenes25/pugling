@@ -10,7 +10,6 @@ import { fachStand, nachFach } from "./tagessicht";
 import { fachMotiv, STERNE, svgUrl, type FachMotiv } from "./fachMotiv";
 import { useSkinText } from "../lib/skinText";
 import { jetztGerade } from "../lib/datum";
-import { useDialogFocus } from "../lib/useDialogFocus";
 import { useAction } from "../lib/useAction";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { useErrorMessage } from "../lib/chromeText";
@@ -18,9 +17,9 @@ import { prefersReducedMotion } from "../lib/ui";
 import { InterestIntroCard } from "./SohnInterests";
 import { BonusEinstieg } from "./SohnBonus";
 import {
-  abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, nebenweg, pflichtErfuellt, spielPfad, truhenZiele,
+  abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechstePositionId, pflichtErfuellt, spielPfad, truhenZiele,
   zielAnteil,
-  type Frist, type Spielweg,
+  type Frist,
 } from "./pfad";
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
 import type { TruhenZiele } from "./pfad";
@@ -251,9 +250,7 @@ export function Pfad({ positions, jetzt = jetztGerade(), naechsteId }: {
 }) {
   const { t } = useTranslation();
   const { skin } = useSohn();
-  const [offenId, setOffenId] = useState<number | null>(null);
   const naechste = naechsteId === undefined ? naechstePositionId(positions) : naechsteId;
-  const offen = positions.find((p) => p.positionId === offenId) ?? null;
 
   let lauf = 0;
   return (
@@ -271,7 +268,7 @@ export function Pfad({ positions, jetzt = jetztGerade(), naechsteId }: {
               return (
                 <div key={pos.positionId} className={`pfad-zeile${istNaechste ? " mit-start" : ""}`} style={{ transform: `translateX(${dx}px)` }}>
                   {istNaechste && <span className="pfad-start" aria-hidden="true">{t("pfad.start")}</span>}
-                  <Knoten pos={pos} naechste={istNaechste} jetzt={jetzt} onOeffnen={() => setOffenId(pos.positionId)} />
+                  <Knoten pos={pos} naechste={istNaechste} jetzt={jetzt} />
                   {istNaechste && (
                     <div className="pfad-begleiter" style={dx > 0 ? { right: "calc(50% + 52px)" } : { left: "calc(50% + 52px)" }} aria-hidden="true">
                       <Mascot skin={skin} mood="happy" size={64} />
@@ -283,7 +280,6 @@ export function Pfad({ positions, jetzt = jetztGerade(), naechsteId }: {
           </div>
         </section>
       ))}
-      {offen && <KnotenBlatt key={offen.positionId} pos={offen} jetzt={jetzt} onSchliessen={() => setOffenId(null)} />}
     </>
   );
 }
@@ -334,10 +330,14 @@ function Ring({ r, anteil, farbe, klasse }: { r: number; anteil: number; farbe: 
   );
 }
 
-function Knoten({ pos, naechste, jetzt, onOeffnen }: {
-  pos: PositionStatus; naechste: boolean; jetzt: Date; onOeffnen: () => void;
-}) {
+/**
+ * Ein Knoten des Pfads. B-686: der Tipp startet die Übung sofort – kein Blatt mit „Los“ und „Test“ mehr dazwischen. Er
+ * führt ins Üben, an dessen Ende der Test angeboten wird; direkt in den Test nur, wenn heute nichts mehr zu üben ist
+ * (`hauptweg`). Was das Blatt zusätzlich zeigte, steht schon am Knoten (Ring, Frist) bzw. im Kopf der Übung (Buchbezug).
+ */
+function Knoten({ pos, naechste, jetzt }: { pos: PositionStatus; naechste: boolean; jetzt: Date }) {
   const { t } = useTranslation();
+  const { setPlanId } = useSohn();
   const fristText = useFristText();
   const anteil = kennenlernAnteil(pos);
   const ziel = zielAnteil(pos);
@@ -359,11 +359,12 @@ function Knoten({ pos, naechste, jetzt, onOeffnen }: {
 
   return (
     <>
-      <button
-        type="button"
+      {/* B-606: die Startseite zeigt mehrere Pläne; Üben und Test spielen den gemerkten Plan – also erst den der Position merken. */}
+      <Link
+        to={spielPfad(hauptweg(pos), pos.positionId)}
+        onClick={() => { if (pos.planId) setPlanId(pos.planId); }}
         className={`pfad-knoten${naechste ? " naechste" : ""}${erfuellt ? " erfuellt" : ""}${pos.cadence === "None" ? " frei" : ""}`}
-        aria-label={name} aria-haspopup="dialog" aria-current={naechste ? "step" : undefined}
-        onClick={onOeffnen}
+        aria-label={name} aria-current={naechste ? "step" : undefined}
       >
         {(anteil !== null || ziel !== null) && (
           <svg className="pfad-ring" width={KNOTEN} height={KNOTEN} aria-hidden="true">
@@ -374,65 +375,10 @@ function Knoten({ pos, naechste, jetzt, onOeffnen }: {
         )}
         <span className="pfad-kern" aria-hidden="true">{typeIcon(pos.exerciseType)}</span>
         {erfuellt && <span className="pfad-haken" aria-hidden="true">✓</span>}
-      </button>
+      </Link>
       <span className="pfad-titel" aria-hidden="true">{pos.exerciseTitle}</span>
       <FristZeile pos={pos} jetzt={jetzt} versteckt />
     </>
-  );
-}
-
-const WEG_TEXT = { practice: "pfad.practice", test: "pfad.test" } as const satisfies Record<Spielweg, string>;
-
-/** Das Blatt zu einem Knoten: Stand der Position und genau ein Hauptknopf; der andere Weg bleibt klein daneben. */
-function KnotenBlatt({ pos, jetzt, onSchliessen }: { pos: PositionStatus; jetzt: Date; onSchliessen: () => void }) {
-  const { t } = useTranslation();
-  const { setPlanId } = useSohn();
-  const blatt = useRef<HTMLDivElement | null>(null);
-  const los = useRef<HTMLAnchorElement | null>(null);
-  // B-606: die Startseite zeigt mehrere Pläne; Üben und Test spielen den gemerkten Plan – also erst den der Position merken.
-  const merkePlan = () => { if (pos.planId) setPlanId(pos.planId); };
-  // Fokus auf „Los“, Tab im Blatt gefangen, Escape schließt, danach zurück zum Knoten – sonst wäre `aria-modal`
-  // gelogen: Tab wanderte hinter den Schleier.
-  useDialogFocus(blatt, onSchliessen, los);
-  const anteil = kennenlernAnteil(pos);
-  const zweiter = nebenweg(pos);
-  const titelId = `pfad-blatt-${pos.positionId}`;
-
-  return (
-    <div className="pfad-schleier" onClick={onSchliessen}>
-      <div ref={blatt} tabIndex={-1} className="pfad-blatt" role="dialog" aria-modal="true" aria-labelledby={titelId} onClick={(e) => e.stopPropagation()}>
-        <div className="row">
-          <span style={{ fontSize: 30 }} aria-hidden="true">{typeIcon(pos.exerciseType)}</span>
-          <b id={titelId} className="pfad-blatt-titel">{pos.exerciseTitle}</b>
-          <button type="button" className="pfad-zu" onClick={onSchliessen} aria-label={t("pfad.close")}>✕</button>
-        </div>
-        <div className="row" style={{ flexWrap: "wrap", rowGap: 6 }}>
-          <span className="pill">{t(cadenceKey(pos.cadence))}</span>
-          {pflichtErfuellt(pos) && <span className="pill lime">✓ {t("pfad.goalMet")}</span>}
-          {/* B-588: nur mit Seite – „Unit 2“ allein schickte das Kind irgendwo in die Unit suchen. */}
-          {pos.bookPages && (
-            <span className="pill pfad-buchbezug">
-              {t("pfad.bookRef", { series: pos.seriesName ?? "", unit: pos.seriesUnitLabel, pages: pos.bookPages })}
-            </span>
-          )}
-          <FristZeile pos={pos} jetzt={jetzt} />
-        </div>
-        {anteil !== null && (
-          <div className="sub">
-            {t("home.introduced", { count: pos.imprintedCount ?? 0, total: pos.poolSize })}
-            {pos.useLeitner && pos.dueCount > 0 && <> · {t("pfad.due", { count: pos.dueCount })}</>}
-          </div>
-        )}
-        <Link ref={los} to={spielPfad(hauptweg(pos), pos.positionId)} onClick={merkePlan} className="btn gold" style={{ textDecoration: "none", textAlign: "center" }}>
-          {t("pfad.go")}
-        </Link>
-        {zweiter && (
-          <Link to={spielPfad(zweiter, pos.positionId)} onClick={merkePlan} className="btn ghost small" style={{ textDecoration: "none", textAlign: "center" }}>
-            {t(WEG_TEXT[zweiter])}
-          </Link>
-        )}
-      </div>
-    </div>
   );
 }
 

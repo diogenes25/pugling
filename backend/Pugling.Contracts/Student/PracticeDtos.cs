@@ -104,10 +104,11 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
 /// plays the card as free text from the German <c>Prompt</c>.
 ///
-/// <c>LearnCard</c> (B-598) marks the learn card: <c>Prompt</c> is the German word, <c>Reveal</c> the learnt word the child
-/// uncovers, copies and then recalls; the answer carries both results (<c>WasKnown</c> of the uncovering,
-/// <c>GivenAnswer</c> of the recall, <c>null</c> = given up). <c>RevealSpeechLang</c>/<c>RevealAudioUrl</c> read that
-/// learnt word aloud - on the learn card only, where it is shown anyway, and only while it is shown.
+/// <c>LearnCard</c> (B-598) marks the learn card: <c>Prompt</c> is the German word, <c>Reveal</c> the learnt word the
+/// child uncovers, copies and then recalls; the answer carries the recall (<c>GivenAnswer</c>) or <c>GaveUp</c>.
+/// <c>WasKnown</c> is optional there and only recorded when sent: the card no longer asks it (B-686).
+/// <c>RevealSpeechLang</c>/<c>RevealAudioUrl</c> read that learnt word aloud - on the learn card only, where it is
+/// shown anyway, and only while it is shown.
 ///
 /// <c>CanEase</c> (B-635) says the child may make this card easier (<c>POST …/easier</c>): a remediation task, or a learn
 /// card's recall, not yet at the easiest form. <c>Eased</c> marks a card made easier in this round: an answer to it shows
@@ -131,11 +132,13 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);
 
 /// <summary>
-/// The child's answer to a practice card. <paramref name="ItemIndex"/> addresses the content atom
-/// in the exercise. Typed stages supply <paramref name="GivenAnswer"/>, display/self-assessment
-/// stages supply <paramref name="WasKnown"/>. The server enforces the stage; it grades – never the frontend.
+/// The child's answer to a practice card. <paramref name="ItemIndex"/> addresses the content atom in the exercise.
+/// Typed stages supply <paramref name="GivenAnswer"/>, display/self-assessment stages supply <paramref
+/// name="WasKnown"/>. The server enforces the stage; it grades – never the frontend. <paramref name="GaveUp"/> (B-686)
+/// is read on the learn card only: the child gave up the recall. It tells that verdict apart from an answer carrying
+/// nothing at all, which is no verdict (B-433).
 /// </summary>
-public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);
+public record ReviewDto(int ItemIndex, string? GivenAnswer, bool? WasKnown, bool GaveUp = false);
 
 /// <summary>
 /// "This card is visible now" (B-530). <paramref name="ItemIndex"/> names the card the client shows, the same atom
