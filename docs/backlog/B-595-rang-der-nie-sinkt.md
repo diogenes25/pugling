@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, bereich/punkte, rolle/student]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/punkte, rolle/student]
 aliases: [Rang, Lebenszeit-Münzen, XP]
-status: idee
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: Marktvergleich Belohnungs-Apps (Sitzung 2026-11-16, PointUp XP/15 Ränge)
 unverifiziert: true
-grund: ""
-ersetzt_durch: []
+grund: "ersetzt durch die Notenstufe je Fach (B-682), Entscheidung des Vaters 2026-11-19: der Rang darf sinken, die echte Klausur verifiziert ihn"
+ersetzt_durch: [B-682]
 ---
 
 # B-595 · Ein Rang, der nie sinkt – getrennt vom ausgebbaren Guthaben
@@ -29,3 +29,4 @@ Eine Familien-Serie über mehrere Kinder (ebenfalls PointUp) ist bewusst nicht T
 ## Verlauf
 
 - **2026-11-16** — angelegt aus dem Marktvergleich Belohnungs-Apps (PointUp, Rang aus XP).
+- **2026-11-19** — `verworfen`, ersetzt durch [B-682](B-682-notenstufe-je-fach-statt-liga.md): Der Vater will statt eines Rangs, der nie sinkt, eine Notenstufe je Fach (Einser- bis Sechser-Schüler), die an der echten Klausur auf- und absteigt ([Leitbild](../leitbild-privatlehrer.md)). Der Gedanke „was ich geschafft habe, bleibt“ lebt als offene Frage in B-682 weiter (beste bestätigte Note als Auszeichnung).
