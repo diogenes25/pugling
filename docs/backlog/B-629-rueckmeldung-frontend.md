@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-623
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Review-Funde Sprint 88 einarbeiten (Nachtlauf-Halt, Zähler 8)"
+wartet_auf: ""
 ---
 
 # B-629 · Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend)
@@ -100,3 +100,7 @@ Mustern (`ExerciseRatingPanel`, Vater-Listen mit `ListControls`).
 - **2026-11-18** — **Halt des Nachtlaufs (Freigabe 3):** der Zähler des Sprints stand nach dem Frontend-Review bei **8** (Backend 2, Live-Region-Tor 1, Frontend-Review 5) – mehr als fünf. Code liegt ungemergt auf `refs/heads/auto/sprint-88-rueckmeldung`; nicht abgenommen, kein Rollengang-Urteil.
 - **2026-11-19** — 🟡7 entschieden vom Vater: „Link zum Plan reicht“ → Entscheidung 1, AK 4 präzisiert; kein Code nötig.
   Offen bleiben die übrigen fünf 🟡 (1, 3, 4, 5, 6).
+- **2026-11-19** — Review-Funde eingearbeitet (2026-11-19, auf Wunsch des Vaters „fertigstellen“): 🟡1 der Knopf bleibt stehen (`aria-expanded`, `aria-controls`), der Fokus geht beim Öffnen ins Formular, beim Abbrechen auf den Knopf, nach dem Absenden auf den Dank; 🟡3 Reihenfolge als `satisfies Record<FeedbackReason, number>` (ein neuer Grund macht den Typecheck rot), toter `api.feedbackReasons` entfernt; 🟡4 veraltete Zeilen nach Filterwechsel gesperrt und gedimmt (`list.stale`); 🟡5 E2E wartet die Hinweis-Antwort ab, bevor sie „kein Hinweis“ zusichert; 🟡6 E2E-Schritt 5: im laufenden Test kein Knopf; 🟡7 Entscheidung 1. 🟢: Label-Kommentar ehrlich (Kurzform), Tastatur-Fall als Absichtserklärung beschriftet, `ListenAusfall` mit `schluessel`, Kinder-Fehler über `ListenAusfall` (Tor B-183), Arcade-CSS für Formular und Hinweis; „Knopf an `isOwn` statt Schreibrecht“ trifft nicht zu – `isOwn` IST Owner oder Write-Grant.
+- **2026-11-19** — AK 1 → `frontend/src/sohn/KartenMeldung.test.tsx:17` (F5 Leerzeichen rot), Reihenfolge `:72` (F4 rot) · AK 1 Mehrfachauswahl/AK 3 Dank → `:31` · Fokus und `aria-expanded` → `:49` (F1, F2, F3 rot) · AK 2 → `:104` (F8 rot) und E2E Schritt 5 · AK 3 Hinweis einmal → `:119` (F6 rot), E2E Schritt 4 (E2: Quittung ohne Aufruf → rot) · AK 4 → `frontend/src/vater/VaterRueckmeldungen.test.tsx:23` (F7 rot) und E2E Schritt 2 · AK 5 → E2E Schritt 3 · Knopf an der Übungskarte → E2E (E1 rot). Mutanten gemessen an `e640e2c4 + Arbeitsbaum`, 2026-11-19 06:34 (Skriptkopie mit Schreib-Wiederholung): 10/10 rot am richtigen Ort. Ohne eigene Mutante: E2E-Schritt 5 (der Knopf müsste dafür in die Fragenansicht wandern – eine Zeile trägt das nicht; gilt als Absichtserklärung).
+- **2026-11-19** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten; Rollengang-E2E `rueckmeldung`, `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` **5 passed** (5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
+- **2026-11-19** — Rollengang Sohn/Vater: `frontend/e2e/rueckmeldung.spec.ts` – passed. **Wartet nicht mehr** – `wartet_auf` geleert.

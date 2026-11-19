@@ -256,7 +256,6 @@ export type FeedbackReach = S["FeedbackReach"];
 export type FeedbackStatus = S["FeedbackStatus"];
 export type CreateFeedbackDto = S["CreateFeedbackDto"];
 export type FeedbackReceipt = S["FeedbackReceipt"];
-export type FeedbackReasonInfo = S["FeedbackReasonInfo"];
 /** Ein erledigter, noch nicht gesehener Fall – der Hinweis an das Kind (B-623, Entscheidung 8). */
 export type FeedbackNotice = S["FeedbackNotice"];
 /** Die volle Sicht des Betreuers auf eine Meldung (Kind, Karte, Lösung, Antwort, Text). */

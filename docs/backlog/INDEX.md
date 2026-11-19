@@ -624,7 +624,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (7)
+### Wartet auf Zutun von außen (5)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -636,8 +636,6 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | `gegrillt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
-| [B-628](B-628-rueckmeldung-backend.md) | Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend) | `in-arbeit` | Review-Funde Sprint 88 einarbeiten (Nachtlauf-Halt, Zähler 8) |
-| [B-629](B-629-rueckmeldung-frontend.md) | Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend) | `in-arbeit` | Review-Funde Sprint 88 einarbeiten (Nachtlauf-Halt, Zähler 8) |
 
 ### Nach der Abnahme entgangen (198)
 

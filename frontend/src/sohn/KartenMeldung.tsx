@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
@@ -6,18 +6,34 @@ import { useErrorMessage } from "../lib/chromeText";
 import type { FeedbackNotice, FeedbackReason } from "../lib/types";
 import { useAction } from "../lib/useAction";
 
-/** Die acht festen Gründe in der Reihenfolge, in der das Kind sie sieht (B-623, Entscheidung 4). */
-export const GRUENDE: readonly FeedbackReason[] = [
-  "TooHard", "TooEasy", "AheadOfClass", "WrongTranslation", "TooMuchAsked", "TooStrict", "SeveralMeanings", "Liked",
-];
+/**
+ * Die Reihenfolge der Gründe, in der das Kind sie sieht (B-623, Entscheidung 4). Ein Abbild über **alle** Gründe des
+ * Vertrags (`satisfies Record`): kommt dort ein neunter dazu, wird der Typecheck rot, statt dass der Grund im Vater-Web
+ * erscheint, das Kind ihn aber nicht melden kann.
+ */
+const REIHENFOLGE = {
+  TooHard: 0, TooEasy: 1, AheadOfClass: 2, WrongTranslation: 3, TooMuchAsked: 4, TooStrict: 5, SeveralMeanings: 6, Liked: 7,
+} as const satisfies Record<FeedbackReason, number>;
+
+/** Die acht festen Gründe in der Reihenfolge des Kindes. */
+export const GRUENDE: readonly FeedbackReason[] = (Object.keys(REIHENFOLGE) as FeedbackReason[])
+  .sort((a, b) => REIHENFOLGE[a] - REIHENFOLGE[b]);
+
+/** Wohin der Fokus nach einer Handlung des Kindes geht – nie von selbst, nur nach Öffnen, Abbrechen oder Absenden. */
+type FokusZiel = "formular" | "knopf" | "dank" | null;
 
 /**
  * Der Knopf „Rückmeldung" an einer Karte und sein Formular (B-629): Gründe zur Mehrfachauswahl, optional ein Text,
  * Absenden erst mit einem Grund oder Text. Nach dem Absenden bleibt die Karte stehen, der Knopf weicht dem Dank.
  *
- * Der Dialog darf das Spiel nicht stören (Risiko 1): kein Tastendruck aus dem Formular erreicht die Arcade
- * (`onKeyDown` endet hier), und er bewegt nichts an der Runde – die Meldung ist ein eigener Aufruf, keine Antwort.
- * Wer sie einhängt, gibt ihr je Karte einen eigenen `key`, damit Auswahl und Dank nicht auf die nächste Karte wandern.
+ * Der Knopf bleibt stehen, solange das Formular offen ist (`aria-expanded`), und der Fokus folgt der Handlung: ins
+ * Formular beim Öffnen, zurück auf den Knopf beim Abbrechen, auf den Dank nach dem Absenden – sonst fiele er jedes Mal
+ * auf die Seite, und wer mit der Tastatur spielt, müsste neu durch die Karte tabben.
+ *
+ * Der Dialog darf das Spiel nicht stören (Risiko 1): kein Tastendruck aus dem Formular verlässt es (`onKeyDown` endet
+ * hier – ein Vertrag für künftige Tastenkürzel der Arcade, heute hört dort niemand), und er bewegt nichts an der Runde: die
+ * Meldung ist ein eigener Aufruf, keine Antwort. Wer sie einhängt, gibt ihr je Karte einen eigenen `key`, damit Auswahl
+ * und Dank nicht auf die nächste Karte wandern.
  */
 export function KartenMeldung({ planId, positionId, itemIndex }: {
   planId: number; positionId: number;
@@ -32,24 +48,39 @@ export function KartenMeldung({ planId, positionId, itemIndex }: {
   const [text, setText] = useState("");
   const [gesendet, setGesendet] = useState(false);
   const leer = gewaehlt.length === 0 && !text.trim();
+  const knopfRef = useRef<HTMLButtonElement>(null);
+  const formularRef = useRef<HTMLFieldSetElement>(null);
+  const dankRef = useRef<HTMLDivElement>(null);
+  const [fokus, setFokus] = useState<FokusZiel>(null);
+
+  useEffect(() => {
+    if (fokus === null) return;
+    ({ formular: formularRef, knopf: knopfRef, dank: dankRef })[fokus].current?.focus();
+    setFokus(null);
+  }, [fokus]);
 
   const umschalten = (g: FeedbackReason) =>
     setGewaehlt((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]));
+
+  function oeffnen(auf: boolean) {
+    setOffen(auf);
+    setFokus(auf ? "formular" : "knopf");
+  }
 
   async function absenden() {
     if (leer) return;
     const ok = await action.run(() => api.reportFeedback(planId, positionId, {
       reasons: gewaehlt, text: text.trim() || null, itemIndex,
     }));
-    if (ok) { setGesendet(true); setOffen(false); }
+    if (ok) { setGesendet(true); setOffen(false); setFokus("dank"); }
   }
 
+  const formularId = `${uid}-formular`;
   // Ein Wert, keine innere Komponente: eine Funktionskomponente im Rumpf wäre bei jedem Tastendruck ein neuer Typ, und das
   // Textfeld verlöre mit dem Neu-Einhängen seinen Fokus.
   const formular = (
-    // Tastendrücke bleiben im Formular: die Arcade hört auf Enter/Leertaste für Antworten und Aufdecken.
-    <div className="rueckmeldung" onKeyDown={(e) => e.stopPropagation()}>
-      <fieldset>
+    <div className="rueckmeldung" id={formularId} onKeyDown={(e) => e.stopPropagation()}>
+      <fieldset ref={formularRef} tabIndex={-1}>
         <legend>{t("feedback.title")}</legend>
         <div className="rueckmeldung-gruende" role="group" aria-label={t("feedback.reasons")}>
           {GRUENDE.map((g) => (
@@ -68,7 +99,7 @@ export function KartenMeldung({ planId, positionId, itemIndex }: {
         <button type="button" className="btn lime small" disabled={action.busy || leer} onClick={absenden}>
           {t("feedback.send")}
         </button>
-        <button type="button" className="btn ghost small" disabled={action.busy} onClick={() => setOffen(false)}>
+        <button type="button" className="btn ghost small" disabled={action.busy} onClick={() => oeffnen(false)}>
           {t("feedback.cancel")}
         </button>
       </div>
@@ -79,10 +110,13 @@ export function KartenMeldung({ planId, positionId, itemIndex }: {
   return (
     <>
       {/* Die Region steht vor ihrem Dank im DOM (B-134) – sonst sagt ein Screenreader „angekommen“ nicht an. */}
-      <div className="sub rueckmeldung-dank" role="status" aria-live="polite">{gesendet && t("feedback.thanks")}</div>
-      {!gesendet && !offen && (
+      <div className="sub rueckmeldung-dank" role="status" aria-live="polite" ref={dankRef} tabIndex={-1}>
+        {gesendet && t("feedback.thanks")}
+      </div>
+      {!gesendet && (
         <div className="lektion-fuss">
-          <button type="button" className="btn ghost small" aria-expanded={false} onClick={() => setOffen(true)}>
+          <button type="button" className="btn ghost small" ref={knopfRef} aria-expanded={offen} aria-controls={formularId}
+            onClick={() => oeffnen(!offen)}>
             💬 {t("feedback.open")}
           </button>
         </div>

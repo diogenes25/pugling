@@ -11,6 +11,7 @@ import { sohnLogin, pfadStart, vaterLogin } from "./helpers";
  * 2. Die Vater-Seite „Rückmeldungen“ zeigt Karte, Grund und Text und setzt „erledigt“ → rot ohne Seite, Navigation oder PATCH.
  * 3. Am eigenen Lückentext steht die Zählung der Gründe → rot ohne Panel oder ohne Schreibrecht-Sicht.
  * 4. Der Sohn sieht den Hinweis einmal und quittiert ihn → rot ohne Hinweis oder wenn er nach „Alles klar“ wiederkommt.
+ * 5. Während eines Tests trägt die Frage keinen Rückmelde-Knopf → rot, wenn er in die Fragenansicht wandert.
  *
  * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
@@ -82,7 +83,15 @@ test("Rückmeldung: Sohn meldet eine Karte, Vater erledigt, Ersteller zählt, So
   await expect(hinweis).toHaveCount(1);
   await page.getByRole("button", { name: "Alles klar" }).click();
   await expect(hinweis).toHaveCount(0);
+  // Erst die Antwort der Hinweis-Abfrage abwarten: vorher ist die Liste leer, und „kein Hinweis“ hielte auch dann, wenn die
+  // Quittung nicht gespeichert wäre.
+  const hinweiseGeladen = page.waitForResponse((r) => r.url().includes(`/children/${childId}/feedback-notices`) && r.ok());
   await page.reload();
-  await expect(page.getByText("Tagesmission").or(page.getByRole("heading", { level: 1 })).first()).toBeVisible();
+  await hinweiseGeladen;
   await expect(page.getByRole("status").filter({ hasText: "wurde erledigt" })).toHaveCount(0);
+
+  // ---- 5. Im laufenden Test gibt es keinen Knopf (B-623, Entscheidung 5) – erst das Ergebnisblatt trägt ihn ----
+  await pfadStart(page, "test");
+  await expect(page.getByRole("textbox", { name: "Lösung" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Rückmeldung/ })).toHaveCount(0);
 });

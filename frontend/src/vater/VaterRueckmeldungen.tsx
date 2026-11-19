@@ -28,6 +28,10 @@ export function VaterRueckmeldungen() {
   // Eine Instanz für die ganze Liste: eine laufende Änderung sperrt die übrigen Knöpfe sichtbar (`disabled={busy}`).
   const action = useAction();
 
+  // Nach einem Filterwechsel stehen bis zur Antwort noch die Zeilen des vorigen Filters da (`data` überlebt den Wechsel):
+  // sperren, nicht ausblenden – sonst erledigte ein Klick im Ladefenster eine Meldung, die der Vater gar nicht mehr sieht.
+  const veraltet = list.stale;
+
   async function setze(entry: FeedbackEntry, next: FeedbackStatus) {
     if (await action.run(() => api.updateFeedback(entry.id, next),
       next === "Done" ? "Als erledigt markiert – das Kind bekommt einen Hinweis." : "Wieder geöffnet."))
@@ -46,6 +50,8 @@ export function VaterRueckmeldungen() {
             <option value="">alle Kinder</option>
             {children.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          {children.error && <ListenAusfall was="Deine Kinder" fehler={children.error} laedt={children.loading}
+            onRetry={children.reload} style={{ marginTop: 6 }} />}
         </div>
         <div className="field" style={{ maxWidth: 200 }}>
           <label htmlFor="rm-status">Status</label>
@@ -62,7 +68,7 @@ export function VaterRueckmeldungen() {
           onRetry={list.reload} schluessel={`${childId}|${status}`} />
         : (
           <div style={{ overflowX: "auto" }}>
-            <table className="table">
+            <table className="table" aria-busy={veraltet} style={veraltet ? { opacity: 0.5 } : undefined}>
               <thead>
                 <tr><th>Kind</th><th>Übung · Karte</th><th>Grund</th><th>Antwort des Kindes</th><th>Text</th><th>Zuletzt</th><th /></tr>
               </thead>
@@ -83,8 +89,8 @@ export function VaterRueckmeldungen() {
                     <td className="muted">{formatDate(f.lastReportedAt)}</td>
                     <td>
                       {f.status === "Open"
-                        ? <button type="button" className="btn small" disabled={action.busy} onClick={() => setze(f, "Done")}>Erledigt</button>
-                        : <button type="button" className="btn ghost small" disabled={action.busy} onClick={() => setze(f, "Open")}>Wieder öffnen</button>}
+                        ? <button type="button" className="btn small" disabled={action.busy || veraltet} onClick={() => setze(f, "Done")}>Erledigt</button>
+                        : <button type="button" className="btn ghost small" disabled={action.busy || veraltet} onClick={() => setze(f, "Open")}>Wieder öffnen</button>}
                     </td>
                   </tr>
                 ))}

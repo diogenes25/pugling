@@ -156,9 +156,9 @@ export const GENDERS: { value: Gender; label: string }[] = [
 ];
 
 /**
- * Die Rückmelde-Gründe im Vater-Web (B-629) – dieselben Worte wie die Knöpfe des Kindes (`feedback.reason.*` in der
- * Arcade), damit Vater und Kind über dieselbe Meldung sprechen. `Record` statt Teil-Abbild: ein neuer Grund im Vertrag
- * lässt den Typecheck rot werden.
+ * Die Rückmelde-Gründe im Vater-Web (B-629) – die Kurzform der Knöpfe des Kindes (`feedback.reason.*` in der Arcade):
+ * dieselben Anfänge, ohne die Erklärung in Klammern, damit die Tabellenspalte schmal bleibt. `Record` statt Teil-Abbild:
+ * ein neuer Grund im Vertrag lässt den Typecheck rot werden.
  */
 const FEEDBACK_REASON_LABELS: Record<FeedbackReason, string> = {
   TooHard: "Zu schwer",

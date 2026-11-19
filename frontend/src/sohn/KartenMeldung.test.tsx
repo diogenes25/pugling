@@ -44,7 +44,43 @@ describe("KartenMeldung", () => {
     expect(screen.queryByRole("button", { name: /Rückmeldung/ })).toBeNull();
   });
 
-  // Risiko 1: rot, wenn ein Tastendruck im Formular die Arcade erreicht (Enter würde dort eine Antwort abschicken).
+  // Review-Fund: rot, wenn der Knopf beim Öffnen verschwindet bzw. `aria-expanded` nicht folgt, oder wenn der Fokus beim
+  // Öffnen, Abbrechen und Absenden nicht dorthin geht, wo die Handlung weitergeht (sonst fiele er auf die Seite).
+  it("führt den Fokus und sagt, ob das Formular offen ist", async () => {
+    vi.spyOn(api, "reportFeedback").mockResolvedValue({ ids: [1] });
+    render(<KartenMeldung planId={3} positionId={7} itemIndex={0} />);
+    const knopf = screen.getByRole("button", { name: /Rückmeldung/ });
+    expect(knopf.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(knopf);
+    await act(async () => {});
+    expect(knopf.getAttribute("aria-expanded")).toBe("true");
+    expect(document.activeElement?.tagName).toBe("FIELDSET");
+
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    await act(async () => {});
+    expect(document.activeElement).toBe(knopf);
+
+    fireEvent.click(knopf);
+    fireEvent.click(screen.getByRole("button", { name: "Zu leicht" }));
+    fireEvent.click(screen.getByRole("button", { name: "Absenden" }));
+    await act(async () => {});
+    expect(document.activeElement).toBe(screen.getByRole("status"));
+  });
+
+  // Rot, wenn die Reihenfolge der Gründe nicht die des Kindes ist (B-623, Entscheidung 4) oder ein Grund fehlt.
+  it("zeigt die acht Gründe in der festen Reihenfolge", () => {
+    render(<KartenMeldung planId={3} positionId={7} itemIndex={0} />);
+    fireEvent.click(screen.getByRole("button", { name: /Rückmeldung/ }));
+    expect(screen.getAllByRole("button", { pressed: false }).map((b) => b.textContent)).toEqual([
+      "Zu schwer", "Zu leicht", "Hatten wir noch nicht im Unterricht", "Falsch übersetzt",
+      "Zu viel verlangt (mehr als die Vokabel)", "Zu streng bewertet (Akzent, ein Buchstabe)",
+      "Wort hat mehrere Bedeutungen", "Gut so 👍",
+    ]);
+  });
+
+  // Absichtserklärung (Risiko 1): heute hört kein Vorfahre der Meldung auf Tasten; der Fall hält, dass das Formular keine
+  // Taste hinauslässt, falls die Arcade einmal Tastenkürzel bekommt. Rot ohne das `stopPropagation`.
   it("lässt keinen Tastendruck aus dem Formular hinaus", () => {
     const arcade = vi.fn();
     render(<div onKeyDown={arcade}><KartenMeldung planId={3} positionId={7} itemIndex={0} /></div>);

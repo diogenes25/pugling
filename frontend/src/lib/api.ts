@@ -4,7 +4,7 @@ import type {
   UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
-  CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReasonInfo, FeedbackReceipt,
+  CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
   FeedbackStatus,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
@@ -477,7 +477,6 @@ export const api = {
   /** B-628: das Kind meldet eine Karte (oder die ganze Übung) einer Position. */
   reportFeedback: (planId: number, positionId: number, dto: CreateFeedbackDto) =>
     http<FeedbackReceipt>(`${V1}/student/study-plans/${planId}/positions/${positionId}/feedback`, "POST", dto),
-  feedbackReasons: () => http<FeedbackReasonInfo[]>(`${V1}/student/feedback-reasons`),
   feedbackNotices: (childId: number) => http<FeedbackNotice[]>(`${V1}/student/children/${childId}/feedback-notices`),
   ackFeedbackNotice: (childId: number, feedbackId: number) =>
     http<void>(`${V1}/student/children/${childId}/feedback-notices/${feedbackId}/seen`, "POST"),

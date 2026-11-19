@@ -17,7 +17,8 @@ export function ExerciseFeedbackPanel({ exerciseId }: { exerciseId: number }) {
   const summary = useAsync<ExerciseFeedbackSummary>(() => api.exerciseFeedbackSummary(exerciseId), [exerciseId]);
   if (summary.loading && summary.data === null) return <div className="loading">Lade…</div>;
   if (summary.error)
-    return <ListenAusfall was="Die Rückmeldungen" fehler={summary.error} laedt={summary.loading} onRetry={summary.reload} />;
+    return <ListenAusfall was="Die Rückmeldungen" fehler={summary.error} laedt={summary.loading} onRetry={summary.reload}
+      schluessel={exerciseId} />;
   const s = summary.data;
   if (!s || s.total === 0) return <p className="muted" style={{ margin: "6px 0" }}>Keine Rückmeldungen von Kindern.</p>;
   return (
