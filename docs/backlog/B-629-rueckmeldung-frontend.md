@@ -43,6 +43,13 @@ Siehe [B-623 → Ist-Stand am Code](B-623-feedback-knopf-an-der-karte.md#ist-sta
 Knöpfe mit ihren Texten für das Kind), **E5** (im Test nur auf dem Ergebnisblatt), **E7** (Vater-Liste und
 Hinweis im Creator-Editor ohne Freitext und Kind) und **E8** („Danke, ist angekommen“, Hinweis nach *erledigt*).
 
+Dazu eine eigene Entscheidung dieser Story:
+
+1. **„Sprung zur Übung“ ist der Link zum Plan, in dem das Kind die Übung spielt** (Entscheidung des Vaters,
+   2026-11-19, auf den Review-Fund 🟡7). *Begründung:* Einen Tiefenlink auf eine einzelne Übung gibt es in
+   `/vater/exercises` nicht; der Plan zeigt die Position mit ihrer Übung und dem Report. *Kosten:* zum Korrigieren
+   der Karte geht der Vater von dort noch einen Schritt in die Übungsverwaltung.
+
 ## Akzeptanzkriterien
 
 1. (B-623 AK1) An jeder Karte im Üben gibt es einen Knopf „Rückmeldung“; er öffnet die acht Gründe zur
@@ -51,7 +58,7 @@ Hinweis im Creator-Editor ohne Freitext und Kind) und **E8** („Danke, ist ange
 3. (B-623 AK9) Nach dem Absenden „Danke, ist angekommen“, die Karte bleibt stehen; ein erledigter Fall erscheint
    dem Kind einmal als Hinweis.
 4. (B-623 AK6) Das Vater-Web hat eine Seite „Rückmeldungen“, filterbar nach Kind und Status, mit Übung, Karte,
-   Antwort und Freitext; *erledigt* setzen; Sprung zur Übung.
+   Antwort und Freitext; *erledigt* setzen; Sprung zur Übung (als Link zum Plan, Entscheidung 1).
 5. (B-623 AK7) Im Creator-Editor steht an der Übung die Zählung der Gründe, ohne Freitext und Kind.
 6. Jede Mutation läuft über `useAction` + `StatusBanner`, Knöpfe tragen `disabled={busy}`
    ([frontend/CLAUDE.md](../../frontend/CLAUDE.md)); der Dialog ist per Tastatur bedienbar.
@@ -91,3 +98,5 @@ Mustern (`ExerciseRatingPanel`, Vater-Listen mit `ListControls`).
 - **2026-11-18** — Live-Region-Tor (`src/liveRegions.test.ts`) rot: Dank und Hinweis entstanden mit ihrem Text → Regionen dauerhaft, `MeldungsHinweis` in `REGION_BAUSTEINE` (zählt).
 - **2026-11-18** — Review `frontend-reviewer`, **offen** (Lauf beendet, bevor eingearbeitet): 🟡1 Fokus fällt beim Öffnen/Abbrechen/Absenden auf `body`, `aria-expanded` fest `false`; 🟡3 `GRUENDE` nicht erschöpfend typisiert, `api.feedbackReasons` ungenutzt; 🟡4 Filterwechsel zeigt alte Zeilen mit aktiven Knöpfen (`list.stale`); 🟡5 E2E „Hinweis nur einmal“ kann nach `reload` nicht fallen (`waitForResponse` fehlt); 🟡6 keine Zusicherung „kein Knopf während des Tests“; 🟡7 AK 4 „Sprung zur Übung“ ist ein Link zum Plan (es gibt keinen Tiefenlink auf eine Übung) – Entscheidung nötig; 🟢 Vater-Labels Kurzform statt „dieselben Worte“, Tastatur-Fall-Kommentar, Knopf an `isOwn` statt Schreibrecht, `ListenAusfall` ohne `schluessel`, `children.error` stumm, CSS-Klassen ohne Regeln.
 - **2026-11-18** — **Halt des Nachtlaufs (Freigabe 3):** der Zähler des Sprints stand nach dem Frontend-Review bei **8** (Backend 2, Live-Region-Tor 1, Frontend-Review 5) – mehr als fünf. Code liegt ungemergt auf `refs/heads/auto/sprint-88-rueckmeldung`; nicht abgenommen, kein Rollengang-Urteil.
+- **2026-11-19** — 🟡7 entschieden vom Vater: „Link zum Plan reicht“ → Entscheidung 1, AK 4 präzisiert; kein Code nötig.
+  Offen bleiben die übrigen fünf 🟡 (1, 3, 4, 5, 6).
