@@ -18,6 +18,7 @@ const submitTest = vi.fn();
 const celebrate = vi.fn();
 const setStreak = vi.fn();
 const refreshWallet = vi.fn();
+const overview = vi.fn();
 
 // Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
 const { SKINS } = await import("../lib/skins");
@@ -33,7 +34,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       nextTest: (...a: unknown[]) => nextTest(...a),
       answerTest: (...a: unknown[]) => answerTest(...a),
       submitTest: (...a: unknown[]) => submitTest(...a),
-      overview: () => Promise.resolve({ currentStreak: 4 }),
+      overview: (...a: unknown[]) => overview(...a),
     },
   };
 });
@@ -46,6 +47,7 @@ beforeEach(() => {
   startTest.mockReset().mockResolvedValue({ attemptId: 9, stage: 3, totalItems: 2 });
   nextTest.mockReset().mockResolvedValue({ item, done: false, cursor: 0, total: 2 });
   answerTest.mockReset();
+  overview.mockReset().mockResolvedValue({ currentStreak: 4, today: { positions: [] } });
 });
 
 function renderTest() {
@@ -629,3 +631,22 @@ function taskRegion(): HTMLElement {
   if (!region) throw new Error("keine Ansage-Region");
   return region;
 }
+
+/*
+ * B-686: führt der Knoten direkt in den Test (heute nichts zu üben), steht der Buchbezug (B-588) im Kopf des Tests –
+ * sonst sähe ihn das Kind auf diesem Weg nirgends.
+ */
+describe("SohnTest, Buchbezug im Kopf", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+
+  // Rot, wenn der Test den Buchbezug nicht zeigt (er stand vor B-686 auf dem Blatt vor dem Start).
+  it("zeigt Reihe, Unit und Seite der Position", async () => {
+    overview.mockResolvedValue({
+      currentStreak: 4,
+      today: { positions: [{ positionId: 5, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: "42" }] },
+    });
+    renderTest();
+    expect((await screen.findByText("Access 3 · Unit 2 · S. 42")).classList).toContain("pfad-buchbezug");
+    expect(overview).toHaveBeenCalledWith(3);
+  });
+});

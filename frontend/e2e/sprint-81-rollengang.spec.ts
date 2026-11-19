@@ -136,6 +136,10 @@ test("B-588: der Creator trägt die Buchseite ein, der Sohn sieht Reihe, Unit un
   const zaehler = page.locator(".pill.cyan", { hasText: /^Karte \d+ \/ \d+$/ });
   await knoten(MIT).click();
   await expect(page.locator(".pfad-buchbezug")).toHaveText(`${REIHE} · ${UNIT} · S. 42–43`);
+  // … und ebenso im Kopf des Tests: führt der Knoten direkt dorthin, sähe das Kind die Seite sonst nirgends.
+  await page.goto(page.url().replace("/sohn/practice/", "/sohn/test/"));
+  await expect(page.locator(".lektion.test")).toBeVisible();
+  await expect(page.locator(".pfad-buchbezug")).toHaveText(`${REIHE} · ${UNIT} · S. 42–43`);
 
   // Ohne Seite keine Pille – auch nicht die halbe „Reihe · Unit“. Erst wenn die Übersicht geantwortet hat und die Runde
   // steht: vorher stünde die Abwesenheit schon fest, bevor überhaupt gelesen wurde.

@@ -57,7 +57,7 @@ Mitgenommen: „· N fällig“ stand nur auf dem Blatt und entfällt; „eingep
 
 - [x] Ein Tipp auf den Knoten startet die Übung ohne Zwischenblatt; mit fälligen Karten ins Üben, ohne in den Test.
 - [x] Am Start gibt es keinen Test-Knopf; der Test kommt am Ende der Übungsrunde.
-- [x] Der Buchbezug steht im Kopf der Übungsrunde, ohne Seite steht keine Pille.
+- [x] Der Buchbezug steht im Kopf der Übungsrunde und des Tests, ohne Seite steht keine Pille.
 - [x] Die Lernkarte geht vom Aufdecken direkt zum Abschreiben; ihre Antwort trägt kein `wasKnown`.
 - [x] „Später nochmal“ schickt `gaveUp: true`; das Wort kommt am Rundenende wieder, die Historie hält nur das Erinnern.
 - [x] Eine Antwort ganz ohne Ergebnis bleibt kein Urteil (B-433 unverändert grün).
@@ -81,8 +81,12 @@ Mitgenommen: „· N fällig“ stand nur auf dem Blatt und entfällt; „eingep
   Test; Buchbezug mit eigenen Unit-Tests in `SohnPractice.test.tsx` (rote Probe: ohne `bookPages`-Bedingung fällt
   „zeigt ohne Seite keine Pille“), die E2E-Abwesenheitsprüfung wartet auf die Übersicht; zwei Zusicherungen, die nie
   fallen konnten (Blatt/Test-Knopf abwesend), gestrichen; Payload-Typ aus dem Vertrag (`Omit<ReviewInput, "itemIndex">`).
-- Offen, an den PO: führt der Knoten direkt in den Test (heute nichts zu üben), sieht das Kind den Buchbezug nirgends –
-  der Testbildschirm hat keine Pille.
+- ~~Offen, an den PO: führt der Knoten direkt in den Test (heute nichts zu üben), sieht das Kind den Buchbezug nirgends –
+  der Testbildschirm hat keine Pille.~~ Vater am 2026-11-19: „ja, auch im Test“ (siehe unten).
 - Schlussstand: `dotnet test Pugling.sln -c Release` 1921/1921, Vitest 115 Dateien / 1258 Fälle, E2E der berührten
   Specs grün (Pfad, Lernkarte, Test-Einstiege, Rollengänge 81/82/83, full-flow).
 - 2026-11-19: abgenommen, Commit `bc4be340`. Rollengang = die E2E-Specs oben (Pfad-Start, Lernkarte, Buchbezug im Kopf); der Blick des Sohns am echten Gerät steht nach dem nächsten Heimnetz-Neustart aus.
+- 2026-11-19, Nachtrag: der Buchbezug steht auch im Kopf des Tests. Das Lesen liegt jetzt einmal in `useBuchbezug`
+  (`frontend/src/sohn/buchbezug.ts`), Üben und Test nutzen es. Unit-Test `SohnTest.test.tsx` „Buchbezug im Kopf“ (rote
+  Probe: ohne `unterKopf` fällt er), E2E `sprint-81-rollengang.spec.ts` prüft die Pille jetzt in Üben **und** Test.
+  Vitest 115 Dateien / 1259 Fälle, `tsc -b` sauber.

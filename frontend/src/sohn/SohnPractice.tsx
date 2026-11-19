@@ -10,6 +10,7 @@ import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform, istDiktat } from "./aufgabenform";
 import { Lernkarte } from "./Lernkarte";
+import { useBuchbezug } from "./buchbezug";
 import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
@@ -96,20 +97,7 @@ export function SohnPractice() {
   const vorDemSchalten = useRef(new Map<number, PracticeCard>());
   // B-635: der Stand einer Nacharbeit (Runde, erledigt, gesamt) – vom Server beim Start, „erledigt“ wächst je Antwort.
   const [nacharbeit, setNacharbeit] = useState<{ round: number; done: number; total: number } | null>(null);
-  // B-686: der Buchbezug (B-588) stand auf dem Blatt vor dem Start; das Blatt ist weg, also steht er im Kopf der Runde.
-  // Beiwerk: scheitert das Lesen, fehlt nur die Pille.
-  const [buchbezug, setBuchbezug] = useState<string | null>(null);
-  useEffect(() => {
-    setBuchbezug(null);
-    if (!planId || !positionId) return;
-    let aktiv = true;
-    api.overview(planId).then((o) => {
-      const pos = o.today.positions.find((p) => p.positionId === positionId);
-      if (aktiv && pos?.bookPages)
-        setBuchbezug(t("pfad.bookRef", { series: pos.seriesName ?? "", unit: pos.seriesUnitLabel, pages: pos.bookPages }));
-    }).catch(() => {});
-    return () => { aktiv = false; };
-  }, [planId, positionId, t]);
+  const buchbezug = useBuchbezug(planId, positionId);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
   const [hintShown, setHintShown] = useState(false);
   const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
