@@ -12,6 +12,7 @@ quelle: B-623
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-19
 ---
 
 # B-629 · Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend)
@@ -105,3 +106,4 @@ Mustern (`ExerciseRatingPanel`, Vater-Listen mit `ListControls`).
 - **2026-11-19** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten; Rollengang-E2E `rueckmeldung`, `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` **5 passed** (5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-19** — Rollengang Sohn/Vater: `frontend/e2e/rueckmeldung.spec.ts` – passed. **Wartet nicht mehr** – `wartet_auf` geleert.
 - **2026-11-19** — abgenommen: `796314db`, `8f3d12db` (Sprint 88), nach `main` gemergt.
+- **2026-11-19** — nachgeschaut (PM-Sitzung 2026-11-19, Nachschau über `f5b04d26` bzw. `796314db`/`8f3d12db`): nur über B-685 betroffen (der Knopf im Üben wird angeboten, der Server lehnt ab); sonst ohne Befund: Knopf je Karte, Ergebnisblatt in beiden Zweigen, Senden gesperrt ohne Grund und Text, Fokus/`aria-expanded`, Vater-Seite mit Filtern und Sprung zum Plan, Panel nur bei Schreibrecht.

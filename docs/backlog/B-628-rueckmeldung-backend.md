@@ -12,6 +12,7 @@ quelle: B-623
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: 2026-11-19
 ---
 
 # B-628 · Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend)
@@ -120,3 +121,4 @@ ein Eigentums-Check über Kind/Plan/Position/Karte und ein Rückkanal an das Kin
 - **2026-11-19** — Rollengang Sohn → Vater → Ersteller: `frontend/e2e/rueckmeldung.spec.ts` – der Sohn meldet im Üben, der Vater erledigt, die Zählung steht an der Übung, der Sohn sieht den Hinweis einmal, im laufenden Test gibt es keinen Knopf.
 - **2026-11-19** — **Wartet nicht mehr** – `wartet_auf` geleert.
 - **2026-11-19** — abgenommen: `796314db`, `8f3d12db` (Sprint 88), nach `main` gemergt.
+- **2026-11-19** — nachgeschaut (PM-Sitzung 2026-11-19, Nachschau über `f5b04d26` bzw. `796314db`/`8f3d12db`): Durchrutscher [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md): ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den Tag (Entscheidung 5 von B-623 erlaubt sie dort jederzeit). Sonst geprüft ohne Befund: Rollenprüfung, Kartengrenzen, Zusammenführen offener Meldungen, Vater-Liste über `SupervisorLinks`, Creator-Summe ohne Kind und Text, Hinweise nur einmal, kein Lösungsfeld im Student-Vertrag.

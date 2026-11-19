@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-636]
+nachgeschaut: 2026-11-19
 ---
 
 # B-668 · Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter
@@ -83,3 +84,4 @@ neuer Text), `wo: backend`. Testweg: `RemediationPositionTests.Nacharbeit_ohne_A
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang: kein UI-Pfad (Meldung über das bestehende Banner); Ersatz der Integrationstest über den echten PATCH/POST.
 - **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).
+- **2026-11-19** — nachgeschaut (PM-Sitzung 2026-11-19, Nachschau über `f5b04d26` bzw. `796314db`/`8f3d12db`): ohne Befund: Prüfung bei POST und beim PATCH, der die Nacharbeit einschaltet; der Pool kann nicht nachträglich schrumpfen.

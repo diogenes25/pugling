@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-637]
+nachgeschaut: 2026-11-19
 ---
 
 # B-667 · Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte
@@ -80,3 +81,4 @@ Angriffsplan: Vitest rot, Filter, grün. Testweg: `PlanPositionsNacharbeit.test.
 - **2026-11-18** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1882/1882**, Vitest **1249/1249**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten an nicht berührten Zeilen; E2E `nacharbeit-bis-erledigt`, `nacharbeit`, `full-flow` **3 passed** (Ausweichports 5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-18** — Rollengang Vater: `frontend/e2e/nacharbeit-bis-erledigt.spec.ts:86` liest „Nacharbeit: 2/2 erledigt“ – passed.
 - **2026-11-18** — abgenommen: `f5b04d26` (Sprint 93, Nachtlauf).
+- **2026-11-19** — nachgeschaut (PM-Sitzung 2026-11-19, Nachschau über `f5b04d26` bzw. `796314db`/`8f3d12db`): ohne Befund: der Report zählt gegen den Pool, der Server setzt `remediation` genau für `Index < pool`.

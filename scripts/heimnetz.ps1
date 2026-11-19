@@ -33,6 +33,10 @@
 .PARAMETER SkipBuild
     Frontend und API nicht neu bauen (schneller Neustart ohne Code-Änderung).
 
+.PARAMETER AllowUncommittedMigrations
+    Startet gegen die echte Datenbank, obwohl unter backend/Pugling.Api/Data/Migrations etwas ungecommittet ist. Ohne
+    den Schalter bricht das Skript dann ab: Der Start spielte eine Migration ein, an der noch gearbeitet wird.
+
 .PARAMETER NoTailscale
     Die HTTPS-Adresse über Tailscale nicht einrichten. Ohne den Schalter richtet das Skript sie ein, sobald
     Tailscale installiert ist und der Port der Vorgabe entspricht (nur die echte Instanz bekommt die Adresse,
@@ -46,7 +50,8 @@ param(
     [int]$Port = 5200,
     [string]$Database,
     [switch]$SkipBuild,
-    [switch]$NoTailscale
+    [switch]$NoTailscale,
+    [switch]$AllowUncommittedMigrations
 )
 
 $ErrorActionPreference = 'Stop'
@@ -74,6 +79,21 @@ if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyCon
 # 2. Eine fehlende Datei würde die Migration still als leere Datenbank anlegen.
 if (-not (Test-Path $Database)) {
     throw "Datenbank '$Database' nicht gefunden."
+}
+
+# 2a. Keine ungecommittete Migration in die echte Datenbank: Der Build nimmt den Arbeitsstand, wie er gerade ist, und
+#     der Start spielt jede Migration darin ein. Eine Migration, an der eine Sitzung noch arbeitet, landete so am
+#     2026-11-19 in pugling.db, bevor ihr Sprint abgenommen war - danach ist sie eingefroren, jede Korrektur muss als
+#     neue Migration hinten an. Gilt nur für die echte Datenbank; eine Probe auf einer Kopie (-Database) darf das.
+$realDatabase = [System.IO.Path]::GetFullPath((Join-Path $apiProject 'pugling.db'))
+if (-not $SkipBuild -and -not $AllowUncommittedMigrations -and $Database -eq $realDatabase) {
+    $pending = git -C $repo status --porcelain -- 'backend/Pugling.Api/Data/Migrations'
+    if ($LASTEXITCODE -ne 0) { throw 'git status fehlgeschlagen – ohne ihn lässt sich nicht prüfen, ob eine Migration noch in Arbeit ist.' }
+    if ($pending) {
+        throw ("Ungecommittete Migration im Arbeitsstand – der Start spielte sie in die echte Datenbank ein:`n" +
+            ($pending -join "`n") + "`nErst committen (dann ist sie abgenommen und eingefroren), " +
+            "oder bewusst mit -AllowUncommittedMigrations starten.")
+    }
 }
 
 # 2b. Sicherung vor jedem Start: Ab hier kann eine neue Migration die Datenbank umbauen, und sie trägt den

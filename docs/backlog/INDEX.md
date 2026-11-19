@@ -25,16 +25,16 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `idee` | P1 | — | — | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `idee` | P2 | — | backend | — |
+| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `idee` | P2 | — | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `in-arbeit` | P2 | L | beides | Migration + Vertrag |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
 | [B-625](B-625-ein-eingabefeld-je-bedeutung.md) | Ein Eintrag mit mehreren Formen oder Bedeutungen bekommt je Teil ein eigenes Eingabefeld | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md) | Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-631](B-631-buchimport-fuellt-vokabel-store-nur-flach.md) | Der Buchimport füllt vom Vokabel-Store nur Wort und Übersetzung | Wunsch | `geschaetzt` | P2 | M | doku | — |
-| [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `geschaetzt` | P2 | L | beides | Migration + Vertrag |
 | [B-647](B-647-vokabeln-vollstaendig-ladeweg-und-bestand.md) | Vokabeln vollständig: Definition, Ladeweg und Bestand | Wunsch | `geschaetzt` | P2 | L | beides | Vertrag |
 | [B-654](B-654-webuntis-connector-backend.md) | WebUntis-Connector im Backend: Schulzugang am Kind, Hausaufgaben je Kind abrufen | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
-| [B-665](B-665-vater-loest-aus-dem-inventar-des-kindes-ein.md) | Der Vater löst direkt aus dem Inventar des Kindes ein | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | Birkenbihl: jedes Wort eines Textes hat eine Vokabel | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | Wunsch | `gegrillt` | P2 | — | — | — |
@@ -88,7 +88,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (533)</summary>
+<summary>Abgenommen (534)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -595,6 +595,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-665](B-665-vater-loest-aus-dem-inventar-des-kindes-ein.md) | Der Vater löst direkt aus dem Inventar des Kindes ein | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -641,9 +642,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 
-### Nach der Abnahme entgangen (198)
+### Nach der Abnahme entgangen (199)
 
-**Nachgeschaut: 499 von 533 abgenommenen** — und in 181 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 34 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 505 von 534 abgenommenen** — und in 182 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 29 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -845,9 +846,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | [B-661] | `idee` |
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `idee` |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `idee` |
+| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (34) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (29) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -879,15 +881,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
-| [B-628](B-628-rueckmeldung-backend.md) | Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend) |
-| [B-629](B-629-rueckmeldung-frontend.md) | Der Rückmelde-Knopf in der Sohn-App und die Meldungen im Vater-Web (Frontend) |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
-| [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal |
-| [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte |
-| [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter |
-| [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende |
+| [B-665](B-665-vater-loest-aus-dem-inventar-des-kindes-ein.md) | Der Vater löst direkt aus dem Inventar des Kindes ein |
 
 </details>
 
@@ -1056,6 +1053,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | `idee` | Abschnitt „Verlauf" |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | `idee` | Abschnitt „Verlauf" |
+| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (48)</summary>

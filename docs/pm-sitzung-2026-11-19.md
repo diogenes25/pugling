@@ -126,3 +126,80 @@ Bewusst offen (nicht blockierend):
 - Ein Kommentar in der eingefrorenen Migration ist ungenau („never fired“).
 - Produktfrage an den Vater: Ein neues Spar-Angebot (+4 bis 8) ist am ersten Tag achtmal kaufbar, weil die Startregel die
   Obergrenze vorgibt (Entscheidung 11 wörtlich).
+
+## Runde 2 — Rollengang und Abnahme
+
+Der Rollengang lief nach der letzten Bearbeitung gegen einen frischen Server auf einer Wegwerf-DB (Ausweichports
+5211/5181, weil der Heimnetz-Server auf :5200 läuft). Die Spec `taschengeld-monatlich.spec.ts` ist der Gang von Vater und
+Sohn. Zusammen mit den Regressionszeugen `shop-verlauf`, `shop-verlauf-wiederholen`, `full-flow`, `rueckmeldung` und
+`feldhilfe`: **8 passed**.
+
+- **Vater — abgenommen, bis auf eine Bestätigung.** Was der Gang zeigt:
+  - „Taschengeld A“ legt der Vater monatlich mit +4 bis 8 nur für A an; die Zeile zeigt „Monatlich (am 1.), +4 bis 8“
+    und den Bestand je Kind.
+  - Ein Wochen-Angebot mit Wochentag lässt sich anlegen und auf Donnerstag umstellen; ein Einmal-Angebot mit Datum
+    ebenfalls.
+  - „füllen“ füllt genau A's Bestand.
+  - Aus A's Inventar löst der Vater selbst ein, und der Antrag steht als „selbst eingelöst“ da.
+  - **Offen:** die Bestätigung von Entscheidung 11 (B-645 bleibt bis dahin `in-arbeit`). Dazu muss der Heimnetz-Server
+    neu starten, denn er läuft noch mit dem Stand von 08:17, also vor den Review-Korrekturen.
+- **Sohn — abgenommen.** Was der Gang zeigt:
+  - A kauft das gemeinsame Angebot und sein Taschengeld leer und sieht „ausverkauft · wieder da: …“.
+  - B sieht A's Taschengeld gar nicht; das gemeinsame Angebot bleibt für B kaufbar.
+  - A sieht „Papa hat für dich eingelöst“.
+  - Gerätecheck offen: ob „wieder da“ auf der Karte am Handy Platz hat.
+- **Creator — Regressionszeuge.** Kein Creator-Pfad im Diff. `rueckmeldung.spec.ts` (Creator-Zählung) ist grün,
+  ebenso die volle Suite.
+
+**Verifizierte Qualität nach der letzten Bearbeitung:**
+
+- `dotnet test Pugling.sln -c Release`: 1920/1920
+- Vitest: 1258/1258
+- `tsc -b`: sauber
+- `dotnet format`: ohne Fund an den geänderten Dateien
+- Mutanten: 32/32 wie erwartet; die Tabelle steht im Verlauf von B-645 und B-665
+- E2E: 8 passed
+
+## Retrospektive
+
+**Nachschau:** Sprint 93 (B-666, B-667, B-668, B-669 über `f5b04d26`) ist ohne Befund. Sprint 88 (B-628, B-629 über
+`796314db`/`8f3d12db`) hat einen Durchrutscher:
+[B-685](backlog/B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) (`entgangen_bei: [B-628]`). Ein mit „Später“
+verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag. `nachgeschaut: 2026-11-19` steht an allen sechs
+Stories. Index: **505 von 534**.
+
+- **Was die eigenen Tore durchließen:** Die echte DB wurde mitten im Sprint migriert, weil der Heimnetz-Start den
+  Arbeitsstand baut, wie er ist. Kein Tor sah das; aufgefallen ist es nur, weil der Probelauf auf einer Kopie die neuen
+  Spalten schon vorfand. Ausgegangen ist es gut, weil der Migrationstest den Fehler in der Reihenfolge *vor* dem
+  Heimnetz-Start gefunden hatte. Zwanzig Minuten früher hätte eine fehlerhafte Migration die Bestände der Söhne
+  umgeschrieben, und danach hätte nur noch eine Korrektur-Migration geholfen.
+- **Von außen kam:** nichts. Die Review-Funde (Einmalig bei Geschwistern, „Für“-Legende) fanden die Reviewer, der
+  Durchrutscher von Sprint 88 kam aus der Nachschau.
+- **Der eine Mechanismus (neues Tor):** `scripts/heimnetz.ps1` startet gegen die echte `pugling.db` nicht mehr, solange
+  unter `backend/Pugling.Api/Data/Migrations` etwas ungecommittet ist. Die Meldung nennt die Dateien und den Ausweg
+  „committen“; bewusst trotzdem geht es mit `-AllowUncommittedMigrations`. Gemessen:
+  - Parser ohne Fehler;
+  - der Prüfausdruck ist mit einer unversionierten Probedatei im Ordner rot und ohne sie grün.
+  - Nicht gemessen ist der ganze Skriptlauf. Ein Start hätte einen zweiten Server auf die echte DB gesetzt.
+  - Dokumentiert in `docs/heimnetz.md`.
+- **Bewusst ungedeckt:** Ein Start mit einer *committeten*, aber noch nicht abgenommenen Migration (Sprint auf `main`,
+  Abnahme offen) bleibt möglich. Dagegen hilft nur die Reihenfolge „erst abnehmen, dann committen“, die die Projektregel
+  „Commits selbst setzen“ ohnehin vorsieht.
+- **Der Lauf hält hier**, weil die Retro ein neues Tor gebracht hat (README → „Der Backlog-Lauf“). Der Nutzer sieht es
+  zuerst.
+
+## Offene Roadmap (priorisiert)
+
+Die Liste lebt in [docs/backlog/](backlog/INDEX.md). Reihenfolge:
+
+1. B-645 abnehmen, sobald der Vater Entscheidung 11 bestätigt hat (vorher den Heimnetz-Server neu starten).
+2. [B-685](backlog/B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) (P2, Defekt, braucht eine Entscheidung).
+3. [B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) (P2, Defekt).
+4. Sprint 90 ([B-580](backlog/B-580-plan-aus-unit.md)). Die Leitbild-Stories B-680 bis B-684 der parallelen Sitzung sind
+   noch nicht eingeordnet.
+
+## Konkreter Änderungsstand (für Review)
+
+- `08fd05a6`: Sprint 96 (Backend, Migration `ShopStockPerChild`, Vater-Web, Sohn-App, Tests, E2E).
+- Abschluss-Commit: Abnahme B-665, Nachschau, B-685, Tor in `heimnetz.ps1`.
+- Nichts ist gepusht.

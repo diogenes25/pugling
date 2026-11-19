@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/supervisor]
 aliases: [Einlösen ohne Handy, Vater löst ein]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -184,3 +184,4 @@ Alle sechs am 2026-11-19 vom Vater entschieden (Empfehlungen übernommen) → En
   - AK 6 Kind sieht „von Papa eingelöst“ → `ShopStockPerChildTests.cs:501` (R3 → rot) und E2E (F2 → rot); Migration: Bestand `Child` → G3 → rot.
   - AK 7 Vater-Web, Knopf je Inventarzeile mit Bestätigung → E2E `taschengeld-monatlich.spec.ts`.
   - AK 8 Integrationstests je AK 1–5 → oben.
+- 2026-11-19 · abgenommen · `08fd05a6`; Rollengang Vater und Sohn per `taschengeld-monatlich.spec.ts` gegen frischen Server nach der letzten Bearbeitung (8 passed mit den Regressionszeugen). Bewusst offen, nicht blockierend: Der Fokus kehrt nach „Abbrechen“ nicht zum Knopf zurück; „Papa hat für dich eingelöst“ steht auch bei Mama oder Oma.
