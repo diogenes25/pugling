@@ -109,10 +109,10 @@ test("Ohne Leitner tippt der Sohn gleich nach dem Kennenlernen und liest seine F
   await tippen(answer, "la ru");
   await answer.press("Enter");
   // B-439: im roten Blatt, neben der eigenen Antwort – nicht in der 1×1-px-Ansage-Region (sr-only), die Playwright
-  // ebenfalls als sichtbar zählt.
+  // ebenfalls als sichtbar zählt. Die eigene Antwort steht seit e289e249 lesbar da, nicht mehr durchgestrichen.
   const held = page.locator(".lektion-blatt.falsch");
   await expect(held.getByText(`Lösung: ${WORDS[1][0]}`, { exact: true })).toBeVisible();
-  await expect(held.locator("s", { hasText: "la ru" })).toBeVisible();
+  await expect(held.getByText("Deine Antwort: la ru", { exact: true })).toBeVisible();
   // Die nächste Karte kommt NICHT von selbst – auch nach der Zeit, die der alte Toast stand (1,6 s).
   await page.waitForTimeout(2000);
   await expect(counter).toHaveText("Karte 2 / 3");

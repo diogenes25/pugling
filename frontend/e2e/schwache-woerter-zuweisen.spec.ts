@@ -76,9 +76,9 @@ test("Der Vater macht schwache Wörter zur täglichen Wiederholung, das Kind sie
   await knopf.click();
   await expect(page.getByText("Genau diese Wörter übt dieser Plan schon in einer Position.")).toBeVisible();
 
-  // Das Kind sieht die neue Tagespflicht auf seinem Pfad.
+  // Das Kind sieht die neue Tagespflicht auf seinem Pfad – seit B-686 ist der Knoten ein Link, der die Übung startet.
   await page.context().clearCookies();
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
   await sohnLogin(page, { id: String(childId), pin });
-  await expect(page.getByRole("button", { name: /^Wiederholung: schwache Wörter/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Wiederholung: schwache Wörter/ })).toHaveAttribute("href", /^\/sohn\/practice\/\d+$/);
 });
