@@ -312,7 +312,21 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // B-598: the learn card reads its learnt word aloud while it shows it (decision 10) - the word is the reveal.
             // An eased recall asks for the word: reading it aloud there would be the answer.
             learnCard, learnCard && !eased ? item.DictationLang : null, learnCard && !eased ? item.DictationAudioUrl : null,
-            canEase, session.EasedStages?.ContainsKey(position) == true, PositionPlayService.KeyboardLangOf(exercise));
+            canEase, session.EasedStages?.ContainsKey(position) == true, PositionPlayService.KeyboardLangOf(exercise),
+            SolvedGapsOf(pos, type, session, introduced, items, index, f.GapIndex));
+    }
+
+    // The other gaps of the text a remediation already ticked off, filled with their words - a round resumes at the first
+    // open gap, and the solved ones before it must not look skipped.
+    private static List<SolvedGap>? SolvedGapsOf(PlanPosition pos, IExerciseType type, PracticeSession session,
+        Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int index, int? gapIndex)
+    {
+        if (gapIndex is null || !IsRemediationRound(pos, session, type)) return null;
+        return [.. introduced.Where(e => e.Value.RemediationDone && e.Key != index && e.Key < items.Count)
+            .Select(e => items[e.Key])
+            .Where(i => i.GapIndex is not null && i.GapIndex != gapIndex)
+            .OrderBy(i => i.GapIndex)
+            .Select(i => new SolvedGap(i.GapIndex!.Value, i.Answer))];
     }
 
     /// <summary>
@@ -806,7 +820,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
         // The atom just reviewed is introduced now; the set was read before, and the next card may be that atom when a
         // client answered a card other than the cursor's (offline batch).
-        if (prog?.IntroducedAt is { } introducedAt) introduced[prog.ItemIndex] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt);
+        if (prog?.IntroducedAt is { } introducedAt) introduced[prog.ItemIndex] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt,
+            prog.RemediationDoneAt != null);
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         // Without a credited atom there is no solution to name and no box that moved (set mode, wrong answer):
@@ -904,7 +919,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         session.Cursor = PositionPlayService.SkipRemoved(session.Order, cursor, items.Count);
         await db.SaveChangesAsync(ct);
 
-        if (prog.IntroducedAt is { } introducedAt) introduced[index] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt);
+        if (prog.IntroducedAt is { } introducedAt) introduced[index] = new CardProgress(prog.Box, introducedAt, prog.ImprintedAt,
+            prog.RemediationDoneAt != null);
         var done = session.Cursor >= session.Order.Count;
         var next = done ? null : BuildCard(pos, type, dayStage, session, introduced, items, session.Cursor);
         var misspelled = !recalled && !string.IsNullOrWhiteSpace(dto.GivenAnswer)

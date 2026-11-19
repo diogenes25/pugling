@@ -247,7 +247,8 @@ Response — `HTTP 200`:
     "revealAudioUrl": null,
     "canEase": true,
     "eased": false,
-    "keyboardLang": null
+    "keyboardLang": null,
+    "solvedGaps": null
   },
   "done": false,
   "cursor": 0,
@@ -312,7 +313,8 @@ Response — `HTTP 200`:
     "revealAudioUrl": null,
     "canEase": true,
     "eased": false,
-    "keyboardLang": null
+    "keyboardLang": null,
+    "solvedGaps": null
   },
   "done": false,
   "misspelled": true,
@@ -398,7 +400,8 @@ Response — `HTTP 200`:
     "revealAudioUrl": null,
     "canEase": false,
     "eased": false,
-    "keyboardLang": null
+    "keyboardLang": null,
+    "solvedGaps": null
   },
   {
     "itemIndex": 1,
@@ -430,9 +433,9 @@ Response — `HTTP 200`:
     "revealAudioUrl": null,
     "canEase": false,
     "eased": false,
-    "keyboardLang": null
-  }
-]
+    "keyboardLang": null,
+    "solvedGaps": nul
+… (gekürzt)
 ```
 
 ## Review im Info-Modus (kein Feedback → 204)

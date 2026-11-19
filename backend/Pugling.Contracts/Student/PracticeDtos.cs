@@ -117,6 +117,11 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// <c>KeyboardLang</c> (B-661) is the language the learner types in on this exercise: the learnt language of its
 /// textbook series. The client offers the special characters of that language as an on-screen bar, so a phone keyboard
 /// without "î" never blocks a word. It names a character set, not an answer; <c>null</c> = no bar.
+///
+/// <c>SolvedGaps</c> lists the other gaps of a cloze text the child already solved in a remediation round, each with the
+/// word it typed there. Without them those gaps read "…" like the open ones, and a round resuming at the third gap
+/// looked as if it skipped the first two. Gives away nothing: every entry is a task the child has answered itself.
+/// <c>null</c> outside a remediation round on a cloze text.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -126,7 +131,10 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
     string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
     bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null,
-    bool CanEase = false, bool Eased = false, string? KeyboardLang = null);
+    bool CanEase = false, bool Eased = false, string? KeyboardLang = null, IReadOnlyList<SolvedGap>? SolvedGaps = null);
+
+/// <summary>A gap of a cloze text solved earlier in a remediation, with the word that solved it.</summary>
+public record SolvedGap(int GapIndex, string Text);
 
 /// <summary>The next card in learn mode (or <c>Done</c>), server-driven via the session cursor.</summary>
 public record NextResponse(PracticeCard? Card, bool Done, int Cursor, int Total);

@@ -398,3 +398,14 @@ describe("Antwortfläche, Sonderzeichen-Leiste (B-661)", () => {
     expect((screen.getByLabelText("Buchstabe 2 von 3") as HTMLInputElement).value).toBe("ç");
   });
 });
+
+describe("Lückentext in der Nacharbeit", () => {
+  // Rot, wenn die Aufgabe `solvedGaps` nicht an den Lückentext gibt: die gelöste erste Lücke stünde als „…“ da, und die
+  // Runde, die bei der zweiten weitermacht, sähe aus, als hätte sie die erste übersprungen.
+  it("zeigt schon gelöste Lücken mit ihrem Wort, die gefragte bleibt offen", () => {
+    const k = karte({ type: "Cloze", prompt: "{{1}} and {{2}}", gapIndex: 2, solvedGaps: [{ gapIndex: 1, text: "eastwards" }] });
+    render(<Aufgabe karte={k} form={aufgabenform({ reveal: null, ...k }, false)} skin={DEFAULT_SKIN} />);
+    expect(screen.getByRole("img", { name: /eastwards/ }).textContent).toBe("eastwards");
+    expect(document.querySelector(".cloze-gap.asked")?.textContent).toBe("?");
+  });
+});

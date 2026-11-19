@@ -225,6 +225,38 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
     }
 
     /// <summary>
+    /// A round that resumes at the first open gap shows the gaps solved before it filled in, so they do not look skipped:
+    /// within the round (gap 1 solved, card of gap 2) and in the next round, where the wrongly answered gap 3 and an eased
+    /// hit stay open. Red if the card carries no solved gaps, lists the asked gap itself, or counts a wrong or eased answer.
+    /// </summary>
+    [Fact]
+    public async Task Geloeste_Luecken_stehen_ausgefuellt_im_Text()
+    {
+        var (_, planId, positionId) = await RemediationPositionAsync();
+        var child = await TestApi.ChildAsync(factory);
+        var (sessionId, _) = await StartAsync(child, planId, positionId);
+        Assert.Empty((await NextCardAsync(child, planId, positionId, sessionId)).GetProperty("solvedGaps").EnumerateArray());
+
+        await ReviewAsync(child, planId, positionId, sessionId, 0, "eastwards");
+        var second = await NextCardAsync(child, planId, positionId, sessionId);
+        Assert.Equal(1, second.GetProperty("itemIndex").GetInt32());
+        Assert.Equal([(1, "eastwards")], SolvedGaps(second));
+
+        (await EasierAsync(child, planId, positionId, sessionId, 1)).EnsureSuccessStatusCode();
+        await ReviewAsync(child, planId, positionId, sessionId, 1, "asleep");
+        await ReviewAsync(child, planId, positionId, sessionId, 2, "as long as");
+
+        var (nextId, _) = await StartAsync(child, planId, positionId);
+        var resumed = await NextCardAsync(child, planId, positionId, nextId);
+        Assert.Equal(1, resumed.GetProperty("itemIndex").GetInt32());
+        Assert.Equal([(1, "eastwards")], SolvedGaps(resumed));
+    }
+
+    private static List<(int Gap, string Text)> SolvedGaps(JsonElement card) =>
+        [.. card.GetProperty("solvedGaps").EnumerateArray()
+            .Select(g => (g.GetProperty("gapIndex").GetInt32(), g.GetProperty("text").GetString()!))];
+
+    /// <summary>
     /// Guard: a position without remediation plays as before - its day stage, no ease flag - and refuses "easier". Red if
     /// the remediation branch fires for every cloze position.
     /// </summary>
@@ -240,6 +272,7 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
         var card = await NextCardAsync(child, planId, positionId, sessionId);
         Assert.Equal((int)ClozeStage.FreeText, card.GetProperty("stage").GetInt32());
         JsonAssert.False(card, "canEase");
+        Assert.Equal(JsonValueKind.Null, card.GetProperty("solvedGaps").ValueKind);
         Assert.Equal(JsonValueKind.Null, session.GetProperty("remediation").ValueKind);
         await AssertProblemAsync(await EasierAsync(child, planId, positionId, sessionId,
             card.GetProperty("itemIndex").GetInt32()), HttpStatusCode.Conflict, "cannot_ease");

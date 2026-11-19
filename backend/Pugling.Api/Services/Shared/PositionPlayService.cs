@@ -165,7 +165,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public async Task<Dictionary<int, CardProgress>> IntroducedCardsAsync(int positionId, CancellationToken ct) =>
         await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId && p.IntroducedAt != null)
-            .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value, p.ImprintedAt), ct);
+            .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value, p.ImprintedAt,
+                p.RemediationDoneAt != null), ct);
 
     /// <summary>
     /// B-643: does this content have to be written from memory once before it counts as known? Exactly when its
@@ -677,5 +678,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 }
 
-/// <summary>The learning state one introduced card's stage depends on (B-476): its Leitner box and when it was introduced.</summary>
-public readonly record struct CardProgress(int Box, DateOnly IntroducedAt, DateOnly? ImprintedAt = null);
+/// <summary>
+/// The learning state one introduced card's stage depends on (B-476): its Leitner box and when it was introduced.
+/// <paramref name="RemediationDone"/> marks a remediation task already solved - a cloze card shows it filled in.
+/// </summary>
+public readonly record struct CardProgress(int Box, DateOnly IntroducedAt, DateOnly? ImprintedAt = null,
+    bool RemediationDone = false);
