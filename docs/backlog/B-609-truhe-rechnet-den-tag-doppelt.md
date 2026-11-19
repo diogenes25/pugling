@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/backend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/backend, rolle/student]
 aliases: [Truhen-Prüfung doppelt, Kind-Tag auf dem Schreibweg]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Aufräumen
 groesse: ""
@@ -60,6 +60,9 @@ Gelesen am 2026-11-19; **Zeilen gegenüber der Idee verschoben** (dort „~736" 
    Zeile 521).
 7. **Messung:** keine gefunden (Suche nach `Stopwatch`/`BenchmarkDotNet` im Backend ohne einschlägigen Treffer; ein
    Messwert zur Abgabe-Latenz bei 4-15 Positionen steht nirgends). Die Idee vermutet „vermutlich nicht spürbar".
+8. **Korrektur beim Grillen:** Das Vorbild `QueryPlanSmokeTests` zählt nichts – es prüft per `EXPLAIN QUERY PLAN` Indexe
+   (`QueryPlanSmokeTests.cs:23-60`); ein `DbCommandInterceptor` oder `AddInterceptors` ist im Backend nicht gefunden. Die Messung
+   braucht einen neuen Zähler (Entscheidung 1).
 
 ## Die echte Lücke
 
@@ -67,44 +70,107 @@ Gelesen am 2026-11-19; **Zeilen gegenüber der Idee verschoben** (dort „~736" 
   Test liest, treibt die volle Tagessicht bei jeder Abgabe. Das ist die billigste Einsparung und die einzige, die auch
   **nach** der Truhe weiterläuft.
 - **Echt, mittel:** Die Verlaufsschleifen laden Positionen und Fach je Tag neu (Beleg 5-6) – ein Vielfaches der nötigen
-  Abfragen, an der Planübersicht des Vaters (`…/overview/progress`) und der Zeitachse.
-- **Fraglich:** Die zweite Durchrechnung (Truhe) entfällt, sobald die Truhe vergeben ist; bis dahin ist sie einmal je
-  Tag und Kind „zu viel". Eine eigene schlanke Truhen-Prüfung (Vorschlag der Idee) wäre eine zweite Wahrheit für
+  Abfragen, an der Planübersicht des Vaters (`…/overview/progress`) und der Zeitachse. *Beim Grillen relativiert (Entscheidung 3): je Tag kommen mehr als vier Befehle je Position
+  hinzu, die Positions-Abfrage ist ein Befehl von mehr als 60; geschätzt, nicht gemessen.*
+- **Fraglich:** Die zweite Durchrechnung (Truhe) entfällt, sobald die Truhe vergeben ist; bis dahin ist sie bei **jeder** Abgabe zu viel
+  (nicht einmal je Tag, Entscheidung 4). Eine eigene schlanke Truhen-Prüfung (Vorschlag der Idee) wäre eine zweite Wahrheit für
   `RewardsUnlocked` und widerspricht B-611/B-612 („alle Zahlen kommen aus derselben Liste").
 
 ## Offene Punkte
 
-1. **Erst messen?** *Empfehlung: ja, kurz.* Vor jedem Umbau die Abfragen einer Abgabe zählen (EF-Befehlszähler in
-   einem Test, Vorbild `QueryPlanSmokeTests`) für einen Plan mit 5 und mit 15 Positionen. Zeigt sich kein Unterschied
-   von Belang, wird die Story als Verlustposten geschlossen und die Messung ins Protokoll geschrieben.
-2. **Rückgabewert von `EvaluateAndAwardAsync`:** *Empfehlung:* auf `Task` ohne `DayOverview` umstellen und die zwei
-   Test-Aufrufe auf `ComputeDayAsync` verlegen. Kein Vertrag, kein HTTP-Verhalten betroffen.
-3. **Fach nur in der Tagessicht laden?** *Empfehlung:* ja – `LoadPositionsAsync` bekommt einen Schalter oder die Tagessicht
-   lädt Reihe und Fach selbst; die Verlaufsschleifen laden die Positionen **einmal** je Aufruf und reichen sie an die
-   Tagesrechnung weiter. Verworfen: die Einsparung per Cache über Requests (Gefahr stale Daten nach einer Vater-Änderung).
-4. **Truhe:** *Empfehlung:* nicht anfassen (siehe Lücke 3). Wer es dennoch will, rechnet `ComputeChildDayAsync` mit
-   den bereits geladenen Positionen des Plans – nie eine zweite Regel für `RewardsUnlocked`.
-5. **Berührt das Regeln oder Münzen?** Nein: die Umbauten ändern keine Ausgabe (Aufräumen). Das muss ein Test belegen
-   (AK 1).
+1. ~~**Erst messen?**~~ → Entscheidung 1.
+2. ~~**Rückgabewert von `EvaluateAndAwardAsync`:**~~ → Entscheidung 2.
+3. ~~**Fach nur in der Tagessicht laden?**~~ → Entscheidung 3 (die Verlaufsschleifen gehören nicht zu dieser Story) und
+   Entscheidung 5 (zurückgestellt).
+4. ~~**Truhe:**~~ → Entscheidung 4.
+5. ~~**Berührt das Regeln oder Münzen?**~~ → Entscheidung 6.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-Je Kriterium: die Änderung, die es rot macht.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-1. **Verhalten unverändert:** alle bestehenden Tests zu Tageskiste, Ziel-Belohnung, Serie, Planübersicht und Zeitachse
-   bleiben unverändert grün (`DailyBoxTests`, `PositionGoalOverviewTests`, `ChildrenOverviewTests`,
-   `KindTagessichtTests`). *Rot, wenn der Umbau die Reihenfolge Ziel-Belohnung → Truhe verschiebt oder `RewardsUnlocked`
-   anders rechnet.*
-2. **Eine Tagessicht je Abgabe nach vergebener Truhe:** nach dem Spielen, wenn die Truhe des Tages schon vergeben ist,
-   löst eine Abgabe keinen `ItemsOfAsync`/`DueItemIndicesAsync`-Aufruf je Position mehr aus (Zählung an der
-   Befehlsschnittstelle oder an einem Testdoppel). *Rot heute: die Zählung ist größer als null; rot, wenn der Umbau die
-   Schluss-Rechnung in `EvaluateAndAwardAsync` stehen lässt.*
-3. **Verlauf lädt Positionen einmal:** `ProgressAsync` über 30 Tage löst genau **eine** Positions-Abfrage aus (nicht
-   dreißig). *Rot heute (eine je Tag).*
-4. **Tagessicht zeigt weiter das Fach:** `…/overview` und die Kindsicht liefern `SubjectName` je Position unverändert
-   (`KindTagessichtTests`). *Rot, wenn die Fach-Kette beim Umbau aus der Tagessicht verschwindet.*
-5. **Keine zweite Wahrheit:** `RewardsUnlocked` wird weiter nur in `ComputeChildDayAsync` berechnet (ein Treffer im
-   Quelltext). *Rot, wenn eine eigene Truhen-Prüfung dieselbe Regel nachbaut.*
+1. **Zuerst messen; die Messung ist Schritt 1 des Baus und Akzeptanzkriterium 1.** Der in der Story genannte Weg
+   („EF-Befehlszähler, Vorbild `QueryPlanSmokeTests`“) trägt nicht: `QueryPlanSmokeTests` prüft per `EXPLAIN QUERY PLAN`
+   Indexe und zählt nichts, und im Backend gibt es keinen `DbCommandInterceptor` (Suche über `backend/**/*.cs` ohne Treffer, auch
+   `AddInterceptors` fehlt, `Program.cs:156-157` registriert den Kontext nackt). Die Messung braucht darum einen neuen,
+   zählenden Interceptor im Testprojekt, eingehängt über `ConfigureServices` der Test-Fabrik
+   (`PuglingWebAppFactory.cs:65`). Gemessen wird (a) eine Abgabe „Runde beenden“ bei einem Plan mit 5 und mit 15 Positionen,
+   einmal mit offener, einmal mit vergebener Truhe, (b) `ProgressAsync` über 30 Tage bei 15 Positionen, getrennt nach
+   Befehlen, die die Kette Position → Reihe → Fach laden (Befehlstext mit dem Join auf `TextbookSeries`), und allen übrigen.
+   Verworfen: Stoppuhr-Zeiten (flackern unter Last) und Bauen ohne Zahl (die Story selbst vermutet „vermutlich nicht
+   spürbar“). Kosten: ein Hilfsbau im Testprojekt vor dem eigentlichen Aufräumen; er bleibt als Zähler für spätere
+   Messungen stehen. Ausgeschlossener Fall: ein Plan mit mehr als 15 Positionen; gegen die User Story („auch bei vielen
+   Positionen“) deckt die lineare Zeile 5 → 15 das Wachstum ab, ein dritter Messpunkt ändert die Steigung nicht.
+2. **Die unbenutzte Schluss-Rechnung in `EvaluateAndAwardAsync` entfällt, ohne eine Schwelle abzuwarten; die Methode
+   liefert kein `DayOverview` mehr.** Begründung: Beide Controller verwerfen den Rückgabewert
+   (`PositionPracticeController.cs:957`, `PositionTestsController.cs:466`), und Tests lesen ihn nur an einer Stelle
+   (`PositionGoalOverviewTests.cs:266-268`; `RemediationPositionTests.cs:595` verwirft ihn). Die Rechnung hat keinen Leser
+   im Produkt und ändert keine Ausgabe; sie hängt an keiner Buchung (`ComputeDayAsync` schreibt nichts). Die zwei Test-Aufrufer
+   lesen künftig `ComputeDayAsync` nach der Buchung. Der Kommentar im `catch` („the day status below is read fresh from the
+   database anyway“, `PositionProgressService.cs:584`) wird angepasst, `db.ChangeTracker.Clear()` (`:585`) bleibt. Verworfen: den Rückgabewert behalten und einen
+   zweiten Lesepfad bauen (Pflege ohne Nutzen). Kosten: ein Signaturwechsel mit zwei Testanpassungen. Ausgeschlossener Fall:
+   ein künftiger Aufrufer, der die Tagessicht direkt nach der Buchung braucht – er ruft `ComputeDayAsync` selbst; gegen die
+   User Story trägt das, weil sie nur verlangt, dass der Schreibweg nicht öfter rechnet, als er braucht.
+3. **Die Verlaufsschleifen (`ProgressAsync`, Zeitachse) gehören nicht zu dieser Story; die Messung (b) entscheidet, ob eine
+   eigene entsteht.** Begründung, gegen die User Story gerechnet: Sie handelt von der **Abgabe** („der Schreibweg nach einer
+   Abgabe“); `ProgressAsync` (`PositionProgressService.cs:869-879`) und `ChildrenDashboardService.cs:77-83` sind Lesewege des
+   Vaters. Dazu die Rechnung am Code: je Tag lädt `ComputeDayAsync` die Positionen einmal (`:307`), dann je Position
+   mindestens `ItemsOfAsync`, `DueItemIndicesAsync` (mit eigener Item- und Fortschrittsabfrage,
+   `PositionPlayService.cs:273-282`) und `IsGoalMetAsync` (`:326-330`), also mehr als vier Befehle je Position. Bei 15
+   Positionen ist die Positions-Abfrage mit ihrem Fach-Join ein Befehl von mehr als 60 je Tag, unter zwei Prozent
+   (geschätzt, nicht gemessen). Wer sie aus der Schleife hebt, spart fast nichts und ändert drei Aufrufer. Schwelle: macht
+   die Positions-Fach-Abfrage in Messung (b) mindestens 20 Prozent aller Befehle aus, entsteht eine eigene Aufräumen-Story
+   (Id vorher neu zählen); sonst steht im Verlauf „Verlustposten, nicht gebaut“. Die Zahl 20 ist eine Setzung ohne Messung:
+   darunter ist die Ersparnis im Verlauf einer Planübersicht nicht spürbar. Verworfen: Verlauf mitbauen (kostet drei
+   Aufrufer, trägt die Story nicht) und Streichen ohne Messung (die Schätzung ist eine Rechnung, kein Befund). Kosten: die
+   Fach-Kette bleibt in `LoadPositionsAsync` (`:284-289`), sodass [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md)
+   (Rückfall auf das Reihen-Fach) unberührt bleibt. Ausgeschlossener Fall: ein Vater mit sehr langem Verlauf und vielen
+   Positionen, dem die Planübersicht zu langsam ist – seine Zeit sinkt hier nicht, siehe Entscheidung 5.
+4. **Die Truhen-Rechnung wird nicht angefasst: `RewardObligations` bleibt die einzige Auswahl der Belohnungsziele.**
+   Begründung: Sie wird an genau zwei Stellen gerufen (je Plan `PositionProgressService.cs:355`, über das ganze Kind `:421`);
+   eine schlanke Truhen-Prüfung wäre eine dritte Regel für `RewardsUnlocked` und widerspräche
+   [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) („aus derselben Liste“). Verworfen: eine eigene
+   Prüfung mit nur `GoalMet` und `Cadence`. Kosten: bis die Truhe vergeben ist, bezahlt **jede** Abgabe eine Tagessicht über
+   alle aktiven Pläne – nicht „einmal je Tag und Kind“, wie die Idee es sagt, sondern bei einem Tag mit vier Pflichten für
+   die ersten drei Abgaben (`DailyBoxService.cs:35-40`: erst `AlreadyClaimedAsync`, dann `ComputeChildDayAsync`). Nach
+   Entscheidung 2 ist das die einzige Tagessicht je Abgabe. Ausgeschlossener Fall: eine Abgabe, die früh erkennen könnte, dass
+   die Truhe noch zu ist, ohne zu rechnen; gegen die User Story (nicht öfter rechnen als nötig) ist das der Preis, weil die
+   frühe Erkennung selbst die Regel wäre.
+5. **Zurückgestellt: die Verlaufsansicht in Stapelabfragen statt Tag mal Position.** Der eigentliche Hebel der Verlaufsschleifen sind
+   die Abfragen je Position und Tag (Entscheidung 3), nicht das Laden der Positionen. Das ist ein Umbau der Rechenform
+   (Sitzungen und Versuche eines Plans einmal laden, Tage im Speicher rechnen) mit eigenem Risiko für Regeln wie
+   `ActiveOn`. Wann: erst wenn Messung (b) eine absolute Befehlszahl zeigt, die der Nutzer für zu viel hält; eine Zahl
+   dafür setzt dieser Lauf nicht.
+6. **Keine Regel und keine Münze ändert sich.** Die Reihenfolge Ziel-Belohnung → Gamification → Truhe bleibt
+   (`PositionPracticeController.cs:957-961`, `PositionTestsController.cs:466-471`); entfernt wird nur eine Rechnung, deren
+   Ergebnis niemand liest. Der Beleg ist, dass die bestehenden Tests unverändert grün bleiben (Akzeptanzkriterium 3).
+
+## Akzeptanzkriterien
+
+Je Kriterium: die Änderung, die es rot macht. Kriterium 1 liegt vor jedem Umbau.
+
+1. **Messung, vor dem Umbau:** Ein Test mit zählendem Interceptor misst die Befehle einer Abgabe bei 5 und 15 Positionen
+   (Truhe offen und vergeben) und die Befehle von `ProgressAsync` über 30 Tage bei 15 Positionen, mit dem Anteil der
+   Positions-Fach-Abfrage. Die Zahlen stehen im `## Verlauf`. Der Test prüft zuerst, dass der Zähler für eine bekannte
+   Abfrage mehr als null zählt. Rot, wenn der Interceptor nicht eingehängt ist (alle Zahlen null, die Messung bewiese
+   „kostet nichts“).
+2. **Eine Tagessicht weniger je Abgabe nach vergebener Truhe:** Die Befehlszahl einer Abgabe bei vergebener Truhe liegt
+   höchstens bei der Messzahl aus Kriterium 1 abzüglich der Kosten einer direkten Tagessicht desselben Plans (beide
+   Konstanten stehen nach Schritt 1 fest und im Test, mit dem Messdatum im Kommentar). Rot heute (die Zahl ist die
+   Messzahl selbst); rot, wenn die Schluss-Rechnung in `EvaluateAndAwardAsync` stehen bleibt.
+3. **Verhalten unverändert:** `DailyBoxTests`, `PositionGoalOverviewTests`, `ChildrenOverviewTests`, `KindTagessichtTests` bleiben
+   bis auf die zwei Aufrufer aus Entscheidung 2 unverändert grün. Rot, wenn der Umbau die Reihenfolge Ziel-Belohnung →
+   Truhe verschiebt (`DailyBoxTests`: Truhe ohne gebuchte Ziel-Belohnung) oder `RewardsUnlocked` anders rechnet.
+4. **Der Schreibweg liefert nichts mehr zurück:** `PositionGoalOverviewTests.cs:266-268` liest die Tagessicht mit
+   `ComputeDayAsync` nach der Buchung. Rot, wenn die Buchung in `EvaluateAndAwardAsync` entfällt (dann fehlen die Punkte
+   in der gelesenen Tagessicht).
+5. **Keine zweite Wahrheit (Durchsicht, kein Tor):** `RewardObligations(` hat im Quelltext genau die zwei Aufrufstellen aus
+   Entscheidung 4, `RewardsUnlocked` keine dritte Berechnung. Rot, wenn eine eigene Truhen-Prüfung die Regel nachbaut;
+   als `grep` bei der Abnahme beschriftet, weil ein Zähltor auf Quelltext dieselbe Regel nur an einer anderen Stelle
+   festhielte.
+6. **Die Entscheidung über den Verlauf ist belegt (Absichtserklärung, kein Test):** Im `## Verlauf` steht der Anteil der
+   Positions-Fach-Abfrage aus Messung (b) und daraus „eigene Story (Id)“ oder „Verlustposten, nicht gebaut“. Rot, wenn
+   die Zeile fehlt, weil die Abnahme dann die Messung nicht benutzt hat.
 
 ## Verlauf
 
@@ -113,3 +179,4 @@ Je Kriterium: die Änderung, die es rot macht.
   größerer Posten gefunden – die erste Durchrechnung in `EvaluateAndAwardAsync` (Zeile 587) hat keinen Leser auf dem
   Schreibweg; die schlanke Truhen-Prüfung der Idee würde eine zweite Wahrheit schaffen; Messung als erster Schritt
   empfohlen.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 6. Zuerst messen (Messung ist Kriterium 1); Vorbild `QueryPlanSmokeTests` trägt nicht (EXPLAIN, kein Zähler), im Backend gibt es keinen Befehlszähler. Die tote Schluss-Rechnung in `EvaluateAndAwardAsync` fällt ohne Schwelle; die Verlaufsschleifen gehören nicht zur User Story (Abgabe) und werden nur bei mindestens 20 Prozent Anteil eigene Story; Truhe bleibt unangetastet. Akzeptanzkriterien final, je mit roter Änderung.

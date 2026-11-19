@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 aliases: [Keine Sachfragen, Nur Sprache abfragen, Keine Satzantworten]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: "Vater im Chat 2026-11-16: Fragen nach der Farbe der U-Bahn in England oder nach Städten in Frankreich, Antworten teils ganze Sätze – beim Vokabellernen irrelevant"
 grund: ""
 ersetzt_durch: []
+wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
 # B-604 · Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort
@@ -83,43 +84,92 @@ Agenten – und die Regel „Satz als Antwort“ widerspricht dem Zweck des Typs
 
 ## Offene Punkte
 
-Alle ohne Entscheidung; Empfehlung steht dabei.
+1. ~~**Wo gilt die Regel: als Regeltext, als Server-Prüfung, oder beides?**~~ → Entscheidung 1.
+2. ~~**Gilt „kein Satz als Antwort“ auch für `Translation`?**~~ → Entscheidung 2.
+3. ~~**Was wird aus der Landeskunde-Zuordnung?**~~ → Entscheidung 3.
+4. ~~**Bestand.**~~ → Entscheidung 5.
+5. ~~**Soll der Lader warnen?**~~ → Entscheidung 4.
+6. ~~**Abgrenzung zu B-626.**~~ → Entscheidung 6.
+7. ~~**Erreicht die Regel den Vater im Web-Editor?**~~ (beim Grillen gegen die zweite User Story gerechnet) → Entscheidung 1.
 
-1. **Wo gilt die Regel: als Regeltext, als Server-Prüfung, oder beides?** Empfehlung: **nur als Regeltext** (Skill
-   und Agenten-Prompt). Eine Server-Prüfung der rechten Spalte bräche legitime Zuordnungen (Bundesland → Hauptstadt,
-   Seed `:1375`) und kann „Wendung“ nicht von „Satz“ unterscheiden.
-2. **Gilt „kein Satz als Antwort“ auch für `Translation`?** Empfehlung: **nein.** Der Typ übersetzt Sätze; die Regel
-   heißt dort „Sprachfrage statt Sachfrage“, also ein Ausgangssatz, der ein Wort der Unit enthält (das verlangt
-   `DraftRules.CoversRequiredWords` bereits). Die Regel „Antwort = Wortlisten-Eintrag“ gilt für `Vocabulary`,
-   `Matching` und Lückentext-Lücken.
-3. **Was wird aus der Landeskunde-Zuordnung?** Empfehlung: die Zeile in `SKILL.md:169`–`:170` ersetzen („Landeskunde als
-   `matching`“ → „feste Wendungen und Eigennamen **aus der Wortliste** als `matching`“) statt die Landeskunde ganz zu
-   verbieten – sie bleibt als Lesetext/Hintergrund im Stoff (`topics`), nicht als Abfrage.
-4. **Bestand.** Empfehlung: nicht in dieser Story ändern, sondern **read-only auflisten** (Zuordnungen und Übersetzungen,
-   deren Antwort in keiner Wortliste der Unit steht) und den Vater entscheiden lassen. Automatisches Umschreiben risse
-   Item-Ids und Leitner-Stand an den Karten.
-5. **Soll der Lader warnen?** Empfehlung: ja, als `Hinweis` (nicht `FEHLER`), wenn eine `matching`-Seite eines Paares in
-   keiner Wortliste der Unit steht – die Regel bliebe sichtbar, ohne eine legitime Ausnahme zu blockieren.
-6. **Abgrenzung zu B-626:** B-626 räumt Platzhalter aus der Antwort, B-604 begrenzt, *was gefragt wird*. Empfehlung: getrennt
-   lassen, in beiden Verlaufszeilen verlinken.
+## Entscheidungen
 
-## Akzeptanzkriterien (Entwurf)
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Die Regel steht als Text an den Stellen, an denen Übungen entstehen – nicht als Server-Prüfung.** Das sind der
+   Skill (`SKILL.md:169`), der Systemprompt des Agenten (`DraftPrompts.System`, `DraftPrompts.cs:40`–`:55`, bisher acht
+   Regeln) und **eine Hilfezeile im Vater-Editor** (`frontend/src/lib/fieldHelp.ts`, `FIELD_HELP`, die zentrale Stelle
+   aller „ⓘ“-Texte). Begründung: Eine Server-Prüfung der rechten Zuordnungsspalte bräche legitime Übungen – der Seed
+   fragt „Bundesland → Landeshauptstadt“ (`Seed.cs` um `:1375`, Typ `Matching`) –, und C# kann „Wendung“ nicht von
+   „Satz“ und „Sachfrage“ nicht von „Sprachfrage“ unterscheiden (nur die erste der beiden Regeln ist maschinell
+   prüfbar, siehe „Die echte Lücke“). Die Hilfezeile kommt dazu, weil die zweite User Story den Vater als Creator
+   nennt: ohne sie erreichte die Regel nur den Agenten und die Anleitung, nicht den Vater, der im Web-Editor von Hand
+   anlegt. **Verworfen:** Server-Prüfung (bricht den Seed-Fall) und „nur Skill und Prompt“ (lässt den Vater ohne
+   Regel). **Ausgeschlossen:** dass eine Hand-Übung des Vaters mit Sachfrage abgelehnt wird – sie bleibt möglich, die
+   Regel ist ein Hinweis, kein Tor. **Kosten:** drei Textstellen, die auseinanderlaufen können; an welchem Feld des
+   Editors die Hilfezeile hängt, wird beim Schätzen gezählt (die Editor-Felder sind in diesem Lauf nicht gelesen).
+2. **Der Typ `Translation` behält Sätze als Antwort.** Dort heißt die Regel „Sprachfrage statt Sachfrage“: der
+   Ausgangssatz enthält ein Wort der Unit (das prüft `DraftRules.CoversRequiredWords` bereits,
+   `TranslationStrategy.cs:50`). „Antwort = Wortlisten-Eintrag“ gilt für `Vocabulary`, `Matching` und
+   Lückentext-Lücken. Begründung: Der Typ **ist** die Satzübersetzung (`TranslationStrategy.cs:30`–`:34`: „kurze,
+   vollständige Sätze“); eine Regel „kein Satz“ löschte ihn. **Verworfen:** die Regel auf alle Typen ausdehnen.
+   **Ausgeschlossen – und das trifft die User Story:** der Satz „ich habe in einem langen Satz einen Buchstaben
+   vertippt“ bleibt für Übersetzungsübungen möglich, denn die Wertung bleibt binär; `AnswerGrader.IsMisspelled`
+   (`AnswerGrader.cs:47`) ist nur Anzeige und ändert nichts an der Wertung. Dass das Tippfehler-Problem dort bleibt, löst
+   diese Story nicht; das ist die Sache von B-624 (Akzentfehler zählt halb), nicht dieser Regel. **Kosten:** die User
+   Story ist für einen Typ nur teilweise erfüllt; Theodors Schulformat („deutsche Vorgabe ganz übersetzen“) braucht den
+   Satz aber genau so.
+3. **Die Anleitung ändert die Landeskunde-Zeile, statt Landeskunde zu verbieten.** `SKILL.md:169`–`:170` lautet künftig
+   „… Wendungen als `translation`, feste Wendungen und Eigennamen **aus der Wortliste** als `matching`“. Landeskunde
+   bleibt als Stoff (`topics`, Lesetext) erhalten, wird aber nicht abgefragt. Begründung: Der Lader prüft bei `matching`
+   nur die Form (`laden.py:43`), und die Zeile im Skill ist die naheliegende Quelle der Beispiele. **Verworfen:** die
+   Landeskunde ganz aus dem Skill streichen (verliert Kontext, den das Buch trägt). **Ausgeschlossen:** eine
+   Landeskunde-Abfrage, die der Vater ausdrücklich will – dann legt er sie von Hand an (Entscheidung 1). **Kosten:**
+   `lehrwerk-aufbereiten` liefert für künftige Bücher keine Landeskunde-Übungen mehr.
+4. **Der Lader warnt als `Hinweis`, nicht als `FEHLER`.** `check(book, words, exercises)` (`laden.py:157`) kennt die
+   Wortliste je Unit (`words[nr]`, Spalten `wort`/`uebersetzung`, `laden.py:193`–`:200`). Steht eine Seite eines
+   `matching`-Paares weder als Wort noch als Übersetzung noch als eine Bedeutung der Übersetzung in der Liste der Unit
+   (verglichen über `graded()`, `laden.py:106`), kommt ein Hinweis. Begründung: Die Regel bleibt sichtbar, ohne die
+   legitime Ausnahme zu sperren (Eigennamen, Formen in Grammatik-Zuordnungen). **Verworfen:** `FEHLER` (Grammatik-
+   Zuordnungen wie Infinitiv ↔ Form stehen nicht in der Wortliste). **Kosten:** Hinweis-Rauschen bei Grammatik-
+   Zuordnungen; der Vater liest die Hinweise ohnehin (`laden.py:576`).
+5. **Der Bestand wird nicht umgeschrieben, sondern read-only aufgelistet – als einmalige Handarbeit, nicht als Bau der
+   Story.** Der Entwickler listet per lesendem API-Abruf (kein Schreibzugriff) die Zuordnungen und Übersetzungen, deren
+   Antwort in keiner Wortliste der Unit steht, und legt die Liste dem Vater vor. Begründung: Umschreiben risse
+   Item-Ids und Leitner-Stand an den Karten. **Verworfen:** automatisches Umschreiben. **Ausgeschlossen – gegen die
+   User Story gerechnet:** Friedrich und Theodor bekommen die betroffenen Bestandsfragen weiter, bis der Vater die Liste
+   abgearbeitet hat; die Story ist für **neu** angelegte Übungen erfüllt, für den Bestand erst nach der Entscheidung des
+   Vaters. **Kosten:** eine Handarbeit ohne Test; sie wird im `## Verlauf` belegt, nicht durch ein Tor.
+6. **B-604 und B-626 bleiben getrennt.** B-626 räumt Platzhalter („sth.“) aus der Antwort, B-604 begrenzt, *was gefragt
+   wird*. Beide Verlaufszeilen verlinken einander. **Verworfen:** zusammenlegen (andere Ursache, andere Stelle, B-626 ist
+   schon geschätzt). **Kosten:** zwei Stories am selben Satz „die Antwort ist die Vokabel“; wer eine ändert, liest die
+   andere mit.
+
+## Akzeptanzkriterien
 
 Je Kriterium die Änderung, die es rot macht.
 
-1. Der Skill `lehrwerk-aufbereiten` verlangt keine Landeskunde-Abfrage mehr als `matching` und nennt die neue Regel.
-   *Rot, wenn:* die Zeile `SKILL.md:169`–`:170` unverändert bleibt (Prüfung als Textvergleich in einem
-   Skill-Test; gibt es dafür kein Tor, ist das AK ausdrücklich eine **Absichtserklärung**).
-2. Der Regelblock des KI-Creators nennt „Sprachfrage statt Sachfrage“ und „Antwort ist ein Wort oder eine Wendung der
-   Wortliste“ für `Vocabulary`/Lückentext. *Rot, wenn:* ein Test in `CreatorAgentTests` (mit `FakeChatClient`) den
-   Prompt liest und der Satz fehlt, weil jemand den Block aus `DraftPrompts` entfernt.
-3. `laden.py --pruefen` meldet einen `Hinweis`, wenn eine Seite eines `matching`-Paares in keiner Wortliste der Unit
-   steht, und schweigt, wenn alle Paare in der Liste stehen. *Rot, wenn:* `test_laden.py` ein Paar „Orte“ ohne
-   Wortlisten-Treffer lädt und keinen Hinweis sieht.
-4. Die Übersetzungsübung des Agenten erzeugt weiter Sätze als Antwort. *Rot, wenn:* jemand die Regel auf `Translation`
-   ausdehnt und `TranslationStrategy` Satz-Antworten ablehnt – **Absichtserklärung** (der Ist-Stand ist das Soll).
-5. Eine Liste der Bestandsübungen, deren Antwort in keiner Wortliste der Unit steht, liegt dem Vater vor
-   (read-only). *Rot, wenn:* die Auswertung eine bekannte Landeskunde-Zuordnung (Test-DB) nicht nennt.
+1. `SKILL.md` verlangt keine Landeskunde-Abfrage mehr als `matching` und nennt die Wortlisten-Regel. *Rot, wenn:* die
+   Zeile „Landeskunde als `matching`“ wieder in `SKILL.md` steht – ein neuer Fall in
+   `.claude/skills/lehrwerk-aufbereiten/test_laden.py` liest die Datei und prüft beides (der alte Text fehlt, „aus der
+   Wortliste“ steht da).
+2. `DraftPrompts.System` enthält die Regel „Sprachfrage statt Sachfrage“ und „die Antwort einer Vokabel- oder
+   Lückentext-Aufgabe ist ein Wort oder eine feste Wendung der Wortliste“, mit dem Zusatz, dass Übersetzungsaufgaben
+   Sätze verlangen dürfen. *Rot, wenn:* jemand die Regel aus `DraftPrompts` entfernt – ein Fall in `CreatorAgentTests`
+   liest `chat.LastMessages[0].Text` (wie `CreatorAgentTests.cs:95`) und sucht beide Satzteile.
+3. `laden.py --pruefen` meldet einen `Hinweis`, wenn eine Seite eines `matching`-Paares in der Wortliste der Unit fehlt,
+   und schweigt, wenn alle Paare dort stehen. *Rot, wenn:* `test_laden.py` ein Paar „Orte“ ohne Wortlisten-Treffer
+   prüft (`laden.check(book, words, [e])`) und keinen Hinweis findet, **oder** ein Paar aus der Liste einen Hinweis
+   auslöst.
+4. Die Übersetzungsübung des Agenten verlangt weiter Sätze als Antwort. *Rot, wenn:* `TranslationStrategy` einen
+   mehrwortigen `target` als Verstoß meldet – **Absichtserklärung**, soweit kein vorhandener Test in
+   `CreatorAgentTests` einen mehrwortigen `target` annimmt (beim Schätzen nachsehen; findet sich einer, entfällt die
+   Beschriftung).
+5. Der Vater-Editor zeigt die Hilfezeile „Sprachfrage statt Sachfrage“. *Rot, wenn:* `FIELD_HELP` den Eintrag nicht
+   führt – ein Fall in `frontend/src/lib/fieldHelp.test.ts` prüft den Text (Vorbild dort: `FIELD_HELP.stage.text`),
+   und ein Komponententest des Editors prüft, dass die Hilfe am Feld hängt.
+6. Eine Liste der Bestandsübungen, deren Antwort in keiner Wortliste der Unit steht, liegt dem Vater vor (read-only).
+   **Absichtserklärung:** kein Code, der rot werden könnte – der Beleg ist die Verlaufszeile mit der Liste.
 
 ## Verlauf
 
@@ -127,3 +177,6 @@ Je Kriterium die Änderung, die es rot macht.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Quelle der Landeskunde-Zuordnung ist die Anleitung
   `SKILL.md:169`; der Agent erzeugt `Matching`/`Reading` nicht; zwei Regeln, nur eine maschinell prüfbar; Bestand in
   der echten DB nicht geprüft.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Regel als Text an Skill,
+  Agent-Prompt und Vater-Editor statt als Server-Prüfung; `Translation` behält Sätze; Lader warnt nur; Bestand nur
+  gelistet. Verwandt: [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md).

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Frage an den Betreuer, Hausaufgaben-Frage, Kind fragt]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: docs/sofatutor-vergleich-plan.md
 grund: ""
 ersetzt_durch: []
+wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
 # B-586 · Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App
@@ -63,6 +64,19 @@ kurzen Text antworten, damit ich ohne Rückfrage am Küchentisch helfen kann.
 **Nicht gefunden:** ein Feld für Antworttext, ein Antwort-Endpunkt, ein Foto-/Medien-Upload vom Kind
 (`ExerciseMediaController.cs`/`MediaUploadForm.cs` liegen unter `creator/`, kein `student/`-Upload).
 
+**Beim Grillen am Code gemessen (2026-11-19):**
+
+- **Der Hinweis-Abruf hat heute keinerlei Test-Sperre.** `NoticesAsync` filtert nur auf Kind, `Done` und `SeenByChildAt == null`
+  (`Services/Shared/ExerciseFeedbackService.cs:194-216`); `TestRunningAsync` (`:24`) wird nur beim Melden benutzt. Das ist heute
+  harmlos, weil der Hinweis keinen Text trägt; mit einem Antworttext würde derselbe Pfad zum Lösungskanal (Punkt 4 der Story).
+- **Ein Hinweis entsteht nur über `Done`:** `FeedbackController.Update` (`Controllers/Supervisor/FeedbackController.cs:44-62`)
+  setzt den Status für alle Betreuer des Kindes; `UpdateFeedbackDto` trägt nur `Status`. Die Antwort muss also an `Done` hängen.
+- **Das Feld `ReplyText` steht nicht in der Lösungsfeld-Liste** (`Answer`/`Solution`/`CorrectAnswer`/`Translation`); das Tor
+  `Actions_Mit_Loesungsfeld_Sind_Vor_Dem_Studenten_Gegated` fängt einen Antworttext also **nicht**. Die Sperre braucht einen
+  eigenen Test.
+- **Eine Meldung ist je Kind, Übung, Karte und Grund eindeutig, nicht je Position** (Zusammenführen offener Einträge,
+  `ExerciseFeedbackService.cs:30-76`); die Test-Sperre muss deshalb auf die **Übung** schauen, nicht auf eine Position.
+
 ## Die echte Lücke
 
 Schmaler als die Idee: kein neuer Kanal, kein neues Nachrichten-Modell, sondern **eine Antwort auf einen
@@ -74,57 +88,92 @@ Pflicht und Malus (`FeedbackEntities.cs:6-10`); die Frage erbt das.
 
 ## Offene Punkte
 
-1. **Eigene Entität oder Erweiterung von `ExerciseFeedback`?** Empfehlung: Erweiterung um `ReplyText`, `RepliedAt`,
-   `RepliedByAdultId`. Eine Frage ist ein Freitext-`ExerciseFeedback` ohne Grund, der Kontext (Karte, Lösung, letzte
-   Antwort) ist schon da. Migration additiv (nullable Spalten).
-2. **Mehrere Antworten (echter Verlauf) oder genau eine?** Empfehlung: eine Antwort je Meldung im ersten Schritt;
-   Rückfragen stellt das Kind als neue Meldung. Ein Chat-Verlauf ist ein anderes Produkt.
-3. **Wer darf antworten, wenn mehrere Betreuer die Frage sehen?** Empfehlung: der erste, der antwortet; die Antwort
-   gilt für alle (wie `Done`), später antwortende Betreuer sehen die vorhandene.
-4. **Anti-Cheat im Test:** Die Sperre `feedback_during_test` gilt schon. Gilt sie für den Info-Modus (`PlayMode.Info`,
-   `StudyPlanBaseTypes.cs:25`) nicht, ist das gewollt? Empfehlung: unverändert lassen, dort wird nichts gewertet.
-   Die Antwort des Vaters kommt ans Kind erst nach dem Test, nie während eines laufenden (gleiche Sperre beim
-   Abholen des Hinweises prüfen: lieferte `NoticesAsync` einen Antworttext während eines laufenden Tests, wäre das ein
-   Lösungskanal, auch wenn der Vater ihn gut meint). Der Kontext für den Vater darf `Solution` enthalten; er steht
-   bereits hinter `Roles.Supervisor` (Lösungsfeld-Regel).
-5. **Pflicht:** hält eine offene Frage die Pflicht an? Empfehlung: nein, der Malus läuft weiter – die Frage ist Hilfe,
-   kein Aufschub (`PositionProgressService.cs:754` bucht nach Periodenschluss, ohne Feedback zu kennen).
-6. **Belohnung** für eine Frage, nach der die Karte sitzt? Berührt die Münz-Ökonomie, darum nicht hier entscheiden.
-   Empfehlung: keine Münzen für das Fragen selbst (sonst ein Farm-Weg); ob eine Folge-Verbesserung belohnt wird, gehört
-   in die Ökonomie-Diskussion um B-535.
-7. **Länge und Ton der Antwort:** Empfehlung: dieselbe Textgrenze wie `ExerciseFeedbackService.MaxTextLength` (500 Zeichen, `ExerciseFeedbackService.cs:15`), kein
-   Markdown. Kein LLM im Backend; ein Entwurf entsteht offline im Creator und wird vom Vater geprüft.
-8. **Abgrenzung zum Lob-Kanal [B-377](B-377-lob-kanal-des-vaters.md)** (`geschaetzt`, P3, Richtung Vater → Kind, noch
-   ohne Modell): derselbe Zielort beim Kind (Hinweis beim Öffnen). Empfehlung: den Hinweis-Unterbau
-   (`FeedbackNotice`) gemeinsam nutzen, die Modelle getrennt halten; B-586 zuerst, weil der Hinweis-Pfad schon steht.
-9. **Foto der Heftseite:** Empfehlung: ausdrücklich zweiter Schritt als eigene Story; ein Medien-Upload vom Kind ist
-   neu (Datenschutz, Größe, Anti-Cheat).
-10. **Bezug zum Leitbild Privatlehrer** ([Leitbild](../leitbild-privatlehrer.md), B-680/B-681): wenn künftig der
-    Lehrer-Agent statt des Vaters antwortet, ändert sich der Absender, nicht das Modell. Empfehlung: `RepliedBy` offen
-    für beide Rollen halten; die Rollenfrage selbst entscheidet der Nutzer dort.
+1. ~~**Eigene Entität oder Erweiterung von `ExerciseFeedback`?**~~ → Entscheidung 1.
+2. ~~**Mehrere Antworten oder genau eine?**~~ → Entscheidung 2.
+3. ~~**Wer darf antworten, wenn mehrere Betreuer die Frage sehen?**~~ → Entscheidung 3.
+4. ~~**Anti-Cheat im Test:**~~ → Entscheidung 4.
+5. **Pflicht:** hält eine offene Frage die Pflicht an? **Zurückgestellt** → Z1.
+6. **Belohnung** für eine Frage, nach der die Karte sitzt? **Zurückgestellt** → Z2.
+7. ~~**Länge und Ton der Antwort:**~~ → Entscheidung 5.
+8. ~~**Abgrenzung zum Lob-Kanal B-377:**~~ → Entscheidung 6.
+9. ~~**Foto der Heftseite:**~~ → Entscheidung 7.
+10. **Bezug zum Leitbild Privatlehrer:** wer antwortet, wenn nicht der Vater? **Zurückgestellt** → Z3.
 
 ## Entscheidungen
 
-Noch keine – Stufe `ausformuliert`.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-## Akzeptanzkriterien (Entwurf)
+1. **`ExerciseFeedback` wird um `ReplyText`, `RepliedAt` und `RepliedByAdultId` erweitert; eine „Frage“ ist eine Meldung nur mit
+   Text, es gibt keine zweite Art.** Eine Meldung allein mit Text ist schon erlaubt (`ExerciseFeedbackController.cs:53`), und der
+   Kontext (Karte, Lösung, Kinderantwort) liegt in der Betreuer-Sicht bereits vor (`FeedbackResponse` mit `Solution`, `ChildAnswer`).
+   Alle drei Spalten sind nullable und additiv. Verworfen: eine eigene Frage-/Antwort-Entität (zweiter Kanal neben dem
+   bestehenden). Kosten: eine Migration an die Kette (`migration: ja`, nachzusehen bei `geschaetzt`), eine neue Beziehung für
+   `RepliedByAdultId` (bewusste Zeile im Schema-Tor); Meldungen mit Grund („Übersetzung falsch“) können ebenfalls eine Antwort
+   bekommen. Ausgeschlossener Fall: eine Frage, die vom Fehlerbericht unterscheidbar sein muss; gegen die User Story („einen Satz an
+   meinen Vater schreiben“) ist das unschädlich, weil der Text allein schon die Frage ist.
+2. **Genau eine Antwort je Meldung; eine Rückfrage des Kindes ist eine neue Meldung.** Verworfen: ein Verlauf (anderes Produkt).
+   Kosten: kein Hin und Her im selben Faden. Ausgeschlossener Fall: ein Gespräch mit drei Nachrichten. Gegen die User Story
+   („seine Antwort in der App wiederfinden“) trägt das, weil nur eine Antwort verlangt ist.
+3. **Die Antwort kommt über `PATCH supervisor/feedback/{id}`: `UpdateFeedbackDto` bekommt ein optionales `ReplyText`, erlaubt nur
+   zusammen mit `Status = Done`.** Die erste Antwort gilt für alle Betreuer des Kindes (wie `Done`); ein anderer Betreuer bekommt
+   danach `409` mit einem neuen Code `feedback_replied`, der Antwortende selbst darf seinen Text ersetzen, solange das Kind ihn
+   nicht gesehen hat. Leerer oder nur aus Leerzeichen bestehender Text ist `validation_error`. Begründung: keine neue Action, die
+   Eigentumsprüfung (404 bei fremdem Kind, `FeedbackController.cs:58-60`) bleibt dieselbe. Verworfen: ein eigener
+   `…/reply`-Endpunkt. Kosten: ein neuer `ApiErrors`-Code, zwei Ausnahmeregeln. Ausgeschlossener Fall: zwei Betreuer
+   antworten widersprüchlich; gegen die User Story („kurzer Text“ eines Helfers) reicht eine Antwort.
+4. **Der Antworttext wird erst geliefert, wenn kein Test des Kindes (nicht vom Betreuer, nicht abgeschlossen, heutiger Tag) auf einer
+   Position derselben Übung läuft; der Hinweis „erledigt“ bleibt sichtbar, der Text ist bis dahin `null`.** Die Sperre sitzt im
+   Abruf (`NoticesAsync`), nicht nur im Schreiben. Der Info-Modus bleibt unberührt (dort wird nichts gewertet). Begründung: ohne
+   sie wäre der Abruf mit Text ein Lösungskanal, den das Lösungsfeld-Tor nicht sieht (siehe Ist-Stand). Verworfen: die Sperre nur
+   beim Antworten (der Vater antwortet nachmittags, das Kind sitzt abends im Test). Kosten: eine Abfrage mehr je Hinweis; die
+   Antwort kommt bis zum Testende verspätet. Ausgeschlossener Fall: ein Kind, das mitten im Test Hilfe bekommt; gegen die User
+   Story („nicht weiter falsch tippen“) heißt das auch: die Antwort erscheint erst beim nächsten Öffnen der Startseite, nicht
+   mitten in der Übung.
+5. **Die Antwort hat dieselbe Grenze wie die Meldung (`MaxTextLength = 500`, `ExerciseFeedbackService.cs`), nur Klartext; ein Entwurf
+   entsteht offline im Creator und wird vom Betreuer geprüft.** Kein LLM im Backend. Kosten: lange Erklärungen passen nicht.
+   Ausgeschlossener Fall: eine ausführliche, formatierte Erklärung.
+6. **Der Hinweis-Unterbau (`FeedbackNotice`, Abholen und `…/seen`) wird mit B-377 gemeinsam genutzt, die Modelle bleiben getrennt;
+   B-586 kommt zuerst.** `FeedbackNotice` bekommt ein optionales `ReplyText`. Kosten: B-377 muss später dasselbe Notice-DTO
+   erweitern. Ausgeschlossener Fall: ein gemeinsames Nachrichten-Modell für Antwort und Lob.
+7. **Das Foto der Heftseite ist nicht Teil dieser Story.** Ein Medien-Upload vom Kind ist neu (Datenschutz, Größe, Anti-Cheat;
+   ein `student/`-Upload existiert nicht). Kosten: kein Bild zur Frage. Ausgeschlossener Fall: „Frage per Foto“ aus dem
+   sofatutor-Vorbild. Eine Folge-Story ist bei Bestätigung anzulegen (nicht in diesem Lauf, der nur diese Datei ändert).
+
+**Zurückgestellt – nicht entschieden (Rollenaufteilung, Münzen, Malus):**
+
+- **Z1 · Hält eine offene Frage die Pflicht an?** Berührt die Malus-Regeln. *Empfehlung:* nein, der Malus läuft weiter; die Frage
+  ist Hilfe, kein Aufschub (`PositionProgressService.cs:754` bucht nach Periodenschluss, ohne Feedback zu kennen). Das
+  Akzeptanzkriterium 6 hält nur den heutigen Zustand fest (der Antwortpfad schreibt kein Hauptbuch-Objekt).
+- **Z2 · Belohnung für eine Frage, nach der die Karte sitzt?** Berührt die Münz-Ökonomie. *Empfehlung:* keine Münzen für das Fragen
+  selbst (sonst ein Farm-Weg); ob eine Folge-Verbesserung belohnt wird, gehört in die Diskussion um B-535.
+- **Z3 · Wer antwortet, wenn der Lehrer-Agent statt des Vaters antwortet?** Berührt die Rollenaufteilung Vater/Lehrer (Leitbild,
+  B-680/B-681). Heute ist die Antwort an `Roles.Supervisor` gebunden (`FeedbackController.cs:20`); ein reines Lehrer-Konto könnte nicht
+  antworten. *Empfehlung:* `RepliedByAdultId` trägt jeden `Adult`, der Absender wechselt, das Modell nicht; wer antworten darf,
+  entscheidet der Nutzer im Leitbild-Lauf.
+
+## Akzeptanzkriterien
 
 Je Kriterium: welche Änderung macht es rot.
 
-1. Antwortet ein Betreuer auf eine Meldung, liefert `GET student/children/{id}/feedback-notices` den Antworttext.
-   Rot, sobald `FeedbackNotice`/`NoticesAsync` den Text nicht mehr trägt.
-2. Eine Meldung ohne Antwort liefert beim Kind weiterhin nur „erledigt". Rot, wenn ein leerer Text als Antwort gilt.
-3. Antworttext ist ein Pflichtfeld des Antwort-Aufrufs und nach oben begrenzt; leerer oder zu langer Text liefert
-   `validation_error`. Rot, wenn die Prüfung fehlt.
-4. Ein Betreuer eines **fremden** Kindes antwortet nicht (404, nicht 403, wie `FeedbackController.cs:59`). Rot, wenn der
-   Besitzfilter fehlt.
-5. Während ein Test der Position läuft, liefert der Hinweis-Pfad keinen Antworttext (Lösungskanal). Rot, wenn die
-   Sperre nur beim Absenden, nicht beim Abholen greift.
-6. Die Antwort ändert Münzen, Pflichtstand und Malus des Kindes nicht. Rot, sobald der Antwort-Pfad ein Hauptbuch- oder
-   Fortschrittsobjekt schreibt (Regressionstest gegen `ChildPointsEntry`/`PositionGoalPenalty`).
-7. Das Kind sieht die Antwort einmal; nach `seen` verschwindet sie. Rot, wenn `SeenByChildAt` nicht mehr filtert.
-8. Das Vater-Web zeigt Frage, Karte, Lösung, Kinderantwort und ein Antwortfeld; der Antwortknopf ist während der
-   Anfrage gesperrt (`useAction`). Rot, wenn das Feld oder die Sperre fehlt.
+1. `PATCH supervisor/feedback/{id}` mit `Status = Done` und `ReplyText` auf eine Meldung nur mit Text: `GET
+   student/children/{id}/feedback-notices` liefert den Text, wenn kein Test läuft. Rot, sobald `FeedbackNotice`/`NoticesAsync`
+   den Text nicht trägt.
+2. `Done` ohne `ReplyText` liefert beim Kind `ReplyText = null`; ein leerer oder nur aus Leerzeichen bestehender Text ist
+   `validation_error`; `ReplyText` mit `Status = Open` ist `validation_error`. Rot, wenn ein leerer Text als Antwort gilt.
+3. Ein Text über 500 Zeichen liefert `validation_error`. Rot, wenn die Grenze fehlt.
+4. Ein Betreuer eines **fremden** Kindes bekommt `404` (nicht `403`). Rot, wenn der Besitzfilter fehlt.
+5. Läuft ein Test des Kindes auf einer Position derselben Übung, liefert der Abruf den Hinweis mit `ReplyText = null`; nach
+   Abschluss des Tests steht der Text da. Rot, wenn die Sperre nur beim Antworten oder gar nicht im Abruf sitzt.
+6. Der Antwortpfad schreibt kein `ChildPointsEntry` und keinen `PositionGoalPenalty` (Regressionstest). Rot, sobald er ein
+   Hauptbuch- oder Fortschrittsobjekt schreibt. (Hält nur den heutigen Zustand fest, siehe Z1.)
+7. Das Kind sieht die Antwort einmal; nach `…/seen` verschwindet der Hinweis. Rot, wenn `SeenByChildAt` nicht mehr filtert.
+8. Ein zweiter Betreuer bekommt auf eine beantwortete Meldung `409 feedback_replied`, der erste Text bleibt; der Antwortende darf
+   seinen Text vor `seen` ersetzen, danach nicht. Rot, wenn die zweite Antwort überschreibt oder der Antwortende nach `seen`
+   noch ersetzen darf.
+9. Das Vater-Web zeigt Frage, Karte, Lösung, Kinderantwort und ein Antwortfeld; der Antwortknopf ist während der Anfrage gesperrt
+   (`useAction`, `disabled={busy}`). Rot, wenn das Feld oder die Sperre fehlt.
+10. Der Hinweis auf der Sohn-Startseite zeigt den Antworttext (`KartenMeldung`/`SohnHome`, Komponententest). Rot, wenn das Frontend
+    `replyText` aus dem Vertrag nicht darstellt.
 
 ## Verlauf
 
@@ -132,3 +181,7 @@ Je Kriterium: welche Änderung macht es rot.
 - **2026-11-15** — umnummeriert von B-546 auf B-586: die Id war auf `origin/main` schon vergeben (main belegt bis B-552, der Backlog-Lauf vom 2026-11-15 bis B-584). Inhalt unverändert.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): Ist-Stand gegen den Code; der Hinweg besteht seit B-628/B-629, die Lücke
   ist die Antwort des Betreuers samt Auslieferung ans Kind; zehn offene Punkte mit Empfehlung.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt, `wartet_auf` gesetzt): Entscheidungen 1 bis 7;
+  **drei Punkte zurückgestellt** (Z1 Pflicht/Malus, Z2 Belohnung/Münzen, Z3 Absender Lehrer-Agent), weil sie Malus, Münz-Ökonomie
+  und Rollenaufteilung berühren. Am Code belegt: Der Hinweis-Abruf hat keine Test-Sperre, die ein Antworttext braucht;
+  das Lösungsfeld-Tor fängt `ReplyText` nicht. Akzeptanzkriterien final.

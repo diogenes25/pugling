@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/creator, lerntechnik/vokabeln]
 aliases: [Hinweis fehlt bei Fremdwort → Deutsch]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -80,32 +80,69 @@ die Zusicherung im Test.
 
 ## Offene Punkte
 
-1. **Wie erfährt der Creator es?** (a) Ein Erklärtext am Feld („ⓘ", Muster `FieldLabel`/`InfoHint` aus
-   `frontend/CLAUDE.md`), der die drei Fälle nennt; (b) die Spalte je Richtung ausgrauen; (c) ein eigenes
-   Schreib-Hinweisfeld je Zeile. **Empfehlung (a):** Frontend-only, keine Migration, und die Richtung steckt in der
-   Config, nicht im Zeilen-Zustand – (b) bräuchte Plumbing für einen Randfall. (c) ist eine neue Funktion, keine
-   Fehlerbehebung.
-2. **Soll der Hinweis auch beim Schreiben erscheinen?** **Empfehlung nein:** er nennt die deutsche Antwort, das
-   Schreiben fragt das Fremdwort. Wer einen Schreib-Hinweis will, hebt (c) als eigene Idee.
-3. **Gehört „back-to-front verliert den Hinweis überall" in dieselbe Story?** **Empfehlung ja:** gleiche Ursache,
-   derselbe Erklärtext, und ohne sie wäre der Text für diese Richtung falsch.
+1. ~~**Wie erfährt der Creator es?**~~ Entschieden: Entscheidung 1.
+2. ~~**Soll der Hinweis auch beim Schreiben erscheinen?**~~ Entschieden: Entscheidung 2.
+3. ~~**Gehört „back-to-front verliert den Hinweis überall" in dieselbe Story?**~~ Entschieden: Entscheidung 3.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-1. Die Spalte „Hinweis" im Editor trägt ein „ⓘ" mit einem Text, der Auswahl, Schreiben und die Richtung
-   `back-to-front` nennt. Rot macht es: die Überschrift bleibt ein nackter `<th>`-Text (heute so).
-2. Eine Vokabel-Übung mit Richtung `front-to-back` und Hinweis liefert auf der Auswahlstufe den Hinweis und auf
-   Kästchen, Buchstaben, Freitext und Diktat keinen. Rot macht es: `Swap` übernimmt den Hinweis, oder `Written`
-   wird ohne `Swap` gebaut.
-3. Dieselbe Übung mit `back-to-front` liefert auf **keiner** Stufe einen Hinweis. Rot macht es: `Swap` lässt den
-   Hinweis stehen.
-4. Mit `both` trägt die Vorwärtskarte den Hinweis auf der Auswahl, die Rückkarte nie. Rot macht es: `RecognitionOnly`
-   wird dem Hinweis zum Verhängnis oder die Rückkarte erbt ihn.
-5. Der Text aus AK 1 steht in `fieldHelp.ts` (nicht am Feld); ein Tippfehler im Thema fällt über `HelpTopic` beim
-   Übersetzen auf.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Ein Erklärtext am Feld, kein Ausgrauen und kein zweites Feld.** Das Thema `vocabularyHint` kommt in
+   `frontend/src/lib/fieldHelp.ts`; die Spalte „Hinweis" im Editor (`ExerciseEditModal.tsx:559`) trägt ein „ⓘ"
+   daran, ebenso das Zeilenfeld im Anlegen-Formular (`exerciseConfig.tsx:670`, `RowField` nimmt ein `topic`
+   schon an, `:773-782`). Begründung: die Richtung steckt in der Übungs-Config, nicht im Zeilen-Zustand
+   der Tabelle – ein Ausgrauen bräuchte Plumbing für einen Randfall und würde bei `both` doch wieder erklären
+   müssen; ein Schreib-Hinweisfeld wäre eine neue Funktion. Verworfen: (b) ausgrauen je Richtung, (c) eigenes
+   Schreib-Hinweisfeld. Kosten: der Text erreicht nur, wer das „ⓘ" anklickt; ein Creator, der es nie öffnet,
+   schreibt weiter Hinweise ins Leere. Ausgeschlossen wird damit der Fall der User Story, dass der Creator den
+   Verlust *nicht erfahren kann*; nicht ausgeschlossen: dass er ihn nicht liest. Das ist für einen Defekt
+   „Auskunft fehlt" der richtige Schnitt – ein Zwang wäre (c) oder (b).
+2. **Der Hinweis erscheint beim Schreiben weiterhin nicht.** Begründung: der Hinweis nennt die Antwort der
+   Erkennen-Karte (Artikel oder „beginnt mit h" der *Übersetzung*, `ExerciseContentResolver.cs:102`, `:150-153`);
+   auf Schreibstufen ist die Antwort das Fremdwort, und `Swap` löscht den Hinweis bewusst
+   (`ExerciseContentProvider.cs:114-116`, Kommentar: „it belonged to the word now being asked"). Verworfen: den
+   Hinweis auch auf der Schreibkarte zeigen. Kosten: ein Kind, das schreibt, bekommt keinen Hinweis, auch wenn
+   der Creator einen geschrieben hat; wer einen Schreib-Hinweis will, braucht eine eigene Idee (neues Feld je Zeile,
+   Migration, Vertragsbruch). Ausgeschlossen: dass ein Hinweis, der die deutsche Antwort verrät, beim
+   Schreiben die Lösung nennt. Das gehört zur User Story („keinen Hinweis schreiben, den das Kind nie sieht"),
+   weil der Text genau dort ansetzt.
+3. **`back-to-front` steht im selben Text.** Begründung: dieselbe Ursache (`Swap` mit `Hint = null`), und ein
+   Text, der nur „Fremdwort → Deutsch" nennt, wäre für diese Richtung falsch. Verworfen: eine eigene Story.
+   Kosten: der Text nennt drei Fälle statt einem und wird länger. Ausgeschlossen: ein Creator, der bei
+   „Deutsch → Fremdwort" einen Hinweis schreibt und glaubt, die Auswahlstufe zeige ihn.
+4. **Der Text spricht die Richtungen mit den Namen des Formulars an** („Fremdwort → Deutsch", „Deutsch → Fremdwort",
+   „beides"; `exerciseConfig.tsx:486-489`), nicht mit den Server-Schlüsseln. Begründung: der Creator sieht nur die
+   Namen. Kosten: ändert jemand die Beschriftung im Formular, driftet der Text – dafür sichert AK 3 den Wortlaut.
+5. **Die Zusicherungen zum Verwerfen (AK 2–4) sind Festschreibungen, keine Regressionstests.** Sie bestehen im
+   Ausgangszustand, weil das Verhalten stimmt; sie halten es, damit ein späterer Umbau den Text nicht zur Lüge
+   macht. Jede nennt die Änderung, die sie rot macht. Verworfen: sie wegzulassen (dann hängt der Text an Kommentaren
+   wie `PositionTestFlowTests.cs:511`). Kosten: drei Backend-Tests, die heute grün sind. Das Regressionskriterium
+   des Defekts ist AK 1 (rot vor der Änderung).
+
+## Akzeptanzkriterien
+
+Final; je Kriterium die Änderung, die es rot macht.
+
+1. Die Spalte „Hinweis" im Editor einer Vokabel-Übung trägt einen Knopf `Erklärung zu „Hinweis"`; im Anlegen-Formular
+   das Zeilenfeld „Hinweis". Rot macht es: die Überschrift bleibt ein nackter `<th>`-Text (heute so) – Vitest am
+   Editor, `getByRole("button", { name: /Erklärung zu „Hinweis"/ })` (vor der Änderung rot).
+2. Der Text aus AK 1 nennt die Auswahlstufe, das Schreiben und die Richtung „Deutsch → Fremdwort" beim Namen und steht
+   als `FIELD_HELP.vocabularyHint` in `fieldHelp.ts`, nicht am Feld; `fieldHelp.test.ts` prüft die drei Nennungen. Rot
+   macht es: ein Satz gestrichen, etwa die Richtung, oder der Text direkt ins JSX geschrieben (der Test liest
+   `FIELD_HELP`, das Thema fehlt dann); ein Tippfehler im Themennamen fällt über `HelpTopic` beim Übersetzen auf.
+3. Festschreibung: eine Vokabel-Übung mit Richtung `front-to-back` und eigenem Hinweis liefert auf der Auswahlstufe
+   den Hinweis und auf Kästchen, Buchstaben, Freitext und Diktat keinen. Rot macht es: `Swap` übernimmt den Hinweis
+   (`ExerciseContentProvider.cs:128`), oder `Written` wird ohne `Swap` gebaut (`ExerciseContentResolver.cs:120-122`).
+4. Festschreibung: dieselbe Übung mit `back-to-front` liefert auf **keiner** Stufe einen Hinweis. Rot macht es:
+   `Swap` lässt den Hinweis stehen.
+5. Festschreibung: mit `both` trägt die Vorwärtskarte den Hinweis auf der Auswahl, die Rückkarte nie. Rot macht es:
+   die Rückkarte erbt ihn, oder `RecognitionOnly` (`ExerciseContentProvider.cs:100`) kappt die Vorwärtskarte so, dass
+   sie auf der Auswahl keinen Hinweis mehr trägt.
 
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 82 (🟡 des `pugling-reviewer`), `entgangen_bei: [B-597]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): Verwerfen je Richtung am Code belegt; die Lücke ist breiter
   (`back-to-front` verliert den Hinweis schon auf der Auswahl, auch vor B-597); „7 Übungen" nicht nachprüfbar.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): fünf Entscheidungen; Erklärtext in `fieldHelp.ts`, kein Schreib-Hinweisfeld; AK 3–5 sind Festschreibungen.

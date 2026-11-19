@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/test, rolle/entwickler]
+tags: [typ/story, status/gegrillt, bereich/test, rolle/entwickler]
 aliases: [E2E-Worker hängt]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -60,6 +60,10 @@ in `frontend/node_modules/playwright` (installiert 1.65.1; `frontend/package.jso
    (kein Protokoll nennt die Uhrzeit). Ob der Rechner in dieser Zeit schlief oder gedrosselt war (Windows kann
    Hintergrundprozesse bremsen), lässt sich daher aus dem Repo nicht entscheiden.
 
+8. **Ergänzung beim Grillen:** `__stop__` ruft `gracefullyCloseAndExit(false)` (`node_modules/playwright/lib/common/index.js:2027`).
+   Ein Worker, der lebt, aber im Aufräumen hängt, schickt Herzschläge und wird nie für tot erklärt; die Frist trifft nur den
+   stehenden Prozess. Beobachtet wurde dieser Fall nicht.
+
 ## Die echte Lücke
 
 Anders als die Idee sagt, ist nicht „welcher Handle?“ die Frage, sondern **„warum stand der Worker-Prozess fünf Minuten
@@ -76,42 +80,91 @@ Umgebungsvariable dafür kennt. Das lässt sich ohne Kenntnis der Ursache behebe
 
 ## Offene Punkte
 
-1. **Diagnose vor Reparatur oder umgekehrt?** Empfehlung: **beides getrennt, die billige Hälfte zuerst:** die
-   Erkennungsfrist verkürzen (`PWTEST_CHILD_PROCESS_TIMEOUT`, etwa 60000), dann beim nächsten
-   Auftreten die Ursache eingrenzen. Eine Frist unter dem Herzschlag-Takt ist unkritisch: ein lebender Worker meldet
-   sich jede Sekunde.
-2. **Wo steht die Variable?** Empfehlung: oben in `frontend/playwright.config.ts` als
-   `process.env.PWTEST_CHILD_PROCESS_TIMEOUT ??= "60000"`. Der Läufer liest sie erst beim Beenden
-   (`runner/index.js:2107`), die Konfiguration ist dann längst geladen; so gilt sie für jeden Aufruf, auch ein
-   blankes `playwright test`, und ist Windows-fest (kein `VAR=x cmd`). Ob der Läufer die Konfiguration im selben
-   Prozess auswertet, in dem `stop()` später läuft, ist nicht geprüft – das klärt die Probe aus Kriterium 2.
-3. **Wie viel Aufwand für die Ursache?** Empfehlung: **ein Zeitfenster**: beim nächsten Hänger (a) Uhrzeit und
-   Rechnerzustand notieren, (b) `powercfg /lastwake` bzw. das Ereignisprotokoll nach Ruhezustand befragen, (c) den
-   Worker mit `node --cpu-prof` oder einem Herzschlag-Logger fahren. Taucht der Fall in fünf vollen Läufen nicht mehr
-   auf, wird die Story mit Grund „nicht reproduzierbar“ **verworfen** – das entscheidet der Nutzer, nicht der Lauf.
-4. **Soll `why-is-node-running` (Idee) oder `PWDEBUG=0` (Idee) eingesetzt werden?** Empfehlung: **nein.** `why-is-node-running`
-   benennt offene Handles, und die sind nach Punkt 3 nicht die Ursache; `PWDEBUG` setzt hier niemand (in `playwright.config.ts`
-   und `package.json` nicht gefunden), eine Null davor ändert nichts.
-5. **Sollen die Kontexte in `bilder.spec.ts` in `try/finally` schliessen?** Empfehlung: **nein, nicht hier.** Das
-   ist ein Aufräum-Gedanke ohne Bezug zur Ursache; ein Rot in der Mitte ist ohnehin ein anderer Fehler. Wenn überhaupt,
-   gehört er in eine eigene Aufräum-Story.
+1. ~~**Diagnose vor Reparatur oder umgekehrt?**~~ → Entscheidung 1 (die billige Hälfte zuerst) und Entscheidung 3.
+2. ~~**Wo steht die Variable?**~~ → Entscheidung 2.
+3. ~~**Wie viel Aufwand für die Ursache?**~~ → Entscheidung 3 (das Verwerfen bleibt beim Nutzer).
+4. ~~**Soll `why-is-node-running` oder `PWDEBUG=0` eingesetzt werden?**~~ → Entscheidung 4.
+5. ~~**Sollen die Kontexte in `bilder.spec.ts` in `try/finally` schließen?**~~ → Entscheidung 4.
+6. ~~**Deckt die Frist auch den Hänger mitten im Lauf?**~~ → Entscheidung 5 (neu beim Grillen: nein).
 
-## Entwurf der Akzeptanzkriterien
+## Entscheidungen
 
-1. Ein Hänger des Workers endet innerhalb von etwa 60 Sekunden mit der bekannten Meldung, nicht nach 5 Minuten.
-   *Rot, wenn* die Variable aus der Konfiguration entfernt wird: die Probe aus Kriterium 2 braucht dann 5 Minuten statt 1.
-2. Eine **Wegwerf-Probe** außerhalb von `frontend/e2e` (nicht ins Repo) belegt die Deutung aus Punkt 2 des Ist-Stands:
-   ein Test blockiert den Worker synchron länger als der Test-Timeout (`while (Date.now() < …)`), der Lauf trägt
-   `PWTEST_CHILD_PROCESS_TIMEOUT=10000`. Erwartet: dieselbe Meldung („did not exit within 10000ms after stop,
-   force-killed it“) – damit ist belegt, dass die Meldung einen stehenden Worker meint und nicht einen offenen Handle.
-   *Rot, wenn* stattdessen ein Handle ohne Blockierung dieselbe Meldung erzeugt (dann ist Punkt 2 falsch und die
-   Ursachenliste neu zu ordnen).
-3. Die Ursache des Hängers vom 2026-11-16 ist **entweder** benannt (mit Beleg: Zeitstempel, Rechnerzustand, Profil)
-   **oder** die Story endet mit dem Befund „nicht reproduzierbar“ und einem Zähler („in N vollen Läufen nicht wieder
-   aufgetreten“). *Rot, wenn* eine Ursache behauptet wird, ohne dass Kriterium 2 oder ein Profil sie trägt – als
-   Durchsicht bei der Abnahme, kein Tor.
-4. `bilder.spec.ts` und die übrige Suite bleiben unverändert grün (166/168 je nach Stand); die Änderung berührt keine Spec.
-   *Rot, wenn* der Diff eine Spec berührt – Durchsicht.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Die billige Hälfte zuerst: die Erkennungsfrist des Beendens wird auf 45 Sekunden gesetzt; die Ursache bleibt eine
+   eigene, später folgende Hälfte.** Begründung: Die Frist ist `PWTEST_CHILD_PROCESS_TIMEOUT` mit 5 Minuten als Vorgabe
+   (`node_modules/playwright/lib/runner/index.js:2107`) und rechnet ab dem **letzten Herzschlag**
+   (`:2108-2117`); ein lebender Worker schickt beim Beenden jede Sekunde einen (`lib/common/index.js:2046`, `:2054-2055`). Eine
+   Frist von 45 s tötet also nur einen Prozess, dessen Ereignisschleife stillsteht, und liegt unter der Minute, die die
+   User Story verlangt (Herzschlag eine Sekunde plus Frist). 60 s wären die Grenze selbst; 45 s lassen Luft. Die Variable
+   ist am Code der installierten Version 1.65.1 gelesen; `package.json` verlangt `^1.61.1`, ein Playwright-Update kann sie
+   umbenennen – Akzeptanzkriterium 1 fängt das (die Meldung zeigt wieder 300000 ms). Verworfen: erst die Ursache suchen (die
+   Erkennung dauert in jedem Fall 5 Minuten, auch wenn die Ursache offen bleibt) und `PWTEST_FORCE_EXIT_TIMEOUT` (das ist eine
+   Frist **im Worker** nach einem Trennen, `lib/common/index.js:2011`, `:2047`, und trifft den stehenden Worker nicht).
+   Kosten: Ein Rechner, der mitten im Beenden länger als 45 s ruht, verliert die Nacharbeit dieses Workers (Spuren eines
+   roten Falls); die Testergebnisse sind da schon gemeldet. Ausgeschlossener Fall: ein **lebender** Worker mit hängendem
+   Aufräumen. `__stop__` ruft `gracefullyCloseAndExit(false)` (`lib/common/index.js:2027`), solange die Schleife lebt, kommen
+   Herzschläge, und der Läufer wartet für immer – diese Frist erwischt ihn nie. Beobachtet wurde er nicht; gegen die User
+   Story („ein hängender Worker fällt binnen einer Minute auf“) ist er der Teil, den sie nicht deckt.
+2. **Die Variable steht oben in `frontend/playwright.config.ts` als `process.env.PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"`.**
+   Begründung: Der Läufer liest sie erst im Beenden (`runner/index.js:2107`), die Konfiguration ist dann geladen; so gilt sie
+   für jeden Aufruf, auch ein blankes `playwright test`, und unter Windows ohne `VAR=x cmd`. `??=` lässt eine von außen gesetzte
+   Frist gewinnen (die CI-Workflow-Datei `e2e.yml` setzt keine, und braucht keine Änderung). Dass der Läufer die Konfiguration
+   im selben Prozess auswertet, in dem später `stop()` läuft, ist am Code nicht belegt – das klärt die Probe aus
+   Akzeptanzkriterium 1. Verworfen: ein Skript in `package.json` mit der Variablen (ein Aufruf ohne das Skript hätte wieder
+   fünf Minuten) und ein Eintrag in `.github/workflows/e2e.yml` (nur CI, nicht lokal; dort war der Hänger nicht). Kosten: eine
+   Zeile mit einem Kommentar, der Grund und Herkunft nennt. Ausgeschlossener Fall: ein Aufruf eines anderen Läufers (etwa
+   `npx playwright` aus einem anderen Ordner); gegen die User Story (derselbe Lauf, den der Entwickler startet) trägt es,
+   weil jeder Aufruf aus `frontend/` die Konfiguration lädt.
+3. **Die Ursache bekommt ein Zeitfenster, keine Dauerinstrumentierung; „nicht reproduzierbar, verworfen“ bleibt eine
+   Entscheidung des Nutzers.** Beim nächsten Hänger werden (a) Uhrzeit und Rechnerzustand notiert, (b) `powercfg /lastwake`
+   bzw. das Ereignisprotokoll nach Ruhezustand befragt, (c) der Worker mit `node --cpu-prof` oder einem Herzschlag-Protokoll
+   gefahren. Belegt am Code: Die Meldung bedeutet fünf Minuten **ohne einen einzigen Herzschlag** (`runner/index.js:2108-2117`),
+   ein offener Handle blockiert das Beenden nicht (`processExit(0)` nach `gracefullyClose`,
+   `lib/common/index.js:2056-2060`); die Ursachenliste der „echten Lücke“ gilt. Es fand sich im Repo kein weiterer Fall
+   (Stichwortsuche in den Protokollen vom 17. und 18.11. ohne Treffer, ein Zeitstempel des Vorfalls steht nirgends).
+   Vorschlag, nicht Beschluss: Taucht er in fünf vollen Läufen nach der Reparatur nicht wieder auf, schlägt die Story selbst
+   die Verwerfung „nicht reproduzierbar“ vor; die Zahl fünf ist eine Setzung (ein voller Lauf dauert gemessen 21 Minuten),
+   nicht aus Daten gerechnet. Verworfen: die Story jetzt verwerfen (ein Einzelfall ist keine Messreihe, und die Frist aus
+   Entscheidung 1 ist unabhängig davon wert) und Dauer-Logging im Worker (kostet in jedem Lauf für einen seltenen Fall).
+   Kosten: Die Ursache bleibt vorerst offen. Ausgeschlossener Fall: ein Hänger, der nie wiederkommt – er kostet nichts mehr
+   als diese Story schon kostet.
+4. **Weder `why-is-node-running` noch `PWDEBUG=0` noch ein `try/finally` um die Kontexte in `bilder.spec.ts`.** Begründung:
+   `why-is-node-running` benennt offene Handles, und die sind nach Entscheidung 3 nicht die Ursache; `PWDEBUG` setzt hier
+   niemand (in `playwright.config.ts` und `package.json` nicht gefunden), eine Null davor ändert nichts; die Kontexte
+   schließen erst am Ende (`bilder.spec.ts:229-230`), ein Fehler in der Mitte lässt sie offen – das betrifft Chromium, nicht die
+   Schleife des Workers und nicht diese Story. Verworfen: alle drei. Kosten: Ein sauberes Aufräumen in `bilder.spec.ts`
+   bleibt liegen. Ausgeschlossener Fall: ein Rot in der Mitte von `bilder.spec.ts`, das einen Kontext offen lässt; ein
+   anderer Fehler, den dieses Rot selbst meldet.
+5. **Zurückgestellt: der Hänger mitten im Lauf („über zehn Minuten ohne eine Zeile“).** Die Frist aus Entscheidung 1 greift
+   erst im Beenden; mitten im Lauf gibt es im Läufer keine Wache für einen stehenden Worker – der Test-Timeout (60 s) läuft als
+   Zeitgeber **im** Worker und feuert nicht, wenn seine Schleife steht (Ist-Stand 4). Einzig `globalTimeout` beendet so einen
+   Lauf von außen, müsste aber über der längsten Suite liegen (21 Minuten gemessen) und meldete den Hänger damit nach über
+   21 Minuten. Zurückgestellt: erst die Ursache (Entscheidung 3), dann entscheidet sich, ob ein Wächter außerhalb des Läufers
+   (ein Skript, das auf Zeilen der Ausgabe achtet) lohnt. Gegen die User Story gerechnet ist das die Lücke: „ein voller Lauf
+   schweigt zehn Minuten“ bleibt, bis die Ursache bekannt ist.
+
+## Akzeptanzkriterien
+
+Je Kriterium: die Änderung, die es rot macht.
+
+1. Mit der Zeile in `frontend/playwright.config.ts` endet ein blockierter Worker nach etwa 45 s mit „did not exit within
+   45000ms after stop, force-killed it“. Probe **außerhalb des Repos**: eine Wegwerf-Konfiguration importiert die echte
+   Konfiguration (damit deren Zeile läuft), nimmt `globalSetup`/`webServer` heraus und hat eine Wegwerf-Spec, die den Worker
+   mit `while (Date.now() < …)` länger als den Test-Timeout blockiert; Start mit der lokalen Binary
+   (`./node_modules/.bin/playwright`, nicht `npx`). Rot, wenn die Zeile entfernt wird: nach 90 s steht keine Meldung da
+   (sie käme erst bei 300000 ms).
+2. Deutung belegt: dieselbe Wegwerf-Probe, aber mit einem offenen Handle statt einer Blockierung (`setInterval` ohne
+   `unref` in der Spec): der Worker beendet sich ohne die Meldung. Rot, wenn der Handle dieselbe Meldung erzeugt – dann ist
+   die Deutung des Ist-Stands falsch und die Ursachenliste neu zu ordnen. Das Ergebnis beider Proben steht im `## Verlauf`.
+3. Die Ursache des Hängers vom 2026-11-16 ist **entweder** benannt (Zeitstempel, Rechnerzustand, Profil) **oder** die Story
+   endet mit dem Befund „nicht reproduzierbar“ samt Zähler („in N vollen Läufen nicht wieder aufgetreten“) und der
+   Verwerfung durch den Nutzer. **Absichtserklärung**, kein Test: Rot wäre eine Ursache ohne Beleg aus Kriterium 2 oder einem Profil;
+   Durchsicht bei der Abnahme.
+4. Der Diff berührt genau `frontend/playwright.config.ts`, keine Spec und keinen Workflow (`git diff --stat`). Rot, wenn eine
+   zweite Datei im Diff steht.
+5. Die volle Suite läuft danach wie vorher durch; gezählt wird „N passed“ in der Ausgabe, nicht der Exit-Code. Rot, wenn die
+   Konfiguration nicht mehr lädt oder die Zahl der bestandenen Fälle sinkt.
 
 ## Verlauf
 
@@ -120,3 +173,4 @@ Umgebungsvariable dafür kennt. Das lässt sich ohne Kenntnis der Ursache behebe
   Playwright-Code (Herzschlag während des Beendens, `processExit(0)`); die Meldung bedeutet „fünf Minuten kein
   Herzschlag“. Nichts gemessen oder gestartet; Vorschlag an den Nutzer: nach dem Bau mit Verwerfen „nicht
   reproduzierbar“ rechnen, falls der Fall nicht wiederkehrt.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Billige Hälfte zuerst: `PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"` in `playwright.config.ts`, geprüft über eine Wegwerf-Konfiguration, die die echte importiert. Die Frist deckt nur den Hänger im Beenden, nicht den mitten im Lauf (zurückgestellt) und nicht einen lebenden Worker mit hängendem Aufräumen. Die Ursache bleibt ein Zeitfenster; „nicht reproduzierbar, verworfen“ ist ein Vorschlag, die Entscheidung bleibt beim Nutzer. Akzeptanzkriterien final, je mit roter Änderung.

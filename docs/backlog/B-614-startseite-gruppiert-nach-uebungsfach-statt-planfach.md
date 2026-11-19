@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
 aliases: [Fach der Übung statt des Plans]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -46,9 +46,10 @@ sein Fach geschrieben hat.
 - **Gruppierung im Frontend:** `nachFach` gruppiert nach `pos.subjectName ?? ""` (`frontend/src/sohn/tagessicht.ts:25`),
   einziger Aufrufer `frontend/src/sohn/SohnHome.tsx:84`; die Überschrift ist `f.fach || t("home.noSubject")` (`:134`).
   Andere Leser von `PositionStatus.subjectName` im Sohn-Frontend: nicht gefunden.
-- **Tests:** `tagessicht.test.ts` und `tagessichtWeg.test.tsx` setzen `subjectName` von Hand; ein Backend-Test, der den
-  Fachnamen einer `PositionStatus` prüft, ist nicht gefunden (`KindTagessichtTests` kennt kein Fach;
-  `FachnameFolgtDerFachIdTests` prüft Reihe, Profil und Lehrbuch, nicht den Status).
+- **Tests:** `tagessicht.test.ts` und `tagessichtWeg.test.tsx` setzen `subjectName` von Hand. Im Backend prüft
+  `KindTagessichtTests.cs:143` den Namen einer Position (`StartsWith("Englisch-Pos")`, das Fach der **Reihe**) – die
+  Ausformulierung hatte das übersehen und „nicht gefunden“ geschrieben; die Zusicherung hält den alten Sinn fest
+  (Akzeptanzkriterium 5). `FachnameFolgtDerFachIdTests` prüft Reihe, Profil und Lehrbuch, nicht den Status.
 
 ## Die echte Lücke
 
@@ -60,36 +61,90 @@ oft er vorkommt, ist nicht gemessen. Die Söhne haben je Fach einen Plan, darum 
 
 ## Offene Punkte
 
-1. **Wo wird umgestellt – am Server oder im Frontend?** Empfehlung: am Server. `SubjectName` bekommt die Bedeutung
-   „Fach des Plans"; das Frontend liest nur dieses Feld (eine Fundstelle). Ein Gruppieren nach `planId` im Frontend
-   würde die Fach-Reiter an den Plantitel binden, den der Vater frei benennt. Die Vertragsform bleibt, nur die Bedeutung
-   ändert sich.
-2. **Plan ohne Fach (Altbestand, `SetNull`)?** Empfehlung: Rückfall auf den heutigen Namen der Reihe, damit keine Gruppe
-   ohne Namen entsteht, die es vorher mit Namen gab.
-3. **Soll eine fachfremde Übung im Plan sichtbar markiert werden?** Empfehlung: nein, hier nicht. Ob die Anlage so etwas
-   überhaupt zulassen soll, ist eine Frage an `PlanPositionsController` und eine eigene Story.
-4. **Der Plantitel im Feld `SubjectName`?** Nein – das Fach ist `Subject.Name`, der Plantitel bleibt `PlanTitle`.
+1. ~~**Wo wird umgestellt – am Server oder im Frontend?**~~ → Entscheidung 1.
+2. ~~**Plan ohne Fach (Altbestand, `SetNull`)?**~~ → Entscheidung 2.
+3. ~~**Soll eine fachfremde Übung im Plan sichtbar markiert werden?**~~ → Entscheidung 4 (zurückgestellt, eigene Story).
+4. ~~**Der Plantitel im Feld `SubjectName`?**~~ → Entscheidung 1 (nein, das Fach ist `Subject.Name`).
+5. ~~**Wie kommt der Fachname des Plans in die Berechnung?**~~ → Entscheidung 3 (neu beim Grillen: die Aufrufer laden den
+   Plan verschieden).
 
 ## Entscheidungen
 
-Keine – eine Defekt-Story geht erst mit `gegrillt` in die Entscheidungen.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Der Server liefert das Fach des Plans: `PositionStatus.SubjectName` bedeutet künftig `StudyPlan.Subject.Name`.** Begründung:
+   Die Gruppierung hat genau eine Fundstelle (`frontend/src/sohn/tagessicht.ts:25`, einziger Aufrufer
+   `SohnHome.tsx:84`); wer den Namen am Server richtig macht, ändert das Frontend nicht. Die Vertragsform (`string SubjectName`,
+   `ProgressDtos.cs:49`) bleibt, nur der XML-Doc-Satz darüber (`ProgressDtos.cs:28-30`, „the subject of its content, taken
+   from the exercise's textbook series“) wird nachgezogen. Andere Leser des Felds: im Sohn-Frontend nicht gefunden
+   (`grep subjectName` ergibt nur `tagessicht.ts`), im Vater-Frontend nur andere DTOs (`ChildCarePanels.tsx:160`,
+   `ChildMaterialSection.tsx:86`), in `Pugling.Client`/`Agent.Creator` keine `PositionStatus`-Leser; im Backend liest nur
+   `KindTagessichtTests.cs:143` das Feld (siehe Akzeptanzkriterium 5). Verworfen: nach `planId` gruppieren (bindet die Reiter
+   an den Plantitel, den der Vater frei benennt; zwei Pläne desselben Fachs sollen weiter eine Gruppe sein, wie
+   `tagessicht.test.ts:17` es festhält) und ein zusätzliches Vertragsfeld `PlanSubjectName` (additiv, aber ein zweites Feld
+   für dieselbe Aussage, und das alte bliebe als Falle stehen). Kosten: ein Feld ändert seine Bedeutung ohne Typänderung;
+   `docs/api-examples/` und `contract.ts` ziehen über den Doku-Mitschnitt bzw. die Generierung nach, kein Handgriff. Ausgeschlossener
+   Fall: ein Client, der das Fach der **Übung** wollte – gegen die User Story („so gegliedert, wie der Vater die Pläne
+   angelegt hat“) ist das der Fall, der verschwinden soll.
+2. **Ein Plan ohne `SubjectId` behält den heutigen Namen der Reihe als Rückfall** (`Subject.Name ?? SubjectName ?? ""`, die
+   bisherige `SubjectNameOf`). Begründung: Die Spalte ist nullable (Altbestand, gelöschtes Fach → `SetNull`,
+   `StudyPlanEntities.cs:77-84`); ohne Rückfall fiele die Gruppe eines Altplans von ihrem Namen auf „ohne Fach“
+   (`home.noSubject`), eine Verschlechterung für genau die Pläne, die der Vater noch nicht nachgepflegt hat. Verworfen: leerer
+   Name (verliert die Überschrift, die es vorher gab). Kosten: der Rückfallzweig bleibt, und damit die Kette
+   `Series → Subject` in `LoadPositionsAsync` (`PositionProgressService.cs:284-289`); [B-609](B-609-truhe-rechnet-den-tag-doppelt.md)
+   fasst sie in Entscheidung 3 ausdrücklich nicht an, die beiden Stories stören sich also nicht. Ausgeschlossener Fall: ein Altplan ohne Fach mit einem
+   Lehrwerk ohne Fach bleibt „ohne Fach“; gegen die User Story trägt das, weil der Vater dort kein Fach angelegt hat, das
+   die Liste zeigen könnte.
+3. **`ComputeChildDayAsync` lädt die Pläne mit `Subject`; `ComputeDayAsync` holt den Namen selbst nach, wenn `SubjectId`
+   gesetzt, die Navigation aber leer ist.** Begründung (am Code geprüft): Die Aufrufer laden den Plan verschieden –
+   `ComputeChildDayAsync` ohne `Include` (`PositionProgressService.cs:409-412`), `PlanOverviewController.GetPlan`
+   `AsNoTracking` ohne `Include` (`PlanOverviewController.cs:25-26`, Aufruf `:40`), die übrigen Aufrufer über
+   `ChildrenDashboardService.cs:77`, `ProgressAsync` (`:875`) und `EvaluateAndAwardAsync` (`:587`). Ein Vertrag „der Aufrufer
+   lädt `Subject`“ liefe bei einem vergessenen `Include` still in den Rückfall (Entscheidung 2), also in den heutigen Fehler.
+   Verworfen: `Include` bei jedem Aufrufer (fragil, lautlos) und der Name über `PlanPosition.StudyPlan.Subject` in
+   `LoadPositionsAsync` (hängt an einer Navigation, die zur übergebenen `plan`-Instanz parallel lebt). Kosten: eine
+   zusätzliche Abfrage nach der Primärschlüssel-Zeile des Fachs je `ComputeDayAsync`-Aufruf ohne vorgeladenes `Subject`;
+   auf der Startseite (`ComputeChildDayAsync` lädt es mit) fällt sie weg, in den Verlaufsschleifen (`ProgressAsync`,
+   Dashboard-Zeitachse) fällt sie je Tag an – ein Befehl von mehr als 60 je Verlaufstag bei 15 Positionen, geschätzt, nicht
+   gemessen (Rechnung in B-609, Entscheidung 3). Ausgeschlossener Fall: ein Aufrufer, der `Subject` vorlädt, zahlt nichts. Gegen die User Story gerechnet: jeder Weg, der `SubjectName` an ein Kind
+   ausgibt, liefert dasselbe Fach – sonst zeigte die Plan-Übersicht eine andere Überschrift als die Startseite.
+4. **Die fachfremde Übung im Plan bleibt hier unberührt; ob die Anlage sie zulassen soll, ist eine eigene Frage
+   (zurückgestellt).** Begründung: In `PlanPositionsController` kommt „Subject“ nicht vor; nur der Wiederholungs-Pfad prüft das
+   Fach (`WeakWordReviewService.cs:87`, `ReviewSubjectMismatch`). Eine Sperre ändert, was der Vater anlegen darf, und
+   berührt Pläne im Bestand; das ist nicht „den Namen richtig herstellen“. Verworfen: die Sperre in dieser Story (ein
+   Verhaltenswechsel an einem Schreibweg, den kein Akzeptanzkriterium des Defekts braucht). Kosten: Positionen mit fremdem
+   Fach erscheinen künftig unter dem Fach des Plans, ohne dass jemand es merkt. Ausgeschlossener Fall: eine Übung, deren Fach
+   das Kind an der Überschrift erkennen wollte – gegen die User Story trägt das, weil die Gliederung ausdrücklich die des
+   Vaters sein soll. Zurückgestellt bis zu einer Messung am echten Bestand (wie viele Positionen haben ein anderes Fach
+   als ihr Plan); eine Story dafür entsteht erst, wenn die Zahl über null liegt.
 
 ## Akzeptanzkriterien
 
-Entwurf; je Kriterium die Änderung, die es rot macht.
+Je Kriterium: die Änderung, die es rot macht.
 
-1. Eine Position, deren Übung in einer Reihe mit anderem Fach liegt als der Plan, meldet in `student/children/{id}/today`
-   das Fach des Plans. Rot, wenn `SubjectNameOf` weiter nur die Reihe liest.
-2. Zwei Positionen desselben Plans, deren Reihen „Englisch" (Katalog) bzw. „English" (Freitext) heißen, melden denselben
-   Fachnamen. Rot, wenn der Name aus der Reihe kommt.
-3. Ein Plan ohne `SubjectId` meldet den Namen der Reihe wie bisher. Rot, wenn der Rückfall fehlt (dann leer).
-4. Der Plan wird mit seinem Fach geladen, ohne zusätzliche Abfrage je Position. Rot, wenn `ComputeChildDayAsync` das
-   `Subject` nicht lädt und das Fach still leer bleibt (AK 1 deckt es ab).
-5. Zwei Pläne desselben Fachs stehen auf der Startseite weiter in einer Gruppe (`tagessicht.test.ts`, vorhanden). Rot,
-   wenn die Gruppierung auf `planId` umgestellt wird.
+1. Eine Position, deren Übung in einer Reihe mit anderem Fach liegt als der Plan, meldet in
+   `student/children/{id}/today` das Fach des Plans (Reihe „Mathe-x“, Plan „Englisch“ → `Englisch`). Rot, wenn
+   `SubjectNameOf` weiter nur die Reihe liest.
+2. Zwei Positionen desselben Plans, deren Reihen „Englisch“ (Katalog) bzw. „English“ (Freitext) heißen, melden beide den
+   Namen des Plan-Fachs. Rot, wenn der Name aus der Reihe kommt.
+3. Ein Plan ohne `SubjectId` meldet den Namen der Reihe wie bisher (Katalogname, sonst Freitext, sonst leer). Rot, wenn
+   der Rückfall fehlt (dann ist der Name leer).
+4. `student/study-plans/{planId}/overview` – dort wird der Plan ohne `Include` geladen (`PlanOverviewController.cs:25-26`) –
+   liefert dasselbe Plan-Fach wie die Startseite. Rot, wenn `ComputeDayAsync` den Namen nur aus `plan.Subject` liest und
+   bei leerer Navigation auf die Reihe zurückfällt.
+5. Die bestehende Zusicherung `Assert.StartsWith("Englisch-Pos", …)` in `KindTagessichtTests.cs:143` wird auf das Fach des
+   Testplans umgeschrieben (`TestApi.SeedLeitnerPosition` setzt `SubjectId` auf „Englisch“, `TestApi.cs:318-324`).
+   Rot, sobald die Umstellung steht und die Zusicherung unverändert bleibt (Plan-Fach „Englisch“ ≠ Reihen-Fach
+   „Englisch-Pos…“): sie hält den alten Sinn („Fach der Reihe“) fest. Umgeschrieben ist sie rot, wenn der Name wieder aus der
+   Reihe kommt.
+6. Das Frontend bleibt unverändert: `tagessicht.test.ts:17` (zwei Pläne eines Fachs, eine Gruppe) bleibt grün. Rot, wenn die
+   Gruppierung auf `planId` umgestellt wird.
+7. Der XML-Doc-Satz zu `SubjectName` in `ProgressDtos.cs` nennt das Fach des Plans, nicht der Übung (Durchsicht bei der
+   Abnahme, kein Tor: ein Kommentar ist nicht mechanisch prüfbar).
 
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 83 (🟢, `pugling-reviewer`), `entgangen_bei: [B-606]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): am Code bestätigt; Lücke geschärft (Gruppe hängt am
   Lehrwerk; Plan wird ohne `Subject` geladen), fachfremde Positionen sind nicht ausgeschlossen. `unverifiziert` entfällt.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 4. Server liefert das Fach des Plans (Bedeutung von `SubjectName` ändert sich, Vertragsform bleibt), Rückfall auf die Reihe bei Plan ohne Fach, Plan-Fach wird in `ComputeDayAsync` nachgeladen, wo die Aufrufer es nicht mitbringen (`PlanOverviewController` lädt ohne `Include`). Gegen den Code korrigiert: `KindTagessichtTests.cs:143` liest `subjectName` und hält den alten Sinn fest. Akzeptanzkriterien final, je mit roter Änderung.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/rueckmeldung, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/rueckmeldung, rolle/student]
 aliases: [Rückmeldung nach „Später“ gesperrt]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -71,43 +71,74 @@ liefert keine Lösung zurück (`FeedbackReceipt(Ids)`, `FeedbackDtos.cs:18`).
 
 ## Offene Punkte
 
-1. **Welche Regel gilt am Server?** B-628 AK 3 („eine Meldung zu dessen Karten“) lässt sich positionsweit lesen und hat
-   diese Sperre erzeugt. Wege:
-   - **(a)** nur sperren, während der Testbildschirm aktiv ist: braucht ein Signal vom Client und ist darum schwach für
-     eine Server-Regel.
-   - **(b)** die Meldung aus dem Üben nie sperren und nur eine Meldung mit Quelle „Test“ bis zum Ergebnisblatt
-     aufschieben: braucht ein neues Request-Feld (Vertragsänderung), und kein heutiger Aufrufer würde es setzen, weil der
-     Test den Knopf nicht anbietet.
-   - **(c)** den Knopf im Üben verbergen, solange ein Test offen ist, mit einem Satz dazu: braucht im Üben eine neue
-     Kenntnis über den offenen Test (heute liefert `TestAttemptsLeft` nur die Restversuche, kein „offen“-Flag; nicht
-     gefunden) und nimmt dem Kind genau die Meldung, die B-623 im Üben „jederzeit“ wollte.
-   - **(d)** die Server-Sperre ganz entfernen; die Oberfläche hält die Regel „kein Knopf im Test“ ohnehin ein.
+1. ~~**Welche Regel gilt am Server?** (a) Signal vom Client, (b) Quelle „Test“ im Request, (c) Knopf im Üben verbergen, (d) Sperre
+   entfernen~~ → Entscheidung 1 (d).
+2. ~~**Wird der Fehlercode mit entfernt?**~~ → Entscheidung 2.
+3. ~~**Ändert sich B-628 nachträglich?**~~ → Entscheidung 3.
 
-   *Empfehlung: (d).* Sie stellt B-623 Entscheidung 5 am schlichtesten her („im Üben jederzeit“), braucht weder ein neues
-   Vertragsfeld noch einen neuen Zustand im Üben und verliert nichts, weil die Sperre keinen Anti-Cheat-Zweck hat
-   (Entscheidung 6) und der Test den Knopf nicht zeigt. Kosten: `feedback_during_test` und B-628 AK 3 entfallen;
-   die i18n-Texte (`de.ts:512`, `en.ts:488`, `api.ts:101`, `chromeText.tsx:57`) und der Fehlercode im Vertrag
-   (`contract.ts:28804`) werden mit entfernt. Fällt später ein Knopf im Test doch an, ist (b) der Weg und dann zu
-   bauen, wenn der Knopf da ist. Rückfallempfehlung, wenn der Vater eine Server-Sperre will: (b).
-2. **Wird der Fehlercode mit entfernt?** Folgt aus Punkt 1. Bei (d) ja – ein toter Code im Vertrag lockt den nächsten
-   Leser zu einer Sperre, die es nicht mehr gibt. *Empfehlung: entfernen.*
-3. **Ändert sich B-628 nachträglich?** Dessen Akzeptanzkriterium 3 ist abgenommen. *Empfehlung:* nicht umschreiben,
-   sondern im Verlauf dieser Story als ersetzt benennen (B-628 ist abgenommen; die Änderung gehört hierher).
+## Entscheidungen
 
-## Akzeptanzkriterien (Entwurf)
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-1. Hat das Kind den Test zu einer Position mit „Später“ verlassen (offener Versuch von heute), wird eine Meldung aus
-   dem Üben dieser Position angenommen (`201`), nicht mit `409` abgewiesen. Rot macht ihn heute die Sperre in
-   `ExerciseFeedbackController.cs:67`.
-2. Der Fall steht als eigener Integrationstest in `ExerciseFeedbackTests`: Versuch starten, **nicht** abgeben, dann
-   melden. Der bestehende Test (`:135`) wird dafür umgeschrieben, weil er die Absage verlangt.
-3. Die Meldung ändert dabei weiter weder Lernstand, Punkte, Pflicht, Malus noch den Cursor des offenen Versuchs (der
-   Versuch bleibt `CompletedAt == null`, sein Cursor unverändert). Rot macht ihn jede Änderung, die eine Meldung an
-   den Versuch bindet.
-4. Das Ergebnisblatt bietet die Meldung weiter je Karte an; der Testbildschirm bietet sie weiterhin nicht an. Rot macht
-   ihn ein `KartenMeldung` im laufenden Test.
-5. Bei Empfehlung (d): `feedback_during_test` ist aus `ApiErrors`, dem Vertrag und den Texten verschwunden; die
-   reflexiven Tore (Fehlercode-Liste, Texte) bleiben grün.
+Keine Malus- oder Münzregel ist berührt. Berührt wird eine **abgenommene** Entscheidung bzw. ihr Akzeptanzkriterium:
+B-623 AK 4 und B-628 AK 3 verlangen die Server-Sperre; sie entfallen (siehe Entscheidung 3). Entscheidung 5 von B-623
+selbst („im Test nur auf dem Ergebnisblatt, im Üben jederzeit“) bleibt unverändert und wird erst wirklich eingelöst.
+
+1. **Die Server-Sperre `feedback_during_test` entfällt (Weg d).** `ExerciseFeedbackController.Create` prüft nicht mehr auf
+   einen offenen Versuch (`ExerciseFeedbackController.cs:65-69`), `ExerciseFeedbackService.TestRunningAsync` (`:24`) wird
+   gelöscht. *Begründung:* Die Sperre schützt nichts. Der Testbildschirm bietet den Knopf nie an (`KartenMeldung` steht nur
+   im Ergebnisblatt, `SohnTest.tsx:393`, `:406`), die Oberfläche hält Entscheidung 5 also selbst ein; und eine Meldung hat
+   nach B-623 Entscheidung 6 keine Wirkung auf Lernstand, Punkte, Pflicht, Malus oder Cursor und gibt keine Lösung zurück
+   (`FeedbackReceipt(Ids)`, `FeedbackDtos.cs:18`). Die Sperre trifft damit in der echten App nur das Üben bei einem mit
+   „Später“ verlassenen Test (`SohnTest.tsx:238-243`, offener Versuch gewollt: `PositionTestsController.cs:130-136`) –
+   genau den Fall, den Entscheidung 5 erlauben wollte. *Kosten:* Der Server erzwingt „kein Rückmelden im Test“ nicht mehr;
+   ein Client, der es dennoch schickt (ein künftiger Knopf im Test, ein Skript), wird angenommen. *Verworfene
+   Alternativen:* (a) braucht ein Signal vom Client und ist als Server-Regel schwach; (b) braucht ein neues Request-Feld
+   (Vertragsänderung), und kein heutiger Aufrufer würde es setzen, weil der Test den Knopf nicht anbietet; (c) verbirgt im
+   Üben den Knopf bei offenem Test, braucht dort eine neue Kenntnis über den Test (heute liefert `TestAttemptsLeft` nur
+   Restversuche, kein „offen“-Flag) und nimmt dem Kind genau die Meldung, die Entscheidung 5 im Üben „jederzeit“ wollte.
+   *Ausgeschlossener Fall (gegen die User Story gerechnet):* Die Story will, dass ein Kind beim Üben melden kann und keine
+   Absage zu einem Test bekommt, den es nicht vor sich hat. Mit (d) bekommt es auch dann keine Absage, wenn der Test
+   tatsächlich offen am Bildschirm steht – dort gibt es den Knopf nicht, der Fall tritt nur über die rohe API ein und ist
+   harmlos. Fällt später doch ein Knopf im Test an, ist (b) der Weg, und er ist dann zu bauen, wenn der Knopf da ist.
+   Rückfallempfehlung, falls der Vater eine Server-Sperre will: (b).
+2. **Der Fehlercode wird mit entfernt, auch in den Texten.** *Begründung:* Ein toter Code im Vertrag lockt den nächsten Leser
+   zu einer Sperre, die es nicht mehr gibt. Hand zu entfernen: `ApiErrors.cs:217`, `de.ts:512`, `en.ts:488`, `api.ts:101`,
+   `chromeText.tsx:57` samt Kommentar, der Capture-Schritt „Meldung während des Tests“ in `DocsCaptureTests.cs:1043-1048`.
+   Erzeugt, nicht von Hand: `docs/openapi/v1.json` (`ContractDocumentTests`, CI hält den Diff, `ci.yml:122`), die
+   Beispiele `docs/api-examples/feedback.md` und `index.md` (`DocsCaptureTests`) und `frontend/src/lib/contract.ts` (nicht
+   eingecheckt, `ci.yml:194`). *Kosten:* Die Codeliste im Vertragsdokument schrumpft um einen Wert; ein Client, der auf
+   `feedback_during_test` verzweigt, läuft ins Leere – es gibt außer der Oberfläche keinen.
+3. **B-623 und B-628 werden nicht umgeschrieben.** Beide sind abgenommen. *Begründung:* Die Änderung gehört hierher; im
+   Verlauf dieser Story steht, dass B-623 AK 4 und B-628 AK 3 (Server-Sperre) **ersetzt** sind und ihre Tests
+   (`ExerciseFeedbackTests.cs:135`, `:317`) umgeschrieben bzw. gelöscht werden. *Kosten:* Wer B-628 allein liest, findet
+   noch das Kriterium; der Verweis steht dort nicht. Die Vermerke in B-623 und B-628 setzt der Bau-Lauf beim Abnehmen.
+
+**Überlappung:** [B-623](B-623-feedback-knopf-an-der-karte.md) (AK 4) und [B-628](B-628-rueckmeldung-backend.md) (AK 3)
+sind abgenommen und werden hiermit in einem Kriterium ersetzt, nicht in einer Entscheidung; B-629 (Frontend, Knopf im
+Ergebnisblatt) bleibt unverändert.
+
+## Akzeptanzkriterien
+
+Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse `ExerciseFeedbackTests`, Frontend-Probe in
+`frontend/e2e/rueckmeldung.spec.ts`.
+
+1. Hat das Kind den Test zu einer Position mit „Später“ verlassen (offener Versuch von heute), wird eine Meldung aus dem
+   Üben dieser Position angenommen (`201`, eine Zeile). Rot, solange die Sperre in `ExerciseFeedbackController.cs:65-69`
+   steht. Der Test `Waehrend_des_Tests_gesperrt_nach_dem_Abgeben_erlaubt` (`:135`) wird dafür umgeschrieben (Versuch
+   starten, **nicht** abgeben, melden, `201`), weil er heute die Absage verlangt; `Offener_Test_von_gestern_sperrt_nicht` (`:317`) geht darin auf und wird gelöscht.
+2. Dieselbe Meldung lässt den offenen Versuch unberührt: `CompletedAt` bleibt `null`, Antworten und Zähler des Versuchs
+   sind vorher gleich nachher (`TestAttempts` im Snapshot des Falls `Meldung_aendert_weder_Kasten_noch_Wallet_noch_Cursor`,
+   `:122`). Rot bei der Probe „`ReportAsync` stempelt den offenen Versuch (`CompletedAt`)“. Ohne diese Probe wäre das
+   Kriterium eine Absichtserklärung, denn heute fasst `ReportAsync` keinen Versuch an.
+3. Das Ergebnisblatt bietet die Meldung weiter je Karte an, der Testbildschirm nicht. Der zweite Teil hält schon
+   `rueckmeldung.spec.ts:93-96`. Neu wird der erste: ein Schritt nach der Abgabe, der den Knopf „Rückmeldung“ auf dem
+   Ergebnisblatt erwartet; Rot, wenn `KartenMeldung` aus `TestResult` (`SohnTest.tsx:393`, `:406`) entfällt – heute fängt
+   das kein Test (nicht gefunden).
+4. `feedback_during_test` ist aus `ApiErrors`, den Texten (`de.ts`, `en.ts`, `api.ts`, `chromeText.tsx`) und dem Capture
+   verschwunden; Vertragsdokument und Beispiele sind neu erzeugt und committet. **Absichtserklärung:** Rot wird nur ein
+   Rest, der Code und Dokument auseinanderlaufen lässt (der CI-Diff auf `docs/openapi/v1.json`, die Beispiel-Prüfung in
+   `DocsCaptureTests`); dass nichts mehr referenziert wird, prüft kein Tor.
 
 ## Verlauf
 
@@ -116,3 +147,6 @@ liefert keine Lösung zurück (`FeedbackReceipt(Ids)`, `FeedbackDtos.cs:18`).
 - 2026-11-19 · ausformuliert · Ist-Stand mit `Datei:Zeile` neu am Code belegt; neu gefunden: der Test bietet den Knopf nie
   an, die Server-Sperre schützt daher nichts und trifft nur das Üben; Weg (d) „Sperre entfernen“ als Empfehlung
   ergänzt, Akzeptanzkriterien als Entwurf.
+- 2026-11-19 · gegrillt · Vorbereitungslauf (Sonnet), stellvertretend und unbestätigt: Server-Sperre `feedback_during_test`
+  entfällt (Weg d), Fehlercode samt Texten wird entfernt, B-623 AK 4 und B-628 AK 3 (beide abgenommen) sind damit
+  ersetzt und werden nicht umgeschrieben; Akzeptanzkriterien final, Kriterium 5 als Absichtserklärung beschriftet.

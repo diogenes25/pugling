@@ -28,8 +28,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `ausformuliert` | P1 | — | — | — |
 | [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `ausformuliert` | P1 | — | — | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
-| [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `ausformuliert` | P2 | — | backend | — |
-| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `ausformuliert` | P2 | — | beides | — |
+| [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `gegrillt` | P2 | — | backend | — |
+| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `gegrillt` | P2 | — | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `geschaetzt` | P2 | M | frontend | — |
@@ -42,19 +42,19 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-654](B-654-webuntis-connector-backend.md) | WebUntis-Connector im Backend: Schulzugang am Kind, Hausaufgaben je Kind abrufen | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | Wunsch | `geschaetzt` | P2 | M | backend | — |
+| [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-627](B-627-berechtigte-meldung-bucht-nach.md) | Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-660](B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) | Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0 | Wunsch | `ausformuliert` | P2 | — | beides | — |
 | [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | Wunsch | `ausformuliert` | P2 | — | frontend | — |
 | [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `ausformuliert` | P2 | — | beides | — |
@@ -63,17 +63,17 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | Defekt | `ausformuliert` | P3 | — | — | — |
-| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `ausformuliert` | P3 | — | backend | — |
+| [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | Defekt | `gegrillt` | P3 | — | — | — |
+| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `gegrillt` | P3 | — | backend | — |
+| [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | Defekt | `gegrillt` | P3 | — | frontend | — |
+| [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `gegrillt` | P3 | — | backend | — |
 | [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | Wird eine Pflicht zur Kür (oder gelöscht), bricht die Serie rückwirkend | Defekt | `ausformuliert` | P3 | — | backend | — |
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | Defekt | `ausformuliert` | P3 | — | beides | — |
-| [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | Defekt | `ausformuliert` | P3 | — | frontend | — |
-| [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `ausformuliert` | P3 | — | backend | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -88,7 +88,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
 | [B-684](B-684-korrigierte-klausur-einscannen.md) | Die korrigierte Klausur einscannen: Note und Fehler erfassen | Wunsch | `idee` | P3 | — | — | — |
-| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `gegrillt` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
@@ -635,19 +635,26 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (13)
+### Wartet auf Zutun von außen (20)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
+| [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
+| [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
+| [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
+| [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist; Bestätigung der Sonnet-Annahmen unter Schätzung |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
+| [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
+| [B-640](B-640-uebungstyp-gleichung-loesen.md) | Übungstyp „Gleichung lösen“ mit Lösungsmenge | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
 | [B-648](B-648-birkenbihl-jedes-wort-eine-vokabel.md) | Birkenbihl: jedes Wort eines Textes hat eine Vokabel | `geschaetzt` | Bestätigung der Sonnet-Entscheidungen |
+| [B-650](B-650-vokabel-im-satz-birkenbihl-karte.md) | Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen | `gegrillt` | Bestätigung der Sonnet-Entscheidungen |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | Bestätigung der Sonnet-Annahmen unter Schätzung; baubar erst nach B-654 |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | Bestätigung der Sonnet-Entscheidungen |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung | `geschaetzt` | Bestätigung der Sonnet-Entscheidungen |
@@ -845,22 +852,22 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | [B-469, B-16] | `abgenommen` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | [B-16] | `abgenommen` |
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
-| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `ausformuliert` |
-| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `ausformuliert` |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `gegrillt` |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `gegrillt` |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | [B-606] | `abgenommen` |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | [B-606] | `abgenommen` |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | [B-606] | `abgenommen` |
-| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `ausformuliert` |
-| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `ausformuliert` |
+| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `gegrillt` |
+| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `gegrillt` |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | [B-598] | `abgenommen` |
 | [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | [B-636] | `abgenommen` |
 | [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | [B-637] | `abgenommen` |
 | [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | [B-636] | `abgenommen` |
 | [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | [B-636] | `abgenommen` |
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | [B-661] | `ausformuliert` |
-| [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `ausformuliert` |
-| [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `ausformuliert` |
-| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `ausformuliert` |
+| [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `gegrillt` |
+| [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `gegrillt` |
+| [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `gegrillt` |
 
 <details>
 <summary>Nie nachgeschaut (31) — Arbeitsvorrat der Nachschau</summary>

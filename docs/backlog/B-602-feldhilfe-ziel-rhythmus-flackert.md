@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/qualitaet, rolle/entwickler]
+tags: [typ/story, status/gegrillt, bereich/qualitaet, rolle/entwickler]
 aliases: [Feldhilfe-Spec flackert]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -44,7 +44,8 @@ Die Vermutung der Idee („der Klick kommt, während das Formular noch nachlädt
 3. **Die Spec wartet nur auf den Knopf, nicht auf die Liste.** Sie legt den Plan an und wartet auf die Überschrift
    (`frontend/e2e/feldhilfe.spec.ts:30`), dann auf die Sichtbarkeit des ersten Knopfs (`:63`) und klickt
    (`:64`). Die Trefferzahl „(N Treffer)“ als Zeichen, dass die Liste steht (`PlanPositions.tsx:756`), kommt in der
-   Spec nicht vor. Im zweiten Fall der Datei (Escape, `:71-88`) wartet nicht einmal eine `toBeVisible`-Zusicherung vor
+   Spec nicht vor. *Korrektur beim Grillen: Die Zahl taugt nicht als Zeichen – beim Erstladen steht schon „(0 Treffer)“
+   (Entscheidung 2).* Im zweiten Fall der Datei (Escape, `:71-88`) wartet nicht einmal eine `toBeVisible`-Zusicherung vor
    dem Klick (`:77`); Playwrights Stabilitätsprüfung deckt nur zwei Frames ab.
 4. **Dieselbe Lage in zwei weiteren Fällen derselben Datei:** der Gleichlaut-Fall klickt am Planbau
    (`feldhilfe.spec.ts:94-96`) und im Assistenten (`:112-115`) ohne Warten auf die Trefferliste. Die im Backlog
@@ -72,39 +73,86 @@ genauso ein sich schließendes Popover. Die Feldhilfe-Position ändert sich nich
 
 ## Offene Punkte
 
-1. **Nur die Spec reparieren oder auch die Layoutverschiebung beseitigen?** Empfehlung: **nur die Spec.** Das Schließen
-   bei Bewegung ist durch B-273 beschlossen und getestet; die Verschiebung zu beseitigen (Höhe der Trefferliste
-   reservieren) wäre ein eigenes Produktvorhaben für Handy-Nutzer und gehört in eine eigene Story.
-2. **Worauf wartet die Spec?** Empfehlung: auf „(N Treffer)“ im Beschriftungstext der Katalog-Auswahl
-   (`getByText(/\(\d+ Treffer\)/)`), denn der Text erscheint erst, wenn die Zeilen zum Filter gehören
-   (`PlanPositions.tsx:756`: sonst „Suche läuft…“). Nicht `waitForTimeout`, nicht ein Wiederholen des Klicks mit
-   `toPass` (das verdeckte genau die Bewegung, die B-273 meldet).
-3. **Eine Hilfsfunktion für alle drei Fälle?** Empfehlung: ja, in `feldhilfe.spec.ts` selbst (`planbauBereit(page)`),
-   weil sie von `planAnlegen` her folgt. Der Assistent im dritten Fall hat eine eigene Trefferliste und bekommt dort
-   dieselbe Wartebedingung; ob sein Beschriftungstext ebenfalls „(N Treffer)“ trägt, ist im Code nicht geprüft
-   (`frontend/src/vater/VaterWizard.tsx`: keine Fundstelle für „Treffer)“ – nicht gefunden).
-4. **Gehört die Probe mit verzögerter Suchantwort in die Spec?** Empfehlung: ja, als eigener Fall nach dem Vorbild
-   `planbau-ladefenster.spec.ts:57` (`page.route("**/api/v1/creator/exercises?**", …)`): Er hält die Antwort zurück,
-   klickt das „ⓘ“, gibt die Antwort frei und erwartet das geschlossene Popover. Ein Fall, der die verzögerte Lage
-   *dauerhaft* herstellt, ist die einzige Möglichkeit, die Reparatur nicht von der Last abhängig zu belegen.
+1. ~~**Nur die Spec reparieren oder auch die Layoutverschiebung beseitigen?**~~ → Entscheidung 1.
+2. ~~**Worauf wartet die Spec?**~~ → Entscheidung 2 (die Empfehlung „(N Treffer)“ trägt nicht).
+3. ~~**Eine Hilfsfunktion für alle drei Fälle?**~~ → Entscheidung 3.
+4. ~~**Gehört die Probe mit verzögerter Suchantwort in die Spec?**~~ → Entscheidung 4 (anders als im Entwurf).
+5. ~~**Braucht der Assistent im Gleichlaut-Fall eine Wartebedingung?**~~ → Entscheidung 5 (neu beim Grillen).
 
-## Entwurf der Akzeptanzkriterien
+## Entscheidungen
 
-1. Alle drei Fälle von `feldhilfe.spec.ts`, die ein „ⓘ“ im Planbau anklicken, warten vorher auf „(N Treffer)“.
-   *Rot, wenn* die Wartebedingung in einem Fall fehlt: mit der verzögerten Suchantwort aus Kriterium 3 fällt genau
-   dieser Fall.
-2. Der Assistent im Gleichlaut-Fall (`:112-115`) wartet auf das Äquivalent seiner Trefferliste. *Rot, wenn* es fehlt,
-   unter derselben verzögerten Antwort für den Assistenten (`/creator/exercises?**` wird dort ebenfalls abgefragt –
-   nicht geprüft, beim Schätzen klären).
-3. Ein Fall in der Spec verzögert die Suchantwort per `page.route` um ein Mehrfaches der Frame-Zeit, klickt das
-   „ⓘ“ vor der Antwort und erwartet danach das **geschlossene** Popover (`aria-expanded="false"`). *Rot, wenn* jemand
-   die Schließen-bei-Bewegung-Regel aus `InfoHint.tsx:45` entfernt (B-273 bleibt geschützt) – und es dokumentiert die
-   Ursache des Flackerns als bekannte, gewollte Lage.
-4. Die rote Probe der Reparatur: Wartebedingung in einem Fall entfernen **und** Verzögerung aus Kriterium 3 darüber
-   stellen → genau dieser Fall wird rot; mit Wartebedingung grün. *Rot, wenn* die Wartebedingung wirkungslos ist
-   (z. B. auf einen Text wartet, der vor der Antwort schon steht).
-5. Kein Fall der Datei verwendet `waitForTimeout` oder eine Wiederholungsschleife um den Klick. *Rot, wenn* ein
-   Wartebefehl diese Form hat; als Durchsicht beim Abnehmen, kein Tor.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Nur die Spec wird repariert; das Schließen bei Bewegung und die springende Liste bleiben.** Begründung: Das Schließen
+   ist durch B-273 beschlossen (Akzeptanzkriterium 1, `B-273-feste-feldhilfe-resize-und-layoutverschiebung.md:74`) und
+   hat eine eigene Spec, `feldhilfe-lage.spec.ts:213` („ein Inhalt, der über dem Knopf aufgeht, schließt ein offenes ⓘ“).
+   Die Höhe der Trefferliste zu reservieren wäre ein Produktumbau für Handy-Nutzer. Verworfen: die Liste mit fester Höhe
+   rendern (ein eigenes Vorhaben, das auch die Spec grün machte, aber an der Ursache im Produkt dreht, nicht am
+   Defekt „Spec ohne Wartebedingung“). Kosten: Ein Vater, der in den ersten Sekunden auf ein ⓘ tippt, erlebt das
+   schließende Popover weiter (siehe „Die echte Lücke“, Randbefund). Ausgeschlossener Fall: dieser Vater; gegen die User
+   Story (Entwickler, „Rot nur bei falschem Feld oder nicht aufgehendem Hinweis“) trägt das, weil sie nur das Rot der Spec
+   meint.
+2. **Die Spec wartet auf die Radiogruppe der Trefferliste, nicht auf „(N Treffer)“:
+   `page.getByRole("radiogroup", { name: "Übung wählen" })` sichtbar.** Die Empfehlung der Ausformulierung trägt nicht, am Code
+   geprüft: Während der **ersten** Abfrage steht die Beschriftung bereits bei „(0 Treffer)“ (`PlanPositions.tsx:756`:
+   weder `sucheGescheitert` noch `zeilenVeraltet`; `zeilenVeraltet` ist `exercises.stale`, und `stale` ist beim Erstladen
+   falsch, weil `dataDeps` mit den Abhängigkeiten des ersten Renders beginnt, `useAsync.ts:59` und `:80`; `results` ist
+   `[]`, solange `data` fehlt, `PlanPositions.tsx:734`). Eine Wartebedingung `(\d+ Treffer)` wäre also vor der Antwort schon
+   erfüllt und könnte nie rot werden. Die Radiogruppe ersetzt das „Lade…“ erst, wenn die Antwort da ist
+   (`PlanPositions.tsx:794-798`: `exercises.loading && exercises.data === null`). Verworfen: der Treffer-Text (steht
+   vorher), `waitForTimeout` (Zeitraten) und ein Wiederholen des Klicks mit `toPass` (verdeckt genau die Bewegung, die
+   B-273 meldet). Kosten: Die Bedingung hängt an einer Rolle und einem Namen der Oberfläche; wird die Gruppe umbenannt,
+   fällt die Spec laut (Timeout) statt still. Bei einer gescheiterten Suche erscheint die Gruppe ebenfalls – die Spec
+   wartet dann nicht auf Treffer, sondern auf das Ende des Ladens, und das ist hier gemeint. Ausgeschlossener Fall: eine Seite,
+   deren Liste ausfällt; gegen die User Story gerechnet bleibt das Rot dort ein Rot der Seite, nicht ein Flackern der Spec.
+3. **Die Wartebedingung steht einmal, am Ende von `planAnlegen` in `feldhilfe.spec.ts:25-31`.** Begründung: Alle drei Fälle der Datei
+   (`:35`, `:73`, `:92`) legen den Plan darüber an, und der Escape-Fall hat vor seinem ersten Klick nicht einmal eine
+   `toBeVisible`-Zusicherung (`:75-77`). Die Datei hat ihre Hilfsfunktionen schon lokal (`planAnlegen`, `vaterLogin`);
+   `e2e/helpers.ts` führt `vaterLogin` zwar ebenfalls, zehn Specs definieren aber ihre eigene (Suche nach
+   `async function vaterLogin`), und `planbau-ladefenster.spec.ts:29` hat `planbauOeffnen` ebenso lokal. Verworfen: je ein Warten
+   vor jedem Klick (drei Stellen, eine wird vergessen) und der Umzug in `helpers.ts` (nur diese Datei braucht ihn, und ein
+   gemeinsamer Helfer für „Planbau steht“ wäre eine zweite Stelle neben `planbauOeffnen`). Kosten: `planAnlegen` wartet
+   künftig auf die Liste, auch wo ein Fall sie nicht braucht (der Escape-Fall); es kostet Millisekunden. Ausgeschlossener
+   Fall: eine vierte Spec, die später `planAnlegen` kopiert und die Wartebedingung vergisst; das fängt der Spät-Fall aus
+   Entscheidung 4 nicht (er prüft nur diese Datei) – dort steht der Kommentar mit dem Grund.
+4. **Ein Dauerfall hält die Wartebedingung ehrlich: die Suchantwort wird um 1,5 s verzögert, nach `planAnlegen` wird das ⓘ am
+   „Ziel-Rhythmus“ geöffnet, zwei Frames nach dem Eintreffen der Liste muss es noch offen sein.** Begründung: Ohne diesen Fall
+   ist die Wartebedingung eine Zusicherung, die niemand rot sehen kann – ein späteres Aufräumen („wartet ohne Grund“) brächte
+   das Flackern zurück, unbemerkt. Das Schließen bei Bewegung selbst bleibt bei `feldhilfe-lage.spec.ts:213`; der neue Fall
+   prüft das Gegenstück: **mit** der Wartebedingung bleibt das Popover offen. Das Muster der Verzögerung steht in
+   `planbau-ladefenster.spec.ts:57` (`page.route("**/api/v1/creator/exercises?**", …)` mit `route.fallback()`); die Route wird hier
+   **vor** `planAnlegen` gesetzt, weil die Liste beim Öffnen der Seite lädt. Der Fall muss rot werden, wenn die Bedingung
+   fehlt: dann öffnet das ⓘ vor der Antwort, die Liste springt, das Popover schließt. Verworfen: eine Wegwerf-Probe nur beim
+   Bauen (belegt die Reparatur einmal, nicht dauerhaft) und ein Fall, der das Schließen des Popovers erwartet (das
+   dupliziert `feldhilfe-lage.spec.ts:213`). Kosten: rund 1,5 s mehr in einer Suite mit 166 Fällen. Ausgeschlossener
+   Fall: ein Flackern, das nicht von der Trefferliste kommt (etwa ein späterer Ladevorgang über dem Formular); gegen die User
+   Story („Rot heißt nie mehr einfach nochmal laufen lassen“) ist das die Grenze: ein neuer Auslöser braucht seinen
+   eigenen Fall.
+5. **Der Assistent im Gleichlaut-Fall bekommt keine Wartebedingung.** Das ⓘ steht im Schritt „Feinschliff“
+   (`VaterWizard.tsx:667-668`, `step === 3`), und die Trefferliste gehört zu Schritt 3 (`step === 2`, `:564`); beim Klick auf
+   „Weiter“ ist sie nicht mehr gerendert, über dem ⓘ lädt nichts nach (nicht gefunden: weitere Abfrage in Schritt 4 im Code, die
+   Prüfung ist gelesen, nicht gemessen). Verworfen: eine Wartebedingung „auf Verdacht“ (ein Warten ohne Ursache ist eine
+   zweite Zusicherung, die nie rot werden kann). Kosten: Flackert dieser Teil doch, entsteht eine eigene Story. Ausgeschlossener
+   Fall: ein Flackern im Assistenten; gegen die User Story ist es nicht belegt, also nicht Teil des Defekts.
+
+## Akzeptanzkriterien
+
+Je Kriterium: die Änderung, die es rot macht.
+
+1. `planAnlegen` wartet am Ende auf `getByRole("radiogroup", { name: "Übung wählen" })`, und alle drei bestehenden Fälle der
+   Datei laufen über sie. Rot, wenn die Zeile fehlt: der Spät-Fall aus Kriterium 2 fällt.
+2. Ein neuer Fall verzögert die Antwort auf `**/api/v1/creator/exercises?**` um 1,5 s (Route **vor** `planAnlegen`), öffnet nach
+   `planAnlegen` das ⓘ „Ziel-Rhythmus“, wartet auf die Trefferliste und zwei Frames und erwartet `aria-expanded="true"` und
+   den sichtbaren Hinweis „Wochenziel“ einmal pro Woche“. Rot, wenn `planAnlegen` die Wartebedingung verliert: das ⓘ öffnet vor
+   der Antwort, die Liste springt, das Popover ist zu.
+3. Die Wartebedingung ist nicht auf „(N Treffer)“ gegründet. Probe bei der Abnahme: ersetzt man die Zeile in `planAnlegen`
+   durch `getByText(/\(\d+ Treffer\)/)`, fällt der Spät-Fall (die Beschriftung steht vor der Antwort schon bei „(0 Treffer)“).
+   Rot, wenn er unter dieser Ersetzung grün bleibt: dann wartet die Zeile nicht auf die Antwort, und die Probe hat nichts
+   gemessen.
+4. Keine Stelle der Datei verwendet `waitForTimeout` oder eine Wiederholungsschleife um einen Klick. Rot, wenn ein Wartebefehl
+   diese Form hat; Durchsicht bei der Abnahme (Suche in der Datei), kein Tor.
+5. Die übrigen Fälle der Datei (Escape-Fall, Gleichlaut-Fall mit Assistent) bleiben unverändert bis auf den Aufruf von
+   `planAnlegen`. Rot, wenn der Diff den Assistenten-Teil (`:101-116`) berührt – Durchsicht, kein Tor.
 
 ## Verlauf
 
@@ -112,3 +160,4 @@ genauso ein sich schließendes Popover. Die Feldhilfe-Position ändert sich nich
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Ursache am Code gelesen (`InfoHint.tsx` schließt bei
   Bewegung des Knopfs, B-273; die Trefferliste unter dem Formular lädt nach), Zeilennummern der Idee waren verrutscht;
   nichts gemessen oder gestartet.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Gegen den Code korrigiert: die empfohlene Wartebedingung „(N Treffer)“ trüge nicht, die Beschriftung steht beim Erstladen schon bei „(0 Treffer)“; gewartet wird auf die Radiogruppe der Trefferliste, einmal in `planAnlegen`. Ein Dauerfall mit verzögerter Suchantwort hält die Bedingung ehrlich. Der Assistent bleibt unberührt. Akzeptanzkriterien final, je mit roter Änderung.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, bereich/training, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/frontend, bereich/training, rolle/student]
 aliases: [Learning Queue, Lern-Warteschlange, Heute-Woche-Überfällig]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
 grund: ""
 ersetzt_durch: []
+wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
 # B-220 · Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig
@@ -53,6 +54,17 @@ Gemessen am 2026-11-19 auf `main`; Pfade relativ zu `backend/Pugling.Api/` bzw. 
 - **Zeit ist UTC.** Alle Perioden rechnen auf dem UTC-Kalendertag (`ChildTodayController.cs:31`, Fallstrick im Repo-Root); „bis heute Abend"
   wäre für ein Kind in Deutschland ein Zeitpunkt, den der Server nicht kennt.
 
+**Beim Grillen am Code ergänzt (2026-11-19):**
+
+- **Es gibt eine dritte Taktung ohne Periodenende.** `GoalCadence.UntilDone` („täglich, bis erledigt“) endet nicht mit einem
+  Datum, sondern mit der Erledigung (`PositionProgressService.HasDutyOn`, `Services/Shared/PositionProgressService.cs:52-55`,
+  B-636); `PeriodRange` kennt nur `Weekly` und den Rest als Tag (`:34-39`). Die Queue braucht für `UntilDone` also ein
+  `DueBy = null`.
+- **`HasDutyOn` ist die eine „ist das eine Pflicht“-Regel** und öffentlich (`:52`); die Queue darf kein eigenes `Cadence != None`
+  daneben stellen.
+- **Der Endpunkt hängt am Eigentumsfilter des Kindes:** `ChildTodayController` trägt `[Authorize]` und
+  `[ServiceFilter(typeof(ChildOwnershipFilter))]` (`Controllers/Student/ChildTodayController.cs:16-17`); die Queue nimmt dasselbe.
+
 ## Die echte Lücke
 
 Nicht „es fehlt eine Warteschlange", sondern: Der Server liefert die Zutaten schon einzeln (`today`, `PenaltyCoins`, `DaysLeft`,
@@ -62,32 +74,81 @@ drei Eintragsarten (Pflicht, fällige Karten, Objective/Mission) – und die Kar
 
 ## Offene Punkte
 
-Bereits entschieden (Nutzer 2026-10-23 und Vater 2026-11-17, siehe Verlauf): zeigt, was Nichtstun kostet; Server-Endpunkt; „überfällig" nur für
-Karten, Objectives, Klassenarbeiten; keine Sortierung nach Stundenplan. Offen:
+Bereits entschieden (Nutzer 2026-10-23 und Vater 2026-11-17, siehe Verlauf): zeigt, was Nichtstun kostet; Server-Endpunkt;
+„überfällig“ nur für Karten, Objectives, Klassenarbeiten; keine Sortierung nach Stundenplan.
 
-1. **Neues Feld in `today` oder eigene Route?** Empfehlung: eigene Route `student/children/{childId}/queue`, gespeist aus
-   `ComputeChildDayAsync` und den Missions-/Objective-Diensten; `today` bleibt schlank, beide teilen den Dienst. Additiv, kein Vertragsbruch.
-2. **Welches Datum und welche Beschriftung?** Empfehlung: je Eintrag `DueBy` als `DateOnly` (Tag: heute; Woche: Sonntag) und
-   der Text „heute"/„bis Sonntag" ohne Uhrzeit, wegen UTC. Die Perioden-Funktion aus `PositionProgressService` wird öffentlich statt
-   im Client nachgebaut.
-3. **Eintragsarten der ersten Fassung?** Empfehlung: Pflichten (mit `PenaltyCoins`), fällige Karten, offene Missionen, überfällige Objectives;
-   Mischwiederholung und Klassenarbeit kommen als weitere Art, wenn B-218/B-248 gebaut sind – darum `Kind` als offene Zeichenkette im Vertrag, nicht als
-   geschlossenes Enum.
-4. **Ersetzt die Queue die Tagessicht (B-606) oder ergänzt sie?** Empfehlung: ergänzt, als Block auf der Startseite; die Fach-Gliederung bleibt, die
-   Queue ordnet nach Fälligkeit.
-5. **Sortierung innerhalb einer Gruppe.** Empfehlung: nach `PenaltyCoins` absteigend, dann Fach; ohne Preis ans Ende.
-6. **Soll das Kind die Queue als Pflicht lesen, auch wenn ein Eintrag freiwillig ist?** Empfehlung: Pflicht-Einträge tragen ein Merkmal `Duty`, damit „Kür" nicht
-   wie „kostet etwas" aussieht.
+Die Queue **zeigt** nur: Sie liest `PenaltyCoins` und `DueCount`, sie ändert weder Malus-Regeln noch Münzwerte noch Pflichten.
 
-## Akzeptanzkriterien (Entwurf)
+1. ~~**Neues Feld in `today` oder eigene Route?**~~ → Entscheidung 1.
+2. ~~**Welches Datum und welche Beschriftung?**~~ → Entscheidung 2.
+3. ~~**Eintragsarten der ersten Fassung?**~~ → Entscheidung 3; die **Baureihenfolge** gegenüber B-218 ist zurückgestellt → Z1.
+4. ~~**Ersetzt die Queue die Tagessicht (B-606) oder ergänzt sie?**~~ → Entscheidung 4.
+5. ~~**Sortierung innerhalb einer Gruppe.**~~ → Entscheidung 5.
+6. ~~**Soll das Kind die Queue als Pflicht lesen, auch wenn ein Eintrag freiwillig ist?**~~ → Entscheidung 6.
 
-1. Eine Tagespflicht mit `PenaltyCoins` 20 steht unter „heute" mit dem Preis 20 und `DueBy` = heute. *Rot, wenn der Eintrag den Preis nicht trägt.*
-2. Eine Wochenpflicht steht unter „diese Woche" mit `DueBy` = dem Sonntag der Woche, nicht dem Tag. *Rot, wenn die Perioden-Funktion `Weekly` wie `Daily` behandelt.*
-3. Eine erfüllte Pflicht steht nicht mehr in der Queue. *Rot, wenn die Queue `GoalMet` ignoriert.*
-4. Eine Karte mit `DueOn` vor heute steht unter „überfällig", eine Pflicht mit abgelaufener Periode nie. *Rot, wenn die Queue Pflichten überfällig nennt.*
-5. Eine Position mit `Cadence = None` taucht nicht als Eintrag mit Preis auf (Preis immer 0, nie abgerechnet). *Rot, wenn freie Positionen als Pflicht erscheinen.*
-6. Ein anderes Kind desselben Vaters und ein fremdes `childId` werden abgewiesen. *Rot, wenn die Route ohne `ChildOwnershipFilter` hängt.*
-7. Die Queue und `today` nennen für dieselbe Pflicht dasselbe `GoalMet`. *Rot, wenn die Queue eine zweite Erfüllt-Regel einführt.*
+## Entscheidungen
+
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Eigene Route `GET student/children/{childId}/queue`, gespeist aus demselben Dienst wie `today`
+   (`PositionProgressService.ComputeChildDayAsync`, `:407`); `today` bleibt unverändert.** Die Route trägt dieselben Attribute wie
+   `today` (`[Authorize]`, `ChildOwnershipFilter`). Begründung: ein zweites Lese-Modell mit anderer Form statt eines Feldes, das jede
+   Startseite mitträgt; additiv, kein Vertragsbruch. Verworfen: ein Feld in `TodayResponse`. Kosten: zwei Routen, die dasselbe
+   `GoalMet` nennen müssen (Akzeptanzkriterium 8 hält das fest). Ausgeschlossener Fall: ein Client, der Tagessicht und Queue in einem
+   Aufruf will; gegen die User Story („auf einen Blick“) genügt die Startseite mit zwei Aufrufen.
+2. **Je Eintrag ein `DueBy` als `DateOnly`: Tagespflicht = heute, Wochenpflicht = der Sonntag der Woche, `UntilDone` = `null`
+   („bis erledigt“).** Beschriftung „heute“ / „bis Sonntag“ / „bis erledigt“, ohne Uhrzeit. Die Perioden-Logik wird als öffentlicher
+   Helfer `PeriodEnd(cadence, day)` neben `PeriodRange` (`PositionProgressService.cs:34-39`) herausgezogen und nicht im Client
+   nachgebaut. Gruppen: „heute“ (`DueBy` = heute und `UntilDone`), „diese Woche“ (`DueBy` später in der Woche), „überfällig“
+   (Karten und Objectives, nie Pflichten). Verworfen: eine Uhrzeit („bis 22 Uhr“). Kosten: Die Perioden rechnen auf dem UTC-Tag
+   (`ChildTodayController.cs:31`); für ein Kind in Deutschland kippt „heute“ nachts um 1 bzw. 2 Uhr. Ausgeschlossener Fall: eine
+   Pflicht „bis heute Abend, sonst −N Münzen“ mit echter lokaler Uhrzeit; gegen die User Story („was es jetzt kostet“) trägt der Tag,
+   die Stunde nicht.
+3. **Eintragsarten der ersten Fassung: Pflichten (mit `PenaltyCoins`), Karten (je Position, mit Anzahl), offene Missionen (mit
+   `DaysLeft`), überfällige Objectives; `Kind` ist eine offene Zeichenkette im Vertrag.** Karten stehen unter „überfällig“, sobald
+   eine Karte der Position vor heute fällig war, sonst unter „heute“. Mischwiederholung (B-218) und Klassenarbeit (B-248) kommen
+   später als weitere `Kind`-Werte. Verworfen: ein geschlossenes Enum (bräche bei jeder neuen Art). Kosten: Clients müssen ein unbekanntes
+   `Kind` still überspringen. Ausgeschlossener Fall: ein Eintrag je Karte (zu lang); gegen die User Story („Reihenfolge nach dem
+   Preis“) zählt je Position der Preis, nicht je Karte.
+4. **Die Queue ergänzt die Tagessicht (B-606) als Block auf der Startseite; die Fach-Gliederung bleibt.** Verworfen: die Tagessicht
+   ersetzen (verlöre die Fach-Gruppen, `sohn/tagessicht.ts`). Kosten: zwei Sichten auf dieselben Pflichten. Ausgeschlossener
+   Fall: eine einzige Liste; gegen die User Story trägt die Queue die Fälligkeit, die Tagessicht das Fach.
+5. **Sortierung in der Gruppe: nach `PenaltyCoins` absteigend, dann Fachname; Einträge ohne Preis ans Ende.** Kosten: eine Kür mit
+   hohem Nutzen steht unten. Ausgeschlossener Fall: Sortierung nach Nutzen; gegen die Story („nach dem Preis des Nichtstuns wählen“)
+   ist der Preis das gewollte Kriterium.
+6. **Jeder Eintrag trägt `Duty` (bool): `true`, wenn `PositionProgressService.HasDutyOn` für die Position zutrifft, sonst `false`;
+   freie Positionen (`Cadence = None`) erscheinen nur als Karten-Eintrag mit `Duty = false` und ohne Preis.** Damit sieht
+   „Kür“ nicht aus wie „kostet etwas“. Verworfen: eine zweite Pflicht-Regel in der Queue (Drift gegen `today`). Kosten: ein Feld.
+   Ausgeschlossener Fall: ein Kind, das eine freie Position wegen ihrer Fälligkeit für Pflicht hält.
+
+**Zurückgestellt – nicht entschieden:**
+
+- **Z1 · Darf die erste Fassung vor B-218 gebaut werden?** Der Nutzer legte am 2026-10-23 „erst nach B-218, die Countdown-Zeile erst
+  nach B-248“ fest (Verlauf); die Entscheidungen oben machen den Vertrag für spätere Arten offen. Ob diese Reihenfolge nun
+  aufgeweicht wird, ist seine Entscheidung. *Empfehlung:* ja, ohne B-218 bauen, weil `Kind` offen ist und B-218 ohne Termin ist; sonst
+  wartet die Queue auf einen Stoff, der nicht kommt.
+
+## Akzeptanzkriterien
+
+Je Kriterium: welche Änderung macht es rot.
+
+1. Eine Tagespflicht mit `PenaltyCoins` 20 steht unter „heute“ mit dem Preis 20, `DueBy` = heute (UTC) und `Duty = true`. Rot, wenn der
+   Eintrag den Preis nicht trägt.
+2. Eine Wochenpflicht steht unter „diese Woche“ mit `DueBy` = dem Sonntag der Woche; am Sonntag selbst unter „heute“. Rot, wenn die
+   Perioden-Funktion `Weekly` wie `Daily` behandelt.
+3. Eine erfüllte Pflicht steht nicht in der Queue. Rot, wenn die Queue `GoalMet` ignoriert.
+4. Eine Karte der Position mit `DueOn` vor heute macht deren Eintrag zu „überfällig“; eine gestern **nicht erfüllte** Tagespflicht
+   steht gar nicht in der Queue (die Periode ist gebucht). Rot, wenn die Queue eine Pflicht „überfällig“ nennt.
+5. Eine Position mit `Cadence = None` erscheint nur als Karten-Eintrag mit `Duty = false` und ohne Preis. Rot, wenn sie als Pflicht
+   mit Preis erscheint.
+6. Eine `UntilDone`-Pflicht steht mit `DueBy = null` unter „heute“, nach ihrer Erledigung nicht mehr. Rot, wenn `UntilDone` ein Datum
+   bekommt oder nach der Erledigung bleibt (Regel: `HasDutyOn`).
+7. Ein Kind eines anderen Vaters liefert denselben Fehler wie `today`. Rot, wenn der `ChildOwnershipFilter` an der Route fehlt.
+8. Die Queue und `today` nennen für dieselbe Pflicht dasselbe `GoalMet`. Rot, wenn die Queue eine zweite Erfüllt-Regel einführt.
+9. In einer Gruppe steht der Eintrag mit dem höchsten `PenaltyCoins` zuerst, Einträge ohne Preis zuletzt. Rot, wenn die Sortierung fehlt
+   oder nach Fach vor Preis ordnet.
+10. Die Startseite zeigt den Queue-Block mit den drei Gruppen und überspringt ein unbekanntes `Kind` still (Komponententest in
+    `sohn/`). Rot, wenn der Block fehlt oder bei unbekanntem `Kind` bricht.
 
 ## Verlauf
 
@@ -101,3 +162,6 @@ Karten, Objectives, Klassenarbeiten; keine Sortierung nach Stundenplan. Offen:
 - **2026-11-17** — **Entscheidung des Vaters** (B-615 Entscheidung 13): Die Queue sortiert **nicht** nach Stundenplan; die Stundenplan-Pflicht aus B-615 genügt. Der offene Punkt aus dem vorigen Eintrag ist damit erledigt.
 - **2026-11-17** — B-615 ist geteilt worden; die Stundenplan-Pflicht, auf die die beiden vorigen Einträge verweisen, tragen jetzt [B-621](B-621-stundenplan-pflicht-backend.md) und [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md).
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Ist-Stand am Code neu gemessen. Neu gegenüber der Notiz: der kind-weite `today`-Endpunkt (B-606) existiert (`ChildTodayController.cs:14,27`), `PenaltyCoins` ist im Vertrag; es fehlen nur ein Fälligkeitsdatum je Eintrag und die gemeinsame Sortierung. Sechs offene Punkte mit Empfehlung, keine Entscheidung getroffen. Überschneidung: B-218, B-248, B-606/B-525.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt, `wartet_auf` gesetzt): Entscheidungen 1 bis 6.
+  Neu am Code: `UntilDone` hat kein Periodenende (`DueBy = null`), `HasDutyOn` ist die eine Pflicht-Regel. **Eine Frage zurückgestellt (Z1):**
+  die Reihenfolge „erst nach B-218“ des Nutzers vom 2026-10-23. Die Queue zeigt nur und ändert keine Malus-Regel. Akzeptanzkriterien final.

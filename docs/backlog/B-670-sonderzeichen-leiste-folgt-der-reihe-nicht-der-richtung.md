@@ -62,6 +62,35 @@ deutsch → heute falsche Leiste (französisch). (2) Vertauschte Karte oder Schr
 Zielsprache gilt hier **nicht**. Ein einfaches „immer `TargetLanguage`“ wäre also falsch, und `KeyboardLangOf` allein
 reicht nicht – es braucht die Karte und die Stufe, auf der sie gespielt wird.
 
+### Nachprüfung beim Grillen (Vorbereitungslauf 2026-11-19): der beschriebene Fall tritt am Code nicht auf
+
+Beim Grillen ließ sich Fall (1) nicht herstellen, und damit trägt die Prämisse der Story nicht:
+
+1. Die Leiste steht nur unter Freitext und Kästchen (`frontend/src/sohn/Lektion.tsx:176-203`; die Auswahl- und
+   Wortkasten-Zweige bekommen keine). Auf der Auswahl wird nicht getippt.
+2. Getippte Stufen einer Vokabelübung sind Kästchen, Buchstaben ordnen, Freitext, Diktat und Auswahl
+   (`backend/Pugling.Api/Services/Shared/StageMechanics.cs:17-19`); die Schreibstufen darunter
+   (`VocabularyExerciseType.cs:123-125`) spielen immer die `Written`-Karte (`CardForStage`, `:115-116`). Eine
+   Vorwärtskarte, die in der Muttersprache getippt wird, gibt es auf keiner dieser Stufen: die einzige getippte Stufe
+   ohne Schreibkarte ist die Auswahl.
+3. Die `Written`-Karte ist eine `Swap`-Karte (`ExerciseContentResolver.cs:120-122`, `Reversed = true`:
+   `ExerciseContentProvider.cs:130`); getippt wird also die gelernte Sprache der Reihe – genau, was
+   `KeyboardLangOf` liefert.
+4. `Written` bleibt nur leer, wenn die Vokabel im Speicher fehlt (Platzhalter `(Vokabel #N fehlt)`,
+   `ExerciseContentResolver.cs:96`, `:115`) – kaputte Daten, kein Spielfall.
+5. Typen ohne Richtung (Lückentext, Liste) tippen die Lernsprache der Reihe: ebenfalls richtig, wie die Story selbst
+   in Fall (3) feststellt.
+
+Die Aussage in der Notiz „bei einer Französisch-Karte vorn nach hinten (Antwort deutsch) zeigt die Leiste die
+französischen Zeichen" gilt damit seit B-597 (Schreibstufen tippen das gelernte Wort) nicht mehr; sie stammt vermutlich
+aus einer Zeit davor oder aus der Annahme, die Karte werde unverändert getippt. Nicht geprüft (kein Server in diesem
+Lauf): ein Durchspielen an der laufenden App. Offen bleibt als echter Rest nur die Randfrage der regionalen Codes.
+
+**Vorschlag, nicht Entscheidung:** die Story als gegenstandslos verwerfen (`verworfen`, Grund: B-597) und AK 5 – falls
+gewünscht – als eigene kleine Story (Frontend, XS) neu anlegen. Die Stufe bleibt darum `ausformuliert`; ein
+Grillen mit Entscheidungen über einen nicht vorhandenen Fehler würde Akzeptanzkriterien erzeugen, die im Ausgangszustand
+schon bestehen.
+
 ## Offene Punkte
 
 1. **Wer entscheidet je Karte: Server oder Frontend?** Empfehlung: Server (Backend zuerst) – er kennt `Reversed`,
@@ -98,3 +127,4 @@ Entwurf; je Kriterium die Änderung, die es rot macht.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Fundstellen neu belegt; die Lücke ist je Karte **und**
   Stufe, nicht je Übung – „immer Zielsprache“ wäre für Lückentext und Liste falsch. `unverifiziert` entfällt (war schon
   `false`).
+- **2026-11-19** — Grillversuch (Vorbereitungslauf, Sonnet): Stufe bleibt `ausformuliert`; Fall (1) tritt am Code nicht auf (getippt wird auf jeder Schreibstufe die `Written`-Karte, die gelernte Sprache), Vorschlag `verworfen` samt Belegen im Abschnitt „Nachprüfung beim Grillen".

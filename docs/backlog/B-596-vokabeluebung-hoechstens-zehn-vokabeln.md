@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 aliases: [Zehn Vokabeln, Obergrenze Vokabelübung, Untergrenze Vokabelübung, Mini-Übung]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
+wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
 # B-596 · Eine Vokabelübung hat 5 bis 10 Vokabeln
@@ -65,6 +66,14 @@ bleibe.
 `Controllers/Supervisor/PlanPositionsController.cs:36`, `:185`); der KI-Creator nutzt eine Wortliste erst ab 3
 (`FixedPairs`, `Drafting/VocabularyStrategy.cs:34`).
 
+**Korrektur beim Grillen (2026-11-19):** Der KI-Creator **schneidet** eine Unit-Wortliste schon auf `ItemCount` zu
+(Vorgabe 10, `AgentCommands.cs:19`, `:573`): `UnitVocabulary.Slice(pool, weakWords, count, part)` nimmt `count` Wörter ab
+`part × count`, rotierend (`backend/Pugling.Agent.Creator/Briefing/UnitVocabulary.cs:33-45`, Aufruf `BriefingBuilder.cs:93`),
+und `Normalize` kürzt den Entwurf auf `ItemCount` (`Drafting/VocabularyStrategy.cs`). Über 10 kommt er nur mit `--count`
+(Grenze `DraftRules.MaxItems = 30`, `Drafting/DraftRules.cs:43`). Die Aussage „Aufteilung einer Unit-Wortliste: nicht gefunden“
+oben gilt also nur für `laden.py`; beim KI-Creator ist es ein Teilen **mit Überlappung** (die Scheibe läuft am Listenende
+um), kein sauberes Zerlegen.
+
 ## Die echte Lücke
 
 Die Regel ist nicht „eine Prüfung einbauen", sondern drei Dinge, die gegeneinander laufen:
@@ -84,60 +93,112 @@ Clients) und die echten Daten der Söhne nicht berühren darf.
 
 ## Offene Punkte
 
-1. **Wörter oder Karten?** (aus [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md), Entscheidung 8): Empfehlung:
-   **Wörter**. Das ist, was der Vater sieht und was eine Seite trägt; die Tagesdosis zählt Karten und regelt den Umfang je
-   Tag ohnehin. 10 Wörter bei `both` sind 20 Karten, ein einzelnes Üben, kein Problem.
-2. **Wo greift die Obergrenze?** Empfehlung: auf **POST und PUT** und auf `POST …/items`, als `validation_error`
-   (`ExerciseControllers.cs:38`, `:202`); auf `refs-from-tags` ebenfalls (mehr als 10 Treffer liefern einen Fehler mit
-   der Trefferzahl, statt still zu kürzen).
-3. **Bestandsübungen über 10:** Empfehlung: **nicht abweisen, nur nicht wachsen lassen**: eine Änderung ist erlaubt, solange
-   die neue Wortzahl nicht größer ist als die alte; dasselbe Muster wie die bestehende Kürzungs-Sperre.
-   Automatisches Aufteilen kommt nicht in Frage, weil es den Leitner-Stand an den Karten zerreißt (Story-Vorgabe).
-4. **Untergrenze 5: wo?** Empfehlung: **beim Zuweisen an einen Plan** (`PlanPositionsController.cs:185`) und beim
-   KI-Creator, nicht beim Anlegen; Ausnahme muss möglich sein für die letzte Seite einer Unit (siehe 5).
-5. **Rest an der Seitengrenze:** Empfehlung: das Erzeugen entscheidet: `laden.py`/KI-Creator fassen einen zu kleinen
-   Rest mit der Nachbarliste derselben Unit zusammen oder halten ihn zurück. Der Server lehnt nicht ab, was ihm eine
-   Unit-Wortliste mit 4 Wörtern als Ganzes anbietet, wenn es die ganze Unit ist (sonst wäre eine kleine Unit nicht
-   anlegbar).
-6. **Weak-Word-Review (bis 25):** Empfehlung: die Grenze von 25 auf 10 senken **oder** die Regel für „Wiederholung" ausnehmen.
-   Das ist eine Produktentscheidung (eine Wiederholung ist ein Tagespflicht-Päckchen, keine Lerneinheit).
-7. **Bestehende Daten bei Friedrich (Child 3, Plan 8 bei null angefangen am 2026-11-16):** Neu aufteilen ist dort
-   „billig", aber **nicht** in dieser Story: der Umbau echter Pläne geschieht über ein Skript an einer DB-Kopie, nicht
-   über die API-Regel.
-8. **Wo steht die Regel für den Creator?** Empfehlung: im Vertrag als Konstante im `VocabularyConfig`-Kommentar
-   (`backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs:23`) und im Typ-Manifest, damit das Vater-Web die Grenze
-   anzeigen kann und `laden.py` sie nicht doppelt hartkodiert.
-9. **Vertragsbruch?** Ein neuer Fehlerfall ändert keine Felder; ob das als Bruch zählt, entscheidet erst `geschaetzt`.
-   Hinweis: `laden.py` und der KI-Creator rufen die API auf und scheitern bei Listen über 10; beide müssen **vor** der
-   Server-Regel nachziehen.
-10. **Berührt die Leitbild-Stories** (B-680): Wenn der Lehrer-Agent täglich je Fach Pakete schneidet, ist die
-    Wortzahl je Paket seine Sache, nicht die des Katalogs. Empfehlung: die Regel als **Katalog-Obergrenze** formulieren,
-    nicht als pädagogische Größe.
+1. ~~**Wörter oder Karten?**~~ → Entscheidung 1.
+2. ~~**Wo greift die Obergrenze?**~~ → Entscheidung 2.
+3. ~~**Bestandsübungen über 10:**~~ → Entscheidung 3.
+4. ~~**Untergrenze 5: wo?**~~ → Entscheidung 4.
+5. ~~**Rest an der Seitengrenze:**~~ → Entscheidung 5.
+6. ~~**Weak-Word-Review (bis 25):**~~ → Entscheidung 6.
+7. ~~**Bestehende Daten bei Friedrich:**~~ → Entscheidung 3 (nicht Teil dieser Story).
+8. ~~**Wo steht die Regel für den Creator?**~~ → Entscheidung 7.
+9. ~~**Vertragsbruch?**~~ → Entscheidung 8 (gemessen erst bei `geschaetzt`).
+10. ~~**Berührt die Leitbild-Stories (B-680):**~~ → Entscheidung 9.
 
 ## Entscheidungen
 
-Noch keine – Stufe `ausformuliert`.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-## Akzeptanzkriterien (Entwurf)
+1. **Gezählt werden Wörter, nicht Karten; Grenzen `MinWords = 5`, `MaxWords = 10`.** Begründung: Ein Wort ist genau eine
+   `ExerciseItem`-Zeile (eindeutig je Übung: Vorprüfung `ExerciseControllers.cs:224`, `RepeatedWordAsync` `:70-84`); Karten sind
+   eine abgeleitete Größe je Richtung (`ExerciseContentProvider.CardCount`, `Services/Shared/ExerciseContentProvider.cs:109`).
+   Beide Größen haben getrennte Schreiber, die Regel gleicht sie bewusst nicht gleich. Verworfen: Karten zählen (`both`
+   hieße 5 Wörter = 10 Karten Untergrenze und 5 Wörter Obergrenze). Kosten: 10 Wörter bei `both` sind 20 Karten in einem
+   Üben; die Tagesdosis (zählt Karten) deckelt den Umfang je Tag ohnehin. Ausgeschlossener Fall: ein Kind, dem 20 Karten
+   am Stück zu viel sind. Gegen die User Story gerechnet („eine Sitzung lang“): trägt, weil die Dosis den Tag regelt, die
+   Übung nur die Einheit.
+2. **Ein Prädikat an allen Schreibwegen: abgewiesen wird, wenn `nachher > 10` und zugleich `nachher > vorher`.** Wege:
+   Neuanlage (POST, vorher = 0), PUT mit Items (`UpdateConflictAsync`, `ExerciseControllers.cs:111`, hat `exercise` und damit
+   `vorher`), `POST …/items` (`:202`), `refs-from-tags` (`:129`; die Fehlermeldung nennt die Trefferzahl, gespeichert wird nichts).
+   Fehler `validation_error`. Ein PUT **ohne** Items bleibt unberührt (`HasPayloadItems`, `:115`). Die Regel sitzt in den
+   Creator-Routen, **nicht** im geteilten `ExerciseItemService.ReconcileAsync` (Begründung Entscheidung 6). Verworfen: die
+   Obergrenze nur auf POST. Kosten: vier Stellen, ein gemeinsamer Helfer nötig; ob POST über `ValidateConfigAsync`
+   (`:38`, läuft auch bei PUT) oder einen eigenen Haken verdrahtet wird, entscheidet der Bau, die Akzeptanzkriterien prüfen
+   nur das Verhalten. Ausgeschlossener Fall: ein Weg an der Regel vorbei – gegen die User Story („keine Wortlisten-Wand“)
+   ist das der Fall, der sie leerlaufen ließe.
+3. **Bestand über 10 wird nicht abgewiesen und nicht zum Teilen gezwungen; er darf nur nicht wachsen.** Zusammenspiel mit der
+   Verschiebe-Sperre, geprüft an `WouldShiftAsync` (`ExerciseItemService.cs:90-97`: `current.Count > desired.Count` sperrt
+   das Kürzen): eine **gespielte** Übung ist damit in der Länge eingefroren (nicht kürzer wegen der Sperre, nicht länger
+   wegen Entscheidung 2); eine **ungespielte** Übung über 10 darf kürzer werden, auch auf einen Wert über 10. Automatisches
+   Aufteilen bleibt verboten (zerreißt den Leitner-Stand an den Karten). Der Umbau echter Pläne (Friedrich, Plan 8) ist **nicht**
+   Teil dieser Story, sondern ein Skript an einer DB-Kopie. Verworfen: jede Speicherung über 10 abweisen (die gespielte
+   44er-Übung wäre nie wieder speicherbar). Kosten: die Wortlisten-Wand des Bestands bleibt, bis jemand sie per Skript
+   teilt. Ausgeschlossener Fall: Bestand per API auf ≤ 10 zwingen; gegen die Schüler-Story heißt das, dass der Sohn die
+   vorhandenen langen Listen weiter bekommt.
+4. **Untergrenze 5 greift nur beim Zuweisen** (`PlanPositionsController.cs:185`, neben `IsUnfilledAsync`), als `validation_error`.
+   Ausnahme nur durch ein neues, additives Feld `AllowShortList` (bool, Vorgabe `false`) an `CreatePositionDto`, das das
+   Vater-Web nach einer Rückfrage setzt. Begründung: „anlegen, dann füllen“ ist ausdrücklich gewollt
+   (`PlanPositionsController.cs:181-184`), eine Untergrenze auf POST verböte ihn; ob eine Liste die ganze Unit ist, kann
+   der Server nicht wissen. Verworfen: der Server leitet „ganze Unit“ aus den Wörtern der Unit ab (fragil, ein
+   Zweitfall je Unit). Kosten: ein Vertragsfeld und eine Rückfrage im Vater-Web. Ausgeschlossener Fall: eine kurze Liste,
+   die ohne bewusste Bestätigung zugewiesen wird; gegen die User Story („keine Mini-Übung“) ist das der Zweck.
+5. **Die Erzeuger entscheiden über Reste und Überlängen, der Server prüft nur.** `laden.py` (eine Übung je Abschnitt ohne
+   Aufteilung, `laden.py:443-456`): Abschnitte unter 5 Wörtern werden an den Nachbarabschnitt derselben Unit gehängt, danach wird
+   jeder Abschnitt über 10 **gleichmäßig** in `ceil(n/10)` Teile mit dem Titelzusatz „(Teil i/k)“ zerlegt (mindestens 5 Wörter
+   je Teil für jedes n ≥ 11, gerechnet: 11 = 6+5, 21 = 7+7+7). Bleibt eine ganze Unit unter 5, bleibt sie und wird mit
+   `AllowShortList` zugewiesen. KI-Creator: `MinItems`/`MaxItems` gelten für die Vokabeltypen als 5/10 statt 3/30
+   (`DraftRules.cs:40-43`); `Slice` bleibt. Verworfen: `laden.py` bricht nur ab und überlässt dem Vater das Zerlegen
+   (die zehn Buch-Wortlisten wären dann nicht mehr ladbar). Kosten: Abschnittsgrenzen des Buchs (Seiten) verschwimmen im
+   Titel; zwei Erzeuger müssen vor dem Server nachziehen. Ausgeschlossener Fall: ein Abschnitt, der als eine Übung
+   erhalten bleibt, weil er „zusammengehört“; gegen die Schüler-Story richtig, weil die 44er-Liste genau das Problem ist.
+6. **Die Weak-Word-Review bleibt bei 25 Wörtern und ist von der Katalog-Obergrenze ausgenommen.** Sie legt ihre Übung über
+   `ExerciseItemService` an, nicht über die Creator-Routen (`WeakWordReviewService.cs`, Konstruktor `items`, `MaxWords = 25`,
+   `:22`), und ist ein Pflicht-Päckchen für einen Tag, keine Lerneinheit; ihr Umfang ist die Wahl des Vaters aus seiner
+   Wortliste. Das ist **kein** Eingriff in Malus oder Münzen. Verworfen: auf 10 senken (würde die Wiederholung eines
+   schwachen Tages zerhacken). Kosten: der Katalog enthält Übungen bis 25 Wörter, und die Regel „Katalog-Obergrenze“ hat eine
+   benannte Ausnahme. Ausgeschlossener Fall: eine Wiederholung mit mehr als 10 Wörtern ist nicht „überschaubar“; gegen die
+   Schüler-Story ist das der schwächste Punkt der Entscheidung.
+7. **Die Grenzen stehen als benannte Konstanten im Vertragsprojekt neben `VocabularyConfig`**
+   (`Pugling.Contracts/Exercise/ExerciseConfigs.cs:23`), `laden.py` dupliziert sie mit Verweis. Ein Typ-Manifest-Feld dafür
+   habe ich im Vertragsprojekt nicht gefunden (Suche nach `Manifest` ohne Treffer); ob es eines gibt, klärt `geschaetzt`.
+   Begründung: Wird die Zahl in Python dupliziert, ist Drift **laut** (der Server antwortet `400`), nicht still. Verworfen:
+   Grenzen aus einem Endpunkt lesen. Kosten: eine doppelte Zahl. Ausgeschlossener Fall: ein Python-Lader, der sich selbst
+   an eine Servergrenze anpasst.
+8. **Reihenfolge des Baus: Erzeuger vor Server.** `laden.py` und der KI-Creator rufen die API auf und scheitern sonst an
+   Listen über 10; sie ziehen im selben Schritt nach, bevor die Server-Regel scharf wird. Der Vertrag wächst additiv
+   (`AllowShortList`, Konstanten) – `vertragsbruch` wird bei `geschaetzt` nachgesehen. Kosten: ein Bau in drei Teilen
+   (Server, `laden.py`, Agent). Ausgeschlossener Fall: ein Server, der vor den Erzeugern scharf wird.
+9. **Die Regel ist eine Katalog-Obergrenze, keine pädagogische Größe.** Ein Lehrer-Agent (B-680) schneidet Tagespakete über
+   Positionen und `NewItemsPerDay`, nicht über die Wortzahl der Katalogübung. Diese Story ändert weder Rollenaufteilung noch
+   Münzen oder Malus. Kosten: ein Paket von 12 Wörtern ist eine Übung mit 10 plus eine zweite. Ausgeschlossener Fall: eine
+   Katalogübung, die ein Agent frei nach Tagesbedarf dimensioniert.
+
+## Akzeptanzkriterien
 
 Je Kriterium: welche Änderung macht es rot.
 
-1. `POST …/vocabulary` mit 11 Wörtern liefert `validation_error`, mit 10 `201`. Rot, wenn die Grenze fehlt oder bei `> 11`
-   liegt.
-2. `PUT` eines Bestands mit 44 Wörtern in einem Plan, **unverändert in der Länge**, bleibt möglich; mit 45 Wörtern nicht.
-   Rot, wenn die Regel alle Speicherungen abweist (Bestandsschutz) oder das Wachstum zulässt.
-3. `POST …/items` auf eine Übung mit 10 Items liefert `validation_error`; mit 9 geht es. Rot, wenn der Item-Weg die
-   Grenze nicht kennt.
-4. `refs-from-tags` mit 11 Treffern liefert einen Fehler, der die Anzahl nennt, und lässt die Items unverändert. Rot,
-   wenn gekürzt oder gespeichert wird.
-5. Das Zuweisen einer Vokabelübung mit 4 Wörtern an einen Plan liefert `validation_error`, mit 5 geht es. Rot, wenn die
-   Untergrenze beim Anlegen statt beim Zuweisen prüft (dann scheitert der Weg „anlegen, dann füllen").
-6. Zwei Wörter sind bei `both` vier Karten, aber **zwei** Wörter für die Grenze. Rot, wenn `CardCount` statt der
-   Wortzahl zählt.
-7. `laden.py` meldet einen Abschnitt über 10 Wörtern **vor** dem ersten Aufruf mit Abschnittsname und Zahl. Rot, wenn der
-   Fehler erst als 400 des Servers kommt.
-8. Der KI-Creator legt aus einer Unit-Wortliste mit 25 Wörtern keine Übung mit 25 Wörtern an. Rot, wenn `Normalize`
-   die Liste unverändert durchreicht.
+1. `POST …/vocabulary` mit 11 Wörtern liefert `validation_error`, mit 10 `201`. Rot, wenn die Grenze fehlt oder bei `> 11` liegt.
+2. `PUT` mit Items auf eine in einem Plan gespielte Übung mit 44 Wörtern: **gleiche Länge** → `200`; 45 Wörter → `400
+   validation_error`; 43 Wörter → weiter `409 exercise_items_locked` (Verschiebe-Sperre). Rot, wenn die Regel nur `nachher > 10`
+   prüft (44 würde abgewiesen) oder das Wachstum zulässt.
+3. `PUT` mit 30 Items auf eine **ungespielte** 44er-Übung liefert `200`. Rot, wenn die Obergrenze auf PUT absolut gilt.
+4. `PUT` ohne Items und ohne Richtungswechsel (nur Titel/Einstellungen) auf die 44er-Übung liefert `200`. Rot, wenn die Prüfung die
+   Zeilen der Tabelle zählt, obwohl der Payload keine Items trägt.
+5. `POST …/items` auf eine Übung mit 10 Items liefert `validation_error`, mit 9 `201`, auf die 44er-Übung `validation_error`. Rot,
+   wenn der Item-Weg die Grenze nicht kennt.
+6. `refs-from-tags` mit 11 Treffern liefert `validation_error`, dessen Text „11“ nennt, und lässt die Items unverändert; auf
+   einer 44er-Übung sind 40 Treffer erlaubt. Rot, wenn gekürzt oder gespeichert wird oder der Weg die Grenze nicht kennt.
+7. Zuweisen einer Vokabelübung mit 4 Wörtern liefert `validation_error`, mit `AllowShortList = true` `201`, mit 5 Wörtern ohne
+   das Feld `201`; Anlegen einer leeren Übung und späteres `…/items` bleibt möglich. Rot, wenn die Untergrenze beim Anlegen
+   statt beim Zuweisen greift oder das Feld ignoriert wird.
+8. Zehn Wörter mit `direction = both` (20 Karten) werden angenommen, fünf (10 Karten) auch. Rot, wenn `CardCount` statt der
+   Wortzahl zählt (zehn Wörter `both` würden abgewiesen).
+9. Die Weak-Word-Review mit 25 Wörtern entsteht weiter (`201`). Rot, wenn die Obergrenze im geteilten `ExerciseItemService`
+   statt in den Creator-Routen sitzt.
+10. `laden.py` macht aus einem Abschnitt mit 25 Wörtern drei Übungen mit 9/8/8 Wörtern und Titel „(Teil i/3)“ und hängt einen
+    Abschnitt mit 4 Wörtern an den Nachbarn; geprüft an einer reinen Funktion (Testweg bei `geschaetzt`). Rot, wenn der
+    Abschnitt unverändert als Übung mit 25 Wörtern in den Plan geht.
+11. Der KI-Creator liefert für einen Vokabelentwurf mit `--count 25` keine Übung mit 25 Wörtern (Verstoß oder Kürzung auf 10).
+    Rot, wenn `DraftRules.MaxItems = 30` für Vokabeltypen gilt.
 
 ## Verlauf
 
@@ -147,3 +208,7 @@ Je Kriterium: welche Änderung macht es rot.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): keine Zählgrenze an vier Schreibwegen; die Behauptung „`laden.py` und
   KI-Creator teilen selbst auf“ ist nicht belegbar; die Obergrenze kollidiert mit der Verschiebe-Sperre für gespielte
   Übungen; zehn offene Punkte mit Empfehlung.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt, `wartet_auf` gesetzt): Entscheidungen 1 bis 9.
+  Gegen den Code korrigiert: Der KI-Creator schneidet Unit-Wortlisten schon auf `ItemCount` (Vorgabe 10). Untergrenze nur beim
+  Zuweisen mit additivem `AllowShortList`; Bestand darf nicht wachsen (Zusammenspiel mit der Verschiebe-Sperre belegt).
+  Weak-Word-Review bleibt bei 25. Akzeptanzkriterien final, je mit roter Änderung.

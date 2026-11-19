@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/frontend, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
 aliases: [Bonusrunde Sonderzeichen falsches Kästchen]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -52,30 +52,68 @@ nachgestellt.
 
 ## Offene Punkte
 
-1. **Wo wird repariert?** (a) Nur in `LetterBoxes` das gemerkte Kästchen zurücksetzen (Vorschlag der Notiz);
-   (b) in `SohnBonusRun` dieselbe Fokusregel wie Üben/Test; (c) beides. **Empfehlung (c):** (a) allein heilt den
-   Enter-Weg nicht (der Fokus bleibt im Kästchen 5, `onFocus` setzt `zuletzt` nie neu), (b) allein lässt den
-   Knopf-Weg offen, wenn der Fokus nicht an die Kästchen geht.
-2. **Wann setzt `LetterBoxes` zurück?** Bei jedem Leeren des Werts wäre falsch – wer Kästchen 3 antippt und dann ein
-   Zeichen wählt, will Kästchen 3. **Empfehlung:** beim Verlassen der Kästchen (`onBlur` auf der Gruppe, Ziel außerhalb).
-   Die Leiste nimmt dem Feld den Fokus nicht (`LetterBoxes.test.tsx:118-123`), löst also keinen Verlust aus.
-3. **Bonus-Runde: Fokus nach Laden?** Üben setzt ihn nach dem ersten Aufbau bewusst nicht (B-443).
-   **Empfehlung:** auch hier nur nach einer Handlung des Kindes, nicht beim Laden.
+1. ~~**Wo wird repariert?**~~ Entschieden: Entscheidung 1 (anders als der Vorschlag der Ausformulierung).
+2. ~~**Wann setzt `LetterBoxes` zurück?**~~ Gegenstandslos durch Entscheidung 1: `LetterBoxes` bleibt unverändert.
+3. ~~**Bonus-Runde: Fokus nach Laden?**~~ Entschieden: Entscheidung 2.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-1. In der Bonusrunde steht nach der Abgabe einer Kästchen-Karte per Enter der Fokus im ersten Kästchen der nächsten
-   Karte. Rot macht es: ein Bonus-Weg ohne Fokus beim Kartenwechsel (heute so) – im E2E, nicht per Vitest (Fläche mit
-   Server).
-2. Ein Leisten-Zeichen nach dem Kartenwechsel landet im ersten leeren Kästchen, auch bei gleich langer Folgekarte.
-   Rot macht es: das gemerkte Kästchen bleibt über Blur und Kartenwechsel erhalten (heute so) – `LetterBoxes.test.tsx`,
-   Fokus Kästchen 5, Blur, Leiste, Erwartung Kästchen 1.
-3. Wer ein Kästchen antippt und dann ein Zeichen der Leiste wählt, setzt es dort ein (kein Blur dazwischen). Rot macht
-   es: ein Zurücksetzen bei jedem Leeren des Werts statt beim Verlassen; der Fall steht schon (`:95-101`).
-4. Üben und Test verhalten sich unverändert: ihre Fokus-Fälle bleiben grün.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+1. **Repariert wird nur in `SohnBonusRun`, mit der Fokusregel von Üben und Test; `LetterBoxes` bleibt unangetastet.**
+   `answer()` (`SohnBonus.tsx:222-229`) setzt eine Absicht (`useRef`), ein Effekt auf `cursor` fokussiert danach das
+   erste Bedienbare der Antwortzone (`answerRef.current?.querySelector("input, button:not([disabled])")`, die
+   Antwortzone `div.lektion-antwort` bekommt den Ref) – Muster `SohnTest.tsx:89-102` und `SohnPractice.tsx:196-203`.
+   Begründung am Code: der Fokus auf Kästchen 1 ruft `onFocus` (`LetterBoxes.tsx:116`) und setzt `zuletzt` auf 0 –
+   damit heilt **ein** Eingriff beide Wege, den Enter-Weg (Fokus bliebe sonst in Kästchen 5, jede Taste dorthin) und
+   den Knopf-Weg (nur das gemerkte Kästchen irrte). Ein stehengebliebenes `zuletzt` überlebt ohnehin nur zwischen
+   zwei Kästchen-Karten, weil die Kästchen sonst neu eingehängt werden (`Lektion.tsx:144-146`, B-526); jeder Wechsel
+   auf eine solche Karte landet jetzt in Kästchen 1. Verworfen: (a) `zuletzt` beim Verlassen der Gruppe
+   zurücksetzen und (c) beides – die Ausformulierung empfahl (c), weil „(b) allein den Knopf-Weg offen lasse, wenn der
+   Fokus nicht an die Kästchen geht"; ein solcher Weg ist am Code nicht zu finden (im Bonus gibt es keine Sperre
+   zwischen den Karten, `action.busy` gilt nur für die Abgabe am Ende). (a) kostet dagegen sicher etwas: eine geteilte
+   Komponente, die Üben und Test auch tragen, bekäme eine `onBlur`-Logik, deren Verhalten am Handy (Tastatur klappt
+   zu, Ziel unklar) kein jsdom-Test sieht (`LetterBoxes.test.tsx:118-123` prüft nur die Ereignisse). Kosten der
+   Entscheidung: ein künftiger Bildschirm mit Kästchen und ohne Fokuslandung kann `zuletzt` wieder falsch stehen
+   lassen – die Ursache wäre dann dieselbe, die Reparatur dieselbe. Ausgeschlossen wird der Fall der User Story: der
+   Akzent aus der Leiste oder getippt landet nach dem Weiter in der ersten Lücke der neuen Karte, auf beiden Wegen.
+2. **Der Fokus wird nur nach einer Handlung des Kindes gesetzt, nicht beim Laden der Runde.** Begründung: B-443,
+   Üben setzt ihn bewusst nicht beim ersten Aufbau; am Handy klappte sonst die Tastatur ungefragt auf. Verworfen:
+   Fokus auch auf Karte 1. Kosten: auf der ersten Karte einer Runde braucht es einen Tipp ins Feld, bevor getippt
+   wird; dort ist `zuletzt` `null`, das Leisten-Zeichen geht ins erste leere Kästchen – richtig.
+3. **Der Test sitzt in Vitest (`SohnBonus.test.tsx`), nicht im E2E.** Die Ausformulierung nannte das E2E, weil
+   die „Fläche mit Server" laufe; die Bonus-Tests rendern die Runde aber mit gemockter API
+   (`SohnBonus.test.tsx:130`, `startExtraRun.mockResolvedValue(…)`) und können `document.activeElement` lesen.
+   Verworfen: ein neuer E2E in `e2e/bonus.spec.ts` – er wäre langsamer und sähe gegenüber Vitest nichts Zusätzliches
+   (ob am echten Handy die Tastatur offen bleibt, sieht keines von beiden). Kosten: jsdom-Fokus ist nicht der
+   Browser-Fokus; die Rollenprobe an der laufenden App bleibt nötig.
+4. **Karten mit Auswahl oder Karteikarte bekommen denselben Fokus wie in Üben.** Das erste Bedienbare ist dort die
+   erste Option bzw. „Aufdecken" – gleiches Verhalten wie `SohnPractice.tsx:201`. Verworfen: den Fokus auf
+   Kästchen-Karten beschränken (zwei Regeln statt einer, und Tastaturkinder profitieren überall). Kosten: ein
+   Tastaturkind, das auf einer Auswahlkarte Enter drückt, trifft die erste Option; wie im Üben.
+
+## Akzeptanzkriterien
+
+Final; je Kriterium die Änderung, die es rot macht. Alle in `SohnBonus.test.tsx`, Fixture: zwei gleich lange
+Kästchen-Karten (`answerLength: 6`, `keyboardLang: "fr"`).
+
+1. Enter-Weg: Kästchen 5 der ersten Karte fokussiert, ein Zeichen getippt, Enter. Danach ist das fokussierte Element
+   „Buchstabe 1 von 6" der zweiten Karte. Rot macht es: der Effekt in `SohnBonusRun` fehlt (heute so, der Fokus bleibt
+   im Kästchen 5) oder die Absicht wird nicht in `answer()` gesetzt.
+2. Leisten-Zeichen nach dem Kartenwechsel: nach AK 1 „î einsetzen" gedrückt – das Zeichen steht in Kästchen 1, nicht
+   in 5. Rot macht es: derselbe fehlende Effekt (`zuletzt` bliebe 4); ein Fokus, der `onFocus` nicht auslöst (zum
+   Beispiel das Setzen des Werts ohne `.focus()`), lässt dieses Kriterium fallen, AK 1 nicht.
+3. Knopf-Weg: Kästchen 5 gefüllt, Abgabe per „Weiter"-Knopf. Der Fokus steht danach in Kästchen 1 der nächsten Karte.
+   Rot macht es: die Absicht hängt am Enter-Handler der Kästchen statt in `answer()`.
+4. Festschreibung (besteht im Ausgangszustand): nach dem Laden der Runde steht der Fokus nicht in den Kästchen. Rot
+   macht es: ein Fokus beim ersten Aufbau (Entscheidung 2).
+5. Festschreibung: `LetterBoxes.test.tsx` und die Fokus-Fälle von Üben und Test bleiben unverändert grün; die Datei
+   `LetterBoxes.tsx` wird nicht angefasst. Rot macht es: eine `onBlur`-Logik in `LetterBoxes`, die den Fall
+   „Kästchen 3 antippen, dann Zeichen wählen" (`LetterBoxes.test.tsx:95-101`) bricht.
 
 ## Verlauf
 
 - **2026-11-18** — angelegt aus der Nachschau von B-661 (`frontend-reviewer`), `entgangen_bei: [B-661]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): am Code gelesen (nicht im Browser nachgestellt); die Ursache
   liegt in der Bonusrunde (kein Fokus beim Kartenwechsel), und der Enter-Weg betrifft auch normale Tasten.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): vier Entscheidungen; Reparatur nur in `SohnBonusRun` (Fokusregel von Üben/Test), `LetterBoxes` bleibt; weicht von der Empfehlung (c) der Ausformulierung ab, weil Kästchen-1-Fokus `zuletzt` über `onFocus` ohnehin setzt; Test in Vitest statt E2E.

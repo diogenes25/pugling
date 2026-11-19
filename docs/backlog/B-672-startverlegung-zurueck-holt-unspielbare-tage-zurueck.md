@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Start zurückverlegt bricht Serie, Ferienpause kostet Malus]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Defekt
 groesse: ""
@@ -90,39 +90,84 @@ dokumentierte Unschärfe zugunsten des Kindes (`StudyPlanEntities.cs:93-96`).
 
 ## Offene Punkte
 
-1. **Genügt `ActivatedAt = max(ActivatedAt, min(alter Start, heute))` vor dem Absenken?** Empfehlung: ja. Serie:
-   `max(18.11., min(1.12., 25.11.))` = 25.11. – der 24.11. ist frei. Malus: `max(1.11., min(15.11., 20.11.))` =
-   15.11. – 6.–14.11. fallen aus der Fälligkeit (`from >= ActivatedAt` greift, weil `ActivatedAt > StartDate`).
-   Das anschließende Absenken bleibt unverändert und verhindert, dass ein Vorziehen auf heute das Ergebnis zerstört.
-2. **Soll die Freistellung auch Tage erfassen, die vor dem Verlegen spielbar waren** (1.–5.11. im Malus-Fall)?
-   Empfehlung: ja, hinnehmen. Die Alternative (Historie der Starts speichern) wäre ein Schema; die Unschärfe zugunsten
-   des Kindes ist bereits Vertrag der Spalte.
-3. **Bereits gebuchter Malus und gebrochene Serien** aus früheren Verlegungen: Empfehlung: nicht rückwirkend ändern
-   (Ledger bleibt, siehe Kommentar `PositionProgressService.cs:780`); der Fix wirkt ab dem nächsten Verlegen.
-4. **Gilt dasselbe, wenn das Verlegen eines inaktiven Plans später aktiviert wird?** Nicht betroffen:
-   Einschalten setzt `ActivatedAt = today` (Zeile 220) und das Verlegen prüft `plan.Active` (Zeile 225).
-   Empfehlung: nichts tun.
+1. ~~**Genügt `ActivatedAt = max(ActivatedAt, min(alter Start, heute))` vor dem Absenken?**~~ → Entscheidung 1.
+2. ~~**Soll die Freistellung auch Tage erfassen, die vor dem Verlegen spielbar waren** (1.–5.11. im Malus-Fall)?~~ →
+   Entscheidung 2.
+3. ~~**Bereits gebuchter Malus und gebrochene Serien** aus früheren Verlegungen~~ → Entscheidung 3.
+4. ~~**Gilt dasselbe, wenn das Verlegen eines inaktiven Plans später aktiviert wird?**~~ → Entscheidung 4.
 
 ## Entscheidungen
 
-Noch keine – Stufe `ausformuliert`; die Punkte oben warten auf den Grill.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
+
+Keine Malus- oder Münzregel ist neu: B-613 Entscheidung 2 und der Kommentar `StudyPlansController.cs:222-224`
+versprechen schon, dass Tage vor dem ersten spielbaren Tag „zugunsten des Kindes“ bleiben. Der Code löst das nur für die
+Richtung „Zukunftsstart vorgezogen“ ein. Die Entscheidungen stellen die versprochene Regel für die Gegenrichtung her.
+
+1. **Vor dem Absenken wird `ActivatedAt` auf `max(ActivatedAt, min(alter Start, heute))` angehoben, nur bei
+   `startMoved && plan.Active`.** Der alte Start wird dafür vor `StudyPlansController.cs:216` in einer Variablen
+   festgehalten. Die Reihenfolge ist Anheben, dann das bestehende Absenken (`:225-229`), beides im selben Block.
+   *Begründung:* `min(alter Start, heute)` ist der erste Tag, an dem der Plan nach der **alten** Lage spielbar war
+   (`PositionPlayService.cs:66-67`); alles davor war nicht spielbar und darf nicht zählen. Gerechnet an den Fällen der
+   Story: Serie `max(18.11., min(1.12., 25.11.))` = 25.11., der 24.11. ist frei; Malus `max(1.11., min(15.11., 20.11.))` =
+   15.11., die Perioden 6.–14.11. fallen aus der Fälligkeit, weil `from >= ActivatedAt` gilt und `ActivatedAt <= StartDate`
+   nicht mehr (`PositionProgressService.cs:677-679`). Der Test `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet`
+   (`RueckwirkendePflichtTests.cs:465`) bleibt grün: `max(start+5, min(start+5, heute))` ändert nichts, das Absenken
+   setzt danach weiter auf heute. *Kosten:* ein weiterer Schritt in einem ohnehin dichten Block, und der Controller muss
+   den alten Start kennen.
+   *Verworfene Alternative:* `ActivatedAt = playableFrom` bei **jedem** Verlegen. Das wäre kürzer, gäbe aber dem Vater mit
+   jeder Startkorrektur um einen Tag die gesamte spielbare Vergangenheit des Plans frei – Malus und Serie der letzten
+   Wochen verfielen. Das widerspräche dem Kern „verpasste Pflicht kostet“ und der Story, die nur **unspielbare** Tage
+   freistellen will.
+   *Ausgeschlossener Fall (gegen die User Story gerechnet):* Ein Tag, an dem der Plan nach dem alten Start spielbar war,
+   bleibt Pflicht, auch wenn der Vater den Start danach hinter ihn schiebt – das Kind konnte an diesem Tag spielen. Eine
+   Wochenpflicht, deren Woche vor dem alten Start beginnt, gilt weiter als nicht fällig (`from >= ActivatedAt`,
+   `PositionProgressService.cs:673-679`); das ist die abgenommene Regel „nur Perioden ganz nach dem Einschalten“ von B-613
+   und ändert sich hier nicht.
+2. **Keine Historie der Starts, kein neues Feld, keine Migration.** Die Freistellung erfasst auch Tage, die vor dem
+   Verlegen spielbar waren (1.–5.11. im Malus-Fall), weil nur der **letzte** Schaltzeitpunkt bekannt ist. *Begründung:*
+   Das ist der ausdrückliche Vertrag der Spalte (`StudyPlanEntities.cs:93-96`: „the blur always goes in the child's
+   favour“) und B-613 Entscheidung 2. *Kosten:* In seltenen Doppelverlegungen schenkt der Fix dem Kind ein paar Tage, die
+   es spielen konnte. *Verworfene Alternative:* Startverlauf als Tabelle (Migration über die echte DB, Schema-Tore) für
+   eine Handvoll Tage in einer Korrektur, die der Vater selbst auslöst.
+3. **Bereits gebuchter Malus und gebrochene Serien aus früheren Verlegungen werden nicht rückwirkend geändert.** Der Fix
+   wirkt ab dem nächsten Verlegen. *Begründung:* Der Ledger ist idempotent und wird nicht umgeschrieben (Kommentar
+   `PositionProgressService.cs:780`), und eine Heilung bräuchte ein Skript an der echten `pugling.db`. *Kosten:* Ein Kind,
+   dem so schon ein Malus gebucht wurde, behält ihn; der Vater kann ihn über das Verschenken (`POST children/{}/points`,
+   Druckventil gegen Malus-Schulden, `backend/Pugling.Api/CLAUDE.md`) ausgleichen.
+4. **Das Verlegen eines inaktiven Plans ändert `ActivatedAt` nicht.** *Begründung:* Das spätere Einschalten setzt
+   `ActivatedAt = today` (`StudyPlansController.cs:220`); die Anhebung ist mit `plan.Active` gegated. Wird im selben
+   Request eingeschaltet **und** der Start verlegt, setzt `:220` zuerst heute, und `max(heute, min(alt, heute))` bleibt
+   heute. *Kosten:* keine.
+
+**Überlappung:** Die Entscheidungen berühren [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) (abgenommen), ändern
+aber keine seiner Entscheidungen; sie lösen deren Versprechen („Tage davor nur zugunsten des Kindes“) für das
+Zurückverlegen ein. Keine Überlappung mit einer anderen offenen Story gefunden.
 
 ## Akzeptanzkriterien
 
-Entwurf (je mit der Änderung, die es rot macht):
+Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse: `RueckwirkendePflichtTests` (Uhr per
+`factory.Clock.Advance`, Muster `:465`).
 
-1. **Malus:** Plan seit Tag X gespielt, Start auf Tag Y > heute verlegt, dann zurück auf X: die Abrechnung bucht für
-   Perioden zwischen X und Y keinen Malus. Rot, wenn `ActivatedAt` beim Verlegen nicht auf `min(alter Start, heute)`
-   angehoben wird (heute: Malus gebucht).
-2. **Serie:** Plan mit Zukunftsstart, vorzeitig eingeschaltet, dann Start auf gestern verlegt: die Serie des Kindes
-   bleibt, der Tag „neuer Start bis gestern“ zählt nicht als Pflichttag. Rot, wenn die Anhebung fehlt oder den alten
-   Start schon überschrieben vorfindet.
-3. **Vorziehen bleibt:** die Zukunftsstart-auf-heute-Probe (`Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet`) bleibt
-   grün – ein am heutigen Tag fälliger Plan schuldet ab heute. Rot, wenn die Anhebung das Absenken verdrängt.
-4. **Unverlegter Plan und Verlegen eines inaktiven Plans** ändern `ActivatedAt` nicht. Rot, wenn die Anhebung nicht auf
-   `startMoved && plan.Active` begrenzt ist.
-5. **Später verlegt** (Start nach hinten in die Zukunft verschoben, dann gespielt): ein Tag, an dem der Plan nach dem
-   alten Start spielbar war, bleibt Pflicht. Rot, wenn die Anhebung über `min(alter Start, heute)` hinausgeht.
+1. **Malus:** Plan mit Start heute T und Tagespflicht; Start auf T+5 verlegt; Uhr auf T+7; Start zurück auf T: die
+   Abrechnung bucht für die Tage T+1 bis T+4 keinen Malus. Rot, wenn der Anhebungsschritt fehlt (`ActivatedAt` bleibt T,
+   `ActivatedAt <= StartDate` – heute wird für T+1 bis T+4 gebucht) oder wenn er `heute` statt `min(alter Start, heute)`
+   nimmt (dann fielen auch T+5 und T+6 aus der Pflicht).
+2. **Serie:** Plan mit Start T+13, am Tag T eingeschaltet (`ActivatedAt` T); Uhr auf T+7; Start auf T+6 verlegt: der Tag
+   T+6 zählt nicht als Pflichttag, die Serie des Kindes bleibt. Rot, wenn die Anhebung fehlt oder erst nach dem Absenken
+   steht, oder wenn der alte Start nach `:216` gelesen wird (dann ist es der neue und `min` liefert T+6).
+3. **Vorziehen bleibt:** `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet` bleibt grün – ein Zukunftsstart, auf heute
+   vorgezogen, schuldet ab heute. Rot, wenn die Anhebung das Absenken verdrängt (`ActivatedAt` bliebe T+5, der verpasste
+   Tag fiele aus).
+4. **Nichts verlegt, nichts angehoben (Datenzusicherung, ausdrücklich beschriftet):** Plan mit `ActivatedAt` T und Start
+   T+10 (am Tag T eingeschaltet), Uhr auf T+12: ein PATCH ohne `startDate` – und ebenso einer mit dem unveränderten Start
+   oder bei `Active == false` – lässt `ActivatedAt` bei T. Das Verhalten ändert sich dabei nicht (der Tag liegt vor dem
+   Start), die Zusicherung hält nur fest, dass die Anhebung auf `startMoved && plan.Active` begrenzt bleibt. Rot, wenn die
+   Begrenzung fällt (`ActivatedAt` stünde danach bei T+10).
+5. **Spielbare Tage bleiben Pflicht:** Plan mit Start T und Tagespflicht, am Tag T+3 der Start auf T+2 gesetzt (später,
+   aber nicht nach heute): ein an T+2 verpasster Tag kostet Malus. Rot bei der verworfenen Kurzregel
+   `ActivatedAt = playableFrom` bei jedem Verlegen (T+2 fiele frei) und bei einer Anhebung über `min(alter Start, heute)`
+   hinaus.
 
 ## Verlauf
 
@@ -131,3 +176,6 @@ Entwurf (je mit der Änderung, die es rot macht):
 - **2026-11-19** — ausformuliert im Vorbereitungslauf: Ist-Stand mit Fundstellen am Code belegt; Malus-Fall bestätigt,
   Serien-Fall korrigiert (betroffen ist der Streifen neuer Start bis heute, nicht alles ab `ActivatedAt`);
   `unverifiziert` entfernt; Akzeptanzkriterien als Entwurf, Offene Punkte mit Empfehlung. Nicht gegrillt.
+- **2026-11-19** — gegrillt im Vorbereitungslauf (Sonnet), stellvertretend und unbestätigt: vier Entscheidungen
+  (Anhebung `max(ActivatedAt, min(alter Start, heute))` vor dem Absenken, kein Startverlauf, keine rückwirkende Heilung,
+  inaktive Pläne unberührt); Akzeptanzkriterien final mit je einer roten Änderung. Keine neue Malus-Regel.

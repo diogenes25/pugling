@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, lerntechnik/vokabeln, lerntechnik/birkenbihl]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln, lerntechnik/birkenbihl]
 aliases: [Vokabel im Satz, Satzkarte]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-17"
 grund: ""
 ersetzt_durch: []
+wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
 # B-650 · Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen
@@ -75,6 +76,26 @@ Die Bausteine existieren einzeln, nur nicht zusammen:
    (`backend/Pugling.Api/CLAUDE.md`, Abschnitt Medien); [B-03](B-03-lueckensaetze-mit-bild.md) wurde aus genau diesem
    Grund verworfen.
 
+**Korrekturen beim Grillen (2026-11-19), am Code gemessen:**
+
+- **Die Dekodierung verrät die Lösung durch das Lernwort, nicht durch die Glosse.** `BirkenbihlDecoding` zeigt je Paar das Lernwort
+  *über* der Glosse (`frontend/src/components/BirkenbihlDecoding.tsx`, `decoding-word` und `decoding-gloss`). Für *home* stünde also
+  `home` über *heim* – das ist die Lösung. Die deutsche Glosse *heim* ist dagegen der **Hinweis**, den das Kind braucht
+  (der Beispielsatz der Story zeigt sie ausdrücklich: „Tom rennt heim.“). Der Satz „alle Wörter außer der Zielvokabel
+  übersetzt“ im Kopf der Story und die Formulierung „die Glosse der Zielvokabel fehlt“ weiter oben widersprechen dem Beispiel;
+  maßgeblich ist das Beispiel (Entscheidung 2).
+- **Eine Cloze-Karte schreibt den wortgebundenen Lernstand nicht.** `ItemProgressService.RecordAsync` kehrt ohne `ItemId` und
+  `VocabularyId` zurück (`Services/Shared/ItemProgressService.cs:32`); `ClozeExerciseType.ItemsOf` setzt beides nicht
+  (`Exercises/BuiltInExerciseTypes.cs:237-238`). Aussage und Kriterium 4 der Story („zählt über `VocabKey` in den Wort-Lernstand“)
+  trafen nicht zu (Entscheidung 8).
+- **Das Frontend rendert die Zeile schon für jeden Typ:** `Lektion.tsx:119` hängt `BirkenbihlDecoding` ohne Typbedingung an
+  `karte.decoding`; das alte Kriterium 7 war im Ausgangszustand grün.
+- **Der Cloze hat kein Feld für die Dekodierung:** `ClozeConfig` und `Gap` tragen keines
+  (`backend/Pugling.Contracts/Exercise/ExerciseConfigs.cs:71-85`, `:109`); `ContentItem.Decoding` ist eine Liste von `WordPair`
+  (`Services/Shared/ExerciseContentProvider.cs:56`).
+- **Der KI-Creator erzeugt Einzelsätze mit je einer Lücke aus der Wortliste schon** (`--schultest`, B-524, mit `VocabKey` und
+  `Form`; `backend/Pugling.Agent.Creator/CLAUDE.md`); schwache Wörter liegen im Briefing (`BriefingBuilder.cs:85-87`).
+
 ## Die echte Lücke
 
 Schmaler als die Idee: Lückensatz, Wortbezug, gebeugte Form und Tipp-Stufen gibt es als Cloze. Es fehlen drei Dinge:
@@ -93,58 +114,102 @@ Die Satzkarte als Cloze zu bauen wäre kein Parallel-Stack, sondern das im Repo 
 
 ## Offene Punkte
 
-Je mit Empfehlung; die Entscheidung trifft erst die Grill-Runde.
+1. ~~**Wo im Ablauf, und als welcher Typ?**~~ → Entscheidung 1.
+2. ~~**Welche Wörter bekommen eine Satzkarte?**~~ → Entscheidung 3.
+3. ~~**Woher kommen die Sätze?**~~ → Entscheidung 4.
+4. ~~**Gebeugte Form:**~~ → Entscheidung 6.
+5. ~~**Dekodierung automatisch oder von Hand?**~~ → Entscheidung 5.
+6. ~~**Wie wird die Zielvokabel in der Zeile ausgespart?**~~ → Entscheidung 2.
+7. ~~**Bild:**~~ → Entscheidung 7.
+8. ~~**Zählt die Satzkarte für Pflicht und Leitner?**~~ → Entscheidung 8.
 
-1. **Wo im Ablauf, und als welcher Typ?** Eine Stufe der Lernkarte (Vokabel-Typ), ein Cloze mit Dekodierung oder
-   eine eigene Station?
-   *Empfehlung:* Cloze mit Dekodierung. Der Cloze trägt Satz, Lücke, `VocabKey`, `Form` und die Tipp-Stufen schon; neu
-   ist nur die Dekodierung. Die Lernkarte bliebe unberührt. Die Satzkarte läuft als Position **neben** der Vokabelliste und
-   kommt **nach** dem freien Erinnern, nicht anstelle der Kombi-Lernkarte.
-2. **Welche Wörter bekommen eine Satzkarte?** Alle oder nur die schweren?
-   *Empfehlung:* nur Wörter mit `LastMissed` oder niedriger Beherrschung (`onlyWeak`, Punkt 6). Ein Vorschlag je Tag,
-   keine Pflicht für alle. Die Schwellen sind Vater-Sache und gehören nicht in diese Story.
-3. **Woher kommen die Sätze?** Lehrwerk, vorhandene Übungen oder KI-Creator?
-   *Empfehlung:* eigene Sätze, vom KI-Creator vorgeschlagen und vom Creator durchgesehen, mit Wortschatz aus der Unit.
-   Die Sätze des Buchs dürfen nicht übernommen werden (Punkt 4). Sätze bleiben Cloze-Texte und kommen nicht in den
-   Wortspeicher ([B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md)).
-4. **Gebeugte Form:** Was wird erwartet?
-   *Empfehlung:* die Form des Satzes, im Feld `Gap.Form` (Punkt 2); keine neue Mechanik nötig.
-5. **Dekodierung automatisch oder von Hand?**
-   *Empfehlung:* automatisch, mit Korrektur durch den Creator – aber erst nach B-648 (Grundform-Suche). Bis dahin
-   von Hand; die Story ist darum **nicht vor B-648 baubar** (Abhängigkeit, nicht Duplikat).
-6. **Wie wird die Zielvokabel in der Zeile ausgespart?** Die Glosse der Lücke fehlt oder ist durch eine Auslassung
-   ersetzt; das erzwingt der Server auf getippten Stufen.
-   *Empfehlung:* Server erzwingt es (Regelbruch wäre ein stiller Lösungsverrat), mit eigenem Testfall je getippter
-   Cloze-Stufe. Das ist eine Folge von Punkt 3 der Lücke und kein Detail.
-7. **Bild:** Gilt das Anti-Cheat-Argument aus B-03 hier?
-   *Empfehlung:* ja, vorerst ohne Bild bauen. Die Regel „Bild nur auf ungetippten Stufen" bleibt, die Story wird so
-   kleiner.
-8. **Zählt die Satzkarte für Pflicht und Leitner?**
-   *Empfehlung:* ja, wie jede Cloze-Position (sie zählt über ihre Lücken und `VocabKey` in den
-   Wort-Lernstand). Ein eigener Münz-Satz ist nicht nötig.
+## Entscheidungen
 
-## Akzeptanzkriterien (Entwurf)
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-Je Kriterium die Änderung, die es rot macht. Entwurf; endgültig erst nach der Grill-Runde.
+1. **Die Satzkarte ist ein Cloze mit Dekodierung, in einer eigenen Position neben der Vokabelliste; die Lernkarte bleibt
+   unberührt.** Neu ist ein optionales Feld `Decoding` an `Gap` (die Dekodierung des Satzes, in dem die Lücke steht; additiv,
+   JSON in `ConfigJson`, keine Tabelle). Die Reihenfolge „nach dem freien Erinnern“ erzwingt nichts; sie ist die Plan-Reihenfolge,
+   die der Vater setzt. Begründung: Der Cloze trägt Satz, Lücke, `VocabKey`, `Form` und die Tipp-Stufen
+   (`ExerciseConfigs.cs:109`); ein Wort-Atom der Vokabelübung hat keinen Satz. Verworfen: eine Stufe der Lernkarte (Wort-Atom ohne
+   Satz) und eine eigene Station (Parallel-Stack gegen `CLAUDE.md`). Kosten: ein Vertragsfeld, ein Editor für die Dekodierung im
+   Cloze-Formular des Vater-Webs. Ausgeschlossener Fall: die Satzkarte als Stufe im selben Atom wie das Wort; gegen die User
+   Story („zusätzlich“ geübt) ist das gewollt.
+2. **Der Server maskiert das Lernwort aller Lücken-Lösungen in der Dekodierung und lässt die Glosse stehen.** In
+   `ClozeExerciseType.ItemsOf` wird jedes Paar, dessen `LearningWord` (ohne Groß-/Kleinschreibung) einer Lösung einer Lücke der
+   Config entspricht (`ClozeGaps.SolutionOf`, `BuiltInExerciseTypes.cs:605-606`), mit `LearningWord = ""` ausgegeben; die
+   Glosse (*heim*) bleibt als Hinweis. Findet sich zur eigenen Lücke der Karte kein Paar, geht die Dekodierung dieser Karte
+   **gar nicht** hinaus. Das Frontend zeigt ein leeres Lernwort als „___“ mit vorgelesenem „Lücke“. Die unbedingte Ausgabe in
+   `PositionPlayService.cs:541-543` bleibt dadurch sicher, weil die Maskierung vor ihr, im Typ, passiert; der Hinweis in
+   `BuiltInExerciseTypes.cs:162-171` bekommt den Satz dazu. Begründung: Anti-Cheat gehört auf den Server, und das Feld
+   `LearningWord` steht **nicht** in der Lösungsfeld-Liste von `ConventionGuardTests`, das Tor fängt es also nicht. Verworfen:
+   die Glosse der Zielvokabel weglassen (nähme dem Kind den Hinweis; widerspricht dem Beispiel der Story) und Maskieren im
+   Frontend. Kosten: ein Wort wie *run*, das zugleich Lösung und Füllwort ist, wird überall im Satz maskiert; die Ausgabe
+   bei fehlendem Paar nimmt dem Kind die Zeile. Ausgeschlossener Fall: eine Lücke, deren Wort der Creator nicht in die
+   Dekodierung aufnahm – die Karte läuft dann ohne Zeile. Gegen die User Story gerechnet: der Satz trägt die Bedeutung weiter,
+   die Zeile ist Hilfe, nicht Voraussetzung.
+3. **Die Auswahl der Wörter macht der KI-Creator aus den schwachen Wörtern des Kindes, ein Vorschlag je Aufruf und keine
+   Pflicht.** Er hat sie schon im Briefing (`BriefingBuilder.cs:85-87`, `child.WeakWords`); ein neuer Server-Endpunkt entfällt.
+   Die Schwellen bleiben die bestehenden. Verworfen: ein neuer `suggestions`-Endpunkt (zweite Auswahlregel neben `onlyWeak`).
+   Kosten: die Auswahl liegt im Agenten statt im Server; wer ohne Agent arbeitet, wählt die Wörter von Hand über `by-word`.
+   Ausgeschlossener Fall: eine serverseitig tägliche Satzkarte ohne Zutun des Vaters; gegen die Story („schwer zu merkende
+   Vokabeln“) reicht ein Vorschlag, die Pflicht setzt der Vater.
+4. **Die Sätze sind eigene Sätze, vom KI-Creator entworfen (Wortschatz der Unit, wie `--schultest`) und vom Creator durchgesehen;
+   Sätze des Buchs kommen nie in die App.** Beleg: `.claude/skills/lehrwerk-aufbereiten/SKILL.md:20-23`. Sätze bleiben Cloze-Texte
+   und kommen nicht in den Wortspeicher ([B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md)). Kosten: jeder Satz braucht
+   eine Durchsicht. Ausgeschlossener Fall: Schultest-Sätze des Lehrwerks als Quelle.
+5. **Gebaut wird nach B-648; bis dahin ist die Story gegrillt, aber nicht baubar.** Die Dekodierung entsteht aus dem Wortspeicher
+   (Grundform-Suche), nicht aus dem Modell; B-648 steht auf `geschaetzt`, seine Entscheidungen 10 bis 12 sind ebenfalls
+   unbestätigt. Verworfen: von Hand dekodieren und B-648 abwarten (zwei Wege für dieselbe Sache). Kosten: B-650 wartet auf zwei
+   Bestätigungen. Ausgeschlossener Fall: eine Satzkarte vor der Grundform-Suche; *runs* fände *run* nicht
+   (`BirkenbihlDecodingService.cs:48-62`).
+6. **Die gebeugte Form ist die Form des Satzes im Feld `Gap.Form`; keine neue Mechanik.** Beleg: `SolutionOf`,
+   `BuiltInExerciseTypes.cs:605-606`. Kosten: keine. Ausgeschlossener Fall: die Grundform als richtige Antwort.
+7. **Kein Bild auf der Satzkarte.** Die Regel „Bild nur auf nicht-getippten Stufen“ (`backend/Pugling.Api/CLAUDE.md`, Medien)
+   gilt unverändert; B-03 wurde aus diesem Grund verworfen. Kosten: weniger Anker für das Kind. Ausgeschlossener Fall: ein
+   Bild am Lückensatz.
+8. **Die Satzkarte zählt für Pflicht und Leitner der Position wie jede Cloze-Position und schreibt den wortgebundenen
+   `ItemProgress` nicht.** Die Pflicht, ihre Münzen und der Malus sind die der Position und werden vom Vater so gesetzt wie bei
+   jeder anderen; diese Story ändert daran nichts. Weil die Karte den Lernstand des Wortes nicht fortschreibt, bleibt ein Wort in der
+   Sicht „schwach“, bis die Vokabelübung es hebt; der Agent schlägt darum kein Wort vor, für das das Kind schon eine Satzkarte
+   hat. Verworfen: den `ItemProgress` über `VocabKey` mitschreiben (bräuchte `ItemId` und `VocabularyId` im Cloze-Atom, ein
+   neuer Pfad in `ItemProgressService`). Kosten: Satzkarten heben die „Schwach“-Liste nicht. Ausgeschlossener Fall: ein Kind, das
+   ein Wort im Satz beherrscht und trotzdem weiter als schwach gelistet wird; gegen die User Story („im Zusammenhang
+   verankern“) fehlt dann der Rückfluss in die Wortsicht. Das ist die Entscheidung, bei der der Nutzer am ehesten anders
+   entscheidet.
 
-1. Eine Cloze-Karte mit Dekodierung liefert die Zeile mit, in der **die Glosse der Zielvokabel fehlt**; alle anderen
-   Wörter sind glossiert. *Rot, wenn* die Ausspielung die Dekodierung unverändert durchreicht
-   (`PositionPlayService.cs:541-543`): dann steht *heim* in der Zeile.
-2. Auf **jeder getippten** Cloze-Stufe enthält kein Feld der Karte die Lösung, auch nicht die Dekodierung.
-   *Rot, wenn* eine Stufe (etwa Buchstabenkästchen) die Zeile ungefiltert ausgibt.
-3. Eine Lücke mit `Form = "runs"` gilt nur mit „runs" als richtig, mit „run" als falsch.
-   *Rot, wenn* die Wertung die Grundform der Vokabel statt der `Form` nimmt (`ClozeGaps.SolutionOf`, `BuiltInExerciseTypes.cs:605-606`).
-4. Das Ergebnis der Karte schreibt den Lernstand der Zielvokabel fort (`VocabKey` → `ItemProgress`).
-   *Rot, wenn* die Satzkarte ohne Verknüpfung zur Vokabel gespielt wird.
-5. Ein Wort mit `LastMissed` wird für die Satzkarte vorgeschlagen, ein sicheres nicht.
-   *Rot, wenn* die Auswahl alle Wörter oder keines liefert.
-6. Der Creator kann die Dekodierung eines Satzes korrigieren und die Karte danach spielen.
-   *Rot, wenn* die Korrektur nicht gespeichert oder ignoriert wird.
-7. Im Sohn-Spiel erscheint die Birkenbihl-Zeile auf der Cloze-Karte wie im Birkenbihl-Typ
-   (`Lektion.tsx:119`). *Rot, wenn* das Frontend die Zeile nur für den Birkenbihl-Typ rendert.
+## Akzeptanzkriterien
+
+Je Kriterium die Änderung, die es rot macht.
+
+1. Die Karte einer Lücke mit Lösung *home* trägt eine Dekodierung, in der das Paar von *home* `LearningWord = ""` und die Glosse
+   *heim* hat; alle anderen Paare sind unverändert. Rot, wenn `ClozeExerciseType.ItemsOf` die Dekodierung unmaskiert durchreicht
+   (dann steht *home* im JSON der Karte).
+2. Steht zur Lücke kein Paar mit der Lösung in der Dekodierung, trägt die Karte keine Dekodierung. Rot, wenn die Dekodierung
+   dann unmaskiert oder gekürzt mitgeht.
+3. Über **alle** Cloze-Stufen (je ein Fall pro Stufenwert) enthält die ausgespielte Karte die Lösung in keinem Feld außer den
+   Auswahlfeldern der Stufe selbst (Wortkasten, Kacheln, Hinweisbox). Rot, wenn ein Pfad die Dekodierung am Typ vorbei füllt.
+4. Eine Lücke mit `Form = "runs"` gilt nur mit „runs“ als richtig, mit „run“ als falsch. Rot, wenn die Wertung die Grundform der
+   Vokabel statt der `Form` nimmt (`ClozeGaps.SolutionOf`).
+5. Das Ergebnis der Satzkarte schreibt den Lernstand der **Position** fort (`PositionItemProgress` der Lücke). *Absichtserklärung
+   für die zweite Hälfte:* der wortgebundene `ItemProgress` bleibt unverändert; dafür gibt es keine rote Änderung, das Kriterium
+   hält nur die Entscheidung 8 fest. Rot (erste Hälfte), wenn das Ergebnis den Positionsstand nicht schreibt.
+6. Der KI-Creator wählt für den Satzkarten-Entwurf ein Wort mit `LastMissed` bzw. niedriger Beherrschung und kein sicheres und
+   schlägt kein Wort vor, für das das Kind schon eine Satzkarte hat. Rot, wenn die Auswahl alle oder keine Wörter liefert
+   (Testklasse in `CreatorAgentTests` beim Schätzen).
+7. `PUT` eines Cloze mit `Gap.Decoding` speichert das Feld, und die nächste Karte zeigt die geänderte Fassung. Rot, wenn das Feld
+   im Vertrag fehlt (`400 unknown_field`) oder beim Speichern verworfen wird.
+8. `BirkenbihlDecoding` zeigt ein Paar mit leerem Lernwort als „___“, vorgelesen als „Lücke“, und die Glosse daneben
+   (Komponententest in `BirkenbihlDecoding.test.tsx`). Rot, wenn ein leeres Lernwort als leere Spalte erscheint.
+9. *Absichtserklärung:* Das Rendern der Zeile auf der Cloze-Karte (`Lektion.tsx:119`) braucht keine Frontend-Änderung; das
+   Kriterium fällt nicht, weil es im Ausgangszustand schon gilt, und steht nur da, damit niemand die Typbedingung nachrüstet.
 
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Chat mit dem Vater; Beispiel „Tom runs ___ / Tom rennt heim“).
 - **2026-11-17** — Frage 3 vorab geprüft: Das Vokabelschema hat kein Beispielsatz-Feld. Beispielsätze gibt es nur in der privaten Lehrwerk-Notiz, und wegen des Urheberrechts dürfen sie nicht in die App.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): Ist-Stand am Code. Cloze hat Lücke, `VocabKey`, `Form` und Tipp-Stufen schon; es fehlen die Dekodierung mit ausgelassener Zielvokabel (Server-erzwungen), die Auswahl schwacher Wörter und die Herkunft der Sätze. Abhängigkeit von B-648.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt, `wartet_auf` gesetzt): Entscheidungen 1 bis 8.
+  Am Code korrigiert: die Dekodierung verrät die Lösung über das Lernwort, nicht über die Glosse (Entscheidung 2 folgt dem Beispiel
+  der Story, nicht ihrem Kopftext); eine Cloze-Karte schreibt den wortgebundenen Lernstand nicht (Entscheidung 8); das Frontend
+  rendert die Zeile schon typunabhängig. Baubar erst nach B-648. Akzeptanzkriterien final, zwei als Absichtserklärung beschriftet.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Plan umhängen erbt Malus]
-status: ausformuliert
+status: gegrillt
 prio: P3
 art: Defekt
 groesse: ""
@@ -73,38 +73,89 @@ Gelesen am 2026-11-19, nicht per Test nachgestellt.
 
 ## Offene Punkte
 
-1. **Darf man einen gespielten Plan überhaupt umhängen?** *Empfehlung: nein.* Sperre wie bei Positionen
-   (`position_has_data`, `PlanPositionsController.cs:409-411`): hat der Plan `PracticeSessions`, `TestAttempts` oder
-   `PositionItemProgress`, antwortet der PATCH mit `childId` mit `409` und einem additiven Fehlercode; das Kopieren eines
-   Plans für ein zweites Kind ist ein eigenes Vorhaben (Backlog). Verworfen: den Spielstand beim Umhängen löschen (still
-   zerstörend) und ihn mitnehmen (das heutige Verhalten).
-2. **Ungespielte Pläne:** *Empfehlung:* umhängen bleibt erlaubt; ein aktiver Plan bekommt dabei `ActivatedAt = heute`
-   (wie ein neues Einschalten, `StudyPlansController.cs:220`), damit Serie und Abrechnung des neuen Kindes erst ab dem
-   Tag der Zuweisung laufen. Das wendet die Fairness-Regel von B-613 an, es ändert sie nicht.
-3. **Berührt das die Malus-Regeln?** Nein: die Empfehlung setzt die bestehende Regel „was vor dem Einschalten lag,
-   kann nicht verpasst worden sein" (`PlanDueForPeriod`, Zeile 673) auf einen weiteren Schreibweg an. Zur Kenntnis,
-   weil sie die Abrechnung des neuen Kindes betrifft.
-4. **Gesperrter Fall im UI:** die Kind-Auswahl in `VaterPlanDetail.tsx:179` müsste bei einem gespielten Plan abgeschaltet
-   oder erklärt werden (Frontend folgt dem Backend, API-First).
+1. ~~**Darf man einen gespielten Plan überhaupt umhängen?**~~ → Entscheidung 1.
+2. ~~**Ungespielte Pläne:**~~ → Entscheidung 2.
+3. ~~**Berührt das die Malus-Regeln?**~~ → Entscheidung 3.
+4. ~~**Gesperrter Fall im UI:**~~ → Entscheidung 4.
+5. ~~**Was heißt „gespielt“?**~~ → Entscheidung 1 (neu beim Grillen).
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-Je Kriterium: die Änderung, die es rot macht. Entwurf – final erst nach Bestätigung der Punkte 1 und 2.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-19 (Sonnet), unbestätigt.*
 
-1. Plan mit einer Sitzung oder einem Versuch: PATCH `childId` → `409`; der Plan bleibt beim ersten Kind, Serie und
-   Konto beider Kinder sind unverändert. *Rot heute (200, Besitzer wechselt); rot, wenn die Sperre fehlt oder nur
-   `TestAttempts` prüft.*
-2. Aktiver, ungespielter Plan, der seit vor drei Tagen läuft; das Zielkind hat diese Tage mit einem anderen Plan
-   (anderes Fach) erfüllt: nach dem Umhängen reißt seine Serie nicht (`ChildStreakAsync` ohne Lücke an den drei
-   Vortagen), `ActivatedAt` steht auf dem Tag des Wechsels. *Rot heute (der neue Plan hat dort offene Pflichten);
-   rot, wenn `ActivatedAt` nicht gesetzt wird.* (Der Malus ist bei einem ungespielten Plan nicht betroffen: ohne Spieltag
-   in `FirstPlayDaysAsync` rechnet die Abrechnung nichts ab. Das ist Absicht und braucht kein Kriterium.)
-3. Ein inaktiver, ungespielter Plan wird umgehängt: kein Eingriff in `ActivatedAt` (das setzt erst das Einschalten).
-   *Rot, wenn der Kindwechsel `ActivatedAt` bedingungslos überschreibt.*
-4. Ein PATCH `childId` auf das **gleiche** Kind oder ohne `childId` ändert weder `ActivatedAt` noch löst er die Sperre
-   aus. *Rot, wenn die Prüfung vor dem `newChildId != plan.ChildId`-Zweig (Zeile 183) greift.*
-5. Der Fach-Nachlauf beim Wechsel (`PlanSubjectTests.cs:262`) bleibt grün. *Rot, wenn die Sperre die Reihenfolge der
-   Speicherungen verändert.*
+1. **Ein gespielter Plan lässt sich nicht umhängen: `PATCH` mit einem anderen `childId` antwortet `409` mit dem neuen,
+   additiven Code `plan_has_data`. „Gespielt“ heißt: an irgendeiner Position des Plans liegt mindestens eine
+   `PracticeSession`, ein `TestAttempt` oder eine `PositionItemProgress`-Zeile.** Begründung: Der Spielstand hängt am Plan
+   und wird über `StudyPlan.ChildId` dem Kind zugeordnet (Ist-Stand 3); ein Umhängen kann ihn dem zweiten Kind nur
+   mitgeben oder zerstören, beides falsch. Die drei Tabellen sind absichtlich mehr als die Positions-Sperre prüft
+   (`PlanPositionsController.cs:409-411`: nur `TestAttempts` und `PracticeSessions`): Die Abrechnung des Malus beginnt am
+   ersten Tag, an dem das Kind ein Wort **eingeführt** hat (`FirstPlayDaysAsync`, `PositionProgressService.cs:849-866`,
+   liest `PositionItemProgress.IntroducedAt`), und genau das übernähme das zweite Kind. Belegt am Code: die Sperre ist
+   ein **Vorbild**, keine Repo-weite Konvention. Fundstelle: `position_has_data` an der Position
+   (`PlanPositionsController.cs:409-411`, Fehlercode `ApiErrors.cs:205`, deutscher Satz `frontend/src/lib/api.ts:188`).
+   Gegenfundstelle: `StudyPlansController.Delete` löscht einen ganzen Plan samt Spielstand ohne jede Sperre
+   (`StudyPlansController.cs`, Methode `Delete`, Kommentar „Removes its positions via cascade incl. progress, practice
+   sessions, test attempts and goal rewards“). Die Regel hier gilt also für das **Umhängen**, nicht für jede
+   Plan-Änderung, und stützt sich auf den Besitz des Spielstands, nicht auf eine Konvention. Verworfen: den Spielstand
+   beim Umhängen löschen (still zerstörend, der erste Sohn verlöre Tage) und ihn mitnehmen (das heutige Verhalten: das
+   zweite Kind erbt Serie und Malus-Beginn). Kosten: Der Vater kann einen gespielten Plan nicht mehr dem Bruder geben; er
+   legt für ihn einen neuen an. Ein bloß einmal geöffneter Plan ist nur gesperrt, wenn eine `PositionItemProgress`-Zeile
+   entstand – nach dem Code erzeugt sie nur `ProgressForAsync` auf Spielwegen (`PositionPlayService.cs:633-646`). Ausgeschlossener Fall:
+   „gib meinem Zweiten dasselbe Programm“ aus einem schon gespielten Plan. Gegen die User Story („mit einer leeren
+   Vergangenheit beginnen“) ist das die richtige Lücke: Ein Umhängen kann nicht leer beginnen lassen, ohne dem ersten Kind
+   etwas zu nehmen; das Kopieren eines Plans ist ein Wunsch für eine eigene Story, nicht dieser Defekt.
+2. **Ein ungespielter Plan darf umgehängt werden; war er aktiv und bleibt er es, setzt der Wechsel `ActivatedAt` auf
+   heute.** Begründung: Die bestehende Regel (B-613, `StudyPlanEntities.cs:90-97`, `ActiveOn` `PositionProgressService.cs:82`):
+   Tage vor dem Einschalten zählen zugunsten des Kindes. Das Zielkind schaltet den Plan mit dem Wechsel faktisch ein;
+   `StudyPlansController.Update` setzt `ActivatedAt = today` an genau dieser Stelle beim Einschalten (Zeile 220). Es wird
+   schlicht `today` gesetzt, ohne `max` mit dem alten Wert: bei einem Plan mit künftigem Start steht `ActivatedAt = today`
+   schon beim normalen Einschalten vor dem Start, und `ActiveOn` zusammen mit dem Start ergibt dasselbe. Ein inaktiver Plan
+   bleibt unberührt (das Einschalten setzt es später); schaltet derselbe `PATCH` ihn gleichzeitig ein, gilt die
+   bestehende Zeile 220. Der Wechsel sitzt **vor** dem Block für verschobene Starts (Zeilen 225-229), damit dieser auf dem neuen
+   Stand rechnet. Verworfen: `ActivatedAt` bedingungslos beim Kindwechsel überschreiben (ein inaktiver Plan würde ein
+   Datum tragen, das niemand je eingeschaltet hat). Kosten: ein weiterer Schreibweg für `ActivatedAt` neben Einschalten und
+   Start-Verschieben. Ausgeschlossener Fall: ein Plan, den das Zielkind **rückwirkend** bespielen soll (Nachholen) –
+   dafür gibt es Nachtrag durch den Vater, nicht den Wechsel; gegen die User Story („weder die Tage meines Bruders meine
+   Serie verfälschen noch …“) trägt es, weil das Kind erst ab dem Zuweisungstag Pflichten hat.
+3. **Keine neue Malus-Regel.** Entscheidung 2 wendet die vorhandene Fairness-Regel („was vor dem Einschalten lag, kann nicht
+   verpasst worden sein“, `PlanDueForPeriod`, `PositionProgressService.cs:673-679`) auf einen weiteren Schreibweg an,
+   Entscheidung 1 hält einen Plan dort, wo sein Spielstand liegt. Keine Münzhöhe, kein Takt, keine Abrechnung ändert
+   sich; wer heute einen gespielten Plan umhängt, bekommt künftig `409` statt eines stillen Erbes. Begründet, weil der Lauf
+   Malus- und Münz-Regeln nicht neu setzen darf. Zur Kenntnis für die Bestätigung: Die Sperre verbietet einen heute
+   möglichen Vater-Weg.
+4. **Das Vater-Web zeigt den Grund, es sperrt die Kind-Auswahl nicht vorab.** `plan_has_data` bekommt in
+   `frontend/src/lib/api.ts` (neben Zeile 188) einen deutschen Satz, den die Plan-Bearbeitung über ihr
+   `StatusBanner` (`VaterPlanDetail.tsx:30`, `:86`) zeigt – nach dem Muster der Positions-Sperre. Das Feld `PlanResponse`
+   bekommt **kein** Kennzeichen „gespielt“. Verworfen: ein Server-Kennzeichen wie `IsPlayable` (`StudyPlanDtos.cs:25-31`
+   ist der Vorläufer: der Server trägt die Regel, der Client rechnet sie nicht nach) mit abgeschalteter Auswahl. Kosten:
+   Der Vater erfährt es erst beim Speichern, und das Formular hat keinen Weg, die Auswahl vorher zu erklären.
+   Ausgeschlossener Fall: ein Vater, der die Kind-Auswahl schon vorher gesperrt sehen wollte; das Umhängen kommt selten vor,
+   und ein Vertragsfeld für einen Fehlerfall wäre mehr als der Defekt braucht. Wird es zum Ärger, ist das Kennzeichen eine
+   additive Folgestory.
+
+## Akzeptanzkriterien
+
+Je Kriterium: die Änderung, die es rot macht.
+
+1. Ein Plan mit einer `PracticeSession` – in zwei weiteren Fällen mit einem `TestAttempt`, mit einer
+   `PositionItemProgress`-Zeile –: `PATCH` mit anderem `childId` liefert `409` `plan_has_data`; der Plan bleibt beim ersten
+   Kind, Serie und Konto beider Kinder bleiben unverändert. Rot heute (200, der Besitzer wechselt); rot, wenn die Sperre nur
+   eine der drei Tabellen prüft (jeder Fall fällt einzeln).
+2. Der `409` ändert nichts: ein `PATCH` mit neuem Titel **und** anderem `childId` auf einen gespielten Plan lässt den Titel
+   unverändert. Rot, wenn die Sperre erst nach `SaveChangesAsync` greift.
+3. Aktiver, ungespielter Plan, der seit vor drei Tagen läuft; das Zielkind hat diese Tage mit einem anderen Plan (anderes
+   Fach) erfüllt: nach dem Umhängen reißt seine Serie nicht (`ChildStreakAsync` ohne Lücke an den drei Vortagen),
+   `ActivatedAt` steht auf dem Tag des Wechsels. Rot heute (der Plan hat dort offene Pflichten); rot, wenn
+   `ActivatedAt` nicht gesetzt wird.
+4. Ein inaktiver, ungespielter Plan wird umgehängt: `ActivatedAt` bleibt (der Test liest den Wert aus der Datenbank, die
+   API zeigt ihn nicht). Rot, wenn der Kindwechsel `ActivatedAt` bedingungslos überschreibt.
+5. Ein `PATCH` ohne `childId`, oder mit dem gleichen `childId`, auf einen **gespielten** Plan (nur Titel) liefert `200` und
+   ändert `ActivatedAt` nicht. Rot, wenn die Prüfung vor dem `newChildId != plan.ChildId`-Zweig (`StudyPlansController.cs:183`)
+   greift.
+6. `Kindwechsel_Schaltet_Beim_Neuen_Kind_Dasselbe_Fach_Ab` (`PlanSubjectTests.cs:262`) bleibt grün. Rot, wenn die Sperre die
+   Reihenfolge von Speichern und `DeactivateSameSubjectPlansAsync` verändert.
+7. Das Vater-Web übersetzt `plan_has_data` in einen deutschen Satz (Muster `errorMessage.test.ts:72-80`, `exercise_in_use`).
+   Rot, wenn der Code kein Mapping hat: der Vater sähe den englischen Server-Text.
 
 ## Verlauf
 
@@ -112,3 +163,4 @@ Je Kriterium: die Änderung, die es rot macht. Entwurf – final erst nach Best�
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): am Code belegt; die Produktfrage ist beantwortet, das Umhängen ist
   ein ausgebauter Vater-Weg (Vertrag und Formular). Der Vorschlag `ActivatedAt = heute` allein genügt nicht; Empfehlung
   Sperre für gespielte Pläne plus `ActivatedAt` bei ungespielten.
+- **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 4. Gespielter Plan: Umhängen gesperrt (`409 plan_has_data`, drei Tabellen, mehr als die Positions-Sperre prüft); ungespielter aktiver Plan: `ActivatedAt = heute` beim Wechsel (B-613 auf einem weiteren Schreibweg); keine neue Malus-Regel. Die Sperre ist ein Vorbild (`position_has_data`), keine Repo-Konvention (`StudyPlansController.Delete` löscht ohne Sperre). Akzeptanzkriterien final, je mit roter Änderung.
