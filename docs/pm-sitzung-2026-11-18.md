@@ -403,3 +403,31 @@ dessen Nachschau der nächste Lauf führt.
 2. **[B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md)** (P2, Defekt): ein zurückverlegter
    Planstart kann Serie und Münzen kosten – bis dahin einen Planstart nicht zurück in die Vergangenheit verlegen.
 3. Danach die Folge der Sprintplanung (Sprint 90); B-670, B-671, B-673 (P3) in die nächste Sichtung.
+
+## Runde 8 — Sprint 88 fertiggestellt (2026-11-19, auf Wunsch des Vaters)
+
+Der Vater entschied 🟡7 („Link zum Plan reicht“, B-629 Entscheidung 1) und gab „fertigstellen“. Auf
+`auto/sprint-88-rueckmeldung` eingearbeitet: Fokus und `aria-expanded` im Melde-Dialog, Gründe erschöpfend typisiert,
+veraltete Zeilen der Vater-Liste gesperrt, die E2E wartet die Hinweis-Antwort ab und prüft „kein Knopf im laufenden Test“,
+dazu die 🟢-Reste (Details im Verlauf von B-629; „Knopf an `isOwn`“ trifft nicht zu – `isOwn` ist Schreibrecht).
+
+**Mutanten:** 26/26 rot am richtigen Ort (16 Backend, 8 Vitest, 2 E2E); vier Backend-Mutanten erst in kompilierbarer Form
+(`if (false)` ist unter `TreatWarningsAsErrors` unerreichbarer Code, ein gestrichener Aufruf ließ den
+Konstruktor-Parameter ungelesen – beides „ungemessen“, nicht rot).
+
+**Verifikation nach der letzten Bearbeitung:** `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**
+(nach dem Tor B-183: der Kinder-Fehler läuft über `ListenAusfall`), `tsc -b` sauber, `dotnet format` ohne Fund außer
+Zeilenende-Artefakten, `dotnet build Pugling.sln` nach dem Merge sauber.
+
+**Abnahme:**
+
+- **Sohn — abgenommen.** `rueckmeldung.spec.ts`: meldet eine Karte mit Grund und Text, „Danke, ist angekommen!“, die Karte
+  bleibt; sieht den Hinweis nach „erledigt“ einmal; im laufenden Test kein Knopf. Gerätecheck offen: ob der Knopf am Handy
+  das Spiel nicht stört (Platz unter der Karte).
+- **Vater — abgenommen.** Dieselbe Spec: sieht Karte, Lösung, Grund und Text unter „💬 Rückmeldungen“, erledigt die
+  Meldung, springt zum Plan.
+- **Creator — abgenommen.** Dieselbe Spec: „Falsch übersetzt ×1“ an der eigenen Übung, ohne Kind und Text.
+- Regressionszeugen: `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` – zusammen **5 passed**.
+
+Gemergt nach `main` (`04d5875e`), ungepusht. **Vor dem nächsten Heimnetz-Start:** der Neustart spielt die Migration
+`ExerciseFeedback` ein (rein additiv, an einer Kopie der echten DB geprobt).
