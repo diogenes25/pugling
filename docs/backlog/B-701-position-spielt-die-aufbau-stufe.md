@@ -12,7 +12,7 @@ quelle: B-536
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-701 · Eine Position spielt ihre aktuelle Aufbau-Stufe und steigt nach dem bestandenen Test auf
@@ -156,3 +156,4 @@ zentralen Inhaltsauswahl, die jeden Spielpfad trägt, und ein Zustandsübergang 
 - **2026-11-19** — Teil von B-536, geteilt und geschätzt im Vorbereitungslauf (Sonnet): L, backend, Migration ja,
   Vertrag additiv. Abstieg und Pflichtziel bewusst nicht enthalten (B-702). Entscheidungen stellvertretend,
   unbestätigt.
+- **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

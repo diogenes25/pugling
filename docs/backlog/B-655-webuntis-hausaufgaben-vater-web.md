@@ -2,7 +2,7 @@
 tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Hausaufgaben im Vater-Web, Schulzugang einrichten]
 status: geschaetzt
-wartet_auf: "Bestätigung der Sonnet-Annahmen unter Schätzung; baubar erst nach B-654"
+wartet_auf: "B-654 (Endpunkt und DTO)"
 prio: P2
 art: Wunsch
 groesse: M
@@ -134,3 +134,4 @@ Voraussetzung: **B-654 gebaut** und `npm run gen:contract` gelaufen.
 - **2026-11-18** — angelegt durch Teilen von B-651 beim Schätzen (Vater: Variante A, drei Stories nach
   Schicht); Entscheidungen aus B-651 übernommen, damit auf `gegrillt`.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch. Das eine AK aus B-651 in fünf mit je einer roten Änderung geteilt; nachgemessen, dass die Query der Übungserstellung keinen Text kennt (neu zu bauen). Drei Annahmen stellvertretend und unbestätigt (Text in die Beschreibung, Abruf auf Knopfdruck statt beim Öffnen, Reiter „Schule“); `wartet_auf` gesetzt. Baubar erst nach B-654.
+- **2026-11-19** — Annahmen bestätigt (Aufgabentext in die Beschreibung, Abruf auf Knopfdruck, Reiter „Schule“); baubar erst nach B-654. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

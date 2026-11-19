@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17"
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-650 · Vokabel im Satz: Karte mit Birkenbihl-Zeile, nur die Zielvokabel ist offen
@@ -286,3 +286,4 @@ trägt eine Etappe, aber kein XL: alles hängt an einem Feld und einer Maskierun
   (`Gap.Decoding` additiv). Baureihenfolge nach B-648. Neu am Code: die `laden.py`-Feldliste führt die Gap-Felder und muss mit
   `decoding` im selben Commit mitziehen (`LadenFieldListTests`).
 - **2026-11-19** — Entscheidungen 2 und 8 vom Nutzer bestätigt (Lernwort maskieren, Glosse stehen lassen; Satzkarte füttert den Wort-Lernstand nicht). Die übrigen Entscheidungen warten weiter, darum bleibt `wartet_auf`.
+- **2026-11-19** — alle übrigen Entscheidungen bestätigt; baubar erst nach B-648. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

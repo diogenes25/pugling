@@ -12,7 +12,7 @@ quelle: B-536
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-700 · Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung
@@ -139,3 +139,4 @@ Fremdschlüssel entsteht.
 
 - **2026-11-19** — Teil von B-536, geteilt und geschätzt im Vorbereitungslauf (Sonnet): M, backend, Migration ja,
   Vertrag additiv. Entscheidungen stellvertretend, unbestätigt. Hängt an keiner Malus- oder Rollenfrage.
+- **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

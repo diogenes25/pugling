@@ -12,7 +12,7 @@ quelle: B-536
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-704 · Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind
@@ -119,3 +119,4 @@ neuer Endpunkt. Aufwand steckt in Editor-Rundlauf und E2E, nicht im Rechnen.
 - **2026-11-19** — Teil von B-536, geteilt und geschätzt im Vorbereitungslauf (Sonnet): M, frontend, keine Migration,
   kein Vertragsbruch. Entscheidungen stellvertretend, unbestätigt. Wartet fachlich auf B-700 und B-701; Kadenz-Sperre
   fällt mit B-702.
+- **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

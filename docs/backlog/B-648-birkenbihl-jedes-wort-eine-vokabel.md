@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-646
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-648 · Birkenbihl: jedes Wort eines Textes hat eine Vokabel
@@ -178,3 +178,4 @@ Aussage („jedes Wort hat eine Vokabel“) und werden zusammen abgenommen.
   (additive Felder). Akzeptanzkriterien umgeschrieben, je Kriterium die rote Änderung; das alte Kriterium zu
   `POST …/sentences` prüfte nichts, weil der Satz-Input keine Glosse trägt. Entscheidungen 10 bis 12
   stellvertretend, unbestätigt (`wartet_auf`).
+- **2026-11-19** — Entscheidungen 10 bis 12 bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

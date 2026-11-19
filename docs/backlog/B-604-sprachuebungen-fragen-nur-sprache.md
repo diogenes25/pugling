@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Vater im Chat 2026-11-16: Fragen nach der Farbe der U-Bahn in England oder nach Städten in Frankreich, Antworten teils ganze Sätze – beim Vokabellernen irrelevant"
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-604 · Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort
@@ -234,3 +234,4 @@ Spielpfad.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein
   Vertragsbruch; AK 4 ist keine Absichtserklärung (`CreatorAgentTests` hat Satz-`target`); AK 5 am Feld „Rechts“.
   `wartet_auf` bleibt.
+- **2026-11-19** — Entscheidungen 1 bis 6 bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

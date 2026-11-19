@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-220 · Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig
@@ -233,3 +233,4 @@ die Story nicht baubar. Malus-Regeln, Münzwerte und Pflichten bleiben außerhal
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (neue Records neben `TodayResponse`). Fundament B-606 abgenommen; B-218 nicht gebaut, Z1 bleibt zurückgestellt und ist Bau-Sperre.
   Neu am Code: „überfällig“ bei Karten braucht eine neue Abfrage (`DueCount` zählt `<= heute` und nie gelernte Karten).
+- **2026-11-19** — Entscheidungen 1 bis 6 bestätigt; Z1 mit Empfehlung entschieden: die erste Fassung darf vor B-218 gebaut werden. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-640
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-711 · „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen
@@ -147,3 +147,4 @@ Je Kriterium die Änderung, die es rot macht.
   Auswahlstufe (AK 7 der Ursprungsstory).
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend, keine Migration, kein Vertragsbruch; hängt an B-710.
   `wartet_auf` bleibt.
+- **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

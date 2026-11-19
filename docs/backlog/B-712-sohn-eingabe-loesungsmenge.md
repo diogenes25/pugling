@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-640
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-712 · Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“
@@ -147,3 +147,4 @@ kippt die Größe Richtung L.
   Mehrfeld-Eingabe (AK 10 der Ursprungsstory).
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (additives Karten-Feld); hängt an B-710. `wartet_auf` bleibt.
+- **2026-11-19** — Entscheidungen bestätigt, einschließlich des Kartenfelds `setAnswer`. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

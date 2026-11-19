@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Mathe in die App; Material raw/Math/lambacher-schweizer-9-sh-pugling/md)"
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-638 · Formeln in Aufgabentext und Auswahl anzeigen
@@ -254,3 +254,4 @@ Umbau mit Datenrettung wie E6. Nicht XL, weil das Backend unberührt bleibt und 
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): L, frontend, keine Migration, kein Vertragsbruch;
   Testumgebung ist `happy-dom` (nicht jsdom wie in der Story), Zahl der Editor-Felder und Chunk-Größe ungemessen;
   AK 9 beweist nur die Konfiguration, die Wirkung belegt `dist/sw.js`. `wartet_auf` bleibt.
+- **2026-11-19** — Entscheidungen 1 bis 7 bestätigt; offener Punkt 8 (Lücke in einer Formel) bleibt zurückgestellt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

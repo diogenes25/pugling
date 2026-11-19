@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: docs/sofatutor-vergleich-plan.md
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: "Z3 (Absender Lehrer-Agent, Rollenschnitt) offen; Z1 und Z2 mit Empfehlung entschieden"
 ---
 
 # B-586 · Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App
@@ -255,3 +255,4 @@ gehören **nicht** in diesen Bau. Bis zur Bestätigung der Entscheidungen 1 bis 
   das Lösungsfeld-Tor fängt `ReplyText` nicht. Akzeptanzkriterien final.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): M, beides (Backend zuerst), **Migration ja** (drei nullable
   Spalten, FK `SetNull`), kein Vertragsbruch (additive Felder). Z1 bis Z3 bleiben zurückgestellt und sind Bau-Sperre.
+- **2026-11-19** — Entscheidungen 1 bis 7 bestätigt; Z1 (offene Frage hält die Pflicht nicht an, Malus läuft weiter) und Z2 (keine Münzen fürs Fragen) mit der Empfehlung der Story entschieden; Z3 bleibt offen. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

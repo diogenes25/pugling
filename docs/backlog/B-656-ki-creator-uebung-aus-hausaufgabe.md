@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-651
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: "B-654 (Endpunkt `school-homework` und DTO)"
 ---
 
 # B-656 · KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`)
@@ -160,3 +160,4 @@ Voraussetzung**: beide hängen unabhängig an B-654, und der Agent ruft den Endp
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend, keine Migration, kein Vertragsbruch;
   hängt an B-654, nicht an B-655. Das eine Akzeptanzkriterium aus B-651 in sechs zerlegt, je mit roter Änderung.
   Entscheidungen 10 bis 13 (offen, Zeitraum, Thema, Reihe) stellvertretend, unbestätigt (`wartet_auf`).
+- **2026-11-19** — Entscheidungen 10 bis 13 bestätigt; baubar erst nach B-654. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

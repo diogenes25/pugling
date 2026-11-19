@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-596 · Eine Vokabelübung hat 5 bis 10 Vokabeln
@@ -283,3 +283,4 @@ Zwischenstände, in denen der Server scharf und ein Erzeuger noch alt ist.
   Weak-Word-Review bleibt bei 25. Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (additives `AllowShortList`). Größter Posten: die Test-Fixtures (zwei Wörter als Vorgabe, 185 Aufrufe in 62 Dateien) laufen gegen die Untergrenze.
+- **2026-11-19** — Entscheidungen 1 bis 9 bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.

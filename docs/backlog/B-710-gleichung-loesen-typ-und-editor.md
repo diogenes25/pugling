@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-640
 grund: ""
 ersetzt_durch: []
-wartet_auf: Bestätigung der Sonnet-Entscheidungen
+wartet_auf: ""
 ---
 
 # B-710 · Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor
@@ -229,3 +229,4 @@ mit Config, Löser, Validierung, Controller und Wächter-Zeilen, dazu ein **neue
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (additiv); hängt hart an B-639, weich an B-638. `wartet_auf` bleibt.
 - **2026-11-19** — Vom Nutzer bestätigt: zwei Stufen (Auswählen, Tippen) mit gleichem Soll; „Anzahl bestimmen“ und „Verfahren wählen“ bleiben zurückgestellt, keine Brüche. Die übrigen Entscheidungen warten weiter, darum bleibt `wartet_auf`.
+- **2026-11-19** — Entscheidungen bestätigt; „Anzahl bestimmen“ und „Verfahren wählen“ bleiben zurückgestellt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
