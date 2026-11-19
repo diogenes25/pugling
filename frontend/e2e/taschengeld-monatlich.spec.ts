@@ -103,10 +103,13 @@ test("Taschengeld je Kind: eigener Bestand, Zielgruppe, wieder da; Vater löst s
   await expect(angebotsZeile(`Ausflug ${RUN}`)).toContainText("Einmalig (15.01.2030)");
 
   await zeileAlle.getByRole("button", { name: "Bearbeiten" }).click();
-  const bearbeiten = vater.getByRole("row").filter({ has: vater.getByRole("button", { name: "OK" }) });
+  // `exact`: ohne trifft „OK“ als Teilstring auch „Bestand von Kontokind … füllen“ – ein Kind, das eine andere Spec in
+  // der geteilten DB anlegt und das in der Zeile des Angebots für alle steht.
+  const ok = vater.getByRole("button", { name: "OK", exact: true });
+  const bearbeiten = vater.getByRole("row").filter({ has: ok });
   await bearbeiten.getByLabel("Wochentag", { exact: true }).selectOption("Thursday");
   const gepatcht = vater.waitForResponse((r) => r.request().method() === "PATCH" && /\/listings\/\d+$/.test(r.url()));
-  await bearbeiten.getByRole("button", { name: "OK" }).click();
+  await bearbeiten.getByRole("button", { name: "OK", exact: true }).click();
   expect((await gepatcht).status()).toBe(200);
   await expect(zeileAlle).toContainText("Wöchentlich (Do)");
 

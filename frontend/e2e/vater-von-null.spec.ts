@@ -318,6 +318,9 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await vater.getByRole("button", { name: /Plan anlegen/ }).click();
   await expect(vater).toHaveURL(/\/vater\/plan\/\d+$/);
 
+  // Erst suchen: die Trefferliste endet bei 100, und die geteilte DB trägt im Gesamtlauf mehr Übungen – ungefiltert
+  // fiele die eben angelegte hinten heraus.
+  await vater.getByLabel("Freitext-Filter").fill(EXERCISE);
   const exRadio = vater.getByRole("radio", { name: new RegExp(EXERCISE) });
   await expect(exRadio).toBeVisible();
   await exRadio.check();
