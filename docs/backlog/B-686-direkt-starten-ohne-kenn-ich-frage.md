@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: [Knoten startet direkt, Kenn-ich-Frage gestrichen, Lernkarte ohne Kannte-ich]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -85,3 +85,4 @@ Mitgenommen: „· N fällig“ stand nur auf dem Blatt und entfällt; „eingep
   der Testbildschirm hat keine Pille.
 - Schlussstand: `dotnet test Pugling.sln -c Release` 1921/1921, Vitest 115 Dateien / 1258 Fälle, E2E der berührten
   Specs grün (Pfad, Lernkarte, Test-Einstiege, Rollengänge 81/82/83, full-flow).
+- 2026-11-19: abgenommen, Commit `bc4be340`. Rollengang = die E2E-Specs oben (Pfad-Start, Lernkarte, Buchbezug im Kopf); der Blick des Sohns am echten Gerät steht nach dem nächsten Heimnetz-Neustart aus.
