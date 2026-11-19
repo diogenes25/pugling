@@ -211,3 +211,4 @@ vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umba
 - 2026-11-19 · geschaetzt · Vorbereitungslauf (Sonnet): S, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (Fehlercode nur in `ApiErrors` und im erzeugten Enum, kein Client verzweigt darauf); Risiko: B-586 zitiert die Sperre
   in seinem Ist-Stand.
+- **2026-11-19** — Entscheidung 1 (Weg d, Server-Sperre entfällt) vom Nutzer bestätigt; die Stellvertreter-Marke gilt damit für diese Entscheidung nicht mehr.

@@ -285,3 +285,4 @@ trägt eine Etappe, aber kein XL: alles hängt an einem Feld und einer Maskierun
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (`Gap.Decoding` additiv). Baureihenfolge nach B-648. Neu am Code: die `laden.py`-Feldliste führt die Gap-Felder und muss mit
   `decoding` im selben Commit mitziehen (`LadenFieldListTests`).
+- **2026-11-19** — Entscheidungen 2 und 8 vom Nutzer bestätigt (Lernwort maskieren, Glosse stehen lassen; Satzkarte füttert den Wort-Lernstand nicht). Die übrigen Entscheidungen warten weiter, darum bleibt `wartet_auf`.
