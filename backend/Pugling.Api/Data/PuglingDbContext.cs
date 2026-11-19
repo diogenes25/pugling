@@ -103,6 +103,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // purchase history and activation requests
     public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
     public DbSet<ShopListing> ShopListings => Set<ShopListing>();
+    public DbSet<ShopListingStock> ShopListingStocks => Set<ShopListingStock>();
+    public DbSet<ShopListingAudience> ShopListingAudiences => Set<ShopListingAudience>();
     public DbSet<ShopPurchase> ShopPurchases => Set<ShopPurchase>();
     public DbSet<ChildInventory> ChildInventories => Set<ChildInventory>();
     public DbSet<ActivationRequest> ActivationRequests => Set<ActivationRequest>();
@@ -909,6 +911,22 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.Property(l => l.ConcurrencyStamp).IsConcurrencyToken();
             e.HasOne(l => l.ShopArticle).WithMany(a => a.Listings).HasForeignKey(l => l.ShopArticleId).OnDelete(DeleteBehavior.Cascade);
+        });
+        // Stock per child (B-645): one row per (listing, child) - the unique index is what keeps two lazily created
+        // rows from splitting one child's stock in two. Both sides cascade: the stock means nothing without either.
+        modelBuilder.Entity<ShopListingStock>(e =>
+        {
+            e.HasIndex(s => new { s.ShopListingId, s.ChildId }).IsUnique();
+            e.Property(s => s.ConcurrencyStamp).IsConcurrencyToken();
+            e.HasOne(s => s.ShopListing).WithMany(l => l.Stocks).HasForeignKey(s => s.ShopListingId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(s => s.Child).WithMany().HasForeignKey(s => s.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+        // Audience (B-645, decision 12): no rows means "every linked child".
+        modelBuilder.Entity<ShopListingAudience>(e =>
+        {
+            e.HasKey(a => new { a.ShopListingId, a.ChildId });
+            e.HasOne(a => a.ShopListing).WithMany(l => l.Audience).HasForeignKey(a => a.ShopListingId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(a => a.Child).WithMany().HasForeignKey(a => a.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
         modelBuilder.Entity<ShopPurchase>(e =>
         {

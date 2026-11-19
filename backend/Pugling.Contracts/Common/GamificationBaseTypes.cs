@@ -44,6 +44,8 @@ public enum UnitType
     Gramm = 3,
     /// <summary>Generic count of times (e.g. "3 times having ice cream").</summary>
     Mal = 4,
+    /// <summary>Whole euros, e.g. pocket money ("5 €"); amounts stay integers.</summary>
+    Euro = 5,
 }
 
 /// <summary>Type of action the item represents – categorizes the item for the supervisor.</summary>
@@ -74,6 +76,17 @@ public enum ShopRefillKind
     TwiceDaily = 3,
     /// <summary>Restock once weekly on a fixed weekday.</summary>
     Weekly = 4,
+    /// <summary>Restock once monthly, always on the 1st (UTC).</summary>
+    Monthly = 5,
+}
+
+/// <summary>Who opened an activation request: the child asks, or the supervisor redeems on the child's behalf.</summary>
+public enum ActivationRequester
+{
+    /// <summary>The child filed the request from its own inventory; the supervisor decides later.</summary>
+    Child = 0,
+    /// <summary>The supervisor redeemed directly from the child's inventory; approved at once.</summary>
+    Supervisor = 1,
 }
 
 /// <summary>State of a historical shop purchase entry.</summary>

@@ -400,20 +400,27 @@ export const FIELD_HELP = {
     text: "Gems kommen aus Missionen und Auszeichnungen und dienen sonst den Skins. Ein Angebot darf beide "
       + "Währungen verlangen – dann wird beides abgebucht.",
   },
-  shopStock: {
-    title: "Bestand",
-    text: "Wie oft das Angebot aktuell noch gekauft werden kann. Bei 0 ist es für das Kind sichtbar, aber "
-      + "nicht kaufbar.",
-  },
   shopMaxStock: {
-    title: "Max-Bestand",
-    text: "Bis wohin das automatische Auffüllen hochzählt – die Obergrenze, z. B. „höchstens 2 × Fernsehen "
-      + "am Tag“. Ohne Auffüllen ist der Wert bedeutungslos.",
+    title: "Obergrenze je Kind",
+    text: "Jedes Kind hat seinen eigenen Bestand: kauft eines, bleibt es für die Geschwister kaufbar. Die "
+      + "Obergrenze ist der Startbestand und das Höchste, bis wohin das Auffüllen hochzählt – z. B. „höchstens "
+      + "2 × Fernsehen am Tag“.",
   },
   shopRefill: {
     title: "Auffüllen",
-    text: "Ob und wie oft sich der Bestand von selbst wieder auf den Max-Bestand hebt (täglich, 2× täglich, "
-      + "wöchentlich, einmalig). „Kein Auffüllen“ heißt: ist er leer, füllst du ihn von Hand.",
+    text: "Ob und wie oft sich der Bestand jedes Kindes von selbst auffüllt (täglich, 2× täglich, wöchentlich am "
+      + "gewählten Tag, monatlich am 1., einmalig am Datum). Hat niemand am Stichtag reingeschaut, wird beim nächsten "
+      + "Öffnen nachgeholt. „Kein Auffüllen“ heißt: ist er leer, füllst du ihn von Hand.",
+  },
+  shopRefillQuantity: {
+    title: "+ je Termin",
+    text: "So viel kommt an jedem Auffüll-Termin dazu, höchstens bis zur Obergrenze. Gleich der Obergrenze heißt: "
+      + "Reste verfallen. Kleiner heißt: das Kind kann ansparen – z. B. +4 im Monat bis 8 sind zwei Monate.",
+  },
+  shopAudience: {
+    title: "Für",
+    text: "Für welche Kinder das Angebot gilt. Leer heißt alle. So bekommt jedes Kind sein eigenes Taschengeld – "
+      + "„Taschengeld Theodor“ und „Taschengeld Friedrich“ als zwei Angebote mit je eigener Menge.",
   },
 
   // ---- Missionen & Auszeichnungen (Gems) ----

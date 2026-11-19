@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
@@ -31,6 +32,8 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         InsufficientInventory,
         /// <summary>The requested quantity is not positive or otherwise invalid.</summary>
         InvalidQuantity,
+        /// <summary>The listing is not meant for this child (it lies outside the listing's audience).</summary>
+        NotInAudience,
         /// <summary>The purchase is not currently possible (e.g. listing outside its time slot).</summary>
         NotOpen,
         /// <summary>The activation request is no longer open (already approved/rejected).</summary>
@@ -58,70 +61,117 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         ShopError.InsufficientGems => ApiErrors.InsufficientGems,
         ShopError.InsufficientInventory => ApiErrors.InsufficientInventory,
         ShopError.InvalidQuantity => ApiErrors.ValidationError,
+        ShopError.NotInAudience => ApiErrors.ValidationError,
         ShopError.NotOpen => ApiErrors.PurchaseNotOpen,
         ShopError.NotPending => ApiErrors.ActivationNotPending,
         _ => ApiErrors.ConcurrencyConflict,
     };
 
+    /// <summary>One child's own stock of a listing as the views show it.</summary>
+    public record StockView(int ChildId, string ChildName, int CurrentStock, DateTime? LastRefilledAtUtc, DateTime? NextRefillAtUtc);
+
+    /// <summary>A listing with its audience and the stock of every child it is meant for (supervisor view).</summary>
+    public record ListingView(ShopListing Listing, IReadOnlyList<int> AudienceChildIds, IReadOnlyList<StockView> Stocks);
+
+    /// <summary>A listing from one child's seat: its own stock and the next refill (student view).</summary>
+    public record ChildListingView(ShopListing Listing, int CurrentStock, DateTime? NextRefillAtUtc);
+
     /// <summary>
-    /// Loads all listings (<see cref="ShopListing"/>s) of the adult incl. their article and applies
-    /// due refill rules idempotently.
+    /// Loads all listings of the adult with every eligible child's stock, creating missing stocks by the start rule and
+    /// applying due refills (B-645). A lost concurrency race re-reads, so the answer is the stored state, not the
+    /// unsaved copy of the loser.
     /// </summary>
-    public async Task<IReadOnlyList<ShopListing>> ListingsForSupervisorAsync(
-        int supervisorId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ListingView>> ListingsForSupervisorAsync(
+        int supervisorId, bool activeOnly, DateTime nowUtc, CancellationToken ct)
     {
-        var query = db.ShopListings
-            .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.AdultId == supervisorId);
-        if (activeOnly) query = query.Where(l => l.Active);
-
-        var listings = await query
-            .OrderByDescending(l => l.Active)
-            .ThenBy(l => l.ShopArticle!.ArticleNumber)
-            .ThenBy(l => l.Id)
-            .ToListAsync(ct);
-
-        var changed = false;
-        foreach (var listing in listings) changed |= ApplyDueRefill(listing, nowUtc);
-        if (!changed) return listings;
-
-        if (await TrySaveAsync(ct)) return listings;
-
-        db.ChangeTracker.Clear();
-        var fresh = db.ShopListings.AsNoTracking()
-            .Include(l => l.ShopArticle)
-            .Where(l => l.ShopArticle!.AdultId == supervisorId);
-        if (activeOnly) fresh = fresh.Where(l => l.Active);
-        return await fresh
-            .OrderByDescending(l => l.Active)
-            .ThenBy(l => l.ShopArticle!.ArticleNumber)
-            .ThenBy(l => l.Id)
-            .ToListAsync(ct);
+        var linked = await LinkedChildrenAsync(supervisorId, ct);
+        var listings = await SupervisorListingsQuery(supervisorId, activeOnly, tracked: true).ToListAsync(ct);
+        if (await MaterializeStocksAsync(listings, l => Eligible(l, linked.Keys), nowUtc, ct) && !await TrySaveAsync(ct))
+        {
+            db.ChangeTracker.Clear();
+            listings = await SupervisorListingsQuery(supervisorId, activeOnly, tracked: false).ToListAsync(ct);
+            await MaterializeStocksAsync(listings, l => Eligible(l, linked.Keys), nowUtc, ct);
+        }
+        return listings.Select(l => ToView(l, linked, nowUtc)).ToList();
     }
 
     /// <summary>
-    /// Loads the listings of ALL supervisors of the student (the child's shared shop view), applies due
-    /// refill rules idempotently and returns them groupable per issuer (<see cref="ShopArticle.AdultId"/>).
+    /// One listing of the adult with every eligible child's stock - computed for display only, nothing is written: a
+    /// GET has no write side effect. The list call or a purchase persists the same refill.
     /// </summary>
-    public async Task<IReadOnlyList<ShopListing>> ListingsForStudentAsync(
-        int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct = default)
+    public async Task<ListingView?> ListingForSupervisorAsync(
+        int supervisorId, int articleId, int listingId, DateTime nowUtc, CancellationToken ct)
     {
-        var query = db.ShopListings
-            .Include(l => l.ShopArticle)
-            .Where(l => db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.AdultId));
-        if (activeOnly) query = query.Where(l => l.Active);
+        var listing = await SupervisorListingsQuery(supervisorId, activeOnly: false, tracked: false)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId, ct);
+        return listing is null ? null : await ToViewAsync(supervisorId, listing, nowUtc, ct);
+    }
 
-        var listings = await query
-            .OrderBy(l => l.ShopArticle!.AdultId)
-            .ThenByDescending(l => l.Active)
-            .ThenBy(l => l.ShopArticle!.ArticleNumber)
-            .ThenBy(l => l.Id)
-            .ToListAsync(ct);
+    /// <summary>
+    /// Loads a listing of the adult tracked, with its audience and every stock row - for the master-data writes of the
+    /// controller (PATCH, audience), which then answer through <see cref="ToViewAsync"/>.
+    /// </summary>
+    public Task<ShopListing?> LoadListingForUpdateAsync(int supervisorId, int articleId, int listingId, CancellationToken ct) =>
+        SupervisorListingsQuery(supervisorId, activeOnly: false, tracked: true)
+            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId, ct);
 
-        var changed = false;
-        foreach (var listing in listings) changed |= ApplyDueRefill(listing, nowUtc);
-        if (changed && !await TrySaveAsync(ct)) db.ChangeTracker.Clear();
-        return listings;
+    /// <summary>The supervisor view of a loaded listing; missing stocks are computed for display, nothing is saved here.</summary>
+    public async Task<ListingView> ToViewAsync(int supervisorId, ShopListing listing, DateTime nowUtc, CancellationToken ct)
+    {
+        var linked = await LinkedChildrenAsync(supervisorId, ct);
+        await MaterializeStocksAsync([listing], l => Eligible(l, linked.Keys), nowUtc, ct);
+        return ToView(listing, linked, nowUtc);
+    }
+
+    /// <summary>The ids of the children linked to the supervisor - the pool an audience may be cut from.</summary>
+    public async Task<IReadOnlyCollection<int>> LinkedChildIdsAsync(int supervisorId, CancellationToken ct) =>
+        (await LinkedChildrenAsync(supervisorId, ct)).Keys;
+
+    /// <summary>
+    /// Sets one child's own stock of a listing (the supervisor's manual "fill up"). <see cref="ShopError.NotFound"/>
+    /// for an unknown listing or a child not linked to the issuer, <see cref="ShopError.NotInAudience"/> for a child
+    /// outside the audience, <see cref="ShopError.InvalidQuantity"/> for a value outside <c>0..MaxStock</c>.
+    /// </summary>
+    public async Task<Result<ListingView>> SetStockAsync(
+        int supervisorId, int articleId, int listingId, int childId, int currentStock, DateTime nowUtc, CancellationToken ct)
+    {
+        var linked = await LinkedChildrenAsync(supervisorId, ct);
+        if (!linked.ContainsKey(childId)) return Result<ListingView>.Fail(ShopError.NotFound);
+        var listing = await LoadListingForUpdateAsync(supervisorId, articleId, listingId, ct);
+        if (listing is null) return Result<ListingView>.Fail(ShopError.NotFound);
+        if (!Eligible(listing, linked.Keys).Contains(childId)) return Result<ListingView>.Fail(ShopError.NotInAudience);
+        if (currentStock < 0 || listing.MaxStock > 0 && currentStock > listing.MaxStock)
+            return Result<ListingView>.Fail(ShopError.InvalidQuantity);
+
+        await MaterializeStocksAsync([listing], _ => [childId], nowUtc, ct);
+        var row = listing.Stocks.First(s => s.ChildId == childId);
+        row.CurrentStock = currentStock;
+        row.ConcurrencyStamp = Guid.NewGuid();
+        if (!await TrySaveAsync(ct)) return Result<ListingView>.Fail(ShopError.Conflict);
+        return Result<ListingView>.Ok(ToView(listing, linked, nowUtc));
+    }
+
+    /// <summary>
+    /// Loads the listings of ALL supervisors of the student that are meant for it (audience empty or containing it),
+    /// with the child's own stock - created by the start rule when missing, refilled when due.
+    /// </summary>
+    public async Task<IReadOnlyList<ChildListingView>> ListingsForStudentAsync(
+        int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct)
+    {
+        var listings = await StudentListingsQuery(childId, activeOnly, tracked: true).ToListAsync(ct);
+        if (await MaterializeStocksAsync(listings, _ => [childId], nowUtc, ct) && !await TrySaveAsync(ct))
+        {
+            // Re-read after a lost race: the unsaved copy would show a refill on top of the winner's (4 + 4 = 8 shown,
+            // 4 stored) - B-645, risk 3.
+            db.ChangeTracker.Clear();
+            listings = await StudentListingsQuery(childId, activeOnly, tracked: false).ToListAsync(ct);
+            await MaterializeStocksAsync(listings, _ => [childId], nowUtc, ct);
+        }
+        return listings.Select(l =>
+        {
+            var row = l.Stocks.First(s => s.ChildId == childId);
+            return new ChildListingView(l, row.CurrentStock, NextRefill(l, row, nowUtc));
+        }).ToList();
     }
 
     /// <summary>
@@ -135,16 +185,16 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
-        // The student may buy from the shop of ANY of their supervisors (a shared wallet).
-        var listing = await db.ShopListings
-            .Include(l => l.ShopArticle)
-            .FirstOrDefaultAsync(l => l.Id == listingId
-                && db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.AdultId), ct);
+        // The student may buy from the shop of ANY of their supervisors (a shared wallet) - but only what is meant for
+        // it: a listing outside its audience is as unknown as a foreign family's.
+        var listing = await StudentListingsQuery(childId, activeOnly: false, tracked: true)
+            .FirstOrDefaultAsync(l => l.Id == listingId, ct);
         if (listing is null) return Result<ShopPurchase>.Fail(ShopError.NotFound);
 
-        ApplyDueRefill(listing, nowUtc);
+        await MaterializeStocksAsync([listing], _ => [childId], nowUtc, ct);
+        var stock = listing.Stocks.First(s => s.ChildId == childId);
         if (!listing.Active) return Result<ShopPurchase>.Fail(ShopError.ListingInactive);
-        if (listing.CurrentStock < 1) return Result<ShopPurchase>.Fail(ShopError.InsufficientStock);
+        if (stock.CurrentStock < 1) return Result<ShopPurchase>.Fail(ShopError.InsufficientStock);
 
         var balances = await wallet.BalancesAsync(childId, ct);
         if (balances.Coins < listing.CoinPrice) return Result<ShopPurchase>.Fail(ShopError.InsufficientCoins);
@@ -171,8 +221,9 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
                 CreatedAt = nowUtc,
             });
 
-        listing.CurrentStock -= 1;
-        listing.ConcurrencyStamp = Guid.NewGuid();
+        // The child's own stock row is the lock (B-645): a sibling's purchase touches another row.
+        stock.CurrentStock -= 1;
+        stock.ConcurrencyStamp = Guid.NewGuid();
 
         var title = string.IsNullOrWhiteSpace(listing.Title) ? article.Title : listing.Title;
         var purchase = new ShopPurchase
@@ -214,7 +265,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             inventory.ConcurrencyStamp = Guid.NewGuid();
         }
 
-        // Balance protection as with listings/skins: the listing stamp serializes the same stock only - the
+        // Balance protection as with listings/skins: the stock stamp serializes the same stock only - the
         // wallet is shared across all buying paths. Bumping the child token makes a second purchase started in
         // parallel (another listing or a skin) fail with a conflict, so the funds check cannot be bypassed twice
         // and the balance cannot go negative.
@@ -376,29 +427,184 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             : Result<ActivationRequest>.Fail(ShopError.Conflict);
     }
 
-    /// <summary>Applies a due refill rule idempotently: due listings are set to MaxStock.</summary>
-    public static bool ApplyDueRefill(ShopListing listing, DateTime nowUtc)
+    /// <summary>
+    /// The supervisor redeems units straight from the child's inventory (B-665): the checks of a child's request
+    /// (positive quantity, the caller's own article, the inventory covers it) and the booking of an approval, in one save
+    /// - no pending step in between. The record names the supervisor as requester, so the child's list explains it.
+    /// </summary>
+    public async Task<Result<ActivationRequest>> RedeemForChildAsync(
+        int supervisorId, int childId, int articleId, int quantity, DateTime nowUtc, CancellationToken ct)
     {
-        if (listing.RefillKind == ShopRefillKind.None || listing.MaxStock <= 0) return false;
-        if (!IsRefillDue(listing, nowUtc)) return false;
+        if (quantity <= 0) return Result<ActivationRequest>.Fail(ShopError.InvalidQuantity);
 
-        listing.CurrentStock = Math.Max(listing.CurrentStock, listing.MaxStock);
-        listing.LastRefilledAtUtc = nowUtc;
-        listing.ConcurrencyStamp = Guid.NewGuid();
+        // Bound to the issuer like an approval: another supervisor's article (Grandma's) is not this one's to redeem.
+        var article = await db.ShopArticles.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
+        if (article is null) return Result<ActivationRequest>.Fail(ShopError.NotFound);
+
+        var inventory = await db.ChildInventories
+            .FirstOrDefaultAsync(i => i.ChildId == childId && i.ShopArticleId == articleId, ct);
+        if (inventory is null || inventory.Quantity < quantity)
+            return Result<ActivationRequest>.Fail(ShopError.InsufficientInventory);
+
+        inventory.Quantity -= quantity;
+        inventory.ConcurrencyStamp = Guid.NewGuid();
+
+        var request = new ActivationRequest
+        {
+            ChildId = childId,
+            ShopArticleId = articleId,
+            SupervisorId = supervisorId,
+            RequestedQuantity = quantity,
+            Status = ActivationRequestStatus.Approved,
+            ArticleTitle = article.Title,
+            UnitType = article.UnitType,
+            ActionType = article.ActionType,
+            RequestedAt = nowUtc,
+            ClosedAt = nowUtc,
+            RequestedBy = ActivationRequester.Supervisor,
+        };
+        db.ActivationRequests.Add(request);
+
+        return await TrySaveAsync(ct)
+            ? Result<ActivationRequest>.Ok(request)
+            : Result<ActivationRequest>.Fail(ShopError.Conflict);
+    }
+
+    // ─── Stock per child (B-645) ─────────────────────────────────────────────
+
+    // The supervisor's listings with article, audience and every stock row. Tracked for writes, untracked for display.
+    private IQueryable<ShopListing> SupervisorListingsQuery(int supervisorId, bool activeOnly, bool tracked)
+    {
+        var query = db.ShopListings
+            .Include(l => l.ShopArticle)
+            .Include(l => l.Audience)
+            .Include(l => l.Stocks)
+            .Where(l => l.ShopArticle!.AdultId == supervisorId);
+        if (!tracked) query = query.AsNoTracking();
+        if (activeOnly) query = query.Where(l => l.Active);
+        return query
+            .OrderByDescending(l => l.Active)
+            .ThenBy(l => l.ShopArticle!.ArticleNumber)
+            .ThenBy(l => l.Id);
+    }
+
+    // The listings meant for the child: issued by one of its supervisors, audience empty or containing it. Only the
+    // child's own stock row is loaded - the siblings' rows are none of its business and must not be written here.
+    private IQueryable<ShopListing> StudentListingsQuery(int childId, bool activeOnly, bool tracked)
+    {
+        var query = db.ShopListings
+            .Include(l => l.ShopArticle)
+            .Include(l => l.Stocks.Where(s => s.ChildId == childId))
+            .Where(l => db.SupervisorLinks.Any(sl => sl.StudentId == childId && sl.SupervisorId == l.ShopArticle!.AdultId))
+            .Where(l => !l.Audience.Any() || l.Audience.Any(a => a.ChildId == childId));
+        if (!tracked) query = query.AsNoTracking();
+        if (activeOnly) query = query.Where(l => l.Active);
+        return query
+            .OrderBy(l => l.ShopArticle!.AdultId)
+            .ThenByDescending(l => l.Active)
+            .ThenBy(l => l.ShopArticle!.ArticleNumber)
+            .ThenBy(l => l.Id);
+    }
+
+    // Children linked to the supervisor, id → name: the pool every audience is cut from.
+    private async Task<Dictionary<int, string>> LinkedChildrenAsync(int supervisorId, CancellationToken ct) =>
+        await db.SupervisorLinks.AsNoTracking()
+            .Where(sl => sl.SupervisorId == supervisorId)
+            .Select(sl => new { sl.StudentId, sl.Student!.Name })
+            .ToDictionaryAsync(x => x.StudentId, x => x.Name, ct);
+
+    // Who a listing is for: its audience, or every linked child when the audience is empty. An audience member who is no
+    // longer linked drops out - the link, not the join row, decides whose shop it is.
+    private static IEnumerable<int> Eligible(ShopListing listing, IReadOnlyCollection<int> linkedChildIds) =>
+        listing.Audience.Count == 0
+            ? linkedChildIds
+            : listing.Audience.Select(a => a.ChildId).Where(linkedChildIds.Contains);
+
+    /// <summary>
+    /// The one sink for stock state: gives every (listing, child) pair a stock row - a missing one by the start rule
+    /// (<see cref="ShopRefillSchedule.StartStock"/>, decision 11) - and applies the due refills to all of them. Returns
+    /// whether anything changed. On tracked listings EF inserts/updates the rows on save; on untracked ones the result is
+    /// display only.
+    /// </summary>
+    private async Task<bool> MaterializeStocksAsync(
+        IReadOnlyList<ShopListing> listings, Func<ShopListing, IEnumerable<int>> childrenOf, DateTime nowUtc, CancellationToken ct)
+    {
+        var missing = listings
+            .SelectMany(l => childrenOf(l).Where(c => l.Stocks.All(s => s.ChildId != c)).Select(c => (Listing: l, ChildId: c)))
+            .ToList();
+
+        var changed = false;
+        if (missing.Count > 0)
+        {
+            var listingIds = missing.Select(m => m.Listing.Id).Distinct().ToList();
+            var childIds = missing.Select(m => m.ChildId).Distinct().ToList();
+            var purchases = await db.ShopPurchases.AsNoTracking()
+                .Where(p => p.ShopListingId != null && listingIds.Contains(p.ShopListingId.Value)
+                    && childIds.Contains(p.ChildId) && p.Status != ShopPurchaseStatus.Cancelled)
+                .Select(p => new { ListingId = p.ShopListingId!.Value, p.ChildId, p.PurchasedAt })
+                .ToListAsync(ct);
+
+            foreach (var (listing, childId) in missing)
+            {
+                var periodStart = ShopRefillSchedule.PeriodStartUtc(
+                    listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, listing.CreatedAt, nowUtc);
+                var own = purchases.Count(p => p.ListingId == listing.Id && p.ChildId == childId && p.PurchasedAt >= periodStart);
+                var (stock, last) = ShopRefillSchedule.StartStock(listing.RefillKind, listing.RefillAtUtc, listing.MaxStock, own, nowUtc);
+                listing.Stocks.Add(new ShopListingStock
+                {
+                    ShopListingId = listing.Id,
+                    ChildId = childId,
+                    CurrentStock = stock,
+                    LastRefilledAtUtc = last,
+                });
+                changed = true;
+            }
+        }
+
+        foreach (var listing in listings)
+        {
+            var eligible = childrenOf(listing).ToHashSet();
+            foreach (var row in listing.Stocks.Where(s => eligible.Contains(s.ChildId)))
+                changed |= ApplyDueRefill(listing, row, nowUtc);
+        }
+        return changed;
+    }
+
+    /// <summary>
+    /// Applies the due refills to one child's stock: every refill instant since its last refill adds
+    /// <see cref="ShopListing.RefillQuantity"/>, capped at <see cref="ShopListing.MaxStock"/> (B-645, decision 4).
+    /// </summary>
+    public static bool ApplyDueRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc)
+    {
+        var due = ShopRefillSchedule.DueRefills(
+            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc);
+        if (due <= 0 || listing.MaxStock <= 0) return false;
+
+        // A one-off fills to the cap, whatever the quantity says: a child whose row was created after the instant starts at
+        // MaxStock (decision 11), and a sibling whose row existed before it must end up at the same value (AK 10).
+        var quantity = listing.RefillKind == ShopRefillKind.Once ? listing.MaxStock : listing.RefillQuantity;
+        stock.CurrentStock = ShopRefillSchedule.Refill(stock.CurrentStock, listing.MaxStock, quantity, due);
+        stock.LastRefilledAtUtc = nowUtc;
+        stock.ConcurrencyStamp = Guid.NewGuid();
         return true;
     }
 
-    private static bool IsRefillDue(ShopListing listing, DateTime nowUtc) => listing.RefillKind switch
+    private static DateTime? NextRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc) =>
+        ShopRefillSchedule.NextRefillAtUtc(
+            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc);
+
+    private static ListingView ToView(ShopListing listing, IReadOnlyDictionary<int, string> linked, DateTime nowUtc)
     {
-        ShopRefillKind.Once => listing.RefillAtUtc is { } at && nowUtc >= at && listing.LastRefilledAtUtc is null,
-        ShopRefillKind.Daily => listing.LastRefilledAtUtc is null || listing.LastRefilledAtUtc.Value.Date < nowUtc.Date,
-        ShopRefillKind.TwiceDaily => listing.LastRefilledAtUtc is null
-            || listing.LastRefilledAtUtc.Value.Date < nowUtc.Date
-            || listing.LastRefilledAtUtc.Value.Hour < 12 && nowUtc.Hour >= 12,
-        ShopRefillKind.Weekly => listing.RefillDayOfWeek == nowUtc.DayOfWeek
-            && (listing.LastRefilledAtUtc is null || listing.LastRefilledAtUtc.Value.Date < nowUtc.Date),
-        _ => false,
-    };
+        var eligible = Eligible(listing, linked.Keys.ToList()).ToHashSet();
+        var stocks = listing.Stocks
+            .Where(s => eligible.Contains(s.ChildId))
+            .OrderBy(s => s.ChildId)
+            .Select(s => new StockView(s.ChildId, linked[s.ChildId], s.CurrentStock, s.LastRefilledAtUtc, NextRefill(listing, s, nowUtc)))
+            .ToList();
+        var audience = listing.Audience.Select(a => a.ChildId).OrderBy(id => id).ToList();
+        return new ListingView(listing, audience, stocks);
+    }
 
     // Bound to the issuer: only the supervisor who issued the article/listing (SupervisorId snapshot) sees or
     // edits the purchase or the request. A case issued by someone else appears as NotFound.
@@ -433,5 +639,13 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         {
             return false;
         }
+        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
+        {
+            // Two first reads of the same child's stock raced to create its row; the unique index let one of them win.
+            return false;
+        }
     }
+
+    // SQLITE_CONSTRAINT_UNIQUE (extended result code).
+    private const int SqliteUniqueViolation = 2067;
 }

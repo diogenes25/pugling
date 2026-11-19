@@ -24,7 +24,7 @@ Response — `HTTP 201`:
 
 ```json
 {
-  "id": 5,
+  "id": 6,
   "articleNumber": "TV-900",
   "title": "Fernsehzeit",
   "description": "Bildschirmzeit in Minuten",
@@ -93,6 +93,15 @@ Response — `HTTP 200`:
     "createdAt": "<timestamp>"
   },
   {
+    "id": 5,
+    "articleNumber": "GELD-001",
+    "title": "Taschengeld",
+    "description": "Taschengeld, erarbeitet mit M\u00FCnzen \u2013 ausgezahlt, sobald der Vater die Einl\u00F6sung best\u00E4tigt.",
+    "unitType": "Euro",
+    "actionType": "Sonstiges",
+    "createdAt": "<timestamp>"
+  },
+  {
     "id": 3,
     "articleNumber": "SWEET-001",
     "title": "S\u00FC\u00DFigkeiten",
@@ -111,15 +120,13 @@ Response — `HTTP 200`:
     "createdAt": "<timestamp>"
   },
   {
-    "id": 5,
+    "id": 6,
     "articleNumber": "TV-900",
     "title": "Fernsehzeit",
     "description": "Bildschirmzeit in Minuten",
     "unitType": "Minute",
     "actionType": "TV",
-    "createdAt": "<timestamp>"
-  }
-]
+… (gekürzt)
 ```
 
 ## Artikel auflisten (Suche)
@@ -142,7 +149,7 @@ Response — `HTTP 200`:
     "createdAt": "<timestamp>"
   },
   {
-    "id": 5,
+    "id": 6,
     "articleNumber": "TV-900",
     "title": "Fernsehzeit",
     "description": "Bildschirmzeit in Minuten",
@@ -155,7 +162,7 @@ Response — `HTTP 200`:
 
 ## Artikel ändern
 
-`PATCH /api/v1/supervisor/shop/articles/5`
+`PATCH /api/v1/supervisor/shop/articles/6`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -172,7 +179,7 @@ Response — `HTTP 200`:
 
 ```json
 {
-  "id": 5,
+  "id": 6,
   "articleNumber": "TV-900",
   "title": "Fernsehzeit (30 Min)",
   "description": "30 Minuten freie Bildschirmzeit",
@@ -184,7 +191,7 @@ Response — `HTTP 200`:
 
 ## Angebot anlegen
 
-`POST /api/v1/supervisor/shop/articles/5/listings`
+`POST /api/v1/supervisor/shop/articles/6/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -197,7 +204,6 @@ Request:
   "coinPrice": 120,
   "gemPrice": 0,
   "unitsPerPurchase": 30,
-  "currentStock": 5,
   "maxStock": 5
 }
 ```
@@ -206,8 +212,8 @@ Response — `HTTP 201`:
 
 ```json
 {
-  "id": 7,
-  "shopArticleId": 5,
+  "id": 8,
+  "shopArticleId": 6,
   "articleNumber": "TV-900",
   "articleTitle": "Fernsehzeit (30 Min)",
   "title": "30 Min Fernsehen",
@@ -216,19 +222,35 @@ Response — `HTTP 201`:
   "gemPrice": 0,
   "unitsPerPurchase": 30,
   "active": true,
-  "currentStock": 5,
   "maxStock": 5,
+  "refillQuantity": 5,
   "refillKind": "None",
   "refillAtUtc": null,
   "refillDayOfWeek": null,
-  "lastRefilledAtUtc": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "childIds": [],
+  "stocks": [
+    {
+      "childId": 1,
+      "childName": "Sohn",
+      "currentStock": 5,
+      "lastRefilledAtUtc": null,
+      "nextRefillAtUtc": null
+    },
+    {
+      "childId": 5,
+      "childName": "\u00D6konomie-Kind A",
+      "currentStock": 5,
+      "lastRefilledAtUtc": null,
+      "nextRefillAtUtc": null
+    }
+  ]
 }
 ```
 
 ### Angebot anlegen (ungültiger Preis) — Fehlerfall
 
-`POST /api/v1/supervisor/shop/articles/5/listings`
+`POST /api/v1/supervisor/shop/articles/6/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -239,7 +261,6 @@ Request:
   "coinPrice": 0,
   "gemPrice": 0,
   "unitsPerPurchase": 30,
-  "currentStock": 5,
   "maxStock": 5
 }
 ```
@@ -259,7 +280,7 @@ Response — `HTTP 400`:
 
 ## Angebote auflisten
 
-`GET /api/v1/supervisor/shop/articles/5/listings`
+`GET /api/v1/supervisor/shop/articles/6/listings`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -268,8 +289,8 @@ Response — `HTTP 200`:
 ```json
 [
   {
-    "id": 7,
-    "shopArticleId": 5,
+    "id": 8,
+    "shopArticleId": 6,
     "articleNumber": "TV-900",
     "articleTitle": "Fernsehzeit (30 Min)",
     "title": "30 Min Fernsehen",
@@ -278,20 +299,36 @@ Response — `HTTP 200`:
     "gemPrice": 0,
     "unitsPerPurchase": 30,
     "active": true,
-    "currentStock": 5,
     "maxStock": 5,
+    "refillQuantity": 5,
     "refillKind": "None",
     "refillAtUtc": null,
     "refillDayOfWeek": null,
-    "lastRefilledAtUtc": null,
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "childIds": [],
+    "stocks": [
+      {
+        "childId": 1,
+        "childName": "Sohn",
+        "currentStock": 5,
+        "lastRefilledAtUtc": null,
+        "nextRefillAtUtc": null
+      },
+      {
+        "childId": 5,
+        "childName": "\u00D6konomie-Kind A",
+        "currentStock": 5,
+        "lastRefilledAtUtc": null,
+        "nextRefillAtUtc": null
+      }
+    ]
   }
 ]
 ```
 
-## Angebot ändern (Bestand auffüllen)
+## Angebot ändern (Obergrenze anheben)
 
-`PATCH /api/v1/supervisor/shop/articles/5/listings/7`
+`PATCH /api/v1/supervisor/shop/articles/6/listings/8`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -299,7 +336,6 @@ Request:
 
 ```json
 {
-  "currentStock": 5,
   "maxStock": 10
 }
 ```
@@ -308,8 +344,8 @@ Response — `HTTP 200`:
 
 ```json
 {
-  "id": 7,
-  "shopArticleId": 5,
+  "id": 8,
+  "shopArticleId": 6,
   "articleNumber": "TV-900",
   "articleTitle": "Fernsehzeit (30 Min)",
   "title": "30 Min Fernsehen",
@@ -318,13 +354,29 @@ Response — `HTTP 200`:
   "gemPrice": 0,
   "unitsPerPurchase": 30,
   "active": true,
-  "currentStock": 5,
   "maxStock": 10,
+  "refillQuantity": 10,
   "refillKind": "None",
   "refillAtUtc": null,
   "refillDayOfWeek": null,
-  "lastRefilledAtUtc": null,
-  "createdAt": "<timestamp>"
+  "createdAt": "<timestamp>",
+  "childIds": [],
+  "stocks": [
+    {
+      "childId": 1,
+      "childName": "Sohn",
+      "currentStock": 5,
+      "lastRefilledAtUtc": null,
+      "nextRefillAtUtc": null
+    },
+    {
+      "childId": 5,
+      "childName": "\u00D6konomie-Kind A",
+      "currentStock": 5,
+      "lastRefilledAtUtc": null,
+      "nextRefillAtUtc": null
+    }
+  ]
 }
 ```
 
@@ -354,7 +406,8 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 1,
       "currentStock": 1,
-      "affordable": false
+      "affordable": false,
+      "nextRefillAtUtc": null
     },
     {
       "id": 3,
@@ -369,7 +422,8 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 30,
       "currentStock": 3,
-      "affordable": true
+      "affordable": true,
+      "nextRefillAtUtc": "<timestamp>"
     },
     {
       "id": 4,
@@ -384,27 +438,24 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 60,
       "currentStock": 1,
-      "affordable": false
+      "affordable": false,
+      "nextRefillAtUtc": "<timestamp>"
     },
     {
-      "id": 5,
-      "shopArticleId": 3,
-      "articleNumber": "SWEET-001",
-      "articleTitle": "S\u00FC\u00DFigkeiten",
-      "unitType": "Gramm",
-      "actionType": "Suessigkeit",
-      "title": "50 g Naschpaket",
-      "description": "",
-      "coinPrice": 300,
-      "gemPrice": 10,
-      "unitsPerPurchase": 50,
-      "currentStock": 4
+      "id": 7,
+      "shopArticleId": 5,
+      "articleNumber": "GELD-001",
+      "articleTitle": "Taschengeld",
+      "unitType": "Euro",
+      "actionType": "Sonstiges",
+      "title": "Taschengeld 5 \u20AC",
+      "description": "
 … (gekürzt)
 ```
 
 ## Shop-Angebot kaufen
 
-`POST /api/v1/student/me/shop/listings/7/purchase`
+`POST /api/v1/student/me/shop/listings/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -434,7 +485,8 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 1,
       "currentStock": 1,
-      "affordable": false
+      "affordable": false,
+      "nextRefillAtUtc": null
     },
     {
       "id": 3,
@@ -449,7 +501,8 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 30,
       "currentStock": 3,
-      "affordable": false
+      "affordable": false,
+      "nextRefillAtUtc": "<timestamp>"
     },
     {
       "id": 4,
@@ -464,27 +517,24 @@ Response — `HTTP 200`:
       "gemPrice": 0,
       "unitsPerPurchase": 60,
       "currentStock": 1,
-      "affordable": false
+      "affordable": false,
+      "nextRefillAtUtc": "<timestamp>"
     },
     {
-      "id": 5,
-      "shopArticleId": 3,
-      "articleNumber": "SWEET-001",
-      "articleTitle": "S\u00FC\u00DFigkeiten",
-      "unitType": "Gramm",
-      "actionType": "Suessigkeit",
-      "title": "50 g Naschpaket",
-      "description": "",
-      "coinPrice": 300,
-      "gemPrice": 10,
-      "unitsPerPurchase": 50,
-      "currentStock": 
+      "id": 7,
+      "shopArticleId": 5,
+      "articleNumber": "GELD-001",
+      "articleTitle": "Taschengeld",
+      "unitType": "Euro",
+      "actionType": "Sonstiges",
+      "title": "Taschengeld 5 \u20AC",
+      "description": 
 … (gekürzt)
 ```
 
 ### Shop-Angebot kaufen (ausverkauft) — Fehlerfall
 
-`POST /api/v1/student/me/shop/listings/8/purchase`
+`POST /api/v1/student/me/shop/listings/9/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -509,7 +559,7 @@ Response — `HTTP 409`:
 
 ### Shop-Angebot kaufen (deaktiviert) — Fehlerfall
 
-`POST /api/v1/student/me/shop/listings/8/purchase`
+`POST /api/v1/student/me/shop/listings/9/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -534,7 +584,7 @@ Response — `HTTP 400`:
 
 ### Shop-Angebot kaufen (kein Guthaben) — Fehlerfall
 
-`POST /api/v1/student/me/shop/listings/7/purchase`
+`POST /api/v1/student/me/shop/listings/8/purchase`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -559,7 +609,7 @@ Response — `HTTP 400`:
 
 ## Aktivierungsanfrage stellen
 
-`POST /api/v1/student/me/shop/inventory/5/activate`
+`POST /api/v1/student/me/shop/inventory/6/activate`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -576,20 +626,21 @@ Response — `HTTP 200`:
 ```json
 {
   "id": 1,
-  "shopArticleId": 5,
+  "shopArticleId": 6,
   "articleTitle": "Fernsehzeit (30 Min)",
   "unitType": "Minute",
   "actionType": "TV",
   "requestedQuantity": 30,
   "status": "Pending",
   "requestedAt": "<timestamp>",
-  "closedAt": null
+  "closedAt": null,
+  "requestedBy": "Child"
 }
 ```
 
 ### Aktivierungsanfrage (Inventar erschöpft) — Fehlerfall
 
-`POST /api/v1/student/me/shop/inventory/5/activate`
+`POST /api/v1/student/me/shop/inventory/6/activate`
 
 Rolle: **child** — `Authorization: Bearer <child-token>`
 
@@ -625,7 +676,7 @@ Response — `HTTP 200`:
 ```json
 [
   {
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleNumber": "TV-900",
     "title": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
@@ -647,25 +698,27 @@ Response — `HTTP 200`:
 [
   {
     "id": 2,
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
     "requestedQuantity": 10,
     "status": "Pending",
     "requestedAt": "<timestamp>",
-    "closedAt": null
+    "closedAt": null,
+    "requestedBy": "Child"
   },
   {
     "id": 1,
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
     "requestedQuantity": 30,
     "status": "Pending",
     "requestedAt": "<timestamp>",
-    "closedAt": null
+    "closedAt": null,
+    "requestedBy": "Child"
   }
 ]
 ```
@@ -681,7 +734,7 @@ Response — `HTTP 200`:
 ```json
 [
   {
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleNumber": "TV-900",
     "title": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
@@ -704,7 +757,7 @@ Response — `HTTP 200`:
   {
     "id": 1,
     "childId": 6,
-    "shopListingId": 7,
+    "shopListingId": 8,
     "articleNumber": "TV-900",
     "title": "30 Min Fernsehen",
     "description": "Einmalige Halbstunde",
@@ -732,7 +785,7 @@ Response — `HTTP 200`:
   {
     "id": 2,
     "childId": 6,
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
@@ -740,13 +793,14 @@ Response — `HTTP 200`:
     "status": "Pending",
     "requestedAt": "<timestamp>",
     "closedAt": null,
+    "requestedBy": "Child",
     "canApprove": true,
     "canReject": true
   },
   {
     "id": 1,
     "childId": 6,
-    "shopArticleId": 5,
+    "shopArticleId": 6,
     "articleTitle": "Fernsehzeit (30 Min)",
     "unitType": "Minute",
     "actionType": "TV",
@@ -754,6 +808,7 @@ Response — `HTTP 200`:
     "status": "Pending",
     "requestedAt": "<timestamp>",
     "closedAt": null,
+    "requestedBy": "Child",
     "canApprove": true,
     "canReject": true
   }
@@ -772,7 +827,7 @@ Response — `HTTP 200`:
 {
   "id": 1,
   "childId": 6,
-  "shopArticleId": 5,
+  "shopArticleId": 6,
   "articleTitle": "Fernsehzeit (30 Min)",
   "unitType": "Minute",
   "actionType": "TV",
@@ -780,6 +835,7 @@ Response — `HTTP 200`:
   "status": "Approved",
   "requestedAt": "<timestamp>",
   "closedAt": "<timestamp>",
+  "requestedBy": "Child",
   "canApprove": false,
   "canReject": false
 }
@@ -835,7 +891,7 @@ Response — `HTTP 200`:
 {
   "id": 2,
   "childId": 6,
-  "shopArticleId": 5,
+  "shopArticleId": 6,
   "articleTitle": "Fernsehzeit (30 Min)",
   "unitType": "Minute",
   "actionType": "TV",
@@ -843,6 +899,7 @@ Response — `HTTP 200`:
   "status": "Rejected",
   "requestedAt": "<timestamp>",
   "closedAt": "<timestamp>",
+  "requestedBy": "Child",
   "canApprove": false,
   "canReject": false
 }
@@ -860,7 +917,7 @@ Response — `HTTP 200`:
 {
   "id": 1,
   "childId": 6,
-  "shopListingId": 7,
+  "shopListingId": 8,
   "articleNumber": "TV-900",
   "title": "30 Min Fernsehen",
   "description": "Einmalige Halbstunde",
@@ -876,7 +933,7 @@ Response — `HTTP 200`:
 
 ## Angebot löschen
 
-`DELETE /api/v1/supervisor/shop/articles/5/listings/7`
+`DELETE /api/v1/supervisor/shop/articles/6/listings/8`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 
@@ -888,7 +945,7 @@ Response — `HTTP 204`:
 
 ## Artikel löschen
 
-`DELETE /api/v1/supervisor/shop/articles/5`
+`DELETE /api/v1/supervisor/shop/articles/6`
 
 Rolle: **father** — `Authorization: Bearer <father-token>`
 

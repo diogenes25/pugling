@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/shop, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/shop, rolle/supervisor]
 aliases: [Einlösen ohne Handy, Vater löst ein]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -177,3 +177,10 @@ Alle sechs am 2026-11-19 vom Vater entschieden (Empfehlungen übernommen) → En
 - 2026-11-18 · ausformuliert · Vorgabe des Vaters nachgetragen: Einlösen durch den Vater bleibt die Ausnahme, der Antrag des Kindes der Normalfall
 - 2026-11-19 · gegrillt · Vater übernimmt alle sechs Empfehlungen (Entscheidungen 1–6)
 - 2026-11-19 · geschaetzt · M, beides, Migration `RequestedBy` (Bestand → `Child`), kein Vertragsbruch; Sprint 96 mit B-645
+- 2026-11-19 · in-arbeit · gebaut mit B-645 in Sprint 96 (Migration gemeinsam: `ShopStockPerChild` trägt `RequestedBy`). Belege je AK-Fall:
+  - AK 1 Freigabe sofort, Inventar sinkt → `ShopStockPerChildTests.cs:501`, R2 (Inventar bleibt), R4 (Status Pending) → rot.
+  - AK 2 + AK 5 Deckung, Menge 0 → `ShopStockPerChildTests.cs:526`, R5, R6 → rot.
+  - AK 3 + AK 4 Omas Artikel 404, fremder Erwachsener 404, Sohn-Token 403 → `ShopStockPerChildTests.cs:547`, R1 (Ausstellerbindung weg) → rot.
+  - AK 6 Kind sieht „von Papa eingelöst“ → `ShopStockPerChildTests.cs:501` (R3 → rot) und E2E (F2 → rot); Migration: Bestand `Child` → G3 → rot.
+  - AK 7 Vater-Web, Knopf je Inventarzeile mit Bestätigung → E2E `taschengeld-monatlich.spec.ts`.
+  - AK 8 Integrationstests je AK 1–5 → oben.

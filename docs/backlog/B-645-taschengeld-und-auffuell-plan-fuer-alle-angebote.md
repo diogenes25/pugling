@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/shop, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/shop, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Taschengeld, Monatliches Auffüllen, Auffüll-Plan]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -373,3 +373,19 @@ Aggregat hängen (Angebot plus Bestand je Kind) und kein zweiter Bereich berühr
   Punkt 12. Vom Vater entschieden: Angebot je Kind über eine Zielgruppe am Angebot (Entscheidung 12, AK 11). Die
   Größe bleibt L: eine Join-Tabelle, ein DTO-Feld und ein Filter an den Pfaden, die B-645 ohnehin umbaut.
   Stufe bleibt `geschaetzt`.
+- **2026-11-19** · in-arbeit · Sprint 96 gebaut (Backend, Vater-Web, Sohn-App), Entscheidung 12 eingearbeitet. Belege je AK-Fall
+  (Mutanten aus `.claude/scripts/mutant-probe.py` nach der letzten Bearbeitung, alle am genannten Test rot):
+  - AK 1, Geschwister kaufen je aus eigenem Bestand → `ShopStockPerChildTests.cs:74`, A1 (Kauf senkt nicht) → rot.
+  - AK 2 wöchentlich, Montag verpasst → `ShopStockPerChildTests.cs:129` + `ShopRefillScheduleTests.cs:19`, A3 (alte Regel „heute ist der Tag“) → rot.
+  - AK 2 + AK 5 monatlich, nur am 1., nachgeholt → `ShopStockPerChildTests.cs:109` + `ShopRefillScheduleTests.cs:34`, A4 (Tage statt Monate) → rot.
+  - AK 3 Ansparen 2→6 / 6→8 / 0→8 / 0→4 → `ShopStockPerChildTests.cs:155` + `ShopRefillScheduleTests.cs:72`, A5 (kein Deckel), A6 (alte Regel „auf Max“), A7 (Nachholen als ja/nein) → je rot.
+  - AK 4 Verfallen wie bisher → Migration setzt `RefillQuantity = MaxStock`, `ShopStockPerChildMigrationTests.cs:27`, G4 → rot.
+  - AK 6 Vater-Web legt Wöchentlich mit Wochentag, Monatlich (+4 bis 8), Einmalig mit Datum an und ändert den Wochentag ohne `400` → `taschengeld-monatlich.spec.ts:33`, F3 (Menge fällt weg), F4 (Wochentag fällt weg) → rot.
+  - AK 7 Migration, Startbestand je Kind, Käufe bleiben, `MaxStock = 0` → None → `ShopStockPerChildMigrationTests.cs:27`, G1 (fremde Käufe zählen), G2 (Käufe vor dem Auffüllen zählen) → rot; Probelauf: real eingespielt (siehe Vorfall im Sitzungslog), gegen die Sicherung geprüft.
+  - AK 8 Euro im Inventar, Auszahlung erkennbar → `ShopStockPerChildTests.cs:385`.
+  - AK 9 Affordable nach eigenem Bestand, „wieder da“ → `ShopStockPerChildTests.cs:74` (A2 → rot) und E2E (F1 → rot).
+  - AK 10 neues Kind und Einmalig vor dem Termin → `ShopStockPerChildTests.cs:192` (A8 → rot); Einmalig gleich für früh und spät gelesene Geschwister → `ShopStockPerChildTests.cs:225` (A9 → rot).
+  - AK 11 Zielgruppe in Liste und Kauf, fremdes Kind 400 → `ShopStockPerChildTests.cs:250`, A10 (Filter weg), A11 (fremdes Kind angenommen) → rot.
+  - Bestand setzen: Spanne, Zielgruppe → `ShopStockPerChildTests.cs:317`, A12, A13 → rot. Validierung/PATCH-Regel → `ShopStockPerChildTests.cs:351`, A15, A16, A17 → rot. Risiko 3 (Konflikt, Sohnliste liest neu) → `ShopStockPerChildTests.cs:415`, A14 → rot.
+  - A18 (eigene Käufe in der Startregel zur Laufzeit) bleibt **grün**: zur Laufzeit entsteht eine Zeile nie nach eigenen Käufen (Käufe brauchen die Zeile; Zeilen bleiben beim Herausnehmen aus der Zielgruppe). Getragen wird die Regel dort, wo sie wirkt – in der Migration (G1, G2).
+- **2026-11-19** · in-arbeit · Review (`pugling-reviewer`, `frontend-reviewer`) eingearbeitet: Einmalig füllt bis zur Obergrenze, PATCH der Obergrenze kappt keine Spar-Menge mehr, negative Menge 400, zwei Meldungen beim Bestand-Setzen, „Für“-Legende ohne `<label for>`, Merker `expires` beim Tippen, Prüfung übers Panel-Banner. Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` 1920/1920, Vitest 1258/1258, `tsc -b` sauber, Mutanten 32/32 wie erwartet, E2E 8 passed.

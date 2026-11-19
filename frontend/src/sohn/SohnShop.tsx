@@ -220,7 +220,7 @@ function BuyTab({ listings, busy, onBuy }: {
   busy: boolean;
   onBuy: (l: ShopAvailableListing) => void;
 }) {
-  const { t, amount, price } = useShopText();
+  const { t, amount, price, date } = useShopText();
   if (listings.length === 0)
     return <p className="sub">{t("shop.noListings")}</p>;
   return (
@@ -246,6 +246,9 @@ function BuyTab({ listings, busy, onBuy }: {
             </div>
             {soldOut ? <span className="pill red">{t("shop.soldOut")}</span>
               : <span className={`pill ${l.affordable ? "gold" : "red"}`}>{price(l.coinPrice, l.gemPrice)}</span>}
+            {/* B-645: der eigene Bestand ist leer, aber der Server weiß, wann er wiederkommt – Sparen lohnt sich. */}
+            {soldOut && l.nextRefillAtUtc && (
+              <div className="sub" style={{ fontSize: 11 }}>{t("shop.backOn", { when: date(l.nextRefillAtUtc) })}</div>)}
           </button>
         );
       })}
@@ -324,6 +327,8 @@ function RequestsTab({ activations }: { activations: MyActivation[] }) {
             <div>
               <b>{a.articleTitle}</b>
               <div className="sub">{amount(a.requestedQuantity, a.unitType)} · {date(a.requestedAt)}</div>
+              {/* B-665: eine Freigabe, die das Kind nie angefragt hat, muss sagen, wer es war. */}
+              {a.requestedBy === "Supervisor" && <div className="sub">{t("shop.redeemedByParent")}</div>}
             </div>
             <span className={`pill ${pill.cls}`}>{t(pill.label)}</span>
           </div>

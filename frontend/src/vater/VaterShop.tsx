@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
-import { FieldLabel } from "../components/InfoHint";
+import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
 import { api, ApiError } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
@@ -15,7 +15,7 @@ import type {
 } from "../lib/types";
 
 /** Auffüll-Regeln zur Auswahl (Reihenfolge = wie oft man sie braucht). */
-const REFILL_KINDS: ShopRefillKind[] = ["None", "Daily", "TwiceDaily", "Weekly", "Once"];
+const REFILL_KINDS: ShopRefillKind[] = ["None", "Daily", "TwiceDaily", "Weekly", "Monthly", "Once"];
 
 /**
  * Familien-Shop aus Vater-Sicht: den Belohnungs-Katalog pflegen (Artikel + Angebote) und je Kind
@@ -187,16 +187,145 @@ function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRe
   );
 }
 
+/** Der Auffüll-Plan eines Angebots, wie ihn Anlegen und Bearbeiten teilen (B-645). */
+type RefillPlan = {
+  maxStock: number;
+  refillQuantity: number;
+  refillKind: ShopRefillKind;
+  refillDayOfWeek: Weekday;
+  /** Datum `yyyy-mm-dd` für „Einmalig"; leer = noch nicht gewählt. */
+  refillDate: string;
+  /**
+   * Reste verfallen (Menge je Termin = Obergrenze). Als eigener Merker, nicht aus den Zahlen abgeleitet: beim Tippen
+   * der Obergrenze („1" auf dem Weg zu „12") wären Menge und Obergrenze kurz gleich, und aus Ansparen würde Verfallen.
+   */
+  expires: boolean;
+};
+
+type Weekday = NonNullable<CreateShopListingDto["refillDayOfWeek"]>;
+
+const WEEKDAYS: { value: Weekday; label: string; short: string }[] = [
+  { value: "Monday", label: "Montag", short: "Mo" },
+  { value: "Tuesday", label: "Dienstag", short: "Di" },
+  { value: "Wednesday", label: "Mittwoch", short: "Mi" },
+  { value: "Thursday", label: "Donnerstag", short: "Do" },
+  { value: "Friday", label: "Freitag", short: "Fr" },
+  { value: "Saturday", label: "Samstag", short: "Sa" },
+  { value: "Sunday", label: "Sonntag", short: "So" },
+];
+
+/**
+ * Die Felder des Plans für den Server. Wochentag und Datum gehen nur mit, wo die Art sie braucht – sonst
+ * verlangte der Server sie nicht, hielte sie aber fest. Die Menge je Termin zählt nur bei einer auffüllenden Art.
+ */
+function planDto(plan: RefillPlan) {
+  return {
+    maxStock: plan.maxStock,
+    refillKind: plan.refillKind,
+    refillQuantity: plan.refillKind === "None" ? null : plan.refillQuantity,
+    refillDayOfWeek: plan.refillKind === "Weekly" ? plan.refillDayOfWeek : null,
+    refillAtUtc: plan.refillKind === "Once" && plan.refillDate ? `${plan.refillDate}T00:00:00Z` : null,
+  };
+}
+
+/** Prüft, was der Server sonst mit 400 ablehnte – als Satz am Formular statt als Fehlercode. */
+function planProblem(plan: RefillPlan): string | null {
+  if (plan.refillKind === "None") return null;
+  if (plan.maxStock < 1) return "Ein Angebot, das sich auffüllt, braucht eine Obergrenze von mindestens 1.";
+  if (plan.refillQuantity < 1 || plan.refillQuantity > plan.maxStock)
+    return "„+ je Termin“ muss zwischen 1 und der Obergrenze liegen.";
+  return null;
+}
+
+/** Pflichtfeld leer → Speichern gesperrt, keine Meldung (B-233): „Einmalig" ohne Datum. */
+const planIncomplete = (plan: RefillPlan) => plan.refillKind === "Once" && !plan.refillDate;
+
+function refillText(l: ShopListing): string {
+  let text = REFILL_LABEL[l.refillKind];
+  if (l.refillKind === "Weekly" && l.refillDayOfWeek)
+    text += ` (${WEEKDAYS.find((d) => d.value === l.refillDayOfWeek)?.short ?? l.refillDayOfWeek})`;
+  if (l.refillKind === "Once" && l.refillAtUtc) text += ` (${formatDate(l.refillAtUtc)})`;
+  // Ansparen sichtbar machen, bei jeder Art – sonst sähe ein Spar-Angebot aus wie eines, dessen Reste verfallen.
+  if (l.refillKind !== "None" && l.refillKind !== "Once" && l.refillQuantity < l.maxStock)
+    text += `, +${l.refillQuantity} bis ${l.maxStock}`;
+  return text;
+}
+
+/** Auffüllen, Wochentag/Datum, Obergrenze und Menge je Termin – geteilt von Anlegen und Bearbeiten. */
+function RefillFields({ uid, plan, onChange }: { uid: string; plan: RefillPlan; onChange: (p: RefillPlan) => void }) {
+  const up = <K extends keyof RefillPlan>(k: K, v: RefillPlan[K]) => onChange({ ...plan, [k]: v });
+  return (
+    <>
+      {/* Ohne Auffüllen ist ein Angebot nach `maxStock` Käufen je Kind dauerhaft leer – das ist oft gewollt
+          (einmalige Belohnung), aber es muss eine Entscheidung sein, keine Nebenwirkung. */}
+      <div className="field"><FieldLabel htmlFor={`${uid}-refill`} topic="shopRefill">Auffüllen</FieldLabel>
+        <select id={`${uid}-refill`} value={plan.refillKind}
+          onChange={(e) => up("refillKind", e.target.value as ShopRefillKind)}>
+          {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
+        </select></div>
+      {plan.refillKind === "Weekly" && (
+        <div className="field" style={{ maxWidth: 140 }}><label htmlFor={`${uid}-day`}>Wochentag</label>
+          <select id={`${uid}-day`} value={plan.refillDayOfWeek} onChange={(e) => up("refillDayOfWeek", e.target.value as Weekday)}>
+            {WEEKDAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+          </select></div>
+      )}
+      {plan.refillKind === "Once" && (
+        <div className="field" style={{ maxWidth: 160 }}><label htmlFor={`${uid}-date`}>Datum</label>
+          <input id={`${uid}-date`} type="date" value={plan.refillDate} onChange={(e) => up("refillDate", e.target.value)} /></div>
+      )}
+      <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-max`} topic="shopMaxStock">Obergrenze je Kind</FieldLabel>
+        <input id={`${uid}-max`} type="number" min={0} value={plan.maxStock}
+          onChange={(e) => {
+            const max = Number(e.target.value);
+            // „Verfällt" folgt der Obergrenze; eine Spar-Menge bleibt stehen (planProblem meldet, wenn sie darüber liegt).
+            onChange({ ...plan, maxStock: max, refillQuantity: plan.expires ? max : plan.refillQuantity });
+          }} /></div>
+      {plan.refillKind !== "None" && (
+        <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-qty`} topic="shopRefillQuantity">+ je Termin</FieldLabel>
+          <input id={`${uid}-qty`} type="number" min={1} max={plan.maxStock} value={plan.refillQuantity}
+            onChange={(e) => {
+              const quantity = Number(e.target.value);
+              onChange({ ...plan, refillQuantity: quantity, expires: quantity === plan.maxStock });
+            }} /></div>
+      )}
+    </>
+  );
+}
+
+/** „Für": leer heißt alle Kinder; so bekommt jedes Kind sein eigenes Taschengeld-Angebot (B-645, Entscheidung 12). */
+function AudienceField({ uid, kids, value, onChange }: {
+  uid: string; kids: ChildResponse[]; value: number[]; onChange: (ids: number[]) => void;
+}) {
+  if (kids.length < 2) return null;
+  return (
+    <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+      {/* Überschrift über mehreren Feldern: kein <label for>, sonst hakte ein Klick auf „Für" das erste Kind an. */}
+      <legend><span className="label-row group-label">Für (leer = alle) <InfoHint topic="shopAudience" /></span></legend>
+      <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+        {kids.map((c) => (
+          <label key={c.id} className="row" style={{ gap: 4 }}>
+            <input id={`${uid}-aud-${c.id}`} type="checkbox" checked={value.includes(c.id)}
+              onChange={(e) => onChange(e.target.checked ? [...value, c.id] : value.filter((id) => id !== c.id))} />
+            {c.name}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function ListingManager({ article }: { article: ShopArticle }) {
   const uid = useId();
   const list = useAsync<ShopListing[]>(() => api.shopListings(article.id), [article.id]);
-  const [form, setForm] = useState<CreateShopListingDto>({
-    title: "", description: "", coinPrice: 100, gemPrice: 0, unitsPerPurchase: 30, currentStock: 5, maxStock: 5,
-    refillKind: "None",
+  const kids = useAsync<ChildResponse[]>(() => api.children(), []);
+  const [form, setForm] = useState({ title: "", coinPrice: 100, gemPrice: 0, unitsPerPurchase: 30 });
+  const [plan, setPlan] = useState<RefillPlan>({
+    maxStock: 5, refillQuantity: 5, refillKind: "None", refillDayOfWeek: "Monday", refillDate: "", expires: true,
   });
+  const [audience, setAudience] = useState<number[]>([]);
   const action = useAction();
 
-  function up<K extends keyof CreateShopListingDto>(k: K, v: CreateShopListingDto[K]) {
+  function up<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
@@ -204,11 +333,15 @@ function ListingManager({ article }: { article: ShopArticle }) {
     e.preventDefault();
     if (form.coinPrice <= 0 && form.gemPrice <= 0) { action.fail("Mindestens ein Preis muss > 0 sein."); return; }
     if (form.unitsPerPurchase <= 0) { action.fail("Menge je Kauf muss ≥ 1 sein."); return; }
+    if (planIncomplete(plan)) return;
+    const problem = planProblem(plan);
+    if (problem) { action.fail(problem); return; }
     const ok = await action.run(() => api.createShopListing(article.id, {
-      ...form, title: form.title?.trim() || null, description: form.description?.trim() || null,
+      ...form, ...planDto(plan), title: form.title.trim() || null, description: null,
+      childIds: audience.length > 0 ? audience : null,
     }), "Angebot angelegt.");
     if (!ok) return;
-    setForm((f) => ({ ...f, title: "", description: "" }));
+    setForm((f) => ({ ...f, title: "" }));
     list.reload();
   }
 
@@ -218,51 +351,44 @@ function ListingManager({ article }: { article: ShopArticle }) {
   async function save(l: ShopListing, dto: UpdateShopListingDto) {
     if (await action.run(() => api.updateShopListing(article.id, l.id, dto))) list.reload();
   }
-  async function refill(l: ShopListing) {
-    // Schneller „auffüllen": Bestand auf Max zurücksetzen (Max unverändert).
-    if (await action.run(() => api.updateShopListing(article.id, l.id, { currentStock: l.maxStock }))) list.reload();
+  async function fill(l: ShopListing, childId: number) {
+    // „Bestand füllen" je Kind: auf die Obergrenze – das Angebot selbst bleibt unverändert.
+    if (await action.run(() => api.setShopListingStock(article.id, l.id, childId, l.maxStock))) list.reload();
   }
   async function remove(l: ShopListing) {
     if (!confirmAction("Dieses Angebot löschen?")) return;
     if (await action.run(() => api.deleteShopListing(article.id, l.id))) list.reload();
   }
 
+  const children = kids.data ?? [];
   return (
     <div className="card" style={{ marginTop: 12 }}>
       <h4 className="h-section" style={{ fontSize: 16 }}>Angebote für „{article.title}" ({UNIT_LABEL[article.unitType]})</h4>
       <form className="form-grid" onSubmit={submit} style={{ alignItems: "end" }}>
         <div className="field" style={{ minWidth: 150 }}><label htmlFor={`${uid}-t`}>Titel (optional)</label>
-          <input id={`${uid}-t`} value={form.title ?? ""} onChange={(e) => up("title", e.target.value)} placeholder="30 Min Fernsehen" /></div>
+          <input id={`${uid}-t`} value={form.title} onChange={(e) => up("title", e.target.value)} placeholder="30 Min Fernsehen" /></div>
         <div className="field" style={{ maxWidth: 120 }}><FieldLabel htmlFor={`${uid}-units`} topic="shopUnitsPerPurchase">Menge je Kauf</FieldLabel>
           <input id={`${uid}-units`} type="number" min={1} value={form.unitsPerPurchase} onChange={(e) => up("unitsPerPurchase", Number(e.target.value))} /></div>
         <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-coin`} topic="shopCoinPrice">Preis 🪙</FieldLabel>
           <input id={`${uid}-coin`} type="number" min={0} value={form.coinPrice} onChange={(e) => up("coinPrice", Number(e.target.value))} /></div>
         <div className="field" style={{ maxWidth: 110 }}><FieldLabel htmlFor={`${uid}-gem`} topic="shopGemPrice">Preis 💎</FieldLabel>
           <input id={`${uid}-gem`} type="number" min={0} value={form.gemPrice} onChange={(e) => up("gemPrice", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-stock`} topic="shopStock">Bestand</FieldLabel>
-          <input id={`${uid}-stock`} type="number" min={0} value={form.currentStock} onChange={(e) => up("currentStock", Number(e.target.value))} /></div>
-        <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-max`} topic="shopMaxStock">Max-Bestand</FieldLabel>
-          <input id={`${uid}-max`} type="number" min={0} value={form.maxStock} onChange={(e) => up("maxStock", Number(e.target.value))} /></div>
-        {/* Ohne Auffüllen ist ein Angebot nach `maxStock` Käufen dauerhaft leer – das ist oft gewollt
-            (einmalige Belohnung), aber es muss eine Entscheidung sein, keine Nebenwirkung. */}
-        <div className="field"><FieldLabel htmlFor={`${uid}-refill`} topic="shopRefill">Auffüllen</FieldLabel>
-          <select id={`${uid}-refill`} value={form.refillKind ?? "None"} onChange={(e) => up("refillKind", e.target.value as ShopRefillKind)}>
-            {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
-          </select></div>
-        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy}>{action.busy ? "Lege an…" : "Angebot anlegen"}</button>
+        <RefillFields uid={uid} plan={plan} onChange={setPlan} />
+        <AudienceField uid={uid} kids={children} value={audience} onChange={setAudience} />
+        <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || planIncomplete(plan)}>{action.busy ? "Lege an…" : "Angebot anlegen"}</button>
       </form>
       <StatusBanner message={action.message} style={{ marginTop: 10 }} />
 
       {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
         <div style={{ overflowX: "auto", marginTop: 10 }}>
           <table className="table">
-            <thead><tr><th>Angebot</th><th>Menge</th><th>Preis</th><th>Bestand</th><th>Auffüllen</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Angebot</th><th>Menge</th><th>Preis</th><th>Für</th><th>Bestand je Kind</th><th>Auffüllen</th><th>Status</th><th></th></tr></thead>
             <tbody>
               {list.data?.map((l) => (
-                <ListingRow key={l.id} listing={l} unitType={article.unitType} busy={action.busy}
-                  onSave={(dto) => save(l, dto)} onRefill={() => refill(l)} onToggle={() => toggle(l)} onRemove={() => remove(l)} />
+                <ListingRow key={l.id} listing={l} unitType={article.unitType} kids={children} busy={action.busy}
+                  onFail={action.fail} onSave={(dto) => save(l, dto)} onFill={(childId) => fill(l, childId)} onToggle={() => toggle(l)} onRemove={() => remove(l)} />
               ))}
-              {list.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Angebote – lege oben eins an.</td></tr>}
+              {list.data?.length === 0 && <tr><td colSpan={8} className="muted">Noch keine Angebote – lege oben eins an.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -271,30 +397,38 @@ function ListingManager({ article }: { article: ShopArticle }) {
   );
 }
 
-/** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge und Bestandsgrenzen änderbar. */
-function ListingRow({ listing, unitType, busy, onSave, onRefill, onToggle, onRemove }: {
-  listing: ShopListing; unitType: UnitType;
+/** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge, Auffüll-Plan und Zielgruppe änderbar. */
+function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFill, onToggle, onRemove }: {
+  listing: ShopListing; unitType: UnitType; kids: ChildResponse[];
   /**
    * Läuft eine Aktion des Angebots-Panels. Die Zeile hält keinen eigenen Zustand: das Panel teilt eine
    * `useAction`-Instanz über alle Zeilen, und dessen Sperre gilt darum listenweit. Ohne das `disabled`
    * wäre ein Klick in Zeile 7 während Zeile 3 speichert wirkungslos – **ohne** sichtbaren Grund.
    */
   busy: boolean;
+  /** Meldet eine Prüfung über das eine Banner des Panels, wie beim Anlegen – keine zweite Fehlerbox je Zeile. */
+  onFail: (message: string) => void;
   onSave: (dto: UpdateShopListingDto) => void;
-  onRefill: () => void; onToggle: () => void; onRemove: () => void;
+  onFill: (childId: number) => void; onToggle: () => void; onRemove: () => void;
 }) {
   const uid = useId();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     title: listing.title ?? "", coinPrice: listing.coinPrice, gemPrice: listing.gemPrice,
-    unitsPerPurchase: listing.unitsPerPurchase, currentStock: listing.currentStock,
-    maxStock: listing.maxStock, refillKind: listing.refillKind,
+    unitsPerPurchase: listing.unitsPerPurchase,
   });
+  const [plan, setPlan] = useState<RefillPlan>({
+    maxStock: listing.maxStock, refillQuantity: listing.refillQuantity, refillKind: listing.refillKind,
+    refillDayOfWeek: listing.refillDayOfWeek ?? "Monday", refillDate: listing.refillAtUtc?.slice(0, 10) ?? "",
+    expires: listing.refillQuantity >= listing.maxStock,
+  });
+  const [audience, setAudience] = useState<number[]>(listing.childIds);
+  const nameOf = (id: number) => kids.find((c) => c.id === id)?.name ?? `#${id}`;
 
   if (editing) {
     return (
       <tr>
-        <td colSpan={7}>
+        <td colSpan={8}>
           <div className="row" style={{ gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div className="field" style={{ minWidth: 140 }}><label htmlFor={`${uid}-t`}>Titel</label>
               <input id={`${uid}-t`} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} /></div>
@@ -304,16 +438,16 @@ function ListingRow({ listing, unitType, busy, onSave, onRefill, onToggle, onRem
               <input id={`${uid}-c`} type="number" min={0} value={form.coinPrice} onChange={(e) => setForm((f) => ({ ...f, coinPrice: Number(e.target.value) }))} /></div>
             <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-g`} topic="shopGemPrice">Preis 💎</FieldLabel>
               <input id={`${uid}-g`} type="number" min={0} value={form.gemPrice} onChange={(e) => setForm((f) => ({ ...f, gemPrice: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-s`} topic="shopStock">Bestand</FieldLabel>
-              <input id={`${uid}-s`} type="number" min={0} value={form.currentStock} onChange={(e) => setForm((f) => ({ ...f, currentStock: Number(e.target.value) }))} /></div>
-            <div className="field" style={{ maxWidth: 100 }}><FieldLabel htmlFor={`${uid}-m`} topic="shopMaxStock">Max</FieldLabel>
-              <input id={`${uid}-m`} type="number" min={0} value={form.maxStock} onChange={(e) => setForm((f) => ({ ...f, maxStock: Number(e.target.value) }))} /></div>
-            <div className="field"><FieldLabel htmlFor={`${uid}-r`} topic="shopRefill">Auffüllen</FieldLabel>
-              <select id={`${uid}-r`} value={form.refillKind} onChange={(e) => setForm((f) => ({ ...f, refillKind: e.target.value as ShopRefillKind }))}>
-                {REFILL_KINDS.map((k) => <option key={k} value={k}>{REFILL_LABEL[k]}</option>)}
-              </select></div>
-            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy}
-              onClick={() => { onSave({ ...form, title: form.title.trim() || null }); setEditing(false); }}>OK</button>
+            <RefillFields uid={uid} plan={plan} onChange={setPlan} />
+            <AudienceField uid={uid} kids={kids} value={audience} onChange={setAudience} />
+            <button type="button" className="btn inline-btn" style={{ width: "auto" }} disabled={busy || planIncomplete(plan)}
+              onClick={() => {
+                if (planIncomplete(plan)) return;
+                const p = planProblem(plan);
+                if (p) { onFail(p); return; }
+                onSave({ ...form, ...planDto(plan), title: form.title.trim() || null, childIds: audience });
+                setEditing(false);
+              }}>OK</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
           </div>
         </td>
@@ -326,12 +460,20 @@ function ListingRow({ listing, unitType, busy, onSave, onRefill, onToggle, onRem
       <td>{listing.title || <span className="muted">(ohne Titel)</span>}</td>
       <td className="muted">{unitAmount(listing.unitsPerPurchase, unitType)}</td>
       <td>{priceLabel(listing.coinPrice, listing.gemPrice)}</td>
-      <td className="num">{listing.currentStock}/{listing.maxStock}</td>
-      <td className="muted">{REFILL_LABEL[listing.refillKind]}</td>
+      <td className="muted">{listing.childIds.length === 0 ? "alle" : listing.childIds.map(nameOf).join(", ")}</td>
+      <td>
+        {listing.stocks.length === 0 ? <span className="muted">–</span> : listing.stocks.map((s) => (
+          <div key={s.childId} className="row" style={{ gap: 6, whiteSpace: "nowrap" }}>
+            <span>{s.childName}: <span className="num">{s.currentStock}/{listing.maxStock}</span></span>
+            <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+              aria-label={`Bestand von ${s.childName} füllen`}
+              disabled={busy || s.currentStock >= listing.maxStock} onClick={() => onFill(s.childId)}>füllen</button>
+          </div>
+        ))}
+      </td>
+      <td className="muted">{refillText(listing)}</td>
       <td>{listing.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
       <td style={{ whiteSpace: "nowrap" }}>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
-          disabled={busy} onClick={onRefill}>Bestand füllen</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={onToggle}>
           {listing.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
@@ -375,6 +517,9 @@ export function ChildShopView({ childId }: { childId: number }) {
     () => api.childPurchases(childId, { skip: purchaseSkip, take: PAGE_SIZE }), [childId, purchaseSkip]);
   const inventory = useAsync<InventoryItem[]>(() => api.childInventory(childId), [childId]);
   const action = useAction();
+  const uid = useId();
+  // B-665: welche Inventarzeile gerade das Einlösen-Feld zeigt, und mit welcher Menge.
+  const [redeeming, setRedeeming] = useState<{ articleId: number; quantity: number } | null>(null);
 
   async function decide(r: ActivationRequest, approve: boolean) {
     if (approve && !confirmAction(`${unitAmount(r.requestedQuantity, r.unitType)} „${r.articleTitle}" freigeben? Die Einheiten werden aus dem Inventar entnommen.`)) return;
@@ -396,6 +541,17 @@ export function ChildShopView({ childId }: { childId: number }) {
     if (!ok) { activations.reload(); inventory.reload(); return; }
     activations.reload();
     inventory.reload();
+  }
+  async function redeem(item: InventoryItem, quantity: number) {
+    if (item.shopArticleId == null) return;
+    const articleId = item.shopArticleId;
+    if (!confirmAction(`${unitAmount(quantity, item.unitType)} „${item.title}" jetzt selbst einlösen? `
+      + "Das geht ohne Anfrage des Kindes und nimmt die Menge sofort aus dem Inventar.")) return;
+    const ok = await action.run(() => api.redeemFromInventory(childId, articleId, quantity), "Eingelöst.");
+    // Auch bei Misserfolg neu laden: der wahre Bestand gehört unter die Meldung.
+    activations.reload();
+    inventory.reload();
+    if (ok) setRedeeming(null);
   }
   async function cancel(p: ShopPurchase) {
     if (!confirmAction(`Kauf „${p.title}" stornieren und ${priceLabel(p.coinPrice, p.gemPrice)} erstatten?`)) return;
@@ -419,7 +575,7 @@ export function ChildShopView({ childId }: { childId: number }) {
                   <td>{r.articleTitle}</td>
                   <td className="muted">{unitAmount(r.requestedQuantity, r.unitType)}</td>
                   <td className="muted">{formatDate(r.requestedAt)}</td>
-                  <td>{activationPill(r.status)}</td>
+                  <td>{activationPill(r.status)}{r.requestedBy === "Supervisor" && <span className="muted"> · selbst eingelöst</span>}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
                     {r.canApprove && <><button type="button" className="btn lime inline-btn" style={{ width: "auto" }}
                       disabled={action.busy} onClick={() => decide(r, true)}>Freigeben</button>{" "}</>}
@@ -438,7 +594,7 @@ export function ChildShopView({ childId }: { childId: number }) {
       {inventory.loading && inventory.data === null ? <div className="loading">Lade…</div> : inventory.error ? <div className="banner err">{inventory.error}</div> : (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
-            <thead><tr><th>Artikel</th><th className="num">Menge</th></tr></thead>
+            <thead><tr><th>Artikel</th><th className="num">Menge</th><th></th></tr></thead>
             <tbody>
               {inventory.data?.map((i) => (
                 // Bei gelöschtem Artikel ist die Id null (bezahlte Einheiten bleiben): Schlüssel und
@@ -446,9 +602,30 @@ export function ChildShopView({ childId }: { childId: number }) {
                 <tr key={i.shopArticleId ?? `weg:${i.articleNumber}`}>
                   <td>{i.title}{i.shopArticleId === null && <span className="muted"> · Artikel gelöscht</span>}</td>
                   <td className="num">{unitAmount(i.quantity, i.unitType)}</td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {/* B-665: die Ausnahme fürs Kind ohne Handy – darum unauffällig und erst nach einem Klick ein Feld. */}
+                    {i.shopArticleId != null && (redeeming && redeeming.articleId === i.shopArticleId ? (
+                      <span className="row" style={{ gap: 6 }}>
+                        <label htmlFor={`${uid}-redeem-${i.shopArticleId}`} className="muted">Menge</label>
+                        <input id={`${uid}-redeem-${i.shopArticleId}`} type="number" min={1} max={i.quantity} style={{ width: 80 }}
+                          autoFocus
+                          value={redeeming.quantity}
+                          onChange={(e) => setRedeeming({ articleId: i.shopArticleId!, quantity: Number(e.target.value) })} />
+                        <button type="button" className="btn inline-btn" style={{ width: "auto" }}
+                          disabled={action.busy || redeeming.quantity < 1 || redeeming.quantity > i.quantity}
+                          onClick={() => redeem(i, redeeming.quantity)}>Einlösen</button>
+                        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                          onClick={() => setRedeeming(null)}>Abbrechen</button>
+                      </span>
+                    ) : (
+                      <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy}
+                        aria-label={`${i.title} selbst einlösen`}
+                        onClick={() => setRedeeming({ articleId: i.shopArticleId!, quantity: i.quantity })}>Selbst einlösen…</button>
+                    ))}
+                  </td>
                 </tr>
               ))}
-              {inventory.data?.length === 0 && <tr><td colSpan={2} className="muted">Inventar leer.</td></tr>}
+              {inventory.data?.length === 0 && <tr><td colSpan={3} className="muted">Inventar leer.</td></tr>}
             </tbody>
           </table>
         </div>

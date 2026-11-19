@@ -21,10 +21,15 @@ public record WeekCoinsResponse(DateOnly WeekStart, int ThisWeek, int LastWeekSo
 /// <summary>Skin state of the child: current gem balance, equipped and unlocked skins.</summary>
 public record SkinStateResponse(int Gems, string Selected, IReadOnlyList<string> Owned);
 
-/// <summary>A purchasable offer from the family shop from the child's perspective (listing level).</summary>
+/// <summary>
+/// A purchasable offer from the family shop from the child's perspective (listing level). <c>CurrentStock</c> is the
+/// child's <em>own</em> stock (B-645), and <c>Affordable</c> follows it. <c>NextRefillAtUtc</c> is when the stock is
+/// refilled next, <c>null</c> when it never is.
+/// </summary>
 public record ShopListingResponse(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
     UnitType UnitType, ActionType ActionType, string Title, string Description,
-    int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, bool Affordable);
+    int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, bool Affordable,
+    DateTime? NextRefillAtUtc);
 
 /// <summary>
 /// An entry in the child's aggregated inventory: article type → total quantity. <c>ShopArticleId</c> is
@@ -40,10 +45,14 @@ public record MyShopPurchaseResponse(int Id, int? ShopListingId, string ArticleN
     int CoinPrice, int GemPrice, int UnitsPerPurchase, ShopPurchaseStatus Status,
     DateTime PurchasedAt, DateTime? ClosedAt);
 
-/// <summary>The child's own activation request from their perspective.</summary>
+/// <summary>
+/// The child's own activation request from their perspective. <c>RequestedBy</c> = <c>Supervisor</c> marks a redemption
+/// the supervisor made on the child's behalf (B-665), so the child never meets an approval it did not ask for unexplained.
+/// </summary>
 public record MyActivationResponse(int Id, int? ShopArticleId, string ArticleTitle,
     UnitType UnitType, ActionType ActionType, int RequestedQuantity,
-    ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt);
+    ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt,
+    ActivationRequester RequestedBy);
 
 /// <summary>
 /// The child's shop view: wallet, purchasable offers, aggregated inventory and purchase history.

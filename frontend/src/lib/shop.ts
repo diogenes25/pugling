@@ -11,6 +11,7 @@ export const UNIT_LABEL: Record<UnitType, string> = {
   Stunde: "Std",
   Gramm: "g",
   Mal: "Mal",
+  Euro: "€",
 };
 
 /** Emoji je Belohnungsart – gibt den Shop-Karten ein Gesicht. */
@@ -38,6 +39,7 @@ export const REFILL_LABEL: Record<ShopRefillKind, string> = {
   Daily: "Täglich",
   TwiceDaily: "2× täglich",
   Weekly: "Wöchentlich",
+  Monthly: "Monatlich (am 1.)",
 };
 
 /** Menge mit Einheit, z. B. „30 Min", „50 g", „1 Mal". */
@@ -61,6 +63,7 @@ export const UNIT_OPTIONS: { value: UnitType; label: string }[] = [
   { value: "Gramm", label: "Gramm" },
   { value: "Stueck", label: "Stück" },
   { value: "Mal", label: "Mal" },
+  { value: "Euro", label: "Euro (Taschengeld)" },
 ];
 
 export const ACTION_OPTIONS: { value: ActionType; label: string }[] = [

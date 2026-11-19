@@ -322,7 +322,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var article = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
                 new { articleNumber = Eindeutig("A"), title = "Eis", unitType = "Stueck", actionType = "Suessigkeit" }));
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{article}/listings",
-                new { title = "Ein Eis", coinPrice = 10, gemPrice = 0, unitsPerPurchase = 1, currentStock = 5, maxStock = 5 }));
+                new { title = "Ein Eis", coinPrice = 10, gemPrice = 0, unitsPerPurchase = 1, maxStock = 5 }));
             return new Ziel(c, $"/api/v1/supervisor/shop/articles/{article}/listings/{id}");
         }, []),
 

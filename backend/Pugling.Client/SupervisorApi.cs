@@ -203,6 +203,17 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<IReadOnlyList<InventoryItemDto>> ListInventoryAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<InventoryItemDto>>($"{Root}/children/{childId}/shop/inventory", ct);
 
+    /// <summary>Sets one child's own stock of a listing (B-645).</summary>
+    public Task<ShopListingDto> SetShopListingStockAsync(int articleId, int listingId, int childId, int currentStock,
+        CancellationToken ct = default) =>
+        Http.PutAsync<ShopListingDto>($"{Root}/shop/articles/{articleId}/listings/{listingId}/stock/{childId}",
+            new SetShopListingStockRequest(currentStock), ct);
+
+    /// <summary>Redeems units straight from the child's inventory (B-665); approved at once.</summary>
+    public Task<ActivationRequestDto> RedeemFromInventoryAsync(int childId, int articleId, int quantity, CancellationToken ct = default) =>
+        Http.PostAsync<ActivationRequestDto>($"{Root}/children/{childId}/shop/inventory/{articleId}/redeem",
+            new RedeemInventoryRequest(quantity), ct);
+
     /// <summary>Open and completed activation requests of a child.</summary>
     public Task<IReadOnlyList<ActivationRequestDto>> ListActivationsAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ActivationRequestDto>>($"{Root}/children/{childId}/shop/activations", ct);

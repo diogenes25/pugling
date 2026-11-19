@@ -199,20 +199,60 @@ public class ShopListing
     /// <summary>Quantity (in the article's <see cref="UnitType"/>) per purchase, e.g. 30 for "30 minutes".</summary>
     public int UnitsPerPurchase { get; set; } = 1;
     public bool Active { get; set; } = true;
-    /// <summary>Stock currently available for purchase.</summary>
-    public int CurrentStock { get; set; }
-    /// <summary>Target stock that automatic refills raise the stock to.</summary>
+    /// <summary>
+    /// Upper bound of every child's own stock: refills never raise it above this, and a new child starts here minus
+    /// its own purchases of the current period. With <see cref="ShopRefillKind.None"/> it is only the start value.
+    /// </summary>
     public int MaxStock { get; set; }
+    /// <summary>
+    /// Units added per due refill instant, capped at <see cref="MaxStock"/>. Equal to <see cref="MaxStock"/> means
+    /// "whatever was left expires"; smaller lets a child save up (e.g. +4 per month up to 8).
+    /// </summary>
+    public int RefillQuantity { get; set; }
     public ShopRefillKind RefillKind { get; set; } = ShopRefillKind.None;
     /// <summary>Optional one-off refill instant (UTC) for <see cref="ShopRefillKind.Once"/>.</summary>
     public DateTime? RefillAtUtc { get; set; }
     /// <summary>Optional weekday for <see cref="ShopRefillKind.Weekly"/>.</summary>
     public DayOfWeek? RefillDayOfWeek { get; set; }
-    /// <summary>Last automatic refill applied; makes refilling idempotent.</summary>
-    public DateTime? LastRefilledAtUtc { get; set; }
-    /// <summary>Concurrency stamp for stock/refill: parallel purchases must not overdraw the stock.</summary>
+    /// <summary>Concurrency stamp for the listing's master data; the stock carries its own on <see cref="ShopListingStock"/>.</summary>
     public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Each child's own stock (B-645): one sibling's purchase never empties the listing for the other.</summary>
+    public List<ShopListingStock> Stocks { get; set; } = [];
+    /// <summary>
+    /// The children this listing is meant for; empty means every child linked to the issuer. A child outside the
+    /// audience neither sees nor buys the listing – that is how two sons get different pocket money.
+    /// </summary>
+    public List<ShopListingAudience> Audience { get; set; } = [];
+}
+
+/// <summary>
+/// One child's own stock of a <see cref="ShopListing"/> (B-645). Created lazily on the first read or purchase by the
+/// start rule in <c>ShopRefillSchedule.StartStock</c>; kept when the child leaves the audience, so its history stays.
+/// </summary>
+public class ShopListingStock
+{
+    public int Id { get; set; }
+    public int ShopListingId { get; set; }
+    public ShopListing? ShopListing { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>Units this child can still buy now.</summary>
+    public int CurrentStock { get; set; }
+    /// <summary>Last refill applied to this child's stock; due refill instants are counted from here.</summary>
+    public DateTime? LastRefilledAtUtc { get; set; }
+    /// <summary>Concurrency stamp: two parallel purchases (or refills) must not overdraw this child's stock.</summary>
+    public Guid ConcurrencyStamp { get; set; } = Guid.NewGuid();
+}
+
+/// <summary>Join row: the <see cref="ShopListing"/> is meant for this child (B-645, decision 12).</summary>
+public class ShopListingAudience
+{
+    public int ShopListingId { get; set; }
+    public ShopListing? ShopListing { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
 }
 
 /// <summary>
@@ -311,4 +351,9 @@ public class ActivationRequest
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
     /// <summary>Instant of the supervisor's decision (null while still open).</summary>
     public DateTime? ClosedAt { get; set; }
+    /// <summary>
+    /// Who opened it (B-665): the child, or the supervisor redeeming on its behalf - then it is approved at once and the
+    /// child's list says so instead of showing an approval it never asked for.
+    /// </summary>
+    public ActivationRequester RequestedBy { get; set; } = ActivationRequester.Child;
 }

@@ -123,7 +123,6 @@ Content-Type: application/json
   "coinPrice": 20,
   "gemPrice": 0,
   "unitsPerPurchase": 1,
-  "currentStock": 5,
   "maxStock": 5,
   "refillKind": "None"
 }

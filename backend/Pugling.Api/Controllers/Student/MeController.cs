@@ -396,7 +396,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
     private static MyActivationResponse MapActivation(ActivationRequest r) =>
         new(r.Id, r.ShopArticleId, r.ArticleTitle, r.UnitType, r.ActionType,
-            r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt);
+            r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt, r.RequestedBy);
 
     private async Task<ShopViewResponse> ShopViewAsync(int childId, int purchaseSkip, int purchaseTake, CancellationToken ct)
     {
@@ -406,15 +406,18 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         // The child's shared shop view: listings of ALL its supervisors.
         var listings = await shop.ListingsForStudentAsync(childId, activeOnly: true, now, ct);
         var available = listings
-            .OrderBy(l => l.ShopArticle!.ArticleNumber).ThenBy(l => l.Id)
-            .Select(l =>
+            .OrderBy(v => v.Listing.ShopArticle!.ArticleNumber).ThenBy(v => v.Listing.Id)
+            .Select(v =>
             {
+                var l = v.Listing;
                 var art = l.ShopArticle!;
                 var title = string.IsNullOrWhiteSpace(l.Title) ? art.Title : l.Title;
+                // The child's OWN stock decides (B-645): a sibling's remaining stock does not make it buyable.
                 return new ShopListingResponse(
                     l.Id, art.Id, art.ArticleNumber, art.Title, art.UnitType, art.ActionType,
-                    title, l.Description, l.CoinPrice, l.GemPrice, l.UnitsPerPurchase, l.CurrentStock,
-                    l.CurrentStock > 0 && balances.Coins >= l.CoinPrice && balances.Gems >= l.GemPrice);
+                    title, l.Description, l.CoinPrice, l.GemPrice, l.UnitsPerPurchase, v.CurrentStock,
+                    v.CurrentStock > 0 && balances.Coins >= l.CoinPrice && balances.Gems >= l.GemPrice,
+                    v.NextRefillAtUtc);
             })
             .ToList();
 

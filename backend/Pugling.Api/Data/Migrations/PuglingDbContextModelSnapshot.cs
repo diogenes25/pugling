@@ -183,6 +183,10 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("RequestedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("RequestedQuantity")
                         .HasColumnType("INTEGER");
 
@@ -2318,9 +2322,6 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("CurrentStock")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -2328,9 +2329,6 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<int>("GemPrice")
                         .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("LastRefilledAtUtc")
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("MaxStock")
                         .HasColumnType("INTEGER");
@@ -2344,6 +2342,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("RefillKind")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("RefillQuantity")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ShopArticleId")
                         .HasColumnType("INTEGER");
@@ -2361,6 +2362,53 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("ShopArticleId");
 
                     b.ToTable("ShopListings");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ShopListingAudience", b =>
+                {
+                    b.Property<int>("ShopListingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ShopListingId", "ChildId");
+
+                    b.HasIndex("ChildId");
+
+                    b.ToTable("ShopListingAudiences");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ShopListingStock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentStock")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastRefilledAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ShopListingId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId");
+
+                    b.HasIndex("ShopListingId", "ChildId")
+                        .IsUnique();
+
+                    b.ToTable("ShopListingStocks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ShopPurchase", b =>
@@ -3807,6 +3855,44 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("ShopArticle");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ShopListingAudience", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ShopListing", "ShopListing")
+                        .WithMany("Audience")
+                        .HasForeignKey("ShopListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("ShopListing");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ShopListingStock", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ShopListing", "ShopListing")
+                        .WithMany("Stocks")
+                        .HasForeignKey("ShopListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("ShopListing");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ShopPurchase", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4134,6 +4220,13 @@ namespace Pugling.Api.Data.Migrations
             modelBuilder.Entity("Pugling.Api.Models.ShopArticle", b =>
                 {
                     b.Navigation("Listings");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ShopListing", b =>
+                {
+                    b.Navigation("Audience");
+
+                    b.Navigation("Stocks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.StudyPlan", b =>

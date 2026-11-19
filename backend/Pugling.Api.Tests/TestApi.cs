@@ -200,7 +200,7 @@ internal static class TestApi
         var articleId = await IdAsync(await supervisor.PostAsJsonAsync("/api/v1/supervisor/shop/articles",
             new { articleNumber, title = articleTitle, unitType, actionType }));
         return await IdAsync(await supervisor.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
-            new { title = listingTitle, coinPrice, gemPrice, unitsPerPurchase, currentStock = stock, maxStock = stock }));
+            new { title = listingTitle, coinPrice, gemPrice, unitsPerPurchase, maxStock = stock }));
     }
 
     /// <summary>

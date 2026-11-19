@@ -49,10 +49,80 @@ wenn ein Kind ohne Handy vor mir steht, löse ich selbst aus seinem Inventar ein
 - **Reihenfolge:** B-645 Backend (Stichtag-Funktion → Schema/Migration → `ShopService` → Vertrag/Controller →
   Client) → B-665 Backend → Frontend beider Stories → E2E.
 - **Quelle der Wahrheit:** der Bestand je Kind in `ShopListingStock`; die **Senke** jedes Auffüllens ist eine
-  Funktion (`ShopService.RefillStock`), die alle vier Auffüll-Stellen (zwei Listen, Kauf, Einzelansicht) rufen, und die
+  Funktion (gebaut als `ShopService.MaterializeStocksAsync`), die alle vier Auffüll-Stellen (zwei Listen, Kauf, Einzelansicht) rufen, und die
   Startregel (Entscheidung 11) eine zweite neben ihr, die Migration und Laufzeit teilen.
 - **Guards:** Wallet-Invariante beim Kauf (`child.ConcurrencyStamp`); Sperre am Kind-Bestand statt am Angebot;
   Zielgruppe filtert **jeden** Sohn-Pfad (Liste und Kauf); Ausstellerbindung beim Einlösen durch den Vater.
 - **Migration:** Daten der Söhne – Probelauf auf einer Kopie der echten `pugling.db`, Migrationstest im Altzustand.
 - **Testweg:** wie in den Stories; Rollengang Vater **und** Sohn als E2E `taschengeld-monatlich.spec.ts`.
 - **Reviewer:** `pugling-reviewer` und `frontend-reviewer`.
+
+## Iteration 96 — umgesetzt
+
+**Backend (API-First).**
+
+- **Stichtage als reine Funktion:** `ShopRefillSchedule` zählt Auffüll-Termine statt „ist heute fällig?“ – Wöchentlich holt
+  einen verpassten Montag nach, Monatlich gilt am 1. (UTC). Dazu der nächste Termin, der Periodenbeginn und die Startregel
+  (Entscheidung 11).
+- **Bestand je Kind:** neue Tabelle `ShopListingStocks` (Angebot × Kind, eigener Concurrency-Stamp) und
+  `ShopListingAudiences` (Zielgruppe, Entscheidung 12). `ShopService.MaterializeStocksAsync` ist die **eine Senke**: jede
+  Zeile entsteht dort nach der Startregel, jedes Auffüllen läuft dort durch – beide Listen, Kauf, Einzelansicht (nur
+  Anzeige) und „Bestand setzen“. Der Kauf sperrt die Zeile des Kindes und zählt weiter den Stamp des Kindes hoch
+  (Wallet-Invariante).
+- **Vertrag (Bruch, wie geschätzt):** `ShopListingDto` trägt `RefillQuantity`, `ChildIds` und `Stocks[]` statt
+  `CurrentStock`/`LastRefilledAtUtc`. Neu sind `PUT …/listings/{id}/stock/{childId}`, `ShopListingResponse.NextRefillAtUtc`,
+  `UnitType.Euro`, `ShopRefillKind.Monthly`, `ActivationRequester` und `POST children/{id}/shop/inventory/{articleId}/redeem`
+  (B-665). `Pugling.Client` ist nachgezogen.
+- **Migration `ShopStockPerChild` (von Hand):** Das Gerüst hatte `CurrentStock` in `RefillQuantity` umbenannt, was den
+  Bestand weggeworfen hätte. Die Migration legt je Angebot und verknüpftem Kind einen Startbestand nach Entscheidung 11 an:
+  `MaxStock` minus die eigenen, nicht stornierten Käufe seit dem letzten Auffüllen. Sie setzt `RefillQuantity = MaxStock`
+  (verhält sich wie heute) und `RequestedBy = Child`. Den Fehler in der Reihenfolge (`MaxStock = 0` zuerst angehoben, danach
+  griff „Auffüll-Art → None“ nicht mehr) fand der Migrationstest, bevor etwas eingespielt war.
+
+**Frontend.**
+
+- **Vater-Web:** Auffüllen mit Wochentag, Datum und Monatlich, „Obergrenze je Kind“ und „+ je Termin“ (Ansparen). Die
+  Zielgruppe heißt „Für“ (leer = alle). Der Bestand steht je Kind in der Tabelle, mit „füllen“ je Kind. Im Inventar
+  steht ein unauffälliges „Selbst einlösen…“ mit Bestätigung.
+- **Sohn-App:** Ein leeres Angebot zeigt „wieder da: …“, eine Einlösung durch den Vater heißt „Papa hat für dich
+  eingelöst“, und es gibt Euro als Einheit.
+
+**Vorfall – echte DB migriert, bevor der Sprint fertig war.** Um 08:17:50 startete der Heimnetz-Server neu (Sicherung
+`pugling.db.bak-auto-20261119-081750`). Er baute den ungecommitteten Arbeitsstand und spielte `ExerciseFeedback` **und**
+`ShopStockPerChild` in die echte `pugling.db` ein. Ausgelöst hat das nicht diese Sitzung. Der eingespielte Stand ist der
+nach der Korrektur der Reihenfolge. Gegen die Sicherung geprüft (an einer Kopie): Jedes Kind hat den Startbestand nach
+Entscheidung 11. Beispiel „60 Minuten Zocken“: Friedrich hat seit Montag zweimal gekauft und steht auf 0, Theodor und das
+Testkind stehen auf 1. Alle sechs Anträge stehen auf `Child`. Folge: **Die Migrationsdatei ist ab jetzt eingefroren**,
+jede Korrektur geht als neue Migration hinten an die Kette.
+
+## Review Sprint 96
+
+`pugling-reviewer` und `frontend-reviewer`, eingearbeitet:
+
+- 🟡 **Einmalig gab Geschwistern verschiedene Bestände.** Eine Zeile, die vor dem Termin entstand, füllte um die Menge auf
+  (4), eine danach angelegte startete bei der Obergrenze (8). Jetzt füllt Einmalig immer bis zur Obergrenze, mit neuem Test
+  `Einmalig_Gibt_Geschwistern_Denselben_Bestand_Egal_Wann_Gelesen`.
+- 🟢 **PATCH der Obergrenze allein** machte aus einem Spar-Angebot still ein verfallendes (Menge auf die neue Obergrenze
+  gekappt). Jetzt folgt nur „verfällt“, und eine Obergrenze unter der Spar-Menge antwortet 400.
+- 🟢 **Negative Menge** wurde bei „Kein Auffüllen“ gespeichert, jetzt antwortet der Server 400.
+- 🟢 **„Bestand setzen“** hatte eine Meldung für zwei Ursachen, jetzt sind es zwei (Spanne bzw. „nicht für dieses Kind“).
+- 🟡 **„Für“-Legende:** Ein `<label for>` in der Legende hakte beim Klick das erste Kind an. Jetzt steht dort eine
+  Überschrift (`group-label` + `InfoHint`).
+- 🟡 **Obergrenze tippen:** Beim Tippen von „12“ über „1“ wurde aus Ansparen kurz Verfallen. Jetzt gibt es einen eigenen
+  Merker `expires`.
+- 🟡 **Prüfung beim Bearbeiten:** Sie lief über eine eigene Fehlerbox, jetzt über das Banner des Panels. „Einmalig“ ohne
+  Datum sperrt Anlegen bzw. OK, statt eine Meldung zu zeigen (B-233).
+- 🟡 **Einlöse-Knopf:** Er trägt jetzt den Artikel im Namen und setzt Autofokus aufs Mengenfeld; die Ids laufen über
+  `useId`.
+- 🟡 **E2E:** trägt jetzt AK 6 ganz – Einmalig mit Datum, Bearbeiten des Wochentags, „+4 bis 8“ in der Zeile, den Knopf
+  „füllen“. Die Zusicherung, die nichts trug (`zeileA` enthält A), ist weg.
+
+Bewusst offen (nicht blockierend):
+
+- Der Fokus kehrt nach „Abbrechen“ beim Einlösen nicht zum Knopf zurück.
+- Die Sohn-App zeigt bei täglich/2× täglich nur das Datum, keine Uhrzeit.
+- „Papa hat für dich eingelöst“ steht auch, wenn Mama oder Oma einlösen; das folgt dem bestehenden Wortlaut „Anfrage an
+  Papa“.
+- Ein Kommentar in der eingefrorenen Migration ist ungenau („never fired“).
+- Produktfrage an den Vater: Ein neues Spar-Angebot (+4 bis 8) ist am ersten Tag achtmal kaufbar, weil die Startregel die
+  Obergrenze vorgibt (Entscheidung 11 wörtlich).

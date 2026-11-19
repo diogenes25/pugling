@@ -895,22 +895,21 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
                 coinPrice = 120,
                 gemPrice = 0,
                 unitsPerPurchase = 30,
-                currentStock = 5,
                 maxStock = 5
             }, HttpStatusCode.Created);
         var listingId = listingEl.GetProperty("id").GetInt32();
 
         await Capture(father, g, "Angebot anlegen (ungültiger Preis)", HttpMethod.Post,
             $"/api/v1/supervisor/shop/articles/{articleId}/listings",
-            new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 30, currentStock = 5, maxStock = 5 },
+            new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 30, maxStock = 5 },
             HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
 
         await Capture(father, g, "Angebote auflisten", HttpMethod.Get,
             $"/api/v1/supervisor/shop/articles/{articleId}/listings", null, HttpStatusCode.OK);
 
-        await Capture(father, g, "Angebot ändern (Bestand auffüllen)", HttpMethod.Patch,
+        await Capture(father, g, "Angebot ändern (Obergrenze anheben)", HttpMethod.Patch,
             $"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}",
-            new { currentStock = 5, maxStock = 10 }, HttpStatusCode.OK);
+            new { maxStock = 10 }, HttpStatusCode.OK);
 
         // ── The child buys + an activation request ──────────────────────────────────
         var shopChildId = await TestApi.IdAsync(
@@ -930,7 +929,7 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
 
         // Empty stock scenario: create a new listing with stock=0, then buy → shop_insufficient_stock
         var emptyListingEl = await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
-            new { coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, currentStock = 0, maxStock = 1 });
+            new { coinPrice = 50, gemPrice = 0, unitsPerPurchase = 10, maxStock = 0 });
         emptyListingEl.EnsureSuccessStatusCode();
         var emptyListingId = (await emptyListingEl.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
         await Capture(shopChild, g, "Shop-Angebot kaufen (ausverkauft)", HttpMethod.Post,

@@ -311,6 +311,11 @@ public class SchemaGuardTests
             // Cascade stays intentional: an adult with articles must be able to delete themselves.
             ["ShopArticle.AdultId"] = DeleteBehavior.Cascade, // -> Adult
             ["ShopListing.ShopArticleId"] = DeleteBehavior.Cascade, // -> ShopArticle
+            // B-645: audience and per-child stock mean nothing without either side.
+            ["ShopListingAudience.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ShopListingAudience.ShopListingId"] = DeleteBehavior.Cascade, // -> ShopListing
+            ["ShopListingStock.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ShopListingStock.ShopListingId"] = DeleteBehavior.Cascade, // -> ShopListing
             ["ShopPurchase.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ShopPurchase.ShopListingId"] = DeleteBehavior.SetNull, // -> ShopListing
             ["StudyPlan.ChildId"] = DeleteBehavior.Cascade, // -> Child

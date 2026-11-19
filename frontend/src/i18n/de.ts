@@ -304,6 +304,7 @@ export const de = {
       requestSent: "Anfrage an Papa geschickt! 📨",
       noListings: "Papa hat noch keine Belohnungen in den Shop gestellt.",
       soldOut: "ausverkauft",
+      backOn: "wieder da: {{when}}",
       nothingBought: "Noch nichts gekauft. Hol dir im Tab <b>Kaufen</b> etwas Schönes! 🎁",
       youHave: "Du hast {{amount}}",
       goneAtDad: "gibt's bei Papa nicht mehr",
@@ -313,6 +314,7 @@ export const de = {
       statusPending: "wartet",
       statusApproved: "freigegeben",
       statusRejected: "abgelehnt",
+      redeemedByParent: "Papa hat für dich eingelöst",
       cancelled: "storniert",
       retry: "Nochmal versuchen",
       loadingMore: "Lädt…",
@@ -325,6 +327,7 @@ export const de = {
         Stunde_one: "{{count}} Std", Stunde_other: "{{count}} Std",
         Gramm_one: "{{count}} g", Gramm_other: "{{count}} g",
         Mal_one: "{{count}} Mal", Mal_other: "{{count}} Mal",
+        Euro_one: "{{count}} €", Euro_other: "{{count}} €",
       },
     },
     // B-305: der Spielweg. `play.*` lesen die geteilten Komponenten über `useChromeT` – außerhalb der Arcade

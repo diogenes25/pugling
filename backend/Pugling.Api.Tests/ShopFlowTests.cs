@@ -71,7 +71,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 120,
             gemPrice = 30,
             unitsPerPurchase = 30,
-            currentStock = 2,
             maxStock = 2,
         });
 
@@ -131,7 +130,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         {
             coinPrice = 10,
             unitsPerPurchase = 15,
-            currentStock = 1,
             maxStock = 1,
         });
         // With a title of its own - it has to win.
@@ -140,7 +138,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             title = "30 Minuten Fernsehen",
             coinPrice = 10,
             unitsPerPurchase = 30,
-            currentStock = 1,
             maxStock = 1,
         });
 
@@ -178,7 +175,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 50,
-            currentStock = 2,
             maxStock = 2,
         });
 
@@ -218,7 +214,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 30,
-            currentStock = 3,
             maxStock = 3,
         });
         var listing60 = await CreateListingAsync(father, articleId, new
@@ -226,7 +221,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 180,
             gemPrice = 0,
             unitsPerPurchase = 60,
-            currentStock = 3,
             maxStock = 3,
         });
 
@@ -259,8 +253,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 0,
-            maxStock = 1,
+            maxStock = 0,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
             .EnsureSuccessStatusCode();
@@ -288,7 +281,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             ShopArticle = fremdArticle,
             CoinPrice = 1,
             UnitsPerPurchase = 1,
-            CurrentStock = 1,
             MaxStock = 1,
         };
         db.ShopListings.Add(fremdListing);
@@ -321,7 +313,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 25,
             unitsPerPurchase = 5,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
@@ -364,7 +355,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 300, reason = "Coins" }))
@@ -407,7 +397,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 50,
-            currentStock = 3,
             maxStock = 3,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
@@ -453,7 +442,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 30,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
@@ -492,7 +480,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 10,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 100, reason = "Coins" }))
@@ -522,7 +509,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 5,
-            currentStock = 2,
             maxStock = 2,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
@@ -560,7 +546,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 5,
-            currentStock = 2,
             maxStock = 2,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points", new { amount = 200, reason = "Coins" }))
@@ -591,18 +576,14 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
     [Fact]
     public void DailyRefill_MitNullLastRefilledAt_IstFaellig()
     {
-        var listing = new ShopListing
-        {
-            CurrentStock = 0,
-            MaxStock = 3,
-            RefillKind = ShopRefillKind.Daily,
-        };
+        var listing = new ShopListing { MaxStock = 3, RefillQuantity = 3, RefillKind = ShopRefillKind.Daily };
+        var stock = new ShopListingStock { CurrentStock = 0 };
 
-        var changed = ShopService.ApplyDueRefill(listing, new DateTime(2026, 7, 6, 10, 0, 0, DateTimeKind.Utc));
+        var changed = ShopService.ApplyDueRefill(listing, stock, new DateTime(2026, 7, 6, 10, 0, 0, DateTimeKind.Utc));
 
         Assert.True(changed);
-        Assert.Equal(3, listing.CurrentStock);
-        Assert.NotNull(listing.LastRefilledAtUtc);
+        Assert.Equal(3, stock.CurrentStock);
+        Assert.NotNull(stock.LastRefilledAtUtc);
     }
 
     // ─── Article CRUD ────────────────────────────────────────────────────────
@@ -720,7 +701,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 150,
             gemPrice = 0,
             unitsPerPurchase = 30,
-            currentStock = 5,
             maxStock = 5,
         });
 
@@ -743,7 +723,7 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         });
 
         var res = await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
-            new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 1, currentStock = 1, maxStock = 1 });
+            new { coinPrice = 0, gemPrice = 0, unitsPerPurchase = 1, maxStock = 1 });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
@@ -763,7 +743,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 3,
             maxStock = 3,
         });
 
@@ -788,7 +767,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 1,
             maxStock = 1,
         });
 
@@ -819,7 +797,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 500,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 5,
             maxStock = 5,
         });
 
@@ -853,7 +830,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 50,
             unitsPerPurchase = 1,
-            currentStock = 5,
             maxStock = 5,
         });
 
@@ -883,7 +859,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 5,
             maxStock = 5,
         });
         await father.PatchAsJsonAsync(
@@ -917,7 +892,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 3,
             maxStock = 3,
         });
 
@@ -960,7 +934,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 10,
             maxStock = 10,
         });
 
@@ -992,7 +965,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 10,
-            currentStock = 2,
             maxStock = 2,
         });
         await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listingId}/purchase", new { });
@@ -1029,7 +1001,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 50,
             gemPrice = 0,
             unitsPerPurchase = 1,
-            currentStock = 3,
             maxStock = 3,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
@@ -1069,7 +1040,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 100,
             gemPrice = 0,
             unitsPerPurchase = 30,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
@@ -1139,7 +1109,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             coinPrice = 40,
             gemPrice = 0,
             unitsPerPurchase = 10,
-            currentStock = 3,
             maxStock = 3,
         });
 
@@ -1235,7 +1204,6 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
             title = "120 Minuten Fernsehen",
             coinPrice = 100,
             unitsPerPurchase = 120,
-            currentStock = 1,
             maxStock = 1,
         });
         (await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",

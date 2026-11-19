@@ -878,6 +878,9 @@ export const api = {
     http<ShopListing>(`${V1}/supervisor/shop/articles/${articleId}/listings/${listingId}`, "PATCH", dto),
   deleteShopListing: (articleId: number, listingId: number) =>
     http<void>(`${V1}/supervisor/shop/articles/${articleId}/listings/${listingId}`, "DELETE"),
+  // B-645: der Bestand gehört jedem Kind einzeln – „füllen" setzt ihn für genau eines.
+  setShopListingStock: (articleId: number, listingId: number, childId: number, currentStock: number) =>
+    http<ShopListing>(`${V1}/supervisor/shop/articles/${articleId}/listings/${listingId}/stock/${childId}`, "PUT", { currentStock }),
 
   // Kindbezogene Sicht: Inventar, Käufe (stornierbar) und Aktivierungsanfragen (genehmigen/ablehnen).
   childInventory: (childId: number) =>
@@ -890,6 +893,9 @@ export const api = {
     appendPaging(q, opts);
     return httpPaged<ShopPurchase>(`${V1}/supervisor/children/${childId}/shop/purchases?${q.toString()}`);
   },
+  // B-665: der Vater löst ausnahmsweise selbst aus dem Inventar ein – sofort freigegeben.
+  redeemFromInventory: (childId: number, articleId: number, quantity: number) =>
+    http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/inventory/${articleId}/redeem`, "POST", { quantity }),
   cancelPurchase: (childId: number, purchaseId: number) =>
     http<ShopPurchase>(`${V1}/supervisor/children/${childId}/shop/purchases/${purchaseId}/cancel`, "POST", {}),
   childActivations: (childId: number, status?: ActivationRequestStatus) => {

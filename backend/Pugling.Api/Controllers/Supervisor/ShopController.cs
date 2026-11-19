@@ -27,12 +27,17 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
     private static ShopArticleDto MapArticle(ShopArticle a) =>
         new(a.Id, a.ArticleNumber, a.Title, a.Description, a.UnitType, a.ActionType, a.CreatedAt);
 
-    private static ShopListingDto MapListing(ShopListing l) =>
-        new(l.Id, l.ShopArticleId, l.ShopArticle?.ArticleNumber ?? "",
+    private static ShopListingDto MapListing(ShopService.ListingView view)
+    {
+        var l = view.Listing;
+        return new(l.Id, l.ShopArticleId, l.ShopArticle?.ArticleNumber ?? "",
             l.ShopArticle?.Title ?? "", l.Title, l.Description,
             l.CoinPrice, l.GemPrice, l.UnitsPerPurchase, l.Active,
-            l.CurrentStock, l.MaxStock, l.RefillKind,
-            l.RefillAtUtc, l.RefillDayOfWeek, l.LastRefilledAtUtc, l.CreatedAt);
+            l.MaxStock, l.RefillQuantity, l.RefillKind,
+            l.RefillAtUtc, l.RefillDayOfWeek, l.CreatedAt, view.AudienceChildIds,
+            view.Stocks.Select(s => new ShopListingStockDto(
+                s.ChildId, s.ChildName, s.CurrentStock, s.LastRefilledAtUtc, s.NextRefillAtUtc)).ToList());
+    }
 
     private static ShopPurchaseDto MapPurchase(ShopPurchase p) =>
         new(p.Id, p.ChildId, p.ShopListingId, p.ArticleNumber, p.Title, p.Description,
@@ -41,7 +46,7 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
 
     private static ActivationRequestDto MapActivation(ActivationRequest r) =>
         new(r.Id, r.ChildId, r.ShopArticleId, r.ArticleTitle, r.UnitType, r.ActionType,
-            r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt)
+            r.RequestedQuantity, r.Status, r.RequestedAt, r.ClosedAt, r.RequestedBy)
         {
             CanApprove = r.Status == ActivationRequestStatus.Pending,
             CanReject = r.Status == ActivationRequestStatus.Pending,
@@ -185,7 +190,7 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         if (article is null) return NotFound();
 
         var listings = await shop.ListingsForSupervisorAsync(supervisorId, activeOnly: false, time.GetUtcNow().UtcDateTime, ct);
-        return listings.Where(l => l.ShopArticleId == articleId).Select(MapListing).ToList();
+        return listings.Where(v => v.Listing.ShopArticleId == articleId).Select(MapListing).ToList();
     }
 
     /// <summary>Read a single listing of an article.</summary>
@@ -194,22 +199,16 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ShopListingDto>> Listing(int articleId, int listingId, CancellationToken ct = default)
     {
-        var supervisorId = User.AdultId()!.Value;
-        // Load only THIS listing (no full scan of all the adult's listings). AsNoTracking + a purely
-        // display-side refill (ApplyDueRefill mutates the untracked object only, no SaveChanges) - a GET must
-        // have no write side effect. The refill is persisted on the list call or on a purchase; what is shown
-        // here is the same.
-        var listing = await db.ShopListings.AsNoTracking()
-            .Include(l => l.ShopArticle)
-            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == supervisorId, ct);
-        if (listing is null) return NotFound();
-
-        ShopService.ApplyDueRefill(listing, time.GetUtcNow().UtcDateTime);
-        return MapListing(listing);
+        // Display only: the service computes every child's stock without saving - a GET has no write side effect.
+        var view = await shop.ListingForSupervisorAsync(User.AdultId()!.Value, articleId, listingId, time.GetUtcNow().UtcDateTime, ct);
+        if (view is null) return NotFound();
+        return MapListing(view);
     }
 
-    /// <summary>Creates a new listing for an article (with price, quantity and stock).</summary>
+    /// <summary>
+    /// Creates a new listing for an article (price, quantity, refill plan, audience). Every child it is meant for starts
+    /// with its own stock: <c>MaxStock</c> minus its own purchases of the current period.
+    /// </summary>
     [HttpPost("articles/{articleId:int}/listings")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -221,9 +220,12 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         var article = await db.ShopArticles.FirstOrDefaultAsync(a => a.Id == articleId && a.AdultId == supervisorId, ct);
         if (article is null) return NotFound();
 
+        var refillQuantity = dto.RefillQuantity ?? dto.MaxStock;
         var validation = ValidateListing(dto.CoinPrice, dto.GemPrice, dto.UnitsPerPurchase,
-            dto.CurrentStock, dto.MaxStock, dto.RefillKind, dto.RefillAtUtc, dto.RefillDayOfWeek);
+            dto.MaxStock, refillQuantity, dto.RefillKind, dto.RefillAtUtc, dto.RefillDayOfWeek);
         if (validation is not null) return validation;
+        var (audience, audienceError) = await ResolveAudienceAsync(supervisorId, dto.ChildIds, ct);
+        if (audienceError is not null) return audienceError;
 
         var listing = new ShopListing
         {
@@ -233,19 +235,25 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
             CoinPrice = dto.CoinPrice,
             GemPrice = dto.GemPrice,
             UnitsPerPurchase = dto.UnitsPerPurchase,
-            CurrentStock = dto.CurrentStock,
             MaxStock = dto.MaxStock,
+            RefillQuantity = refillQuantity,
             RefillKind = dto.RefillKind,
             RefillAtUtc = dto.RefillAtUtc,
             RefillDayOfWeek = dto.RefillDayOfWeek,
         };
+        foreach (var childId in audience ?? []) listing.Audience.Add(new ShopListingAudience { ChildId = childId });
         db.ShopListings.Add(listing);
         await db.SaveChangesAsync(ct);
         listing.ShopArticle = article;
-        return CreatedAtAction(nameof(Listing), new { articleId, listingId = listing.Id }, MapListing(listing));
+        var view = await shop.ToViewAsync(supervisorId, listing, time.GetUtcNow().UtcDateTime, ct);
+        return CreatedAtAction(nameof(Listing), new { articleId, listingId = listing.Id }, MapListing(view));
     }
 
-    /// <summary>Partially changes a listing (price, quantity, stock, active status).</summary>
+    /// <summary>
+    /// Partially changes a listing (price, quantity, refill plan, audience, active status). A child's stock is set
+    /// through <c>…/stock/{childId}</c>. Changing only <c>MaxStock</c> of a listing whose leftovers expire
+    /// (<c>RefillQuantity = MaxStock</c>) keeps it that way.
+    /// </summary>
     [HttpPatch("articles/{articleId:int}/listings/{listingId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -254,39 +262,77 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         int articleId, int listingId, UpdateShopListingDto dto, CancellationToken ct = default)
     {
         var supervisorId = User.AdultId()!.Value;
-        var listing = await db.ShopListings
-            .Include(l => l.ShopArticle)
-            .FirstOrDefaultAsync(l => l.Id == listingId && l.ShopArticleId == articleId
-                && l.ShopArticle!.AdultId == supervisorId, ct);
+        var listing = await shop.LoadListingForUpdateAsync(supervisorId, articleId, listingId, ct);
         if (listing is null) return NotFound();
 
         var nextCoin = dto.CoinPrice ?? listing.CoinPrice;
         var nextGem = dto.GemPrice ?? listing.GemPrice;
         var nextUnits = dto.UnitsPerPurchase ?? listing.UnitsPerPurchase;
-        var nextStock = dto.CurrentStock ?? listing.CurrentStock;
         var nextMaxStock = dto.MaxStock ?? listing.MaxStock;
+        // An omitted quantity keeps the listing's mode: "expires" (quantity = MaxStock) follows a new MaxStock, a saving
+        // quantity stays as it is - clamping it to a lower cap would silently make it "expires", so a cap below the
+        // quantity is refused by the validation instead.
+        var nextQuantity = dto.RefillQuantity
+            ?? (listing.RefillQuantity == listing.MaxStock ? nextMaxStock : listing.RefillQuantity);
         var nextRefillKind = dto.RefillKind ?? listing.RefillKind;
         var nextRefillAt = dto.RefillAtUtc ?? listing.RefillAtUtc;
         var nextRefillDay = dto.RefillDayOfWeek ?? listing.RefillDayOfWeek;
 
         var validation = ValidateListing(nextCoin, nextGem, nextUnits,
-            nextStock, nextMaxStock, nextRefillKind, nextRefillAt, nextRefillDay);
+            nextMaxStock, nextQuantity, nextRefillKind, nextRefillAt, nextRefillDay);
         if (validation is not null) return validation;
+        var (audience, audienceError) = await ResolveAudienceAsync(supervisorId, dto.ChildIds, ct);
+        if (audienceError is not null) return audienceError;
 
         if (dto.Title is not null) listing.Title = dto.Title.Trim();
         if (dto.Description is not null) listing.Description = dto.Description.Trim();
         listing.CoinPrice = nextCoin;
         listing.GemPrice = nextGem;
         listing.UnitsPerPurchase = nextUnits;
-        listing.CurrentStock = nextStock;
         listing.MaxStock = nextMaxStock;
+        listing.RefillQuantity = nextQuantity;
         listing.RefillKind = nextRefillKind;
         listing.RefillAtUtc = nextRefillAt;
         listing.RefillDayOfWeek = nextRefillDay;
         if (dto.Active is not null) listing.Active = dto.Active.Value;
+        if (audience is not null)
+        {
+            // Diff instead of clear-and-add: the join row's key is (listing, child), and re-adding a removed key in the
+            // same context collides. A child taken out keeps its stock row and its purchases; it just no longer sees it.
+            listing.Audience.RemoveAll(a => !audience.Contains(a.ChildId));
+            foreach (var childId in audience.Where(id => listing.Audience.All(a => a.ChildId != id)))
+                listing.Audience.Add(new ShopListingAudience { ChildId = childId });
+        }
         listing.ConcurrencyStamp = Guid.NewGuid();
         await db.SaveChangesAsync(ct);
-        return MapListing(listing);
+        return MapListing(await shop.ToViewAsync(supervisorId, listing, time.GetUtcNow().UtcDateTime, ct));
+    }
+
+    /// <summary>
+    /// Sets one child's own stock of a listing - the supervisor's manual "fill up" (B-645). The value lies in
+    /// <c>0..MaxStock</c>; the child must be one the listing is meant for.
+    /// </summary>
+    [HttpPut("articles/{articleId:int}/listings/{listingId:int}/stock/{childId:int}")]
+    [ServiceFilter(typeof(ChildOwnershipFilter))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ShopListingDto>> SetStock(
+        int articleId, int listingId, int childId, SetShopListingStockRequest dto, CancellationToken ct = default)
+    {
+        var result = await shop.SetStockAsync(User.AdultId()!.Value, articleId, listingId, childId, dto.CurrentStock,
+            time.GetUtcNow().UtcDateTime, ct);
+        return result.Error switch
+        {
+            ShopService.ShopError.None => MapListing(result.Value!),
+            ShopService.ShopError.NotFound => NotFound(),
+            ShopService.ShopError.InvalidQuantity => this.ProblemWithCode(ApiErrors.ValidationError,
+                "The stock must not be negative and not exceed the listing's MaxStock."),
+            ShopService.ShopError.NotInAudience => this.ProblemWithCode(ApiErrors.ValidationError,
+                "This listing is not meant for this child; add the child to the listing's ChildIds first."),
+            _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "The stock changed concurrently — please try again."),
+        };
     }
 
     /// <summary>Deletes a listing. Purchases already made are kept as a snapshot in the inventory.</summary>
@@ -379,6 +425,32 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         };
     }
 
+    /// <summary>
+    /// Redeems units straight from the child's inventory (B-665) - the exception for a child without its phone. The
+    /// result is an approved request marked <c>RequestedBy = Supervisor</c>; the inventory drops at once.
+    /// </summary>
+    [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/inventory/{articleId:int}/redeem")]
+    [ServiceFilter(typeof(ChildOwnershipFilter))]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ActivationRequestDto>> RedeemFromInventory(
+        int childId, int articleId, RedeemInventoryRequest dto, CancellationToken ct = default)
+    {
+        var result = await shop.RedeemForChildAsync(User.AdultId()!.Value, childId, articleId, dto.Quantity,
+            time.GetUtcNow().UtcDateTime, ct);
+        return result.Error switch
+        {
+            ShopService.ShopError.None => MapActivation(result.Value!),
+            ShopService.ShopError.NotFound => NotFound(),
+            ShopService.ShopError.InvalidQuantity => this.ProblemWithCode(ShopService.ToApiError(result.Error), "Quantity must be at least 1."),
+            ShopService.ShopError.InsufficientInventory => this.ProblemWithCode(ShopService.ToApiError(result.Error),
+                "Not enough units in the child's inventory to redeem this quantity."),
+            _ => this.ProblemWithCode(ShopService.ToApiError(result.Error), "The inventory changed concurrently — please try again."),
+        };
+    }
+
     // ─── Activation requests ─────────────────────────────────────────────────
 
     /// <summary>Activation requests of a child, optionally filtered by status.</summary>
@@ -443,18 +515,36 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         };
 
     private ActionResult? ValidateListing(int coinPrice, int gemPrice, int unitsPerPurchase,
-        int currentStock, int maxStock, ShopRefillKind refillKind,
+        int maxStock, int refillQuantity, ShopRefillKind refillKind,
         DateTime? refillAtUtc, DayOfWeek? refillDayOfWeek)
     {
         if (coinPrice < 0 || gemPrice < 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Prices must not be negative.");
         if (coinPrice == 0 && gemPrice == 0) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one price must be positive.");
         if (unitsPerPurchase <= 0) return this.ProblemWithCode(ApiErrors.ValidationError, "UnitsPerPurchase must be at least 1.");
-        if (currentStock < 0 || maxStock < 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Stock values must not be negative.");
-        if (currentStock > maxStock && maxStock > 0) return this.ProblemWithCode(ApiErrors.ValidationError, "Current stock must not exceed max stock.");
+        if (maxStock < 0) return this.ProblemWithCode(ApiErrors.ValidationError, "MaxStock must not be negative.");
+        if (refillQuantity < 0) return this.ProblemWithCode(ApiErrors.ValidationError, "RefillQuantity must not be negative.");
+        // A refilling listing needs a cap to refill up to and a step within it; without refill both are unused.
+        if (refillKind != ShopRefillKind.None && maxStock < 1)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "MaxStock must be at least 1 for a listing that refills.");
+        if (refillKind != ShopRefillKind.None && (refillQuantity < 1 || refillQuantity > maxStock))
+            return this.ProblemWithCode(ApiErrors.ValidationError, "RefillQuantity must lie between 1 and MaxStock.");
         if (refillKind == ShopRefillKind.Once && refillAtUtc is null)
             return this.ProblemWithCode(ApiErrors.ValidationError, "RefillAtUtc is required for one-time refills.");
         if (refillKind == ShopRefillKind.Weekly && refillDayOfWeek is null)
             return this.ProblemWithCode(ApiErrors.ValidationError, "RefillDayOfWeek is required for weekly refills.");
         return null;
+    }
+
+    // The audience of a listing: null = unchanged/everyone, otherwise distinct ids that must all be children of the
+    // caller. A foreign child id is refused rather than ignored - a silently dropped id would hide a typo.
+    private async Task<(List<int>? Ids, ActionResult? Error)> ResolveAudienceAsync(
+        int supervisorId, IReadOnlyList<int>? childIds, CancellationToken ct)
+    {
+        if (childIds is null) return (null, null);
+        var linked = await shop.LinkedChildIdsAsync(supervisorId, ct);
+        var ids = childIds.Distinct().ToList();
+        if (ids.Any(id => !linked.Contains(id)))
+            return (null, this.ProblemWithCode(ApiErrors.ValidationError, "ChildIds may only name children you supervise."));
+        return (ids, null);
     }
 }

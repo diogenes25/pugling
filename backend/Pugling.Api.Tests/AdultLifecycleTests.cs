@@ -100,7 +100,7 @@ public class AdultLifecycleTests(PuglingWebAppFactory factory) : IClassFixture<P
             new { articleNumber = "TV-513", title = "Fernsehen", unitType = "Minute", actionType = "TV" }));
         var listingId = await TestApi.IdAsync(await vater.PostAsJsonAsync(
             $"/api/v1/supervisor/shop/articles/{articleId}/listings",
-            new { title = "60 Minuten", coinPrice = 50, unitsPerPurchase = 60, currentStock = 1, maxStock = 1 }));
+            new { title = "60 Minuten", coinPrice = 50, unitsPerPurchase = 60, maxStock = 1 }));
         (await vater.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/points",
             new { amount = 50, reason = "Coins" })).EnsureSuccessStatusCode();
         var kind = await TestApi.ChildAsync(factory, childId, "5115");

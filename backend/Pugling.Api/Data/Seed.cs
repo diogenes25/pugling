@@ -994,8 +994,8 @@ public static class Seed
                     CoinPrice = 50,
                     GemPrice = 0,
                     UnitsPerPurchase = 10,
-                    CurrentStock = 3,
                     MaxStock = 3,
+                    RefillQuantity = 3,
                     RefillKind = ShopRefillKind.Daily,
                 },
                 new ShopListing
@@ -1004,8 +1004,8 @@ public static class Seed
                     CoinPrice = 130,
                     GemPrice = 0,
                     UnitsPerPurchase = 30,
-                    CurrentStock = 1,
                     MaxStock = 1,
+                    RefillQuantity = 1,
                     RefillKind = ShopRefillKind.Daily,
                 },
             ],
@@ -1029,8 +1029,8 @@ public static class Seed
                     CoinPrice = 200,
                     GemPrice = 0,
                     UnitsPerPurchase = 30,
-                    CurrentStock = 3,
                     MaxStock = 3,
+                    RefillQuantity = 3,
                     RefillKind = ShopRefillKind.Weekly,
                     RefillDayOfWeek = DayOfWeek.Monday,
                 },
@@ -1040,8 +1040,8 @@ public static class Seed
                     CoinPrice = 350,
                     GemPrice = 0,
                     UnitsPerPurchase = 60,
-                    CurrentStock = 1,
                     MaxStock = 1,
+                    RefillQuantity = 1,
                     RefillKind = ShopRefillKind.Weekly,
                     RefillDayOfWeek = DayOfWeek.Monday,
                 },
@@ -1067,8 +1067,8 @@ public static class Seed
                     CoinPrice = 300,
                     GemPrice = 10,
                     UnitsPerPurchase = 50,
-                    CurrentStock = 4,
                     MaxStock = 4,
+                    RefillQuantity = 4,
                     RefillKind = ShopRefillKind.None,
                 },
             ],
@@ -1092,14 +1092,39 @@ public static class Seed
                     CoinPrice = 1500,
                     GemPrice = 0,
                     UnitsPerPurchase = 1,
-                    CurrentStock = 1,
                     MaxStock = 1,
+                    RefillQuantity = 1,
                     RefillKind = ShopRefillKind.None,
                 },
             ],
         };
 
-        db.ShopArticles.AddRange(tv, gaming, sweets, cinema);
+        // ── Article 5: pocket money (B-645) ───────────────────────────────────
+        // Whole euros in part amounts: +4 × 5 € on every 1st, saved up to two months (8). Each child has its own stock.
+        var pocketMoney = new ShopArticle
+        {
+            AdultId = father.Id,
+            ArticleNumber = "GELD-001",
+            Title = "Taschengeld",
+            Description = "Taschengeld, erarbeitet mit Münzen – ausgezahlt, sobald der Vater die Einlösung bestätigt.",
+            UnitType = UnitType.Euro,
+            ActionType = ActionType.Sonstiges,
+            Listings =
+            [
+                new ShopListing
+                {
+                    Title = "Taschengeld 5 €",
+                    CoinPrice = 150,
+                    GemPrice = 0,
+                    UnitsPerPurchase = 5,
+                    MaxStock = 8,
+                    RefillQuantity = 4,
+                    RefillKind = ShopRefillKind.Monthly,
+                },
+            ],
+        };
+
+        db.ShopArticles.AddRange(tv, gaming, sweets, cinema, pocketMoney);
         db.SaveChanges();
     }
     private static void SeedAdmin(PuglingDbContext db)

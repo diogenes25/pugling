@@ -289,6 +289,7 @@ export const en = {
       requestSent: "Request sent to your dad! 📨",
       noListings: "Your dad hasn't put any rewards in the shop yet.",
       soldOut: "sold out",
+      backOn: "back: {{when}}",
       nothingBought: "Nothing bought yet. Get yourself something nice in the <b>Buy</b> tab! 🎁",
       youHave: "You have {{amount}}",
       goneAtDad: "no longer offered by your dad",
@@ -298,6 +299,7 @@ export const en = {
       statusPending: "waiting",
       statusApproved: "approved",
       statusRejected: "declined",
+      redeemedByParent: "Dad redeemed this for you",
       cancelled: "cancelled",
       retry: "Try again",
       loadingMore: "Loading…",
@@ -309,6 +311,7 @@ export const en = {
         Stunde_one: "{{count}} hr", Stunde_other: "{{count}} hrs",
         Gramm_one: "{{count}} g", Gramm_other: "{{count}} g",
         Mal_one: "{{count}} time", Mal_other: "{{count}} times",
+        Euro_one: "€{{count}}", Euro_other: "€{{count}}",
       },
     },
     play: {

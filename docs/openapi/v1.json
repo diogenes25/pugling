@@ -5918,7 +5918,7 @@
         "tags": [
           "Supervisor \u2013 Shop"
         ],
-        "summary": "Creates a new listing for an article (with price, quantity and stock).",
+        "summary": "Creates a new listing for an article (price, quantity, refill plan, audience). Every child it is meant for starts\nwith its own stock: \u0060MaxStock\u0060 minus its own purchases of the current period.",
         "parameters": [
           {
             "name": "articleId",
@@ -6080,7 +6080,7 @@
         "tags": [
           "Supervisor \u2013 Shop"
         ],
-        "summary": "Partially changes a listing (price, quantity, stock, active status).",
+        "summary": "Partially changes a listing (price, quantity, refill plan, audience, active status). A child\u0027s stock is set\nthrough \u0060\u2026/stock/{childId}\u0060. Changing only \u0060MaxStock\u0060 of a listing whose leftovers expire\n(\u0060RefillQuantity = MaxStock\u0060) keeps it that way.",
         "parameters": [
           {
             "name": "articleId",
@@ -6212,6 +6212,128 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}/stock/{childId}": {
+      "put": {
+        "tags": [
+          "Supervisor \u2013 Shop"
+        ],
+        "summary": "Sets one child\u0027s own stock of a listing - the supervisor\u0027s manual \u0022fill up\u0022 (B-645). The value lies in\n\u00600..MaxStock\u0060; the child must be one the listing is meant for.",
+        "parameters": [
+          {
+            "name": "articleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetShopListingStockRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetShopListingStockRequest"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetShopListingStockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopListingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -6486,6 +6608,118 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ShopPurchaseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/shop/inventory/{articleId}/redeem": {
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Shop"
+        ],
+        "summary": "Redeems units straight from the child\u0027s inventory (B-665) - the exception for a child without its phone. The\nresult is an approved request marked \u0060RequestedBy = Supervisor\u0060; the inventory drops at once.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "articleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemInventoryRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemInventoryRequest"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemInventoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivationRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -30155,6 +30389,7 @@
           "childId",
           "id",
           "requestedAt",
+          "requestedBy",
           "requestedQuantity",
           "status",
           "unitType"
@@ -30217,6 +30452,9 @@
             ],
             "format": "date-time"
           },
+          "requestedBy": {
+            "$ref": "#/components/schemas/ActivationRequester"
+          },
           "canApprove": {
             "type": "boolean",
             "description": "May the supervisor approve this request now?"
@@ -30226,7 +30464,15 @@
             "description": "May the supervisor reject this request now?"
           }
         },
-        "description": "An activation request from the child for units from their inventory."
+        "description": "An activation request for units from the child\u0027s inventory \u2013 filed by the child, or redeemed directly by the\nsupervisor (\u0060RequestedBy\u0060, B-665)."
+      },
+      "ActivationRequester": {
+        "enum": [
+          "Child",
+          "Supervisor"
+        ],
+        "type": "string",
+        "description": "Who opened an activation request: the child asks, or the supervisor redeems on the child\u0027s behalf.\n\nAllowed values: Child, Supervisor."
       },
       "ActivationRequestStatus": {
         "enum": [
@@ -33085,7 +33331,6 @@
       "CreateShopListingDto": {
         "required": [
           "coinPrice",
-          "currentStock",
           "gemPrice",
           "maxStock",
           "unitsPerPurchase"
@@ -33128,14 +33373,6 @@
             ],
             "format": "int32"
           },
-          "currentStock": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
           "maxStock": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -33163,9 +33400,32 @@
                 "$ref": "#/components/schemas/DayOfWeek"
               }
             ]
+          },
+          "refillQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Input for creating a listing for an article."
+        "description": "Input for creating a listing for an article. Every child starts with its own stock (\u0060MaxStock\u0060 minus its own\npurchases in the current refill period). \u0060RefillQuantity\u0060 is added per due refill instant, capped at\n\u0060MaxStock\u0060; \u0060null\u0060 means \u0060MaxStock\u0060 (whatever was left expires). \u0060ChildIds\u0060 limits the listing\nto some linked children; \u0060null\u0060 or empty means all of them."
       },
       "CreateSubjectDto": {
         "required": [
@@ -42289,6 +42549,7 @@
           "articleTitle",
           "id",
           "requestedAt",
+          "requestedBy",
           "requestedQuantity",
           "status",
           "unitType"
@@ -42342,9 +42603,12 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/ActivationRequester"
           }
         },
-        "description": "The child\u0027s own activation request from their perspective."
+        "description": "The child\u0027s own activation request from their perspective. \u0060RequestedBy\u0060 = \u0060Supervisor\u0060 marks a redemption\nthe supervisor made on the child\u0027s behalf (B-665), so the child never meets an approval it did not ask for unexplained."
       },
       "MyInterestInput": {
         "required": [
@@ -44533,6 +44797,23 @@
         },
         "description": "Reading comprehension: text \u002B comprehension questions."
       },
+      "RedeemInventoryRequest": {
+        "required": [
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The supervisor redeems units straight from the child\u0027s inventory (B-665) \u2013 the exception for a child without its\nphone; the normal way stays the child\u0027s own request."
+      },
       "RefsFromTagsDto": {
         "required": [
           "tags"
@@ -45611,6 +45892,23 @@
         },
         "description": "Replaces the child\u0027s own interests entirely (empty list = remove all) \u2013 the guided process edits\nthe set as a whole, the same way the supervisor\u0027s editor does."
       },
+      "SetShopListingStockRequest": {
+        "required": [
+          "currentStock"
+        ],
+        "type": "object",
+        "properties": {
+          "currentStock": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Sets one child\u0027s own stock of a listing (the supervisor\u0027s manual \u0022fill up\u0022)."
+      },
       "ShopArticleDto": {
         "required": [
           "actionType",
@@ -45658,15 +45956,17 @@
           "active",
           "articleNumber",
           "articleTitle",
+          "childIds",
           "coinPrice",
           "createdAt",
-          "currentStock",
           "description",
           "gemPrice",
           "id",
           "maxStock",
           "refillKind",
+          "refillQuantity",
           "shopArticleId",
+          "stocks",
           "title",
           "unitsPerPurchase"
         ],
@@ -45727,7 +46027,7 @@
           "active": {
             "type": "boolean"
           },
-          "currentStock": {
+          "maxStock": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -45735,7 +46035,7 @@
             ],
             "format": "int32"
           },
-          "maxStock": {
+          "refillQuantity": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -45763,19 +46063,29 @@
               }
             ]
           },
-          "lastRefilledAtUtc": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "childIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "stocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShopListingStockDto"
+            }
           }
         },
-        "description": "A listing for an article: price in both currencies, stock, and refill rule."
+        "description": "A listing for an article: price in both currencies, refill rule and the stock of every child it is meant for.\nEach child buys from its own stock (B-645); \u0060ChildIds\u0060 is the audience \u2013 empty means every linked child."
       },
       "ShopListingResponse": {
         "required": [
@@ -45863,9 +46173,60 @@
           },
           "affordable": {
             "type": "boolean"
+          },
+          "nextRefillAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         },
-        "description": "A purchasable offer from the family shop from the child\u0027s perspective (listing level)."
+        "description": "A purchasable offer from the family shop from the child\u0027s perspective (listing level). \u0060CurrentStock\u0060 is the\nchild\u0027s *own* stock (B-645), and \u0060Affordable\u0060 follows it. \u0060NextRefillAtUtc\u0060 is when the stock is\nrefilled next, \u0060null\u0060 when it never is."
+      },
+      "ShopListingStockDto": {
+        "required": [
+          "childId",
+          "childName",
+          "currentStock"
+        ],
+        "type": "object",
+        "properties": {
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childName": {
+            "type": "string"
+          },
+          "currentStock": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lastRefilledAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "nextRefillAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "One child\u0027s own stock of a listing. \u0060NextRefillAtUtc\u0060 is the next refill instant (UTC), \u0060null\u0060 when the\nlisting never refills again (\u0060None\u0060, or \u0060Once\u0060 after it fired)."
       },
       "ShopPurchaseDto": {
         "required": [
@@ -45976,10 +46337,11 @@
           "Once",
           "Daily",
           "TwiceDaily",
-          "Weekly"
+          "Weekly",
+          "Monthly"
         ],
         "type": "string",
-        "description": "Automatic restock rule for a shop listing (\u0060ShopListing\u0060).\n\nAllowed values: None, Once, Daily, TwiceDaily, Weekly."
+        "description": "Automatic restock rule for a shop listing (\u0060ShopListing\u0060).\n\nAllowed values: None, Once, Daily, TwiceDaily, Weekly, Monthly."
       },
       "ShopViewResponse": {
         "required": [
@@ -47333,10 +47695,11 @@
           "Minute",
           "Stunde",
           "Gramm",
-          "Mal"
+          "Mal",
+          "Euro"
         ],
         "type": "string",
-        "description": "Unit of measurement of the item \u2013 determines how quantities are displayed in the inventory and upon activation.\n\nAllowed values: Stueck, Minute, Stunde, Gramm, Mal."
+        "description": "Unit of measurement of the item \u2013 determines how quantities are displayed in the inventory and upon activation.\n\nAllowed values: Stueck, Minute, Stunde, Gramm, Mal, Euro."
       },
       "UpdateAchievementDto": {
         "type": "object",
@@ -48756,15 +49119,6 @@
               "boolean"
             ]
           },
-          "currentStock": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
           "maxStock": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -48800,9 +49154,32 @@
                 "$ref": "#/components/schemas/DayOfWeek"
               }
             ]
+          },
+          "refillQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
           }
         },
-        "description": "Partial change to a listing; omitted fields stay unchanged."
+        "description": "Partial change to a listing; omitted fields stay unchanged. \u0060ChildIds\u0060: \u0060null\u0060 = unchanged, empty = all\nlinked children. A child\u0027s stock is set through its own endpoint (\u0060\u2026/stock/{childId}\u0060)."
       },
       "UpdateSubjectDto": {
         "type": "object",

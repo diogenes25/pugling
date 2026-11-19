@@ -8,11 +8,22 @@ namespace Pugling.Contracts.Supervisor;
 public record ShopArticleDto(int Id, string ArticleNumber, string Title, string Description,
     UnitType UnitType, ActionType ActionType, DateTime CreatedAt);
 
-/// <summary>A listing for an article: price in both currencies, stock, and refill rule.</summary>
+/// <summary>
+/// A listing for an article: price in both currencies, refill rule and the stock of every child it is meant for.
+/// Each child buys from its own stock (B-645); <c>ChildIds</c> is the audience – empty means every linked child.
+/// </summary>
 public record ShopListingDto(int Id, int ShopArticleId, string ArticleNumber, string ArticleTitle,
     string Title, string Description, int CoinPrice, int GemPrice, int UnitsPerPurchase,
-    bool Active, int CurrentStock, int MaxStock, ShopRefillKind RefillKind,
-    DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek, DateTime? LastRefilledAtUtc, DateTime CreatedAt);
+    bool Active, int MaxStock, int RefillQuantity, ShopRefillKind RefillKind,
+    DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek, DateTime CreatedAt,
+    IReadOnlyList<int> ChildIds, IReadOnlyList<ShopListingStockDto> Stocks);
+
+/// <summary>
+/// One child's own stock of a listing. <c>NextRefillAtUtc</c> is the next refill instant (UTC), <c>null</c> when the
+/// listing never refills again (<c>None</c>, or <c>Once</c> after it fired).
+/// </summary>
+public record ShopListingStockDto(int ChildId, string ChildName, int CurrentStock,
+    DateTime? LastRefilledAtUtc, DateTime? NextRefillAtUtc);
 
 /// <summary>A historical purchase entry of the child.</summary>
 public record ShopPurchaseDto(int Id, int ChildId, int? ShopListingId, string ArticleNumber,
@@ -23,10 +34,14 @@ public record ShopPurchaseDto(int Id, int ChildId, int? ShopListingId, string Ar
     public bool CanCancel { get; init; }
 }
 
-/// <summary>An activation request from the child for units from their inventory.</summary>
+/// <summary>
+/// An activation request for units from the child's inventory – filed by the child, or redeemed directly by the
+/// supervisor (<c>RequestedBy</c>, B-665).
+/// </summary>
 public record ActivationRequestDto(int Id, int ChildId, int? ShopArticleId, string ArticleTitle,
     UnitType UnitType, ActionType ActionType, int RequestedQuantity,
-    ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt)
+    ActivationRequestStatus Status, DateTime RequestedAt, DateTime? ClosedAt,
+    ActivationRequester RequestedBy)
 {
     /// <summary>May the supervisor approve this request now?</summary>
     public bool CanApprove { get; init; }
@@ -42,17 +57,36 @@ public record CreateShopArticleDto(string ArticleNumber, string Title, string? D
 public record UpdateShopArticleDto(string? ArticleNumber, string? Title, string? Description,
     UnitType? UnitType, ActionType? ActionType);
 
-/// <summary>Input for creating a listing for an article.</summary>
+/// <summary>
+/// Input for creating a listing for an article. Every child starts with its own stock (<c>MaxStock</c> minus its own
+/// purchases in the current refill period). <c>RefillQuantity</c> is added per due refill instant, capped at
+/// <c>MaxStock</c>; <c>null</c> means <c>MaxStock</c> (whatever was left expires). <c>ChildIds</c> limits the listing
+/// to some linked children; <c>null</c> or empty means all of them.
+/// </summary>
 public record CreateShopListingDto(string? Title, string? Description,
-    int CoinPrice, int GemPrice, int UnitsPerPurchase, int CurrentStock, int MaxStock,
+    int CoinPrice, int GemPrice, int UnitsPerPurchase, int MaxStock,
     ShopRefillKind RefillKind = ShopRefillKind.None,
-    DateTime? RefillAtUtc = null, DayOfWeek? RefillDayOfWeek = null);
+    DateTime? RefillAtUtc = null, DayOfWeek? RefillDayOfWeek = null,
+    int? RefillQuantity = null, IReadOnlyList<int>? ChildIds = null);
 
-/// <summary>Partial change to a listing; omitted fields stay unchanged.</summary>
+/// <summary>
+/// Partial change to a listing; omitted fields stay unchanged. <c>ChildIds</c>: <c>null</c> = unchanged, empty = all
+/// linked children. A child's stock is set through its own endpoint (<c>…/stock/{childId}</c>).
+/// </summary>
 public record UpdateShopListingDto(string? Title, string? Description,
     int? CoinPrice, int? GemPrice, int? UnitsPerPurchase, bool? Active,
-    int? CurrentStock, int? MaxStock, ShopRefillKind? RefillKind,
-    DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek);
+    int? MaxStock, ShopRefillKind? RefillKind,
+    DateTime? RefillAtUtc, DayOfWeek? RefillDayOfWeek,
+    int? RefillQuantity = null, IReadOnlyList<int>? ChildIds = null);
+
+/// <summary>Sets one child's own stock of a listing (the supervisor's manual "fill up").</summary>
+public record SetShopListingStockRequest(int CurrentStock);
+
+/// <summary>
+/// The supervisor redeems units straight from the child's inventory (B-665) – the exception for a child without its
+/// phone; the normal way stays the child's own request.
+/// </summary>
+public record RedeemInventoryRequest(int Quantity);
 
 /// <summary>
 /// An entry in the child's aggregated inventory. <c>ShopArticleId</c> is <c>null</c> if the
