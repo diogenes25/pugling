@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/api, bereich/frontend, rolle/supervisor, rolle/creator, rolle/student]
+tags: [typ/story, status/verworfen, bereich/api, bereich/frontend, rolle/supervisor, rolle/creator, rolle/student]
 aliases: [Aufbau-Übungen, Vorstufen, Lernweg zum Stoff, Scaffolding]
-status: gegrillt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: XL
@@ -10,8 +10,8 @@ migration: ""
 vertragsbruch: ""
 quelle: "Nutzer im Chat 2026-11-13: Friedrichs Stoff ist zu schwer – es muss einen Weg geben, Übungen auszuwählen, die zum gewünschten Level aufbauen; statt zu versagen ein Weg mit Übungen zum Erlernen des aktuellen Stoffes"
 unverifiziert: false
-grund: ""
-ersetzt_durch: []
+grund: "geteilt — XL laut Entscheidungen (Katalog-Stufe, Positions-Wechsel, Abstieg/Pflichtziel, Agent-Verb, Oberfläche); gebaut wird in fünf Teilen, zwei davon warten auf den Nutzer (Malus-Regel, Rollenschnitt)"
+ersetzt_durch: [B-700, B-701, B-702, B-703, B-704]
 ---
 
 # B-536 · Aufbau-Übungen: ein Weg zum aktuellen Stoff statt Versagen daran
@@ -98,3 +98,10 @@ nicht mehr an der Wochen-Grammatik).
   Kopie der echten DB (Plan 6) belegt. `art: Wunsch` – die offenen Punkte gehören ins Grillen.
 - **2026-11-14** — Backlog-Lauf: gegrillt (alle fünf Empfehlungen als Stakeholder-Entscheidung im Auftrag des
   Nutzers übernommen); Größe XL, nächster Schritt eine Karte im Dialog statt Bau in diesem Lauf.
+- **2026-11-19** — Vorbereitungslauf (Sonnet): Eintrittsbedingung `gegrillt` war erfüllt (alle fünf Punkte entschieden),
+  die Schätzung ergab faktisch XL. Geteilt nach „Teilen und Zusammenlegen": B-700 (Katalog-Stufe, M), B-701 (Position
+  spielt die Stufe, Aufstieg, L), B-702 (Abstieg und Pflichtziel, `gegrillt`, wartet auf den Nutzer), B-703
+  (KI-Creator erzeugt Vorstufen, `gegrillt`, wartet auf den Rollenschnitt), B-704 (Oberfläche, M). Die Entscheidungen
+  3 (Abstieg ohne Malus) und 4 (Pflichtziel = aktuelle Stufe) berühren die Malus-Regel und wurden **nicht**
+  übernommen, sondern als offene Frage nach B-702; Entscheidung 2 (Agent erzeugt, Vater wählt) kollidiert mit dem
+  Leitbild vom 2026-11-19 und liegt in B-703.
