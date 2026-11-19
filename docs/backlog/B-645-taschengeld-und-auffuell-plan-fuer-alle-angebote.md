@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/shop, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Taschengeld, Monatliches Auffüllen, Auffüll-Plan]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -366,7 +366,7 @@ Aggregat hängen (Angebot plus Bestand je Kind) und kein zweiter Bereich berühr
   - der Sohn-Pfad liest nach einem Konflikt neu;
   - AK 3 nennt jetzt Startbestände, die die heutige Regel rot machen;
   - AK 10 ist neu: der Startbestand eines neuen Kindes und eines neuen Angebots.
-  Entscheidung 11 ist aus dem Review abgeleitet und beim Rollengang vom Vater zu bestätigen.
+  Entscheidung 11 ist aus dem Review abgeleitet und beim Rollengang vom Vater zu bestätigen (bestätigt 2026-11-19).
 - **2026-11-19** — Vater im Chat: Shops müssen pro Kind sein (Taschengeld 10 € vs. 20 €, Daddelzeit 1 h täglich je
   Kind, kein Wegkaufen unter Geschwistern). Am Code erneut bestätigt: der Bestand ist weiter familienweit
   (`ShopService.cs:147`, `:174`). Das Wegkaufen deckt Entscheidung 1 ab, die unterschiedliche Höhe nicht → offener
@@ -390,3 +390,4 @@ Aggregat hängen (Angebot plus Bestand je Kind) und kein zweiter Bereich berühr
   - A18 (eigene Käufe in der Startregel zur Laufzeit) bleibt **grün**: zur Laufzeit entsteht eine Zeile nie nach eigenen Käufen (Käufe brauchen die Zeile; Zeilen bleiben beim Herausnehmen aus der Zielgruppe). Getragen wird die Regel dort, wo sie wirkt – in der Migration (G1, G2).
 - **2026-11-19** · in-arbeit · Review (`pugling-reviewer`, `frontend-reviewer`) eingearbeitet: Einmalig füllt bis zur Obergrenze, PATCH der Obergrenze kappt keine Spar-Menge mehr, negative Menge 400, zwei Meldungen beim Bestand-Setzen, „Für“-Legende ohne `<label for>`, Merker `expires` beim Tippen, Prüfung übers Panel-Banner. Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` 1920/1920, Vitest 1258/1258, `tsc -b` sauber, Mutanten 32/32 wie erwartet, E2E 8 passed.
 - **2026-11-19** · in-arbeit · Gebaut, verifiziert und gecommittet (`08fd05a6`), Rollengang Vater und Sohn grün. **Offen für `abgenommen`:** die Bestätigung von Entscheidung 11 durch den Vater (so in der Story verlangt). Konkret: Ein neues Spar-Angebot (+4 bis 8) ist am ersten Tag achtmal kaufbar, weil jedes Kind mit der Obergrenze startet.
+- **2026-11-19** · abgenommen · `08fd05a6`. Der Vater bestätigt Entscheidung 11 im Chat („Ja, voll starten“): Ein neues Angebot startet für jedes Kind voll, auch ein Spar-Angebot (+4 bis 8 startet mit 8). Rollengang Vater und Sohn grün (siehe Sitzungslog, Runde 2). Gerätecheck offen: ob „wieder da: …“ auf der Karte am Handy Platz hat.

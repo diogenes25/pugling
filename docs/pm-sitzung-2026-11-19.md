@@ -192,7 +192,7 @@ Stories. Index: **505 von 534**.
 
 Die Liste lebt in [docs/backlog/](backlog/INDEX.md). Reihenfolge:
 
-1. B-645 abnehmen, sobald der Vater Entscheidung 11 bestätigt hat (vorher den Heimnetz-Server neu starten).
+1. Den Heimnetz-Server neu starten: Er läuft noch mit dem Stand von 08:17, ohne die Review-Korrekturen.
 2. [B-685](backlog/B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) (P2, Defekt, braucht eine Entscheidung).
 3. [B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) (P2, Defekt).
 4. Sprint 90 ([B-580](backlog/B-580-plan-aus-unit.md)). Die Leitbild-Stories B-680 bis B-684 der parallelen Sitzung sind
@@ -203,3 +203,9 @@ Die Liste lebt in [docs/backlog/](backlog/INDEX.md). Reihenfolge:
 - `08fd05a6`: Sprint 96 (Backend, Migration `ShopStockPerChild`, Vater-Web, Sohn-App, Tests, E2E).
 - Abschluss-Commit: Abnahme B-665, Nachschau, B-685, Tor in `heimnetz.ps1`.
 - Nichts ist gepusht.
+
+## Runde 3 — Entscheidung 11 bestätigt
+
+Der Vater bestätigt im Chat „Ja, voll starten“: Ein neues Angebot startet für jedes Kind mit der Obergrenze, auch ein
+Spar-Angebot. Damit sind beide Rollen ohne Vorbehalt abgenommen, und **B-645 ist `abgenommen`** (`08fd05a6`). Sprint 96
+ist abgeschlossen.

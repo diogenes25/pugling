@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (70)
+### Offen (69)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `idee` | P2 | — | backend | — |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `idee` | P2 | — | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `in-arbeit` | P2 | L | beides | Migration + Vertrag |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
 | [B-625](B-625-ein-eingabefeld-je-bedeutung.md) | Ein Eintrag mit mehreren Formen oder Bedeutungen bekommt je Teil ein eigenes Eingabefeld | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -88,7 +87,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `idee` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (534)</summary>
+<summary>Abgenommen (535)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -589,6 +588,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-637](B-637-nacharbeit-vater-sicht-je-aufgabe.md) | Nacharbeit: der Vater sieht je Aufgabe Stufen und Erledigt-Stand | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-64](B-64-textbook-vs-series.md) | Das Lehrwerk gibt es zweimal: einmal als Freitext am Kind, einmal katalogisiert | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-643](B-643-lernkarte-leichter-schalten-und-runden-bis-alles-erinnert.md) | Lernkarte: „Mach's mir leichter“ beim Erinnern, Runden bis jedes Wort aus dem Gedächtnis sitzt | Wunsch | `abgenommen` | P2 | L | beides | Migration |
+| [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `abgenommen` | P2 | L | beides | Migration + Vertrag |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `abgenommen` | P3 | S | frontend | — |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht | Wunsch | `abgenommen` | P2 | M | beides | — |
@@ -644,7 +644,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (199)
 
-**Nachgeschaut: 505 von 534 abgenommenen** — und in 182 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 29 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 505 von 535 abgenommenen** — und in 182 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -849,7 +849,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (29) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (30) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -881,6 +881,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
+| [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
