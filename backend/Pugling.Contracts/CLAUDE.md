@@ -12,9 +12,10 @@ es pur verwenden kann. Folgerichtig bleibt Entity-Wissen in der API (Mapping-Kla
 siehe `ExerciseBriefMapping`), und Service-Ergebnisse, die `ApiError` oder Entities tragen, bleiben ebenfalls
 dort.
 
-Einzige reine Funktion neben den Typen (und dem `Exercise/VocabRefJsonConverter.cs`): `Common/VocabKey.cs`
+Reine Funktionen neben den Typen (und dem `Exercise/VocabRefJsonConverter.cs`): `Common/VocabKey.cs`
 (B-336). Der Vokabel-Schlüssel ist der Server-Begriff „dasselbe Wort", und der KI-Creator muss vor dem Anlegen
-genauso falten – eine zweite Kopie würde driften.
+genauso falten – eine zweite Kopie würde driften. Aus demselben Grund `Common/FeedbackBaseTypes.cs`
+(`FeedbackReasons.ReachOf`, B-628): die Reichweite eines Rückmelde-Grunds braucht der KI-Creator wie der Server.
 
 Beschreibt ein `/// <summary>` ein **Verhalten** (wann ein Treffer, wann ein Fehler), ist der Satz eine Behauptung wie ein
 Ist-Stand: er nennt die Grenze, an der der Code aufhört, und wird gegen die Service-Methode **und** ihre Aufrufer gelesen,

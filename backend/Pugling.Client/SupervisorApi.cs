@@ -259,4 +259,14 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<KlassenarbeitDetail> AssignClassTestExercisesAsync(int classTestId, AssignExercisesDto dto,
         CancellationToken ct = default) =>
         Http.PostAsync<KlassenarbeitDetail>($"{Root}/class-tests/{classTestId}/exercises", dto, ct);
+
+    /// <summary>The feedback of the caller's children on cards (B-628), optionally for one child and one status.</summary>
+    public Task<IReadOnlyList<FeedbackResponse>> ListFeedbackAsync(int? childId = null, FeedbackStatus? status = null,
+        CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<FeedbackResponse>>(
+            $"{Root}/feedback" + PuglingHttp.Query(("childId", childId), ("status", status?.ToString())), ct);
+
+    /// <summary>Marks a feedback done for all supervisors of the child, or open again (B-628).</summary>
+    public Task<FeedbackResponse> UpdateFeedbackAsync(int feedbackId, UpdateFeedbackDto dto, CancellationToken ct = default) =>
+        Http.PatchAsync<FeedbackResponse>($"{Root}/feedback/{feedbackId}", dto, ct);
 }

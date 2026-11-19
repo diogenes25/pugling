@@ -7,6 +7,7 @@ import { ExerciseAttribution } from "./ExerciseAttribution";
 import { ExerciseEditModal } from "./ExerciseEditModal";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { ExerciseRatingPanel, ratingSummary } from "./ExerciseRatingPanel";
+import { ExerciseFeedbackPanel } from "./ExerciseFeedbackPanel";
 import { PAGE_SIZE, Pager, SortControl } from "../components/ListControls";
 import type {
   ExerciseSortKey, ExerciseSummary, ExerciseUsage, Paged, SeriesUnitResponse, SortDir, SubjectResponse,
@@ -345,6 +346,7 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
   const [usage, setUsage] = useState<ExerciseUsage | null>(null);
   const [open, setOpen] = useState(false);
   const [ratingsOpen, setRatingsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // Bearbeitbar nur, wenn diese UI einen Editor hat UND der Server eine Route dafür nennt.
@@ -417,6 +419,11 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={toggleUsage}>Verwendung</button>
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-expanded={ratingsOpen}
           onClick={() => setRatingsOpen((v) => !v)}>★ Bewertungen</button>
+        {/* B-629: was Kinder gemeldet haben – nur für den, der die Übung ändern darf (der Server prüft dasselbe). */}
+        {exercise.isOwn && (
+          <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} aria-expanded={feedbackOpen}
+            onClick={() => setFeedbackOpen((v) => !v)}>💬 Rückmeldungen</button>
+        )}
         {exercise.isOwn && known && (
           <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={remove}>Löschen</button>
         )}
@@ -438,6 +445,7 @@ function ExerciseManageRow({ exercise, subjectName = null, route, label, onChang
       {err && <div className="banner err" style={{ marginTop: 6 }}>{err}</div>}
       {open && usage && <UsagePanel usage={usage} exercise={exercise} busy={busy} onToggleSharing={toggleSharing} />}
       {ratingsOpen && <ExerciseRatingPanel exercise={exercise} onChanged={onChanged} />}
+      {feedbackOpen && exercise.isOwn && <ExerciseFeedbackPanel exerciseId={exercise.id} />}
     </div>
   );
 }

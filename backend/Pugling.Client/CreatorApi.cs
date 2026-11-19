@@ -354,6 +354,10 @@ public sealed class CreatorApi(HttpClient http)
     public Task RemoveRatingAsync(int exerciseId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/exercises/{exerciseId}/rating", null, ct);
 
+    /// <summary>The children's feedback on an exercise, counted per reason and card (B-628); needs write permission.</summary>
+    public Task<ExerciseFeedbackSummary> GetFeedbackSummaryAsync(int exerciseId, CancellationToken ct = default) =>
+        Http.GetAsync<ExerciseFeedbackSummary>($"{Root}/exercises/{exerciseId}/feedback", ct);
+
     // ---------------------------------------------------------------- Interest taxonomy
 
     /// <summary>

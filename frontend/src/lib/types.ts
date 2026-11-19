@@ -250,6 +250,20 @@ export type ExerciseGrant = S["GrantResponse"];
 /** Die Bewertung einer Übung durch einen Creator (B-12): Sterne 1–5, optional ein Kommentar. */
 export type ExerciseRating = S["ExerciseRatingResponse"];
 
+/** Rückmeldung eines Kindes zu einer Karte (B-628): die acht festen Gründe, ihre Reichweite und der Bearbeitungsstand. */
+export type FeedbackReason = S["FeedbackReason"];
+export type FeedbackReach = S["FeedbackReach"];
+export type FeedbackStatus = S["FeedbackStatus"];
+export type CreateFeedbackDto = S["CreateFeedbackDto"];
+export type FeedbackReceipt = S["FeedbackReceipt"];
+/** Ein erledigter, noch nicht gesehener Fall – der Hinweis an das Kind (B-623, Entscheidung 8). */
+export type FeedbackNotice = S["FeedbackNotice"];
+/** Die volle Sicht des Betreuers auf eine Meldung (Kind, Karte, Lösung, Antwort, Text). */
+export type FeedbackEntry = S["FeedbackResponse"];
+/** Die gezählten Gründe einer Übung für den Ersteller – ohne Kind und ohne Text. */
+export type ExerciseFeedbackSummary = S["ExerciseFeedbackSummary"];
+export type FeedbackReasonCount = S["FeedbackReasonCount"];
+
 /**
  * Verwandtschaft eines Betreuers zum Kind. Sie ist reine Beschreibung – die Rechte sind für alle
  * Betreuer gleich; nur die **Einlösung** ist ausstellergebunden (wer den Artikel angelegt hat, gibt frei).

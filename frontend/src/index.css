@@ -741,3 +741,12 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .lektion-blatt .rev { font-size: 18px; font-weight: 800; }
 .lektion-fehlerstelle { background: none; color: var(--gold); text-decoration: underline 3px; text-underline-offset: 4px; }
 .lektion-blatt .sub { color: var(--ink); opacity: .85; }
+
+/* B-629: Rückmeldung zur Karte – das Formular in der Arcade-Optik statt im Browser-Standard. */
+.rueckmeldung fieldset { border: 1px solid var(--stroke); border-radius: 12px; padding: 10px 12px; margin: 8px 0 0; }
+.rueckmeldung fieldset:focus { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.rueckmeldung legend { padding: 0 6px; color: var(--muted); }
+.rueckmeldung-gruende { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.rueckmeldung textarea { width: 100%; box-sizing: border-box; background: var(--bg-2); color: var(--ink);
+  border: 1px solid var(--stroke); border-radius: 10px; padding: 8px; font: inherit; }
+.meldungs-hinweis { border-color: var(--lime); }

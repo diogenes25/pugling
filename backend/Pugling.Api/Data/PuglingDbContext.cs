@@ -119,6 +119,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<Remark> Remarks => Set<Remark>();
     public DbSet<RemarkComment> RemarkComments => Set<RemarkComment>();
 
+    // A child's feedback on a card (B-628): seen and handled by the supervisors, counted for the creator
+    public DbSet<ExerciseFeedback> ExerciseFeedbacks => Set<ExerciseFeedback>();
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1017,6 +1020,22 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(c => c.AuthorAccount).WithMany().HasForeignKey(c => c.AuthorAccountId).OnDelete(DeleteBehavior.SetNull);
             // The only read path: the history of one remark, chronologically.
             e.HasIndex(c => new { c.RemarkId, c.CreatedAt });
+        });
+
+        // A child's feedback (B-628): the child and the exercise bind it (cascade - without either there is nothing to
+        // report on). Position, card and the supervisor who handled it may fade (SetNull): a corrected card or a removed
+        // position must not take the observation with it, and SetNull on the position keeps a second cascade path
+        // (child -> plan -> position -> feedback) from arising next to child -> feedback.
+        modelBuilder.Entity<ExerciseFeedback>(e =>
+        {
+            e.HasOne(f => f.Child).WithMany().HasForeignKey(f => f.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(f => f.Exercise).WithMany().HasForeignKey(f => f.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(f => f.PlanPosition).WithMany().HasForeignKey(f => f.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(f => f.ExerciseItem).WithMany().HasForeignKey(f => f.ExerciseItemId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(f => f.DoneByAdult).WithMany().HasForeignKey(f => f.DoneByAdultId).OnDelete(DeleteBehavior.SetNull);
+            // The read paths: a child's list and notices (supervisor view, child notices) and the creator's count.
+            e.HasIndex(f => new { f.ChildId, f.Status });
+            e.HasIndex(f => f.ExerciseId);
         });
 
         ApplyEnumConvention(modelBuilder);

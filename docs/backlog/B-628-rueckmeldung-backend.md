@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Rückmeldung Backend, ExerciseFeedback]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-623
 grund: ""
 ersetzt_durch: []
+wartet_auf: ""
 ---
 
 # B-628 · Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend)
@@ -110,3 +111,12 @@ ein Eigentums-Check über Kind/Plan/Position/Karte und ein Rückkanal an das Kin
 ## Verlauf
 
 - **2026-11-17** — angelegt beim Schätzen von B-623 (Teil 1 von 3: Backend), geschätzt L.
+- **2026-11-18** — Nachtlauf, Sprint 88: gebaut. Entität `ExerciseFeedback` + Migration `20261118215442_ExerciseFeedback` (rein additiv; Probe an einer Kopie der echten DB über die Sicherungs-API: von `DutySinceActivatedAt` hochgezogen, Kinder 4 / Positionen 204 / Lernstand 385 / Buchungen 319 unverändert, `foreign_key_check` leer, Kopie gelöscht). Vertrag `FeedbackReason`/`FeedbackReach`/`FeedbackStatus` + `FeedbackReasons.ReachOf` (Contracts), Dienst `ExerciseFeedbackService`, Endpunkte student `…/positions/{id}/feedback`, `feedback-reasons`, `children/{id}/feedback-notices(/{id}/seen)`, supervisor `feedback` (+`take`, PATCH), creator `exercises/{id}/feedback` (Schreibrecht), Fehlercode `feedback_during_test`, Client-Methoden, Doku-Capture-Gruppe `feedback` (zweimal byte-gleich).
+- **2026-11-18** — Tests `backend/Pugling.Api.Tests/ExerciseFeedbackTests.cs` (12): AK 1 Melden mit zwei Gründen + Abweisungen, AK 2 Kasten/Ledger/Cursor vorher = nachher, AK 3 Testsperre und offener Test von gestern, AK 4 Zusammenlegen, AK 5 Multi-Supervisor/fremd, AK 6 Ersteller-Zählung ohne Kind/Text, AK 7 Hinweis einmal, AK 8 Reichweite; dazu offen-vor-erledigt und Doppelrolle. `dotnet test Pugling.sln -c Release` vor dem Review-Einbau 1889/1891 (zwei Tore, behoben), danach Klasse 12/12. **Keine Mutanten-Probe, keine volle Suite nach dem letzten Stand** – der Lauf hielt vorher.
+- **2026-11-18** — Review `pugling-reviewer`: 🟡 offen-zuerst sortierte den Text-Status („Done“ < „Open“) → behoben + Fall (zählt); 🟡 Doppelrollen-Konto meldete/quittierte für ein betreutes Kind → behoben + Fall (zählt); 🟡 Karte nur über den Index verankert → **nicht übernommen**: derselbe Anker wie der Lernstand (`PositionItemProgress.ItemIndex`), eine gespielte Übung darf ihre Liste nicht kürzen oder umsortieren (B-328) – als Absatz am Dienst dokumentiert; 🟢 Hinweis-Cache, Merge ohne Index begründet, Vater-Lesen im AK-7-Fall ergänzt (ohne Zählung).
+- **2026-11-18** — **Halt des Nachtlaufs (Freigabe 3):** der Zähler des Sprints stand nach dem Frontend-Review bei **8** (Backend 2, Live-Region-Tor 1, Frontend-Review 5) – mehr als fünf. Code liegt ungemergt auf `refs/heads/auto/sprint-88-rueckmeldung`; nicht abgenommen, kein Rollengang-Urteil.
+- **2026-11-19** — AK 1 → `backend/Pugling.Api.Tests/ExerciseFeedbackTests.cs:69` und `:93` · AK 2 → `:116` · AK 3 → `:139` (B2 rot), gestern offen → `:317` (B1 rot) · AK 4 → `:160` (B3 Karte, B4 Status, B6 Text rot) · AK 5 → `:183` (B12 fremdes Kind, B13 fremder PATCH rot) · AK 6 → `:222` (B7 Summe, B14 Schreibrecht rot) · AK 7 → `:253` (B8 gesehen, B9 nur erledigt rot) · AK 8 → `:279` (B15 Reichweite rot) · offen zuerst → `:295` (B5, B16 rot) · Doppelrolle → `:349` (B10 Melden, B11 Quittieren rot). Mutanten gemessen an `e640e2c4 + Arbeitsbaum`, 2026-11-19 06:34 (Skriptkopie mit Schreib-Wiederholung): 16/16 rot am richtigen Ort; B10, B12–B14 erst in kompilierbarer Form (`if (false)` ist unter `TreatWarningsAsErrors` unerreichbarer Code, ein entfernter Aufruf ließ den Konstruktor-Parameter ungelesen).
+- **2026-11-19** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten; Rollengang-E2E `rueckmeldung`, `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` **5 passed** (5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
+- **2026-11-19** — Rollengang Sohn → Vater → Ersteller: `frontend/e2e/rueckmeldung.spec.ts` – der Sohn meldet im Üben, der Vater erledigt, die Zählung steht an der Übung, der Sohn sieht den Hinweis einmal, im laufenden Test gibt es keinen Knopf.
+- **2026-11-19** — **Wartet nicht mehr** – `wartet_auf` geleert.
+- **2026-11-19** — abgenommen: `796314db`, `8f3d12db` (Sprint 88), nach `main` gemergt.

@@ -137,4 +137,13 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>Opens the oldest waiting reward chest and books its draw - the child's own seat only.</summary>
     public Task<DailyBoxOpened> OpenDailyBoxAsync(int childId, CancellationToken ct = default) =>
         Http.PostAsync<DailyBoxOpened>($"{Root}/children/{childId}/daily-box/open", null, ct);
+
+    /// <summary>The child reports a card (or the whole exercise) of a position with reasons and/or a text (B-628).</summary>
+    public Task<FeedbackReceipt> ReportFeedbackAsync(int planId, int positionId, CreateFeedbackDto dto,
+        CancellationToken ct = default) =>
+        Http.PostAsync<FeedbackReceipt>($"{Root}/study-plans/{planId}/positions/{positionId}/feedback", dto, ct);
+
+    /// <summary>The fixed feedback reasons with their reach (B-628).</summary>
+    public Task<IReadOnlyList<FeedbackReasonInfo>> ListFeedbackReasonsAsync(CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<FeedbackReasonInfo>>($"{Root}/feedback-reasons", ct);
 }

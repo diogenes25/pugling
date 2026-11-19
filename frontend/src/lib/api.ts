@@ -4,6 +4,8 @@ import type {
   UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
+  CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
+  FeedbackStatus,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   CreateChildTagDto, ExerciseWriteResult,
@@ -96,6 +98,7 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   review_subject_mismatch: "Diese Wörter gehören zu einem anderen Fach als dieser Plan.",
   // B-635: nennt nur die Sperre – leichter geht nur die aktuelle Nacharbeits-Karte, und nur bis zur Auswahl.
   cannot_ease: "Diese Karte lässt sich nicht noch leichter schalten.",
+  feedback_during_test: "Dein Test zu dieser Übung läuft noch – melden kannst du nach dem Abgeben auf dem Ergebnisblatt.",
   // B-552: nennt nur die Sperre – welche Stufe getippt prüft, steht in der Feldhilfe.
   typed_test_unreachable: "„Nur getippte Tests zählen“ braucht eine getippte Stufe – auf Selbsteinschätzung wäre die Pflicht nie erreichbar.",
   extra_run_completed: "Diese Bonus-Runde ist schon abgegeben.",
@@ -468,6 +471,25 @@ export const api = {
   removeExerciseGrant: (exerciseId: number, creatorId: number, permission: GrantPermission) =>
     http<void>(`${V1}/creator/exercises/${exerciseId}/grants/${creatorId}/${permission}`, "DELETE"),
   // Bewertungen geteilter Übungen (B-12): lesen darf jeder Creator, bewerten nur, wer die Übung nicht verwaltet.
+  /** B-628: die gezählten Rückmelde-Gründe einer Übung (nur mit Schreibrecht). */
+  exerciseFeedbackSummary: (exerciseId: number) =>
+    http<ExerciseFeedbackSummary>(`${V1}/creator/exercises/${exerciseId}/feedback`),
+  /** B-628: das Kind meldet eine Karte (oder die ganze Übung) einer Position. */
+  reportFeedback: (planId: number, positionId: number, dto: CreateFeedbackDto) =>
+    http<FeedbackReceipt>(`${V1}/student/study-plans/${planId}/positions/${positionId}/feedback`, "POST", dto),
+  feedbackNotices: (childId: number) => http<FeedbackNotice[]>(`${V1}/student/children/${childId}/feedback-notices`),
+  ackFeedbackNotice: (childId: number, feedbackId: number) =>
+    http<void>(`${V1}/student/children/${childId}/feedback-notices/${feedbackId}/seen`, "POST"),
+  /** B-628: die Rückmeldungen der eigenen Kinder, optional für ein Kind und einen Status. */
+  listFeedback: (childId?: number, status?: FeedbackStatus) => {
+    const q = new URLSearchParams();
+    if (childId !== undefined) q.set("childId", String(childId));
+    if (status) q.set("status", status);
+    const qs = q.toString();
+    return http<FeedbackEntry[]>(`${V1}/supervisor/feedback${qs ? `?${qs}` : ""}`);
+  },
+  updateFeedback: (feedbackId: number, status: FeedbackStatus) =>
+    http<FeedbackEntry>(`${V1}/supervisor/feedback/${feedbackId}`, "PATCH", { status }),
   exerciseRatings: (exerciseId: number) =>
     http<ExerciseRating[]>(`${V1}/creator/exercises/${exerciseId}/ratings`),
   rateExercise: (exerciseId: number, stars: number, comment: string | null) =>

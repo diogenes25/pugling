@@ -15,6 +15,7 @@ import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueck
 import { SelfAssessAnswer } from "./SohnTest";
 import { Mascot } from "../components/Mascot";
 import type { PracticeCard, PositionSession, ReviewOutcome } from "../lib/types";
+import { KartenMeldung } from "./KartenMeldung";
 
 /** So lange nimmt die nächste Karte nach „Weiter" auf dem Blatt keinen Knopfdruck an (Doppeltipp, gehaltenes Enter). */
 export const NACH_BLATT_MS = 350;
@@ -626,6 +627,9 @@ export function SohnPractice() {
           </>
         )}
       </div>
+
+      {/* B-629: an jeder Karte im Üben; je Karte frisch, damit Auswahl und Dank nicht auf die nächste wandern. */}
+      {planId && <KartenMeldung key={`${round}-${idx}`} planId={planId} positionId={positionId} itemIndex={card.itemIndex} />}
 
       {/* Solange das Blatt steht, sagt die Region nur an, was dort schon zu lesen ist; sichtbar wird sie allein für
           die Meldung des Bildwechsels. Sie steht immer da – eine Region, die erst mit ihrem Text entsteht, bleibt stumm. */}

@@ -24,6 +24,7 @@ import {
 } from "./pfad";
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
 import type { TruhenZiele } from "./pfad";
+import { MeldungsHinweis } from "./KartenMeldung";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -63,6 +64,7 @@ export function SohnHome() {
     return (
       <div className="sohn-body">
         <InterestIntroCard />
+        <MeldungsHinweis childId={childId} />
         <Mascot skin={skin} mood="sleepy" size={120} />
         <div className="card" style={{ textAlign: "center" }}>
           <div className="screen-title">{t("home.noMissionTitle")}</div>
@@ -89,6 +91,7 @@ export function SohnHome() {
   return (
     <div className="sohn-body">
       <InterestIntroCard />
+      <MeldungsHinweis childId={childId} />
 
       <div className="row">
         <Mascot skin={skin} mood={mood} size={84} />

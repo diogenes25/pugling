@@ -8,6 +8,7 @@ import { useSohn } from "./SohnApp";
 import { Mascot } from "../components/Mascot";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { ErgebnisZeile } from "./ErgebnisZeile";
+import { KartenMeldung } from "./KartenMeldung";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform, istDiktat } from "./aufgabenform";
 import { useVoiceFor } from "../components/SpeakButton";
@@ -214,7 +215,8 @@ export function SohnTest() {
     <TestResult result={result} stageName={stageName} skin={skin} titleRef={resultTitleRef} onHome={() => nav("/sohn")}
       onRetry={() => { focusIntent.current = true; void start(); }}
       // B-522: die Herkunft reist mit – nach einer Niederlage feiert der Leerbildschirm des Übens nicht.
-      onPractice={() => nav(`/sohn/practice/${positionId}`, { state: { nachTest: true } })} />
+      onPractice={() => nav(`/sohn/practice/${positionId}`, { state: { nachTest: true } })}
+      rueckmeldung={planId ? { planId, positionId } : undefined} />
   );
 
   // B-350: hängt der Start oder die nächste Frage, ist das Bild sonst eine Sackgasse – nur der Browser führte zurück.
@@ -334,8 +336,13 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesung
  * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
  * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
  */
-export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry, onPractice }: {
+export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry, onPractice, rueckmeldung }: {
   result: TestSubmitResponse; stageName?: string | null; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
+  /**
+   * B-629: im Test meldet das Kind erst hier, je Karte neben der Lösung (B-623, Entscheidung 5) – während des Tests gibt
+   * es den Knopf nicht. Ohne Plan/Position (Vorschau) bleibt das Blatt ohne Knopf.
+   */
+  rueckmeldung?: { planId: number; positionId: number };
   /**
    * Landeplatz für den Fokus (B-541). Fokussiert wird er vom Aufrufer, nur nach einer Handlung des Kindes – ein Ergebnis,
    * das ohne Handlung erscheint (der Start trifft einen fertigen Versuch), bekommt keinen Fokus.
@@ -369,18 +376,24 @@ export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry,
           {sharedPrompt && <p className="sub" style={{ marginTop: 0 }}>{sharedPrompt}</p>}
           {!sharedPrompt && result.items.map((o) => (
             // Selbst eingeschätzte Karten tragen keine getippte Antwort (`givenAnswer` null) – dort nur die Lösung.
-            <ErgebnisZeile key={o.itemIndex} prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
-              givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} misspelled={o.misspelled}
-              zeigeAntwort={o.givenAnswer != null} />
+            <div key={o.itemIndex}>
+              <ErgebnisZeile prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
+                givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} misspelled={o.misspelled}
+                zeigeAntwort={o.givenAnswer != null} />
+              {rueckmeldung && <KartenMeldung {...rueckmeldung} itemIndex={o.itemIndex} />}
+            </div>
           ))}
           {sharedPrompt && result.items.map((o) => (
             // Das Zeichen ist die Optik, das Wort die Bedeutung: allein gelesen hieße „❌ Berlin" für das Kind „Berlin war
             // falsch", während der Server „Berlin hast du nicht genannt" meint (B-77/E2). Die Lösung steht groß, weil der
             // Aufgabentext schon oben steht.
-            <div className="row" key={o.itemIndex} style={{ padding: "4px 0" }}>
-              <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
-              <span className="test-prompt">{o.expected}</span>
-              <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? t("test.named") : t("test.notNamed")}</span>
+            <div key={o.itemIndex}>
+              <div className="row" style={{ padding: "4px 0" }}>
+                <span aria-hidden="true">{o.wasCorrect ? "✅" : "❌"}</span>
+                <span className="test-prompt">{o.expected}</span>
+                <span className="sub" style={{ marginLeft: "auto" }}>{o.wasCorrect ? t("test.named") : t("test.notNamed")}</span>
+              </div>
+              {rueckmeldung && <KartenMeldung {...rueckmeldung} itemIndex={o.itemIndex} />}
             </div>
           ))}
         </div>

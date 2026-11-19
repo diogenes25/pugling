@@ -1,5 +1,5 @@
 import type {
-  Currency, Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SchoolTypeValue, SupervisorRelation,
+  Currency, FeedbackReason, Gender, GrantPermission, InterestFacet, PointKind, SchoolType, SchoolTypeValue, SupervisorRelation,
   Weekday,
 } from "./types";
 
@@ -154,3 +154,21 @@ export const GENDERS: { value: Gender; label: string }[] = [
   { value: "Female", label: "weiblich" },
   { value: "Diverse", label: "divers" },
 ];
+
+/**
+ * Die Rückmelde-Gründe im Vater-Web (B-629) – die Kurzform der Knöpfe des Kindes (`feedback.reason.*` in der Arcade):
+ * dieselben Anfänge, ohne die Erklärung in Klammern, damit die Tabellenspalte schmal bleibt. `Record` statt Teil-Abbild:
+ * ein neuer Grund im Vertrag lässt den Typecheck rot werden.
+ */
+const FEEDBACK_REASON_LABELS: Record<FeedbackReason, string> = {
+  TooHard: "Zu schwer",
+  TooEasy: "Zu leicht",
+  AheadOfClass: "Hatten wir noch nicht im Unterricht",
+  WrongTranslation: "Falsch übersetzt",
+  TooMuchAsked: "Zu viel verlangt",
+  TooStrict: "Zu streng bewertet",
+  SeveralMeanings: "Mehrere Bedeutungen",
+  Liked: "Gut so 👍",
+};
+export const feedbackReasonLabel = (r: FeedbackReason | null | undefined): string =>
+  r ? FEEDBACK_REASON_LABELS[r] : "nur Text";
