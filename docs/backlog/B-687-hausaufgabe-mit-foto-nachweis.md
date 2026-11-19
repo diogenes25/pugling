@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, bereich/medien, bereich/belohnung, rolle/student, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/training, bereich/medien, bereich/belohnung, rolle/student, rolle/supervisor]
 aliases: [Hausaufgaben-Foto, Hausaufgabe machen, Foto-Nachweis]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -11,6 +11,7 @@ vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-19 (Friedrichs Mathe-Hausaufgabe S. 80/82 per Foto nachgeprüft)"
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus)"
 ---
 
 # B-687 · Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab
@@ -30,9 +31,8 @@ Münzen, Nacharbeit nötig → zurück ans Kind mit einer Zeile Begründung. Ist
 **Malus** wie bei jeder verpassten Pflicht. Das ist der „Stick“ aus der CLAUDE.md, diesmal für die Schule statt für die
 App-Übungen.
 
-**Vorbehalt:** Art `Wunsch`; der Vorbereitungslauf hat nur **ausformuliert**. Die Fragen unter „Offene Punkte“ sind
-**nicht entschieden**, es gibt bewusst keinen Abschnitt `## Entscheidungen`. Berührt Malus-Regeln und Münz-Ökonomie
-(Nutzer entscheidet) und hängt am Rollenschnitt B-681.
+**Stand:** Art `Wunsch`. Alle Fragen sind unten stellvertretend entschieden, bis auf den Ablageweg der Fotos (Frage 5,
+ausdrücklich zurückgestellt, gemeinsam mit B-684). Berührt Malus-Regeln und Münz-Ökonomie und hängt am Rollenschnitt B-681.
 
 ## User Story
 
@@ -114,48 +114,131 @@ authentifizierten Ablageweg** für Fotos – dieselbe Entscheidung wie B-684.
 
 ## Offene Punkte
 
-1. **Ist „Hausaufgabe machen“ ein neuer `ExerciseType` in einer `PlanPosition` oder eine eigene Sache am Kind?**
+1. ~~**Ist „Hausaufgabe machen“ ein neuer `ExerciseType` in einer `PlanPosition` oder eine eigene Sache am Kind?**
    Empfehlung: eigene Ressource am Kind (`supervisor/children/{id}/homework`, `student/homework`). Eine Katalog-Übung
    ist wiederverwendbar und hat eine prüfbare Antwort; eine Hausaufgabe gilt einmal, für ein Kind, mit einer Frist und
    ohne Antwortschlüssel. Die Pflicht-/Malus-Mechanik soll aber **wiederverwendet**, nicht nachgebaut werden –
    **geprüft:** `PositionGoalPenalty` verlangt eine `PlanPositionId` (`Models/PlanPositionEntities.cs:226`); ohne Position
-   lässt sich nur das Muster (Ledger-Eintrag, eindeutiger Schlüssel, Concurrency-Marke) übernehmen, nicht die Tabelle.
-2. **Was zählt als „erledigt“ für die Frist: das Hochladen oder die Annahme?** Empfehlung: das Hochladen. Sonst hinge
-   der Malus des Kindes an der Reaktionszeit des Vaters.
-3. **Wie viel ist eine Hausaufgabe wert?** Empfehlung: fester Betrag je Hausaufgabe (Familien-Einstellung), nicht je
-   Aufgabe frei – der Vater soll beim Abnehmen nicht rechnen müssen.
-4. **Anti-Cheat: altes oder fremdes Foto?** Empfehlung: nur die Kamera-Aufnahme anbieten, Aufnahmezeit mitspeichern,
-   den Rest leistet die Abnahme durch den Vater. Keine EXIF-Forensik. Hinweis: `capture="environment"` ist nur ein Hinweis an den Browser; manche Geräte öffnen trotzdem die Galerie – „nur Kamera“ ist so nicht erzwingbar.
-5. **Wo liegen die Fotos, wie lange?** Empfehlung: im Medien-Speicher der App (nicht im Repo), mit Löschung nach einer
+   lässt sich nur das Muster (Ledger-Eintrag, eindeutiger Schlüssel, Concurrency-Marke) übernehmen, nicht die Tabelle.~~ → Entscheidung 1.
+2. ~~**Was zählt als „erledigt“ für die Frist: das Hochladen oder die Annahme?** Empfehlung: das Hochladen. Sonst hinge
+   der Malus des Kindes an der Reaktionszeit des Vaters.~~ → Entscheidung 2.
+3. ~~**Wie viel ist eine Hausaufgabe wert?** Empfehlung: fester Betrag je Hausaufgabe (Familien-Einstellung), nicht je
+   Aufgabe frei – der Vater soll beim Abnehmen nicht rechnen müssen.~~ → Entscheidung 3.
+4. ~~**Anti-Cheat: altes oder fremdes Foto?** Empfehlung: nur die Kamera-Aufnahme anbieten, Aufnahmezeit mitspeichern,
+   den Rest leistet die Abnahme durch den Vater. Keine EXIF-Forensik. Hinweis: `capture="environment"` ist nur ein Hinweis an den Browser; manche Geräte öffnen trotzdem die Galerie – „nur Kamera“ ist so nicht erzwingbar.~~ → Entscheidung 4.
+5. ~~**Wo liegen die Fotos, wie lange?** Empfehlung: im Medien-Speicher der App (nicht im Repo), mit Löschung nach einer
    Frist (z. B. Ende des Schulhalbjahres). **Geprüft:** der bestehende Medien-Pfad ist
    öffentlich und Creator-only (siehe Ist-Stand) und taugt nicht; nötig ist ein eigener, nur für berechtigte Supervisor
    lesbarer Ablageweg (gemeinsam mit B-684 zu entscheiden). Das „im Medien-Speicher“ aus der Empfehlung gilt nur für den
-   Speicherort, nicht für die öffentliche Auslieferung.
-6. **Teilweise erledigt (wie 12d)?** Empfehlung: kein Teilpunkte-System; der Vater gibt mit „Nacharbeit: 12d fehlt“
-   zurück, das Kind lädt ein weiteres Foto nach.
-7. **Gilt das für beide Söhne?** Theodors Schule (AVS) gibt dem Elternkonto Hausaufgaben frei, Prüfungen nicht – für
-   die Hausaufgaben selbst reicht das. Beim Ausformulieren bestätigen.
-8. **Höhe des Malus je verpasster Hausaufgabe?** Empfehlung: Familien-Einstellung wie der Betrag der Gutschrift (Punkt 3),
-   nicht je Aufgabe frei. *Malus-Regeln – Nutzer entscheidet.*
+   Speicherort, nicht für die öffentliche Auslieferung.~~ → Entscheidung 5, **zurückgestellt** mit B-684.
+6. ~~**Teilweise erledigt (wie 12d)?** Empfehlung: kein Teilpunkte-System; der Vater gibt mit „Nacharbeit: 12d fehlt“
+   zurück, das Kind lädt ein weiteres Foto nach.~~ → Entscheidung 6.
+7. ~~**Gilt das für beide Söhne?** Theodors Schule (AVS) gibt dem Elternkonto Hausaufgaben frei, Prüfungen nicht – für
+   die Hausaufgaben selbst reicht das. Beim Ausformulieren bestätigen.~~ → Entscheidung 7.
+8. ~~**Höhe des Malus je verpasster Hausaufgabe?** Empfehlung: Familien-Einstellung wie der Betrag der Gutschrift (Punkt 3),
+   nicht je Aufgabe frei. *Malus-Regeln – Nutzer entscheidet.*~~ → Entscheidung 8.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-Final erst nach den Punkten 1 bis 5. Je Kriterium die Änderung, die es rot macht:
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
 
-1. Ein Kind lädt zu einer Hausaufgabe ein Foto hoch; Vater sieht es nur nach Anmeldung als berechtigter Supervisor des
-   Kindes. *Rot, wenn* das Foto unter einer öffentlichen Medien-URL (`Program.cs:598-607`) erreichbar ist oder ein
-   fremder Supervisor es abrufen kann.
-2. Ein Student kann nur für **seine** Hausaufgaben hochladen, nie für ein anderes Kind. *Rot, wenn* die Ownership-Prüfung
-   (`OwnsChildAsync`) fehlt.
-3. Frist ohne Upload kostet **genau einmal** Münzen, mit Upload nichts, und das Nachladen am selben Tag erhöht den Betrag
-   nicht. *Rot, wenn* die Abrechnung bei zweimaligem Aufruf doppelt bucht oder die Wallet-Concurrency-Marke nicht bewegt wird.
-4. Eine Abnahme schreibt einmal Münzen gut; ein zweites „Annehmen“ nicht. *Rot, wenn* der Endpunkt nicht idempotent ist.
-5. „Nacharbeit“ mit Begründung erscheint an der Karte des Kindes und verschiebt die Frist nicht. *Rot, wenn* die
-   Notiz fehlt oder die Frist sich verschiebt.
-6. Ein Upload über dem Größenlimit oder ein Nicht-Bild wird mit `400` abgelehnt, nicht stumm angenommen. *Rot, wenn*
-   die Prüfung aus `MediaAssetsController.cs:224`/`:244` beim Nachbau fehlt.
-7. Ein Kind sieht seine Hausaufgabenliste und die Karten der Söhne eines anderen Haushalts nicht. *Rot, wenn* die
-   Listen-Abfrage nicht je Kind filtert.
+**Ausdrücklich zurückgestellt (Frage 5, Ablageweg der Fotos):** Der Ort der Dateien, ihre Auslieferung und die Löschmechanik
+werden **gemeinsam mit [B-684](B-684-korrigierte-klausur-einscannen.md)** entschieden; B-684 ist `idee`, die Entscheidung
+steht nirgends. Das ist der Grund für `wartet_auf`. Festgeschrieben ist nur die Untergrenze (Entscheidung 5). Alles andere ist
+entschieden.
+
+**Querfragen:** Die Rücknahme eines Malus ist **keine** Funktion dieser Story: Die systemische Gegenbuchung ist ein positiver
+`GoalPenalty`-Eintrag ([B-627](B-627-berechtigte-meldung-bucht-nach.md) Entscheidung 3), die Gnade des Vaters die vorhandene
+`Manual`-Gutschrift (Entscheidung 2 hier). Der Abrechnungs-Auslöser ist, wie bei jeder Pflicht, der Kind-Login
+(`AuthController.cs:85`), ebenso bei [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) Entscheidung 2. **Überschneidung
+mit abgenommenen Entscheidungen, nicht geändert:** B-535 (der Malus einer Position beginnt mit dem ersten Spielen des Kindes)
+bleibt für Positionen; Entscheidung 3 nimmt den Gedanken nur als „vor der Frist angelegt“ auf.
+
+1. **Eine eigene Ressource am Kind, die das Muster der Pflicht übernimmt, nicht die Tabelle.** Eigene Entität (Hausaufgabe
+   mit Fach, Text, Frist als Tag, Abgaben, Zustand) und eigene Routen (`supervisor/children/{id}/homework`, `student/homework`).
+   Von der Abrechnung wird das **Muster** übernommen: Ledger-Eintrag, Idempotenz über einen eindeutigen Schlüssel,
+   `child.ConcurrencyStamp = Guid.NewGuid()` vor dem Speichern (`PositionProgressService.cs:827`). Die Tabelle
+   `PositionGoalPenalty` verlangt eine `PlanPositionId` (`PlanPositionEntities.cs:226`) und taugt nicht. Eine Hausaufgabe
+   zählt **nicht** für Serie, Tageskiste, Missionen und die Sperre des Bonus-Trainings. *Begründung:* Eine Katalog-Übung ist
+   wiederholbar und hat einen Antwortschlüssel; eine Hausaufgabe gilt einmal, mit Frist, ohne Schlüssel. *Kosten:* eigene
+   Entität, **eine Migration**, ein zweiter, kleiner Abrechnungspfad neben `SettleClosedPeriodsAsync`. *Verworfen:* eine
+   `PlanPosition` mit neuem `ExerciseType` (Serie und Zeitachse gratis, aber ein Schul-Nachweis würde die Serie an die
+   Annahmezeit des Vaters binden). *Schließt aus:* „Hausaufgabe macht den Tag vollständig“; ein Kind, das nur Hausaufgaben
+   macht, hat keine Serie.
+2. **Erledigt für die Frist heißt: abgegeben. Malus gibt es nur ohne jede Abgabe; die Annahme bringt die Münzen.** Liegt zur
+   Frist mindestens ein Foto vor, kostet nichts etwas. Reicht das Kind nach dem Malus ein Foto nach, bleibt der Malus (eine Frist
+   ist eine Frist); der Vater erlässt ihn bei Bedarf mit der vorhandenen **`Manual`-Gutschrift** („Münzen schenken“, `POST
+   children/{}/points`). *Begründung:* Sonst hinge der Malus an der Reaktionszeit des Vaters. *Kosten:* Ein Kind kann mit einem
+   wertlosen Foto den Malus vermeiden; es bekommt dann aber keine Münzen, weil der Vater „Nacharbeit“ setzt. Die Qualität
+   hängt an der **zurückgehaltenen Belohnung**, nicht am Malus. *Verworfen:* eine Nachfrist mit Malus nach „Nacharbeit“
+   (Strafe für die Antwortzeit des Vaters und für das Kind, das ehrlich nachbessert). *Schließt aus:* Strafe für schlechte
+   Abgabe. *Gegen die User Story gerechnet:* „ob die Hausaufgabe wirklich gemacht ist“ weiß der Vater durch seine Sicht auf das
+   Foto; das System erzwingt nur die Abgabe.
+3. **Feste Beträge je Kind, getrennt für Gutschrift und Malus, mit Vorgabe aus der Konfiguration; Malus nur für vor der
+   Frist angelegte Hausaufgaben.** Zwei nullbare Felder am Kind (Muster `Child.BonusDailyCoinCap`, `AdminEntities.cs:96`:
+   leer = Vorgabe aus der Konfiguration), nicht je Aufgabe frei. Eine Familien-Einstellung gibt es als Entität **nicht**
+   (nicht gefunden); das Kind trägt die Einstellungen. Gutschrift und Malus sind getrennte Größen, wie `PointsGoalMet` und
+   `PenaltyCoins` an der Position (`PlanPositionEntities.cs:84`, `:91`). Der Startwert wird beim Schätzen aus den echten
+   Positions-Beträgen der Kinder abgeleitet. Der Malus wird beim Kind-Login gebucht (kein Zeitgeber) für Hausaufgaben, deren
+   Frist **vor dem Login** liegt, höchstens 14 Tage zurück (`MaxSettleLookbackDays`, `PositionProgressService.cs:25`), und
+   nur wenn die Hausaufgabe **angelegt wurde, bevor ihre Frist verstrich** (ein Nachtrag mit abgelaufener Frist kostet
+   nichts, das gilt auch für eine spätere WebUntis-Übernahme, B-654). *Kosten:* zwei Felder am Kind, Migration. Gutschrift als
+   neue Art `PointKind.HomeworkCoins` (Münzen, additiv, zählt als verdient); Malus als `PointKind.GoalPenalty` wie jeder Malus.
+   *Verworfen:* ein Betrag für beides („wie die Gutschrift“) und freie Beträge je Aufgabe (der Vater soll beim Abnehmen nicht
+   rechnen). *Schließt aus:* einen Malus für eine Hausaufgabe, die das Kind nie sehen konnte.
+4. **Anti-Cheat ist die Abnahme des Vaters, keine Forensik.** Der Server speichert die Zeit des Hochladens
+   (`UploadedAt`, Serverzeit, maßgeblich); das Eingabefeld bittet die Kamera an (`capture="environment"`), erzwingen lässt sich
+   das nicht (manche Geräte öffnen die Galerie). Keine EXIF-Auswertung. *Kosten:* Ein altes Foto ist möglich; der Vater sieht
+   die Upload-Zeit und vergleicht mit der Aufgabe. *Verworfen:* EXIF- und Bildforensik (Aufwand ohne Verlässlichkeit; der
+   Grundsatz „Korrektur beim Vater, KI nur als Vorschlag“ stammt aus B-582). *Schließt aus:* die sichere Verhinderung einer
+   Fälschung durch ein unehrliches Kind.
+5. **Ablageweg: zurückgestellt (mit B-684); festgeschrieben ist die Untergrenze.** Ein Foto vom Heft eines Kindes wird nie
+   öffentlich ausgeliefert: der bestehende Pfad ist öffentlich und nur für den Creator (`Program.cs:598-607`,
+   `MediaAssetsController.cs:25`) und kommt **nicht** in Frage. Lesen darf nur ein berechtigter Supervisor des Kindes und das
+   Kind selbst; Dekodieren und Neukodieren wie `images.Process` (`MediaAssetsController.cs:244`), Größenlimit mit `400`
+   (`MediaOptions.MaxUploadBytes`, 10 MB), und es gibt eine **Löschfrist** (Länge und Mechanik mit B-684). *Kosten:* Die Story
+   ist erst baubar, wenn B-684 den Ablageweg entschieden hat (`wartet_auf`). *Verworfen:* den Ablageweg hier allein festlegen
+   (B-684 und diese Story sollen Fotos gleich behandeln).
+6. **Teilweise erledigt: kein Teilpunkte-System.** Der Vater gibt mit „Nacharbeit: 12d fehlt“ zurück, die Notiz steht an der
+   Karte des Kindes, das Kind lädt ein weiteres Foto nach. Die Frist verschiebt sich nicht (Entscheidung 2 macht das
+   unnötig: es gibt eine Abgabe, also keinen Malus). *Kosten:* keine Teilbelohnung. *Verworfen:* Punkte je Aufgabe.
+7. **Die Funktion gilt je Kind, unabhängig von der Quelle.** Beide Söhne, Anlegen von Hand durch den Supervisor; WebUntis
+   (B-654) ist nur eine spätere Quelle derselben Ressource. Dass Theodors Schule dem Elternkonto Hausaufgaben freigibt und
+   Prüfungen nicht, ist eine Angabe der Story, am Code nicht prüfbar. *Kosten:* ohne B-654 wird abgetippt.
+8. **Die Höhe des Malus ist die zweite Zahl aus Entscheidung 3.** Kein eigener Betrag je Hausaufgabe, keine Staffelung.
+   *Kosten:* alle Hausaufgaben eines Kindes sind gleich viel wert.
+
+## Akzeptanzkriterien
+
+Je Kriterium die Änderung, die es rot macht. AK 1 bis 3 hängen am Ablageweg (Entscheidung 5, zurückgestellt) und gelten
+unabhängig von dessen Form als Untergrenze.
+
+1. Ein Kind lädt zu einer Hausaufgabe ein Foto hoch; der Vater sieht es nur nach Anmeldung als berechtigter Supervisor des
+   Kindes. *Rot, wenn das Foto unter einer öffentlichen Medien-URL (`Program.cs:598-607`) erreichbar ist oder ein fremder
+   Supervisor es abrufen kann.*
+2. Ein Student kann nur für **seine** Hausaufgaben hochladen, nie für ein anderes Kind. *Rot, wenn die Ownership-Prüfung
+   (`OwnsChildAsync`) fehlt.*
+3. Ein Upload über dem Größenlimit oder ein Nicht-Bild wird mit `400` abgelehnt, nicht stumm angenommen. *Rot, wenn die
+   Prüfung aus `MediaAssetsController.cs:224` und `:244` beim Nachbau fehlt.*
+4. Eine Hausaufgabe **ohne Abgabe** zur Frist kostet beim nächsten Login genau einmal den Malus des Kindes
+   (`PointKind.GoalPenalty`, Betrag aus Entscheidung 3); mit mindestens einer Abgabe kostet sie nichts, auch nicht, wenn das
+   Kind nachlädt oder der Vater „Nacharbeit“ setzt. *Rot, wenn zweimaliges Abrechnen doppelt bucht, die Wallet-Concurrency-Marke
+   nicht bewegt wird oder „Nacharbeit“ einen Malus auslöst.*
+5. Eine Hausaufgabe, die nach Ablauf ihrer Frist **angelegt** wurde, und eine, deren Frist länger als 14 Tage zurückliegt,
+   kosten nichts. *Rot, wenn die Abrechnung `CreatedAt` oder das Zeitfenster nicht liest.*
+6. Eine Abnahme schreibt einmal Münzen gut (`PointKind.HomeworkCoins`, Betrag aus Entscheidung 3); ein zweites „Annehmen“
+   nicht. *Rot, wenn der Endpunkt nicht idempotent ist oder die Münzen als „nicht verdient“ aus `WeekCoinsAsync` fallen.*
+7. „Nacharbeit“ mit Begründung erscheint an der Karte des Kindes und verschiebt die Frist nicht. *Rot, wenn die Notiz fehlt
+   oder die Frist sich verschiebt.*
+8. Die Hausaufgabe ändert Serie, Tageskiste, Missionen und die Sperre des Bonus-Trainings nicht (Entscheidung 1). *Rot, wenn
+   eine offene Hausaufgabe `GateAsync` sperrt oder `DutyStateAsync` sie als Pflicht liest.*
+9. Ein Kind sieht seine Hausaufgabenliste und nicht die der Söhne eines anderen Haushalts. *Rot, wenn die Listen-Abfrage nicht
+   je Kind filtert.*
+10. Bestand: nach der Migration sind die Beträge am Kind leer (Vorgabe aus der Konfiguration), und an einer Kopie der echten DB
+    ändert sich kein Kontostand. *Rot, wenn die Migration etwas vorbelegt.*
+11. **Absichtserklärung:** Ein später nachgereichtes Foto nimmt einen schon gebuchten Malus nicht zurück; das geht nur über
+    die `Manual`-Gutschrift des Vaters. Der Ausgangszustand (keine Funktion) erfüllt das schon; rot würde nur, wer eine
+    automatische Rücknahme einbaut.
 
 ## Verlauf
 
@@ -164,3 +247,4 @@ Final erst nach den Punkten 1 bis 5. Je Kriterium die Änderung, die es rot mach
 - **2026-11-19** — `idee` → `ausformuliert` (Vorbereitungslauf, Sonnet): Ist-Stand am Code belegt. Kern: In allen Schichten
   neu; der Malus hängt an `PlanPosition` und ist so nicht wiederverwendbar, der vorhandene Medienpfad ist Creator-only und
   öffentlich (Datenschutz). Sieben offene Punkte mit Empfehlung, **nichts entschieden** (Malus/Münzen, Rollenschnitt B-681).
+- **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): eigene Ressource am Kind, keine Wirkung auf Serie und Kiste; Malus nur ohne Abgabe, Gnade über die `Manual`-Gutschrift; Beträge je Kind; Anti-Cheat = Abnahme des Vaters. **Ablageweg der Fotos ausdrücklich zurückgestellt** (gemeinsam mit B-684, `wartet_auf`), nur die Untergrenze steht fest. Akzeptanzkriterien final.

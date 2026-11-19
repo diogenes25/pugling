@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
 aliases: [Tagesplaner, Tagesauswertung, Leistungsprofil, adaptiver Tagesplan]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
 groesse: ""
@@ -167,32 +167,29 @@ Reset. Größer als gedacht ist die **Zeitseite**. Es fehlen:
 7. **Einstellungen je Kind:** zwei Zahlenpaare, Malus-Betrag, Pause.
 8. **Stoff ohne Termin:** `StudyPlan.EndDate` und `Klassenarbeit.ScheduledDate` sind Pflichtfelder.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
-1. „Heute" entsteht an genau einer Stelle in deutscher Zeit; ein Tor verhindert neue direkte
-   UTC-Tagesbildung. Tests decken den Tag der Umstellung und die Zeitumstellung im März und Oktober.
-2. Für jedes Kind entsteht an jedem Lerntag (Montag bis Samstag, nicht in einer Pause) genau ein
-   Tagesplan – um 6 Uhr durch den Zeitgeber oder beim ersten Zugriff danach; zweimaliges Auslösen erzeugt
-   keinen zweiten Plan.
-3. Der Tagesplan enthält mindestens den Boden und höchstens den Deckel an Pflichtaufgaben und an neuen
-   Wörtern; auch wenn kein neuer Stoff ansteht, ist er nie leer.
-4. Jede Aufgabe trägt eine für Vater und Kind lesbare Begründung.
-5. Derselbe Datenstand ergibt denselben Plan (der Planer ist deterministisch).
-6. Eine bis Mitternacht nicht erledigte Pflichtaufgabe kostet genau einmal den Malus-Betrag des Kindes;
-   eine erledigte nichts. Der verpasste Stoff erscheint am nächsten Lerntag wieder, ohne den Deckel zu
-   überschreiten.
-7. Sonntag und Pause reißen die Serie nicht und kosten keinen Malus.
-8. Ein nachgetragener Termin (Klassenarbeit oder Teilprüfung) verändert den Plan des Folgetags; liegt das
-   nötige Tempo über dem Deckel, sieht der Vater eine Meldung mit der fehlenden Menge.
-9. Fach von heute und morgen laut Stundenplan hat im Plan Vorrang.
-10. Der Vater kann eine nicht begonnene Aufgabe streichen und eine eigene dazulegen; beides ist in der
-    Auswertung des Folgetags als Eingriff erkennbar.
-11. Die Tagesauswertung ist je Kind, Tag und Fach gespeichert (Mengen und Fehlerarten); das Vater-Web zeigt
-    Verlauf und Problemwörter, die Sohn-App nur die eigene Kurve und die Begründung an der Aufgabe.
-12. Im Schattenmodus entsteht der Plan täglich, wirkt aber auf Pflicht, Malus und Sohn-App nicht.
-13. Nach dem Stichtag sind Lernstand, Pläne und Positionen beider Kinder leer; Münzen, Gems, Skins und
-    Shop-Einlösungen sind unverändert, das Kassenbuch ist vollständig.
-14. Fällt das Sprachmodell aus, entsteht der Tagesplan trotzdem.
+Final. Je Kriterium die Änderung, die es rot macht.
+
+1. „Heute“ entsteht an genau einer Stelle in deutscher Zeit; ein Tor in `ConventionGuardTests` lehnt neue direkte UTC-Tagesbildung ab; Tests decken den Tag der Umstellung und die Zeitumstellung im März und Oktober, und eine Antwort um 23:30 Ortszeit zählt für den alten, um 00:30 für den neuen Tag. *Rot, wenn* das Tor fehlt oder der Tagesbegriff auf UTC läuft.
+2. Je Kind und Lerntag (Montag bis Samstag, nicht in einer Pause) entsteht genau ein Tagesplan, um 6 Uhr durch den Zeitgeber oder beim ersten Zugriff danach; zweimaliges Auslösen legt keinen zweiten an. *Rot, wenn* der Unique-Index auf (Kind, Tag) fehlt.
+3. Der Tagesplan enthält mindestens den Boden und höchstens den Deckel an Pflichtaufgaben und an neuen Wörtern und ist nie leer; Wiederholungen zählen nicht gegen den Wörter-Deckel. *Rot, wenn* Boden oder Deckel nicht angewandt werden oder Wiederholungen den Wörter-Deckel verbrauchen.
+4. Jede Aufgabe trägt eine für Vater und Kind lesbare Begründung aus den Eingangsdaten. *Rot, wenn* der Text konstant ist.
+5. Derselbe Datenstand ergibt denselben Plan. *Rot, wenn* der Planer von Zufall oder einem Sprachmodell abhängt.
+6. Eine bis Mitternacht nicht erledigte Pflichtaufgabe kostet genau einmal den Malus-Betrag des Kindes, eine erledigte nichts; der verpasste Stoff erscheint am nächsten Lerntag wieder, ohne den Deckel zu überschreiten. *Rot, wenn* doppelt gebucht wird oder der Rückstand über den Deckel wächst.
+7. Sonntag und Pause reißen die Serie nicht und kosten keinen Malus. *Rot, wenn* `ChildStreakAsync` am Sonntag oder in einer Pause bricht oder Malus bucht.
+8. Ein nachgetragener Termin ändert den Plan des Folgetags; liegt das nötige Tempo über dem Deckel, sieht der Vater eine Meldung mit der fehlenden Menge. *Rot, wenn* die Meldung fehlt oder die Pflicht still über den Deckel steigt.
+9. Fach von heute und morgen laut Stundenplan hat im Plan Vorrang. *Rot, wenn* der Stundenplan ignoriert wird.
+10. Der Vater kann eine nicht begonnene Aufgabe streichen und eine eigene dazulegen; beides ist in der Auswertung des Folgetags als Eingriff erkennbar; eine begonnene Aufgabe lässt sich nicht streichen. *Rot, wenn* ein Eingriff nicht vermerkt wird oder das Streichen einer begonnenen Aufgabe gelingt.
+11. Die Tagesauswertung ist je Kind, Tag und Fach gespeichert (Mengen und Fehlerarten); das Vater-Web zeigt Verlauf und Problemwörter, die Sohn-App nur die eigene Kurve und die Begründung. *Rot, wenn* ein Student-Endpunkt Fehlerarten oder Zahlen des Bruders liefert.
+12. Im Schattenmodus entsteht der Plan täglich, wirkt aber auf Pflicht, Malus und Sohn-App nicht. *Rot, wenn* ein Schattenplan Münzen bucht oder in der Sohn-App erscheint.
+13. Nach dem Stichtag sind Lernstand, Pläne und Positionen beider Kinder leer; Münzen, Gems, Skins und Shop-Einlösungen sind unverändert, das Kassenbuch vollständig (Test gegen eine Kopie der echten DB). *Rot, wenn* der Reset `ChildPointsEntry` oder das Inventar anfasst.
+14. Fällt das Sprachmodell aus, entsteht der Tagesplan trotzdem. *Rot, wenn* der Planer-Dienst eine Abhängigkeit auf einen Chat-Client hat.
+15. Eine Bonusaufgabe ist ein vorgeschlagenes Bonus-Training und bucht nur im Rahmen von `BonusDailyCoinCap`. *Rot, wenn* eine Bonusaufgabe Münzen außerhalb des Deckels bucht.
+16. Eine Teilprüfung (zweite Klassenarbeit mit kleinerem Bündel) verdichtet den Plan auf ihren Termin; der Planer kennt mehr als eine Klassenarbeit je Fach. *Rot, wenn* nur die späteste Klassenarbeit wirkt.
+17. Ein `StudyPlan` ohne `EndDate` wird von Tagessicht, Planer, Dashboard und Medienbedarf ohne Fehler gelesen (je Lesestelle ein Fall). *Rot, wenn* eine der sieben Lesestellen bei `NULL` fehlschlägt oder ein Enddatum erfindet.
+18. Bei jeder getippten Antwort steht die Fehlerart beim Speichern fest; eine Auswahl-Antwort trägt keine. *Rot, wenn* die Fehlerart erst beim Lesen berechnet wird oder bei Auswahl gefüllt ist.
+19. Ein Tag ohne erzeugten Plan (Server aus) kostet keinen Malus, lässt die Serie stehen und erscheint beim Vater als Meldung. *Rot, wenn* Malus gebucht wird oder die Meldung fehlt.
 
 ## Entwurf
 
@@ -273,6 +270,8 @@ B-220 (Learning Queue), B-536 (Aufbau-Übungen). **B-618, B-621 und B-622 stehen
 würden die Pflicht an einer Stelle verankern, die dieser Umbau wieder auflöst. Empfehlung: ihren Bau
 anhalten, bis diese Story gegrillt ist; ihre Entscheidungen (Prozent-Gewichte, Fachtag und Vortag) werden
 Eingaben des Planers.
+
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
 
 ## Entscheidungen
 
@@ -387,6 +386,25 @@ ist nachzuprüfen, bevor sie weiterwandert.
     Planers die Kinder Münzen. Kosten: eine Woche später scharf; die Anzeige der Schattenpläne wird vor der
     eigentlichen Planer-Ansicht gebraucht und ist als deren Vorstufe zu bauen, nicht als Wegwerf-Oberfläche.
 
+<!-- markdownlint-disable MD029 -->
+
+**Ab hier stellvertretend** (Vorbereitungslauf 2026-11-20, siehe Zeile über der Überschrift): Die Entscheidungen 1 bis 14 stammen vom Vater (2026-11-17) und sind unberührt. Die Entscheidungen 15 bis 20 beantworten die offenen Punkte 11 bis 16, die Entscheidungen 21 bis 25 sind die Rahmenentscheidungen A, B, D, E und G des Clusters (führend B-681, dort mit F), Entscheidung 26 den Zuschnitt.
+
+15. **Eine Bonusaufgabe ist ein vom Planer vorgeschlagenes Bonus-Training mit Begründung** – dieselbe Mechanik wie `ExtraTrainingRun` (`GamificationEntities.cs:124`), gedeckelt über `BonusDailyCoinCap`; Tagesbox und Missionen bleiben, wie sie sind. Begründung: Bonus gibt es schon dreimal; ein vierter Weg würde die Münz-Obergrenze umgehen. Kosten: Der Planer braucht einen Vorschlagspfad in das bestehende Training; die Bonus-Kasse bleibt am Deckel. Verworfen: eine Bonusaufgabe als eigene Entität mit eigener Münzregel. Schließt aus: Bonus ohne Münzdeckel – die Sohn-Story „Aufgaben, die zu mir passen“ gilt für das Angebot, nicht für unbegrenzte Münzen.
+16. **Eine Teilprüfung ist eine eigene Klassenarbeit mit kleinerem Bündel aus Übungen oder Tags;** einen Wortbereich innerhalb einer Übung gibt es nicht. Begründung: Das Modell trägt es schon (`KlassenarbeitExercise`, `KlassenarbeitTag`), solange die Wortlisten je Buchabschnitt als eigene Übung geschnitten sind; ob das für alle geladenen Bücher stimmt, ist beim Schätzen an den Übungen nachzusehen. Kosten: Eine Teilprüfung über die Hälfte einer Übung braucht erst eine Teilung der Übung. Verworfen: ein Wortbereich (Von-Bis) an `KlassenarbeitExercise` – Schema und Migration für einen seltenen Fall. Schließt aus: einen Test über die Wörter 1 bis 15 einer 30-Wörter-Übung ohne vorherige Teilung; die User Story „was morgen in der Schule dran ist“ wird dort vom Vater durch Teilen erfüllt.
+17. **`StudyPlan.EndDate` wird optional, `Klassenarbeit.ScheduledDate` bleibt Pflicht.** Der Stoffrahmen bleibt der `StudyPlan` (Fach, Unit, Start); ein Plan ohne Termin trägt kein `EndDate`. Ein noch nicht feststehender Klausurtermin heißt: noch keine Klassenarbeit angelegt, sie entsteht beim Nachtragen. Begründung: B-644 Entscheidung 1 (Termin optional, kommt oft später); das ist die kleinste Änderung am Modell, ohne zweites Aggregat mit eigenem Eigentumsfilter und eigener Aktivierungsregel je Fach (B-539). Kosten: `EndDate` wird an 29 Fundstellen gelesen (Api und Contracts ohne Migrationen und Tests, Zählung 2026-11-20; Api-Dateien: PlanOverviewController, StudentPlansController, StudyPlansController, MediaDemandService, PositionPlayService, PositionProgressService, ChildrenDashboardService) – jede braucht den Fall „ohne Ende“; im Vertrag wird das Feld nullable (Vertragsbruch), dazu eine Migration. Verworfen: eine eigene, schlankere Stoffrahmen-Entität mit Wegfall des `StudyPlan` zum Stichtag – zweite Gruppe für die Aktivierungsregel, zweite Eigentumsprüfung, und die Positionen hängen am Container. Schließt aus: einen Stoffrahmen, der ein Pflicht-Enddatum vortäuscht, und eine Klassenarbeit ohne Datum (Termin unbekannt heißt: keine Klassenarbeit).
+18. **Die Fehlerart (Akzent, Tippfehler, falsches Wort, Ausweichen auf ein Synonym) wird beim Antworten bestimmt und mit der Antwort gespeichert, nur für getippte Antworten;** Auswahl-Antworten tragen keine Fehlerart. Begründung: Stabil gegen spätere Regeländerungen; die Altdaten entfallen durch den Reset (Entscheidung 12). Kosten: eine Spalte an `ItemReviewEvent` und `TestItemResult` (Migration) und die Bestimmung im Antwortpfad; wo die Regel „Akzentfehler zählt im Üben halb“ (B-624) sitzt, ist beim Schätzen zu finden (unter Akzent/Diakritik/Verdict nicht gefunden) – dieselbe Vergleichsfunktion soll die Quelle sein. Verworfen: die Fehlerart nachträglich aus der gespeicherten Antwort bestimmen – für getippte Antworten möglich, aber instabil gegen Regeländerungen. Schließt aus: eine Fehlerart für Auswahl-Antworten; das Vater-Web zeigt dort nur das Wort ohne Art.
+19. **Ein Tag, an dem der Server nie lief und darum kein Plan entstand, zählt wie eine Pause (kein Malus, Serie steht) und wird dem Vater im Vater-Web sichtbar gemeldet.** Begründung: Der Tag des Kindes darf nicht an der Laufzeit des Heimservers hängen (Entscheidung 9); die Meldung schließt „Server ausschalten“ als Weg um die Pflicht (Rahmen E). Kosten: Das Fehlen eines Plans wird erst beim nächsten Start erkannt; der Vater muss die Meldung lesen. Verworfen: Malus für Tage ohne Server. Schließt aus: einen Malus an einem Tag, an dem das Kind keinen Plan sehen konnte.
+20. **Eine Aufgabe ist begonnen, sobald es zu ihr heute eine Antwort oder Sitzung des Kindes gibt; begonnene Aufgaben sind nicht streichbar, unbegonnene und selbst hinzugefügte schon.** Begründung: Sonst nähme ein Streichen nach dem Spielen nachträglich Pflicht, Serie und Malus-Grundlage, und schlecht gespielte Aufgaben ließen sich löschen. Kosten: Eine versehentlich begonnene Aufgabe lässt sich nicht mehr entfernen; Ausweg ist die Pause für den Tag (Entscheidung 8, auch rückwirkend). Verworfen: jederzeit streichbar. Schließt aus: das Streichen einer Aufgabe, die das Kind schon gespielt hat.
+21. **Der serverseitige Planer entscheidet den Tagesplan, nicht ein Sprachmodell (Rahmen A, führend B-681).** Der Tagesplan entsteht durch den Planer aus B-644 mit festen Regeln in C#; „Lehrer-Agent“ ist der Name dieses Planers gegenüber dem Kind, kein Modellaufruf. Der Konsolen-Agent (`Pugling.Agent.Creator`) bleibt das Werkzeug für Inhalte und entscheidet keine Pflicht. Begründung: Die Pflicht kostet Münzen und muss nachrechenbar und wiederholbar sein (B-644 Entscheidung 10); ein Agent mit Plan-Steuerung bräuchte außerdem ein eigenes Konto und einen Zugriff auf Kinder, den es nicht gibt (Eigentum läuft über `SupervisorLink`, `AuthAccess.cs:112`). Kosten: Der Planer ist nur so klug wie seine Regeln; ein unvorhergesehenes Muster bleibt unentdeckt, bis jemand eine Regel schreibt. Verworfen: ein Sprachmodell, das den Plan je Kind täglich selbst festlegt – nicht nachrechenbar und mit dem lokalen Modell ausfallgefährdet. Schließt aus: einen frei „erfundenen“ Plan je Kind, wie ihn der Satz „Lehrer-Agent erzeugt jeden Tag den Plan“ nahelegt; das Kind bekommt einen täglichen Plan nach seinem Lernstand, kein Modell-Ergebnis. (Gleichlautend B-680 Entscheidung 2 und B-681 Entscheidung 7; bestätigt B-644 Entscheidung 10.)
+22. **Der Vater setzt Leitplanken und hat eine Notbremse, er legt keine Tagesmengen fest (Rahmen B, führend B-681).** Je Kind setzt der Vater einmal Boden und Deckel für Pflichtaufgaben und neue Wörter, den Malus-Betrag und Pausen (B-644 Entscheidungen 2 bis 5 und 8) und behält die Notbremse: eine nicht begonnene Aufgabe streichen oder eine eigene dazulegen (B-644 Entscheidung 7). Er baut keinen Plan und bestimmt keine Tagesmenge. Begründung: Ein Planer braucht eine menschliche Grenze gegen Fehlplanung; die vier Zahlen sind die eigenen Entscheidungen des Vaters vom 2026-11-17 und bleiben unberührt; Belohnung, Shop und Einlösen bleiben seine Aufgabe, die Tagesarbeit nicht. Kosten: Der Vater trägt weiter vier Zahlen und eine Pause je Kind; „nur Belohnung“ aus dem Leitbild ist damit nicht wörtlich erfüllt (abgewichen von B-680 Punkt 3, der Boden und Deckel zu Planer-Voreinstellungen machte). Verworfen: Boden und Deckel als reine Planer-Voreinstellung – hübe B-644 Entscheidung 4 auf und ließe den Planer ohne harte Grenze. Schließt aus: einen Vater, der gar nicht mehr in die Mengen eingreifen kann; die User Story „ich möchte die Plansteuerung nicht mehr selbst tragen“ gilt für die tägliche Arbeit, nicht für die Grenzen. (Gleichlautend B-680 Entscheidung 3 und B-681 Entscheidung 3; berührt nicht B-644 Entscheidungen 2 bis 8.)
+23. **Klausurtermin und Note trägt der Vater ein (Rahmen D, führend B-681).** Die Schreibrouten der Klassenarbeit bleiben `Roles.Supervisor` (`KlassenarbeitenController.cs:92`, `:130`); Planer, Agent und eine spätere Foto-Auswertung (B-684) lesen Termin und Note oder schlagen sie nur vor, die Freigabe bleibt beim Vater. Begründung: Er hat den Schulkontakt (WebUntis, Heft, Klausur), und eine Note beeinflusst Stufe und Pflicht – kein Konto, das davon profitiert oder Pflichten setzt, trägt sie selbst ein. Kosten: ein Handgriff mehr nach jedem Scan; solange B-684 fehlt, bleibt das Eintragen Handarbeit. Verworfen: Note direkt aus dem Scan übernehmen. Schließt aus: ein Kind oder einen Agenten, der die eigene Note einträgt (Selbstbetrug).
+24. **Der Tagesplan steht ab 6 Uhr fest, und Malus kostet nur, was das Kind sehen konnte (Rahmen E, führend B-681).** Der Plan des Tages ist ab 6 Uhr Ortszeit eingefroren (B-644 Entscheidung 9); eine verpasste Pflichtaufgabe eines gesehenen Plans kostet genau einmal den Malus-Betrag des Kindes (B-644 Entscheidung 5); ein Tag, an dem nie ein Plan entstand, zählt wie eine Pause (B-644 Entscheidung 19). Begründung: Heute steht die Pflicht Wochen vorher an der Position (`PlanPosition.PenaltyCoins`); eine Pflicht, die erst heute früh entsteht, darf nicht rückwirkend oder unsichtbar kosten (Leitbild: „nicht unfair machen“). Kosten: Wird der Plan um 6 Uhr nicht erzeugt, entgeht dem Kind ein Pflichttag (als Pause beim Vater gemeldet); ein erzeugter Plan lässt sich nur über die Notbremse des Vaters ändern. Verworfen: Malus über die Pflicht an der Position auch für Planer-Kinder. Schließt aus: Strafe für Aufgaben, die das Kind nie angezeigt bekam oder die der Planer nach dem Erzeugen verändert hätte.
+25. **Modellerzeugter Inhalt wird erst durch einen Menschen Pflicht (Rahmen G, führend B-681).** Förder-Übungen und Vorstufen aus dem Agenten entstehen als Katalog-Entwurf; Pflicht werden sie erst, wenn ein Mensch sie in einen Plan übernimmt (`assign`, Positionsformular, Einschalten der Stufung). Der Planer wählt nur aus Positionen des aktiven Plans und legt aus Modellinhalt keine Position selbst an. Begründung: Das ersetzt die heutige Sicherung „KI-Plan entsteht inaktiv“ (`PlanPlanner.cs:101`) durch die kleinste menschliche Handlung statt einer Freigabe je Aufgabe; C# prüft die Lösbarkeit (B-460), nicht die Didaktik, und die Qualität hängt am Modell. Kosten: Neue Förder-Übungen erreichen das Kind erst nach einem Vater-Klick; der Agent kann nicht unbeaufsichtigt Inhalt bis zum Kind durchreichen. Verworfen: Der Planer nimmt frische Modellübungen selbst auf, Schattenwoche plus Deckel und Boden als einzige Sicherung. Schließt aus: den täglich vollautomatischen Kreislauf „Agent baut, Planer verteilt, Kind lernt ohne Vater“, den das Leitbild andeutet.
+26. **B-644 bleibt die Sammel-Story des Planers; die Etappen E0 bis E5 sind der Schnitt, es gibt keine Karte mit Ticket-Dateien.** Beim Schätzen entsteht je Etappe eine eigene Story oder B-644 wird je Etappe geschätzt (README „Teilen und Zusammenlegen“, dann geht B-644 auf `verworfen` mit `ersetzt_durch`); das entscheidet der Schätz-Lauf, nicht diese Story. Begründung: Alle offenen Punkte sind entschieden und hängen nicht mehr voneinander ab – damit entfällt der Grund für eine Karte (README „Karten“). Kosten: Entscheidungen 15 bis 26 sind stellvertretend und unbestätigt; widerspricht der Nutzer bei einer Rahmenentscheidung, kann doch eine Karte nötig werden. Verworfen: eine Karte mit Entscheidungs-Tickets. Schließt aus: Ticket-Dateien unter `karten/B-644/`.
+
+<!-- markdownlint-enable MD029 -->
+
 ## Offene Punkte
 
 1. ~~**Ersetzen oder daneben?** Empfehlung: je Kind einschaltbar daneben (E3), Ersetzen erst in E6.~~
@@ -409,24 +427,16 @@ ist nachzuprüfen, bevor sie weiterwandert.
    → Entscheidung 13.
 10. ~~**B-618/B-621/B-622 jetzt anhalten?** Siehe „Berührte Stories".~~ → Entscheidung 6.
 
-### Nach dem Ausformulieren neu offen
+### Nach dem Ausformulieren neu offen (alle am 2026-11-20 stellvertretend entschieden)
 
 <!-- markdownlint-disable MD029 -->
 
-11. **Was ist eine Bonusaufgabe?** Bonus gibt es schon dreimal (Bonus-Training, Tagesbox, Missionen).
-    Empfehlung: Eine Bonusaufgabe ist ein vom Planer **vorgeschlagenes Bonus-Training** mit Begründung –
-    dieselbe Mechanik, kein vierter Weg; Tagesbox und Missionen bleiben, wie sie sind.
-12. **Wie fein ist eine Teilprüfung?** Die Klassenarbeit bündelt ganze Übungen oder Tags. Reicht das
-    („Vokabeltest über Unit 1, Teil A" = eine Übung), oder braucht es einen Wortbereich innerhalb einer
-    Übung? Empfehlung: Übungen und Tags reichen, solange die Wortlisten je Buchabschnitt geschnitten sind.
-13. **Stoff ohne Termin im Modell:** `EndDate` am Plan optional machen, oder der Stoffrahmen wird eine
-    eigene, schlankere Größe und der `StudyPlan` entfällt mit dem Stichtag? Empfehlung: beim Schneiden der
-    Karte entscheiden, weil es die Migration bestimmt.
-14. **Fehlerart: nachträglich oder beim Antworten?** Empfehlung: beim Antworten bestimmen und speichern
-    (stabil gegen spätere Regeländerungen); die Altdaten entfallen durch den Reset ohnehin.
-15. **Ein Tag ganz ohne Server** zählt wie eine Pause und wird dem Vater gemeldet (Vorschlag aus
-    Entscheidung 9, noch nicht bestätigt).
-16. **Begonnene Aufgaben sind nicht mehr streichbar** (Vorschlag aus Entscheidung 7, noch nicht bestätigt).
+11. ~~**Was ist eine Bonusaufgabe?** Bonus gibt es schon dreimal (Bonus-Training, Tagesbox, Missionen). Empfehlung: Eine Bonusaufgabe ist ein vom Planer **vorgeschlagenes Bonus-Training** mit Begründung – dieselbe Mechanik, kein vierter Weg; Tagesbox und Missionen bleiben, wie sie sind.~~ → Entscheidung 15.
+12. ~~**Wie fein ist eine Teilprüfung?** Die Klassenarbeit bündelt ganze Übungen oder Tags. Reicht das („Vokabeltest über Unit 1, Teil A" = eine Übung), oder braucht es einen Wortbereich innerhalb einer Übung? Empfehlung: Übungen und Tags reichen, solange die Wortlisten je Buchabschnitt geschnitten sind.~~ → Entscheidung 16.
+13. ~~**Stoff ohne Termin im Modell:** `EndDate` am Plan optional machen, oder der Stoffrahmen wird eine eigene, schlankere Größe und der `StudyPlan` entfällt mit dem Stichtag? Empfehlung: beim Schneiden der Karte entscheiden, weil es die Migration bestimmt.~~ → Entscheidung 17.
+14. ~~**Fehlerart: nachträglich oder beim Antworten?** Empfehlung: beim Antworten bestimmen und speichern (stabil gegen spätere Regeländerungen); die Altdaten entfallen durch den Reset ohnehin.~~ → Entscheidung 18.
+15. ~~**Ein Tag ganz ohne Server** zählt wie eine Pause und wird dem Vater gemeldet (Vorschlag aus Entscheidung 9, noch nicht bestätigt).~~ → Entscheidung 19.
+16. ~~**Begonnene Aufgaben sind nicht mehr streichbar** (Vorschlag aus Entscheidung 7, noch nicht bestätigt).~~ → Entscheidung 20.
 
 <!-- markdownlint-enable MD029 -->
 
@@ -436,3 +446,4 @@ ist nachzuprüfen, bevor sie weiterwandert.
   Ist-Stand nur als Teilbefund; `unverifiziert` bleibt bis zum Ausformulieren.
 - **2026-11-17** — **Grill-Runde mit dem Vater im Dialog:** 14 Entscheidungen (siehe `## Entscheidungen`), alle zehn offenen Punkte erledigt. B-618, B-619, B-621 und B-622 angehalten (`wartet_auf`). Die Stufe bleibt `idee`: Der Ist-Stand ist noch nicht Zeile für Zeile belegt, und mehrere Entscheidungen nennen Prüfpunkte am Code (freier Sonntag in Serie und Malus, Fehlerart je Übungstyp, Münz-Verlauf nach dem Reset, UTC-Umstellung). Nächster Schritt: ausformulieren, dann als Karte schneiden.
 - **2026-11-17** — `idee` → `ausformuliert`: Ist-Stand am Code belegt (Stand `36185a56`). Kern: Die Daten für Auswertung und Reset liegen vollständig vor, das Kassenbuch hat keinen Fremdschlüssel auf Positionen; es fehlen Ortszeit (35 UTC-Stellen ohne gemeinsame Funktion), Lerntage (Serie und Malus kennen keinen freien Sonntag und keine Pause), ein Zeitgeber und die Fehlerart. Etappe E0 neu, Etappentabelle an Entscheidung 11 und 14 angepasst, sechs neue offene Punkte (11–16).
+- **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet): Die 14 Entscheidungen des Vaters unangetastet; die sechs neuen offenen Punkte (11 bis 16) stellvertretend auf Anweisung des Nutzers entschieden, unbestätigt (Entscheidungen 15 bis 20), dazu die Rahmenentscheidungen A, B, D, E, G aus dem Cluster Leitbild Privatlehrer (21 bis 25, führend B-681) und der Zuschnitt (26). Eintrittsbedingung `gegrillt` erfüllt: kein Punkt offen, Akzeptanzkriterien final mit je einer roten Änderung. Prüfpunkte für das Schätzen: Ort der Akzentregel B-624, die sieben `EndDate`-Lesestellen, Wortlisten je Buchabschnitt.

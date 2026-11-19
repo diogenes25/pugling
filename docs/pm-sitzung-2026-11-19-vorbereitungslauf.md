@@ -169,3 +169,44 @@ Verworfen oder erledigt sind sie nicht; das entscheidet der Nutzer.
    „Plan für ein zweites Kind kopieren“ wäre eine Wunsch-Idee zu B-673.
 9. **Prozess:** Mehrere Agenten schrieben Frontmatter mit Unterstrich-Hervorhebung (MD049) und einmal mit einem
    Seitenvorschub statt `\f` (B-638, per Python repariert). Beides fing der Lint.
+
+## Nachtrag: Bestätigungsrunde und Entscheidung der offenen Fragen
+
+Der Nutzer war im Anschluss erreichbar und hat Folgendes veranlasst:
+
+1. **Mit dem Nutzer bestätigt** (je im `## Verlauf` der Story): B-650 Entscheidungen 2 und 8, B-710 (zwei Stufen), B-685,
+   B-673, B-619 (drei Annahmen, `wartet_auf` nur noch B-644). Commits `92758efb`, `8dead813`.
+2. **Auf Anweisung „nimm für alle Fragen deine Empfehlung“** bestätigt, `wartet_auf` geleert: B-604, B-638, B-710 bis
+   B-712, B-596, B-650, B-648, B-220, B-700, B-701, B-704. B-655 und B-656 warten nur noch auf B-654, B-586 nur noch auf
+   Z3 (Absender Lehrer-Agent). Commit `9860128f`.
+3. **Auf Anweisung „entscheide“ die Fragen aus „Nicht entschieden“** stellvertretend entschieden (Freigabe 2 aufgehoben),
+   `gegrillt`: B-680, B-681, B-682, B-683, B-644 (Entscheidungen 15 bis 26), B-662, B-663, B-659, B-660, B-593, B-627,
+   B-687, B-218, B-248. B-702 und B-703 blieben `gegrillt` mit geleertem `wartet_auf`. Der Marker über
+   `## Entscheidungen` sagt „auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt“. Gesetzt ist `wartet_auf`
+   nur bei B-687 (Ablageweg der Foto-Dateien, mit B-684) und B-619 (B-644).
+
+**Einheitliche Querentscheidungen** (führend B-681, wortgleich in den betroffenen Stories):
+
+- **A:** Planer mit festen C#-Regeln im Server, „Lehrer-Agent“ ist nur sein Name gegenüber dem Kind.
+- **B:** Der Vater setzt Leitplanken (Boden, Deckel, Malus-Betrag, Pause) und hat die Notbremse, keine Tagesmengen.
+- **C:** Keine Rolle `Teacher`, kein `TeacherLink`, die Gates bleiben `Supervisor`.
+- **D:** Termin und Note trägt der Vater ein.
+- **E:** Der Plan ist ab 6 Uhr eingefroren, Malus nur für eine verpasste Pflichtaufgabe eines gesehenen Plans.
+- **F:** Münzen bleiben an der erfüllten Pflicht, keine Münzprämie für Notenstufe oder Klausurnote.
+- **G:** KI-Inhalt ist ein Katalog-Entwurf und wird erst durch einen Menschen Pflicht.
+- **Pflicht-Ende:** Spalte `DutyUntil` (mit B-659 gemeinsam, wer zuerst baut, legt sie an).
+- **Gegenbuchung:** positiver `GoalPenalty`-Eintrag, die Strafzeile bleibt, `ConcurrencyStamp` wird gebumpt.
+- **Neue Malus-Quellen** (B-248, B-687) buchen beim Kind-Login, nie auf einem GET und nie per Job.
+
+**Am ehesten anders entscheiden würde der Nutzer:** Rahmen C (kein `TeacherLink`, größte Abweichung von einer
+Story-Empfehlung), Rahmen G, B-702 Entscheidung 2 (Serie und Truhe zählen den Test der Vorstufe voll), B-660 E4 (keine
+sinkende Münzleiter für Nicht-Vokabel-Typen), B-248 E11 (Standard-Malus je Tag, keine Ziel-Belohnung), B-687 E2, B-627
+E2 und E5, B-659 E5.
+
+**Widerspruch im Text:** B-248 nennt B-680 und B-644 noch „nicht entschieden“. Das war zum Zeitpunkt seiner Runde so und
+ist durch den Cluster-Lauf überholt. Beim Schätzen von B-248 prüfen, ob die Verdichtungs-Pflicht (c) neben dem
+Tagesplaner von B-644 noch gebraucht wird.
+
+**Weiter offen:** B-702 und B-703 sind entschieden, aber noch nicht geschätzt. B-659, B-660, B-593, B-627, B-687, B-218,
+B-248, B-644, B-662, B-663, B-680 bis B-683 sind `gegrillt`, noch nicht geschätzt. B-670, B-664, B-605 sind weder
+verworfen noch erledigt (Vorschläge oben bleiben).

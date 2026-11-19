@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, bereich/klassenarbeit, rolle/student, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/gamification, bereich/klassenarbeit, rolle/student, rolle/creator]
 aliases: [Notenstufe eichen, Auf- und Abstieg durch Klausur]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -21,8 +21,7 @@ zum Teil auch der Agent falsch – die Prognose muss sich an der echten Note **e
 Wert und das Kind glaubt ihr nicht mehr. Die Note liegt heute schon als `Klassenarbeit.Grade` vor (von Hand
 eingetragen) und wird von einem Key-Result gelesen.
 
-**Vorbehalt:** Hängt am Richtungswechsel „Leitbild Privatlehrer“ und an B-682 (Nutzer entscheidet). Nur **ausformuliert**;
-Fragen unter „Offene Punkte“ sind **nicht entschieden**, kein Abschnitt `## Entscheidungen`.
+**Stand:** Stellvertretend gegrillt im Vorbereitungslauf 2026-11-20 auf Anweisung des Nutzers („Entscheide die offenen Fragen nach deiner Empfehlung“), unbestätigt. Die Rahmenentscheidungen A bis G gelten für den ganzen Cluster B-644, B-680 bis B-683, B-662, B-663, B-702 und B-703; führend ist B-681.
 
 ## User Story
 
@@ -60,43 +59,44 @@ nicht vereinbar – die Story darf es nicht stillschweigend umdeuten.
 
 ## Offene Punkte
 
-Jede Frage mit Empfehlung. **Nichts davon ist entschieden.**
+Alle Punkte entschieden; die Empfehlung steht durchgestrichen daneben.
 
-1. **Zählt eine Klausur sofort voll oder wird sie mit der Prognose verrechnet (Tagesform)?** Empfehlung: Die Note setzt die
-   Stufe **sofort auf den Bereich der Note**, aber nur **eine Stufe** pro Klausur abwärts (Ton ohne Tadel, Tagesform
-   schluckt einen Ausreißer); aufwärts darf sie voll zählen. Eine zweite Klausur in Folge bestätigt oder korrigiert.
-2. **Wie lernt das Modell aus einer einzelnen Note?** Empfehlung: im ersten Bau **gar nicht automatisch** – die Abweichung
-   (Prognose ↔ Note) wird gespeichert und dem Vater gezeigt; der Umrechnungsschlüssel (B-682 Punkt 2) wird von Hand
-   nachgestellt, bis genug Paare vorliegen. Ein einziger Datenpunkt eicht nichts.
-3. **Was sieht das Kind beim Abstieg?** Empfehlung: kein „abgestiegen“, sondern „Stufe 3 – nächste Ziel: 12 Wörter
-   sicher“ plus der Weg zurück; Ton als Produktentscheidung des Nutzers.
-4. **Was passiert mit dem Ziel-Maß `ClassTestGrade`?** Empfehlung: unverändert lassen (beste Note); die Stufe ist eine
-   eigene Größe. Beides zu vermengen würde laufende Ziele (`ObjectiveEvaluationService.cs:105`) ändern.
-5. **Auslöser:** Empfehlung: Eintrag der Note (`PATCH` mit `Grade`) stößt die Neubewertung an, idempotent; ein nachträglich
-   korrigierter Wert rechnet die Stufe neu (nicht doppelt buchen). Ob eine Klausurprämie in Münzen daran hängt: nicht
-   vorwegnehmen – *Münz-Ökonomie, Nutzer entscheidet*.
-6. **Wer trägt die Note ein?** Empfehlung: Vater (siehe B-681 Punkt 5); der Lehrer(-Agent) liest sie nur. Bei B-684
-   kommt die Note aus dem Scan, aber die Freigabe bleibt beim Vater.
-7. **Welche Klausuren zählen?** Empfehlung: nur solche mit `ScheduledDate` und Fach; eine Note ohne Fach verändert
-   keine Stufe.
+1. ~~**Zählt eine Klausur sofort voll oder wird sie mit der Prognose verrechnet (Tagesform)?** Empfehlung: Die Note setzt die Stufe **sofort auf den Bereich der Note**, aber nur **eine Stufe** pro Klausur abwärts (Ton ohne Tadel, Tagesform schluckt einen Ausreißer); aufwärts darf sie voll zählen. Eine zweite Klausur in Folge bestätigt oder korrigiert.~~ → Entscheidung 1.
+2. ~~**Wie lernt das Modell aus einer einzelnen Note?** Empfehlung: im ersten Bau **gar nicht automatisch** – die Abweichung (Prognose ↔ Note) wird gespeichert und dem Vater gezeigt; der Umrechnungsschlüssel (B-682 Punkt 2) wird von Hand nachgestellt, bis genug Paare vorliegen. Ein einziger Datenpunkt eicht nichts.~~ → Entscheidung 2.
+3. ~~**Was sieht das Kind beim Abstieg?** Empfehlung: kein „abgestiegen“, sondern „Stufe 3 – nächste Ziel: 12 Wörter sicher“ plus der Weg zurück; Ton als Produktentscheidung des Nutzers.~~ → Entscheidung 3.
+4. ~~**Was passiert mit dem Ziel-Maß `ClassTestGrade`?** Empfehlung: unverändert lassen (beste Note); die Stufe ist eine eigene Größe. Beides zu vermengen würde laufende Ziele (`ObjectiveEvaluationService.cs:105`) ändern.~~ → Entscheidung 4.
+5. ~~**Auslöser:** Empfehlung: Eintrag der Note (`PATCH` mit `Grade`) stößt die Neubewertung an, idempotent; ein nachträglich korrigierter Wert rechnet die Stufe neu (nicht doppelt buchen). Ob eine Klausurprämie in Münzen daran hängt: nicht vorwegnehmen – *Münz-Ökonomie, Nutzer entscheidet*.~~ → Entscheidung 5.
+6. ~~**Wer trägt die Note ein?** Empfehlung: Vater (siehe B-681 Punkt 5); der Lehrer(-Agent) liest sie nur. Bei B-684 kommt die Note aus dem Scan, aber die Freigabe bleibt beim Vater.~~ → Entscheidung 6.
+7. ~~**Welche Klausuren zählen?** Empfehlung: nur solche mit `ScheduledDate` und Fach; eine Note ohne Fach verändert keine Stufe.~~ → Entscheidung 7.
 
-## Akzeptanzkriterien (Entwurf)
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
 
-Final erst nach Punkt 1, 2 und 5. Je Kriterium die Änderung, die es rot macht:
+## Entscheidungen
 
-1. Eine eingetragene Note speichert die zu diesem Zeitpunkt gültige Prognose (Stufe/Note) an der Klassenarbeit. *Rot, wenn*
-   `Grade` gesetzt wird, ohne dass die Prognose festgehalten wird (Eichung ohne Vergleichswert).
-2. Eine Note besser als die Stufe hebt sie; eine Note schlechter senkt sie höchstens um die in Punkt 1 festgelegte Zahl
-   Stufen. *Rot, wenn* die Stufe nach einer Klausur unverändert bleibt oder um mehr als erlaubt fällt.
-3. Dieselbe Note zweimal eingetragen (oder das Feld unverändert erneut gesendet) ändert die Stufe nicht ein zweites Mal.
-   *Rot, wenn* der `PATCH` jedes Mal neu bewertet.
-4. Eine nachträglich **korrigierte** Note ersetzt die Wirkung der alten, sie addiert sich nicht. *Rot, wenn* zwei
-   Eintragungen zwei Auf-/Abstiege auslösen.
-5. Das Ziel-Maß `ClassTestGrade` liefert für dieselben Daten dasselbe wie vorher (beste Note). *Rot, wenn* die Umsetzung
-   `BestGradeTimesTen` ändert.
-6. Eine Note ohne Fach oder Termin verändert keine Stufe. *Rot, wenn* sie ein beliebiges Fach trifft.
-7. Der Text am Kind beim Absteigen enthält keinen Stufen-Etikett-Abstieg und nennt den nächsten Schritt. *Rot, wenn* das
-   Wort „abgestiegen“ oder die schlechtere Notenbezeichnung erscheint.
+Entscheidung 6 ist die Rahmenentscheidung D, Entscheidung 8 die Rahmenentscheidung F (führend B-681).
+
+1. **Eine eingetragene Klausurnote setzt die Stufe des Fachs sofort auf den Notenbereich: aufwärts voll, abwärts höchstens eine Stufe je Klausur.** Begründung: Tagesform schluckt einen Ausreißer, eine zweite Klausur bestätigt oder korrigiert. Kosten: Ein Kind auf Stufe 2, das eine 5 schreibt, steht erst nach zwei Klausuren bei 4; der nachlassende Lernstand (B-682 Entscheidung 4) kann es schneller dorthin bringen. Verworfen: volles Absteigen nach einer Klausur. Schließt aus: einen Absturz um drei Stufen durch eine einzige Arbeit.
+2. **Das Modell eicht sich im ersten Bau nicht von selbst.** Die Abweichung (Prognose-Stufe zu Note) wird an der Klassenarbeit gespeichert und dem Vater im Kind-Hub gezeigt; den Schlüssel stellt er bzw. der Entwickler von Hand nach (B-682 Entscheidung 2). Begründung: Ein einziger Datenpunkt eicht nichts. Kosten: Die Prognose kann wiederholt danebenliegen, bis jemand nachstellt; der Vater liest eine Abweichungsliste. Verworfen: ein automatisches Nachstellen nach jeder Note. Schließt aus: die Zeile der User Story „wird nachgeschärft“ in der Lesart „von selbst“; nachgeschärft wird von Hand.
+3. **Beim Absteigen nennt die Oberfläche die neue Stufe und den Weg zurück („nächstes Ziel: noch N Wörter sicher“), nie das Wort „abgestiegen“ oder eine schlechtere Notenbezeichnung** (gleiche Textregel wie B-682 Entscheidung 3). Begründung: Der freundliche Weg zurück ist der Kern der User Story. Kosten: Das Kind sieht den Rückschritt nur an der Zahl der Stufe. Verworfen: der Text „Du bist abgestiegen“. Schließt aus: einen Tadel im Wortlaut.
+4. **Das Ziel-Maß `ClassTestGrade` bleibt unverändert (beste Note je Fach); die Stufe ist eine eigene Größe.** Begründung: `BestGradeTimesTen` (`ObjectiveEvaluationService.cs:123`) liest die beste Note; das Maß für ein sinkendes Ergebnis umzudeuten, änderte laufende Ziele. Kosten: Zwei Größen für „Note im Fach“ nebeneinander, mit verschiedener Bedeutung (beste vs. aktuelle). Verworfen: das Maß auf die letzte Note umstellen. Schließt aus: ein Ziel, das nach einer schlechten Klausur plötzlich als verfehlt gilt, obwohl es schon erreicht wurde.
+5. **Das Eintragen oder Ändern einer Note (`PATCH` mit geändertem `Grade`) stößt die Neubewertung an, idempotent je Klassenarbeit.** Die Prognose-Stufe wird als Schnappschuss am Klausurtag gespeichert (neue nullable Spalte `Klassenarbeit.PredictedLevel`, vom täglichen Lauf des `ScheduledDate` einmalig gesetzt). Die Stufe nach der Klausur ist eine Funktion aus Schnappschuss und Note; eine korrigierte Note ersetzt die Wirkung der alten, und sie ändert die laufende Stufe nur, wenn es die jüngste geschriebene Klausur des Fachs ist, sonst nur die gespeicherte Abweichung. Begründung: Ohne Schnappschuss gibt es nichts zum Vergleichen, und die Funktion aus Schnappschuss und Note ist wiederholbar. Kosten: eine Migration; Klassenarbeiten ohne Lauf am Klausurtag (Server aus) haben keinen Schnappschuss und eichen nicht. Verworfen: die Prognose zum Zeitpunkt der Noteneintragung – Tage nach der Klausur, der Lernstand ist weiter. Schließt aus: Klausuren ohne Prognose (Altmaterial) als Eichpunkte.
+6. **Klausurtermin und Note trägt der Vater ein (Rahmen D, führend B-681).** Die Schreibrouten der Klassenarbeit bleiben `Roles.Supervisor` (`KlassenarbeitenController.cs:92`, `:130`); Planer, Agent und eine spätere Foto-Auswertung (B-684) lesen Termin und Note oder schlagen sie nur vor, die Freigabe bleibt beim Vater. Begründung: Er hat den Schulkontakt (WebUntis, Heft, Klausur), und eine Note beeinflusst Stufe und Pflicht – kein Konto, das davon profitiert oder Pflichten setzt, trägt sie selbst ein. Kosten: ein Handgriff mehr nach jedem Scan; solange B-684 fehlt, bleibt das Eintragen Handarbeit. Verworfen: Note direkt aus dem Scan übernehmen. Schließt aus: ein Kind oder einen Agenten, der die eigene Note einträgt (Selbstbetrug). (Beantwortet Punkt 6.)
+7. **Nur Klassenarbeiten mit Fach zählen; eine Note ohne Fach (`SubjectId` ist nullable, `KlassenarbeitEntities.cs`) verändert keine Stufe.** Das Datum ist Pflichtfeld und damit immer vorhanden. Begründung: Eine Stufe gehört zu einem Fach; ein beliebig zugeordnetes Fach wäre erfunden. Kosten: Der Vater muss das Fach setzen, sonst bleibt die Note ohne Wirkung auf die Stufe. Verworfen: die Note dem Fach des Titels zuraten. Schließt aus: eine Note, die ein falsches Fach hebt oder senkt.
+8. **Münzen hängen an der erfüllten Pflicht, nicht an Notenstufe oder Klausurnote (Rahmen F, führend B-681).** Zielpunkte, Truhe und Serie bleiben wie heute an der erfüllten Pflicht; in diesem Zyklus gibt es keine Münzprämie für eine Notenstufe oder eine Klausurnote, die Notenstufe ist Auszeichnung ohne Münzwert (`RewardPoints` 0). Begründung: Die Stufe ist aus Lerndaten geschätzt und keine harte Leistung wie ein bestandener Test, die Note wird von Hand eingetragen; eine Münzprämie darauf trüge Prognosefehler und Eintragsfehler in das Guthaben (Wallet-Invarianten). Die Probeklausur B-249 ist ebenfalls ohne Münzen entschieden. Kosten: Eine gute Klausur belohnt der Vater von Hand (`POST children/{}/points`, Manual); für die Stufe gibt es Ehre statt Geld. Verworfen: Klausurprämie in Münzen. Schließt aus: ein Kind, das für eine Eins in der Klausur automatisch Münzen bekommt. (Beantwortet die Münzfrage aus Punkt 5.)
+
+## Akzeptanzkriterien
+
+Final. Je Kriterium die Änderung, die es rot macht.
+
+1. Der Lauf am `ScheduledDate` schreibt die Prognose-Stufe einmal an die Klassenarbeit; ein zweiter Lauf überschreibt sie nicht. *Rot, wenn* der Schnappschuss fehlt oder beim zweiten Lauf ersetzt wird.
+2. Eine Note besser als die Stufe hebt sie voll, eine schlechtere senkt sie um höchstens eine Stufe. *Rot, wenn* die Stufe unverändert bleibt oder um mehr als eine fällt.
+3. Dieselbe Note zweimal gesendet ändert die Stufe nicht ein zweites Mal. *Rot, wenn* der `PATCH` jedes Mal neu bewertet.
+4. Eine korrigierte Note ersetzt die Wirkung der alten. *Rot, wenn* zwei Eintragungen zwei Auf- oder Abstiege auslösen.
+5. Die Korrektur der Note einer älteren Klausur ändert nur die gespeicherte Abweichung, nicht die laufende Stufe. *Rot, wenn* die laufende Stufe dabei springt.
+6. *Absichtserklärung.* `ClassTestGrade` liefert für dieselben Daten dasselbe wie vorher (beste Note). *Rot, wenn* die Umsetzung `BestGradeTimesTen` ändert.
+7. Eine Note an einer Klassenarbeit ohne Fach verändert keine Stufe. *Rot, wenn* sie ein beliebiges Fach trifft.
+8. Der Text beim Absteigen enthält weder „abgestiegen“ noch eine Notenbezeichnung der neuen Stufe und nennt den nächsten Schritt. *Rot, wenn* eines der Wörter erscheint.
+9. Das Eintragen der Note bucht keine Münzen. *Rot, wenn* dabei ein `ChildPointsEntry` entsteht.
 
 ## Beziehungen zu anderen Stories (nur gelesen)
 
@@ -112,3 +112,4 @@ Final erst nach Punkt 1, 2 und 5. Je Kriterium die Änderung, die es rot macht:
   schreibbar, hat aber keinerlei Folge, und es gibt keine gespeicherte Prognose, gegen die geeicht werden könnte; das
   bestehende `ClassTestGrade`-Maß (beste Note) darf nicht umgedeutet werden. Sieben offene Punkte mit Empfehlung,
   **nichts entschieden**.
+- **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle sieben Punkte entschieden. Kern: Note setzt die Stufe sofort (abwärts höchstens eine Stufe), keine automatische Eichung, Prognose-Schnappschuss am Klausurtag, `ClassTestGrade` unverändert, Note trägt der Vater ein, keine Münzprämie.

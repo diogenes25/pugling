@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/auth, bereich/shop, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/gegrillt, bereich/auth, bereich/shop, rolle/supervisor, rolle/creator]
 aliases: [Rollenschnitt Vater/Lehrer, Vater nur Belohnung]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -21,9 +21,7 @@ nur noch um die Belohnung (Shop füllen, gekaufte und aktivierte Artikel einlös
 KI-Agent, B-680 – analysiert den Lernstand und steuert Übungen und Pläne. Der Supervisor zerfällt damit in zwei
 Zuständigkeiten, was Routen und Rollen-Gates trifft.
 
-**Vorbehalt:** Die Story hängt am Richtungswechsel „Leitbild Privatlehrer“ (2026-11-19), den der Nutzer entscheidet. Sie
-wurde im Vorbereitungslauf nur **ausformuliert**; jede Frage unter „Offene Punkte“ steht mit Empfehlung da und ist
-**nicht entschieden**. Es gibt bewusst keinen Abschnitt `## Entscheidungen`.
+**Stand:** Stellvertretend gegrillt im Vorbereitungslauf 2026-11-20 auf Anweisung des Nutzers („Entscheide die offenen Fragen nach deiner Empfehlung“), unbestätigt. Die Rahmenentscheidungen A bis G gelten für den ganzen Cluster B-644, B-680 bis B-683, B-662, B-663, B-702 und B-703; führend ist B-681.
 
 ## User Story
 
@@ -88,48 +86,42 @@ Nicht die Lücke: das Datenmodell der Pläne selbst – das bleibt am Kind.
 
 ## Offene Punkte
 
-Jede Frage mit Empfehlung. **Nichts davon ist entschieden** (Rollenschnitt: Nutzer entscheidet).
+Alle Punkte entschieden; die Empfehlung steht durchgestrichen daneben.
 
-1. **Neue Rolle `Teacher` oder bestehendes Lehrer-Konto erweitern?** Empfehlung: **keine neue Rolle**, sondern die
-   Plan-Endpunkte unter `supervisor/…` für `Creator` mit Lehrer-Zuordnung öffnen (Gate `AnyAdult` plus Eigentumsprüfung).
-   Begründung: Das Lehrer-Konto ist schon Creator-only (`TeacherAccountsController.cs:12`), und eine vierte Rolle
-   verbreitert den Schnitt von API, Code und Token, den CLAUDE.md als Taxonomie führt. Alternative: Rolle `Teacher`
-   – sauberer im Token, kostet einen Claim und Gate-Umbau an ca. 33 Stellen.
-2. **Wie bekommt ein Lehrer Zugriff auf *ein* Kind?** Empfehlung: eine zweite Verknüpfung (z. B. `TeacherLink`)
-   statt `SupervisorLink` wiederzuverwenden – sonst sähe der Lehrer den Familien-Shop. Entscheidend für B-680 (Wer ist
-   „der Lehrer“, wenn es der Agent ist?). Das ist ein Schema-Eingriff (Migration an die Kette).
-3. **Läuft der Agent unter dem Vater-Konto weiter?** Empfehlung: für den Übergang ja (heute so, `AgentCommands.cs:268`);
-   Ziel ist ein eigenes Agenten-Konto mit Creator- und Lehrer-Zuordnung, damit der Vater-PIN nicht in der Agenten-
-   Konfiguration steht.
-4. **Darf der Vater eingreifen?** Empfehlung: ja – Notbremse behalten (Plan pausieren, eine Aufgabe streichen), keine
-   Mengen setzen. Das ist dieselbe Frage wie B-680 Punkt 3 und B-644 Entscheidungen 2, 4, 7, 8; dort nicht doppelt
-   entscheiden.
-5. **Wer setzt Klausurtermin und Note?** Empfehlung: Termin und Note bleiben beim **Vater** (er hat den Schulkontakt:
-   WebUntis, Heft, Klausur) und werden dem Lehrer(-Agenten) gelesen zur Verfügung gestellt; B-684 (Scan) klärt den
-   Eintrag. Ein Agent trägt keine Note ein, die Pflichten und Klausur-Prämien beeinflusst.
-6. **Was passiert mit den laufenden Plänen in der echten `pugling.db`?** Empfehlung: **nichts** – Pläne hängen am Kind,
-   nicht am Steuernden; der Schnitt ist ein Zugriffsumbau, kein Datenumbau. Nur die neue Zuordnung (Punkt 2) kommt als
-   anhängende Migration (CLAUDE.md: Kette wird nur verlängert).
-7. **Frontend:** Empfehlung: Perspektiven bleiben; „Zuweisen“ wird für den Vater zur Leseansicht, sobald der Planer
-   (B-680/B-644) läuft. Nicht vorwegnehmen.
+1. ~~**Neue Rolle `Teacher` oder bestehendes Lehrer-Konto erweitern?** Empfehlung: **keine neue Rolle**, sondern die Plan-Endpunkte unter `supervisor/…` für `Creator` mit Lehrer-Zuordnung öffnen (Gate `AnyAdult` plus Eigentumsprüfung). Begründung: Das Lehrer-Konto ist schon Creator-only (`TeacherAccountsController.cs:12`), und eine vierte Rolle verbreitert den Schnitt von API, Code und Token, den CLAUDE.md als Taxonomie führt. Alternative: Rolle `Teacher` – sauberer im Token, kostet einen Claim und Gate-Umbau an ca. 33 Stellen.~~ → Entscheidung 1.
+2. ~~**Wie bekommt ein Lehrer Zugriff auf *ein* Kind?** Empfehlung: eine zweite Verknüpfung (z. B. `TeacherLink`) statt `SupervisorLink` wiederzuverwenden – sonst sähe der Lehrer den Familien-Shop. Entscheidend für B-680 (Wer ist „der Lehrer“, wenn es der Agent ist?). Das ist ein Schema-Eingriff (Migration an die Kette).~~ → Entscheidung 1.
+3. ~~**Läuft der Agent unter dem Vater-Konto weiter?** Empfehlung: für den Übergang ja (heute so, `AgentCommands.cs:268`); Ziel ist ein eigenes Agenten-Konto mit Creator- und Lehrer-Zuordnung, damit der Vater-PIN nicht in der Agenten- Konfiguration steht.~~ → Entscheidung 2.
+4. ~~**Darf der Vater eingreifen?** Empfehlung: ja – Notbremse behalten (Plan pausieren, eine Aufgabe streichen), keine Mengen setzen. Das ist dieselbe Frage wie B-680 Punkt 3 und B-644 Entscheidungen 2, 4, 7, 8; dort nicht doppelt entscheiden.~~ → Entscheidung 3.
+5. ~~**Wer setzt Klausurtermin und Note?** Empfehlung: Termin und Note bleiben beim **Vater** (er hat den Schulkontakt: WebUntis, Heft, Klausur) und werden dem Lehrer(-Agenten) gelesen zur Verfügung gestellt; B-684 (Scan) klärt den Eintrag. Ein Agent trägt keine Note ein, die Pflichten und Klausur-Prämien beeinflusst.~~ → Entscheidung 4.
+6. ~~**Was passiert mit den laufenden Plänen in der echten `pugling.db`?** Empfehlung: **nichts** – Pläne hängen am Kind, nicht am Steuernden; der Schnitt ist ein Zugriffsumbau, kein Datenumbau. Nur die neue Zuordnung (Punkt 2) kommt als anhängende Migration (CLAUDE.md: Kette wird nur verlängert).~~ → Entscheidung 5.
+7. ~~**Frontend:** Empfehlung: Perspektiven bleiben; „Zuweisen“ wird für den Vater zur Leseansicht, sobald der Planer (B-680/B-644) läuft. Nicht vorwegnehmen.~~ → Entscheidung 6.
 
-## Akzeptanzkriterien (Entwurf)
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
 
-Final erst nach Entscheidung der Punkte 1 und 2. Je Kriterium die Änderung, die es rot macht:
+## Entscheidungen
 
-1. Ein Konto mit Lehrer-Zuordnung zu Kind A darf einen Plan für A lesen und ändern und bekommt für B `403/404`. *Rot,
-   wenn* das Gate weiterhin nur `Roles.Supervisor` verlangt (Lehrer bekommt `403` für A) oder die Eigentumsprüfung fehlt
-   (Lehrer darf B).
-2. Dasselbe Konto bekommt für **jede** Shop-Route des Kindes `403`. *Rot, wenn* die Lehrer-Zuordnung versehentlich
-   `SupervisorLink` erzeugt und damit den Shop öffnet.
-3. Ein Vater ohne Lehrer-Zuordnung kann Shop und Einlösung wie bisher bedienen. *Rot, wenn* der Umbau die Shop-Gates
-   an die neue Zuordnung bindet.
-4. Das Setzen einer Pflicht (`GoalThreshold`, `PenaltyCoins`) durch den Lehrer-Zugang ist nach denselben Regeln begrenzt
-   wie durch den Vater (Boden/Deckel aus B-644). *Rot, wenn* ein Lehrer-Konto Strafmünzen über dem Deckel setzen kann.
-5. Eine Migration lässt vorhandene Pläne, Positionen und Fortschritte der echten Datenbank unverändert (Test gegen eine
-   Kopie mit Altzeilen). *Rot, wenn* die Migration Zeilen löscht oder neu nummeriert.
-6. Der Vater kann einen Plan pausieren, der Lehrer(-Agent) nicht entpausieren, was der Vater pausierte (Frage 4, falls
-   so entschieden). *Rot, wenn* beide dasselbe Feld überschreiben.
+Die Entscheidungen 7 bis 10 sind die Rahmenentscheidungen A, E, F und G des Clusters; die Entscheidungen 1 bis 3 tragen C und B, Entscheidung 4 trägt D.
+
+1. **Es gibt keine neue Rolle `Teacher` und keine Zuordnung `TeacherLink` (Rahmen C, führend B-681).** Plan-, Positions-, Klassenarbeits- und Shop-Schreibrouten bleiben `Roles.Supervisor`; ein Lehrer-Konto (Creator ohne Betreuungsauftrag, `TeacherAccountsController.cs:12`) steuert keine Pläne. Begründung: Rahmen A macht den Planer zu Server-Code ohne Identität, ein Lehrer-Zugang zu einem Kind wird also nicht gebraucht; er bräuchte Schema (Migration), den Umbau von rund 33 Gate-Stellen (grep 2026-11-19) und eine zweite Eigentumsprüfung neben `SupervisorOwnsChildAsync`. Kosten: Ein menschlicher Lehrer mit Plan-Steuerung für ein Kind ist nicht möglich; kommt er, ist ein eigenes `TeacherLink` (nicht `SupervisorLink`, damit der Shop zu bleibt) die vorgemerkte Lösung, aber heute nicht gebaut. Verworfen: Gate `AnyAdult` plus `TeacherLink` jetzt (Empfehlung 1 und 2 aus B-681). Schließt aus: die Lesart der User Story von B-681, ein Lehrer-Konto steuere Pläne eines Kindes ohne Wallet-Sicht; erfüllt wird sie dadurch, dass der Planer kein Wallet liest und kein Konto hat. (Beantwortet die Punkte 1 und 2.)
+2. **Der Konsolen-Agent läuft weiter unter dem Konto des Vaters, ein Agenten-Konto entsteht in diesem Zyklus nicht.** Begründung: Nach Rahmen A entscheidet der Agent keine Pflicht und braucht keine Plan-Rolle; Konto und PIN kommen wie heute aus Konfiguration und User-Secrets (`AgentCommands.cs:268`, `:942`). Kosten: Die PIN des Vaters liegt weiter in der Agenten-Konfiguration, und das Konto trägt mehr Rechte, als der Agent braucht (er legt Pläne weiter inaktiv an, `PlanPlanner.cs:101`). Verworfen: ein eigenes Agenten-Konto mit Creator-Profil – ein weiterer Account samt Zuordnung ohne heutigen Nutzen. Schließt aus: einen Agenten, dessen Spuren der Vater von den eigenen unterscheiden kann.
+3. **Der Vater setzt Leitplanken und hat eine Notbremse, er legt keine Tagesmengen fest (Rahmen B, führend B-681).** Je Kind setzt der Vater einmal Boden und Deckel für Pflichtaufgaben und neue Wörter, den Malus-Betrag und Pausen (B-644 Entscheidungen 2 bis 5 und 8) und behält die Notbremse: eine nicht begonnene Aufgabe streichen oder eine eigene dazulegen (B-644 Entscheidung 7). Er baut keinen Plan und bestimmt keine Tagesmenge. Begründung: Ein Planer braucht eine menschliche Grenze gegen Fehlplanung; die vier Zahlen sind die eigenen Entscheidungen des Vaters vom 2026-11-17 und bleiben unberührt; Belohnung, Shop und Einlösen bleiben seine Aufgabe, die Tagesarbeit nicht. Kosten: Der Vater trägt weiter vier Zahlen und eine Pause je Kind; „nur Belohnung“ aus dem Leitbild ist damit nicht wörtlich erfüllt (abgewichen von B-680 Punkt 3, der Boden und Deckel zu Planer-Voreinstellungen machte). Verworfen: Boden und Deckel als reine Planer-Voreinstellung – hübe B-644 Entscheidung 4 auf und ließe den Planer ohne harte Grenze. Schließt aus: einen Vater, der gar nicht mehr in die Mengen eingreifen kann; die User Story „ich möchte die Plansteuerung nicht mehr selbst tragen“ gilt für die tägliche Arbeit, nicht für die Grenzen. (Beantwortet Punkt 4.)
+4. **Klausurtermin und Note trägt der Vater ein (Rahmen D, führend B-681).** Die Schreibrouten der Klassenarbeit bleiben `Roles.Supervisor` (`KlassenarbeitenController.cs:92`, `:130`); Planer, Agent und eine spätere Foto-Auswertung (B-684) lesen Termin und Note oder schlagen sie nur vor, die Freigabe bleibt beim Vater. Begründung: Er hat den Schulkontakt (WebUntis, Heft, Klausur), und eine Note beeinflusst Stufe und Pflicht – kein Konto, das davon profitiert oder Pflichten setzt, trägt sie selbst ein. Kosten: ein Handgriff mehr nach jedem Scan; solange B-684 fehlt, bleibt das Eintragen Handarbeit. Verworfen: Note direkt aus dem Scan übernehmen. Schließt aus: ein Kind oder einen Agenten, der die eigene Note einträgt (Selbstbetrug). (Beantwortet Punkt 5.)
+5. **Der Rollenschnitt verändert keine Daten und bringt keine Migration.** Begründung: Pläne, Positionen und Fortschritte hängen am Kind, nicht am Steuernden; eine neue Zuordnung entfällt nach Entscheidung 1. Der Stichtag-Reset aus B-644 (Entscheidungen 11 und 12) ist davon unberührt und bleibt dort. Kosten: keine. Verworfen: eine Tabelle `TeacherLink` samt Migration (Entscheidung 1). Schließt aus: einen Schnitt, der Bestandsdaten der echten `pugling.db` anfasst.
+6. **Die drei Perspektiven bleiben; „Zuweisen“ wird für das Vater-Konto erst zur Leseansicht, wenn der Planer scharf ist (B-644 Etappe E3).** Begründung: Bis dahin legt der Vater Pläne von Hand an; die Maske vorher wegzunehmen ließe die Kinder ohne Plan. Kosten: Eine Zwischenzeit mit der alten Maske; die Leseansicht ist eigene Arbeit nach E3. Verworfen: die Maske jetzt abschalten. Schließt aus: einen Vater ohne Planungsmöglichkeit, solange kein Planer läuft.
+7. **Der serverseitige Planer entscheidet den Tagesplan, nicht ein Sprachmodell (Rahmen A, führend B-681).** Der Tagesplan entsteht durch den Planer aus B-644 mit festen Regeln in C#; „Lehrer-Agent“ ist der Name dieses Planers gegenüber dem Kind, kein Modellaufruf. Der Konsolen-Agent (`Pugling.Agent.Creator`) bleibt das Werkzeug für Inhalte und entscheidet keine Pflicht. Begründung: Die Pflicht kostet Münzen und muss nachrechenbar und wiederholbar sein (B-644 Entscheidung 10); ein Agent mit Plan-Steuerung bräuchte außerdem ein eigenes Konto und einen Zugriff auf Kinder, den es nicht gibt (Eigentum läuft über `SupervisorLink`, `AuthAccess.cs:112`). Kosten: Der Planer ist nur so klug wie seine Regeln; ein unvorhergesehenes Muster bleibt unentdeckt, bis jemand eine Regel schreibt. Verworfen: ein Sprachmodell, das den Plan je Kind täglich selbst festlegt – nicht nachrechenbar und mit dem lokalen Modell ausfallgefährdet. Schließt aus: einen frei „erfundenen“ Plan je Kind, wie ihn der Satz „Lehrer-Agent erzeugt jeden Tag den Plan“ nahelegt; das Kind bekommt einen täglichen Plan nach seinem Lernstand, kein Modell-Ergebnis.
+8. **Der Tagesplan steht ab 6 Uhr fest, und Malus kostet nur, was das Kind sehen konnte (Rahmen E, führend B-681).** Der Plan des Tages ist ab 6 Uhr Ortszeit eingefroren (B-644 Entscheidung 9); eine verpasste Pflichtaufgabe eines gesehenen Plans kostet genau einmal den Malus-Betrag des Kindes (B-644 Entscheidung 5); ein Tag, an dem nie ein Plan entstand, zählt wie eine Pause (B-644 Entscheidung 19). Begründung: Heute steht die Pflicht Wochen vorher an der Position (`PlanPosition.PenaltyCoins`); eine Pflicht, die erst heute früh entsteht, darf nicht rückwirkend oder unsichtbar kosten (Leitbild: „nicht unfair machen“). Kosten: Wird der Plan um 6 Uhr nicht erzeugt, entgeht dem Kind ein Pflichttag (als Pause beim Vater gemeldet); ein erzeugter Plan lässt sich nur über die Notbremse des Vaters ändern. Verworfen: Malus über die Pflicht an der Position auch für Planer-Kinder. Schließt aus: Strafe für Aufgaben, die das Kind nie angezeigt bekam oder die der Planer nach dem Erzeugen verändert hätte.
+9. **Münzen hängen an der erfüllten Pflicht, nicht an Notenstufe oder Klausurnote (Rahmen F, führend B-681).** Zielpunkte, Truhe und Serie bleiben wie heute an der erfüllten Pflicht; in diesem Zyklus gibt es keine Münzprämie für eine Notenstufe oder eine Klausurnote, die Notenstufe ist Auszeichnung ohne Münzwert (`RewardPoints` 0). Begründung: Die Stufe ist aus Lerndaten geschätzt und keine harte Leistung wie ein bestandener Test, die Note wird von Hand eingetragen; eine Münzprämie darauf trüge Prognosefehler und Eintragsfehler in das Guthaben (Wallet-Invarianten). Die Probeklausur B-249 ist ebenfalls ohne Münzen entschieden. Kosten: Eine gute Klausur belohnt der Vater von Hand (`POST children/{}/points`, Manual); für die Stufe gibt es Ehre statt Geld. Verworfen: Klausurprämie in Münzen. Schließt aus: ein Kind, das für eine Eins in der Klausur automatisch Münzen bekommt.
+10. **Modellerzeugter Inhalt wird erst durch einen Menschen Pflicht (Rahmen G, führend B-681).** Förder-Übungen und Vorstufen aus dem Agenten entstehen als Katalog-Entwurf; Pflicht werden sie erst, wenn ein Mensch sie in einen Plan übernimmt (`assign`, Positionsformular, Einschalten der Stufung). Der Planer wählt nur aus Positionen des aktiven Plans und legt aus Modellinhalt keine Position selbst an. Begründung: Das ersetzt die heutige Sicherung „KI-Plan entsteht inaktiv“ (`PlanPlanner.cs:101`) durch die kleinste menschliche Handlung statt einer Freigabe je Aufgabe; C# prüft die Lösbarkeit (B-460), nicht die Didaktik, und die Qualität hängt am Modell. Kosten: Neue Förder-Übungen erreichen das Kind erst nach einem Vater-Klick; der Agent kann nicht unbeaufsichtigt Inhalt bis zum Kind durchreichen. Verworfen: Der Planer nimmt frische Modellübungen selbst auf, Schattenwoche plus Deckel und Boden als einzige Sicherung. Schließt aus: den täglich vollautomatischen Kreislauf „Agent baut, Planer verteilt, Kind lernt ohne Vater“, den das Leitbild andeutet.
+
+## Akzeptanzkriterien
+
+Final. Je Kriterium die Änderung, die es rot macht.
+
+1. *Absichtserklärung (hält den Ist-Zustand).* Ein Konto nur mit Creator-Profil bekommt auf Plan-, Positions-, Klassenarbeits- und Shop-Schreibrouten `403`. *Rot, wenn* eines dieser Gates auf `Creator` oder `AnyAdult` geöffnet wird (Integrationstest je Routenfamilie mit einem Token ohne Supervisor-Claim).
+2. *Absichtserklärung.* `Roles` kennt genau drei Rollen und das Modell keine Zuordnung `TeacherLink`. *Rot, wenn* eine vierte Rollenkonstante oder eine solche Entität hinzukommt (Reflexionsprüfung in `ConventionGuardTests`).
+3. *Absichtserklärung.* Ein Vater (Creator und Supervisor) bedient Shop und Einlösung wie bisher. *Rot, wenn* ein Shop-Gate an etwas Neues gebunden wird.
+4. Boden, Deckel, Malus-Betrag und Pause lassen sich nur mit Supervisor-Claim und bestandener `SupervisorOwnsChildAsync`-Prüfung setzen: ein Konto nur mit Creator-Profil bekommt `403`, ein fremder Vater `404`. *Rot, wenn* eines der beiden Gates fehlt (gilt ab dem Bau von B-644 E0).
+5. Der Planer nimmt keine Tagesmenge aus einem Request an und hebt eine vom Vater eingetragene Pause nie auf. *Rot, wenn* ein Endpunkt die Menge übernimmt oder der Planer das Pausenfeld überschreibt (gilt ab dem Bau von B-644).
 
 ## Beziehungen zu anderen Stories (nur gelesen)
 
@@ -145,3 +137,4 @@ Final erst nach Entscheidung der Punkte 1 und 2. Je Kriterium die Änderung, die
 - **2026-11-19** — `idee` → `ausformuliert` (Vorbereitungslauf, Sonnet): Ist-Stand am Code belegt. Kern: Die Gates folgen
   schon der richtigen Taxonomie; es fehlt eine Zuordnung Lehrer ⇢ Kind und ein Agenten-Konto, keine neue Rolle
   zwingend. Sieben offene Punkte mit Empfehlung, **nichts entschieden** (Rollenschnitt liegt beim Nutzer).
+- **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle sieben Punkte entschieden, dazu die Rahmenentscheidungen A bis G für den Cluster. Kern: Der Planer läuft im Server ohne Identität, deshalb keine Rolle `Teacher` und kein `TeacherLink`; der Vater behält Leitplanken und Notbremse, trägt Termin und Note ein, der Agent bleibt Inhalts-Werkzeug.

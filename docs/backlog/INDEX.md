@@ -23,10 +23,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-701](B-701-position-spielt-die-aufbau-stufe.md) | Eine Position spielt ihre aktuelle Aufbau-Stufe und steigt nach dem bestandenen Test auf | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-704](B-704-aufbau-weg-in-der-oberflaeche.md) | Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind | Wunsch | `geschaetzt` | P1 | M | frontend | — |
+| [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `gegrillt` | P1 | — | — | — |
+| [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `gegrillt` | P1 | — | — | — |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe | Wunsch | `gegrillt` | P1 | — | backend | — |
 | [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | Wunsch | `gegrillt` | P1 | — | backend | — |
-| [B-644](B-644-tagesplaner-statt-fester-lauf.md) | Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage | Wunsch | `ausformuliert` | P1 | — | — | — |
-| [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `ausformuliert` | P1 | — | — | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `geschaetzt` | P2 | S | backend | — |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `geschaetzt` | P2 | S | beides | — |
@@ -51,20 +51,20 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-710](B-710-gleichung-loesen-typ-und-editor.md) | Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ | Wunsch | `geschaetzt` | P2 | M | beides | — |
-| [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `ausformuliert` | P2 | — | — | — |
+| [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) | Eine Mischwiederholung über alle Positionen des Kindes | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) | Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-627](B-627-berechtigte-meldung-bucht-nach.md) | Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-660](B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) | Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0 | Wunsch | `gegrillt` | P2 | — | beides | — |
+| [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | Wunsch | `gegrillt` | P2 | — | frontend | — |
+| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `gegrillt` | P2 | — | beides | — |
+| [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md) | Rollenschnitt: der Vater belohnt, der Lehrer(-Agent) unterrichtet | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | Wunsch | `gegrillt` | P2 | — | — | — |
+| [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | Wunsch | `gegrillt` | P2 | — | — | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-627](B-627-berechtigte-meldung-bucht-nach.md) | Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-660](B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) | Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0 | Wunsch | `ausformuliert` | P2 | — | beides | — |
-| [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | Wunsch | `ausformuliert` | P2 | — | frontend | — |
-| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `ausformuliert` | P2 | — | beides | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
-| [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md) | Rollenschnitt: der Vater belohnt, der Lehrer(-Agent) unterrichtet | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | Wunsch | `ausformuliert` | P2 | — | — | — |
-| [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `geschaetzt` | P3 | S | frontend | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `geschaetzt` | P3 | M | frontend | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `geschaetzt` | P3 | S | frontend | — |
@@ -74,7 +74,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `geschaetzt` | P3 | S | backend | — |
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | Defekt | `geschaetzt` | P3 | S | frontend | — |
 | [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `geschaetzt` | P3 | M | beides | — |
-| [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | Wird eine Pflicht zur Kür (oder gelöscht), bricht die Serie rückwirkend | Defekt | `ausformuliert` | P3 | — | backend | — |
+| [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | Wird eine Pflicht zur Kür (oder gelöscht), bricht die Serie rückwirkend | Defekt | `gegrillt` | P3 | — | backend | — |
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | Defekt | `ausformuliert` | P3 | — | beides | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
@@ -637,7 +637,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (10)
+### Wartet auf Zutun von außen (9)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -652,8 +652,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
-| [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe | `gegrillt` | Entscheidung des Nutzers (Malus-Regel und Pflichtziel einer gestuften Position) |
-| [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | `gegrillt` | Entscheidung des Nutzers (Rollenschnitt Vater/Lehrer-Agent, B-681) |
+| [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | `gegrillt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
 ### Nach der Abnahme entgangen (199)
 

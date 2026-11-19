@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
+tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
 aliases: [Täglicher Lehrplan, Just-in-time-Plan, Privatlehrer-Plan]
-status: ausformuliert
+status: gegrillt
 prio: P1
 art: Wunsch
 groesse: ""
@@ -22,9 +22,7 @@ den nächsten Klausurtermin und dessen Stoff, auf den Lernstand des Kindes und d
 Umfang ergibt sich aus dem, was bis zum Ziel noch fehlt. Gibt es keine Klausur, läuft ein freier Plan, damit das Kind
 im Stoff bleibt. Die tägliche Pflicht mit dem Stick bleibt der Grundgedanke.
 
-**Vorbehalt:** Diese Story hängt am Richtungswechsel „Leitbild Privatlehrer“ (2026-11-19), den der Nutzer entscheidet.
-Sie wurde im Vorbereitungslauf nur **ausformuliert**; jede Frage unter „Offene Punkte“ steht mit Empfehlung da und ist
-**nicht entschieden**. Es gibt bewusst keinen Abschnitt `## Entscheidungen` mit Inhalt.
+**Stand:** Stellvertretend gegrillt im Vorbereitungslauf 2026-11-20 auf Anweisung des Nutzers („Entscheide die offenen Fragen nach deiner Empfehlung“), unbestätigt. Die Rahmenentscheidungen A bis G gelten für den ganzen Cluster B-644, B-680 bis B-683, B-662, B-663, B-702 und B-703; führend ist B-681.
 
 ## User Story
 
@@ -104,54 +102,50 @@ Fach noch eine Rechnung dahin; und ein Plan ohne Pflicht-Enddatum.
 
 ## Offene Punkte
 
-Jede Frage mit Empfehlung. **Nichts davon ist entschieden.**
+Alle Punkte entschieden; die Empfehlung steht durchgestrichen daneben.
 
-1. **Wie verhält sich B-680 zu B-644?** Fast alle Bausteine (Tagesauswertung, Leistungsprofil, Tagesplaner, Zeitgeber,
-   Lerntage, Reset zum Stichtag) stehen dort. Empfehlung: B-680 wird **keine zweite Planer-Story**, sondern die
-   Produktseite von B-644 – es bleibt eine Karte, und was in B-680 an Entscheidungen neu fällt (Zielbegriff
-   Notenstufe, Wer-entscheidet), wird in B-644 als Regel eingearbeitet. Alternativ B-680 mit B-644 zusammenlegen
-   (`verworfen`, `ersetzt_durch`) – das entscheidet der Nutzer.
-2. **Entscheiden Regeln oder ein Sprachmodell über den Tagesplan?** B-644 Entscheidung 10 sagt: Regeln in C#,
-   Sprachmodell nur für Inhalt und Prosa. Das Leitbild sagt „Lehrer-Agent“. Empfehlung: bei der Regel-Lösung bleiben –
-   die Pflicht kostet Münzen und muss nachrechenbar und wiederholbar sein; „Lehrer-Agent“ ist dann der Name des
-   Planers für das Kind, nicht ein LLM-Aufruf. *Rollenschnitt Vater/Lehrer – Nutzer entscheidet.*
-3. **Was bleibt für den Vater an der Steuerung?** Leitbild: nur Belohnung. B-644 (Entscheidungen 2, 4, 7, 8):
-   Boden und Deckel, Pause und Streichen einer Aufgabe liegen beim Vater. Empfehlung: Der Vater behält eine **Notbremse**
-   (Pause eintragen, eine Aufgabe streichen), setzt aber keine Mengen mehr; Boden und Deckel werden Voreinstellungen des
-   Planers. Ob das gewollt ist, hängt an B-681. *Rollenschnitt – Nutzer entscheidet.*
-4. **Wie wird eine Pflicht, die erst heute entsteht, gegen den Malus fair?** Heute steht die Pflicht Wochen vorher fest
-   (`PenaltyCoins` an der Position, `PlanPositionEntities.cs:86`). Empfehlung: Der Plan des Tages steht ab 6 Uhr fest und
-   ist danach eingefroren (B-644, Selbstbetrug); der Malus gilt je verpasster Pflichtaufgabe, nie rückwirkend für
-   Aufgaben, die das Kind nicht sehen konnte (Tag ohne Plan = Pause, B-644 Punkt 15). *Malus-Regeln – Nutzer entscheidet.*
-5. **Was ersetzt „KI-Plan entsteht inaktiv“, wenn niemand freigibt?** Heute ist die Freigabe die Sicherung gegen
-   fehlerhaften Maschineninhalt (`PlanPlanner.cs:101`). Empfehlung: Schattenmodus eine Woche (B-644 Entscheidung 14) und
-   danach Deckel plus Boden als harte Grenzen – der Planer kann die Pflicht weder über den Deckel heben noch auf null
-   senken.
-6. **Münz-Ökonomie:** Wie viel ist eine erfüllte Tagespflicht in Münzen wert, wenn das Ziel die Notenstufe ist, nicht
-   mehr die Pflicht? Empfehlung: Münzen bleiben an der erfüllten Tagespflicht und an der Klausur, die Notenstufe ist
-   Auszeichnung ohne Münzwert, bis B-682 das anders entscheidet. *Münz-Ökonomie – Nutzer entscheidet.*
-7. **Läuft der Planer im Server oder als Agent gegen die API?** Empfehlung: im Server, als idempotenter träger Aufruf
-   (B-644, Der 6-Uhr-Lauf); der Konsolen-Agent bleibt für Inhalte zuständig.
-8. **Stoff ohne Termin:** `StudyPlan.EndDate` und `Klassenarbeit.ScheduledDate` sind Pflichtfelder. Empfehlung: im
-   Karten-Schnitt von B-644 (Punkt 13) mit entscheiden; hier nicht vorwegnehmen.
-9. **Was sind „freie Pläne“ ohne Klausur?** Empfehlung: dieselbe Planer-Regel ohne Rückwärtsrechnung (Tempo aus dem
-   Leistungsprofil, Boden bleibt), kein eigener Pfad.
-10. **Wie weit trägt ein Plan, wenn das Ziel die Notenstufe ist?** Das Prognosemodell „Lernstand → Note“ gibt es nicht
-    (B-682). Empfehlung: B-680 baut zuerst ohne Notenstufe auf Termin, Stoff und Beherrschung der Wortliste; die
-    Notenstufe ist ein späterer Eingang des Planers, keine Voraussetzung.
-11. **Reihenfolge der Karte:** Empfehlung: Karte (`/wayfinder`) erst, nachdem der Nutzer Punkt 1 bis 3 entschieden hat;
-    vorher wäre jedes Ticket eine Vermutung.
+1. ~~**Wie verhält sich B-680 zu B-644?** Fast alle Bausteine (Tagesauswertung, Leistungsprofil, Tagesplaner, Zeitgeber, Lerntage, Reset zum Stichtag) stehen dort. Empfehlung: B-680 wird **keine zweite Planer-Story**, sondern die Produktseite von B-644 – es bleibt eine Karte, und was in B-680 an Entscheidungen neu fällt (Zielbegriff Notenstufe, Wer-entscheidet), wird in B-644 als Regel eingearbeitet. Alternativ B-680 mit B-644 zusammenlegen (`verworfen`, `ersetzt_durch`) – das entscheidet der Nutzer.~~ → Entscheidung 1.
+2. ~~**Entscheiden Regeln oder ein Sprachmodell über den Tagesplan?** B-644 Entscheidung 10 sagt: Regeln in C#, Sprachmodell nur für Inhalt und Prosa. Das Leitbild sagt „Lehrer-Agent“. Empfehlung: bei der Regel-Lösung bleiben – die Pflicht kostet Münzen und muss nachrechenbar und wiederholbar sein; „Lehrer-Agent“ ist dann der Name des Planers für das Kind, nicht ein LLM-Aufruf. *Rollenschnitt Vater/Lehrer – Nutzer entscheidet.*~~ → Entscheidung 2.
+3. ~~**Was bleibt für den Vater an der Steuerung?** Leitbild: nur Belohnung. B-644 (Entscheidungen 2, 4, 7, 8): Boden und Deckel, Pause und Streichen einer Aufgabe liegen beim Vater. Empfehlung: Der Vater behält eine **Notbremse** (Pause eintragen, eine Aufgabe streichen), setzt aber keine Mengen mehr; Boden und Deckel werden Voreinstellungen des Planers. Ob das gewollt ist, hängt an B-681. *Rollenschnitt – Nutzer entscheidet.*~~ → Entscheidung 3.
+4. ~~**Wie wird eine Pflicht, die erst heute entsteht, gegen den Malus fair?** Heute steht die Pflicht Wochen vorher fest (`PenaltyCoins` an der Position, `PlanPositionEntities.cs:86`). Empfehlung: Der Plan des Tages steht ab 6 Uhr fest und ist danach eingefroren (B-644, Selbstbetrug); der Malus gilt je verpasster Pflichtaufgabe, nie rückwirkend für Aufgaben, die das Kind nicht sehen konnte (Tag ohne Plan = Pause, B-644 Punkt 15). *Malus-Regeln – Nutzer entscheidet.*~~ → Entscheidung 4.
+5. ~~**Was ersetzt „KI-Plan entsteht inaktiv“, wenn niemand freigibt?** Heute ist die Freigabe die Sicherung gegen fehlerhaften Maschineninhalt (`PlanPlanner.cs:101`). Empfehlung: Schattenmodus eine Woche (B-644 Entscheidung 14) und danach Deckel plus Boden als harte Grenzen – der Planer kann die Pflicht weder über den Deckel heben noch auf null senken.~~ → Entscheidung 5.
+6. ~~**Münz-Ökonomie:** Wie viel ist eine erfüllte Tagespflicht in Münzen wert, wenn das Ziel die Notenstufe ist, nicht mehr die Pflicht? Empfehlung: Münzen bleiben an der erfüllten Tagespflicht und an der Klausur, die Notenstufe ist Auszeichnung ohne Münzwert, bis B-682 das anders entscheidet. *Münz-Ökonomie – Nutzer entscheidet.*~~ → Entscheidung 6.
+7. ~~**Läuft der Planer im Server oder als Agent gegen die API?** Empfehlung: im Server, als idempotenter träger Aufruf (B-644, Der 6-Uhr-Lauf); der Konsolen-Agent bleibt für Inhalte zuständig.~~ → Entscheidung 7.
+8. ~~**Stoff ohne Termin:** `StudyPlan.EndDate` und `Klassenarbeit.ScheduledDate` sind Pflichtfelder. Empfehlung: im Karten-Schnitt von B-644 (Punkt 13) mit entscheiden; hier nicht vorwegnehmen.~~ → Entscheidung 8.
+9. ~~**Was sind „freie Pläne“ ohne Klausur?** Empfehlung: dieselbe Planer-Regel ohne Rückwärtsrechnung (Tempo aus dem Leistungsprofil, Boden bleibt), kein eigener Pfad.~~ → Entscheidung 9.
+10. ~~**Wie weit trägt ein Plan, wenn das Ziel die Notenstufe ist?** Das Prognosemodell „Lernstand → Note“ gibt es nicht (B-682). Empfehlung: B-680 baut zuerst ohne Notenstufe auf Termin, Stoff und Beherrschung der Wortliste; die Notenstufe ist ein späterer Eingang des Planers, keine Voraussetzung.~~ → Entscheidung 10.
+11. ~~**Reihenfolge der Karte:** Empfehlung: Karte (`/wayfinder`) erst, nachdem der Nutzer Punkt 1 bis 3 entschieden hat; vorher wäre jedes Ticket eine Vermutung.~~ → Entscheidung 11.
+
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
+
+## Entscheidungen
+
+Entscheidungen 2, 3, 4, 6 und 13 sind die Rahmenentscheidungen A, B, E, F und D (führend B-681); Entscheidung 8 gilt gleichlautend in B-644.
+
+1. **B-680 ist die Produktseite von B-644 und kein zweiter Planer.** B-680 liefert die Planer-Regeln je Fach (Etappen E3 und E4 von B-644) und wird erst gebaut, nachdem B-644 E0 bis E2 gelaufen sind (Ortszeit und Lerntage, Auswertung und Profil, Schattenmodus). Begründung: Fast alle Bausteine stehen in B-644 und seinen 14 Entscheidungen des Vaters; zwei Stories mit demselben Planer würden dieselbe Regel zweimal entscheiden. Kosten: B-680 ist eine Story lang nur eine Abhängigkeit; was neu entschieden wird (Notenstufe, Wer-entscheidet), steht hier und in B-681, nicht doppelt in B-644. Verworfen: B-680 mit B-644 zusammenlegen (`verworfen`, `ersetzt_durch`) – verlöre die Produktsicht (Fach, Klausur, Folgetag) und den Zuschnitt auf Etappen. Schließt aus: einen eigenen Planer-Pfad neben B-644.
+2. **Der serverseitige Planer entscheidet den Tagesplan, nicht ein Sprachmodell (Rahmen A, führend B-681).** Der Tagesplan entsteht durch den Planer aus B-644 mit festen Regeln in C#; „Lehrer-Agent“ ist der Name dieses Planers gegenüber dem Kind, kein Modellaufruf. Der Konsolen-Agent (`Pugling.Agent.Creator`) bleibt das Werkzeug für Inhalte und entscheidet keine Pflicht. Begründung: Die Pflicht kostet Münzen und muss nachrechenbar und wiederholbar sein (B-644 Entscheidung 10); ein Agent mit Plan-Steuerung bräuchte außerdem ein eigenes Konto und einen Zugriff auf Kinder, den es nicht gibt (Eigentum läuft über `SupervisorLink`, `AuthAccess.cs:112`). Kosten: Der Planer ist nur so klug wie seine Regeln; ein unvorhergesehenes Muster bleibt unentdeckt, bis jemand eine Regel schreibt. Verworfen: ein Sprachmodell, das den Plan je Kind täglich selbst festlegt – nicht nachrechenbar und mit dem lokalen Modell ausfallgefährdet. Schließt aus: einen frei „erfundenen“ Plan je Kind, wie ihn der Satz „Lehrer-Agent erzeugt jeden Tag den Plan“ nahelegt; das Kind bekommt einen täglichen Plan nach seinem Lernstand, kein Modell-Ergebnis. (Beantwortet Punkt 2.)
+3. **Der Vater setzt Leitplanken und hat eine Notbremse, er legt keine Tagesmengen fest (Rahmen B, führend B-681).** Je Kind setzt der Vater einmal Boden und Deckel für Pflichtaufgaben und neue Wörter, den Malus-Betrag und Pausen (B-644 Entscheidungen 2 bis 5 und 8) und behält die Notbremse: eine nicht begonnene Aufgabe streichen oder eine eigene dazulegen (B-644 Entscheidung 7). Er baut keinen Plan und bestimmt keine Tagesmenge. Begründung: Ein Planer braucht eine menschliche Grenze gegen Fehlplanung; die vier Zahlen sind die eigenen Entscheidungen des Vaters vom 2026-11-17 und bleiben unberührt; Belohnung, Shop und Einlösen bleiben seine Aufgabe, die Tagesarbeit nicht. Kosten: Der Vater trägt weiter vier Zahlen und eine Pause je Kind; „nur Belohnung“ aus dem Leitbild ist damit nicht wörtlich erfüllt (abgewichen von B-680 Punkt 3, der Boden und Deckel zu Planer-Voreinstellungen machte). Verworfen: Boden und Deckel als reine Planer-Voreinstellung – hübe B-644 Entscheidung 4 auf und ließe den Planer ohne harte Grenze. Schließt aus: einen Vater, der gar nicht mehr in die Mengen eingreifen kann; die User Story „ich möchte die Plansteuerung nicht mehr selbst tragen“ gilt für die tägliche Arbeit, nicht für die Grenzen. (Beantwortet Punkt 3.)
+4. **Der Tagesplan steht ab 6 Uhr fest, und Malus kostet nur, was das Kind sehen konnte (Rahmen E, führend B-681).** Der Plan des Tages ist ab 6 Uhr Ortszeit eingefroren (B-644 Entscheidung 9); eine verpasste Pflichtaufgabe eines gesehenen Plans kostet genau einmal den Malus-Betrag des Kindes (B-644 Entscheidung 5); ein Tag, an dem nie ein Plan entstand, zählt wie eine Pause (B-644 Entscheidung 19). Begründung: Heute steht die Pflicht Wochen vorher an der Position (`PlanPosition.PenaltyCoins`); eine Pflicht, die erst heute früh entsteht, darf nicht rückwirkend oder unsichtbar kosten (Leitbild: „nicht unfair machen“). Kosten: Wird der Plan um 6 Uhr nicht erzeugt, entgeht dem Kind ein Pflichttag (als Pause beim Vater gemeldet); ein erzeugter Plan lässt sich nur über die Notbremse des Vaters ändern. Verworfen: Malus über die Pflicht an der Position auch für Planer-Kinder. Schließt aus: Strafe für Aufgaben, die das Kind nie angezeigt bekam oder die der Planer nach dem Erzeugen verändert hätte. (Beantwortet Punkt 4.)
+5. **An die Stelle von „KI-Plan entsteht inaktiv“ treten eine Woche Schattenmodus (B-644 Entscheidung 14), danach Boden und Deckel als harte Grenzen und Rahmen G für den Inhalt.** Der Planer kann die Pflicht weder über den Deckel heben noch unter den Boden senken. Begründung: Die heutige Freigabe sichert gegen fehlerhaften Maschineninhalt (`PlanPlanner.cs:101`); der Planer ist deterministischer Code (Rahmen A), seine Gefahr ist Fehlplanung, nicht Fehlinhalt, und die fangen Schattenwoche und Grenzen. Kosten: Eine Woche, in der der Planer nichts bewirkt; ein Regelfehler innerhalb der Grenzen trifft Münzen (die Notbremse des Vaters bleibt). Verworfen: eine Freigabe je Tagesplan – sie ließe das Kind an jedem Morgen ohne Aufgaben, an dem der Vater nicht hineinsieht (B-644 Entscheidung 7). Schließt aus: einen Tagesplan, der ohne Blick des Vaters über den Deckel oder unter den Boden fällt.
+6. **Münzen hängen an der erfüllten Pflicht, nicht an Notenstufe oder Klausurnote (Rahmen F, führend B-681).** Zielpunkte, Truhe und Serie bleiben wie heute an der erfüllten Pflicht; in diesem Zyklus gibt es keine Münzprämie für eine Notenstufe oder eine Klausurnote, die Notenstufe ist Auszeichnung ohne Münzwert (`RewardPoints` 0). Begründung: Die Stufe ist aus Lerndaten geschätzt und keine harte Leistung wie ein bestandener Test, die Note wird von Hand eingetragen; eine Münzprämie darauf trüge Prognosefehler und Eintragsfehler in das Guthaben (Wallet-Invarianten). Die Probeklausur B-249 ist ebenfalls ohne Münzen entschieden. Kosten: Eine gute Klausur belohnt der Vater von Hand (`POST children/{}/points`, Manual); für die Stufe gibt es Ehre statt Geld. Verworfen: Klausurprämie in Münzen. Schließt aus: ein Kind, das für eine Eins in der Klausur automatisch Münzen bekommt. (Beantwortet Punkt 6.)
+7. **Der Planer läuft im Server als träger, idempotenter Aufruf beim ersten Zugriff nach 6 Uhr Ortszeit; ein kleiner Hintergrunddienst ruft dieselbe Methode um 6 Uhr (B-644 Entscheidung 9).** Begründung: Ein Codepfad, und der Plan entsteht auch, wenn der Heimserver um 6 Uhr aus war; im Backend gibt es bisher keinen Zeitgeber (`IHostedService`, `BackgroundService`, `PeriodicTimer` ohne Treffer, 2026-11-19). Kosten: Der erste Zugriff nach 6 Uhr zahlt die Rechenzeit; der Hintergrunddienst ist das erste zeitgesteuerte Stück des Backends. Verworfen: der Planer als Konsolen-Agent gegen die API – abhängig von Handstart und lokalem Modell. Schließt aus: einen Tag ohne Plan, weil niemand den Agenten gestartet hat.
+8. **`StudyPlan.EndDate` wird optional, `Klassenarbeit.ScheduledDate` bleibt Pflicht.** Der Stoffrahmen bleibt der `StudyPlan` (Fach, Unit, Start); ein Plan ohne Termin trägt kein `EndDate`. Ein noch nicht feststehender Klausurtermin heißt: noch keine Klassenarbeit angelegt, sie entsteht beim Nachtragen. Begründung: B-644 Entscheidung 1 (Termin optional, kommt oft später); das ist die kleinste Änderung am Modell, ohne zweites Aggregat mit eigenem Eigentumsfilter und eigener Aktivierungsregel je Fach (B-539). Kosten: `EndDate` wird an 29 Fundstellen gelesen (Api und Contracts ohne Migrationen und Tests, Zählung 2026-11-20; Api-Dateien: PlanOverviewController, StudentPlansController, StudyPlansController, MediaDemandService, PositionPlayService, PositionProgressService, ChildrenDashboardService) – jede braucht den Fall „ohne Ende“; im Vertrag wird das Feld nullable (Vertragsbruch), dazu eine Migration. Verworfen: eine eigene, schlankere Stoffrahmen-Entität mit Wegfall des `StudyPlan` zum Stichtag – zweite Gruppe für die Aktivierungsregel, zweite Eigentumsprüfung, und die Positionen hängen am Container. Schließt aus: einen Stoffrahmen, der ein Pflicht-Enddatum vortäuscht, und eine Klassenarbeit ohne Datum (Termin unbekannt heißt: keine Klassenarbeit). (Beantwortet Punkt 8; gleichlautend B-644 Entscheidung 17.)
+9. **Ein freier Plan ohne Klausur ist derselbe Planer ohne Rückwärtsrechnung:** Das Tempo kommt aus dem Leistungsprofil zwischen Boden und Deckel (B-644 Entscheidung 2), es gibt keinen eigenen Pfad. Begründung: Eine zweite Regelmenge für „frei“ würde doppelt gepflegt und könnte vom Hauptpfad abweichen. Kosten: Ohne Termin fehlt der Druck; das Tempo hängt am Kind und am Boden. Verworfen: der freie Plan als eigener Modus. Schließt aus: ein Fach ohne Klausur, dessen Stoff nie wieder drankommt – der Boden gilt über alle Fächer, und die Verteilung nach Schwäche (B-644 Regel 5) holt es zurück.
+10. **Die Notenstufe ist kein Eingang des ersten Baus.** Der Planer rechnet auf Termin, Stoff und Beherrschung der Wortliste (Anteil `MasteredItems` am Stoff, B-682 Entscheidung 1). Begründung: Das Prognosemodell „Lernstand → Note“ gibt es nicht, und B-682 darf B-680 nicht blockieren. Kosten: Das Leitbild „der Planer arbeitet auf die Zielnote hin“ wird erst in einer späteren Ausbaustufe erfüllt; bis dahin plant er auf „Stoff bis Termin beherrscht“. Verworfen: den Planer erst nach B-682 bauen. Schließt aus: eine Planmenge, die von einer Notenstufe abhängt, solange es keine gibt.
+11. **B-680 bekommt keine eigene Karte (`/wayfinder`).** Die Fragen sind entschieden, die Etappen E0 bis E5 von B-644 sind der Schnitt. Begründung: Eine Karte lohnt, wenn die Punkte voneinander abhängen und man die Kette nicht sieht (README); hier hängen sie an Rahmenentscheidungen, die gefallen sind. Kosten: Die Entscheidungen sind stellvertretend und unbestätigt; widerspricht der Nutzer bei den Rahmenentscheidungen A bis C, wird doch eine Karte nötig. Verworfen: eine Karte vor dem Grillen. Schließt aus: Ticket-Dateien unter `karten/B-680/`.
+12. **Der Tagesplan ist eindeutig je Kind und Lerntag; das Fach ist Eigenschaft der Aufgabe, nicht des Plans.** Boden und Deckel gelten über alle Fächer (B-644 Entscheidung 4), die Verteilung folgt Stundenplan und Schwäche (B-644 Regeln 3 bis 5). Begründung: So steht es in B-644, und eine Pflicht je Fach und Tag würde die vier Zahlen je Kind zu vier je Fach vervielfachen. Kosten: Ein Fach kann an einem Tag keine Pflichtaufgabe haben; die User Story „jeden Tag für jedes Fach“ gilt als „für die Fächer, die laut Verteilung dran sind“. Verworfen: ein Pflichtminimum je Fach und Tag. Schließt aus: ein Fach, das jeden Tag drankommen muss, auch wenn der Stundenplan es nicht verlangt und nichts fällig ist.
+13. **Klausurtermin und Note trägt der Vater ein (Rahmen D, führend B-681).** Die Schreibrouten der Klassenarbeit bleiben `Roles.Supervisor` (`KlassenarbeitenController.cs:92`, `:130`); Planer, Agent und eine spätere Foto-Auswertung (B-684) lesen Termin und Note oder schlagen sie nur vor, die Freigabe bleibt beim Vater. Begründung: Er hat den Schulkontakt (WebUntis, Heft, Klausur), und eine Note beeinflusst Stufe und Pflicht – kein Konto, das davon profitiert oder Pflichten setzt, trägt sie selbst ein. Kosten: ein Handgriff mehr nach jedem Scan; solange B-684 fehlt, bleibt das Eintragen Handarbeit. Verworfen: Note direkt aus dem Scan übernehmen. Schließt aus: ein Kind oder einen Agenten, der die eigene Note einträgt (Selbstbetrug).
 
 ## Beziehungen zu anderen Stories (nur gelesen)
 
-- **[B-644](B-644-tagesplaner-statt-fester-lauf.md)** (`ausformuliert`, P1, hat 14 Entscheidungen des Vaters): große
+- **[B-644](B-644-tagesplaner-statt-fester-lauf.md)** (`gegrillt`, P1, 14 Entscheidungen des Vaters und sechs stellvertretende): große
   inhaltliche Überschneidung, siehe oben. Konflikte mit dem Leitbild: Entscheidung 7 (Vater kann eingreifen) und 10
   (Regeln statt Sprachmodell).
-- **[B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md)** (`idee`): entscheidet, wer den Plan steuert;
+- **[B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md)** (`gegrillt`): entscheidet, wer den Plan steuert;
   Voraussetzung für Punkt 3.
-- **[B-682](B-682-notenstufe-je-fach-statt-liga.md)** (`idee`): liefert das Ziel (Notenstufe), von dem der Plan
+- **[B-682](B-682-notenstufe-je-fach-statt-liga.md)** (`gegrillt`): liefert das Ziel (Notenstufe), von dem der Plan
   zurückrechnet; B-680 darf nicht darauf warten (Punkt 10).
-- **[B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md)** (`idee`): die echte Note eicht die Prognose; liest
+- **[B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md)** (`gegrillt`): die echte Note eicht die Prognose; liest
   `Klassenarbeit.Grade`, das schon vorhanden ist.
 - **[B-684](B-684-korrigierte-klausur-einscannen.md)** (`idee`, P3): bringt Note und Fehler an die Klassenarbeit;
   die Fehlerart ist auch ein Eingang des Leistungsprofils in B-644.
@@ -159,32 +153,20 @@ Jede Frage mit Empfehlung. **Nichts davon ist entschieden.**
   in B-644 (Regel 4) auf. **[B-618](B-618-faecher-verteilung-backend.md)** (`geschaetzt`, wartet auf B-644): Verteilung
   über die Fächer. **[B-630](B-630-rueckmeldung-im-ki-creator.md)** (`geschaetzt`): Rückmeldungen im KI-Creator.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
-Jedes Kriterium nennt die Änderung, die es rot macht. Sie werden erst final, wenn die offenen Punkte 1 bis 3
-entschieden sind; Zahlen und Namen sind Platzhalter.
+Final. Je Kriterium die Änderung, die es rot macht.
 
-1. Für jedes Kind und jedes Fach mit aktivem Stoff entsteht an jedem Lerntag genau eine gespeicherte Tagesvorgabe;
-   zweimaliges Auslösen erzeugt keine zweite. *Rot, wenn* der Aufruf nicht idempotent ist (zweiter Lauf legt eine zweite
-   Zeile an).
-2. Mit einem eingetragenen Klausurtermin richtet sich die Menge neuer Wörter nach dem Abstand zum Termin und dem noch
-   nicht beherrschten Rest der Stoff-Wortliste. *Rot, wenn* der Planer den Termin ignoriert (gleiche Menge bei Termin
-   in drei Tagen und in drei Wochen).
-3. Ohne Klausurtermin entsteht trotzdem eine nicht leere Tagesvorgabe am Boden. *Rot, wenn* ein Fach ohne Termin
-   einen leeren Tag liefert.
-4. Ein nachgetragener oder verschobener Termin ändert die Vorgabe des **Folgetags**, nicht die des laufenden Tages.
-   *Rot, wenn* der laufende, eingefrorene Plan sich ändert.
-5. Der Tagesplan ist nach dem Erzeugen für das Kind nicht neu würfelbar. *Rot, wenn* ein zweiter Abruf eine andere
-   Zusammenstellung liefert.
-6. Eine bis Tagesende nicht erledigte Pflichtaufgabe kostet genau einmal Münzen, eine erledigte nichts; ein Tag, an dem
-   kein Plan entstand, kostet nichts. *Rot, wenn* der Malus für einen nie sichtbar gewesenen Plan gebucht wird oder
-   doppelt.
-7. Dieselben Daten ergeben denselben Plan (deterministisch). *Rot, wenn* der Planer von Zufall oder einem Sprachmodell
-   abhängt.
-8. Das Kind sieht je Aufgabe den Grund (Klausur in n Tagen, Wort schwach). *Rot, wenn* die Begründung fehlt oder bei
-   unterschiedlichen Ausgangsdaten gleich lautet.
-9. Die Notenstufe (B-682) ist **kein** Eingang dieses ersten Baus. *Rot, wenn* ein Test den Plan an eine Notenstufe
-   bindet, die es noch nicht gibt.
+1. Je Kind und Lerntag entsteht genau ein gespeicherter Tagesplan (die Aufgaben tragen das Fach); zweimaliges Auslösen legt keinen zweiten an. *Rot, wenn* der Unique-Index auf (Kind, Tag) fehlt oder der Aufruf nicht idempotent ist.
+2. Bei gleicher Stoff-Wortliste ergibt „Termin in 3 Tagen“ mehr neue Wörter als „Termin in 3 Wochen“, bis zum Deckel. *Rot, wenn* der Planer den Termin ignoriert.
+3. Ohne Termin (Plan ohne `EndDate`, keine Klassenarbeit) ist der Tagesplan nicht leer und liegt mindestens am Boden. *Rot, wenn* der Boden nicht angewandt wird.
+4. Ein nachgetragener oder verschobener Termin ändert den Plan des Folgetags, nicht den eingefrorenen laufenden. *Rot, wenn* der heutige Plan neu gerechnet wird.
+5. Ein zweiter Abruf am selben Tag liefert dieselbe Zusammenstellung, auch wenn sich der Lernstand dazwischen ändert. *Rot, wenn* der Plan beim Abruf neu gerechnet wird.
+6. Eine bis Tagesende nicht erledigte Pflichtaufgabe kostet genau einmal den Malus-Betrag, eine erledigte nichts, ein Tag ohne erzeugten Plan nichts. *Rot, wenn* der Malus für einen nie gesehenen Plan oder doppelt gebucht wird.
+7. Gleiche Daten und gleiche Uhr ergeben denselben Plan; der Planer-Dienst hängt weder von einem Chat-Client noch von ungesätem Zufall ab. *Rot, wenn* eine solche Abhängigkeit in den Konstruktor kommt oder zwei Läufe mit `FakeTimeProvider` verschiedene Pläne liefern.
+8. Jede Aufgabe trägt eine Begründung, die aus den Eingangsdaten entsteht (Klausur in n Tagen, Wort schwach). *Rot, wenn* der Text konstant ist oder bei verschiedenen Ausgangsdaten gleich lautet.
+9. Die Pflicht liegt immer zwischen Boden und Deckel; liegt das nötige Tempo über dem Deckel, bekommt der Vater eine Meldung mit der fehlenden Menge. *Rot, wenn* der Deckel überschritten oder die Meldung unterdrückt wird.
+10. *Absichtserklärung.* Der Planer-Dienst hat keine Abhängigkeit auf einen Notenstufen-Dienst. *Rot, wenn* der Konstruktor einen solchen erhält, bevor B-682 gebaut und bestätigt ist.
 
 ## Verlauf
 
@@ -193,3 +175,4 @@ entschieden sind; Zahlen und Namen sind Platzhalter.
   überschneidet sich weitgehend mit der schon gegrillten B-644; neu sind nur das Ziel „Notenstufe“ und die Frage, ob ein
   Agent oder feste Regeln den Plan entscheiden. Elf offene Punkte mit Empfehlung, **nichts entschieden** (Rollenschnitt,
   Münz-Ökonomie und Malus-Regeln liegen beim Nutzer).
+- **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle elf Punkte entschieden. Kern: B-680 ist die Produktseite von B-644 (E3/E4), der Planer entscheidet mit festen Regeln im Server, der Vater behält Leitplanken und Notbremse, Notenstufe ist kein Eingang des ersten Baus, `StudyPlan.EndDate` wird optional.

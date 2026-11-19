@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Tagesaufgabe wiederholen, Wiederholung mit sinkenden Münzen]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -80,46 +80,101 @@ Es ist möglich, dass die Story zu großen Teilen durch eine **Verbindung** vom 
 
 ## Offene Punkte
 
-Die Münz-Ökonomie ist Sache des Vaters. Je Frage nur eine Empfehlung, keine Entscheidung.
+Alle Punkte sind unten entschieden (durchgestrichen, mit Verweis auf die Entscheidung).
 
-1. **Neuer Weg oder Bonus-Training erweitern?** Ein zweiter Münzweg neben dem Bonus-Training verdoppelt Deckel,
+1. ~~**Neuer Weg oder Bonus-Training erweitern?** Ein zweiter Münzweg neben dem Bonus-Training verdoppelt Deckel,
    Halbierung und Sperre.
    *Empfehlung:* kein zweiter Weg. Das Bonus-Training erweitern: dieselbe Übung am Knoten einer erledigten Pflicht als
-   Einstieg ins Bonus-Training anbieten, und die Ausnahme „Nicht-Vokabel-Position" (Punkt 6) überprüfen.
-2. **Form der Abnahme:** Halbierung, feste Stufen oder ein Wert?
+   Einstieg ins Bonus-Training anbieten, und die Ausnahme „Nicht-Vokabel-Position" (Punkt 6) überprüfen.~~ → Entscheidung 1 und 2.
+2. ~~**Form der Abnahme:** Halbierung, feste Stufen oder ein Wert?
    *Empfehlung:* die vorhandene Stufung 100/50/25/0 beibehalten (`RunPercent`). Ein zweites Schema für dieselbe Sache
-   wäre die Kosten nicht wert.
-3. **Je Position oder je Tag?** Heute zählt die Halbierung je **Übung und Tag**
+   wäre die Kosten nicht wert.~~ → Entscheidung 5.
+3. ~~**Je Position oder je Tag?** Heute zählt die Halbierung je **Übung und Tag**
    (`ExtraTrainingService.cs:191-193`), nicht je Position.
    *Empfehlung:* je Übung und Tag beibehalten. Eine Übung ist selten in mehr als einer Position desselben Kindes, und
-   „je Position" erlaubte, dieselbe Übung über einen zweiten Plan zu melken.
-4. **Zählt eine Wiederholung für den Leitner-Kasten?**
+   „je Position" erlaubte, dieselbe Übung über einen zweiten Plan zu melken.~~ → Entscheidung 5.
+4. ~~**Zählt eine Wiederholung für den Leitner-Kasten?**
    *Empfehlung:* nein, wie im Bonus-Training (Punkt 7). Die Karte soll an ihrem Fälligkeitstag wieder drankommen; eine
-   freiwillige Zusatzrunde darf den Abstand nicht verlängern.
-5. **Der Deckel (90 Münzen am Tag) und die Sperre „erst nach den Tageszielen" bleiben?**
-   *Empfehlung:* ja. Der Vater hat „solange sich das nicht ausnutzen lässt" gesagt; beide Regeln sind sein Schutz.
-6. **Vorschlag: Duplikat?** B-660 deckt sich zum großen Teil mit dem Bonus-Training (B-538/B-657/B-535).
+   freiwillige Zusatzrunde darf den Abstand nicht verlängern.~~ → Entscheidung 5.
+5. ~~**Der Deckel (90 Münzen am Tag) und die Sperre „erst nach den Tageszielen" bleiben?**
+   *Empfehlung:* ja. Der Vater hat „solange sich das nicht ausnutzen lässt" gesagt; beide Regeln sind sein Schutz.~~ → Entscheidung 5.
+6. ~~**Vorschlag: Duplikat?** B-660 deckt sich zum großen Teil mit dem Bonus-Training (B-538/B-657/B-535).
    *Empfehlung:* nicht verwerfen, aber **kürzen** auf Punkt 1 der Lücke (Erreichbarkeit vom Knoten, Ausnahme für
-   Nicht-Vokabel-Positionen). Das entscheidet der Vater beim Grillen.
+   Nicht-Vokabel-Positionen). Das entscheidet der Vater beim Grillen.~~ → Entscheidung 6.
 
-## Akzeptanzkriterien (Entwurf)
+## Entscheidungen
 
-Je Kriterium die Änderung, die es rot macht. Entwurf; endgültig erst nach der Grill-Runde.
+*Stellvertretend entschieden im Vorbereitungslauf 2026-11-20 (Sonnet) auf Anweisung des Nutzers (Empfehlung übernommen), unbestätigt.*
 
-1. Vom Knoten einer **erledigten** Pflicht aus lässt sich dieselbe Übung noch einmal spielen, sobald die Tagesziele
-   erfüllt sind. *Rot, wenn* der Knoten weiter nur in den Leerzustand führt
-   (`SohnPractice.tsx:139`).
-2. Eine Nicht-Vokabel-Übung, die Position eines Plans des Kindes ist, ist im Bonus-Training spielbar. *Rot, wenn*
-   `knownFromPath` sie weiter ausschließt (`ExtraTrainingService.cs:318-322`).
-3. Der erste Wiederholungsdurchgang zahlt 100 %, der zweite 50 %, der dritte 25 %, der vierte 0 % der Treffer-Münzen.
-   *Rot, wenn* `RunPercent` (`:282-289`) geändert oder umgangen wird.
-4. Nach dem vierten Durchgang lässt sich dieselbe Übung weiter spielen, ohne Münzen. *Rot, wenn* der Start bei 0 %
-   abgewiesen wird (`:94-97`) – das gilt heute nur für die Vokabel.
-5. Eine Wiederholung ändert weder Kasten noch Fälligkeit der Position. *Rot, wenn* der Durchgang `PositionItemProgress`
-   schreibt.
-6. Die Tagessumme der Wiederholungs-Münzen bleibt unter dem Deckel. *Rot, wenn* ein Weg am Deckel vorbei bucht.
-7. Der Leerzustand der Üben-Sicht nennt, dass es weitergeht und was es bringt. *Rot, wenn* der Text unverändert
-   „nichts fällig" meint.
+**Querfrage mit [B-218](B-218-mischwiederholung-ueber-alle-positionen.md) (dort Entscheidungen 1, 2 und 7, gleiche Antwort):**
+Es gibt **einen** Münzweg für Zusatzrunden, das Bonus-Training (`ExtraTrainingService`), und **einen** Tagesdeckel
+(`Child.BonusDailyCoinCap`, sonst `DailyCoinCap` = 90). Eine **Wiederholung** (diese Story) bewegt keinen Kasten; eine
+**Mischwiederholung** fälliger Karten (B-218) bewegt den Kasten der Herkunftsposition, weil sie die Leitner-Wiederholung
+selbst ist. **Überschneidung mit abgenommenen Entscheidungen, nicht geändert:** B-533 Entscheidung 6 („Bekanntes fliegt raus“),
+7 („unabhängig vom Plan“), 1 und 3 (Sperre, Deckel) sowie B-538 Entscheidung 6 und 7 (Halbierung je Übung und Tag, Deckel 90).
+
+1. **Kein zweiter Münzweg: die Wiederholung ist das Bonus-Training.** *Begründung:* Das Bonus-Training zahlt die verlangte
+   Abnahme schon (`RunPercent` 100/50/25/0 je Übung und Tag, `ExtraTrainingService.cs:282-289`), mit Deckel und Sperre. Ein
+   zweites Schema für dieselbe Sache wäre die Kosten nicht wert. Die Position zahlt eine Karte ohnehin nur einmal je Tag
+   (`PositionPracticeController.cs:674-680`), eine zweite Runde im Üben zahlt also 0. *Kosten:* Wiederholen mit Münzen
+   verlangt, dass die Tagesziele erfüllt sind (`duty_open`). *Verworfen:* Münzen je Wiederholung im Üben (zwei Deckel, zwei
+   Halbierungen). *Schließt aus:* Ein Kind, das erst eine von vier Pflichten gemacht hat und diese Aufgabe sofort noch einmal
+   für Münzen spielen will; es kann üben (Entscheidung 3), aber nicht kassieren. Das ist gegen die User Story gerechnet gewollt:
+   „solange sich das nicht ausnutzen lässt“ ist der Grund der Sperre.
+2. **Der Knoten einer erledigten Pflicht führt weiter, statt in den Leerzustand.** Der Leerzustand der Üben-Sicht
+   (`SohnPractice.tsx:139`, Phase `empty` `:434`) sagt, dass es weitergeht, und bietet je nach Lage: das **Bonus-Training mit
+   dieser Übung** (nur wenn sie im Pool liegt, die Sperre offen ist; sonst der Satz, wie viele Tagesziele noch fehlen) und das
+   **Weiter üben ohne Münzen** (Entscheidung 3). *Begründung:* Friedrich tippt den Knoten an und findet heute „nichts fällig“
+   (Ist-Stand 2); das ist die erlebte Abgeschlossenheit. *Kosten:* ein Einstieg ins Bonus-Training aus der Üben-Sicht und
+   neuer Text (Übersetzungsschlüssel `practice.empty*`, nicht gelesen). *Verworfen:* den Knoten direkt ins Bonus-Training
+   leiten: ein Tippen soll nie ungefragt eine bezahlte Runde starten.
+3. **„Weiter üben, so oft er will“ ist der vorhandene freie Modus `PlayMode.Info`.** Er spielt den ganzen Pool ohne
+   Fälligkeit (`PositionPracticeController.cs:121-129`), ohne Rückmeldung (`:569`, 204), zahlt nichts, bewegt keinen Kasten,
+   und zählt nicht zur Pflicht (nur `PlayMode.Lern` zählt, `PositionProgressService.cs`, `PlayedRoundMeetsGoalAsync`).
+   *Begründung:* Es ist das einzige „noch einmal“, das für **jeden** Übungstyp geht, auch für die ausgesparten
+   Nicht-Vokabel-Positionen. *Kosten:* Die Sohn-App benutzt den Modus bisher nirgends (Ist-Stand 4: nicht gefunden), das ist neue
+   Oberfläche; wird sie größer als M, wird sie beim Schätzen eine eigene Story. *Verworfen:* gar nicht anbieten: dann hätte
+   Friedrich für Lückentext und Co. keine Wiederholung. *Schließt aus:* Münzen für das Wiederholen einer
+   Nicht-Vokabel-Pflicht (siehe 4).
+4. **Die Ausnahme „Nicht-Vokabel-Position“ bleibt (B-533 Entscheidung 6 unverändert).** Eine Übung ohne Vokabeln, die Position
+   eines Plans des Kindes ist, steht nicht im Bonus-Pool (`knownFromPath`, `ExtraTrainingService.cs:318-322`). *Begründung:*
+   Eine feste Übung fragt dieselben Antworten, und die erste Wiederholung würde mit 100 % „für das Gedächtnis“ zahlen
+   (Kommentar `:21-24`); genau das ist der Missbrauch, den der Vater nennt. *Kosten:* Für Lückentext, Rechnen und Co. gibt es
+   **keine sinkende Münzleiter** aus der Pflicht heraus, nur das freie Üben. **Hier würde der Nutzer am ehesten anders
+   entscheiden.** *Verworfen:* die Ausnahme aufheben: sie erlaubte, eine gelernte Pflicht mit 100/50/25 Prozent zu melken.
+   *Gegen die User Story gerechnet:* Der Vater will „bis 0 sinken“; für diese Typen ist es von Anfang an 0. Das ist der
+   ausgeschlossene Fall.
+5. **Form, Zähler, Deckel, Sperre und Kasten bleiben, wie sie sind.** Stufung 100/50/25/0; Zähler **je Übung und Tag** (B-538
+   Entscheidung 6; „je Position“ erlaubte, dieselbe Übung über einen zweiten Plan zu melken); Deckel je Kind übersteuerbar
+   (Vorgabe 90, `ExtraTrainingOptions.cs:14`; die Story sprach von einem festen Wert); Sperre „erst nach den Tageszielen“;
+   die Wiederholung bewegt weder Kasten noch Fälligkeit (B-533 Entscheidung 7), damit die Karte an ihrem Fälligkeitstag wieder
+   drankommt. *Kosten:* keine neue Regel, kein neuer Code. *Schließt aus:* eine freiwillige Zusatzrunde, die den Abstand der
+   Karte verlängert.
+6. **Die Story wird auf die Erreichbarkeit gekürzt, nicht verworfen.** Sie deckt sich mit B-533/B-538/B-657 bis auf
+   Entscheidung 2 und 3 (Knoten, Leerzustand, freies Üben). *Kosten:* kleinere Story (voraussichtlich S bis M). *Verworfen:*
+   als Duplikat verwerfen: der erlebte Fall „Knoten führt ins Leere“ bleibt sonst ohne Eigentümer.
+
+## Akzeptanzkriterien
+
+Je Kriterium die Änderung, die es rot macht. „Bestehendes Verhalten“ heißt: der Ausgangszustand erfüllt es schon; das
+Kriterium ist eine Absichtserklärung und fällt nur, wenn jemand die genannte Regel aufhebt.
+
+1. Der Leerzustand einer **erledigten Vokabel-Pflicht** bietet bei offener Sperre das Bonus-Training mit **dieser** Übung
+   und das freie Üben an, bei geschlossener Sperre den Satz, wie viele Tagesziele fehlen. *Rot, wenn der Leerzustand wie
+   heute nur den Text zeigt (`SohnPractice.tsx:139`). Vitest an `SohnPractice` mit einer Position ohne Fälliges.*
+2. Der Text des Leerzustands nennt, dass es weitergeht und was es bringt (Münzen im Bonus-Training, keine beim freien Üben).
+   *Rot, wenn der Text unverändert „nichts fällig“ meint.*
+3. Das **freie Üben** nach einer erledigten Pflicht spielt den ganzen Pool, ohne Münzen, ohne Kasten, ohne Wirkung auf die
+   Pflicht. *Rot, wenn der Durchgang `PositionItemProgress`, einen `ChildPointsEntry` oder eine zählende `PracticeSession`
+   (`Mode = Lern`) schreibt. API-Test: Info-Sitzung, Antwort `204`, Kontostand und `DueOn` vor und nach gleich.*
+4. **Bestehendes Verhalten:** Eine Nicht-Vokabel-Übung, die Position eines Plans des Kindes ist, bleibt aus dem Bonus-Pool
+   (B-533 Entscheidung 6). *Rot, wenn jemand `knownFromPath` (`ExtraTrainingService.cs:318-322`) entfernt.*
+5. **Bestehendes Verhalten:** Stufung 100/50/25/0 je Übung und Tag, danach spielt eine Vokabelübung weiter ohne Münzen.
+   *Rot, wenn `RunPercent` (`:282-289`) geändert oder der Start bei 0 % für eine Vokabelübung abgewiesen wird (`:94-97`).*
+6. **Bestehendes Verhalten:** Die Tagessumme bleibt unter dem Deckel des Kindes. *Rot, wenn ein Weg am Deckel vorbei bucht
+   (`CoinsTodayAsync`, `:299`).*
+7. Eine Bonus-Runde auf einer Übung, die auch Position ist, ändert weder Kasten noch Fälligkeit dieser Position (B-533
+   Entscheidung 7). *Rot, wenn der Durchgang `PositionItemProgress` schreibt.*
 
 ## Verlauf
 
@@ -128,3 +183,4 @@ Je Kriterium die Änderung, die es rot macht. Entwurf; endgültig erst nach der 
   ist (nur Fälliges, 0 Münzen) und das Bonus-Training die verlangte Abnahme 100/50/25/0 je Übung und Tag schon hat – mit
   Ausnahme der Nicht-Vokabel-Positionen. Teil-Überschneidung mit B-538/B-657; Entscheidungen der Münz-Ökonomie stehen
   nur als offene Punkte.
+- 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): kein zweiter Münzweg, Wiederholung = Bonus-Training; Knoten und Leerzustand führen weiter, freies Üben über den vorhandenen `PlayMode.Info`; B-533 Entscheidung 6 und 7 bleiben (Nicht-Vokabel-Positionen ohne Münzleiter, keine Kastenbewegung); Story auf die Erreichbarkeit gekürzt. Querfrage mit B-218 einheitlich beantwortet.
