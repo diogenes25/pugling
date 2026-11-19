@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/backend, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Rückmeldung Backend, ExerciseFeedback]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -119,3 +119,4 @@ ein Eigentums-Check über Kind/Plan/Position/Karte und ein Rückkanal an das Kin
 - **2026-11-19** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten; Rollengang-E2E `rueckmeldung`, `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` **5 passed** (5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-19** — Rollengang Sohn → Vater → Ersteller: `frontend/e2e/rueckmeldung.spec.ts` – der Sohn meldet im Üben, der Vater erledigt, die Zählung steht an der Übung, der Sohn sieht den Hinweis einmal, im laufenden Test gibt es keinen Knopf.
 - **2026-11-19** — **Wartet nicht mehr** – `wartet_auf` geleert.
+- **2026-11-19** — abgenommen: `796314db`, `8f3d12db` (Sprint 88), nach `main` gemergt.

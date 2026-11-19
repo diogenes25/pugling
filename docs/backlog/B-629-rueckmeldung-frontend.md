@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/frontend, rolle/student, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/frontend, rolle/student, rolle/supervisor, rolle/creator]
 aliases: [Rückmeldung Frontend, Feedback-Knopf Sohn-App]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -104,3 +104,4 @@ Mustern (`ExerciseRatingPanel`, Vater-Listen mit `ListControls`).
 - **2026-11-19** — AK 1 → `frontend/src/sohn/KartenMeldung.test.tsx:17` (F5 Leerzeichen rot), Reihenfolge `:72` (F4 rot) · AK 1 Mehrfachauswahl/AK 3 Dank → `:31` · Fokus und `aria-expanded` → `:49` (F1, F2, F3 rot) · AK 2 → `:104` (F8 rot) und E2E Schritt 5 · AK 3 Hinweis einmal → `:119` (F6 rot), E2E Schritt 4 (E2: Quittung ohne Aufruf → rot) · AK 4 → `frontend/src/vater/VaterRueckmeldungen.test.tsx:23` (F7 rot) und E2E Schritt 2 · AK 5 → E2E Schritt 3 · Knopf an der Übungskarte → E2E (E1 rot). Mutanten gemessen an `e640e2c4 + Arbeitsbaum`, 2026-11-19 06:34 (Skriptkopie mit Schreib-Wiederholung): 10/10 rot am richtigen Ort. Ohne eigene Mutante: E2E-Schritt 5 (der Knopf müsste dafür in die Fragenansicht wandern – eine Zeile trägt das nicht; gilt als Absichtserklärung).
 - **2026-11-19** — Verifikation nach der letzten Bearbeitung: `dotnet test Pugling.sln -c Release` **1894/1894**, Vitest **1258/1258**, `tsc -b` sauber, `dotnet format --verify-no-changes` ohne Fund außer Zeilenende-Artefakten; Rollengang-E2E `rueckmeldung`, `full-flow`, `pfad`, `test-durchgefallen-ueben`, `nacharbeit-bis-erledigt` **5 passed** (5211/5181, Server von Playwright nach der letzten Bearbeitung gestartet).
 - **2026-11-19** — Rollengang Sohn/Vater: `frontend/e2e/rueckmeldung.spec.ts` – passed. **Wartet nicht mehr** – `wartet_auf` geleert.
+- **2026-11-19** — abgenommen: `796314db`, `8f3d12db` (Sprint 88), nach `main` gemergt.
