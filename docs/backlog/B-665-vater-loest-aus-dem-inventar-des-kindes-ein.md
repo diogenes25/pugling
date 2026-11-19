@@ -95,7 +95,6 @@ Inventardeckung, Concurrency-Stamp), ohne die Logik ein zweites Mal zu schreiben
 
 Alle sechs am 2026-11-19 vom Vater entschieden (Empfehlungen übernommen) → Entscheidungen 1–6.
 
-
 1. **Form des Endpunkts.** Vorschlag:
    `POST supervisor/children/{childId}/shop/inventory/{articleId}/redeem` mit `{ quantity }`, Antwort
    `ActivationRequestDto`. Alternative: Supervisor ruft den Student-Endpunkt mit – widerspricht der

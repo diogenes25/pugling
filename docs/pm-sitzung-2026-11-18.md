@@ -240,7 +240,7 @@ ungeprüft: leerer Pool endet nie). `nachgeschaut: 2026-11-18` an B-636 und B-63
 - **Bewusst ungedeckt:** der Rollengang von B-613 an der Oberfläche (vergangene Tage); die Prüfung sieht nur, ob ein Name
   *existiert*, nicht, ob er zum richtigen Fall gehört.
 
-## Offene Roadmap (priorisiert)
+## Offene Roadmap (priorisiert, nach Sprint 87)
 
 Quelle ist [docs/backlog/](backlog/INDEX.md). **Vor allem anderen [B-666](backlog/B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md)**
 (P2, Defekt): es kostet echte Kinder Münzen, sobald der Vater eine laufende Nacharbeit auf „bis erledigt“ stellt – bis

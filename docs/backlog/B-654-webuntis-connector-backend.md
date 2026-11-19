@@ -70,7 +70,7 @@ Jeder Punkt für sich wäre M; zusammen und mit Betriebsfolgen sind sie L.
 - **`migration: ja`**: Neue Tabelle 1:1 zum Kind. Bestandszeilen gibt es keine, die Migration ist rein additiv.
 - **`vertragsbruch: nein`**: Es kommen nur neue DTOs und Endpunkte dazu. Kein bestehendes Feld ändert sich.
 
-**Risiken**
+### Risiken
 
 1. ~~**SSO sperrt die Anmeldung** mit Benutzername und Passwort (Entscheidung 6). Dann kommt der Weg mit dem
    QR-Code-Schlüssel dazu (TOTP), und die Story wird neu geschätzt. Deshalb ist Schritt 0 die Probe.~~
@@ -87,7 +87,7 @@ Jeder Punkt für sich wäre M; zusammen und mit Betriebsfolgen sind sie L.
 5. **Endpunkt-Abdeckung:** `EndpointCoverageGuard` verlangt, dass jede neue Action erfolgreich aufgerufen wird.
    Steht sie nicht in den Tests, wird das Tor rot.
 
-**Angriffsplan (Backend, Reihenfolge)**
+### Angriffsplan (Backend, Reihenfolge)
 
 0. **Probe-Login.** Ein Wegwerfskript im Scratchpad, nicht im Repo, meldet sich mit Friedrichs Zugang per
    JSON-RPC an und ruft `homeworks/lessons` ab. Den Zugang trägt der Vater selbst als Umgebungsvariable oder
@@ -109,7 +109,7 @@ Jeder Punkt für sich wäre M; zusammen und mit Betriebsfolgen sind sie L.
 6. **Heimnetz-Probe:** nach dem Neustart über `heimnetz.ps1` per `curl` gegen `:5200` mit Friedrichs Zugang
    (AC 6).
 
-**Testweg**
+### Testweg
 
 - **Integrationstests** in einer neuen Klasse `SchoolHomeworkTests` (`Pugling.Api.Tests`). Der Fake-Connector
   wird in der Testfabrik registriert, so wie `PuglingWebAppFactory` schon `TimeProvider` ersetzt.

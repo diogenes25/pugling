@@ -100,6 +100,8 @@ Auszahlungsbestätigung deckt den Ablauf ab. Die Lücke ist schmaler und liegt t
 
 ## Offene Punkte
 
+<!-- markdownlint-disable MD029 -->
+<!-- Einen Punkt 11 gab es nie: Entscheidung 11 kam aus dem Code-Review, nicht aus einem offenen Punkt; 12 behält seine Nummer. -->
 1. ~~**Träger: Shop-Angebot oder eigener Belohnungstyp?**~~ → Entscheidung 2.
 2. ~~**Ein Kauf = das ganze Taschengeld, oder Teilbeträge?**~~ → Entscheidung 3.
 3. ~~**Bestand je Kind?**~~ → Entscheidung 1.
@@ -111,6 +113,8 @@ Auszahlungsbestätigung deckt den Ablauf ab. Die Lücke ist schmaler und liegt t
 9. ~~**`TwiceDaily` um 12 Uhr UTC.**~~ → **zurückgestellt** (Entscheidung 9).
 10. ~~**Anzeige für den Sohn.**~~ → Entscheidung 10.
 12. ~~**Unterschiedlich hohes Taschengeld je Kind.**~~ → Entscheidung 12.
+
+<!-- markdownlint-enable MD029 -->
 
 ## Entscheidungen
 
