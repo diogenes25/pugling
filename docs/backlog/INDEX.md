@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (69)
+### Offen (70)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,6 +58,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md) | Rollenschnitt: der Vater belohnt, der Lehrer(-Agent) unterrichtet | Wunsch | `idee` | P2 | — | — | — |
 | [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | Wunsch | `idee` | P2 | — | — | — |
 | [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | Wunsch | `idee` | P2 | — | — | — |
+| [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `idee` | P3 | — | — | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `idee` | P3 | — | — | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `idee` | P3 | — | — | — |
