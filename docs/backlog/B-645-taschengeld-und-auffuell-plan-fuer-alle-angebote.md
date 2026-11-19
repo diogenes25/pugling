@@ -110,6 +110,7 @@ Auszahlungsbestätigung deckt den Ablauf ab. Die Lücke ist schmaler und liegt t
 8. ~~**Defekte abspalten?**~~ → Entscheidung 8.
 9. ~~**`TwiceDaily` um 12 Uhr UTC.**~~ → **zurückgestellt** (Entscheidung 9).
 10. ~~**Anzeige für den Sohn.**~~ → Entscheidung 10.
+12. ~~**Unterschiedlich hohes Taschengeld je Kind.**~~ → Entscheidung 12.
 
 ## Entscheidungen
 
@@ -176,6 +177,23 @@ Auszahlungsbestätigung deckt den Ablauf ab. Die Lücke ist schmaler und liegt t
       `MaxStock = CurrentStock + Käufe aller Kinder`, also ungefähr den Anfangsbestand. Bleibt das 0, ist das Angebot
       für jedes Kind leer wie heute. Laut Seed (Werte 1–4) gibt es diesen Fall in der echten DB vermutlich nicht.
       Der Probelauf auf der Kopie prüft das.
+12. **Unterschiedliche Höhe über ein Angebot je Kind: Zielgruppe am Angebot** (Vater, 2026-11-19). Anlass: Ein
+    Kind bekommt 10 € Taschengeld, das andere 20 €, beide einmal im Monat. Mit Entscheidung 1 hat zwar jedes Kind
+    seinen eigenen Bestand, aber `MaxStock` und `RefillQuantity` liegen am Angebot und gelten für alle Kinder
+    gleich. Darum bekommt jedes Angebot eine **Zielgruppe**: eine Liste von Kindern, leer heißt „alle verknüpften
+    Kinder“ (Verhalten wie heute). Der Vater legt „Taschengeld Theodor“ (z. B. 5 €, Menge 2) und „Taschengeld
+    Friedrich“ (5 €, Menge 4) getrennt an. Ein Kind außerhalb der Zielgruppe sieht das Angebot nicht, kann es nicht
+    kaufen (`404` wie ein fremdes Angebot) und bekommt keine Bestandszeile.
+    - Begründung: Das Modell bleibt einfach (keine Werte, die je Kind überschrieben werden), und Angebote, die nur
+      ein Kind sehen soll, sind auch über das Taschengeld hinaus nützlich. Die Daddelzeit (1 h täglich für jedes
+      Kind) bleibt **ein** Angebot mit leerer Zielgruppe, denn das Wegkaufen verhindert schon der Bestand je Kind.
+    - Kosten: eine Join-Tabelle `ShopListingAudience` (Angebot × Kind, Cascade auf beiden Seiten), die die Migration
+      leer anlegt. Bestehende Angebote gelten also weiter für alle Kinder. Ein Feld `childIds` an Anlage, Änderung
+      und Antwort des Vater-DTOs (PATCH: `null` = unverändert, `[]` = alle Kinder). Ein Kind, das nicht über
+      `SupervisorLinks` mit dem Aussteller verknüpft ist, wird mit `validation_error` abgewiesen. Im Vater-Web eine
+      Mehrfachauswahl „für“ und eine Spalte mit der Zielgruppe. Wird die Zielgruppe verkleinert, bleiben die
+      Bestandszeilen und die Käufe des herausgenommenen Kindes erhalten, das Kind sieht das Angebot nur nicht mehr.
+      Die Startregel (Entscheidung 11) gilt für ein Kind, das neu in die Zielgruppe kommt.
 
 ## Akzeptanzkriterien
 
@@ -208,6 +226,10 @@ Auszahlungsbestätigung deckt den Ablauf ab. Die Lücke ist schmaler und liegt t
 10. **Startbestand eines neuen Kindes und eines neuen Angebots:** Ein Kind, das nach der Migration verknüpft wird,
     und jedes Kind bei einem neu angelegten Angebot startet nach derselben Regel (Entscheidung 11) wie die
     Geschwister in der Migration. Ein `Once`-Angebot ist vor seinem Datum für niemanden kaufbar.
+11. **Zielgruppe:** Ein Angebot mit Zielgruppe [Friedrich] erscheint in Friedrichs Shop, aber nicht in Theodors.
+    Theodors Kaufversuch antwortet `404`. Ein Angebot mit leerer Zielgruppe sehen beide. `childIds` mit einem nicht
+    verknüpften Kind antwortet `400 validation_error`. Nach der Migration hat jedes bestehende Angebot eine leere
+    Zielgruppe. Rot machen diese Fälle ein Sohn-Listenpfad oder ein Kaufpfad, der die Zielgruppe nicht filtert.
 
 ## Schätzung
 
@@ -345,3 +367,9 @@ Aggregat hängen (Angebot plus Bestand je Kind) und kein zweiter Bereich berühr
   - AK 3 nennt jetzt Startbestände, die die heutige Regel rot machen;
   - AK 10 ist neu: der Startbestand eines neuen Kindes und eines neuen Angebots.
   Entscheidung 11 ist aus dem Review abgeleitet und beim Rollengang vom Vater zu bestätigen.
+- **2026-11-19** — Vater im Chat: Shops müssen pro Kind sein (Taschengeld 10 € vs. 20 €, Daddelzeit 1 h täglich je
+  Kind, kein Wegkaufen unter Geschwistern). Am Code erneut bestätigt: der Bestand ist weiter familienweit
+  (`ShopService.cs:147`, `:174`). Das Wegkaufen deckt Entscheidung 1 ab, die unterschiedliche Höhe nicht → offener
+  Punkt 12. Vom Vater entschieden: Angebot je Kind über eine Zielgruppe am Angebot (Entscheidung 12, AK 11). Die
+  Größe bleibt L: eine Join-Tabelle, ein DTO-Feld und ein Filter an den Pfaden, die B-645 ohnehin umbaut.
+  Stufe bleibt `geschaetzt`.
