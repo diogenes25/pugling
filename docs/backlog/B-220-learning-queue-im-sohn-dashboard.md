@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, bereich/training, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/frontend, bereich/training, rolle/student]
 aliases: [Learning Queue, Lern-Warteschlange, Heute-Woche-Überfällig]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
 grund: ""
 ersetzt_durch: []
@@ -150,6 +150,71 @@ Je Kriterium: welche Änderung macht es rot.
 10. Die Startseite zeigt den Queue-Block mit den drei Gruppen und überspringt ein unbekanntes `Kind` still (Komponententest in
     `sohn/`). Rot, wenn der Block fehlt oder bei unbekanntem `Kind` bricht.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet); die Entscheidungen oben sind weiter unbestätigt, `wartet_auf` bleibt.*
+
+**Größe: L** – ein neues Lese-Modell, das vier Quellen zusammenführt (Pflichten aus `ComputeChildDayAsync`, fällige Karten,
+Missionen, Objectives), dazu ein herausgezogener öffentlicher Perioden-Helfer, ein neuer Karten-Zustand („überfällig“) und ein
+Block auf der Startseite. Größer als M, weil kein Baustein fertig vorliegt: weder ein Periodenende je Position noch eine
+Unterscheidung „überfällig“ gegenüber „fällig“ bei Karten. Nicht XL: ein Endpunkt, ein Dienst, ein Block.
+
+- **`wo: beides`** – Backend zuerst (Endpunkt, Dienst, Helfer), danach der Queue-Block in `frontend/src/sohn/SohnHome.tsx`.
+- **`migration: nein`** – nachgesehen: Die Queue liest `PlanPosition`, `PositionItemProgress.DueOn`, Missionen und Objectives;
+  sie schreibt nichts und führt keine Spalte ein.
+- **`vertragsbruch: nein`** – nachgesehen: neue Records (`QueueResponse`, `QueueEntry`) neben `TodayResponse`
+  (`Pugling.Contracts/Student/ProgressDtos.cs:32`); `TodayResponse` und `PositionStatus` bleiben unverändert (Entscheidung 1).
+  `Kind` ist eine offene Zeichenkette, spätere Arten sind kein Bruch.
+
+### Reihenfolge und Abhängigkeiten
+
+1. **B-606 ist `abgenommen`** (`ChildTodayController`, `ComputeChildDayAsync`): das Fundament steht; die Queue baut darauf auf.
+2. **B-218** (Mischwiederholung, `ausformuliert`) ist **nicht** gebaut. Ob die Queue vor B-218 gebaut werden darf, ist **Z1** und
+   bleibt dem Nutzer vorbehalten (seine Festlegung vom 2026-10-23: erst nach B-218). Die Schätzung gilt für die erste Fassung ohne
+   B-218; kommt B-218 vorher, ändert sich nur ein weiterer `Kind`-Wert, nicht der Aufwand.
+3. **B-248** (Klassenarbeits-Countdown) kommt als weitere Art danach und ist nicht Teil dieser Story.
+
+### Risiken
+
+1. **Pflicht und Karten derselben Position erscheinen doppelt.** Eine Tagespflicht und die fälligen Karten derselben Position sind
+   zwei Einträge (Entscheidung 3); ein Kind kann das als zwei Aufgaben lesen. Der Bau entscheidet die Darstellung (eine Zeile mit
+   zwei Zahlen oder zwei getrennte Gruppen); AK 1 und 4 bleiben gültig. Mit dem Nutzer bei der Bestätigung klären.
+2. **„Überfällig“ bei Karten gibt es heute nicht:** `PositionStatus.DueCount` zählt `DueOn <= heute`
+   (`PositionPlayService.cs:630`) und zählt nie gelernte Karten mit (`DueOn == null`). Überfällig braucht eine neue Abfrage auf
+   `DueOn < heute` – ohne die nie gelernten Karten, sonst steht jede frische Position „überfällig“ (eigener Testfall).
+3. **UTC-Tag:** „heute“ kippt für ein Kind in Deutschland nachts (Entscheidung 2 nimmt das hin; `ChildTodayController.cs:31`).
+   Der Test setzt die Uhr über `TimeProvider`, nicht über die Systemzeit.
+4. **Zwei Wahrheiten für „erfüllt“:** `today` und `queue` müssen dasselbe `GoalMet` nennen (AK 8). Wer die Queue aus einem zweiten
+   Weg speist, bricht das still; darum denselben Dienstaufruf nehmen und `HasDutyOn` (`PositionProgressService.cs:52`) wiederverwenden.
+5. **Der Malus je Eintrag ist der der Position** (`PenaltyCoins`, `cadence == None ⇒ 0`, `PositionProgressService.cs:340`). Die Queue
+   rechnet nichts um und schreibt nichts; Malus-Regeln und Münzwerte bleiben unberührt.
+6. **Missionen und Objectives haben je eine eigene Quelle** (`MissionStatus.DaysLeft`, `GoalStatus.Overdue` in
+   `ObjectiveEvaluationService.cs:55`); die Queue ruft sie, kopiert aber keine Regel.
+
+### Angriffsplan
+
+1. `PeriodEnd(cadence, day)` öffentlich neben `PeriodRange` (`PositionProgressService.cs:34`); `UntilDone` liefert `null`.
+2. Karten-Abfrage „überfällig“ (`DueOn < heute`, nie gelernte ausgenommen) im Wiedergabedienst neben `DueItemIndicesAsync`.
+3. `Pugling.Contracts/Student`: `QueueResponse`/`QueueEntry` (`Kind`, `DueBy`, `Duty`, `PenaltyCoins`, `Count`, Beschriftung);
+   `ChildQueueController` mit denselben Attributen wie `ChildTodayController` (`[Authorize]`, `ChildOwnershipFilter`).
+4. Dienst, der aus `ComputeChildDayAsync`, Karten, Missionen und Objectives die Einträge baut, gruppiert und sortiert
+   (Preis absteigend, dann Fach).
+5. Frontend: Queue-Block unter der Tagessicht in `SohnHome.tsx`, unbekanntes `Kind` still überspringen (AK 10).
+6. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Reviewer `pugling-reviewer` und `frontend-reviewer`.
+
+### Testweg
+
+- Neue Klasse `KindQueueTests` (Vorbild `KindTagessichtTests`, Aufbau mit `TestApi.SeedLeitnerPosition`, Uhr per `TimeProvider`):
+  AK 1 bis 9. Rot-Proben: `Weekly` wie `Daily` behandeln (AK 2), `GoalMet` weglassen (AK 3), `UntilDone` ein Datum geben (AK 6),
+  Filter von der Route nehmen (AK 7).
+- `KindTagessichtTests`: AK 8 als Vergleich `today` gegen `queue` am selben Aufbau.
+- `EndpointCoverageGuard` verlangt für die neue Action eine Abdeckung; der Zähler (derzeit 295 Actions) wird mit der Route
+  nachgezogen.
+- `frontend/src/sohn/SohnHome.test.tsx`: AK 10; vor der Abnahme der Rollengang als Sohn an der laufenden App.
+
+**Bau-Sperre:** Z1 (Baureihenfolge gegenüber B-218) entscheidet allein der Nutzer; bis zur Bestätigung der Entscheidungen 1 bis 6 ist
+die Story nicht baubar. Malus-Regeln, Münzwerte und Pflichten bleiben außerhalb der Story.
+
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 3 des Übernahmeplans).
@@ -165,3 +230,6 @@ Je Kriterium: welche Änderung macht es rot.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt, `wartet_auf` gesetzt): Entscheidungen 1 bis 6.
   Neu am Code: `UntilDone` hat kein Periodenende (`DueBy = null`), `HasDutyOn` ist die eine Pflicht-Regel. **Eine Frage zurückgestellt (Z1):**
   die Reihenfolge „erst nach B-218“ des Nutzers vom 2026-10-23. Die Queue zeigt nur und ändert keine Malus-Regel. Akzeptanzkriterien final.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
+  (neue Records neben `TodayResponse`). Fundament B-606 abgenommen; B-218 nicht gebaut, Z1 bleibt zurückgestellt und ist Bau-Sperre.
+  Neu am Code: „überfällig“ bei Karten braucht eine neue Abfrage (`DueCount` zählt `<= heute` und nie gelernte Karten).

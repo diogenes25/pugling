@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln, lerntechnik/birkenbihl]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, lerntechnik/vokabeln, lerntechnik/birkenbihl]
 aliases: [Vokabel im Satz, Satzkarte]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17"
 grund: ""
 ersetzt_durch: []
@@ -204,6 +204,75 @@ Je Kriterium die Änderung, die es rot macht.
 9. *Absichtserklärung:* Das Rendern der Zeile auf der Cloze-Karte (`Lektion.tsx:119`) braucht keine Frontend-Änderung; das
    Kriterium fällt nicht, weil es im Ausgangszustand schon gilt, und steht nur da, damit niemand die Typbedingung nachrüstet.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet); die Entscheidungen oben sind weiter unbestätigt, `wartet_auf` bleibt.*
+
+**Größe: L** – der Server-Teil allein (ein Feld, eine Maskierung, ein Tor-Test) ist M; dazu kommen der Dekodierungs-Editor im
+Cloze-Formular des Vater-Webs, die Leerstellen-Darstellung, die Auswahl im KI-Creator und der Abgleich der Lader-Feldliste. Das
+trägt eine Etappe, aber kein XL: alles hängt an einem Feld und einer Maskierung und ist in Reihenfolge baubar.
+
+- **`wo: beides`** – Backend zuerst: `Gap.Decoding` und die Maskierung in `ClozeExerciseType.ItemsOf`; danach Frontend
+  (`BirkenbihlDecoding`, Cloze-Formular) und Agent.
+- **`migration: nein`** – nachgesehen: `Gap` liegt als JSON in `ConfigJson` (`Pugling.Contracts/Exercise/ExerciseConfigs.cs:109`);
+  keine Spalte, keine Tabelle, die Kette bleibt.
+- **`vertragsbruch: nein`** – nachgesehen: `Decoding` ist ein neuer **letzter** optionaler Parameter von `Gap` mit Vorgabe `null`;
+  bestehende Konfigurationen und Aufrufer bleiben gültig. Neue Konfigurationen mit `decoding` sind für alte Server `400 unknown_field`,
+  das ist die gewollte Richtung (`UnmappedMemberHandling.Disallow`, Repo-`CLAUDE.md`). Frontend-Typen werden
+  neu erzeugt, die `unknown_field`-Guards ziehen mit dem neuen Feld mit.
+
+### Reihenfolge und Abhängigkeiten
+
+1. **B-648 zuerst** (Grundform-Suche im `BirkenbihlDecodingService`, `geschaetzt`, L, beides). Ohne sie fände die automatische
+   Dekodierung *runs* nicht (`BirkenbihlDecodingService.cs:48-62`).
+2. Dann B-650. Der Server-Teil (Feld, Maskierung, AK 1 bis 5, 7) braucht B-648 technisch **nicht** – die Dekodierung kann von
+   Hand im Config stehen – und ließe sich vorziehen; Entscheidung 5 legt es trotzdem hinter B-648, damit es nur einen Weg gibt.
+3. Beide Stories hängen an unbestätigten Sonnet-Entscheidungen (B-648 Entscheidungen 10 bis 12, B-650 Entscheidungen 1 bis 8).
+
+### Risiken
+
+1. **Die Lösung kann auf einem zweiten Weg mitreisen.** `PositionPlayService.cs:541-543` gibt `Decoding` unbedingt aus; sicher
+   ist das nur, solange alle Füller maskieren. Zwei Gaps im selben Text teilen sich `c.Text`; die Maskierung muss die Lösungen
+   **aller** Lücken des Textes erfassen, nicht nur der Karte (Entscheidung 2 verlangt das; AK 1 prüft nur eine Lücke, der Bau
+   ergänzt einen Zwei-Lücken-Fall).
+2. **Das Tor fängt `LearningWord` nicht** (nicht in der Lösungsfeld-Liste von `ConventionGuardTests`); die Sicherung ist allein
+   AK 1 bis 3. Rot-Probe: Maskierung aus `ItemsOf` entfernen, AK 1 muss fallen.
+3. **Die Lader-Feldliste muss mitziehen:** `laden.py` führt die Gap-Felder als Kopie
+   (`["index", "answer", "alternatives", "vocabKey", "form", "distractors", "prompt"]`), und `LadenFieldListTests` hält sie am
+   Vertrag. Wird `decoding` nur im Vertrag ergänzt, fällt dieser Test rot; beide Stellen im selben Commit ändern.
+4. **Speicherort je Lücke:** `Decoding` hängt an `Gap`, der Satz (`ClozeConfig.Text`) ist aber für alle Lücken derselbe. Bei
+   mehreren Lücken im Satz steht dieselbe Dekodierung mehrfach und kann auseinanderlaufen. Entscheidung 1 nimmt das hin; ob das
+   Feld an `ClozeConfig` (je Text) besser sitzt, ist eine Frage an den Nutzer bei der Bestätigung.
+5. **Die Rückseite der Maskierung:** Ist die Lösung zugleich ein Füllwort (*run* … *to run*), maskiert der Server beide Stellen;
+   das ist hingenommen (Kosten in Entscheidung 2), im Test als Fall festhalten.
+
+### Angriffsplan
+
+1. `Gap` um `List<WordPair>? Decoding = null` erweitern, mit Dokukommentar (Vertrag).
+2. `ClozeExerciseType.ItemsOf` füllt `ContentItem.Decoding` aus der Lücke und maskiert das Lernwort jedes Paares, das einer
+   Lösung eines beliebigen Gaps des Textes entspricht (`ClozeGaps.SolutionOf`); fehlt das Paar der eigenen Lücke, bleibt `Decoding`
+   `null`. Hinweis im Kommentar von `BirkenbihlExerciseType.IsTypedStage` (`BuiltInExerciseTypes.cs:162-171`) ergänzen.
+3. `laden.py`-Feldliste um `decoding` ergänzen (gleicher Commit, `LadenFieldListTests` bleibt grün).
+4. `BirkenbihlDecoding.tsx`: leeres `learningWord` als „___“ mit vorgelesenem „Lücke“; Cloze-Formular
+   (`frontend/src/vater/ClozeTexts.tsx`, `exerciseConfig.tsx`) um die Dekodierung erweitern (build + read-back).
+5. KI-Creator: Auswahl nach `LastMissed`/niedriger Beherrschung aus `child.WeakWords` (`BriefingBuilder.cs:85-87`), kein Wort
+   mit vorhandener Satzkarte.
+6. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Reviewer `pugling-reviewer` und `frontend-reviewer`.
+
+### Testweg
+
+- `ClozePlayTests` (vorhanden): AK 1 bis 3 – je ein Fall pro Cloze-Stufenwert, dazu der Zwei-Lücken-Fall; Rot-Probe: die
+  Maskierung herausnehmen.
+- `ClozePlayTests`: AK 4 (`Form = "runs"` gilt, „run“ nicht) und AK 5 (Positionsstand wird geschrieben; die zweite Hälfte bleibt
+  Absichtserklärung).
+- `UnknownFieldTests` bzw. `ClozePlayTests`: AK 7, PUT mit `Gap.Decoding` und Read-back.
+- `LadenFieldListTests`: bleibt grün, nachdem `laden.py` das Feld führt (Rot-Probe: Feld nur im Vertrag ergänzen).
+- `CreatorAgentTests`: AK 6, Auswahl der Wörter.
+- `frontend/src/components/BirkenbihlDecoding.test.tsx`: AK 8.
+- Rollengang als Vater (Cloze mit Dekodierung anlegen, vorspielen) und als Sohn (Karte mit „___“) vor der Abnahme.
+
+**Bau-Sperre:** nicht vor B-648 und nicht vor der Bestätigung der Entscheidungen durch den Nutzer.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Chat mit dem Vater; Beispiel „Tom runs ___ / Tom rennt heim“).
@@ -213,3 +282,6 @@ Je Kriterium die Änderung, die es rot macht.
   Am Code korrigiert: die Dekodierung verrät die Lösung über das Lernwort, nicht über die Glosse (Entscheidung 2 folgt dem Beispiel
   der Story, nicht ihrem Kopftext); eine Cloze-Karte schreibt den wortgebundenen Lernstand nicht (Entscheidung 8); das Frontend
   rendert die Zeile schon typunabhängig. Baubar erst nach B-648. Akzeptanzkriterien final, zwei als Absichtserklärung beschriftet.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
+  (`Gap.Decoding` additiv). Baureihenfolge nach B-648. Neu am Code: die `laden.py`-Feldliste führt die Gap-Felder und muss mit
+  `decoding` im selben Commit mitziehen (`LadenFieldListTests`).

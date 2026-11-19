@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Plan umhängen erbt Malus]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: backend
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Nachtlauf 2026-11-18, Nachschau von Sprint 87 (fe13531c, pugling-reviewer, Hinweis 2) – docs/pm-sitzung-2026-11-18.md, Runde 5"
 grund: ""
 ersetzt_durch: []
@@ -157,6 +157,76 @@ Je Kriterium: die Änderung, die es rot macht.
 7. Das Vater-Web übersetzt `plan_has_data` in einen deutschen Satz (Muster `errorMessage.test.ts:72-80`, `exercise_in_use`).
    Rot, wenn der Code kein Mapping hat: der Vater sähe den englischen Server-Text.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet), am Code nachgesehen.*
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector` (B-03): ein Eingriff im `StudyPlansController.Update`, ein neuer
+Fehlercode samt Nachziehern und ein gutes Dutzend Testfälle über zwei Klassen. Nicht S, weil die Sperre drei Tabellen
+prüft und `ActivatedAt` mit der B-613-Logik zusammenspielen muss.
+
+- **`wo: beides`** — Backend zuerst (`StudyPlansController`, `ApiErrors`); das Frontend ist nur der deutsche Satz in
+  `frontend/src/lib/api.ts` (`GERMAN_PROBLEM_TEXT`) samt Test in `errorMessage.test.ts`.
+- **`migration: nein`** — nachgesehen: `ActivatedAt` und `ChildId` sind vorhandene Spalten, die Sperre liest drei vorhandene
+  Tabellen (`PracticeSessions`, `TestAttempts`, `PositionItemProgress`). Kein Modell-Drift, keine Migration.
+- **`vertragsbruch: nein`** — nachgesehen: `UpdatePlanDto` und `PlanResponse` in `Pugling.Contracts` bleiben unberührt
+  (Entscheidung 4: kein Kennzeichen „gespielt"). Der Fehlercode lebt in `Pugling.Api/Errors/ApiErrors.cs`, nicht im Vertrag.
+  Der Aufruf `PATCH` bekommt eine neue `409`-Antwort; das ändert das eingecheckte `docs/openapi/v1.json` (`[ProducesResponseType(409)]`
+  an `Update`, neuer Wert in der Code-Aufzählung – `ErrorCodeTests` prüft sie gegen das Register). Das gehört in denselben
+  Commit, `ContractDocumentTests` schreibt die Datei bei jedem Lauf.
+
+### Risiken
+
+1. **Das Tor `ProblemTextGuardTests` koppelt Backend und Frontend:** jeder 409-Code braucht einen deutschen Text in
+   `frontend/src/lib/api.ts` (`GERMAN_PROBLEM_TEXT`) oder eine Ausnahme
+   (`backend/Pugling.Api.Tests/ProblemTextGuardTests.cs:39`). „Backend zuerst" heißt hier: Code, Text und Mapping-Test in
+   **einem** Schritt, sonst steht die Suite zwischendurch rot.
+2. **Reihenfolge im Controller:** die Sperre muss im Zweig `dto.ChildId is { } newChildId && newChildId != plan.ChildId`
+   greifen (`StudyPlansController.cs:183`), **vor** `plan.ChildId = newChildId` und vor jedem `SaveChangesAsync`; sonst
+   würde ein halbes `PATCH` gespeichert (AK 2). Die Prüfung `SupervisorOwnsChildAsync` (404) kommt davor, damit
+   ein fremdes Kind keinen Hinweis auf den Spielstand bekommt.
+3. **`ActivatedAt` bei gleichzeitigem Ausschalten:** `PATCH {childId, active:false}` auf einen aktiven Plan – „war er aktiv und
+   bleibt er es" (Entscheidung 2) verlangt, `ActivatedAt` nur zu setzen, wenn der Plan nach dem `PATCH` aktiv ist; sonst setzt der
+   Wechsel ein Datum, das niemand je eingeschaltet hat. Der Kombinationsfall (`active:true` zusammen mit `childId` auf einen
+   inaktiven Plan) läuft über die bestehende Zeile 220 und braucht einen eigenen Fall.
+4. **`DeactivateSameSubjectPlansAsync` bleibt der Nachlauf** (`:232`): die Reihenfolge von Speichern und Abschalten darf sich nicht
+   ändern; `Kindwechsel_Schaltet_Beim_Neuen_Kind_Dasselbe_Fach_Ab` (`PlanSubjectTests.cs:262`) ist das Netz (AK 6).
+5. **Das Seeden eines „gespielten" Plans:** Üben und Test laufen über HTTP, `PositionItemProgress` allein (AK 1, dritter Fall)
+   nur über die Datenbank. `TestApi.SeedLeitnerPosition` legt solche Zeilen an (`TestApi.cs:291-295`); ob das für „ohne
+   Sitzung" reicht, ist beim Bau zu prüfen.
+6. **Verbotener, heute möglicher Vater-Weg:** wer einen gespielten Plan umhing, bekommt `409` statt eines stillen Erbes
+   (Entscheidung 3, zur Bestätigung vorgemerkt). E2E-Specs, die den Kindwechsel fahren
+   (`e2e/plan-kinderliste-*.spec.ts` lesen nur die Auswahl), sind nicht betroffen; ein Aufrufer in `docs/tutorial-supervisor.md`
+   oder `docs/REST/` ist nicht nachgesehen.
+
+### Angriffsplan
+
+1. Backend, Tests zuerst: AK 1, 2, 5 und AK 3, 4 (rot), AK 6 (grün) schreiben.
+2. `ApiErrors.PlanHasData` (`plan_has_data`, 409, nach dem Muster von `PositionHasData`, `ApiErrors.cs:205`);
+   `StudyPlansController.Update`: Sperre im Kindwechsel-Zweig, `ActivatedAt = heute` bei aktivem Plan nach dem Zweig und vor
+   dem Block für verschobene Starts; `[ProducesResponseType(409)]`.
+3. Frontend im selben Schritt: Eintrag `plan_has_data` in `GERMAN_PROBLEM_TEXT` (`api.ts`, neben `position_has_data`) und der
+   Fall in `errorMessage.test.ts` (AK 7).
+4. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`; der Lauf schreibt `docs/openapi/v1.json` und die
+   `docs/api-examples` neu, beides in den Commit.
+
+### Testweg
+
+- **AK 1, 2, 5 (Regressionstest, vorher rot):** `backend/Pugling.Api.Tests/PlanSubjectTests.cs` (Hilfen `SetupAsync`,
+  `PlanAsync`, Zweitkind wie in `:262`) oder eine neue Klasse `PlanUmhaengenTests` für die Sperre; je Tabelle ein Fall
+  (`PracticeSession`, `TestAttempt`, `PositionItemProgress`). Rot macht sie: heute `200` und neuer Besitzer; die Sperre
+  nur auf eine Tabelle; die Prüfung außerhalb des `newChildId != plan.ChildId`-Zweigs.
+- **AK 3, 4:** `backend/Pugling.Api.Tests/RueckwirkendePflichtTests.cs` – dort liegen `CreateBackdatedPlanAsync`,
+  `Read(db => …)` für `ActivatedAt`, `StreakAsync` und `factory.Clock`; Vorbild `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet`
+  (`:459`). Rot macht sie: `ActivatedAt` bleibt der alte Wert (AK 3) bzw. wird bedingungslos überschrieben (AK 4). Hinweis:
+  die Streak-Methode heißt im Code `ChildStreakAsync`/`StreakBoundedAsync` (`PositionProgressService.cs:479`), nicht nur
+  `ChildStreakAsync`.
+- **AK 6:** `PlanSubjectTests.Kindwechsel_Schaltet_Beim_Neuen_Kind_Dasselbe_Fach_Ab` bleibt grün.
+- **AK 7:** `frontend/src/lib/errorMessage.test.ts` (Muster `exercise_in_use`); das Backend-Tor `ProblemTextGuardTests`
+  ist der zweite Beleg.
+- Vor der Abnahme: `pugling-reviewer`; Rollengang als Vater: gespielten Plan einem Bruder geben – deutscher Satz im
+  `StatusBanner` (`VaterPlanDetail.tsx:86`).
+
 ## Verlauf
 
 - **2026-11-18** — angelegt aus der Nachschau von Sprint 87 (Hinweis 2), unverifiziert.
@@ -164,3 +234,4 @@ Je Kriterium: die Änderung, die es rot macht.
   ein ausgebauter Vater-Weg (Vertrag und Formular). Der Vorschlag `ActivatedAt = heute` allein genügt nicht; Empfehlung
   Sperre für gespielte Pläne plus `ActivatedAt` bei ungespielten.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 4. Gespielter Plan: Umhängen gesperrt (`409 plan_has_data`, drei Tabellen, mehr als die Positions-Sperre prüft); ungespielter aktiver Plan: `ActivatedAt = heute` beim Wechsel (B-613 auf einem weiteren Schreibweg); keine neue Malus-Regel. Die Sperre ist ein Vorbild (`position_has_data`), keine Repo-Konvention (`StudyPlansController.Delete` löscht ohne Sperre). Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch (`docs/openapi/v1.json` ändert sich um eine 409-Antwort); `ProblemTextGuardTests` koppelt Backend und Frontend-Satz in einen Schritt.

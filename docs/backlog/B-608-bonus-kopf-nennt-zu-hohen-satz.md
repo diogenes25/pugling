@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
 aliases: [CoinsPerHit übertreibt]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 82 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
@@ -128,9 +128,73 @@ Final; je Kriterium die Änderung, die es rot macht.
    Tippschritt nennt dann weiter ein nacktes „3" ohne „bis zu").
 6. Festschreibung: der Ergebnisbildschirm bleibt unverändert (Ist-Stand 5); die vorhandenen Fälle bleiben grün.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet), am Code nachgesehen.*
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector` (B-03): ein Umbau an einer geteilten Stelle (die Satz-Funktion
+neben der Abrechnung), dazu zwei Vertragsfelder und ihre Nachzieher in Frontend und Texten. Nicht L: kein Schema, keine
+neue Regel.
+
+- **`wo: beides`** — Backend zuerst (`ExtraTrainingService`, `ExtraTrainingDtos.cs`), dann `SohnBonus.tsx`,
+  `de.ts`/`en.ts` und die Vitest-Fixtures.
+- **`migration: nein`** — nichts am Schema; die Sätze kommen aus `ExtraTrainingOptions` und werden pro Aufruf berechnet.
+- **`vertragsbruch: nein`** — nachgesehen: beide Felder sind **additiv** in Antworten (`ExtraCard.CoinsPerHit`,
+  `ExtraExercise.MixedRates`); nach README ist ein additives Feld kein Bruch. Der Text in Entscheidung 1 („`vertragsbruch:
+  ja`") meint den *Nachzieh-Aufwand* und gilt für die Einstufung nicht. Zu beachten bleibt trotzdem:
+  `ExtraCard` und `ExtraExercise` sind positionale Records, und die Felder müssen **vor** den Parametern mit
+  Vorgabewert stehen (`ExtraCard`: vor `DictationSpokenAnswer`); beide haben genau einen Aufrufer
+  (`ExtraTrainingService.cs:357`, `:431`), `Pugling.Client` und `Pugling.Agent.Creator` bauen sie nicht (nicht gefunden).
+  Das eingecheckte `docs/openapi/v1.json` ändert sich (`ContractDocumentTests` schreibt es bei jedem Lauf; CI wird rot, wenn die
+  Änderung nicht im selben Commit steht). `frontend/src/lib/contract.ts` ist nicht eingecheckt, sondern wird bei
+  `postinstall`/`prebuild` erzeugt.
+
+### Risiken
+
+1. **Hier liegt Geld:** Die Satz-Funktion ersetzt den Kern von `CardRatesAsync` (`ExtraTrainingService.cs:392-406`),
+   den die Abrechnung nutzt (`:197-201`). Ein Versehen verschiebt Münzen. `ExtraTrainingTests.Getippte_Bonusrunde_Fragt_Die_Vorwaertskarte_Bei_Beiden_Als_Auswahl`
+   (`:185`, `coinsEarned` 4 × 1 + 4 × 3) muss unverändert grün bleiben und ist das Netz.
+2. **`MixedRates` vergleicht Sätze, nicht Formen:** in der Pool-Schleife (`:355-358`) liegen `items` und `stage` vor,
+   aber `CardRatesAsync` lädt die Items selbst noch einmal (`:395`). Die Hilfsfunktion nimmt die geladenen Items, sonst
+   kostet die Übersicht je Übung eine zweite Abfrage.
+3. **Fixtures in `SohnBonus.test.tsx`:** Karten werden als `as unknown as ExtraRunResponse` ohne `coinsPerHit` gebaut
+   (Zeilen `:130`, `:205`, `:234`, `:258`, `:301`); ohne Ergänzung zeigt der Kopf „undefined". Der Cast verdeckt den
+   Fehler beim Übersetzen – vor `tsc` ist er also nicht zu finden, nur im Test selbst.
+4. **Texte in zwei Sprachen:** `bonus.formTypedMixed` fehlt in `de.ts` (`:199`) und `en.ts` (`:186`); ein
+   Paritäts-Wächter für die Schlüssel ist nicht nachgesehen.
+5. **Fremde Arbeit im Baum:** `SohnBonus.tsx`, `SohnBonus.test.tsx`, `de.ts`, `en.ts` sind sauber; die ungecommittete
+   LearningDad-Arbeit liegt in `sohn/Lektion.tsx`, `SohnApp.tsx`, `SohnPractice.tsx`, `SohnTest.tsx`. Berührt wird
+   nur, wer dort in der Bonusrunde etwas ändert – Zeilennummern in `sohn/*` können driften.
+
+### Angriffsplan
+
+1. Backend: synchrone Satz-Funktion (Karte, Übung, Stufe der Runde → Satz) aus `CardRatesAsync` herauslösen; Abrechnung
+   ruft sie; Tests für AK 2 und AK 6 zuerst festschreiben (grün).
+2. `ExtraCard.CoinsPerHit` und `ExtraExercise.MixedRates` im Vertrag; `BuildRun` und die Pool-Schleife füllen sie
+   (AK 1, 3, 5, rot vor der Änderung).
+3. Frontend: `SohnBonus.tsx` liest den Satz der Karte (`:301-304`) und nennt in der Übersicht „bis zu" bei `mixedRates`
+   (`:135`, `:258`); Texte `bonus.formTypedMixed` (de, en); Fixtures nachziehen.
+4. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, danach der Lauf, der `docs/openapi/v1.json` neu schreibt; im
+   selben Commit.
+
+### Testweg
+
+- **AK 1, 3 (Regressionstest, vorher rot):** `backend/Pugling.Api.Tests/ExtraTrainingTests.cs`, neben `:185`; ein Fall je
+  Form (`both`, `back-to-front`, Auswahl-Runde, Karteikarte). Rot macht es: `BuildRun` füllt jede Karte mit
+  `CoinsPerHit(run.Form)`.
+- **AK 2:** derselbe Klassenrahmen, `coinsForHits` der „both"-Runde gegen die Summe der Karten-`coinsPerHit` aus `/runs`.
+  Rot macht es: ein zweiter Rechenweg für Ansage oder Abrechnung.
+- **AK 5:** `ExtraTrainingTests.cs` über die Übersicht (`MixedRates`), Fälle „both" und eine einheitliche Runde.
+- **AK 4:** `frontend/src/sohn/SohnBonus.test.tsx`, Fall mit zwei Karten (1 und 3) und Wechsel nach dem Weiter. Rot macht
+  es: der Kopf liest `run.coinsPerHit`.
+- **AK 6:** vorhandene Ergebnis-Fälle (`:258-306` in `SohnBonus.test.tsx`) bleiben grün.
+- Vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`; Rollengang als Sohn an einer „beides"-Liste;
+  `e2e/bonus.spec.ts` ist die Stelle, falls ein Durchstich gewünscht ist.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 82 (🟢 des `pugling-reviewer`), `entgangen_bei: [B-597]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): Notiz-Zeilen veraltet (Datei 438 Zeilen), Ansage steht bei
   `:436` und `:358`; Lücke breiter (Übersichtszeile, jede gemischte Runde); Ergebnis ist korrekt.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): fünf Entscheidungen; Satz je Karte als additives Vertragsfeld (`ExtraCard.CoinsPerHit`, `ExtraExercise.MixedRates`), eine gemeinsame Satz-Funktion für Ansage und Abrechnung; keine Münz-Regel geändert.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch (beide Felder additiv; `docs/openapi/v1.json` ändert sich); Risiko: die Satz-Funktion berührt den Abrechnungspfad.

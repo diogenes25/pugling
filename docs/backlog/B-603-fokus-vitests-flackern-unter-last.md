@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/test, rolle/entwickler]
+tags: [typ/story, status/geschaetzt, bereich/test, rolle/entwickler]
 aliases: [Fokus-Vitests flackern]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Sprint 82, Verifikation von B-598 (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -157,6 +157,60 @@ Je Kriterium: die Änderung, die es rot macht.
    abweichen: eine Probe ist stehen geblieben.
 5. `SohnProgress.test.tsx` wird nicht berührt (Durchsicht, kein Tor).
 
+## Schätzung
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector`: kein Entwurfsproblem, aber breit. Ein lokaler Helfer, 24 Stellen in
+zwei Testdateien und 16 Probeläufe an acht Fokus-Aufrufen; jede Stelle ist klein, die Summe kostet.
+
+- **`migration: nein`** — nachgesehen: nur Testdateien; kein Schema.
+- **`vertragsbruch: nein`** — nachgesehen: `Pugling.Contracts` und `Pugling.Client` bleiben unberührt, Produktcode wird
+  nur während der Proben verändert und danach byte-gleich zurückgespielt (Akzeptanzkriterium 4).
+- **`wo: frontend`** — Vitest-Tests im Frontend; Reviewer `frontend-reviewer`.
+
+### Risiken
+
+1. **Fremde Änderungen im Arbeitsbaum.** `SohnPractice.tsx` und `SohnTest.tsx` tragen ungecommittete Arbeit (`git status`
+   zeigt beide als geändert, dazu `Lektion.tsx`, `SohnApp.tsx`). Die Zahl acht der Fokus-Aufrufe und die Zeilen
+   (`SohnPractice.tsx:179`, `:203`, `:207`, `:210`, `:213`, `:226`, `:370`, `SohnTest.tsx:99`) sind am 2026-11-19 gezählt
+   und können driften; **vor Schritt 1 neu zählen**. Die Testdateien selbst sind unverändert
+   (`SohnPractice.test.tsx` 17, `SohnTest.test.tsx` 10 `activeElement`-Stellen, davon 1 bzw. 2 verneinend).
+2. **Eine Probe, die den Arbeitsbaum anfasst, ist heikel.** Entscheidung 5 verlangt Sicherungskopie und Blob-Hash vor und nach,
+   kein `git checkout`. Das Zurückspielen per Kopie ist hier ungefährlich: Vitest liest die Quelle bei jedem Lauf frisch, es
+   gibt keine Assembly, die die Probe weitertrüge (anders als beim Backend-Build).
+3. **`waitFor` und Zielfunktion:** Entscheidung 2 verlangt, dass die Suche im Wiederholungsblock steht. Ein Ziel mit zwei
+   Treffern wirft im Block und wird wiederholt, bis das Timeout (4 s, `test-setup.ts`) die Mehrdeutigkeit meldet statt des
+   Fokus – gewollt, aber die Fehlermeldung zeigt dann nicht auf den Fokus.
+4. **Die drei verneinenden Zusicherungen bleiben schwächer** (Entscheidung 3, dort benannt): unter Last ein falsches Grün
+   möglich, nie ein falsches Rot.
+5. **Der Befund kann sich bei Probe 5b ändern:** trägt ein Fokus-Aufruf keinen Fall, steht das als Befund im `## Verlauf`
+   (Akzeptanzkriterium 2), und es entsteht kein stilles Ergänzen. Das kann eine Folge-Story erzeugen.
+
+### Angriffsplan
+
+1. Fokus-Aufrufe und Zusicherungen neu zählen (Risiko 1); Abweichung im Verlauf vermerken.
+2. `erwarteFokus(ziel: () => HTMLElement)` lokal in `SohnPractice.test.tsx` und `SohnTest.test.tsx`
+   (`await waitFor(() => expect(document.activeElement).toBe(ziel()))`).
+3. Die 16 bzw. 8 positiven Stellen umstellen; die drei verneinenden (`SohnPractice.test.tsx:688`,
+   `SohnTest.test.tsx:495` und `:508`) behalten den Takt und bekommen den Kommentar mit dem Grund.
+4. **Messschritt M1 (Probe 5a, je Fokus-Aufruf):** Stand sichern, Blob-Hash notieren; je Aufruf in `setTimeout(…, 50)` hüllen;
+   Dateien mit **alter** Form zeigen mindestens einen roten Fall, mit **neuer** Form alle grün.
+5. **Messschritt M2 (Probe 5b):** je Aufruf entfernen; mindestens ein Fall rot, sonst Befund. Danach Stand zurückspielen und
+   Blob-Hash gegenprüfen (Akzeptanzkriterium 4).
+6. `tsc -b` und Vitest für beide Dateien, danach der volle Lauf.
+
+### Testweg
+
+- **Vitest:** `frontend/src/sohn/SohnPractice.test.tsx` und `frontend/src/sohn/SohnTest.test.tsx` (die Zusicherungen selbst).
+  Rote Probe: Aufruf um 50 ms verzögert → alte Form rot, neue grün (Akzeptanzkriterium 1); Aufruf entfernt →
+  mindestens ein Fall rot (Akzeptanzkriterium 2). Die Proben liegen in den **Komponenten**, nicht in den Tests, und das
+  Zurückspielen ist Teil der Probe.
+- **Messbefehl** (aus `frontend/`, lokale Binary): `./node_modules/.bin/vitest run src/sohn/SohnPractice.test.tsx src/sohn/SohnTest.test.tsx`;
+  gezählt wird die Zahl der bestandenen Fälle, nicht der Exit-Code. Das Flackern selbst misst kein Lauf; die Beweiskraft liegt
+  in der verzögerten Probe (deterministisch).
+- Akzeptanzkriterien 3 und 5 sind Absichtserklärungen mit Durchsicht bei der Abnahme.
+- Vor der Abnahme: `frontend-reviewer`; ein Rollengang ist nicht nötig (kein Verhalten ändert sich), das Fehlen steht dann
+  als Zeile im `## Verlauf`.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt bei der Verifikation von B-598 (Sprint 82).
@@ -164,3 +218,4 @@ Je Kriterium: die Änderung, die es rot macht.
   behauptete eines); Ursache am Code gelesen (Effekt nach Commit, `findBy` löst vorher aus); zwei weitere Meldungen im
   Protokoll nachgetragen; nichts gemessen oder gestartet.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Gezählt: 24 positive und 3 verneinende Fokus-Zusicherungen; alle positiven über einen lokalen Helfer mit `waitFor`, die verneinenden bleiben. Probe je Fokus-Aufruf (acht), nicht je Datei. `SohnProgress.test.tsx` zurückgestellt (keine Protokollstelle nennt einen Fall). Die Komponenten tragen im Arbeitsbaum fremde, ungecommittete Änderungen: Zeilen neu lesen, Proben per Kopie zurückspielen. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur Testdateien; Komponenten nur kurz durch Proben verändert). Nachgezählt: 17 und 10 `activeElement`-Stellen, 8 Fokus-Aufrufe, `waitFor` kommt in beiden Dateien nicht vor. Die Komponenten tragen fremde ungecommittete Änderungen: vor dem Bau neu zählen. Nichts gemessen oder gestartet.

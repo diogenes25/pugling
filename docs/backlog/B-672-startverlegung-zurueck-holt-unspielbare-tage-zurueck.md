@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Start zurückverlegt bricht Serie, Ferienpause kostet Malus]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: "Nachtlauf 2026-11-18, Nachschau von Sprint 87 (fe13531c, pugling-reviewer) – docs/pm-sitzung-2026-11-18.md, Runde 5"
 grund: ""
 ersetzt_durch: []
@@ -169,6 +169,44 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse: `Rueckwirkend
    `ActivatedAt = playableFrom` bei jedem Verlegen (T+2 fiele frei) und bei einer Anhebung über `min(alter Start, heute)`
    hinaus.
 
+## Schätzung
+
+**Größe: S** — wie „`childId` aus dem Test-Pfad ziehen“ (B-01): eine Stelle im Controller (vier Zeilen und eine
+Variable), dazu fünf Testfälle in einer vorhandenen Klasse.
+
+- **`migration: nein`** — `StudyPlan.ActivatedAt` gibt es schon (`StudyPlanEntities.cs:97`); es ändert sich nur, wann der
+  Controller den Wert schreibt, nicht das Schema (Entscheidung 2: keine Startverlaufs-Tabelle).
+- **`vertragsbruch: nein`** — `UpdatePlanDto` (Vergleich `dto == new UpdatePlanDto(null, null, null, null, false)`,
+  `StudyPlansController.cs:208`) und die Antwort bleiben unverändert; geändert wird nur ein interner Spaltenwert.
+- **`wo: backend`** — das Frontend schickt weiter nur `startDate`.
+
+### Risiken
+
+- **Reihenfolge im Block:** Anheben muss vor dem Absenken (`:225-229`) stehen, und der alte Start muss vor `:216`
+  gelesen werden; liest man ihn danach, liefert `min` den neuen Start (AK 2 fängt das).
+- **Gleichzeitiges Einschalten und Verlegen:** `:220` setzt `ActivatedAt` zuerst auf heute; die Anhebung darf das nicht
+  nach hinten schieben (Entscheidung 4, gedeckt durch das `plan.Active`-Gate und `max`). Eigener Testfall im Bau.
+- **Vorhandener Test:** `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet` (`RueckwirkendePflichtTests.cs:465`) ist die
+  Gegenprobe (AK 3) und muss grün bleiben.
+- **Bereits gebuchter Malus** bleibt (Entscheidung 3); kein Skript an der echten `pugling.db`.
+
+### Angriffsplan
+
+1. `StudyPlansController.Update`: alten Start vor `:216` festhalten.
+2. Im Block `if (startMoved && plan.Active)` zuerst anheben (`ActivatedAt = max(ActivatedAt, min(alter Start, heute))`),
+   dann das bestehende Absenken.
+3. Fünf Fälle aus den Akzeptanzkriterien in `RueckwirkendePflichtTests`; vorher rot gemessen.
+4. `dotnet build Pugling.sln` und `dotnet format Pugling.sln` vor dem Commit.
+
+### Testweg
+
+- `RueckwirkendePflichtTests` (Uhr per `factory.Clock.Advance`, Muster `:465`): AK 1 bis 5 als eigene Fälle. Ohne den
+  Anhebungsschritt sind AK 1 und AK 2 rot (Malus gebucht für T+1..T+4 bzw. Serie gebrochen am T+6); AK 3 und AK 4 sind
+  Gegenproben und im Ausgangszustand grün – AK 4 ist als Datenzusicherung beschriftet, AK 5 fällt nur bei der
+  verworfenen Kurzregel.
+- Vor der Abnahme: Agent `pugling-reviewer`; der Rollengang als Vater (Start verlegen) gegen die laufende App oder, wo
+  das ausfällt, eine Zeile im `## Verlauf`, die das benennt.
+
 ## Verlauf
 
 - **2026-11-18** — angelegt (Quelle: Nachtlauf 2026-11-18, Nachschau von Sprint 87, pugling-reviewer; Defekt, entgangen
@@ -179,3 +217,5 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse: `Rueckwirkend
 - **2026-11-19** — gegrillt im Vorbereitungslauf (Sonnet), stellvertretend und unbestätigt: vier Entscheidungen
   (Anhebung `max(ActivatedAt, min(alter Start, heute))` vor dem Absenken, kein Startverlauf, keine rückwirkende Heilung,
   inaktive Pläne unberührt); Akzeptanzkriterien final mit je einer roten Änderung. Keine neue Malus-Regel.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, backend, keine Migration, kein Vertragsbruch; Block in
+  `StudyPlansController.cs:211-229` am Code nachgelesen, die Fälle AK 1, 2, 5 gegen die Formel durchgerechnet.

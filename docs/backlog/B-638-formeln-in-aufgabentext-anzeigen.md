@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt]
+tags: [typ/story, status/geschaetzt]
 aliases: []
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Mathe in die App; Material raw/Math/lambacher-schweizer-9-sh-pugling/md)"
 grund: ""
 ersetzt_durch: []
@@ -164,10 +164,83 @@ Je Kriterium die Änderung, die es rot macht.
    fehlt dort. *Rot, wenn:* die Ansage `\frac` oder `^` enthält oder der Knopf bei einer Formel erscheint.
 8. Ein Lückentext mit einer Lücke **innerhalb** von `$…$` zeigt Rohtext und wirft nicht; eine Lücke neben der Formel
    zeigt Formel und Lücke. *Rot, wenn:* der Zerlege-Pfad eine halbe Formel setzt oder eine Karte leer bleibt.
-9. `vite.config.ts` nimmt `woff2` in den Precache. *Rot, wenn:* `workbox.globPatterns` kein `woff2` enthält – ein
-   Vitest liest die Konfiguration.
+9. `vite.config.ts` nimmt `woff2` in den Precache. *Rot, wenn:* `workbox.globPatterns` kein `woff2` enthält – ein Vitest
+   liest den Text der Konfiguration. **Das beweist nur, dass die Konfiguration es sagt, nicht dass der Service Worker die
+   Schrift enthält** (Absichtserklärung für die Wirkung); der Beleg der Wirkung ist `vite build` und ein Treffer für `woff2`
+   in `dist/sw.js`, festgehalten in der Verlaufszeile der Abnahme.
 10. Eine Vokabelkarte mit Text ohne `$` bleibt für alle bestehenden Frontend-Tests unverändert grün – **Absichtserklärung**
     (der Ausgangszustand erfüllt sie), rot nur bei einem unbeabsichtigten Eingriff in den Rendering-Pfad.
+
+## Schätzung
+
+**Größe: L** — Obergrenze der Skala, nicht darüber: ein einziger Mechanismus (ein Baustein, eine Bibliothek), aber mit
+neuer Abhängigkeit, Parser-Regeln, gut zwölf Einsatzstellen in zwei Oberflächen, einer Editor-Vorschau, der
+Hilfstechnik-Seite (Ansage, Vorlesen) und PWA-Cache – das ist mehr als ein Eingriff an einer Stelle (M), aber kein
+Umbau mit Datenrettung wie E6. Nicht XL, weil das Backend unberührt bleibt und sich alles am Baustein `MathText` bündelt.
+
+- **`migration: nein`** — nachgesehen: die Formel bleibt Text in `Prompt`/`Answer`; kein Schema, keine Spalte.
+- **`vertragsbruch: nein`** — `Pugling.Contracts` bleibt unberührt; `gen:contract` (`frontend/package.json`) erzeugt aus
+  dem Vertrag, hier ändert sich nichts daran. Das neue Paket (`katex`) steht in `frontend/package.json`, nicht im Vertrag.
+- **`wo: frontend`** — der Server bleibt ahnungslos (Entscheidungen 1 bis 7 berühren nur `frontend/`). Das Gegenstück der
+  Lücken-Klammern in Agent und Lader ist ausdrücklich ausgeklammert (offener Punkt 8).
+
+### Risiken
+
+- **Zählung der Einsatzstellen ist eine Schätzung.** Gelesen sind rund zwölf (Sohn: `ClozePrompt`, `Passage`, Hinweis,
+  Wortkasten, Auswahlknöpfe, `ErgebnisZeile`, `SohnTest`-Auflösung; Vater: fünf Stellen in `ExercisePreviewModal`) plus
+  die Editor-Feldtypen – **nicht gezählt**, ob der Editor an drei oder zehn Eingabefeldern eine Vorschauzeile braucht.
+  Das ist die größte Unsicherheit der Größe (L kann zur Obergrenze werden).
+- **Bündelgröße ungemessen.** `katex` und seine CSS/Schriftdateien werden dynamisch geladen; wie groß der Chunk wird und ob
+  `vite build` die Schriften (woff2/woff/ttf) alle in `dist/` legt, ist vor dem Bau zu messen. Im Precache reicht `woff2`
+  (moderne Browser), die Vite-Ausgabe enthält aber auch die anderen Formate.
+- **Testumgebung ist `happy-dom`**, nicht jsdom (`frontend/vitest.config.ts:15`; die Story nannte jsdom). Ob `katex.render`
+  dort ein Element mit `.katex` und MathML liefert, ist **nicht ausprobiert** – scheitert es, braucht der Test eine
+  Atrappe der Bibliothek, und AK 1 verliert an Beweiskraft; das ist beim Bau zuerst zu klären.
+- **Dynamischer Import im Test.** `await import("katex")` ist asynchron – Tests müssen auf das gerenderte Element warten
+  (`findBy…`), sonst sind sie flackernd oder prüfen den Quelltext-Zustand.
+- **Wortkasten-Kacheln und `ClozePrompt` zerlegen den Text vorher** (`cloze.ts:11`, `:29`); der Baustein muss je Textstück
+  laufen (Entscheidung 6). Ein Verlust der Wortgrenzen beim Setzen (Leerzeichen am Stückende) wäre unsichtbar im Test, solange
+  nur auf das Formel-Element geprüft wird – ein Fall prüft darum den umgebenden Text mit.
+- **Ansage:** `TaskAnnouncer` (`ClozePrompt.tsx:94`) und `spoken()` kennen heute nur Lücken; die Regel „Formel“ gehört an
+  dieselbe Funktion, sonst entstehen zwei Zerleger.
+- **`package.json` ist im Arbeitsbaum geändert** (fremde Arbeit: `gen:dad-assets`); der Bau fasst dieselbe Datei an. Erst
+  prüfen, ob sie committet ist, sonst landet fremde Arbeit im Commit.
+
+### Angriffsplan
+
+1. **Messen zuerst:** `katex` hinzufügen (festgenagelt), prüfen, dass `katex.render` unter `happy-dom` ein `.katex`-Element
+   liefert, und Chunk-Größe (`vite build`) lesen. Hält eines davon nicht, wird die Entscheidung 1 neu bewertet.
+2. **Parser** (`frontend/src/lib/mathText.ts`, rein, ohne DOM): zerlegt Text in Text- und Formelstücke nach der Pandoc-Regel
+   (Entscheidung 2), `\$` als wörtliches Dollarzeichen; Unit-Test mit der Tabelle aus AK 5.
+3. **Baustein** `MathText` (`frontend/src/components/MathText.tsx`): setzt Textstücke als Text, Formelstücke per
+   `katex.render(…, Element)` in einer Ref-Wirkung, `trust: false`, `throwOnError: false` (Entscheidung 4); bis die
+   Bibliothek geladen ist, steht der Quelltext.
+4. **Einsatz Sohn:** `ClozePrompt` (je Textstück nach `clozeParts`), `Passage`, Hinweis, Wortkasten, Auswahlknöpfe,
+   `ErgebnisZeile`, `SohnTest`-Auflösung; Ansage und `SpeakButton` (Entscheidung 5).
+5. **Einsatz Vater:** `ExercisePreviewModal` (fünf Stellen), Editor-Vorschauzeile unter den Text-Feldern (`RowField` und
+   Verwandte in `exerciseConfig.tsx`), nur bei gepaartem `$…$`.
+6. **PWA:** `workbox.globPatterns` in `vite.config.ts` um `woff2` ergänzen (AK 9).
+7. `tsc -b`, `./node_modules/.bin/vitest run`, E2E (`./node_modules/.bin/playwright test formel.spec.ts`); nur „N passed“
+   zählt, nie der Exit-Code allein.
+
+### Testweg
+
+- `frontend/src/lib/mathText.test.ts` (neu) – die `$`-Regeln als Tabelle (AK 5). Rote Probe je Zeile: ein Parser, der jedes
+  `$`-Paar nimmt, fällt an „it costs $5 and $6“; einer ohne `\$` an dem Escape.
+- `frontend/src/components/MathText.test.tsx` (neu) – gesetzte Formel, Quelltext-Rückfall bei `$\frac{1$` (AK 6), Text
+  daneben unverändert.
+- `frontend/src/components/ClozePrompt.test.tsx` – Formel neben der Lücke, Lücke innerhalb der Formel (AK 1, 8) und die
+  Ansage („Formel“, kein `\frac`; AK 7).
+- `frontend/src/sohn/Lektion.test.tsx`, `SohnTest.test.tsx` und je ein Fall für `ErgebnisZeile` – je Einsatzstelle ein Test
+  (AK 2), und der `SpeakButton` fehlt bei Formel (AK 7).
+- `frontend/src/vater/ExercisePreviewModal.test.tsx` (AK 3) und ein Editor-Fall in einer neuen
+  `frontend/src/vater/FormelVorschau.test.tsx` (AK 4).
+- `frontend/src/vite-config.test.ts` (neu, liest den Text von `vite.config.ts`) für AK 9; Wirkung per `dist/sw.js`-Belegzeile.
+- E2E `frontend/e2e/formel.spec.ts` (neu): Vater legt per Editor einen Lückentext mit `$x^2 - 6x + 8 = 0$` an, sieht die
+  Vorschauzeile und das gesetzte `.katex` in der Vorschau; Sohn spielt die Position und sieht die Formel auf der Karte. Der
+  Test trägt Entscheidung 3 gegen die zweite User Story.
+- Vor der Abnahme: `frontend-reviewer`; Rollengang als Vater (Editor) und als Sohn (Karte, Tablet-Breite, `prefers-reduced-motion`
+  ohne Folge).
 
 ## Verlauf
 
@@ -178,3 +251,6 @@ Je Kriterium die Änderung, die es rot macht.
   Pandoc-Regel, Vorschauzeile auch im Editor (gegen die zweite User Story), Rendern ohne `dangerouslySetInnerHTML`,
   Lücken nur außerhalb von Formeln (offener Punkt 8 zurückgestellt). Abgestimmt mit [B-639](B-639-dezimalkomma-im-zahlenvergleich.md)
   und [B-640](B-640-uebungstyp-gleichung-loesen.md).
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): L, frontend, keine Migration, kein Vertragsbruch;
+  Testumgebung ist `happy-dom` (nicht jsdom wie in der Story), Zahl der Editor-Felder und Chunk-Größe ungemessen;
+  AK 9 beweist nur die Konfiguration, die Wirkung belegt `dist/sw.js`. `wartet_auf` bleibt.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/qualitaet, rolle/entwickler]
+tags: [typ/story, status/geschaetzt, bereich/qualitaet, rolle/entwickler]
 aliases: [Feldhilfe-Spec flackert]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Sprint 82, Verifikation von B-597 (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -154,6 +154,59 @@ Je Kriterium: die Änderung, die es rot macht.
 5. Die übrigen Fälle der Datei (Escape-Fall, Gleichlaut-Fall mit Assistent) bleiben unverändert bis auf den Aufruf von
    `planAnlegen`. Rot, wenn der Diff den Assistenten-Teil (`:101-116`) berührt – Durchsicht, kein Tor.
 
+## Schätzung
+
+**Größe: S** — größer als der XS-Anker (zwei Sätze plus ein E2E): eine Zeile in einer Hilfsfunktion, aber dazu ein neuer
+Dauerfall mit verzögerter Antwort nach dem Muster von `planbau-ladefenster.spec.ts`. Kein Produktcode, daher klein.
+
+- **`migration: nein`** — nachgesehen: Es ändert sich nur `frontend/e2e/feldhilfe.spec.ts`; kein Schema, kein Backend.
+- **`vertragsbruch: nein`** — nachgesehen: `Pugling.Contracts` bleibt unberührt, die Spec ruft nur die Oberfläche.
+- **`wo: frontend`** — E2E-Spezifikation im Frontend; `frontend/CLAUDE.md` lädt dort selbst, Reviewer
+  `frontend-reviewer`.
+
+### Risiken
+
+1. **Die Verzögerung muss wirklich greifen.** Der Glob `**/api/v1/creator/exercises?**` stammt aus
+   `planbau-ladefenster.spec.ts:57`; `api.searchExercises` hängt Paging an (`api.ts:538`, `appendPaging`), die Adresse
+   trägt also in der Regel ein `?`. Greift die Route doch nicht, besteht der neue Fall auch ohne Wartebedingung und beweist
+   nichts – genau das fängt die rote Probe (Schritt 3 unten). Nicht gemessen.
+2. **Die Radiogruppe erscheint nur, wenn die Antwort da ist:** `exercises.loading && exercises.data === null` ersetzt
+   „Lade…“ (`PlanPositions.tsx:794`); `loading` startet mit `true` (`useAsync.ts:51`), die Bedingung ist also schon im
+   ersten Render erfüllt. Gelesen, nicht gemessen.
+3. **Folge-Layoutwechsel nach der Liste** (etwa ein weiterer Ladevorgang über dem Formular) wäre durch die Wartebedingung
+   nicht gedeckt – so entschieden (Entscheidung 4, ausgeschlossener Fall). Der Dauerfall prüft zwei Frames **nach** der
+   Liste und wäre dann der erste, der fällt.
+4. **Die Spec öffnet im ersten Fall ein eingeklapptes `summary`** (`feldhilfe.spec.ts:57`): auch das verschiebt Knöpfe,
+   aber unterhalb der Ziel-Felder und vor der Schleife – nicht Teil des Befunds, hier nur gesehen.
+5. **Der Lauf teilt sich die Maschine mit dem Heimnetz-Server.** Die Messung läuft auf Ausweichports
+   (`PUGLING_E2E_API_PORT`, `PUGLING_E2E_WEB_PORT`, `playwright.config.ts:21-22`), nie auf `:5200` (echte DB der Söhne).
+
+### Angriffsplan
+
+1. `planAnlegen` (`feldhilfe.spec.ts:25-31`) bekommt als letzte Zeile
+   `await expect(page.getByRole("radiogroup", { name: "Übung wählen" })).toBeVisible();` samt Kommentar (Grund: B-273
+   schließt ein offenes ⓘ, sobald sein Knopf wandert; die Liste lädt unter dem Feld nach).
+2. Neuer Fall am Ende der Datei (Entscheidung 4): Route mit 1,5 s Verzögerung **vor** `planAnlegen`, danach ⓘ
+   „Ziel-Rhythmus“ öffnen, auf die Trefferliste und zwei Frames warten, `aria-expanded="true"` und Hinweistext prüfen.
+3. **Messschritt M1 (rote Probe, Akzeptanzkriterien 1 und 3):** Wartezeile aus `planAnlegen` entfernen, nur den neuen Fall
+   laufen lassen – er muss rot sein; dann die Zeile durch `getByText(/\(\d+ Treffer\)/)` ersetzen – er muss ebenfalls rot
+   sein; dann Zeile wiederherstellen – grün. Danach alle drei alten Fälle einzeln je drei Mal und die ganze Datei einmal.
+4. Durchsicht Akzeptanzkriterien 4 und 5 (kein `waitForTimeout`, Diff berührt `:101-116` nicht).
+
+### Testweg
+
+- **E2E-Spec:** `frontend/e2e/feldhilfe.spec.ts` selbst (der neue Fall trägt die Wartebedingung). Rote Probe liegt in der
+  **Spec**, nicht im Produkt: Entfernen der Wartezeile in `planAnlegen` macht den neuen Fall rot, weil das ⓘ vor der
+  Antwort öffnet und die Liste es anschließend schließt (`InfoHint.tsx:38-48`). Das Gegenstück zum Produkt bleibt
+  `feldhilfe-lage.spec.ts:213`, unverändert.
+- **Messbefehl** (aus `frontend/`, lokale Binary, nicht `npx`; Ausweichports, Release-Build, weil auf `:5200` der
+  Heimnetz-Server die Debug-Ausgabe sperrt):
+  `PUGLING_E2E_API_PORT=5201 PUGLING_E2E_WEB_PORT=5174 PUGLING_E2E_CONFIGURATION=Release ./node_modules/.bin/playwright test e2e/feldhilfe.spec.ts`;
+  gezählt wird „N passed“, nicht der Exit-Code. Ein Lauf misst bei einem Flackern wenig: die Beweiskraft liegt in der
+  verzögerten Antwort (deterministisch), nicht in grünen Wiederholungen.
+- Vor der Abnahme: `frontend-reviewer`; ein Rollengang als Vater an der Plan-Seite (ⓘ „Ziel-Rhythmus“ gleich nach dem Öffnen
+  antippen) – dort bleibt das schließende Popover als Randbefund sichtbar, bewusst.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt bei der Verifikation von B-597 (Sprint 82): 2 von 3 Einzelläufen grün.
@@ -161,3 +214,4 @@ Je Kriterium: die Änderung, die es rot macht.
   Bewegung des Knopfs, B-273; die Trefferliste unter dem Formular lädt nach), Zeilennummern der Idee waren verrutscht;
   nichts gemessen oder gestartet.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Gegen den Code korrigiert: die empfohlene Wartebedingung „(N Treffer)“ trüge nicht, die Beschriftung steht beim Erstladen schon bei „(0 Treffer)“; gewartet wird auf die Radiogruppe der Trefferliste, einmal in `planAnlegen`. Ein Dauerfall mit verzögerter Suchantwort hält die Bedingung ehrlich. Der Assistent bleibt unberührt. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur `feldhilfe.spec.ts`, kein Produktcode). Rote Probe benannt (Wartezeile entfernen; zweite Probe mit „(N Treffer)“); Messbefehl auf Ausweichports. Offen bleibt, ob die Route-Verzögerung greift – genau das zeigt die erste Probe. Nichts gemessen oder gestartet.

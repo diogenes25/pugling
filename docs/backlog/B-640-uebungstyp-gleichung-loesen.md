@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt]
+tags: [typ/story, status/verworfen]
 aliases: []
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-17 (Mathe in die App; Material raw/Math/lambacher-schweizer-9-sh-pugling/md)"
-grund: ""
-ersetzt_durch: []
+grund: geteilt
+ersetzt_durch: [B-710, B-711, B-712]
 wartet_auf: Bestätigung der Sonnet-Entscheidungen
 ---
 
@@ -211,6 +211,22 @@ Je Kriterium die Änderung, die es rot macht.
 10. Die Sohn-Eingabe bindet zwei Felder zu `x1;x2` aufsteigend und den Knopf zu `keine Lösung`. *Rot, wenn:* ein
     Komponententest bei Eingabe `4` und `2` etwas anderes als `2;4` sendet.
 
+## Teilung
+
+Beim Schätzen als **faktisch XL** erkannt (Backend-Typ samt Löser und neuem Mengen-Atom in der geteilten Wertung, Vater-Editor,
+Auswahlstufe, neues Mehrfeld-Eingabeelement mit additivem Karten-Feld, dazu zwei vorgelagerte Stories). Geteilt nach
+[Teilen und Zusammenlegen](README.md#teilen-und-zusammenlegen); die Entscheidungen und Akzeptanzkriterien liegen jetzt dort:
+
+1. [B-710](B-710-gleichung-loesen-typ-und-editor.md) – Typ, Löser, Mengen-Wertung, Vater-Editor, Eingabe im vorhandenen
+   Textfeld (Entscheidungen 1 bis 5, 7, 8, 10 dieser Story; Akzeptanzkriterien 1 bis 6, 8, 9).
+2. [B-711](B-711-loesungsmenge-auswaehlen.md) – Stufe „Lösungsmenge auswählen“ (Entscheidung 6; Akzeptanzkriterium 7).
+3. [B-712](B-712-sohn-eingabe-loesungsmenge.md) – getrennte Felder und Knopf „keine Lösung“ (Teil von Entscheidung 2;
+   Akzeptanzkriterium 10).
+
+Reihenfolge: [B-639](B-639-dezimalkomma-im-zahlenvergleich.md), dann [B-638](B-638-formeln-in-aufgabentext-anzeigen.md), dann
+B-710, danach B-711 und B-712. Die zurückgestellten Fragen (offene Punkte 11 und 12: Stufen „Anzahl“ und „Verfahren“) stehen
+in B-710.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt (Quelle: Konzept „Mathe in die App" aus dem Chat, Lambacher Schweizer 9, Kapitel IV).
@@ -222,3 +238,6 @@ Je Kriterium die Änderung, die es rot macht.
   „Anzahl“ und „Verfahren“ zurückgestellt (anderes Soll je Stufe ist im Typ-Vertrag nicht gefunden); AK 2 des Entwurfs
   berichtigt („2,4“ ist nach B-639 die Zahl 2,4). Abgestimmt mit [B-638](B-638-formeln-in-aufgabentext-anzeigen.md)
   und [B-639](B-639-dezimalkomma-im-zahlenvergleich.md).
+- **2026-11-19** — verworfen, geteilt (Vorbereitungslauf, Sonnet): faktisch XL; ersetzt durch
+  [B-710](B-710-gleichung-loesen-typ-und-editor.md), [B-711](B-711-loesungsmenge-auswaehlen.md) und
+  [B-712](B-712-sohn-eingabe-loesungsmenge.md). Der Stand `gegrillt` mit allen Entscheidungen bleibt hier lesbar.

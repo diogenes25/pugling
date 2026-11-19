@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
 aliases: [Fach der Übung statt des Plans]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 83 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
@@ -142,9 +142,58 @@ Je Kriterium: die Änderung, die es rot macht.
 7. Der XML-Doc-Satz zu `SubjectName` in `ProgressDtos.cs` nennt das Fach des Plans, nicht der Übung (Durchsicht bei der
    Abnahme, kein Tor: ein Kommentar ist nicht mechanisch prüfbar).
 
+## Schätzung
+
+**Größe: M** — der Code ist klein (`SubjectNameOf` wird planbewusst, zwei Ladestellen), aber die Änderung wirkt über fünf
+Aufrufer von `ComputeDayAsync` und trägt eine ungemessene Abfrage-Last in den Verlaufsschleifen; dazu sieben
+Kriterien mit eigenen Fixtures. Anker: wie der Batch-Pfad im `MediaSelector` (M), nicht wie B-01 (S).
+
+- **`migration: nein`** — `StudyPlan.SubjectId` und `Subject` gibt es (`StudyPlanEntities.cs:83-84`); nichts am Schema.
+- **`vertragsbruch: nein`** — `PositionStatus.SubjectName` bleibt `string` (`ProgressDtos.cs:49`); die Form ändert sich
+  nicht, nur der XML-Doc-Satz (`ProgressDtos.cs:28-30`) und der Wert. Das ist eine Bedeutungsänderung ohne Typbruch –
+  `Pugling.Client`/`Agent.Creator` lesen das Feld nicht (Entscheidung 1), die Beispiele und `docs/openapi/v1.json`
+  ziehen über `DocsCaptureTests` bzw. `ContractDocumentTests` nach.
+- **`wo: backend`** — das Frontend bleibt unverändert (AK 6); `tagessicht.ts:25` gruppiert weiter nach `subjectName`.
+  Die Quelle trug `bereich/frontend`, weil der Defekt dort sichtbar wird; die Arbeit liegt im Server.
+
+### Risiken
+
+- **Abfrage-Last:** Entscheidung 3 nennt einen Befehl je `ComputeDayAsync`-Aufruf ohne vorgeladenes `Subject`; in den
+  Verlaufsschleifen (`PositionProgressService.cs:875`, `ChildrenDashboardService.cs:77`) fällt er je Tag an. Gemessen ist
+  das nicht; der Bau misst es (B-609 hat eine Rechnung dazu, Entscheidung 3 dort).
+- **Fünf Aufrufer mit verschiedenem Ladeverhalten:** `PositionProgressService.cs:416` (lädt mit), `PlanOverviewController.cs:40`
+  (ohne `Include`, AK 4), `ChildrenDashboardService.cs:77`, `PositionProgressService.cs:587` und `:875`. Ein vergessener
+  Pfad fällt still auf den Reihen-Namen zurück – genau der Fehler; AK 4 deckt nur die Plan-Übersicht ab.
+- **Doku-Capture byte-stabil:** `docs/api-examples` ändert sich vermutlich an Stellen mit `subjectName`; `DocsCaptureTests`
+  schreibt sie neu, der Diff ist zu lesen, nicht blind zu committen.
+- **Fachfremde Positionen** bleiben ungeprüft (Entscheidung 4, zurückgestellt); kein Teil dieser Größe.
+
+### Angriffsplan
+
+1. `PositionProgressService`: `SubjectNameOf` bekommt den Plan; Name = `plan.Subject?.Name`, bei leerer Navigation und
+   gesetzter `SubjectId` nachladen, sonst Rückfall auf die Reihe (Entscheidungen 2 und 3).
+2. `ComputeChildDayAsync` (`:409-412`) lädt die Pläne mit `Include(Subject)`.
+3. Tests (siehe Testweg), je Kriterium vorher rot gemessen; `KindTagessichtTests.cs:143` umschreiben.
+4. `ProgressDtos.cs:28-30` Doc-Satz nachziehen; Capture- und Vertragsdokument neu erzeugen lassen.
+5. `dotnet build Pugling.sln` und `dotnet format Pugling.sln`.
+
+### Testweg
+
+- `KindTagessichtTests` (`backend/Pugling.Api.Tests/KindTagessichtTests.cs`): AK 1, 2, 3, 5 über `student/children/{id}/today`
+  mit Reihe eines anderen Fachs bzw. zwei Schreibweisen; Aufbau über `TestApi.SeedLeitnerPosition` (Plan-Fach „Englisch“
+  über `DefaultSubjectIdAsync`, `TestApi.cs:318-324`). Rot heute: AK 1, 2 und das umgeschriebene AK 5; AK 3 (Rückfall)
+  ist im Ausgangszustand grün und trägt nur gegen eine Fassung ohne Rückfall.
+- AK 4: `student/study-plans/{planId}/overview` – Testklasse für `PlanOverviewController` nicht benannt; im Bau per Grep
+  unter `backend/Pugling.Api.Tests` zu finden, sonst in `KindTagessichtTests`.
+- AK 6: `frontend/src/sohn/tagessicht.test.ts:17` bleibt grün (keine Frontend-Änderung); `tagessichtWeg.test.tsx` ebenso.
+- Vor der Abnahme: `pugling-reviewer`; Rollengang als Sohn an der Startseite eines Kindes mit zwei Fächern.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 83 (🟢, `pugling-reviewer`), `entgangen_bei: [B-606]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): am Code bestätigt; Lücke geschärft (Gruppe hängt am
   Lehrwerk; Plan wird ohne `Subject` geladen), fachfremde Positionen sind nicht ausgeschlossen. `unverifiziert` entfällt.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 4. Server liefert das Fach des Plans (Bedeutung von `SubjectName` ändert sich, Vertragsform bleibt), Rückfall auf die Reihe bei Plan ohne Fach, Plan-Fach wird in `ComputeDayAsync` nachgeladen, wo die Aufrufer es nicht mitbringen (`PlanOverviewController` lädt ohne `Include`). Gegen den Code korrigiert: `KindTagessichtTests.cs:143` liest `subjectName` und hält den alten Sinn fest. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend (Frontend bleibt), keine Migration, kein Vertragsbruch
+  (Feldform unverändert, nur Bedeutung und Doc-Satz); Aufrufer von `ComputeDayAsync` am Code gezählt (fünf), Last der
+  Nachladeabfrage ungemessen.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 aliases: [Keine Sachfragen, Nur Sprache abfragen, Keine Satzantworten]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: "Vater im Chat 2026-11-16: Fragen nach der Farbe der U-Bahn in England oder nach Städten in Frankreich, Antworten teils ganze Sätze – beim Vokabellernen irrelevant"
 grund: ""
 ersetzt_durch: []
@@ -162,14 +162,65 @@ Je Kriterium die Änderung, die es rot macht.
    prüft (`laden.check(book, words, [e])`) und keinen Hinweis findet, **oder** ein Paar aus der Liste einen Hinweis
    auslöst.
 4. Die Übersetzungsübung des Agenten verlangt weiter Sätze als Antwort. *Rot, wenn:* `TranslationStrategy` einen
-   mehrwortigen `target` als Verstoß meldet – **Absichtserklärung**, soweit kein vorhandener Test in
-   `CreatorAgentTests` einen mehrwortigen `target` annimmt (beim Schätzen nachsehen; findet sich einer, entfällt die
-   Beschriftung).
-5. Der Vater-Editor zeigt die Hilfezeile „Sprachfrage statt Sachfrage“. *Rot, wenn:* `FIELD_HELP` den Eintrag nicht
-   führt – ein Fall in `frontend/src/lib/fieldHelp.test.ts` prüft den Text (Vorbild dort: `FIELD_HELP.stage.text`),
-   und ein Komponententest des Editors prüft, dass die Hilfe am Feld hängt.
+   mehrwortigen `target` als Verstoß meldet – das ist **keine** Absichtserklärung mehr: `CreatorAgentTests`
+   (`Eine_Uebersetzung_mit_Null_Alternative_entsteht_ohne_sie`, um `:1094`) legt drei Übersetzungen mit
+   Satz-`target` an und erwartet `Assert.Empty(outcome.Violations)` – eine Satz-Regel in `TranslationStrategy` färbt ihn rot.
+5. Der Vater-Editor zeigt die Hilfezeile „Sprachfrage statt Sachfrage“ am Feld „Rechts“ der Zuordnung. *Rot, wenn:*
+   `FIELD_HELP` den Eintrag nicht führt – ein Fall in `frontend/src/lib/fieldHelp.test.ts` prüft den Text (Vorbild dort:
+   `FIELD_HELP.pointsGoalMet.text`) –, **oder** das Feld „Rechts“ ohne `topic` gerendert wird – ein Fall in einer neuen
+   `frontend/src/vater/ZuordnungHilfe.test.tsx` rendert `ConfigEditor type="Matching"` (Vorbild: `BirkenbihlSprachen.test.tsx`)
+   und sucht den Hinweisknopf an der ersten Zeile.
 6. Eine Liste der Bestandsübungen, deren Antwort in keiner Wortliste der Unit steht, liegt dem Vater vor (read-only).
    **Absichtserklärung:** kein Code, der rot werden könnte – der Beleg ist die Verlaufszeile mit der Liste.
+
+## Schätzung
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector`: kein einzelner großer Eingriff, aber vier Stellen mit je eigenem
+Test (Skill-Text, Prompt, Lader-Warnung, Editor-Hilfe), dazu eine Handarbeit am Bestand. Keine davon trägt Logik im
+Spielpfad.
+
+- **`migration: nein`** — kein Schema berührt; Regel und Hinweis sind Text, die Wortlisten-Prüfung liegt im Python-Lader.
+- **`vertragsbruch: nein`** — nachgesehen: nichts in `Pugling.Contracts`; `DraftPrompts` ist ein `const string` im
+  Agenten, `FIELD_HELP` reine Frontend-Konstante, `laden.py` liest nur.
+- **`wo: beides`** — Backend zuerst: der Agent-Prompt (`backend/Pugling.Agent.Creator/Drafting/DraftPrompts.cs`) und
+  `CreatorAgentTests` in `Pugling.Api.Tests`. Dann Skill und Lader (Python, `.claude/skills/lehrwerk-aufbereiten/`), zuletzt
+  die Editor-Hilfe im Frontend.
+
+### Risiken
+
+- **Drei Textstellen laufen auseinander** (Entscheidung 1): keine mechanische Klammer. AK 1, 2 und 5 prüfen je ihre Stelle
+  auf die Kernsätze, nicht auf Gleichlaut.
+- **Prompt-Länge:** `SystemFor` hängt `System` hinter Persona und Didaktik des Profils (`DraftPrompts.cs:19`–`:33`); eine
+  neunte Regel verlängert jeden Aufruf. Kleine Modelle (Ollama) verlieren bei langen Prompts Regeln – die Wirkung auf die
+  Qualität ist **nicht gemessen**, der Test sichert nur, dass der Text da ist.
+- **Hinweis-Rauschen im Lader** (Entscheidung 4): Grammatik-Zuordnungen stehen nicht in der Wortliste. Die Wortliste kann
+  fehlen (`words` ist dann leer, wie im bestehenden Test `laden.check(book, {}, [e])`): ohne Liste der Unit **kein** Hinweis,
+  sonst warnte jede Zuordnung.
+- **Bestandsliste (AK 6)** braucht die laufende echte DB; ein lesender API-Abruf, nie ein Schreibzugriff, nie eine zweite
+  Instanz auf :5200 (Heimnetz). Die Liste ist Handarbeit des Entwicklers beim Bau, kein Code.
+
+### Angriffsplan
+
+1. **Backend:** Regel 9 in `DraftPrompts.System` („Sprachfrage statt Sachfrage“, Antwort = Wort/Wendung der Wortliste für
+   Vokabel, Zuordnung, Lückentext-Lücke; Übersetzung darf Sätze) und der Test in `CreatorAgentTests` (AK 2, 4).
+2. **Skill:** Zeile `SKILL.md:169`–`:170` ändern; `test_laden.py` liest die Datei (AK 1).
+3. **Lader:** Hinweis in `check()` für `matching`-Paare, über `graded()` gegen `wort`, `uebersetzung` und deren Bedeutungen
+   (Aufteilung wie bei `meanings`, `laden.py:215`), nur wenn die Unit eine Wortliste hat (AK 3).
+4. **Frontend:** `FIELD_HELP.answerIsWord` (Titel „Sprachfrage statt Sachfrage“) und `topic` am Feld „Rechts“ des
+   `Matching`-Zweigs (`exerciseConfig.tsx:703`), erste Zeile (AK 5).
+5. **Bestand:** read-only Liste der Zuordnungen/Übersetzungen ohne Wortlisten-Treffer, in die Verlaufszeile (AK 6).
+6. `dotnet build Pugling.sln` und `dotnet format Pugling.sln`; `./node_modules/.bin/vitest` für die beiden Frontend-Tests.
+
+### Testweg
+
+- `CreatorAgentTests` (`backend/Pugling.Api.Tests/CreatorAgentTests.cs`) – neuer Fall: `chat.LastMessages[0].Text` enthält
+  beide Satzteile (AK 2); der vorhandene Fall mit Satz-`target` bleibt grün (AK 4). Rot: Regel aus `DraftPrompts` löschen.
+- `.claude/skills/lehrwerk-aufbereiten/test_laden.py` – Fälle für SKILL.md-Text (AK 1) und Hinweis bei fehlendem/vorhandenem
+  Treffer (AK 3). Rot: je die Änderung aus der AK-Zeile.
+- `frontend/src/lib/fieldHelp.test.ts` und neue `frontend/src/vater/ZuordnungHilfe.test.tsx` (AK 5).
+- Kein E2E nötig: der Editor-Hinweis ist ein bestehender Mechanismus (`InfoHint`, `e2e/feldhilfe.spec.ts` prüft ihn je Feld);
+  wer ihn dort ergänzen will, hängt an der Plan-Seite, nicht am Katalog-Editor – nicht gelesen, daher kein Kriterium.
+- Vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`; Rollengang als Vater im Editor (Hinweis erscheint am Feld).
 
 ## Verlauf
 
@@ -180,3 +231,6 @@ Je Kriterium die Änderung, die es rot macht.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Regel als Text an Skill,
   Agent-Prompt und Vater-Editor statt als Server-Prüfung; `Translation` behält Sätze; Lader warnt nur; Bestand nur
   gelistet. Verwandt: [B-626](B-626-antwort-verlangt-mehr-als-die-vokabel.md).
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein
+  Vertragsbruch; AK 4 ist keine Absichtserklärung (`CreatorAgentTests` hat Satz-`target`); AK 5 am Feld „Rechts“.
+  `wartet_auf` bleibt.

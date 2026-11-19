@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/backend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
 aliases: [Truhen-Prüfung doppelt, Kind-Tag auf dem Schreibweg]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Aufräumen
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: "Backend-Review von B-606 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
@@ -172,6 +172,75 @@ Je Kriterium: die Änderung, die es rot macht. Kriterium 1 liegt vor jedem Umbau
    Positions-Fach-Abfrage aus Messung (b) und daraus „eigene Story (Id)“ oder „Verlustposten, nicht gebaut“. Rot, wenn
    die Zeile fehlt, weil die Abnahme dann die Messung nicht benutzt hat.
 
+## Schätzung
+
+**Größe: M** — wie der Batch-Pfad im `MediaSelector`: ein kleiner Eingriff an einer Stelle (die Signatur von
+`EvaluateAndAwardAsync`), aber mit eigenem Hilfsbau davor (ein zählender Interceptor samt Messtest), den kein
+Vorgänger im Repo liefert. Ohne die Messung wäre es ein S; sie ist Akzeptanzkriterium 1 und gehört dazu.
+
+- **`migration: nein`** — nachgesehen: Die Story ändert weder eine Entität noch eine Spalte; `ComputeDayAsync` schreibt
+  nichts (`PositionProgressService.cs:305-360`), und die Buchung in `EvaluateAndAwardAsync` bleibt, wie sie ist.
+- **`vertragsbruch: nein`** — nachgesehen: `DayOverview` liegt zwar in `Pugling.Contracts`
+  (`backend/Pugling.Contracts/Shared/ProgressDtos.cs:57`), bleibt aber Rückgabetyp von `ComputeDayAsync`
+  (`PlanOverviewController.cs:40` liest ihn weiter). Geändert wird nur die Signatur des Dienstes
+  `PositionProgressService.EvaluateAndAwardAsync` – er ist kein Endpunkt, und kein Controller gibt den Wert heraus (beide
+  verwerfen ihn, `PositionPracticeController.cs:957`, `PositionTestsController.cs:466`). `Pugling.Client` und das
+  Frontend sind nicht betroffen.
+- **`wo: backend`** — Dienst und Testprojekt; im Frontend steht nichts.
+
+### Risiken
+
+1. **Der Zähler muss sich überhaupt einhängen lassen.** `Program.cs:156-157` registriert `AddDbContext` ohne Interceptor,
+   und `PuglingWebAppFactoryBase.ConfigureWebHost` ist versiegelt; der Haken ist `ConfigureFactory` (Muster:
+   `DailyBoxRangeFactory`, `DailyBoxRangeTests.cs:112-132`). Ob EF einen als `IInterceptor` im Anwendungs-Container
+   registrierten Zähler von allein aufnimmt, ist hier **nicht belegt** (Paket 10.0.15). Fällt der Weg aus, bleibt, den
+   Kontext in der Factory-Unterklasse mit `AddInterceptors` neu zu registrieren (Vorlage für den Einhängeweg pro Kontext:
+   `ShopStockPerChildTests.cs:436`, dort ein `SaveChangesInterceptor`, kein Befehlszähler – die Aussage der Entscheidung
+   1 „`AddInterceptors` fehlt“ stimmt nur für `backend/Pugling.Api`). Die Vorprobe aus Akzeptanzkriterium 1 (Zähler
+   größer null) fängt beide Wege.
+2. **Pläne mit 5 und 15 Positionen gibt es im Testbau nicht.** `TestApi.SeedLeitnerPosition` (`TestApi.cs:260`) legt je
+   Aufruf einen **eigenen** Plan mit einer Position an (`TestApi.cs:307-345`). Für „ein Plan, N Positionen“ braucht der
+   Messtest einen lokalen Aufbau (`StudyPlan` mit `Positions`), der die Regel „ein aktiver Plan je Fach“ (B-539) umgeht,
+   weil er direkt in die DB schreibt – gewollt, aber im Kommentar zu benennen.
+3. **Die Zahlen in Akzeptanzkriterium 2 sind fest verdrahtet** und werden rot, sobald eine fremde Änderung eine Abfrage in
+   der Tagessicht hinzufügt – aus einem anderen Grund als diese Story. Besser, sie im selben Lauf **relativ** zu messen:
+   Befehle der Abgabe gegen Befehle einer direkten `ComputeDayAsync`-Sicht desselben Plans, beide aus derselben Messung.
+   Das ändert keine Entscheidung, nur die Form der Konstanten; beim Bau zu wählen.
+4. **Reihenfolge Ziel-Belohnung → Gamification → Truhe darf sich nicht verschieben** (Entscheidung 6): Die Buchung steht
+   in `EvaluateAndAwardAsync` vor der entfallenden Zeile 587 und bleibt unberührt; `DailyBoxTests` ist das Netz.
+5. **Anzahl der Testanpassungen:** Entscheidung 2 spricht von zwei; nachgesehen braucht nur
+   `PositionGoalOverviewTests.cs:266-268` eine Änderung (liest `overview.DutyDone`). `RemediationPositionTests.cs:595`
+   verwirft den Wert und kompiliert unverändert.
+
+### Angriffsplan
+
+1. **Messschritt M1 (Akzeptanzkriterium 1, vor jedem Umbau):** `CommandCounter : DbCommandInterceptor` im Testprojekt, eine
+   Factory-Unterklasse über `PuglingWebAppFactoryBase.ConfigureFactory`, der Messtest `AbgabeBefehlszaehlerTests`. Erst die
+   Vorprobe (bekannte Abfrage zählt mehr als null), dann Messung (a) Abgabe bei 5 und 15 Positionen mit offener und
+   vergebener Truhe, (b) `ProgressAsync` über 30 Tage bei 15 Positionen, getrennt nach Befehlen mit dem Join auf
+   `TextbookSeries`. Zahlen in den `## Verlauf`.
+2. `EvaluateAndAwardAsync` liefert `Task`; die Schluss-Rechnung und der veraltete Kommentar im `catch`
+   (`PositionProgressService.cs:577-586`) entfallen bzw. werden angepasst; `PositionGoalOverviewTests.cs:266-268` liest
+   `ComputeDayAsync` nach der Buchung.
+3. Die Konstanten aus Schritt 1 in den Test schreiben (Akzeptanzkriterium 2), mit Messdatum im Kommentar.
+4. Durchsicht Akzeptanzkriterium 5 (`grep` auf `RewardObligations(`) und Eintrag der Entscheidung zu Akzeptanzkriterium 6
+   im `## Verlauf`: Anteil der Positions-Fach-Abfrage, daraus „eigene Story“ oder „Verlustposten“.
+5. `dotnet build Pugling.sln` und `dotnet format Pugling.sln` vor dem Commit.
+
+### Testweg
+
+- **Neu:** `AbgabeBefehlszaehlerTests` (Akzeptanzkriterien 1 und 2) mit eigener Factory. Zählen ist deterministisch (keine
+  Zeiten), also kein Flacker. Rot heute: Kriterium 2 (die Zahl ist die Messzahl selbst); rot, wenn der Zähler nicht
+  eingehängt ist (Vorprobe).
+- **Unverändert grün:** `DailyBoxTests`, `PositionGoalOverviewTests` (bis auf die eine Stelle), `ChildrenOverviewTests`,
+  `KindTagessichtTests`, `RemediationPositionTests` (Akzeptanzkriterien 3 und 4); Lauf über das Test-Tor
+  (`dotnet test Pugling.sln -c Release`).
+- **Messschritt als eigener Befehl:** `dotnet test backend/Pugling.Api.Tests -c Release --filter AbgabeBefehlszaehlerTests`;
+  die Zahlen kommen über `ITestOutputHelper` und werden von Hand in den Verlauf übertragen (gezählt wird „N passed“, nicht
+  der Exit-Code).
+- Vor der Abnahme: Agent `pugling-reviewer`; ein Rollengang als Sohn (Runde beenden mit Truhe) genügt, weil sich kein
+  sichtbares Verhalten ändert.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Backend-Review von B-606 (🟢, ohne Zählung).
@@ -180,3 +249,4 @@ Je Kriterium: die Änderung, die es rot macht. Kriterium 1 liegt vor jedem Umbau
   Schreibweg; die schlanke Truhen-Prüfung der Idee würde eine zweite Wahrheit schaffen; Messung als erster Schritt
   empfohlen.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 6. Zuerst messen (Messung ist Kriterium 1); Vorbild `QueryPlanSmokeTests` trägt nicht (EXPLAIN, kein Zähler), im Backend gibt es keinen Befehlszähler. Die tote Schluss-Rechnung in `EvaluateAndAwardAsync` fällt ohne Schwelle; die Verlaufsschleifen gehören nicht zur User Story (Abgabe) und werden nur bei mindestens 20 Prozent Anteil eigene Story; Truhe bleibt unangetastet. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend, keine Migration, kein Vertragsbruch (nachgesehen: `DayOverview` bleibt Rückgabetyp von `ComputeDayAsync`, `EvaluateAndAwardAsync` ist ein Dienst ohne Endpunkt). Größer als der Eingriff selbst ist der Hilfsbau (Zähler, Plan mit N Positionen); beides benannt. Nebenfund: nur eine statt zwei Testanpassungen nötig; `AddInterceptors` fehlt nur in `backend/Pugling.Api`, im Testprojekt gibt es ein Vorbild (`ShopStockPerChildTests.cs:436`). Nichts gemessen oder gestartet.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Frage an den Betreuer, Hausaufgaben-Frage, Kind fragt]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: docs/sofatutor-vergleich-plan.md
 grund: ""
 ersetzt_durch: []
@@ -175,6 +175,74 @@ Je Kriterium: welche Änderung macht es rot.
 10. Der Hinweis auf der Sohn-Startseite zeigt den Antworttext (`KartenMeldung`/`SohnHome`, Komponententest). Rot, wenn das Frontend
     `replyText` aus dem Vertrag nicht darstellt.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet); die Entscheidungen oben sind weiter unbestätigt, `wartet_auf` bleibt.*
+
+**Größe: M** – wie der Batch-Pfad im `MediaSelector` ein Eingriff mit klarem Rahmen, aber mit Migration, einer neuen Sperre im
+Abruf und Oberfläche auf zwei Seiten; die Bausteine (Modell, Controller, Notices, beide Komponenten) bestehen seit
+B-628/B-629 und werden nur erweitert. Kein neues Modell, kein neuer Kanal.
+
+- **`wo: beides`** – Backend zuerst (Migration, `PATCH`, Abruf mit Sperre), danach Vater-Web
+  (`frontend/src/vater/VaterRueckmeldungen.tsx`) und Sohn-App (`frontend/src/sohn/KartenMeldung.tsx`, `SohnHome.tsx`).
+- **`migration: ja`** – nachgesehen: `ExerciseFeedback` bekommt `ReplyText`, `RepliedAt`, `RepliedByAdultId`
+  (`backend/Pugling.Api/Models/FeedbackEntities.cs`), dazu eine Beziehung zu `Adult` mit `SetNull` in
+  `PuglingDbContext.cs:1047` (wie `DoneByAdult`). Die Migration hängt hinter `20261119065732_ShopStockPerChild`; alle drei
+  Spalten nullable, Bestandszeilen (`ExerciseFeedback`-Kette vom 2026-11-18) bleiben unverändert. Die Zusicherungstabelle G2 in
+  `SchemaGuardTests` braucht die Zeile `ExerciseFeedback.RepliedByAdultId = SetNull`.
+- **`vertragsbruch: nein`** – nachgesehen: `UpdateFeedbackDto(Status)` bekommt `string? ReplyText = null` als letzten
+  Parameter (`Pugling.Contracts/Supervisor/FeedbackDtos.cs:33`), `FeedbackNotice` ebenso (`Student/FeedbackDtos.cs:35`), die
+  Betreuer-Antwort `FeedbackResponse` darf `ReplyText` additiv mitführen. Kein bestehendes Feld ändert Form oder Sinn; Client und
+  Frontend-Typen werden neu erzeugt.
+
+### Risiken
+
+1. **Der Antworttext ist ein Lösungskanal, den das Tor nicht sieht.** `NoticesAsync` hat heute keine Test-Sperre
+   (`ExerciseFeedbackService.cs:194-216`), `TestRunningAsync` (`:24`) gilt je **Position**. Die neue Sperre muss je **Übung** und
+   über alle Positionen des Kindes schauen (eine Meldung ist je Übung, nicht je Position eindeutig). Ein Fehler hier ist
+   unsichtbar; AK 5 ist die einzige Sicherung.
+2. **Der Abruf ist für Betreuer offen:** `GET …/feedback-notices` lässt per `ChildOwnershipFilter` auch den Supervisor durch
+   (`ExerciseFeedbackController.cs:95-100`). Die Sperre hängt an dem, was das Kind gerade tut, nicht am Aufrufer
+   (Entscheidung 4: kein Test des Kindes läuft); im Test beide Rollen als Aufrufer prüfen.
+3. **Gleichzeitige Antworten zweier Betreuer** (Entscheidung 3): zwei `PATCH` mit Text in derselben Sekunde. Ohne Konfliktprüfung
+   gewinnt der letzte; die Spalte hat keinen eigenen Zähler. Der Bau muss `RepliedAt IS NULL` im selben Schreibvorgang
+   mitprüfen (Zeilen-Version oder bedingtes Update) und es testen.
+4. **`DocsCaptureTests` überschreibt `docs/api-examples`** bei jedem Lauf; die neuen Felder verändern die Beispiele, die
+   Änderung gehört in den Commit (Fallstrick „Doku-Capture byte-stabil“: keine zeitabhängigen Werte ungeschwärzt lassen,
+   `RepliedAt` maskieren).
+5. **Neuer Fehlercode `feedback_replied`:** `ApiErrors`-Eintrag plus Zeile im Fehlercode-Test (`ErrorCodeTests`) und im
+   Frontend-Fehlertext.
+6. **Z1 bis Z3 bleiben zurückgestellt und sind Bau-Sperre für die jeweilige Folge:** keine Pflicht-Aussetzung (Z1), keine Münzen
+   für das Fragen (Z2), kein Lehrer-Konto als Absender (Z3). Der Bau darf `Roles.Supervisor` am `PATCH` nicht lockern; AK 6 hält
+   nur fest, dass der Antwortpfad weder Hauptbuch noch Malus schreibt.
+
+### Angriffsplan
+
+1. Migration `…_FeedbackReply` (nullable Spalten, FK `SetNull`), Modell und `OnModelCreating`-Zeile; G2-Zeile in `SchemaGuardTests`.
+2. Contracts additiv: `UpdateFeedbackDto.ReplyText`, `FeedbackNotice.ReplyText`, `FeedbackResponse.ReplyText`; Fehlercode
+   `feedback_replied` in `ApiErrors`.
+3. `FeedbackController.Update`: Text nur mit `Done`, Länge 500, nicht leer, erste Antwort gewinnt, Ersetzen nur durch den
+   Antwortenden und nur vor `seen` (AK 2, 3, 4, 8).
+4. `ExerciseFeedbackService.NoticesAsync`: `ReplyText` ausgeben, bis zum Testende `null` (neue Prüfung je Übung, AK 1, 5).
+5. Vater-Web: Antwortfeld mit `useAction`/`disabled={busy}`; Sohn-App: Text im Hinweis (AK 9, 10).
+6. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Reviewer `pugling-reviewer` und `frontend-reviewer`.
+
+### Testweg
+
+- `ExerciseFeedbackTests` (vorhanden): AK 1 bis 8 als Fälle im bestehenden Aufbau; AK 5 mit einem laufenden `TestAttempt` auf
+  einer **zweiten** Position derselben Übung (Rot-Probe: Sperre auf `positionId` statt `exerciseId` stellen), AK 6 als
+  Regressionsfall.
+- Neue Klasse `FeedbackReplyMigrationTests` (Vorbild `ShopStockPerChildMigrationTests`): eine Bestandszeile überlebt die
+  Migration mit `ReplyText = null`.
+- `SchemaGuardTests` (G1b, G2) laufen mit, ohne Änderung außer der Tabellenzeile; `ErrorCodeTests` für `feedback_replied`.
+- `frontend/src/vater/VaterRueckmeldungen.test.tsx`: AK 9; `frontend/src/sohn/KartenMeldung.test.tsx` und
+  `SohnHome.test.tsx`: AK 10.
+- E2E: `frontend/e2e/rueckmeldung.spec.ts` um die Antwort erweitern (Vater antwortet, Sohn sieht den Text einmal); danach
+  Rollengang Vater → Sohn an der laufenden App.
+
+**Bau-Sperre:** Z1 (Pflicht/Malus), Z2 (Belohnung/Münzen) und Z3 (Absender Lehrer-Agent) sind Entscheidungen des Nutzers und
+gehören **nicht** in diesen Bau. Bis zur Bestätigung der Entscheidungen 1 bis 7 ist die Story nicht baubar.
+
 ## Verlauf
 
 - **2026-11-15** — angelegt (Quelle: sofatutor-Vergleich, Etappe 1 des Übernahmeplans; Sammel-Story [B-585](B-585-sofatutor-vergleich-sammel-story.md)).
@@ -185,3 +253,5 @@ Je Kriterium: welche Änderung macht es rot.
   **drei Punkte zurückgestellt** (Z1 Pflicht/Malus, Z2 Belohnung/Münzen, Z3 Absender Lehrer-Agent), weil sie Malus, Münz-Ökonomie
   und Rollenaufteilung berühren. Am Code belegt: Der Hinweis-Abruf hat keine Test-Sperre, die ein Antworttext braucht;
   das Lösungsfeld-Tor fängt `ReplyText` nicht. Akzeptanzkriterien final.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): M, beides (Backend zuerst), **Migration ja** (drei nullable
+  Spalten, FK `SetNull`), kein Vertragsbruch (additive Felder). Z1 bis Z3 bleiben zurückgestellt und sind Bau-Sperre.

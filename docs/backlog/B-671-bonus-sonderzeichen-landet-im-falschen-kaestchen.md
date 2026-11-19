@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
 aliases: [Bonusrunde Sonderzeichen falsches Kästchen]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: frontend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: "Nachtlauf 2026-11-18, Nachschau von B-661 (96a3491d, frontend-reviewer) – docs/pm-sitzung-2026-11-18.md, Runde 5"
 grund: ""
 ersetzt_durch: []
@@ -111,9 +111,57 @@ Kästchen-Karten (`answerLength: 6`, `keyboardLang: "fr"`).
    `LetterBoxes.tsx` wird nicht angefasst. Rot macht es: eine `onBlur`-Logik in `LetterBoxes`, die den Fall
    „Kästchen 3 antippen, dann Zeichen wählen" (`LetterBoxes.test.tsx:95-101`) bricht.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet), am Code nachgesehen.*
+
+**Größe: S** — wie `childId` aus dem Test-Pfad ziehen (B-01): ein Eingriff an einer Stelle (`SohnBonusRun`, ein Ref und
+ein Effekt nach dem Muster von `SohnTest.tsx:89-102`), dazu fünf Vitest-Fälle.
+
+- **`wo: frontend`** — die Ursache liegt allein in `SohnBonus.tsx`; das Backend schickt die Karten richtig.
+- **`migration: nein`** — kein Schema.
+- **`vertragsbruch: nein`** — `Pugling.Contracts` unberührt; `LetterBoxes.tsx` bleibt unangetastet (Entscheidung 1).
+
+### Risiken
+
+1. **Absicht nach der letzten Karte:** nach der letzten Antwort ist `card` `null` (`SohnBonus.tsx`, `const card = … cursor <
+   run.cards.length`), die Antwortzone steht nicht mehr da. Findet der Effekt kein Ziel und lässt die Absicht stehen
+   (wie `SohnTest.tsx:96-98`, wo `return` vor dem Zurücksetzen liegt), feuert sie später am Ergebnisbild. Die Absicht
+   gehört in dem Fall verbraucht; ein Fall in `SohnBonus.test.tsx` sichert es.
+2. **jsdom-Fokus ≠ Browser-Fokus:** `fireEvent.focus` setzt `document.activeElement` nicht. Die Fälle müssen
+   `element.focus()` (in `act`) nutzen, sonst ist AK 1 auf `document.activeElement` blind und AK 2 liest ein
+   unveränderliches `zuletzt`. Das ist die Stelle, an der eine leere Zusicherung entstehen kann (CLAUDE.md, „Zusicherung,
+   die den Ausgangszustand prüft"): je Fall vor dem Bau den roten Lauf sehen.
+3. **Die Leiste braucht einen Fall, der `onFocus` auslöst:** AK 2 fällt nur, wenn der Fokus über `.focus()` kommt
+   (Entscheidung 1); das Setzen des Werts allein lässt `zuletzt` bei 4.
+4. **Fremde Arbeit im Baum:** `SohnBonus.tsx` und `SohnBonus.test.tsx` sind sauber, aber `sohn/Lektion.tsx` (dort
+   `Antwortflaeche`, auf der die Reparatur aufsetzt) trägt ungecommittete LearningDad-Änderungen (6 Zeilen). Vor dem
+   Bau gegen den Stand von `HEAD` oder den dann gemergten Stand lesen; Zeilennummern in `sohn/*` können driften.
+5. **E2E sieht den Mobilfall nicht:** ob am Handy die Tastatur offen bleibt, entscheidet kein Test (Entscheidung 3).
+
+### Angriffsplan
+
+1. Rote Probe zuerst: den Vitest-Fall mit zwei gleich langen Kästchen-Karten (`answerLength: 6`, `keyboardLang: "fr"`)
+   schreiben und im Ausgangszustand rot sehen (AK 1–3).
+2. `SohnBonusRun`: Absicht (`useRef`) in `answer()` setzen, `answerRef` auf `div.lektion-antwort`, Effekt auf `cursor`
+   fokussiert das erste Bedienbare und verbraucht die Absicht auch ohne Ziel.
+3. Festschreibungen AK 4 und 5 laufen lassen; `dotnet`-Teile entfallen (kein Backend).
+
+### Testweg
+
+- **AK 1–4:** `frontend/src/sohn/SohnBonus.test.tsx` (mockt `startExtraRun`, liest `document.activeElement`); neuer
+  `describe` für den Kartenwechsel. AK 1–3 sind **Regressionstests**, vorher rot: heute bleibt der Fokus in Kästchen 5
+  bzw. auf dem Knopf, und `zuletzt` steht auf 4. Rot macht sie: der Effekt oder die Absicht in `answer()` fehlt. AK 4
+  besteht im Ausgangszustand (Festschreibung).
+- **AK 5:** `frontend/src/components/LetterBoxes.test.tsx` und die Fokusfälle von `SohnPractice` und `SohnTest` bleiben
+  unverändert grün; `git diff` zeigt `LetterBoxes.tsx` unberührt.
+- Vor der Abnahme: `frontend-reviewer`; Rollengang als Sohn in einer Bonusrunde über eine Kästchen-Liste mit Akzent
+  (Handy-Tastatur bleibt hier ungeprüft, siehe Risiko 5).
+
 ## Verlauf
 
 - **2026-11-18** — angelegt aus der Nachschau von B-661 (`frontend-reviewer`), `entgangen_bei: [B-661]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): am Code gelesen (nicht im Browser nachgestellt); die Ursache
   liegt in der Bonusrunde (kein Fokus beim Kartenwechsel), und der Enter-Weg betrifft auch normale Tasten.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): vier Entscheidungen; Reparatur nur in `SohnBonusRun` (Fokusregel von Üben/Test), `LetterBoxes` bleibt; weicht von der Empfehlung (c) der Ausformulierung ab, weil Kästchen-1-Fokus `zuletzt` über `onFocus` ohnehin setzt; Test in Vitest statt E2E.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch; Risiken: Absicht nach der letzten Karte, jsdom-Fokus, `Lektion.tsx` mit fremder Arbeit.

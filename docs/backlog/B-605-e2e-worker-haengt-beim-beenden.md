@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/test, rolle/entwickler]
+tags: [typ/story, status/geschaetzt, bereich/test, rolle/entwickler]
 aliases: [E2E-Worker hängt]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: Sprint 82, Rollengang und volle E2E-Suite (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -150,8 +150,8 @@ Je Kriterium: die Änderung, die es rot macht.
 
 1. Mit der Zeile in `frontend/playwright.config.ts` endet ein blockierter Worker nach etwa 45 s mit „did not exit within
    45000ms after stop, force-killed it“. Probe **außerhalb des Repos**: eine Wegwerf-Konfiguration importiert die echte
-   Konfiguration (damit deren Zeile läuft), nimmt `globalSetup`/`webServer` heraus und hat eine Wegwerf-Spec, die den Worker
-   mit `while (Date.now() < …)` länger als den Test-Timeout blockiert; Start mit der lokalen Binary
+   Konfiguration (damit deren Zeile läuft), nimmt `globalSetup`/`webServer` heraus und hat eine Wegwerf-Spec, deren worker-skopiertes Fixture im Abbau
+   mit `while (Date.now() < …)` länger als die Frist blockiert (nicht im Testkörper, siehe Schätzung, Risiko 1); Start mit der lokalen Binary
    (`./node_modules/.bin/playwright`, nicht `npx`). Rot, wenn die Zeile entfernt wird: nach 90 s steht keine Meldung da
    (sie käme erst bei 300000 ms).
 2. Deutung belegt: dieselbe Wegwerf-Probe, aber mit einem offenen Handle statt einer Blockierung (`setInterval` ohne
@@ -166,6 +166,60 @@ Je Kriterium: die Änderung, die es rot macht.
 5. Die volle Suite läuft danach wie vorher durch; gezählt wird „N passed“ in der Ausgabe, nicht der Exit-Code. Rot, wenn die
    Konfiguration nicht mehr lädt oder die Zahl der bestandenen Fälle sinkt.
 
+## Schätzung
+
+**Größe: S** — der Bau ist eine Zeile mit Kommentar (XS), die Beweisführung aber ein Wegwerf-Aufbau außerhalb des Repos mit zwei
+Proben; zusammen etwas über dem XS-Anker (zwei Sätze plus ein prüfender E2E).
+
+- **`migration: nein`** — nachgesehen: Konfiguration des Testläufers, kein Schema.
+- **`vertragsbruch: nein`** — nachgesehen: nur `frontend/playwright.config.ts`; `Pugling.Contracts` unberührt.
+- **`wo: frontend`** — Playwright-Konfiguration im Frontend; Reviewer `frontend-reviewer`.
+
+### Risiken
+
+1. **Der Probe-Aufbau aus Akzeptanzkriterium 1 trägt so nicht: Ein Block im Testkörper erzeugt die Meldung nicht.**
+   Die Frist gilt erst ab `stop()` (`node_modules/playwright/lib/runner/index.js:2099-2118`); blockiert der Worker mitten im
+   Test, ist `stop()` noch nicht gerufen, und nach dem Ende der Schleife läuft der Worker normal aus. Die Blockade muss
+   **nach** dem `__stop__` liegen: im Abbau eines **worker-skopierten Fixtures** (`gracefullyClose` ruft
+   `teardownScope("worker", …)`, `lib/worker/workerProcessEntry.js:1406-1420`, und der Herzschlag-Zeitgeber läuft schon,
+   `lib/common/index.js:2046-2055`). Eine synchrone Schleife dort legt auch den Herzschlag lahm – genau die Lage, die die
+   Meldung beschreibt. Die Schleife muss die Frist deutlich überdauern (etwa 120 s bei 45 s Frist).
+2. **Die Variable gilt nur, wenn die Konfiguration im selben Prozess geladen wird, der später `stop()` ruft.** Der Läufer lädt
+   sie im Haupt-Prozess (die Worker sind Kinder), `stop()` ist dort; dass es in 1.65.1 genau so läuft, belegt erst die Probe.
+   Eine Aktualisierung von Playwright (`^1.61.1`) kann den Namen ändern; Akzeptanzkriterium 1 zeigt es.
+3. **Die Wegwerf-Konfiguration muss die echte importieren, ohne ihren Start mitzubringen.** `webServer`, `globalSetup` und
+   `globalTeardown` wären sonst aktiv (`dotnet run`, echte Ports) – die Probe verbietet das. Die Konfiguration wirft außerdem,
+   solange eine Mutanten-Probe läuft (`.claude/.mutant-probe.lock`, `playwright.config.ts:34-39`).
+4. **Die 45 s sind eine Setzung**: Der Herzschlag kommt jede Sekunde, die Frist rechnet ab dem letzten; ein Rechner, der im
+   Beenden länger ruht, verliert die Nacharbeit dieses Workers (Entscheidung 1, Kosten).
+5. **Der Hänger mitten im Lauf und der lebende Worker mit hängendem Aufräumen bleiben ungedeckt** (Entscheidungen 1 und 5); die
+   Story endet nach dem Bau ohne Wächter dafür.
+
+### Angriffsplan
+
+1. `process.env.PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000";` oben in `frontend/playwright.config.ts` (nach den Importen), mit
+   Kommentar zu Grund und Herkunft (Version 1.65.1, `runner/index.js:2107`).
+2. **Messschritt M1 (Akzeptanzkriterium 1), außerhalb des Repos** (Ablage im Scratchpad): Wegwerf-Konfiguration, die die echte
+   importiert und `webServer`, `globalSetup`, `globalTeardown` entfernt; Wegwerf-Spec mit einem worker-skopierten Fixture,
+   dessen Abbau ca. 120 s blockiert. Lauf mit Zeile: Meldung „did not exit within 45000ms“ bei etwa 45 s. Lauf ohne Zeile
+   (zweite Wegwerf-Konfiguration): bis 90 s keine Meldung.
+3. **Messschritt M2 (Akzeptanzkriterium 2):** dieselbe Probe, aber im Abbau nur ein `setInterval` ohne `unref`; der Worker
+   beendet sich ohne die Meldung. Beide Ergebnisse in den `## Verlauf`.
+4. Volle Suite (Akzeptanzkriterium 5) und Diff-Prüfung (`git diff --stat`, genau eine Datei).
+
+### Testweg
+
+- **Kein Repo-Test:** der Nutzen der Zeile ist die Erkennungsfrist; sie lässt sich nur über einen blockierten Worker messen, und
+  ein solcher Fall gehört nicht in die Suite (er kostete jedes Mal 45 s und 120 s Blockade). Darum die Wegwerf-Probe aus dem
+  Angriffsplan; ihr Aufbau steht im `## Verlauf`, damit sie wiederholbar ist.
+- **Rote Probe:** Zeile entfernen → die Meldung kommt nicht bei 45 s (Akzeptanzkriterium 1); offener Handle statt Blockade →
+  keine Meldung (Akzeptanzkriterium 2). Beides deterministisch, kein Flackern.
+- **Messbefehl** (aus `frontend/`, lokale Binary, nicht `npx`; Konfiguration per `--config` auf die Wegwerf-Datei):
+  `./node_modules/.bin/playwright test --config <Scratchpad>/probe.config.ts`. Die volle Suite danach auf Ausweichports
+  (`PUGLING_E2E_API_PORT=5201 PUGLING_E2E_WEB_PORT=5174 PUGLING_E2E_CONFIGURATION=Release`); gezählt wird „N passed“, nicht der
+  Exit-Code.
+- Vor der Abnahme: `frontend-reviewer`; ein Rollengang entfällt (Testwerkzeug, keine Oberfläche), das steht dann im Verlauf.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt beim Rollengang von Sprint 82.
@@ -174,3 +228,4 @@ Je Kriterium: die Änderung, die es rot macht.
   Herzschlag“. Nichts gemessen oder gestartet; Vorschlag an den Nutzer: nach dem Bau mit Verwerfen „nicht
   reproduzierbar“ rechnen, falls der Fall nicht wiederkehrt.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Billige Hälfte zuerst: `PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"` in `playwright.config.ts`, geprüft über eine Wegwerf-Konfiguration, die die echte importiert. Die Frist deckt nur den Hänger im Beenden, nicht den mitten im Lauf (zurückgestellt) und nicht einen lebenden Worker mit hängendem Aufräumen. Die Ursache bleibt ein Zeitfenster; „nicht reproduzierbar, verworfen“ ist ein Vorschlag, die Entscheidung bleibt beim Nutzer. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur `playwright.config.ts`). Beim Schätzen am Läufer-Code korrigiert: der Probe-Aufbau aus Akzeptanzkriterium 1 muss die Blockade im Abbau eines worker-skopierten Fixtures setzen, nicht im Testkörper (die Frist gilt erst ab `stop()`); sonst bestünde die Probe ohne die Zeile ebenso. Nichts gemessen oder gestartet.

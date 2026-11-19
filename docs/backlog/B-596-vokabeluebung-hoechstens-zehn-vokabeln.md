@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, lerntechnik/vokabeln]
 aliases: [Zehn Vokabeln, Obergrenze Vokabelübung, Untergrenze Vokabelübung, Mini-Übung]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: beides
+migration: nein
+vertragsbruch: nein
 quelle: Diskussion Regeln fürs Erstellen von Übungen (Sitzung 2026-11-16, Vater)
 grund: ""
 ersetzt_durch: []
@@ -200,6 +200,75 @@ Je Kriterium: welche Änderung macht es rot.
 11. Der KI-Creator liefert für einen Vokabelentwurf mit `--count 25` keine Übung mit 25 Wörtern (Verstoß oder Kürzung auf 10).
     Rot, wenn `DraftRules.MaxItems = 30` für Vokabeltypen gilt.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet); die Entscheidungen oben sind weiter unbestätigt, `wartet_auf` bleibt.*
+
+**Größe: L** – drei Erzeuger plus Server plus Vater-Web in einem Vorhaben, jeder Teil für sich M oder kleiner, zusammen eine
+Etappe wie E6 (ein geteilter Eingriff, der Bestand und Test-Fixtures mitzieht). Nicht XL: die Teile hängen an einer Regel und
+einem Prädikat und lassen sich als Commits in Reihenfolge bauen (Entscheidung 8), eine Zerlegung in Stories brächte nur
+Zwischenstände, in denen der Server scharf und ein Erzeuger noch alt ist.
+
+- **`wo: beides`** – Backend zuerst: Prädikat an vier Creator-Routen und die Untergrenze beim Zuweisen
+  (`ExerciseControllers.cs:38`, `:111`, `:129`, `:202`; `PlanPositionsController.cs:185`); danach Erzeuger (`laden.py`, KI-Creator),
+  zuletzt die Rückfrage im Vater-Web (`frontend/src/vater/PlanPositionsAdd.tsx`).
+- **`migration: nein`** – nachgesehen: Die Zählung liest `ExerciseItem`-Zeilen bzw. den Payload, `AllowShortList` ist ein
+  Request-Feld, kein Spaltenwert (`CreatePositionDto`, `Pugling.Contracts/Supervisor/StudyPlanDtos.cs:221`); kein Eintrag an der
+  Migrationskette.
+- **`vertragsbruch: nein`** – nachgesehen: `AllowShortList` kommt als **letzter** optionaler Parameter mit Vorgabe an
+  `CreatePositionDto` (wie `CompletionBonus = null`, `:226`), die Konstanten sind neu; kein bestehendes Feld ändert Form oder Sinn.
+  Client, Frontend-Typen (`S["CreatePositionDto"]`, `frontend/src/lib/types.ts:508`) werden neu erzeugt, aber nicht gebrochen.
+  Der Bruch liegt im **Verhalten** (neue `validation_error`-Fälle für alte Aufrufer), nicht in der Form des Vertrags.
+
+### Risiken
+
+1. **Die Test-Fixtures laufen gegen die Untergrenze.** `TestApi.CreateVocabExerciseAsync` legt ohne Argumente **zwei** Wörter an
+   (`TestApi.cs:178`); es hat 185 Aufrufe in 62 Testdateien, und 52 Dateien weisen über `/positions` zu. Jede davon trifft die
+   Untergrenze 5 beim Zuweisen. Der Bau muss zuerst die Fixture-Vorgabe auf mindestens 5 Wörter anheben oder die Aufrufe
+   `AllowShortList` setzen lassen und danach messen, welche Zusicherungen an „zwei Karten“ hingen – das ist der eigentliche
+   Aufwand dieser Story, nicht das Prädikat.
+2. **Das Frontend-E2E weist ebenfalls kurze Listen zu** (43 Treffer auf `positions` in `frontend/e2e/*.ts`); die Helfer in
+   `frontend/e2e/helpers.ts` legen Übungen mit wenigen Wörtern an und müssen mitziehen.
+3. **Die Weak-Word-Review (1 bis 25 Wörter) geht nicht über `PlanPositionsController`**, sondern über `WeakWordReviewService`
+   (`:35`). Die Untergrenze darf sie nicht treffen: eine Wiederholung von 3 schwachen Wörtern muss weiter gehen (Testfall bei
+   AK 9 ergänzen).
+4. **Reihenfolge ist Pflicht (Entscheidung 8):** wird die Server-Regel vor `laden.py` und dem KI-Creator scharf, scheitert jeder
+   Ladevorgang mit 25er-Abschnitten mit `400`.
+5. **`laden.py` hat eine Kopie der Config-Felder** (`LadenFieldListTests`); die neuen Konstanten sind keine Felder, die Liste
+   bleibt gleich, der Test muss unverändert grün sein.
+6. **Gleichmäßiges Teilen** (Entscheidung 5) und das Anhängen von Resten verschieben die Abschnittsgrenzen des Buchs; die
+   Titel „(Teil i/k)“ kollidieren nicht mit der Titeleindeutigkeit je Unit, wenn `laden.py` sie vor dem Anlegen prüft
+   (nicht nachgemessen).
+
+### Angriffsplan
+
+1. Konstanten `MinWords = 5`, `MaxWords = 10` im Vertragsprojekt neben `VocabularyConfig`
+   (`Pugling.Contracts/Exercise/ExerciseConfigs.cs:23`).
+2. Ein Helfer für das Prädikat `nachher > 10 && nachher > vorher` in `ExerciseControllers.cs`; Verdrahtung auf POST/PUT
+   (Payload mit Items), `POST …/items` und `refs-from-tags` (AK 1 bis 6, 8). `ExerciseItemService` bleibt unberührt (AK 9).
+3. Fixtures: `TestApi.CreateVocabExerciseAsync` auf mindestens 5 Wörter, Suite messen, gebrochene Zusicherungen einzeln
+   nachziehen. Erst danach Schritt 4.
+4. `AllowShortList` an `CreatePositionDto`; Untergrenze beim Zuweisen neben `IsUnfilledAsync`
+   (`PlanPositionsController.cs:185`), nur für Vokabelübungen (AK 7).
+5. `laden.py`: Reste anhängen, über 10 gleichmäßig teilen, Titelzusatz; reine Funktion (AK 10).
+6. KI-Creator: 5/10 für die Vokabeltypen in `DraftRules` (AK 11).
+7. Vater-Web: Rückfrage vor dem Zuweisen einer kurzen Liste, setzt `AllowShortList`.
+8. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Reviewer `pugling-reviewer` und `frontend-reviewer`.
+
+### Testweg
+
+- Neue Klasse `VocabWordLimitTests` (Vorbild `VocabExerciseAuthoringTests`): AK 1 bis 6 und 8, je Weg ein Fall; die gespielte
+  44er-Übung per `TestApi.SeedLeitnerPosition` und 44 Items als Setup. Rote Probe je AK: die Spalte „rot, wenn …“ oben.
+- `PlanPositionCrudTests` (Vorbild `EmptyExerciseGuardTests`, `:156`): AK 7 mit 4 Wörtern ohne und mit `AllowShortList`, mit 5
+  Wörtern ohne das Feld, leere Übung anlegen und später füllen.
+- `WeakWordReviewTests`: AK 9 mit 25 Wörtern und der Fall mit 3 Wörtern.
+- `.claude/skills/lehrwerk-aufbereiten/test_laden.py`: AK 10 an der reinen Teilen-Funktion (25 → 9/8/8, 4 → angehängt, 11 → 6+5).
+- `CreatorAgentTests`: AK 11.
+- `frontend/src/vater/PlanPositionsAdd.test.tsx`: Rückfrage setzt das Feld (Komponententest); Rollengang als Vater beim
+  Zuweisen einer 4-Wörter-Übung vor der Abnahme.
+
+**Bau-Sperre:** die Story bleibt bis zur Bestätigung der Entscheidungen 1 bis 9 durch den Nutzer nicht baubar.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt aus der Diskussion über Regeln fürs Erstellen von Übungen.
@@ -212,3 +281,5 @@ Je Kriterium: welche Änderung macht es rot.
   Gegen den Code korrigiert: Der KI-Creator schneidet Unit-Wortlisten schon auf `ItemCount` (Vorgabe 10). Untergrenze nur beim
   Zuweisen mit additivem `AllowShortList`; Bestand darf nicht wachsen (Zusammenspiel mit der Verschiebe-Sperre belegt).
   Weak-Word-Review bleibt bei 25. Akzeptanzkriterien final, je mit roter Änderung.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): L, beides (Backend zuerst), keine Migration, kein Vertragsbruch
+  (additives `AllowShortList`). Größter Posten: die Test-Fixtures (zwei Wörter als Vorgabe, 185 Aufrufe in 62 Dateien) laufen gegen die Untergrenze.

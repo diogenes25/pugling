@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, lerntechnik/vokabeln, rolle/student]
+tags: [typ/story, status/geschaetzt, lerntechnik/vokabeln, rolle/student]
 aliases: [Scope New und Lernkarte, offene Lernkarte verschwindet]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
+groesse: S
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: "PM-Sitzung 2026-11-18, Nachschau von B-643 (e10cdd34)"
 entgangen_bei: [B-643]
 grund: ""
@@ -142,6 +142,54 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse `UmfangNeuTest
 6. Der Tagesstatus (`dueCount`, `PositionProgressService.cs:328`) zählt das offene Wort mit der Runde mit. Rot, wenn der
    Filter außerhalb von `DueItemIndicesAsync` sitzt.
 
+## Schätzung
+
+**Größe: S** — eine Datei (`PositionPlayService.cs`): ein gemeinsames Prädikat herausziehen, `ScopeMatch` um zwei
+Parameter erweitern, ein Aufrufer. Der Aufwand liegt in den Tests, nicht im Code; kleiner als der Batch-Pfad im
+`MediaSelector` (M), weil kein neuer Pfad entsteht.
+
+- **`migration: nein`** — `PositionItemProgress.IntroducedAt` und `ImprintedAt` gibt es (`PlanPositionEntities.cs:269`);
+  gelesen, nicht geschrieben.
+- **`vertragsbruch: nein`** — kein Vertragstyp berührt; nur der Inhalt von `dueCount` im Tagesstatus ändert sich
+  (`PositionProgressService.cs:328`), nicht seine Form.
+- **`wo: backend`** — das Frontend zeigt, was die Runde liefert.
+
+### Risiken
+
+- **Zwei Aufrufer, eine Änderung:** `DueItemIndicesAsync` speist Lernrunde (`PositionPracticeController.cs:129`) und
+  Tagesstatus (`PositionProgressService.cs:328`); beide ändern sich zugleich (Entscheidung 3, AK 6).
+- **Dosis-Reihenfolge:** `OpenLearnCards` zählt hinter dem Filter (`PositionPlayService.cs:294-296`); gelangt das offene Wort
+  jetzt durch den Filter, zählt es doppelt, wenn das Prädikat nicht an einer Stelle steht (AK 4).
+- **Ungemessen:** die zweite Runde am selben Tag (AK 4, zweiter Satz) hängt an `DueOn` nach dem Einprägen; die Story
+  verlangt, den Satz zu streichen, wenn der Bau zeigt, dass das Wort danach nicht mehr fällig ist.
+- **Tagestest bleibt unberührt** (Offener Punkt 5): `DailyTestPortion` fragt solche Wörter weiter kalt; wer das ändern
+  will, eröffnet eine eigene Story.
+- **Ohne `Exercise`/Typ** (nicht geladen) fällt der Filter auf das heutige Verhalten zurück (Entscheidung 1); ein Fall
+  für den Bau, damit das nicht still den Filter öffnet.
+
+### Angriffsplan
+
+1. Prädikat „offene Lernkarte“ aus `OpenLearnCards` (`:352-353`) als statische Hilfsmethode herausziehen; `OpenLearnCards`
+   ruft sie auf – Verhalten unverändert, vorhandene Tests grün.
+2. `ScopeMatch` (`:621`) bekommt Typ und Inhaltsliste; `New` lässt zusätzlich das offene Wort durch;
+   `DueItemIndicesAsync` (`:286`) reicht beides durch.
+3. Tests (siehe Testweg), je Kriterium vorher rot gemessen.
+4. `dotnet build Pugling.sln` und `dotnet format Pugling.sln`.
+
+### Testweg
+
+- `UmfangNeuTests` (`backend/Pugling.Api.Tests/UmfangNeuTests.cs`): Schwester zum Aufbau `IntroduceAsync` mit
+  `wasKnown: true` (`:46-51`), die ein Wort nur einführt; AK 1, 2, 3 und 5. Rot heute: AK 1 und AK 2 (der Filter wirft
+  das Wort am Folgetag hinaus); AK 3 ist im Ausgangszustand grün und trägt erst gegen die Erweiterung, die
+  `NeedsImprint` weglässt (rote Probe über diesen Mutanten, nicht über den Ausgangszustand); AK 5 ist als
+  Absichtserklärung beschriftet.
+- `LernkarteTests` (`backend/Pugling.Api.Tests/LernkarteTests.cs`): AK 4, Dosis 6 mit 2 offenen ergibt 4 neue – heute
+  6 neue (Dosis-Leck), also vorher rot.
+- AK 6 (Tagesstatus, `dueCount`): ein Test, der das offene Wort im Tagesstatus mitzählt. Im Test-Projekt kommt `dueCount`
+  nirgends vor (Grep ohne Fund); der Test gehört vermutlich nach `KindTagessichtTests`, die Heimat ist im Bau zu klären.
+- Vor der Abnahme: `pugling-reviewer`; Rollengang als Sohn an einer Position mit „nur neue“ und einem am Vortag nicht
+  eingeprägten Wort.
+
 ## Verlauf
 
 - **2026-11-18** — angelegt (Quelle: Nachschau von B-643, `HEAD` 7c642bb9).
@@ -152,3 +200,6 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse `UmfangNeuTest
   offene Lernkarten-Inhalte mit demselben Prädikat wie `OpenLearnCards` durch, Dosis zählt sie, Typ und Inhalt reicht
   `DueItemIndicesAsync` durch, Defekt bleibt B-643 zugeordnet); Tagestest-Scope ausdrücklich zurückgestellt;
   Akzeptanzkriterien final. Verfeinert B-435 Entscheidung 1, ändert sie nicht.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, backend, keine Migration, kein Vertragsbruch; Filter,
+  Prädikat und beide Aufrufer am Code nachgelesen (`PositionPlayService.cs:286`, `:352-353`, `:621`); Testort von AK 6
+  offen.

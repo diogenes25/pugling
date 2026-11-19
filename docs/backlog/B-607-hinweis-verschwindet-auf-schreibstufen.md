@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/geschaetzt, bereich/training, rolle/creator, lerntechnik/vokabeln]
 aliases: [Hinweis fehlt bei Fremdwort → Deutsch]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 82 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
@@ -140,9 +140,67 @@ Final; je Kriterium die Änderung, die es rot macht.
    die Rückkarte erbt ihn, oder `RecognitionOnly` (`ExerciseContentProvider.cs:100`) kappt die Vorwärtskarte so, dass
    sie auf der Auswahl keinen Hinweis mehr trägt.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-19 (Sonnet), am Code nachgesehen.*
+
+**Größe: S** — mehr als der Anker XS (zwei Sätze in `fieldHelp.ts` plus der E2E, der sie prüft, B-02), weil derselbe
+Text an zwei Stellen hängt und drei Backend-Festschreibungen dazukommen; weniger als M, weil kein Produktcode im
+Backend und kein Vertrag berührt wird.
+
+- **`wo: frontend`** — der gesamte Produktcode liegt im Frontend (`fieldHelp.ts`, `ExerciseEditModal.tsx`,
+  `exerciseConfig.tsx`). Das Backend bekommt nur die drei Festschreibungen (AK 3–5), keine Änderung am Verhalten. Wer
+  „Backend zuerst" will: die drei Tests zuerst schreiben, sie sind im Ausgangszustand grün.
+- **`migration: nein`** — kein Schema, der Hinweis liegt unverändert am Eintrag.
+- **`vertragsbruch: nein`** — `Pugling.Contracts` bleibt unberührt; das Verwerfen geschieht in `Swap`
+  (`ExerciseContentProvider.cs:128`), und genau das wird nicht geändert.
+
+### Risiken
+
+1. **Der Knopfname hängt am Titel des Themas:** `InfoHint` setzt `aria-label` aus `help.title`
+   (`frontend/src/components/InfoHint.tsx:99`). Das Thema `vocabularyHint` muss also `title: "Hinweis"` tragen, sonst
+   findet AK 1 den Knopf `Erklärung zu „Hinweis"` nicht.
+2. **Mehrere Treffer im Anlegen-Formular:** `RowField label="Hinweis"` steht je Zeile (`exerciseConfig.tsx:670`). Mit zwei
+   Zeilen gibt es zwei gleichnamige Knöpfe; `getByRole` würfe. Der Test nimmt `getAllByRole` oder eine Zeile.
+3. **Die Spalte ist ein `<th>`** (`ExerciseEditModal.tsx:559`), kein `FieldLabel`. Der `InfoHint` kommt als Geschwister des
+   Textes in die Zelle; ob er in der Tabellenkopfzeile sauber umbricht, sieht nur der Rollengang.
+4. **AK 5 (`both`) hängt an der Vorschau:** die Backend-Tests laufen am billigsten über
+   `creator/exercises/{id}/preview?stage=` (Vorbild `VokabelTippTests.HintAsync`). Ob die Vorschau die Karten-Decke
+   (`CardCeiling`) anwendet und die Vorwärtskarte einer `both`-Übung auf einer Schreibstufe auf die Auswahl kappt, ist
+   nicht nachgesehen; sonst läuft AK 5 über den Üben-Pfad (`SeedLeitnerPosition` + `/cards`).
+5. **Fremde Arbeit im Baum:** `frontend/src/vater/*` und `frontend/src/lib/fieldHelp.ts` sind sauber (kein Konflikt
+   mit der ungecommitteten LearningDad-Arbeit in `sohn/*`).
+
+### Angriffsplan
+
+1. Backend zuerst: eine Testklasse-Erweiterung mit den Festschreibungen AK 3–5, je Richtung und Stufe über die Vorschau
+   (Kästchen, Buchstaben, Freitext, Diktat, Auswahl); sie müssen im Ausgangszustand grün sein.
+2. `FIELD_HELP.vocabularyHint` in `fieldHelp.ts` (Titel „Hinweis"; Auswahlstufe, Schreiben, „Deutsch → Fremdwort"),
+   dazu der Test in `fieldHelp.test.ts` (AK 2).
+3. `InfoHint topic="vocabularyHint"` in die Spalte (`ExerciseEditModal.tsx:559`) und als `topic` an das `RowField`
+   (`exerciseConfig.tsx:670`).
+4. Vitest am Editor und am Anlegen-Formular (AK 1), `dotnet build`/`dotnet format` für die Backend-Tests.
+
+### Testweg
+
+- **AK 1 (Regressionstest, vorher rot):** neuer Fall in `frontend/src/vater/ExerciseEditSpeichern.test.tsx` (rendert das
+  Editor-Modal schon, `render(<ExerciseEditModal …>)`) – `getByRole("button", { name: /Erklärung zu „Hinweis"/ })` in der
+  Wortpaare-Tabelle; ein zweiter Fall am Anlegen-Formular in `frontend/src/vater/exerciseConfig.test.ts` bzw. dem Test,
+  der das Formular rendert. Rot macht es: der `<th>` bleibt ein nackter Text, der Knopf fehlt.
+- **AK 2:** `frontend/src/lib/fieldHelp.test.ts`, drei `toMatch` auf `FIELD_HELP.vocabularyHint.text` (Auswahl, Schreiben,
+  „Deutsch → Fremdwort"). Rot macht es: ein gestrichener Satz oder ein fehlendes Thema.
+- **AK 3–5 (Festschreibungen, grün im Ausgangszustand):** `backend/Pugling.Api.Tests/VokabelTippTests.cs` (Hilfsmethode
+  `HintAsync` auf Stufe und Eigen-Hinweis verallgemeinern) oder `ExercisePreviewTests.cs`; der Test
+  `PositionTestFlowTests.Abschlusstest_Liefert_Keinen_Tipp_Das_Ueben_Schon` sichert heute nur die Auswahlstufe, das
+  Schreiben steht dort als Kommentar (`:511`). Rot macht sie: `Swap` übernimmt den Hinweis, oder `Written` wird ohne
+  `Swap` gebaut.
+- Vor der Abnahme: `frontend-reviewer`; Rollengang als Creator (Editor öffnen, „ⓘ" lesen) – oder ein E2E nach dem
+  Vorbild von `e2e/auch-richtig-im-uebungseditor.spec.ts`.
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus der Nachschau von Sprint 82 (🟡 des `pugling-reviewer`), `entgangen_bei: [B-597]`.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf): Verwerfen je Richtung am Code belegt; die Lücke ist breiter
   (`back-to-front` verliert den Hinweis schon auf der Auswahl, auch vor B-597); „7 Übungen" nicht nachprüfbar.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): fünf Entscheidungen; Erklärtext in `fieldHelp.ts`, kein Schreib-Hinweisfeld; AK 3–5 sind Festschreibungen.
+- **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch; Produktcode nur im Frontend, drei Festschreibungen im Backend.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/rueckmeldung, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/rueckmeldung, rolle/student]
 aliases: [Rückmeldung nach „Später“ gesperrt]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
+groesse: S
 wo: beides
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: "Nachschau Sprint 88 in der PM-Sitzung 2026-11-19"
 grund: ""
 ersetzt_durch: []
@@ -140,6 +140,64 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse `ExerciseFeedb
    Rest, der Code und Dokument auseinanderlaufen lässt (der CI-Diff auf `docs/openapi/v1.json`, die Beispiel-Prüfung in
    `DocsCaptureTests`); dass nichts mehr referenziert wird, prüft kein Tor.
 
+## Schätzung
+
+**Größe: S** — viele Fundstellen, aber jede klein: eine Prüfung und eine Service-Methode fallen weg, ein Fehlercode samt
+vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umbau von Logik. Gegen M (Batch-Pfad im
+`MediaSelector`) gehalten: kein neuer Pfad, nur Entfernen.
+
+- **`migration: nein`** — kein Schema berührt (`ExerciseFeedback` bleibt wie es ist).
+- **`vertragsbruch: nein`** — `Pugling.Contracts` bleibt unverändert: `CreateFeedbackDto` und `FeedbackReceipt` ändern sich
+  nicht, und `feedback_during_test` steht nur in `ApiErrors` (`backend/Pugling.Api/Errors/ApiErrors.cs:217`), nicht im
+  Vertrags-Projekt. Nachgesehen, ob das Entfernen eines Fehlercodes brechend ist: der Code ist Teil des generierten
+  `code`-Enums in `docs/openapi/v1.json:44493` und schrumpft um einen Wert. Das ist formal kein Bruch – eine Antwort mit
+  diesem Code kommt nicht mehr, und `Pugling.Client`/`Agent.Creator` verzweigen nicht darauf (keine Fundstelle in
+  `backend/` außerhalb von `Pugling.Api`/Tests). Brechend wäre es nur für einen fremden Client, der den Code behandelt;
+  den gibt es außer der Oberfläche nicht (Entscheidung 2). `ErrorCodeTests.OpenApi_CodeEnum_DecktSichMitRegistry` hält
+  Registry und Enum gleich, zieht also von allein mit.
+- **`wo: beides`** — Backend zuerst (Sperre, Code, Tests, erzeugte Doku), danach die Frontend-Texte und der E2E-Schritt.
+
+### Risiken
+
+- **Erzeugte Artefakte driften:** `docs/openapi/v1.json`, `docs/api-examples/feedback.md` und `index.md` sowie
+  `backend/Pugling.Api/OpenApi/openapi-examples.generated.json` (Zeile 1961 trägt das Beispiel) hängen am
+  Capture-Schritt `DocsCaptureTests.cs:1043-1048`. Erst den Schritt löschen, dann Tests laufen lassen (sie schreiben die
+  Dateien neu), dann committen – sonst rotes CI-Diff.
+- **Frontend-Reste:** `de.ts:512`, `en.ts:488`, `lib/api.ts:101`, `lib/chromeText.tsx:57` müssen alle fallen, sonst steht ein
+  Text für einen Code, den es nicht gibt; ob `chromeText.tsx` gegen das generierte `contract.ts` typisiert ist und der
+  Build deshalb von allein meckert, ist nicht nachgesehen.
+- **Nebenfund B-586:** Die Story B-586 (gegrillt) nennt `TestRunningAsync` und `feedback_during_test` in ihrem Ist-Stand
+  (`B-586-kind-fragt-den-betreuer-zur-aufgabe.md:41-42`, `:70`). Nach diesem Bau stimmt das dort nicht mehr; B-586 ist
+  vor ihrem Bau gegen den Code neu zu lesen.
+- **Zwei abgenommene Kriterien werden ersetzt** (B-623 AK 4, B-628 AK 3): im Verlauf der beiden Stories zu vermerken
+  (Entscheidung 3, setzt der Bau-Lauf).
+
+### Angriffsplan
+
+1. Backend: Sperre in `ExerciseFeedbackController.Create` (`:65-69`) und `ExerciseFeedbackService.TestRunningAsync`
+   (`:24`) entfernen; `ApiErrors.FeedbackDuringTest` (`:217`) löschen.
+2. Tests: `ExerciseFeedbackTests` umschreiben (AK 1, AK 2), `Offener_Test_von_gestern_sperrt_nicht` löschen;
+   Capture-Schritt in `DocsCaptureTests.cs:1043-1048` streichen.
+3. Läufe: `ContractDocumentTests` und `DocsCaptureTests` erzeugen `docs/openapi/v1.json`, die Beispiele und das
+   generierte Katalog-JSON neu; Diff lesen, er darf nur den einen Code und das eine Beispiel zeigen.
+4. Frontend: vier Textstellen entfernen; E2E-Schritt (AK 3) ergänzen.
+5. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`.
+
+### Testweg
+
+- `ExerciseFeedbackTests` (`backend/Pugling.Api.Tests/ExerciseFeedbackTests.cs`): `Waehrend_des_Tests_gesperrt_nach_dem_Abgeben_erlaubt`
+  (`:135`) wird zu „Versuch gestartet, nicht abgegeben, gemeldet, `201`“ – **vorher rot**, weil die Sperre heute
+  `409` liefert; fällt nur durch das Entfernen von `ExerciseFeedbackController.cs:65-69`. AK 2 (offener Versuch bleibt
+  unberührt) hat im Ausgangszustand keine rote Probe und wird mit der Probe „`ReportAsync` stempelt `CompletedAt`“
+  gemessen, wie im Kriterium verlangt.
+- `ErrorCodeTests.OpenApi_CodeEnum_DecktSichMitRegistry` und der CI-Diff auf `docs/openapi/v1.json` (`ci.yml:122`) halten AK 4
+  nur halb – im Kriterium als Absichtserklärung beschriftet.
+- `frontend/e2e/rueckmeldung.spec.ts` (ein Test vorhanden, Zeile 27): neuer Schritt nach der Abgabe, der den Knopf
+  „Rückmeldung“ auf dem Ergebnisblatt erwartet (AK 3); die Probe „`KartenMeldung` fällt aus `TestResult`“ ist im Bau zu
+  messen, vorher fängt sie nichts.
+- Vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`; Rollengang als Sohn (Test öffnen, „Später“, üben, melden)
+  – eine E2E, die den Weg fährt, zählt.
+
 ## Verlauf
 
 - 2026-11-19 · idee · aufgenommen aus der Nachschau von Sprint 88 (B-628/B-629); am Code bestätigt. Bewusst nicht in
@@ -150,3 +208,6 @@ Jedes Kriterium nennt die Änderung, die es rot macht. Testklasse `ExerciseFeedb
 - 2026-11-19 · gegrillt · Vorbereitungslauf (Sonnet), stellvertretend und unbestätigt: Server-Sperre `feedback_during_test`
   entfällt (Weg d), Fehlercode samt Texten wird entfernt, B-623 AK 4 und B-628 AK 3 (beide abgenommen) sind damit
   ersetzt und werden nicht umgeschrieben; Akzeptanzkriterien final, Kriterium 5 als Absichtserklärung beschriftet.
+- 2026-11-19 · geschaetzt · Vorbereitungslauf (Sonnet): S, beides (Backend zuerst), keine Migration, kein Vertragsbruch
+  (Fehlercode nur in `ApiErrors` und im erzeugten Enum, kein Client verzweigt darauf); Risiko: B-586 zitiert die Sperre
+  in seinem Ist-Stand.
