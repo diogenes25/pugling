@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (106)
+### Offen (102)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -41,10 +41,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `geschaetzt` | P2 | S | beides | — |
 | [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `in-arbeit` | P2 | M | frontend | — |
-| [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf | Wunsch | `in-arbeit` | P2 | S | backend | — |
-| [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um | Wunsch | `in-arbeit` | P2 | L | frontend | — |
-| [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind | Wunsch | `in-arbeit` | P2 | S | backend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -124,7 +120,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (536)</summary>
+<summary>Abgenommen (540)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -632,6 +628,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen | Wunsch | `abgenommen` | P2 | M | frontend | — |
 | [B-665](B-665-vater-loest-aus-dem-inventar-des-kindes-ein.md) | Der Vater löst direkt aus dem Inventar des Kindes ein | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | Defekt | `abgenommen` | P3 | XS | frontend | — |
@@ -646,9 +643,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
+| [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf | Wunsch | `abgenommen` | P2 | S | backend | — |
+| [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um | Wunsch | `abgenommen` | P2 | L | frontend | — |
 | [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
+| [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
@@ -686,7 +686,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (201)
 
-**Nachgeschaut: 507 von 536 abgenommenen** — und in 183 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 29 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 507 von 540 abgenommenen** — und in 183 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 33 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -893,7 +893,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-772](B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md) | Die Antwort auf „Bestand setzen" zeigt die Geschwister mit veraltetem Bestand | [B-645] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (29) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (33) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -928,7 +928,11 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
+| [B-663](B-663-profilwahl-vater-oder-creator.md) | Beim Einloggen zwischen „Vater" und „Creator" wählen |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
+| [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf |
+| [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um |
+| [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind |
 
 </details>
 

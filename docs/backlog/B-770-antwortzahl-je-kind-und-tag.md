@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/dashboard, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/dashboard, rolle/supervisor]
 aliases: [Antwortzahl heute, ChildDay Antworten]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -115,3 +115,4 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 | B770-M9 unbeantwortet zaehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:58 | red | red |  |
 | B770-M10 Selbsteinschaetzung fehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:58 | red | red |  |
 | B770-M3 Uebung ohne Tag | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:55 | red | red | Nachmessung kompilierbar (`e.PracticeSession!.StudyPlan!`), erste Fassung `ungemessen` |
+- **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).

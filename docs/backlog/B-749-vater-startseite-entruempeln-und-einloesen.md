@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: [Vater-Sicht, Vater-Startseite entrümpeln, Einlösen am Handy]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -144,3 +144,4 @@ Daten schon in B-747 und B-770 stehen.
 | B749-F4 Rest verschwiegen | frontend/src/vater/VaterDashboard.tsx:88 | red | red |  |
 | B749-F5 Zaehler ohne Meldung | frontend/src/vater/einloesungen.ts:44 | red | red |  |
 | B749-F6 Zaehler fragt ohne aktiv | frontend/src/vater/einloesungen.ts:63 | red | red |  |
+- **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).
