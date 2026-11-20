@@ -113,7 +113,7 @@ kein Vertragsbruch.
 | M4 Stempel fehlt | backend/Pugling.Api/Services/Shared/ShopService.cs:603 | red | red |  |
 | M5 Wochentag startet nicht neu | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:294 | red | red |  |
 
-- **2026-11-20** — `abgenommen` (Hash folgt im nächsten Commit). Der Rollengang ist die Integrationssuite mit eingefrorener Uhr, also der
+- **2026-11-20** — `abgenommen` mit `3d872f69`. Der Rollengang ist die Integrationssuite mit eingefrorener Uhr, also der
   Weg des Vaters über die API. Die E2E-Spec `taschengeld-monatlich` bleibt durch die fremde Celebration-Arbeit rot
   (`.cel-title`) und belegt hier nichts. Am echten Shop gab es nach der Messung auf der DB-Kopie keine betroffenen Zeilen.
   Offen ist nichts.
