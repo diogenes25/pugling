@@ -258,6 +258,7 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ShopListingDto>> UpdateListing(
         int articleId, int listingId, UpdateShopListingDto dto, CancellationToken ct = default)
     {
@@ -284,6 +285,16 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         var (audience, audienceError) = await ResolveAudienceAsync(supervisorId, dto.ChildIds, ct);
         if (audienceError is not null) return audienceError;
 
+        var now = time.GetUtcNow().UtcDateTime;
+        // B-771: a switch to a recurring kind - or a new weekday of a weekly one - restarts every child's refill clock, after
+        // booking what the old rule still owes while the listing carries it. Otherwise the new calendar counts an instant
+        // that lies before the switch and refills at once (a Monday stock moved to Friday on a Saturday would refill twice in
+        // one week). "Once" keeps its empty instant: that is what fires it on its date.
+        var restartsRefillClock = ShopRefillSchedule.IsRecurring(nextRefillKind)
+            && (nextRefillKind != listing.RefillKind || nextRefillDay != listing.RefillDayOfWeek);
+        if (restartsRefillClock)
+            foreach (var stock in listing.Stocks) ShopService.ApplyDueRefill(listing, stock, now);
+
         if (dto.Title is not null) listing.Title = dto.Title.Trim();
         if (dto.Description is not null) listing.Description = dto.Description.Trim();
         listing.CoinPrice = nextCoin;
@@ -303,9 +314,18 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
             foreach (var childId in audience.Where(id => listing.Audience.All(a => a.ChildId != id)))
                 listing.Audience.Add(new ShopListingAudience { ChildId = childId });
         }
+        if (restartsRefillClock) ShopService.RestartRefillClock(listing, now);
         listing.ConcurrencyStamp = Guid.NewGuid();
-        await db.SaveChangesAsync(ct);
-        return MapListing(await shop.ToViewAsync(supervisorId, listing, time.GetUtcNow().UtcDateTime, ct));
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A purchase or a refill of the same stock rows (or another PATCH) committed first; the whole PATCH rolled back.
+            return this.ProblemWithCode(ApiErrors.ConcurrencyConflict, "The listing changed meanwhile - reload it and try again.");
+        }
+        return MapListing(await shop.ToViewAsync(supervisorId, listing, now, ct));
     }
 
     /// <summary>

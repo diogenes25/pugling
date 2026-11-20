@@ -590,6 +590,21 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         return true;
     }
 
+    /// <summary>
+    /// Starts the refill calendar of every existing stock row now (B-771): called when the supervisor switches a listing to
+    /// a recurring kind. A row born under "none" or an unfired "once" has no refill instant, and without one the schedule
+    /// owes a refill at once - the switch would hand out the next month's pocket money today. The caller books the old
+    /// rule's due refills first, so nothing the child already earned is lost.
+    /// </summary>
+    public static void RestartRefillClock(ShopListing listing, DateTime nowUtc)
+    {
+        foreach (var stock in listing.Stocks)
+        {
+            stock.LastRefilledAtUtc = nowUtc;
+            stock.ConcurrencyStamp = Guid.NewGuid();
+        }
+    }
+
     private static DateTime? NextRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc) =>
         ShopRefillSchedule.NextRefillAtUtc(
             listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc);

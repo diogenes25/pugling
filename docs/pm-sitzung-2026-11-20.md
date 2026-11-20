@@ -180,3 +180,22 @@ Der Backlog liegt unter [docs/backlog/](backlog/INDEX.md). Diese Reihenfolge fol
 2. **B-748.** Die Morgenübersicht des Vaters baut auf diesem Sprint auf; Lernstand und Klausurchance fehlen noch.
 3. **Prüfung durch den Nutzer:** die eigene Celebration-Arbeit gegen `full-flow`, `shop-verlauf` und
    `taschengeld-monatlich` laufen lassen (`.cel-title` fehlt dort).
+
+## Runde 3 — B-771 nachgezogen
+
+Der Nutzer hat gesagt: „Ja, B-771 hier". Ich habe die Story in einem Zug ausformuliert, entschieden und geschätzt (S,
+backend, keine Migration) und dann gebaut.
+
+- **Messung auf einer Kopie der echten DB:** Es gibt keine Bestände ohne Zeitpunkt an wiederkehrenden Angeboten. Der
+  Defekt bestand also nur über den PATCH.
+- **Fix:** Ein Wechsel auf eine wiederkehrende Art bucht zuerst, was die alte Regel noch schuldet. Danach startet die Uhr
+  jedes Kind-Bestands neu.
+- **Review:**
+  - Ein Wochentag-Wechsel startet jetzt ebenfalls neu. Vorher gab es dort die gleiche Doppel-Auffüllung.
+  - Bei einer Kollision antwortet der PATCH mit 409 statt 500.
+- **Verifikation:**
+  - 7 Integrationstests;
+  - 5 von 5 Mutanten rot am richtigen Test;
+  - die volle Backend-Suite ist grün.
+- **Rollengang des Vaters:** über die API mit eingefrorener Uhr. Die E2E-Spec `taschengeld-monatlich` bleibt wegen der
+  fremden Celebration-Arbeit rot.

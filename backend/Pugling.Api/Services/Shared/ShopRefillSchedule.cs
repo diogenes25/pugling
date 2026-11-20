@@ -12,6 +12,9 @@ namespace Pugling.Api.Services.Shared;
 /// </summary>
 public static class ShopRefillSchedule
 {
+    /// <summary>Does the kind refill again and again on a calendar (not never, not once)?</summary>
+    public static bool IsRecurring(ShopRefillKind kind) => kind is not (ShopRefillKind.None or ShopRefillKind.Once);
+
     /// <summary>
     /// Number of refill instants in <c>(lastUtc, nowUtc]</c>. A stock that was never refilled (<paramref name="lastUtc"/>
     /// <c>null</c>) owes exactly one refill - for <c>Once</c> only from <paramref name="onceAtUtc"/> on.

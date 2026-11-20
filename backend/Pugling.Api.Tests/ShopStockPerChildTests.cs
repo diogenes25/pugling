@@ -229,7 +229,11 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
         var early = await KidAsync(father, "4143");
         var (articleId, once) = await ListingAsync(father, new
         {
-            coinPrice = 10, unitsPerPurchase = 1, maxStock = 8, refillQuantity = 4, refillKind = "Once",
+            coinPrice = 10,
+            unitsPerPurchase = 1,
+            maxStock = 8,
+            refillQuantity = 4,
+            refillKind = "Once",
             refillAtUtc = "2026-11-21T00:00:00Z",
         });
         await Json(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings"));
@@ -560,5 +564,187 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
         Assert.Equal(HttpStatusCode.NotFound, (await RedeemAsync(stranger, kid.Id, articleId, 10)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await RedeemAsync(kid.Client, kid.Id, articleId, 10)).StatusCode);
         Assert.Equal(30, await InventoryAsync(father, kid.Id, articleId));
+    }
+
+    // ─── B-771: switching the refill kind restarts the clock ────────────────
+
+    private static Task<HttpResponseMessage> PatchListingAsync(HttpClient father, int articleId, int listingId, object patch) =>
+        father.PatchAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}", patch);
+
+    /// <summary>
+    /// AK 1: "none" → "monthly" after the child bought everything. Before the fix the switch filled the stock at once
+    /// (a stock row without a refill instant owed one refill), so the child bought its pocket money twice in November.
+    /// Red when the switch refills now, or when the 1st no longer refills.
+    /// </summary>
+    [Fact]
+    public async Task B771_Umstellen_Auf_Monatlich_Fuellt_Erst_Zum_Monatsersten()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 5));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7711");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Taschengeld",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 5,
+            maxStock = 2,
+            refillKind = "None",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 19));
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Monthly" })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+
+        factory.Clock.FreezeAt(At(2026, 11, 30, 23));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 12, 1, 1));
+        Assert.Equal(2, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 2: "none" → "daily": not today, but tomorrow. Red when the switch refills at once or the clock never starts.
+    /// </summary>
+    [Fact]
+    public async Task B771_Umstellen_Auf_Taeglich_Fuellt_Am_Naechsten_Tag()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 10, 9));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7712");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Spielzeit",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            maxStock = 1,
+            refillKind = "None",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 10, 15));
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Daily" })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 11, 8));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 3: "daily" → "monthly" while yesterday's daily refill is still owed (nobody read the shop since). The owed refill
+    /// is booked under the old rule before the new one starts. Red when the switch drops what the child already earned.
+    /// </summary>
+    [Fact]
+    public async Task B771_Umstellen_Bucht_Die_Faellige_Auffuellung_Der_Alten_Regel()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 3, 9));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7713");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Spielzeit",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            maxStock = 1,
+            refillKind = "Daily",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 4, 9));
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Monthly" })).EnsureSuccessStatusCode();
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        factory.Clock.FreezeAt(At(2026, 11, 5, 9));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 5 (review finding): a weekly listing moved from Monday to Friday on a Saturday does not refill at once - the Friday
+    /// before the switch is not a refill of the new calendar. Red when only a kind change restarts the clock.
+    /// </summary>
+    [Fact]
+    public async Task B771_Neuer_Wochentag_Fuellt_Erst_Am_Neuen_Tag()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 16, 8)); // Monday
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7715");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Kino",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 1,
+            refillKind = "Weekly",
+            refillDayOfWeek = "Monday",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 21)); // Saturday
+        (await PatchListingAsync(father, articleId, listingId, new { refillDayOfWeek = "Friday" })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 27, 1)); // Friday
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 1 for a recurring old kind: weekly (last refill on Friday 30 Oct) → monthly on 4 Nov. The old rule owes nothing yet,
+    /// the new one would count 1 Nov - a boundary before the switch. Red when the restart is limited to stocks without an
+    /// instant (green before the fix as well: the defect needed a missing instant, this guards the chosen repair).
+    /// </summary>
+    [Fact]
+    public async Task B771_Woechentlich_Auf_Monatlich_Zaehlt_Keine_Grenze_Vor_Der_Umstellung()
+    {
+        factory.Clock.FreezeAt(At(2026, 10, 30, 8)); // Friday
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7716");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Taschengeld",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 5,
+            maxStock = 1,
+            refillKind = "Weekly",
+            refillDayOfWeek = "Friday",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 4)); // Wednesday
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Monthly" })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 12, 1, 1));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 4: "none" → "once" with a future date still fires on that date - the restart is for recurring kinds only, "once"
+    /// needs the empty refill instant. Red when the switch stamps every kind. (Green before the fix as well: it guards the
+    /// fix, not the defect.)
+    /// </summary>
+    [Fact]
+    public async Task B771_Umstellen_Auf_Einmalig_Loest_Zum_Termin_Aus()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7714");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Kino",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 1,
+            refillKind = "None",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Once", refillAtUtc = "2026-11-15T00:00:00Z" }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 15, 1));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
     }
 }

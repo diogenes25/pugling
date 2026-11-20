@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (102)
+### Offen (101)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -39,7 +39,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `geschaetzt` | P2 | S | backend | — |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `geschaetzt` | P2 | S | beides | — |
-| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -120,7 +119,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (540)</summary>
+<summary>Abgenommen (541)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -649,6 +648,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
 | [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind | Wunsch | `abgenommen` | P2 | S | backend | — |
+| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
@@ -686,7 +686,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (201)
 
-**Nachgeschaut: 507 von 540 abgenommenen** — und in 183 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 33 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 507 von 541 abgenommenen** — und in 183 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 34 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -889,11 +889,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `geschaetzt` |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `geschaetzt` |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `geschaetzt` |
-| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | [B-645] | `idee` |
+| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | [B-645] | `abgenommen` |
 | [B-772](B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md) | Die Antwort auf „Bestand setzen" zeigt die Geschwister mit veraltetem Bestand | [B-645] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (33) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (34) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -933,6 +933,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf |
 | [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um |
 | [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind |
+| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf |
 
 </details>
 
@@ -1091,7 +1092,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | `abgenommen` | Abschnitt „Schätzung" |
-| [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | `idee` | `unverifiziert: true` |
 | [B-772](B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md) | `idee` | `unverifiziert: true` |
 
 <details>
