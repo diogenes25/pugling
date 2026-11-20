@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * Die Feld-Erklärungen („ⓘ") an den Stellen, an denen der Vater die Lern-Ökonomie einstellt.
@@ -18,7 +19,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 /** Legt einen leeren Plan an und landet auf seiner Seite – dort steht das Positions-Formular. */

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  PERSPECTIVES, perspective, perspectiveOfPath, rememberPerspective, rememberedPerspective,
+  PERSPECTIVES, perspective, perspectiveOfPath, perspectivesFor, rememberPerspective, rememberedPerspective,
 } from "./navigation";
 
 /*
@@ -84,5 +84,27 @@ describe("gemerkte Perspektive", () => {
     // und die Anmeldung führte ins Nichts.
     localStorage.setItem("pugling.vater.perspective", "verwalten");
     expect(rememberedPerspective()).toBeNull();
+  });
+});
+
+/*
+ * B-663: am Telefon (unter 768 px) bleibt dem Vater nur das Betreuen. Rot, wenn `perspectivesFor` die Breite
+ * ignoriert (Fall 1), wenn die Sperre auch breite Fenster trifft (Fall 2) oder ein Lehrer-Konto seine einzige
+ * Perspektive verliert (Fall 3).
+ */
+describe("perspectivesFor mit Fensterbreite", () => {
+  const keys = (ps: { key: string }[]) => ps.map((p) => p.key);
+
+  it("zeigt dem Vater am Telefon nur Betreuen", () => {
+    expect(keys(perspectivesFor("Supervisor", true))).toEqual(["betreuen"]);
+  });
+
+  it("zeigt dem Vater im breiten Fenster alle drei", () => {
+    expect(keys(perspectivesFor("Supervisor", false))).toEqual(["betreuen", "zuweisen", "erstellen"]);
+    expect(keys(perspectivesFor("Supervisor"))).toEqual(["betreuen", "zuweisen", "erstellen"]);
+  });
+
+  it("lässt einem Lehrer-Konto auch am Telefon die Werkstatt", () => {
+    expect(keys(perspectivesFor("Creator", true))).toEqual(["erstellen"]);
   });
 });

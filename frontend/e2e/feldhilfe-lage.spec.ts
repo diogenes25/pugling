@@ -182,7 +182,8 @@ test("Scrollen und Größenänderung schließen ein offenes ⓘ", async ({ page 
 
   await openHint(btn);
   const vorher = await btn.evaluate((el) => el.getBoundingClientRect().left);
-  await page.setViewportSize({ width: 700, height: 600 });
+  // Verbreitern, nicht verschmälern: unter 768 px gibt es die Werkstatt seit B-663 nicht mehr, die Seite wiche zur Startseite.
+  await page.setViewportSize({ width: 1000, height: 600 });
   // Vorbedingung (B-273): seit Entscheidung 2 schließt nur eine Größenänderung, die den Knopf bewegt.
   expect(await btn.evaluate((el) => el.getBoundingClientRect().left), "Vorbedingung: der Knopf wandert").not.toBe(vorher);
   await expect(page.locator(".info-hint-pop")).toHaveCount(0);

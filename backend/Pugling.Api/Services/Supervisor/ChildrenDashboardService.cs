@@ -29,11 +29,34 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             // met when there is a goal AND every goal of every such plan is met.
             var day = await progress.ComputeChildDayAsync(child.Id, date, ct);
             var points = day.Plans.Sum(p => p.Overview.PointsAwarded);
+            var answers = await CountAnswersAsync(child.Id, date, ct);
             rows.Add(new ChildDay(child.Id, child.Name, day.Plans.Count, day.GoalsTotal, day.GoalsMet, points,
-                day.DutyDone, day.GoalsMet > 0 || points > 0));
+                day.DutyDone, day.GoalsMet > 0 || points > 0, answers));
         }
 
         return new Dashboard(date, rows);
+    }
+
+    /// <summary>
+    /// Answers the child gave on <paramref name="date"/> across all of its plans (B-770): one <see cref="Models.ReviewEvent"/>
+    /// per practice card and one <see cref="Models.TestItemResult"/> per test answer. Not <see cref="Models.ItemReviewEvent"/>:
+    /// a vocabulary test answer writes one of those next to its TestItemResult (counted twice), and non-vocabulary
+    /// practice writes none (missing). Not derived from points either - bonus points are no work done.
+    /// <para>
+    /// A test row counts only once answered: the start pre-creates one row per question, so an abandoned test would
+    /// otherwise count in full. A supervisor's test attempt (preview, catch-up) is not the child's work. Known limits:
+    /// a self-assessed "not known" test answer leaves no trace and is missed, a supervisor's practice session cannot be
+    /// told apart (no actor column), and bonus training is plan-independent and not counted.
+    /// </para>
+    /// </summary>
+    private async Task<int> CountAnswersAsync(int childId, DateOnly date, CancellationToken ct)
+    {
+        var practice = await db.ReviewEvents.AsNoTracking()
+            .CountAsync(e => e.PracticeSession!.Day == date && e.PracticeSession.StudyPlan!.ChildId == childId, ct);
+        var tests = await db.TestAttempts.AsNoTracking()
+            .Where(a => a.Day == date && a.StudyPlan!.ChildId == childId && !a.BySupervisor)
+            .SumAsync(a => a.Results.Count(r => r.GivenAnswer != null || r.WasCorrect), ct);
+        return practice + tests;
     }
 
     /// <summary>Longest range one timeline request may cover (B-39, decision 9): the cost grows with days × plans × children.</summary>

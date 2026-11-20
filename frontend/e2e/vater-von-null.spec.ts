@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * „Von Null": ein Vater, der noch nicht existiert, richtet sich selbst ein und baut ein komplettes
@@ -32,7 +33,7 @@ async function registerFather(page: Page): Promise<string> {
   await page.getByRole("button", { name: "Konto anlegen" }).click();
 
   // Nach dem Auto-Login ist das Dashboard da; die Id steht im Kopf der Seite.
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
   const badge = await page.locator("header.vater-top a").filter({ hasText: FATHER.name }).innerText();
   const id = badge.match(/#(\d+)/)?.[1];
   expect(id, "Vater-Id muss im Kopf stehen – sie ist der Login-Name").toBeTruthy();
@@ -47,6 +48,8 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   const fatherId = await registerFather(vater);
 
   // ---------- 2a. Ein Fehler beim Anlegen erscheint ROT (B-54) ----------
+  // Angelegt wird auf der Verwaltungsseite (B-749), erreicht über die Navigation wie ein neuer Vater sie fände.
+  await vater.locator("nav.vater-nav").getByRole("link", { name: "👨‍👧 Kinder", exact: true }).click();
   /*
    * Bis zum 2026-08-01 schrieben Erfolg und Fehler in *dieselbe* Variable, die fest als `banner ok`
    * gerendert wurde: „Kind angelegt." und „Name schon vergeben" sahen identisch aus.
@@ -78,7 +81,7 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   //
   // Zugleich der Beleg für B-61 AK 4: `addChild` ruft nach dem Anlegen `children.reload()` auf; die
   // GET-Antwort wird hier künstlich verzögert, damit die Prüfung unten nicht zufällig grün ist, weil der
-  // Server ohnehin schneller war als der Assert. Ohne den `data === null`-Wächter (VaterDashboard.tsx)
+  // Server ohnehin schneller war als der Assert. Ohne den `data === null`-Wächter (VaterKinder.tsx)
   // ersetzte `{children.loading ? "Lade…" : …}` die schon sichtbare (noch leere) Tabelle kurz durch die
   // Ladeanzeige – strukturell geprüft, nicht zeitkritisch (Entscheidung 7).
   let releaseChildrenReload: (() => void) | undefined;
@@ -460,6 +463,6 @@ test("Vater legt sich selbst an und richtet ein Englisch-Szenario von Null ein",
   await wieder.locator("#fid").fill(fatherId);
   await wieder.locator("#pin").fill(FATHER.pin);
   await wieder.getByRole("button", { name: "Anmelden" }).click();
-  await expect(wieder.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(wieder);
   await expect(wieder.getByRole("link", { name: CHILD.name, exact: true })).toBeVisible();
 });

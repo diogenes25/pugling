@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * Die drei Perspektiven des Vater-Webs (Betreuen / Zuweisen / Erstellen, siehe
@@ -19,7 +20,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 /** Die Bereichs-Navigation der aktiven Perspektive (nicht der Umschalter darüber). */
@@ -41,9 +42,15 @@ test("Vater betreut: Autorenwerkzeug liegt nicht im Weg", async ({ page }) => {
   for (const area of ["Lehrwerke", "Fachlehrer", "Lückentexte", "Katalog", "Vokabeln"]) {
     await expect(areaNav(page).getByRole("link", { name: new RegExp(area) })).toHaveCount(0);
   }
-  // Die Plan-Liste ist auf der Betreuen-Startseite nur noch ein Weg, keine Tabelle.
+  // Die Plan-Liste ist beim Betreuen nur ein Weg, keine Tabelle – und seit B-749 nicht einmal der auf der Startseite: dort
+  // steht der tägliche Blick, der Weg zu den Plänen liegt mit den Stammdaten unter „Kinder".
   await expect(page.getByRole("columnheader", { name: "Zeitraum" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Zum Zuweisen/ })).toHaveCount(0);
+  await areaNav(page).getByRole("link", { name: "👨‍👧 Kinder", exact: true }).click();
+  await expect(page).toHaveURL(/\/vater\/kinder$/);
+  await expect(currentPerspective(page)).toContainText("Betreuen");
   await expect(page.getByRole("link", { name: /Zum Zuweisen/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Kind anlegen" })).toBeVisible();
 });
 
 test("Lehrer erstellt: kein Kind, kein Geld, keine Pflicht", async ({ page }) => {
@@ -88,13 +95,17 @@ test("Der Lehrer landet nach dem Anmelden in seiner Werkstatt", async ({ page })
 
   await page.getByRole("button", { name: "Abmelden" }).click();
   // Bewusst über `/vater` anmelden: genau dort greift der Sprung, und nur dort – ein Sprung bei *jedem*
-  // Besuch von `/vater` würde den Umschalter unbenutzbar machen. `vaterLogin` taugt hier nicht, es erwartet
-  // die Kinder-Tabelle, die es in der Werkstatt zu Recht nicht gibt.
+  // Besuch von `/vater` würde den Umschalter unbenutzbar machen. `vaterLogin` taugt hier nicht, es wählt
+  // „Als Vater".
   await page.goto("/vater");
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
 
+  // B-663: nach der PIN fragt ein Konto mit beiden Rollen, woran es arbeitet – vorbelegt mit der gemerkten Wahl, also
+  // liegt der Fokus auf „Als Creator", und Enter nimmt sie. Ohne die Vorbelegung landete Enter beim Vater.
+  await expect(page.getByRole("button", { name: "Als Creator", exact: true })).toBeFocused();
+  await page.keyboard.press("Enter");
   // Ohne dieses Verhalten müsste ein Lehrer nach jedem Anmelden erst an der Vater-Sicht vorbei.
   await expect(page).toHaveURL(/\/vater\/inhalte$/);
   await expect(page.getByRole("heading", { name: "Werkstatt" })).toBeVisible();

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild, lernkarteDurchspielen, pfadStart } from "./helpers";
+import { createChild, lernkarteDurchspielen, pfadStart, alsVaterStarten } from "./helpers";
 
 // End-to-End der individualisierten Bebilderung:
 //   Vater legt zwei Darstellungen desselben Motivs an  →  ordnet beide der Vokabel „la ville" zu
@@ -50,7 +50,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 async function sohnLogin(page: Page, childId: string) {

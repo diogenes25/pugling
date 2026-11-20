@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild } from "./helpers";
+import { createChild, alsVaterStarten } from "./helpers";
 
 // End-to-End der Frage „wer kennt den Stoff dieses Kindes?":
 //   Vater legt die Buchreihe an  →  eine Unit mit Themen/Grammatik/Wortschatz  →  einen Fachlehrer auf
@@ -23,7 +23,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 test("Buchreihe, Fachlehrer und Kind treffen zusammen", async ({ page }) => {

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * Legt **jeden** Übungstyp über das Vater-UI an, den es im Server-Manifest gibt.
@@ -23,7 +24,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 /** Titel wählen, Typ umschalten, anlegen – und die Erfolgsmeldung abwarten. */

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createChild } from "./helpers";
+import { createChild, alsVaterStarten } from "./helpers";
 
 /*
  * Der ganze Creator-Weg in einem Zug: Reihe anlegen → Unit anlegen → Übung über den
@@ -25,7 +25,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 test("Reihe, Unit, Übung, Zuweisung – der Creator-Weg in einem Zug", async ({ page }) => {

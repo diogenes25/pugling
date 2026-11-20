@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * B-177: Kommt die Kinderliste erst an, NACHDEM der Vater angefangen hat, ein neues Kind einzutragen, darf
@@ -16,7 +17,7 @@ test("Eine spät ankommende Kinderliste nimmt dem Vater sein neues Kind nicht we
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 
   // Die Liste bis zur Freigabe anhalten – nur sie, alles andere läuft normal.
   let freigeben!: () => void;
@@ -88,7 +89,7 @@ test("Ohne Eingabe wählt der Assistent nach der späten Liste das bestehende Ki
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 
   let freigeben!: () => void;
   const freigegeben = new Promise<void>((resolve) => { freigeben = resolve; });

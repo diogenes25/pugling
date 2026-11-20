@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor]
 aliases: [Vater-Sicht, Vater-Startseite entrümpeln, Einlösen am Handy]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -124,3 +124,23 @@ Daten schon in B-747 und B-770 stehen.
 
 - **2026-11-20** — angelegt aus [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) (geteilt); `geschaetzt`: L, frontend, keine
   Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-20** — gebaut in Sprint 97: Startseite `/vater` (Karten je Kind: Antworten, Tagesziel n von m, Punkte; offene
+  Einlöse-Wünsche aller Kinder mit Kindname aus der Tagesübersicht; Zeitachse), Verwaltung `/vater/kinder` (Tabelle, Anlegen,
+  Pläne-Karte; Nav-Eintrag „👨‍👧 Kinder"), Zähler am „Shop" (`useOffeneEinloesungenZahl`), eine Senke für Freigeben/Ablehnen
+  (`einloesungen.ts`, auch von `VaterShop` benutzt). Layout inline statt in `index.css` (dort liegt fremde, ungecommittete Arbeit).
+  AK 1 → `VaterDashboard.test.tsx` „zeigt je Kind …" (37 Antworten ≠ 40 Punkte, keine Verwaltung). AK 2 → „listet die offenen Wünsche
+  aller Kinder mit Namen". AK 3 → „gibt am Kind der Zeile frei …" und „Zähler … lädt nach einer Entscheidung neu"; E2E
+  `vater-handy.spec.ts` (Zähler sinkt um eins). AK 4 → `perspektiven.spec.ts` (Nav „Kinder" → `/vater/kinder` mit „Kind anlegen" und
+  „Zum Zuweisen"), `vater-von-null.spec.ts`. AK 5 → `vater-handy.spec.ts` (`scrollWidth <= innerWidth` bei 390 px vor und nach dem
+  Freigeben). AK 6 → `lehrer-konto.spec.ts`. AK 7 → 15 Specs über `alsVaterStarten`, `createChild` auf `/vater/kinder`. Review-Funde
+  eingearbeitet: Rückfrage vor `action.run` (vorher meldete „Abbrechen" „freigegeben"), `ziel-vier-wochen.spec.ts`, veraltete Verweise,
+  Rest-Hinweis über 100 Wünsche. Mutanten (2026-11-20 17:49):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| B749-F1 Rueckfrage ignoriert | frontend/src/vater/VaterDashboard.tsx:43 | red | red |  |
+| B749-F2 Antworten aus Punkten | frontend/src/vater/VaterDashboard.tsx:117 | red | red |  |
+| B749-F3 kein Neuladen nach Entscheidung | frontend/src/vater/VaterDashboard.tsx:47 | red | red |  |
+| B749-F4 Rest verschwiegen | frontend/src/vater/VaterDashboard.tsx:88 | red | red |  |
+| B749-F5 Zaehler ohne Meldung | frontend/src/vater/einloesungen.ts:44 | red | red |  |
+| B749-F6 Zaehler fragt ohne aktiv | frontend/src/vater/einloesungen.ts:63 | red | red |  |

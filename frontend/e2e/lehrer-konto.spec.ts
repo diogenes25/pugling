@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * Das **Lehrer-Konto** aus der Sicht dessen, der es benutzt.
@@ -108,7 +109,7 @@ test("Der Vater behält beide Perspektiven", async ({ page }) => {
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 
   await expect(page.locator("nav.perspective-switch")).toBeVisible();
   for (const p of ["Betreuen", "Zuweisen", "Erstellen"]) {

@@ -111,7 +111,7 @@ export function VaterPlaene() {
 
       {children.data?.length === 0 && (
         <div className="banner">
-          Ein Plan braucht ein Kind. Lege zuerst eines unter <Link to="/vater">Betreuen</Link> an.
+          Ein Plan braucht ein Kind. Lege zuerst eines unter <Link to="/vater/kinder">Kinder</Link> an.
         </div>
       )}
     </>

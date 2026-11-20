@@ -56,7 +56,7 @@ die Sohn-Arcade (B-49) folgt ihr noch nicht. **Pflichtfeld leer → Speichern `d
 „(Pflicht)" über `<Pflicht />` (`src/components/Pflicht.tsx`), die Bedingung steht inline am Knopf
 (`disabled={busy || !wert.trim()}`), die Prüfzeile im Handler kehrt stumm zurück; keine lokale Meldung (B-233, B-380).
 Bewusste Ausnahme: das Anmerkungs-Widget meldet einen leeren Text nach Enter (Hauptweg Enter, kein Speichern-Knopf). Den Fokus eines gesperrten `busy`-Knopfs nimmt ohne
-Fehlerkasten der Container (`tabIndex={-1}`, B-231). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
+Fehlerkasten der Container (`tabIndex={-1}`, B-231). **Eine Rückfrage (`confirmAction`) steht vor `run`, nie darin** – sonst meldet ein „Abbrechen“ den `okText` (Sprint 97, Tor `src/rueckfrage.test.ts`). **Erfolg darf stumm bleiben** (`run` ohne `okText`), wo die
 Änderung selbst die Rückmeldung ist – so der Tag-Editor im Vokabel-Store; ein Banner je Chip wäre Lärm.
 
 **`npm install`/`npm ci` ohne `--legacy-peer-deps`**, auch in CI ([B-25](../docs/backlog/B-25-vite-pwa-peer-konflikt.md)).

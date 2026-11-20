@@ -28,7 +28,17 @@ export async function vaterLogin(page: Page, credentials: LoginCredentials) {
     await expect(page.locator("#pin")).toHaveValue(credentials.pin, { timeout: 500 });
   }).toPass({ timeout: 10_000 });
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
+}
+
+/**
+ * Answers the step after the PIN (B-663) with "Als Vater" and waits for the Betreuen start page. One place for every
+ * father login: the step and the start page's landmark change together, and fifteen copies of the wait would not.
+ * Only for accounts with both roles - a teacher account never sees the step.
+ */
+export async function alsVaterStarten(page: Page) {
+  await page.getByRole("button", { name: "Als Vater", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Heute", exact: true })).toBeVisible();
 }
 
 /**
@@ -45,12 +55,12 @@ export async function sohnLogin(page: Page, credentials: LoginCredentials) {
 }
 
 /**
- * Creates a child on the supervisor dashboard and returns its id (B-255). The id comes from the create response, not
- * from a table row: the dashboard shows a child's name twice ("Heute" and "Kinder"), and a name that already exists -
- * a retried spec, a second child of the same name - makes any row lookup by name ambiguous.
+ * Creates a child on the children admin page (`/vater/kinder`, B-749) and returns its id (B-255). The id comes from the
+ * create response, not from a table row: a name that already exists - a retried spec, a second child of the same name -
+ * makes any row lookup by name ambiguous.
  */
 export async function createChild(page: Page, name: string, pin: string): Promise<string> {
-  await page.goto("/vater");
+  await page.goto("/vater/kinder");
   await page.locator("#new-child-name").fill(name);
   await page.locator("#new-child-pin").fill(pin);
   // Bounded: a form the client refuses (e.g. a too short PIN) sends no request at all, and the screenshot of the form

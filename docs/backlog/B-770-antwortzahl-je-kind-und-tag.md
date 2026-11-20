@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/dashboard, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/dashboard, rolle/supervisor]
 aliases: [Antwortzahl heute, ChildDay Antworten]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -94,3 +94,24 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 - **2026-11-20** — angelegt aus [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) (geteilt); `geschaetzt`: S, backend, keine
   Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
 - **2026-11-20** — von B-748 auf B-770 umnummeriert: eine parallele Sitzung des Nutzers legte zeitgleich `B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md` an (Id-Kollision; die Datei der anderen Sitzung behält B-748, weil sie vom Nutzer selbst stammt, und diese Story wich auf eine freie Id aus).
+- **2026-11-20** — gebaut in Sprint 97. **Abweichung von Entscheidung 2, am Code begründet:** gezählt werden `ReviewEvent`
+  (Üben, über `PracticeSession.Day`) und **beantwortete** `TestItemResult` (`GivenAnswer != null || WasCorrect`, über `TestAttempt.Day`,
+  ohne `BySupervisor`), nicht `ItemReviewEvent` – ein Vokabeltest schreibt beides je Antwort (doppelt), Nicht-Vokabel-Üben schreibt kein
+  `ItemReviewEvent` (fehlte). Der Start legt je Frage eine Zeile vorab an; ohne den Filter zählte ein abgebrochener Test voll
+  (Review-Fund `pugling-reviewer`). Bewusst nicht gezählt, im `<summary>` benannt: Übungssitzung des Vaters (keine Akteur-Spalte),
+  selbst eingeschätztes „nicht gewusst" im Test, Bonus-Training (planunabhängig). AK 1–4 → `ChildrenDashboardAnswersTests` (Quellen mit
+  verschiedenen Zahlen 2/3/7/11/13/17/19, damit jeder fehlende Filter eine andere Summe ergibt; Punkte 0 neben 5 Antworten). AK 5 ist
+  Absichtserklärung (additiv am Ende des Records). Mutanten:
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| B770-M1 ohne Uebung | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:59 | red | red |  |
+| B770-M2 ohne Test | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:59 | red | red |  |
+| B770-M4 Test ohne Tag | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:57 | red | red |  |
+| B770-M5 Uebung ohne Kind | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:55 | red | red |  |
+| B770-M6 Test ohne Kind | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:57 | red | red |  |
+| B770-M7 aus Punkten | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:34 | red | red |  |
+| B770-M8 Vater-Versuch zaehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:57 | red | red |  |
+| B770-M9 unbeantwortet zaehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:58 | red | red |  |
+| B770-M10 Selbsteinschaetzung fehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:58 | red | red |  |
+| B770-M3 Uebung ohne Tag | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:55 | red | red | Nachmessung kompilierbar (`e.PracticeSession!.StudyPlan!`), erste Fassung `ungemessen` |

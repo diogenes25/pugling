@@ -1,60 +1,135 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
-import type { ChildrenDashboard, ChildrenOverview } from "../lib/types";
+import type { ActivationRequest, ChildrenDashboard, ChildrenOverview } from "../lib/types";
 import { VaterDashboard } from "./VaterDashboard";
+import { useOffeneEinloesungenZahl } from "./einloesungen";
 
 /*
- * B-380: der Vorname des neuen Kindes ist Pflicht – leer ist „Kind anlegen" gesperrt, das Label sagt „(Pflicht)", Enter
- * bleibt stumm. Gefälscht werden die drei Abrufe der Seite, nicht das `fetch` (Muster `PlanPositionsAdd.test.tsx`).
+ * B-749: die Betreuen-Startseite zeigt je Kind Antwortzahl, Tagesziel und Punkte, darunter die offenen Einlöse-Wünsche
+ * aller Kinder – und keine Verwaltung mehr. Gefälscht werden die Abrufe der Seite, nicht das `fetch`.
  */
-describe("Dashboard – Kind anlegen, Pflichtfeld Name (B-380)", () => {
-  beforeEach(() => {
-    localStorage.setItem("pugling.session", JSON.stringify({
-      token: "t", role: "Supervisor", id: 1, name: "Papa", expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-    }));
-    vi.spyOn(api, "children").mockResolvedValue([]);
-    vi.spyOn(api, "plans").mockResolvedValue([]);
-    vi.spyOn(api, "childrenDaily").mockResolvedValue({ children: [] } as unknown as ChildrenDashboard);
-    // B-39: die Zeitachse fragt eigenständig ab – ohne Fälschung ginge das ans Netz.
-    vi.spyOn(api, "childrenOverview").mockResolvedValue({ children: [] } as unknown as ChildrenOverview);
-  });
-  afterEach(() => { vi.restoreAllMocks(); localStorage.removeItem("pugling.session"); });
+const tag = {
+  date: "2026-11-20",
+  children: [
+    { childId: 1, name: "Friedrich", activePlans: 2, goalsTotal: 4, goalsMet: 3, pointsToday: 40, dutyDone: false, practiced: true, answersToday: 37 },
+    { childId: 3, name: "Theodor", activePlans: 1, goalsTotal: 2, goalsMet: 2, pointsToday: 25, dutyDone: true, practiced: true, answersToday: 1 },
+  ],
+} as unknown as ChildrenDashboard;
 
-  const zeige = async () => {
-    const view = render(<AuthProvider><MemoryRouter><VaterDashboard /></MemoryRouter></AuthProvider>);
+const anfrage = (id: number, childId: number, articleTitle: string) => ({
+  id, childId, articleTitle, requestedQuantity: 30, unitType: "Minute", status: "Pending",
+  requestedAt: "2026-11-20T07:00:00Z", canApprove: true, canReject: true,
+}) as unknown as ActivationRequest;
+
+beforeEach(() => {
+  localStorage.setItem("pugling.session", JSON.stringify({
+    token: "t", role: "Supervisor", id: 1, name: "Papa", expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+  }));
+  vi.stubGlobal("confirm", () => true);
+  vi.spyOn(api, "childrenDaily").mockResolvedValue(tag);
+  vi.spyOn(api, "childrenOverview").mockResolvedValue({ children: [] } as unknown as ChildrenOverview);
+});
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.removeItem("pugling.session"); });
+
+const zeige = async () => {
+  render(<AuthProvider><MemoryRouter><VaterDashboard /></MemoryRouter></AuthProvider>);
+  await act(async () => {});
+};
+
+describe("Vater-Startseite (B-749)", () => {
+  // AK 1. Rot, wenn die Antwortzahl fehlt oder aus den Punkten kommt (37 ≠ 40), das Tagesziel nicht „n von m" sagt,
+  // oder Tabelle, Anlegeformular bzw. Pläne-Karte zurück auf die Startseite wandern.
+  it("zeigt je Kind Antworten, Tagesziel und Punkte – ohne Verwaltung", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    await zeige();
+
+    const friedrich = within(screen.getByRole("list", { name: "Kinder heute" })).getAllByRole("listitem")[0];
+    expect(friedrich.textContent).toContain("37 Antworten");
+    expect(friedrich.textContent).toContain("3 von 4");
+    expect(friedrich.textContent).toContain("40");
+    const theodor = within(screen.getByRole("list", { name: "Kinder heute" })).getAllByRole("listitem")[1];
+    expect(theodor.textContent).toContain("1 Antwort");
+    expect(theodor.textContent).toContain("Tagesziel geschafft");
+
+    expect(screen.queryByRole("button", { name: "Kind anlegen" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Kinder" })).toBeNull();
+    expect(screen.queryByText("🎯 Lehrpläne")).toBeNull();
+    expect(screen.getByText("Nichts einzulösen.")).toBeTruthy();
+  });
+
+  // AK 2. Rot, wenn die Liste ein Kind wählen lässt statt alle zu zeigen oder der Name fehlt (dann stünde „Kind #3").
+  it("listet die offenen Wünsche aller Kinder mit Namen", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({
+      items: [anfrage(9, 3, "Fernsehen"), anfrage(8, 1, "Konsole")], total: 2,
+    });
+    await zeige();
+
+    const zeilen = within(screen.getByRole("list", { name: "Offene Einlöse-Wünsche" })).getAllByRole("listitem");
+    expect(zeilen.map((z) => z.textContent?.split(":")[0])).toEqual(["Theodor", "Friedrich"]);
+    expect(screen.queryByRole("combobox")).toBeNull();
+  });
+
+  // AK 3, Liste. Rot, wenn Freigeben am falschen Kind entscheidet oder die Liste danach nicht neu lädt.
+  it("gibt am Kind der Zeile frei und lädt die Liste neu", async () => {
+    const liste = vi.spyOn(api, "allActivations")
+      .mockResolvedValueOnce({ items: [anfrage(9, 3, "Fernsehen")], total: 1 })
+      .mockResolvedValue({ items: [], total: 0 });
+    const freigeben = vi.spyOn(api, "approveActivation").mockResolvedValue(anfrage(9, 3, "Fernsehen"));
+    await zeige();
+
+    fireEvent.click(screen.getByRole("button", { name: "Theodor: „Fernsehen\" freigeben" }));
     await act(async () => {});
-    return view;
-  };
 
-  // AK 1. Rot, wenn am Knopf das `|| !name.trim()` fehlt.
-  it("sperrt „Kind anlegen“ ohne Namen", async () => {
-    await zeige();
-    const knopf = screen.getByRole("button", { name: "Kind anlegen" }) as HTMLButtonElement;
-    expect(knopf.disabled).toBe(true);
-    fireEvent.change(screen.getByLabelText("Name (Pflicht)"), { target: { value: "Lena" } });
-    expect(knopf.disabled).toBe(false);
+    expect(freigeben).toHaveBeenCalledWith(3, 9);
+    expect(liste).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Nichts einzulösen.")).toBeTruthy();
   });
 
-  // AK 1. Rot, wenn die `fail`-Zeile zurückkommt („Bitte einen Vornamen angeben.") oder trotzdem angelegt wird.
-  it("schickt nach Enter ohne Namen nichts und meldet nichts", async () => {
-    const anlegen = vi.spyOn(api, "createChild");
-    const { container } = await zeige();
-    fireEvent.submit(container.querySelector("form")!);
-    expect(anlegen).not.toHaveBeenCalled();
-    expect(screen.queryByText(/Vornamen/)).toBeNull();
+  // Review-Fund: lag die Rückfrage in `action.run`, meldete ein „Abbrechen" „freigegeben". Rot, wenn sie dorthin zurückwandert
+  // (die Meldung erscheint) oder trotz Abbruch entschieden wird.
+  it("meldet nach abgebrochener Rückfrage nichts und entscheidet nichts", async () => {
+    vi.stubGlobal("confirm", () => false);
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [anfrage(9, 3, "Fernsehen")], total: 1 });
+    const freigeben = vi.spyOn(api, "approveActivation");
+    await zeige();
+
+    fireEvent.click(screen.getByRole("button", { name: "Theodor: „Fernsehen\" freigeben" }));
+    await act(async () => {});
+
+    expect(freigeben).not.toHaveBeenCalled();
+    expect(screen.queryByText(/freigegeben/)).toBeNull();
   });
 
-  // AK 3. Die PIN-Regel bleibt eine Meldung nach dem Klick. Rot, wenn sie mit verschwand.
-  it("meldet eine zu kurze PIN weiter nach dem Absenden", async () => {
-    const anlegen = vi.spyOn(api, "createChild");
+  // Mehr als eine Seite offen: die Liste verschweigt den Rest nicht. Rot, wenn der Hinweis fehlt.
+  it("nennt offene Wünsche jenseits der ersten Seite", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [anfrage(9, 3, "Fernsehen")], total: 104 });
     await zeige();
-    fireEvent.change(screen.getByLabelText("Name (Pflicht)"), { target: { value: "Lena" } });
-    fireEvent.change(screen.getByLabelText("PIN"), { target: { value: "12" } });
-    fireEvent.click(screen.getByRole("button", { name: "Kind anlegen" }));
-    expect(screen.getAllByRole("status").some((s) => /PIN/.test(s.textContent ?? ""))).toBe(true);
-    expect(anlegen).not.toHaveBeenCalled();
+    expect(screen.getByText(/und 103 weitere/)).toBeTruthy();
+  });
+});
+
+describe("Zähler offener Einlösungen (B-749 AK 3)", () => {
+  // Rot, wenn der Zähler nach einer Entscheidung stehen bleibt (keine Meldung, kein Neuladen) oder ohne `aktiv` abfragt.
+  it("lädt nach einer Entscheidung neu und fragt für ein Lehrer-Konto nicht", async () => {
+    const liste = vi.spyOn(api, "allActivations")
+      .mockResolvedValueOnce({ items: [], total: 2 })
+      .mockResolvedValue({ items: [], total: 1 });
+    vi.spyOn(api, "approveActivation").mockResolvedValue(anfrage(9, 3, "Fernsehen"));
+
+    const { result } = renderHook(() => useOffeneEinloesungenZahl(true, "/vater"));
+    await act(async () => {});
+    expect(result.current).toBe(2);
+
+    const { entscheideEinloesung } = await import("./einloesungen");
+    await act(async () => { await entscheideEinloesung(anfrage(9, 3, "Fernsehen"), true); });
+    expect(result.current).toBe(1);
+
+    liste.mockClear();
+    renderHook(() => useOffeneEinloesungenZahl(false, "/vater"));
+    await act(async () => {});
+    expect(liste).not.toHaveBeenCalled();
   });
 });

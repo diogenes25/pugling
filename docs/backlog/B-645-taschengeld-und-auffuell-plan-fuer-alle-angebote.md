@@ -11,6 +11,7 @@ vertragsbruch: ja
 quelle: "Vater im Chat, 2026-11-17"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-20
 ---
 
 # B-645 · Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift

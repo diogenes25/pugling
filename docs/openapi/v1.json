@@ -6873,6 +6873,92 @@
         }
       }
     },
+    "/api/v1/supervisor/shop/activations": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Shop"
+        ],
+        "summary": "Activation requests of all of the father\u0027s children in one call, optionally filtered by status\n(e.g. \u0060Pending\u0060 for the approval list); \u0060X-Total-Count\u0060 carries the filtered total.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ActivationRequestStatus"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivationRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/shop/activations/{requestId}/approve": {
       "post": {
         "tags": [
@@ -31391,6 +31477,7 @@
       "ChildDay": {
         "required": [
           "activePlans",
+          "answersToday",
           "childId",
           "dutyDone",
           "goalsMet",
@@ -31449,9 +31536,17 @@
           },
           "practiced": {
             "type": "boolean"
+          },
+          "answersToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Daily state of a child, aggregated across its active study plans."
+        "description": "Daily state of a child, aggregated across its active study plans. \u0060AnswersToday\u0060 counts the answers the child\ngave that day across all of its plans (practice cards plus test answers) - how much was done, independent of\nbonus points (B-770)."
       },
       "ChildInterestInput": {
         "required": [

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/shop, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/shop, rolle/supervisor]
 aliases: [Offene Einlösungen aller Kinder, Einlöse-Endpunkt]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -96,3 +96,15 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 
 - **2026-11-20** — angelegt aus [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) (geteilt); `geschaetzt`: S, backend, keine
   Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-20** — `in-arbeit` → gebaut in Sprint 97 ([Protokoll](../pm-sitzung-2026-11-20.md)): `ShopController.AllActivations`,
+  Client `ListAllActivationsAsync`. AK 1/6 → `ShopActivationsOverviewTests.OhneFilter_NurEigeneAnfragenEigenerKinder…` (A sieht weder
+  Bs Anfrage am geteilten Kind noch seine eigene an einem nicht gebundenen Kind; B sieht nur seine). AK 2/3/4 →
+  `StatusPending_FiltertUndZaehlt_UndSinktNachApprove`. AK 5 → gleicher Zeitstempel ordnet die Id; `Reihenfolge_BleibtUnterRejectStabil`.
+  Index-Risiko: bei wenigen hundert Zeilen ohne Messung belassen (keine Migration). Mutanten (gemessen 2026-11-20 17:46, `1808f640` + Arbeitsbaum):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| B747-M1 ohne Aussteller | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:494 | red | red |  |
+| B747-M2 ohne Kind-Bindung | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:495 | red | red |  |
+| B747-M3 ohne Statusfilter | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:496 | red | red |  |
+| B747-M4 ohne Tiebreaker | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:500 | red | red |  |

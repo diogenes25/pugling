@@ -1,150 +1,123 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { ListenAusfall } from "../components/ListenAusfall";
 import { StatusBanner } from "../components/StatusBanner";
-import { Pflicht } from "../components/Pflicht";
 import { api } from "../lib/api";
 import { useAction } from "../lib/useAction";
-import { pinProblem } from "../lib/pin";
 import { useAsync } from "../lib/useAsync";
+import { unitAmount } from "../lib/shop";
+import { formatDate } from "../lib/datum";
 import { ChildrenTimeline } from "./ChildrenTimeline";
+import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import { useAuth } from "../lib/auth";
-import type { ChildResponse, ChildrenDashboard, PlanResponse } from "../lib/types";
+import type { ActivationRequest, ChildDay, ChildrenDashboard, Paged } from "../lib/types";
 
+/*
+ * Layout inline statt in index.css: kein Stilblock, den andere Seiten mitlesen, und eine Liste aus Karten statt einer
+ * Tabelle bricht am Handy (390 px) um, statt seitlich zu scrollen (B-749, AK 5).
+ */
+const LISTE: React.CSSProperties = { listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 };
+const ZAHLEN: React.CSSProperties = {
+  display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8, margin: "8px 0 0",
+};
+
+/**
+ * Die Betreuen-Startseite (B-749): je Kind, ob und wie viel es heute gelernt hat und ob das Tagesziel steht, darunter alles,
+ * was einzulösen ist – über alle Kinder, ohne ein Kind zu wählen. Gebaut für den Blick am Handy; die Verwaltung (Kinder
+ * anlegen, Stammdaten, der Weg zu den Plänen) liegt unter „Kinder".
+ */
 export function VaterDashboard() {
   const { session } = useAuth();
   const adultId = session!.id;
 
-  const children = useAsync<ChildResponse[]>(() => api.children(), [adultId]);
-  // Nur für die Standortbestimmung „gibt es überhaupt einen Plan?" – die Liste selbst liegt beim Zuweisen.
-  const plans = useAsync<PlanResponse[]>(() => api.plans(), [adultId]);
   const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [adultId]);
-  const [timelineToken, setTimelineToken] = useState(0);
-
-  const [name, setName] = useState("");
-  const [grade, setGrade] = useState("");
-  const [pin, setPin] = useState("");
-  /*
-   * Der erste Bildschirm eines neuen Vaters – und bis B-54 der einzige mit einem eigenen `try/catch`. Zwei
-   * Dinge hingen daran: zwei Klicks im selben Tick legten **zwei Kinder** an (kein Ref-Gate, kein
-   * `disabled`), und Erfolg wie Fehler schrieben in *dieselbe* Variable, die fest als grüner Kasten
-   * gerendert wurde – „Kind angelegt." und „Name schon vergeben" sahen identisch aus.
-   */
+  const offen = useAsync<Paged<ActivationRequest>>(
+    () => api.allActivations({ status: "Pending", take: 100 }), [adultId]);
   const action = useAction();
 
-  async function addChild(e: React.FormEvent) {
-    e.preventDefault();
-    // Stumm (B-380, Entscheidung 4): der Knopf ist leer gesperrt, nur Enter im Feld kommt hier an.
-    if (!name.trim()) return;
-    const pinError = pinProblem(pin.trim());
-    if (pinError) { action.fail(pinError); return; }
-    // Ohne PIN legt der Server das Kind mit leerer PIN an – es kann sich dann nicht anmelden, bis der
-    // Vater sie auf der Kind-Seite nachträgt. Darauf weist der Hinweis unter dem Formular hin.
-    const ok = await action.run(() => api.createChild({
-      name: name.trim(), pin: pin.trim() || undefined, grade: grade ? Number(grade) : null,
-    }), "Kind angelegt.");
-    if (!ok) return;
-    setName(""); setGrade(""); setPin("");
-    children.reload();
-    // The "Heute" card lists the same children (B-453) - without this it kept saying "Noch keine Kinder".
-    today.reload();
-    // Die Zeitachse ebenso (B-39): sie fragt eigenständig ab und hielte sonst am alten Bestand fest.
-    setTimelineToken((n) => n + 1);
-  }
+  // Der Kindname je Zeile kommt aus der Tagesübersicht (B-747 Entscheidung 2: kein Namensfeld im Vertrag). Beide listen
+  // dieselben Kinder – die des Vaters; fehlt die Übersicht, steht die Id statt einer leeren Stelle.
+  const nameOf = (childId: number) =>
+    today.data?.children.find((c) => c.childId === childId)?.name ?? `Kind #${childId}`;
 
+  async function decide(r: ActivationRequest, approve: boolean) {
+    if (approve && !bestaetigeFreigabe(r)) return;
+    await action.run(() => entscheideEinloesung(r, approve),
+      approve ? `${nameOf(r.childId)}: „${r.articleTitle}" freigegeben.` : `${nameOf(r.childId)}: „${r.articleTitle}" abgelehnt.`);
+    // Auch nach einem Fehler neu laden: hat ein anderer Erwachsener schon entschieden, darf die Zeile nicht stehen bleiben.
+    offen.reload();
+  }
 
   return (
     <>
       <section>
         <h2 className="h-section">Heute</h2>
-        {today.loading && today.data === null ? <div className="loading">Lade…</div> : today.error ? <div className="banner err">{today.error}</div> : (
-          <table className="table">
-            <thead><tr><th>Kind</th><th>Status</th><th className="num">Ziele</th><th className="num">Punkte heute</th></tr></thead>
-            <tbody>
-              {today.data?.children.map((c) => (
-                <tr key={c.childId}>
-                  <td>{c.name}</td>
-                  <td>
-                    {c.goalsTotal === 0 ? <span className="pill">kein Tagesziel</span>
-                      : c.dutyDone ? <span className="pill lime">✓ geschafft</span>
-                      : c.practiced ? <span className="pill">dran</span>
-                      : <span className="pill mag">offen</span>}
-                  </td>
-                  <td className="num">{c.goalsMet} / {c.goalsTotal}</td>
-                  <td className="num">{c.pointsToday}</td>
-                </tr>
-              ))}
-              {today.data?.children.length === 0 && <tr><td colSpan={4} className="muted">Noch keine Kinder.</td></tr>}
-            </tbody>
-          </table>
+        <ListenAusfall was="Die Tagesübersicht" fehler={today.error} laedt={today.loading} onRetry={today.reload} />
+        {today.showPlaceholder ? <div className="loading">Lade…</div> : today.data && (
+          today.data.children.length === 0
+            ? <p className="muted">Noch keine Kinder. <Link to="/vater/kinder">Kind anlegen →</Link></p>
+            : <ul className="vater-heute" aria-label="Kinder heute" style={LISTE}>
+              {today.data.children.map((c) => <HeuteKind key={c.childId} c={c} />)}
+            </ul>
         )}
       </section>
-
-      <ChildrenTimeline reloadToken={timelineToken} />
 
       <section>
-        <h2 className="h-section">Kinder</h2>
-        {children.loading && children.data === null ? <div className="loading">Lade…</div> : children.error ? <div className="banner err">{children.error}</div> : (
-          <table className="table">
-            <thead><tr><th>Id</th><th>Name</th><th>Klasse</th><th>Schulart</th><th>Interessen</th><th className="num">🪙</th><th className="num">💎</th></tr></thead>
-            <tbody>
-              {children.data?.map((c) => (
-                <tr key={c.id}>
-                  <td className="num">{c.id}</td>
-                  {/* Das Profil steuert, welches Bild das Kind zu einer Vokabel sieht – deshalb hier verlinkt. */}
-                  <td><Link to={`/vater/kind/${c.id}`}>{c.name}</Link></td>
-                  <td>{c.grade ? `${c.grade}.` : "–"}</td>
-                  <td className="muted">{c.schoolType && c.schoolType !== "None" ? c.schoolType : "–"}</td>
-                  <td className="muted">
-                    {c.interests.length > 0
-                      ? c.interests.join(", ")
-                      : <Link to={`/vater/kind/${c.id}?bereich=interessen`}>Interessen pflegen →</Link>}
-                  </td>
-                  <td className="num">{c.coins}</td>
-                  <td className="num">{c.gems}</td>
-                </tr>
+        <h2 className="h-section">Einlösen</h2>
+        <StatusBanner message={action.message} style={{ marginBottom: 8 }} />
+        <ListenAusfall was="Die offenen Einlöse-Wünsche" fehler={offen.error} laedt={offen.loading} onRetry={offen.reload} />
+        {offen.showPlaceholder ? <div className="loading">Lade…</div> : offen.data && (
+          offen.data.items.length === 0
+            ? <p className="muted">Nichts einzulösen.</p>
+            : <ul className="vater-einloesen" aria-label="Offene Einlöse-Wünsche" style={LISTE}>
+              {offen.data.items.map((r) => (
+                <li key={r.id} className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div>
+                    <strong>{nameOf(r.childId)}</strong>: {unitAmount(r.requestedQuantity, r.unitType)} „{r.articleTitle}"
+                    <span className="muted"> · {formatDate(r.requestedAt)}</span>
+                  </div>
+                  <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                    {r.canApprove && <button type="button" className="btn lime inline-btn" style={{ width: "auto" }}
+                      aria-label={`${nameOf(r.childId)}: „${r.articleTitle}" freigeben`}
+                      disabled={action.busy} onClick={() => decide(r, true)}>Freigeben</button>}
+                    {r.canReject && <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
+                      aria-label={`${nameOf(r.childId)}: „${r.articleTitle}" ablehnen`}
+                      disabled={action.busy} onClick={() => decide(r, false)}>Ablehnen</button>}
+                  </div>
+                </li>
               ))}
-              {children.data?.length === 0 && <tr><td colSpan={7} className="muted">Noch keine Kinder.</td></tr>}
-            </tbody>
-          </table>
+              {offen.data.total > offen.data.items.length && (
+                <li className="muted">
+                  … und {offen.data.total - offen.data.items.length} weitere – im <Link to="/vater/shop">Shop</Link> je Kind.
+                </li>
+              )}
+            </ul>
         )}
-
-        <form className="form-grid" style={{ marginTop: 12, alignItems: "end" }} onSubmit={addChild}>
-          <div className="field"><label htmlFor="new-child-name">Name <Pflicht /></label><input id="new-child-name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vorname" /></div>
-          <div className="field"><label htmlFor="new-child-grade">Klasse</label><input id="new-child-grade" name="grade" type="number" min={1} max={13} value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="z.B. 8" /></div>
-          <div className="field"><label htmlFor="new-child-pin">PIN</label><input id="new-child-pin" name="pin" value={pin} onChange={(e) => setPin(e.target.value)} placeholder="z.B. 1111" /></div>
-          <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !name.trim()}>
-            {action.busy ? "Lege an…" : "Kind anlegen"}
-          </button>
-        </form>
-        <p className="sub" style={{ marginTop: 8 }}>
-          Die <strong>PIN ist der Login deines Kindes</strong> – ohne sie kommt es nicht in seine App
-          (nachtragen kannst du sie auf der Kind-Seite). Der <strong>Lehrplan-Assistent</strong> führt
-          danach Schritt für Schritt durch Problemfeld und passende Übungen.
-        </p>
-        <StatusBanner message={action.message} style={{ marginTop: 10 }} />
       </section>
 
-      {/*
-        Die Lehrpläne sind hier bewusst **weg**: das Zuweisen ist eine eigene Perspektive und stand vorher
-        als Anhängsel unter zwei Betreuungs-Tabellen (docs/vater-perspektiven-plan.md). Was bleibt, ist der
-        Weg dorthin – mit der Zahl, damit die Seite nicht verschweigt, ob überhaupt ein Plan existiert.
-      */}
-      <section className="card">
-        <div className="row" style={{ alignItems: "center", gap: 10 }}>
-          <div>
-            <h3 style={{ margin: 0 }}>🎯 Lehrpläne</h3>
-            <p className="muted" style={{ margin: "4px 0 0", fontSize: 13 }}>
-              {plans.loading ? "Lade…"
-                : plans.data?.length === 0 ? "Noch kein Plan angelegt – ohne Plan hat dein Kind keine Pflicht."
-                : `${plans.data?.length} ${plans.data?.length === 1 ? "Plan" : "Pläne"}, davon ${plans.data?.filter((p) => p.active).length} aktiv.`}
-            </p>
-          </div>
-          <Link to="/vater/plaene" className="btn inline-btn"
-            style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>
-            Zum Zuweisen
-          </Link>
-        </div>
-      </section>
+      <ChildrenTimeline />
     </>
+  );
+}
+
+/**
+ * Ein Kind am heutigen Tag: Status, Antwortzahl (B-770: wie viel, unabhängig von Bonuspunkten), Tagesziel als „n von m"
+ * und Punkte. Das Tagesziel liest `goalsMet`/`goalsTotal` (B-749 Entscheidung 3).
+ */
+function HeuteKind({ c }: { c: ChildDay }) {
+  return (
+    <li className="card">
+      <div className="row" style={{ alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <Link to={`/vater/kind/${c.childId}`}><strong>{c.name}</strong></Link>
+        {c.goalsTotal === 0 ? <span className="pill">kein Tagesziel</span>
+          : c.dutyDone ? <span className="pill lime">✓ Tagesziel geschafft</span>
+          : c.practiced ? <span className="pill">dran</span>
+          : <span className="pill mag">offen</span>}
+      </div>
+      <dl className="vater-heute-zahlen" style={ZAHLEN}>
+        <div><dt className="muted" style={{ fontSize: 13 }}>Geübt heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.answersToday} {c.answersToday === 1 ? "Antwort" : "Antworten"}</dd></div>
+        <div><dt className="muted" style={{ fontSize: 13 }}>Tagesziel</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.goalsTotal === 0 ? "–" : `${c.goalsMet} von ${c.goalsTotal}`}</dd></div>
+        <div><dt className="muted" style={{ fontSize: 13 }}>Punkte heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.pointsToday}</dd></div>
+      </dl>
+    </li>
   );
 }

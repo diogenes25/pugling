@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * B-58: der Lehrplan-Assistent hat einen echten Durchstich. Bis hierher fuhr kein Test ihn zu Ende – nur
@@ -40,7 +41,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 test("Der Assistent legt Kind, Plan und Position mit den eingetippten Feinschliff-Werten an", async ({ page }) => {

@@ -12,6 +12,7 @@ quelle: "Vater am 2026-11-18, Erfahrung aus dem echten Betrieb (Kind will einlö
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-11-20
 ---
 
 # B-665 · Der Vater löst direkt aus dem Inventar des Kindes ein

@@ -475,6 +475,33 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
+    /// <summary>
+    /// Activation requests of all of the father's children in one call, optionally filtered by status
+    /// (e.g. <c>Pending</c> for the approval list); <c>X-Total-Count</c> carries the filtered total.
+    /// </summary>
+    [HttpGet("activations")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ActivationRequestDto>>> AllActivations(
+        [FromQuery] ActivationRequestStatus? status,
+        [FromQuery] int skip = 0, [FromQuery] int take = PagingExtensions.DefaultTake,
+        CancellationToken ct = default)
+    {
+        var fid = User.AdultId();
+        // No child id in the path, so no ChildOwnershipFilter: the request must be issued by this father
+        // (redemption is issuer-bound) AND the child must still be linked to him – an unlinked child's
+        // old requests are not his to decide anymore.
+        var query = db.ActivationRequests.AsNoTracking()
+            .Where(r => r.SupervisorId == fid
+                && db.SupervisorLinks.Any(l => l.SupervisorId == fid && l.StudentId == r.ChildId));
+        if (status is not null) query = query.Where(r => r.Status == status);
+
+        // Same stable order as the per-child list (B-113).
+        return await query
+            .OrderByDescending(r => r.RequestedAt).ThenByDescending(r => r.Id)
+            .Select(r => MapActivation(r))
+            .ToPagedListAsync(Response, skip, take, ct);
+    }
+
     /// <summary>Approves an open activation request; the child's inventory is reduced.</summary>
     [HttpPost("~/" + ApiRoutes.Supervisor + "/children/{childId:int}/shop/activations/{requestId:int}/approve")]
     [ServiceFilter(typeof(ChildOwnershipFilter))]

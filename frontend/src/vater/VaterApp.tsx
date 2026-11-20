@@ -1,6 +1,8 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { RemarkWidget } from "../components/RemarkWidget";
+import { api } from "../lib/api";
+import { useNarrowViewport } from "../lib/useNarrowViewport";
 import { useAuth } from "../lib/auth";
 import {
   homeFor, isNeutralPath, perspective, perspectiveOfPath, perspectivesFor, rememberPerspective,
@@ -8,7 +10,10 @@ import {
   type Perspective,
 } from "./navigation";
 import { VaterLogin } from "./VaterLogin";
+import { VaterWahl } from "./VaterWahl";
 import { VaterDashboard } from "./VaterDashboard";
+import { VaterKinder } from "./VaterKinder";
+import { useOffeneEinloesungenZahl } from "./einloesungen";
 import { VaterPlaene } from "./VaterPlaene";
 import { VaterInhalte } from "./VaterInhalte";
 import { VaterVocab } from "./VaterVocab";
@@ -35,8 +40,10 @@ import { VaterRueckmeldungen } from "./VaterRueckmeldungen";
 
 export function VaterApp() {
   const { session, signOut } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, state: routeState } = useLocation();
   const navigate = useNavigate();
+  // Der Hinweis gilt nur, solange das Fenster schmal ist: nach dem Verbreitern stünde sonst „nur am Rechner" am Rechner.
+  const amRechnerHinweis = (routeState as { amRechner?: boolean } | null)?.amRechner === true;
   /*
    * Nach dem **Anmelden** in die zuletzt bewusst gewählte Perspektive führen: ein Lehrer landet in seiner
    * Werkstatt statt jedes Mal in der Vater-Sicht.
@@ -53,21 +60,69 @@ export function VaterApp() {
    */
   // „Erwachsener" = Supervisor (Vater) oder Creator (Lehrer-Konto). Der Unterschied steckt in `role`.
   const adultRole = session?.role === "Supervisor" || session?.role === "Creator" ? session.role : null;
+  const narrow = useNarrowViewport();
+  /*
+   * Der Wahlschritt nach der PIN (B-663): „pruefen" solange `auth/me` die Rollen des Kontos noch nicht genannt hat,
+   * „waehlen" für ein Konto mit beiden Rollen. Nur beim Anmelde-Übergang, aus demselben Grund wie oben.
+   */
+  const [wahl, setWahl] = useState<"pruefen" | "waehlen" | null>(null);
   const wasSignedIn = useRef(adultRole !== null);
-  useEffect(() => {
+  // Zähler offener Einlösungen am Navigationspunkt „Shop" (B-749); lädt bei jedem Seitenwechsel und nach jeder Entscheidung.
+  const offeneEinloesungen = useOffeneEinloesungenZahl(adultRole === "Supervisor" && wahl === null, pathname);
+  // Layout-Effekt: der Wahlschritt muss stehen, bevor die Startseite zum ersten Mal gezeichnet wird – sonst feuerte sie
+  // ihre Abrufe für einen Bildschirm, den der Vater gleich wieder verlässt.
+  useLayoutEffect(() => {
     const signedIn = adultRole !== null;
     const justSignedIn = signedIn && !wasSignedIn.current;
     wasSignedIn.current = signedIn;
+    if (!signedIn) setWahl(null);
     if (!justSignedIn || pathname !== "/vater") return;
     // Ein Lehrer hat nur eine Perspektive – er gehört immer in die Werkstatt, unabhängig vom Gemerkten.
     if (adultRole === "Creator") { navigate(homeFor("Creator"), { replace: true }); return; }
-    const remembered = rememberedPerspective();
-    if (remembered && remembered !== "betreuen") navigate(perspective(remembered).home, { replace: true });
+    // Am Telefon gibt es nur das Betreuen (Entscheidung 3) – eine Wahl mit einer Antwort wäre keine.
+    if (narrow) return;
+    const followRemembered = () => {
+      const remembered = rememberedPerspective();
+      if (remembered && remembered !== "betreuen") navigate(perspective(remembered).home, { replace: true });
+    };
+    let alive = true;
+    setWahl("pruefen");
+    // Die Sitzung kennt nur die primäre Rolle; ob das Konto auch Creator ist, sagt erst `auth/me`. Scheitert der Abruf,
+    // läuft die Anmeldung weiter wie vor dem Wahlschritt (gemerkte Perspektive) – keine Sackgasse hinter der PIN.
+    api.me().then(
+      (me) => {
+        if (!alive) return;
+        if (me.roles.includes("Creator") && me.roles.includes("Supervisor")) { setWahl("waehlen"); return; }
+        setWahl(null);
+        followRemembered();
+      },
+      () => {
+        if (!alive) return;
+        setWahl(null);
+        followRemembered();
+      });
+    return () => { alive = false; };
     // Absichtlich nur an `session` gekoppelt: der Effekt beschreibt den Anmelde-Übergang, nicht jeden Pfadwechsel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   if (!session || adultRole === null) return <VaterLogin />;
+
+  if (wahl === "pruefen") {
+    return <div className="app-vater" style={{ justifyContent: "center", alignItems: "center" }}>
+      <p className="muted" role="status">Anmelden …</p>
+    </div>;
+  }
+  if (wahl === "waehlen") {
+    return <VaterWahl name={session.name} onAbmelden={signOut}
+      vorbelegt={rememberedPerspective() === "erstellen" ? "erstellen" : "betreuen"}
+      onWahl={(key) => {
+        // Die Antwort ist eine bewusste Wahl wie ein Klick auf den Umschalter – sie gilt beim nächsten Mal als Vorbelegung.
+        rememberPerspective(key);
+        setWahl(null);
+        navigate(perspective(key).home, { replace: true });
+      }} />;
+  }
 
   /*
    * Ein Lehrer-Konto hat nur die Erstellen-Perspektive. Ruft es eine Betreuungs-Seite auf – per Lesezeichen
@@ -79,11 +134,13 @@ export function VaterApp() {
    * `perspectiveOfPath` fällt für sie auf „Betreuen" zurück – ohne diese Ausnahme käme ein Lehrer nicht
    * an sein eigenes Profil.
    */
-  const allowed = perspectivesFor(adultRole);
+  const allowed = perspectivesFor(adultRole, narrow);
   const pathKey = perspectiveOfPath(pathname);
   const neutral = isNeutralPath(pathname);
   if (!neutral && !allowed.some((p) => p.key === pathKey)) {
-    return <Navigate to={homeFor(adultRole)} replace />;
+    // Am Telefon gesperrt, nicht verboten (B-663): die Startseite sagt, wo es weitergeht.
+    const amRechner = adultRole === "Supervisor" && perspectivesFor(adultRole).some((p) => p.key === pathKey);
+    return <Navigate to={homeFor(adultRole)} replace state={amRechner ? { amRechner: true } : undefined} />;
   }
   // Auf einer perspektivlosen Seite zeigt die Navigation die Heimat des Kontos – nicht „Betreuen" für einen
   // Lehrer, der dort nichts zu suchen hat.
@@ -120,7 +177,13 @@ export function VaterApp() {
         <PerspectiveSwitch available={allowed} />
         <nav className="vater-nav" aria-label={`Bereiche: ${active.label}`}>
           {active.entries.map((e) => (
-            <NavLink key={e.to} to={e.to} end={e.end}>{e.label}</NavLink>
+            <NavLink key={e.to} to={e.to} end={e.end}>
+              {e.label}
+              {e.to === "/vater/shop" && offeneEinloesungen !== null && offeneEinloesungen > 0 && (
+                <span className="pill mag" style={{ marginLeft: 6 }}
+                  aria-label={`${offeneEinloesungen} offene Einlöse-Wünsche`}>{offeneEinloesungen}</span>
+              )}
+            </NavLink>
           ))}
           {/* Werkzeug für die Entwicklung, wie das Erfassungs-Widget: im Prod-Bundle wegoptimiert. Es
               gehört zu keiner Perspektive und steht darum abgesetzt am Ende. */}
@@ -133,10 +196,16 @@ export function VaterApp() {
       </header>
 
       <main className="vater-main">
+        {amRechnerHinweis && narrow && (
+          <div className="banner info" role="status">
+            Zuweisen und Erstellen gibt es nur am Rechner – öffne Pugling dort in einem breiten Fenster.
+          </div>
+        )}
         <Routes>
           {/* Je Perspektive eine Startseite. Vorher trug das Dashboard alle drei Anliegen: „Heute" und
               „Kinder" (Betreuen) neben „Lehrpläne" (Zuweisen). */}
           <Route index element={<VaterDashboard />} />
+          <Route path="kinder" element={<VaterKinder />} />
           <Route path="plaene" element={<VaterPlaene />} />
           <Route path="inhalte" element={<VaterInhalte />} />
           <Route path="wizard" element={<VaterWizard />} />

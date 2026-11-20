@@ -218,6 +218,12 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<IReadOnlyList<ActivationRequestDto>> ListActivationsAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ActivationRequestDto>>($"{Root}/children/{childId}/shop/activations", ct);
 
+    /// <summary>Activation requests of all of the supervisor's children (B-747), optionally only one status; the page carries the total.</summary>
+    public Task<PuglingPage<ActivationRequestDto>> ListAllActivationsAsync(ActivationRequestStatus? status = null,
+        int skip = 0, int take = 100, CancellationToken ct = default) =>
+        Http.GetPageAsync<ActivationRequestDto>($"{Root}/shop/activations"
+            + PuglingHttp.Query(("status", status?.ToString()), ("skip", skip), ("take", take)), ct);
+
     /// <summary>Approves an activation (issuing supervisor only).</summary>
     public Task<ActivationRequestDto> ApproveActivationAsync(int childId, int requestId, CancellationToken ct = default) =>
         Http.PostAsync<ActivationRequestDto>($"{Root}/children/{childId}/shop/activations/{requestId}/approve", null, ct);

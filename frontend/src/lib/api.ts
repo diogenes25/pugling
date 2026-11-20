@@ -904,6 +904,14 @@ export const api = {
     const qs = q.toString();
     return http<ActivationRequest[]>(`${V1}/supervisor/children/${childId}/shop/activations${qs ? `?${qs}` : ""}`);
   },
+  // B-747: die Anfragen aller Kinder in einem Aufruf; `total` ist die gefilterte Gesamtzahl (Zähler an der Navigation).
+  allActivations: (p: { status?: ActivationRequestStatus; skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (p.status) q.set("status", p.status);
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<ActivationRequest>(`${V1}/supervisor/shop/activations${qs ? `?${qs}` : ""}`);
+  },
   approveActivation: (childId: number, requestId: number) =>
     http<ActivationRequest>(`${V1}/supervisor/children/${childId}/shop/activations/${requestId}/approve`, "POST", {}),
   rejectActivation: (childId: number, requestId: number) =>

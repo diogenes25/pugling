@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * B-167: Dasselbe Ladefenster wie im Assistenten (B-169) — nur im **Planbau**, wo es niemand geschlossen
@@ -22,7 +23,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 /** Legt einen leeren Plan für das geseedete Kind an und landet im Planbau. */

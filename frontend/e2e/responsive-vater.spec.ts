@@ -111,6 +111,7 @@ test("Vater-Web bei 768 px: keine Seite scrollt seitlich, auch nicht mit offenem
 
   const routes = [
     "/vater",
+    "/vater/kinder",
     "/vater/plaene",
     "/vater/inhalte",
     "/vater/exercises",

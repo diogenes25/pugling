@@ -24,7 +24,8 @@ test("Vater gibt eine Liste als tägliche Pflicht mit Tagesdosis auf, das Kind b
   const vater = await (await browser.newContext()).newPage();
   await vaterLogin(vater, { id: "1", pin: "0000" });
   const childId = await createChild(vater, CHILD.name, CHILD.pin);
-  // B-453: die Karte „Heute" kennt das neue Kind sofort, ohne Neuladen.
+  // Angelegt wird seit B-749 unter „Kinder"; die Startseite mit der Karte „Heute" kennt das neue Kind danach.
+  await vater.goto("/vater");
   await expect(vater.locator("section", { has: vater.getByRole("heading", { name: "Heute" }) }).getByText(CHILD.name)).toBeVisible();
 
   // ---------- Stoff: Reihe, Unit, Übung aus einer eingefügten Liste ----------

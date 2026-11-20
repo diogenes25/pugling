@@ -2,13 +2,14 @@ import { useId, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { PAGE_SIZE, Pager } from "../components/ListControls";
-import { api, ApiError } from "../lib/api";
+import { api } from "../lib/api";
 import { useAction, type ActionState } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
 import { formatDate } from "../lib/datum";
+import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
   InventoryItem, Paged, ShopArticle, ShopListing, ShopPurchase, ShopRefillKind, UnitType, UpdateShopListingDto,
@@ -503,7 +504,7 @@ function ChildShopManager() {
               {children.data.map((c) => <option key={c.id} value={c.id}>{c.name} (#{c.id})</option>)}
             </select>
           </div>
-        ) : <div className="banner">Lege zuerst ein Kind an (unter „Kinder &amp; Heute").</div>}
+        ) : <div className="banner">Lege zuerst ein Kind an (unter „Kinder").</div>}
 
       {activeChild !== null && <ChildShopView key={activeChild} childId={activeChild} />}
     </section>
@@ -522,20 +523,9 @@ export function ChildShopView({ childId }: { childId: number }) {
   const [redeeming, setRedeeming] = useState<{ articleId: number; quantity: number } | null>(null);
 
   async function decide(r: ActivationRequest, approve: boolean) {
-    if (approve && !confirmAction(`${unitAmount(r.requestedQuantity, r.unitType)} „${r.articleTitle}" freigeben? Die Einheiten werden aus dem Inventar entnommen.`)) return;
-    const ok = await action.run(async () => {
-      try {
-        await (approve ? api.approveActivation(childId, r.id) : api.rejectActivation(childId, r.id));
-      } catch (e) {
-        // Nur hier sind Artikel und Menge bekannt, und nur hier bleibt eine Anfrage offen (beim Kind entsteht keine) –
-        // darum ein eigener Satz statt des geteilten aus `GERMAN_PROBLEM_TEXT` (B-504).
-        if (approve && e instanceof ApiError && e.code === "insufficient_inventory")
-          // „weniger als N" ist genau die Bedingung des Servers (keine Zeile oder `Quantity < RequestedQuantity`).
-          throw new Error(`„${r.articleTitle}" lässt sich nicht freigeben: im Inventar sind weniger als `
-            + `${unitAmount(r.requestedQuantity, r.unitType)} übrig. Die Anfrage bleibt offen – du kannst sie ablehnen.`);
-        throw e;
-      }
-    });
+    // Rückfrage, Fehlersatz und Zähler-Meldung liegen in der gemeinsamen Senke (einloesungen.ts, B-749).
+    if (approve && !bestaetigeFreigabe(r)) return;
+    const ok = await action.run(() => entscheideEinloesung(r, approve));
     // Auch bei Misserfolg neu laden: der Satz zeigt aufs Inventar, und das muss darunter den wahren Bestand zeigen; und
     // hat ein anderer Erwachsener schon entschieden, darf die Zeile nicht weiter „Freigeben" anbieten.
     if (!ok) { activations.reload(); inventory.reload(); return; }

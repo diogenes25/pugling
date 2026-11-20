@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 // Das Anmerkungs-Widget: erfassen, die Id zurückbekommen, die eigene Liste lesen.
 //
@@ -21,7 +22,7 @@ async function vaterLogin(page: Page) {
   await page.locator("#fid").fill(FATHER.id);
   await page.locator("#pin").fill(FATHER.pin);
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
 }
 
 test("Vater erfasst eine Anmerkung, bekommt die Log-Id und findet sie in seiner Liste", async ({ page }) => {

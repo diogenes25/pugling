@@ -71,7 +71,7 @@ export function VaterKind() {
         <span className="pill">💎 {me.gems}</span>
         {/* `width: auto` ist Pflicht, nicht Kosmetik: `.btn` ist vollbreit: ohne die Angabe füllte der
             Zurück-Knopf die halbe Zeile und quetschte die Münz-/Gem-Anzeigen in den Umbruch. */}
-        <Link to="/vater" className="btn ghost small"
+        <Link to="/vater/kinder" className="btn ghost small"
           style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>← Alle Kinder</Link>
       </div>
 

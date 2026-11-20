@@ -401,7 +401,7 @@ daneben – Stock-Bilder liegen oft schon irgendwo.
 - **Kind-Profil** (`/vater/kind/:childId`, [VaterKind.tsx](../frontend/src/vater/VaterKind.tsx)):
   gewichtete Interessen mit getrennten Listen „Mag"/„Mag nicht" und die Bild-Freigabe als eigene,
   erklärte Auswahl. Vorschläge kommen aus Tags, die schon Bilder tragen – so führt eine Eingabe
-  garantiert zu Treffern. Verlinkt aus der Kinder-Tabelle des Dashboards.
+  garantiert zu Treffern. Verlinkt aus der Kinder-Tabelle unter „Kinder“ (`/vater/kinder`, seit B-749) und von der Startseite.
 - **Bild-Bibliothek** (`/vater/media`, [VaterMedia.tsx](../frontend/src/vater/VaterMedia.tsx)):
   anlegen (per URL), Vorschau, Schlagworte ergänzen, „Wo benutzt?" und löschen. Assets ohne Datei oder
   ohne Schlagwort sind als solche markiert – beides macht sie für die Auswahl unsichtbar.

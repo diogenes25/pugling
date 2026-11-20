@@ -23,7 +23,7 @@ describe("pinProblem", () => {
  * Aufrufstelle vor dem Senden wirkt, prüft er auch nicht; dafür bräuchte jedes Formular einen eigenen Render-Fall.
  */
 describe("PIN-Formulare", () => {
-  const FORMS = ["VaterDashboard", "VaterKind", "VaterLogin", "VaterProfil", "VaterWizard"];
+  const FORMS = ["VaterKinder", "VaterKind", "VaterLogin", "VaterProfil", "VaterWizard"];
 
   it.each(FORMS)("%s prüft die PIN vor dem Absenden", (name) => {
     const source = readFileSync(`src/vater/${name}.tsx`, "utf-8");

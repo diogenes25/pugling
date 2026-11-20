@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
+import { alsVaterStarten } from "./helpers";
 
 /*
  * B-12 – geteilte Übungen bewerten, aus beiden Sitzen.
@@ -72,7 +73,7 @@ test("Vater bewertet eine geteilte Übung, sortiert danach – der Autor liest m
   await page.locator("#fid").fill("1");
   await page.locator("#pin").fill("0000");
   await page.getByRole("button", { name: "Anmelden" }).click();
-  await expect(page.getByRole("heading", { name: "Kinder" })).toBeVisible();
+  await alsVaterStarten(page);
   await page.goto(listUrl);
   await page.getByLabel("geteilte Übungen anderer Väter anzeigen").check();
 

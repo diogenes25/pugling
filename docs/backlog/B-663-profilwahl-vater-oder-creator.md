@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Rollenwahl beim Login, Creator nur im Web]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -182,3 +182,17 @@ Hinweis, drei Teststufen. Kein XL: alles liegt in `frontend/src/vater/` und `lib
   und B-681.
 - 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): alle sechs Punkte entschieden. Kern: reine Frontend-Wahl ohne Token-Änderung, Wahlschritt nach der PIN nur für Konten mit beiden Rollen, unter 768 px entfallen Erstellen und Zuweisen, B-663 vor B-662.
 - 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, `wo` von beides auf frontend (Entscheidung 1: kein Token-Eingriff), keine Migration, kein Vertragsbruch. Eintrittsbedingung gegrillt geprüft (sechs Punkte entschieden, Kriterien mit roter Änderung, `Absichtserklärung` ausgewiesen).
+- **2026-11-20** — gebaut in Sprint 97: `useNarrowViewport` (abonniert `matchMedia`, unter 768 px), `perspectivesFor(role, narrow)`,
+  Wahlschritt `VaterWahl` nach der PIN (nur bei `auth/me.roles` mit Creator **und** Supervisor, vorbelegt aus der gemerkten Wahl,
+  Ausgang „Abmelden"), Weiterleitung gesperrter Seiten am Telefon mit Hinweis „nur am Rechner". AK 1 → `VaterWahl.test.tsx` und
+  `perspektiven.spec.ts` („Der Lehrer landet …": Fokus auf „Als Creator", Enter → `/vater/inhalte`). AK 2 → `lehrer-konto.spec.ts`
+  (Lehrer-Konto landet ohne Schritt in der Werkstatt). AK 3/4 → `navigation.test.ts` und `vater-schmal.spec.ts` (390 px kein Schritt, kein
+  Umschalter, `/vater/inhalte` → `/vater` mit Hinweis; nach 1024 px alle drei Perspektiven). AK 5/6 Absichtserklärung (kein Vertrags-
+  oder Token-Diff; `PuglingClientTests` grün). Mitgezogen: 15 Login-Stellen über `alsVaterStarten` (`e2e/helpers.ts`), `feldhilfe-lage`
+  verbreitert statt auf 700 px zu verschmälern. Mutanten (2026-11-20 17:49):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| B663-F1 Breite ignoriert | frontend/src/vater/navigation.ts:168 | red | red |  |
+| B663-F2 Creator verliert Werkstatt am Telefon | frontend/src/vater/navigation.ts:167 | red | red |  |
+| B663-F3 Vorbelegung ignoriert | frontend/src/vater/VaterWahl.tsx:31 | red | red |  |

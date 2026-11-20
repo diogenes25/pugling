@@ -59,7 +59,9 @@ export const PERSPECTIVES: Perspective[] = [
     purpose: "Wie läuft es bei deinem Kind – und was steuerst du daran?",
     home: "/vater",
     entries: [
-      { to: "/vater", label: "🏠 Kinder & Heute", end: true },
+      { to: "/vater", label: "🏠 Heute", end: true },
+      // Stammdaten der Kinder und das Anlegen (B-749): Verwaltung, nicht der tägliche Blick – darum nicht die Startseite.
+      { to: "/vater/kinder", label: "👨‍👧 Kinder" },
       { to: "/vater/class-tests", label: "📝 Klassenarbeiten" },
       { to: "/vater/rueckmeldungen", label: "💬 Rückmeldungen" },
       { to: "/vater/rewards", label: "🏆 Belohnungen" },
@@ -156,9 +158,14 @@ export const isNeutralPath = (pathname: string): boolean =>
  *
  * Das ist **keine** Rechteprüfung: die sitzt im Server. Hier geht es darum, niemandem Türen zu zeigen, die
  * für ihn verschlossen sind.
+ *
+ * Auf **schmalem** Bildschirm (`narrow`, unter 768 px, B-663) bleibt dem Vater nur das Betreuen: Zuweisen und
+ * Erstellen sind am Telefon nicht handhabbar. Ein Lehrer-Konto behält seine Werkstatt – ohne sie stünde es vor
+ * einer leeren Seite.
  */
-export function perspectivesFor(role: "Supervisor" | "Creator"): Perspective[] {
-  return role === "Creator" ? PERSPECTIVES.filter((p) => p.key === "erstellen") : PERSPECTIVES;
+export function perspectivesFor(role: "Supervisor" | "Creator", narrow = false): Perspective[] {
+  if (role === "Creator") return PERSPECTIVES.filter((p) => p.key === "erstellen");
+  return narrow ? PERSPECTIVES.filter((p) => p.key === "betreuen") : PERSPECTIVES;
 }
 
 /**

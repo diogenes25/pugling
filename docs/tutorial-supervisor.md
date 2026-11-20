@@ -76,7 +76,9 @@ PATCH /api/v1/supervisor/adults/7   { "pin": "1234" }
 ```
 
 > **Im Web-UI:** `/vater` bietet beides an („Anmelden" / „Neu registrieren"); die Registrierung meldet direkt
-> an und zeigt die neue Vater-Id. Das eigene Konto liegt unter `/vater/profil`.
+> an und zeigt die neue Vater-Id. Ein Konto mit beiden Rollen wählt danach „Als Vater" oder „Als Creator" (B-663;
+> am Handy entfällt die Wahl, dort gibt es nur das Betreuen). Die Startseite zeigt je Kind den Tag und alle offenen
+> Einlöse-Wünsche; Kinder anlegen liegt unter `/vater/kinder`. Das eigene Konto liegt unter `/vater/profil`.
 
 ---
 

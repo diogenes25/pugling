@@ -52,7 +52,7 @@ export function VaterRewards() {
                 ))}
               </select>
             </div>
-          ) : <div className="banner">Lege zuerst ein Kind an (unter „Kinder &amp; Heute").</div>}
+          ) : <div className="banner">Lege zuerst ein Kind an (unter „Kinder").</div>}
       </section>
 
       {activeChild !== null && <MissionManager key={`m${activeChild}`} childId={activeChild} />}
