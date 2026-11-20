@@ -167,3 +167,4 @@ Nach [B-733](B-733-tagesauswertung-und-leistungsprofil.md) (Profil) und [B-731](
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E2) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 und B-680 geerbt. Nachgesehen: kein Zeitgeber, keine Tagesaufgabe im Modell; Modus als
   Tabellenzeile statt Konfiguration (Schätz-Annahme). L am oberen Rand, beides, Migration, kein Vertragsbruch.
+- **2026-11-20** — Reihenfolge entschieden (siehe B-680, stellvertretend auf Anweisung des Nutzers): Der Schattenmodus wird erst eingeschaltet, wenn B-735 und die Regeln aus B-680 gebaut sind. B-734 liefert den Kern und den abgeschalteten Modus.

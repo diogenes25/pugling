@@ -230,7 +230,7 @@ Die Nummern setzen die Kriterien oben fort.
 - **Stundenplan als Eingang:** Der Stundenplan wird heute nur gespeichert und gelesen (`Controllers/Supervisor/TimetableController.cs:25`),
   kein Dienst nutzt ihn; sein Format (Wochentag, optionale Uhrzeit) trägt „morgen" ohne Weiteres.
 - **Schattenwoche:** Die Regeln sollten laufen, bevor der Vater den Stichtag setzt. B-680 Entscheidung 1 baut sie erst „nach E0 bis E2";
-  das lässt die Schattenwoche ohne diese Regeln laufen. Hier nicht entschieden, siehe Protokoll.
+  das ließe die Schattenwoche ohne diese Regeln laufen. Entschieden am 2026-11-20 (stellvertretend, auf Anweisung des Nutzers): Der Schattenmodus wird erst eingeschaltet, wenn B-735 und die Regeln dieser Story gebaut sind; B-734 liefert den Kern, der Schattenmodus bleibt bis dahin aus.
 
 ### Angriffsplan
 
@@ -267,3 +267,4 @@ Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Vorau
   Münz-Ökonomie und Malus-Regeln liegen beim Nutzer).
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle elf Punkte entschieden. Kern: B-680 ist die Produktseite von B-644 (E3/E4), der Planer entscheidet mit festen Regeln im Server, der Vater behält Leitplanken und Notbremse, Notenstufe ist kein Eingang des ersten Baus, `StudyPlan.EndDate` wird optional.
 - **2026-11-20** — `gegrillt` → `geschaetzt` (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): nach der Teilung von B-644 trägt B-680 die Planer-Regeln für Termin, Stundenplan und Fächerverteilung (E4a) als Aufsatz auf B-734. L, backend, keine Migration, kein Vertragsbruch; Zuordnung der zehn Kriterien auf B-734, B-735, B-736 und diese Story, vier Kriterien ergänzt. Eintrittsbedingung `gegrillt` erfüllt (elf Punkte entschieden).
+- **2026-11-20** — Reihenfolge entschieden (stellvertretend auf Anweisung des Nutzers, unbestätigt): Die Schattenwoche startet erst, wenn B-735 und die Planer-Regeln dieser Story (Termin, Stundenplan, Fächerverteilung) gebaut sind, damit der Vater den vollständigen Planer prüft und nicht nur einen Teil. B-734 wird vorher gebaut, der Schattenmodus bleibt bis dahin ausgeschaltet. Kosten: Der Planer läuft später an; der Vorteil ist, dass die Schattenwoche die Regeln misst, die später Münzen kosten.

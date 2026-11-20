@@ -238,7 +238,7 @@ Ausformulieren gegenlesen.
 
 **Zum Bestätigen, neu und hoch:**
 
-1. **B-680 gegen B-644:** B-680 Entscheidung 1 baut die Termin- und Stundenplan-Regeln erst nach E0 bis E2. Dann läuft
+1. **B-680 gegen B-644 (entschieden am 2026-11-20, stellvertretend auf Anweisung):** Die Schattenwoche startet erst, wenn B-735 und die Regeln aus B-680 gebaut sind. Zuvor stand: B-680 Entscheidung 1 baut die Termin- und Stundenplan-Regeln erst nach E0 bis E2. Dann läuft
    die Schattenwoche ohne sie, und der Vater prüft nur einen Teil des Planers. Offen, der Nutzer soll entscheiden.
 2. **B-752, B-757, B-758:** Bauen nur, wenn B-644 die Terminpflicht nicht übernimmt.
 3. **B-701 Entscheidung 6** begründet falsch: `IsGoalMetAsync` zählt jeden bestandenen Versuch, auch den der Vorstufe.
