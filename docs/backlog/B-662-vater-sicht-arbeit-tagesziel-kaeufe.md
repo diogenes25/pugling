@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/frontend, rolle/supervisor]
 aliases: [Vater-Startseite, Was mich als Vater interessiert]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: frontend
 migration: ""
 vertragsbruch: ""
 quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedrich"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt, faktisch XL: Sammel-Endpunkt, Antwortzahl-Feld und Startseiten-Umbau samt 15 betroffenen Specs sind drei einzeln baubare Stücke (Backend zuerst)"
+ersetzt_durch: [B-747, B-770, B-749]
 entgangen_bei: []
 ---
 
@@ -122,6 +122,17 @@ Final. Je Kriterium die Änderung, die es rot macht.
 6. Bei 390 px Breite scrollt die Betreuen-Startseite nicht seitlich, und Freigeben ist erreichbar. *Rot, wenn* die neue Playwright-Probe bei 390 px einen Überlauf misst.
 7. *Absichtserklärung.* Ein Lehrer-Konto (nur Creator) sieht die Seite nicht. *Rot, wenn* `perspectivesFor` sie ihm zeigt.
 
+## Schätzung
+
+Nicht geschätzt, sondern geteilt: `wo` wird `beides` (Entscheidung 2); Backend mit zwei neuen Stücken, eine Startseite, die fünfzehn
+E2E-Specs berührt, und eine 390-px-Probe wären ein XL. Zerlegung nach „Teilen und Zusammenlegen":
+
+1. [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) · Endpunkt `supervisor/shop/activations` über alle Kinder (S, backend; Entscheidung 2).
+2. [B-770](B-770-antwortzahl-je-kind-und-tag.md) · `ChildDay.AnswersToday` (S, backend; Entscheidung 3).
+3. [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) · Startseite, Verwaltungsseite, Zähler, Handy-Probe (L, frontend; Entscheidungen 1, 4 bis 8).
+
+Bau-Reihenfolge: [B-663](B-663-profilwahl-vater-oder-creator.md) zuerst (Entscheidung 5), dann B-747 und B-770, zuletzt B-749.
+
 ## Verlauf
 
 - 2026-11-18 · idee · aufgenommen aus dem Feedback des Vaters
@@ -129,3 +140,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   kindübergreifende offene Einlösungen mit Zähler, „wie gut" über Punkte hinaus, eine entrümpelte Startseite und eine
   Telefon-Probe (nur 768 px belegt). Die Rollentrennung tragen die Perspektiven seit 2026-07-28. Hängt an B-663.
 - 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): alle fünf Punkte entschieden. Kern: `/vater` wird die Vater-Sicht, Verwaltung zieht um, Endpunkt für offene Einlösungen über alle Kinder, „wie gut“ = Punkte plus Antwortzahl, Telefonbreite nur Betreuen, B-663 zuerst.
+- 2026-11-20 · verworfen (geteilt, Vorbereitungslauf, Sonnet): faktisch XL, zerlegt in B-747, B-770, B-749; Eintrittsbedingung `gegrillt` geprüft und erfüllt. B-663 bleibt vor dem Frontend-Teil.

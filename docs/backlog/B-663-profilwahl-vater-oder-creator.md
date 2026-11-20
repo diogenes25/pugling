@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/frontend, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/supervisor, rolle/creator]
 aliases: [Rollenwahl beim Login, Creator nur im Web]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: beides
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedrich"
 grund: ""
 ersetzt_durch: []
@@ -121,6 +121,58 @@ Final. Je Kriterium die Änderung, die es rot macht.
 5. *Absichtserklärung.* Token, `LoginResponse` und `MeResponse` bleiben unverändert. *Rot, wenn* ein Vertragsfeld oder eine Claim hinzukommt.
 6. *Absichtserklärung.* Der KI-Creator meldet sich weiter mit Creator-Claim an. *Rot, wenn* `auth/login` die Rolle verengt (`AuthHandler.cs:48`).
 
+## Schätzung
+
+**Größe: M**, wie der Batch-Pfad im `MediaSelector` (B-03): ein Wahlschritt, eine Breitenweiche in `perspectivesFor`, ein Weiterleiten mit
+Hinweis, drei Teststufen. Kein XL: alles liegt in `frontend/src/vater/` und `lib/ui.ts`.
+
+- **`wo: frontend`** (vorher `beides`): Entscheidung 1 hält das Token und `LoginResponse`/`MeResponse` unverändert, also fällt kein C#
+  an. Die Rollen des Kontos liefert `GET auth/me` (`MeResponse.Roles`, `frontend/src/lib/api.ts:366`), ohne Vertragsänderung.
+- **`migration: nein`**: kein Schema.
+- **`vertragsbruch: nein`**: nichts in `Pugling.Contracts`; AK 5 hält das als Absichtserklärung fest.
+
+### Risiken
+
+- **Die Sitzung kennt nur die primäre Rolle.** Das Frontend trägt `session.role` (Supervisor vor Creator, `VaterApp.tsx:57`), nicht alle
+  Rollen; für den Wahlschritt braucht es einen zusätzlichen Abruf von `auth/me` direkt nach der PIN. Schlägt er fehl, muss der Weg
+  ohne Wahlschritt weiterlaufen (Vater landet in der gemerkten Perspektive wie heute), nicht in einer Sackgasse.
+- **Die Breitenweiche braucht Zustand statt Abfrage (AK 4).** Ein einmal gelesenes `matchMedia` bleibt nach dem Verbreitern des Fensters
+  stehen, wenn es nicht abonniert wird (`change`-Ereignis); die Gefahr ist die einmalige Verengung. Der Schwellenwert gilt ab
+  768 px, dieselbe Grenze wie die Probe `e2e/responsive-vater.spec.ts:19`.
+- **E2E-Bestand:** Die Playwright-Specs laufen auf `Desktop Chrome` (1280 px, `playwright.config.ts:73`); die sieben Specs mit
+  `setViewportSize` setzen alle mindestens 768 px (Grep 2026-11-20). Keine bestehende Spec fällt also an der neuen Sperre; das ist
+  gemessen, nicht angenommen.
+- **Erstellen auf dem Handy bleibt per Adresszeile erreichbar,** wenn die Weiterleitung nur die Navigation betrifft. AK 3 verlangt die
+  Weiterleitung beim direkten Aufruf; das ist eine Oberflächenhilfe, keine Rechtegrenze (`navigation.ts:11-15`).
+- **Lehrer-Konto:** hat nur Erstellen; auf schmalem Bildschirm sperrt die Weiche dann alles. Für ein reines Creator-Konto ist die
+  Sperre auszusetzen (sonst steht es vor einer leeren Seite), AK 2 deckt den Wahlschritt, nicht diesen Fall; als Testfall ergänzen.
+- **Reihenfolge:** B-663 vor [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) (jetzt
+  [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md)).
+
+### Angriffsplan
+
+1. Ein Haken `useNarrowViewport()` in `frontend/src/lib/ui.ts` (neben `prefersReducedMotion`, `:23`), der `matchMedia` abonniert.
+2. `perspectivesFor(role, narrow)` in `frontend/src/vater/navigation.ts:160`: unter 768 px nur Betreuen (für `Supervisor`); für `Creator`
+   unverändert.
+3. Weiterleitung in `VaterApp.tsx`: Pfad einer gesperrten Perspektive unter 768 px führt zur Betreuen-Startseite mit dem Hinweis
+   „Am Rechner öffnen".
+4. Wahlschritt nach der PIN (neue Komponente, ein Abruf von `auth/me`, Vorbelegung aus `rememberedPerspective`), nur bei zwei
+   Rollen; ersetzt den Absprung `VaterApp.tsx:59-65`.
+5. Vitest, Playwright, `npm run build`, Lint.
+
+### Testweg
+
+- Vitest `frontend/src/vater/navigation.test.ts` (vorhanden): neue Fälle für `perspectivesFor` mit der Breite (AK 3): unter 768 px
+  fehlen Erstellen und Zuweisen, bei 768 px sind sie da; Creator-Konto bleibt unberührt. Rot, wenn `perspectivesFor` die Breite
+  ignoriert.
+- Vitest für die Wahlschritt-Komponente (neu, `VaterWahl.test.tsx`): zwei Rollen zeigen den Schritt, eine Rolle nicht (AK 1, 2).
+- E2E `frontend/e2e/perspektiven.spec.ts` (vorhanden): Wahlschritt für das Vater-Konto 1 nach der Anmeldung. Neue Spec
+  `frontend/e2e/vater-schmal.spec.ts`: bei 390 px erscheint kein Erstellen und der direkte Aufruf von `/vater/inhalte` führt zur
+  Startseite (AK 3); nach dem Verbreitern auf 1024 px sind alle Perspektiven wieder da (AK 4).
+- AK 5 und 6 sind Absichtserklärungen: `ContractDocumentTests` laufen im Gate mit; eine Prüfung des KI-Creators gegen `auth/login` ist
+  nur durch einen vorhandenen Agent-Test gedeckt (Grep vor dem Bau; bei fehlender Abdeckung als Absichtserklärung beschriften).
+- Vor der Abnahme: Agent `frontend-reviewer`; der Rollengang ist die neue E2E-Spec.
+
 ## Verlauf
 
 - 2026-11-18 · idee · aufgenommen aus dem Feedback des Vaters
@@ -129,3 +181,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   Creator, das Token trägt alle Rollen. Offen: Wahl beim Anmelden, Erstellen auf schmalen Bildschirmen. Hängt an B-662
   und B-681.
 - 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): alle sechs Punkte entschieden. Kern: reine Frontend-Wahl ohne Token-Änderung, Wahlschritt nach der PIN nur für Konten mit beiden Rollen, unter 768 px entfallen Erstellen und Zuweisen, B-663 vor B-662.
+- 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, `wo` von beides auf frontend (Entscheidung 1: kein Token-Eingriff), keine Migration, kein Vertragsbruch. Eintrittsbedingung gegrillt geprüft (sechs Punkte entschieden, Kriterien mit roter Änderung, `Absichtserklärung` ausgewiesen).

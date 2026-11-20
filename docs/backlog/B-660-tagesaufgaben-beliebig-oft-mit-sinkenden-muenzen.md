@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Tagesaufgabe wiederholen, Wiederholung mit sinkenden Münzen]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: beides
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: frontend
+migration: nein
+vertragsbruch: nein
 quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedrich"
 grund: ""
 ersetzt_durch: []
@@ -176,6 +176,71 @@ Kriterium ist eine Absichtserklärung und fällt nur, wenn jemand die genannte R
 7. Eine Bonus-Runde auf einer Übung, die auch Position ist, ändert weder Kasten noch Fälligkeit dieser Position (B-533
    Entscheidung 7). *Rot, wenn der Durchgang `PositionItemProgress` schreibt.*
 
+## Schätzung
+
+**Größe: M** – wie der Batch-Pfad im `MediaSelector` (B-03): eine Oberfläche mit mehreren Zweigen, kein Schema. Nicht S,
+weil der Leerzustand drei Lagen unterscheiden muss (Sperre offen und Übung im Pool, Sperre zu, Übung nicht im Pool) und das
+freie Üben (`PlayMode.Info`) in der Sohn-App bisher keine Oberfläche hat.
+
+Nachgesehen am 2026-11-20:
+
+- **`wo: frontend`.** Die Stelle, an der heute nichts steht, ist `SohnPractice.tsx` (Phase `empty`, `:434-448`). Produktiver
+  Backend-Code ändert sich nicht (Entscheidungen 1, 4 und 5 sagen „bleibt, wie es ist“). Das Backend bekommt nur Tests, die
+  vorhandenes Verhalten festnageln (AK 3 bis 7); sie kommen **zuerst**, weil sie den Boden für die Oberfläche zeigen.
+- **`migration: nein`.** Die Info-Sitzung schreibt nur eine `PracticeSession` mit `Mode = Info`, die Bonus-Runde nur
+  `ExtraTrainingRun`; beide Tabellen gibt es. Kein neues Feld.
+- **`vertragsbruch: nein`.** `StartPracticeDto(Day, Mode)` kennt `Mode` schon (`Pugling.Contracts/Student/PracticeDtos.cs:44`),
+  und `ExtraTrainingOverview` liefert `Unlocked`, `Outstanding` und `Exercises` (`ExtraTrainingDtos.cs:28`). Der Client
+  schickt heute einen leeren Rumpf (`frontend/src/lib/api.ts:695-696`); ein zusätzlicher Parameter ändert den Vertrag nicht.
+- Der Weg ins Bonus-Training steht: Route `bonus/:exerciseId` (`frontend/src/sohn/SohnApp.tsx:184`), Start über
+  `api.startExtraRun` (`SohnBonus.tsx:189`).
+
+### Risiken
+
+1. **Info-Modus ohne Oberfläche.** Server: Info liefert den ganzen Pool (`PositionPracticeController.cs:129`), auf einer
+   Lernkarten-Stufe wird die Anzeigestufe gewählt (`PositionPlayService.cs:206`), `review` antwortet `204` ohne Rückmeldung
+   (`:569`). Offen: Wie verhält sich eine **getippte** Stufe im Info-Modus, wenn nichts zurückkommt? Zeigt der Bildschirm dann
+   die Lösung, oder tippt das Kind ins Leere? Das ist die Stelle, an der M zu L werden kann; dann wird das freie Üben eine
+   eigene Story (Zerlegen beim Bauen, nicht jetzt).
+2. **Die `exerciseId` der Position kennt `SohnPractice` nicht** (keine Fundstelle in der Datei); sie kommt aus der
+   Plan-Übersicht oder muss mitgeliefert werden. Im zweiten Fall wäre es ein **additives** Vertragsfeld.
+3. **Fremde, ungecommittete Arbeit:** `SohnPractice.tsx` und `SohnApp.tsx` tragen am 2026-11-20 uncommittete Änderungen
+   (LearningDad). Erst bauen, wenn diese Arbeit committet ist, sonst Konflikt im selben Bildschirm.
+4. **Zusammenspiel mit der Pflicht:** Das freie Üben darf die Tagespflicht nicht erfüllen (nur `Mode = Lern` zählt,
+   `PositionProgressService.cs`, `PlayedRoundMeetsGoalAsync`); der Test `InfoModus_ErfuelltDasTagesziel_Nicht` deckt das.
+5. **Teilung mit B-218:** beide hängen am Bonus-Training; Reihenfolge siehe unten.
+
+### Angriffsplan
+
+1. Backend-Tests zuerst (kein Produktivcode): AK 3 (Info bucht weder `ChildPointsEntry` noch `PositionItemProgress` noch eine
+   Lern-Sitzung, Kontostand und `DueOn` gleich), AK 7 (Bonus-Runde auf einer Übung, die auch Position ist, lässt
+   `PositionItemProgress` unberührt).
+2. Client: `startSession` bekommt den Modus als Parameter (Standard `Lern`).
+3. `SohnPractice`: im Leerzustand `GET extra-training` lesen und drei Zweige zeigen (AK 1, 2); „Weiter üben ohne Münzen“ startet
+   eine Info-Sitzung und spielt den Pool.
+4. i18n-Schlüssel `practice.empty*` in Deutsch und Englisch.
+5. Vitest, dann E2E, dann `frontend-reviewer`.
+
+### Reihenfolge mit B-218
+
+**B-660 zuerst, B-218 danach, nicht parallel.** Beide hängen am Bonus-Training. B-660 ändert dort keinen Produktivcode,
+liest nur `ExtraTrainingOverview`; B-218 (jetzt B-764 bis B-766) ändert `ExtraTrainingService.CoinsTodayAsync`, die Übersicht und
+`SohnBonus.tsx`. Läuft B-660 zuerst, ist die Leitung vom Knoten zum Bonus-Training bewiesen, bevor eine zweite Spielart
+daneben tritt.
+
+### Testweg
+
+- `PositionPlayModesTests` (Info-Modus): AK 3 als neuer Fall neben `InfoModus_LiefertAlleKartenAlsBatch_UndSchreibtKeinFeedback`;
+  der vorhandene Test prüft heute nur `PositionItemProgress` und `ReviewEvents`, nicht `ChildPointsEntries` und nicht den
+  Kontostand. Rote Probe: ein Pfad, der im Info-Modus Münzen bucht, lässt ihn fallen.
+- `ExtraTrainingTests`: AK 5 bis 7 liegen dort schon (Stufung, Deckel, `knownFromPath`); je einen Fall um AK 7 ergänzen. AK 4 bis 6 sind
+  Absichtserklärungen und als solche beschriftet.
+- `SohnPractice.test.tsx`: neue Fälle für den Leerzustand (Sperre offen, Sperre zu, Übung nicht im Pool). Rote Probe: der
+  heutige Leerzustand zeigt in allen drei Fällen nur den Text.
+- E2E: `frontend/e2e/bonus.spec.ts` um den Weg „erledigte Pflicht, Knoten antippen, Bonus-Training starten“ erweitern oder
+  eine Spec `wiederholen-nach-pflicht.spec.ts` anlegen; Vorbild ist `wiederholknopf-bleibt.spec.ts`. Das ist der Rollengang als Sohn.
+- Vor der Abnahme: `frontend-reviewer`.
+
 ## Verlauf
 
 - 2026-11-18 · idee · aufgenommen aus dem Feedback des Vaters
@@ -184,3 +249,4 @@ Kriterium ist eine Absichtserklärung und fällt nur, wenn jemand die genannte R
   Ausnahme der Nicht-Vokabel-Positionen. Teil-Überschneidung mit B-538/B-657; Entscheidungen der Münz-Ökonomie stehen
   nur als offene Punkte.
 - 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): kein zweiter Münzweg, Wiederholung = Bonus-Training; Knoten und Leerzustand führen weiter, freies Üben über den vorhandenen `PlayMode.Info`; B-533 Entscheidung 6 und 7 bleiben (Nicht-Vokabel-Positionen ohne Münzleiter, keine Kastenbewegung); Story auf die Erreichbarkeit gekürzt. Querfrage mit B-218 einheitlich beantwortet.
+- 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, frontend (Backend nur Tests), keine Migration, kein Vertragsbruch. Risiko: das freie Üben (`PlayMode.Info`) hat in der Sohn-App keine Oberfläche, bei getippten Stufen ohne Rückmeldung kann es L werden. Reihenfolge: vor B-218 (jetzt B-764 bis B-766). Fremde uncommittete Arbeit an `SohnPractice.tsx` und `SohnApp.tsx` abwarten.

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, bereich/klassenarbeit, rolle/student]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/klassenarbeit, rolle/student]
 aliases: [Notenstufe, Einser-Schüler, Liga-Ersatz]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/leitbild-privatlehrer.md
-grund: ""
-ersetzt_durch: []
+grund: "geteilt, faktisch XL: Notenschlüssel, Berechnung mit Tabelle, Lese-Endpunkte und Anzeige sind vier einzeln baubare Stücke"
+ersetzt_durch: [B-740, B-741, B-742, B-743]
 ---
 
 # B-682 · Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers
@@ -130,6 +130,21 @@ Final. Je Kriterium die Änderung, die es rot macht.
 - [B-249](B-249-probeklausur-mit-notenprognose.md) (`idee`, hat G-7-Entscheidung): gemeinsamer Notenschlüssel.
 - [B-595](B-595-rang-der-nie-sinkt.md) (`verworfen`, ersetzt durch diese Story).
 
+## Schätzung
+
+Nicht geschätzt, sondern geteilt: Notenschlüssel `PercentToGrade`, neue Tabelle samt täglichem Lauf, Lese-Endpunkte und
+Anzeige in zwei Oberflächen ergäben ein XL (Backend mit Migration, Vertrag und Frontend in einer Story). Zerlegung nach „Teilen und
+Zusammenlegen":
+
+1. [B-740](B-740-notenschluessel-percenttograde.md) · Notenschlüssel `PercentToGrade` (S, gemeinsam mit B-249; Entscheidung 2).
+2. [B-741](B-741-notenstufe-berechnen-und-speichern.md) · Stufe berechnen und speichern (M, Migration; Entscheidungen 1, 4, 5, 8, 9).
+3. [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) · Lese-Endpunkte Kind und Vater (S; Entscheidung 6).
+4. [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) · Anzeige mit Stand-Text und Zielsatz (M, Frontend; Entscheidung 3).
+
+Bau-Reihenfolge: B-740, B-741, B-742, B-743. Entscheidung 7 (B-680 baut zuerst ohne Stufe) bleibt eine Reihenfolgeregel ohne eigenes
+Stück. Die Akzeptanzkriterien 1 bis 6, 8 bis 10 liegen in B-741, 7 in B-743, 6 in B-740; die Stufe zählt bis zur Bestätigung der
+Entscheidungen als Vorschlag. Die Klausur-Hälfte ([B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md)) baut auf B-741 auf.
+
 ## Verlauf
 
 - **2026-11-19** — angelegt aus dem Leitbild-Gespräch mit dem Vater ([Leitbild](../leitbild-privatlehrer.md));
@@ -138,3 +153,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   der Lernstand je Fach/Unit bereits serverseitig vor; es fehlen Umrechnung, Ablage und Anzeige – und ein Beherrschungswert
   für Mathe/Grammatik ist nicht belegt. Sieben offene Punkte mit Empfehlung, **nichts entschieden**.
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle sieben Punkte entschieden. Kern: Maß ist der Anteil beherrschter Wörter am ganzen Stoff (nur Vokabel-Fächer), Schlüssel gemeinsam mit B-249, Etikett nur für Stufe 1 bis 3, Senkung höchstens eine Stufe je Woche, Bestwert als Spalte, eigene Tabelle, keine Münzen.
+- **2026-11-20** — `gegrillt` → `verworfen` (geteilt, Vorbereitungslauf, Sonnet): faktisch XL, zerlegt in [B-740](B-740-notenschluessel-percenttograde.md), [B-741](B-741-notenstufe-berechnen-und-speichern.md), [B-742](B-742-notenstufe-lesen-student-und-supervisor.md), [B-743](B-743-notenstufe-anzeige-kind-und-vater.md); Eintrittsbedingung `gegrillt` geprüft und erfüllt.

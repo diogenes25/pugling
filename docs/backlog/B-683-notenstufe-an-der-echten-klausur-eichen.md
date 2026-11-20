@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, bereich/klassenarbeit, rolle/student, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/gamification, bereich/klassenarbeit, rolle/student, rolle/creator]
 aliases: [Notenstufe eichen, Auf- und Abstieg durch Klausur]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/leitbild-privatlehrer.md
-grund: ""
-ersetzt_durch: []
+grund: "geteilt, faktisch XL: Prognose-Schnappschuss mit Migration, Wirkung der Note und Abweichungsanzeige sind drei einzeln baubare Stücke"
+ersetzt_durch: [B-744, B-745, B-746]
 ---
 
 # B-683 · Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose
@@ -105,6 +105,20 @@ Final. Je Kriterium die Änderung, die es rot macht.
 - [B-249](B-249-probeklausur-mit-notenprognose.md): Probeklausur, Notenschlüssel G-7; zweiter Datenpunkt der Eichung.
 - [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md): wer die Note einträgt.
 
+## Schätzung
+
+Nicht geschätzt, sondern geteilt: Schnappschuss-Spalte mit Migration, Rückkanal der Note auf die Stufe und eine Abweichungsanzeige
+über Backend, Vertrag und Frontend ergäben ein XL, das zudem an [B-682](B-682-notenstufe-je-fach-statt-liga.md) hängt. Zerlegung nach
+„Teilen und Zusammenlegen":
+
+1. [B-744](B-744-klausur-prognose-schnappschuss.md) · `PredictedLevel` am Klausurtag festhalten (M, Migration; Entscheidungen 5 erster Teil, 7, 8).
+2. [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) · Note hebt oder senkt die Stufe (M; Entscheidungen 1, 4, 5 zweiter Teil, 6, 7, 8).
+3. [B-746](B-746-klausur-abweichung-fuer-den-vater.md) · Abweichung für den Vater (S, beides; Entscheidung 2).
+
+Die Textregel für den Abstieg (Entscheidung 3, Kriterium 8) liegt in [B-743](B-743-notenstufe-anzeige-kind-und-vater.md), weil es dieselbe
+Anzeige ist. Bau-Reihenfolge: B-741 (aus B-682) vor B-744 vor B-745 vor B-746. Offene Frage, die aus der Schätzung folgt und die
+Entscheidungen nicht beantworten: ob die Klausurwirkung neben dem täglichen Lauf Bestand hat (siehe B-745, Migration `offen`).
+
 ## Verlauf
 
 - **2026-11-19** — angelegt aus dem Leitbild-Gespräch mit dem Vater ([Leitbild](../leitbild-privatlehrer.md)).
@@ -113,3 +127,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   bestehende `ClassTestGrade`-Maß (beste Note) darf nicht umgedeutet werden. Sieben offene Punkte mit Empfehlung,
   **nichts entschieden**.
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle sieben Punkte entschieden. Kern: Note setzt die Stufe sofort (abwärts höchstens eine Stufe), keine automatische Eichung, Prognose-Schnappschuss am Klausurtag, `ClassTestGrade` unverändert, Note trägt der Vater ein, keine Münzprämie.
+- **2026-11-20** — `gegrillt` → `verworfen` (geteilt, Vorbereitungslauf, Sonnet): faktisch XL, zerlegt in [B-744](B-744-klausur-prognose-schnappschuss.md), [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md), [B-746](B-746-klausur-abweichung-fuer-den-vater.md); Eintrittsbedingung `gegrillt` geprüft und erfüllt.

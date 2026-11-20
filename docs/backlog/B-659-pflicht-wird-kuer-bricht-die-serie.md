@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Pflicht zur Kür, gelöschte Pflicht bricht die Serie]
-status: gegrillt
+status: geschaetzt
 prio: P3
 art: Defekt
-groesse: ""
+groesse: L
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: ja
+vertragsbruch: nein
 quelle: "PM-Sitzung 2026-11-18, Runde 3 (Sprint 87), Review von B-613 (pugling-reviewer, 🟡2)"
 grund: ""
 ersetzt_durch: []
@@ -195,6 +195,84 @@ Je Kriterium die Änderung, die es rot macht.
    `CadenceUntil` sind gelöscht). *Rot, wenn die gelöschte Spanne die neue Pflicht verneint (die Serie der neuen Pflicht
    zählt dann nie).*
 
+## Schätzung
+
+**Größe: L** – wie eine DB-Umbau-Etappe (E6, Löschverhalten explizit plus Bestand mitnehmen): zwei neue Spalten an einem
+Schema mit Bestandsdaten, ein neuer Lesehelfer an der Stelle, die Serie, Missionen, Zeitachse, Kistenstufe und Zielzahlung
+gemeinsam tragen (`PositionProgressService`), eine neue Schreibregel im Positions-PATCH und eine Sperre im Plan-Löschpfad
+mit einem umzuschreibenden Test. Jeder Teil ist klein, die Streuung der Lesestellen macht es zu einem L.
+
+- **`migration: ja`** – nachgesehen: `DutyUntil` (`DateOnly?`) und `CadenceUntil` (`GoalCadence?`, in der DB als Text, G4)
+  an `PlanPositions`. Die Migration hängt an die Kette (letztes Glied heute `20261119065732_ShopStockPerChild`; B-700 bis
+  B-702 hängen sich bei ihrem Bau davor oder dahinter, die Kette wird nur verlängert), ohne Backfill, `NULL` = „nie Kür
+  gewesen“, mit Probe gegen eine Kopie der echten DB (`SchemaGuardTests` G1b, G9: kein SQL-DEFAULT).
+- **`vertragsbruch: nein`** – nachgesehen: `Pugling.Contracts` ändert sich nicht; der neue Fehlercode `plan_has_data` steht in
+  `ApiErrors` der Api (additiv, Muster `PositionHasData`, `PlanPositionsController.cs:411`) und das Löschen der Position
+  bleibt unberührt. Die Spalten sind kein Teil der Antwort.
+- **`wo: backend`** – die Meldung des 409 zeigt die Vater-Oberfläche schon als Fehlerbanner (`VaterPlanDetail.tsx:34`, die
+  Aktion läuft über `action.run`); der Bestätigungstext vor dem Löschen („… gehen verloren“) wird dadurch unwahr für Pläne
+  mit Spielstand. Das ist eine Textzeile, kein Akzeptanzkriterium (siehe Risiken).
+- **Reihenfolge mit B-248:** **B-659 baut zuerst** und legt `DutyUntil`, `CadenceUntil`, den Helfer `DutyCadenceOn` und die
+  Schließ-Regel an. Der Teil (c) von B-248 ([B-752](B-752-vorbereitungs-pflicht-im-fenster.md) und
+  [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md)) hängt daran und legt nur seine eigenen Spalten an.
+
+### Risiken
+
+- **Lesestellen, die `pos.Cadence` roh lesen, sind mehr als die vier, die die Story nennt.** Nachgesehen: neben
+  `HasDutyOn` (`:55-56`), `IsGoalMetAsync` (`:197-198`), Tagesstatus (`:264-266`) und der Tagesansicht (`:325`) liest auch
+  `EvaluateAndAwardAsync` (`:547-548`) `pos.Cadence` für `PeriodStart` und den Eintrag, und `:731` fragt `pos.Cadence ==
+  Daily`. Bleibt `:547` roh, bucht ein Wochenziel nach dem Wechsel zur Kür an den Tagen bis `DutyUntil` (Donnerstag bis
+  Sonntag, AK 3) mit `Cadence = None` eine **zweite** Zielzahlung, denn der Doppelschutz (`SamePeriodCadences`) vergleicht
+  die Taktung. Der Helfer gehört an **jede** Lesestelle außer dem Malus-Filter (`:761`, AK 4); ein Test „erfüllte Woche,
+  Wechsel zur Kür, Login am Donnerstag: eine Buchung, nicht zwei“ ist Pflicht.
+- **Geschenkte Serientage.** Ist die laufende Periode beim Wechsel erfüllt, gelten die Folgetage bis zum Periodenende ohne
+  weiteres Spielen als vollständig (AK 3 will das ausdrücklich). Es sind bis zu sechs Tage; das ist Entscheidung 2, nicht
+  Defekt, hebt aber die Kistenstufe an (Entscheidung 5).
+- **Nacharbeit (`UntilDone`).** Der PATCH kennt zwei Wege in die Kür; die Schließ-Regel gilt nur für Daily/Weekly → None.
+  Pflicht → Kür über beendete Nacharbeit läuft über `CompletedOn` (B-636, B-669), und
+  `RemediationPositionTests.Beendete_Nacharbeit_traegt_die_Serie_nicht_weiter` (`RemediationPositionTests.cs:685-703`)
+  darf nicht kippen.
+- **„Erfüllt“ im Controller.** Die Schließ-Regel braucht `IsGoalMetAsync` im PATCH, das heute nur der Service kennt; der
+  Controller bekommt eine Abhängigkeit mehr, und die Auswertung muss mit dem **alten** Takt vor dem Überschreiben laufen
+  (`PlanPositionsController.cs:361`).
+- **Neuer 409 im Löschpfad.** Wer Pläne mit Spielstand wegräumt, scheitert künftig. Außer dem umzuschreibenden Test
+  (`PlanPositionCrudTests.cs:199`) fand die Suche im Test- und E2E-Bestand keinen zweiten Treffer; das Skript
+  `scripts/_plan-api.ps1:89` rät noch „ggf. löschen“ (nicht Teil dieser Story).
+- **Wiederholte Wechsel.** Pflicht → Kür → Pflicht bleibt bekannter Rest (Entscheidung 3); AK 9 hält nur fest, dass die
+  Spanne dabei gelöscht wird.
+- **Nicht nachgestellt:** die Aussage „heute Serie 0“ in AK 1 ist am Code gelesen, nicht durch einen Lauf belegt. Die rote
+  Probe ist der erste Handgriff beim Bauen.
+
+### Angriffsplan
+
+1. Entity, EF-Konfiguration (Enum als Text) und Migration
+   (`dotnet dotnet-ef migrations add DutyUntilCadenceUntil --project backend/Pugling.Api --output-dir Data/Migrations`).
+2. Helfer `DutyCadenceOn(pos, day)` in `PositionProgressService` und an alle Lesestellen außer `:761`
+   (`:55-56`, `:197-198`, `:264-266`, `:325`, `:547-548`, `:731`); danach eine Suche nach `.Cadence` in Services und
+   Controllern, ob eine rohe Lesestelle übrig bleibt.
+3. PATCH (`PlanPositionsController.cs:357-361`): nur beim Übergang Daily/Weekly → None die laufende Periode schließen
+   (`PeriodRange`, erfüllt? mit altem Takt) und beide Spalten schreiben; beim Übergang Kür → Pflicht beide löschen.
+4. `StudyPlansController.Delete` (`:242-254`): Spieldaten prüfen (ein `TestAttempt` oder eine `PracticeSession` an irgendeiner
+   Position), `409` mit neuem `ApiErrors.PlanHasData`, `ProducesResponseType(409)` setzen.
+5. Test umschreiben (`Plan_Loeschen_EntferntPlanMitGespielterPosition`), neue Fälle, Migrationstest.
+6. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`.
+
+### Testweg
+
+- Neue Klasse `PflichtWirdKuerSerieTests` in `backend/Pugling.Api.Tests` (Aufbau wie `RueckwirkendePflichtTests`, das Pläne,
+  Positionen und die Serie über die API aufbaut): AK 1, 2, 3, 7, 8, 9, dazu der Doppelbuchungs-Fall aus den Risiken. AK 2 und
+  AK 4 sind Gegenproben und so zu beschriften (Entscheidung 6).
+- AK 4: ein Fall in `PflichtMalusTests` (Position vor der Abrechnung auf Kür, kein Malus für nicht abgerechnete Perioden).
+- AK 5: `PlanPositionCrudTests.Plan_Loeschen_EntferntPlanMitGespielterPosition` wird umgeschrieben (Erwartung `409
+  plan_has_data`, Plan und Serie unverändert); ein Fall für den leeren Plan (`204`). Heute rot, weil der Delete ungesperrt ist.
+- AK 6: neue Klasse `DutyUntilMigrationTests` nach dem Muster `ActivatedAtMigrationTests` (Bestandszeile vor der Migration,
+  beide Spalten danach `NULL`, Serie und Malus-Stand unverändert).
+- `RemediationPositionTests`, `RueckwirkendePflichtTests`, `PflichtMalusTests`, `BelohnungenTagespflichtTests`,
+  `ConventionGuardTests`, `SchemaGuardTests` und `EndpointCoverageGuard` bleiben grün; `DocsCaptureTests` schreibt das neue
+  409-Beispiel beim nächsten Lauf mit.
+- Vor der Abnahme: Agent `pugling-reviewer`; `/smoke-test`; Rollengang als Vater (Pflicht auf Kür, Serie des Kindes prüfen)
+  und die Probe der Migration an einer Kopie der echten `pugling.db`.
+
 ## Verlauf
 
 - **2026-11-18** — angelegt aus dem Review von B-613 (Sprint 87), am Code gelesen.
@@ -202,3 +280,4 @@ Je Kriterium die Änderung, die es rot macht.
   (`position_has_data`), offen bleibt Pflicht → Kür und Plan löschen; Pflicht → Kür → Pflicht als breiterer Rest
   gefunden; Frage zum Malus als offener Punkt 5 ausdrücklich dem Nutzer überlassen.
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): Historie statt Überspringen; nullbares Paar `DutyUntil`/`CadenceUntil` mit einem Helfer und einer Schließ-Regel, gemeinsam mit [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md); Pflicht → Kür → Pflicht bleibt bekannter Rest (B-613); Plan löschen wird bei Spieldaten gesperrt (`plan_has_data`, der Test `Plan_Loeschen_EntferntPlanMitGespielterPosition` kehrt um); Malus unverändert. Akzeptanzkriterien final.
+- **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): L, backend, Migration ja, Vertrag nein. Der Helfer muss an mehr Lesestellen als die Story nennt (auch `EvaluateAndAwardAsync`, sonst Doppelbuchung des Wochenziels nach dem Wechsel); B-659 baut vor dem Teil (c) von B-248 und legt `DutyUntil`, `CadenceUntil` und die Schließ-Regel an.

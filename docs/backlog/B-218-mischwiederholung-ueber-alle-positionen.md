@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/backend, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/training, bereich/backend, rolle/student, rolle/supervisor]
 aliases: [Mischwiederholung, Mastery Challenge, Kind-weite Wiederholung]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/khan-academy-vergleich-plan.md#wo-khan-weiter-ist
-grund: ""
-ersetzt_durch: []
+grund: "geteilt, zu groß für eine Stufe (faktisch XL)"
+ersetzt_durch: [B-764, B-765, B-766]
 ---
 
 # B-218 · Eine Mischwiederholung über alle Positionen des Kindes
@@ -184,6 +184,14 @@ Je Kriterium die Änderung, die es rot macht.
 11. **Bestehendes Verhalten, Absichtserklärung:** Die Bonus-Runde über eine Übung bewegt weiter keine Box (B-533 Entscheidung
     7). *Rot, wenn jemand die Box-Buchung in den Bonus-Pfad statt in die Mischspielart legt.*
 
+## Teilung
+
+Geschätzt am 2026-11-20 (Vorbereitungslauf, Sonnet): **faktisch XL** – eine neue Lauf-Entität über mehrere Positionen mit Migration, Wertung über Positionsgrenzen mit Kasten, Münzen und einem
+Deckel über zwei Quellen, dazu eine Oberfläche. Geteilt, in dieser Reihenfolge: [B-764](B-764-mischrunde-auswahl-und-eingefrorener-lauf.md) (Auswahl und Lauf, Backend, M),
+[B-765](B-765-mischrunde-wertung-kasten-muenzen-und-gemeinsamer-deckel.md) (Wertung, Münzen, gemeinsamer Deckel, Backend, L), [B-766](B-766-mischrunde-in-der-sohn-app.md) (Sohn-App, M).
+Die Entscheidungen und Akzeptanzkriterien oben bleiben die Quelle. **Reihenfolge mit B-660:** B-660 zuerst, dann diese Teile; beide hängen am Bonus-Training und werden nicht parallel gebaut.
+Zwei Annahmen sind beim Schätzen **hinzugekommen und unbestätigt**: nur bereits gesehene Karten (B-764 Entscheidung 4) und ein Zahl-Tor gegen Mehrfachzahlung (B-765 Entscheidung 5).
+
 ## Verlauf
 
 - **2026-10-17** — angelegt (Quelle: Khan-Academy-Vergleich, Etappe 1 des Übernahmeplans).
@@ -194,3 +202,4 @@ Je Kriterium die Änderung, die es rot macht.
 - **2026-11-14** — Abgleich Backlog-Lauf: Ist-Stand bestätigt – keine Mischwiederholung im Code; Auswahl-Baustein `vocabulary-progress` jetzt `ChildVocabularyProgressController.cs:19,38`; das Bonus-Training aus B-533 liegt unter `ExtraTrainingController.cs:16` (eigene Runden, keine Leitner-Bewegung). Die Abgrenzung gegen B-533 bleibt vor dem Ausformulieren offen.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Ist-Stand neu am Code gemessen. Korrektur an der Notiz: `ItemProgress` hat kein Fälligkeitsdatum, die Fälligkeit liegt je Position (`PositionItemProgress.DueOn`); „plan-weit" heißt seit B-539 mehrere aktive Pläne. Sechs offene Punkte mit Empfehlung, keine Entscheidung getroffen; Münz-Ökonomie-Frage (Offener Punkt 1/2) für den Nutzer. Überschneidung: B-533 (Bonus-Training), B-644/B-680 (Tagesplaner nennt B-218 als Zulieferer).
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): Spielart neben dem Bonus-Training mit dessen Sperre, gemeinsamem Deckel und `ExtraTrainingCoins`; bewegt den Kasten der Herkunftsposition (B-533 Entscheidung 7 bleibt wörtlich wahr, die Runde ist keine Bonus-Runde); Auswahl schließt Positionen mit offener Pflicht aus (leere Pflicht-Runde gilt sonst als erfüllt); keine Lern-Sitzung. Akzeptanzkriterien final.
+- 2026-11-20 · verworfen (geteilt, Vorbereitungslauf, Sonnet): zu groß für eine Stufe; ersetzt durch B-764, B-765, B-766. Reihenfolge: B-660 zuerst.

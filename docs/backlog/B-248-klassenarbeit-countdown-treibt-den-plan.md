@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/klassenarbeit, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/klassenarbeit, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Klausur-Countdown, Klassenarbeit treibt den Plan]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: docs/knowunity-vergleich-plan.md#wo-knowunity-weiter-ist
-grund: ""
-ersetzt_durch: []
+grund: "geteilt beim Schätzen am 2026-11-20 (Entscheidung 1) – als Ganzes XL: Sichtbarkeit, Bereitschaft und Verdichtungs-Pflicht, die Verdichtung selbst noch einmal in Kern, Folgen und Oberfläche. Entscheidungen und Akzeptanzkriterien leben hier und werden von den Teil-Stories nach Nummer zitiert"
+ersetzt_durch: [B-750, B-751, B-752, B-757, B-758]
 ---
 
 # B-248 · Die Klassenarbeit wird beim Kind sichtbar und verdichtet den Plan vor dem Termin
@@ -234,3 +234,4 @@ Verdichtungs-Pflicht: 5 bis 14.
 - **2026-11-15** — Prioritäts-Beleg von außen, der dritte nach Knowunity und Baobab: RocketTutor verkauft einen Klausur- und Wochenplaner, der Zeit und Aufgaben rückwärts vom Prüfungstermin verteilt. Vergleich in `docs/rockettutor-vergleich-plan.md` (Sammel-Story [B-581](B-581-rockettutor-vergleich-sammel-story.md)). Keine Änderung an den Entscheidungen.
 - **2026-11-19** — ausformuliert (Vorbereitungslauf, Sonnet): Ist-Stand am Code neu gemessen. Korrekturen: die Bündel-Auflösung ist privat im Controller und hat **keinen** zweiten Nutzer (das „geteilt mit B-39" trägt nicht); ein Pflicht-Ende gibt es nur als `UntilDone` für Nacharbeit, „Pflicht bis zum Termin" braucht ein neues Feld (Migration). Neun offene Punkte mit Empfehlung, keine Entscheidung getroffen; Aufteilung in Sichtbarkeit/Bereitschaft/Pflicht empfohlen. Überschneidungen: B-680/B-644 (Tagesplan rückwärts von der Klausur), B-423 (abgenommen), B-249.
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): **Teilung in drei Stories (Sichtbarkeit, Bereitschaft, Verdichtungs-Pflicht) beschlossen, vollzogen erst beim Schätzen** (Ids dann neu zählen); Auslöser = Abgleich beim Kind-Login (kein GET, kein Job); Pflicht-Ende über die mit B-659 gemeinsame Spalte `DutyUntil`; ein Standard-Malus je Klassenarbeit und Tag, auf die Positionen verteilt, keine eigene Ziel-Belohnung; (c) steht für sich neben B-680. Akzeptanzkriterien final.
+- **2026-11-20** — beim Schätzen geteilt (Vorbereitungslauf, Sonnet, nach Entscheidung 1): (a) Sichtbarkeit beim Kind → [B-750](B-750-klassenarbeit-countdown-beim-kind.md) (M, beides), (b) Bereitschaft für Vokabel-Bündel → [B-751](B-751-klassenarbeit-bereitschaft-vokabeln.md) (M, beides), (c) Verdichtungs-Pflicht war als Ganzes XL und ist in [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) (Kern, L, backend), [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) (Verschieben, Absagen, Schreiben, M, backend) und [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) (Oberfläche, S, frontend) geschnitten. Diese Datei bleibt die Quelle der Entscheidungen 1 bis 12 und der Akzeptanzkriterien 1 bis 14. Beim Schätzen aufgefallen: Entscheidung 8 hatte kein eigenes Kriterium (jetzt AK 10 in B-752), und der Tagesplaner [B-644](B-644-tagesplaner-statt-fester-lauf.md) übernimmt die Terminpflicht und löst die Positions-Pflicht auf – ob (c) noch gebraucht wird, ist vor dem Bau zu klären.

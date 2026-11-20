@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/gamification, bereich/shop, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/shop, rolle/student]
 aliases: [Sparziel, Wunsch-Artikel anheften]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: M
+wo: beides
+migration: ja
+vertragsbruch: nein
 quelle: Marktvergleich Belohnungs-Apps (Sitzung 2026-11-16, Quick-Win 2)
 grund: ""
 ersetzt_durch: []
@@ -195,6 +195,68 @@ Je Kriterium die Änderung, die es rot macht.
 11. Bestand: nach der Migration ist das Ziel bei jedem Kind leer, und der Kontostand ist unverändert. *Rot, wenn die Migration
     etwas vorbelegt (Vorbild `ActivatedAtMigrationTests`).*
 
+## Schätzung
+
+**Größe: M** – wie der Batch-Pfad im `MediaSelector` (B-03), in der oberen Hälfte: ein kleiner Backend-Zuschnitt (zwei Spalten,
+drei Routen, eine neue Summenabfrage) und zwei Oberflächenstellen. Nicht L: die Migration ist additiv und nimmt keine
+Bestandsdaten um, es gibt keine Abrechnung.
+
+Nachgesehen am 2026-11-20:
+
+- **`migration: ja`.** `Child.SavingsGoalListingId` (nullbar, FK auf `ShopListing`, `SetNull`) und `Child.SavingsGoalTitle` sind
+  neue Spalten an `Child` (`Models/AdminEntities.cs`); die Kette endet heute bei `20261119065732_ShopStockPerChild`. Zwei
+  Schema-Tore zeigen auf die neuen Spalten: `Jeder_Fremdschluessel_Hat_Ein_Abgenommenes_Loeschverhalten`
+  (`SchemaGuardTests.cs:194`, die Liste `abgenommen` bekommt eine Zeile) und `Jede_String_Spalte_Hat_Eine_Laenge`
+  (`:388`, der Titel braucht eine Höchstlänge). Beides ist die Antwort auf die in Entscheidung 5 offen gelassene Frage, ob die
+  Tore einen FK ohne Titel verlangen: sie verlangen die Zeile und die Länge, nicht den Titel.
+- **`vertragsbruch: nein`.** Neu sind eine Route und ihre Antwort in `Pugling.Contracts/Student/MeDtos.cs`; `ShopListingResponse`
+  und `WeekCoinsResponse` bleiben. Die gepinnte Karte erkennt das Frontend an der Listing-Id der Zielantwort, ein Flag am
+  Angebot braucht es nicht.
+- **`wo: beides`, Backend zuerst.** Route, Summenabfrage und Löschverhalten, dann `SohnHome` und `SohnShop`.
+- **Wallet-Invariante:** Setzen, Ersetzen und Entfernen buchen nichts und bumpen den `ConcurrencyStamp` nicht (AK 8). Wer
+  `Child` dafür als getrackte Entität lädt und speichert, hängt am Token: ein paralleler Kauf liefert dann `409` für das
+  bloße Setzen. Darum `ExecuteUpdateAsync` auf die zwei Spalten (prüft das Token nicht und bumpt es nicht).
+
+### Risiken
+
+1. **Löschen nimmt das Ziel mit (Entscheidung 5).** `ShopController.DeleteListing` löscht hart
+   (`Controllers/Supervisor/ShopController.cs:339-352`); der Artikel nimmt seine Angebote per `Cascade` mit
+   (`PuglingDbContext.cs:913`). Mit `SetNull` auf der Id und dem Titel als Rest ist „verschwunden“ erkennbar. Die Probe
+   (AK 6) muss **beide** Wege löschen: Angebot und Artikel.
+2. **Zeitfenster.** Eine gleitende Spanne („die sieben vollen Tage vor heute“) ist neu; `WeekCoinsAsync` rechnet Kalenderwochen
+   (`WalletService.cs:56-72`) und taugt nicht. Grenzfall: Verdienst nur in der Vorwoche, Verdienst nur heute (zählt nicht).
+3. **Frühester Eintrag.** „Kontoverlauf jünger als sieben Tage“ braucht `MIN(CreatedAt)` je Kind. Ein Kind ohne Einträge ist
+   „unter sieben Tage“, nicht ein Fehler.
+4. **Angebot außerhalb der Zielgruppe.** Das Ziel darf nur auf ein Angebot zeigen, das `ShopService.ListingsForStudentAsync`
+   dem Kind liefert; ein später entfernter Zielgruppen-Eintrag macht es „nicht verfügbar“, nicht ungültig.
+5. **Fremde, ungecommittete Arbeit:** `SohnHome.tsx` ist am 2026-11-20 nicht geändert, `SohnApp.tsx` schon (LearningDad); `SohnHome`
+   und `SohnShop` bauen erst, wenn diese Arbeit committet ist, falls sie sie berührt.
+6. **Text:** Die Überschrift der Story spricht von „Pflicht-Tagen“, die Anzeige darf das nicht (Entscheidung 1).
+
+### Angriffsplan
+
+1. Modell und Migration: zwei Spalten, FK mit `SetNull`, Länge des Titels, Eintrag in `abgenommen` des FK-Tors; Migration anhängen,
+   Probe an einer Kopie der echten DB (Vorbild `ActivatedAtMigrationTests`, jüngstes Beispiel `ShopStockPerChildMigrationTests`).
+2. `WalletService`: Summe der sieben vollen Tage vor heute über `EarnedCoinKinds`, dazu der früheste Eintrag.
+3. `MeController`: `GET me/savings-goal`, `PUT me/savings-goal` (Listing-Id), `DELETE me/savings-goal`; Rollenprüfung
+   `User.IsStudent()`, Zugriff über `ListingsForStudentAsync`; Antwort mit `fehlendeMuenzen`, `Tage`, `verfuegbar`, Titel, Gem-Anteil,
+   `NextRefillAtUtc`.
+4. Contract-Typen und Client-Methoden; die `unknown_field`-Guards des Frontends nachziehen (nur Felder, die der Vertrag kennt).
+5. `SohnHome`: Streifen; `SohnShop`: gepinnte Karte und der Knopf „Als Ziel“; Texte in Deutsch und Englisch.
+6. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`, Vitest, E2E, beide Reviewer.
+
+### Testweg
+
+- Neue Klasse `SparzielTests` (Vorbild `WochenvergleichTests` für die Uhr, `ShopFlowTests` für Angebote und Kauf): AK 1 bis 9. Rote Proben je
+  Kriterium stehen oben in den Akzeptanzkriterien; besonders AK 3 (Verdienst nur in der Vorwoche, kurzer Verlauf, reiner Gem-Preis,
+  Division durch null) und AK 6 (Angebot **und** Artikel löschen).
+- `SparzielMigrationTests` (neu, nach `ActivatedAtMigrationTests`): AK 11, jedes Kind danach ohne Ziel, Kontostand gleich.
+- `SchemaGuardTests` laufen ohnehin mit und halten FK-Verhalten und Spaltenlänge.
+- `SohnHome.test.tsx`: AK 10 (kein Ziel, kein Streifen; „bei deinem Tempo etwa“, nie „Pflicht-Tage“).
+- E2E: neue Spec `frontend/e2e/sparziel.spec.ts` (Vorbild `shop-verlauf.spec.ts`): Ziel anheften, Streifen auf der Startseite, Vater löscht
+  das Angebot, Streifen sagt „nicht mehr verfügbar“. Das ist der Rollengang als Sohn.
+- Vor der Abnahme: `pugling-reviewer` und `frontend-reviewer`.
+
 ## Verlauf
 
 - **2026-11-16** — angelegt aus dem Marktvergleich Belohnungs-Apps (Quick-Win 2).
@@ -202,3 +264,4 @@ Je Kriterium die Änderung, die es rot macht.
   (`GET me/shop`, `GET me/points/week`), ein Zielzeiger und die Umrechnung in Tage fehlen; elf offene Punkte, darunter
   die Ökonomie-Grenze, mit Empfehlung. Keine Entscheidung gefällt.
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): Tempo = Münzen je Kalendertag der letzten sieben Tage (keine Pflicht-Tage); Ziel am Kind als FK mit Titel-Momentaufnahme, weil Angebote hart gelöscht werden; Ökonomie unberührt (keine Reservierung, Zinsen, Zuschuss). Akzeptanzkriterien final.
+- 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), Migration ja (zwei Spalten, FK mit `SetNull`, Einträge in den zwei Schema-Toren), kein Vertragsbruch. Wallet-Invariante: das Ziel bucht nichts; Setzen über `ExecuteUpdateAsync`, damit weder Token noch Stamp berührt werden. Unabhängig von B-660 und B-218.

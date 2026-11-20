@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
+tags: [typ/story, status/verworfen, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/supervisor, rolle/student, rolle/creator]
 aliases: [Tagesplaner, Tagesauswertung, Leistungsprofil, adaptiver Tagesplan]
-status: gegrillt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Vater im Chat 2026-11-17: statt eines fest geplanten Laufs je Kapitel nur noch Tages- und Bonusaufgaben, jeden Morgen um 6 Uhr aus der Auswertung der Vortage, dem Leistungsprofil und dem Stundenplan erzeugt"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt: zu groß für eine Story (faktisch XL), entlang der Etappen E0 bis E5 in B-730 bis B-739 und B-680 zerlegt"
+ersetzt_durch: [B-730, B-731, B-732, B-733, B-734, B-735, B-736, B-737, B-738, B-739, B-680]
 ---
 
 # B-644 · Ein Tagesplaner erzeugt jeden Morgen die Aufgaben aus der Auswertung der Vortage
@@ -440,6 +440,26 @@ ist nachzuprüfen, bevor sie weiterwandert.
 
 <!-- markdownlint-enable MD029 -->
 
+## Teilung (2026-11-20)
+
+B-644 ist die Sammel-Story, die Entscheidung 26 an die Etappen E0 bis E5 hängt. Beim Schätzen stellte sie sich als faktisch XL heraus und ist nach „Teilen und Zusammenlegen" (README) zerlegt. Alle Entscheidungen 1 bis 26 gelten in den Teilstories weiter; jede nennt die geerbten Entscheidungen mit Nummer.
+
+| Etappe | Teilstory | Größe |
+| --- | --- | --- |
+| E0a | [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) Tagesbegriff in deutscher Zeit | M |
+| E0b | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) Lerntage, Pause, Leitplanken je Kind | L |
+| E1a | [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) Fehlerart beim Antworten | M |
+| E1b | [B-733](B-733-tagesauswertung-und-leistungsprofil.md) Tagesauswertung, Leistungsprofil, Vater-Ansicht | L |
+| E2 | [B-734](B-734-planer-kern-und-schattenmodus.md) Planer-Kern und Schattenmodus | L |
+| E3 (Vorbereitung) | [B-735](B-735-stoffrahmen-ohne-termin.md) Stoffrahmen ohne Termin (`EndDate` optional) | L |
+| E3a | [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) Pflicht aus der Tagesaufgabe | L |
+| E3b | [B-737](B-737-reset-zum-stichtag.md) Reset zum Stichtag | M |
+| E4a | [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) Planer-Regeln für Termin, Stundenplan, Fächer (bestehende Story, nicht neu) | L |
+| E4b | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) Eingriffe, Bonus, Begründung in der Sohn-App | L |
+| E5 | [B-739](B-739-foerder-uebungen-und-zusammenfassung.md) Förder-Übungen und Zusammenfassung | M |
+
+Reihenfolge: B-730, B-731, B-732 (parallel zu B-730/B-731), B-733, B-734, danach die Schattenwoche (B-735 und B-680 sollten in ihr mitlaufen), B-736, B-737 (Stichtag), B-738, B-739. Der Rollenschnitt [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md) ist davon unabhängig und sofort baubar (S).
+
 ## Verlauf
 
 - **2026-11-17** — angelegt aus dem Wunsch des Vaters im Chat, mit Entwurf, Etappen und offenen Punkten.
@@ -447,3 +467,4 @@ ist nachzuprüfen, bevor sie weiterwandert.
 - **2026-11-17** — **Grill-Runde mit dem Vater im Dialog:** 14 Entscheidungen (siehe `## Entscheidungen`), alle zehn offenen Punkte erledigt. B-618, B-619, B-621 und B-622 angehalten (`wartet_auf`). Die Stufe bleibt `idee`: Der Ist-Stand ist noch nicht Zeile für Zeile belegt, und mehrere Entscheidungen nennen Prüfpunkte am Code (freier Sonntag in Serie und Malus, Fehlerart je Übungstyp, Münz-Verlauf nach dem Reset, UTC-Umstellung). Nächster Schritt: ausformulieren, dann als Karte schneiden.
 - **2026-11-17** — `idee` → `ausformuliert`: Ist-Stand am Code belegt (Stand `36185a56`). Kern: Die Daten für Auswertung und Reset liegen vollständig vor, das Kassenbuch hat keinen Fremdschlüssel auf Positionen; es fehlen Ortszeit (35 UTC-Stellen ohne gemeinsame Funktion), Lerntage (Serie und Malus kennen keinen freien Sonntag und keine Pause), ein Zeitgeber und die Fehlerart. Etappe E0 neu, Etappentabelle an Entscheidung 11 und 14 angepasst, sechs neue offene Punkte (11–16).
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet): Die 14 Entscheidungen des Vaters unangetastet; die sechs neuen offenen Punkte (11 bis 16) stellvertretend auf Anweisung des Nutzers entschieden, unbestätigt (Entscheidungen 15 bis 20), dazu die Rahmenentscheidungen A, B, D, E, G aus dem Cluster Leitbild Privatlehrer (21 bis 25, führend B-681) und der Zuschnitt (26). Eintrittsbedingung `gegrillt` erfüllt: kein Punkt offen, Akzeptanzkriterien final mit je einer roten Änderung. Prüfpunkte für das Schätzen: Ort der Akzentregel B-624, die sieben `EndDate`-Lesestellen, Wortlisten je Buchabschnitt.
+- **2026-11-20** — `gegrillt` → `verworfen` (`grund: geteilt`, Vorbereitungslauf, Sonnet): Beim Schätzen faktisch XL (drei Schemaänderungen, der erste Zeitgeber, ein Umbau der Pflichtquelle, ein Reset echter Daten, zwei Oberflächen). Zerlegt nach „Teilen und Zusammenlegen" entlang E0 bis E5 in B-730 bis B-739 (neue Stories mit `quelle: B-644`, keine Sub-Ids) und B-680 (E4a, bestehende Story). Eintrittsbedingung `gegrillt` war erfüllt; jede Teilstory erbt die Entscheidungen mit Nummer.

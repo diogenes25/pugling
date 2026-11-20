@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
+tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
 aliases: [Täglicher Lehrplan, Just-in-time-Plan, Privatlehrer-Plan]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: L
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: docs/leitbild-privatlehrer.md
 grund: ""
 ersetzt_durch: []
@@ -168,6 +168,96 @@ Final. Je Kriterium die Änderung, die es rot macht.
 9. Die Pflicht liegt immer zwischen Boden und Deckel; liegt das nötige Tempo über dem Deckel, bekommt der Vater eine Meldung mit der fehlenden Menge. *Rot, wenn* der Deckel überschritten oder die Meldung unterdrückt wird.
 10. *Absichtserklärung.* Der Planer-Dienst hat keine Abhängigkeit auf einen Notenstufen-Dienst. *Rot, wenn* der Konstruktor einen solchen erhält, bevor B-682 gebaut und bestätigt ist.
 
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-20 (Sonnet), stellvertretend, unbestätigt.* B-680 ist die Produktseite von
+[B-644](B-644-tagesplaner-statt-fester-lauf.md) (Entscheidung 1) und trägt nach der Teilung von B-644 genau die **Planer-Regeln, die den
+Termin, den Stundenplan und die Fächer betreffen** (Regeln 3 bis 5 und Teilprüfung aus B-644, Etappe E4a). Sie ist darum
+keine zweite Planer-Story, sondern der Aufsatz auf den Planer-Kern [B-734](B-734-planer-kern-und-schattenmodus.md).
+
+**Größe: L** — Anker: eine DB-Umbau-Etappe wie E6, ohne Schema: drei neue Eingänge des Planers (Klassenarbeiten, Stundenplan, Schwäche
+je Fach), eine Rückwärtsrechnung mit Meldung, Regeln mit vielen Grenzfällen.
+
+- **`migration: nein`** — die Meldung „nötiges Tempo über dem Deckel" liegt in der JSON-Spalte `Warnings` von `DailyPlan`, die
+  [B-734](B-734-planer-kern-und-schattenmodus.md) anlegt; `Klassenarbeit` und `TimetableEntry` bleiben unverändert (nachgesehen:
+  `Models/KlassenarbeitEntities.cs:67`, `:79`, `:92`, `:106`; `Models/TimetableEntities.cs:7`, `:14`).
+- **`vertragsbruch: nein`** — kein Vertragstyp ändert sich; die Warnungen erscheinen im Antworttyp von `daily-plans` aus B-734.
+- **`wo: backend`** — die Oberfläche (Plan mit Warnung) liefert B-734; Eingriffe und Sohn-Anzeige liefert
+  [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md).
+
+### Zuordnung der Akzeptanzkriterien
+
+Die Kriterien oben sind der Produktschnitt über mehrere Teilstories; jedes hat genau einen Ort, an dem es gebaut und rot geprobt wird:
+
+| Kriterium | Wo gebaut |
+| --- | --- |
+| 1 (ein Tagesplan je Kind und Tag) | [B-734](B-734-planer-kern-und-schattenmodus.md) Kriterium 1 |
+| 2 (Termin treibt die Menge), 4 (Nachtrag wirkt am Folgetag), 9 (Deckel und Meldung) | **diese Story** |
+| 3 (ohne Termin mindestens der Boden) | diese Story, mit dem offenen Plan aus [B-735](B-735-stoffrahmen-ohne-termin.md) |
+| 5 (zweiter Abruf liefert dasselbe), 7 (deterministisch) | B-734 Kriterien 6 und 5 |
+| 6 (Malus genau einmal, nie für unsichtbare Pläne) | [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) |
+| 8 (Begründung) | B-734 Kriterium 4, hier um Termin- und Stundenplan-Bausteine erweitert |
+| 10 (keine Notenstufen-Abhängigkeit) | diese Story als Absichtserklärung |
+
+Dazu kommen hier die Kriterien aus B-644, die der Termin und der Stundenplan tragen: Teilprüfung (B-644 Kriterium 16), Stundenplan-Vorrang
+(Kriterium 9), nachgetragener Termin ändert den Folgetag (Kriterium 8). Sie sind unten mit der roten Änderung geschrieben.
+
+### Zusätzliche Kriterien dieser Story
+
+Die Nummern setzen die Kriterien oben fort.
+
+<!-- markdownlint-disable MD029 -->
+
+11. Der Planer liest **mehr als eine** Klassenarbeit je Fach (Teilprüfung): Eine nahe Teilprüfung über eine Übung verdichtet den Plan
+    auf ihren Termin vor der späteren Klausur. *Rot, wenn* nur die späteste Klassenarbeit wirkt.
+12. Das Fach von heute und morgen laut Stundenplan hat in der Verteilung Vorrang; ein Fach ohne Stundenplan-Eintrag bleibt über den
+    Boden dran. *Rot, wenn* der Stundenplan ignoriert wird oder ein Fach ohne Eintrag nie vorkommt.
+13. Die Verteilung über die Fächer folgt der Schwäche (Beherrschung aus dem Profil, [B-733](B-733-tagesauswertung-und-leistungsprofil.md)),
+    innerhalb von Boden und Deckel. *Rot, wenn* bei gleichen Daten das schwächere Fach nicht mehr Aufgaben bekommt.
+14. Ein nachgetragener Termin ändert den Plan des Folgetags und nie den eingefrorenen heutigen (Kriterium 4 prüft genau diese
+    Trennung mit einem Nachtrag mitten am Tag). *Rot, wenn* der heutige Plan neu gerechnet wird.
+
+<!-- markdownlint-enable MD029 -->
+
+### Risiken
+
+- **Klassenarbeits-Bündel auf Übungsebene:** Eine Teilprüfung ist nur so fein wie die Übung (Entscheidung 16 in B-644). Die geladenen
+  Bücher schneiden die Wortlisten je Abschnitt (ein Beispiel aus `scripts/friedrich-vokabeltest-2026-11-24.ps1`: Unité 5 als zwei
+  Übungen mit 10 und 29 Wörtern); eine Funktion „Übung teilen" fand die Suche in `Controllers/Creator/` **nicht**. Die echte
+  Datenbank ist hier absichtlich nicht geprüft.
+- **Unbestimmte Rückwärtsrechnung:** „Nötiges Tempo" mit mehreren Klassenarbeiten und mehreren Fächern ist eine Verteilungsaufgabe, kein
+  Dreisatz; die Regel gehört vor dem Bau auf Papier und in einen reinen Funktionstest ohne Datenbank.
+- **Stundenplan als Eingang:** Der Stundenplan wird heute nur gespeichert und gelesen (`Controllers/Supervisor/TimetableController.cs:25`),
+  kein Dienst nutzt ihn; sein Format (Wochentag, optionale Uhrzeit) trägt „morgen" ohne Weiteres.
+- **Schattenwoche:** Die Regeln sollten laufen, bevor der Vater den Stichtag setzt. B-680 Entscheidung 1 baut sie erst „nach E0 bis E2";
+  das lässt die Schattenwoche ohne diese Regeln laufen. Hier nicht entschieden, siehe Protokoll.
+
+### Angriffsplan
+
+1. Reine Regelfunktionen (Termin-Tempo, Fächerverteilung, Stundenplan-Vorrang) mit Funktionstests ohne Datenbank.
+2. Anbindung an den Planer-Kern aus B-734; Eingänge: Klassenarbeiten des Kindes, Stundenplan, Profil.
+3. Warnung „nötiges Tempo über dem Deckel" in `Warnings`; Begründungsbausteine für Termin und Fach.
+4. Integrationstests über die Student- und Supervisor-API.
+
+### Testweg
+
+- Neue Klasse `PlanerTerminRegelnTests` (Unit, ohne Datenbank): Termin in 3 Tagen gegen 3 Wochen bei gleicher Wortliste, ohne Termin am
+  Boden, Deckel und Meldung. Rote Probe je Kriterium: den Termin aus dem Eingang entfernen lässt Kriterium 2 fallen; den Deckel
+  entfernen Kriterium 9.
+- `PlanerFaecherTests` (Stundenplan-Vorrang, Schwäche, mehrere Klassenarbeiten); Muster `TagsRatingsTimetableTests` (Stundenplan) und
+  `KlassenarbeitenTests` (Klassenarbeiten) für den Aufbau.
+- `PlanerNachtragTests` (Integration, `TestClock`): Termin nachtragen, heutiger Plan unverändert, Plan des Folgetags geändert.
+- Kriterium 10: Reflexionsprüfung in `ConventionGuardTests`, dass der Konstruktor des Planers keinen Notenstufen-Dienst trägt (Rot-Probe:
+  einen solchen Parameter einführen).
+- Vor der Abnahme: `pugling-reviewer`. Ein Rollengang als Vater (Termin nachtragen, Plan des nächsten Tages) entfällt ohne
+  Oberfläche nicht: der Plan-Verlauf aus B-734 zeigt die Warnung; E2E `frontend/e2e/tagesplan-schatten.spec.ts` wird um den Termin
+  erweitert.
+
+### Reihenfolge und Abhängigkeiten
+
+Nach [B-734](B-734-planer-kern-und-schattenmodus.md) und [B-735](B-735-stoffrahmen-ohne-termin.md); vor [B-736](B-736-pflicht-aus-der-tagesaufgabe.md).
+Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Voraussetzung.
+
 ## Verlauf
 
 - **2026-11-19** — angelegt aus dem Leitbild-Gespräch mit dem Vater ([Leitbild](../leitbild-privatlehrer.md)).
@@ -176,3 +266,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   Agent oder feste Regeln den Plan entscheiden. Elf offene Punkte mit Empfehlung, **nichts entschieden** (Rollenschnitt,
   Münz-Ökonomie und Malus-Regeln liegen beim Nutzer).
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle elf Punkte entschieden. Kern: B-680 ist die Produktseite von B-644 (E3/E4), der Planer entscheidet mit festen Regeln im Server, der Vater behält Leitplanken und Notbremse, Notenstufe ist kein Eingang des ersten Baus, `StudyPlan.EndDate` wird optional.
+- **2026-11-20** — `gegrillt` → `geschaetzt` (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): nach der Teilung von B-644 trägt B-680 die Planer-Regeln für Termin, Stundenplan und Fächerverteilung (E4a) als Aufsatz auf B-734. L, backend, keine Migration, kein Vertragsbruch; Zuordnung der zehn Kriterien auf B-734, B-735, B-736 und diese Story, vier Kriterien ergänzt. Eintrittsbedingung `gegrillt` erfüllt (elf Punkte entschieden).

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/agent, bereich/katalog, rolle/creator, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/agent, bereich/katalog, rolle/creator, rolle/supervisor]
 aliases: [Vorstufen erzeugen, Agent-Verb build, Aufbau-Übungen per KI]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
+groesse: M
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: B-536
 unverifiziert: false
 grund: ""
@@ -65,8 +65,66 @@ Final. Je Kriterium die Änderung, die es rot macht.
 4. `build --existing` verknüpft vorhandene Übungen nur innerhalb derselben Unit und ruft kein Sprachmodell auf (`FakeChatClient` zählt null Aufrufe). *Rot, wenn* eine Verknüpfung über Units hinweg entsteht oder ein Aufruf stattfindet.
 5. `build` legt weder eine `PlanPosition` noch einen `StudyPlan` an. *Rot, wenn* nach dem Lauf eine Position existiert.
 
+## Schätzung
+
+**Größe: M** – wie der vokabel-basierte Batch-Pfad im `MediaSelector` (B-03): ein neues Verb mit zwei Betriebsarten,
+das die vorhandene Pipeline und den Katalog-Zugriff des Agenten wiederverwendet. Kein Schema, keine Oberfläche. Nicht S,
+weil das Verb zwei Wege trägt (Modell und ohne Modell) und die Auswahlregel von `--existing` neu ist.
+
+- **`migration: nein`** – nachgesehen: der Agent schreibt über `Pugling.Client` in die API; er trägt kein eigenes Schema.
+  Die Spalten entstehen in [B-700](B-700-aufbau-stufe-am-katalog.md).
+- **`vertragsbruch: nein`** – nachgesehen: `Pugling.Contracts` ändert diese Story nicht; sie **liest** die von B-700
+  additiv ergänzten Felder (`BuildLevel`, `BuildTargetExerciseId`). `Pugling.Client` bekommt höchstens einen Durchreich-Parameter
+  an `CreateExerciseAsync`/`UpdateExerciseAsync` (`CreatorApi.cs:224`, `:234`), additiv.
+- **`wo: backend`** – der Agent ist eines der fünf Backend-Projekte (`backend/Pugling.Agent.Creator`); eine Oberfläche gibt es
+  nicht, der Vater sieht die Entwürfe im Katalog-Editor ([B-704](B-704-aufbau-weg-in-der-oberflaeche.md)).
+- **Abhängigkeit:** B-700 (Felder und Validierung am Katalog). Ohne B-700 gibt es keinen Ort für die Verknüpfung.
+
+### Risiken
+
+- **Auswahlregel von `build --existing` ist noch nicht ausformuliert.** Entscheidung 2 verlangt „Typ und Schwierigkeit“,
+  nennt aber keine Rangfolge der Typen; das Modell des Katalogs kennt keine Schwierigkeit (B-700 Entscheidung 1: die Stufe
+  ist erst die Verknüpfung). Beim Bauen ist eine feste, kleine Regel zu wählen (Vorschlag: gleiche Unit, anderer Typ als die
+  Ziel-Übung oder dieselbe Typfamilie mit leichterer Spielform, Stufe 1 vor 2 nach Typ-Reihenfolge Auswahl, Cloze, Freitext)
+  und als Absicht zu beschriften. **Die Schätzung nimmt sie als klein an; wird sie groß, ist das ein eigener Schnitt.**
+- **Das Modell trifft „leichter“ nicht zuverlässig** (keine Messung vorhanden). C# prüft nur Lösbarkeit (B-460), nicht die
+  Didaktik; die Qualität bleibt Sache des Vaters, der die Entwürfe sieht (Entscheidung 1).
+- **Der Konstruktor von `AgentCommands` wächst.** Ein neues Verb braucht einen neuen Dienst; genau ein Test konstruiert ihn
+  von Hand (`AssignAgentTests.cs:401`) und muss nachziehen. Der Aufruf liegt in `Program.cs` über die Abhängigkeitsinjektion.
+- **Dubletten:** zweimal `build` zur selben Ziel-Übung darf keine zweite Reihe Vorstufen anlegen. Entscheidung 4 sagt nichts
+  dazu; der Agent prüft vor dem Schreiben, was an der Ziel-Übung schon hängt, wie `assign` es für Positionen tut.
+  Als Testfall führen.
+- **Stufen-Obergrenze:** B-700 erlaubt nur `BuildLevel` 1 und 2 und keine Kette; `build` darf nicht mehr als zwei Stufen
+  und nie eine Vorstufe als Ziel anlegen, sonst lehnt der Server mit 400 ab und der Lauf bricht mit Exit 1.
+
+### Angriffsplan
+
+1. B-700 muss stehen. `Pugling.Client` ergänzen (Durchreichen der beiden Felder).
+2. Neuer Dienst `BuildPlanner` neben `PlanAssigner` (`backend/Pugling.Agent.Creator/PlanAssigner.cs`): liest die Ziel-Übung
+   und ihre Unit, prüft Unit, Typ und vorhandene Vorstufen, **bevor** das erste Schreiben passiert.
+3. Modus Modell: ein Pipeline-Lauf je Vorstufe über `CreatorPipeline.CreateAsync` (eigener Selbsttest je Teil), danach die
+   Verknüpfung setzen; ein gescheiterter Teil macht den Lauf sichtbar unvollständig (Exit 1, Muster `ExamPlanner`).
+4. Modus `--existing`: nur Lesen und Verknüpfen, ohne Modell, nur innerhalb der Unit.
+5. Verb `build` in `AgentCommands.RunAsync` und `PrintUsage`, Flags in `CommandLine`; `--dry-run` schreibt nichts.
+6. Skill `ki-creator` und `backend/Pugling.Agent.Creator/CLAUDE.md` um das Verb ergänzen (Doku, nach dem Bauen).
+7. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`.
+
+### Testweg
+
+- Neue Klasse `BuildAgentTests` in `backend/Pugling.Api.Tests` (Muster `AssignAgentTests`: `PuglingWebAppFactory`, echte API,
+  `FakeChatClient`): AK 1 (Verknüpfung und aufsteigende Stufe), AK 2 (nicht prüfbare Antwort wird nicht angelegt), AK 3
+  (`--dry-run` ändert die Katalog-Zählung nicht), AK 5 (nach dem Lauf keine `PlanPosition`), dazu je ein Fall für Dublette
+  und Stufen-Obergrenze.
+- AK 4: `Build_Existing_Braucht_Kein_Sprachmodell` nach dem Muster `Assign_Braucht_Kein_Sprachmodell`
+  (`AssignAgentTests.cs:388`): `FakeChatClient.Calls == 0`, plus ein Fall mit einer Übung aus einer **anderen** Unit, die
+  nicht verknüpft werden darf.
+- `CreatorAgentTests` und `AssignAgentTests` bleiben unverändert grün; `ConventionGuardTests` bleibt grün.
+- Vor der Abnahme: Agent `pugling-reviewer`; ein Lauf des Verbs gegen die Wegwerf-DB (`/smoke-test`) und ein Gang als Vater im
+  Katalog-Editor, sobald B-704 steht.
+
 ## Verlauf
 
 - **2026-11-19** — Teil von B-536, geteilt im Vorbereitungslauf (Sonnet). Nicht entschieden, weil der Rollenschnitt
   Vater/Lehrer-Agent offen ist (B-681); `gegrillt` mit offener Frage, `wartet_auf` gesetzt.
 - **2026-11-20** — Die offenen Punkte stellvertretend entschieden (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers, unbestätigt), Stufe bleibt `gegrillt`, `wartet_auf` geleert. Kern: Vorstufen entstehen als Entwurf ohne Zuweisung, der Vater übernimmt sie durch Einschalten der Stufung; zweiter Modus ohne Sprachmodell für vorhandene Übungen derselben Unit.
+- **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): M, backend, keine Migration, kein Vertragsbruch. Hängt an B-700; die Auswahlregel von `build --existing` ist beim Bauen festzulegen (Risiko), der Konstruktor von `AgentCommands` wächst (ein Test zieht nach).

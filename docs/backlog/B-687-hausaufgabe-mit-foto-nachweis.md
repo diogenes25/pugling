@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/medien, bereich/belohnung, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/training, bereich/medien, bereich/belohnung, rolle/student, rolle/supervisor]
 aliases: [Hausaufgaben-Foto, Hausaufgabe machen, Foto-Nachweis]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,9 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Chat mit dem Vater, 2026-11-19 (Friedrichs Mathe-Hausaufgabe S. 80/82 per Foto nachgeprüft)"
-grund: ""
-ersetzt_durch: []
-wartet_auf: "Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus)"
+grund: "geteilt, zu groß für eine Stufe (faktisch XL)"
+ersetzt_durch: [B-760, B-761, B-762, B-763]
 ---
 
 # B-687 · Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab
@@ -240,6 +239,14 @@ unabhängig von dessen Form als Untergrenze.
     die `Manual`-Gutschrift des Vaters. Der Ausgangszustand (keine Funktion) erfüllt das schon; rot würde nur, wer eine
     automatische Rücknahme einbaut.
 
+## Teilung
+
+Geschätzt am 2026-11-20 (Vorbereitungslauf, Sonnet): **faktisch XL** – Entität und Migration, Geld auf beiden Seiten, ein neuer Upload- und Ablageweg, eine
+Abnahme-Seite für den Vater und eine Karte für das Kind. Geteilt, in dieser Reihenfolge: [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) (Kern, Backend, L),
+[B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) (Foto-Ablage, **Bau-Sperre durch B-684**, M), [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md)
+(Vater-Web, M), [B-763](B-763-hausaufgaben-sohn-app-karte-und-foto-abgabe.md) (Sohn-App, M). Die Entscheidungen und Akzeptanzkriterien oben bleiben die Quelle; die Teile
+verweisen mit Nummern darauf. Das Feld `wartet_auf` wandert zu B-761, wo es sperrt.
+
 ## Verlauf
 
 - **2026-11-19** — angelegt aus dem Chat mit dem Vater (Friedrichs Mathe-Hausaufgabe per Foto nachgeprüft); Prio P2
@@ -248,3 +255,4 @@ unabhängig von dessen Form als Untergrenze.
   neu; der Malus hängt an `PlanPosition` und ist so nicht wiederverwendbar, der vorhandene Medienpfad ist Creator-only und
   öffentlich (Datenschutz). Sieben offene Punkte mit Empfehlung, **nichts entschieden** (Malus/Münzen, Rollenschnitt B-681).
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): eigene Ressource am Kind, keine Wirkung auf Serie und Kiste; Malus nur ohne Abgabe, Gnade über die `Manual`-Gutschrift; Beträge je Kind; Anti-Cheat = Abnahme des Vaters. **Ablageweg der Fotos ausdrücklich zurückgestellt** (gemeinsam mit B-684, `wartet_auf`), nur die Untergrenze steht fest. Akzeptanzkriterien final.
+- 2026-11-20 · verworfen (geteilt, Vorbereitungslauf, Sonnet): zu groß für eine Stufe; ersetzt durch B-760, B-761, B-762, B-763. `wartet_auf` (Ablageweg, mit B-684) steht jetzt an B-761.

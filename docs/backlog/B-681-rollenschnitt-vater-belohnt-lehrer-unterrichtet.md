@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/auth, bereich/shop, rolle/supervisor, rolle/creator]
+tags: [typ/story, status/geschaetzt, bereich/auth, bereich/shop, rolle/supervisor, rolle/creator]
 aliases: [Rollenschnitt Vater/Lehrer, Vater nur Belohnung]
-status: gegrillt
+status: geschaetzt
 prio: P2
 art: Wunsch
-groesse: ""
-wo: ""
-migration: ""
-vertragsbruch: ""
+groesse: S
+wo: backend
+migration: nein
+vertragsbruch: nein
 quelle: docs/leitbild-privatlehrer.md
 grund: ""
 ersetzt_durch: []
@@ -118,10 +118,61 @@ Die Entscheidungen 7 bis 10 sind die Rahmenentscheidungen A, E, F und G des Clus
 Final. Je Kriterium die Änderung, die es rot macht.
 
 1. *Absichtserklärung (hält den Ist-Zustand).* Ein Konto nur mit Creator-Profil bekommt auf Plan-, Positions-, Klassenarbeits- und Shop-Schreibrouten `403`. *Rot, wenn* eines dieser Gates auf `Creator` oder `AnyAdult` geöffnet wird (Integrationstest je Routenfamilie mit einem Token ohne Supervisor-Claim).
-2. *Absichtserklärung.* `Roles` kennt genau drei Rollen und das Modell keine Zuordnung `TeacherLink`. *Rot, wenn* eine vierte Rollenkonstante oder eine solche Entität hinzukommt (Reflexionsprüfung in `ConventionGuardTests`).
+2. *Absichtserklärung.* `Roles` kennt genau drei Ebenen-Rollen (`Creator`, `Supervisor`, `Student`); `AnyAdult` ist deren Kombination und `Admin` der Break-glass-Claim (`Auth/AuthAccess.cs:34`, `:38`), beides keine vierte Ebene. Das Modell kennt keine Zuordnung `TeacherLink`. *Rot, wenn* eine vierte Ebenen-Rollenkonstante oder eine solche Entität hinzukommt (Reflexionsprüfung in `ConventionGuardTests`).
 3. *Absichtserklärung.* Ein Vater (Creator und Supervisor) bedient Shop und Einlösung wie bisher. *Rot, wenn* ein Shop-Gate an etwas Neues gebunden wird.
 4. Boden, Deckel, Malus-Betrag und Pause lassen sich nur mit Supervisor-Claim und bestandener `SupervisorOwnsChildAsync`-Prüfung setzen: ein Konto nur mit Creator-Profil bekommt `403`, ein fremder Vater `404`. *Rot, wenn* eines der beiden Gates fehlt (gilt ab dem Bau von B-644 E0).
 5. Der Planer nimmt keine Tagesmenge aus einem Request an und hebt eine vom Vater eingetragene Pause nie auf. *Rot, wenn* ein Endpunkt die Menge übernimmt oder der Planer das Pausenfeld überschreibt (gilt ab dem Bau von B-644).
+
+## Schätzung
+
+*Geschätzt im Vorbereitungslauf 2026-11-20 (Sonnet), stellvertretend, unbestätigt.* Nach den Entscheidungen 1 bis 10 baut B-681 **keine neue Rolle und keinen neuen Zugang**: Die Story hält den Ist-Zustand mit mechanischen Absichtserklärungen fest und
+trägt die zwei Kriterien (4 und 5), die erst mit [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) und
+[B-734](B-734-planer-kern-und-schattenmodus.md) greifen.
+
+**Größe: S** — Anker: `childId` aus dem Test-Pfad ziehen (B-01): kein Produktcode, drei Testgruppen und eine Reflexionsprüfung.
+
+- **`migration: nein`** — Entscheidung 5; nachgesehen: keine Entität `TeacherLink` im Modell (Suche in `Models/*.cs` ohne Treffer), nur `SupervisorLink` (`Models/AdminEntities.cs:17`).
+- **`vertragsbruch: nein`** — kein Vertragstyp ändert sich.
+- **`wo: backend`** — Tests in `Pugling.Api.Tests`.
+
+### Wo die Kriterien gebaut werden
+
+| Kriterium | Wo | Wann |
+| --- | --- | --- |
+| 1 (Creator-only bekommt `403` auf Plan-, Positions-, Klassenarbeits- und Shop-Schreibrouten) | **diese Story**, neue Klasse `RollenschnittTests` | sofort |
+| 2 (drei Ebenen-Rollen, kein `TeacherLink`) | **diese Story**, `ConventionGuardTests` | sofort |
+| 3 (Vater bedient Shop wie bisher) | **diese Story** als Absichtserklärung über `ShopFlowTests` | sofort |
+| 4 (Boden, Deckel, Malus-Betrag, Pause nur mit Supervisor-Claim und Eigentum) | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) Kriterien 5 und 6 | mit B-731 |
+| 5 (Planer nimmt keine Tagesmenge an, hebt Pause nie auf) | [B-734](B-734-planer-kern-und-schattenmodus.md) Kriterium 9 | mit B-734 |
+
+### Risiken
+
+- **Heutige Abdeckung ist schmaler als Kriterium 1:** `TeacherAccountTests` prüft nur `GET supervisor/children`, `GET supervisor/class-tests`, `POST supervisor/children` und
+  `POST supervisor/study-plans` auf `403` (`Lehrer_KommtNichtInDenBetreuungsBereich`, `Lehrer_KannKeinKindAnlegenUndKeinenPlanBauen`). Positions-, Klassenarbeits-Schreib- und Shop-Routen
+  hat kein Test mit einem Creator-Token (ein Konto-Token ohne Supervisor-Claim entsteht in den Tests nur über `RegisterTeacherAsync` in `TeacherAccountTests`). Der Ist-Stand lässt sich deshalb heute unbemerkt öffnen.
+- **Rollenzählung:** `Roles` enthält vier Konstanten (`Creator`, `Supervisor`, `Student`, `AnyAdult`) und `Admin`; die Formulierung „genau drei Rollen" war zu eng (Kriterium 2 oben ist angepasst).
+- **Die 33 Gate-Stellen sind die Messlatte:** 33 `Roles.Supervisor`-Treffer in 19 Controllern (`grep`, 2026-11-20); die Theorie in `RollenschnittTests` soll je Routenfamilie
+  einen Vertreter aufrufen, nicht jede Aktion (Letzteres tut der Ownership-Filter in `OwnershipMatrixTests`).
+- **Ein Test, der den Ausgangszustand prüft, kann nicht fallen:** Jede Absichtserklärung nennt hier die Änderung, die sie rot macht (siehe Testweg).
+
+### Angriffsplan
+
+1. `RollenschnittTests`: Theorie über Routenfamilien (Pläne, Positionen, Klassenarbeiten, Shop-Schreibrouten) mit Token eines Kontos ohne Supervisor-Claim (Aufbau wie `TeacherAccountTests.RegisterTeacherAsync`).
+2. Reflexionsprüfung in `ConventionGuardTests`: Ebenen-Rollen und `TeacherLink`.
+3. Kriterium 3: Verweis auf `ShopFlowTests`; Absichtserklärung im Kommentar der Klasse.
+
+### Testweg
+
+- Neue Klasse `RollenschnittTests` (Integration): rote Probe je Familie — das `[Authorize(Roles = Roles.Supervisor)]` des `ShopController` auf `Roles.AnyAdult` stellen lässt die Shop-Zeile fallen, dasselbe
+  am `PlanPositionsController` die Positionszeile, am `KlassenarbeitenController` die Klassenarbeitszeile.
+- `ConventionGuardTests`: neues Tor für die Rollenkonstanten (Rot-Probe: `public const string Teacher = "Teacher";` in `Roles` einfügen) und für `TeacherLink` (Rot-Probe: Klasse `TeacherLink` im Modell anlegen).
+- Regression: `TeacherAccountTests`, `OwnershipMatrixTests`, `OwnershipTests`, `ShopFlowTests`, `MultiSupervisorTests`.
+- Vor der Abnahme: `pugling-reviewer`; ein Rollengang entfällt (keine Oberfläche, nur Gates), im `## Verlauf` benennen.
+
+### Reihenfolge und Abhängigkeiten
+
+Unabhängig von B-730 bis B-739 und sofort baubar. Die Kriterien 4 und 5 laufen mit [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) und
+[B-734](B-734-planer-kern-und-schattenmodus.md); B-681 gilt erst als abgenommen, wenn deren Stellen ihre Kriterien tragen (im `## Verlauf` verlinken).
 
 ## Beziehungen zu anderen Stories (nur gelesen)
 
@@ -138,3 +189,4 @@ Final. Je Kriterium die Änderung, die es rot macht.
   schon der richtigen Taxonomie; es fehlt eine Zuordnung Lehrer ⇢ Kind und ein Agenten-Konto, keine neue Rolle
   zwingend. Sieben offene Punkte mit Empfehlung, **nichts entschieden** (Rollenschnitt liegt beim Nutzer).
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle sieben Punkte entschieden, dazu die Rahmenentscheidungen A bis G für den Cluster. Kern: Der Planer läuft im Server ohne Identität, deshalb keine Rolle `Teacher` und kein `TeacherLink`; der Vater behält Leitplanken und Notbremse, trägt Termin und Note ein, der Agent bleibt Inhalts-Werkzeug.
+- **2026-11-20** — `gegrillt` → `geschaetzt` (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Eintrittsbedingung `gegrillt` erfüllt (sieben Punkte entschieden). S, backend, keine Migration, kein Vertragsbruch: nur Absichtserklärungen und Gate-Tests. Nachgesehen: Die Rollenzählung war zu eng (`AnyAdult` und `Admin` neben den drei Ebenen), die heutigen Tests decken Positions-, Klassenarbeits-Schreib- und Shop-Routen für ein Creator-Konto nicht ab; Kriterium 2 umformuliert, Kriterien 4 und 5 den Teilstories von B-644 zugeordnet.

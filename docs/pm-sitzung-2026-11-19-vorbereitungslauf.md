@@ -210,3 +210,53 @@ Tagesplaner von B-644 noch gebraucht wird.
 **Weiter offen:** B-702 und B-703 sind entschieden, aber noch nicht geschätzt. B-659, B-660, B-593, B-627, B-687, B-218,
 B-248, B-644, B-662, B-663, B-680 bis B-683 sind `gegrillt`, noch nicht geschätzt. B-670, B-664, B-605 sind weder
 verworfen noch erledigt (Vorschläge oben bleiben).
+
+## Nachtrag 2: Schätzung der entschiedenen Stories (2026-11-20)
+
+Auf „Ja, schätzen“ wurden die 16 entschiedenen Stories geschätzt. Teilungen nach „Teilen und Zusammenlegen“ (alte Id
+`verworfen`, `ersetzt_durch`, neue Stories mit `quelle`, alle `geschaetzt`):
+
+| Alt | Neu | Hinweis |
+| --- | --- | --- |
+| B-644 | B-730 bis B-739 (E0a bis E5) | B-680 trägt E4a; B-735 (`EndDate` optional) ist ein Vertragsbruch, B-734, B-736 und B-737 haben hohe Unsicherheit |
+| B-682 | B-740 bis B-743 | Notenschlüssel, Stufe speichern (Migration), Lese-Endpunkte, Anzeige |
+| B-683 | B-744 bis B-746 | B-745 `migration: offen` (Anker gegen Rücknahme des Abstiegs durch den Tageslauf) |
+| B-662 | B-747, B-749, B-770 | B-749 ist L, 15 E2E-Specs warten auf die Überschrift „Kinder“ |
+| B-248 | B-750, B-751, B-752, B-757, B-758 | B-752 hohe Unsicherheit, entfällt eventuell mit B-644 |
+| B-687 | B-760 bis B-763 | B-761 (Foto-Ablage) trägt `wartet_auf` (Ablageweg mit B-684) |
+| B-627 | B-767 bis B-769 | Geld und Pflicht, hohe Unsicherheit |
+| B-218 | B-764 bis B-766 | Reihenfolge nach B-660 |
+
+Direkt geschätzt: B-702 (M), B-703 (M), B-659 (L, Migration), B-660 (M), B-593 (M, Migration), B-663 (M, nur Frontend),
+B-680 (L), B-681 (S).
+
+**Id-Kollision:** Eine parallele Sitzung des Nutzers legte `B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md`
+an (`idee`, P1, `quelle: Nutzer, Sitzung 2026-11-20`). Meine B-748 (Antwortzahl je Kind und Tag) wurde auf **B-770**
+umnummeriert; die Verweise in B-662 und B-749 zogen mit. Die Datei der anderen Sitzung ist nicht von mir und nicht
+committet. B-748 überschneidet sich fachlich mit B-733 (Tagesauswertung) und B-749 (Vater-Startseite): bei ihrem
+Ausformulieren gegenlesen.
+
+**Zum Bestätigen, neu und hoch:**
+
+1. **B-680 gegen B-644:** B-680 Entscheidung 1 baut die Termin- und Stundenplan-Regeln erst nach E0 bis E2. Dann läuft
+   die Schattenwoche ohne sie, und der Vater prüft nur einen Teil des Planers. Offen, der Nutzer soll entscheiden.
+2. **B-752, B-757, B-758:** Bauen nur, wenn B-644 die Terminpflicht nicht übernimmt.
+3. **B-701 Entscheidung 6** begründet falsch: `IsGoalMetAsync` zählt jeden bestandenen Versuch, auch den der Vorstufe.
+   Die Sperre auf `Cadence None` oder `UntilDone` bleibt aus Münzgründen sinnvoll.
+4. **B-768 Entscheidung 6** weicht von B-627 Entscheidung 8 ab: Die Rücknahme-Marke sitzt an der Strafzeile, nicht an der
+   Meldung, sonst könnten zwei Meldungen derselben Periode dieselbe Strafe doppelt erstatten.
+5. **B-737 (Stichtag-Reset)** ist nicht umkehrbar und braucht eine Messung an einer Kopie der echten DB; er soll nicht in
+   die Klausurpläne vom 24.11. fallen.
+
+**Nebenfunde ohne Story:**
+
+- `ChildrenController.AddPoints` (`:279-290`) erlaubt negative Beträge ohne Bump von `child.ConcurrencyStamp`
+  (Verstoß gegen die Wallet-Invariante). Das ist ein `Defekt`-Kandidat, nicht angelegt.
+- Die UTC-Tagesbildung hat 36 Treffer in 16 Dateien, dazu sieben Zeitstempel-Umrechnungen und drei Stellen im Frontend
+  (`toISOString().slice(0, 10)`); B-644 zählte weniger.
+- B-624 (Akzentfehler zählt halb) ist nicht gebaut; `IsMisspelled` ist nur Anzeige.
+- Ein serverseitiger Standard-Malus existiert nirgends, nur als Konstante im Assistenten (`VaterWizard.tsx:48-52`).
+- Der konto-zentrische Login löst die Abrechnung nicht aus (nicht geprüft).
+- `scripts/_plan-api.ps1:89` rät „ggf. löschen“ und muss nach B-659 „ausschalten“ sagen.
+- Der Lint lief über eine gecachte `markdownlint-cli2`-Kopie; `npx --no-install` fand sie nach einer Änderung am
+  Root-`package.json` (fremde Arbeit, `vite-plugin-pwa`) nicht mehr.

@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
 aliases: [Abstieg ohne Malus, Pflichtziel der aktuellen Stufe, Stufen und Stick]
-status: gegrillt
+status: geschaetzt
 prio: P1
 art: Wunsch
-groesse: ""
+groesse: M
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: ja
+vertragsbruch: nein
 quelle: B-536
 unverifiziert: false
 grund: ""
@@ -75,8 +75,83 @@ Final. Je Kriterium die Änderung, die es rot macht.
 9. Zwei parallele Abschlüsse senken die Stufe nicht doppelt (idempotent über den Versuch). *Rot, wenn* der Abstieg ohne Ref-Gate oder Nebenläufigkeitsschutz läuft.
 10. Die Migration nimmt vorhandene Positionen mit Zähler 0 und ohne Stufen-Datum mit. *Rot, wenn* die Spalten nicht nullbar sind oder Bestandszeilen verändert werden.
 
+## Schätzung
+
+**Größe: M** – wie der vokabel-basierte Batch-Pfad im `MediaSelector` (B-03): ein Zähler, ein Zustandsübergang im
+Testabschluss und eine Betragsregel an einer Buchungsstelle, kein neues Aggregat. Kleiner als B-701 (L), weil die Naht
+der Stufenwahl und der Aufstieg dort schon stehen; größer als ein S, weil die Zahlung (`PositionGoalReward`) und ein
+Schema mit Bestandsdaten berührt werden.
+
+- **`migration: ja`** – nachgesehen: zwei neue nullbare Spalten an `PlanPositions` (Zähler der Fehlversuche in Folge,
+  Datum `CurrentBuildLevelSince`; `null` zählt als 0 bzw. „seit unbekannt“). Die Migration hängt **hinter** die von
+  [B-700](B-700-aufbau-stufe-am-katalog.md) und [B-701](B-701-position-spielt-die-aufbau-stufe.md) (letztes Glied heute
+  `20261119065732_ShopStockPerChild`), nimmt Bestandszeilen mit `null` mit und braucht eine Probe gegen eine Kopie der
+  echten DB (`SchemaGuardTests` G1b).
+- **`vertragsbruch: nein`** – nachgesehen: nichts an `Pugling.Contracts` ändert sich brechend. Die Anzeige der Stufe und
+  der Zeit auf ihr (höchstens ein trailing optionales Feld in `PositionResponse`) gehört zu
+  [B-704](B-704-aufbau-weg-in-der-oberflaeche.md); der Abstieg selbst braucht keinen Endpunkt.
+- **`wo: backend`** – Anzeige in B-704.
+- **Abhängigkeit:** B-701 (`CurrentBuildLevel`, `TestAttempt.BuildLevel`, Aufstieg im Abschlusspfad) muss gebaut sein;
+  B-700 steht darunter.
+
+### Risiken
+
+- **Zwei Ankerpunkte sind schon grün.** `IsGoalMetAsync` zählt heute jeden bestandenen Versuch der Position, ohne die
+  Stufe zu kennen (`PositionProgressService.cs:202-204`). Akzeptanzkriterium 6 und 8 prüfen also einen Zustand, der nach
+  B-701 schon stimmt: Gegenproben, die nur eine falsche Reparatur (etwa „Endstufe verlangen“) fängt. Das neue Verhalten
+  dieser Story ist allein der Abstieg (AK 1–3, 9) und der halbe Zielbetrag (AK 7). Sie sind in der Schätzung so zu
+  beschriften, nicht als Neubau zu verkaufen.
+- **Der halbe Betrag liest den Versuch, nicht die Position.** `EvaluateAndAwardAsync` bucht je Tag und Periode über
+  `pos.PointsGoalMet` (`PositionProgressService.cs:544-570`) und weiß nicht, welcher Versuch das Ziel erfüllte. Läuft der
+  Aufstieg von B-701 im selben Abschlusspfad **vor** der Buchung, stünde die Position schon eine Stufe höher und zahlte
+  voll. Gelesen werden muss `TestAttempt.BuildLevel` des Versuchs, der das Ziel der Periode erstmals erfüllt (frühester
+  bestandener Versuch der Periode, wichtig beim Wochenziel). AK 7 braucht darum einen Fall „Aufstieg und Zahlung im
+  selben Abschluss“.
+- **Bestanden unter 50 %.** Hat eine Position `GoalThreshold` unter 50, besteht ein Versuch mit 45 %. Entscheidung 1
+  sagt „unter 50 % zählt“; B-701 sagt „bestanden steigt auf“. Ohne Vorrang stiege dasselbe Kind auf und zählte zugleich
+  einen Fehlversuch. Vorschlag für das Bauen (keine neue Entscheidung, nur die Lesart): ein bestandener Versuch setzt die
+  Zählung immer auf 0; ein Testfall hält es fest.
+- **Rundung.** „Abgerundet, mindestens 1 bei Punkten über 0“: eine Zielzahlung von 1 zahlt auf der Vorstufe 1, nicht 0.
+  Der Testfall braucht beide Ränder (1 und ein ungerader Betrag).
+- **Rennen.** Zwei parallele Abschlüsse dürfen weder doppelt absteigen noch den Zähler überspringen. Der Abschluss setzt
+  `Passed` bereits nur einmal je Versuch; der Abstieg muss am selben Übergang hängen (nur wenn der Versuch gerade erst
+  abgeschlossen wurde), nicht an einer separaten Zählung. Ein Wallet-Eingriff entsteht nicht (der Abstieg bucht nichts),
+  die Zielzahlung läuft über den bestehenden Pfad.
+- **Entscheidung 4 und 5 sind Rahmen ohne eigenen Code.** Sie sagen, was **nicht** gebaut wird (kein Malus auf
+  nie gesehenen Plan, keine Münzprämie für Notenstufe); sie hängen am Planer [B-644](B-644-tagesplaner-statt-fester-lauf.md)
+  und tragen kein Akzeptanzkriterium. Wer sie beim Bauen sucht, findet nichts zu tun.
+- **Lang auf der Vorstufe.** Dauerhaft 60 bis 79 % löst weder Abstieg noch Aufstieg aus und lässt den Malus laufen
+  (Entscheidung 1, Kosten); sichtbar wird es nur in B-704.
+
+### Angriffsplan
+
+1. Entity-Felder (Zähler, `CurrentBuildLevelSince`) und Migration, **hinter** B-701
+   (`dotnet dotnet-ef migrations add AufbauAbstieg --project backend/Pugling.Api --output-dir Data/Migrations`).
+2. Abstieg im Abschlusspfad des Tests (`PositionTestsController.cs` bei `attempt.Passed`, `:460`), neben dem Aufstieg von
+   B-701: nur Kind-Versuche (`BySupervisor` aus), Zählung auf Versuche unter 50 %, bestandener oder ab-50-%-Versuch setzt
+   0, Boden Stufe 1; bei jedem Stufenwechsel Zähler 0 und `CurrentBuildLevelSince` setzen.
+3. Halbe Zielzahlung in `EvaluateAndAwardAsync` (`PositionProgressService.cs:544-570`): Betrag aus dem Versuch, der das
+   Ziel der Periode erstmals erfüllt; Buchung und `PositionGoalReward.Points` tragen denselben Betrag.
+4. `IsGoalMetAsync`, `IsCompleteDay` und `SettleMissedAsync` bleiben unangetastet (AK 5, 6, 8 sind Gegenproben).
+5. `dotnet build Pugling.sln`, `dotnet format Pugling.sln`.
+
+### Testweg
+
+- Neue Klasse `AufbauStufeAbstiegTests` in `backend/Pugling.Api.Tests` (Aufbau über `TestApi`, Muster
+  `PositionTestFlowTests`): AK 1–4 (je Fall eigener Test, Zähler-Reset, Vater-Versuch, Boden, keine Buchung), AK 7 mit
+  beiden Rundungsrändern und dem Fall „Aufstieg und Zahlung im selben Abschluss“, AK 9 als parallele Abschlüsse
+  (`Task.WhenAll`, Muster `DailyBoxTests`).
+- AK 5, 6 und 8 als beschriftete Gegenproben in `PflichtMalusTests` (Malus einer gestuften Position), `BelohnungenTagespflichtTests`
+  (Ziel auf der Vorstufe erfüllt, volle Serie) und `RueckwirkendePflichtTests` (Serie am Vorstufen-Tag).
+- Neue Klasse `AufbauStufeAbstiegMigrationTests` nach dem Muster `ShopStockPerChildMigrationTests`: AK 10 mit Bestandszeile
+  vor der Migration.
+- `ConventionGuardTests`, `SchemaGuardTests` und `EndpointCoverageGuard` bleiben grün.
+- Rollengang vor der Abnahme als Sohn an einer gestuften Position (zwei schlechte Versuche, Abstieg sichtbar); E2E erst mit
+  B-704 (`aufbau-stufen.spec.ts`). Vor der Abnahme: Agent `pugling-reviewer`; `/smoke-test`.
+
 ## Verlauf
 
 - **2026-11-19** — Teil von B-536, geteilt im Vorbereitungslauf (Sonnet). Bewusst **nicht** entschieden, weil die
   Punkte die Malus-Regel und die Münz-Ökonomie berühren; Stufe `gegrillt` mit offener Frage, `wartet_auf` gesetzt.
 - **2026-11-20** — Die offenen Punkte stellvertretend entschieden (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers, unbestätigt), Stufe bleibt `gegrillt`, `wartet_auf` geleert. Kern: Abstieg nach zwei Versuchen unter 50 % ohne Buchung; Ziel ist die aktuelle Stufe mit halben Zielpunkten auf Vorstufen, aber Serie und Truhe zählen voll (Abweichung von der Empfehlung, begründet); keine harte Frist, nur Sichtbarkeit.
+- **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): M, backend, Migration ja, Vertrag nein. Zwei der Akzeptanzkriterien (6, 8) sind im Ausgangszustand schon grün und als Gegenproben zu führen; der halbe Zielbetrag muss den Versuch statt der Position lesen (Reihenfolge Aufstieg/Zahlung). Hängt an B-701 und B-700.

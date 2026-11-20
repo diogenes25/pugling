@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/verworfen, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [berechtigte Meldung, Nachbuchen nach Rückmeldung]
-status: gegrillt
+status: verworfen
 prio: P2
 art: Wunsch
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "B-623, Entscheidung 6 (Grill-Runde mit dem Vater, 2026-11-17)"
-grund: ""
-ersetzt_durch: []
+grund: "geteilt, zu groß für eine Stufe (faktisch XL)"
+ersetzt_durch: [B-767, B-768, B-769]
 ---
 
 # B-627 · Eine vom Vater als berechtigt bestätigte Meldung bucht den Fehler des Kindes nach
@@ -230,6 +230,14 @@ Je Kriterium die Änderung, die es rot macht.
 11. **Absichtserklärung:** Der Kasten der Karte wird durch die Bestätigung nicht zurückgebucht. Der Ausgangszustand erfüllt es
     schon; rot würde nur, wer `PositionItemProgress` in die Umbuchung zieht.
 
+## Teilung
+
+Geschätzt am 2026-11-20 (Vorbereitungslauf, Sonnet): **faktisch XL** – drei Tabellen in der Migration, ein Ausdruck, der an zwei Abfragen hängt, Geld und Pflicht, dazu eine Oberfläche. Geteilt, in dieser Reihenfolge:
+[B-767](B-767-meldung-zeigt-auf-die-antwort-und-bekommt-einen-ausgang.md) (Bezug und Ausgang, Backend, M), [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) (Umbuchung, Backend, L),
+[B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) (Oberfläche, S). Die Entscheidungen und Akzeptanzkriterien oben bleiben die Quelle. **Drei Annahmen sind beim Schätzen hinzugekommen und
+unbestätigt:** die Zusammenführung berücksichtigt den Bezug (B-767 Entscheidung 3), die Rücknahme-Marke sitzt an der Strafzeile statt (nur) an der Meldung (B-768 Entscheidung 6, weicht von Entscheidung 8 hier im Wortlaut ab)
+und „bestanden nach Korrektur“ wird einmal berechnet (B-768 Entscheidung 7). Außerdem antwortet ein fremder Supervisor weiter `404` statt `403` wie in AK 9 (B-767 Entscheidung 4).
+
 ## Verlauf
 
 - **2026-11-17** — angelegt als Folge-Story aus B-623, Entscheidung 6.
@@ -237,3 +245,4 @@ Je Kriterium die Änderung, die es rot macht.
   (kein Bezug, beim Üben von Nicht-Vokabel-Karten nicht gespeichert); Malus hängt nur am nicht bestandenen Test, eine
   Rückerstattung gibt es nicht. Acht offene Punkte, alle mit Empfehlung, keine entschieden (Münz-/Malus-Regeln).
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): nur die gemeldete Antwort, Bezug beim Absenden eingefroren; zuerst nur der Test; Malus-Rücknahme als positive `GoalPenalty`-Gegenbuchung (Konvention `WalletService.cs:43-48`), Strafzeile bleibt; Korrekturspur statt Überschreiben; Kasten wird nicht zurückgebucht; Serie heilt sich selbst. Akzeptanzkriterien final.
+- 2026-11-20 · verworfen (geteilt, Vorbereitungslauf, Sonnet): zu groß für eine Stufe; ersetzt durch B-767, B-768, B-769. Reihenfolge laut Entscheidung 9 weiter nach B-624, B-625 und B-626 messen.
