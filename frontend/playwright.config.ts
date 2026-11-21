@@ -4,6 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { dbFile, mediaDir } from "./e2e/temp-paths";
 
+// Ein Worker, dessen Ereignisschleife steht, gilt nach 45 s statt nach 5 Minuten als tot (B-605). Der Läufer liest die
+// Frist erst beim Beenden (`playwright/lib/runner/index.js:2107`, 1.65.1) und zählt sie ab dem letzten Herzschlag, den
+// ein lebender Worker beim Beenden jede Sekunde schickt – getroffen wird also nur ein stehender Prozess. `??=`: von außen gesetzt gewinnt.
+process.env.PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000";
+
 // ESM: __dirname existiert nicht → aus import.meta.url ableiten.
 const here = path.dirname(fileURLToPath(import.meta.url));
 
