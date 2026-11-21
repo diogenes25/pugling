@@ -16,6 +16,7 @@ import { SohnShop } from "./SohnShop";
 import { SohnKonto } from "./SohnKonto";
 import { SohnInterests } from "./SohnInterests";
 import { SohnBonus, SohnBonusRun } from "./SohnBonus";
+import { DadShowcase } from "./DadShowcase";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
 import { RemarkWidget } from "../components/RemarkWidget";
@@ -37,6 +38,8 @@ interface SohnContextValue {
   setStreak: (n: number) => void;
   /** Löst eine Feier (Overlay + Ton + Haptik) aus; das Overlay liegt zentral in der Shell. */
   celebrate: ReturnType<typeof useCelebration>["celebrate"];
+  /** Löst eine aufmunternde Reaktion bei Fehlern (Learning Dad Facepalm + Ton) aus. */
+  encourage?: ReturnType<typeof useCelebration>["encourage"];
 }
 
 const SohnContext = createContext<SohnContextValue | null>(null);
@@ -80,7 +83,7 @@ function SohnShell({ childId }: { childId: number }) {
   });
   const [streak, setStreak] = useState(0);
   const [muted, setMutedState] = useState(isMuted());
-  const { celebration, celebrate } = useCelebration();
+  const { celebration, celebrate, encourage } = useCelebration();
   const { t, i18n } = useTranslation();
   // Kein Kopieren aus der Arcade, kein Einfügen hinein: sonst schreibt man das Wort ab, solange es zu sehen ist, und
   // fügt es im Gedächtnis-Schritt wieder ein. Der Login liegt bewusst außerhalb.
@@ -113,8 +116,8 @@ function SohnShell({ childId }: { childId: number }) {
   }, [childId]);
 
   const value = useMemo<SohnContextValue>(() => ({
-    childId, coins, gems, refreshWallet, skin, setSkin, planId, setPlanId, streak, setStreak, celebrate,
-  }), [childId, coins, gems, refreshWallet, skin, planId, setPlanId, streak, celebrate]);
+    childId, coins, gems, refreshWallet, skin, setSkin, planId, setPlanId, streak, setStreak, celebrate, encourage,
+  }), [childId, coins, gems, refreshWallet, skin, planId, setPlanId, streak, celebrate, encourage]);
 
   const toggleMute = useCallback(() => {
     setMutedState((m) => {
@@ -128,7 +131,11 @@ function SohnShell({ childId }: { childId: number }) {
     <SohnContext.Provider value={value}>
       <div className="app-sohn" ref={wurzel}>
         <div className="sohn-hud">
-          <div className="avatar-mini" style={{ background: skin.gradient }} aria-hidden="true">{skin.emoji}</div>
+          <div className="avatar-mini" style={{ background: skin.gradient, overflow: "hidden" }} aria-hidden="true">
+            {skin.id === "pug"
+              ? <img src="/character/dad/dad_head_happy.png" alt="" width={32} height={32} style={{ objectFit: "cover" }} />
+              : skin.emoji}
+          </div>
           <div className="chip" aria-live="polite"><span aria-hidden="true">🪙</span><b className="tabnum" aria-label={t("hud.coins", { count: coins })}>{coins}</b></div>
           <div className="chip" aria-live="polite"><span aria-hidden="true">💎</span><b className="tabnum" aria-label={t("hud.gems", { count: gems })}>{gems}</b></div>
           <div className="chip flame" aria-live="polite"><span aria-hidden="true">🔥</span><b className="tabnum" aria-label={t("hud.streak", { count: streak })}>{streak}</b></div>
@@ -172,6 +179,7 @@ function SohnShell({ childId }: { childId: number }) {
           <Route path="skins" element={<SohnSkins />} />
           <Route path="konto" element={<SohnKonto />} />
           <Route path="ich" element={<SohnInterests />} />
+          <Route path="dad" element={<DadShowcase />} />
           <Route path="bonus" element={<SohnBonus />} />
           <Route path="bonus/:exerciseId" element={<SohnBonusRun />} />
           <Route path="*" element={<Navigate to="/sohn" replace />} />

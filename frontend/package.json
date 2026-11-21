@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "gen:dad-assets": "python scripts/prepare-dad-assets.py",
     "gen:contract": "node scripts/gen-contract.mjs",
     "postinstall": "node scripts/gen-contract.mjs",
     "prebuild": "node scripts/gen-contract.mjs",

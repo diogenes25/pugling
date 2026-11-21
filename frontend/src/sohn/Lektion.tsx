@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode, type Ref } from "react";
 import { useTranslation } from "react-i18next";
 import { Mascot } from "../components/Mascot";
+import { LearningDad } from "../components/LearningDad";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
 import { AudioButton } from "../components/AudioButton";
@@ -263,9 +264,8 @@ const LOB = ["lektion.praise1", "lektion.praise2", "lektion.praise3", "lektion.p
  * Verdiente Münzen stehen nur da, wenn es welche gab – eine nicht wertbare Karte (nicht fällig, heute schon
  * gewertet) darf keinen Gewinn vortäuschen.
  */
-export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
+export function RueckmeldungsBlatt({ r, weiterRef, onWeiter }: {
   r: Rueckmeldung;
-  skin: Skin;
   weiterRef?: Ref<HTMLButtonElement>;
   onWeiter: () => void;
 }) {
@@ -276,8 +276,10 @@ export function RueckmeldungsBlatt({ r, skin, weiterRef, onWeiter }: {
   ].filter(Boolean).join(" · ");
   return (
     <div className={`lektion-blatt ${r.richtig ? "richtig" : "falsch"}`}>
-      <div className="row">
-        <div className="lektion-begleiter" aria-hidden="true"><Mascot skin={skin} mood={r.richtig ? "hyped" : "happy"} size={48} /></div>
+      <div className="row" style={{ alignItems: "center" }}>
+        <div className="lektion-begleiter" aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <LearningDad action={r.richtig ? "thumbs-up" : "facepalm"} size={48} />
+        </div>
         <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : r.falschGeschrieben ? t("test.misspelled") : t("lektion.almost")}</b>
         {r.richtig && r.muenzen > 0 && <span className="pill gold" style={{ marginLeft: "auto" }}>+{r.muenzen} 🪙</span>}
       </div>

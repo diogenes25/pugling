@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
-import { DEFAULT_SKIN } from "../lib/skins";
 import type { ItemOutcome, TestSubmitResponse } from "../lib/types";
 import { KartenMeldung, MeldungsHinweis } from "./KartenMeldung";
 import { TestResult } from "./SohnTest";
@@ -102,12 +101,12 @@ describe("TestResult mit Rückmeldung (B-629 AK 2)", () => {
 
   // Rot, wenn das Ergebnisblatt keinen Knopf je Karte trägt – oder ihn auch ohne Plan (Vorschau) zeigt.
   it("trägt je Karte einen Knopf, nur mit Plan und Position", () => {
-    const { unmount } = render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}}
+    const { unmount } = render(<TestResult result={result} onHome={() => {}} onRetry={() => {}}
       onPractice={() => {}} rueckmeldung={{ planId: 3, positionId: 7 }} />);
     expect(screen.getAllByRole("button", { name: /Rückmeldung/ })).toHaveLength(2);
     unmount();
 
-    render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
+    render(<TestResult result={result} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
     expect(screen.queryByRole("button", { name: /Rückmeldung/ })).toBeNull();
   });
 });

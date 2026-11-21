@@ -55,12 +55,14 @@ const TONES: Record<CelebrationTier, number[]> = {
   small: [880],
   medium: [660, 990],
   big: [523.25, 659.25, 783.99, 1046.5], // C-Dur-Arpeggio C5–E5–G5–C6
+  encourage: [440, 392], // Sanfter aufmunternder Zweiklang
 };
 
 const VIBRATION: Record<CelebrationTier, number[]> = {
   small: [15],
   medium: [20, 40, 30],
   big: [30, 50, 40, 50, 70],
+  encourage: [25, 25],
 };
 
 function playTone(ac: AudioContext, freq: number, startAt: number, length: number): void {

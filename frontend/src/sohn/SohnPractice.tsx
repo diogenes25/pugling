@@ -279,10 +279,10 @@ export function SohnPractice() {
         if (feedback.kind === "correct") {
           setEarned((e) => e + feedback.awarded + feedback.comboBonus + feedback.speedBonus + abschluss);
           if (abschluss > 0) {
-            celebrate("big", "🏆", t("practice.allTasksDone"), t("practice.completionBonus", { bonus: abschluss }));
+            celebrate("big", "🏆", t("practice.allTasksDone"), t("practice.completionBonus", { bonus: abschluss }), "boxing-win");
           } else if (feedback.comboBonus > 0) {
             const tier = feedback.combo >= 10 ? "big" : "medium";
-            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, t("practice.comboBonus", { bonus: feedback.comboBonus }));
+            celebrate(tier, tier === "big" ? "🥷" : "🎉", `COMBO ×${feedback.combo}`, t("practice.comboBonus", { bonus: feedback.comboBonus }), "punch");
           } else {
             celebrate("small", SMALL_EMOJI[feedback.combo % SMALL_EMOJI.length]);
           }
@@ -573,7 +573,7 @@ export function SohnPractice() {
       <div className="lektion-antwort" ref={answerRef}>
         {phase === "blatt" && blatt ? (
           // B-420/B-526: die Karte bleibt stehen – Frage oben, darunter das Blatt mit der Rückmeldung, bis „Weiter".
-          <RueckmeldungsBlatt r={blatt} skin={skin} weiterRef={continueRef} onWeiter={next} />
+          <RueckmeldungsBlatt r={blatt} weiterRef={continueRef} onWeiter={next} />
         ) : (
           <>
             {form.antwort === "lernkarte" ? (

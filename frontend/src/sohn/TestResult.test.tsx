@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TestResult } from "./SohnTest";
-import { DEFAULT_SKIN } from "../lib/skins";
 import type { ItemOutcome, TestSubmitResponse } from "../lib/types";
 
 /**
@@ -18,7 +17,7 @@ describe("TestResult", () => {
     passed: false, passPercent: 90, attemptsRemaining: 1,
   };
   const view = (result: TestSubmitResponse) =>
-    render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
+    render(<TestResult result={result} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
 
   const listItems: ItemOutcome[] = [
     { itemIndex: 0, prompt: "Nenne alle 16 Bundesländer.", expected: "Bayern", givenAnswer: "Bayern", wasCorrect: true, gapIndex: null },
@@ -130,7 +129,7 @@ describe("TestResult", () => {
    */
   it("bietet nach nicht bestandenem Test „Üben“ an und ruft dafür onPractice", () => {
     const onPractice = vi.fn(); const onRetry = vi.fn();
-    render(<TestResult result={{ ...base, items: listItems }} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={onRetry} onPractice={onPractice} />);
+    render(<TestResult result={{ ...base, items: listItems }} onHome={() => {}} onRetry={onRetry} onPractice={onPractice} />);
     fireEvent.click(screen.getByRole("button", { name: "▶ Üben" }));
     expect(onPractice).toHaveBeenCalledTimes(1);
     expect(onRetry).not.toHaveBeenCalled();

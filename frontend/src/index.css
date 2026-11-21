@@ -580,6 +580,135 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
   100% { transform: translateX(118vw) translateY(0) rotate(22deg) scale(1); opacity: 0; }
 }
 
+/* =========================================================================
+   Learning Dad – Motivations-Animationen (Daumen hoch, Facepalm, Sprechblase)
+   ========================================================================= */
+.dad-character-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  user-select: none;
+}
+.dad-figure-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s ease;
+}
+.dad-bubble {
+  position: relative;
+  background: linear-gradient(180deg, #2b3068, #161a46);
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  padding: 8px 16px;
+  margin-bottom: 8px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,.45), 0 0 16px rgba(255,199,56,.28);
+  animation: dad-bubble-pop .32s cubic-bezier(.175,.885,.32,1.275) both;
+  z-index: 5;
+  max-width: 280px;
+}
+.dad-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid var(--gold);
+}
+.dad-bubble-text {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--gold);
+  text-shadow: 0 1px 2px rgba(0,0,0,.6);
+  letter-spacing: .02em;
+}
+.dad-bubble-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--cyan);
+  margin-top: 2px;
+  font-weight: 600;
+}
+@keyframes dad-bubble-pop {
+  0% { transform: scale(.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Bühnen für Overlays in CelebrationLayer */
+.dad-stage {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 90;
+  pointer-events: none;
+}
+.dad-hero-stage {
+  top: 45%;
+  animation: dad-hero-entrance 2.5s cubic-bezier(.16, 1, .3, 1) both;
+}
+.dad-banner-stage {
+  top: 42%;
+  animation: dad-banner-entrance 1.8s ease both;
+}
+.dad-pop-stage {
+  top: 42%;
+  animation: dad-pop-entrance .95s cubic-bezier(.175,.885,.32,1.275) both;
+}
+.dad-encourage-stage {
+  top: 44%;
+  animation: dad-encourage-entrance 2s cubic-bezier(.16, 1, .3, 1) both;
+}
+.dad-encourage-stage .dad-bubble {
+  border-color: var(--cyan);
+  box-shadow: 0 4px 14px rgba(0,0,0,.45), 0 0 16px rgba(38,217,255,.3);
+}
+.dad-encourage-stage .dad-bubble::after {
+  border-top-color: var(--cyan);
+}
+.dad-encourage-stage .dad-bubble-text {
+  color: #fff;
+}
+.dad-encourage-stage .dad-bubble-sub {
+  color: var(--cyan);
+}
+
+@keyframes dad-hero-entrance {
+  0% { transform: translate(-50%, -30%) scale(.35); opacity: 0; }
+  18% { transform: translate(-50%, -50%) scale(1.14); opacity: 1; }
+  35% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -55%) scale(.95); opacity: 0; }
+}
+@keyframes dad-banner-entrance {
+  0% { transform: translate(-50%, -40%) scale(.4); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  82% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -52%) scale(.95); opacity: 0; }
+}
+@keyframes dad-pop-entrance {
+  0% { transform: translate(-50%, -50%) scale(.4); opacity: 0; }
+  35% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; }
+  70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.05); opacity: 0; }
+}
+@keyframes dad-encourage-entrance {
+  0% { transform: translate(-50%, -35%) scale(.5); opacity: 0; }
+  22% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  45% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  82% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -45%) scale(.95); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
   .cel-layer { display: none; }

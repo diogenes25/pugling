@@ -175,7 +175,7 @@ describe("Blatt", () => {
     richtig: true, gegeben: "der Bahnhof", loesung: null, muenzen: 2, comboBonus: 0, tempoBonus: 0, faelligAm: null, lob: 0, ...over,
   });
   const zeige = (rueck: Rueckmeldung, onWeiter = () => {}) =>
-    render(<RueckmeldungsBlatt r={rueck} skin={DEFAULT_SKIN} onWeiter={onWeiter} />).container.querySelector(".lektion-blatt")!;
+    render(<RueckmeldungsBlatt r={rueck} onWeiter={onWeiter} />).container.querySelector(".lektion-blatt")!;
 
   it("zeigt bei richtig Münzen, Boni und die nächste Fälligkeit", () => {
     // Rot, wenn ein Bonus oder die Fälligkeit im Blatt fehlte – beides stand vorher im Toast bzw. unter der Karte.

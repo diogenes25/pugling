@@ -53,3 +53,7 @@ backend/Pugling.Api/media-uploads/
 
 # Photographed textbook pages (B-375): copyrighted source material, never committed.
 raw/
+
+# Learning-Dad-Rohquellen (Original-Clips, Charakter-Bibel): bleiben lokal; die App liest nur die
+# aufbereiteten Dateien unter frontend/public/character/ (erzeugt von frontend/scripts/prepare-dad-*.py).
+frontend/character/

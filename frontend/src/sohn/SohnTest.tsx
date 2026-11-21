@@ -5,7 +5,7 @@ import { ApiError, api } from "../lib/api";
 import { useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
 import { useSohn } from "./SohnApp";
-import { Mascot } from "../components/Mascot";
+import { LearningDad } from "../components/LearningDad";
 import { TaskAnnouncer } from "../components/ClozePrompt";
 import { ErgebnisZeile } from "./ErgebnisZeile";
 import { KartenMeldung } from "./KartenMeldung";
@@ -214,7 +214,7 @@ export function SohnTest() {
     <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button></div>;
 
   if (result) return (
-    <TestResult result={result} stageName={stageName} skin={skin} titleRef={resultTitleRef} onHome={() => nav("/sohn")}
+    <TestResult result={result} stageName={stageName} titleRef={resultTitleRef} onHome={() => nav("/sohn")}
       onRetry={() => { focusIntent.current = true; void start(); }}
       // B-522: die Herkunft reist mit – nach einer Niederlage feiert der Leerbildschirm des Übens nicht.
       onPractice={() => nav(`/sohn/practice/${positionId}`, { state: { nachTest: true } })}
@@ -340,8 +340,8 @@ export function SelfAssessAnswer({ reveal, alternatives, revealed, busy, loesung
  * Props-Komponente (kein Laden, kein `fetch`), und genau die Regeln, die hier hängen – teilen alle Zeilen
  * ihren Aufgabentext? gibt es Fehlnennungen? – sind die, die man sonst nur von Hand ansehen könnte.
  */
-export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry, onPractice, rueckmeldung }: {
-  result: TestSubmitResponse; stageName?: string | null; skin: import("../lib/skins").Skin; onHome: () => void; onRetry: () => void; onPractice: () => void;
+export function TestResult({ result, stageName, titleRef, onHome, onRetry, onPractice, rueckmeldung }: {
+  result: TestSubmitResponse; stageName?: string | null; onHome: () => void; onRetry: () => void; onPractice: () => void;
   /**
    * B-629: im Test meldet das Kind erst hier, je Karte neben der Lösung (B-623, Entscheidung 5) – während des Tests gibt
    * es den Knopf nicht. Ohne Plan/Position (Vorschau) bleibt das Blatt ohne Knopf.
@@ -373,7 +373,13 @@ export function TestResult({ result, stageName, skin, titleRef, onHome, onRetry,
         </div>
         <div className={`vtitle ${result.passed ? "win" : "lose"}`} ref={titleRef} tabIndex={-1}>{result.passed ? t("test.victory") : t("test.almost")}</div>
         <div className="ring" style={ring}><b>{pct}%<small>{result.correctItems} / {result.totalItems}</small></b></div>
-        <Mascot skin={skin} mood={result.passed ? "hyped" : "sleepy"} size={84} />
+        <div className="dad-test-reaction" style={{ margin: "10px auto 4px" }}>
+          <LearningDad
+            action={result.passed ? "thumbs-up" : "facepalm"}
+            size="md"
+            caption={result.passed ? "Klasse Leistung!" : "Kein Problem – beim nächsten Mal!"}
+          />
+        </div>
         <p className="sub">{t("test.passMark", { pct: result.passPercent })}</p>
 
         <div className="card" style={{ width: "100%", marginTop: 4, textAlign: "left" }}>

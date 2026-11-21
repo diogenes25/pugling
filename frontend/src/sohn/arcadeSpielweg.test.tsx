@@ -4,7 +4,6 @@ import { setLanguage } from "../lib/i18n";
 import { ApiError, errorMessage } from "../lib/api";
 import { ArcadeScope, useErrorMessage } from "../lib/chromeText";
 import { useAction } from "../lib/useAction";
-import { DEFAULT_SKIN } from "../lib/skins";
 import { de } from "../i18n/de";
 import { AudioButton } from "../components/AudioButton";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
@@ -94,7 +93,7 @@ describe("Klausur auf Englisch", () => {
 
   it("übersetzt den Auswertungsschirm samt Stufenname, nicht aber Aufgabe und Lösung", async () => {
     await setLanguage("en");
-    render(<TestResult result={result} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
+    render(<TestResult result={result} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
     // Rot, wenn Sieg-Titel, Bestehensgrenze oder der Stufenname am deutschen Literal hängen.
     expect(screen.getByText("VICTORY!")).toBeTruthy();
     expect(screen.getByText("Pass mark 80%")).toBeTruthy();
@@ -108,7 +107,7 @@ describe("Klausur auf Englisch", () => {
   it("nennt eine unbekannte Stufe mit Nummer statt mit einem Schlüsselnamen", async () => {
     // Rot, wenn die Stufe ungeprüft in den Schlüssel wandert („test.stage9“ im Bild).
     await setLanguage("en");
-    render(<TestResult result={{ ...result, stage: 9 }} skin={DEFAULT_SKIN} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
+    render(<TestResult result={{ ...result, stage: 9 }} onHome={() => {}} onRetry={() => {}} onPractice={() => {}} />);
     expect(screen.getByText("TEST · STAGE 9")).toBeTruthy();
   });
 
