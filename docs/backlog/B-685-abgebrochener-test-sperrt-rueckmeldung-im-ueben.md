@@ -12,6 +12,7 @@ quelle: "Nachschau Sprint 88 in der PM-Sitzung 2026-11-19"
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-628]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-685 · Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag
@@ -242,3 +243,8 @@ vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umba
   Server (Ausweichports): volle E2E **179/179**. Darin fährt `rueckmeldung.spec.ts` den Weg des Sohnes: Test öffnen,
   „Später weiter“, üben, melden, „Danke, ist angekommen!“, Test fortsetzen, Ergebnisblatt mit „Rückmeldung“. Vater:
   Schritt 2 derselben Spec (er sieht und erledigt die Meldung). Creator: Regressionszeuge.
+- **2026-11-21** — nachgeschaut (Nachtlauf, Retro Sprint 100), Diff `1793475e`. Geprüft wurde zweierlei:
+  - Nach `feedback_during_test`/`FeedbackDuringTest`/`TestRunningAsync` gegrept in `backend/Pugling.Api`, `Contracts`,
+    `Client`, `frontend/src`, `docs` (ohne Backlog/Protokolle) und `wiki`: kein Rest.
+  - Die Sperre fehlt in der Controller-Aktion und im Service; der Ergebnisblatt-Weg in `rueckmeldung.spec.ts` bleibt.
+  Kein Befund.

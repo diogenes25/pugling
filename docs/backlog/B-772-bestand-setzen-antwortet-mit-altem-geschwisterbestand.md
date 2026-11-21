@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/supervisor]
 aliases: [SetStock-Antwort veraltet]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -79,3 +79,6 @@ laden muss, um die Bestände der Geschwister richtig zu sehen.
   | M6 | `ShopService.cs:146` | red | red |
 
   Gemessen mit `mutant-probe.py` an `3612afb0 + Arbeitsbaum`.
+- **2026-11-21** — abgenommen in Commit `a0b73724` (Sprint 100). Endstand: Backend 1937/1937 (Release). Rollengang E2E 4/4
+  auf den Ausweichports, Vater abgenommen, Sohn und Creator als Regressionszeugen. Review: vier 🟢, Zähler 0 von 5
+  (docs/pm-sitzung-2026-11-21.md, Sprint 100).

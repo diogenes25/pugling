@@ -12,6 +12,7 @@ quelle: "Nachtlauf 2026-11-18, Nachschau von B-661 (96a3491d, frontend-reviewer)
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-661]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-671 · In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte
@@ -188,3 +189,9 @@ ein Effekt nach dem Muster von `SohnTest.tsx:89-102`), dazu fünf Vitest-Fälle.
   **179/179** als Regressionszeuge (`bonus*.spec.ts` grün). **Geliefert, Geräte-Prüfung offen:** Ob am echten Handy die
   Tastatur nach dem Weiter offen bleibt und das „î“ aus der Leiste in der neuen Karte landet, sieht kein jsdom-Test. Einmal
   in einer französischen Bonusrunde am Handy durchtippen.
+- **2026-11-21** — nachgeschaut (Nachtlauf, Retro Sprint 100), Diff `1793475e` in `SohnBonus.tsx:222-240` gelesen:
+  - Die Absicht setzt nur `answer()`.
+  - Der Effekt verbraucht sie auch ohne Ziel, also nach der letzten Karte, so dass kein späterer Cursor-Wechsel beim
+    Laden fokussiert.
+  - Gesucht wird `input, button:not([disabled])` nur im `answerRef`.
+  Kein Befund. Der Fokus nach „Aufdecken“ liegt schon als B-778 vor.

@@ -165,3 +165,94 @@ Commit `1793475e`, B-671 und B-685 `abgenommen`.
 eine Verfahrenszeile: Ein Fall mit der Beschriftung „Festschreibung“ bekommt trotzdem eine Mutante, die ihn rot macht,
 sonst wird er gestrichen. Das ist der B-157-Befund aus dem Root-`CLAUDE.md` in einem fünften Fall.
 **Bewusst ungedeckt:** Fokus am echten Handy (Geräte-Prüfung oben).
+
+## Sprint 100 — Ziel & Umfang
+
+Zweiter Start am Nachmittag mit dem Auftrag „nachtlauf“ und freier Auswahl. Es gelten die Freigaben 1–10.
+
+**Auswahl:** Kandidaten aus der Nachschau von Sprint 97 waren B-776 und B-777. Gewählt wurde der Shop als Themengebiet:
+- [B-776](backlog/B-776-wechsel-auf-einmalig-loest-nie-aus.md), Defekt, P2;
+- [B-772](backlog/B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md), Defekt, P3.
+
+B-777 (Vater-Startseite) gehört zu einem anderen Gebiet und bleibt Kandidat für den nächsten Sprint.
+
+**Verfeinerung:** Beide Stories gingen autonom von `idee` bis `geschaetzt` (`art: Defekt`). Ist-Stand und Szenario sind am
+Code nachgerechnet. Größen: B-776 S, B-772 XS. Beide ohne Migration und ohne Vertragsbruch.
+
+**Sprint-Ziel:** Aus Sicht des Vaters gilt, was er im Shop einstellt, für jedes Kind gleich. Ein „einmalig zum Termin“
+füllt zum Termin auf, und die Antwort auf „Bestand setzen“ zeigt die Geschwister so, wie sie sind. Widerlegbar ist das
+durch einen Bestand, der nach dem Termin leer bleibt, oder durch ein Geschwister mit altem Wert in der Antwort.
+
+**Entwickler-Brief:**
+- Quelle der Wahrheit ist der Bestand je Kind (`ShopListingStock.LastRefilledAtUtc`), gelesen über
+  `ShopRefillSchedule.DueRefills`.
+- Senken: der PATCH für alles, was die Regel ändert, und `ToViewAsync` für die Vater-Sicht eines geladenen Angebots.
+- Guard: Die alte Regel wird gebucht, bevor ihr Zeitpunkt geleert wird (Muster B-771).
+- Testweg: Integrationsfälle in `ShopStockPerChildTests`, Rollengang über die Shop-E2E-Specs.
+
+## Iteration 100 — umgesetzt
+
+- **B-776:** `ShopController.UpdateListing` leert über die neue `ShopService.ClearRefillInstant` die Zeitpunkte aller
+  Bestände. Das geschieht bei einem Wechsel auf „einmalig“ oder bei einem neuen Termin, nachdem die alte Regel gebucht ist.
+  Ein unverändert mitgeschickter Termin leert nichts.
+- **B-772:** `SetStockAsync` antwortet nach dem Speichern über `ToViewAsync`. Geschrieben wird weiter nur der Bestand des
+  einen Kindes.
+- **Rote Probe:** Der Shop-Filter stand vorher bei 4 failed / 22 passed, nachher bei 81/81. Die Zahlen je AK stehen im
+  `## Verlauf` der Stories.
+- **Mutanten:** M1–M7, alle rot am benannten Test, gemessen nach der letzten Änderung. Die Tabellen stehen in den Stories.
+- **Volle Suite (Release):** 1936/1936 vor den beiden 🟢-Korrekturen, auf dem Endstand nach `a0b73724` **1937/1937**.
+
+### Review Sprint 100
+
+`pugling-reviewer`: kein 🔴, kein 🟡, vier 🟢. **Zähler Sprint 100: 0 von 5** (Freigabe 10: 🟢 zählt nicht).
+
+1. 🟢 Ein Wechsel auf „einmalig“ ohne Datum verwendete den gespeicherten alten Termin weiter. Durch diesen Fix hätte er
+   sofort ausgelöst. → **behoben, ohne Zählung:** `400 validation_error` mit Test `B776_Wechsel_Auf_Einmalig_Verlangt_Ein_Datum`
+   und Mutante M7. Das Vater-Web trifft es nicht, denn `planIncomplete` sperrt „einmalig“ ohne Datum.
+2. 🟢 `ClearRefillInstant` bumpte auch Zeilen ohne Zeitpunkt. → **behoben, ohne Zählung** (die Zeile wird übersprungen).
+3. 🟢 Eine Bestandszeile, die zwischen dem Laden und dem Speichern des PATCH entsteht, bekommt das Leeren nicht ab. Dieselbe
+   Lücke hat `RestartRefillClock` (B-771), das Fenster ist winzig. → **bewusst offen**, hier vermerkt.
+4. 🟢 Ein `RefillAtUtc` mit einem anderen Offset als `Z` gilt als neuer Termin, weil das Feld nicht auf UTC normalisiert
+   wird. Das liegt außerhalb des Diffs. Dazu kommt der Nebenbefund: Ein aus SQLite gelesener Termin geht ohne `Z` über den
+   Draht. → **beides offen, als Notiz**. Eine Story lohnt erst, wenn ein Client daran falsch rechnet. Das Vater-Web schneidet
+   auf das Datum zu und rechnet deshalb nicht falsch.
+
+## Runde 4 — Rollengang Sprint 100
+
+Der Server wurde nach der letzten Änderung von Playwright frisch gestartet, auf den Ausweichports 5201/5174 (Heimnetz auf
+:5200). Gefahren wurden `taschengeld-monatlich`, `shop-verlauf`, `shop-verlauf-wiederholen` und `full-flow`: **4 passed**.
+
+- **Vater — abgenommen:** „Ich stelle um und gebe einen Termin, und jedes meiner Kinder kriegt es zum Termin. Setze ich den
+  Bestand des einen, zeigt mir die Antwort die anderen richtig.“
+  - Belegt durch AK 1–4 von B-776 und AK 1–3 von B-772 (Integrationsfälle gegen die API).
+  - Im Browser bearbeitet und „füllt“ er Angebote (`taschengeld-monatlich`).
+  - Den Wechsel auf „einmalig“ fährt keine E2E-Spec am Bestand. Der Beleg dafür ist der Integrationstest.
+- **Sohn — Regressionszeuge:** Er kauft leer und sieht „ausverkauft, wieder da:“ (`taschengeld-monatlich`, `shop-verlauf`).
+  Keine Sohn-Fläche liegt im Diff.
+- **Creator — Regressionszeuge:** `full-flow` ist grün, keine Creator-Fläche liegt im Diff.
+
+## Retrospektive (Sprint 100)
+
+**Nachschau:** Sprint 99 nachgesehen (B-685, B-671, `nachgeschaut: 2026-11-21`):
+- B-685: Nach Resten der entfernten Sperre über Backend, Frontend, Doku und Wiki gegrept: keine.
+- B-671: Der Fokus-Effekt in `SohnBonus.tsx:222-240` verbraucht die Absicht auch nach der letzten Karte.
+- Kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:**
+- Der Reviewer-Fund 1 entstand aus der eigenen Entscheidung 4 („ein Termin in der Vergangenheit feuert sofort“). Gedacht
+  war sie für einen Termin, den der Vater ausdrücklich setzt. Der PATCH führt aber `dto.X ?? listing.X` zusammen, und dadurch
+  kann ein **weggelassenes** Feld einen Altwert tragen, den niemand gesehen hat. Keine meiner Mutanten konnte das finden, weil
+  kein AK den Fall „Feld weggelassen, Altwert vorhanden“ hatte.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Kein neues Tor. Eine Verfahrenszeile in `backend/CLAUDE.md` unter
+„PATCH-Semantik“: Eine Story, die am Wechsel eines Feldes eine Wirkung auslöst, nimmt den Fall „Feld weggelassen,
+gespeicherter Altwert“ als eigenes AK auf. Der zusammengeführte Wert (`dto.X ?? entity.X`) ist dann nicht das, was der
+Nutzer gerade gesehen hat. Ein Tor wäre hier nicht mechanisch formulierbar, denn welche Felder eine Wirkung auslösen, ist
+Fachlogik.
+
+**Bewusst ungedeckt:** die Hinweise 3 und 4 aus dem Review.
+
+## Offene Roadmap (Stand nach Sprint 100)
+
+Nächster Kandidat ist [B-777](backlog/B-777-heute-status-offen-trotz-antworten.md) (Defekt, `idee`, Vater-Startseite).
+Danach kommen die geschätzten Defekte B-672 und B-639. Alles Weitere steht in [docs/backlog/](backlog/INDEX.md).

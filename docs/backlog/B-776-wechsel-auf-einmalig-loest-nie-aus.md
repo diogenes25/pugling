@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/shop, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/supervisor, rolle/student]
 aliases: [Wechsel auf einmalig löst nie aus]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -118,3 +118,6 @@ Entscheidung 3 vergleicht `DateTime?`; der Wert aus dem JSON ist UTC, der aus SQ
   nicht (unerreichbarer Code) und wurde darum als Bedingung neu gemessen.
   Nebenbefund außerhalb des Diffs: Ein aus SQLite gelesenes `RefillAtUtc` geht ohne `Z` über den Draht. Der Test vergleicht
   darum den Text.
+- **2026-11-21** — abgenommen in Commit `a0b73724` (Sprint 100). Endstand: Backend 1937/1937 (Release). Rollengang E2E 4/4
+  auf den Ausweichports, Vater abgenommen, Sohn und Creator als Regressionszeugen. Review: vier 🟢, Zähler 0 von 5
+  (docs/pm-sitzung-2026-11-21.md, Sprint 100).
