@@ -31546,7 +31546,7 @@
             "format": "int32"
           }
         },
-        "description": "Daily state of a child, aggregated across its active study plans. \u0060AnswersToday\u0060 counts the answers the child\ngave that day across all of its plans (practice cards plus test answers) - how much was done, independent of\nbonus points (B-770)."
+        "description": "Daily state of a child, aggregated across its active study plans. \u0060AnswersToday\u0060 counts the answers the child\ngave that day across all of its plans (practice cards plus test answers) - how much was done, independent of\nbonus points (B-770). \u0060Practiced\u0060 is true once \u0060AnswersToday\u0060 is above 0, a goal was met or points were earned that day (B-777)."
       },
       "ChildInterestInput": {
         "required": [

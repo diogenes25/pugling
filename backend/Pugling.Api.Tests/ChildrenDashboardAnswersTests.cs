@@ -75,4 +75,30 @@ public class ChildrenDashboardAnswersTests(PuglingWebAppFactory factory) : IClas
         // AK 1: answers are not points - no position, no points, yet answers.
         Assert.Equal(0, rowA.GetProperty("pointsToday").GetInt32());
     }
+
+    /// <summary>
+    /// B-777: a child that answered today but met no goal and earned no points has practised (AK 1) - the father's start
+    /// page showed "open" under "5 answers". A child without any activity has not (AK 2). Red for AK 1 when the answers do
+    /// not feed <c>practiced</c>, red for AK 2 when it is always true.
+    /// </summary>
+    [Fact]
+    public async Task Geuebt_Heisst_Geantwortet_Auch_Ohne_Ziel_Und_Punkte()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var busy = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Geuebt-A", pin = "7771" }));
+        var idle = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children", new { name = "Geuebt-B", pin = "7772" }));
+        AddPractice(await TestApi.CreateEmptyPlanAsync(father, busy), Day, 5);
+        await TestApi.CreateEmptyPlanAsync(father, idle);
+
+        var dashboard = await (await father.GetAsync($"/api/v1/supervisor/children/daily-overview?date={Day:yyyy-MM-dd}"))
+            .Content.ReadFromJsonAsync<JsonElement>();
+        var rows = dashboard.GetProperty("children").EnumerateArray().ToList();
+        var rowBusy = rows.First(r => r.GetProperty("childId").GetInt32() == busy);
+        var rowIdle = rows.First(r => r.GetProperty("childId").GetInt32() == idle);
+
+        Assert.Equal(0, rowBusy.GetProperty("goalsMet").GetInt32());
+        Assert.Equal(0, rowBusy.GetProperty("pointsToday").GetInt32());
+        Assert.True(rowBusy.GetProperty("practiced").GetBoolean());
+        Assert.False(rowIdle.GetProperty("practiced").GetBoolean());
+    }
 }

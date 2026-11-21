@@ -35,7 +35,7 @@ public record UpdateKeyResultRequest(KeyResultMetric? Metric, int? TargetValue, 
 /// <summary>
 /// Daily state of a child, aggregated across its active study plans. <c>AnswersToday</c> counts the answers the child
 /// gave that day across all of its plans (practice cards plus test answers) - how much was done, independent of
-/// bonus points (B-770).
+/// bonus points (B-770). <c>Practiced</c> is true once <c>AnswersToday</c> is above 0, a goal was met or points were earned that day (B-777).
 /// </summary>
 public record ChildDay(int ChildId, string Name, int ActivePlans, int GoalsTotal, int GoalsMet,
     int PointsToday, bool DutyDone, bool Practiced, int AnswersToday);

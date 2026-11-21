@@ -30,8 +30,9 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             var day = await progress.ComputeChildDayAsync(child.Id, date, ct);
             var points = day.Plans.Sum(p => p.Overview.PointsAwarded);
             var answers = await CountAnswersAsync(child.Id, date, ct);
+            // B-777: an answer is practice even before a goal is met - points only come with a met goal.
             rows.Add(new ChildDay(child.Id, child.Name, day.Plans.Count, day.GoalsTotal, day.GoalsMet, points,
-                day.DutyDone, day.GoalsMet > 0 || points > 0, answers));
+                day.DutyDone, day.GoalsMet > 0 || points > 0 || answers > 0, answers));
         }
 
         return new Dashboard(date, rows);
