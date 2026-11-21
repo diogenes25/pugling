@@ -14,7 +14,7 @@ ersetzt_durch: []
 entgangen_bei: []
 ---
 
-# B-787 · Ein geleerter Angebotstitel wird als gespeichert gemeldet und bleibt stehen
+# B-789 · Ein geleerter Angebotstitel wird als gespeichert gemeldet und bleibt stehen
 
 Im Bearbeiten einer Angebots-Zeile (`ListingRow`, `frontend/src/vater/VaterShop.tsx`) wird ein leerer Titel zu `null`
 (`title: form.title.trim() || null`). `ShopController.UpdateListing` liest `null` als „nicht angegeben“
@@ -30,3 +30,4 @@ ihn bei leerem Feld; oder ein leerer String heißt am Server „leeren“.
 ## Verlauf
 
 - **2026-11-22** — angelegt aus dem Review von B-786 (`idee`); bewusst nicht in B-786 (anderes Feld, Vertrag betroffen).
+- **2026-11-22** — umnummeriert von B-787 auf B-789: Lauf B hatte B-787/B-788 auf seinem Branch schon vergeben.
