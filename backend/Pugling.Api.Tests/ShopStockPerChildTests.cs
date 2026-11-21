@@ -855,6 +855,48 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
+    /// B-782 AK 4: a "once" date with a time of day (set by an API caller), fired and sold out. The Vater-Web sends the date
+    /// it loaded back unchanged with a price change - the server reads no new date and refills nothing. The same PATCH
+    /// with the date cut to midnight, as the Vater-Web sent it before B-782, is a new date and refills (B-776): the case
+    /// shows that the round trip, not the comparison, carries the fix. Red when <c>resetsOnceInstant</c> compares anything
+    /// but the instant the client sent back.
+    /// </summary>
+    [Theory]
+    [InlineData(true, 0)]
+    [InlineData(false, 1)]
+    public async Task B782_Termin_Mit_Uhrzeit_Unveraendert_Zurueck_Fuellt_Nicht_Erneut(bool sendLoaded, int expectedStock)
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, sendLoaded ? "7821" : "7822");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Kino",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 1,
+            refillKind = "Once",
+            refillAtUtc = "2026-11-12T10:00:00Z",
+        });
+        factory.Clock.FreezeAt(At(2026, 11, 12, 12));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        factory.Clock.FreezeAt(At(2026, 11, 13));
+
+        var loaded = (await Json(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}")))
+            .GetProperty("refillAtUtc").GetString()!;
+        Assert.StartsWith("2026-11-12T10:00:00", loaded);
+        (await PatchListingAsync(father, articleId, listingId, new
+        {
+            coinPrice = 20,
+            refillKind = "Once",
+            refillAtUtc = sendLoaded ? loaded : "2026-11-12T00:00:00Z",
+        })).EnsureSuccessStatusCode();
+        Assert.Equal(expectedStock, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
     /// AK 4: "daily" → "once" while today's daily refill is still unread. The old rule books it before the instant is
     /// emptied, so the child keeps what it earned. Red when the switch to "once" skips booking the old rule.
     /// </summary>

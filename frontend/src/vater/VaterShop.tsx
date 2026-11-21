@@ -218,14 +218,20 @@ const WEEKDAYS: { value: Weekday; label: string; short: string }[] = [
 /**
  * Die Felder des Plans für den Server. Wochentag und Datum gehen nur mit, wo die Art sie braucht – sonst
  * verlangte der Server sie nicht, hielte sie aber fest. Die Menge je Termin zählt nur bei einer auffüllenden Art.
+ *
+ * `loadedRefillAtUtc` ist der Termin, wie der Server ihn geliefert hat (B-782): Steht im Feld noch sein Datum, geht er
+ * unverändert zurück. Das Feld kennt nur den Tag; ein Termin mit Uhrzeit käme sonst als Mitternacht zurück, der Server
+ * läse einen neuen Termin und füllte jedes Kind noch einmal auf.
  */
-function planDto(plan: RefillPlan) {
+function planDto(plan: RefillPlan, loadedRefillAtUtc?: string | null) {
   return {
     maxStock: plan.maxStock,
     refillKind: plan.refillKind,
     refillQuantity: plan.refillKind === "None" ? null : plan.refillQuantity,
     refillDayOfWeek: plan.refillKind === "Weekly" ? plan.refillDayOfWeek : null,
-    refillAtUtc: plan.refillKind === "Once" && plan.refillDate ? `${plan.refillDate}T00:00:00Z` : null,
+    refillAtUtc: plan.refillKind !== "Once" || !plan.refillDate ? null
+      : loadedRefillAtUtc && loadedRefillAtUtc.slice(0, 10) === plan.refillDate ? loadedRefillAtUtc
+      : `${plan.refillDate}T00:00:00Z`,
   };
 }
 
@@ -399,7 +405,7 @@ function ListingManager({ article }: { article: ShopArticle }) {
 }
 
 /** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge, Auffüll-Plan und Zielgruppe änderbar. */
-function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFill, onToggle, onRemove }: {
+export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFill, onToggle, onRemove }: {
   listing: ShopListing; unitType: UnitType; kids: ChildResponse[];
   /**
    * Läuft eine Aktion des Angebots-Panels. Die Zeile hält keinen eigenen Zustand: das Panel teilt eine
@@ -446,7 +452,7 @@ function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFill, onT
                 if (planIncomplete(plan)) return;
                 const p = planProblem(plan);
                 if (p) { onFail(p); return; }
-                onSave({ ...form, ...planDto(plan), title: form.title.trim() || null, childIds: audience });
+                onSave({ ...form, ...planDto(plan, listing.refillAtUtc), title: form.title.trim() || null, childIds: audience });
                 setEditing(false);
               }}>OK</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
