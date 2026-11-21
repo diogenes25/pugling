@@ -404,6 +404,27 @@ function ListingManager({ article }: { article: ShopArticle }) {
   );
 }
 
+/** Das Bearbeiten-Formular einer Angebots-Zeile, belegt aus dem gespeicherten Angebot. */
+function editForm(listing: ShopListing) {
+  return {
+    title: listing.title ?? "", coinPrice: listing.coinPrice, gemPrice: listing.gemPrice,
+    unitsPerPurchase: listing.unitsPerPurchase,
+  };
+}
+
+/**
+ * Der Auffüll-Plan zum Bearbeiten. Das Datum kommt nur aus einem „einmalig“-Angebot (B-786): der Server hält einen alten
+ * Termin auch an einem wiederkehrenden Angebot fest, und vorbelegt ginge er beim Wechsel auf „einmalig“ ungewählt hinaus.
+ */
+function editPlan(listing: ShopListing): RefillPlan {
+  return {
+    maxStock: listing.maxStock, refillQuantity: listing.refillQuantity, refillKind: listing.refillKind,
+    refillDayOfWeek: listing.refillDayOfWeek ?? "Monday",
+    refillDate: listing.refillKind === "Once" ? listing.refillAtUtc?.slice(0, 10) ?? "" : "",
+    expires: listing.refillQuantity >= listing.maxStock,
+  };
+}
+
 /** Eine Angebots-Zeile; im Bearbeiten-Modus sind Preis, Menge, Auffüll-Plan und Zielgruppe änderbar. */
 export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFill, onToggle, onRemove }: {
   listing: ShopListing; unitType: UnitType; kids: ChildResponse[];
@@ -420,16 +441,17 @@ export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFi
 }) {
   const uid = useId();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
-    title: listing.title ?? "", coinPrice: listing.coinPrice, gemPrice: listing.gemPrice,
-    unitsPerPurchase: listing.unitsPerPurchase,
-  });
-  const [plan, setPlan] = useState<RefillPlan>({
-    maxStock: listing.maxStock, refillQuantity: listing.refillQuantity, refillKind: listing.refillKind,
-    refillDayOfWeek: listing.refillDayOfWeek ?? "Monday", refillDate: listing.refillAtUtc?.slice(0, 10) ?? "",
-    expires: listing.refillQuantity >= listing.maxStock,
-  });
+  const [form, setForm] = useState(() => editForm(listing));
+  const [plan, setPlan] = useState<RefillPlan>(() => editPlan(listing));
   const [audience, setAudience] = useState<number[]>(listing.childIds);
+  // B-786: jedes Öffnen beginnt beim gespeicherten Angebot. Sonst stünde nach „Abbrechen“ das Verworfene im Formular, und
+  // ein späteres „OK“ schickte es mit – ein verworfenes Datum leerte als neuer Termin jeden Bestand.
+  const startEditing = () => {
+    setForm(editForm(listing));
+    setPlan(editPlan(listing));
+    setAudience(listing.childIds);
+    setEditing(true);
+  };
   const nameOf = (id: number) => kids.find((c) => c.id === id)?.name ?? `#${id}`;
 
   if (editing) {
@@ -452,7 +474,9 @@ export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFi
                 if (planIncomplete(plan)) return;
                 const p = planProblem(plan);
                 if (p) { onFail(p); return; }
-                onSave({ ...form, ...planDto(plan, listing.refillAtUtc), title: form.title.trim() || null, childIds: audience });
+                // B-786: der geladene Termin zählt nur, wo er auch vorbelegt war – der Rest-Termin eines
+                // wiederkehrenden Angebots brächte sonst seine verborgene Uhrzeit mit, wenn der Vater denselben Tag wählt.
+                onSave({ ...form, ...planDto(plan, listing.refillKind === "Once" ? listing.refillAtUtc : null), title: form.title.trim() || null, childIds: audience });
                 setEditing(false);
               }}>OK</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
@@ -481,7 +505,7 @@ export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFi
       <td className="muted">{refillText(listing)}</td>
       <td>{listing.active ? <span className="pill lime">aktiv</span> : <span className="pill">inaktiv</span>}</td>
       <td style={{ whiteSpace: "nowrap" }}>
-        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(true)}>Bearbeiten</button>{" "}
+        <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={startEditing}>Bearbeiten</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={busy} onClick={onToggle}>
           {listing.active ? "Deaktivieren" : "Aktivieren"}</button>{" "}
         <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}

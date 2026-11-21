@@ -45,3 +45,31 @@ test("Nur den Preis ändern schickt den Termin mit Uhrzeit unverändert zurück"
   // Die Liste lädt nach dem Speichern neu: der neue Preis steht, der Termin ist derselbe.
   await expect(page.getByRole("row", { name: new RegExp(angebot) })).toContainText("12");
 });
+
+// B-786: ein mit „Abbrechen“ verworfenes Datum geht beim nächsten „OK“ nicht mit hinaus.
+test("Ein verworfenes Datum geht nach „Abbrechen“ nicht mit dem nächsten Speichern hinaus", async ({ page }) => {
+  await vaterLogin(page, FATHER);
+  const artikel = `Eisessen ${RUN}`;
+  const angebot = `Einmal-Eis ${RUN}`;
+  const article = await post(page, "/api/v1/supervisor/shop/articles",
+    { articleNumber: `E-${RUN}`, title: artikel, description: null, unitType: "Stueck", actionType: "Sonstiges" });
+  const listing = await post(page, `/api/v1/supervisor/shop/articles/${article.id}/listings`, {
+    title: angebot, description: null, coinPrice: 10, gemPrice: 0, unitsPerPurchase: 1, maxStock: 1,
+    refillKind: "Once", refillAtUtc: "2030-02-01T10:00:00Z",
+  });
+
+  await page.goto("/vater/shop");
+  await page.getByRole("row", { name: new RegExp(artikel) }).getByRole("button", { name: /Angebote/ }).click();
+  const angebotZeile = page.getByRole("row", { name: new RegExp(angebot) });
+  const zeile = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  await angebotZeile.getByRole("button", { name: "Bearbeiten" }).click();
+  await zeile.getByLabel("Datum", { exact: true }).fill("2030-03-01");
+  await zeile.getByRole("button", { name: "Abbrechen" }).click();
+
+  await angebotZeile.getByRole("button", { name: "Bearbeiten" }).click();
+  await expect(zeile.getByLabel("Datum", { exact: true })).toHaveValue("2030-02-01");
+  await zeile.getByLabel("Preis 🪙", { exact: true }).fill("12");
+  const patch = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(`/listings/${listing.id}`));
+  await zeile.getByRole("button", { name: "OK" }).click();
+  expect((await patch).postDataJSON().refillAtUtc).toMatch(/^2030-02-01T10:00:00/);
+});

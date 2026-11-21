@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { ShopListing, UpdateShopListingDto } from "../lib/types";
+import type { ChildResponse, ShopListing, UpdateShopListingDto } from "../lib/types";
 import { ListingRow } from "./VaterShop";
 
 /*
@@ -51,5 +51,81 @@ describe("Vater-Shop – einmaliger Termin beim Bearbeiten (B-782)", () => {
     });
     expect(dto.refillKind).toBe("Once");
     expect(dto.refillAtUtc).toBe("2026-11-20T00:00:00Z");
+  });
+});
+
+/*
+ * B-786: „OK“ schickt nur einen Termin, den der Vater in diesem Formular sieht und gewählt hat – keinen Rest-Termin eines
+ * früheren „einmalig“ und keinen, den er mit „Abbrechen“ verworfen hat.
+ */
+function zeile(listing: ShopListing, kids: ChildResponse[] = []) {
+  const onSave = vi.fn();
+  render(<table><tbody><ListingRow listing={listing} unitType={"Piece" as never} kids={kids} busy={false}
+    onFail={() => {}} onSave={onSave} onFill={() => {}} onToggle={() => {}} onRemove={() => {}} /></tbody></table>);
+  return onSave;
+}
+
+describe("Vater-Shop – Bearbeiten beginnt beim gespeicherten Angebot (B-786)", () => {
+  // AK 1. Rot, solange das Datum unabhängig von der Art aus dem Termin vorbelegt wird: dann stünde 2026-11-12 im Feld, „OK“
+  // wäre frei und der Rest-Termin ginge ungewählt hinaus.
+  it("ein wöchentliches Angebot mit Rest-Termin öffnet „einmalig“ mit leerem Datum und gesperrtem OK", () => {
+    zeile({ ...ONCE, refillKind: "Weekly", refillDayOfWeek: "Monday" } as unknown as ShopListing);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Auffüllen", { exact: true }), { target: { value: "Once" } });
+    expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("");
+    expect((screen.getByRole("button", { name: "OK" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // Review B-786: wählt der Vater nach dem Wechsel selbst den Tag des Rest-Termins, geht Mitternacht hinaus, nicht dessen
+  // verborgene Uhrzeit. Rot, wenn `planDto` den geladenen Termin auch bei einem nicht-einmaligen Angebot vergleicht.
+  it("der selbst gewählte Tag des Rest-Termins geht als Mitternacht hinaus, nicht mit dessen Uhrzeit", () => {
+    const onSave = zeile({ ...ONCE, refillKind: "Weekly", refillDayOfWeek: "Monday" } as unknown as ShopListing);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Auffüllen", { exact: true }), { target: { value: "Once" } });
+    fireEvent.change(screen.getByLabelText("Datum", { exact: true }), { target: { value: "2026-11-12" } });
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect((onSave.mock.calls[0][0] as UpdateShopListingDto).refillAtUtc).toBe("2026-11-12T00:00:00Z");
+  });
+
+  // AK 2. Rot, wenn „Bearbeiten“ den Plan nicht neu belegt: das verworfene 2026-11-20 stünde im Feld und ginge als neuer
+  // Termin hinaus.
+  it("nach „Abbrechen“ steht wieder der gespeicherte Termin, und er geht unverändert hinaus", () => {
+    const onSave = zeile(ONCE);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Datum", { exact: true }), { target: { value: "2026-11-20" } });
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("2026-11-12");
+    fireEvent.change(screen.getByLabelText("Preis 🪙", { exact: true }), { target: { value: "12" } });
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect((onSave.mock.calls[0][0] as UpdateShopListingDto).refillAtUtc).toBe("2026-11-12T10:00:00");
+  });
+
+  // AK 3. Rot, wenn „Bearbeiten“ das Formular nicht neu belegt: der verworfene Preis 99 stünde im Feld.
+  it("nach „Abbrechen“ steht wieder der gespeicherte Preis", () => {
+    zeile(ONCE);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.change(screen.getByLabelText("Preis 🪙", { exact: true }), { target: { value: "99" } });
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    expect((screen.getByLabelText("Preis 🪙", { exact: true }) as HTMLInputElement).value).toBe("10");
+  });
+
+  // Wie AK 3 für die Zielgruppe. Rot, wenn „Bearbeiten“ sie nicht neu belegt: das verworfene Häkchen bei Ben stünde noch.
+  it("nach „Abbrechen“ steht wieder die gespeicherte Zielgruppe", () => {
+    const kids = [{ id: 1, name: "Ada" }, { id: 2, name: "Ben" }] as unknown as ChildResponse[];
+    zeile(ONCE, kids);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Ben" }));
+    fireEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    expect((screen.getByRole("checkbox", { name: "Ben" }) as HTMLInputElement).checked).toBe(false);
+  });
+
+  // AK 4. Rot, wenn das Datum immer leer vorbelegt wird: ein „einmalig“-Angebot öffnete ohne seinen Termin.
+  it("ein einmaliges Angebot öffnet mit seinem Datum", () => {
+    zeile(ONCE);
+    fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
+    expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("2026-11-12");
   });
 });
