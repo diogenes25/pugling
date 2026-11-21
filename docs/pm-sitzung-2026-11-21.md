@@ -434,3 +434,52 @@ wäre ein neues Tor, darum hier nur vorgeschlagen.
 
 **Entscheidung zum Umstoßen:** B-783 Entscheidung 1 (die Verlängerung verwischt das alte Fenster wie das Wiedereinschalten,
 Zeitachse und Metriken können sich nachträglich verbessern). Alternative wäre ein Startverlauf mit Migration.
+
+## Sprint 104 — Ziel & Umfang
+
+**Umfang:** [B-639](backlog/B-639-dezimalkomma-im-zahlenvergleich.md), Defekt, P2, M, `geschaetzt` (im Dialog gegrillt).
+
+**Sprint-Ziel:** Aus Sicht des Sohns zählt eine richtig gerechnete Dezimalzahl, egal ob er sie mit Komma oder Punkt
+tippt – im Test wie beim Üben, und so, wie der Vater es im Testmodus gesehen hat. Widerlegbar durch „2,5“, das als falsch
+gewertet wird.
+
+**Entwickler-Brief:** Senke ist `AnswerGrader.Matches(given, item)` (alle Spielpfade) plus `AnswerChecking.NumericMatch`
+(Katalog-Check, Drill). Ein Parser an einer Stelle; Zahlen-Atome tragen ihr Ziel als `ContentItem.Numeric`, Text-Atome
+bleiben unberührt. Keine Migration, kein Vertragsbruch (`ContentItem` ist intern).
+
+## Iteration 104 — umgesetzt
+
+- `NumericAnswer` (neu), `ContentItem.Numeric`, `AnswerGrader` (Zahl-Zweig, Tippfehler-Sperre), `NumericMatch` auf dem
+  Parser, `Swap` räumt `Numeric` ab.
+- **Rote Probe:** 14 von 28 Fällen der neuen Theorie rot vor dem Fix (u. a. „2,5“ auf beiden Pfaden, Toleranz beim Spielen).
+- Mutanten P1–P11 und P1e (E2E) rot am erwarteten Fall. **Volle Suite (Release):** 1978/1978.
+- **Review** (`pugling-reviewer`): kein 🔴; zwei 🟡 nur Testkommentare (falsch benannte rote Proben) → korrigiert, ohne
+  Zählung; drei 🟢 übernommen. **Zähler 0 von 5.**
+
+## Runde 9 — Rollengang Sprint 104
+
+Server und Vite frisch von Playwright gestartet (5201/5174), nach der letzten Änderung.
+
+- **Sohn — abgenommen:** neue Spec `rechnen-mit-komma`: „Ich tippe 2,5 wie in der Schule, und es zählt. 2,3 bei 7 : 3
+  zählt auch. 2,5 bei 5 · 5 natürlich nicht.“ (2 / 3, mit P1 rot).
+- **Vater — Regressionszeuge:** sein Testmodus nutzt denselben Parser (Katalog-Check, im Unit-Test belegt); keine
+  Vater-Fläche im Diff.
+- **Creator — Regressionszeuge:** `full-flow` grün.
+- **Geräte-Prüfung offen:** am Handy, ob die Tastatur der Arcade ein Komma bequem anbietet (kein `inputMode="decimal"`).
+
+## Retrospektive (Sprint 104)
+
+**Nachschau:** Sprint 103 nachgesehen (B-783, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: die Aktivierungsregel
+(`DeactivateSameSubjectPlansAsync` filtert ohne Datum, ein verlängerter Plan schaltet keinen laufenden ab) und der
+Client-Rundweg (`VaterPlanDetail.tsx:160`).
+
+**Was die eigenen Tore durchgelassen haben:** Der Reviewer fand Testkommentare, die rote Proben behaupteten, die es nicht
+gab („25“ für 2,5; „1234“ für 1,234). Das ist genau die Fehlerklasse aus dem Root-`CLAUDE.md` („eine Zusicherung, die den
+Ausgangszustand prüft, kann nie fehlschlagen“), wieder von einem Reviewer und von keinem Tor gefunden. Die rote Probe lief
+diesmal je Theorie-Fall (14 von 28 rot gezählt), aber niemand hat die 14 grünen gegen die Beschriftung abgeglichen.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** `mutant-probe.py` (oder ein Geschwister-Skript) fährt die neuen Tests
+einmal gegen den Stand **vor** dem Fix und listet je Fall „grün vor dem Fix“. Jeder so gelistete Fall muss im Kommentar
+als Absichtserklärung stehen, sonst bricht das Skript ab. Das wäre ein neues Tor.
+
+**Bewusst ungedeckt:** der Gedankenstrich „–“ als Minus (nur vermerkt), die Ziffern-Tastatur der Arcade (Geräte-Prüfung).

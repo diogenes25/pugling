@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt]
+tags: [typ/story, status/abgenommen]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -135,3 +135,54 @@ gemeinsamer Zahlen-Parser, kein Schema, kein neues Vertragsfeld.
   für beide Pfade, Toleranz damit auch beim Spielen. Akzeptanzkriterien final (7).
 - **2026-11-17** — geschaetzt: M, backend, keine Migration, kein Vertragsbruch; ein Eingriff im `AnswerGrader`, der alle
   Spielpfade trägt.
+- **2026-11-21** — in-arbeit (Nachtlauf 2026-11-21, Sprint 104). Gebaut nach Angriffsplan: `NumericAnswer`
+  (`Services/Shared/NumericAnswer.cs`) als einziger Zahlen-Parser, `ContentItem.Numeric` (`NumericTarget`), gesetzt in
+  `ArithmeticExerciseType.ItemsOf`; `AnswerGrader.Matches` vergleicht Zahlen-Atome numerisch mit Toleranz,
+  `IsMisspelled` gibt für sie `false`; `AnswerChecking.NumericMatch` (Katalog-Check, Drill) nutzt denselben Parser.
+  **Rote Probe** (`ZahlenantwortTests`, vor dem Fix): 14 von 28 Fällen rot – u. a. „2,5“ für 2,5 auf beiden Pfaden
+  (der Check-Pfad las 25), „2,3“ bei Toleranz 0,05 beim Spielen, „3,33“ im Drill, „2,4“ als Tippfehler für 2,5.
+  Je AK-Fall Test und Mutante:
+  - AK 1 (Komma/Punkt/2.50, beide Pfade) → `Dieselbe_Zahl_Zaehlt_Auf_Beiden_Pfaden`; P2 (Komma nicht ersetzt) → rot.
+    Spielen in der Position: `PositionTestFlowTests.Test_Rechenaufgabe_Mit_Komma_Und_Toleranz` (erwartet 2 von 3); P1
+    (`Numeric` in `ItemsOf` weg) → rot.
+  - AK 2 („2,5“ ist nicht 25) → derselbe Integrationsfall (dritte Aufgabe 25 mit „2,5“) und „2,5“ in der Theorie; P3
+    (Komma als Tausender gelesen) → rot. „25“ für 2,5 in `Andere_Oder_Keine_Zahl_Ist_Falsch` ist Absichtserklärung.
+  - AK 3 (1.234) → „1,234“ in der ersten Theorie (P2 → rot); „1234“ ist Absichtserklärung.
+  - AK 4 (Toleranz beim Spielen) → `Toleranz_Gilt_Beim_Spielen`; P1, P5 (Grenze exklusiv) → rot.
+  - AK 5 (+3, leer, „drei“) → „+3“, P8 (Vorzeichen weg) → rot; leer und „drei“ sind Absichtserklärung (vorher schon falsch).
+  - AK 6 (Drill) → `Drill_Wertet_Komma_Wie_Punkt`; P2 → rot („3.33“ ist Absichtserklärung).
+  - AK 7 (Text-Typen) → `Text_Atom_Bleibt_Textvergleich`; P7 (Zahl-Regel für jedes Atom) → rot.
+  - Risiko Minuszeichen → „−0,4“, P4 (U+2212 weg) → rot. Tippfehler → `Falsche_Zahl_Ist_Kein_Tippfehler`, P6 → rot.
+  - Aus dem Review (🟢, ohne Zählung): `Swap` setzt `Numeric = null` → `Vertauschte_Karte_Ist_Kein_Zahlen_Atom`, P10 → rot;
+    der Schlusspunkt „2,5.“ wird wie früher beim Textvergleich toleriert → P11 → rot; Rand-Leerraum über `Trim()` → P9 → rot.
+  - **Abweichung vom Testweg:** statt `ExerciseCheckEndpointTests`/`PositionPracticeFlowTests` prüft ein Unit-Test beide
+    Pfade direkt (`Check` und `AnswerGrader.Matches` auf dem Atom aus `ItemsOf`), dazu ein Integrationsfall über die
+    Test-Route. Üben läuft durch dieselbe `Matches`-Zeile (`PositionPracticeController.cs:643/:858`, vom Review gelesen).
+
+  Gemessen nach der letzten Änderung an `ed922687 + Arbeitsbaum geändert` mit `mutant-probe.py` (Debug), Grundlinie
+  danach grün:
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | P1 | `BuiltInExerciseTypes.cs:483` ohne `Numeric` | red | red |
+  | P2 | `NumericAnswer.cs:21` Komma nicht ersetzt | red | red |
+  | P3 | `:21` Komma entfernt (= Tausender) | red | red |
+  | P4 | `:21` U+2212 nicht ersetzt | red | red |
+  | P5 | `:27` Toleranz exklusiv | red | red |
+  | P6 | `AnswerGrader.cs:54` Tippfehler-Sperre weg | red | red |
+  | P7 | `AnswerGrader.cs:19` Zahl-Regel für jedes Atom | red | red |
+  | P8 | `NumericAnswer.cs:12` ohne Vorzeichen | red | red |
+  | P9 | `:21` ohne `Trim()` | red | red |
+  | P10 | `ExerciseContentProvider.cs:139` `Swap` behält `Numeric` | red | red |
+  | P11 | `:21` ohne Schlusspunkt-Toleranz | red | red |
+  | P1e | `BuiltInExerciseTypes.cs:483`, E2E `rechnen-mit-komma` | red | red |
+
+  Review (`pugling-reviewer`): kein 🔴. Zwei 🟡, beide falsch beschriftete Testkommentare (benannte rote Proben, die
+  keine waren) → Kommentare korrigiert, **ohne Zählung** (nur Kommentar). Vier 🟢: drei übernommen (oben), einer nur
+  vermerkt (der Gedankenstrich „–“ als Minus wird nicht gelesen – erst, wenn ein Tablet ihn wirklich schickt).
+  **Zähler 0 von 5.**
+- **2026-11-21** — abgenommen in Commit `7ff47fde` (Sprint 104). Backend 1978/1978 (Release).
+  **Rollengang Sohn:** neue Spec `rechnen-mit-komma` gegen die frisch gestartete App (5201/5174): der Sohn tippt im
+  Tagestest „2,5“, „2,3“, „2,5“ und sieht „2 / 3“ – 1 passed, mit P1 rot. `full-flow` grün.
+  Nicht enthalten, wie geplant: eine Zifferntastatur (`inputMode="decimal"`) in der Arcade. Das Textfeld nimmt das Komma
+  an; ob die Handy-Tastatur es bequem anbietet, ist eine offene Geräte-Prüfung.

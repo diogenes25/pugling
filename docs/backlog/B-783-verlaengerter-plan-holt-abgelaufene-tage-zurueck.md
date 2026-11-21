@@ -12,6 +12,7 @@ quelle: "Review von Sprint 102 (B-672, pugling-reviewer) im Nachtlauf 2026-11-21
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-672]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-783 · Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück
@@ -104,3 +105,8 @@ Agent und Skripte legen Pläne nur an (Review von Sprint 102).
   die Integrationsfälle fahren den PATCH des Vaters über die API. Regressions-E2E nach der letzten Änderung frisch
   gestartet (5201/5174): `full-flow`, `vater-schmal`, `heute-dran-nach-antworten` – 4 passed. Vater abgenommen auf diesem
   Beleg, Sohn und Creator als Regressionszeugen.
+- **2026-11-21** — nachgeschaut (Nachschau Sprint 103 in der Retro von Sprint 104), kein Befund. Geprüft:
+  `DeactivateSameSubjectPlansAsync` (`StudyPlansController.cs:162-168`) filtert nach `Active` ohne Datum – ein
+  verlängerter abgelaufener Plan war also schon der einzige aktive seines Fachs und schaltet keinen laufenden ab; der
+  Client (`VaterPlanDetail.tsx:160`) schickt `endDate` nur bei Änderung, ein Speichern ohne Datumsänderung löst die
+  Regel nicht aus.
