@@ -541,14 +541,15 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     /// <summary>
     /// Evaluates the day and credits the goal points once for every position with a reached goal
-    /// (idempotent per period via <see cref="PositionGoalReward"/>). Returns the current daily status.
+    /// (idempotent per period via <see cref="PositionGoalReward"/>). Returns nothing: the hand-in path never reads a day
+    /// view here, and whoever needs one afterwards calls <see cref="ComputeDayAsync"/> (B-609).
     /// <para>
     /// The existence check below is only the fast pre-check; the <b>guarantee</b> lives in the unique index on
     /// <c>(PlanPositionId, Cadence, PeriodStart)</c> - per cadence only, see <see cref="SamePeriodCadences"/>. Exactly as with the penalty
     /// (<see cref="SettleClosedPeriodsAsync"/>), the concurrent loser must not break on this.
     /// </para>
     /// </summary>
-    public async Task<DayOverview> EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
+    public async Task EvaluateAndAwardAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var now = time.GetUtcNow().UtcDateTime;
@@ -592,10 +593,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             // index. Nothing is open in domain terms: the reward is there, it is once per period, and the amount
             // is the same - the conflict here always means "already booked". Rethrowing would only turn a
             // successful completion into a 500. Detach it so that a later SaveChanges of the same request does
-            // not stumble over it again; the day status below is read fresh from the database anyway.
+            // not stumble over it again; whatever reads the day afterwards reads it fresh from the database.
             db.ChangeTracker.Clear();
         }
-        return await ComputeDayAsync(plan, day, ct);
     }
 
     /// <summary>

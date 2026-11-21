@@ -262,13 +262,17 @@ public class PositionGoalOverviewTests(PuglingWebAppFactory factory) : IClassFix
             Reason = "[Rennen] Tagesziel erreicht",
         });
 
-        // It has to run through and return the current state - not throw.
-        var overview = await scope.ServiceProvider.GetRequiredService<PositionProgressService>()
-            .EvaluateAndAwardAsync(plan, today);
-        Assert.True(overview.DutyDone);
+        // It has to run through - not throw. The booking returns nothing (B-609); the day is read afterwards.
+        await scope.ServiceProvider.GetRequiredService<PositionProgressService>().EvaluateAndAwardAsync(plan, today);
+        // A later save of the same request must not trip over the loser's rows again - what the cleared tracker is for.
+        await db.SaveChangesAsync();
 
         using var check = _factory.Services.CreateScope();
         var fresh = check.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var overview = await check.ServiceProvider.GetRequiredService<PositionProgressService>()
+            .ComputeDayAsync(fresh.StudyPlans.First(p => p.Id == planId), today);
+        Assert.True(overview.DutyDone);
+        Assert.Equal(20, overview.PointsAwarded);
         // Neither half nor double booked: the conflict discards the loser's whole transaction.
         Assert.Equal(1, fresh.PositionGoalRewards.Count(r => r.PlanPositionId == positionId));
         Assert.Equal(ledgerBefore, fresh.ChildPointsEntries.Count(p => p.Kind == PointKind.Goal));
