@@ -203,6 +203,8 @@ public static class ApiErrors
     public static readonly ApiError VocabularyInUse = new("vocabulary_in_use", 409, "Vocabulary item is in use.");
     /// <summary>Position already has practice/test data and cannot be deleted (409).</summary>
     public static readonly ApiError PositionHasData = new("position_has_data", 409, "Position has practice/test data.");
+    /// <summary>Study plan was already played by its child and cannot be handed to another child (409, B-673).</summary>
+    public static readonly ApiError PlanHasData = new("plan_has_data", 409, "Study plan has practice/test data.");
     /// <summary>Study plan is currently not active/playable (403).</summary>
     public static readonly ApiError PlanInactive = new("plan_inactive", 403, "Study plan is not active.");
     /// <summary>

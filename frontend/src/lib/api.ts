@@ -185,6 +185,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   last_owner: "Eine Übung braucht mindestens jemanden, der sie verwaltet – das letzte Recht „Verwalten“ kannst du nicht entziehen.",
   vocabulary_in_use: "Diese Vokabel wird noch benutzt – in Übungen oder als Grundform anderer Einträge.",
   position_has_data: "An dieser Position wurde schon geübt oder getestet. Entfernen würde diesen Lernstand mitnehmen und geht darum nicht mehr.",
+  // B-673: der Spielstand hängt am Plan und gehört über ihn seinem Kind. Kein Ausweg genannt: es gibt keinen, der die
+  // Sperre aufhebt, ohne dem ersten Kind etwas zu nehmen.
+  plan_has_data: "Mit diesem Plan wurde schon geübt oder getestet. Der Lernstand gehört dem Kind, das damit gelernt hat, darum lässt sich der Plan keinem anderen Kind mehr geben.",
   timetable_slot_taken: "Dieses Fach steht an diesem Wochentag schon im Stundenplan.",
   purchase_not_open: "Dieser Kauf ist schon storniert.",
   activation_not_pending: "Diese Anfrage ist schon beantwortet.",

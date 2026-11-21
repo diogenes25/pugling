@@ -167,12 +167,23 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Active, false), ct);
     }
 
+    /// <summary>
+    /// B-673: the plan was played - a practice session, a test attempt (the supervisor's own included: a passed one counts
+    /// for the child) or a progress row at one of its positions.
+    /// </summary>
+    // No default for `ct`, as above.
+    private async Task<bool> PlanHasPlayDataAsync(int planId, CancellationToken ct) =>
+        await db.PracticeSessions.AnyAsync(s => s.StudyPlanId == planId, ct)
+        || await db.TestAttempts.AnyAsync(t => t.StudyPlanId == planId, ct)
+        || await db.PositionItemProgress.AnyAsync(p => p.PlanPosition!.StudyPlanId == planId, ct);
+
     /// <summary>Changes the study plan container (partial, father/own only). <see cref="UpdatePlanDto.ChildId"/> assigns the plan to another own child.</summary>
     [HttpPatch("{planId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PlanResponse>> Update(int planId, UpdatePlanDto dto, CancellationToken ct = default)
     {
         // Only scalar fields change - the positions stay untouched and need not be loaded/tracked.
@@ -180,10 +191,16 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         if (plan is null) return NotFound();
 
         // Reassigning to another child: only to a child of this supervisor (otherwise 404, as on create).
+        var childMoved = false;
         if (dto.ChildId is { } newChildId && newChildId != plan.ChildId)
         {
             if (!await access.SupervisorOwnsChildAsync(User, newChildId, ct)) return this.ProblemWithCode(ApiErrors.NotFound, "Child not found.");
+            // B-673: the play data hangs on the plan and belongs to its child through it - a move would hand the first
+            // child's streak and penalty start to the second, or destroy them. Introduced words count: they start billing.
+            if (await PlanHasPlayDataAsync(planId, ct))
+                return this.ProblemWithCode(ApiErrors.PlanHasData, "This study plan already has practice or test data and cannot be given to another child.");
             plan.ChildId = newChildId;
+            childMoved = true;
         }
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
@@ -221,6 +238,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         // B-613: only the switch from off to on moves the date; a repeated "active: true" must not shift it.
         if (dto.Active == true && !plan.Active) plan.ActivatedAt = today;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
+        // B-673: for the new child an active plan is switched on today - the days before it were never its duty.
+        if (childMoved && plan.Active) plan.ActivatedAt = today;
         // A moved start changes the first day the child can play an active plan: the new start, but never before today
         // (days before it were not playable then, so they stay in the child's favour). Without this, a future plan pulled
         // forward to today would keep its old start as switch-on day and owe nothing until then.

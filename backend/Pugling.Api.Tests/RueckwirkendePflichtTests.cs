@@ -728,6 +728,141 @@ public class RueckwirkendePflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(t, ActivatedAt(planC));
     }
 
+    // B-673: a sibling of the setup child with its own plan of a fresh subject, running since start, its daily goal a duty
+    // since then; nothing played yet.
+    private async Task<(int Sibling, int Plan, int Position)> SiblingPlanAsync(Setup s, DateOnly start)
+    {
+        var sibling = await TestApi.IdAsync(await s.Father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Geschwister") }));
+        var subjectId = await TestApi.IdAsync(await s.Father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Geschwister-Fach") }));
+        var (plan, position) = TestApi.SeedLeitnerPosition(factory, s.ExerciseId, (int)TestStage.FreeText, childId: sibling, introduced: false);
+        Backdate(plan, position, start);
+        Change<StudyPlan>(plan, p => { p.SubjectId = subjectId; p.EndDate = start.AddDays(20); p.ActivatedAt = start; });
+        return (sibling, plan, position);
+    }
+
+    private Task<HttpResponseMessage> MoveToAsync(Setup s, int planId, object body) =>
+        s.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", body);
+
+    private static async Task AssertPlanHasDataAsync(HttpResponseMessage res)
+    {
+        Assert.Equal(System.Net.HttpStatusCode.Conflict, res.StatusCode);
+        Assert.Equal("plan_has_data", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+
+    /// <summary>
+    /// B-673 AK 1: a plan the sibling has played - one practice session, one test, or only introduced words - cannot be
+    /// handed to the setup child: 409 <c>plan_has_data</c>, the plan stays with the sibling and the setup child's streak
+    /// stays 4. Red today (200, the owner changes), and each case red on its own when the lock leaves its table out.
+    /// </summary>
+    [Theory]
+    [InlineData("practice")]
+    [InlineData("test")]
+    [InlineData("introduced")]
+    public async Task Gespielter_Plan_Laesst_Sich_Nicht_Umhaengen(string played)
+    {
+        var s = await SetupAsync();
+        var (sibling, planB, positionB) = await SiblingPlanAsync(s, Today.AddDays(-3));
+        switch (played)
+        {
+            case "practice":
+                using (var scope = factory.Services.CreateScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+                    db.PracticeSessions.Add(new PracticeSession { StudyPlanId = planB, PlanPositionId = positionB, Day = Today.AddDays(-2) });
+                    db.SaveChanges();
+                }
+                break;
+            case "test":
+                SeedPassedTest(planB, positionB, Today.AddDays(-2));
+                break;
+            default:
+                TestApi.MarkIntroduced(factory, positionB);
+                break;
+        }
+
+        await AssertPlanHasDataAsync(await MoveToAsync(s, planB, new { childId = s.ChildId }));
+
+        Assert.Equal(sibling, Read(db => db.StudyPlans.Single(p => p.Id == planB).ChildId));
+        Assert.Equal(4, await StreakAsync(s));
+    }
+
+    /// <summary>
+    /// B-673 AK 2: the 409 changes nothing - a title sent along with the other child stays unsaved. Red when the lock
+    /// runs after the save; a lock after the title is applied but before the save is harmless (nothing is saved).
+    /// </summary>
+    [Fact]
+    public async Task Abgewiesenes_Umhaengen_Speichert_Nichts()
+    {
+        var s = await SetupAsync();
+        var (_, planB, positionB) = await SiblingPlanAsync(s, Today.AddDays(-3));
+        SeedPassedTest(planB, positionB, Today.AddDays(-2));
+        var title = Read(db => db.StudyPlans.Single(p => p.Id == planB).Title);
+
+        await AssertPlanHasDataAsync(await MoveToAsync(s, planB, new { childId = s.ChildId, title = "Neuer Titel" }));
+
+        Assert.Equal(title, Read(db => db.StudyPlans.Single(p => p.Id == planB).Title));
+    }
+
+    /// <summary>
+    /// B-673 AK 3: an active, unplayed plan running since three days is handed to the setup child, who met those days
+    /// with plan A. The move switches it on for him today: <c>ActivatedAt</c> is today, and once he meets it today his
+    /// streak is 4. Red today (the plan's three past days are open duties of an active plan ⇒ 1).
+    /// </summary>
+    [Fact]
+    public async Task Umgehaengter_Plan_Bricht_Die_Serie_Des_Neuen_Kindes_Nicht()
+    {
+        var s = await SetupAsync();
+        var (_, planB, positionB) = await SiblingPlanAsync(s, Today.AddDays(-3));
+
+        (await MoveToAsync(s, planB, new { childId = s.ChildId })).EnsureSuccessStatusCode();
+        TestApi.MarkIntroduced(factory, positionB); // he meets it today: the words are known
+        await PassTestAsync(s.Child, planB, positionB);
+
+        Assert.Equal(4, await StreakAsync(s));
+        Assert.Equal(Today, ActivatedAt(planB));
+    }
+
+    /// <summary>
+    /// B-673 AK 4 and risk 3, a data assertion: a switched-off plan handed over keeps its <c>ActivatedAt</c> (switching on
+    /// sets it later), and so does an active one switched off by the same PATCH. Red when the move overwrites
+    /// <c>ActivatedAt</c> without looking at <c>Active</c> after the PATCH.
+    /// </summary>
+    [Fact]
+    public async Task Umgehaengter_Inaktiver_Plan_Behaelt_Sein_Einschaltdatum()
+    {
+        var s = await SetupAsync();
+        var (_, planB, _) = await SiblingPlanAsync(s, Today.AddDays(-3));
+        Change<StudyPlan>(planB, p => p.Active = false);
+        var (_, planC, _) = await SiblingPlanAsync(s, Today.AddDays(-3));
+
+        (await MoveToAsync(s, planB, new { childId = s.ChildId })).EnsureSuccessStatusCode();
+        (await MoveToAsync(s, planC, new { childId = s.ChildId, active = false })).EnsureSuccessStatusCode();
+
+        Assert.Equal(Today.AddDays(-3), ActivatedAt(planB));
+        Assert.Equal(Today.AddDays(-3), ActivatedAt(planC));
+    }
+
+    /// <summary>
+    /// B-673 AK 5: on a played plan, a PATCH without a child or with its own child is no move - 200, and
+    /// <c>ActivatedAt</c> stays. Red when the lock fires before the "other child" branch, or when the switch-on day is
+    /// set for an unchanged child.
+    /// </summary>
+    [Fact]
+    public async Task Gleiches_Kind_Ist_Kein_Umhaengen()
+    {
+        var s = await SetupAsync();
+        var (sibling, planB, positionB) = await SiblingPlanAsync(s, Today.AddDays(-3));
+        SeedPassedTest(planB, positionB, Today.AddDays(-2));
+
+        (await MoveToAsync(s, planB, new { title = "Plan B2" })).EnsureSuccessStatusCode();
+        (await MoveToAsync(s, planB, new { title = "Plan B3", childId = sibling })).EnsureSuccessStatusCode();
+
+        Assert.Equal("Plan B3", Read(db => db.StudyPlans.Single(p => p.Id == planB).Title));
+        Assert.Equal(Today.AddDays(-3), ActivatedAt(planB));
+    }
+
     /// <summary>
     /// The creating write paths store the dates the backfill would give (B-613, risk 5): a plan is on since its start, a
     /// position a duty since its creation day - plan and position create, and the seed (the weak-word review is asserted in

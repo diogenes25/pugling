@@ -7433,6 +7433,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -44611,6 +44621,7 @@
               "not_author",
               "not_found",
               "not_owner",
+              "plan_has_data",
               "plan_inactive",
               "position_has_data",
               "publisher_in_use",

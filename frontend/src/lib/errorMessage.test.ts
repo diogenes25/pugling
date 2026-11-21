@@ -69,6 +69,14 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
+  // B-673: die Sperre beim Umhängen eines gespielten Plans. Rot, wenn der Eintrag fehlt (dann die englische Zeile).
+  it("übersetzt die Sperre beim Umhängen eines gespielten Plans", () => {
+    const text = problem("plan_has_data");
+
+    expect(text).toContain("keinem anderen Kind");
+    expect(text).not.toContain("Some English sentence.");
+  });
+
   // B-205: die Löschsperre an einer Übung (seit B-413 nur noch dort). Rot, wenn der Eintrag fehlt (dann die englische Zeile).
   // Der Halbsatz zur Betreuung ersetzt, was der Server dynamisch sagt: Verwendungen außerhalb der eigenen Betreuung sperren auch.
   // B-414: kein „Entferne sie dort zuerst" – eine gespielte Position lässt sich nicht herausnehmen (`position_has_data`).
