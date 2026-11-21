@@ -480,7 +480,7 @@ public sealed class ArithmeticExerciseType : ExerciseTypeBase
         return [.. c.Problems.Select((p, i) =>
         {
             var answer = p.Answer.ToString(CultureInfo.InvariantCulture);
-            return new ContentItem(i, p.Prompt, answer, [answer]);
+            return new ContentItem(i, p.Prompt, answer, [answer], Numeric: new NumericTarget(p.Answer, p.Tolerance));
         })];
     }
 
@@ -687,8 +687,7 @@ internal static class AnswerChecking
         given.TryGetValue(index, out var v) ? v : null;
 
     public static bool NumericMatch(string? given, decimal expected, decimal tolerance) =>
-        decimal.TryParse(given, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
-        && Math.Abs(value - expected) <= tolerance;
+        NumericAnswer.Matches(given, expected, tolerance);
 
     public static bool TextMatch(string? given, string expected) =>
         StageMechanics.Normalize(given) == StageMechanics.Normalize(expected);

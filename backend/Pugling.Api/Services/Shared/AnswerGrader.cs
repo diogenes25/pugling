@@ -13,9 +13,12 @@ public class AnswerGrader
     /// tolerance (<see cref="ContentItem.ArticleOptionalIn"/>) and, for a word-list entry, each single meaning of it
     /// (<see cref="ContentItem.MeaningsSeparable"/>). The one entry point for every place that grades an atom
     /// (practice, test, preview, set matching), so the rule cannot differ between practice and test.
+    /// A number atom (<see cref="ContentItem.Numeric"/>, B-639) is compared as a number instead, with its tolerance.
     /// </summary>
     public bool Matches(string? given, ContentItem item) =>
-        item.GradedAnswers().Any(a => Matches(given, a, item.ArticleOptionalIn));
+        item.Numeric is { } number
+            ? NumericAnswer.Matches(given, number.Value, number.Tolerance)
+            : item.GradedAnswers().Any(a => Matches(given, a, item.ArticleOptionalIn));
 
     /// <summary>
     /// Text answer against one expected solution. An empty input is never correct. With
@@ -47,7 +50,8 @@ public class AnswerGrader
     public bool IsMisspelled(string? given, ContentItem item, IReadOnlyList<ContentItem> siblings)
     {
         var g = StageMechanics.Normalize(given);
-        if (g.Length == 0 || Matches(given, item)) return false;
+        // A wrong number is another number, not a spelling slip - "2,4" is one character off "2,5" (B-639).
+        if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
         var own = Spellings(item, item).ToHashSet();
         if (own.Count == 0) return false;
         var nearest = own.Min(a => Distance(g, a));

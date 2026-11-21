@@ -82,6 +82,52 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
         JsonAssert.True(res, "passed");
     }
 
+    /// <summary>
+    /// B-639 AK 1 and 4 through the child's test route: a task with the solution 2.5 takes "2,5", one with 2.33 and
+    /// tolerance 0.05 takes "2,3", a third with 25 rejects "2,5" - 2 of 3. Red while playing compares text (0 of 3: the
+    /// comma never matches and the tolerance is ignored) and red if "2,5" reads as 25 again (the third would count).
+    /// </summary>
+    [Fact]
+    public async Task Test_Rechenaufgabe_Mit_Komma_Und_Toleranz()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("Komma-Mathe") }));
+        var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId, "Kapitel IV");
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{seriesUnitId}/arithmetic", new
+            {
+                title = "Dezimalzahlen",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    problems = new[]
+                    {
+                        new { prompt = "5 : 2", answer = 2.5m, tolerance = 0m },
+                        new { prompt = "7 : 3 (gerundet)", answer = 2.33m, tolerance = 0.05m },
+                        new { prompt = "5 · 5", answer = 25m, tolerance = 0m },
+                    },
+                },
+            }));
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(_factory, exerciseId, (int)TestStage.FreeText, useLeitner: false);
+        var child = await TestApi.ChildAsync(_factory);
+        var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{positionId}/tests";
+
+        var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(baseUrl, new { }), "attemptId");
+        var res = await (await child.PostAsJsonAsync($"{baseUrl}/{attemptId}/submit", new
+        {
+            answers = new[]
+            {
+                new { itemIndex = 0, givenAnswer = "2,5" },
+                new { itemIndex = 1, givenAnswer = "2,3" },
+                new { itemIndex = 2, givenAnswer = "2,5" },
+            },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(3, res.GetProperty("totalItems").GetInt32());
+        Assert.Equal(2, res.GetProperty("correctItems").GetInt32());
+    }
+
     /*
      * Die Einheit der Schwelle ist auch bei einem Katalog-Check-Verfahren PROZENT – nicht die Anzahl
      * richtiger Aufgaben. Das stand einmal anders in der Doku (und der Seed setzte danach Trefferzahlen),

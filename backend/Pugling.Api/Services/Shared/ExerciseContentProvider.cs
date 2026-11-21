@@ -62,7 +62,8 @@ public record ContentItem(
     ContentItem? Written = null,
     bool RecognitionOnly = false,
     string? DictationAudioUrl = null,
-    string? DictationLang = null)
+    string? DictationLang = null,
+    NumericTarget? Numeric = null)
 {
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
@@ -134,5 +135,7 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
             DictationLang = it.SpeechLang,
             Written = null,
             RecognitionOnly = false,
+            // The reversed card asks the prompt; a number target kept here would grade it against the old number.
+            Numeric = null,
         };
 }
