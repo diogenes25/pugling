@@ -12,6 +12,7 @@ quelle: "Nachtlauf 2026-11-18, Nachschau von Sprint 87 (fe13531c, pugling-review
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-21"
 ---
 
 # B-673 · Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit
@@ -286,3 +287,4 @@ prüft und `ActivatedAt` mit der B-613-Logik zusammenspielen muss.
   auf der Plan-Seite des Bruders das jüngere Kind, speichert und liest den deutschen Satz; der Plan bleibt beim Bruder.
   Mit Q0e rot. Dazu `full-flow` und `plan-kinderliste-laedt-noch` grün – 3 passed.
 - **2026-11-21** — vom Nutzer bestätigt (Chat nach dem Nachtlauf, „Ja, so lassen“): die stellvertretenden Entscheidungen 1–4, insbesondere Entscheidung 1 (ein gespielter Plan lässt sich nicht mehr umhängen).
+- **2026-11-21** — nachgeschaut (Nachtlauf, Retro Sprint 106), kein Befund. Geprüft: (1) kein zweiter Weg setzt `plan.ChildId` (Grep über `Controllers`/`Services`, einziger Treffer `StudyPlansController.cs:202`); (2) Umhängen und Startverschiebung im selben PATCH: `:242` setzt das Einschaltdatum auf heute, der Block `:246-254` hebt es danach nur auf `min(alter Start, heute)` oder senkt es auf `max(neuer Start, heute)` – nie vor heute, also keine Pflichttage beim neuen Kind.

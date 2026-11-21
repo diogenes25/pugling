@@ -546,3 +546,58 @@ keinen weiteren Sprint; der Index wurde **nicht** neu erzeugt und die fremden Da
   Vater-Weg fällt weg).
 - **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 102–105; Geräte-Prüfung Komma-Tastatur am Handy (B-639).
 - **Nächste Kandidaten:** B-782 (Shop, Reparaturweg zu entscheiden), B-653, B-614.
+
+## Runde 11 — vierter Start (Nachtlauf am Abend)
+
+Vor dem Start geprüft: keine andere Sitzung läuft (`list_sessions`, alle `isRunning: false`). Die fremden, nicht
+committeten Dateien (`B-626`, `B-784`, `INDEX.md`, `scripts/theodor-part-c-aufholen-2026-11-19.ps1`) bleiben unangetastet
+und werden nicht mitcommittet.
+
+## Sprint 106 — Ziel & Umfang
+
+**Umfang:** [B-653](backlog/B-653-nur-neue-inhalte-verliert-offene-lernkarte.md), Defekt, P3, S, `geschaetzt`
+(Entscheidungen stellvertretend aus dem Vorbereitungslauf 2026-11-19).
+
+**Sprint-Ziel:** Aus Sicht des Sohns kommt ein Wort, das er bei der Einführung nicht aus dem Kopf schreiben konnte, auch
+unter „nur neue Inhalte“ an jedem Folgetag wieder als Lernkarte, bis es sitzt – und nimmt dabei einen Platz der Tagesdosis
+ein. Widerlegbar durch eine Runde am Folgetag ohne dieses Wort oder durch sechs neue Wörter neben zwei offenen.
+
+**Entwickler-Brief:** Senke ist `PositionPlayService.DueItemIndicesAsync`, der einzige Weg zu Lernrunde und Tagesstatus.
+Das Prädikat „offene Lernkarte“ wird aus `OpenLearnCards` herausgezogen und von `ScopeMatch` mitbenutzt (eine Stelle,
+Entscheidung 1). `Old`/`All` unverändert, Tagestest unberührt. Keine Migration, kein Vertrag.
+
+## Iteration 106 — umgesetzt
+
+- `PositionPlayService`: Prädikat `IsOpenLearnCard` herausgezogen; `OpenLearnCards` und `ScopeMatch` (`ItemScope.New`)
+  nutzen es gemeinsam, `DueItemIndicesAsync` reicht Typ und Inhalte durch. Fünf neue Fälle in `UmfangNeuTests` und
+  `LernkarteTests`.
+- **Rote Proben:** vor dem Fix 5 von 9 rot (AK 1 erwartet `[0, 2]`, gemessen `[2]`; AK 6 erwartet `dueCount` 2, gemessen 1;
+  AK 4 erwartet Karten 0..5, gemessen 2..7). Mutanten Q1–Q6 und Q3b nach der letzten Änderung alle rot, jeweils am
+  benannten Fall.
+- **Volle Suite (Release):** 1990/1990. **Review** (`pugling-reviewer`): kein 🔴/🟡, drei 🟢 übernommen (ohne Zählung).
+  **Zähler 0 von 5.**
+
+## Runde 12 — Rollengang Sprint 106
+
+- **Sohn — abgenommen** (über die API, In-Process-Server aus dem Stand nach der letzten Änderung): „Das Wort, das ich gestern
+  nicht hinbekommen hab, kommt heute wieder als Lernkarte, auch morgen noch, bis ich es kann. Und ich krieg nicht einfach
+  sechs neue obendrauf.“ Keine UI-Änderung, darum keine eigene Spec.
+- **Vater — Regressionszeuge:** `full-flow` E2E 1 passed (Server frisch von Playwright auf 5201/5174); keine Vater-Fläche
+  im Diff.
+- **Creator — Regressionszeuge:** derselbe `full-flow`-Lauf; keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 106)
+
+**Nachschau:** Sprint 105 nachgesehen (B-673, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: kein zweiter Weg setzt
+`plan.ChildId` (Grep, einziger Treffer `StudyPlansController.cs:202`); Umhängen plus Startverschiebung im selben PATCH legt
+das Einschaltdatum nie vor heute.
+
+**Was die eigenen Tore durchgelassen haben:** Der Reviewer fand eine falsche Doku-Zusage aus B-643: `OpenLearnCards`
+versprach, offene Karten belegten auch im Testanteil Plätze – der Testanteil ruft die Methode gar nicht auf. Kein Tor prüft
+eine Doku-Behauptung über Aufrufer; die Nachschau von B-643 hat sie auch nicht gesehen.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** keiner als Mechanismus. Begründung: eine Behauptung „gilt auch für X“ in
+einer `<summary>` ist nur per Lesen prüfbar; ein Tor müsste Prosa gegen den Aufrufgraphen halten. Billiger bleibt der
+Reviewer-Auftrag, der die Senke benennt und nach Pfaden darum greppen lässt – er hat es hier gefunden.
+
+Kein Halt-Grund: kein neues Tor, kein Defekt im Increment.

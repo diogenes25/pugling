@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, lerntechnik/vokabeln, rolle/student]
+tags: [typ/story, status/abgenommen, lerntechnik/vokabeln, rolle/student]
 aliases: [Scope New und Lernkarte, offene Lernkarte verschwindet]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -203,3 +203,34 @@ Parameter erweitern, ein Aufrufer. Der Aufwand liegt in den Tests, nicht im Code
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, backend, keine Migration, kein Vertragsbruch; Filter,
   Prädikat und beide Aufrufer am Code nachgelesen (`PositionPlayService.cs:286`, `:352-353`, `:621`); Testort von AK 6
   offen.
+- **2026-11-21** — in-arbeit (Nachtlauf, Sprint 106). Gebaut: `IsOpenLearnCard` als gemeinsames Prädikat von
+  `OpenLearnCards` und `ScopeMatch` (`PositionPlayService.cs:358-361`, `:633-634`), `DueItemIndicesAsync` reicht Typ und
+  Inhalte durch (`:286-287`). Entscheidung 1–3 ohne Abweichung; ohne Typ bleibt die Tagesregel.
+  - **Rote Proben vor dem Fix** (Debug, 5 von 9 rot): AK 1 erwartet `[0, 2]`, gemessen `[2]`; AK 6 erwartet `dueCount` 2,
+    gemessen 1; AK 4 erwartet Karten 0..5, gemessen 2..7; AK 4 zweite Runde: Wörter ≥ 6 kamen; AK 3 (Fall in
+    `LernkarteTests`) rot nur am `Contains(1)` – sein Unterscheidungswert liegt in Q3/Q3b unten.
+  - AK 1, Folgetag → `UmfangNeuTests.Neu_Bringt_Ein_Nicht_Eingepraegtes_Wort_Als_Lernkarte_Zurueck_Bis_Es_Sitzt`, Q1 → rot.
+  - AK 2, übernächster Tag → derselbe Fall, Q2 (nur Folgetag) → rot; AK 2, jedes eingeführte Wort → Q6 → rot.
+  - AK 3, Erkennungskarte bleibt draußen → `LernkarteTests.Neu_Laesst_Eine_Erkennungskarte_Ohne_Lernkarte_Am_Folgetag_Draussen`,
+    Q3 (Prädikat ohne `NeedsImprint`) und Q3b (Umfang nur `ImprintedAt is null`) → rot.
+  - AK 4, Dosis → `LernkarteTests.Neu_Offene_Lernkarten_Zaehlen_Auf_Die_Tagesdosis`, Q4 (Zählung entfällt) → rot; zweiter
+    Satz gemessen statt gestrichen: das Wort bleibt nach dem Einprägen am selben Tag fällig →
+    `Neu_Zweite_Runde_Am_Selben_Tag_Bringt_Keine_Neuen_Ueber_Die_Dosis`, Q5 (ohne `ImprintedAt == day`) → rot.
+  - AK 5, `Old`/`All` → vorhandene Fälle in `UmfangNeuTests` und `LernkarteTests`, Absichtserklärung wie in der Story.
+  - AK 6, Tagesstatus → `UmfangNeuTests.Neu_Tagesstatus_Zaehlt_Die_Offene_Lernkarte_Mit`, Q1 → rot. Die Form „Filter
+    außerhalb von `DueItemIndicesAsync`“ ist nicht als Mutante gemessen (kein Einzeilen-Eingriff); der Fall fällt mit jeder
+    Form, die den Tagesstatus ohne die Regel lässt.
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| Q1 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:635 | red | red |  |
+| Q2 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:361 | red | red |  |
+| Q3 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:362 | red | red |  |
+| Q3b | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:635 | red | red |  |
+| Q4 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:297 | red | red |  |
+| Q5 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:361 | red | red |  |
+| Q6 | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:635 | red | red |  |
+
+Gemessen nach der letzten Änderung (Review-Nacharbeit) an `7da612ee + Arbeitsbaum geändert`, 2026-11-21 21:34, mit `fails` je Zeile (fällt am benannten Fall).
+- **2026-11-21** — Review (`pugling-reviewer`): kein 🔴/🟡; drei 🟢 übernommen (ohne Zählung): doppelter Tageshelfer in `UmfangNeuTests` zusammengelegt, Klassen-Doku um die Lernkarten-Ausnahme ergänzt, `OpenLearnCards`-Doku korrigiert (der Testanteil liest keine offenen Karten – einziger Aufrufer `PositionPlayService.cs:297`). Mutanten danach neu gemessen (Tabelle oben). Volle Suite (Release) 1990/1990.
+- **2026-11-21** — abgenommen (Sprint 106). Rollengang: Sohn über die API im Integrationsfall (In-Process-Server aus dem Stand nach der letzten Änderung): Wort am Folgetag und übernächsten Tag als Lernkarte, Dosis 2 offen + 4 neu, Tagesstatus 2. Keine UI-Änderung, darum keine eigene Spec; `full-flow` E2E 1 passed (Server frisch auf 5201/5174). Vater und Creator: Regressionszeugen, keine ihrer Flächen im Diff. Commit `f72b9638`.
