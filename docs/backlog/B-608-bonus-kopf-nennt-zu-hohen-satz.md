@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student]
 aliases: [CoinsPerHit übertreibt]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: M
@@ -198,3 +198,22 @@ neue Regel.
   `:436` und `:358`; Lücke breiter (Übersichtszeile, jede gemischte Runde); Ergebnis ist korrekt.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): fünf Entscheidungen; Satz je Karte als additives Vertragsfeld (`ExtraCard.CoinsPerHit`, `ExtraExercise.MixedRates`), eine gemeinsame Satz-Funktion für Ansage und Abrechnung; keine Münz-Regel geändert.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch (beide Felder additiv; `docs/openapi/v1.json` ändert sich); Risiko: die Satz-Funktion berührt den Abrechnungspfad.
+- **2026-11-21** — in-arbeit (Nachtlauf, Sprint 108). Rote Probe vor dem Fix: 9 von 33 Fällen in `ExtraTrainingTests` rot, alle mit `KeyNotFoundException` (Feld `coinsPerHit` bzw. `mixedRates` fehlt) – das belegt nur das fehlende Feld, nicht die Regel; die Last tragen die Mutanten unten.
+- **2026-11-21** — Fälle → Tests: AK 1 („both“, Vorwärtskarte 1, Rückkarte 3) → `ExtraTrainingTests.Jede_Bonuskarte_Nennt_Was_Ein_Treffer_Auf_Ihr_Zahlt`, M1 → rot; AK 2 (Ansage = Abrechnung) → derselbe Fall (`coinsForHits` = Summe der Karten) und die Lückentext-Theorie (`CardRates(run).Sum()`), M1 und M2 → rot; AK 3 (einheitlich: Tippen 3, Auswahl 1, Karteikarte 1) → `Eine_Einheitliche_Runde_Nennt_Den_Satz_Ihrer_Form_Auf_Jeder_Karte`, M5 (Tippen) und M6 (Karteikarte) → rot – Auswahl und Karteikarte zahlen beide 1, eine Verwechslung der beiden bleibt ungemessen; AK 4 (Kopf je Karte) → Vitest `SohnBonus.test.tsx` „wechselt den genannten Satz mit der Karte“, F1 → rot; AK 5 (Übersicht „bis zu“) → `Die_Uebersicht_Nennt_Bis_Zu_Wo_Die_Karten_Verschieden_Zahlen` (M3, M4 → rot) und Vitest „nennt bei gemischten Karten …“ (F2, F3 → rot); AK 6 (Ergebnis unverändert) → vorhandene Ergebnis-Fälle in `SohnBonus.test.tsx` grün, Ergebnis-Code nicht im Diff.
+- **2026-11-21** — Mutanten nach der letzten Änderung (`mutant-probe.py`, Backend Debug, Filter `ExtraTrainingTests`; Frontend Vitest `SohnBonus.test.tsx`):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | M1 Karte trägt den Satz der Runde | `ExtraTrainingService.cs:446` | red | red |
+  | M2 Abrechnung nach dem Satz der Runde | `ExtraTrainingService.cs:200` | red | red |
+  | M3 `MixedRates` nie | `ExtraTrainingService.cs:361` | red | red |
+  | M4 `MixedRates` immer | `ExtraTrainingService.cs:361` | red | red |
+  | M5 jede geprüfte Karte als Auswahl | `ExtraTrainingService.cs:417` | red | red |
+  | M6 Karteikarte zum Tipp-Satz | `ExtraTrainingService.cs:412` | red | red |
+  | F1 Hinweis liest `run.coinsPerHit` | `SohnBonus.tsx:329` | red | red |
+  | F2 „bis zu“ nie | `SohnBonus.tsx:43` | red | red |
+  | F3 „bis zu“ nur beim Tippen (Review-Fund) | `SohnBonus.tsx:43` | red | red |
+
+  E2E-Probe E1 (M1 gegen `frontend/e2e/bonus-satz-je-karte.spec.ts`, Ausweichports) → rot. `rates.Max()` statt `CoinsPerHit(form)` am Vorrat ist in keinem gemessenen Fall verschieden (nur bei der gemischten Auswahlrunde) – ungemessen.
+- **2026-11-21** — Review (`pugling-reviewer`, `frontend-reviewer`): **ein 🟡, von beiden gefunden** – Entscheidung 3 nahm an, nur die Form Tippen könne mischen; eine Vokabel-Auswahlrunde mischt aber, wenn eine Karte keinen Ablenker hat (`FormFor` prüft im Kletterzweig nur die Anzahl, `DistractorPool` liefert dann `null`, die Karte wird getippt und zahlt 3). Behoben: „bis zu“ hängt nur noch an `mixedRates`, je Form ein Text (`formChoiceMixed`, `formSelfAssessMixed`), Vitest-Fall „Auswahl gemischt“ (F3). **Zähler 1 von 5.** 🟢 ohne Zählung: veralteter Kommentar (`CardRatesAsync` → `CardRate`), Doc-Satz zu `RunPercent` umgebrochen und eindeutig. 🟢 Überblickskosten (gestufte Liste je Karte neu): ein Cache je Stufe wurde gebaut und wieder entfernt – seine Mutante (Schlüssel falsch) blieb grün, weil die Ablenker in beiden gestuften Listen dieselben sind; ungeprüfter Code in einem Geldpfad wiegt schwerer als Millisekunden. 🟢 außerhalb des Diffs: der Aufwärm-Hinweis verspricht „ab der Auswahl gibt es mehr“ → [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md). Volle Suite (Release) 1999/1999, Vitest 1304/1304.
+- **2026-11-21** — abgenommen (Sprint 108). Rollengang Sohn als E2E (`frontend/e2e/bonus-satz-je-karte.spec.ts`, Server frisch von Playwright auf 5201/5174 nach der letzten Änderung): Lückentext auf „Buchstaben ordnen“ mit einer Lücke, die auf Kästchen zurückfällt – die Übersicht sagt „Tippen · bis zu 3 🪙 je Treffer“, Karte 1 „bringt 1 🪙“, Karte 2 „bringt 3 🪙“. Vater und Creator: Regressionszeugen (`bonus`, `bonus-deckel`, `bonus-deckel-voll`, `full-flow` grün; keine Vater-/Creator-Fläche im Diff). Entscheidung 3 im Bau erweitert („bis zu“ in jeder Form, siehe Review) – keine neue Produktentscheidung, dieselbe Regel auf einen Fall, den die Annahme übersah. Commit `26f2863e`.

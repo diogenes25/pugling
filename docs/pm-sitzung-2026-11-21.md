@@ -656,3 +656,52 @@ direkter Service-Fall.
 der letzten Änderung“ deckt genau diesen Fall; ein zweites Tor würde dasselbe messen.
 
 Kein Halt-Grund: kein neues Tor, kein Defekt im Increment.
+
+## Sprint 108 — Ziel & Umfang
+
+**Umfang:** [B-608](backlog/B-608-bonus-kopf-nennt-zu-hohen-satz.md), Defekt, P3, M, `geschaetzt` (Entscheidungen
+stellvertretend aus dem Vorbereitungslauf 2026-11-19).
+
+**Sprint-Ziel:** Aus Sicht des Sohns verspricht das Bonus-Training nie mehr, als eine Karte zahlt – der Hinweis über jeder
+Karte nennt ihren Satz, die Übersicht sagt „bis zu“, wo die Karten verschieden zahlen. Widerlegbar durch eine Auswahlkarte,
+über der „3 🪙“ steht.
+
+**Entwickler-Brief:** Senke ist `ExtraTrainingService.CardRate` – die eine Stelle, aus der Abrechnung (`CardRatesAsync`),
+Karten (`BuildRun`) und Vorrat (`CoinsPerHit` = höchster Satz, `MixedRates`) lesen. Hier liegt Geld: die Abrechnung bleibt
+wertgleich (Netz: `Getippte_Bonusrunde_Fragt_Die_Vorwaertskarte_Bei_Beiden_Als_Auswahl`). Zwei additive Antwortfelder,
+keine Migration. Frontend liest den Satz der Karte und `mixedRates`.
+
+## Iteration 108 — umgesetzt
+
+- Backend: `CardRate` aus `CardRatesAsync` gelöst, `CardRates` je Übung; `ExtraCard.CoinsPerHit`, `ExtraExercise.MixedRates`.
+  Frontend: Hinweis je Karte, „bis zu“ je Form (`MIXED_KEY`), drei neue Texte de/en. Tests: drei Fälle plus Summenzeile in der
+  Lückentext-Theorie (`ExtraTrainingTests`), zwei Vitest-Fälle, E2E `bonus-satz-je-karte.spec.ts`.
+- **Rote Probe:** 9 von 33 rot, nur am fehlenden Feld (`KeyNotFoundException`) – trägt nichts; die Last tragen M1–M6,
+  F1–F3 und E1, alle nach der letzten Änderung rot.
+- **Volle Suite (Release):** 1999/1999, Vitest 1304/1304. **Review:** ein 🟡 (von beiden Reviewern) behoben, **Zähler 1
+  von 5**; 🟢 ohne Zählung behoben bzw. als [B-785](backlog/B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md)
+  zurückgestellt.
+
+## Runde 15 — Rollengang Sprint 108
+
+- **Sohn — abgenommen** (E2E `bonus-satz-je-karte`, Server frisch auf 5201/5174 nach der letzten Änderung): „Oben steht
+  jetzt ‚bis zu 3‘, und bei der Buchstabenkarte steht 1, bei der zum Schreiben 3. Das passt dann auch zu dem, was ich am
+  Ende kriege.“
+- **Vater — Regressionszeuge:** `bonus-deckel` und `full-flow` E2E grün; keine Vater-Fläche im Diff.
+- **Creator — Regressionszeuge:** derselbe `full-flow`-Lauf; keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 108)
+
+**Nachschau:** Sprint 107 nachgesehen (B-614, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: `subjectName` hat einen
+Leser im Sohn-Frontend (`tagessicht.ts:25`); `PositionStatus` entsteht nur in `PositionProgressService.cs:336`. Index nicht
+neu erzeugt (fremde Änderungen an `INDEX.md`).
+
+**Was die eigenen Tore durchgelassen haben:** Eine Annahme der Schätzung („gemischt kann nur Tippen sein“, mit „nicht
+gefunden“ belegt) ging ungeprüft in den Bau; die Tests wählten ihre Fälle aus derselben Annahme. Gefunden haben es beide
+Reviewer unabhängig. Außerdem: die erste rote Probe fiel nur am fehlenden Feld – sie sah gültig aus und trug nichts.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Eine „nur X ist möglich“-Annahme in `## Entscheidungen` bekommt im Bau
+eine Mutante, die die Annahme selbst bricht (hier: „bis zu“ nur beim Tippen) – fällt sie nicht, fehlt der Gegenfall als
+Test. Als Zeile im Verfahren (`pm-loop` Step 5), kein Tor.
+
+Kein Halt-Grund: kein neues Tor; der Defekt im Increment ist behoben, Zähler 1 von 5 (Nachtlauf-Freigabe 3/10).

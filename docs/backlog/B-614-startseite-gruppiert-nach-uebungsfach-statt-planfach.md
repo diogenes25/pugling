@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Sprint 83 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-21"
 entgangen_bei: [B-606]
 ---
 
@@ -213,3 +214,4 @@ Kriterien mit eigenen Fixtures. Anker: wie der Batch-Pfad im `MediaSelector` (M)
   Q5/Q6 grün ist gewollt: die `Include`s sparen nur die Nachlade-Abfrage, das Ergebnis trägt die Senke. E2E-Probe E1 (Q1 gegen `startseite-plan-fach.spec.ts`, Ausweichports) → rot.
 - **2026-11-21** — Review (`pugling-reviewer`): kein 🔴/🟡. Geprüft: `PositionStatus` entsteht nur in `ComputeDayAsync`; alle fünf Aufrufer gelesen, die Verlaufsschleifen lesen den Namen nicht. Zwei 🟢 übernommen (ohne Zählung): `Include(Subject)` in `PlanOverviewController.GetPlan` und der Dashboard-Zeitachse (spart die Abfrage je Verlaufstag); „father“ → „supervisor“ im Swagger-Satz. Weil die Plan-Übersicht danach nicht mehr nachlädt, trägt AK 4 das Nachladen nicht mehr – dafür der direkte Service-Fall (Q3). Volle Suite (Release) 1994/1994. **Zähler 0 von 5.**
 - **2026-11-21** — abgenommen (Sprint 107). Rollengang Sohn als E2E (`frontend/e2e/startseite-plan-fach.spec.ts`, Server frisch von Playwright auf 5201/5174 nach der letzten Änderung): Englisch-Plan mit einer Übung aus einer Mathe-Reihe zeigt genau eine Fach-Karte „Englisch …“ mit beiden Aufgaben, keine Mathe-Karte. Vater und Creator: Regressionszeugen (`full-flow`, `belohnung-ueber-faecher` grün; keine Vater-/Creator-Fläche im Diff außer der Ladezeile der Dashboard-Zeitachse). Entscheidung 4 bleibt zurückgestellt (fachfremde Positionen ungeprüft). Commit `86d74423`.
+- **2026-11-21** — nachgeschaut (Nachtlauf, Retro Sprint 108), kein Befund. Geprüft: (1) `subjectName` hat im Sohn-Frontend genau einen Leser, `frontend/src/sohn/tagessicht.ts:25` (Grep über `frontend/src/sohn` ohne Tests); (2) `new PositionStatus(` steht nur in `PositionProgressService.cs:336`, der Name dort ist `planSubject ?? SeriesSubjectNameOf(pos)` – kein zweiter Weg liefert das Fach der Reihe an ein Kind.
