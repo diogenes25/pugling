@@ -210,6 +210,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
 
         var startMoved = dto.StartDate is { } movedTo && movedTo != plan.StartDate;
         var oldStart = plan.StartDate;
+        var oldEnd = plan.EndDate;
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         plan.SubjectId = subjectId;
@@ -232,6 +233,11 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
             var playableFrom = plan.StartDate > today ? plan.StartDate : today;
             if (playableFrom < plan.ActivatedAt) plan.ActivatedAt = playableFrom;
         }
+        // B-783: an expired plan extended later was not playable between its old end and today. Like a switch back on,
+        // it then counts from today; an end of yesterday leaves no such gap and changes nothing. An end first moved into the
+        // past and then extended again frees the days in between as well - only in the child's favour, and only by the father.
+        if (plan.Active && plan.EndDate > oldEnd && oldEnd.AddDays(1) < today)
+            plan.ActivatedAt = today;
         await db.SaveChangesAsync(ct);
         // After activating, moving to another child or changing the subject, restore "one active plan per subject".
         if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);

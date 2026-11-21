@@ -609,6 +609,125 @@ public class RueckwirkendePflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal([t.AddDays(2), t.AddDays(3)], PenaltyDays(positionB));
     }
 
+    private async Task MoveEndAsync(Setup s, int planId, DateOnly end) =>
+        await OkJsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { endDate = end }));
+
+    // B-783: plan B with a penalised daily goal, running T..T+5 and met on each of those days.
+    private async Task<(int Plan, int Position)> ExpiredPlanAsync(Setup s, DateOnly t)
+    {
+        var planB = await CreatePlanAsync(s, t);
+        await MoveEndAsync(s, planB, t.AddDays(5));
+        var positionB = await AddPenaltyPositionAsync(s, planB);
+        for (var d = 0; d <= 5; d++) SeedPassedTest(planB, positionB, t.AddDays(d));
+        return (planB, positionB);
+    }
+
+    /// <summary>
+    /// B-783 AK 1: plan B ran T..T+5 and expired; at T+10 the father extends it to T+30. T+6..T+9 were not playable (past
+    /// the old end), so the settlement charges nothing. Red without raising <c>ActivatedAt</c> on the extension (four
+    /// penalties), and red with the raise to <c>min(old end + 1, today)</c> (the gap would still lie after it).
+    /// </summary>
+    [Fact]
+    public async Task Verlaengerter_Abgelaufener_Plan_Bucht_Keinen_Malus_Fuer_Die_Luecke()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var (planB, positionB) = await ExpiredPlanAsync(s, t);
+
+        factory.Clock.Advance(TimeSpan.FromDays(10));
+        await MoveEndAsync(s, planB, t.AddDays(30));
+        await SettleAsync(s.ChildId);
+
+        Assert.Empty(PenaltyDays(positionB));
+    }
+
+    /// <summary>
+    /// B-783 AK 2: as AK 1, plan A met every day and B met today ⇒ the gap days T+6..T+9 do not break the streak (14 =
+    /// T-3..T+10). Red without the raise (T+9 is an open duty of an active plan ⇒ 1).
+    /// </summary>
+    [Fact]
+    public async Task Verlaengerter_Abgelaufener_Plan_Bricht_Die_Serie_Nicht()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var (planB, positionB) = await ExpiredPlanAsync(s, t);
+        Change<StudyPlan>(s.PlanA, p => p.EndDate = t.AddDays(30)); // the seeded plan A would end at T+5
+        for (var d = 1; d <= 10; d++) SeedPassedTest(s.PlanA, s.PositionA, t.AddDays(d));
+
+        factory.Clock.Advance(TimeSpan.FromDays(10));
+        await MoveEndAsync(s, planB, t.AddDays(30));
+        await PassTestAsync(s.Child, planB, positionB);
+
+        Assert.Equal(14, await StreakAsync(s));
+    }
+
+    /// <summary>
+    /// B-783 AK 3: a plan that ended yesterday has no gap - extending it frees nothing. Plan B T..T+9, T+8 missed, at T+10
+    /// extended ⇒ T+8 is still charged. Red when the rule fires for an end of yesterday too (it would raise to today and
+    /// free T+8).
+    /// </summary>
+    [Fact]
+    public async Task Gestern_Abgelaufener_Plan_Bleibt_Pflicht()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t);
+        await MoveEndAsync(s, planB, t.AddDays(9));
+        var positionB = await AddPenaltyPositionAsync(s, planB);
+        for (var d = 0; d <= 9; d++) if (d != 8) SeedPassedTest(planB, positionB, t.AddDays(d));
+
+        factory.Clock.Advance(TimeSpan.FromDays(10));
+        await MoveEndAsync(s, planB, t.AddDays(30));
+        await SettleAsync(s.ChildId);
+
+        Assert.Equal([t.AddDays(8)], PenaltyDays(positionB));
+    }
+
+    /// <summary>
+    /// B-783 AK 3b, the other side of AK 3: the shortest gap is one day. Plan B T..T+8 (all met), extended at T+10 ⇒ T+9
+    /// was not playable and is not charged. Red when the gap condition demands more than one day (<c>oldEnd + 2 &lt; today</c>).
+    /// </summary>
+    [Fact]
+    public async Task Eintaegige_Luecke_Bucht_Keinen_Malus()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t);
+        await MoveEndAsync(s, planB, t.AddDays(8));
+        var positionB = await AddPenaltyPositionAsync(s, planB);
+        for (var d = 0; d <= 8; d++) SeedPassedTest(planB, positionB, t.AddDays(d));
+
+        factory.Clock.Advance(TimeSpan.FromDays(10));
+        await MoveEndAsync(s, planB, t.AddDays(30));
+        await SettleAsync(s.ChildId);
+
+        Assert.Empty(PenaltyDays(positionB));
+    }
+
+    /// <summary>
+    /// B-783 AK 4, a data assertion: only an extension of an active plan raises <c>ActivatedAt</c>. An expired plan whose
+    /// title is edited, or whose end is moved but not later, keeps it; so does an extended switched-off plan (switching
+    /// on sets it anyway). Red when the "later end" condition falls (the title edit would raise it to today) or the
+    /// <c>Active</c> gate falls.
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Verlaengerung_Wird_Nichts_Angehoben()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var (planB, _) = await ExpiredPlanAsync(s, t);
+        var (planC, _) = await ExpiredPlanAsync(s, t);
+        Change<StudyPlan>(planC, p => p.Active = false);
+
+        factory.Clock.Advance(TimeSpan.FromDays(10));
+        await OkJsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planB}", new { title = "Plan B2" }));
+        Assert.Equal(t, ActivatedAt(planB));
+        await MoveEndAsync(s, planB, t.AddDays(4));
+        Assert.Equal(t, ActivatedAt(planB));
+        await MoveEndAsync(s, planC, t.AddDays(30));
+        Assert.Equal(t, ActivatedAt(planC));
+    }
+
     /// <summary>
     /// The creating write paths store the dates the backfill would give (B-613, risk 5): a plan is on since its start, a
     /// position a duty since its creation day - plan and position create, and the seed (the weak-word review is asserted in
