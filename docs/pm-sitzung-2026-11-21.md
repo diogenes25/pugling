@@ -387,3 +387,50 @@ in der Retro von Sprint 69.
 ist Prosa im Vorbereitungslauf, und ein Mechanismus müsste Fenster erkennen.
 
 **Bewusst ungedeckt:** Malus, der vor dem Fix durch eine Zurückverlegung schon gebucht wurde (Entscheidung 3).
+
+## Sprint 103 — Ziel & Umfang
+
+**Umfang:** [B-783](backlog/B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md), Defekt, P2, im Sprint von `idee`
+bis `geschaetzt` gebracht (autonom grillbar), XS. Dasselbe Themengebiet wie Sprint 102, das gespiegelte Ende.
+
+**Sprint-Ziel:** Aus Sicht des Sohns kostet ihn das Verlängern eines abgelaufenen Plans weder Münzen noch die Serie für
+die Tage, an denen der Plan schon zu Ende war. Widerlegbar durch einen Malus oder Serienbruch in dieser Lücke.
+
+**Entwickler-Brief:** Senke wie in Sprint 102 (`StudyPlansController.Update`); ein abgelaufener, aktiver Plan, der
+verlängert wird, gilt wie beim Wiedereinschalten (B-613) ab heute als eingeschaltet. Keine Migration, kein Vertragsbruch.
+
+## Iteration 103 — umgesetzt
+
+- `StudyPlansController.Update`: `oldEnd` festhalten, Regel `Active && neues Ende > altes Ende && altes Ende + 1 < heute`
+  → `ActivatedAt = heute`. Eine unerreichbare Zusatzbedingung (`today > ActivatedAt`) aus dem ersten Entwurf gestrichen.
+- **Rote Proben:** AK 1 erwartet kein Malus, gemessen T+6..T+9 (vier); AK 2 erwartet Serie 14, gemessen 1.
+- Fünf neue Fälle, Mutanten N1–N6 rot (Tabelle in der Story). **Volle Suite (Release):** 1947/1947.
+- **Review** (`pugling-reviewer`): kein 🔴; 🟡 Untergrenze der Lücke ohne Fall → Fall + N6 ergänzt (**Zähler 1 von 5**);
+  🟡 Kosten der Entscheidung zu knapp → in der Story ergänzt (ohne Zählung); 🟢 Code-Kommentar ergänzt.
+
+## Runde 8 — Rollengang Sprint 103
+
+Wie in Sprint 102: Die Wirkung braucht vergehende Tage, ein Gang im Browser kann sie nicht zeigen; Ersatzbeleg sind die
+Integrationsfälle über den PATCH des Vaters. Regressions-E2E nach der letzten Änderung frisch gestartet (5201/5174):
+**4 passed**.
+
+- **Vater — abgenommen (auf dem Ersatzbeleg):** „Ist der Plan übers Wochenende ausgelaufen und ich verlängere ihn am
+  Montag, zahlt mein Sohn nichts für Samstag und Sonntag.“
+- **Sohn, Creator — Regressionszeugen:** keine ihrer Flächen im Diff, `full-flow` grün.
+
+## Retrospektive (Sprint 103)
+
+**Nachschau:** Sprint 102 nachgesehen (B-672, `nachgeschaut: 2026-11-21`). Der Review-Befund war schon B-783. Zusätzlich
+geprüft: der Rundweg des echten Clients (`VaterPlanDetail.tsx:159-160` schickt die Daten nur bei Änderung, im selben
+Format) – kein weiterer Befund.
+
+**Was die eigenen Tore durchgelassen haben:** Die eigene Mutantenliste prüfte die Grenze `altes Ende + 1 < heute` nur von
+einer Seite (N2 lockert sie). Die Gegenseite (verschärfen) fand der Reviewer. Bei B-672 war es dieselbe Form: eine Grenze
+mit Konstante hat zwei Richtungen.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** `mutant-probe.py` könnte zu jeder Mutante, die eine Vergleichskonstante
+um eins verschiebt, die Gegenrichtung anmahnen (Warnung, wenn nur eine der beiden Richtungen in der Liste steht). Das
+wäre ein neues Tor, darum hier nur vorgeschlagen.
+
+**Entscheidung zum Umstoßen:** B-783 Entscheidung 1 (die Verlängerung verwischt das alte Fenster wie das Wiedereinschalten,
+Zeitachse und Metriken können sich nachträglich verbessern). Alternative wäre ein Startverlauf mit Migration.

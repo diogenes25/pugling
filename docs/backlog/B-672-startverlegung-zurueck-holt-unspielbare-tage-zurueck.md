@@ -12,6 +12,7 @@ quelle: "Nachtlauf 2026-11-18, Nachschau von Sprint 87 (fe13531c, pugling-review
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-613]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-672 · Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war
@@ -257,3 +258,8 @@ Variable), dazu fünf Testfälle in einer vorhandenen Klasse.
   fahren (Uhr per `factory.Clock`). Regressions-E2E auf 5201/5174 nach der letzten Änderung frisch gestartet:
   `full-flow`, `vater-schmal` (zwei Fälle), `heute-dran-nach-antworten` – 4 passed. Vater abgenommen auf diesem Beleg,
   Sohn und Creator als Regressionszeugen (keine ihrer Flächen im Diff).
+- **2026-11-21** — nachgeschaut (Nachschau Sprint 102 in der Retro von Sprint 103). Befund aus dem Review schon als
+  [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) angelegt und in Sprint 103 gebaut. Zusätzlich
+  geprüft: der Rundweg des echten Clients – `VaterPlanDetail.tsx:159-160` schickt `startDate`/`endDate` nur, wenn sie
+  sich gegenüber dem geladenen Plan geändert haben, im selben ISO-Format; ein Speichern ohne Datumsänderung löst
+  `startMoved` also nicht aus. Kein weiterer Befund.

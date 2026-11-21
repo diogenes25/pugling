@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (104)
+### Offen (103)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -38,7 +38,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
-| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -122,7 +121,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (549)</summary>
+<summary>Abgenommen (550)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -661,6 +660,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
+| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
 | [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen | Defekt | `abgenommen` | P1 | S | backend | — |
@@ -697,7 +697,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (206)
 
-**Nachgeschaut: 519 von 549 abgenommenen** — und in 188 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 520 von 550 abgenommenen** — und in 189 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -906,7 +906,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | [B-771] | `abgenommen` |
 | [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | [B-749, B-770] | `abgenommen` |
 | [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | [B-776] | `idee` |
-| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | [B-672] | `idee` |
+| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | [B-672] | `abgenommen` |
 
 <details>
 <summary>Nie nachgeschaut (30) — Arbeitsvorrat der Nachschau</summary>
@@ -944,8 +944,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
-| [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
+| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück |
 
 </details>
 
@@ -1105,6 +1105,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | `idee` | Abschnitt „Verlauf" |
+| [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
 
 <details>
 <summary>Verworfen (58)</summary>
