@@ -148,7 +148,9 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         row.CurrentStock = currentStock;
         row.ConcurrencyStamp = Guid.NewGuid();
         if (!await TrySaveAsync(ct)) return Result<ListingView>.Fail(ShopError.Conflict);
-        return Result<ListingView>.Ok(ToView(listing, linked, nowUtc));
+        // B-772: only this child's row is written, so a sibling's purchase cannot turn the father's write into a conflict;
+        // the answer still shows every sibling with its due refill and start stock, computed for display only.
+        return Result<ListingView>.Ok(await ToViewAsync(supervisorId, listing, nowUtc, ct));
     }
 
     /// <summary>
@@ -601,6 +603,21 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         foreach (var stock in listing.Stocks)
         {
             stock.LastRefilledAtUtc = nowUtc;
+            stock.ConcurrencyStamp = Guid.NewGuid();
+        }
+    }
+
+    /// <summary>
+    /// Empties the refill instant of every existing stock row (B-776): called when the supervisor switches a listing to
+    /// "once" or gives it a new date. A one-off fires only on a row without an instant, so every child then fills on the
+    /// date, as a child whose row is created later does. The caller books the old rule's due refills first.
+    /// </summary>
+    public static void ClearRefillInstant(ShopListing listing)
+    {
+        // A row without an instant is left alone: bumping its stamp would only widen the window for a 409.
+        foreach (var stock in listing.Stocks.Where(s => s.LastRefilledAtUtc is not null))
+        {
+            stock.LastRefilledAtUtc = null;
             stock.ConcurrencyStamp = Guid.NewGuid();
         }
     }

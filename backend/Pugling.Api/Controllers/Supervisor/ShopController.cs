@@ -279,6 +279,9 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         var nextRefillAt = dto.RefillAtUtc ?? listing.RefillAtUtc;
         var nextRefillDay = dto.RefillDayOfWeek ?? listing.RefillDayOfWeek;
 
+        // B-776: a switch to "once" fires on the date it carries; a date left over from an earlier one-off would fire at once.
+        if (nextRefillKind == ShopRefillKind.Once && listing.RefillKind != ShopRefillKind.Once && dto.RefillAtUtc is null)
+            return this.ProblemWithCode(ApiErrors.ValidationError, "RefillAtUtc is required when switching to a one-time refill.");
         var validation = ValidateListing(nextCoin, nextGem, nextUnits,
             nextMaxStock, nextQuantity, nextRefillKind, nextRefillAt, nextRefillDay);
         if (validation is not null) return validation;
@@ -289,10 +292,15 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         // B-771: a switch to a recurring kind - or a new weekday of a weekly one - restarts every child's refill clock, after
         // booking what the old rule still owes while the listing carries it. Otherwise the new calendar counts an instant
         // that lies before the switch and refills at once (a Monday stock moved to Friday on a Saturday would refill twice in
-        // one week). "Once" keeps its empty instant: that is what fires it on its date.
+        // one week).
         var restartsRefillClock = ShopRefillSchedule.IsRecurring(nextRefillKind)
             && (nextRefillKind != listing.RefillKind || nextRefillDay != listing.RefillDayOfWeek);
-        if (restartsRefillClock)
+        // B-776: "once" fires only on an empty instant, so a switch to it - or a new date - empties every stock's instant;
+        // a stock born under a recurring kind or a fired date would otherwise never fill. An unchanged date empties nothing,
+        // or each later price change would hand the stock out again.
+        var resetsOnceInstant = nextRefillKind == ShopRefillKind.Once
+            && (listing.RefillKind != ShopRefillKind.Once || nextRefillAt != listing.RefillAtUtc);
+        if (restartsRefillClock || resetsOnceInstant)
             foreach (var stock in listing.Stocks) ShopService.ApplyDueRefill(listing, stock, now);
 
         if (dto.Title is not null) listing.Title = dto.Title.Trim();
@@ -315,6 +323,7 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
                 listing.Audience.Add(new ShopListingAudience { ChildId = childId });
         }
         if (restartsRefillClock) ShopService.RestartRefillClock(listing, now);
+        if (resetsOnceInstant) ShopService.ClearRefillInstant(listing);
         listing.ConcurrencyStamp = Guid.NewGuid();
         try
         {

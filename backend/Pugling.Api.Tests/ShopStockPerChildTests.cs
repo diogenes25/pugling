@@ -747,4 +747,202 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
         factory.Clock.FreezeAt(At(2026, 11, 15, 1));
         Assert.Equal(1, await StockAsync(kid.Client, listingId));
     }
+
+    // ─── B-776: switching to "once" or a new date empties the refill instant ───
+
+    // The instant as text: a "once" date read back from SQLite is serialized without an offset, so a local conversion
+    // would shift it by the test machine's time zone.
+    private static async Task<string?> FatherNextRefillAsync(HttpClient father, int articleId, int listingId, int childId)
+    {
+        var view = await Json(await father.GetAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings/{listingId}"));
+        var next = view.GetProperty("stocks").EnumerateArray().Single(s => s.GetProperty("childId").GetInt32() == childId)
+            .GetProperty("nextRefillAtUtc");
+        return next.ValueKind == JsonValueKind.Null ? null : next.GetString()![..19];
+    }
+
+    /// <summary>
+    /// AK 1: "daily" → "once in five days" after a sell-out. The daily stock carries a refill instant, and "once" only fires
+    /// on an empty one - before the fix the date never came and the father read "no further refill". Red when the switch
+    /// leaves the instant in place.
+    /// </summary>
+    [Fact]
+    public async Task B776_Taeglich_Auf_Einmalig_Fuellt_Zum_Termin()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 20, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7761");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Spielzeit",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 2,
+            refillKind = "Daily",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Once", refillAtUtc = "2026-11-25T00:00:00Z" }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        Assert.Equal("2026-11-25T00:00:00", await FatherNextRefillAsync(father, articleId, listingId, kid.Id));
+
+        factory.Clock.FreezeAt(At(2026, 11, 24, 23));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 25, 1));
+        Assert.Equal(2, await StockAsync(kid.Client, listingId));
+    }
+
+    private async Task<(HttpClient Father, (int Id, HttpClient Client) Kid, int ArticleId, int ListingId)> FiredOnceSoldOutAsync(
+        string pin)
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, pin);
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Kino",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 1,
+            refillKind = "Once",
+            refillAtUtc = "2026-11-12T00:00:00Z",
+        });
+        factory.Clock.FreezeAt(At(2026, 11, 12, 10));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        factory.Clock.FreezeAt(At(2026, 11, 13));
+        return (father, kid, articleId, listingId);
+    }
+
+    /// <summary>
+    /// AK 2: a fired "once" gets a new date and fires again on it, not before. Red when only a change of the kind empties
+    /// the instant.
+    /// </summary>
+    [Fact]
+    public async Task B776_Neuer_Termin_Fuellt_Erneut_Zum_Neuen_Termin()
+    {
+        var (father, kid, articleId, listingId) = await FiredOnceSoldOutAsync("7762");
+
+        (await PatchListingAsync(father, articleId, listingId, new { refillAtUtc = "2026-11-15T00:00:00Z" })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 14, 23));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 15, 1));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 3: a price change on a fired "once" that sends the unchanged date along does not refill. Red when every PATCH of a
+    /// "once" listing empties the instant (each later price change would hand the stock out again).
+    /// </summary>
+    [Fact]
+    public async Task B776_Gleicher_Termin_Fuellt_Nicht_Erneut()
+    {
+        var (father, kid, articleId, listingId) = await FiredOnceSoldOutAsync("7763");
+
+        (await PatchListingAsync(father, articleId, listingId, new
+        {
+            coinPrice = 20,
+            refillKind = "Once",
+            refillAtUtc = "2026-11-12T00:00:00Z",
+        })).EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 20));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// AK 4: "daily" → "once" while today's daily refill is still unread. The old rule books it before the instant is
+    /// emptied, so the child keeps what it earned. Red when the switch to "once" skips booking the old rule.
+    /// </summary>
+    [Fact]
+    public async Task B776_Umstellen_Auf_Einmalig_Bucht_Die_Alte_Regel()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 3, 9));
+        var father = await TestApi.AdultAsync(factory);
+        var kid = await KidAsync(father, "7764");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            title = "Spielzeit",
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 30,
+            maxStock = 1,
+            refillKind = "Daily",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+
+        factory.Clock.FreezeAt(At(2026, 11, 4, 9));
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Once", refillAtUtc = "2026-11-09T00:00:00Z" }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(kid.Client, listingId)).StatusCode);
+        factory.Clock.FreezeAt(At(2026, 11, 8, 23));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+        factory.Clock.FreezeAt(At(2026, 11, 9, 1));
+        Assert.Equal(1, await StockAsync(kid.Client, listingId));
+    }
+
+    /// <summary>
+    /// Review finding (B-776): a listing that was once a one-off keeps its old date. Switching it back to "once" without a
+    /// date is refused instead of firing on that stale date at once; with a date it works. Red when the switch reuses the
+    /// stored date.
+    /// </summary>
+    [Fact]
+    public async Task B776_Wechsel_Auf_Einmalig_Verlangt_Ein_Datum()
+    {
+        var (father, kid, articleId, listingId) = await FiredOnceSoldOutAsync("7765");
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Daily" })).EnsureSuccessStatusCode();
+
+        var stale = await PatchListingAsync(father, articleId, listingId, new { refillKind = "Once" });
+        Assert.Equal(HttpStatusCode.BadRequest, stale.StatusCode);
+        Assert.Equal("validation_error", await CodeAsync(stale));
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+
+        (await PatchListingAsync(father, articleId, listingId, new { refillKind = "Once", refillAtUtc = "2026-11-16T00:00:00Z" }))
+            .EnsureSuccessStatusCode();
+        Assert.Equal(0, await StockAsync(kid.Client, listingId));
+    }
+
+    // ─── B-772: the answer of "set stock" shows the siblings as they are ───
+
+    /// <summary>
+    /// AK 1-3: two children sold out a daily listing yesterday, a third was linked today and has no stock row. Setting one
+    /// child's stock answers with the sibling refilled (AK 1) and the newcomer at its start stock (AK 2), and writes neither
+    /// of them (AK 3: the row count stays at two). Red for AK 1/2 when the answer is built from the loaded rows only, red for
+    /// AK 3 when every child is materialized before the save.
+    /// </summary>
+    [Fact]
+    public async Task B772_Bestand_Setzen_Zeigt_Geschwister_Aktuell_Und_Schreibt_Sie_Nicht()
+    {
+        factory.Clock.FreezeAt(At(2026, 11, 19, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var a = await KidAsync(father, "7721");
+        var b = await KidAsync(father, "7722");
+        var (articleId, listingId) = await ListingAsync(father, new
+        {
+            coinPrice = 10,
+            gemPrice = 0,
+            unitsPerPurchase = 1,
+            maxStock = 1,
+            refillKind = "Daily",
+        });
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(a.Client, listingId)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await BuyAsync(b.Client, listingId)).StatusCode);
+        Assert.Equal(2, await StockRowsAsync(listingId));
+
+        factory.Clock.FreezeAt(At(2026, 11, 20, 10));
+        var c = await KidAsync(father, "7723");
+        var answer = await Json(await SetStockAsync(father, articleId, listingId, a.Id, 0));
+        int StockOf(int childId) => answer.GetProperty("stocks").EnumerateArray()
+            .Single(s => s.GetProperty("childId").GetInt32() == childId).GetProperty("currentStock").GetInt32();
+
+        Assert.Equal(0, StockOf(a.Id));
+        Assert.Equal(1, StockOf(b.Id));
+        Assert.Equal(1, StockOf(c.Id));
+        Assert.Equal(2, await StockRowsAsync(listingId));
+    }
 }
