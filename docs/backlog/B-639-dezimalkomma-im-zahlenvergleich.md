@@ -10,6 +10,7 @@ migration: nein
 vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Mathe in die App; Material raw/Math/lambacher-schweizer-9-sh-pugling/md)"
 entgangen_bei: []
+nachgeschaut: "2026-11-21"
 grund: ""
 ersetzt_durch: []
 ---
@@ -186,3 +187,7 @@ gemeinsamer Zahlen-Parser, kein Schema, kein neues Vertragsfeld.
   Tagestest „2,5“, „2,3“, „2,5“ und sieht „2 / 3“ – 1 passed, mit P1 rot. `full-flow` grün.
   Nicht enthalten, wie geplant: eine Zifferntastatur (`inputMode="decimal"`) in der Arcade. Das Textfeld nimmt das Komma
   an; ob die Handy-Tastatur es bequem anbietet, ist eine offene Geräte-Prüfung.
+- **2026-11-21** — nachgeschaut (Nachschau Sprint 104 in der Retro von Sprint 105), kein Befund. Geprüft: der Gang lief
+  nur über den Test – das Üben nutzt dieselbe Eingabekomponente (`Lektion`, Feld „Deine Antwort“), und in den
+  Spielflächen der Arcade gibt es kein `type="number"`, das ein Komma verschlucken könnte (gegrept: nur
+  `SohnLogin.tsx:73` `inputMode="numeric"` und `SohnShop.tsx:300`).

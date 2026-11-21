@@ -483,3 +483,66 @@ einmal gegen den Stand **vor** dem Fix und listet je Fall „grün vor dem Fix�
 als Absichtserklärung stehen, sonst bricht das Skript ab. Das wäre ein neues Tor.
 
 **Bewusst ungedeckt:** der Gedankenstrich „–“ als Minus (nur vermerkt), die Ziffern-Tastatur der Arcade (Geräte-Prüfung).
+
+## Sprint 105 — Ziel & Umfang
+
+**Umfang:** [B-673](backlog/B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md), Defekt, P3, M,
+`geschaetzt` (Entscheidungen stellvertretend aus dem Vorbereitungslauf 2026-11-19). Dasselbe Themengebiet wie Sprint 102
+und 103: wem ein Plan gehört und ab wann er Pflicht ist.
+
+**Sprint-Ziel:** Aus Sicht des Vaters nimmt ein Plan, den er einem anderen Kind gibt, weder Serie noch Malus-Beginn des
+ersten Kindes mit; einen schon gespielten Plan lässt der Server gar nicht umhängen und sagt warum. Widerlegbar durch ein
+Umhängen, nach dem das neue Kind eine gebrochene Serie hat, oder durch eine englische Rohzeile.
+
+**Entwickler-Brief:** Senke `StudyPlansController.Update`, Zweig „anderes Kind“: 404 zuerst, dann die Sperre (drei
+Tabellen), dann die Zuweisung; `ActivatedAt = heute` erst, wenn feststeht, ob der Plan nach dem PATCH aktiv ist.
+Fehlercode, deutscher Satz und Vitest in einem Schritt (`ProblemTextGuardTests` koppelt sie). Keine Migration.
+
+## Iteration 105 — umgesetzt
+
+- `ApiErrors.PlanHasData`, Sperre und Einschaltdatum im Controller, `[ProducesResponseType(409)]`, `v1.json` neu,
+  deutscher Satz und Vitest.
+- **Rote Proben:** AK 1 (drei Fälle) und AK 2 erwartet 409, gemessen 200; AK 3 erwartet Serie 4, gemessen 1.
+- Mutanten Q1–Q8 und Q0e (E2E) rot; eine erste Gang-Probe Q2e war kein Beleg und ist ersetzt (Story).
+- **Volle Suite (Release):** 1985/1985; Vitest 1302/1302.
+- **Review** (`pugling-reviewer`): kein 🔴; 🟡 verrutschte Helfer-Doku (Code, **Zähler 1 von 5**), 🟡 Testkommentar
+  (ohne Zählung), 🟢 zwei Satz-Hinweise übernommen.
+
+## Runde 10 — Rollengang Sprint 105
+
+Server und Vite frisch von Playwright gestartet (5201/5174), nach der letzten Änderung. 3 passed.
+
+- **Vater — abgenommen:** „Ich wollte den Plan meines Großen dem Kleinen geben. Die Seite sagt mir auf Deutsch, dass
+  damit schon gelernt wurde, und der Plan bleibt beim Großen.“ (Spec `plan-umhaengen-gesperrt`, mit Q0e rot).
+- **Sohn — Regressionszeuge:** AK 3 (seine Serie nach dem Umhängen) läuft über die API im Integrationsfall; keine
+  Sohn-Fläche im Diff, `full-flow` grün.
+- **Creator — Regressionszeuge:** `full-flow` grün.
+
+## Retrospektive (Sprint 105)
+
+**Nachschau:** Sprint 104 nachgesehen (B-639, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: Üben und Test teilen die
+Eingabekomponente; keine Spielfläche hat ein Zahlenfeld, das ein Komma verschluckt.
+
+**Was die eigenen Tore durchgelassen haben:** Meine erste rote Probe für den Gang (Q2e) war keine: `mutant-probe.py`
+meldete sie richtig als „abweichend“, von Hand blieb die Spec grün. Ursache: ein Test-Submit schreibt auch
+Fortschrittszeilen, sodass eine zweite Bedingung derselben Sperre den Fall trägt. Das Werkzeug hat hier funktioniert –
+die Lehre ist, für einen Gang die ganze Sperre zu mutieren, nicht eine ihrer ODER-Bedingungen.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** In `pm-loop` Step 5 ein Halbsatz: „Für eine E2E-Gang-Probe die ganze Regel
+abschalten, nicht eine Bedingung einer ODER-Kette – der Gang erzeugt oft mehr Daten als der Integrationsfall.“ Prosa,
+kein Tor.
+
+**Halt nach diesem Sprint:** Während Sprint 105 hat eine **parallele Sitzung** im selben Checkout Backlog-Dateien
+geschrieben (`B-626` geändert, `B-784` neu, `INDEX.md`). Nach [parallele Sitzungen](nachtlauf.md) startet dieser Lauf
+keinen weiteren Sprint; der Index wurde **nicht** neu erzeugt und die fremden Dateien sind nicht mitcommittet.
+
+## Stand am Ende des dritten Starts
+
+- **Gebaut und abgenommen:** B-672 (`095b6e01`), B-783 (`6ddf9b2c`), B-639 (`7ff47fde`), B-673 (`1ac42f4a`). Nichts
+  gepusht.
+- **Neu im Backlog:** B-783 (aus dem Review von Sprint 102, im selben Lauf gebaut).
+- **Entscheidungen zum Umstoßen:** B-783 Entscheidung 1 (die Verlängerung verwischt das alte Fenster wie das
+  Wiedereinschalten); B-673 Entscheidung 1 (ein gespielter Plan lässt sich nicht mehr umhängen – ein heute möglicher
+  Vater-Weg fällt weg).
+- **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 102–105; Geräte-Prüfung Komma-Tastatur am Handy (B-639).
+- **Nächste Kandidaten:** B-782 (Shop, Reparaturweg zu entscheiden), B-653, B-614.

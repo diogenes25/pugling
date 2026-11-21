@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Plan umhängen erbt Malus]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: M
@@ -236,3 +236,52 @@ prüft und `ActivatedAt` mit der B-613-Logik zusammenspielen muss.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 4. Gespielter Plan: Umhängen gesperrt (`409 plan_has_data`, drei Tabellen, mehr als die Positions-Sperre prüft); ungespielter aktiver Plan: `ActivatedAt = heute` beim Wechsel (B-613 auf einem weiteren Schreibweg); keine neue Malus-Regel. Die Sperre ist ein Vorbild (`position_has_data`), keine Repo-Konvention (`StudyPlansController.Delete` löscht ohne Sperre). Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch (`docs/openapi/v1.json` ändert sich um eine 409-Antwort); `ProblemTextGuardTests` koppelt Backend und Frontend-Satz in einen Schritt.
 - **2026-11-19** — Entscheidung 1 (Sperre `409 plan_has_data` für gespielte Pläne) vom Nutzer bestätigt.
+- **2026-11-21** — in-arbeit (Nachtlauf 2026-11-21, Sprint 105). Gebaut nach Entscheidungen 1–4:
+  `StudyPlansController.Update` prüft im Zweig „anderes Kind“ nach dem 404 und vor jeder Zuweisung
+  `PlanHasPlayDataAsync` (Übungssitzung, Testversuch, Fortschrittszeile am Plan) → `409 plan_has_data` (neu in
+  `ApiErrors`); sonst `ActivatedAt = heute`, wenn der Plan nach dem PATCH aktiv ist. Deutscher Satz in
+  `frontend/src/lib/api.ts`, nennt die Sperre und keinen Ausweg (es gibt keinen, der dem ersten Kind nichts nimmt).
+  **Rote Proben** (vor dem Fix): AK 1 drei Fälle und AK 2 erwartet 409, gemessen 200; AK 3 erwartet Serie 4, gemessen 1.
+  Je AK-Fall Test und Mutante (`RueckwirkendePflichtTests`):
+  - AK 1 → `Gespielter_Plan_Laesst_Sich_Nicht_Umhaengen` („practice“/„test“/„introduced“); Q1/Q2/Q3 (je eine Tabelle
+    weg) → je genau ihr Fall rot. Das „Konto beider Kinder“ des AK prüft der Test nicht: ohne Abrechnung entstünde dort
+    kein Malus; die Serie des Zielkinds (4) trägt die Zusicherung.
+  - AK 2 → `Abgewiesenes_Umhaengen_Speichert_Nichts`. **Ungemessen:** die Reihenfolge „Sperre vor dem Speichern“ ist
+    keine Einzeilen-Mutante; eine Sperre nach dem Titel, aber vor dem Speichern, wäre harmlos (Kommentar am Test).
+  - AK 3 → `Umgehaengter_Plan_Bricht_Die_Serie_Des_Neuen_Kindes_Nicht`; Q5 (`ActivatedAt` weg) → rot.
+  - AK 4 und Risiko 3 → `Umgehaengter_Inaktiver_Plan_Behaelt_Sein_Einschaltdatum` (Datenzusicherung); Q6 (ohne
+    `plan.Active`) → rot.
+  - AK 5 → `Gleiches_Kind_Ist_Kein_Umhaengen`; Q7 (Sperre auch bei gleichem Kind) → rot.
+  - AK 6 → `PlanSubjectTests.Kindwechsel_Schaltet_Beim_Neuen_Kind_Dasselbe_Fach_Ab` grün.
+  - AK 7 → `errorMessage.test.ts` „übersetzt die Sperre beim Umhängen eines gespielten Plans“; Q8 (Eintrag fehlt) → rot.
+  - Kombinationsfall `{childId, active:true}` auf einen inaktiven Plan: ohne eigenen Fall – beide Zeilen setzen heute,
+    ein Test fiele nur, wenn beide fehlten (Review-Hinweis 🟢5).
+
+  Gemessen nach der letzten Änderung an `72103ab9 + Arbeitsbaum geändert` mit `mutant-probe.py` (Debug), Grundlinie
+  danach grün:
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | Q1 | `StudyPlansController.cs:176` ohne `PracticeSessions` | red | red |
+  | Q2 | `:177` ohne `TestAttempts` | red | red |
+  | Q3 | `:178` ohne `PositionItemProgress` | red | red |
+  | Q5 | `:242` `ActivatedAt` nicht gesetzt | red | red |
+  | Q6 | `:242` ohne `plan.Active` | red | red |
+  | Q7 | `:195` Sperre auch bei gleichem Kind | red | red |
+  | Q8 | `frontend/src/lib/api.ts:190` Eintrag fehlt | red | red |
+  | Q0e | `:200` Sperre ganz weg, E2E `plan-umhaengen-gesperrt` | red | red |
+
+  Eine erste Gang-Probe Q2e (nur `TestAttempts` weg) war **kein Beleg**: von Hand gefahren blieb der Gang grün, weil
+  der Test-Submit auch Fortschrittszeilen schreibt und Q3 weiter sperrt. Ersetzt durch Q0e.
+
+  Review (`pugling-reviewer`): kein 🔴. 🟡 1: der neue Helfer stand zwischen der Doku von
+  `DeactivateSameSubjectPlansAsync` und deren Rumpf → verschoben, eigene Doku (Code, **Zähler 1 von 5**, vorsichtig
+  gezählt). 🟡 2: der AK-2-Kommentar behauptete eine rote Probe „nach dem Titel“, die keine ist → berichtigt (ohne
+  Zählung). 🟢 3/4: englischer `detail` ohne „by its child“ (auch ein Vater-Versuch sperrt, und das ist richtig: ein
+  bestandener zählt fürs Kind); deutscher Satz „gehört dem Kind, das damit gelernt hat“ statt mehrdeutig „diesem Kind“.
+  Bestätigt: „gespielt“ ist vollständig – alle anderen kindgebundenen Zeilen am Plan setzen eine der drei Tabellen
+  voraus.
+- **2026-11-21** — abgenommen in Commit `1ac42f4a` (Sprint 105). Backend 1985/1985 (Release), Vitest 1302/1302.
+  **Rollengang Vater:** neue Spec `plan-umhaengen-gesperrt` gegen die frisch gestartete App (5201/5174): der Vater wählt
+  auf der Plan-Seite des Bruders das jüngere Kind, speichert und liest den deutschen Satz; der Plan bleibt beim Bruder.
+  Mit Q0e rot. Dazu `full-flow` und `plan-kinderliste-laedt-noch` grün – 3 passed.
