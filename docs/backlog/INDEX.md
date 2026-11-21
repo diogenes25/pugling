@@ -12,10 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (103)
+### Offen (106)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-780](B-780-muenzen-je-uebung-nachmessen.md) | Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen | Frage | `ausformuliert` | P1 | — | — | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
@@ -91,6 +92,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | Learning Dad reagiert auf verfehlte Tagesziele vom Vortag (wütend → Monster → Kampfansage) | Wunsch | `idee` | P2 | — | — | — |
+| [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
+| [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
 | [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `geschaetzt` | P3 | S | frontend | — |
 | [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `geschaetzt` | P3 | M | frontend | — |
 | [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `geschaetzt` | P3 | S | frontend | — |
