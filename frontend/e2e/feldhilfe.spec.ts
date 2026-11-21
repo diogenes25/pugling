@@ -29,6 +29,10 @@ async function planAnlegen(page: Page, title: string) {
   await page.getByRole("combobox", { name: "Fach (Pflicht)" }).selectOption({ label: "Englisch" });
   await page.getByRole("button", { name: "Plan anlegen & Übungen hinzufügen" }).click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  // Erst wenn die Katalog-Trefferliste steht, liegen die ⓘ-Knöpfe still: Sie lädt ÜBER dem Positions-Formular nach,
+  // und ein offenes ⓘ schließt, sobald sein Knopf wandert (B-273). Ohne dieses Warten flackerte die Datei (B-602).
+  // Nicht „(N Treffer)": die Beschriftung steht beim Erstladen schon vor der Antwort auf „(0 Treffer)".
+  await expect(page.getByRole("radiogroup", { name: "Übung wählen" })).toBeVisible();
 }
 
 test("Positions-Formular: jedes erklärungsbedürftige Feld hat den passenden Hinweis", async ({ page }) => {
@@ -115,4 +119,29 @@ test("Assistent und Plan-Seite erklären dieselbe Größe mit demselben Text", a
   await imAssistenten.click();
   await expect(page.getByRole("note")).toBeVisible();
   expect(await page.getByRole("note").innerText()).toBe(textPlanSeite);
+});
+
+test("Ein ⓘ, das nach dem Anlegen geöffnet wird, bleibt auch bei langsamer Suche offen", async ({ page }) => {
+  // Hält die Wartebedingung in `planAnlegen` ehrlich (B-602): Die Suche antwortet erst nach 1,5 s. Fehlt das Warten,
+  // öffnet das ⓘ vor der Antwort, die Trefferliste schiebt es danach nach unten, und es schließt (B-273).
+  // Die Route steht VOR `planAnlegen`, weil die Liste beim Öffnen der Seite lädt. Ein Pfad-Vergleich statt des Globs
+  // `exercises?**`: Das Erstladen sucht ohne Filter, die Adresse trägt dann kein `?` – der Glob griffe nie.
+  await vaterLogin(page);
+  let verzoegert = 0;
+  await page.route((u) => u.pathname === "/api/v1/creator/exercises", async (route) => {
+    verzoegert++;
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.fallback();
+  });
+  await planAnlegen(page, `Feldhilfe-Langsam ${Date.now()}`);
+
+  const knopf = page.getByRole("button", { name: 'Erklärung zu „Ziel-Rhythmus"' }).first();
+  await knopf.click();
+  await expect(page.getByRole("radiogroup", { name: "Übung wählen" })).toBeVisible();
+  // Zwei Frames: so lange braucht die Lageprüfung des Popovers, um eine Bewegung zu sehen und zu schließen.
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await expect(knopf).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("note").filter({ hasText: /Wochenziel“ einmal pro Woche/ })).toBeVisible();
+  // Ohne Treffer der Route liefe der Fall in normaler Geschwindigkeit und bewiese nichts.
+  expect(verzoegert).toBeGreaterThan(0);
 });
