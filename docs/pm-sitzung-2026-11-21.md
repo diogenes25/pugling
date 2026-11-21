@@ -533,7 +533,7 @@ abschalten, nicht eine Bedingung einer ODER-Kette – der Gang erzeugt oft mehr 
 kein Tor.
 
 **Halt nach diesem Sprint:** Während Sprint 105 hat eine **parallele Sitzung** im selben Checkout Backlog-Dateien
-geschrieben (`B-626` geändert, `B-784` neu, `INDEX.md`). Nach [parallele Sitzungen](nachtlauf.md) startet dieser Lauf
+geschrieben (`B-626` geändert, `B-784` neu, `INDEX.md`). Zwei schreibende Läufe im selben Checkout stören sich (DLL-Sperren, doppelte Story-Nummern); darum startet dieser Lauf
 keinen weiteren Sprint; der Index wurde **nicht** neu erzeugt und die fremden Dateien sind nicht mitcommittet.
 
 ## Stand am Ende des dritten Starts
