@@ -285,3 +285,4 @@ prüft und `ActivatedAt` mit der B-613-Logik zusammenspielen muss.
   **Rollengang Vater:** neue Spec `plan-umhaengen-gesperrt` gegen die frisch gestartete App (5201/5174): der Vater wählt
   auf der Plan-Seite des Bruders das jüngere Kind, speichert und liest den deutschen Satz; der Plan bleibt beim Bruder.
   Mit Q0e rot. Dazu `full-flow` und `plan-kinderliste-laedt-noch` grün – 3 passed.
+- **2026-11-21** — vom Nutzer bestätigt (Chat nach dem Nachtlauf, „Ja, so lassen“): die stellvertretenden Entscheidungen 1–4, insbesondere Entscheidung 1 (ein gespielter Plan lässt sich nicht mehr umhängen).

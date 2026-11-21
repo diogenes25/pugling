@@ -110,3 +110,4 @@ Agent und Skripte legen Pläne nur an (Review von Sprint 102).
   verlängerter abgelaufener Plan war also schon der einzige aktive seines Fachs und schaltet keinen laufenden ab; der
   Client (`VaterPlanDetail.tsx:160`) schickt `endDate` nur bei Änderung, ein Speichern ohne Datumsänderung löst die
   Regel nicht aus.
+- **2026-11-21** — vom Nutzer bestätigt (Chat nach dem Nachtlauf, „Ja, so lassen“): Entscheidung 1 (die Verlängerung gilt wie ein Wiedereinschalten ab heute, das alte Fenster wird verwischt).
