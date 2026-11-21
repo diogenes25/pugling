@@ -68,3 +68,12 @@ Umhäng-Sperre und nicht die Ladereihenfolge der Seite.
 
 - **2026-11-22**: im Nachtlauf B in einem Zug angelegt und bis `in-arbeit` getrieben. Der Defekt war fest rot, die
   Ursache am Code gelesen, und als Defekt XS durfte der Lauf das allein.
+- **2026-11-22**: gebaut. `:60` adressiert jetzt die `.row` mit der Überschrift `Bruder-Plan ${RUN}`.
+  - **AK 2, alte Form:** im vollen Lauf rot, einzeln `--repeat-each=2` zweimal rot. Zusammen 3 von 3 rot, immer mit der
+    Meldung „strict mode violation … resolved to 2 elements“.
+  - **AK 2, neue Form:** `--repeat-each=3` gibt 3 von 3 grün.
+  - **AK 1, Mutante:** Der Locator trifft statt der Kopfzeile eine Tabellenzeile (`page.locator("tr")`). Ergebnis: rot an
+    `:65`, die Option „Jünger …“ fehlt, weil das Feld „Kind“ nicht erscheint. Der Knopf der Kopfzeile ist also wirklich
+    der, der die Spec trägt.
+  - Kein Review-Agent: Die Änderung ist eine Zeile in einer Spec, und beide Richtungen sind gemessen. Ein Rollengang
+    entfällt, die Spec ist selbst der Rollengang Vater von B-673.
