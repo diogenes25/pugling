@@ -140,7 +140,8 @@ public class KindTagessichtTests(PuglingWebAppFactory factory) : IClassFixture<P
         var open = Assert.Single(positions, p => !p.GetProperty("goalMet").GetBoolean());
         Assert.Equal(s.PlanB, open.GetProperty("planId").GetInt32());
         Assert.Equal("Plan B", open.GetProperty("planTitle").GetString());
-        Assert.StartsWith("Englisch-Pos", open.GetProperty("subjectName").GetString());
+        // The plan's subject (B-614), not the series' "Englisch-Pos…".
+        Assert.Equal("Englisch", open.GetProperty("subjectName").GetString());
 
         await PassTestAsync(s, s.PlanB, s.PositionB);
 

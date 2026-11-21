@@ -314,6 +314,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 .Select(p => new { p.PlanPositionId, p.ItemIndex, Imprinted = p.ImprintedAt != null })
                 .ToListAsync(ct))
             .ToLookup(p => p.PlanPositionId, p => (p.ItemIndex, p.Imprinted));
+        var planSubject = await PlanSubjectNameAsync(plan, ct);
 
         // A remediation that ended before this day has left the mission (B-636); on its last day it still shows as met.
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.UntilDone || HasDutyOn(p, day)))
@@ -341,7 +342,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
                 pos.Exercise?.SeriesUnitId ?? 0, pos.Exercise?.SeriesUnit?.Label ?? "",
                 pos.Exercise?.SeriesUnit?.Series?.Name ?? "", pos.Exercise?.BookPages,
-                plan.Id, plan.Title, SubjectNameOf(pos),
+                plan.Id, plan.Title, planSubject ?? SeriesSubjectNameOf(pos),
                 // B-643: the golden ring - imprinted words, or introduced ones where a content needs no learn card.
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize && (p.Imprinted
                     || type is null || !PositionPlayService.NeedsImprint(type, items[p.ItemIndex])))));
@@ -387,8 +388,18 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public static string OutstandingLabel(PositionStatus s) =>
         $"{s.ExerciseTitle} ({(s.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")}) offen";
 
-    // The subject of the position's content: the catalog subject of its textbook series, else the series' free text.
-    private static string SubjectNameOf(PlanPosition pos) =>
+    // The subject a position is filed under is its plan's (B-614): the child's day is grouped the way the father filed
+    // the plans, not by how a textbook spells its subject. Callers load the plan differently, so a missing navigation is
+    // looked up here - a forgotten Include would otherwise fall back to the series' name without a sound.
+    private async Task<string?> PlanSubjectNameAsync(StudyPlan plan, CancellationToken ct) =>
+        plan.Subject?.Name
+        ?? (plan.SubjectId is { } subjectId
+            ? await db.Subjects.AsNoTracking().Where(s => s.Id == subjectId).Select(s => s.Name).FirstOrDefaultAsync(ct)
+            : null);
+
+    // Fallback for a plan without a subject (legacy rows, deleted subject): the catalog subject of the exercise's series,
+    // else the series' free text.
+    private static string SeriesSubjectNameOf(PlanPosition pos) =>
         pos.Exercise?.SeriesUnit?.Series is { } series ? series.Subject?.Name ?? series.SubjectName ?? "" : "";
 
     // ---- The child's day across all plans (B-606) ---- ----
@@ -406,7 +417,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     public async Task<ChildDayRollup> ComputeChildDayAsync(int childId, DateOnly day, CancellationToken ct)
     {
-        var plans = await db.StudyPlans.AsNoTracking()
+        var plans = await db.StudyPlans.AsNoTracking().Include(p => p.Subject)
             .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && p.EndDate >= day)
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
             .ToListAsync(ct);

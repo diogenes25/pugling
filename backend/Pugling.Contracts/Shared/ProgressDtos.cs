@@ -25,9 +25,10 @@ namespace Pugling.Contracts.Shared;
 /// looking it up while practicing is the point, the class test stays without it.
 /// </para>
 /// <para>
-/// <c>PlanId</c>/<c>PlanTitle</c> name the plan the position belongs to and <c>SubjectName</c> the subject of its
-/// content (taken from the exercise's textbook series, "" = none) - B-606: the child's day view lists the positions of
-/// every active plan side by side, and a position must still lead into the path of its own plan.
+/// <c>PlanId</c>/<c>PlanTitle</c> name the plan the position belongs to and <c>SubjectName</c> the subject of that plan
+/// (B-614: the child's day is grouped the way the supervisor filed the plans) - only a plan without a subject falls back to
+/// the subject of the exercise's textbook series ("" = none). B-606: the child's day view lists the positions of every
+/// active plan side by side, and a position must still lead into the path of its own plan.
 /// </para>
 /// <para>
 /// <c>GoalProgress</c> (0…1) is how far the goal of the current period has come, so the child sees a duty filling up

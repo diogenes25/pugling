@@ -22,8 +22,9 @@ namespace Pugling.Api.Controllers.Student;
 public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox, TimeProvider time) : ControllerBase
 {
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
+    // The subject rides along so the history's day rollup does not look it up once per day (B-614).
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
-        db.StudyPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == planId, ct);
+        db.StudyPlans.AsNoTracking().Include(p => p.Subject).FirstOrDefaultAsync(p => p.Id == planId, ct);
 
     /// <summary>
     /// Daily mission: positions due today with status, mandatory goal completion and current streak. The streak is the

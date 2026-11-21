@@ -88,7 +88,8 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         {
             // Every plan running in the range, also one switched off since (B-558): a chapter change must not erase the
             // weeks before it. A plan off on a day (off now, or switched on only later - B-613) counts in the child's favour.
-            var plans = await db.StudyPlans.AsNoTracking()
+            // The subject rides along: the day rollup would otherwise look it up once per day (B-614).
+            var plans = await db.StudyPlans.AsNoTracking().Include(p => p.Subject)
                 .Where(p => p.ChildId == child.Id && p.StartDate <= to && p.EndDate >= from)
                 .ToListAsync(ct);
             var days = new List<(DateOnly Day, int GoalsTotal, int GoalsMet, int Points, bool? DutyDone)>();
