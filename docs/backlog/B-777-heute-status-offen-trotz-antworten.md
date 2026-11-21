@@ -12,6 +12,7 @@ quelle: "Nachschau Sprint 97 im Nachtlauf 2026-11-21 (frontend-reviewer und pugl
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-749, B-770]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-777 · Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat
@@ -93,3 +94,7 @@ Zusicherungen in `ChildrenDashboardAnswersTests`.
 - **2026-11-21** — abgenommen in Commit `6c128f3a` (Sprint 101). Backend 1938/1938 (Release). Rollengang-E2E 4/4 auf den
   Ausweichports (`heute-dran-nach-antworten`, `vater-schmal`, `full-flow`). Vater abgenommen, Sohn und Creator als
   Regressionszeugen.
+- **2026-11-21** — nachgeschaut (Nachschau Sprint 101 in der Retro von Sprint 102): kein Befund. Geprüft: alle Leser von
+  `practiced` gegrept (einziger Leser `VaterDashboard.tsx:113`, in `Pugling.Client`/`Pugling.Agent.*` keiner), die neue
+  Bedingung gegen `CountAnswersAsync` (`ChildrenDashboardService.cs:53-60`) gelesen: angefangene, unbeantwortete
+  Testzeilen und Vater-Tests (`BySupervisor`) zählen nicht, also macht ein abgebrochener Test `practiced` nicht wahr.

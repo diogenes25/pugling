@@ -328,3 +328,62 @@ Akteur-Spalte, und dieselbe Grenze gilt seit B-770 für `AnswersToday`.
 - **Offen beim Nutzer:**
   - die Retro-Vorschläge aus Sprint 99, 100 und 101;
   - die Geräte-Prüfung von B-671.
+
+## Runde 6 — Dritter Start am Abend (Auftrag „starte einen Nachtlauf“)
+
+Freie Auswahl, Freigaben nach [nachtlauf.md](nachtlauf.md). Kein neuer Befund unter `docs/anmerkungen/`. Die Rollen
+wurden nicht neu durchgespielt: die Kandidaten stehen aus der Nachschau und dem Vorbereitungslauf fest (B-672, B-639,
+B-782). Reihenfolge: erst B-672 (geschätzt, Malus und Serie, also der Kern „verpasste Pflicht kostet“), dann B-639
+(Mathe, eigenes Themengebiet, eigener Sprint).
+
+## Sprint 102 — Ziel & Umfang
+
+**Umfang:** [B-672](backlog/B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md), Defekt, P2, S, `geschaetzt`.
+
+**Sprint-Ziel:** Aus Sicht des Sohns kostet ihn eine Startkorrektur des Vaters weder Münzen noch die Serie für Tage, an
+denen er den Plan nicht spielen konnte. Widerlegbar durch einen Malus oder einen Serienbruch an einem solchen Tag.
+
+**Entwickler-Brief:**
+- Quelle der Wahrheit ist `StudyPlan.ActivatedAt`; die einzige Stelle, die beim Verlegen schreibt, ist
+  `StudyPlansController.Update` (die Senke). Die Verbraucher `PlanDueForPeriod` und `ActiveOn` bleiben unverändert.
+- Alten Start vor dem Überschreiben festhalten, dann anheben auf `min(alter Start, heute)`, dann das bestehende Absenken.
+- Keine Migration, kein Vertragsbruch. Testweg: `RueckwirkendePflichtTests` mit eingefrorener Uhr.
+
+## Iteration 102 — umgesetzt
+
+- `StudyPlansController.Update`: `oldStart` vor dem Überschreiben, Anhebung im Block `startMoved && plan.Active`;
+  Spalten-Doku von `ActivatedAt` ergänzt.
+- Vier neue Fälle. **Rote Proben:** AK 1 erwartet `[T+5, T+6]`, gemessen T+1..T+6; AK 2 erwartet Serie 11, gemessen 1.
+- Mutanten M1–M7 alle rot am erwarteten Test (Tabelle in der Story).
+- **Volle Suite (Release):** 1942/1942.
+- **Review** (`pugling-reviewer`): kein 🔴; ein 🟡 außerhalb des Diffs →
+  [B-783](backlog/B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) (Verlängern eines abgelaufenen Plans, das
+  gespiegelte Ende); drei 🟢 nachgezogen bzw. in der Story vermerkt. **Zähler 0 von 5.**
+
+## Runde 7 — Rollengang Sprint 102
+
+Die Wirkung braucht vergehende Tage; die laufende App hat keine verstellbare Uhr. Ein Gang im Browser kann den Fall nicht
+zeigen. Ersatzbeleg: die Integrationsfälle fahren den PATCH des Vaters über die API mit eingefrorener Uhr. Regressions-E2E
+nach der letzten Änderung frisch gestartet (5201/5174): `full-flow`, `vater-schmal`, `heute-dran-nach-antworten` – **4 passed**.
+
+- **Vater — abgenommen (auf dem Ersatzbeleg):** „Wenn ich nach den Ferien den Start zurücksetze, bekommt mein Sohn keinen
+  Malus für die Tage, an denen der Plan gar nicht lief.“
+- **Sohn — Regressionszeuge:** keine Sohn-Fläche im Diff, `full-flow` grün.
+- **Creator — Regressionszeuge:** `full-flow` grün.
+
+## Retrospektive (Sprint 102)
+
+**Nachschau:** Sprint 101 nachgesehen (B-777, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: alle Leser von
+`practiced` gegrept (einziger Leser `VaterDashboard.tsx:113`), die neue Bedingung gegen `CountAnswersAsync` gelesen –
+abgebrochene Tests und Vater-Tests zählen nicht.
+
+**Was die eigenen Tore durchgelassen haben:** Der Fund B-783 kam vom Reviewer, nicht aus der Story. Die Ausformulierung
+von B-672 hat den Anfang des Spielfensters untersucht (`StartDate`) und das Ende (`EndDate`) nicht, obwohl
+`PlanPlayableForChild` beide Grenzen gleich behandelt. Dieselbe Lehre („eine Grenze gilt an beiden Enden“) steht schon
+in der Retro von Sprint 69.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Beim Ausformulieren einer Story über ein Zeitfenster
+(`StartDate`/`EndDate`, `from`/`to`) nennt der Ist-Stand ausdrücklich, was am anderen Ende passiert. Kein Tor: die Stelle
+ist Prosa im Vorbereitungslauf, und ein Mechanismus müsste Fenster erkennen.
+
+**Bewusst ungedeckt:** Malus, der vor dem Fix durch eine Zurückverlegung schon gebucht wurde (Entscheidung 3).

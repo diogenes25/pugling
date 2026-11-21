@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Start zurückverlegt bricht Serie, Ferienpause kostet Malus]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -219,3 +219,41 @@ Variable), dazu fünf Testfälle in einer vorhandenen Klasse.
   inaktive Pläne unberührt); Akzeptanzkriterien final mit je einer roten Änderung. Keine neue Malus-Regel.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, backend, keine Migration, kein Vertragsbruch; Block in
   `StudyPlansController.cs:211-229` am Code nachgelesen, die Fälle AK 1, 2, 5 gegen die Formel durchgerechnet.
+- **2026-11-21** — in-arbeit (Nachtlauf 2026-11-21, Sprint 102). Je AK-Fall der Test und die Mutante:
+  - AK 1, Malus nach Zurückverlegen → `RueckwirkendePflichtTests.Zurueckverlegter_Start_Bucht_Keinen_Malus_Fuer_Unspielbare_Tage`;
+    rote Probe ohne Fix: erwartet `[T+5, T+6]`, gemessen T+1..T+6 (sechs Tage). Mutanten M1 (Anhebung weg), M2
+    (Anhebung = heute, dann gar kein Malus), M3 (alter Start nach dem Überschreiben gelesen) → rot.
+  - AK 2, Serie → `Zurueckverlegter_Start_Bricht_Die_Serie_Nicht`; rote Probe ohne Fix: erwartet 11, gemessen 1. M1, M3 → rot.
+    Der Test verlängert Plan A (der geseedete Plan endet bei T+5), sonst bräche die Serie am Testaufbau statt am Fehler.
+  - AK 3, Vorziehen bleibt → bestehender `Vorgezogener_Start_Gilt_Ab_Heute_Als_Eingeschaltet`; M7 (Absenken weg) → rot.
+  - AK 4, Datenzusicherung (beschriftet) → `Ohne_Verlegung_Wird_Nichts_Angehoben`, drei Fälle (kein Start, gleicher
+    Start, inaktiver Plan); M4 (`Active`-Gate weg), M5 (`startMoved`-Gate weg) → rot. Im Ausgangszustand grün.
+  - AK 5, spielbare Tage bleiben Pflicht → `Spielbare_Tage_Bleiben_Pflicht`; M6 (Kurzregel `ActivatedAt = playableFrom`)
+    und M2 → rot. Im Ausgangszustand grün (Gegenprobe gegen die verworfene Regel).
+  - **Äquivalent, kein Test möglich:** die Reihenfolge „anheben, dann absenken“ (Risiken, AK 2). Der Block ist ein Clamp
+    zwischen `min(alter Start, heute)` und `max(neuer Start, heute)`; beide Reihenfolgen liefern denselben Wert
+    (Review-Hinweis 🟢). Ebenso tut der Block bei „einschalten + verlegen“ in einem PATCH nichts (`:221` setzt heute, der
+    Clamp lässt heute stehen); der unter Risiken angekündigte eigene Testfall wäre nur eine Absichtserklärung und ist
+    darum nicht gebaut.
+
+  Gemessen an `560bd2f0 + Arbeitsbaum geändert` mit `mutant-probe.py` (Debug), Grundlinie danach grün:
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | M1 | `StudyPlansController.cs:231` Anhebung weg | red | red |
+  | M2 | `:230` Anhebung = heute | red | red |
+  | M3 | `:212` alter Start = neuer Start | red | red |
+  | M4 | `:226` ohne `plan.Active` | red | red |
+  | M5 | `:226` ohne `startMoved` | red | red |
+  | M6 | `:231` Kurzregel `playableFrom` | red | red |
+  | M7 | `:233` Absenken weg | red | red |
+
+  Review (`pugling-reviewer`): kein 🔴, ein 🟡 außerhalb des Diffs → [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md)
+  (verlängerter, schon abgelaufener Plan, ohne Zählung), drei 🟢: Spalten-Doku `StudyPlanEntities.cs` ergänzt, die beiden
+  äquivalenten Fälle oben vermerkt. **Zähler 0 von 5.**
+- **2026-11-21** — abgenommen in Commit `095b6e01` (Sprint 102). Backend 1942/1942 (Release).
+  **Rollengang:** Die Wirkung braucht vergehende Tage, die laufende App hat keine verstellbare Uhr; ein echter Gang im
+  Browser kann den Fall darum nicht zeigen. Ersatzbeleg sind die Integrationsfälle, die den PATCH des Vaters über die API
+  fahren (Uhr per `factory.Clock`). Regressions-E2E auf 5201/5174 nach der letzten Änderung frisch gestartet:
+  `full-flow`, `vater-schmal` (zwei Fälle), `heute-dran-nach-antworten` – 4 passed. Vater abgenommen auf diesem Beleg,
+  Sohn und Creator als Regressionszeugen (keine ihrer Flächen im Diff).
