@@ -601,3 +601,58 @@ einer `<summary>` ist nur per Lesen prüfbar; ein Tor müsste Prosa gegen den Au
 Reviewer-Auftrag, der die Senke benennt und nach Pfaden darum greppen lässt – er hat es hier gefunden.
 
 Kein Halt-Grund: kein neues Tor, kein Defekt im Increment.
+
+## Runde 13 — fünfter Start (Nachtlauf am späten Abend)
+
+Vor dem Start geprüft: keine andere Sitzung läuft (`list_sessions`, alle `isRunning: false`). Die fremden, nicht
+committeten Dateien (`B-626`, `B-784`, `INDEX.md`, `scripts/theodor-part-c-aufholen-2026-11-19.ps1`) bleiben unangetastet;
+`INDEX.md` wird darum nicht neu erzeugt.
+
+## Sprint 107 — Ziel & Umfang
+
+**Umfang:** [B-614](backlog/B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md), Defekt, P3, M, `geschaetzt`
+(Entscheidungen stellvertretend aus dem Vorbereitungslauf 2026-11-19).
+
+**Sprint-Ziel:** Aus Sicht des Sohns steht jede Aufgabe eines Plans auf der Startseite unter dem Fach dieses Plans – eine
+Übung aus einem fremden Lehrwerk öffnet keine zweite Fach-Karte. Widerlegbar durch eine zweite Karte für einen
+Englisch-Plan mit einer Mathe-Übung.
+
+**Entwickler-Brief:** Senke ist `PositionProgressService.ComputeDayAsync`, die einzige Stelle, die `PositionStatus` baut.
+Name = Fach des Plans; fehlt die Navigation, holt die Senke ihn selbst (Entscheidung 3); Plan ohne Fach → Name der Reihe
+wie bisher (Entscheidung 2). Frontend unverändert. Keine Migration, Vertragsform unverändert (nur Doc-Satz).
+
+## Iteration 107 — umgesetzt
+
+- `PositionProgressService`: `PlanSubjectNameAsync` (geladene Navigation, sonst Abfrage nach `SubjectId`), Rückfall
+  `SeriesSubjectNameOf`; `ComputeChildDayAsync`, Plan-Übersicht und Dashboard-Zeitachse laden `Subject` mit.
+  `ProgressDtos.cs` Doc-Satz. Neue Klasse `PlanFachTagessichtTests` (4 Fälle), `KindTagessichtTests.cs:143` umgeschrieben,
+  E2E `startseite-plan-fach.spec.ts`.
+- **Rote Probe:** vor dem Fix 2 von 3 rot (AK 1 erwartet `Englisch`, gemessen `Mathe-x 16`; AK 4 erwartet `Englisch`,
+  gemessen `Mathe-x 24`). Mutanten Q1–Q4 rot, Q5/Q6 (nur Ladeoptimierung) grün wie erwartet; E2E-Probe E1 rot.
+- **Volle Suite (Release):** 1994/1994. **Review** (`pugling-reviewer`): kein 🔴/🟡, zwei 🟢 übernommen (ohne Zählung).
+  **Zähler 0 von 5.**
+
+## Runde 14 — Rollengang Sprint 107
+
+- **Sohn — abgenommen** (E2E `startseite-plan-fach`, Server frisch auf 5201/5174 nach der letzten Änderung): „Ich hab
+  Englisch, und da steht auch alles von Englisch drin – auch die Wörter, die aus dem anderen Buch kommen. Keine komische
+  Mathe-Karte mehr.“
+- **Vater — Regressionszeuge:** `full-flow` und `belohnung-ueber-faecher` E2E grün; im Diff nur die Ladezeile der
+  Dashboard-Zeitachse (`Include`), deren Zahlen den Namen nicht lesen.
+- **Creator — Regressionszeuge:** derselbe `full-flow`-Lauf; keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 107)
+
+**Nachschau:** Sprint 106 nachgesehen (B-653, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: `pos.Scope` hat einen
+einzigen Leser (`PositionPlayService.cs:287`); Umfang und Dosis teilen `IsOpenLearnCard`. Index nicht neu erzeugt
+(fremde Änderungen an `INDEX.md`).
+
+**Was die eigenen Tore durchgelassen haben:** nichts nach außen. Innen: der übernommene 🟢-Vorschlag (`Include` in der
+Plan-Übersicht) nahm AK 4 die Last, das Nachladen zu tragen – der Fall wäre danach ohne Zweck grün geblieben. Gefangen hat
+es die Pflicht, nach der letzten Änderung neu zu messen (Q3 hätte sonst „grün statt rot“ gezeigt); ergänzt wurde ein
+direkter Service-Fall.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** keiner als Mechanismus. Begründung: die bestehende Regel „Mutanten nach
+der letzten Änderung“ deckt genau diesen Fall; ein zweites Tor würde dasselbe messen.
+
+Kein Halt-Grund: kein neues Tor, kein Defekt im Increment.

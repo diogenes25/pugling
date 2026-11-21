@@ -12,6 +12,7 @@ quelle: "PM-Sitzung 2026-11-18, Nachschau von B-643 (e10cdd34)"
 entgangen_bei: [B-643]
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-21"
 ---
 
 # B-653 · Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte
@@ -234,3 +235,4 @@ Parameter erweitern, ein Aufrufer. Der Aufwand liegt in den Tests, nicht im Code
 Gemessen nach der letzten Änderung (Review-Nacharbeit) an `7da612ee + Arbeitsbaum geändert`, 2026-11-21 21:34, mit `fails` je Zeile (fällt am benannten Fall).
 - **2026-11-21** — Review (`pugling-reviewer`): kein 🔴/🟡; drei 🟢 übernommen (ohne Zählung): doppelter Tageshelfer in `UmfangNeuTests` zusammengelegt, Klassen-Doku um die Lernkarten-Ausnahme ergänzt, `OpenLearnCards`-Doku korrigiert (der Testanteil liest keine offenen Karten – einziger Aufrufer `PositionPlayService.cs:297`). Mutanten danach neu gemessen (Tabelle oben). Volle Suite (Release) 1990/1990.
 - **2026-11-21** — abgenommen (Sprint 106). Rollengang: Sohn über die API im Integrationsfall (In-Process-Server aus dem Stand nach der letzten Änderung): Wort am Folgetag und übernächsten Tag als Lernkarte, Dosis 2 offen + 4 neu, Tagesstatus 2. Keine UI-Änderung, darum keine eigene Spec; `full-flow` E2E 1 passed (Server frisch auf 5201/5174). Vater und Creator: Regressionszeugen, keine ihrer Flächen im Diff. Commit `f72b9638`.
+- **2026-11-21** — nachgeschaut (Nachtlauf, Retro Sprint 107), kein Befund. Geprüft: (1) `pos.Scope` hat in `Services`/`Controllers` genau einen Leser, die Auswahl `PositionPlayService.cs:287` – kein zweiter Weg filtert „nur neue“ ohne das neue Prädikat; (2) `ScopeMatch` (`:634`) und `OpenLearnCards` rufen dasselbe `IsOpenLearnCard` auf, beide mit dem Tag der Runde und `ItemIndex < items.Count` – Dosis und Umfang zählen dieselben Wörter.

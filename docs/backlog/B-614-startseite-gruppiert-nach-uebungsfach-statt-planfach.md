@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Fach der Übung statt des Plans]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: M
@@ -197,3 +197,19 @@ Kriterien mit eigenen Fixtures. Anker: wie der Batch-Pfad im `MediaSelector` (M)
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend (Frontend bleibt), keine Migration, kein Vertragsbruch
   (Feldform unverändert, nur Bedeutung und Doc-Satz); Aufrufer von `ComputeDayAsync` am Code gezählt (fünf), Last der
   Nachladeabfrage ungemessen.
+- **2026-11-21** — in-arbeit (Nachtlauf, Sprint 107). Rote Probe vor dem Fix: `PlanFachTagessichtTests` 2 von 3 rot – AK 1 erwartet `Englisch`, gemessen `Mathe-x 16`; AK 4 erwartet `Englisch`, gemessen `Mathe-x 24`; AK 3 grün wie angekündigt (Rückfall = Ausgangszustand).
+- **2026-11-21** — Fälle → Tests: AK 1 (Reihe mit fremdem Katalogfach) → `PlanFachTagessichtTests.Startseite_Meldet_Das_Fach_Des_Plans`, Mutante Q1 → rot; AK 2 (nur Freitext „English“) → derselbe Fall, Zeile `FreeTextPos`, Q1 → rot; AK 3 (Plan ohne Fach: Katalogname / Freitext / leer) → `Plan_Ohne_Fach_Faellt_Auf_Die_Reihe_Zurueck`, Q2 (Rückfall leer) und Q4 (Freitext fehlt) → rot; AK 4 (Plan-Übersicht) → `Planuebersicht_Meldet_Dasselbe_Fach_Wie_Die_Startseite`, Q1 → rot; Entscheidung 3 (Aufrufer ohne geladenes Fach) → `Plan_Ohne_Geladenes_Fach_Meldet_Trotzdem_Das_Plan_Fach` (direkter Service-Aufruf), Q3 → rot; AK 5 → `KindTagessichtTests.cs:143-144` auf `Equal("Englisch")` umgeschrieben, Q1 → rot; AK 6 → Vitest `src/sohn/tagessicht*` 12/12 grün, kein Frontend-Diff; AK 7 → Doc-Satz `ProgressDtos.cs:28-31` gelesen (nennt Plan-Fach, Rückfall, "" = keins).
+- **2026-11-21** — Mutanten nach der letzten Änderung (`mutant-probe.py`, Debug, Filter `PlanFachTagessichtTests|KindTagessichtTests`):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | Q1 Name nur aus der Reihe | `PositionProgressService.cs:345` | red | red |
+  | Q2 Rückfall leer | `PositionProgressService.cs:345` | red | red |
+  | Q3 Nachladen aus | `PositionProgressService.cs:396` | red | red |
+  | Q4 Freitext der Reihe fehlt | `PositionProgressService.cs:403` | red | red |
+  | Q5 `Include` in `ComputeChildDayAsync` weg | `PositionProgressService.cs:420` | green | green |
+  | Q6 `Include` in der Plan-Übersicht weg | `PlanOverviewController.cs:27` | green | green |
+
+  Q5/Q6 grün ist gewollt: die `Include`s sparen nur die Nachlade-Abfrage, das Ergebnis trägt die Senke. E2E-Probe E1 (Q1 gegen `startseite-plan-fach.spec.ts`, Ausweichports) → rot.
+- **2026-11-21** — Review (`pugling-reviewer`): kein 🔴/🟡. Geprüft: `PositionStatus` entsteht nur in `ComputeDayAsync`; alle fünf Aufrufer gelesen, die Verlaufsschleifen lesen den Namen nicht. Zwei 🟢 übernommen (ohne Zählung): `Include(Subject)` in `PlanOverviewController.GetPlan` und der Dashboard-Zeitachse (spart die Abfrage je Verlaufstag); „father“ → „supervisor“ im Swagger-Satz. Weil die Plan-Übersicht danach nicht mehr nachlädt, trägt AK 4 das Nachladen nicht mehr – dafür der direkte Service-Fall (Q3). Volle Suite (Release) 1994/1994. **Zähler 0 von 5.**
+- **2026-11-21** — abgenommen (Sprint 107). Rollengang Sohn als E2E (`frontend/e2e/startseite-plan-fach.spec.ts`, Server frisch von Playwright auf 5201/5174 nach der letzten Änderung): Englisch-Plan mit einer Übung aus einer Mathe-Reihe zeigt genau eine Fach-Karte „Englisch …“ mit beiden Aufgaben, keine Mathe-Karte. Vater und Creator: Regressionszeugen (`full-flow`, `belohnung-ueber-faecher` grün; keine Vater-/Creator-Fläche im Diff außer der Ladezeile der Dashboard-Zeitachse). Entscheidung 4 bleibt zurückgestellt (fachfremde Positionen ungeprüft). Commit `86d74423`.
