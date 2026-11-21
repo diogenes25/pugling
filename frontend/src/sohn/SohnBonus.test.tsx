@@ -33,7 +33,8 @@ afterEach(() => sessionStorage.clear());
 
 const uebung = (over: Partial<ExtraExercise>): ExtraExercise => ({
   exerciseId: 1, title: "Tiere", type: "Vocabulary", unitLabel: "Unit 1", itemCount: 4, repeatable: true,
-  completedRuns: 0, done: false, nextForm: "Typed", coinsPerHit: 3, openRunId: null, nextRunPercent: 100, ...over,
+  completedRuns: 0, done: false, nextForm: "Typed", coinsPerHit: 3, openRunId: null, nextRunPercent: 100, mixedRates: false,
+  ...over,
 });
 
 /*
@@ -127,7 +128,7 @@ describe("Bonus-Runde – Hinweis zum Wert", () => {
   const starte = async (runPercent: number) => {
     startExtraRun.mockResolvedValue({
       runId: 50 + runPercent, exerciseId: 2, title: "Rechnen", type: "Arithmetic", form: "Typed", stage: 1, typed: true,
-      coinsPerHit: 3, runPercent, cards: [{ itemIndex: 0, prompt: "1 + 1" }, { itemIndex: 1, prompt: "2 + 2" }],
+      coinsPerHit: 3, runPercent, cards: [{ itemIndex: 0, coinsPerHit: 3, prompt: "1 + 1" }, { itemIndex: 1, coinsPerHit: 3, prompt: "2 + 2" }],
     } as unknown as ExtraRunResponse);
     render(
       <MemoryRouter initialEntries={["/sohn/bonus/2"]}>
@@ -202,7 +203,7 @@ describe("Bonus-Runde am vollen Deckel", () => {
     sessionStorage.setItem("pugling.bonus.run.41", JSON.stringify(saved));
     startExtraRun.mockResolvedValue({
       runId: 41, exerciseId: 2, title: "Rechnen", type: "Arithmetic", form: "Typed", stage: 1, typed: true,
-      coinsPerHit: 2, cards: [{ itemIndex: 0, prompt: "1 + 1" }],
+      coinsPerHit: 2, cards: [{ itemIndex: 0, coinsPerHit: 2, prompt: "1 + 1" }],
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockRejectedValue(new ApiError(409, "Technical server line.", "trace-7", "extra_cap_reached"));
 
@@ -231,7 +232,7 @@ describe("Bonus-Runde einer geänderten Übung", () => {
     sessionStorage.setItem("pugling.bonus.run.42", JSON.stringify(saved));
     startExtraRun.mockResolvedValue({
       runId: 42, exerciseId: 2, title: "Rechnen", type: "Arithmetic", form: "Typed", stage: 1, typed: true,
-      coinsPerHit: 2, cards: [{ itemIndex: 0, prompt: "1 + 1" }],
+      coinsPerHit: 2, cards: [{ itemIndex: 0, coinsPerHit: 2, prompt: "1 + 1" }],
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockRejectedValue(new ApiError(409, "Technical server line.", "trace-8", "extra_run_stale"));
 
@@ -256,7 +257,7 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
     const text = "1. Your sister plays the drums, {{1}} 2. We aren't late, {{2}}";
     startExtraRun.mockResolvedValue({
       runId: 300, exerciseId: 4, title: "Tags", type: "Cloze", form: "Typed", stage: 1, typed: true, coinsPerHit: 3,
-      runPercent: 100, cards: [{ itemIndex: 0, prompt: text, gapIndex: 1 }, { itemIndex: 1, prompt: text, gapIndex: 2 }],
+      runPercent: 100, cards: [{ itemIndex: 0, coinsPerHit: 3, prompt: text, gapIndex: 1 }, { itemIndex: 1, coinsPerHit: 3, prompt: text, gapIndex: 2 }],
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockResolvedValue({
       runId: 300, form: "Typed", total: 2, correct: 1, coinsAwarded: 1, capReached: false, coinsToday: 1, dailyCoinCap: null,
@@ -299,7 +300,7 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
   it("nennt bei gemischten Karten die Summe der Treffer statt richtig × Satz", async () => {
     startExtraRun.mockResolvedValue({
       runId: 301, exerciseId: 5, title: "Beides", type: "Vocabulary", form: "Typed", stage: 4, typed: true, coinsPerHit: 3,
-      runPercent: 100, cards: [{ itemIndex: 0, prompt: "walk" }, { itemIndex: 1, prompt: "gehen" }],
+      runPercent: 100, cards: [{ itemIndex: 0, coinsPerHit: 3, prompt: "walk" }, { itemIndex: 1, coinsPerHit: 3, prompt: "gehen" }],
     } as unknown as ExtraRunResponse);
     submitExtraRun.mockResolvedValue({
       runId: 301, form: "Typed", total: 2, correct: 2, coinsAwarded: 4, capReached: false, coinsToday: 4, dailyCoinCap: null,
@@ -325,6 +326,59 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
 });
 
 /*
+ * B-608 AK 4 – der Hinweis über der Karte nennt, was ein Treffer auf DIESER Karte zahlt: in einer Tipp-Runde über eine
+ * „beides“-Liste zahlt die Auswahlkarte 1, die Schreibkarte 3. Rot, solange der Hinweis den Satz der Runde liest (dann
+ * stünde auf beiden Karten 3).
+ */
+describe("Bonus-Runde – Satz je Karte (B-608)", () => {
+  it("wechselt den genannten Satz mit der Karte", async () => {
+    startExtraRun.mockResolvedValue({
+      runId: 608, exerciseId: 8, title: "Beides", type: "Vocabulary", form: "Typed", stage: 4, typed: true,
+      coinsPerHit: 3, runPercent: 100, cards: [
+        { itemIndex: 0, coinsPerHit: 1, prompt: "die Insel", answerLength: 6 },
+        { itemIndex: 1, coinsPerHit: 3, prompt: "der Weg", answerLength: 6 },
+      ],
+    } as unknown as ExtraRunResponse);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/8"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("die Insel");
+    expect(screen.getByText("Jede richtige Antwort bringt 1 🪙 – ausgewertet wird am Ende.")).toBeTruthy();
+
+    const kaestchen = screen.getByLabelText("Buchstabe 1 von 6");
+    fireEvent.change(kaestchen, { target: { value: "x" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Weiter/ })); });
+    await screen.findByText("der Weg");
+    expect(screen.getByText("Jede richtige Antwort bringt 3 🪙 – ausgewertet wird am Ende.")).toBeTruthy();
+  });
+});
+
+/*
+ * B-608 AK 5 – die Übersicht sagt „bis zu“, wo die Karten der nächsten Runde verschieden zahlen. Rot, wenn die Zeile
+ * `mixedRates` übergeht (dann stünde ein nacktes „3 🪙 je Treffer“ da).
+ */
+describe("Bonus-Übersicht – gemischte Sätze (B-608)", () => {
+  it("nennt bei gemischten Karten „bis zu“, sonst den Satz", async () => {
+    extraTraining.mockResolvedValue({
+      unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 0, dailyCoinCap: null,
+      exercises: [
+        uebung({ exerciseId: 1, title: "Beides", mixedRates: true }),
+        uebung({ exerciseId: 2, title: "Nur Tippen" }),
+        // Review-Fund: auch eine Auswahlrunde mischt, wenn eine Karte keinen Ablenker hat und getippt wird.
+        uebung({ exerciseId: 3, title: "Auswahl gemischt", nextForm: "Choice", mixedRates: true }),
+      ],
+    } as ExtraTrainingOverview);
+    render(<MemoryRouter><SohnBonus /></MemoryRouter>);
+    await screen.findByText("Beides");
+    expect(screen.getByText(/Tippen · bis zu 3 🪙 je Treffer/)).toBeTruthy();
+    expect(screen.getAllByText(/Tippen · 3 🪙 je Treffer/)).toHaveLength(1);
+    expect(screen.getByText(/Auswahl · bis zu 3 🪙 je Treffer/)).toBeTruthy();
+  });
+});
+
+/*
  * B-671 – nach dem Weiter einer Kästchen-Karte landet der Fokus in Kästchen 1 der neuen Karte; damit setzt die
  * Sonderzeichen-Leiste dort ein und nicht in das Kästchen, in dem die vorige Karte endete.
  */
@@ -333,9 +387,9 @@ describe("Bonus-Runde – Fokus nach dem Kartenwechsel (B-671)", () => {
     startExtraRun.mockResolvedValue({
       runId: 671, exerciseId: 7, title: "Wörter", type: "Vocabulary", form: "Typed", stage: 3, typed: true,
       coinsPerHit: 1, runPercent: 100, cards: [
-        { itemIndex: 0, prompt: "die Insel", answerLength: 6, keyboardLang: "fr" },
-        { itemIndex: 1, prompt: "der Weg", answerLength: 6, keyboardLang: "fr" },
-        { itemIndex: 2, prompt: "das Haus", answerLength: 6, keyboardLang: "fr" },
+        { itemIndex: 0, coinsPerHit: 1, prompt: "die Insel", answerLength: 6, keyboardLang: "fr" },
+        { itemIndex: 1, coinsPerHit: 1, prompt: "der Weg", answerLength: 6, keyboardLang: "fr" },
+        { itemIndex: 2, coinsPerHit: 1, prompt: "das Haus", answerLength: 6, keyboardLang: "fr" },
       ],
     } as unknown as ExtraRunResponse);
     render(

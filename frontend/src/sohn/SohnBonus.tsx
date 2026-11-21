@@ -27,10 +27,20 @@ const FORM_KEY = {
   SelfAssess: "bonus.formSelfAssess", Choice: "bonus.formChoice", Typed: "bonus.formTyped",
 } as const satisfies Record<ExtraForm, string>;
 
-/** Die Form einer Runde in Arcade-Sprache, mit dem Preis je Treffer. */
+/** B-608: dieselben Formen mit „bis zu“ – für eine Runde, deren Karten verschieden zahlen. */
+const MIXED_KEY = {
+  SelfAssess: "bonus.formSelfAssessMixed", Choice: "bonus.formChoiceMixed", Typed: "bonus.formTypedMixed",
+} as const satisfies Record<ExtraForm, string>;
+
+/**
+ * Die Form einer Runde in Arcade-Sprache, mit dem Preis je Treffer. B-608: zahlen die Karten der Runde verschieden
+ * (`mixedRates` vom Server, in jeder Form möglich – eine Auswahlkarte ohne Ablenker wird getippt), nennt die Zeile den
+ * höchsten Satz als „bis zu“ statt ihn jeder Karte zu versprechen.
+ */
 function useFormText() {
   const { t } = useTranslation();
-  return (form: ExtraForm, coins: number) => t(FORM_KEY[form], { coins });
+  return (form: ExtraForm, coins: number, mixed: boolean) =>
+    t(mixed ? MIXED_KEY[form] : FORM_KEY[form], { coins });
 }
 
 // Die Antworten einer offenen Runde, je Runde im sessionStorage: „Später weiter“ soll dort weitermachen, wo das Kind
@@ -132,7 +142,7 @@ function BonusZeile({ e, capReached, capZero }: { e: ExtraExercise; capReached: 
         {e.unitLabel && <span className="pill" style={{ marginLeft: "auto" }}>{e.unitLabel}</span>}
       </div>
       <div className="sub" style={{ margin: "4px 0 8px" }}>
-        {e.done && !e.repeatable ? t(capZero ? "bonus.doneTodayNoCoins" : "bonus.doneToday") : formText(e.nextForm, e.coinsPerHit)}
+        {e.done && !e.repeatable ? t(capZero ? "bonus.doneTodayNoCoins" : "bonus.doneToday") : formText(e.nextForm, e.coinsPerHit, e.mixedRates)}
         {/* B-538: jede weitere Runde derselben Übung am selben Tag zahlt die Hälfte – der Wert steht vor dem Spielen da. Am
             vollen Deckel zahlt ohnehin nichts mehr; dann sagt es die Deckel-Karte, nicht ein Prozentwert. */}
         {!capReached && e.repeatable && e.done && <> · {t("bonus.vocabNoWorth")}</>}
@@ -269,7 +279,7 @@ export function SohnBonusRun() {
           <p className="sub">{result.coinsAwarded > 0 ? t("bonus.earned", { coins: result.coinsAwarded }) : t("bonus.noCoins")}</p>
           {result.capReached && <p className="sub">{t("bonus.capCut")}</p>}
           {next && next.repeatable && next.nextForm !== result.form && (
-            <p className="sub">{t("bonus.nextHarder", { form: formText(next.nextForm, next.coinsPerHit) })}</p>
+            <p className="sub">{t("bonus.nextHarder", { form: formText(next.nextForm, next.coinsPerHit, next.mixedRates) })}</p>
           )}
           <div className="card" style={{ width: "100%", textAlign: "left" }}>
             {result.items.map((o) => (
@@ -312,10 +322,11 @@ export function SohnBonusRun() {
         anweisung={t(form.anweisung)}
         hinweis={run.runPercent === 0 ? t("bonus.hintNoWorth")
           // B-657: auch die Karteikarte zahlt – ihr Hinweis bittet trotzdem um eine ehrliche Einschätzung.
-          : run.form === "SelfAssess" && run.runPercent === 100 ? t("bonus.hintSelf", { coins: run.coinsPerHit })
+          : run.form === "SelfAssess" && run.runPercent === 100 ? t("bonus.hintSelf", { coins: card.coinsPerHit })
           // B-538: die Runde nennt ihren heutigen Wert, nicht den vollen Satz – sonst verspräche der Hinweis zu viel.
-          : run.runPercent < 100 ? t("bonus.hintPaidReduced", { percent: run.runPercent, coins: run.coinsPerHit })
-          : t("bonus.hintPaid", { coins: run.coinsPerHit })}
+          // B-608: der Satz der gezeigten Karte, nicht der Runde – eine Auswahlkarte in einer Tipp-Runde zahlt weniger.
+          : run.runPercent < 100 ? t("bonus.hintPaidReduced", { percent: run.runPercent, coins: card.coinsPerHit })
+          : t("bonus.hintPaid", { coins: card.coinsPerHit })}
       >
         <Aufgabe
           karte={card} form={form} skin={skin} gedreht={!typed && revealed}

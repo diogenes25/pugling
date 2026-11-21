@@ -353,10 +353,12 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             // Every exercise may be played again (B-538); "done" now means "worth nothing more today".
             var percent = RunPercent(completedToday.GetValueOrDefault(exercise.Id));
 
+            // B-608: the entry names the highest rate its cards pay and says when they differ - the same rates the submit books.
+            var rates = CardRates(exercise, type, items, stage).Values.ToList();
             pool.Add(new PoolEntry(
                 new ExtraExercise(exercise.Id, exercise.Title, exercise.Type, exercise.SeriesUnit?.Label ?? "", items.Count,
-                    climbs, done, percent == 0, form, CoinsPerHit(form), open.TryGetValue(exercise.Id, out var runId) ? runId : null,
-                    percent),
+                    climbs, done, percent == 0, form, rates.Max(), open.TryGetValue(exercise.Id, out var runId) ? runId : null,
+                    percent, rates.Distinct().Count() > 1),
                 exercise, type, stage, items));
         }
         return pool;
@@ -381,28 +383,38 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         if (stage is not { } checkedStage) return null;
         // A checked stage whose cards offer options or letter tiles is a pick, not a recall, and pays as one (B-599: the
         // scramble counts as a choice). Named for the run only where every card picks: a card falling back to letter
-        // boxes pays the typed rate on its own (CardRatesAsync), and a run advertised as a pick would undersell it.
+        // boxes pays the typed rate on its own (CardRate), and a run advertised as a pick would undersell it.
         return (items.All(i => type.Choices(exercise.ConfigJson, items, i, checkedStage) is not null
                 || type.LetterTileSource(i, checkedStage) is not null) ? ExtraForm.Choice : ExtraForm.Typed,
             checkedStage);
     }
 
-    // The rate of each card of a run by item index, from the stage it is asked at: its ceiling (B-597) caps the run's stage,
-    // and a card offering options or letter tiles is a pick, everything else typed - the same facets the card showed.
+    // The rate of each card of a run by item index (see CardRate), for the submit.
     private async Task<Dictionary<int, int>> CardRatesAsync(Exercise exercise, int runStage, CancellationToken ct)
     {
         if (registry.ByKey(exercise.Type) is not { } type) return [];
         var items = await content.ItemsOfAsync(exercise, ct: ct);
-        return items.ToDictionary(raw => raw.Index, raw =>
-        {
-            var stage = type.CardCeiling(raw, runStage);
-            if (!type.IsTypedStage(stage)) return CoinsPerHit(ExtraForm.SelfAssess);
-            var staged = PositionPlayService.AtStage(type, items, stage);
-            var item = type.CardForStage(raw, stage);
-            var picks = type.Choices(exercise.ConfigJson, staged, item, stage) is not null
-                || type.LetterTileSource(item, stage) is not null;
-            return CoinsPerHit(picks ? ExtraForm.Choice : ExtraForm.Typed);
-        });
+        return CardRates(exercise, type, items, runStage);
+    }
+
+    // The rate of each card by item index - for the submit, the run's cards and the pool alike.
+    private Dictionary<int, int> CardRates(Exercise exercise, IExerciseType type, IReadOnlyList<ContentItem> items,
+        int runStage) =>
+        items.ToDictionary(raw => raw.Index, raw => CardRate(exercise, type, items, raw, runStage));
+
+    // The rate of one card from the stage it is asked at: its ceiling (B-597) caps the run's stage, and a card offering
+    // options or letter tiles is a pick, everything else typed - the same facets the card showed. The one source for what
+    // the submit pays and what the card and the pool announce (B-608), so announcement and payment cannot drift apart.
+    private int CardRate(Exercise exercise, IExerciseType type, IReadOnlyList<ContentItem> items, ContentItem raw,
+        int runStage)
+    {
+        var stage = type.CardCeiling(raw, runStage);
+        if (!type.IsTypedStage(stage)) return CoinsPerHit(ExtraForm.SelfAssess);
+        var staged = PositionPlayService.AtStage(type, items, stage);
+        var item = type.CardForStage(raw, stage);
+        var picks = type.Choices(exercise.ConfigJson, staged, item, stage) is not null
+            || type.LetterTileSource(item, stage) is not null;
+        return CoinsPerHit(picks ? ExtraForm.Choice : ExtraForm.Typed);
     }
 
     private int CoinsPerHit(ExtraForm form) => form switch
@@ -420,6 +432,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         var typed = type.IsTypedStage(run.Stage);
         var rng = new Random(run.Id);
         var ordered = exercise.Type == ExerciseTypeKeys.Vocabulary ? items.OrderBy(_ => rng.Next()).ToList() : [.. items];
+        var rates = CardRates(exercise, type, items, run.Stage);
         var cards = ordered.Select(raw =>
         {
             // B-597: each card at its own ceiling and in the form that stage asks it - the preview check grades the same way.
@@ -430,7 +443,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             var choices = f.Choices is { } c ? c.OrderBy(_ => rng.Next()).ToList() : null;
             return new ExtraCard(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal, f.RevealAlternatives,
                 choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox,
-                f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
+                rates[raw.Index], f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
             CoinsPerHit(run.Form), cards, runPercent);

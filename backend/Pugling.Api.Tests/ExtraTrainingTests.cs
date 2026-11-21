@@ -98,13 +98,14 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         return db.ChildPointsEntries.Where(e => e.ChildId == childId && e.Kind == PointKind.ExtraTrainingCoins).Sum(e => e.Amount);
     }
 
-    // Four runs completed yesterday: the next run of the exercise is the typed form (two self-assessed, two choices).
-    private void SeedCompletedRuns(Setup s)
+    // Runs completed yesterday: after four the next run of the exercise is the typed form (two self-assessed, two
+    // choices), after two the choice form.
+    private void SeedCompletedRuns(Setup s, int count = 4)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var yesterday = factory.Clock.GetUtcNow().UtcDateTime.AddDays(-1);
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < count; i++)
         {
             db.ExtraTrainingRuns.Add(new ExtraTrainingRun
             {
@@ -209,6 +210,88 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(Words.Length * 1 + Words.Length * 3, result.GetProperty("coinsEarned").GetInt32());
     }
 
+    private static List<int> CardRates(JsonElement run) =>
+        [.. run.GetProperty("cards").EnumerateArray().Select(c => c.GetProperty("coinsPerHit").GetInt32())];
+
+    /// <summary>
+    /// B-608 AK 1 + 2: on a "both" list the typed run announces 1 on each forward card (asked as a choice) and 3 on each
+    /// reversed one, and a run played right pays exactly the sum of what its cards announced. Red when every card carries
+    /// the run's rate (all 3, sum 24 against 16 paid).
+    /// </summary>
+    [Fact]
+    public async Task Jede_Bonuskarte_Nennt_Was_Ein_Treffer_Auf_Ihr_Zahlt()
+    {
+        var s = await SetupAsync();
+        SetDirection(s, "both");
+        SeedCompletedRuns(s);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        var cards = run.GetProperty("cards").EnumerateArray().ToList();
+        Assert.All(cards, c => Assert.Equal(c.GetProperty("itemIndex").GetInt32() % 2 == 0 ? 1 : 3,
+            c.GetProperty("coinsPerHit").GetInt32()));
+
+        var answers = cards.Select(c =>
+        {
+            var index = c.GetProperty("itemIndex").GetInt32();
+            var word = Words[index / 2];
+            return new { itemIndex = index, givenAnswer = index % 2 == 0 ? word.Back : word.Front, wasKnown = (bool?)null };
+        }).ToArray();
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers }));
+        Assert.Equal(CardRates(run).Sum(), result.GetProperty("coinsForHits").GetInt32());
+    }
+
+    /// <summary>
+    /// B-608 AK 3: a run whose cards all ask alike announces the form's rate on each card - typed (back-to-front) 3, choice
+    /// 1, self-assessed 1. Red when a fix pulls rates down across the board or handles only the typed form.
+    /// </summary>
+    [Theory]
+    [InlineData(4, "Typed", 3)]
+    [InlineData(2, "Choice", 1)]
+    [InlineData(0, "SelfAssess", 1)]
+    public async Task Eine_Einheitliche_Runde_Nennt_Den_Satz_Ihrer_Form_Auf_Jeder_Karte(int completedRuns, string form, int rate)
+    {
+        var s = await SetupAsync();
+        SetDirection(s, "back-to-front");
+        SeedCompletedRuns(s, completedRuns);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+
+        Assert.Equal(form, run.GetProperty("form").GetString());
+        Assert.All(CardRates(run), r => Assert.Equal(rate, r));
+    }
+
+    /// <summary>
+    /// B-608 AK 5: the pool says "up to" where the next run's cards pay different rates - a "both" list on its typed step,
+    /// a cloze whose scramble falls back to boxes on one card - and the plain rate where they pay alike. Red when
+    /// <c>mixedRates</c> is missing or always set, or when a mixed run's entry still names the form's rate without it.
+    /// </summary>
+    [Fact]
+    public async Task Die_Uebersicht_Nennt_Bis_Zu_Wo_Die_Karten_Verschieden_Zahlen()
+    {
+        var s = await SetupAsync();
+        var mathId = await AddArithmeticAsync(s, ("2 + 2", 4), ("3 + 3", 6));
+        var scrambleId = await AddClozeAsync(s, ClozeStage.LetterScramble, "tired", "aren't I");
+        var pickId = await AddClozeAsync(s, ClozeStage.Choice, "isn't it", "can't you", "didn't he");
+
+        (int Rate, bool Mixed) Entry(JsonElement overview, int id)
+        {
+            var e = PoolEntry(overview, id);
+            return (e.GetProperty("coinsPerHit").GetInt32(), e.GetProperty("mixedRates").GetBoolean());
+        }
+
+        var fresh = await JsonAsync(await s.Child.GetAsync(Base(s)));
+        Assert.Equal((1, false), Entry(fresh, s.VocabId));
+        Assert.Equal((3, false), Entry(fresh, mathId));
+        Assert.Equal((3, true), Entry(fresh, scrambleId));
+        Assert.Equal((1, false), Entry(fresh, pickId));
+
+        SeedCompletedRuns(s);
+        Assert.Equal((3, false), Entry(await JsonAsync(await s.Child.GetAsync(Base(s))), s.VocabId));
+        SetDirection(s, "both");
+        Assert.Equal((3, true), Entry(await JsonAsync(await s.Child.GetAsync(Base(s))), s.VocabId));
+    }
+
     private static async Task<int> AddClozeAsync(Setup s, ClozeStage stage, params string[] answers) =>
         await TestApi.IdAsync(await s.Father.PostAsJsonAsync(
             $"/api/v1/creator/textbook-series/{s.SeriesId}/units/{s.UnitId}/cloze", new
@@ -260,6 +343,8 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         Assert.Equal(form, run.GetProperty("form").GetString());
         Assert.Equal(answers.Length, result.GetProperty("correct").GetInt32());
         Assert.Equal(coinsForHits, result.GetProperty("coinsForHits").GetInt32());
+        // B-608 AK 2: what the cards announced is what the hits paid.
+        Assert.Equal(coinsForHits, CardRates(run).Sum());
     }
 
     [Fact]

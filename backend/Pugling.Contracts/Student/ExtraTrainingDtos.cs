@@ -35,17 +35,21 @@ public record ExtraTrainingOverview(bool Unlocked, string? LockReason, IReadOnly
 /// show the solutions for nothing. <paramref name="NextRunPercent"/> is
 /// what the next run is worth today in percent of its hits - 100, 50, 25, then 0, halved by every run of this exercise
 /// completed earlier today; <paramref name="Done"/> means that worth is 0 until tomorrow. <paramref name="NextForm"/> is
-/// the form the next run asks in, <paramref name="CoinsPerHit"/> what one correct card of it pays at 100 %.
+/// the form the next run asks in, <paramref name="CoinsPerHit"/> what one correct card of it pays at 100 % - the highest
+/// rate of its cards. <paramref name="MixedRates"/> (B-608) is true when its cards pay different rates (a "both" list asks
+/// forward cards as a choice, a vocabulary choice card without a distractor is typed), so the client announces "up to"
+/// that rate - on any form - instead of promising it on every card.
 /// <paramref name="OpenRunId"/> names a started run that still waits for its answers - it is resumed, never replaced.
 /// </summary>
 public record ExtraExercise(int ExerciseId, string Title, string Type, string UnitLabel, int ItemCount,
     bool Repeatable, int CompletedRuns, bool Done, ExtraForm NextForm, int CoinsPerHit, int? OpenRunId,
-    int NextRunPercent);
+    int NextRunPercent, bool MixedRates);
 
 /// <summary>
 /// A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning
 /// (<see cref="ExtraCard.Reveal"/>) is shown only on the self-assessed form. <paramref name="CoinsPerHit"/> is the full
-/// rate; <paramref name="RunPercent"/> is the share of it this run is worth as of its start (B-538). The submit judges
+/// rate of the run's form; what a hit on a single card pays is <see cref="ExtraCard.CoinsPerHit"/> (B-608).
+/// <paramref name="RunPercent"/> is the share of those rates this run is worth as of its start (B-538). The submit judges
 /// by the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less.
 /// </summary>
 public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string Type, ExtraForm Form, int Stage,
@@ -53,6 +57,9 @@ public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string T
 
 /// <summary>
 /// One card of a bonus run - the same facets a practice card carries, without an image.
+///
+/// <c>CoinsPerHit</c> (B-608) is what a right answer on this card pays at 100 %, by the form the card is asked in - the
+/// same rate the submit books, so the announcement never promises more than the card pays.
 ///
 /// <c>DictationSpokenAnswer</c>/<c>DictationLang</c> (B-597) are set only on the dictation stage of a vocabulary card
 /// without a recording: the learnt word the device reads aloud, and the language to read it in. <b>This is the answer,
@@ -67,7 +74,7 @@ public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string T
 public record ExtraCard(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage,
     bool AnyOrder, IReadOnlyList<WordPair>? Decoding, string? AnswerPattern, IReadOnlyList<string>? LetterTiles,
-    IReadOnlyList<string>? CueBox, string? DictationSpokenAnswer = null, string? DictationLang = null,
+    IReadOnlyList<string>? CueBox, int CoinsPerHit, string? DictationSpokenAnswer = null, string? DictationLang = null,
     string? KeyboardLang = null);
 
 /// <summary>One answer of a bonus run: typed or chosen (<paramref name="GivenAnswer"/>) or self-assessed (<paramref name="WasKnown"/>).</summary>
