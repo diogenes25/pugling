@@ -132,24 +132,29 @@ public class ExerciseFeedbackTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// AK 3: while the child's test on the position runs, a report is refused with feedback_during_test; after submitting it
-    /// is accepted. Red if the running test is not checked, or if a submitted test still locks.
+    /// B-685 AK 1 and 2: a test left with "later" keeps an open attempt (by design), and a report from practising the same
+    /// position is accepted anyway - one row, and the open attempt is untouched (still open, same counts). Red while the
+    /// running test locks reporting, or if reporting closes or alters the attempt. Replaces B-623 AK 4 / B-628 AK 3.
     /// </summary>
     [Fact]
-    public async Task Waehrend_des_Tests_gesperrt_nach_dem_Abgeben_erlaubt()
+    public async Task Offener_Test_sperrt_die_Meldung_aus_dem_Ueben_nicht()
     {
         var k = await KidAsync();
         var testsUrl = $"/api/v1/student/study-plans/{k.PlanId}/positions/{k.PositionId}/tests";
-        var attemptId = await TestApi.IdWithKeyAsync(await k.Child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        await TestApi.IdWithKeyAsync(await k.Child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        // The cursor is the part of an open attempt a child would most like to move (strictly one question at a time).
+        (DateTime? CompletedAt, int Total, int Correct, int Score, bool Passed, int Cursor, int Results) Attempt() => WithDb(db =>
+        {
+            var a = db.TestAttempts.Include(t => t.Results).Single(t => t.PlanPositionId == k.PositionId);
+            return (a.CompletedAt, a.TotalItems, a.CorrectItems, a.ScorePercent, a.Passed, a.Cursor, a.Results.Count);
+        });
+        var before = Attempt();
+        Assert.Null(before.CompletedAt);
 
-        await AssertProblemAsync(await k.Child.PostAsJsonAsync(k.FeedbackUrl, new { reasons = new[] { "TooStrict" }, itemIndex = 0 }),
-            HttpStatusCode.Conflict, "feedback_during_test");
-        Assert.Empty(Rows(k.ChildId));
-
-        var answers = new[] { new { itemIndex = 0, givenAnswer = "halo" }, new { itemIndex = 1, givenAnswer = "tschüss" } };
-        (await k.Child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers })).EnsureSuccessStatusCode();
         await OkJsonAsync(await k.Child.PostAsJsonAsync(k.FeedbackUrl, new { reasons = new[] { "TooStrict" }, itemIndex = 0 }));
+
         Assert.Single(Rows(k.ChildId));
+        Assert.Equal(before, Attempt());
     }
 
     /// <summary>
@@ -307,23 +312,6 @@ public class ExerciseFeedbackTests(PuglingWebAppFactory factory) : IClassFixture
         var first = await OkJsonAsync(await k.Father.GetAsync($"/api/v1/supervisor/feedback?childId={k.ChildId}&take=1"));
 
         Assert.Equal(open, Assert.Single(first.EnumerateArray()).GetProperty("id").GetInt32());
-    }
-
-    /// <summary>
-    /// AK 3, the other side of "today": a test left open on an earlier day is no running test and does not lock the
-    /// position for good. Red if the lock ignores the attempt's day.
-    /// </summary>
-    [Fact]
-    public async Task Offener_Test_von_gestern_sperrt_nicht()
-    {
-        var k = await KidAsync();
-        await TestApi.IdWithKeyAsync(await k.Child.PostAsJsonAsync(
-            $"/api/v1/student/study-plans/{k.PlanId}/positions/{k.PositionId}/tests", new { }), "attemptId");
-        var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
-        WithDb(db => db.TestAttempts.Where(t => t.PlanPositionId == k.PositionId)
-            .ExecuteUpdate(u => u.SetProperty(t => t.Day, yesterday)));
-
-        await OkJsonAsync(await k.Child.PostAsJsonAsync(k.FeedbackUrl, new { reasons = new[] { "TooHard" }, itemIndex = 0 }));
     }
 
     // A token with the supervisor AND the student role, as a login issues it for an account carrying both profiles.

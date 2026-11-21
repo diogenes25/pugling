@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/rueckmeldung, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/rueckmeldung, rolle/student]
 aliases: [Rückmeldung nach „Später“ gesperrt]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Defekt
 groesse: S
@@ -212,3 +212,29 @@ vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umba
   (Fehlercode nur in `ApiErrors` und im erzeugten Enum, kein Client verzweigt darauf); Risiko: B-586 zitiert die Sperre
   in seinem Ist-Stand.
 - **2026-11-19** — Entscheidung 1 (Weg d, Server-Sperre entfällt) vom Nutzer bestätigt; die Stellvertreter-Marke gilt damit für diese Entscheidung nicht mehr.
+- **2026-11-21** — Nachtlauf, Sprint 99: `in-arbeit` und gebaut. Die stellvertretenden Entscheidungen 1–3 aus dem
+  Vorbereitungslauf trägt der Lauf als Defekt (Freigabe 1). Gegen den Code nachgelesen, sie stimmen.
+  - **Backend:** Sperre und `TestRunningAsync` entfernt, `ApiErrors.FeedbackDuringTest` gelöscht, Capture-Schritt
+    gestrichen; Vertrag und Beispiele neu erzeugt (nur der Code, zwei Beispiele, die Summary und das 409 fallen weg).
+  - **Frontend:** vier Texte entfernt; `rueckmeldung.spec.ts` Schritt 5b (Weg des Sohnes: Test mit „Später weiter“
+    verlassen, im Üben melden) und Schritt 6 (Ergebnisblatt).
+  - **AK 1 →** `ExerciseFeedbackTests.Offener_Test_sperrt_die_Meldung_aus_dem_Ueben_nicht`, rot vorher: erwartet 201,
+    gemessen 409 `feedback_during_test`. Dazu E2E 5b.
+  - **AK 2 →** derselbe Test, Schnappschuss des Versuchs (CompletedAt, Zähler, Passed, Cursor, Ergebniszeilen).
+  - **AK 3 →** E2E Schritt 6.
+  - **AK 4:** Absichtserklärung; die Suche nach Resten in Backend, Frontend, Client und Agent ergab keine Fundstelle.
+  - Proben:
+
+| Probe | Stelle | erwartet | gemessen |
+| --- | --- | --- | --- |
+| Sperre zurück (drei Backend-Dateien aus `HEAD`) | `ExerciseFeedbackController.cs` | E2E 5b rot | rot, `rueckmeldung.spec.ts:110` „Danke, ist angekommen!“ fehlt |
+| `KartenMeldung` aus dem Ergebnisblatt | `SohnTest.tsx:393`, `:406` | E2E 6 rot | rot, `:118` |
+| `ReportAsync` stempelt den offenen Versuch | `ExerciseFeedbackService.cs:36` | AK-2-Test rot | rot, 1 failed von 11 |
+
+  - **Review `pugling-reviewer`:**
+    - 🟡 Die Swagger-Summary versprach noch die Absage → umformuliert (Kommentar, ohne Zählung).
+    - 🟡 `[ProducesResponseType(409)]` ohne 409-Pfad → entfernt (gezählt, Sprint 99: 1).
+    - 🟢 Der Schnappschuss ohne Cursor und Ergebnisse → ergänzt (ohne Zählung).
+    - 🟢 B-586 nennt die entfernte Sperre als Vorbild → dort vermerkt.
+  - Kein Fund zum Anti-Cheat: Die Quittung enthält nur Ids, der Hinweis nur die Aufgabe.
+  - Backend 1931/1931, Vitest 1301/1301.

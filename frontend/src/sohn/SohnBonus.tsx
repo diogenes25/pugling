@@ -219,8 +219,22 @@ export function SohnBonusRun() {
     });
   }
 
+  // B-671: after an answer the next card's first control takes the focus (pattern of test and practice). Focusing the first
+  // letter box also resets its "last focused box", so a key from the special-character bar lands in the new card, not in
+  // the box the previous card ended on. Set only by the child's answer, never on the first load (B-443).
+  const focusIntent = useRef(false);
+  const answerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!focusIntent.current) return;
+    // Consumed even without a target (after the last card the zone is gone): a lingering intent would focus the next
+    // cursor change, which would be a load. Unlike the test there is no window where the zone stands but is still busy.
+    focusIntent.current = false;
+    answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
+  }, [cursor]);
+
   function answer(a: ExtraAnswer) {
     if (!run) return;
+    focusIntent.current = true;
     const all = [...answers, a];
     setAnswers(all); setWert(""); setRevealed(false); saveAnswers(run.runId, all);
     // Auch nach der letzten Karte weiter: dann zeigt das Bild „Wird ausgewertet …“ statt der beantworteten Karte.
@@ -313,7 +327,7 @@ export function SohnBonusRun() {
             </>
           )}
         />
-        <div className="lektion-antwort">
+        <div className="lektion-antwort" ref={answerRef}>
           {typed ? (
             <Antwortflaeche
               kartenId={card.itemIndex} karte={card} wert={wert} onWert={setWert} gesperrt={action.busy}

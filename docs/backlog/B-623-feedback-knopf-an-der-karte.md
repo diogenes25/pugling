@@ -208,3 +208,4 @@ Grill-Runde mit dem Vater, 2026-11-17.
 - **2026-11-17** — beim Schätzen geteilt in [B-628](B-628-rueckmeldung-backend.md) (Backend, L),
   [B-629](B-629-rueckmeldung-frontend.md) (Frontend, M) und [B-630](B-630-rueckmeldung-im-ki-creator.md)
   (KI-Creator, M). Diese Datei bleibt die Quelle der Entscheidungen E1–E9 und der AKs.
+- **2026-11-21** — Ein Kriterium ersetzt durch B-685 (Nachtlauf, Sprint 99): Die Server-Sperre `feedback_during_test` ist entfernt (B-623 AK 4 bzw. B-628 AK 3). Ein offener Test sperrt die Meldung aus dem Üben nicht mehr; der Testbildschirm bietet den Knopf weiterhin nicht an.

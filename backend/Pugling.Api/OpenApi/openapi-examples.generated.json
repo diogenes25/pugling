@@ -1937,32 +1937,6 @@
     "expectedCode": "validation_error"
   },
   {
-    "key": "feedback-test-starten",
-    "resourceGroup": "feedback",
-    "title": "Test starten",
-    "method": "POST",
-    "path": "/api/v1/student/study-plans/5/positions/20/tests",
-    "role": "child",
-    "requestBodyJson": "{}",
-    "expectedStatus": 201,
-    "responseBodyJson": "{\n  \u0022attemptId\u0022: 3,\n  \u0022planId\u0022: 5,\n  \u0022positionId\u0022: 20,\n  \u0022day\u0022: \u0022\u003Cdate\u003E\u0022,\n  \u0022stage\u0022: 4,\n  \u0022totalItems\u0022: 2\n}",
-    "isError": false,
-    "expectedCode": null
-  },
-  {
-    "key": "feedback-meldung-wahrend-des-tests",
-    "resourceGroup": "feedback",
-    "title": "Meldung w\u00E4hrend des Tests",
-    "method": "POST",
-    "path": "/api/v1/student/study-plans/5/positions/20/feedback",
-    "role": "child",
-    "requestBodyJson": "{\n  \u0022reasons\u0022: [\n    \u0022TooStrict\u0022\n  ],\n  \u0022itemIndex\u0022: 0\n}",
-    "expectedStatus": 409,
-    "responseBodyJson": "{\n  \u0022type\u0022: \u0022https://pugling.app/errors/feedback_during_test\u0022,\n  \u0022title\u0022: \u0022Feedback is possible after submitting the test.\u0022,\n  \u0022status\u0022: 409,\n  \u0022detail\u0022: \u0022Your test on this exercise is still running. Report the card on the result sheet after submitting.\u0022,\n  \u0022code\u0022: \u0022feedback_during_test\u0022,\n  \u0022traceId\u0022: \u0022\u003Ctrace-id\u003E\u0022\n}",
-    "isError": true,
-    "expectedCode": "feedback_during_test"
-  },
-  {
     "key": "feedback-ruckmeldungen-der-kinder-offen",
     "resourceGroup": "feedback",
     "title": "R\u00FCckmeldungen der Kinder (offen)",

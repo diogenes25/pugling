@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
 aliases: [Bonusrunde Sonderzeichen falsches Kästchen]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
@@ -165,3 +165,22 @@ ein Effekt nach dem Muster von `SohnTest.tsx:89-102`), dazu fünf Vitest-Fälle.
   liegt in der Bonusrunde (kein Fokus beim Kartenwechsel), und der Enter-Weg betrifft auch normale Tasten.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): vier Entscheidungen; Reparatur nur in `SohnBonusRun` (Fokusregel von Üben/Test), `LetterBoxes` bleibt; weicht von der Empfehlung (c) der Ausformulierung ab, weil Kästchen-1-Fokus `zuletzt` über `onFocus` ohnehin setzt; Test in Vitest statt E2E.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch; Risiken: Absicht nach der letzten Karte, jsdom-Fokus, `Lektion.tsx` mit fremder Arbeit.
+- **2026-11-21** — Nachtlauf, Sprint 99: `in-arbeit` und gebaut. Die stellvertretenden Entscheidungen 1–4 trägt der Lauf
+  als Defekt (Freigabe 1). `SohnBonusRun` hat eine Fokus-Absicht in `answer()` und einen Effekt auf `cursor`, der das
+  erste Bedienbare der Antwortzone fokussiert; `LetterBoxes.tsx` bleibt unberührt (AK 5).
+  - **Tests** in `SohnBonus.test.tsx`, Block „Fokus nach dem Kartenwechsel (B-671)“:
+    - AK 1+2 → „Enter-Weg …“;
+    - AK 3 → „Knopf-Weg …“;
+    - AK 4 → „… beim Laden …“ (Festschreibung) und „… beim Fortsetzen …“.
+  - **Rote Probe** gegen den Ausgangsstand von `SohnBonus.tsx`: erwartet 2 failed, gemessen 2 failed (Enter-Weg,
+    Knopf-Weg). Mit Fix 17/17.
+  - **Review `frontend-reviewer`:**
+    - 🟡 Die Absicht wurde nach der letzten Karte nicht verbraucht (Risiko 1 der Schätzung) → jetzt vor dem Fokus
+      verbraucht (gezählt, Sprint 99: 2). Ohne eigenen roten Test: Kein heutiger Weg benutzt die Instanz nach der letzten
+      Karte weiter.
+    - 🟡 Der Lade-Fall trug fast nichts → Fortsetzungsfall ergänzt (gezählt, Sprint 99: 3). Mutante „Wächter
+      `if (!focusIntent.current)` gestrichen“: erwartet 1 failed, gemessen 1 failed („… beim Fortsetzen …“).
+    - 🟢 Kein Fokus nach „Aufdecken“ und auf dem Ergebnisblatt (schon vorher so) → B-778 (ohne Zählung).
+  - AK 2 hat keine eigene Mutante: Ein Fokus ohne `onFocus` lässt sich in happy-dom nicht herstellen, der Fall hängt an
+    derselben Ursache wie AK 1.
+  - Vitest 1301/1301.

@@ -1041,11 +1041,6 @@ public class DocsCaptureTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
             HttpStatusCode.Created);
         await Capture(child, g, "Meldung ohne Grund und Text", HttpMethod.Post, feedbackUrl,
             new { reasons = Array.Empty<string>() }, HttpStatusCode.BadRequest, ApiErrors.ValidationError.Code);
-        // A running test locks reporting on the position until it is submitted (B-623, decision 5).
-        await Capture(child, g, "Test starten", HttpMethod.Post, feedbackUrl.Replace("/feedback", "/tests"), new { },
-            HttpStatusCode.Created);
-        await Capture(child, g, "Meldung während des Tests", HttpMethod.Post, feedbackUrl,
-            new { reasons = new[] { "TooStrict" }, itemIndex = 0 }, HttpStatusCode.Conflict, ApiErrors.FeedbackDuringTest.Code);
 
         await Capture(father, g, "Rückmeldungen der Kinder (offen)", HttpMethod.Get, "/api/v1/supervisor/feedback?status=Open",
             null, HttpStatusCode.OK);

@@ -9335,7 +9335,7 @@
         "tags": [
           "Student \u2013 Feedback"
         ],
-        "summary": "Reports the card \u0060itemIndex\u0060 (or, without it, the whole exercise) with one or more reasons and/or a text. A\nreason already reported on the same card and still open is merged into (count up, text appended). While the child\u0027s\ntest on the position runs today, the report is refused - in a test it belongs on the result sheet.",
+        "summary": "Reports the card \u0060itemIndex\u0060 (or, without it, the whole exercise) with one or more reasons and/or a text. A\nreason already reported on the same card and still open is merged into (count up, text appended). An open test attempt\non the position does not block it: the test screen offers no report button, and a report changes nothing of the game\n(B-685).",
         "parameters": [
           {
             "name": "planId",
@@ -9411,16 +9411,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -44595,7 +44585,6 @@
               "extra_run_completed",
               "extra_run_stale",
               "extra_training_locked",
-              "feedback_during_test",
               "forbidden",
               "grammar_topic_in_use",
               "http_error",

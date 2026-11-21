@@ -19,20 +19,20 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService play, ExerciseFeedbackService feedback,
-    TimeProvider time) : ControllerBase
+public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService play, ExerciseFeedbackService feedback)
+    : ControllerBase
 {
     /// <summary>
     /// Reports the card <c>itemIndex</c> (or, without it, the whole exercise) with one or more reasons and/or a text. A
-    /// reason already reported on the same card and still open is merged into (count up, text appended). While the child's
-    /// test on the position runs today, the report is refused - in a test it belongs on the result sheet.
+    /// reason already reported on the same card and still open is merged into (count up, text appended). An open test attempt
+    /// on the position does not block it: the test screen offers no report button, and a report changes nothing of the game
+    /// (B-685).
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FeedbackReceipt>> Create(int planId, int positionId, CreateFeedbackDto dto,
         CancellationToken ct)
     {
@@ -63,11 +63,8 @@ public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService
             if (index < 0 || card is null)
                 return this.ProblemWithCode(ApiErrors.ItemNotFound, "This card does not belong to the position's exercise.");
         }
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
-        if (await feedback.TestRunningAsync(pos.Id, today, ct))
-            return this.ProblemWithCode(ApiErrors.FeedbackDuringTest,
-                "Your test on this exercise is still running. Report the card on the result sheet after submitting.");
-
+        // No lock for an open test (B-685): the test screen offers no report button, and a report changes nothing of the
+        // game - so the only case a lock would catch is practising after leaving a test with "later".
         var ids = await feedback.ReportAsync(childId, pos, card, reasons, text, ct);
         return StatusCode(StatusCodes.Status201Created, new FeedbackReceipt(ids));
     }

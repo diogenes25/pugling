@@ -210,11 +210,6 @@ public static class ApiErrors
     /// the position is no remediation and the card no learn card (409).
     /// </summary>
     public static readonly ApiError CannotEase = new("cannot_ease", 409, "This card cannot be made easier.");
-    /// <summary>
-    /// A feedback on a position while the child's test on it is running (B-628, B-623 decision 5): in a test the child
-    /// reports from the result sheet, after submitting (409).
-    /// </summary>
-    public static readonly ApiError FeedbackDuringTest = new("feedback_during_test", 409, "Feedback is possible after submitting the test.");
     /// <summary>Test has already been submitted (400).</summary>
     public static readonly ApiError TestAlreadySubmitted = new("test_already_submitted", 400, "Test already submitted.");
     /// <summary>The bonus training is locked until today's daily goals are done (B-535; all goals when no plan has daily ones, B-611) (409).</summary>

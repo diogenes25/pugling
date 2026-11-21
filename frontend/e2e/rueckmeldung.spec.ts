@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin, pfadStart, vaterLogin } from "./helpers";
+import { sohnLogin, pfadStart, vaterLogin, tippen } from "./helpers";
 
 /*
  * B-628/B-629 – die Rückmeldung zur Karte, einmal ganz herum (zugleich der Rollengang von Sprint 88): der Sohn meldet im
@@ -12,6 +12,10 @@ import { sohnLogin, pfadStart, vaterLogin } from "./helpers";
  * 3. Am eigenen Lückentext steht die Zählung der Gründe → rot ohne Panel oder ohne Schreibrecht-Sicht.
  * 4. Der Sohn sieht den Hinweis einmal und quittiert ihn → rot ohne Hinweis oder wenn er nach „Alles klar“ wiederkommt.
  * 5. Während eines Tests trägt die Frage keinen Rückmelde-Knopf → rot, wenn er in die Fragenansicht wandert.
+ * 5b. Den Test mit „Später weiter“ verlassen, im Üben derselben Position melden → „Danke, ist angekommen!“ (B-685 AK 1,
+ *    der Weg des Sohnes) → rot, solange ein offener Test die Meldung mit `feedback_during_test` sperrt.
+ * 6. Nach der letzten Antwort trägt das Ergebnisblatt den Knopf je Karte (B-685 AK 3) → rot, wenn `KartenMeldung` aus dem
+ *    Ergebnisblatt fällt.
  *
  * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
@@ -94,4 +98,22 @@ test("Rückmeldung: Sohn meldet eine Karte, Vater erledigt, Ersteller zählt, So
   await pfadStart(page, "test");
   await expect(page.getByRole("textbox", { name: "Lösung" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Rückmeldung/ })).toHaveCount(0);
+
+  // ---- 5b. „Später weiter“, dann im Üben melden: der offene Test sperrt die Meldung nicht (B-685 AK 1) ----
+  await page.getByRole("button", { name: "Später weiter" }).click();
+  await expect(page).toHaveURL(/\/sohn$/);
+  await pfadStart(page, "practice");
+  await expect(page.getByRole("textbox", { name: "Deine Antwort" })).toBeVisible();
+  await page.getByRole("button", { name: /Rückmeldung/ }).click();
+  await page.getByRole("button", { name: "Falsch übersetzt" }).click();
+  await page.getByRole("button", { name: "Absenden" }).click();
+  await expect(page.getByText("Danke, ist angekommen!")).toBeVisible();
+  await page.goto("/sohn");
+  await pfadStart(page, "test");
+  await expect(page.getByRole("textbox", { name: "Lösung" })).toBeVisible();
+
+  // ---- 6. Die einzige Frage beantwortet schließt den Test ab; das Ergebnisblatt bietet die Meldung an (B-685 AK 3) ----
+  await tippen(page.getByRole("textbox", { name: "Lösung" }), "eastwards");
+  await page.getByRole("textbox", { name: "Lösung" }).press("Enter");
+  await expect(page.getByRole("button", { name: /Rückmeldung/ })).toHaveCount(1);
 });

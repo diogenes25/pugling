@@ -18,14 +18,6 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
     private const int MaxJoinedTextLength = 2000;
 
     /// <summary>
-    /// Is a test of the child on this position running today? Then a report on it waits for the result sheet (B-623,
-    /// decision 5). An attempt left open on an earlier day is no running test - it must not lock the position for good.
-    /// </summary>
-    public Task<bool> TestRunningAsync(int positionId, DateOnly today, CancellationToken ct) =>
-        db.TestAttempts.AnyAsync(t => t.PlanPositionId == positionId && !t.BySupervisor
-            && t.CompletedAt == null && t.Day == today, ct);
-
-    /// <summary>
     /// Writes the report: one entry per reason (one without a reason for a text-only report). An open entry of the same
     /// child, exercise, card and reason is merged into - count up, text appended (decision 9). <paramref name="card"/> is the
     /// card reported on, already checked to belong to the position's exercise, or <c>null</c> for the whole exercise.

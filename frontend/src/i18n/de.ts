@@ -509,7 +509,6 @@ export const de = {
       media_no_alternative: "Mehr Bilder gibt es dafür nicht 🙂",
       media_not_on_card: "Zu dieser Karte gibt es kein Bild.",
       cannot_ease: "Diese Karte lässt sich nicht noch leichter schalten.",
-      feedback_during_test: "Dein Test zu dieser Übung läuft noch – melden kannst du nach dem Abgeben auf dem Ergebnisblatt.",
       interest_wish_limit_reached: "Deine Liste mit eigenen Interessen ist voll.",
       concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
       insufficient_gems: "Dafür reichen deine Gems noch nicht.",

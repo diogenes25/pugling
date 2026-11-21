@@ -485,7 +485,6 @@ export const en = {
       media_no_alternative: "There are no more pictures for this 🙂",
       media_not_on_card: "This card has no picture.",
       cannot_ease: "This card can't be made any easier.",
-      feedback_during_test: "Your test is still running – you can report after handing it in, on the result sheet.",
       interest_wish_limit_reached: "You can't add any more interests of your own.",
       concurrency_conflict: "That clashed with another change and wasn't saved. Try again.",
       insufficient_gems: "You don't have enough gems for this yet.",

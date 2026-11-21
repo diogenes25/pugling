@@ -256,3 +256,7 @@ gehören **nicht** in diesen Bau. Bis zur Bestätigung der Entscheidungen 1 bis 
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet; `wartet_auf` bleibt): M, beides (Backend zuerst), **Migration ja** (drei nullable
   Spalten, FK `SetNull`), kein Vertragsbruch (additive Felder). Z1 bis Z3 bleiben zurückgestellt und sind Bau-Sperre.
 - **2026-11-19** — Entscheidungen 1 bis 7 bestätigt; Z1 (offene Frage hält die Pflicht nicht an, Malus läuft weiter) und Z2 (keine Münzen fürs Fragen) mit der Empfehlung der Story entschieden; Z3 bleibt offen. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-21** — Hinweis aus dem Bau von B-685 (Nachtlauf): `TestRunningAsync` und `feedback_during_test` gibt es nicht
+  mehr (B-685 hat die Sperre entfernt). Der Ist-Stand oben (`:41-42`, `:70`) und Risiko 1 nennen sie noch als
+  Vorbild für die Sperre des Antworttexts. Vor dem Bau gegen den Code neu lesen und die Prüfung „offener Versuch von heute“
+  **nicht** zurückbringen: Genau sie war der Defekt aus B-685.

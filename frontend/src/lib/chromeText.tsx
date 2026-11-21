@@ -53,8 +53,6 @@ const PROBLEM_KEYS = [
   "daily_box_none",
   // B-635: leichter geht nur die aktuelle Karte und nur bis zur leichtesten Form.
   "cannot_ease",
-  // B-628: im laufenden Test wird erst auf dem Ergebnisblatt gemeldet.
-  "feedback_during_test",
 ] as const;
 type ProblemKey = (typeof PROBLEM_KEYS)[number];
 const isProblemKey = (code: string): code is ProblemKey => (PROBLEM_KEYS as readonly string[]).includes(code);

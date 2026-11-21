@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "../lib/i18n";
@@ -321,5 +321,68 @@ describe("Bonus-Auswertung – Frage, Antwort, Lösung", () => {
 
     expect(document.querySelector(".erloes-summe")?.textContent)
       .toBe("2 richtig = 4 🪙 (Auswählen zählt weniger als Schreiben) → +4 🪙");
+  });
+});
+
+/*
+ * B-671 – nach dem Weiter einer Kästchen-Karte landet der Fokus in Kästchen 1 der neuen Karte; damit setzt die
+ * Sonderzeichen-Leiste dort ein und nicht in das Kästchen, in dem die vorige Karte endete.
+ */
+describe("Bonus-Runde – Fokus nach dem Kartenwechsel (B-671)", () => {
+  const starte = async (erste = "die Insel") => {
+    startExtraRun.mockResolvedValue({
+      runId: 671, exerciseId: 7, title: "Wörter", type: "Vocabulary", form: "Typed", stage: 3, typed: true,
+      coinsPerHit: 1, runPercent: 100, cards: [
+        { itemIndex: 0, prompt: "die Insel", answerLength: 6, keyboardLang: "fr" },
+        { itemIndex: 1, prompt: "der Weg", answerLength: 6, keyboardLang: "fr" },
+        { itemIndex: 2, prompt: "das Haus", answerLength: 6, keyboardLang: "fr" },
+      ],
+    } as unknown as ExtraRunResponse);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/7"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText(erste);
+  };
+  const kaestchen = (n: number) => screen.getByLabelText(`Buchstabe ${n} von 6`);
+
+  // AK 4, Festschreibung (besteht im Ausgangszustand): rot, wenn schon der erste Aufbau fokussiert (B-443).
+  it("fokussiert beim Laden der Runde kein Kästchen", async () => {
+    await starte();
+    expect(document.activeElement).not.toBe(kaestchen(1));
+  });
+
+  // AK 4, Fortsetzung (B-443): gespeicherte Antworten setzen den Cursor beim Laden auf Karte 2 – der Effekt läuft also.
+  // Rot, wenn er ohne Absicht fokussiert (Wächter `if (!focusIntent.current)` gestrichen oder `useRef(true)`).
+  it("fokussiert beim Fortsetzen einer Runde kein Kästchen", async () => {
+    sessionStorage.setItem("pugling.bonus.run.671", JSON.stringify([{ itemIndex: 0, givenAnswer: "x" }]));
+    await starte("der Weg");
+    expect(document.activeElement).not.toBe(kaestchen(1));
+  });
+
+  // AK 1 und 2: rot, wenn der Effekt fehlt oder die Absicht nicht in answer() gesetzt wird – der Fokus bliebe dann in
+  // Kästchen 5, und „î einsetzen“ landete dort (`zuletzt` = 4).
+  it("Enter-Weg: Fokus in Kästchen 1 der neuen Karte, das Leisten-Zeichen landet dort", async () => {
+    await starte();
+    kaestchen(5).focus();
+    fireEvent.change(kaestchen(5), { target: { value: "x" } });
+    kaestchen(5).focus();
+    await act(async () => { fireEvent.keyDown(kaestchen(5), { key: "Enter" }); });
+    await screen.findByText("der Weg");
+    expect(document.activeElement).toBe(kaestchen(1));
+    fireEvent.click(screen.getByRole("button", { name: "î einsetzen" }));
+    expect((kaestchen(1) as HTMLInputElement).value).toBe("î");
+    expect((kaestchen(5) as HTMLInputElement).value).toBe("");
+  });
+
+  // AK 3: rot, wenn die Absicht am Enter der Kästchen hinge statt in answer() – der Knopf-Weg bliebe dann ohne Fokus.
+  it("Knopf-Weg: nach „Weiter“ steht der Fokus in Kästchen 1 der neuen Karte", async () => {
+    await starte();
+    kaestchen(5).focus();
+    fireEvent.change(kaestchen(5), { target: { value: "x" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Weiter/ })); });
+    await screen.findByText("der Weg");
+    expect(document.activeElement).toBe(kaestchen(1));
   });
 });

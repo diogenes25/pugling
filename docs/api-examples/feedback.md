@@ -198,61 +198,6 @@ Response — `HTTP 400`:
 }
 ```
 
-## Test starten
-
-`POST /api/v1/student/study-plans/5/positions/20/tests`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-
-```json
-{}
-```
-
-Response — `HTTP 201`:
-
-```json
-{
-  "attemptId": 3,
-  "planId": 5,
-  "positionId": 20,
-  "day": "<date>",
-  "stage": 4,
-  "totalItems": 2
-}
-```
-
-### Meldung während des Tests — Fehlerfall
-
-`POST /api/v1/student/study-plans/5/positions/20/feedback`
-
-Rolle: **child** — `Authorization: Bearer <child-token>`
-
-Request:
-
-```json
-{
-  "reasons": [
-    "TooStrict"
-  ],
-  "itemIndex": 0
-}
-```
-
-Response — `HTTP 409`:
-
-```json
-{
-  "type": "https://pugling.app/errors/feedback_during_test",
-  "title": "Feedback is possible after submitting the test.",
-  "status": 409,
-  "detail": "Your test on this exercise is still running. Report the card on the result sheet after submitting.",
-  "code": "feedback_during_test",
-  "traceId": "<trace-id>"
-}
-```
-
 ## Rückmeldungen der Kinder (offen)
 
 `GET /api/v1/supervisor/feedback?status=Open`
