@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Backend-Review von B-606 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: []
 ---
 
@@ -263,3 +264,4 @@ Vorgänger im Repo liefert. Ohne die Messung wäre es ein S; sie ist Akzeptanzkr
 
 - **2026-11-21** — Review (`pugling-reviewer`): ein 🟡 (zwei Seiten): die Obergrenze aus AK 2 als **Gesamtzahl** (≤ 66 − Tagessicht) hatte keinen Spielraum – jede fremde Abfrage auf dem Abgabeweg oder in der Tagessicht hätte sie rot gemacht, eine billigere Tagessicht sie still gelockert. Behoben: AK 2 prüft jetzt **strukturell** – die eine Abfrage, die nur eine Tagessicht absetzt (eingeführte Inhalte eines ganzen Plans, `PositionItemProgress` × `PlanPositions` über `StudyPlanId`), kommt bei vergebener Truhe 0-mal vor, bei offener 1-mal; die Tagessicht selbst muss sie genau einmal zeigen (prüft den Marker). Die Messzahlen stehen im Doc-Kommentar. Die Wortlaut-Abweichung vom Kriterium („höchstens die Messzahl abzüglich …“) ist gewollt: dieselbe Absicht, ohne Fehlalarm. **Zähler 1 von 5.** 🟢 ohne Zählung übernommen: `SaveChangesAsync` nach dem Verlierer im Renn-Test (hält, wofür `ChangeTracker.Clear()` da ist – R3), Doc-Satz an `EvaluateAndAwardAsync`, `Trait` an den Messfällen, „Befehle, nicht Rundreisen“ am Zähler, Zeit der Test-Truhe aus der Test-Uhr. Volle Suite (Release) 2004/2004.
 - **2026-11-21** — abgenommen (Sprint 109). Kein UI-Diff; Rollengang Sohn über die laufende App: E2E `full-flow` (Abgabe bucht Punkte), `belohnung-ueber-faecher` (Truhe nach erfüllten Tageszielen), `bonus` (Sperre nach Pflicht) grün, Server frisch von Playwright auf 5201/5174 nach der letzten Änderung. Vater und Creator: Regressionszeugen, keine ihrer Flächen im Diff. Commit `9482ec75`.
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 109 im Nachtlauf A): alle Aufrufer von `EvaluateAndAwardAsync` verwerfen das Ergebnis (`PositionPracticeController.cs:957`, `PositionTestsController.cs:466`, zwei Tests); nach dem `ChangeTracker.Clear()` lesen `gamification`/`dailyBox` frisch. Kein Befund.

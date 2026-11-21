@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/creator, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/creator, lerntechnik/vokabeln]
 aliases: [Hinweis fehlt bei Fremdwort → Deutsch]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Sprint 82 im Nachtlauf 2026-11-17 (docs/pm-sitzung-2026-11-17-nachtlauf.md)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: [B-597]
 ---
 
@@ -204,3 +205,12 @@ Backend und kein Vertrag berührt wird.
   (`back-to-front` verliert den Hinweis schon auf der Auswahl, auch vor B-597); „7 Übungen" nicht nachprüfbar.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): fünf Entscheidungen; Erklärtext in `fieldHelp.ts`, kein Schreib-Hinweisfeld; AK 3–5 sind Festschreibungen.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch; Produktcode nur im Frontend, drei Festschreibungen im Backend.
+- **2026-11-22** — in-arbeit (Nachtlauf A, Sprint 110). Gebaut: `FIELD_HELP.vocabularyHint`, „ⓘ“ an der Spalte (`ExerciseEditModal.tsx:559`) und am Zeilenfeld (`exerciseConfig.tsx:670`); Festschreibungen `VokabelHinweisReichweiteTests` (15 Fälle). Abweichung von Risiko 4: die Vorschau wendet `CardCeiling` an, darum prüft AK 5 auf Schreibstufen, dass eine Karte mit Hinweis eine Auswahl ist (Vorwärtskarte wird nie geschrieben).
+  - AK 1, Editor → `ExerciseItemErklaerung.test.tsx` „die Spalte „Hinweis“ trägt den Erklärungs-Knopf“, Mutante F1 (InfoHint weg) → rot (Vitest und E2E).
+  - AK 1, Anlegen-Formular, zwei Zeilen → `VokabelHinweisFeld.test.tsx`, Mutante F2 (`topic` weg) → rot.
+  - AK 2, je Nennung → `fieldHelp.test.ts`: Richtung F3, Schreiben F4, Abschlusstest F5, „beim Üben“ F6 → je rot.
+  - AK 3 Auswahl/Schreiben, AK 4 alle Stufen, AK 5 → `VokabelHinweisReichweiteTests`: B1 (`Swap` behält `Hint`) → rot, B2 (`Written` ohne `Swap`) → rot, B3 (Vorwärtskarte ohne Hinweis) → rot.
+  - Messung nach der letzten Änderung (00:22, Frontend; Backend 00:15 an unverändertem Backend-Stand): F1–F6 rot, B1–B3 rot, Grundlinie grün; E2E-Probe E1 rot (00:30).
+- **2026-11-22** — Review `frontend-reviewer`: zwei 🟡 im Hilfetext behoben (Klammer „immer als Auswahl“ war falsch – die Vorwärtskarte kommt auch als Selbsteinschätzung oder Lernkarte ohne Hinweis; der Abschlusstest zeigt nie einen Hinweis, B-544), Zähler 2 von 5. 🟢 ohne Zählung: „meist der Artikel“ übernommen; LearnCard nicht festgeschrieben (untypisierte Stufe, hält `IsTyped`, nicht `Swap`); ein „ⓘ“ am Artikel im Vokabel-Store wäre eine eigene Idee.
+- **2026-11-22** — abgenommen (`dd06a3dd`, Sprint 110): Rollengang Creator per E2E `vokabel-hinweis-erklaerung` gegen frisch gestarteten Server (5201/5174); Vater und Sohn Regressionszeugen (`full-flow`, `auch-richtig-im-uebungseditor`). Backend 2021/2021 (Release), Vitest 1313/1313.
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 110): jeder Satz des Hilfetexts gegen einen Prüfweg gelegt; „im Abschlusstest nie“ hält `PositionTestFlowTests.Abschlusstest_Liefert_Keinen_Tipp_Das_Ueben_Schon`. Kein Befund.
