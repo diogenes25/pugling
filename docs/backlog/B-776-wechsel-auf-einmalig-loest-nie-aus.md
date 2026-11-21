@@ -12,6 +12,7 @@ quelle: "Nachschau Sprint 97 / B-771 im Nachtlauf 2026-11-21 (pugling-reviewer),
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-771]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-776 · Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf
@@ -121,3 +122,7 @@ Entscheidung 3 vergleicht `DateTime?`; der Wert aus dem JSON ist UTC, der aus SQ
 - **2026-11-21** — abgenommen in Commit `a0b73724` (Sprint 100). Endstand: Backend 1937/1937 (Release). Rollengang E2E 4/4
   auf den Ausweichports, Vater abgenommen, Sohn und Creator als Regressionszeugen. Review: vier 🟢, Zähler 0 von 5
   (docs/pm-sitzung-2026-11-21.md, Sprint 100).
+- **2026-11-21** — nachgeschaut (Retro Sprint 101), Diff `a0b73724`. Gegrept, wer `RefillAtUtc` schreibt: nur
+  `VaterShop.tsx:228`, immer `<Datum>T00:00:00Z`. Gegen den Vergleich `nextRefillAt != listing.RefillAtUtc` gelesen.
+  **Befund:** Ein per API mit Uhrzeit angelegter Termin zählt beim Bearbeiten im Vater-Web als neu und füllt erneut auf →
+  [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md).

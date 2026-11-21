@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-645]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-772 · Die Antwort auf „Bestand setzen" zeigt die Geschwister mit veraltetem Bestand
@@ -82,3 +83,8 @@ laden muss, um die Bestände der Geschwister richtig zu sehen.
 - **2026-11-21** — abgenommen in Commit `a0b73724` (Sprint 100). Endstand: Backend 1937/1937 (Release). Rollengang E2E 4/4
   auf den Ausweichports, Vater abgenommen, Sohn und Creator als Regressionszeugen. Review: vier 🟢, Zähler 0 von 5
   (docs/pm-sitzung-2026-11-21.md, Sprint 100).
+- **2026-11-21** — nachgeschaut (Retro Sprint 101), Diff `a0b73724`, `SetStockAsync:146-153` gelesen:
+  - Die Materialisierung vor dem Speichern betrifft nur `childId`.
+  - `ToViewAsync` läuft erst nach `TrySaveAsync`.
+  - Kein späteres `SaveChanges` im Request: Aktion, Filter und Middleware gegengelesen, wie der Reviewer.
+  Kein Befund.

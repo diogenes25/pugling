@@ -256,3 +256,75 @@ Fachlogik.
 
 Nächster Kandidat ist [B-777](backlog/B-777-heute-status-offen-trotz-antworten.md) (Defekt, `idee`, Vater-Startseite).
 Danach kommen die geschätzten Defekte B-672 und B-639. Alles Weitere steht in [docs/backlog/](backlog/INDEX.md).
+
+## Sprint 101 — Ziel & Umfang
+
+**Umfang:** [B-777](backlog/B-777-heute-status-offen-trotz-antworten.md), Defekt, P2, autonom von `idee` bis `geschaetzt`.
+Größe XS, die Reparatur liegt entgegen der ersten Notiz im **Backend**.
+
+**Sprint-Ziel:** Aus Sicht des Vaters widerspricht der Status eines Kindes auf der Startseite nicht mehr seiner
+Antwortzahl. Wer heute geantwortet hat, steht auf „dran“. Widerlegbar ist das durch ein Kind mit Antworten unter „offen“.
+
+**Entwickler-Brief:**
+- Quelle der Wahrheit ist `ChildDay.Practiced`, also die Senke im Vertrag. Der einzige Leser ist `VaterDashboard.tsx:113`,
+  und das Frontend bleibt unverändert.
+- Keine Migration, kein Vertragsbruch.
+- Testweg: Integrationsfall, dazu eine neue Rollengang-Spec.
+
+## Iteration 101 — umgesetzt
+
+- `ChildrenDashboardService`: `Practiced = GoalsMet > 0 || points > 0 || answers > 0`. Dazu die Vertragszeile an
+  `ChildDay` (`v1.json` neu erzeugt).
+- **Rote Probe:** erwartet `true`, gemessen `false`. Mutanten M8, M9 und M8e (E2E) alle rot, Tabelle in der Story.
+- **Volle Suite (Release):** 1938/1938.
+- **Review** (`pugling-reviewer`): zwei 🟢, **Zähler 0 von 5**.
+  - Die schärfere Vertragszeile ist übernommen.
+  - Kein Leser hing an der alten Bedeutung „mindestens ein Ziel“.
+  - Der geplante B-592 (Erinnerung „noch nicht geübt“) passt zur neuen Bedeutung besser als zur alten.
+
+## Runde 5 — Rollengang Sprint 101
+
+Der Server wurde nach der letzten Änderung von Playwright frisch gestartet, auf 5201/5174. Gefahren wurden
+`heute-dran-nach-antworten` (neu), `vater-schmal` und `full-flow`: **4 passed**.
+
+- **Vater — abgenommen:** „Mein Kind hat vier Antworten gegeben und noch nichts geschafft, und die Startseite sagt ‚dran‘,
+  nicht ‚offen‘.“
+- **Sohn — Regressionszeuge:** Sein Test läuft in der Spec über die API, keine Sohn-Fläche liegt im Diff, `full-flow`
+  ist grün.
+- **Creator — Regressionszeuge:** `full-flow` ist grün.
+
+## Retrospektive (Sprint 101)
+
+**Nachschau:** Sprint 100 nachgesehen (B-776, B-772, `nachgeschaut: 2026-11-21`):
+- B-776 gegen die einzige schreibende Stelle für `RefillAtUtc` gelesen (`VaterShop.tsx:228`, immer Mitternacht mit `Z`).
+  **Befund:** Ein per API mit Uhrzeit angelegter „einmalig“-Termin zählt beim späteren Bearbeiten im Vater-Web als neuer
+  Termin und füllt erneut auf → [B-782](backlog/B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md)
+  (`idee`, `entgangen_bei: [B-776]`).
+- B-772: kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:**
+- B-782 ist derselbe Mechanismus wie der Reviewer-Fund 1 aus Sprint 100. Ein Vergleich „neu gegen alt“ sieht den Wert,
+  den der **Client zurückschickt**, und das ist nicht unbedingt der Wert, den er geladen hat. In Sprint 100 war es das
+  weggelassene Feld, hier ist es das abgeschnittene.
+- Keine Mutante kann das finden, solange kein AK einen Client hat, der den Wert verändert zurückschickt.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Der Vorschlag aus Sprint 100 wird erweitert. Löst eine Story am
+**Wechsel** eines Feldes eine Wirkung aus, prüft sie zwei weitere Fälle: das weggelassene Feld (`dto.X ?? entity.X`) und
+den Rundweg des echten Clients (geladen, umgeformt, zurückgeschickt). Für einen Tag-Termin heißt das: ein Fall mit
+Uhrzeit. Weiterhin kein Tor, aus demselben Grund wie in Sprint 100.
+
+**Bewusst ungedeckt:** Übt der Vater im Plan des Kindes, macht das `practiced` wahr. `ReviewEvents` haben keine
+Akteur-Spalte, und dieselbe Grenze gilt seit B-770 für `AnswersToday`.
+
+## Stand am Ende des Laufs
+
+- **Gebaut und abgenommen:** B-776 und B-772 (`a0b73724`), B-777 (`6c128f3a`). Nichts gepusht.
+- **Kein Halt erzwungen:** Kein neues Tor, und der Review-Zähler stand in beiden Sprints bei 0. Der Lauf endet nach
+  Sprint 101, weil der nächste Kandidat ein anderes Themengebiet aufmacht.
+- **Nächste Kandidaten:**
+  - [B-782](backlog/B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) (Shop, `idee`, die Reparatur ist zu
+    entscheiden);
+  - B-672 und B-639 (geschätzte Defekte im Backend).
+- **Offen beim Nutzer:**
+  - die Retro-Vorschläge aus Sprint 99, 100 und 101;
+  - die Geräte-Prüfung von B-671.

@@ -39,7 +39,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `geschaetzt` | P2 | S | backend | — |
-| [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | Defekt | `idee` | P2 | — | frontend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -104,6 +103,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `geschaetzt` | P3 | M | beides | — |
 | [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | Defekt | `ausformuliert` | P3 | — | beides | — |
 | [B-778](B-778-bonus-fokus-ergebnis-und-aufdecken.md) | Die Bonusrunde lässt den Fokus nach „Aufdecken“ und auf dem Ergebnisblatt auf `body` fallen | Defekt | `idee` | P3 | — | frontend | — |
+| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | Defekt | `idee` | P3 | — | beides | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -122,7 +122,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (547)</summary>
+<summary>Abgenommen (548)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -658,6 +658,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-774](B-774-am-rechner-hinweis-live-region-bedingt.md) | Der Hinweis „nur am Rechner“ entsteht zusammen mit seiner Live-Region | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-775](B-775-e2e-feier-titel-nach-learning-dad.md) | Drei E2E-Specs suchen den Feier-Titel noch unter `.cel-title` | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
@@ -693,9 +694,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (204)
+### Nach der Abnahme entgangen (205)
 
-**Nachgeschaut: 516 von 547 abgenommenen** — und in 187 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 31 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 518 von 548 abgenommenen** — und in 188 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -902,10 +903,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-772](B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md) | Die Antwort auf „Bestand setzen" zeigt die Geschwister mit veraltetem Bestand | [B-645] | `abgenommen` |
 | [B-774](B-774-am-rechner-hinweis-live-region-bedingt.md) | Der Hinweis „nur am Rechner“ entsteht zusammen mit seiner Live-Region | [B-663] | `abgenommen` |
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | [B-771] | `abgenommen` |
-| [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | [B-749, B-770] | `idee` |
+| [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | [B-749, B-770] | `abgenommen` |
+| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | [B-776] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (31) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (30) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -941,8 +943,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
-| [B-772](B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md) | Die Antwort auf „Bestand setzen" zeigt die Geschwister mit veraltetem Bestand |
-| [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf |
+| [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat |
 
 </details>
 

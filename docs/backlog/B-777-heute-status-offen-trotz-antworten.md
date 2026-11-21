@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/auswertung, rolle/supervisor]
 aliases: [Status offen trotz Antworten]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -90,3 +90,6 @@ Zusicherungen in `ChildrenDashboardAnswersTests`.
   - Der Hinweis, die Vertragsdatei mitzucommitten, ist erledigt.
   - Bekannte Grenze, im Vertrag nicht eigens genannt: Übt der Vater im Plan des Kindes, macht das `practiced` wahr, weil
     `ReviewEvents` keine Akteur-Spalte haben (dieselbe Grenze wie bei `AnswersToday`, B-770).
+- **2026-11-21** — abgenommen in Commit `6c128f3a` (Sprint 101). Backend 1938/1938 (Release). Rollengang-E2E 4/4 auf den
+  Ausweichports (`heute-dran-nach-antworten`, `vater-schmal`, `full-flow`). Vater abgenommen, Sohn und Creator als
+  Regressionszeugen.
