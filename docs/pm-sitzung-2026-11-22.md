@@ -130,3 +130,49 @@ einen Wert zum Server bringt, den der Nutzer nicht berührt hat (Vorbelegung, Ab
 
 Kein Halt-Grund: kein neues Tor, kein Defekt im Increment (Zähler 0).
 
+## Sprint 112 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Vaters schickt „OK“ im Bearbeiten eines Angebots nur den Termin, den er in diesem Formular
+sieht und gewählt hat. Widerlegbar durch einen PATCH mit einem verworfenen oder einem alten, nicht gezeigten Termin.
+
+**Umfang:** [B-786](backlog/B-786-shop-bearbeiten-uebernimmt-alten-termin.md) (aus dem Review von Sprint 111, im Lauf
+ausformuliert, gegrillt und geschätzt – Defekt, autonom).
+
+**Entwickler-Brief:** Senke bleibt `planDto`; neu ist die Belegung beim Öffnen (`editForm`/`editPlan`), die einzige Stelle,
+an der das Formular Werte aus dem Angebot übernimmt. Keine Server-Änderung.
+
+## Iteration 112 — umgesetzt
+
+- `VaterShop.tsx`: „Bearbeiten“ belegt Formular, Plan und Zielgruppe frisch; das Datum nur bei „einmalig“.
+- **Review (`frontend-reviewer`):** ein 🟡 behoben – wählte der Vater nach dem Wechsel auf „einmalig“ den Tag des
+  Rest-Termins, ging dessen verborgene Uhrzeit mit; **Zähler 1 von 5**. 🟢: „OK“ schließt vor dem Ergebnis (gewollt, im
+  Verlauf vermerkt); geleerter Titel bleibt stehen → [B-789](backlog/B-789-angebotstitel-leeren-bleibt-stehen.md).
+- **Mutanten nach der letzten Änderung:** N1–N8 rot, E2E-Probe E3 rot. Vitest `src/vater` 543/543, `tsc -b` sauber.
+- **Nummern-Kollision:** B-787 war kurz doppelt vergeben – Lauf B hatte B-787/B-788 auf seinem Branch vergeben, bevor
+  dieser Lauf seine Story anlegte; umnummeriert auf B-789 (`d5f344c4`). Die Zählung vorher sah nur den Arbeitsbaum von
+  Lauf B, nicht dessen frische Commits. Abgestimmt über die gemeinsamen Notizen.
+
+## Runde 4 — Rollengang Sprint 112
+
+- **Vater — abgenommen** (E2E `shop-einmal-termin-bearbeiten`, zweiter Fall; Server frisch auf 5201/5174): Datum geändert,
+  „Abbrechen“, erneut „Bearbeiten“ – das Feld zeigt wieder den gespeicherten Tag, nur der Preis ändert sich, der Termin geht
+  unverändert hinaus. „Abbrechen heißt jetzt auch abbrechen.“
+- **Sohn — Regressionszeuge:** `shop-verlauf`, `full-flow` grün.
+- **Creator — Regressionszeuge:** keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 112)
+
+**Nachschau:** Sprint 111 nachgesehen (B-782, `nachgeschaut: 2026-11-22`). Gefunden: der Aufrufer von `planDto` gab den
+geladenen Termin auch bei einem wiederkehrenden Angebot weiter – in B-782 harmlos, weil das Datum dort nie leer vorbelegt
+war; erst B-786 machte den Fall möglich. Kein Defekt in B-782 selbst, darum kein `entgangen_bei`.
+
+**Was die eigenen Tore durchgelassen haben:** Eine Zählung der nächsten B-Nummer, die nur Dateien beider Checkouts las,
+nicht die Commits des anderen Branches (Lauf B hatte zwischen Zählung und Anlage committet). Das Commit-sofort-Verfahren
+hielt den Schaden klein (eine Umnummerierung).
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Beim Parallelbetrieb zählt die Nummer unmittelbar vor dem Anlegen über
+`git ls-tree` aller Branches *und* die gemeinsame Notiz, und die Notiz wird **vor** dem Commit geschrieben (Reservierung
+statt Bericht). Prosa in `docs/nachtlauf.md`, kein Tor.
+
+Kein Halt-Grund: kein neues Tor; der Fund im Increment ist behoben, Zähler 1 von 5.
+

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/shop, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/shop, rolle/supervisor]
 aliases: [Angebot bearbeiten übernimmt alten oder verworfenen Termin]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -79,3 +79,12 @@ gewählt habe – nicht einen alten oder einen, den ich mit „Abbrechen“ verw
 - **2026-11-22** — angelegt aus dem Review von B-782 (`idee`); bewusst nicht in B-782, weil dessen Sprint-Ziel ohne
   diese Wege erfüllt ist.
 - **2026-11-22** — ausformuliert, gegrillt (stellvertretend, Defekt, autonom) und geschätzt im Nachtlauf A: S, frontend.
+- **2026-11-22** — in-arbeit (Nachtlauf A, Sprint 112). `editForm`/`editPlan` in `VaterShop.tsx`, „Bearbeiten“ ruft `startEditing`.
+  - AK 1 → `VaterShopEinmalTermin.test.tsx` „Rest-Termin öffnet „einmalig“ mit leerem Datum“, N1 (Datum immer aus Termin) → rot.
+  - AK 2 → „nach „Abbrechen“ steht wieder der gespeicherte Termin“, N3 (Plan nicht neu) → rot, N6 (Knopf öffnet nur) → rot; E2E zweiter Fall, E3 (= N3) → rot.
+  - AK 3 → „gespeicherte Preis“, N4 → rot; Zielgruppe (gleiche Regel, Entscheidung 1) → „gespeicherte Zielgruppe“, N5 → rot.
+  - AK 4 → „öffnet mit seinem Datum“, N2 (immer leer) → rot.
+  - Review-Fund → „selbst gewählte Tag des Rest-Termins geht als Mitternacht hinaus“, N7 (geladener Termin auch bei wiederkehrendem Angebot) → rot; N8 (B-782-Aufrufer ohne Termin) → rot.
+  - Messung 00:46 nach der letzten Änderung: N1–N8 rot, Grundlinie grün.
+- **2026-11-22** — Review `frontend-reviewer`: 🟡 1 behoben (verborgene Uhrzeit des Rest-Termins ging bei gleichem Tag hinaus; `planDto` bekommt den geladenen Termin nur bei „einmalig“), **Zähler 1 von 5**. 🟢 ohne Zählung: „OK“ schließt vor dem Ergebnis, nach einem Server-Fehler beginnt das erneute Öffnen beim gespeicherten Stand (Folge von Entscheidung 1, gewollt); geleerter Titel bleibt stehen → [B-789](B-789-angebotstitel-leeren-bleibt-stehen.md).
+- **2026-11-22** — abgenommen (`4013ead9`, Sprint 112): Rollengang Vater per E2E `shop-einmal-termin-bearbeiten` (2 Fälle, frisch auf 5201/5174); Sohn Regressionszeuge (`shop-verlauf`, `full-flow`), Creator ohne Fläche im Diff.

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Sprint 100 (a0b73724) im Nachtlauf 2026-11-21, docs/pm-sitzung-2026-11-21.md"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: [B-776]
 ---
 
@@ -119,3 +120,4 @@ aufgefüllt wird.
   - Messung 00:19 nach der letzten Produktänderung: M1–M5 rot, Grundlinie grün. AK-1-Wortlaut an das Format der Liste angepasst.
 - **2026-11-22** — Review `frontend-reviewer`: keine 🟡/🔴, Zähler 0. 🟢 1 und 2 (alter Termin beim Wechsel auf „einmalig“; „Abbrechen“ setzt das Formular nicht zurück) sind älter als B-782 → [B-786](B-786-shop-bearbeiten-uebernimmt-alten-termin.md); 🟢 3 (AK-Wortlaut) übernommen.
 - **2026-11-22** — abgenommen (`fbf1bd94`, Sprint 111): Rollengang Vater per E2E `shop-einmal-termin-bearbeiten` gegen frisch gestarteten Server (5201/5174); Sohn Regressionszeuge (`shop-verlauf`, `full-flow`), Creator ohne Fläche im Diff. Backend 2021/2021 (Release), Vitest 1313/1313.
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 111): Aufrufer von `planDto` gegen alle Arten gelegt; der geladene Termin ging auch bei wiederkehrenden Angeboten mit – erst durch B-786 erreichbar und dort behoben. Kein Defekt in B-782.
