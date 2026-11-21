@@ -37,3 +37,26 @@ describe("Feldhilfe Stufe – Stufenplan", () => {
     expect(FIELD_HELP.stage.text).not.toMatch(/Stufenplan je Leitner-Fach/);
   });
 });
+
+// B-607: der Hinweis einer Vokabelzeile erscheint nur auf der Auswahlstufe einer Erkennen-Karte. Rot, wenn der Text eine der
+// drei Grenzen verschweigt (Auswahlstufe, Schreiben, Richtung „Deutsch → Fremdwort“) oder das Thema aus FIELD_HELP fällt.
+describe("Feldhilfe Hinweis einer Vokabelzeile (B-607)", () => {
+  const text = FIELD_HELP.vocabularyHint.text;
+
+  it("trägt den Titel, aus dem der Knopfname entsteht", () => {
+    expect(FIELD_HELP.vocabularyHint.title).toBe("Hinweis");
+  });
+  it("nennt die Auswahlstufe beim Üben als einzigen Ort", () => {
+    expect(text).toMatch(/nur beim Üben auf der Auswahlstufe/);
+  });
+  // Review B-607: der Abschlusstest zeigt keinen Tipp, auch nicht als Auswahl (B-544, PositionTestsController.ToItem).
+  it("sagt, dass der Abschlusstest ihn nie zeigt", () => {
+    expect(text).toMatch(/im Abschlusstest nie/);
+  });
+  it("sagt, dass er beim Schreiben nie erscheint", () => {
+    expect(text).toMatch(/Beim Schreiben .* erscheint er nie/);
+  });
+  it("nennt die Richtung „Deutsch → Fremdwort“ mit dem Namen aus dem Formular", () => {
+    expect(text).toMatch(/„Deutsch → Fremdwort“ erscheint er auf keiner Stufe/);
+  });
+});

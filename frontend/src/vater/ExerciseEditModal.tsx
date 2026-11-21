@@ -4,7 +4,7 @@ import { Modal } from "../components/Modal";
 import { GrammarTopicPicker } from "../components/GrammarTopicChips";
 import { StatusBanner } from "../components/StatusBanner";
 import { RepeatedTextFields, nonEmpty } from "../components/RepeatedTextFields";
-import { FieldLabel } from "../components/InfoHint";
+import { FieldLabel, InfoHint } from "../components/InfoHint";
 import { SCHOOL_TYPES } from "../lib/labels";
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
@@ -556,7 +556,7 @@ function ItemEditor({ detail }: { detail: ExerciseDetail }) {
       {items.loading && items.data === null ? <div className="loading">Lade Wortpaare…</div> : items.data && (
         <div style={{ overflowX: "auto" }}>
           <table className="table">
-            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Auch richtig</th><th>Hinweis</th><th>Erklärung (nach der Antwort)</th><th /></tr></thead>
+            <thead><tr><th>#</th><th>Wort</th><th>Übersetzung</th><th>Auch richtig</th><th><span className="label-row">Hinweis <InfoHint topic="vocabularyHint" /></span></th><th>Erklärung (nach der Antwort)</th><th /></tr></thead>
             <tbody>
               {items.data.map((it, i) => (
                 <ItemRow key={it.id} item={it} position={i + 1} busy={action.busy} exerciseId={detail.id}

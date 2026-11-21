@@ -667,7 +667,7 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
           {type === "Vocabulary" && <>
             <RowField label="Vorderseite" value={r.front} onChange={(v) => patchRow(i, { front: v })} />
             <RowField label="Rückseite" value={r.back} onChange={(v) => patchRow(i, { back: v })} />
-            <RowField label="Hinweis" value={r.hint} onChange={(v) => patchRow(i, { hint: v })} optional />
+            <RowField label="Hinweis" value={r.hint} onChange={(v) => patchRow(i, { hint: v })} optional topic="vocabularyHint" />
           </>}
           {type === "Arithmetic" && <>
             <RowField label="Aufgabe" value={r.prompt} onChange={(v) => patchRow(i, { prompt: v })} placeholder="7 × 6" />

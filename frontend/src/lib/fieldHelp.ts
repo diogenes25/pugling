@@ -338,6 +338,17 @@ export const FIELD_HELP = {
       + "wird die Frage frei beantwortet.",
   },
 
+  // B-607: der Hinweis gehört zur deutschen Antwort der Erkennen-Karte; jede Karte, die das Fremdwort abfragt,
+  // verwirft ihn. Der Text sagt das, damit niemand einen Hinweis schreibt, den das Kind nie sieht.
+  vocabularyHint: {
+    title: "Hinweis",
+    text: "Ein Tipp zur deutschen Antwort, etwa „beginnt mit h“. Ohne eigenen Hinweis steht dort meist der Artikel aus "
+      + "dem Vokabelspeicher. Das Kind sieht ihn nur beim Üben auf der Auswahlstufe, im Abschlusstest nie, und nur bei "
+      + "„Fremdwort → Deutsch“ oder „beides“ (dort auf der Karte vom Fremdwort zum Deutschen; sie wird nie geschrieben, "
+      + "höchstens als Auswahl gefragt). Beim Schreiben (Kästchen, Buchstaben ordnen, Freitext, Diktat, Lernkarte) "
+      + "erscheint er nie, weil dort das Fremdwort die Antwort ist. Bei „Deutsch → Fremdwort“ erscheint er auf keiner Stufe.",
+  },
+
   // ---- Vokabel-Store ----
   vocabListPaste: {
     title: "Vokabelliste einfügen",

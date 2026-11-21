@@ -56,3 +56,14 @@ describe("Bearbeiten-Dialog – Erklärung je Wort (B-583)", () => {
     expect(patch).toHaveBeenCalledWith(2, 3, 7, 41, { explanation: "Bahnhof: der, gare: la." });
   });
 });
+
+describe("Bearbeiten-Dialog – Erklärung am Hinweis (B-607)", () => {
+  // Rot, solange die Spalte „Hinweis" ein nackter Tabellenkopf ist: dann erfährt der Creator nicht, dass der Hinweis auf
+  // den Schreibstufen und bei „Deutsch → Fremdwort" nie erscheint.
+  it("die Spalte „Hinweis“ trägt den Erklärungs-Knopf", async () => {
+    render(<AuthProvider><ExerciseEditModal exercise={{ id: 7, type: "Vocabulary", title: "Am Bahnhof" } as unknown as ExerciseSummary}
+      onClose={() => {}} onSaved={() => {}} /></AuthProvider>);
+    await screen.findByLabelText("Erklärung für la gare");
+    expect(screen.getByRole("button", { name: /Erklärung zu „Hinweis"/ })).toBeTruthy();
+  });
+});
