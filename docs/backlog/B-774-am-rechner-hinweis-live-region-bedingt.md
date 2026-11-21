@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/a11y, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/a11y, rolle/supervisor]
 aliases: [Am-Rechner-Hinweis bedingte Live-Region]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-663]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-774 · Der Hinweis „nur am Rechner“ entsteht zusammen mit seiner Live-Region
@@ -86,3 +87,9 @@ Playwright-Probe bei 390 px aus B-663 (`e2e/vater-schmal.spec.ts`).
 | --- | --- | --- | --- |
 | Region ohne `banner info` | `VaterApp.tsx` | `vater-schmal` rot | rot (`toHaveClass(/banner/)`) |
 | `banner info` bedingungslos | `VaterApp.tsx` | `vater-schmal` rot | rot (`not.toHaveClass`, 1 failed) |
+- **2026-11-21** — `abgenommen` mit `9ab66ecc`. Rollengang als Maschinenlauf gegen den nach dem letzten Edit gestarteten
+  Server (Ausweichports 5201/5174): volle E2E-Suite **179/179**, Vitest **1297/1297**. Vater: `vater-schmal` (390 px) zeigt
+  den Hinweis mit Banner-Optik und davor eine leere Region ohne Banner. Sohn: `full-flow` und `shop-verlauf` zeigen die
+  Feier. Creator: Regressionszeuge, kein Pfad im Diff, eigene Specs grün. Ob ein Screenreader den Hinweis am echten Handy
+  ansagt, hat niemand gehört.
+- **2026-11-21** — Nachschau (Retro Sprint 99): Diff `9ab66ecc` gegen AK 1–3 gelesen. Die leere Region steht in `.vater-main` (Flex mit `gap`) außerhalb des Flusses (`.live-region:empty`, `index.css:540`), also ohne Zusatzabstand. Gezählt: 27 `role="status"` im Frontend; keine Spec findet mit einem ungefilterten `getByRole("status")` jetzt eine zusätzliche leere Region (E2E 179/179 im Lauf von Sprint 99). Kein Befund.

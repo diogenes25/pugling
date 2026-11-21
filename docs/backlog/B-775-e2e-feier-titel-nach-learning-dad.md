@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/test, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/test, rolle/student]
 aliases: [cel-title nach Learning Dad]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-21"
 ---
 
 # B-775 · Drei E2E-Specs suchen den Feier-Titel noch unter `.cel-title`
@@ -69,3 +70,7 @@ Gemessen am 2026-11-21 auf `c84fbedb`.
   „Banner ohne `caption`“ (`Celebration.tsx`): erwartet `shop-verlauf` rot, gemessen rot. Review `frontend-reviewer`: die
   Selektoren sind robust (die kleine Feier hat keinen Titel, also keine `.dad-bubble-text`; nur eine `.cel-layer` zur
   Zeit); kein Fund zu dieser Story.
+- **2026-11-21** — `abgenommen` mit `9ab66ecc`. Rollengang: volle E2E-Suite **179/179** nach dem letzten Edit (Ausweichports),
+  darin `full-flow` (Combo ×5 und Kauf-Feier beim Sohn) und `shop-verlauf`/`taschengeld-monatlich` (Kauf-Feier). Vater und
+  Creator: Regressionszeugen, ihre Specs grün.
+- **2026-11-21** — Nachschau (Retro Sprint 99): Die vier Selektoren tragen im vollen Lauf von Sprint 99 erneut (179/179), und `.cel-layer .dad-bubble-text` trifft nach der Änderung an `LearningDad` (Untertitel ohne Titel) keine kleine Feier: Sie hat keinen Titel, also keine `.dad-bubble-text`. Kein Befund.

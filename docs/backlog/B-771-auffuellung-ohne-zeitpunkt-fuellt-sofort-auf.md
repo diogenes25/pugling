@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-645]
+nachgeschaut: "2026-11-21"
 ---
 
 # B-771 · Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf
@@ -117,3 +118,4 @@ kein Vertragsbruch.
   Weg des Vaters über die API. Die E2E-Spec `taschengeld-monatlich` bleibt durch die fremde Celebration-Arbeit rot
   (`.cel-title`) und belegt hier nichts. Am echten Shop gab es nach der Messung auf der DB-Kopie keine betroffenen Zeilen.
   Offen ist nichts.
+- **2026-11-21** — Nachschau (Nachtlauf, pugling-reviewer): Reihenfolge im PATCH (`ShopController.cs:288-317`, alte Regel vor dem Überschreiben), Verlustfreiheit von `DueRefills` in `(last, now]` nachgerechnet, `Include(Stocks)` in `LoadListingForUpdateAsync`, 409 über die Concurrency-Tokens (`PuglingDbContext.cs:912`, `:920`). **Entgangen:** der Nachbarpfad wiederkehrend → einmalig feuert nie → B-776.

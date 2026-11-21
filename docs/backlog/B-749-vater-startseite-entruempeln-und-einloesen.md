@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-662
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-21"
 ---
 
 # B-749 · Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um
@@ -145,3 +146,4 @@ Daten schon in B-747 und B-770 stehen.
 | B749-F5 Zaehler ohne Meldung | frontend/src/vater/einloesungen.ts:44 | red | red |  |
 | B749-F6 Zaehler fragt ohne aktiv | frontend/src/vater/einloesungen.ts:63 | red | red |  |
 - **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).
+- **2026-11-21** — Nachschau (Nachtlauf, frontend-reviewer): AK 1 `VaterDashboard.tsx:110-120` gegen „zeigt je Kind …“ (37 Antworten ≠ 40 Punkte), AK 3 Rückfrage vor `run` und `disabled={busy}`, AK 4 `/vater/kinder` in `navigation.ts`, AK 6 Lehrer-Konto. **Entgangen:** Status „offen“ trotz Antworten → B-777. 🟢 ohne Story: „undefined Pläne“ in `VaterKinder.tsx:107-109` bei gescheitertem Lesen (Altlast, Familie B-369), „Zum Zuweisen“ am Telefon führt in die Weiche.

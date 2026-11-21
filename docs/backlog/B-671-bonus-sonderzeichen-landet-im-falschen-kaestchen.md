@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Bonusrunde Sonderzeichen falsches Kästchen]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -184,3 +184,7 @@ ein Effekt nach dem Muster von `SohnTest.tsx:89-102`), dazu fünf Vitest-Fälle.
   - AK 2 hat keine eigene Mutante: Ein Fokus ohne `onFocus` lässt sich in happy-dom nicht herstellen, der Fall hängt an
     derselben Ursache wie AK 1.
   - Vitest 1301/1301.
+- **2026-11-21** — `abgenommen` mit `1793475e`. Rollengang: Vitest mit gemockter API (Entscheidung 3) und volle E2E
+  **179/179** als Regressionszeuge (`bonus*.spec.ts` grün). **Geliefert, Geräte-Prüfung offen:** Ob am echten Handy die
+  Tastatur nach dem Weiter offen bleibt und das „î“ aus der Leiste in der neuen Karte landet, sieht kein jsdom-Test. Einmal
+  in einer französischen Bonusrunde am Handy durchtippen.

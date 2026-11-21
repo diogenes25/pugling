@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-662
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-21"
 ---
 
 # B-770 · Die Zahl der heute gewerteten Antworten je Kind
@@ -116,3 +117,4 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 | B770-M10 Selbsteinschaetzung fehlt | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:58 | red | red |  |
 | B770-M3 Uebung ohne Tag | backend/Pugling.Api/Services/Supervisor/ChildrenDashboardService.cs:55 | red | red | Nachmessung kompilierbar (`e.PracticeSession!.StudyPlan!`), erste Fassung `ungemessen` |
 - **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).
+- **2026-11-21** — Nachschau (Nachtlauf, beide Reviewer): Tagesbezug `PracticeSession.Day`/`TestAttempt.Day` gegen `ComputeChildDayAsync` gleich, beide Zählungen mit `ChildId`-Filter, `ReviewEvent` an genau zwei Stellen (`PositionPracticeController.cs:712`, `:893`), `TestItemResult` erst beantwortet gezählt. **Entgangen:** der Status der Startseite liest die neue Zahl nicht → B-777. 🟢 ohne Story: ein doppelt gesendeter Lernkarten-POST zählt zweimal (`:893`).

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/rueckmeldung, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/rueckmeldung, rolle/student]
 aliases: [Rückmeldung nach „Später“ gesperrt]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -238,3 +238,7 @@ vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umba
     - 🟢 B-586 nennt die entfernte Sperre als Vorbild → dort vermerkt.
   - Kein Fund zum Anti-Cheat: Die Quittung enthält nur Ids, der Hinweis nur die Aufgabe.
   - Backend 1931/1931, Vitest 1301/1301.
+- **2026-11-21** — `abgenommen` mit `1793475e`. Rollengang als Maschinenlauf gegen den nach dem letzten Edit gestarteten
+  Server (Ausweichports): volle E2E **179/179**. Darin fährt `rueckmeldung.spec.ts` den Weg des Sohnes: Test öffnen,
+  „Später weiter“, üben, melden, „Danke, ist angekommen!“, Test fortsetzen, Ergebnisblatt mit „Rückmeldung“. Vater:
+  Schritt 2 derselben Spec (er sieht und erledigt die Meldung). Creator: Regressionszeuge.
