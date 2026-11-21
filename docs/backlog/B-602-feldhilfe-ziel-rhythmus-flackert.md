@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, rolle/entwickler]
+tags: [typ/story, status/in-arbeit, bereich/qualitaet, rolle/entwickler]
 aliases: [Feldhilfe-Spec flackert]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S

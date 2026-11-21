@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/test, rolle/entwickler]
+tags: [typ/story, status/in-arbeit, bereich/test, rolle/entwickler]
 aliases: [E2E-Worker hängt]
-status: geschaetzt
+status: in-arbeit
 prio: P3
 art: Defekt
 groesse: S
