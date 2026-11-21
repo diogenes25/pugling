@@ -10,6 +10,8 @@ Die **Regeln** des Verfahrens stehen woanders — die Stufenkette und ihre Eintr
 ist nur die **Betriebsanleitung**: wie ein Lauf gestartet wird, der ohne Rückfragen arbeitet, was er dabei
 darf, und was am Morgen davon übrig ist.
 
+Nur vorbereiten statt bauen (bis `geschaetzt`, für Sonnet): [vorbereitungslauf.md](vorbereitungslauf.md).
+
 Sie existiert, weil das Verfahren an drei Stellen ausdrücklich einen Menschen verlangt. Ohne Vorab-Freigabe
 bleibt ein unbeaufsichtigter Lauf an jeder dieser Stellen stehen — richtig, aber nutzlos.
 
