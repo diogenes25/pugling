@@ -554,7 +554,8 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     // A fresh child with ten words, a dose of six and two words met yesterday on a learn card but not imprinted.
-    private async Task<(HttpClient Child, int ChildId, int PlanId, int PositionId)> DoseSetupAsync()
+    private async Task<(HttpClient Child, int ChildId, int PlanId, int PositionId)> DoseSetupAsync(
+        ItemScope scope = ItemScope.All)
     {
         var father = await TestApi.AdultAsync(factory);
         var pin = "6" + Random.Shared.Next(100, 999);
@@ -567,7 +568,9 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         var yesterday = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1);
         Db(db =>
         {
-            db.PlanPositions.Single(p => p.Id == positionId).NewItemsPerDay = 6;
+            var position = db.PlanPositions.Single(p => p.Id == positionId);
+            position.NewItemsPerDay = 6;
+            position.Scope = scope;
             foreach (var i in new[] { 0, 1 })
                 db.PositionItemProgress.Add(new PositionItemProgress
                 { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
@@ -604,6 +607,66 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
         Assert.DoesNotContain(cards, c => c.GetProperty("itemIndex").GetInt32() >= 6);
         Assert.Equal(6, Db(db => db.PositionItemProgress.Count(p => p.PlanPositionId == positionId && p.IntroducedAt != null)));
+    }
+
+    /// <summary>
+    /// B-653 AK 4: under "new" too the two open learn cards from yesterday take places of the dose - two open and four
+    /// new, not six new beside them. Red while "new" keeps yesterday's words out (cards 2..7, the dose leak), and red if
+    /// the open words were let in without counting on the dose (cards 0..7).
+    /// </summary>
+    [Fact]
+    public async Task Neu_Offene_Lernkarten_Zaehlen_Auf_Die_Tagesdosis()
+    {
+        var (child, _, planId, positionId) = await DoseSetupAsync(ItemScope.New);
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { mode = "Lern" }));
+        var cards = (await child.GetFromJsonAsync<List<JsonElement>>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards"))!;
+
+        Assert.Equal([0, 1, 2, 3, 4, 5], cards.Select(c => c.GetProperty("itemIndex").GetInt32()).Order());
+    }
+
+    /// <summary>
+    /// B-653 AK 4, second round: imprinted in the first round today, the two open words still hold their places - the
+    /// second round brings no word beyond the dose. Red if the scope rule leaves out "imprinted today" (the two words drop
+    /// out of the count, words 6 and 7 come as new).
+    /// </summary>
+    [Fact]
+    public async Task Neu_Zweite_Runde_Am_Selben_Tag_Bringt_Keine_Neuen_Ueber_Die_Dosis()
+    {
+        var (child, _, planId, positionId) = await DoseSetupAsync(ItemScope.New);
+        await PlayLearnRoundAsync(child, planId, positionId);
+
+        var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(TestApi.PracticeBase(planId, positionId), new { mode = "Lern" }));
+        var cards = (await child.GetFromJsonAsync<List<JsonElement>>($"{TestApi.PracticeBase(planId, positionId)}/{sessionId}/cards"))!;
+
+        Assert.DoesNotContain(cards, c => c.GetProperty("itemIndex").GetInt32() >= 6);
+        Assert.Equal(6, Db(db => db.PositionItemProgress.Count(p => p.PlanPositionId == positionId && p.IntroducedAt != null)));
+    }
+
+    /// <summary>
+    /// B-653 AK 3: on a "both" list under "new", the recognition card met yesterday needs no learn card and stays out the
+    /// next day, while the reversed card met yesterday but not imprinted comes back. Red if the scope rule lets every
+    /// not-imprinted word in without asking whether it needs a learn card (card 0 would stay forever).
+    /// </summary>
+    [Fact]
+    public async Task Neu_Laesst_Eine_Erkennungskarte_Ohne_Lernkarte_Am_Folgetag_Draussen()
+    {
+        var s = await SetupAsync(TestStage.FreeText, direction: "both");
+        var yesterday = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1);
+        Db(db =>
+        {
+            db.PlanPositions.Single(p => p.Id == s.PositionId).Scope = ItemScope.New;
+            foreach (var i in new[] { 0, 1 })
+                db.PositionItemProgress.Add(new PositionItemProgress
+                { PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+            return db.SaveChanges();
+        });
+
+        var indices = (await s.Child.GetFromJsonAsync<List<JsonElement>>($"{Base(s)}/{await StartAsync(s)}/cards"))!
+            .Select(c => c.GetProperty("itemIndex").GetInt32()).ToList();
+
+        Assert.Contains(1, indices);
+        Assert.DoesNotContain(0, indices);
     }
 
     // Takes the position's test and answers every item with its right answer in the stage's language.

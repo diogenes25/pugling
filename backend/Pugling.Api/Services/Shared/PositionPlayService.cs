@@ -281,9 +281,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             .Where(p => p.PlanPositionId == pos.Id && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
+        var type = pos.Exercise is { } ex ? TypeOf(ex) : null;
         IEnumerable<(int Index, PositionItemProgress? Prog)> due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
-            .Where(x => ScopeMatch(pos.Scope, x.Prog, day) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)))
+            .Where(x => ScopeMatch(pos.Scope, x.Prog, day, type, items) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)))
             .ToList();
 
         // The dose only shapes a round that is played for the record; free practice (info) introduces nothing.
@@ -344,14 +345,21 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
     /// <summary>
     /// B-643: words introduced before <paramref name="day"/> that come back as learn cards that day - not imprinted yet, or
-    /// imprinted only today. They take places of the day's new words, in practice and in the test portion alike.
+    /// imprinted only today. They take places of the day's new words in the learn round; the test portion reads no scope
+    /// and no dose of open cards (B-04).
     /// </summary>
     public int OpenLearnCards(PlanPosition pos, IReadOnlyList<ContentItem> items, IEnumerable<PositionItemProgress?> progress,
         DateOnly day) =>
         pos.Exercise is { } ex && TypeOf(ex) is { } type
-            ? progress.Count(p => p is { IntroducedAt: { } at } && at < day && (p.ImprintedAt is null || p.ImprintedAt == day)
-                && p.ItemIndex < items.Count && NeedsImprint(type, items[p.ItemIndex]))
+            ? progress.Count(p => IsOpenLearnCard(type, items, p, day))
             : 0;
+
+    // B-643/B-653: introduced before the day, not imprinted or imprinted only that day, and the content needs a learn card.
+    // One predicate for the dose count and the "new" scope, so a word the dose counts is always in the round it counts in.
+    private static bool IsOpenLearnCard(IExerciseType type, IReadOnlyList<ContentItem> items, PositionItemProgress? p,
+        DateOnly day) =>
+        p is { IntroducedAt: { } at } && at < day && (p.ImprintedAt is null || p.ImprintedAt == day)
+            && p.ItemIndex < items.Count && NeedsImprint(type, items[p.ItemIndex]);
 
     /// <summary>
     /// Applies the daily dose (B-04): of the never-shown contents only as many pass as the day still has room for,
@@ -618,12 +626,16 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     // round of its introduction day and becomes review material from the next day on - with or without Leitner,
     // which is why the day decides and not the review count (without Leitner no review is ever counted).
     // "Old" stays "introduced at all", so on the introduction day a word lies in both scopes.
-    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog, DateOnly day) => scope switch
-    {
-        ItemScope.New => prog?.IntroducedAt is null || prog.IntroducedAt == day,
-        ItemScope.Old => prog?.IntroducedAt is not null,
-        _ => true,
-    };
+    // B-653: a word met on its learn card but not imprinted stays "new" until it is - a half-learnt word must not drop
+    // out of the plan. A content without a learn card, or a position whose type is unknown, keeps the day rule.
+    private static bool ScopeMatch(ItemScope scope, PositionItemProgress? prog, DateOnly day, IExerciseType? type,
+        IReadOnlyList<ContentItem> items) => scope switch
+        {
+            ItemScope.New => prog?.IntroducedAt is null || prog.IntroducedAt == day
+                || (type is not null && IsOpenLearnCard(type, items, prog, day)),
+            ItemScope.Old => prog?.IntroducedAt is not null,
+            _ => true,
+        };
 
     // Due when never seen (no progress) or the due date has been reached.
     private static bool IsDue(PositionItemProgress? prog, DateOnly day) =>
