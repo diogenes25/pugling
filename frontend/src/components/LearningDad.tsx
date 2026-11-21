@@ -246,15 +246,15 @@ export const LearningDad = memo(function LearningDad({
       style={containerStyle}
       onClick={onClick}
     >
-      {/* The live region always exists so screen readers announce a caption that appears later. */}
-      <div className={`live-region${caption ? " dad-bubble" : ""}`} role="status">
-        {caption && (
-          <>
-            <span className="dad-bubble-text">{caption}</span>
-            {subCaption && <span className="dad-bubble-sub">{subCaption}</span>}
-          </>
-        )}
-      </div>
+      {/* Decorative, deliberately no live region: every caller either sits under aria-hidden (celebration layer, lesson
+          sheet) or shows the caption from mount, and the screen it sits on announces through its own region (B-134).
+          The sub-caption stands on its own - a small celebration passes only "+N coins". */}
+      {(caption || subCaption) && (
+        <div className="dad-bubble">
+          {caption && <span className="dad-bubble-text">{caption}</span>}
+          {subCaption && <span className="dad-bubble-sub">{subCaption}</span>}
+        </div>
+      )}
 
       <div className="dad-figure-box" style={figureStyle}>
         {effectiveMode === "video" ? (

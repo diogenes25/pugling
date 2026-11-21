@@ -196,11 +196,12 @@ export function VaterApp() {
       </header>
 
       <main className="vater-main">
-        {amRechnerHinweis && narrow && (
-          <div className="banner info" role="status">
-            Zuweisen und Erstellen gibt es nur am Rechner – öffne Pugling dort in einem breiten Fenster.
-          </div>
-        )}
+        {/* The region always exists: the hint appears after a navigation, and only a region that is already in the
+            DOM gets its new text announced (liveRegions.test.ts, B-774). */}
+        <div className={`live-region${amRechnerHinweis && narrow ? " banner info" : ""}`} role="status">
+          {amRechnerHinweis && narrow
+            && "Zuweisen und Erstellen gibt es nur am Rechner – öffne Pugling dort in einem breiten Fenster."}
+        </div>
         <Routes>
           {/* Je Perspektive eine Startseite. Vorher trug das Dashboard alle drei Anliegen: „Heute" und
               „Kinder" (Betreuen) neben „Lehrpläne" (Zuweisen). */}

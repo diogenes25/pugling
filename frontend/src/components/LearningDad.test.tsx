@@ -37,6 +37,13 @@ describe("LearningDad Component", () => {
     expect(screen.getByText("+5 Münzen")).toBeTruthy();
   });
 
+  it("zeigt den Münz-Untertitel einer kleinen Feier auch ohne Titel", () => {
+    // Red if the bubble hangs on `caption` alone: the small tier passes only "+N 🪙" (SohnBonus), which then vanished.
+    const kleine: Celebration = { id: 1, tier: "small", emoji: "⭐", sub: "+3 🪙" };
+    render(<CelebrationLayer celebration={kleine} />);
+    expect(screen.getByText("+3 🪙")).toBeTruthy();
+  });
+
   it("unterstützt HTML5 Video-Modus", () => {
     const { container } = render(<LearningDad action="thumbs-up" mode="video" />);
     const video = container.querySelector("video");

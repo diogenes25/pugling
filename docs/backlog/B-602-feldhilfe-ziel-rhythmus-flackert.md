@@ -215,3 +215,7 @@ Dauerfall mit verzögerter Antwort nach dem Muster von `planbau-ladefenster.spec
   nichts gemessen oder gestartet.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Gegen den Code korrigiert: die empfohlene Wartebedingung „(N Treffer)“ trüge nicht, die Beschriftung steht beim Erstladen schon bei „(0 Treffer)“; gewartet wird auf die Radiogruppe der Trefferliste, einmal in `planAnlegen`. Ein Dauerfall mit verzögerter Suchantwort hält die Bedingung ehrlich. Der Assistent bleibt unberührt. Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur `feldhilfe.spec.ts`, kein Produktcode). Rote Probe benannt (Wartezeile entfernen; zweite Probe mit „(N Treffer)“); Messbefehl auf Ausweichports. Offen bleibt, ob die Route-Verzögerung greift – genau das zeigt die erste Probe. Nichts gemessen oder gestartet.
+- **2026-11-21** — weiterer Fall im Nachtlauf (Sprint 98, voller E2E-Lauf auf 5201/5174): diesmal
+  `feldhilfe.spec.ts:72` („Hinweis schließt per Escape und per Klick daneben“), `getByRole('note')` nach dem Klick auf
+  den Knopf nicht sichtbar. Einzeln wiederholt `--repeat-each=3`: 9/9 grün. Dieselbe Spec, ein anderer Fall als der
+  „Ziel-Rhythmus“; die Ursache aus der Ausformulierung (`InfoHint` schließt bei Bewegung des Knopfs) passt auch hier.

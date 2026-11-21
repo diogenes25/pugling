@@ -28,9 +28,16 @@ test("Am Telefon gibt es nur das Betreuen, die Werkstatt verweist an den Rechner
   await expect(page.getByRole("button", { name: "Als Creator", exact: true })).toHaveCount(0);
   await expect(umschalter(page)).toHaveCount(0);
 
+  // B-774: the region is always in the DOM, so the banner look must hang on the hint, not on the element - without the
+  // hint it is an empty, unstyled region (red if `banner info` became unconditional: an empty blue box on every page).
+  const hinweisRegion = page.locator(".vater-main > [role=status]");
+  await expect(hinweisRegion).toBeEmpty();
+  await expect(hinweisRegion).not.toHaveClass(/\bbanner\b/);
+
   await page.goto("/vater/inhalte");
   await expect(page).toHaveURL(/\/vater$/);
   await expect(page.getByRole("status").filter({ hasText: "nur am Rechner" })).toBeVisible();
+  await expect(hinweisRegion).toHaveClass(/\bbanner\b/);
   await page.goto("/vater/plaene");
   await expect(page).toHaveURL(/\/vater$/);
 });

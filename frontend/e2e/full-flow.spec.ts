@@ -96,7 +96,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
     }
   }
   // Motivations-Feature: ab 5 Treffern in Folge feiert die App den Combo-Meilenstein (Feier-Banner).
-  await expect(sohn.locator(".cel-title", { hasText: "COMBO ×5" })).toBeVisible();
+  await expect(sohn.locator(".cel-layer .dad-bubble-text", { hasText: "COMBO ×5" })).toBeVisible();
   await expect(sohn.getByText("RUNDE FERTIG!")).toBeVisible();
 
   // Weiter zum Test
@@ -169,7 +169,7 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
   await expect(buyCard).toBeVisible();
   await buyCard.click();
   // Der Kauf wird gefeiert; danach liegt die Ware im Inventar-Tab "Sachen" (Einlösen möglich).
-  await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
+  await expect(sohn.locator(".cel-layer .dad-bubble-text", { hasText: "GEKAUFT!" })).toBeVisible();
   await sohn.getByRole("button", { name: /^Sachen/ }).click();
   await expect(sohn.getByRole("button", { name: "Einlösen beantragen" }).first()).toBeVisible();
   // Kaufhistorie (B-99): der eben getätigte Kauf ist im Verlauf-Tab sichtbar - der Tab existierte vorher

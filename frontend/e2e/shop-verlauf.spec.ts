@@ -65,7 +65,7 @@ test("Der eigene Kauf steht im Verlauf, auch wenn der Verlauf vorher schon offen
     if (r.method() === "POST" && /\/shop\/listings\/\d+\/purchase$/.test(r.url())) purchasePosts.push(r.url());
   });
   await buyCard.dblclick();
-  await expect(sohn.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
+  await expect(sohn.locator(".cel-layer .dad-bubble-text", { hasText: "GEKAUFT!" })).toBeVisible();
   expect(purchasePosts, "Ein Doppelklick darf genau einen Kauf auslösen").toHaveLength(1);
 
   // Und jetzt muss der Verlauf ihn zeigen. Vor B-110 stand hier weiter der zuerst geladene Stand.

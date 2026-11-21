@@ -130,7 +130,7 @@ test("Taschengeld je Kind: eigener Bestand, Zielgruppe, wieder da; Vater löst s
   await sohnA.goto("/sohn/shop");
   for (const titel of [`Zocken alle ${RUN}`, `Taschengeld A ${RUN}`]) {
     await sohnA.locator("button.skin", { hasText: titel }).click();
-    await expect(sohnA.locator(".cel-title", { hasText: "GEKAUFT!" })).toBeVisible();
+    await expect(sohnA.locator(".cel-layer .dad-bubble-text", { hasText: "GEKAUFT!" })).toBeVisible();
     await sohnA.keyboard.press("Escape");
     await sohnA.goto("/sohn/shop");
   }
