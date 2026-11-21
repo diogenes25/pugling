@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/backend, rolle/student]
 aliases: [Truhen-Prüfung doppelt, Kind-Tag auf dem Schreibweg]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: M
@@ -250,3 +250,16 @@ Vorgänger im Repo liefert. Ohne die Messung wäre es ein S; sie ist Akzeptanzkr
   empfohlen.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 6. Zuerst messen (Messung ist Kriterium 1); Vorbild `QueryPlanSmokeTests` trägt nicht (EXPLAIN, kein Zähler), im Backend gibt es keinen Befehlszähler. Die tote Schluss-Rechnung in `EvaluateAndAwardAsync` fällt ohne Schwelle; die Verlaufsschleifen gehören nicht zur User Story (Abgabe) und werden nur bei mindestens 20 Prozent Anteil eigene Story; Truhe bleibt unangetastet. Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend, keine Migration, kein Vertragsbruch (nachgesehen: `DayOverview` bleibt Rückgabetyp von `ComputeDayAsync`, `EvaluateAndAwardAsync` ist ein Dienst ohne Endpunkt). Größer als der Eingriff selbst ist der Hilfsbau (Zähler, Plan mit N Positionen); beides benannt. Nebenfund: nur eine statt zwei Testanpassungen nötig; `AddInterceptors` fehlt nur in `backend/Pugling.Api`, im Testprojekt gibt es ein Vorbild (`ShopStockPerChildTests.cs:436`). Nichts gemessen oder gestartet.
+- **2026-11-21** — in-arbeit (Nachtlauf, Sprint 109). **Messung vor jedem Umbau** (AK 1, `SchreibwegMessungTests`, zählender `DbCommandInterceptor` in eigener Test-Fabrik `CommandCountingWebAppFactory`): Tagessicht eines Plans 34 Befehle (5 Positionen) bzw. 94 (15); Abgabe (Test bestanden) mit offener Truhe 100 bzw. 230, mit vergebener Truhe 66 bzw. 136. Verlauf (`…/overview/progress`) über 30 Tage bei 15 Positionen: 3261 Befehle, davon 36 mit der Positions-Fach-Kette (Join `PlanPositions` × `TextbookSeries`) = **1,1 %**.
+- **2026-11-21** — AK 6 (Entscheidung 3): 1,1 % liegt unter der Schwelle von 20 % → **Verlustposten, nicht gebaut**, keine eigene Story. Der Hebel des Verlaufs sind die Abfragen je Position und Tag (Entscheidung 5, zurückgestellt; 3261 Befehle für eine Planübersicht über 30 Tage ist die Zahl, an der der Nutzer das entscheiden kann).
+- **2026-11-21** — Nach dem Umbau (Entscheidung 2, `EvaluateAndAwardAsync` liefert nichts mehr): Abgabe mit vergebener Truhe 66 → **32** (−34 = genau eine Tagessicht), 136 → **42** (−94); mit offener Truhe 100 → 66, 230 → 136. Fälle → Tests: AK 1 → `Messung_Abgabe`, `Messung_Verlauf` (`[Trait("Category", "Measurement")]`, prüfen nur, dass der Zähler zählt); AK 2 → `Nach_Vergebener_Truhe_Rechnet_Die_Abgabe_Keine_Tagessicht` (5 und 15 Positionen), R1 (Tagessicht wieder auf dem Schreibweg) → rot; AK 3 → `DailyBox*`, `PositionGoalOverviewTests`, `ChildrenOverviewTests`, `KindTagessichtTests` grün (64/64), nur der eine Leser aus Entscheidung 2 angepasst; AK 4 → `NebenlaeufigeZielbuchung_VerliertDasRennen_OhneFehlerUndOhneDoppelbuchung` liest die Tagessicht mit `ComputeDayAsync` nach der Buchung, R2 (Buchung entfällt) → rot; AK 5 → `grep "RewardObligations(" backend/Pugling.Api` (ohne Doku-Zeilen): `PositionProgressService.cs:356` und `:432`, keine dritte Stelle (dazu ein Testaufruf `RemediationPositionTests.cs:469`).
+- **2026-11-21** — Mutanten nach der letzten Änderung (`mutant-probe.py`, Debug, Filter `SchreibwegMessungTests|PositionGoalOverviewTests`):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | R1 Tagessicht auf dem Schreibweg | `PositionProgressService.cs:554` | red | red |
+  | R2 Buchung entfällt | `PositionProgressService.cs:558` | red | red |
+  | R3 `ChangeTracker.Clear()` entfällt | `PositionProgressService.cs:597` | red | red |
+
+- **2026-11-21** — Review (`pugling-reviewer`): ein 🟡 (zwei Seiten): die Obergrenze aus AK 2 als **Gesamtzahl** (≤ 66 − Tagessicht) hatte keinen Spielraum – jede fremde Abfrage auf dem Abgabeweg oder in der Tagessicht hätte sie rot gemacht, eine billigere Tagessicht sie still gelockert. Behoben: AK 2 prüft jetzt **strukturell** – die eine Abfrage, die nur eine Tagessicht absetzt (eingeführte Inhalte eines ganzen Plans, `PositionItemProgress` × `PlanPositions` über `StudyPlanId`), kommt bei vergebener Truhe 0-mal vor, bei offener 1-mal; die Tagessicht selbst muss sie genau einmal zeigen (prüft den Marker). Die Messzahlen stehen im Doc-Kommentar. Die Wortlaut-Abweichung vom Kriterium („höchstens die Messzahl abzüglich …“) ist gewollt: dieselbe Absicht, ohne Fehlalarm. **Zähler 1 von 5.** 🟢 ohne Zählung übernommen: `SaveChangesAsync` nach dem Verlierer im Renn-Test (hält, wofür `ChangeTracker.Clear()` da ist – R3), Doc-Satz an `EvaluateAndAwardAsync`, `Trait` an den Messfällen, „Befehle, nicht Rundreisen“ am Zähler, Zeit der Test-Truhe aus der Test-Uhr. Volle Suite (Release) 2004/2004.
+- **2026-11-21** — abgenommen (Sprint 109). Kein UI-Diff; Rollengang Sohn über die laufende App: E2E `full-flow` (Abgabe bucht Punkte), `belohnung-ueber-faecher` (Truhe nach erfüllten Tageszielen), `bonus` (Sperre nach Pflicht) grün, Server frisch von Playwright auf 5201/5174 nach der letzten Änderung. Vater und Creator: Regressionszeugen, keine ihrer Flächen im Diff. Commit `9482ec75`.

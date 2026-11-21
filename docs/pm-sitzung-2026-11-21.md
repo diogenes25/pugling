@@ -705,3 +705,61 @@ eine Mutante, die die Annahme selbst bricht (hier: „bis zu“ nur beim Tippen)
 Test. Als Zeile im Verfahren (`pm-loop` Step 5), kein Tor.
 
 Kein Halt-Grund: kein neues Tor; der Defekt im Increment ist behoben, Zähler 1 von 5 (Nachtlauf-Freigabe 3/10).
+
+## Sprint 109 — Ziel & Umfang
+
+**Umfang:** [B-609](backlog/B-609-truhe-rechnet-den-tag-doppelt.md), Aufräumen, P3, M, `geschaetzt` (Entscheidungen
+stellvertretend aus dem Vorbereitungslauf 2026-11-19).
+
+**Sprint-Ziel:** Aus Sicht des Entwicklers rechnet eine Abgabe des Sohns den Tag nur noch so oft, wie jemand ihn liest –
+gemessen, nicht vermutet; für den Sohn ändert sich nichts. Widerlegbar durch eine Tagessicht auf dem Schreibweg nach
+vergebener Truhe oder einen roten Verhaltenstest.
+
+**Entwickler-Brief:** Erst messen (zählender Interceptor, eigene Test-Fabrik), dann die Schluss-Rechnung in
+`EvaluateAndAwardAsync` streichen. Reihenfolge Ziel-Belohnung → Gamification → Truhe bleibt; `RewardObligations` bleibt
+die einzige Auswahl. Keine Migration, kein Vertrag.
+
+## Iteration 109 — umgesetzt
+
+- Messung vor dem Umbau: Abgabe mit vergebener Truhe 66/136 Befehle (5/15 Positionen), Tagessicht 34/94; Verlauf 30 Tage
+  3261 Befehle, Positions-Fach-Kette 1,1 % → kein eigener Umbau (Verlustposten). Nach dem Umbau 32/42.
+- `EvaluateAndAwardAsync` liefert nichts mehr; ein Test-Leser angepasst. Neue Klasse `SchreibwegMessungTests` mit
+  `CommandCounter`/`CommandCountingWebAppFactory`.
+- **Rote Probe:** R1–R3 nach der letzten Änderung rot. **Volle Suite (Release):** 2004/2004. **Review:** ein 🟡 (starre
+  Obergrenze) behoben durch eine strukturelle Prüfung, **Zähler 1 von 5**; 🟢 ohne Zählung übernommen.
+
+## Runde 16 — Rollengang Sprint 109
+
+- **Sohn — abgenommen** (E2E `full-flow`, `belohnung-ueber-faecher`, `bonus`, Server frisch auf 5201/5174): „Ich merk keinen
+  Unterschied – Punkte kommen, die Truhe geht auf, der Bonus auch.“ Kein UI-Diff; die Wirkung (Befehle je Abgabe) belegt die
+  Messung, nicht das Gefühl.
+- **Vater — Regressionszeuge:** `full-flow` grün; keine Vater-Fläche im Diff.
+- **Creator — Regressionszeuge:** derselbe Lauf; keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 109)
+
+**Nachschau:** Sprint 108 nachgesehen (B-608, `nachgeschaut: 2026-11-21`), kein Befund. Geprüft: alle Leser von
+`coinsPerHit` im Frontend und alle Aufrufer von `CoinsPerHit(` im Service – kein Weg kündigt einer Karte einen anderen Satz
+an, als die Abrechnung bucht. Index nicht neu erzeugt (fremde Änderungen an `INDEX.md`).
+
+**Was die eigenen Tore durchgelassen haben:** Das Akzeptanzkriterium selbst schrieb eine Messzahl als Obergrenze vor; der
+Bau folgte ihm wörtlich, der Reviewer fand die Sprödigkeit. Kein Tor prüft, ob ein Kriterium eine Zahl festschreibt, die
+von fremdem Code abhängt.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** In `docs/backlog/README.md` → Akzeptanzkriterien ein Satz: „Eine Messzahl
+wird nie als Obergrenze getestet; geprüft wird, dass der eingesparte Befehl nicht mehr vorkommt.“ Prosa, kein Tor – eine
+Zahl in einem Kriterium ist nicht mechanisch von einer gewollten Zahl zu unterscheiden.
+
+Kein Halt-Grund: kein neues Tor; der Fund im Increment ist behoben, Zähler 1 von 5.
+
+## Stand am Ende dieses Starts
+
+- **Abgenommen:** B-614 (`86d74423`), B-608 (`26f2863e`), B-609 (`9482ec75`); Backlog-Commits bis zum Protokoll dieses
+  Abschnitts. Nichts gepusht.
+- **Neu:** [B-785](backlog/B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) (Aufwärm-Hinweis übertreibt, `idee`).
+- **Entscheidungen zum Umstoßen:** B-608 Entscheidung 3 im Bau erweitert („bis zu“ in jeder Form, weil auch eine
+  Auswahlrunde mischt); B-609 AK 2 strukturell statt als Gesamtzahl geprüft.
+- **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 108 (Mutante gegen „nur X ist möglich“-Annahmen) und 109
+  (Messzahl nie als Obergrenze); die Verlaufsansicht kostet 3261 Befehle für 30 Tage (B-609 Entscheidung 5, zurückgestellt).
+- **Nächste Kandidaten:** B-607 (Hinweis verschwindet auf Schreibstufen, Defekt S), B-602/B-605 (flackernde Tests),
+  B-782 (Shop, noch `idee`).
