@@ -209,6 +209,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         if (subjectId is null && !onlySwitchesOff) return this.ProblemWithCode(ApiErrors.ValidationError, SubjectRequired);
 
         var startMoved = dto.StartDate is { } movedTo && movedTo != plan.StartDate;
+        var oldStart = plan.StartDate;
         if (dto.Title is not null && dto.Title.Trim().Length > 0) plan.Title = dto.Title.Trim();
         if (dto.Description is not null) plan.Description = dto.Description.Trim() is { Length: > 0 } d ? d : null;
         plan.SubjectId = subjectId;
@@ -224,6 +225,10 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         // forward to today would keep its old start as switch-on day and owe nothing until then.
         if (startMoved && plan.Active)
         {
+            // B-672: under the old start the plan was playable only from min(old start, today). A start moved back into
+            // the past must not turn the days before that into duties, so the switch-on day first rises to it.
+            var playableBefore = oldStart < today ? oldStart : today;
+            if (playableBefore > plan.ActivatedAt) plan.ActivatedAt = playableBefore;
             var playableFrom = plan.StartDate > today ? plan.StartDate : today;
             if (playableFrom < plan.ActivatedAt) plan.ActivatedAt = playableFrom;
         }

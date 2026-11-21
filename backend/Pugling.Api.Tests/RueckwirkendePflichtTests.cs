@@ -488,6 +488,127 @@ public class RueckwirkendePflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal([day0.AddDays(1)], PenaltyDays(positionB));
     }
 
+    // B-672: plan B of a fresh subject created through the API, starting at the given day.
+    private async Task<int> CreatePlanAsync(Setup s, DateOnly start)
+    {
+        var subjectId = await TestApi.IdAsync(await s.Father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Verlege-Fach") }));
+        return await TestApi.IdAsync(await s.Father.PostAsJsonAsync("/api/v1/supervisor/study-plans", new
+        {
+            childId = s.ChildId,
+            title = "Plan B",
+            subjectId,
+            startDate = start,
+            durationDays = 30,
+        }));
+    }
+
+    private async Task<int> AddPenaltyPositionAsync(Setup s, int planId)
+    {
+        var positionId = await TestApi.IdAsync(await s.Father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId = s.ExerciseId, cadence = "Daily", stage = (int)TestStage.FreeText, useLeitner = true, penaltyCoins = 10 }));
+        TestApi.MarkIntroduced(factory, positionId);
+        return positionId;
+    }
+
+    private async Task MoveStartAsync(Setup s, int planId, DateOnly start) =>
+        await OkJsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}", new { startDate = start }));
+
+    private DateOnly ActivatedAt(int planId) => Read(db => db.StudyPlans.Single(p => p.Id == planId).ActivatedAt);
+
+    /// <summary>
+    /// B-672 AK 1: a plan running since T is pushed to T+5, and at T+7 pulled back to T. The days T+1..T+4 were never
+    /// playable (old start T+5), so the settlement charges only T+5 and T+6. Red without raising <c>ActivatedAt</c> to
+    /// <c>min(old start, today)</c> (T+1..T+6 charged), and red when the raise takes today instead (nothing charged).
+    /// </summary>
+    [Fact]
+    public async Task Zurueckverlegter_Start_Bucht_Keinen_Malus_Fuer_Unspielbare_Tage()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t);
+        var positionB = await AddPenaltyPositionAsync(s, planB);
+        SeedPassedTest(planB, positionB, t);
+        await MoveStartAsync(s, planB, t.AddDays(5));
+
+        factory.Clock.Advance(TimeSpan.FromDays(7));
+        await MoveStartAsync(s, planB, t);
+        await SettleAsync(s.ChildId);
+
+        Assert.Equal([t.AddDays(5), t.AddDays(6)], PenaltyDays(positionB));
+    }
+
+    /// <summary>
+    /// B-672 AK 2: plan B starts at T+13 but is switched on at T. At T+7 the father moves the start to T+6, a day that was
+    /// not playable (old start T+13); plan A is met every day and B is met today ⇒ the streak runs on through T+6 (11).
+    /// Red without the raise (T+6 counts as an open duty day ⇒ 1), and red when the old start is read after the dates are
+    /// overwritten (<c>min</c> then yields the new start T+6).
+    /// </summary>
+    [Fact]
+    public async Task Zurueckverlegter_Start_Bricht_Die_Serie_Nicht()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t.AddDays(13));
+        Change<StudyPlan>(planB, p => p.ActivatedAt = t); // switched on today, ahead of its start
+        var positionB = await AddDailyPositionAsync(s, planB);
+        Change<StudyPlan>(s.PlanA, p => p.EndDate = t.AddDays(30)); // the seeded plan A would end at T+5
+        for (var d = 1; d <= 7; d++) SeedPassedTest(s.PlanA, s.PositionA, t.AddDays(d));
+
+        factory.Clock.Advance(TimeSpan.FromDays(7));
+        await MoveStartAsync(s, planB, t.AddDays(6));
+        await PassTestAsync(s.Child, planB, positionB);
+
+        Assert.Equal(11, await StreakAsync(s));
+        Assert.Equal(t.AddDays(7), ActivatedAt(planB));
+    }
+
+    /// <summary>
+    /// B-672 AK 4, a data assertion (behaviour is the same, the days lie before the start): the raise is limited to a
+    /// moved start of an active plan. A plan on since T with start T+10, at T+12: a PATCH without a start, one with the
+    /// unchanged start, and a moved start on a switched-off plan all leave <c>ActivatedAt</c> at T. Red when the
+    /// <c>startMoved</c> or the <c>Active</c> gate falls (it would then read T+10).
+    /// </summary>
+    [Fact]
+    public async Task Ohne_Verlegung_Wird_Nichts_Angehoben()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t.AddDays(10));
+        Change<StudyPlan>(planB, p => p.ActivatedAt = t);
+        var planC = await CreatePlanAsync(s, t.AddDays(10));
+        Change<StudyPlan>(planC, p => { p.ActivatedAt = t; p.Active = false; });
+
+        factory.Clock.Advance(TimeSpan.FromDays(12));
+        await OkJsonAsync(await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planB}", new { title = "Plan B2" }));
+        Assert.Equal(t, ActivatedAt(planB));
+        await MoveStartAsync(s, planB, t.AddDays(10));
+        Assert.Equal(t, ActivatedAt(planB));
+        await MoveStartAsync(s, planC, t.AddDays(11));
+        Assert.Equal(t, ActivatedAt(planC));
+    }
+
+    /// <summary>
+    /// B-672 AK 5: a plan running since T, at T+3 its start is set to T+2 - later, but not after today. T+2 was playable
+    /// (old start T), so missing it still costs: the settlement at T+4 charges T+2 and T+3. Red with the rejected short
+    /// rule <c>ActivatedAt = playableFrom</c> on every move, or a raise past <c>min(old start, today)</c> (only T+3).
+    /// </summary>
+    [Fact]
+    public async Task Spielbare_Tage_Bleiben_Pflicht()
+    {
+        var s = await SetupAsync();
+        var t = Today;
+        var planB = await CreatePlanAsync(s, t);
+        var positionB = await AddPenaltyPositionAsync(s, planB);
+
+        factory.Clock.Advance(TimeSpan.FromDays(3));
+        await MoveStartAsync(s, planB, t.AddDays(2));
+        factory.Clock.Advance(TimeSpan.FromDays(1));
+        await SettleAsync(s.ChildId);
+
+        Assert.Equal([t.AddDays(2), t.AddDays(3)], PenaltyDays(positionB));
+    }
+
     /// <summary>
     /// The creating write paths store the dates the backfill would give (B-613, risk 5): a plan is on since its start, a
     /// position a duty since its creation day - plan and position create, and the seed (the weak-word review is asserted in

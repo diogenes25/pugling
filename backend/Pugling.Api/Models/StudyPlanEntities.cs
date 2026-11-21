@@ -90,7 +90,8 @@ public class StudyPlan
     public bool Active { get; set; } = true;
     /// <summary>
     /// The UTC day the plan was last switched on (B-613): <see cref="StartDate"/> on creation, today on a switch from
-    /// inactive to active. Days before it count like days of an inactive plan - only in the child's favour - for the
+    /// inactive to active; a moved start of an active plan clamps it between <c>min(old start, today)</c> and
+    /// <c>max(new start, today)</c> (B-672). Days before it count like days of an inactive plan - only in the child's favour - for the
     /// streak and the penalty, because the child could not play the plan then. Only the last switch is known; the
     /// blur always goes in the child's favour. <c>default</c> (never set) means "active since the start".
     /// </summary>
