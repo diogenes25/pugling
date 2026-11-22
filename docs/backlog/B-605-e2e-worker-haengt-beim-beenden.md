@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/test, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/test, rolle/entwickler]
 aliases: [E2E-Worker hängt]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -229,3 +229,25 @@ Proben; zusammen etwas über dem XS-Anker (zwei Sätze plus ein prüfender E2E).
   reproduzierbar“ rechnen, falls der Fall nicht wiederkehrt.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Billige Hälfte zuerst: `PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"` in `playwright.config.ts`, geprüft über eine Wegwerf-Konfiguration, die die echte importiert. Die Frist deckt nur den Hänger im Beenden, nicht den mitten im Lauf (zurückgestellt) und nicht einen lebenden Worker mit hängendem Aufräumen. Die Ursache bleibt ein Zeitfenster; „nicht reproduzierbar, verworfen“ ist ein Vorschlag, die Entscheidung bleibt beim Nutzer. Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur `playwright.config.ts`). Beim Schätzen am Läufer-Code korrigiert: der Probe-Aufbau aus Akzeptanzkriterium 1 muss die Blockade im Abbau eines worker-skopierten Fixtures setzen, nicht im Testkörper (die Frist gilt erst ab `stop()`); sonst bestünde die Probe ohne die Zeile ebenso. Nichts gemessen oder gestartet.
+- **2026-11-22** — in Arbeit (Nachtlauf B, Worktree `claude/serene-bhabha-1b1ff6`). `process.env.PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"`
+  oben in `frontend/playwright.config.ts`. Die installierte Version ist 1.65.1 (`runner/index.js:2107` liest die Variable in `stop()`).
+  - **Probe-Aufbau (wiederholbar, außerhalb des Repos):** `probe.config.ts` importiert die echte Konfiguration und setzt
+    `webServer`/`globalSetup`/`globalTeardown` auf `undefined`; daneben `package.json` mit `{"type":"module"}` (ohne lädt die
+    Konfiguration als CJS und scheitert an `import.meta`). `block.spec.ts`: worker-skopiertes Fixture, dessen Abbau 120 s
+    synchron in `while (Date.now() < end)` dreht. `handle.spec.ts`: Abbau hinterlässt nur `setInterval` ohne `unref`. Aufruf aus
+    `frontend/` mit `./node_modules/.bin/playwright test --config <probe>/probe.config.ts`.
+  - **AK 1, mit Zeile:** Testende 23:09:51, „worker-0 process did not exit within 45000ms after stop, force-killed it“ um
+    23:10:36 (45 s). **Ohne Zeile:** Testende 23:16:52, bis zum Abbruch um 23:18:29 (97 s) keine Meldung.
+  - **AK 2, offener Handle:** Testende 23:18:52, Lauf endet in derselben Sekunde ohne Meldung – die Deutung „Meldung heißt
+    fünf Minuten ohne Herzschlag, kein Handle“ trägt.
+  - **AK 3 (Absichtserklärung):** Ursache des Hängers vom 2026-11-16 weiter offen; Zähler für „nicht reproduzierbar“ beginnt
+    mit dem vollen Lauf dieses Sprints.
+  - **AK 4:** Für diese Story steht nur `frontend/playwright.config.ts` im Diff (der Branch trägt daneben B-602 und B-603,
+    eigene Commits).
+  - Review (frontend-reviewer): kein Befund; Nit „jede Sekunde“ → „beim Beenden jede Sekunde“ eingearbeitet.
+- **2026-11-22**: **abgenommen** (`04c72b89`, Branch `claude/serene-bhabha-1b1ff6`).
+  - AK 5: Die volle Suite lädt die Konfiguration. Erster Lauf 183 passed / 2 failed (beide ohne Bezug, siehe B-790 und
+    Protokoll), zweiter Lauf auf dem Endstand 185/185.
+  - In beiden Läufen kam keine Meldung „did not exit“. **Zähler „nicht reproduzierbar“: 2 von 5** volle Läufe ohne Hänger
+    (Vorschlag aus Entscheidung 3, die Verwerfung entscheidet der Nutzer).
+  - Rollengang entfällt: Es ist Testwerkzeug ohne Oberfläche.

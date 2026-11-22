@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/qualitaet, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, rolle/entwickler]
 aliases: [Umhäng-Spec trifft zwei Bearbeiten]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: XS
@@ -77,3 +77,4 @@ Umhäng-Sperre und nicht die Ladereihenfolge der Seite.
     der, der die Spec trägt.
   - Kein Review-Agent: Die Änderung ist eine Zeile in einer Spec, und beide Richtungen sind gemessen. Ein Rollengang
     entfällt, die Spec ist selbst der Rollengang Vater von B-673.
+- **2026-11-22**: **abgenommen** (`761af289`). Die volle E2E-Suite auf dem Endstand läuft 185/185 grün, mit der Spec.
