@@ -897,6 +897,40 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
     }
 
     /// <summary>
+    /// B-789 AK 3: an empty string clears a listing's title and an article's description; <c>null</c> leaves both as they
+    /// are (PATCH semantics). The Vater-Web sends a cleared field as <c>""</c> and relies on this. Red when the controller
+    /// skips blank strings instead of only <c>null</c>.
+    /// </summary>
+    [Fact]
+    public async Task B789_Leerer_Text_Leert_Titel_Und_Beschreibung_Null_Laesst_Sie_Stehen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var articleId = (await Json(await father.PostAsJsonAsync("/api/v1/supervisor/shop/articles", new
+        {
+            articleNumber = TestApi.UniqueName("B789"),
+            title = "Kino",
+            description = "Ein Film am Wochenende",
+            unitType = "Stueck",
+            actionType = "Sonstiges",
+        }))).GetProperty("id").GetInt32();
+        var listingId = (await Json(await father.PostAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}/listings",
+            new { title = "Kinoabend", coinPrice = 10, gemPrice = 0, unitsPerPurchase = 1, maxStock = 1 })))
+            .GetProperty("id").GetInt32();
+
+        var listingKept = await Json(await PatchListingAsync(father, articleId, listingId, new { title = (string?)null, coinPrice = 11 }));
+        Assert.Equal("Kinoabend", listingKept.GetProperty("title").GetString());
+        var listingCleared = await Json(await PatchListingAsync(father, articleId, listingId, new { title = "" }));
+        Assert.Equal("", listingCleared.GetProperty("title").GetString());
+
+        var articleKept = await Json(await father.PatchAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}",
+            new { description = (string?)null }));
+        Assert.Equal("Ein Film am Wochenende", articleKept.GetProperty("description").GetString());
+        var articleCleared = await Json(await father.PatchAsJsonAsync($"/api/v1/supervisor/shop/articles/{articleId}",
+            new { description = "" }));
+        Assert.Equal("", articleCleared.GetProperty("description").GetString());
+    }
+
+    /// <summary>
     /// AK 4: "daily" → "once" while today's daily refill is still unread. The old rule books it before the instant is
     /// emptied, so the child keeps what it earned. Red when the switch to "once" skips booking the old rule.
     /// </summary>

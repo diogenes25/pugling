@@ -124,7 +124,7 @@ function ArticleCatalog() {
  * Bestand hängen an seinen Angeboten. Titel und Einheit lassen sich nachträglich richtigstellen, ohne
  * die Kaufhistorie anzutasten – sie trägt ihre eigene Momentaufnahme.
  */
-function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRemove }: {
+export function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRemove }: {
   article: ShopArticle; selected: boolean; action: ActionState;
   onToggleListings: () => void; onSaved: () => void; onRemove: () => void;
 }) {
@@ -137,7 +137,8 @@ function ArticleRow({ article, selected, action, onToggleListings, onSaved, onRe
   async function save() {
     const ok = await action.run(() => api.updateShopArticle(article.id, {
       articleNumber: form.articleNumber.trim(), title: form.title.trim(),
-      description: form.description.trim() || null, unitType: form.unitType, actionType: form.actionType,
+      // B-789: leer heißt `""` – der Server leert damit; `null` hieße „unverändert“, die alte Beschreibung bliebe stehen.
+      description: form.description.trim(), unitType: form.unitType, actionType: form.actionType,
     }), "Artikel gespeichert.");
     if (!ok) return;
     setEditing(false);
@@ -474,9 +475,10 @@ export function ListingRow({ listing, unitType, kids, busy, onFail, onSave, onFi
                 if (planIncomplete(plan)) return;
                 const p = planProblem(plan);
                 if (p) { onFail(p); return; }
+                // B-789: ein geleerter Titel geht als `""` – `null` ließe den alten beim Server stehen.
                 // B-786: der geladene Termin zählt nur, wo er auch vorbelegt war – der Rest-Termin eines
                 // wiederkehrenden Angebots brächte sonst seine verborgene Uhrzeit mit, wenn der Vater denselben Tag wählt.
-                onSave({ ...form, ...planDto(plan, listing.refillKind === "Once" ? listing.refillAtUtc : null), title: form.title.trim() || null, childIds: audience });
+                onSave({ ...form, ...planDto(plan, listing.refillKind === "Once" ? listing.refillAtUtc : null), title: form.title.trim(), childIds: audience });
                 setEditing(false);
               }}>OK</button>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }} onClick={() => setEditing(false)}>Abbrechen</button>
