@@ -234,13 +234,19 @@ export function SohnBonusRun() {
   // the box the previous card ended on. Set only by the child's answer, never on the first load (B-443).
   const focusIntent = useRef(false);
   const answerRef = useRef<HTMLDivElement>(null);
+  // B-778: the result sheet replaces the lesson; its title takes the focus, as in the test (`SohnTest.tsx`).
+  const resultTitleRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!focusIntent.current) return;
-    // Consumed even without a target (after the last card the zone is gone): a lingering intent would focus the next
-    // cursor change, which would be a load. Unlike the test there is no window where the zone stands but is still busy.
+    // After the last card the intent waits for the result: until it arrives there is no target ("Wird ausgewertet …").
+    const waitingForResult = run != null && cursor >= run.cards.length && !result && !error;
+    if (waitingForResult) return;
+    // Consumed even without a target (an error box takes the focus by its own effect): a lingering intent would focus the
+    // next cursor change, which would be a load. Unlike the test there is no window where the zone stands but is still busy.
     focusIntent.current = false;
-    answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
-  }, [cursor]);
+    if (result) resultTitleRef.current?.focus();
+    else answerRef.current?.querySelector<HTMLElement>("input, button:not([disabled])")?.focus();
+  }, [cursor, revealed, result, error, run]);
 
   function answer(a: ExtraAnswer) {
     if (!run) return;
@@ -274,7 +280,7 @@ export function SohnBonusRun() {
     if (result) return (
       <div className="sohn-body">
         <div className="victory">
-          <div className="vtitle win">{t("bonus.resultTitle", { correct: result.correct, total: result.total })}</div>
+          <div className="vtitle win" ref={resultTitleRef} tabIndex={-1}>{t("bonus.resultTitle", { correct: result.correct, total: result.total })}</div>
           <Mascot skin={skin} mood={result.coinsAwarded > 0 ? "hyped" : "happy"} size={84} />
           <p className="sub">{result.coinsAwarded > 0 ? t("bonus.earned", { coins: result.coinsAwarded }) : t("bonus.noCoins")}</p>
           {result.capReached && <p className="sub">{t("bonus.capCut")}</p>}
@@ -349,7 +355,7 @@ export function SohnBonusRun() {
             <div className="lektion-fuss">
               <SelfAssessAnswer
                 reveal={card.reveal} alternatives={card.revealAlternatives} revealed={revealed} loesungInDerKarte
-                busy={action.busy} onReveal={() => setRevealed(true)}
+                busy={action.busy} onReveal={() => { focusIntent.current = true; setRevealed(true); }}
                 onJudge={(wasKnown) => answer({ itemIndex: card.itemIndex, wasKnown })}
               />
             </div>

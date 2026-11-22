@@ -152,6 +152,29 @@ describe("Bonus-Runde – Hinweis zum Wert", () => {
 });
 
 /*
+ * B-785 – der Aufwärm-Hinweis einer Karteikarten-Runde verspricht nur, was stimmt: die Auswahl zahlt so viel wie die
+ * Karteikarte (`ExtraTrainingOptions`, 1 und 1), mehr gibt es erst beim Tippen (3). Dass die Sätze so bleiben, hält
+ * `ExtraTrainingRatesTests` am Server.
+ */
+describe("Bonus-Runde – Aufwärm-Hinweis (B-785)", () => {
+  // Rot mit dem alten Text „ab der Auswahl gibt es mehr“.
+  it("verspricht mehr erst beim Tippen, nicht ab der Auswahl", async () => {
+    startExtraRun.mockResolvedValue({
+      runId: 785, exerciseId: 3, title: "Wörter", type: "Vocabulary", form: "SelfAssess", stage: 2, typed: false,
+      coinsPerHit: 1, runPercent: 100, cards: [{ itemIndex: 0, coinsPerHit: 1, prompt: "la maison", reveal: "das Haus" }],
+    } as unknown as ExtraRunResponse);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/3"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("la maison");
+    expect(screen.getByText(/jedes gewusste Wort bringt 1 🪙, beim Tippen gibt es mehr/)).toBeTruthy();
+    expect(screen.queryByText(/ab der Auswahl/)).toBeNull();
+  });
+});
+
+/*
  * B-543 – bei vollem Tagesdeckel zeigt eine Übung fester Form ihre Lösungen nicht für 0 Münzen: der Server weist ihren Start ab, die
  * Zeile bietet ihn darum gar nicht erst an und sagt, wann sie wieder geht.
  */
@@ -438,5 +461,69 @@ describe("Bonus-Runde – Fokus nach dem Kartenwechsel (B-671)", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Weiter/ })); });
     await screen.findByText("der Weg");
     expect(document.activeElement).toBe(kaestchen(1));
+  });
+});
+
+/*
+ * B-778 – „Aufdecken“ und das Ergebnisblatt ersetzen das fokussierte Element; der Fokus fällt nicht auf `body`, sondern auf
+ * das erste Urteil bzw. die Überschrift des Ergebnisses – wie im Test (`SohnTest.tsx`).
+ */
+describe("Bonus-Runde – Fokus nach Aufdecken und am Ergebnis (B-778)", () => {
+  const starte = async (form: "SelfAssess" | "Typed", runId: number) => {
+    startExtraRun.mockResolvedValue({
+      runId, exerciseId: 8, title: "Wörter", type: "Vocabulary", form, stage: form === "Typed" ? 4 : 2, typed: form === "Typed",
+      coinsPerHit: 1, runPercent: 100, cards: [form === "Typed"
+        ? { itemIndex: 0, coinsPerHit: 1, prompt: "la maison", answerLength: 6, keyboardLang: "fr" }
+        : { itemIndex: 0, coinsPerHit: 1, prompt: "la maison", reveal: "das Haus" }],
+    } as unknown as ExtraRunResponse);
+    submitExtraRun.mockResolvedValue({
+      runId, form, total: 1, correct: 1, coinsAwarded: 1, capReached: false, coinsToday: 1, dailyCoinCap: null,
+      coinsPerHit: 1, runPercent: 100, coinsEarned: 1, coinsForHits: 1,
+      items: [{ itemIndex: 0, prompt: "la maison", expected: "das Haus", givenAnswer: "das Haus", wasCorrect: true, gapIndex: null }],
+    } as ExtraRunResult);
+    extraTraining.mockResolvedValue({ unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 1, dailyCoinCap: null, exercises: [] } as ExtraTrainingOverview);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/8"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("la maison");
+  };
+
+  // AK 1. Rot, wenn `onReveal` keine Absicht setzt oder der Effekt nicht auf `revealed` hört: der Knopf „Aufdecken“
+  // verschwindet, und der Fokus fiele auf `body`.
+  it("nach „Aufdecken“ steht der Fokus auf dem ersten Urteil", async () => {
+    await starte("SelfAssess", 7781);
+    const aufdecken = screen.getByRole("button", { name: /Aufdecken/ });
+    aufdecken.focus();
+    await act(async () => { fireEvent.click(aufdecken); });
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Nicht gewusst" }));
+  });
+
+  // AK 2. Rot, wenn die Absicht nach der letzten Karte verfällt, bevor das Ergebnis da ist (Ausgangszustand), oder die
+  // Überschrift keinen `ref`/`tabIndex` trägt.
+  it("nach der letzten Karte steht der Fokus auf der Überschrift des Ergebnisses", async () => {
+    await starte("SelfAssess", 7782);
+    fireEvent.click(screen.getByRole("button", { name: /Aufdecken/ }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Gewusst" })); });
+    const titel = await screen.findByText("1 / 1 richtig");
+    expect(document.activeElement).toBe(titel);
+  });
+
+  // AK 2, getippte Runde (Review): auch nach der letzten getippten Karte wartet die Absicht auf das Ergebnis. Rot, wenn
+  // `answer()` für den Tipp-Weg keine Absicht setzt oder sie vor dem Ergebnis verfällt.
+  it("nach der letzten getippten Karte steht der Fokus auf der Überschrift des Ergebnisses", async () => {
+    await starte("Typed", 7784);
+    fireEvent.change(screen.getByLabelText("Buchstabe 1 von 6"), { target: { value: "x" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: /Weiter/ })); });
+    const titel = await screen.findByText("1 / 1 richtig");
+    expect(document.activeElement).toBe(titel);
+  });
+
+  // AK 3, Festschreibung (besteht im Ausgangszustand): das Laden der Runde fokussiert nichts (B-443) – auch mit `revealed`
+  // und `result` in den Abhängigkeiten.
+  it("fokussiert beim Laden der Runde nichts", async () => {
+    await starte("SelfAssess", 7783);
+    expect(document.activeElement).toBe(document.body);
   });
 });

@@ -212,7 +212,7 @@ export const de = {
       loading: "Bonus-Training wird geladen …",
       cardOf: "Karte {{n}} / {{total}}",
       later: "Später weiter",
-      hintSelf: "Aufwärmen: ehrlich einschätzen – jedes gewusste Wort bringt {{coins}} 🪙, ab der Auswahl gibt es mehr.",
+      hintSelf: "Aufwärmen: ehrlich einschätzen – jedes gewusste Wort bringt {{coins}} 🪙, beim Tippen gibt es mehr.",
       hintPaid: "Jede richtige Antwort bringt {{coins}} 🪙 – ausgewertet wird am Ende.",
       hintPaidReduced: "Diese Runde zählt heute {{percent}} %: {{coins}} 🪙 je richtige Antwort, abgerundet am Ende.",
       hintNoWorth: "Diese Runde bringt heute keine Münzen mehr – üben lohnt sich trotzdem.",

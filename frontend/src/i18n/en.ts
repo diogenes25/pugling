@@ -199,7 +199,7 @@ export const en = {
       loading: "Loading bonus training …",
       cardOf: "Card {{n}} / {{total}}",
       later: "Continue later",
-      hintSelf: "Warm-up: judge yourself honestly – every word you knew earns {{coins}} 🪙, the choice pays more.",
+      hintSelf: "Warm-up: judge yourself honestly – every word you knew earns {{coins}} 🪙, typing pays more.",
       hintPaid: "Every right answer earns {{coins}} 🪙 – graded at the end.",
       hintPaidReduced: "This round counts {{percent}} % today: {{coins}} 🪙 per right answer, rounded down at the end.",
       hintNoWorth: "This round brings no more coins today – practising still pays off.",

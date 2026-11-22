@@ -88,11 +88,15 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
 
   // Die Vokabeln: Aufwärmen per Karteikarte zahlt 1 je gewusstem Wort (B-657), und die Runde zählt als gespielt.
   // Zwei Karten, dann „Später weiter“: die Runde setzt bei Karte 3 fort, statt von vorn zu beginnen.
+  // B-778: nach „Aufdecken“ steht der Fokus auf dem ersten Urteil, nicht auf `body`.
   const karteWeiter = async () => {
     await page.getByRole("button", { name: "Aufdecken 🔄" }).click();
+    await expect(page.getByRole("button", { name: "Nicht gewusst" })).toBeFocused();
     await page.getByRole("button", { name: "Gewusst", exact: true }).click();
   };
   await zeile(VOKABELN).getByRole("link", { name: `Spielen: ${VOKABELN}` }).click();
+  // B-785: der Aufwärm-Hinweis verspricht mehr erst beim Tippen – die Auswahl zahlt so viel wie die Karteikarte.
+  await expect(page.getByText(/jedes gewusste Wort bringt 1 🪙, beim Tippen gibt es mehr/)).toBeVisible();
   await karteWeiter();
   await karteWeiter();
   await expect(page.getByText("Karte 3 / 4")).toBeVisible();
@@ -101,7 +105,8 @@ test("Das Bonus-Training öffnet nach der Tagespflicht, zahlt eine getippte Übu
   await expect(page.getByText("Karte 3 / 4")).toBeVisible();
   await karteWeiter();
   await karteWeiter();
-  await expect(page.getByText("4 / 4 richtig")).toBeVisible();
+  // B-778: das Ergebnisblatt nimmt den Fokus auf seine Überschrift.
+  await expect(page.getByText("4 / 4 richtig")).toBeFocused();
   await expect(page.getByText("+4 🪙 verdient")).toBeVisible();
   await page.getByRole("button", { name: "Zurück zum Bonus-Training" }).click();
   await expect(zeile(VOKABELN)).toContainText("1× gespielt");
