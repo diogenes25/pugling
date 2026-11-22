@@ -69,11 +69,13 @@ describe("errorMessage – deutsche Fassung fachlicher Codes", () => {
     expect(text).not.toContain("Some English sentence.");
   });
 
-  // B-673: die Sperre beim Umhängen eines gespielten Plans. Rot, wenn der Eintrag fehlt (dann die englische Zeile).
-  it("übersetzt die Sperre beim Umhängen eines gespielten Plans", () => {
+  // B-673 und B-659: derselbe Code sperrt Umhängen und Löschen eines gespielten Plans. Rot, wenn der Eintrag fehlt (dann
+  // die englische Zeile), wenn er nur eine der beiden Sperren nennt, oder wenn der Ausweg fürs Löschen fehlt.
+  it("übersetzt die Sperre beim Umhängen und Löschen eines gespielten Plans", () => {
     const text = problem("plan_has_data");
 
     expect(text).toContain("keinem anderen Kind");
+    expect(text).toContain("nicht löschen (stattdessen „Deaktivieren“)");
     expect(text).not.toContain("Some English sentence.");
   });
 

@@ -179,8 +179,13 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal("Random", patched.GetProperty("orderStrategy").GetString());
     }
 
+    /// <summary>
+    /// B-659, AK 5: a plan the child has played is no longer deleted with everything in it - the cascade would take the
+    /// child's sessions and met days along (409 <c>plan_has_data</c>, the plan stays). Red while the plan delete is
+    /// unlocked. Until B-659 this case asserted the opposite (<c>Plan_Loeschen_EntferntPlanMitGespielterPosition</c>).
+    /// </summary>
     [Fact]
-    public async Task Plan_Loeschen_EntferntPlanMitGespielterPosition()
+    public async Task Plan_Loeschen_Mit_Gespielter_Position_Ist_Gesperrt()
     {
         var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "summer", "Sommer");
@@ -189,20 +194,36 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var posId = await TestApi.IdAsync(await father.PostAsJsonAsync(
             $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
 
-        // Play the position → a session/progress exists (blocks the position DELETE, but not the plan DELETE).
+        // Play the position → a session/progress exists (blocks the position DELETE and, since B-659, the plan DELETE).
         var child = await TestApi.ChildAsync(_factory);
         var baseUrl = $"/api/v1/student/study-plans/{planId}/positions/{posId}/practice-sessions";
         var sessionId = await TestApi.IdAsync(await child.PostAsJsonAsync(baseUrl, new { }));
         await child.PostAsJsonAsync($"{baseUrl}/{sessionId}/review", new { itemIndex = 0, givenAnswer = "Sommer" });
 
-        // The whole plan can be deleted (cascading positions/progress/sessions).
         var del = await father.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}");
-        Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, del.StatusCode);
+        Assert.Equal("plan_has_data", (await del.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}/positions")).StatusCode);
+    }
+
+    /// <summary>
+    /// B-659, AK 5: a plan nobody has played yet is still deleted, with its positions; the catalog exercise stays. Red when
+    /// the lock also catches plans without play data (a position alone is no play data).
+    /// </summary>
+    [Fact]
+    public async Task Plan_Loeschen_Ohne_Spieldaten_Entfernt_Den_Plan()
+    {
+        var father = await TestApi.AdultAsync(_factory);
+        var (_, key) = await TestApi.CreateStoreVocabAsync(father, "winter", "Winter");
+        var exerciseId = await TestApi.CreateVocabRefExerciseAsync(father, key);
+        var planId = await EmptyPlanAsync(father);
+        await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions", new { exerciseId, useLeitner = true, stage = (int)TestStage.FreeText }));
+
+        Assert.Equal(HttpStatusCode.NoContent, (await father.DeleteAsync($"/api/v1/supervisor/study-plans/{planId}")).StatusCode);
 
         // Afterwards the plan (and thus the position list) is gone → 404 through the ownership filter.
-        var after = await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}/positions");
-        Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
-
+        Assert.Equal(HttpStatusCode.NotFound, (await father.GetAsync($"/api/v1/supervisor/study-plans/{planId}/positions")).StatusCode);
         // The referenced catalog exercise is preserved.
         Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"/api/v1/creator/exercises/{exerciseId}")).StatusCode);
     }

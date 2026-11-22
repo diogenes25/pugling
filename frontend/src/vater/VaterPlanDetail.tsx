@@ -30,7 +30,7 @@ export function VaterPlanDetail() {
   const action = useAction();
 
   async function remove() {
-    if (!confirmAction("Diesen Lehrplan wirklich löschen? Positionen, Fortschritt und Testversuche gehen verloren. Die Übungen im Katalog bleiben erhalten.")) return;
+    if (!confirmAction("Diesen Lehrplan wirklich löschen? Seine Positionen gehen verloren, die Übungen im Katalog bleiben erhalten. Hat das Kind schon damit gelernt, lässt er sich nicht löschen – dann „Deaktivieren“.")) return;
     if (await action.run(() => api.deletePlan(id))) nav("/vater");
   }
 

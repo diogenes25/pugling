@@ -124,7 +124,7 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<PlanResponse> UpdatePlanAsync(int planId, UpdatePlanDto dto, CancellationToken ct = default) =>
         Http.PatchAsync<PlanResponse>($"{Root}/study-plans/{planId}", dto, ct);
 
-    /// <summary>Deletes a study plan.</summary>
+    /// <summary>Deletes a study plan the child has not played yet (409 <c>plan_has_data</c> otherwise, B-659).</summary>
     public Task DeletePlanAsync(int planId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/study-plans/{planId}", null, ct);
 

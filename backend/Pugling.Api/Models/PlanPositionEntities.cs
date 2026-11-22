@@ -150,6 +150,15 @@ public class PlanPosition
     /// <c>default</c> (never set) falls back to <see cref="CreatedAt"/>.
     /// </summary>
     public DateOnly DutySince { get; set; }
+    /// <summary>
+    /// The last day (inclusive) of a duty that was switched to <see cref="GoalCadence.None"/> (B-659), together with
+    /// <see cref="CadenceUntil"/>. The child's met days stay met when the father frees a position later: the history reads
+    /// the old cadence up to this day. <c>null</c> = never freed, or a duty again since (the switch back clears it).
+    /// Only one earlier duty phase is kept; a second switch to free overwrites it.
+    /// </summary>
+    public DateOnly? DutyUntil { get; set; }
+    /// <summary>The cadence that held up to <see cref="DutyUntil"/> (B-659); <c>null</c> together with it.</summary>
+    public GoalCadence? CadenceUntil { get; set; }
     /// <summary>Highest box (default 5).</summary>
     public int MaxBox { get; set; } = 5;
     /// <summary>Interval in days per box (index = box; index 0 unused). Null = the default <c>[0,1,2,4,7,14]</c>.</summary>

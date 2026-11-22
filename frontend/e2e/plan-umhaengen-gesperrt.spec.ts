@@ -66,7 +66,7 @@ test("Plan-Seite: ein gespielter Plan lässt sich keinem anderen Kind geben, und
   await kindFeld.selectOption(String(juengerer));
   await page.getByRole("button", { name: "Speichern" }).click();
 
-  await expect(page.getByText("lässt sich der Plan keinem anderen Kind mehr geben")).toBeVisible();
+  await expect(page.getByText("keinem anderen Kind mehr geben")).toBeVisible();
   await expect(page.getByText("study plan already has", { exact: false })).toHaveCount(0);
   const plan = await request.get(`/api/v1/supervisor/study-plans/${planId}`, { headers: vater });
   expect((await plan.json()).childId).toBe(bruder);

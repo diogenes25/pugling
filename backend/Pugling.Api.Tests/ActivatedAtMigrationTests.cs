@@ -66,9 +66,11 @@ public sealed class ActivatedAtMigrationTests
 
             await using (var db = new PuglingDbContext(options))
             {
-                Assert.Equal(start, (await db.StudyPlans.AsNoTracking().SingleAsync(p => p.Id == planId)).ActivatedAt);
+                // Projected, not loaded: the database stands at this migration, and a later column of the entity (B-659
+                // DutyUntil) does not exist yet.
+                Assert.Equal(start, await db.StudyPlans.Where(p => p.Id == planId).Select(p => p.ActivatedAt).SingleAsync());
                 Assert.Equal(new DateOnly(2026, 11, 14),
-                    (await db.PlanPositions.AsNoTracking().SingleAsync(p => p.Id == positionId)).DutySince);
+                    await db.PlanPositions.Where(p => p.Id == positionId).Select(p => p.DutySince).SingleAsync());
             }
         }
         finally
