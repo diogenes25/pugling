@@ -111,7 +111,8 @@ are only unique per branch: a branch that created stories after its base meets t
   holds only for the forms measured — name them in `grund`.
 - Measure with `.claude/scripts/mutant-probe.py` **after the last edit** and paste its table: per case
   and per condition of a new query, one mutant that turns only it red. `ungemessen`, `abweichend` and a
-  line that is green without the fix are no evidence. Size or contract claims: measured at the file,
+  line that is green without the fix are no evidence, nor is a red from an injected delay not shown to hit
+  (assert a counter, B-602). Size or contract claims: measured at the file,
   command in the line. Mutants build in `Debug` (the test gate holds `Release`), never while a reviewer builds.
 - Error messages name the lock and no way out beyond it **that this reader may take** (owner, base stock,
   foreign); a surface they point at must exist and show the lock. Prefer naming only the step that **lifts this

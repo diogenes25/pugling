@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/qualitaet, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/qualitaet, rolle/entwickler]
 aliases: [Feldhilfe-Spec flackert]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -219,3 +219,21 @@ Dauerfall mit verzögerter Antwort nach dem Muster von `planbau-ladefenster.spec
   `feldhilfe.spec.ts:72` („Hinweis schließt per Escape und per Klick daneben“), `getByRole('note')` nach dem Klick auf
   den Knopf nicht sichtbar. Einzeln wiederholt `--repeat-each=3`: 9/9 grün. Dieselbe Spec, ein anderer Fall als der
   „Ziel-Rhythmus“; die Ursache aus der Ausformulierung (`InfoHint` schließt bei Bewegung des Knopfs) passt auch hier.
+- **2026-11-22** — in Arbeit (Nachtlauf B, Worktree `claude/serene-bhabha-1b1ff6`, E2E auf 5202/5175). `planAnlegen` wartet
+  auf `radiogroup "Übung wählen"`; neuer Fall „Ein ⓘ, das nach dem Anlegen geöffnet wird, bleibt auch bei langsamer Suche
+  offen“.
+  - **Review-Fund (frontend-reviewer), eingearbeitet:** Der Glob `**/api/v1/creator/exercises?**` aus
+    `planbau-ladefenster.spec.ts` griff hier nie – das Erstladen sucht ohne Filter, die Adresse hat kein `?`
+    (`api.ts:527-542`). Risiko 1 der Schätzung war damit real; die erste rote Probe war Latenz, kein Beweis. Jetzt
+    Pfad-Prädikat `u.pathname === "/api/v1/creator/exercises"` und ein Trefferzähler mit `expect(verzoegert).toBeGreaterThan(0)`.
+  - **AK 1/2, Wartezeile → Spät-Fall:** ohne Zeile in `planAnlegen` rot an `aria-expanded` (`feldhilfe.spec.ts:142`); mit
+    Zeile grün; Route getroffen (Zähler). Gemessen mit `scratchpad/b602probe.py` nach der letzten Änderung.
+  - **AK 3, „(N Treffer)“ statt Radiogruppe:** rot an `aria-expanded` (`:143`) – die Beschriftung steht vor der Antwort.
+  - **AK 4:** `grep -nE "waitForTimeout|toPass" feldhilfe.spec.ts` ohne Treffer. **AK 5:** `git diff -U0` zeigt nur zwei
+    Anfügungen (`planAnlegen`-Ende, neuer Fall am Dateiende); der Assistenten-Teil ist unberührt.
+  - Wiederholung `--repeat-each=3` über die Datei: 12/12 grün (die drei alten Fälle je dreimal).
+- **2026-11-22**: **abgenommen** (`f79b8fed`, Branch `claude/serene-bhabha-1b1ff6`).
+  - Rollengang Entwickler: volle E2E-Suite auf dem Endstand, 185/185 grün (5202/5175, frisch gestartet, 12,5 min). Die
+    Datei lief dabei mit.
+  - Vater, Sohn und Creator sind Regressionszeugen: dieselbe Suite, kein Produktcode im Diff.
+  - Entscheidungen 1–5 bleiben stellvertretend und unbestätigt.

@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../lib/api";
@@ -22,6 +22,17 @@ const overview = vi.fn();
 
 // Ein echter Skin: der Ergebnis-Bildschirm zeichnet das Maskottchen (der Neustart-Fall erreicht ihn).
 const { SKINS } = await import("../lib/skins");
+
+/**
+ * Wartet, bis der Fokus-Effekt gelaufen ist (B-603). `findBy…` meldet den Fund, sobald das Element im DOM steht – außerhalb
+ * von `act`; der Fokus kommt aus einem `useEffect` nach dem Commit und unter Last eine Aufgabe später. Die Zielfunktion
+ * läuft in jedem Versuch neu, damit eine Suche (`screen.getBy…`) auch ein Element trifft, das ein späterer Render ersetzt
+ * hat; eine vorab gesuchte Konstante ist unschädlich – ein abgehängtes Element ist nie `activeElement`.
+ */
+async function erwarteFokus(ziel: () => Element) {
+  await waitFor(() => expect(document.activeElement).toBe(ziel()));
+}
+
 vi.mock("./SohnApp", () => ({
   useSohn: () => ({ planId: 3, refreshWallet: () => refreshWallet(), setStreak: (...a: unknown[]) => setStreak(...a), skin: SKINS[0], celebrate: (...a: unknown[]) => celebrate(...a) }),
 }));
@@ -107,7 +118,7 @@ describe("SohnTest, Stufe je Frage (B-476)", () => {
 
     expect(await screen.findByText("the sheep")).toBeTruthy();
     expect(screen.getByRole("textbox")).toBe(feld);
-    expect(document.activeElement).toBe(feld);
+    await erwarteFokus(() => feld);
     // Entscheidung 1: der Test meldet nichts zurück.
     expect(document.querySelector(".lektion-blatt")).toBeNull();
   });
@@ -385,7 +396,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Aufdecken 🔄" }));
 
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Nicht gewusst" }));
+    await erwarteFokus(() => screen.getByRole("button", { name: "Nicht gewusst" }));
   });
 
   // AK 2. Rot, wenn der Effekt nicht an der Frage hängt (dann bleibt der Fokus beim verschwundenen „Gewusst“).
@@ -400,7 +411,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     await screen.findByText("the sheep");
     await act(async () => {});
 
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Aufdecken 🔄" }));
+    await erwarteFokus(() => screen.getByRole("button", { name: "Aufdecken 🔄" }));
   });
 
   // AK 3. Rot, wenn der Effekt die Absicht verbraucht, obwohl er kein Ziel fand (dann lief er, während `action.busy` die
@@ -417,7 +428,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
 
     const erste = screen.getByRole("button", { name: "das Schaf" });
     expect((erste as HTMLButtonElement).disabled).toBe(false);
-    expect(document.activeElement).toBe(erste);
+    await erwarteFokus(() => erste);
   });
 
   // AK 5. Rot, wenn das Ergebnis keinen fokussierbaren Landeplatz bekommt oder der Effekt nicht an `result` hängt.
@@ -429,7 +440,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     await antworte();
     const titel = await screen.findByText("FAST!");
 
-    expect(document.activeElement).toBe(titel);
+    await erwarteFokus(() => titel);
   });
 
   // AK 6. Rot, wenn die Fehlerbox ohne Ref/`tabIndex={-1}` bleibt.
@@ -440,7 +451,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     await antworte();
     const meldung = await screen.findByText("Server kaputt. (Ref: trace-1)");
 
-    expect(document.activeElement).toBe(meldung);
+    await erwarteFokus(() => meldung);
   });
 
   // Review B-541: wie im Üben (`SohnPractice.tsx`) wird die Meldung angesagt, nicht nur fokussiert. Rot, wenn der Fehlerbox
@@ -467,7 +478,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     const erste = await screen.findByRole("button", { name: "das Pferd" });
     await act(async () => {});
 
-    expect(document.activeElement).toBe(erste);
+    await erwarteFokus(() => erste);
   });
 
   // AK 7, zweiter Weg. Rot, wenn „Nochmal versuchen“ die Absicht nicht setzt.
@@ -481,7 +492,7 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     const erste = await screen.findByRole("button", { name: "das Pferd" });
     await act(async () => {});
 
-    expect(document.activeElement).toBe(erste);
+    await erwarteFokus(() => erste);
   });
 
   // AK 8 (Absicherung des neuen Zweigs, im Ist-Code ohne Effekt grün): der erste Aufbau fokussiert nichts (B-443) – auch
@@ -492,6 +503,8 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     await screen.findByRole("button", { name: "das Pferd" });
     await act(async () => {});
 
+    // Bewusst ohne `waitFor` (B-603): Die Zeile belegt eine Abwesenheit (kein ungefragter Fokus, B-443) – `waitFor` bestünde
+    // sie im ersten Versuch und könnte nie rot werden. Der Takt davor gibt dem Effekt Zeit zu feuern.
     expect(document.activeElement).toBe(document.body);
   });
 
@@ -505,6 +518,8 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
     await screen.findByText("FAST!");
     await act(async () => {});
 
+    // Bewusst ohne `waitFor` (B-603): Die Zeile belegt eine Abwesenheit (kein ungefragter Fokus, B-443) – `waitFor` bestünde
+    // sie im ersten Versuch und könnte nie rot werden. Der Takt davor gibt dem Effekt Zeit zu feuern.
     expect(document.activeElement).toBe(document.body);
   });
 });

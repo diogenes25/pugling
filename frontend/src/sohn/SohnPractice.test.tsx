@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { de } from "../i18n/de";
@@ -17,6 +17,16 @@ const endSession = vi.fn();
 const heartbeat = vi.fn();
 const cardShown = vi.fn();
 const overview = vi.fn();
+
+/**
+ * Wartet, bis der Fokus-Effekt gelaufen ist (B-603). `findBy…` meldet den Fund, sobald das Element im DOM steht – außerhalb
+ * von `act`; der Fokus kommt aus einem `useEffect` nach dem Commit und unter Last eine Aufgabe später. Die Zielfunktion
+ * läuft in jedem Versuch neu, damit eine Suche (`screen.getBy…`) auch ein Element trifft, das ein späterer Render ersetzt
+ * hat; eine vorab gesuchte Konstante ist unschädlich – ein abgehängtes Element ist nie `activeElement`.
+ */
+async function erwarteFokus(ziel: () => Element) {
+  await waitFor(() => expect(document.activeElement).toBe(ziel()));
+}
 
 vi.mock("./SohnApp", () => ({
   // `skin`: die Aufgabe steht seit B-526 in der Sprechblase am Maskottchen.
@@ -99,7 +109,7 @@ describe("SohnPractice, doppeltes Absenden", () => {
     expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("one");
     expect(screen.getByText("eins")).toBeTruthy();
     expect(screen.queryByText("zwei")).toBeNull();
-    expect(document.activeElement).toBe(nochmal);
+    await erwarteFokus(() => nochmal);
   });
 
   // B-532, AK 4 (B-333, Nachschau zu B-330): nur `plan_inactive` beendet die Runde, jeder andere Server-Fehler hält an wie
@@ -146,7 +156,7 @@ describe("SohnPractice, doppeltes Absenden", () => {
     expect(await screen.findByText("zwei")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
     expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // B-532, AK 5 (B-284). Rot, wenn „Noch einmal senden" an der Sperre von `useAction` vorbei sendet: dann gingen bei zwei
@@ -250,7 +260,7 @@ describe("SohnPractice, doppeltes Absenden", () => {
     expect(screen.queryByText("zwei")).toBeNull();
     // B-541 AK 9: das Feld ist mit der Karte verschwunden – der Fokus steht auf der Meldung. Rot, wenn der
     // `landingRef`-Zweig weiter nur nach dem Laden greift (dann liegt er auf `body`).
-    expect(document.activeElement).toBe(meldung);
+    await erwarteFokus(() => meldung);
   });
 });
 
@@ -417,13 +427,13 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(toastRegion().classList.contains("sr-only")).toBe(true);
     // Der Fokus steht auf „Weiter" – Enter trägt das Kind weiter, ohne erst zu zielen.
     const weiter = screen.getByRole("button", { name: de.sohn.practice.next });
-    expect(document.activeElement).toBe(weiter);
+    await erwarteFokus(() => weiter);
 
     fireEvent.click(weiter);
     expect(await screen.findByText("zwei")).toBeTruthy();
     expect(screen.queryByText("Deine Antwort: die Strasse")).toBeNull();
     // Zurück ins Antwortfeld der nächsten Karte – sonst müsste das Kind erst hineinklicken (Review-Fund).
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // B-526, Entscheidung 3 (kehrt AK 2 von B-420 um). Rot, wenn ein Treffer wieder von selbst weiterspringt (dann steht
@@ -440,13 +450,13 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(toastRegion().classList.contains("sr-only")).toBe(true);
     expect(toastRegion().textContent).toBe("Richtig. +10 🪙");
     const knopf = screen.getByRole("button", { name: de.sohn.practice.next });
-    expect(document.activeElement).toBe(knopf);
+    await erwarteFokus(() => knopf);
 
     fireEvent.click(knopf);
     expect(await screen.findByText("zwei")).toBeTruthy();
     expect(document.querySelector(".lektion-blatt")).toBeNull();
     // Zurück ins Antwortfeld der nächsten Karte – sonst müsste das Kind nach jeder Karte erst hineintippen.
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // Entscheidung 8. Rot, wenn der Tipp-Knopf unter dem Blatt weiter bedienbar ist – ein Tipp gehört vor die Antwort.
@@ -600,7 +610,7 @@ describe("SohnPractice, falsche Antwort", () => {
     fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.next }));
     const heading = await screen.findByText(de.sohn.practice.roundDone);
     // B-439: der Fokus geht an das Rundenende, nicht auf `body` – „Weiter" ist mit der Karte verschwunden.
-    expect(document.activeElement).toBe(heading);
+    await erwarteFokus(() => heading);
   });
 
   // B-439. Rot, wenn „Weiter" auf dem Blatt der letzten Karte den Fokus nicht an die Überschrift des Rundenendes gibt –
@@ -613,7 +623,7 @@ describe("SohnPractice, falsche Antwort", () => {
     weiter();
 
     const heading = await screen.findByText(de.sohn.practice.roundDone);
-    expect(document.activeElement).toBe(heading);
+    await erwarteFokus(() => heading);
   });
 
   // Rot, wenn auch „Nochmal" der Selbsteinschätzung anhält – dort stand die Lösung schon auf der Rückseite.
@@ -650,7 +660,7 @@ describe("SohnPractice, Fokus beim Kartenwechsel", () => {
     fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.flip }));
     await act(async () => {});
 
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: de.sohn.practice.again }));
+    await erwarteFokus(() => screen.getByRole("button", { name: de.sohn.practice.again }));
   });
 
   // AK 2. Rot, wenn der Zweig `back → front` fehlt: das Urteil nimmt seinen Knopf mit, die nächste Karte bekäme keinen Fokus.
@@ -662,7 +672,7 @@ describe("SohnPractice, Fokus beim Kartenwechsel", () => {
     fireEvent.click(screen.getByRole("button", { name: de.sohn.practice.knewIt }));
 
     expect(await screen.findByText("zwei")).toBeTruthy();
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // AK 3. Rot, wenn der Effekt wieder nur an `phase` hängt: „Weiter" der Kennenlernkarte bleibt bei `front`, nur `idx` wechselt.
@@ -675,7 +685,7 @@ describe("SohnPractice, Fokus beim Kartenwechsel", () => {
     fireEvent.click(await screen.findByRole("button", { name: de.sohn.practice.next }));
 
     expect(await screen.findByText("zwei")).toBeTruthy();
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // AK 4 (B-443). Rot, wenn der Kartenwechsel-Zweig auch den ersten Aufbau trifft: dann spränge beim Öffnen der Seite
@@ -685,6 +695,8 @@ describe("SohnPractice, Fokus beim Kartenwechsel", () => {
     await screen.findByRole("textbox");
     await act(async () => {});
 
+    // Bewusst ohne `waitFor` (B-603): Die Zeile belegt eine Abwesenheit (kein ungefragter Fokus, B-443) – `waitFor` bestünde
+    // sie im ersten Versuch und könnte nie rot werden. Der Takt davor gibt dem Effekt Zeit zu feuern.
     expect(document.activeElement).toBe(document.body);
   });
 });
@@ -739,7 +751,7 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     await act(async () => {});
 
     // Das Antwortfeld der neuen Karte, nicht irgendein Knopf (B-515).
-    expect(document.activeElement).toBe(screen.getByRole("textbox"));
+    await erwarteFokus(() => screen.getByRole("textbox"));
   });
 
   // B-515. Rot, wenn eine leere neue Runde den Fokus auf `body` fallen lässt („Jetzt abfragen" ist weg, keine Karte da).
@@ -756,7 +768,7 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     const title = await screen.findByText(de.sohn.practice.nothingDue);
     await act(async () => {});
 
-    expect(document.activeElement).toBe(title);
+    await erwarteFokus(() => title);
   });
 
   // B-443 (Review). Rot, wenn nur Karten mit Eingabefeld den Fokus bekommen: welche Stufe die neue Runde bringt, entscheidet
@@ -774,7 +786,7 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     await screen.findByText("la rue");
     await act(async () => {});
 
-    expect(document.activeElement).toBe(screen.getByRole("button", { name: de.sohn.practice.next }));
+    await erwarteFokus(() => screen.getByRole("button", { name: de.sohn.practice.next }));
   });
 
   // B-518. Rot, wenn eine gescheiterte neue Runde den Fokus auf `body` fallen lässt: die Meldung (role="alert") bekommt ihn.
@@ -790,7 +802,7 @@ describe("SohnPractice, Rundenende nach dem Kennenlernen", () => {
     const meldung = await screen.findByRole("alert");
     await act(async () => {});
 
-    expect(document.activeElement).toBe(meldung);
+    await erwarteFokus(() => meldung);
   });
 
   // AK 5, zweiter Teil. Rot, wenn das Ende an `displayOnly` statt an `introduction` hängt.

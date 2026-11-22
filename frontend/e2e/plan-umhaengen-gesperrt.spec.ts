@@ -57,7 +57,10 @@ test("Plan-Seite: ein gespielter Plan lässt sich keinem anderen Kind geben, und
 
   await vaterLogin(page, { id: "1", pin: "0000" });
   await page.goto(`/vater/plan/${planId}`);
-  await page.getByRole("button", { name: "Bearbeiten" }).click();
+  // Der Knopf des PLANS, über seine Kopfzeile: jede Positionszeile bringt ein eigenes „Bearbeiten“ mit, und die Liste lädt
+  // nach – ein ungezielter Klick hing an der Ladereihenfolge (B-790).
+  await page.locator(".row").filter({ has: page.getByRole("heading", { name: `Bruder-Plan ${RUN}` }) })
+    .getByRole("button", { name: "Bearbeiten" }).click();
   const kindFeld = page.getByRole("combobox", { name: "Kind" });
   await expect(kindFeld.locator("option", { hasText: `Jünger ${RUN}` })).toHaveCount(1);
   await kindFeld.selectOption(String(juengerer));

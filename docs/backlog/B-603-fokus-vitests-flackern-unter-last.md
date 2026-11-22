@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/test, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/test, rolle/entwickler]
 aliases: [Fokus-Vitests flackern]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: M
@@ -219,3 +219,44 @@ zwei Testdateien und 16 Probeläufe an acht Fokus-Aufrufen; jede Stelle ist klei
   Protokoll nachgetragen; nichts gemessen oder gestartet.
 - **2026-11-19** — gegrillt (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): Entscheidungen 1 bis 5. Gezählt: 24 positive und 3 verneinende Fokus-Zusicherungen; alle positiven über einen lokalen Helfer mit `waitFor`, die verneinenden bleiben. Probe je Fokus-Aufruf (acht), nicht je Datei. `SohnProgress.test.tsx` zurückgestellt (keine Protokollstelle nennt einen Fall). Die Komponenten tragen im Arbeitsbaum fremde, ungecommittete Änderungen: Zeilen neu lesen, Proben per Kopie zurückspielen. Akzeptanzkriterien final, je mit roter Änderung.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch (nachgesehen: nur Testdateien; Komponenten nur kurz durch Proben verändert). Nachgezählt: 17 und 10 `activeElement`-Stellen, 8 Fokus-Aufrufe, `waitFor` kommt in beiden Dateien nicht vor. Die Komponenten tragen fremde ungecommittete Änderungen: vor dem Bau neu zählen. Nichts gemessen oder gestartet.
+- **2026-11-22** — in Arbeit (Nachtlauf B, Worktree `claude/serene-bhabha-1b1ff6`). Vor dem Bau neu gezählt: 17/10
+  `activeElement`-Stellen, acht Fokus-Aufrufe auf denselben Zeilen (`SohnPractice.tsx:179/203/207/210/213/226/370`,
+  `SohnTest.tsx:99`). Im Worktree tragen die Komponenten keine fremden Änderungen (Blob = HEAD,
+  `af7a064a`/`b0f82d56`). `erwarteFokus` steht lokal in beiden Dateien; 16 + 8 positive Stellen sind umgestellt, die drei
+  verneinenden haben ihren Takt behalten und einen Kommentar bekommen. Umgestellt per Skript, das je Stelle prüft, dass der
+  umschließende Fall `async` ist.
+  - **Probe** (`scratchpad/b603probe.py`, je Aufruf drei Läufe beider Dateien, 87 Fälle). Gezählt sind die roten Fälle:
+
+    | Aufruf | 5a neu (50 ms) | 5a alt (HEAD-Tests) | 5b neu (entfernt) |
+    |---|---|---|---|
+    | M1 `SohnPractice.tsx:179` | 87/87 | 2 rot | 2 rot |
+    | M2 `:203` | 87/87 | 8 rot | 8 rot |
+    | M3 `:207` | 87/87 | 2 rot | 2 rot |
+    | M4 `:210` | 87/87 | 1 rot | 1 rot |
+    | M5 `:213` | 87/87 | 2 rot | 2 rot |
+    | M6 `:226` | 87/87 | 1 rot | 2 rot |
+    | M7 `:370` | 87/87 | **0 rot** | **0 rot** |
+    | M8 `SohnTest.tsx:99` | 87/87 | 7 rot | 7 rot |
+
+  - **Befund AK 2 (M7):** Den Fokus nach „Mach's mir leichter“ (`SohnPractice.tsx:370`, B-635) trägt kein Vitest-Fall. Er
+    hängt an der E2E-Spec `lernkarte-leichter.spec.ts:72` (`toBeFocused`). Gemessen: Aufruf entfernt → die Spec ist rot an
+    `:72`. Er ist also getragen, nur nicht in diesen Dateien. Ein Vitest-Fall wurde bewusst nicht ergänzt (AK 2: kein
+    stilles Ergänzen); die E2E-Spec reicht als Träger.
+  - **AK 4:** Nach jeder Probe `git hash-object` = HEAD für beide Komponenten (`af7a064a`, `b0f82d56`).
+  - **AK 3/5:** Die drei verneinenden Stellen tragen den Kommentar, `waitFor` ist dort nicht eingesetzt. `SohnProgress.test.tsx`
+    ist unberührt.
+  - `tsc -p tsconfig.json --noEmit` ist sauber. Voller Vitest-Lauf: einmal 1303/1304, rot war `SohnProgress … nimmt den
+    spielbaren Plan und merkt ihn sich`; danach zweimal 1304/1304. Die Datei allein: 3 × 9/9. Das ist genau das
+    zurückgestellte Flackern aus Entscheidung 4. Jetzt mit Fallname, darum eigene Story **B-787** (`idee`); die
+    Fehlermeldung fehlt noch.
+  - **Review (frontend-reviewer):** kein 🔴/🟡. Zwei 🟢 eingearbeitet: Kommentar des Helfers präzisiert (die Zielfunktion
+    läuft je Versuch neu; eine Konstante ist unschädlich, weil ein abgehängtes Element nie `activeElement` ist) und eine
+    doppelte Leerzeile entfernt. Der dritte 🟢 wurde gemessen statt abgewogen. Frage: Rettet `waitFor` eine Mutante, die
+    eine Effekt-Abhängigkeit streicht? Ergebnis: ohne `revealed` 1 rot, ohne `idx` 2 rot, ohne `phase` 13 rot. Ohne
+    `action.busy` oder `cursor` bleibt es grün, aber **ebenso mit den HEAD-Tests**. Die Lücke ist also älter als diese
+    Story und wurde nicht durch `waitFor` erzeugt. Sie geht als eigene Story **B-788** weiter
+    (`SohnTest.test.tsx:416-417` verspricht ein Rot, das nicht kommt).
+  - Nach den Kommentar-Änderungen: beide Dateien 87/87 (Lauf „nachher“ der Abhängigkeits-Probe).
+- **2026-11-22**: **abgenommen** (`20ca1ce2`, Branch `claude/serene-bhabha-1b1ff6`).
+  - Ein Rollengang ist nicht nötig, kein Verhalten ändert sich.
+  - Regressionszeugen: voller Vitest-Lauf 1304/1304 (zweimal) und volle E2E-Suite 185/185.
