@@ -25,8 +25,8 @@ const position = (over: Partial<PositionStatus>): PositionStatus => ({
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
-// Ein Mittwoch, 22:30 UTC – bis zum Server-Tagesende zwei angefangene Stunden.
-const JETZT = new Date(Date.UTC(2026, 10, 11, 22, 30));
+// Ein Mittwoch, 21:30 UTC = 22:30 MEZ – bis zum Ende des Lerntags (Mitternacht deutscher Zeit, B-730) zwei angefangene Stunden.
+const JETZT = new Date(Date.UTC(2026, 10, 11, 21, 30));
 const zeige = (positions: PositionStatus[]) =>
   render(<MemoryRouter><Pfad positions={positions} jetzt={JETZT} /></MemoryRouter>);
 const knoten = (titel: string) => screen.getByRole("link", { name: new RegExp(`^${titel}`) });

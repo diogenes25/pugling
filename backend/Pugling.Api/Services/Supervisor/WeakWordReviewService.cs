@@ -16,7 +16,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// three rules the endpoint were a side door to build arbitrary exercises past the creator's checks.
 /// </para>
 /// </summary>
-public class WeakWordReviewService(PuglingDbContext db, ExerciseItemService items, TimeProvider time)
+public class WeakWordReviewService(PuglingDbContext db, ExerciseItemService items, TimeProvider time, LearningDay learningDay)
 {
     /// <summary>Most words one review takes - one page of the father's word list.</summary>
     public const int MaxWords = 25;
@@ -133,7 +133,7 @@ public class WeakWordReviewService(PuglingDbContext db, ExerciseItemService item
         var position = new PlanPosition
         {
             CreatedAt = now,
-            DutySince = DateOnly.FromDateTime(now),
+            DutySince = learningDay.DayOf(now),
             StudyPlanId = plan.Id,
             ExerciseId = exercise.Id,
             Order = order,

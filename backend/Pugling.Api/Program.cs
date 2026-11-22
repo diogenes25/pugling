@@ -160,6 +160,9 @@ builder.Services.AddDbContext<PuglingDbContext>(o =>
 // practising for four weeks). Token lifetime stays on the wall clock on purpose - a simulated month must not
 // log the simulated child out.
 builder.Services.AddSingleton(TimeProvider.System);
+// B-730: "today" is the calendar day in the family's zone, formed in one place (LearningDay) - never from the UTC date.
+builder.Services.Configure<LearningDayOptions>(builder.Configuration.GetSection(LearningDayOptions.SectionName));
+builder.Services.AddSingleton<LearningDay>();
 // The time windows of the points multiplier are configuration, not a table (E12) - which makes the service
 // a pure function that needs neither a DB nor a cancellation token.
 builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
@@ -565,6 +568,10 @@ builder.Services.AddOpenApi(o =>
 });
 
 var app = builder.Build();
+
+// B-730: resolve the configured zone now - a host without the zone data must fail at startup with a message naming the
+// setting, not with a 500 on the child's first answer.
+app.Services.GetRequiredService<LearningDay>();
 
 // B-119: behind Azure App Service's front-end, the connection Kestrel sees is the loopback hop from
 // IIS/ANCM, not the real client - every user would share one rate-limiter partition (Program.cs below,

@@ -9,6 +9,8 @@ public class TagesportionTests
 {
     private static readonly DateOnly Today = new(2026, 11, 10);
 
+    private static readonly LearningDay Utc = TestLearningDay.Utc;
+
     private static PositionItemProgress Known(int index, int box, DateOnly dueOn, int reviewedDaysAgo = 3) => new()
     {
         ItemIndex = index,
@@ -21,9 +23,9 @@ public class TagesportionTests
     [Fact]
     public void NichtsEingefuehrt_PrueftDieErsteDosis()
     {
-        Assert.Equal([0, 1, 2], PositionPlayService.DailyTestPortion(3, poolSize: 10, [], Today));
+        Assert.Equal([0, 1, 2], PositionPlayService.DailyTestPortion(3, poolSize: 10, [], Today, Utc));
         // The pool bounds the dose.
-        Assert.Equal([0, 1], PositionPlayService.DailyTestPortion(3, poolSize: 2, [], Today));
+        Assert.Equal([0, 1], PositionPlayService.DailyTestPortion(3, poolSize: 2, [], Today, Utc));
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public class TagesportionTests
         var introducedToday = new PositionItemProgress { ItemIndex = 0, IntroducedAt = Today, DueOn = Today };
         var due = Known(2, box: 2, dueOn: Today);
 
-        Assert.Equal([0, 2, 1, 3], PositionPlayService.DailyTestPortion(3, poolSize: 10, [introducedToday, due], Today));
+        Assert.Equal([0, 2, 1, 3], PositionPlayService.DailyTestPortion(3, poolSize: 10, [introducedToday, due], Today, Utc));
     }
 
     [Fact]
@@ -43,7 +45,7 @@ public class TagesportionTests
             new() { ItemIndex = 0, IntroducedAt = Today, DueOn = Today },
             new() { ItemIndex = 1, IntroducedAt = Today, DueOn = Today },
         ];
-        Assert.Equal([0, 1], PositionPlayService.DailyTestPortion(2, poolSize: 10, today, Today));
+        Assert.Equal([0, 1], PositionPlayService.DailyTestPortion(2, poolSize: 10, today, Today, Utc));
     }
 
     [Fact]
@@ -58,7 +60,7 @@ public class TagesportionTests
         var outsidePool = Known(9, box: 1, dueOn: Today);
 
         var portion = PositionPlayService.DailyTestPortion(2, poolSize: 5,
-            [introducedToday, reviewedToday, dueToday, overdue, notToday, outsidePool], Today);
+            [introducedToday, reviewedToday, dueToday, overdue, notToday, outsidePool], Today, Utc);
 
         Assert.Equal([0, 1, 2, 3], portion.Order());
     }
@@ -71,6 +73,6 @@ public class TagesportionTests
 
         // Lowest box first, the index breaking the tie; two times the dose of 1 is two contents.
         // The pool is through (five of five introduced), so no new content is left to add.
-        Assert.Equal([1, 4], PositionPlayService.DailyTestPortion(1, poolSize: 5, all, Today));
+        Assert.Equal([1, 4], PositionPlayService.DailyTestPortion(1, poolSize: 5, all, Today, Utc));
     }
 }

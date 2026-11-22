@@ -1,5 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { alsUtcText, arcadeDatum, augenblick, formatDate, formatDateIn, formatDateRange, formatDateTime } from "./datum";
+import {
+  alsUtcText, arcadeDatum, augenblick, beginnDesLerntags, formatDate, formatDateIn, formatDateRange, formatDateTime, heuteImLerntag,
+  istServerSonntag, LERNTAG_ZONE, stundenBisServerTagesende,
+} from "./datum";
 
 /**
  * B-427. Ein Datum hat im Vater-Web eine deutsche Schreibweise, egal welche Sprache der Browser meldet.
@@ -185,3 +189,44 @@ describe("inZone stellt die Zone wieder her", () => {
   });
 });
 
+/**
+ * B-730: „heute" und die Fristen der Arcade folgen dem Lerntag des Servers – Mitternacht deutscher Zeit, nicht UTC und nicht
+ * die Zone des Geräts. Jeder Fall liegt so, dass die UTC-Regel ein anderes Ergebnis gäbe.
+ */
+describe("Lerntag in deutscher Zeit", () => {
+  it("belegt um 00:30 Ortszeit schon den neuen Tag vor – im Winter und im Sommer", () => {
+    // Rot mit `toISOString().slice(0, 10)`: dort wäre es noch der Vortag.
+    expect(heuteImLerntag(new Date(Date.UTC(2027, 0, 14, 23, 30)))).toBe("2027-01-15");
+    expect(heuteImLerntag(new Date(Date.UTC(2027, 6, 14, 22, 30)))).toBe("2027-07-15");
+    // Um 23:30 Ortszeit noch der alte.
+    expect(heuteImLerntag(new Date(Date.UTC(2027, 0, 15, 22, 30)))).toBe("2027-01-15");
+  });
+
+  it("zählt die Stunden bis Mitternacht auch über die Zeitumstellung richtig", () => {
+    // Herbst (31.10.2027, 25 Stunden): 00:30 MESZ bis Mitternacht MEZ sind 24 1/2 Stunden – angefangen 25.
+    expect(stundenBisServerTagesende(new Date(Date.UTC(2027, 9, 30, 22, 30)))).toBe(25);
+    // Frühling (28.3.2027, 23 Stunden): 00:30 MEZ bis Mitternacht MESZ sind 22 1/2 Stunden – angefangen 23.
+    expect(stundenBisServerTagesende(new Date(Date.UTC(2027, 2, 27, 23, 30)))).toBe(23);
+  });
+
+  it("kennt den Sonntag der Lernwoche", () => {
+    // Sonntag 23:30 UTC ist Montag in deutscher Zeit; Samstag 23:30 UTC schon Sonntag.
+    expect(istServerSonntag(new Date(Date.UTC(2027, 6, 18, 23, 30)))).toBe(false);
+    expect(istServerSonntag(new Date(Date.UTC(2027, 6, 17, 23, 30)))).toBe(true);
+  });
+
+  it("schickt den Beginn eines Tags als Mitternacht deutscher Zeit", () => {
+    // Rot mit `${tag}T00:00:00Z` – das wäre 1 bzw. 2 Uhr deutscher Zeit.
+    expect(beginnDesLerntags("2026-11-20")).toBe("2026-11-19T23:00:00Z");
+    expect(beginnDesLerntags("2027-07-15")).toBe("2027-07-14T22:00:00Z");
+    // Am Umstellungstag im Frühling beginnt der Tag noch in MEZ.
+    expect(beginnDesLerntags("2027-03-28")).toBe("2027-03-27T23:00:00Z");
+  });
+
+  it("spiegelt die Zone des Servers", () => {
+    // Zwei Orte für eine Einstellung (B-730, Entscheidung 6): rot, sobald `LearningDay:TimeZone` in appsettings.json und
+    // `LERNTAG_ZONE` auseinanderlaufen – dann widersprächen die Fristen der Arcade der Buchung.
+    const settings = JSON.parse(readFileSync("../backend/Pugling.Api/appsettings.json", "utf-8"));
+    expect(settings.LearningDay.TimeZone).toBe(LERNTAG_ZONE);
+  });
+});

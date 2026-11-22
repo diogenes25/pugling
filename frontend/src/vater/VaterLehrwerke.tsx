@@ -800,8 +800,9 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
       grade: form.grade.trim() === "" ? null : Number(form.grade),
       bookType: form.bookType,
       topics: form.topics,
-      grammar: form.grammar.trim() || null,
-      vocabularyNotes: form.vocabularyNotes.trim() || null,
+      // Leer als `""`, nicht `null`: beim Bearbeiten hieße `null` „unverändert", `""` leert (B-791); beim Anlegen gilt beides als leer.
+      grammar: form.grammar.trim(),
+      vocabularyNotes: form.vocabularyNotes.trim(),
       grammarTopicIds: form.grammarTopicIds,
     };
     /*
@@ -814,7 +815,8 @@ export function UnitForm({ seriesId, subjectId, unit, defaults, onDone, onMeldun
      * „nur beim Anlegen" wäre genau die Sorte Regel, die niemand im Kopf behält.
      */
     const ok = await nachObenMelden(action, onMeldung, () => (unit
-      ? api.updateSeriesUnit(seriesId, unit.id, dto)
+      // Ein geleerter Band braucht den Schalter: `grade: null` hieße beim PATCH „unverändert" (B-800).
+      ? api.updateSeriesUnit(seriesId, unit.id, { ...dto, clearGrade: dto.grade === null && unit.grade !== null })
       : api.createSeriesUnit(seriesId, dto)), unit ? "Gespeichert." : "Unit hinzugefügt.");
     if (ok === null) return;
     if (!unit) setForm((f) => ({ ...f, label: "", topics: [], grammar: "", vocabularyNotes: "", grammarTopicIds: [] }));

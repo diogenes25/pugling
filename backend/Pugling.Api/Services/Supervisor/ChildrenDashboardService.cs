@@ -121,7 +121,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
         return (rows, total);
     }
 
-    // The first day of the period a day belongs to - in UTC like all day logic, the week from Monday like the weekly goals.
+    // The first day of the period a day belongs to - on the learning-day calendar like all day logic (B-730), the week from Monday like the weekly goals.
     private static DateOnly PeriodKey(OverviewGranularity granularity, DateOnly day) => granularity switch
     {
         OverviewGranularity.Week => PositionProgressService.WeekMonday(day),

@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Student)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
-    WalletService wallet, ShopService shop, PositionProgressService progress, TimeProvider time) : ControllerBase
+    WalletService wallet, ShopService shop, PositionProgressService progress, TimeProvider time, LearningDay learningDay) : ControllerBase
 {
     /// <summary>Own wallet balance (coins + gems). The individual ledger entries live under <c>points/entries</c>.</summary>
     [HttpGet("points")]
@@ -105,7 +105,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var (items, total) = await gamification.MissionStatusesAsync(cid.Value, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime),
+        var (items, total) = await gamification.MissionStatusesAsync(cid.Value, learningDay.Today,
             Math.Max(skip, 0), Math.Clamp(take, 0, PagingExtensions.MaxTake), ct);
         Response.Headers["X-Total-Count"] = total.ToString();
         return Ok(items);
@@ -121,7 +121,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var status = await gamification.MissionStatusAsync(cid.Value, missionId, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime), ct);
+        var status = await gamification.MissionStatusAsync(cid.Value, missionId, learningDay.Today, ct);
         return status is null ? NotFound() : status;
     }
 
@@ -139,7 +139,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var (items, total) = await gamification.AchievementStatusesAsync(cid.Value, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime),
+        var (items, total) = await gamification.AchievementStatusesAsync(cid.Value, learningDay.Today,
             Math.Max(skip, 0), Math.Clamp(take, 0, PagingExtensions.MaxTake), ct);
         Response.Headers["X-Total-Count"] = total.ToString();
         return Ok(items);
@@ -155,7 +155,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     {
         var cid = User.ChildId();
         if (cid is null) return Forbid();
-        var status = await gamification.AchievementStatusAsync(cid.Value, achievementId, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime), ct);
+        var status = await gamification.AchievementStatusAsync(cid.Value, achievementId, learningDay.Today, ct);
         return status is null ? NotFound() : status;
     }
 
@@ -293,7 +293,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
         // Settle open mandatory periods first: any penalty must reduce the coin balance BEFORE the funds check
         // applies - otherwise the child could dodge the stick by buying quickly.
-        await progress.SettleClosedPeriodsAsync(cid.Value, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime), ct);
+        await progress.SettleClosedPeriodsAsync(cid.Value, learningDay.Today, ct);
 
         var result = await shop.PurchaseAsync(cid.Value, listingId, time.GetUtcNow().UtcDateTime, ct);
         return result.Error switch

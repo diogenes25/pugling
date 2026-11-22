@@ -27,7 +27,7 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class ExtraTrainingService(PuglingDbContext db, PositionProgressService progress, ExerciseContentResolver content,
     ExercisePreviewService preview, ExerciseTypeRegistry registry, IOptions<ExtraTrainingOptions> options,
-    TimeProvider time)
+    TimeProvider time, LearningDay learningDay)
 {
     private readonly ExtraTrainingOptions opts = options.Value;
 
@@ -46,7 +46,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         public static Outcome<T> Fail(ApiError error, string detail) => new(null, error, detail);
     }
 
-    private DateOnly Today => DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+    private DateOnly Today => learningDay.Today;
 
     /// <summary>The child's bonus training for today: whether it is open, the coins so far and the exercise pool.</summary>
     public async Task<ExtraTrainingOverview> OverviewAsync(int childId, CancellationToken ct)

@@ -124,6 +124,8 @@ public class SeriesUnitsController(PuglingDbContext db) : ControllerBase
             unit.Label = label;
         }
         if (dto.Grade.HasValue) unit.Grade = dto.Grade;
+        // Value first, switch second: "no band" wins if a form sends both (PATCH semantics, backend/CLAUDE.md).
+        if (dto.ClearGrade) unit.Grade = null;
         if (dto.OrderIndex.HasValue) unit.OrderIndex = dto.OrderIndex.Value;
         if (dto.BookType.HasValue) unit.BookType = dto.BookType.Value;
         // Assign a new list (no in-place mutation - the JSON column pitfall, cf. CLAUDE.md).

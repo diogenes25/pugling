@@ -579,7 +579,8 @@ public class ShopFlowTests(PuglingWebAppFactory factory) : IClassFixture<Pugling
         var listing = new ShopListing { MaxStock = 3, RefillQuantity = 3, RefillKind = ShopRefillKind.Daily };
         var stock = new ShopListingStock { CurrentStock = 0 };
 
-        var changed = ShopService.ApplyDueRefill(listing, stock, new DateTime(2026, 7, 6, 10, 0, 0, DateTimeKind.Utc));
+        // Pure calendar arithmetic: the service needs neither a database nor a wallet for it.
+        var changed = new ShopService(null!, null!, TestLearningDay.Utc).ApplyDueRefill(listing, stock, new DateTime(2026, 7, 6, 10, 0, 0, DateTimeKind.Utc));
 
         Assert.True(changed);
         Assert.Equal(3, stock.CurrentStock);

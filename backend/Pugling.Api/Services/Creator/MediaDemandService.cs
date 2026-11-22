@@ -15,7 +15,7 @@ namespace Pugling.Api.Services.Creator;
 /// the generator draws is rated for everyone and linked at the vocabulary entry.
 /// </para>
 /// </summary>
-public class MediaDemandService(PuglingDbContext db, TimeProvider time)
+public class MediaDemandService(PuglingDbContext db, LearningDay learningDay)
 {
     /// <summary>
     /// How many interests of a child get images of their own (decision 3 of B-485): the two strongest keep the volume
@@ -41,7 +41,7 @@ public class MediaDemandService(PuglingDbContext db, TimeProvider time)
             .ToListAsync(ct);
 
         // The injected clock, as in PositionPracticeController: a faked "today" must mean the same day in both places.
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         // The same rule as PositionPlayService.PlanPlayableForChild: only what the child can play today needs images now.
         var exerciseIds = db.PlanPositions
             .Where(p => p.StudyPlan!.ChildId == childId && p.StudyPlan.Active

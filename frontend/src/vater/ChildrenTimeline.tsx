@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { ListenAusfall } from "../components/ListenAusfall";
-import { formatDate } from "../lib/datum";
+import { formatDate, heuteImLerntag } from "../lib/datum";
 import type { ChildPeriod, ChildrenOverview, OverviewGranularity } from "../lib/types";
 
 const GRANULARITIES: { value: OverviewGranularity; label: string }[] = [
@@ -13,7 +13,7 @@ const GRANULARITIES: { value: OverviewGranularity; label: string }[] = [
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 /*
- * Der Zeitraum je Ansicht – in UTC wie die Tageslogik des Servers, und nie über die 92 Tage, die er annimmt (B-39,
+ * Der Zeitraum je Ansicht – in Kalendertagen des Lerntags (der Aufrufer reicht ihn als UTC-Mittag herein), und nie über die 92 Tage, die er annimmt (B-39,
  * Entscheidung 9): zwei Wochen Tage, zwölf ganze Wochen ab einem Montag (sonst wäre der erste Balken eine halbe Woche),
  * drei Kalendermonate bis heute.
  */
@@ -44,7 +44,8 @@ export function periodLabel(p: ChildPeriod, granularity: OverviewGranularity): s
  */
 export function ChildrenTimeline({ reloadToken = 0 }: { reloadToken?: number }) {
   const [granularity, setGranularity] = useState<OverviewGranularity>("Week");
-  const range = rangeFor(granularity, new Date());
+  // Der Lerntag als UTC-Mittag: `rangeFor` rechnet in UTC-Feldern, und um 00:30 deutscher Zeit ist schon morgen (B-730).
+  const range = rangeFor(granularity, new Date(`${heuteImLerntag()}T12:00:00Z`));
   const overview = useAsync<ChildrenOverview>(
     () => api.childrenOverview({ ...range, granularity }), [granularity, range.from, range.to, reloadToken]);
 

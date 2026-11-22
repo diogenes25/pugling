@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student]
+tags: [typ/story, status/verworfen, bereich/training, rolle/student]
 aliases: [Sonderzeichen-Leiste falsche Sprache]
-status: ausformuliert
+status: verworfen
 prio: P3
 art: Defekt
 groesse: ""
@@ -9,7 +9,7 @@ wo: beides
 migration: ""
 vertragsbruch: ""
 quelle: "Nachtlauf 2026-11-18, Nachschau von B-661 (96a3491d, frontend-reviewer) – docs/pm-sitzung-2026-11-18.md, Runde 5"
-grund: ""
+grund: "gegenstandslos durch B-597: auf jeder getippten Stufe mit Leiste spielt die Vorwärtskarte ihre vertauschte Written-Form, getippt wird die Lernsprache der Reihe – genau was KeyboardLangOf liefert. Nachgeprüft im Nachtlauf 2026-11-23-a; regionale Codes (AK 5) bietet das Vater-Web nicht an (lib/languages.ts:12-17), darum keine Folge-Story."
 ersetzt_durch: []
 entgangen_bei: [B-661]
 ---
@@ -128,3 +128,13 @@ Entwurf; je Kriterium die Änderung, die es rot macht.
   Stufe, nicht je Übung – „immer Zielsprache“ wäre für Lückentext und Liste falsch. `unverifiziert` entfällt (war schon
   `false`).
 - **2026-11-19** — Grillversuch (Vorbereitungslauf, Sonnet): Stufe bleibt `ausformuliert`; Fall (1) tritt am Code nicht auf (getippt wird auf jeder Schreibstufe die `Written`-Karte, die gelernte Sprache), Vorschlag `verworfen` samt Belegen im Abschnitt „Nachprüfung beim Grillen".
+- **2026-11-22** — **verworfen** (Nachtlauf 2026-11-23-a, stellvertretend in der übertragenen PO-Rolle, unbestätigt – zum
+  Umstoßen). Nachprüfung der Grill-Belege, eigener Prüfpunkt je Behauptung: (a) alle drei Spielpfade bauen die Karte über
+  `CardForStage`/`AtStage` (`PositionPracticeController.cs:298`, `:532`, `:617`; `PositionTestsController.cs:240`, `:275`;
+  `ExtraTrainingService.cs:413-414`, `:440-441`); (b) `IsWritingStage` umfasst Kästchen, Buchstaben, Freitext, Diktat und
+  Lernkarte (`VocabularyExerciseType.cs:123-125`), die Auswahl nicht – und unter der Auswahl steht keine Leiste
+  (`frontend/src/sohn/Lektion.tsx:176`, `:203`); (c) jede Vorwärtskarte mit Speicher-Eintrag trägt ihre `Written`-Form,
+  ausgenommen `RecognitionOnly`, die nie eine Schreibstufe erreicht (`ExerciseContentResolver.cs:117-122`). Fall (1) der
+  Story ist damit nicht herstellbar. AK 5 (regionale Codes): die Sprachwahl im Vater-Web bietet nur `de`/`en`/`fr`/`la`
+  (`frontend/src/lib/languages.ts:12-17`); ein `fr-FR` käme nur über die rohe API und verlöre schlimmstenfalls die Leiste –
+  keine eigene Story. Kein Code geändert, kein Test.

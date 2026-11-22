@@ -395,7 +395,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </para>
     /// </summary>
     public static IReadOnlyList<int> DailyTestPortion(int newItemsPerDay, int poolSize,
-        IEnumerable<PositionItemProgress> progress, DateOnly day)
+        IEnumerable<PositionItemProgress> progress, DateOnly day, LearningDay learningDay)
     {
         var introduced = progress.Where(p => p.IntroducedAt is not null && p.ItemIndex < poolSize).ToList();
         var known = introduced.Select(p => p.ItemIndex).ToHashSet();
@@ -405,7 +405,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
 
         var portion = introduced
             .Where(p => p.IntroducedAt == day || IsDue(p, day)
-                || (p.LastReviewedAt is { } at && DateOnly.FromDateTime(at) == day))
+                || (p.LastReviewedAt is { } at && learningDay.DayOf(at) == day))
             .Select(p => p.ItemIndex)
             .Concat(Enumerable.Range(0, poolSize).Where(i => !known.Contains(i)).Take(room))
             .ToList();

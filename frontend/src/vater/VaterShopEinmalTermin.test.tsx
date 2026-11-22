@@ -26,7 +26,7 @@ function bearbeite(listing: ShopListing, aendern: () => void): UpdateShopListing
 }
 
 describe("Vater-Shop – einmaliger Termin beim Bearbeiten (B-782)", () => {
-  // AK 1. Rot, solange `planDto` immer `<Datum>T00:00:00Z` baut: dann geht 2026-11-12T00:00:00Z statt des geladenen Werts.
+  // AK 1. Rot, solange `planDto` immer `<Datum>T00:00:00Z` baut: dann geht Mitternacht (2026-11-11T23:00:00Z) statt des geladenen Werts.
   it("schickt den geladenen Termin unverändert, wenn nur der Preis geändert wird", () => {
     const dto = bearbeite(ONCE, () =>
       fireEvent.change(screen.getByLabelText("Preis 🪙", { exact: true }), { target: { value: "12" } }));
@@ -38,7 +38,7 @@ describe("Vater-Shop – einmaliger Termin beim Bearbeiten (B-782)", () => {
   it("schickt ein geändertes Datum als Mitternacht UTC", () => {
     const dto = bearbeite(ONCE, () =>
       fireEvent.change(screen.getByLabelText("Datum", { exact: true }), { target: { value: "2026-11-20" } }));
-    expect(dto.refillAtUtc).toBe("2026-11-20T00:00:00Z");
+    expect(dto.refillAtUtc).toBe("2026-11-19T23:00:00Z");
   });
 
   // AK 3. Rot, wenn ein leerer geladener Termin als „gleiches Datum“ gilt: die Umstellung schickte dann nichts (oder
@@ -50,7 +50,7 @@ describe("Vater-Shop – einmaliger Termin beim Bearbeiten (B-782)", () => {
       fireEvent.change(screen.getByLabelText("Datum", { exact: true }), { target: { value: "2026-11-20" } });
     });
     expect(dto.refillKind).toBe("Once");
-    expect(dto.refillAtUtc).toBe("2026-11-20T00:00:00Z");
+    expect(dto.refillAtUtc).toBe("2026-11-19T23:00:00Z");
   });
 });
 
@@ -84,7 +84,7 @@ describe("Vater-Shop – Bearbeiten beginnt beim gespeicherten Angebot (B-786)",
     fireEvent.change(screen.getByLabelText("Auffüllen", { exact: true }), { target: { value: "Once" } });
     fireEvent.change(screen.getByLabelText("Datum", { exact: true }), { target: { value: "2026-11-12" } });
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect((onSave.mock.calls[0][0] as UpdateShopListingDto).refillAtUtc).toBe("2026-11-12T00:00:00Z");
+    expect((onSave.mock.calls[0][0] as UpdateShopListingDto).refillAtUtc).toBe("2026-11-11T23:00:00Z");
   });
 
   // AK 2. Rot, wenn „Bearbeiten“ den Plan nicht neu belegt: das verworfene 2026-11-20 stünde im Feld und ginge als neuer
@@ -127,5 +127,13 @@ describe("Vater-Shop – Bearbeiten beginnt beim gespeicherten Angebot (B-786)",
     zeile(ONCE);
     fireEvent.click(screen.getByRole("button", { name: "Bearbeiten" }));
     expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("2026-11-12");
+  });
+
+  // B-730: ein Termin um Mitternacht deutscher Zeit liegt in UTC auf dem Vortag. Rot mit `refillAtUtc.slice(0, 10)`: dann
+  // öffnete das Angebot mit dem 19. statt dem 20., und ein „OK“ ohne Änderung verschöbe den Termin um einen Tag.
+  it("liest einen Termin um Mitternacht deutscher Zeit als seinen Tag zurück", () => {
+    const dto = bearbeite({ ...ONCE, refillAtUtc: "2026-11-19T23:00:00Z" } as unknown as ShopListing, () =>
+      expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("2026-11-20"));
+    expect(dto.refillAtUtc).toBe("2026-11-19T23:00:00Z");
   });
 });

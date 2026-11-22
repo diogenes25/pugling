@@ -140,7 +140,8 @@ Lernstand – positionsgebunden *und* plan-übergreifend je Vokabel-Item.
 - **Vom Ursprungs-Template ist nichts mehr übrig** – **kein** `User`/`Topic`/`VocabCard`/`Points…` mehr
   anlegen. Der Leitner-Multiplikator nach Tageszeit ist **Konfiguration** (`Scoring:TimeSlots` in
   `appsettings.json`), keine Tabelle. Historie: [docs/db-struktur-umbau-plan.md](docs/db-struktur-umbau-plan.md) (E12).
-- **Zeit/UTC**: Tageslogik nutzt `DateTime.UtcNow`/`DateOnly` – nahe Mitternacht lokal ggf. anderer Kalendertag.
+- **Zeit**: „heute" und der Tag eines Zeitpunkts entstehen nur in `LearningDay` (deutsche Zeit, B-730; Tor
+  `Tage_Entstehen_Nur_Im_Lerntag`). Die Testsuite zählt bewusst im UTC-Kalender, die Zone prüft `TagesbegriffTests`.
 - **JSON-Spalten** (`Gaps`, `WordBank`, `BoxIntervalDays`, `StageSchedule`, `Noun`/`Verb`, `Interests`,
   `OwnedSkins`, `SuggestedBonus`): tragen alle einen `ValueComparer` aus
   [Data/JsonValueComparer.cs](backend/Pugling.Api/Data/JsonValueComparer.cs) – EF erkennt Änderungen also

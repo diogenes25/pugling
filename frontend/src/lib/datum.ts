@@ -12,9 +12,9 @@
  *   alle Zeitstempel in UTC (`DateTime.UtcNow`), liefert gelesene aber ohne Offset (EF/SQLite: `Kind=Unspecified`, kein
  *   UTC-Konverter) – `new Date("…T23:30:00")` läse das als Ortszeit. Ein Zeitstempel ohne Offset bekommt darum ein `Z`.
  *
- * Bewusst: ein Zeitstempel zeigt den Kalendertag des **Geräts**, ein `DateOnly` des Servers den UTC-Tag. Eine Buchung um 23:30 UTC
- * steht damit auf einem Gerät in MEZ am Folgetag, im Tagesverlauf (Server-Tag) am Vortag – Menschen lesen Zeitpunkte in Ortszeit,
- * und die Tagesgrenze der Pflicht ist eine Server-Regel (`CLAUDE.md`, Zeit/UTC), keine Anzeige.
+ * Bewusst: ein Zeitstempel zeigt den Kalendertag des **Geräts**, ein `DateOnly` des Servers den Lerntag (deutsche Zeit,
+ * B-730). Auf einem Gerät in deutscher Zeit fallen beide zusammen; die Tagesgrenze der Pflicht bleibt eine Server-Regel,
+ * keine Anzeige – darum rechnen die Fristen unten mit `LERNTAG_ZONE` und nicht mit der Zone des Geräts.
  *
  * Die Sohn-Arcade spricht über `t()` und formatiert mit der gewählten Sprache – dafür `arcadeDatum` (B-447), mit derselben
  * Lese-Hälfte (Textzerlegung, `augenblick`), sonst stünde in der englischen Arcade ein deutsches Datum.
@@ -97,17 +97,78 @@ export function formatDateRange(from: string, to: string): string {
 }
 
 /**
- * Die Server-Uhr für Fristen (B-525): Tag und Woche enden für den Server in **UTC**, also zeigt die Arcade ihre
- * Fristen danach – eine Anzeige nach Ortszeit widerspräche der Buchung. Der Augenblick wird hier geholt und nicht in
- * der Arcade gebaut (B-447).
+ * Die Zone des Lerntags (B-730): Tag und Woche enden für den Server um Mitternacht **deutscher Zeit**
+ * (`LearningDay:TimeZone` in `backend/Pugling.Api/appsettings.json`). Hier gespiegelt, weil der Browser die Zone des
+ * Servers nicht kennt; ändert sie sich dort, ändert sie sich hier.
+ */
+export const LERNTAG_ZONE = "Europe/Berlin";
+
+// Ein Formatierer je Zone: `teile` läuft je Position und Render mehrmals, das Anlegen ist der teure Teil.
+const FORMATIERER = new Map<string, Intl.DateTimeFormat>();
+
+/** Kalendertag, Wochentag und Uhrzeit eines Augenblicks in `zone`. */
+function teile(jetzt: Date, zone: string) {
+  let f = FORMATIERER.get(zone);
+  if (!f) {
+    f = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+    });
+    FORMATIERER.set(zone, f);
+  }
+  const p = Object.fromEntries(f.formatToParts(jetzt).map((x) => [x.type, x.value]));
+  return {
+    jahr: Number(p.year), monat: Number(p.month), tag: Number(p.day), wochentag: p.weekday,
+    stunde: Number(p.hour), minute: Number(p.minute), sekunde: Number(p.second),
+  };
+}
+
+/** Wie weit `zone` im Augenblick `ms` der UTC voraus ist, in Millisekunden (Winter +1 h, Sommer +2 h). */
+function versatz(ms: number, zone: string): number {
+  const t = teile(new Date(ms), zone);
+  return Date.UTC(t.jahr, t.monat - 1, t.tag, t.stunde, t.minute, t.sekunde) - Math.floor(ms / 1000) * 1000;
+}
+
+/**
+ * Der heutige Lerntag als `DateOnly`-Text („2026-11-08") – der Tag, den der Server „heute" nennt. Nicht
+ * `toISOString()`: das ist der UTC-Tag und belegte ein Formular um 00:30 Ortszeit mit gestern vor (B-730).
+ */
+export function heuteImLerntag(jetzt: Date = new Date(), zone: string = LERNTAG_ZONE): string {
+  const t = teile(jetzt, zone);
+  return `${t.jahr}-${String(t.monat).padStart(2, "0")}-${String(t.tag).padStart(2, "0")}`;
+}
+
+/** Mitternacht eines Wanduhr-Tags (`Date.UTC(…)` der Wanduhr) in `zone` als Augenblick (ms) – zweimal mit dem Versatz,
+ * weil er um Mitternacht an einem Umstellungstag ein anderer sein kann als einen Tag davor. */
+function mitternacht(wand: number, zone: string): number {
+  return wand - versatz(wand - versatz(wand, zone), zone);
+}
+
+/**
+ * Der Beginn eines Lerntags („2026-11-20") als UTC-Zeitpunkt für den Server („2026-11-19T23:00:00Z") – etwa für ein
+ * einmaliges Auffüllen im Shop, das wie jedes andere um Mitternacht deutscher Zeit kommt (B-730), nicht um 1 bzw. 2 Uhr.
+ */
+export function beginnDesLerntags(tag: string, zone: string = LERNTAG_ZONE): string {
+  const m = NUR_TAG.exec(tag);
+  if (!m) return tag;
+  const ms = mitternacht(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])), zone);
+  return new Date(ms).toISOString().replace(".000Z", "Z");
+}
+
+/**
+ * Die Server-Uhr für Fristen (B-525): die Arcade zeigt ihre Fristen nach dem Lerntag – eine Anzeige nach der Zone des
+ * Geräts widerspräche der Buchung, wenn das Gerät woanders steht. Der Augenblick wird hier geholt und nicht in der
+ * Arcade gebaut (B-447).
  */
 export const jetztGerade = (): Date => new Date();
 
-/** Angefangene Stunden bis zum Tagesende des Servers (Mitternacht UTC), mindestens 1. */
-export function stundenBisServerTagesende(jetzt: Date): number {
-  const tagesende = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), jetzt.getUTCDate() + 1);
-  return Math.max(1, Math.ceil((tagesende - jetzt.getTime()) / 3_600_000));
+/** Angefangene Stunden bis zum Ende des Lerntags (Mitternacht deutscher Zeit), mindestens 1. */
+export function stundenBisServerTagesende(jetzt: Date, zone: string = LERNTAG_ZONE): number {
+  const t = teile(jetzt, zone);
+  const ende = mitternacht(Date.UTC(t.jahr, t.monat - 1, t.tag + 1), zone);
+  return Math.max(1, Math.ceil((ende - jetzt.getTime()) / 3_600_000));
 }
 
-/** Der letzte Tag der Server-Woche (Montag bis Sonntag, UTC). */
-export const istServerSonntag = (jetzt: Date): boolean => jetzt.getUTCDay() === 0;
+/** Der letzte Tag der Lernwoche (Montag bis Sonntag, deutsche Zeit). */
+export const istServerSonntag = (jetzt: Date, zone: string = LERNTAG_ZONE): boolean =>
+  teile(jetzt, zone).wochentag === "Sun";

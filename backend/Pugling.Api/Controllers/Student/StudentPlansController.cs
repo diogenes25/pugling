@@ -18,7 +18,7 @@ namespace Pugling.Api.Controllers.Student;
 [Tags("Student – Plans")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Student)]
-public class StudentPlansController(PuglingDbContext db, TimeProvider time) : ControllerBase
+public class StudentPlansController(PuglingDbContext db, LearningDay learningDay) : ControllerBase
 {
     /// <summary>
     /// The playable study plans of the logged-in child (practically exactly one): active <b>and</b> today
@@ -37,7 +37,7 @@ public class StudentPlansController(PuglingDbContext db, TimeProvider time) : Co
         var cid = User.ChildId();
         if (cid is null) return Forbid();
 
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         return Ok(await db.StudyPlans.AsNoTracking()
             .Where(p => p.ChildId == cid.Value && p.Active && p.StartDate <= today && p.EndDate >= today)
             .OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id)

@@ -387,8 +387,8 @@ interface VocabRowProps {
   reloadChildTags: () => void;
 }
 
-/** Eine Store-Zeile mit Inline-Bearbeiten (PATCH), Löschen und aufklappbarem Tag-Editor. */
-function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTagOptions, reloadChildTags }: VocabRowProps) {
+/** Eine Store-Zeile mit Inline-Bearbeiten (PATCH), Löschen und aufklappbarem Tag-Editor. Exportiert für den Test (B-791). */
+export function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTagOptions, reloadChildTags }: VocabRowProps) {
   const [editing, setEditing] = useState(false);
   const [word, setWord] = useState(v.word);
   const [translation, setTranslation] = useState(v.translation);
@@ -416,8 +416,9 @@ function VocabRow({ v, onChanged, childId, globalTags, reloadGlobalTags, childTa
       clearTranslationAlternatives: alts === undefined,
       // "" hebt eine Grundform-Verknüpfung auf; ein Key setzt sie (Server prüft Existenz).
       baseFormKey: baseFormKey.trim(),
-      baseFormRelation: baseFormRelation.trim() || null,
-      pronunciationAudioUrl: audioUrl.trim() || null,
+      // Leer als `""`: `null` hieße „unverändert", `""` leert am Server (B-791).
+      baseFormRelation: baseFormRelation.trim(),
+      pronunciationAudioUrl: audioUrl.trim(),
     };
     // Nur die zur Wortart passenden Detail-Blöcke mitschicken (Server merged partiell).
     if (pos === "Noun")

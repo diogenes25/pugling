@@ -219,4 +219,84 @@ public class PatchClearFieldTests(PuglingWebAppFactory factory) : IClassFixture<
         Assert.Null(IntOrNull(cleared, "grade"));
         Assert.Equal(JsonValueKind.Null, cleared.GetProperty("subjectName").ValueKind);
     }
+
+    /// <summary>
+    /// B-791 AK 5: the father's edit forms send a cleared text field as <c>""</c>, and an empty string must clear the plan
+    /// description and the unit's material notes - <c>null</c> keeps them. Red when either controller skips blank values.
+    /// </summary>
+    [Fact]
+    public async Task B791_Leerer_Text_Leert_Planbeschreibung_Und_Unit_Notizen_Null_Laesst_Sie_Stehen()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var subjectId = await TestApi.DefaultSubjectIdAsync(father);
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
+            new { childId = 1, title = "B-791-Plan", subjectId, durationDays = 5, description = "Erst Vokabeln" }));
+        var planUrl = $"/api/v1/supervisor/study-plans/{planId}";
+
+        var planKept = await JsonAsync(await father.PatchAsJsonAsync(planUrl, new { description = (string?)null }));
+        Assert.Equal("Erst Vokabeln", planKept.GetProperty("description").GetString());
+        var planCleared = await JsonAsync(await father.PatchAsJsonAsync(planUrl, new { description = "" }));
+        Assert.Equal(JsonValueKind.Null, planCleared.GetProperty("description").ValueKind);
+
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var unitUrl = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}";
+        await JsonAsync(await father.PatchAsJsonAsync(unitUrl, new { grammar = "simple past", vocabularyNotes = "Schule" }));
+
+        var unitKept = await JsonAsync(await father.PatchAsJsonAsync(unitUrl, new { grammar = (string?)null, vocabularyNotes = (string?)null }));
+        Assert.Equal("simple past", unitKept.GetProperty("grammar").GetString());
+        Assert.Equal("Schule", unitKept.GetProperty("vocabularyNotes").GetString());
+        var unitCleared = await JsonAsync(await father.PatchAsJsonAsync(unitUrl, new { grammar = "", vocabularyNotes = "" }));
+        Assert.Equal(JsonValueKind.Null, unitCleared.GetProperty("grammar").ValueKind);
+        Assert.Equal(JsonValueKind.Null, unitCleared.GetProperty("vocabularyNotes").ValueKind);
+    }
+
+    /// <summary>
+    /// B-791 AK 4: a blank pronunciation URL is "no URL" - stored as <c>null</c> on create and on update, so the store
+    /// knows one state for "none". <c>null</c> in the PATCH keeps the URL. Red when either path stores the blank verbatim.
+    /// </summary>
+    [Fact]
+    public async Task B791_Leere_Audio_Url_Wird_Null_Beim_Anlegen_Und_Aendern()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var blankOnCreate = await JsonAsync(await creator.PostAsJsonAsync("/api/v1/creator/vocabulary", new
+        {
+            sourceLanguage = "en",
+            targetLanguage = "de",
+            word = TestApi.UniqueName("tune"),
+            translation = "Melodie",
+            pronunciationAudioUrl = "",
+        }));
+        Assert.Equal(JsonValueKind.Null, blankOnCreate.GetProperty("pronunciationAudioUrl").ValueKind);
+
+        var (id, _) = await TestApi.CreateStoreVocabAsync(creator, TestApi.UniqueName("song"), "Lied");
+        var url = $"/api/v1/creator/vocabulary/{id}";
+        await JsonAsync(await creator.PatchAsJsonAsync(url, new { pronunciationAudioUrl = "https://example.org/song.mp3" }));
+
+        var kept = await JsonAsync(await creator.PatchAsJsonAsync(url, new { pronunciationAudioUrl = (string?)null }));
+        Assert.Equal("https://example.org/song.mp3", kept.GetProperty("pronunciationAudioUrl").GetString());
+        var cleared = await JsonAsync(await creator.PatchAsJsonAsync(url, new { pronunciationAudioUrl = "  " }));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("pronunciationAudioUrl").ValueKind);
+
+        // A set URL is stored trimmed - the same cleanup as the base-form relation beside it.
+        var trimmed = await JsonAsync(await creator.PatchAsJsonAsync(url, new { pronunciationAudioUrl = " https://example.org/x.mp3 " }));
+        Assert.Equal("https://example.org/x.mp3", trimmed.GetProperty("pronunciationAudioUrl").GetString());
+    }
+
+    /// <summary>
+    /// B-800: a unit's band (grade) can be cleared again - <c>null</c> alone means "unchanged" in the PATCH, so clearing
+    /// needs the switch. Red without <c>ClearGrade</c> (the old band stays) or when the switch runs before the value.
+    /// </summary>
+    [Fact]
+    public async Task B800_Band_Einer_Unit_Laesst_Sich_Leeren()
+    {
+        var creator = await TestApi.AdultAsync(factory);
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(creator, await TestApi.DefaultSubjectIdAsync(creator));
+        var url = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}";
+        Assert.Equal(7, IntOrNull(await JsonAsync(await creator.PatchAsJsonAsync(url, new { grade = 7 })), "grade"));
+
+        Assert.Equal(7, IntOrNull(await JsonAsync(await creator.PatchAsJsonAsync(url, new { grade = (int?)null })), "grade"));
+        Assert.Null(IntOrNull(await JsonAsync(await creator.PatchAsJsonAsync(url, new { clearGrade = true })), "grade"));
+        // Value first, switch second: a form sending both ends up empty, as everywhere else.
+        Assert.Null(IntOrNull(await JsonAsync(await creator.PatchAsJsonAsync(url, new { grade = 8, clearGrade = true })), "grade"));
+    }
 }

@@ -8,7 +8,7 @@ import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
-import { formatDate } from "../lib/datum";
+import { augenblick, beginnDesLerntags, formatDate, heuteImLerntag } from "../lib/datum";
 import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
@@ -224,6 +224,9 @@ const WEEKDAYS: { value: Weekday; label: string; short: string }[] = [
  * unverändert zurück. Das Feld kennt nur den Tag; ein Termin mit Uhrzeit käme sonst als Mitternacht zurück, der Server
  * läse einen neuen Termin und füllte jedes Kind noch einmal auf.
  */
+/** Der Lerntag eines Server-Zeitpunkts – ein Termin um 23:00 UTC ist schon der Folgetag (B-730). */
+const tagDes = (refillAtUtc: string) => heuteImLerntag(augenblick(refillAtUtc));
+
 function planDto(plan: RefillPlan, loadedRefillAtUtc?: string | null) {
   return {
     maxStock: plan.maxStock,
@@ -231,8 +234,9 @@ function planDto(plan: RefillPlan, loadedRefillAtUtc?: string | null) {
     refillQuantity: plan.refillKind === "None" ? null : plan.refillQuantity,
     refillDayOfWeek: plan.refillKind === "Weekly" ? plan.refillDayOfWeek : null,
     refillAtUtc: plan.refillKind !== "Once" || !plan.refillDate ? null
-      : loadedRefillAtUtc && loadedRefillAtUtc.slice(0, 10) === plan.refillDate ? loadedRefillAtUtc
-      : `${plan.refillDate}T00:00:00Z`,
+      : loadedRefillAtUtc && tagDes(loadedRefillAtUtc) === plan.refillDate ? loadedRefillAtUtc
+      // Mitternacht deutscher Zeit wie jedes andere Auffüllen, nicht 00:00 UTC = 1 bzw. 2 Uhr (B-730).
+      : beginnDesLerntags(plan.refillDate),
   };
 }
 
@@ -421,7 +425,7 @@ function editPlan(listing: ShopListing): RefillPlan {
   return {
     maxStock: listing.maxStock, refillQuantity: listing.refillQuantity, refillKind: listing.refillKind,
     refillDayOfWeek: listing.refillDayOfWeek ?? "Monday",
-    refillDate: listing.refillKind === "Once" ? listing.refillAtUtc?.slice(0, 10) ?? "" : "",
+    refillDate: listing.refillKind === "Once" && listing.refillAtUtc ? tagDes(listing.refillAtUtc) : "",
     expires: listing.refillQuantity >= listing.maxStock,
   };
 }

@@ -5,8 +5,9 @@ namespace Pugling.Api.Services.Shared;
 /// when the next one comes, where the current period began, and what a child's stock starts at. Every path that refills
 /// or creates a child's stock goes through here, so the list views, the purchase and the single view cannot disagree.
 /// <para>
-/// Refill instants are UTC like all day logic of the project: <c>Daily</c> at midnight, <c>TwiceDaily</c> at midnight
-/// and noon, <c>Weekly</c> at midnight of the weekday, <c>Monthly</c> at midnight of the 1st. They are <b>counted</b>,
+/// Refill instants follow the learning day (B-730): <c>Daily</c> at local midnight, <c>TwiceDaily</c> at midnight and
+/// noon, <c>Weekly</c> at midnight of the weekday, <c>Monthly</c> at midnight of the 1st - all in the family's zone
+/// (parameter <c>zone</c>; <c>null</c> = UTC). Inputs and results stay UTC instants; only the calendar is local. They are <b>counted</b>,
 /// not tested for "today": a week nobody opened the shop is caught up on the next read instead of being lost.
 /// </para>
 /// </summary>
@@ -19,20 +20,25 @@ public static class ShopRefillSchedule
     /// Number of refill instants in <c>(lastUtc, nowUtc]</c>. A stock that was never refilled (<paramref name="lastUtc"/>
     /// <c>null</c>) owes exactly one refill - for <c>Once</c> only from <paramref name="onceAtUtc"/> on.
     /// </summary>
-    public static int DueRefills(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime? lastUtc, DateTime nowUtc)
+    public static int DueRefills(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime? lastUtc, DateTime nowUtc,
+        TimeZoneInfo? zone)
     {
         if (kind == ShopRefillKind.Once)
             return onceAtUtc is { } at && nowUtc >= at && lastUtc is null ? 1 : 0;
         if (kind == ShopRefillKind.None) return 0;
-        if (lastUtc is not { } last) return 1;
-        if (nowUtc <= last) return 0;
+        if (lastUtc is not { } lastInstant) return 1;
+        if (nowUtc <= lastInstant) return 0;
+
+        // Counted on the local wall clock: a refill instant is a local midnight (or noon), whatever its UTC offset.
+        var last = Local(lastInstant, zone);
+        var now = Local(nowUtc, zone);
 
         return kind switch
         {
-            ShopRefillKind.Daily => DayNumber(nowUtc) - DayNumber(last),
-            ShopRefillKind.TwiceDaily => HalfDayNumber(nowUtc) - HalfDayNumber(last),
-            ShopRefillKind.Weekly => weekday is { } w ? WeekdaysUpTo(nowUtc, w) - WeekdaysUpTo(last, w) : 0,
-            ShopRefillKind.Monthly => MonthNumber(nowUtc) - MonthNumber(last),
+            ShopRefillKind.Daily => DayNumber(now) - DayNumber(last),
+            ShopRefillKind.TwiceDaily => HalfDayNumber(now) - HalfDayNumber(last),
+            ShopRefillKind.Weekly => weekday is { } w ? WeekdaysUpTo(now, w) - WeekdaysUpTo(last, w) : 0,
+            ShopRefillKind.Monthly => MonthNumber(now) - MonthNumber(last),
             _ => 0,
         };
     }
@@ -41,16 +47,23 @@ public static class ShopRefillSchedule
     /// The next refill instant after <paramref name="nowUtc"/>; <c>null</c> when the listing never refills again
     /// (<c>None</c>, or <c>Once</c> after it fired).
     /// </summary>
-    public static DateTime? NextRefillAtUtc(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime? lastUtc, DateTime nowUtc)
+    public static DateTime? NextRefillAtUtc(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime? lastUtc, DateTime nowUtc,
+        TimeZoneInfo? zone)
     {
-        var today = Utc(nowUtc.Date);
+        if (kind == ShopRefillKind.Once) return lastUtc is null ? onceAtUtc : null;
+        var local = NextRefillLocal(kind, weekday, Local(nowUtc, zone));
+        return local is { } l ? ToUtc(l, zone) : null;
+    }
+
+    private static DateTime? NextRefillLocal(ShopRefillKind kind, DayOfWeek? weekday, DateTime now)
+    {
+        var today = Utc(now.Date);
         return kind switch
         {
-            ShopRefillKind.Once => lastUtc is null ? onceAtUtc : null,
             ShopRefillKind.Daily => today.AddDays(1),
-            ShopRefillKind.TwiceDaily => nowUtc.Hour < 12 ? today.AddHours(12) : today.AddDays(1),
-            ShopRefillKind.Weekly when weekday is { } w => today.AddDays(DaysUntil(nowUtc.DayOfWeek, w) is var d && d == 0 ? 7 : d),
-            ShopRefillKind.Monthly => Utc(new DateTime(nowUtc.Year, nowUtc.Month, 1)).AddMonths(1),
+            ShopRefillKind.TwiceDaily => now.Hour < 12 ? today.AddHours(12) : today.AddDays(1),
+            ShopRefillKind.Weekly when weekday is { } w => today.AddDays(DaysUntil(now.DayOfWeek, w) is var d && d == 0 ? 7 : d),
+            ShopRefillKind.Monthly => Utc(new DateTime(now.Year, now.Month, 1)).AddMonths(1),
             _ => null,
         };
     }
@@ -60,17 +73,24 @@ public static class ShopRefillSchedule
     /// <c>None</c> the listing's creation, for <c>Once</c> its instant. A child's purchases since then count against its
     /// start stock.
     /// </summary>
-    public static DateTime PeriodStartUtc(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime createdAtUtc, DateTime nowUtc)
+    public static DateTime PeriodStartUtc(ShopRefillKind kind, DayOfWeek? weekday, DateTime? onceAtUtc, DateTime createdAtUtc, DateTime nowUtc,
+        TimeZoneInfo? zone)
     {
-        var today = Utc(nowUtc.Date);
+        if (kind == ShopRefillKind.Once && onceAtUtc is { } once) return once;
+        if (!IsRecurring(kind)) return createdAtUtc;
+        return PeriodStartLocal(kind, weekday, Local(nowUtc, zone)) is { } start ? ToUtc(start, zone) : createdAtUtc;
+    }
+
+    private static DateTime? PeriodStartLocal(ShopRefillKind kind, DayOfWeek? weekday, DateTime now)
+    {
+        var today = Utc(now.Date);
         return kind switch
         {
             ShopRefillKind.Daily => today,
-            ShopRefillKind.TwiceDaily => nowUtc.Hour < 12 ? today : today.AddHours(12),
-            ShopRefillKind.Weekly when weekday is { } w => today.AddDays(-DaysUntil(w, nowUtc.DayOfWeek)),
-            ShopRefillKind.Monthly => Utc(new DateTime(nowUtc.Year, nowUtc.Month, 1)),
-            ShopRefillKind.Once when onceAtUtc is { } at => at,
-            _ => createdAtUtc,
+            ShopRefillKind.TwiceDaily => now.Hour < 12 ? today : today.AddHours(12),
+            ShopRefillKind.Weekly when weekday is { } w => today.AddDays(-DaysUntil(w, now.DayOfWeek)),
+            ShopRefillKind.Monthly => Utc(new DateTime(now.Year, now.Month, 1)),
+            _ => null,
         };
     }
 
@@ -101,7 +121,17 @@ public static class ShopRefillSchedule
 
     private static DateTime Utc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
-    private static int DayNumber(DateTime utc) => DateOnly.FromDateTime(utc).DayNumber;
+    // The local wall clock of a UTC instant, kept with kind Utc so the calendar arithmetic below stays kind-agnostic.
+    private static DateTime Local(DateTime utc, TimeZoneInfo? zone) => zone is null
+        ? Utc(utc)
+        : Utc(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone));
+
+    // Back from the local wall clock to the instant; local midnight and noon exist on every day of a supported zone.
+    private static DateTime ToUtc(DateTime local, TimeZoneInfo? zone) => zone is null
+        ? Utc(local)
+        : Utc(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), zone));
+
+    private static int DayNumber(DateTime wallClock) => DateOnly.FromDateTime(wallClock).DayNumber;
 
     private static int HalfDayNumber(DateTime utc) => DayNumber(utc) * 2 + (utc.Hour >= 12 ? 1 : 0);
 

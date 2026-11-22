@@ -67,6 +67,10 @@ public abstract class PuglingWebAppFactoryBase : WebApplicationFactory<Program>
             s.AddSingleton<IStartupFilter, EndpointCoverageStartupFilter>();
             s.AddSingleton<TimeProvider>(Clock);
         });
+        // B-730: the suite runs on the UTC calendar. Many tests form "today" themselves from `DateTime.UtcNow`; on the
+        // production zone they would disagree with the server for an hour or two every night. The zone rule itself is
+        // tested by a factory that sets Europe/Berlin (TagesbegriffTests) - set here, BEFORE ConfigureFactory, so it can.
+        builder.UseSetting("LearningDay:TimeZone", "UTC");
         ConfigureFactory(builder);
 
         // Deliberately **last**: the later `UseSetting` wins, so a derived factory cannot displace these two

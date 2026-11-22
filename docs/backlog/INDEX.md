@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (102)
+### Offen (91)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-704](B-704-aufbau-weg-in-der-oberflaeche.md) | Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind | Wunsch | `geschaetzt` | P1 | M | frontend | — |
-| [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
@@ -90,18 +89,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | Learning Dad reagiert auf verfehlte Tagesziele vom Vortag (wütend → Monster → Kampfansage) | Wunsch | `idee` | P2 | — | — | — |
 | [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
-| [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `geschaetzt` | P3 | S | frontend | — |
-| [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `geschaetzt` | P3 | M | frontend | — |
-| [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `geschaetzt` | P3 | S | frontend | — |
-| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | Defekt | `geschaetzt` | P3 | S | frontend | — |
-| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `geschaetzt` | P3 | M | beides | — |
-| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | Defekt | `geschaetzt` | P3 | M | backend | — |
-| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `geschaetzt` | P3 | S | backend | — |
 | [B-659](B-659-pflicht-wird-kuer-bricht-die-serie.md) | Wird eine Pflicht zur Kür (oder gelöscht), bricht die Serie rückwirkend | Defekt | `geschaetzt` | P3 | L | backend | Migration |
-| [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `geschaetzt` | P3 | M | beides | — |
-| [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | Defekt | `ausformuliert` | P3 | — | beides | — |
-| [B-778](B-778-bonus-fokus-ergebnis-und-aufdecken.md) | Die Bonusrunde lässt den Fokus nach „Aufdecken“ und auf dem Ergebnisblatt auf `body` fallen | Defekt | `idee` | P3 | — | frontend | — |
-| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | Defekt | `idee` | P3 | — | beides | — |
+| [B-787](B-787-sohnprogress-vitest-flackert-unter-last.md) | `SohnProgress.test.tsx` flackert im vollen Vitest-Lauf | Defekt | `idee` | P3 | — | frontend | — |
+| [B-788](B-788-fokus-effekt-abhaengigkeiten-ungetragen.md) | Zwei Abhängigkeiten des Fokus-Effekts im Test trägt kein Fall | Defekt | `idee` | P3 | — | frontend | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
@@ -116,11 +106,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
 | [B-684](B-684-korrigierte-klausur-einscannen.md) | Die korrigierte Klausur einscannen: Note und Fehler erfassen | Wunsch | `idee` | P3 | — | — | — |
-| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `geschaetzt` | P3 | M | backend | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (551)</summary>
+<summary>Abgenommen (569)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -603,12 +592,19 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-598](B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) | Kombi-Lernkarte: aufdecken, einschätzen, abschreiben, aus dem Gedächtnis schreiben | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-60](B-60-flags-enum-im-dokument.md) | Das Vertragsdokument verbietet einen `SchoolTypes`-Wert, den Server und Frontend täglich austauschen | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf | Defekt | `abgenommen` | P3 | M | frontend | — |
+| [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-606](B-606-kind-tagessicht-ueber-alle-plaene.md) | Eine Kind-Tagessicht über alle aktiven Pläne: Pflicht, Box und Serie | Wunsch | `abgenommen` | P1 | M | beides | — |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | Defekt | `abgenommen` | P3 | M | beides | — |
+| [B-609](B-609-truhe-rechnet-den-tag-doppelt.md) | Bis die Truhe vergeben ist, rechnet jede Abgabe den Tag zweimal | Aufräumen | `abgenommen` | P3 | M | backend | — |
 | [B-61](B-61-reste-der-schreib-primitiven-runde.md) | Zwei Reste aus der Schreib-Primitiven-Runde | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach | Defekt | `abgenommen` | P2 | XS | agent | — |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | Defekt | `abgenommen` | P2 | L | backend | Migration |
+| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | Defekt | `abgenommen` | P3 | M | backend | — |
 | [B-62](B-62-reste-aus-dem-b37-review.md) | Drei Reste aus dem B-37-Review (Sohn-Arcade) | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 | Wunsch | `abgenommen` | P1 | M | doku | — |
 | [B-628](B-628-rueckmeldung-backend.md) | Rückmeldungen zur Karte: Speicher, Student-Endpunkt und die Sichten für Betreuer und Ersteller (Backend) | Wunsch | `abgenommen` | P1 | L | backend | Migration |
@@ -625,6 +621,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-645](B-645-taschengeld-und-auffuell-plan-fuer-alle-angebote.md) | Taschengeld als Shop-Belohnung mit monatlichem Auffüllen – und ein Auffüll-Plan, der überall greift | Wunsch | `abgenommen` | P2 | L | beides | Migration + Vertrag |
 | [B-65](B-65-vokabel-mehrere-uebersetzungen.md) | Eine Vokabel mit zwei richtigen Übersetzungen wertet eine davon falsch | Defekt | `abgenommen` | P1 | M | beides | Migration |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten | Aufräumen | `abgenommen` | P3 | S | frontend | — |
+| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-66](B-66-buchstabenkaestchen-trennzeichen.md) | Das Buchstabenkästchen lässt Leer- und Satzzeichen tippen, die schon feststehen | Defekt | `abgenommen` | P2 | M | beides | — |
@@ -638,6 +635,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-67](B-67-fachlehrer-aus-lehrwerk.md) | Der Fachlehrer fragt nach Fach und Sprachen, die im gewählten Lehrwerk längst stehen | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-673](B-673-plan-auf-anderes-kind-umgehaengt-erbt-dessen-vergangenheit.md) | Ein Plan, den der Vater einem anderen Kind gibt, bringt die Vergangenheit des ersten Kindes mit | Defekt | `abgenommen` | P3 | M | beides | — |
 | [B-68](B-68-vater-web-responsive.md) | Das Vater-Web hat keinen einzigen eigenen Breakpoint | Wunsch | `abgenommen` | P3 | M | frontend | — |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ | Wunsch | `abgenommen` | P1 | S | beides | — |
@@ -646,6 +644,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
 | [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um | Wunsch | `abgenommen` | P2 | L | frontend | — |
@@ -659,10 +658,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-775](B-775-e2e-feier-titel-nach-learning-dad.md) | Drei E2E-Specs suchen den Feier-Titel noch unter `.cel-title` | Defekt | `abgenommen` | P2 | XS | frontend | — |
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-778](B-778-bonus-fokus-ergebnis-und-aufdecken.md) | Die Bonusrunde lässt den Fokus nach „Aufdecken“ und auf dem Ergebnisblatt auf `body` fallen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-78](B-78-birkenbihl-dekodierung-erreicht-kind-nicht.md) | Die Birkenbihl-Dekodierung erreicht das Kind nicht | Defekt | `abgenommen` | P2 | M | beides | — |
+| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | Defekt | `abgenommen` | P2 | XS | backend | — |
+| [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | Der Aufwärm-Hinweis verspricht „ab der Auswahl gibt es mehr“, die Auswahl zahlt aber gleich viel | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-786](B-786-shop-bearbeiten-uebernimmt-alten-termin.md) | Das Bearbeiten eines Angebots schickt einen Termin, den der Vater nie gewählt hat | Defekt | `abgenommen` | P3 | S | frontend | — |
+| [B-789](B-789-angebotstitel-leeren-bleibt-stehen.md) | Ein geleerter Angebotstitel wird als gespeichert gemeldet und bleibt stehen | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-79](B-79-position-stufe-unvalidiert.md) | Die Stufe einer Position wird gegen nichts geprüft | Defekt | `abgenommen` | P2 | S | backend | — |
+| [B-790](B-790-plan-umhaengen-spec-trifft-zwei-bearbeiten.md) | `plan-umhaengen-gesperrt.spec.ts` trifft zwei „Bearbeiten“-Knöpfe | Defekt | `abgenommen` | P2 | XS | frontend | — |
+| [B-791](B-791-geleerte-felder-ausserhalb-des-shops.md) | Drei Vater-Formulare leeren ein Feld nicht, sondern lassen es beim Server stehen | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-80](B-80-tags-geben-fremde-konfiguration-preis.md) | Das Kind kann die Lösungen jeder Übung lesen | Defekt | `abgenommen` | P1 | S | backend | Vertrag |
+| [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | Ein geleerter „Band" einer Unit wird als gespeichert gemeldet und bleibt stehen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-83](B-83-loesungsfeld-regel-residenter-kontext.md) | Die Lösungsfeld-Regel steht nur als Kommentar am Wächter | Aufräumen | `abgenommen` | P3 | XS | doku | — |
@@ -695,9 +702,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (206)
+### Nach der Abnahme entgangen (209)
 
-**Nachgeschaut: 521 von 551 abgenommenen** — und in 189 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 30 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 535 von 569 abgenommenen** — und in 191 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 34 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -884,19 +891,19 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-550](B-550-lernkontrolle-warnt-trotz-getippter-stufe.md) | Die Positionszeile warnt „Selbsteinschätzung zählt“, obwohl die Stufe getippt prüft | [B-469, B-16] | `abgenommen` |
 | [B-551](B-551-feldhilfe-stufe-nennt-stufenplan-je-leitner-fach.md) | Die Feldhilfe „Stufe“ nennt einen Stufenplan je Leitner-Fach, den es nicht gibt | [B-16] | `abgenommen` |
 | [B-552](B-552-nur-getippt-ohne-getippte-stufe-unerreichbar.md) | „Nur getippte Tests“ ohne getippte Stufe macht die Pflicht unerreichbar – und kostet täglich Malus | [B-469, B-16] | `abgenommen` |
-| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `geschaetzt` |
-| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `geschaetzt` |
+| [B-607](B-607-hinweis-verschwindet-auf-schreibstufen.md) | Der Editor bietet einen Hinweis an, den die Schreibstufen bei „Fremdwort → Deutsch" still verschlucken | [B-597] | `abgenommen` |
+| [B-608](B-608-bonus-kopf-nennt-zu-hohen-satz.md) | Der Kopf eines Bonus-Laufs verspricht mehr Münzen je Treffer, als manche Karten zahlen | [B-597] | `abgenommen` |
 | [B-611](B-611-wochenplan-sperrt-die-truhe-aller-plaene.md) | Ein Plan nur mit Wochenzielen sperrt die Tagestruhe und den Bonus über alle Pläne | [B-606] | `abgenommen` |
 | [B-612](B-612-startseite-zaehlt-belohnungsziele-anders-als-der-server.md) | Die Startseite zählt die Belohnungsziele anders als der Server – „2/2" neben einer geschlossenen Truhe | [B-606] | `abgenommen` |
 | [B-613](B-613-rueckdatierter-plan-bricht-die-serie.md) | Eine nachgetragene Pflicht oder ein wieder eingeschalteter Plan bricht die Serie und bucht Malus nachträglich | [B-606] | `abgenommen` |
-| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `geschaetzt` |
-| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `geschaetzt` |
+| [B-614](B-614-startseite-gruppiert-nach-uebungsfach-statt-planfach.md) | Die Startseite gruppiert nach dem Fach der Übung, nicht nach dem Fach des Plans | [B-606] | `abgenommen` |
+| [B-653](B-653-nur-neue-inhalte-verliert-offene-lernkarte.md) | Bei „nur neue Inhalte“ kommt ein nicht eingeprägtes Wort nie wieder als Lernkarte | [B-643] | `abgenommen` |
 | [B-661](B-661-fehlende-sonderzeichen-auf-der-tastatur-blockieren-die-mission.md) | Ein Buchstabe, den die Tastatur nicht hat, blockiert die Tagesmission | [B-598] | `abgenommen` |
 | [B-666](B-666-umstellen-auf-bis-erledigt-bucht-malus-doppelt.md) | Umstellen einer Nacharbeit von „Tagesziel“ auf „bis erledigt“ bucht den Malus schon abgerechneter Tage noch einmal | [B-636] | `abgenommen` |
 | [B-667](B-667-nacharbeit-report-zaehlt-aufgaben-ausserhalb-des-pools.md) | Der Nacharbeits-Report zeigt Aufgaben außerhalb des Pools als „offen“ und zählt gegen alle Inhalte | [B-637] | `abgenommen` |
 | [B-668](B-668-leerer-pool-beendet-nacharbeit-nie.md) | Bei leerem Pool endet „täglich, bis erledigt“ nie, und der Malus läuft weiter | [B-636] | `abgenommen` |
 | [B-669](B-669-beendete-nacharbeit-zurueck-auf-tagesziel-bestraft-tage-davor.md) | Eine beendete Nacharbeit, zurück auf Tagesziel gestellt, kostet Malus für die Tage seit ihrem Ende | [B-636] | `abgenommen` |
-| [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | [B-661] | `ausformuliert` |
+| [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | [B-661] | `verworfen` |
 | [B-671](B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) | In der Bonusrunde schreibt die Sonderzeichen-Leiste ins Kästchen der vorigen Karte | [B-661] | `abgenommen` |
 | [B-672](B-672-startverlegung-zurueck-holt-unspielbare-tage-zurueck.md) | Ein zurückverlegter Planstart holt Tage zurück, an denen der Plan nicht spielbar war | [B-613] | `abgenommen` |
 | [B-685](B-685-abgebrochener-test-sperrt-rueckmeldung-im-ueben.md) | Ein mit „Später“ verlassener Test sperrt die Rückmeldung im Üben für den ganzen Tag | [B-628] | `abgenommen` |
@@ -905,11 +912,14 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-774](B-774-am-rechner-hinweis-live-region-bedingt.md) | Der Hinweis „nur am Rechner“ entsteht zusammen mit seiner Live-Region | [B-663] | `abgenommen` |
 | [B-776](B-776-wechsel-auf-einmalig-loest-nie-aus.md) | Ein Angebot, das von wiederkehrend auf „einmalig“ wechselt, füllt vorhandene Bestände nie auf | [B-771] | `abgenommen` |
 | [B-777](B-777-heute-status-offen-trotz-antworten.md) | Die Vater-Startseite zeigt „offen“ bei einem Kind, das heute schon geantwortet hat | [B-749, B-770] | `abgenommen` |
-| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | [B-776] | `idee` |
+| [B-782](B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md) | Ein „einmalig“-Termin mit Uhrzeit füllt beim Bearbeiten im Vater-Web noch einmal auf | [B-776] | `abgenommen` |
 | [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | Ein verlängerter, schon abgelaufener Plan holt die Tage dazwischen als Pflicht zurück | [B-672] | `abgenommen` |
+| [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | Der Aufwärm-Hinweis verspricht „ab der Auswahl gibt es mehr“, die Auswahl zahlt aber gleich viel | [B-657] | `abgenommen` |
+| [B-788](B-788-fokus-effekt-abhaengigkeiten-ungetragen.md) | Zwei Abhängigkeiten des Fokus-Effekts im Test trägt kein Fall | [B-541] | `idee` |
+| [B-790](B-790-plan-umhaengen-spec-trifft-zwei-bearbeiten.md) | `plan-umhaengen-gesperrt.spec.ts` trifft zwei „Bearbeiten“-Knöpfe | [B-673] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (30) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (34) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -939,13 +949,17 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind |
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
+| [B-602](B-602-feldhilfe-ziel-rhythmus-flackert.md) | `feldhilfe.spec.ts` flackert beim „Ziel-Rhythmus“ |
+| [B-603](B-603-fokus-vitests-flackern-unter-last.md) | Fokus-Vitests flackern im vollen Lauf |
+| [B-605](B-605-e2e-worker-haengt-beim-beenden.md) | Playwright-Worker hängt beim Beenden, einmal mitten im Lauf |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
-| [B-639](B-639-dezimalkomma-im-zahlenvergleich.md) | Dezimalkomma im Zahlenvergleich der Rechenaufgaben |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
+| [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) |
+| [B-790](B-790-plan-umhaengen-spec-trifft-zwei-bearbeiten.md) | `plan-umhaengen-gesperrt.spec.ts` trifft zwei „Bearbeiten“-Knöpfe |
 
 </details>
 
@@ -1105,10 +1119,18 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Abschnitt „Verlauf" |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | `idee` | Abschnitt „Verlauf" |
+| [B-778](B-778-bonus-fokus-ergebnis-und-aufdecken.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
+| [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-786](B-786-shop-bearbeiten-uebernimmt-alten-termin.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-787](B-787-sohnprogress-vitest-flackert-unter-last.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-788](B-788-fokus-effekt-abhaengigkeiten-ungetragen.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-789](B-789-angebotstitel-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-791](B-791-geleerte-felder-ausserhalb-des-shops.md) | `abgenommen` | Abschnitt „Schätzung" |
+| [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „Schätzung" |
 
 <details>
-<summary>Verworfen (58)</summary>
+<summary>Verworfen (59)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1161,6 +1183,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-646](B-646-vokabel-schema-nachfuellen.md) | Vokabel-Schema nachfüllen: Wortart, Nomen-/Verb-Angaben, jedes Birkenbihl-Wort eine Vokabel | geteilt (Entscheidung 8) → [B-647, B-648, B-649] |
 | [B-651](B-651-webuntis-hausaufgaben-als-pflicht.md) | WebUntis-Connector: Schul-Hausaufgaben je Kind abrufen, damit der Vater daraus Übungen baut | geteilt → [B-654, B-655, B-656] |
 | [B-662](B-662-vater-sicht-arbeit-tagesziel-kaeufe.md) | Die Vater-Sicht zeigt nur, was den Vater interessiert: Arbeit, Tagesziel, Käufe | geteilt, faktisch XL: Sammel-Endpunkt, Antwortzahl-Feld und Startseiten-Umbau samt 15 betroffenen Specs sind drei einzeln baubare Stücke (Backend zuerst) → [B-747, B-770, B-749] |
+| [B-670](B-670-sonderzeichen-leiste-folgt-der-reihe-nicht-der-richtung.md) | Die Sonderzeichen-Leiste folgt der Sprache der Reihe, nicht der Sprache, in der das Kind tippt | gegenstandslos durch B-597: auf jeder getippten Stufe mit Leiste spielt die Vorwärtskarte ihre vertauschte Written-Form, getippt wird die Lernsprache der Reihe – genau was KeyboardLangOf liefert. Nachgeprüft im Nachtlauf 2026-11-23-a; regionale Codes (AK 5) bietet das Vater-Web nicht an (lib/languages.ts:12-17), darum keine Folge-Story. |
 | [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | geteilt, faktisch XL: Notenschlüssel, Berechnung mit Tabelle, Lese-Endpunkte und Anzeige sind vier einzeln baubare Stücke → [B-740, B-741, B-742, B-743] |
 | [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | geteilt, faktisch XL: Prognose-Schnappschuss mit Migration, Wirkung der Note und Abweichungsanzeige sind drei einzeln baubare Stücke → [B-744, B-745, B-746] |
 | [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | geteilt, zu groß für eine Stufe (faktisch XL) → [B-760, B-761, B-762, B-763] |

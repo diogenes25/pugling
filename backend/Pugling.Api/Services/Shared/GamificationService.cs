@@ -168,7 +168,7 @@ public class GamificationService(PuglingDbContext db, MetricsService metrics, IL
             _ => (null, null),
         };
 
-    /// <summary>Monday of the ISO week of <paramref name="day"/> - the one week boundary (UTC) shared with the week comparison (B-253).</summary>
+    /// <summary>Monday of the ISO week of <paramref name="day"/> - the one week boundary (of the learning day, B-730) shared with the week comparison (B-253).</summary>
     public static DateOnly WeekMonday(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     /// <summary>
