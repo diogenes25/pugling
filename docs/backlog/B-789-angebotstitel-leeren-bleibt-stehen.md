@@ -12,6 +12,7 @@ quelle: "Review von B-786 im Nachtlauf A 2026-11-22 (docs/pm-sitzung-2026-11-22.
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-22"
 ---
 
 # B-789 · Ein geleerter Angebotstitel wird als gespeichert gemeldet und bleibt stehen
@@ -62,3 +63,10 @@ ihn bei leerem Feld; oder ein leerer String heißt am Server „leeren“.
   - AK 3 → `ShopStockPerChildTests.B789_Leerer_Text_Leert_Titel_Und_Beschreibung_Null_Laesst_Sie_Stehen`, T3 (Titel per `IsNullOrWhiteSpace` übergangen) → rot, T4 (Beschreibung ebenso) → rot. Messung 01:18 nach der letzten Änderung, Grundlinie grün.
 - **2026-11-22** — Review `frontend-reviewer`: kein 🟡/🔴, Zähler 0. 🟢: dieselbe Falle in Plan-Beschreibung, Unit-Notizen und Vokabel-Store → [B-791](B-791-geleerte-felder-ausserhalb-des-shops.md); Sohn-Shop zeigt bei leerem Angebotstitel den Artikeltitel (`MeController.cs:414`).
 - **2026-11-22** — abgenommen (`28fce14d`, Sprint 114): Rollengang Vater per E2E `shop-felder-leeren` gegen frisch gestarteten Server; Sohn Regressionszeuge (`shop-verlauf`, `full-flow`). Backend 2024/2024 (Release).
+- **2026-11-22** — nachgeschaut (Nachtlauf 2026-11-23-a, Retro Sprint 115). Prüfpunkte: (a) beide geänderten Aufrufe in
+  `28fce14d` (`VaterShop.tsx` `ArticleRow.save`, `ListingRow` OK) schicken das getrimmte Feld; (b) die übrigen Textfelder der
+  Angebotszeile reisen über `...form` mit ihrem geladenen Wert, kein weiteres `|| null` im Update-Pfad des Shops
+  (`grep "|| null" VaterShop.tsx`: nur `:63` Anlegen und `:348` Anlegen); (c) `ShopStockPerChildTests.B789_…` prüft beide
+  Richtungen (`""` leert, `null` lässt stehen). Kein Befund im Increment; dieselbe Klasse außerhalb des Shops war schon als
+  B-791 aus dem Review erfasst (kein Entgangenes).
+
