@@ -42,8 +42,8 @@ Mehrere grüne Läufe gelten nicht als Beweis.
 eine deterministische rote Probe, die ohne sie fällt. Widerlegbar durch eine Probe, die mit entfernter Wartebedingung grün
 bleibt.
 
-**Umfang:** B-602, B-605, B-603, alle `geschaetzt`. Dazu kam B-790 (Defekt XS) aus der eigenen Suite, siehe unten. Entschieden haben sie stellvertretend der Vorbereitungslauf
-2026-11-19. Die Entscheidungen sind unbestätigt.
+**Umfang:** B-602, B-605, B-603, alle `geschaetzt`. Ihre Entscheidungen traf stellvertretend der Vorbereitungslauf
+2026-11-19, sie sind unbestätigt. Dazu kam B-790 (Defekt XS) aus der eigenen Suite, siehe unten.
 
 **Entwickler-Brief:**
 - Kein Produktcode wird geändert.
