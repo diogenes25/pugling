@@ -160,7 +160,11 @@ public sealed class VocabularyExerciseType : ExerciseTypeBase
          // B-597: the dictation reads the learnt word, which is the answer of the card asked there.
          (TestStage)stage == TestStage.Audio ? item.DictationAudioUrl : null,
          IsTypedStage(stage) ? null : item.ImageUrl,
-         AsLetterBoxes(item, stage) ? StageMechanics.LetterBoxPattern(item.Answer) : null);
+         AsLetterBoxes(item, stage) ? EntryPattern(item) : null);
+
+    // B-626: a store entry hides only its core; a card whose answer is no word-list entry keeps the plain mask.
+    private static string EntryPattern(ContentItem item) =>
+        item.MeaningsSeparable ? StageMechanics.EntryLetterBoxPattern(item.Answer) : StageMechanics.LetterBoxPattern(item.Answer);
 
     /// <summary>
     /// Letter boxes on their own stage - and on the scramble stage for an answer that cannot be scrambled (B-05 AC 3):

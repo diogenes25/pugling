@@ -21,6 +21,48 @@ public static partial class AnswerVariants
         "sb", "sth", "so", "jd", "jdm", "jdn", "jds", "etw", "usw", "etc",
     };
 
+    // B-626: the word list's slots for a person or thing ("sth.", "qc", "jdm."). Not the list above: "so" is an
+    // abbreviation there but a real word here, and a slot may be dropped from an answer only as a whole word.
+    private static readonly HashSet<string> Placeholders = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "sth", "sb", "qn", "qc", "jdn", "jdm", "etw",
+    };
+
+    /// <summary>
+    /// Whether a whitespace-delimited token of a word-list entry is only slots: "sth.", "qc", "qn/qc", "jdn./jdm.".
+    /// </summary>
+    public static bool IsPlaceholder(string token)
+    {
+        var parts = token.TrimEnd(',', ';').Split('/');
+        return parts.All(p => Placeholders.Contains(p.TrimEnd('.')));
+    }
+
+    /// <summary>
+    /// Which characters of an entry are accessories the child need not type (B-626): bracketed parts including their
+    /// brackets, and slot words outside brackets. The letter-box mask and the comparison share this knowledge, so a
+    /// card never shows a fixed "sth." that the grader demands, nor a box for one it forgives.
+    /// </summary>
+    public static bool[] AccessoryMask(string entry)
+    {
+        var mask = new bool[entry.Length];
+        var depth = 0;
+        for (var i = 0; i < entry.Length; i++)
+        {
+            if (entry[i] == '(') depth++;
+            if (depth > 0) mask[i] = true;
+            if (entry[i] == ')' && depth > 0) depth--;
+        }
+        for (var i = 0; i < entry.Length;)
+        {
+            if (char.IsWhiteSpace(entry[i])) { i++; continue; }
+            var start = i;
+            while (i < entry.Length && !char.IsWhiteSpace(entry[i])) i++;
+            if (!mask[start..i].Any(m => m) && IsPlaceholder(entry[start..i]))
+                Array.Fill(mask, true, start, i - start);
+        }
+        return mask;
+    }
+
     /// <summary>
     /// Every answer that counts for <paramref name="expected"/>, raw (the grader normalizes): the entry itself,
     /// each meaning between <c>;</c>, a spaced <c>/</c> and <c>,</c>, each with its bracketed parts kept or left
@@ -36,6 +78,9 @@ public static partial class AnswerVariants
                 // The comma goes too: what is left of "Und überhaupt, ..." is the phrase, not the phrase plus a comma.
                 var bare = Collapse(form.Replace("...", " ").Replace("…", " ")).TrimEnd('.', '!', '?', ',', ' ');
                 if (bare.Length > 0 && !variants.Contains(bare)) variants.Add(bare);
+                // B-626: the slots may be left out as a whole ("marcher sur qc" -> "marcher sur").
+                var core = Collapse(string.Join(' ', bare.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(t => !IsPlaceholder(t))));
+                if (core.Length > 0 && !variants.Contains(core)) variants.Add(core);
             }
         }
         return variants;

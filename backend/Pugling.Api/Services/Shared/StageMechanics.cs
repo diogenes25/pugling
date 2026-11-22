@@ -96,6 +96,17 @@ public static class StageMechanics
     public static string LetterBoxPattern(string answer) =>
         new([.. answer.Select(c => char.IsLetterOrDigit(c) ? '_' : c)]);
 
+    /// <summary>
+    /// The letter-box mask of a word-list entry (B-626): like <see cref="LetterBoxPattern"/>, but the entry's
+    /// accessories - bracketed parts and slot words ("(to) point sth. out (to sb.)") - stay fixed text, so the child
+    /// types only the core ("point", "out"). The card still shows the whole entry as the book prints it.
+    /// </summary>
+    public static string EntryLetterBoxPattern(string entry)
+    {
+        var accessory = AnswerVariants.AccessoryMask(entry);
+        return new([.. entry.Select((c, i) => char.IsLetterOrDigit(c) && !accessory[i] ? '_' : c)]);
+    }
+
     /// <summary>The longest answer still played as letter tiles (B-05); a longer one becomes letter boxes.</summary>
     public const int MaxScrambleLength = 12;
 

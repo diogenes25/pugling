@@ -11,6 +11,30 @@ public class AnswerVariantsTests
     private static ContentItem Entry(string answer, bool separable = true) =>
         new(0, "q", answer, [answer], MeaningsSeparable: separable);
 
+    // B-626 AK 1/3: the slots of the word list may be left out, a plain "to" and a real word like "something" may not.
+    [Theory]
+    [InlineData("marcher sur qc", "marcher sur")]
+    [InlineData("marcher sur qc", "marcher sur qc")]
+    [InlineData("(to) point sth. out (to sb.)", "point out")]
+    [InlineData("(to) point sth. out (to sb.)", "point sth. out")]
+    [InlineData("(to) point sth. out (to sb.)", "to point sth. out to sb.")]
+    [InlineData("imaginer qn/qc", "imaginer")]
+    [InlineData("plaire à qn", "plaire à")]
+    public void Platzhalter_Duerfen_Fehlen(string expected, string given) =>
+        Assert.True(_grader.Matches(given, Entry(expected)));
+
+    [Theory]
+    [InlineData("(to) be home to sth.", "be home")]
+    [InlineData("marcher sur qc", "marcher")]
+    [InlineData("do something", "do")]
+    [InlineData("do something", "do thing")]
+    public void Kern_Und_Echte_Woerter_Bleiben_Pflicht(string expected, string given) =>
+        Assert.False(_grader.Matches(given, Entry(expected)));
+
+    [Fact]
+    public void Platzhalter_Fehlen_Nur_Bei_Woerterlisten_Eintrag() =>
+        Assert.False(_grader.Matches("marcher sur", Entry("marcher sur qc", separable: false)));
+
     // The table measured against the Access word list on 2026-11-10, plus the reverse direction ("(to) reply (to)").
     [Theory]
     [InlineData("sobald, sowie", "sobald")]

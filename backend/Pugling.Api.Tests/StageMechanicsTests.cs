@@ -54,4 +54,15 @@ public class StageMechanicsTests
         Assert.Equal([0, 1, 2, 3], Positions(reversed: false));
         Assert.Equal([0, 1, 2, 3], Positions(reversed: true));
     }
+
+    // B-626 AK 2/3/4: only the core of a word-list entry is typed; brackets and slots stay fixed text.
+    [Theory]
+    [InlineData("(to) point sth. out (to sb.)", "(to) _____ sth. ___ (to sb.)")]
+    [InlineData("(to) be home to sth.", "(to) __ ____ __ sth.")]
+    [InlineData("marcher sur qc", "_______ ___ qc")]
+    [InlineData("imaginer qn/qc", "________ qn/qc")]
+    [InlineData("something", "_________")]
+    [InlineData("to grow up", "__ ____ __")]
+    public void Eintrag_Maske_Setzt_Beiwerk_Fest(string entry, string expected) =>
+        Assert.Equal(expected, StageMechanics.EntryLetterBoxPattern(entry));
 }
