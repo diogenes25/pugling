@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Tagesaufgabe wiederholen, Wiederholung mit sinkenden Münzen]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -250,3 +250,59 @@ daneben tritt.
   nur als offene Punkte.
 - 2026-11-20 · gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): kein zweiter Münzweg, Wiederholung = Bonus-Training; Knoten und Leerzustand führen weiter, freies Üben über den vorhandenen `PlayMode.Info`; B-533 Entscheidung 6 und 7 bleiben (Nicht-Vokabel-Positionen ohne Münzleiter, keine Kastenbewegung); Story auf die Erreichbarkeit gekürzt. Querfrage mit B-218 einheitlich beantwortet.
 - 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, frontend (Backend nur Tests), keine Migration, kein Vertragsbruch. Risiko: das freie Üben (`PlayMode.Info`) hat in der Sohn-App keine Oberfläche, bei getippten Stufen ohne Rückmeldung kann es L werden. Reihenfolge: vor B-218 (jetzt B-764 bis B-766). Fremde uncommittete Arbeit an `SohnPractice.tsx` und `SohnApp.tsx` abwarten.
+- **2026-11-22** — in-arbeit (Nachtlauf B 2026-11-23, Sprint B3; baubar nach Freigabe 8, `geschaetzt` + Wunsch).
+  **Geteilt beim Bauen, wie Risiko 1 es vorsieht:** Das freie Üben (Entscheidung 3, AK 3 und der Satz „freies Üben“ in AK 1/2)
+  ist [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md). Grund, am Code gelesen: der Info-Modus antwortet auf
+  `review` mit `204`, auf einer getippten Stufe tippte das Kind ins Leere – was es dort sehen soll, geben die
+  Entscheidungen nicht her (Freigabe 8: anhalten und notieren, nicht selbst entscheiden). Gebaut ist der Rest:
+  `frontend/src/sohn/NochEinmal.tsx` im Leerzustand von `SohnPractice` mit drei Lagen (Sperre offen und Übung im Pool →
+  Knopf in **diese** Übung mit ihrem heutigen Wert; Sperre zu → wie viele Tages- bzw. Wochenziele fehlen; nicht im Pool
+  oder heute erledigte feste Übung → nichts). Die Übung der Position kommt aus der Tagesübersicht (`overview`), kein
+  Vertragsfeld (Risiko 2 erledigt ohne Vertrag). Kein Backend-Produktcode.
+  **AK, wie gebaut:** AK 1 ohne „freies Üben“ (B-821); AK 2 ohne „keine beim freien Üben“; AK 3 → B-821; AK 4 bis 6
+  bestehendes Verhalten, von `ExtraTrainingTests` getragen (`knownFromPath`, Stufung, Deckel); AK 7 neuer Fall
+  `ExtraTrainingTests.Bonus_Runde_Laesst_Den_Kasten_Der_Position_Unberuehrt` (Absichtserklärung: grün vor und nach dem Bau,
+  rot, wenn die Bonus-Abgabe `PositionItemProgress` schreibt).
+  **Tests:** `NochEinmal.test.tsx` (8 Fälle, je Lage), ein Fall in `SohnPractice.test.tsx` (der Block steht im Leerzustand);
+  `SohnPractice.test.tsx` brauchte dazu Attrappen für `extraTraining` und `useAuth` (der Block lädt über `useAsync`). Neue
+  Spec `e2e/nochmal-nach-pflicht.spec.ts` (Rollengang als Sohn: erst gesperrt mit „Noch 1 Tagesziel offen“, nach der Pflicht
+  in die Bonus-Runde dieser Übung; nur die Kartenliste ist per `page.route` leer, Treffer gezählt).
+  **Mutanten-Probe nach der letzten Änderung:**
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | N1 Position nicht auf ihre Übung abgebildet | NochEinmal.tsx:30 | red | red |
+  | N2 heute erledigte feste Übung angeboten | :45 | red | red |
+  | N3 Wert-Satz auch bei 0 % | :49 | red | red |
+  | N4 Wochenziele als Tagesziele | :38 | red | red |
+  | N5 Sperre ohne offene Ziele verspricht „noch 0“ | :35 | red | red |
+  | N6 Block fehlt im Leerzustand | SohnPractice.tsx:446 | red | red |
+  | N7 Pool ignoriert (erste Übung) | NochEinmal.tsx:43 | red | red |
+  | N8 Sperre ignoriert | :32 | red | red |
+  | E2 Block fehlt (E2E) | SohnPractice.tsx:446 | red | red |
+- **2026-11-22** — Review (`frontend-reviewer`) und Selbst-Check, Zähler Sprint B3: 2 von 5. **Selbst-Check vor dem Review,
+  gezählt:** ein voller Tagesdeckel versprach „noch 100 % wert“ – jetzt wie die Bonus-Liste (`capReached`: Vokabeln ohne
+  Münzen weiter, feste Übung wartet), Satz ohne „morgen“ (galt bei Deckel 0 nie). Der Reviewer fand dasselbe als 🟡1 (einmal
+  gezählt). **🟡2, gezählt:** die Sperre wurde vor dem Pool geprüft und versprach einer Nicht-Vokabel-Pflicht eine bezahlte
+  Wiederholung, die nie kommt (der Server liefert den Pool auch bei Sperre) – jetzt erst der Pool. 🟢 eingearbeitet: eine
+  angefangene Runde heißt „Weiterspielen“ (`openRunId`), der Takt-Satz liest `truhenZiele` wie die Bonus-Liste. 🟢5 (der
+  Bonus-Knopf steht farbig über dem Test-Knopf) bleibt als Geschmacksfrage offen, ohne Story.
+  **Mutanten-Probe nach der letzten Änderung** (ersetzt die Tabelle oben):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | N1 Position nicht auf ihre Übung abgebildet | NochEinmal.tsx:31 | red | red |
+  | N2 heute erledigte feste Übung angeboten | :52 | red | red |
+  | N3 Wert-Satz auch bei 0 % | :56 | red | red |
+  | N4 Wochenziele als Tagesziele | :43 | red | red |
+  | N5 Sperre ohne offene Ziele verspricht „noch 0“ | :40 | red | red |
+  | N6 Block fehlt im Leerzustand | SohnPractice.tsx:446 | red | red |
+  | N7 Pool ignoriert (erste Übung) | NochEinmal.tsx:34 | red | red |
+  | N8 Sperre ignoriert | :37 | red | red |
+  | N9 Tagesdeckel ignoriert | :50 | red | red |
+  | N10 Sperre vor dem Pool | :35 | red | red |
+  | N11 angefangene Runde als neue | :60 | red | red |
+  | E2 Block fehlt (E2E) | SohnPractice.tsx:446 | red | red |
+
+  **Verifikation nach der letzten Änderung:** Vitest voll 1340/1340, `tsc -b` sauber, `ExtraTrainingTests` (Release)
+  36/36.

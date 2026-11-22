@@ -17,6 +17,7 @@ import { SelfAssessAnswer } from "./SohnTest";
 import { Mascot } from "../components/Mascot";
 import type { PracticeCard, PositionSession, ReviewInput, ReviewOutcome } from "../lib/types";
 import { KartenMeldung } from "./KartenMeldung";
+import { NochEinmal } from "./NochEinmal";
 
 /** So lange nimmt die nächste Karte nach „Weiter" auf dem Blatt keinen Knopfdruck an (Doppeltipp, gehaltenes Enter). */
 export const NACH_BLATT_MS = 350;
@@ -441,6 +442,8 @@ export function SohnPractice() {
           ? t("practice.nothingDueTest")
           : t("practice.nothingDueLater")}</p>
       </div>
+      {/* B-660: nichts fällig heißt nicht „fertig für heute“ – noch einmal geht im Bonus-Training. */}
+      <NochEinmal planId={planId!} positionId={positionId} />
       {testable && <button type="button" className="btn" onClick={() => nav(`/sohn/test/${positionId}`)}>{t("practice.toTest")}</button>}
       <button type="button" className="btn ghost" onClick={() => nav("/sohn")}>{t("progress.toHome")}</button>
     </div>
