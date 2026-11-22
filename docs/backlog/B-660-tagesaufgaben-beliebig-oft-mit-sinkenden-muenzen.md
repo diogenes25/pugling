@@ -12,6 +12,7 @@ quelle: "Vater am 2026-11-18, Feedback nach der ersten echten Runde mit Friedric
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-22"
 ---
 
 # B-660 · Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0
@@ -314,3 +315,4 @@ daneben tritt.
   **Gefühlsprüfung am Gerät** und bleibt offen (die Quelle: er wollte die Aufgabe noch einmal machen). **Vater:**
   Regressionszeuge – Münzregeln, Deckel und Sperre unverändert (`ExtraTrainingTests` 36/36, `bonus-deckel-voll` grün).
   **Creator:** Regressionszeuge, kein Pfad im Diff.
+- **2026-11-22** — Nachgeschaut (Nachtlauf 2026-11-22-c, `frontend-reviewer`, nur lesend gegen `199fc39f`). Geprüft: Die Behauptung „kein Backend-Produktcode“ per `--stat` bestätigt. AK 1 und AK 2 gegen `NochEinmal.test.tsx:51-132` mit benannten Mutanten (N1 bis N11). AK 4 bis AK 6 sind unveränderte Absichtserklärungen (`ExtraTrainingService.cs:284/296/346`). AK 7 gegen `ExtraTrainingTests.cs:957-965`. Alle Zweige des Leerzustands: Laden, Fehler, gesperrt mit und ohne offene Ziele, offen, angefangene Runde. Veraltete Ids: kein Rückfall, Position-Ids sind global. i18n-Parität mit sieben Schlüsseln. Jede Zusicherung der E2E-Spec auf Widerlegbarkeit. **Drei Entgleitungen (🟢):** B-845 (Satz verspricht Münzen bei Deckel 0), B-846 (Spec-Kopf verspricht ein Rot, das zwei Mutanten nicht liefern), B-847 (AK 7 nur in der Selbsteinschätzungs-Form gemessen).

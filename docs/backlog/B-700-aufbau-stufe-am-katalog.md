@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/katalog, rolle/creator]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/katalog, rolle/creator]
 aliases: [Aufbau-Stufe, Vorstufe von, Aufbau-Pfad im Katalog]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -140,3 +140,44 @@ Fremdschlüssel entsteht.
 - **2026-11-19** — Teil von B-536, geteilt und geschätzt im Vorbereitungslauf (Sonnet): M, backend, Migration ja,
   Vertrag additiv. Entscheidungen stellvertretend, unbestätigt. Hängt an keiner Malus- oder Rollenfrage.
 - **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-22** — gebaut (Nachtlauf 2026-11-22-c, Opus, Sprint 1). Senke: `ExerciseControllerBase.BuildPathProblemAsync`
+  vor der ersten Zuweisung beider Schreibpfade; Migration `20261122201417_AufbauStufe` hängt an `DutyUntilCadenceUntil`.
+  Fremdschlüssel `NoAction` statt `Restrict`: an SQLite gemessen, dass RESTRICT ein kaskadiertes Löschen von Ziel und
+  Vorstufe in einer Anweisung abbricht und NO ACTION es durchlässt.
+- **2026-11-22** — **Abweichung von AK 4, stellvertretend, zum Umstoßen:** Die Sperre trägt den eigenen Code
+  `exercise_is_build_target` statt `exercise_in_use`. Grund (Review-Fund 🟡): Das Frontend übersetzt
+  `exercise_in_use` mit einem Verweis auf „Verwendung", und die zeigt nie Vorstufen; das ist dieselbe Falle wie B-413.
+  Die Meldung nennt nur die Sperre und die Ids der Vorstufen; der deutsche Text nennt als Ausweg den Bearbeiten-Dialog der
+  Vorstufe und sagt, dass fremde Vorstufen nur ihr Autor herausnimmt.
+- **2026-11-22** — **Kosten von Entscheidung 4, bisher unbenannt (Review-Fund):** Ein fremder Creator kann eine Vorstufe an
+  meine Ziel-Übung hängen und mir damit das Löschen meiner Übung sperren, bis er sie herausnimmt. Ausweg für mich bleibt
+  nur das Löschen der ganzen Unit (als Reihen-Owner). Nicht behoben, weil es eine Produktentscheidung ist; hier für den
+  Nutzer festgehalten.
+- **2026-11-22** — Verlauf je AK-Fall (Test → Mutante → Ergebnis):
+  - AK 1, Anlegen und Zurücklesen (typisiert) → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:42`, M12 (Map ohne `BuildLevel`) rot, M13 (Create ohne) rot.
+  - AK 1, Katalog-Detail und Unit-Liste → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:64`, M15 (Liste) rot, M16 (Detail) rot.
+  - AK 2, andere Unit → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:82`, M1 rot. Ziel ist selbst Vorstufe → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:94`, M2 rot. Übung mit Vorstufen wird Vorstufe →
+    `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:109`, M3 rot. Stufe 0 / 3 → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:124`, M4b / M4a rot. Selbstverweis → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:135`, M5 rot. Halbes Paar und
+    unbekanntes Ziel → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:146`, M6 und M7 rot.
+  - AK 3, PUT ohne Felder löscht → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:161`, M8 (`?? exercise.BuildTargetExerciseId`) rot.
+  - AK 4, Löschen mit Vorstufe 409 `exercise_is_build_target`, Ausweg genommen → 204 → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:182`, M9 (Sperre aus) rot,
+    M17 (alter Code) rot, M18 (Ids nicht in der Meldung) rot. Unit-Löschen mit Weg → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:204`, M10 (`Restrict` im
+    Designer-Modell) rot.
+  - AK 5 → `backend/Pugling.Api.Tests/AufbauStufeKatalogTests.cs:220`; die erste Hälfte ist ausdrücklich als Absichtserklärung beschriftet (der 403 kommt aus dem
+    vorhandenen Schreibrecht-Check, M11 zeigt nur ihn), die zweite (eigene Vorstufe an fremdes Ziel) trägt.
+  - AK 6, Migration mit Bestandszeile samt Item, Lernstand, Grant und Position →
+    `backend/Pugling.Api.Tests/AufbauStufeMigrationTests.cs:27`, M14 (Spalte nicht nullbar) rot, M19/M20/M21 (Items /
+    Grants / Positionen im Up gelöscht) rot.
+- **2026-11-22** — Rote Proben mit Zahl (Auflage 5): drei Läufe von `.claude/scripts/mutant-probe.py`, zusammen
+  23 Mutanten, 23 rot am benannten Fall, Grundlinie jeweils nach dem Zurückspielen grün. Im ersten Lauf waren 5 Mutanten
+  `ungemessen` (`if (false)` erzeugt CS0162, Warnung als Fehler); sie wurden mit nicht-konstanten Bedingungen neu
+  gemessen. Ein weiterer stand auf `green (abweichend)` (M10 in der Migrations-Datei: EF baut die SQLite-Tabelle aus dem
+  Designer-Modell neu, nicht aus `AddForeignKey`) und wurde im Designer neu gemessen. Volle Suite nach dem letzten Edit
+  2089/2089 grün (`dotnet test Pugling.sln -c Release`).
+- **2026-11-22** — Review `pugling-reviewer`: 2 × 🟡 (Lösch-Sperre mit falscher Übersetzung und unsicherem Ausweg;
+  Migrationstest ohne Kind-Tabellen), beide behoben, Zähler 2. 🟢 ohne Zählung: Rennen zwischen Prüfung und Schreiben
+  enden in 500 statt stillem Verlust (notiert, nicht behoben); AK-5-Hälfte als Absicht beschriftet (behoben).
+- **2026-11-22** — Rollengang Creator als Maschinengang nach dem letzten Edit: `frontend/e2e/aufbau-weg-editor.spec.ts`
+  gegen frischen Server auf :5207/:5179, 1 passed (mit `einkleidung.spec.ts` und `grammatik-themen.spec.ts`: 3 passed).
+  Die Editor-Oberfläche ist [B-840](B-840-aufbau-weg-im-uebungseditor.md). Heimnetz (:5200) unberührt.
+- **2026-11-22** — `abgenommen` (Nachtlauf 2026-11-22-c): Commit `e36a5c79`. Creator abgenommen im Maschinengang; Vater und Sohn als Regressionszeugen (Suite grün, kein Pfad ihrer Ebenen im Diff).

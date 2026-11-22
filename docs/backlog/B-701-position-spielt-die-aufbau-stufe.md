@@ -157,3 +157,15 @@ zentralen Inhaltsauswahl, die jeden Spielpfad trägt, und ein Zustandsübergang 
   Vertrag additiv. Abstieg und Pflichtziel bewusst nicht enthalten (B-702). Entscheidungen stellvertretend,
   unbestätigt.
 - **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-22** — Nachprüfung vor dem Bau (Nachtlauf 2026-11-22-c, Opus): **nicht gebaut, angehalten nach Freigabe 8.**
+  Am Code gemessen: `pos.Exercise` wird in `backend/Pugling.Api` an 61 Stellen gelesen (Typ, Config, Vorgabe-Stufe,
+  Prüfmodus, Titel, `BookPages`), `PositionItemProgress` an 50 Stellen in 16 Dateien. Entscheidung 4 („der Stand der
+  verlassenen Stufe bleibt liegen, die neue beginnt leer") lässt sich mit dem Schlüssel `(PlanPositionId, ItemIndex)`
+  nicht halten. Sie braucht eine dritte Schlüsselspalte (Stufe) an `PositionItemProgress` oder ein Löschen beim
+  Aufstieg. Das ist eine Schema-Entscheidung jenseits der zwei Spalten dieser Schätzung. Offen und vor dem Bau zu
+  entscheiden: (a) Stufe als Schlüsselteil des Positions-Lernstands oder Verwerfen beim Aufstieg; (b) was mit einer
+  laufenden Übungs-Sitzung (eingefrorene Reihenfolge), dem Lernkarten-Stand (`ImprintedAt`) und der Tagesdosis beim
+  Aufstieg geschieht; (c) welche Übung der Vater in Übersicht und Bericht sieht (Ziel oder aktuelle Stufe, Titel,
+  `BookPages`); (d) Teilen in zwei Stories, etwa „Stufe spielen (wirksame Übung an allen Spielpfaden,
+  stufengebundener Stand)" und „Aufstieg nach bestandenem Test samt `TestAttempt.BuildLevel` und Ziel-Filter". Die
+  Größe ist mit diesen Antworten eher XL als L.

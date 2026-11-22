@@ -128,3 +128,8 @@ weil das Verb zwei Wege trägt (Modell und ohne Modell) und die Auswahlregel von
   Vater/Lehrer-Agent offen ist (B-681); `gegrillt` mit offener Frage, `wartet_auf` gesetzt.
 - **2026-11-20** — Die offenen Punkte stellvertretend entschieden (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers, unbestätigt), Stufe bleibt `gegrillt`, `wartet_auf` geleert. Kern: Vorstufen entstehen als Entwurf ohne Zuweisung, der Vater übernimmt sie durch Einschalten der Stufung; zweiter Modus ohne Sprachmodell für vorhandene Übungen derselben Unit.
 - **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): M, backend, keine Migration, kein Vertragsbruch. Hängt an B-700; die Auswahlregel von `build --existing` ist beim Bauen festzulegen (Risiko), der Konstruktor von `AgentCommands` wächst (ein Test zieht nach).
+- **2026-11-22** — Nachprüfung (Nachtlauf 2026-11-22-c, Opus): nicht gebaut. B-700 steht jetzt (Felder `BuildLevel`,
+  `BuildTargetExerciseId` am Katalog). Offen bleibt die Auswahlregel von `build --existing`: Das Risiko oben verschiebt
+  sie „aufs Bauen", die `## Entscheidungen` tragen sie nicht. Nach Freigabe 8 angehalten. Zu entscheiden: die
+  Typ-Rangfolge (Vorschlag aus dem Risiko: Auswahl, Cloze, Freitext) und ob ein zweiter `build`-Lauf zur selben
+  Ziel-Übung abbricht oder ergänzt. Ohne B-701 erreicht eine Vorstufe das Kind ohnehin nicht.

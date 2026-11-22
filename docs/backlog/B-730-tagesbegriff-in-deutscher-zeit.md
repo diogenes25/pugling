@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 ---
 
 # B-730 · „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a)
@@ -202,4 +203,4 @@ Abhängigkeit nach vorn. Voraussetzung für [B-733](B-733-tagesauswertung-und-le
   frisch gestarteten Server in Europe/Berlin (5211/5184): `pfad`, `truhe`, `erfolge-woche-frist`, `full-flow`; Vater
   `vater-zeitachse`, `shop-einmal-termin-bearbeiten`, `vater-felder-leeren` – 8/8 grün. Ein Gang um echte Mitternacht ist
   maschinell nicht möglich (die E2E-Uhr ist die Wanduhr); das Verhalten an der Grenze belegen die API-Fälle.
-
+- **2026-11-22** — Nachgeschaut (Nachtlauf 2026-11-22-c, `pugling-reviewer`, nur lesend gegen `3c0122fa` und HEAD). Geprüft: Restliche Tagesbildungen außerhalb von `LearningDay` per grep (`DateOnly.FromDateTime`, `GetLocalNow`, `.Date`, `DateTime.Today`). Treffer nur im Dienst, in `ScoringService.cs:137` (Wanduhr), `ShopRefillSchedule.cs:60/86/134` und im Seed (E8). Den Controller-Diff Zeile für Zeile gegen den Elternstand verglichen. Die ~35 übrigen `GetUtcNow`-Stellen geprüft: alle sind Zeitstempel. DB-Vergleiche über `StartUtc` geprüft (`PositionPracticeController.cs:360-368`, `WalletService.cs:59-72`, `ShopService.cs:552`). Keine 24-h-Annahme gefunden. `datum.ts` `mitternacht()` von Hand gegen `StartUtc` gerechnet (28.3./29.3./31.10.2027). Für jeden AK-Test geprüft, dass er deutschen und UTC-Tag trennt (`TagesbegriffTests.cs:64-217`). **Drei Entgleitungen (🟢):** B-842 (Wochenvergleich in der Umstellungswoche), B-843 (Tor fängt weniger Formen als AK 2 verspricht), B-844 (Titel der Schwachwort-Wiederholung im UTC-Datum).

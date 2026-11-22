@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/creator, rolle/supervisor, rolle/student]
+tags: [typ/story, status/verworfen, bereich/frontend, rolle/creator, rolle/supervisor, rolle/student]
 aliases: [Aufbau-Weg im Editor, Stufenband, Vater wählt Ziel-Level]
-status: geschaetzt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: M
@@ -10,8 +10,8 @@ migration: nein
 vertragsbruch: nein
 quelle: B-536
 unverifiziert: false
-grund: ""
-ersetzt_durch: []
+grund: geteilt
+ersetzt_durch: [B-840, B-841]
 wartet_auf: ""
 ---
 
@@ -120,3 +120,9 @@ neuer Endpunkt. Aufwand steckt in Editor-Rundlauf und E2E, nicht im Rechnen.
   kein Vertragsbruch. Entscheidungen stellvertretend, unbestätigt. Wartet fachlich auf B-700 und B-701; Kadenz-Sperre
   fällt mit B-702.
 - **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-22** — Geteilt (Nachtlauf 2026-11-22-c, Opus) nach dem Mechanismus „Teilen und Zusammenlegen", entlang der
+  Abhängigkeit, die die Story selbst nennt. Der Editor-Teil (Entscheidung 2, AK 1, 2, 7) hängt nur an B-700. Er musste
+  mit B-700 kommen: Der Editor schickt einen Vollersatz-PUT, und ohne die zwei Felder hätte jedes Speichern eine
+  Vorstufe still gelöscht. Er wird [B-840](B-840-aufbau-weg-im-uebungseditor.md). Positionsformular, Kadenz-Sperre,
+  Stufenband beim Kind und Vater-Auswertung (Entscheidungen 1, 3, 4; AK 3–6) brauchen B-701 und werden
+  [B-841](B-841-start-stufe-und-stufenband.md). Keine Entscheidung neu getroffen; beide erben sie von hier.
