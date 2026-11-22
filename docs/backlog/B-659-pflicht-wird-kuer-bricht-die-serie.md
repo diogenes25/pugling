@@ -8,6 +8,7 @@ groesse: L
 wo: backend
 migration: ja
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: "PM-Sitzung 2026-11-18, Runde 3 (Sprint 87), Review von B-613 (pugling-reviewer, 🟡2)"
 grund: ""
 ersetzt_durch: []
@@ -339,3 +340,7 @@ mit einem umzuschreibenden Test. Jeder Teil ist klein, die Streuung der Lesestel
   `PflichtWirdKuerSerieTests` (12+2 Fälle). **Sohn:** Serie, Tagesansicht und Tageskiste folgen der Historie
   (Integrationstests); seine Specs grün. **Creator:** Regressionszeuge, kein Pfad im Diff. Nach dem Merge muss der
   Heimnetz-Start die Migration `DutyUntilCadenceUntil` einspielen (an einer Kopie geprobt, siehe oben).
+- **2026-11-22** — Nachschau (Retro Sprint B3): `edaacfd9` gegen Entscheidung 5 und AK 6 gelesen – der Malus-Filter liest weiter
+  roh (`p.Cadence != GoalCadence.None && p.PenaltyCoins > 0`, 1 Treffer), die Migration enthält weder `defaultValue` noch
+  `Sql(` (0 Treffer), `docs/openapi/v1.json` trägt das neue `409` am Plan-DELETE (1 Treffer); dazu nach Sprint B3 Vitest
+  1340/1340. Kein Befund.

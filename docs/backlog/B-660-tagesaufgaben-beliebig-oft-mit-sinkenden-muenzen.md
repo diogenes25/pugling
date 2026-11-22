@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Tagesaufgabe wiederholen, Wiederholung mit sinkenden Münzen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -306,3 +306,11 @@ daneben tritt.
 
   **Verifikation nach der letzten Änderung:** Vitest voll 1340/1340, `tsc -b` sauber, `ExtraTrainingTests` (Release)
   36/36.
+- **2026-11-22** — abgenommen (`199fc39f`). Rollengang Sprint B3 als Maschinengang auf :5207/:5179 gegen eine Wegwerf-DB,
+  Server aus dem Endstand: `nochmal-nach-pflicht`, `bonus`, `bonus-deckel-voll`, `full-flow`, `pfad`, `karten-umdrehen` – 6
+  passed. **Sohn:** tippt den Knoten einer Aufgabe ohne Fälliges an; vor der Pflicht steht „Noch 1 Tagesziel offen …“ und kein
+  bezahlter Knopf, nach der Pflicht „… heute noch 100 % wert …“, und der Knopf führt in die Bonus-Runde genau dieser
+  Vokabeln (4 Karten, nicht die Rechen-Übung daneben). Ob sich das für Friedrich wie „noch einmal“ anfühlt, ist eine
+  **Gefühlsprüfung am Gerät** und bleibt offen (die Quelle: er wollte die Aufgabe noch einmal machen). **Vater:**
+  Regressionszeuge – Münzregeln, Deckel und Sperre unverändert (`ExtraTrainingTests` 36/36, `bonus-deckel-voll` grün).
+  **Creator:** Regressionszeuge, kein Pfad im Diff.

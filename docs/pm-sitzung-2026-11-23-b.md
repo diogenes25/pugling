@@ -157,3 +157,93 @@ je Entscheidungs-Satz. Kein Mechanismus erzwingt, dass es sie gibt.
 
 **Werkzeug-Lehre:** `DocsCaptureTests` schreibt im Worktree alle `docs/api-examples` mit LF neu; `git diff
 --ignore-cr-at-eol` trennt das Rauschen vom echten Unterschied (hier nur `docs/openapi/v1.json`).
+
+## Sprint B3 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Sohnes führt eine erledigte Aufgabe nicht ins Leere: wer sie noch einmal machen will, landet mit
+einem Tippen in der Runde, die dafür Münzen zahlt – oder liest, was ihm dafür noch fehlt. Widerlegbar durch einen Leerzustand,
+der nur „Nichts fällig“ sagt, oder einen Knopf, der in eine andere Übung führt oder Münzen verspricht, die nicht kommen.
+
+**Umfang:** [B-660](backlog/B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) (`Wunsch`, M, `geschaetzt` →
+baubar nach Freigabe 8). Beim Bauen geteilt, wie die Story es in Risiko 1 vorsah: das freie Üben ist
+[B-821](backlog/B-821-freies-ueben-info-modus-in-der-sohn-app.md) (`idee`, `Wunsch` – die offene Frage „was zeigt eine
+getippte Stufe ohne Rückmeldung?“ geben die Entscheidungen nicht her, Freigabe 8: notieren statt entscheiden).
+
+**Auswahl:** Nach B-659 blieben im Bereich dieses Laufs keine `Defekt`/`Aufräumen` mehr (B-670, B-791 gehören Lauf A; B-649
+ist Datenbereinigung der echten DB mit offener Produktfrage; B-820 ist backend-fachlich und steht neben B-659). B-660 ist der
+höchst priorisierte `geschaetzt`e Frontend-`Wunsch` ohne `wartet_auf` und ohne unbebaute Backend-Vorstufe.
+
+## Iteration B3 — umgesetzt (`199fc39f`)
+
+- **Frontend:** `NochEinmal.tsx` im Leerzustand von `SohnPractice`; drei Lagen nach Pool, Sperre und Deckel, wie die
+  Bonus-Liste.
+- **Backend:** nur ein Fall, der AK 7 festhält (eine Bonus-Runde lässt den Kasten der Position unberührt).
+- **Tests:** 11 Vitest-Fälle an `NochEinmal`, 1 an `SohnPractice`; Spec `nochmal-nach-pflicht` (beide Lagen der Sperre,
+  Kartenliste per `page.route` leer, Treffer gezählt).
+- **Mutanten:** 12, alle rot am benannten Fall.
+- **Review + Selbst-Check:** 2 gezählte Funde (Deckel, Sperre vor Pool), beide behoben; Zähler B3: 2 von 5.
+- **Voller Lauf:** Vitest 1340/1340, `tsc` sauber, `ExtraTrainingTests` 36/36.
+
+## Runde 4 — Re-Review / Abnahme Sprint B3
+
+- **Sohn:** Maschinengang `nochmal-nach-pflicht` (erst gesperrt mit der Zahl der offenen Ziele, dann in die Bonus-Runde dieser
+  Übung) plus `bonus`, `bonus-deckel-voll`, `full-flow`, `pfad`, `karten-umdrehen` – 6 passed. **Abgenommen**, mit einer
+  offenen **Gefühlsprüfung am Gerät** (fühlt sich der Weg für Friedrich wie „noch einmal“ an?).
+- **Vater, Creator:** Regressionszeugen (Münzregeln unverändert, kein Pfad im Diff).
+
+## Retrospektive Sprint B3
+
+**Nachschau:** Sprint B2 (B-659 `edaacfd9`) mit drei benannten Prüfpunkten im Verlauf der Story; kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:** Der neue Block las nur den Wert der Übung, nicht den Tagesdeckel und nicht die
+Reihenfolge Pool/Sperre. Beides stand schon richtig in der Nachbar-Komponente `SohnBonus.tsx` (`capReached`, Pool auch bei
+Sperre). Gefunden hat es zuerst mein Selbst-Check, dann das Review; kein Tor.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** In `pm-loop` Step 4 die Regel „an der Senke, nicht an den Quellen“ um einen Satz
+ergänzen: *Eine neue Fläche, die Daten einer vorhandenen Fläche anders zeigt, liest zuerst deren Entscheidungszweige*
+(hier: Bonus-Liste → Leerzustand). Prosa, kein Tor – ein Tor müsste „gleiche Daten“ erkennen.
+
+**Bewusst ungedeckt:** Die Gefühlsfrage aus der Quelle (Friedrich wollte „noch einmal“, nicht „Bonus-Training“); nur am Gerät.
+
+## Halt nach Sprint B3
+
+Kein neues Tor; die Review-Funde sind behoben und unter dem Fünfer-Zähler. Der Lauf hält trotzdem, weil im eigenen Bereich
+nichts Baubares ohne neue Produktentscheidung übrig ist:
+
+- **`Defekt`/`Aufräumen` außerhalb von Lauf A:** keine. B-820 (laufende Nacharbeit zur Kür) ist neu und backend-fachlich; sie
+  fasst dieselbe Senke an wie B-659 und gehört sinnvollerweise nach dem Merge in einen eigenen Sprint.
+- **Frontend-`Wunsch` auf `geschaetzt`:** B-704, B-743, B-757, B-762, B-763, B-766, B-769 hängen an unbebauten
+  Backend-Vorstufen (B-700..703, B-741/742, B-752, B-760, B-764/765, B-768); B-619, B-622, B-655 tragen `wartet_auf`;
+  B-638 (Formeln, L) braucht eine neue Bibliothek samt Service-Worker – ein eigener Lauf mit Gerätecheck.
+- **B-821** wartet auf die Entscheidung oben (Dialog).
+
+## Offene Roadmap (priorisiert)  ·  Konkreter Änderungsstand (für Review)
+
+**Offen aus diesem Lauf:** [B-820](backlog/B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) (Defekt, idee),
+[B-821](backlog/B-821-freies-ueben-info-modus-in-der-sohn-app.md) (Wunsch, idee, Frage an den Nutzer), die Gefühlsprüfung zu
+B-660 am Gerät und drei Retro-Vorschläge (B1: Vitest-JSON-Bericht; B2: Tor gegen Entitäts-Laden in Migrationstests; B3: Satz
+in `pm-loop` Step 4).
+
+**Commits auf `claude/nachtlauf-b-dcf748`** (Basis `ec0c705a`):
+
+| Commit | Inhalt |
+|---|---|
+| `7b501ed4` | B-787 |
+| `d7b7546b` | B-788 |
+| `13fdb7bd` | Abnahme B1, Nachschau, Protokoll |
+| `edaacfd9` | B-659 (Migration `DutyUntilCadenceUntil`), B-820 neu |
+| `68aa61d9` | Abnahme B2, Protokoll |
+| `199fc39f` | B-660, B-821 neu |
+| danach | Abnahme B3, Protokoll |
+
+**Beim Merge nach `main` beachten:**
+
+- **Migration:** `20261122081510_DutyUntilCadenceUntil` hängt an `20261119065732_ShopStockPerChild`. Hat Lauf A eine eigene
+  Migration angelegt, kollidiert `PuglingDbContextModelSnapshot.cs`: mergen, dann die spätere Migration auf der früheren neu
+  erzeugen (die Kette wird nur verlängert). Danach `dotnet test` (die Migrationstests laden seit B-659 projiziert).
+- **Heimnetz:** Der nächste Start spielt die Migration in die echte `pugling.db` ein (an einer Kopie geprobt: 204 Positionen,
+  keine Spanne gesetzt).
+- **Nummern:** B-820 und B-821 kommen aus dem Bereich von Lauf B; nach dem Merge
+  `ls docs/backlog | grep -o 'B-[0-9]*' | sort | uniq -d` prüfen.
+- `INDEX.md` danach neu erzeugen (dieser Lauf hat es bewusst nicht angefasst).
+- `scripts/_plan-api.ps1:89` rät noch „ggf. löschen“; seit B-659 antwortet das für gespielte Pläne mit 409.
