@@ -415,7 +415,8 @@ describe("SohnTest, Fokus nach jeder Handlung (B-541)", () => {
   });
 
   // AK 3. Rot, wenn der Effekt die Absicht verbraucht, obwohl er kein Ziel fand (dann lief er, während `action.busy` die
-  // Optionen sperrte), oder wenn er nicht an `action.busy` hängt.
+  // alte Frage sperrte). Dass der Effekt an `action.busy` hängt, trägt dieser Fall NICHT, und kein anderer: die neue
+  // Frage kommt im selben Render wie `busy = false` (B-788, Mutante „`action.busy` gestrichen“ blieb 35/35 grün).
   it("steht nach einer Auswahl auf der ersten freigegebenen Option der nächsten Frage", async () => {
     answerTest.mockResolvedValueOnce({ done: false });
     nextTest.mockResolvedValueOnce({ item, done: false, cursor: 0, total: 2 })

@@ -8,6 +8,7 @@ groesse: XS
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: "Nachtlauf B 2026-11-22, volle E2E-Suite des Sprints B1 (docs/pm-sitzung-2026-11-22-b.md)"
 grund: ""
 ersetzt_durch: []
@@ -78,3 +79,4 @@ Umhäng-Sperre und nicht die Ladereihenfolge der Seite.
   - Kein Review-Agent: Die Änderung ist eine Zeile in einer Spec, und beide Richtungen sind gemessen. Ein Rollengang
     entfällt, die Spec ist selbst der Rollengang Vater von B-673.
 - **2026-11-22**: **abgenommen** (`761af289`). Die volle E2E-Suite auf dem Endstand läuft 185/185 grün, mit der Spec.
+- **2026-11-22** — Nachschau (Nachtlauf B 2026-11-23, Retro Sprint B1, Agent `frontend-reviewer`): Selektor gegen `VaterPlanDetail.tsx:51-69` geprüft: die `.row` umschließt genau einen „Bearbeiten“, `PlanPositions` steht als Geschwister darunter; kein Befund.

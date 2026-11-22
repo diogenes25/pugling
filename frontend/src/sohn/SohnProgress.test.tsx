@@ -67,8 +67,10 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
     plans.mockResolvedValue([plan(4, false), plan(5, true)]);
     renderProgress();
 
-    // Positiv: der Weg des gewählten Plans steht da (sein Titel kommt nur aus der Antwort für Plan 5).
-    expect(await screen.findByText(/Plan 5/)).toBeTruthy();
+    // Positiv: der Weg des gewählten Plans steht da (sein Titel kommt nur aus der Antwort für Plan 5). Gesucht wird die
+    // Zusammenfassung („Plan 5 · …“), nicht bloß „Plan 5“: der Knopf der Planwahl trägt denselben Titel, und fragte die
+    // Suche erst, wenn beide stehen, fände sie zwei Treffer und fiele (B-787, unter Last im vollen Lauf).
+    expect(await screen.findByText(/Plan 5 ·/)).toBeTruthy();
     expect(overview).not.toHaveBeenCalledWith(STALE);
     expect(setPlanId).toHaveBeenCalledWith(5);
     expect(screen.queryByText(/Study plan not found/)).toBeNull();
@@ -83,7 +85,8 @@ describe("SohnProgress mit einer gemerkten Plan-Id, die nicht mehr gilt", () => 
     plans.mockResolvedValue([plan(5, true), plan(STALE, false)]);
     renderProgress();
 
-    expect(await screen.findByText(new RegExp(`Plan ${STALE}`))).toBeTruthy();
+    // Die Zusammenfassung, nicht der gleichnamige Knopf der Planwahl (B-787, wie oben).
+    expect(await screen.findByText(new RegExp(`Plan ${STALE} ·`))).toBeTruthy();
     expect(overview).toHaveBeenCalledWith(STALE);
     expect(overview).not.toHaveBeenCalledWith(5);
     expect(setPlanId).not.toHaveBeenCalled();

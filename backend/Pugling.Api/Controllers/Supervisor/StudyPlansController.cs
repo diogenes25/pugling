@@ -265,19 +265,23 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
     }
 
     /// <summary>
-    /// Deletes an entire study plan (father/own only). Removes its positions via cascade incl.
-    /// progress, practice sessions, test attempts and goal rewards. The referenced catalog exercises
-    /// remain untouched (they belong to the child-neutral catalog, not the plan).
+    /// Deletes an entire study plan (father/own only) that the child has not played yet. Removes its positions via
+    /// cascade. The referenced catalog exercises remain untouched (they belong to the child-neutral catalog, not the plan).
+    /// A played plan answers 409 <c>plan_has_data</c> (B-659): the cascade would take the child's sessions, attempts and
+    /// met days with it, and the streak would break backwards. Switching it off keeps all of that.
     /// </summary>
     [HttpDelete("{planId:int}")]
     [Authorize(Roles = Roles.Supervisor)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(int planId, CancellationToken ct = default)
     {
         var plan = await db.StudyPlans.FirstOrDefaultAsync(p => p.Id == planId, ct);
         if (plan is null) return NotFound();
+        if (await PlanHasPlayDataAsync(planId, ct))
+            return this.ProblemWithCode(ApiErrors.PlanHasData, "This study plan already has practice or test data and cannot be deleted. Switch it off instead.");
         db.StudyPlans.Remove(plan);
         await db.SaveChangesAsync(ct);
         return NoContent();

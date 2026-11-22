@@ -7469,7 +7469,7 @@
         "tags": [
           "Supervisor \u2013 Plans"
         ],
-        "summary": "Deletes an entire study plan (father/own only). Removes its positions via cascade incl.\nprogress, practice sessions, test attempts and goal rewards. The referenced catalog exercises\nremain untouched (they belong to the child-neutral catalog, not the plan).",
+        "summary": "Deletes an entire study plan (father/own only) that the child has not played yet. Removes its positions via\ncascade. The referenced catalog exercises remain untouched (they belong to the child-neutral catalog, not the plan).\nA played plan answers 409 \u0060plan_has_data\u0060 (B-659): the cascade would take the child\u0027s sessions, attempts and\nmet days with it, and the streak would break backwards. Switching it off keeps all of that.",
         "parameters": [
           {
             "name": "planId",
@@ -7501,6 +7501,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {

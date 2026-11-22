@@ -1,13 +1,14 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Pflicht zur Kür, gelöschte Pflicht bricht die Serie]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: L
 wo: backend
 migration: ja
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: "PM-Sitzung 2026-11-18, Runde 3 (Sprint 87), Review von B-613 (pugling-reviewer, 🟡2)"
 grund: ""
 ersetzt_durch: []
@@ -281,3 +282,65 @@ mit einem umzuschreibenden Test. Jeder Teil ist klein, die Streuung der Lesestel
   gefunden; Frage zum Malus als offener Punkt 5 ausdrücklich dem Nutzer überlassen.
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): Historie statt Überspringen; nullbares Paar `DutyUntil`/`CadenceUntil` mit einem Helfer und einer Schließ-Regel, gemeinsam mit [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md); Pflicht → Kür → Pflicht bleibt bekannter Rest (B-613); Plan löschen wird bei Spieldaten gesperrt (`plan_has_data`, der Test `Plan_Loeschen_EntferntPlanMitGespielterPosition` kehrt um); Malus unverändert. Akzeptanzkriterien final.
 - **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): L, backend, Migration ja, Vertrag nein. Der Helfer muss an mehr Lesestellen als die Story nennt (auch `EvaluateAndAwardAsync`, sonst Doppelbuchung des Wochenziels nach dem Wechsel); B-659 baut vor dem Teil (c) von B-248 und legt `DutyUntil`, `CadenceUntil` und die Schließ-Regel an.
+- **2026-11-22** — in-arbeit (Nachtlauf B 2026-11-23, Sprint B2). Gebaut: Migration `20261122081510_DutyUntilCadenceUntil`
+  (zwei nullbare Spalten, ohne Vorbelegung), Helfer `PositionProgressService.DutyCadenceOn` an `HasDutyOn`, `IsGoalMetAsync`,
+  `OpenGoalProgressAsync`, `ComputeDayAsync` und `EvaluateAndAwardAsync`; Schließ-Regel `CloseDutyAsync` (im PATCH vor jeder
+  anderen Zuweisung, damit „erfüllt?“ mit den Einstellungen der Periode urteilt); Löschsperre `409 plan_has_data` über den
+  schon vorhandenen `PlanHasPlayDataAsync` aus B-673 (zählt zusätzlich eingeführte Wörter mit; ein Code, eine Prüfstelle).
+  **Abweichungen, stellvertretend entschieden:** (a) Der Code `plan_has_data` gab es schon (B-673, Umhängen); er wird
+  wiederverwendet, statt einen zweiten anzulegen. Der deutsche Satz nennt beide Sperren, den Ausweg „Deaktivieren“ nur am
+  Löschen (Review 🟡2). (b) Die rohen Lesestellen in der Abrechnung (`IsIntroductionDaySparedAsync`) und im Missionsfilter
+  von `ComputeDayAsync` bleiben roh: dort ist der Helfer äquivalent (die Spanne gibt es nur bei `Cadence = None`, solche
+  Positionen erreichen die Abrechnung nicht), und eine ungetragene Änderung wäre Ballast. (c) Bestätigungstext des Vaters
+  (`VaterPlanDetail.tsx`) und Client-Doku nachgezogen; `scripts/_plan-api.ps1:89` bleibt wie in der Story vorgesehen.
+  Neue Spec `frontend/e2e/plan-loeschen-gesperrt.spec.ts`.
+  **Rote Probe vor dem Fix** (`PflichtWirdKuerSerieTests`, 12 Fälle): 7 failed / 5 passed – erwartet: grün nur die beiden
+  Gegenproben (AK 2, AK 4), der Malus-Maßstab, AK 9 und der Doppelbuchungs-Fall (die beiden letzten fallen erst unter einer
+  falschen Reparatur, Mutanten M11/M12 unten).
+  **Migration an einer Kopie der echten DB** (per SQLite-Backup-API gelesen, nur lesend geöffnet): Stand
+  `20261119065732_ShopStockPerChild`, `database update` spielt `DutyUntilCadenceUntil` ein; 204 Positionen, 0× `DutyUntil`,
+  0× `CadenceUntil` gesetzt. Damit liest jeder Tag den heutigen Takt wie vorher (`DutyUntilMigrationTests`); Serie und Malus
+  der Kinder bewegen sich nicht. Die Kopie ist danach gelöscht.
+  **Review `pugling-reviewer`:** 2× 🟡 (der Bericht sprach von drei, nummeriert waren zwei), beide mit Code-/Teständerung
+  gezählt (Zähler Sprint B2: 2 von 5):
+  🟡1 Helfer lieferte nach der Spanne den aktuellen Takt statt `None` (Entscheidung 2; für B-248 nötig) – behoben, plus
+  Einzelfall `Nach_Der_Spanne_Ist_Keine_Pflicht`; 🟡2 der deutsche Satz bot „Deaktivieren“ auch fürs Umhängen an –
+  behoben; die AK-9-Begründung im Controller-Kommentar stimmt damit wieder. 🟢3 Schließ-Regel vor die Zuweisungen
+  gezogen; 🟢4 laufende Nacharbeit → Kür als [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) angelegt
+  (bewusst nicht hier, Entscheidung 2); 🟢5 Doku von `ApiErrors.PlanHasData` und ein Testkommentar korrigiert.
+  `ActivatedAtMigrationTests` liest seit dieser Migration projiziert (es lud die ganze Entity auf einem älteren Stand und
+  fiel an der neuen Spalte – gefunden im vollen Lauf, nicht vom Review).
+  **Mutanten-Probe nach der letzten Änderung** (`mutant-probe.py`, Debug):
+
+  | Mutante | Stelle | erwartet | gemessen | trägt |
+  |---|---|---|---|---|
+  | M1 `HasDutyOn` roh | PositionProgressService.cs:55 | red | red | AK 1 |
+  | M2 Grenze `<` statt `<=` | :68 | red | red | AK 1 |
+  | M3 Takt der Spanne ignoriert | :68 | red | red | AK 1 |
+  | M14 nach der Spanne aktueller Takt | :69 | red | red | Entscheidung 2 (Einzelfall) |
+  | M4 `IsGoalMetAsync` roh | :210 | red | red | AK 3 |
+  | M5 Schließen auch ohne Wechsel | :230 | red | red | AK 8 |
+  | M6 immer Periodenende | :232 | red | red | AK 7 offen |
+  | M7 immer Tag davor | :232 | red | red | AK 7 erfüllt |
+  | M8 `CadenceUntil` fehlt | :233 | red | red | AK 3 |
+  | M9 Fortschrittsbalken roh | :293 | green | green | **ungetragen**: Anzeigewert eines offenen Ziels, innerhalb einer Spanne nur an verpassten Vergangenheitstagen erreichbar |
+  | M10 Tagesansicht roh | :356 | red | red | Tagesansicht-Fall |
+  | M11 Belohnung roh | :590 | red | red | Doppelbuchung |
+  | M12 Spanne bleibt beim Zurück | PlanPositionsController.cs:357 | red | red | AK 9 |
+  | M13 Löschen offen | StudyPlansController.cs:283 | red | red | AK 5 (beide Fälle) |
+  | E1 Löschen offen (E2E) | StudyPlansController.cs:283 | red | red | `plan-loeschen-gesperrt.spec.ts` |
+
+- **2026-11-22** — abgenommen (`edaacfd9`). Verifikation nach der letzten Änderung: Backend voll (Release) 2041/2041,
+  Vitest voll 1327/1327, `tsc -b` und `dotnet format --verify-no-changes` sauber. Rollengang Sprint B2 als Maschinengang
+  auf :5207/:5179 gegen eine Wegwerf-DB, Server aus dem Endstand gestartet: `plan-loeschen-gesperrt`,
+  `plan-umhaengen-gesperrt`, `full-flow`, `belohnung-trotz-wochenziel`, `belohnung-ueber-faecher`, `erfolge-woche-frist`,
+  `heute-dran-nach-antworten`, `pfad` – 8 passed. **Vater:** Löschen eines gespielten Plans sagt auf Deutsch warum und was
+  stattdessen geht, der Plan bleibt (Spec); Umhängen sagt weiter „keinem anderen Kind“. Den Wechsel Pflicht → Kür hat
+  niemand in der Oberfläche geklickt: Ersatz ist der PATCH, den das Positions-Formular schickt, in
+  `PflichtWirdKuerSerieTests` (12+2 Fälle). **Sohn:** Serie, Tagesansicht und Tageskiste folgen der Historie
+  (Integrationstests); seine Specs grün. **Creator:** Regressionszeuge, kein Pfad im Diff. Nach dem Merge muss der
+  Heimnetz-Start die Migration `DutyUntilCadenceUntil` einspielen (an einer Kopie geprobt, siehe oben).
+- **2026-11-22** — Nachschau (Retro Sprint B3): `edaacfd9` gegen Entscheidung 5 und AK 6 gelesen – der Malus-Filter liest weiter
+  roh (`p.Cadence != GoalCadence.None && p.PenaltyCoins > 0`, 1 Treffer), die Migration enthält weder `defaultValue` noch
+  `Sql(` (0 Treffer), `docs/openapi/v1.json` trägt das neue `409` am Plan-DELETE (1 Treffer); dazu nach Sprint B3 Vitest
+  1340/1340. Kein Befund.

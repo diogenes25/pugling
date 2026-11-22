@@ -937,4 +937,34 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             new { answers = RightMathAnswers(run, ("2 + 3", "5"), ("4 × 4", "17")) }));
         Assert.Equal(2, result.GetProperty("correct").GetInt32());
     }
+
+    /// <summary>
+    /// B-660, AK 7 (B-533 decision 7): a bonus run on an exercise that is also a plan position leaves that position's box,
+    /// due date and review count alone - the empty practice screen now sends the child there, so a run must not push the
+    /// card away from its due day. Red when the bonus submit writes <see cref="PositionItemProgress"/> (e.g. through the
+    /// Leitner review of the position).
+    /// </summary>
+    [Fact]
+    public async Task Bonus_Runde_Laesst_Den_Kasten_Der_Position_Unberuehrt()
+    {
+        var s = await SetupAsync();
+        List<string> Snapshot()
+        {
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            return db.PositionItemProgress.Where(p => p.PlanPosition!.ExerciseId == s.VocabId && p.PlanPosition.StudyPlan!.ChildId == s.ChildId)
+                .OrderBy(p => p.ItemIndex)
+                .Select(p => $"{p.ItemIndex}:{p.Box}:{p.DueOn}:{p.ReviewCount}:{p.LastReviewedAt}")
+                .ToList();
+        }
+        var before = Snapshot();
+        Assert.NotEmpty(before);
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        var result = await JsonAsync(await s.Child.PostAsJsonAsync(
+            $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(run) }));
+
+        Assert.True(result.GetProperty("correct").GetInt32() > 0);
+        Assert.Equal(before, Snapshot());
+    }
 }

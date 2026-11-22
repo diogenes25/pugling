@@ -17,6 +17,8 @@ const endSession = vi.fn();
 const heartbeat = vi.fn();
 const cardShown = vi.fn();
 const overview = vi.fn();
+// B-660: der Leerzustand liest das Bonus-Training; vorgegeben ist eine Sperre ohne offene Ziele (der Block bleibt leer).
+const extraTraining = vi.fn();
 
 /**
  * Wartet, bis der Fokus-Effekt gelaufen ist (B-603). `findBy…` meldet den Fund, sobald das Element im DOM steht – außerhalb
@@ -32,6 +34,8 @@ vi.mock("./SohnApp", () => ({
   // `skin`: die Aufgabe steht seit B-526 in der Sprechblase am Maskottchen.
   useSohn: () => ({ planId: 3, refreshWallet: () => {}, setStreak: () => {}, celebrate: () => {}, skin: { id: "pug", name: "Pug", emoji: "🐶", gradient: "", cost: 0, blurb: "" } }),
 }));
+// B-660: der Leerzustand lädt über `useAsync`, und das meldet bei 401 ab – die Sitzung ist hier nicht Gegenstand.
+vi.mock("../lib/auth", () => ({ useAuth: () => ({ signOut: () => {} }) }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -44,6 +48,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       endSession: (...a: unknown[]) => endSession(...a),
       cardShown: (...a: unknown[]) => cardShown(...a),
       overview: (...a: unknown[]) => overview(...a),
+      extraTraining: (...a: unknown[]) => extraTraining(...a),
     },
   };
 });
@@ -62,6 +67,7 @@ beforeEach(() => {
   heartbeat.mockReset().mockResolvedValue(undefined);
   cardShown.mockReset().mockResolvedValue(undefined);
   overview.mockReset().mockResolvedValue({ currentStreak: 0, today: { positions: [] } });
+  extraTraining.mockReset().mockResolvedValue({ unlocked: false, outstanding: [], exercises: [], rewardCadence: "Daily" });
   cards.mockReset().mockImplementation(() => Promise.resolve(["eins", "zwei", "drei"].map((prompt, i) => card(i, prompt))));
 });
 
@@ -972,6 +978,20 @@ describe("SohnPractice nach dem Test", () => {
 
     expect(await screen.findByText(de.sohn.practice.nothingDue)).toBeTruthy();
     expect(screen.getByRole("button", { name: de.sohn.practice.toTest })).toBeTruthy();
+  });
+
+  // B-660, AK 1: der Leerzustand führt weiter – mit offener Sperre ins Bonus-Training mit DIESER Übung. Rot, wenn der
+  // Leerzustand den Block nicht trägt (dann steht dort wie vorher nur „Nichts fällig“).
+  it("bietet im Leerzustand das Bonus-Training mit dieser Übung an", async () => {
+    cards.mockImplementation(() => Promise.resolve([]));
+    overview.mockResolvedValue({ currentStreak: 0, today: { positions: [{ positionId: 5, exerciseId: 42 }] } });
+    extraTraining.mockResolvedValue({ unlocked: true, outstanding: [], rewardCadence: "Daily",
+      exercises: [{ exerciseId: 42, nextRunPercent: 50, done: false, repeatable: true }] });
+    renderFrom();
+
+    const link = await screen.findByRole("link", { name: de.sohn.practice.againPlay });
+    expect(link.getAttribute("href")).toBe("/sohn/bonus/42");
+    expect(screen.getByText(de.sohn.practice.nothingDue)).toBeTruthy();
   });
 });
 

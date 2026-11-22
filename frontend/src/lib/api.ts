@@ -187,7 +187,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   position_has_data: "An dieser Position wurde schon geübt oder getestet. Entfernen würde diesen Lernstand mitnehmen und geht darum nicht mehr.",
   // B-673: der Spielstand hängt am Plan und gehört über ihn seinem Kind. Kein Ausweg genannt: es gibt keinen, der die
   // Sperre aufhebt, ohne dem ersten Kind etwas zu nehmen.
-  plan_has_data: "Mit diesem Plan wurde schon geübt oder getestet. Der Lernstand gehört dem Kind, das damit gelernt hat, darum lässt sich der Plan keinem anderen Kind mehr geben.",
+  // Zwei Sperren, ein Code (B-673 Umhängen, B-659 Löschen): der Satz nennt beide, der Ausweg hängt nur am Löschen –
+  // fürs Umhängen gibt es keinen (B-673).
+  plan_has_data: "Mit diesem Plan wurde schon geübt oder getestet. Der Lernstand gehört dem Kind, das damit gelernt hat, darum lässt sich der Plan nicht löschen (stattdessen „Deaktivieren“) und keinem anderen Kind mehr geben.",
   timetable_slot_taken: "Dieses Fach steht an diesem Wochentag schon im Stundenplan.",
   purchase_not_open: "Dieser Kauf ist schon storniert.",
   activation_not_pending: "Diese Anfrage ist schon beantwortet.",
@@ -597,7 +599,8 @@ export const api = {
   // Lehrplan nachträglich umbenennen/verlängern/deaktivieren (Inhalte laufen über Positionen).
   updatePlan: (planId: number, dto: UpdatePlanDto) =>
     http<PlanResponse>(`${V1}/supervisor/study-plans/${planId}`, "PATCH", dto),
-  // Lehrplan samt Positionen/Fortschritt löschen (Kaskade); die Katalog-Übungen bleiben erhalten.
+  // Lehrplan samt Positionen löschen; die Katalog-Übungen bleiben erhalten. Ein gespielter Plan antwortet 409
+  // `plan_has_data` (B-659): sein Lernstand und die erfüllten Tage gehören dem Kind.
   deletePlan: (planId: number) => http<void>(`${V1}/supervisor/study-plans/${planId}`, "DELETE"),
 
   // ---- Lehrplan-Positionen (Plan = Container aus Katalog-Übungen) ----

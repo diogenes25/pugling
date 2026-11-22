@@ -8,6 +8,7 @@ groesse: S
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: Sprint 82, Verifikation von B-597 (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -237,3 +238,4 @@ Dauerfall mit verzögerter Antwort nach dem Muster von `planbau-ladefenster.spec
     Datei lief dabei mit.
   - Vater, Sohn und Creator sind Regressionszeugen: dieselbe Suite, kein Produktcode im Diff.
   - Entscheidungen 1–5 bleiben stellvertretend und unbestätigt.
+- **2026-11-22** — Nachschau (Nachtlauf B 2026-11-23, Retro Sprint B1, Agent `frontend-reviewer`): Route-Prädikat gegen `api.ts:527-542` nachgerechnet (Erstladen ohne `?`), Wartebedingung `planAnlegen:35` gegen `PlanPositions.tsx:756/794-797` (Radiogruppe erst nach der Antwort) – kann rot werden; kein Befund.

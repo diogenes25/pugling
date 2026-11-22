@@ -1727,6 +1727,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CadenceUntil")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ComboBonusPoints")
                         .HasColumnType("INTEGER");
 
@@ -1743,6 +1746,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateOnly>("DutySince")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("DutyUntil")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ExerciseId")
