@@ -91,20 +91,26 @@ describe("Der Zielring", () => {
 });
 
 describe("Die Frist", () => {
-  // Ein Mittwoch, 22:30 UTC: bis zum Server-Tagesende sind es anderthalb Stunden.
-  const mittwoch = new Date(Date.UTC(2026, 10, 11, 22, 30));
+  // Seit B-730 endet der Lerntag um Mitternacht deutscher Zeit, nicht UTC – die Zeitpunkte sind darum in UTC so gewählt,
+  // dass die alte UTC-Regel ein anderes Ergebnis gäbe. Ein Mittwoch, 21:30 UTC = 22:30 MEZ: anderthalb Stunden bis
+  // Mitternacht (nach UTC wären es zweieinhalb).
+  const mittwoch = new Date(Date.UTC(2026, 10, 11, 21, 30));
+  // Sonntag 20:00 UTC = 21:00 MEZ: drei Stunden (nach UTC vier).
   const sonntag = new Date(Date.UTC(2026, 10, 15, 20, 0));
+  // Sonntag 23:30 UTC = Montag 00:30 MEZ: die Woche ist schon um.
+  const montagFrueh = new Date(Date.UTC(2026, 10, 15, 23, 30));
 
-  it("rechnet ein Tagesziel bis Mitternacht UTC und rundet auf", () => {
-    // Rot, wenn nach Ortszeit gerechnet oder abgerundet wird (dann stünde „noch 1 Std.“ bzw. je nach Zeitzone
-    // etwas anderes) – die Anzeige widerspräche der Buchung.
+  it("rechnet ein Tagesziel bis Mitternacht deutscher Zeit und rundet auf", () => {
+    // Rot, wenn bis Mitternacht UTC (3) oder abgerundet (1) gerechnet wird – die Anzeige widerspräche der Buchung.
     expect(frist(pos({ cadence: "Daily" }), mittwoch)).toEqual({ art: "stunden", stunden: 2 });
   });
 
   it("nennt ein Wochenziel „bis Sonntag“ und erst am Sonntag die Stunden", () => {
     // Rot, wenn ein Wochenziel wie ein Tagesziel täglich abliefe.
     expect(frist(pos({ cadence: "Weekly" }), mittwoch)).toEqual({ art: "sonntag" });
-    expect(frist(pos({ cadence: "Weekly" }), sonntag)).toEqual({ art: "stunden", stunden: 4 });
+    expect(frist(pos({ cadence: "Weekly" }), sonntag)).toEqual({ art: "stunden", stunden: 3 });
+    // Rot, wenn der Sonntag am UTC-Datum hängt: um 00:30 MEZ am Montag gilt schon die neue Woche (B-730).
+    expect(frist(pos({ cadence: "Weekly" }), montagFrueh)).toEqual({ art: "sonntag" });
   });
 
   it("gibt es nur für offene Pflicht", () => {

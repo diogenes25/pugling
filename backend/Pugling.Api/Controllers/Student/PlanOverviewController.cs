@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox, TimeProvider time) : ControllerBase
+public class PlanOverviewController(PuglingDbContext db, PositionProgressService progress, DailyBoxService dailyBox, LearningDay learningDay) : ControllerBase
 {
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles out.
     // The subject rides along so the history's day rollup does not look it up once per day (B-614).
@@ -37,7 +37,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         var todayOverview = await progress.ComputeDayAsync(plan, today, ct);
         var streak = await progress.ChildStreakAsync(plan.ChildId, today, int.MaxValue, ct);
         var boxStatus = await dailyBox.StatusAsync(plan.ChildId, today, ct);
@@ -69,7 +69,7 @@ public class PlanOverviewController(PuglingDbContext db, PositionProgressService
         var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
 
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         var view = await progress.ProgressViewAsync(plan, today, from, to, dutyDone, sort, ct);
         // Paging (an HTTP concern) on the already filtered/sorted day list; X-Total-Count = the filtered total.
         var page = view.Days.ToPagedList(Response, skip, take);

@@ -9,7 +9,7 @@ namespace Pugling.Api.Services.Shared;
 /// currency (see <see cref="PointKindCurrency"/>). Bundles the <c>Where(...).SumAsync(...)</c> query
 /// that used to be duplicated across several places into one location.
 /// </summary>
-public class WalletService(PuglingDbContext db)
+public class WalletService(PuglingDbContext db, LearningDay learningDay)
 {
     /// <summary>Account balance of both currencies of a child.</summary>
     public record Balances(int Coins, int Gems);
@@ -49,16 +49,18 @@ public class WalletService(PuglingDbContext db)
 
     /// <summary>
     /// The child's earned coins this week against its own previous week (B-253, user decision G-6: no siblings, no
-    /// ranks). The week runs Monday to Sunday on the UTC calendar, like weekly missions and weekly duties. The
+    /// ranks). The week runs Monday to Sunday on the learning-day calendar (B-730), like weekly missions and weekly duties. The
     /// previous week is cut at the same moment (<paramref name="now"/> minus seven days), so a Monday morning is not
     /// measured against a full week; the whole previous week rides along beside it. Summed in the database.
     /// </summary>
     public async Task<WeekCoinsResponse> WeekCoinsAsync(int childId, DateTime now, CancellationToken ct)
     {
-        var monday = GamificationService.WeekMonday(DateOnly.FromDateTime(now));
-        var weekStart = monday.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var lastWeekStart = weekStart.AddDays(-7);
-        var lastWeekNow = now.AddDays(-7);
+        // The learning week (B-730): Monday 00:00 in the family's zone, as a UTC instant for the stored timestamps.
+        var monday = GamificationService.WeekMonday(learningDay.DayOf(now));
+        var weekStart = learningDay.StartUtc(monday);
+        var lastWeekStart = learningDay.StartUtc(monday.AddDays(-7));
+        // The same time into last week on the wall clock, not 168 h back: a week with a clock change is 167 or 169 h long.
+        var lastWeekNow = lastWeekStart + (now - weekStart);
         var earned = db.ChildPointsEntries.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Amount > 0 && EarnedCoinKinds.Contains(p.Kind));
 

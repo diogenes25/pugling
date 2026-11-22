@@ -23,7 +23,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PlanPositionsController(PuglingDbContext db, ExercisePermissionService perms, ExerciseTypeRegistry types,
-    TimeProvider time, PositionProgressService progress) : ControllerBase
+    TimeProvider time, LearningDay learningDay, PositionProgressService progress) : ControllerBase
 {
     /// <summary>
     /// Is the exercise <b>not yet filled</b>? Applies only to types that carry their content as an item table
@@ -216,7 +216,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // The same clock as the day logic that reads it (B-476: a word's ladder counts from the day its position
             // joined the plan); the entity's wall-clock default would put the two on different calendars under test.
             CreatedAt = createdAt,
-            DutySince = DateOnly.FromDateTime(createdAt),
+            DutySince = learningDay.DayOf(createdAt),
             StudyPlanId = planId,
             ExerciseId = dto.ExerciseId,
             Order = order,
@@ -357,7 +357,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.Cadence is { } cadence && cadence != GoalCadence.None
             && (pos.Cadence == GoalCadence.None
                 || (pos is { Cadence: GoalCadence.UntilDone, CompletedOn: not null } && cadence != GoalCadence.UntilDone)))
-            pos.DutySince = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+            pos.DutySince = learningDay.Today;
         if (dto.Cadence is not null) pos.Cadence = dto.Cadence.Value;
         if (dto.OrderStrategy is not null) pos.OrderStrategy = dto.OrderStrategy.Value;
         if (dto.GoalThreshold is not null) pos.GoalThreshold = dto.GoalThreshold;

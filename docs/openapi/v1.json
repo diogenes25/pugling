@@ -2351,7 +2351,7 @@
         "tags": [
           "Supervisor \u2013 Children"
         ],
-        "summary": "Daily status of all own children; date optional (default: today, UTC).",
+        "summary": "Daily status of all own children; date optional (default: today\u0027s learning day in the family\u0027s zone, \u0060LearningDay:TimeZone\u0060).",
         "parameters": [
           {
             "name": "date",
@@ -2401,7 +2401,7 @@
         "tags": [
           "Supervisor \u2013 Children"
         ],
-        "summary": "The timeline of the own children from from to to (default: the last 28 days up\nto today, UTC), grouped by granularity. A \u0060to\u0060 after today ends today: a day still to come\nwould read as a missed duty. At most 92 days and \u0060from\u0060 not after \u0060to\u0060, otherwise\n\u0060400 validation_error\u0060. Pages over the children (ordered by name); \u0060X-Total-Count\u0060 is the number\nof children. childId narrows it to one own child - another one simply does not appear.",
+        "summary": "The timeline of the own children from from to to (default: the last 28 days up\nto today\u0027s learning day in the family\u0027s zone), grouped by granularity. A \u0060to\u0060 after today ends today: a day still to come\nwould read as a missed duty. At most 92 days and \u0060from\u0060 not after \u0060to\u0060, otherwise\n\u0060400 validation_error\u0060. Pages over the children (ordered by name); \u0060X-Total-Count\u0060 is the number\nof children. childId narrows it to one own child - another one simply does not appear.",
         "parameters": [
           {
             "name": "from",

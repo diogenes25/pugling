@@ -5,12 +5,14 @@ import { FieldLabel } from "../components/InfoHint";
 import { Pflicht } from "../components/Pflicht";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { useAsync } from "../lib/useAsync";
+import { heuteImLerntag } from "../lib/datum";
 import { useAuth } from "../lib/auth";
 import type { ChildResponse, CreatePlanDto, SubjectResponse } from "../lib/types";
 import { PlanUnitSelect } from "./PlanUnitSelect";
 
+// Der Lerntag des Servers, nicht der UTC-Tag: um 00:30 deutscher Zeit ist schon morgen (B-730).
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return heuteImLerntag();
 }
 
 /**

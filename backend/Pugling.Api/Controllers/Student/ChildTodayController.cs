@@ -16,7 +16,7 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildTodayController(PositionProgressService progress, DailyBoxService dailyBox, TimeProvider time)
+public class ChildTodayController(PositionProgressService progress, DailyBoxService dailyBox, LearningDay learningDay)
     : ControllerBase
 {
     /// <summary>
@@ -29,7 +29,7 @@ public class ChildTodayController(PositionProgressService progress, DailyBoxServ
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TodayResponse>> Get(int childId, CancellationToken ct)
     {
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         var day = await progress.ComputeChildDayAsync(childId, today, ct);
         var streak = await progress.ChildStreakAsync(childId, today, int.MaxValue, ct);
         var box = await dailyBox.StatusAsync(childId, today, ct);

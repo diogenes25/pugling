@@ -301,7 +301,7 @@ public class ShopController(PuglingDbContext db, ShopService shop, TimeProvider 
         var resetsOnceInstant = nextRefillKind == ShopRefillKind.Once
             && (listing.RefillKind != ShopRefillKind.Once || nextRefillAt != listing.RefillAtUtc);
         if (restartsRefillClock || resetsOnceInstant)
-            foreach (var stock in listing.Stocks) ShopService.ApplyDueRefill(listing, stock, now);
+            foreach (var stock in listing.Stocks) shop.ApplyDueRefill(listing, stock, now);
 
         if (dto.Title is not null) listing.Title = dto.Title.Trim();
         if (dto.Description is not null) listing.Description = dto.Description.Trim();

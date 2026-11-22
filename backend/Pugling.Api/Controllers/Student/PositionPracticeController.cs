@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
     ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger,
-    TimeProvider time, DailyBoxService dailyBox)
+    TimeProvider time, LearningDay learningDay, DailyBoxService dailyBox)
     : ControllerBase
 {
     /// <summary>Upper bound of the seconds creditable per heartbeat (anti time cheat).</summary>
@@ -88,7 +88,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     {
         var pos = await GetPosition(planId, positionId, ct);
         if (pos is null) return NotFound();
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         if (dto.Day is { } d && d != today && !User.IsSupervisor())
             return Forbid(); // catching up on other days is for the supervisor only (anti-cheat).
         // Anti-cheat: the child may only play its active, running plan - no cherry-picking easy or expired
@@ -336,7 +336,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// named".
     ///
     /// Two windows, not one span: the session's day <b>and</b> the current one. Normally they are the same;
-    /// they part when a round runs past UTC midnight or when the supervisor backdates one
+    /// they part when a round runs past midnight of the learning day or when the supervisor backdates one
     /// (<c>StartPracticeDto.Day</c>) – the stamp then carries the wall clock while the round belongs to
     /// another day. Covering both is the safe direction, because a missed stamp does not merely lose a
     /// detail: every remaining card would accept the same answer again. A single span across both days would
@@ -356,10 +356,12 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     /// </summary>
     private async Task<HashSet<int>> NamedInRoundAsync(int positionId, DateOnly day, CancellationToken ct)
     {
-        var dayFrom = day.ToDateTime(TimeOnly.MinValue);
-        var dayTo = dayFrom.AddDays(1);
-        var todayFrom = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime).ToDateTime(TimeOnly.MinValue);
-        var todayTo = todayFrom.AddDays(1);
+        // Bounds as UTC instants of the learning day (B-730); the next day's start, not +24 h - a day can last 23 or 25.
+        var dayFrom = learningDay.StartUtc(day);
+        var dayTo = learningDay.StartUtc(day.AddDays(1));
+        var today = learningDay.Today;
+        var todayFrom = learningDay.StartUtc(today);
+        var todayTo = learningDay.StartUtc(today.AddDays(1));
         return [.. await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId
                 && ((p.LastReviewedAt >= dayFrom && p.LastReviewedAt < dayTo)
@@ -382,7 +384,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var plan = (await GetPlan(planId, ct))!;
         // Anti-cheat: even with a session still open, the child must not keep practicing a plan that has since
         // been deactivated or expired (the supervisor stays exempt for preview/catch-up).
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -425,7 +427,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null || pos.StudyPlan is null) return NotFound();
         if (User.IsStudent()
-            && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+            && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
 
         // Cards of this session only: the order frozen at the start is exactly the set that is served (and it
@@ -471,7 +473,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -510,7 +512,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var plan = (await GetPlan(planId, ct))!;
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -560,7 +562,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var plan = (await GetPlan(planId, ct))!;
         // Anti-cheat: even with a session still open, the child must not keep practicing a plan that has since
         // been deactivated or expired (the supervisor stays exempt for preview/catch-up).
-        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)))
+        if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.Exercise is null) return NotFound();
@@ -672,7 +674,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         }
 
         var due = prog is null || prog.DueOn is null || prog.DueOn <= session.Day;
-        var alreadyScoredToday = prog?.LastReviewedAt is { } last && DateOnly.FromDateTime(last) == session.Day;
+        var alreadyScoredToday = prog?.LastReviewedAt is { } last && learningDay.DayOf(last) == session.Day;
         // A free display stage (B-96) counts as practiced (session/heartbeat/missions still see it) but never
         // as a graded hit: no points, no Leitner movement - "Kennenlernen" must not be the cheapest way to coins.
         // A self-assessed rung of the ladder (B-476) is a claim, not a check: it is no graded hit and pays only the
@@ -753,7 +755,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
 
             var cfg = ScoreConfigOf(plan, pos);
             var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
-                time.GetLocalNow().DateTime, elapsedSeconds);
+                learningDay.LocalNow, elapsedSeconds);
             foreach (var c in score.Contributions)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = c.Kind, Amount = c.Amount, Reason = c.Reason, CreatedAt = now });
             awarded = score.BasePoints;
@@ -878,7 +880,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var awarded = 0;
         if (User.IsStudent() && recallCounts && prog.ImprintedAt is null && prog.NewBonusPaidAt is null)
         {
-            var learnt = scoring.ScoreNewWordRecall(ScoreConfigOf(plan, pos), time.GetLocalNow().DateTime);
+            var learnt = scoring.ScoreNewWordRecall(ScoreConfigOf(plan, pos), learningDay.LocalNow);
             // A position may set its new-content points to 0, and a time slot may round them down to 0: no empty row.
             if (learnt.Amount > 0)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = learnt.Kind, Amount = learnt.Amount, Reason = learnt.Reason, CreatedAt = now });
@@ -946,7 +948,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // session open forever (the frontend closes it from an effect cleanup and swallows the error), and an
         // open session is worth no less to the child than a closed one - the goal rule reads cursor and order,
         // not EndedAt.
-        var payable = !User.IsStudent() || PositionPlayService.PlanPlayableForChild(plan, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime));
+        var payable = !User.IsStudent() || PositionPlayService.PlanPlayableForChild(plan, learningDay.Today);
 
         session.EndedAt = time.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);

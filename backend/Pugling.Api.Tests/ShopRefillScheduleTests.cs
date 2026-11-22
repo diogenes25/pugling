@@ -17,51 +17,51 @@ public class ShopRefillScheduleTests
     /// </summary>
     [Fact]
     public void Woechentlich_Montag_Verpasst_Wird_Nachgeholt() =>
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 12, 18), Utc(2026, 11, 18, 9)));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 12, 18), Utc(2026, 11, 18, 9), TimeZoneInfo.Utc));
 
     /// <summary>Two Mondays skipped count twice; red when the count collapses into "due yes/no".</summary>
     [Fact]
     public void Woechentlich_Zwei_Montage_Verpasst_Zaehlt_Zwei() =>
-        Assert.Equal(2, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 12), Utc(2026, 11, 24)));
+        Assert.Equal(2, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 12), Utc(2026, 11, 24), TimeZoneInfo.Utc));
 
     /// <summary>Refilled on Monday morning, read Monday evening: nothing due. Red when the boundary is "&gt;=" on the day.</summary>
     [Fact]
     public void Woechentlich_Am_Selben_Montag_Nicht_Nochmal() =>
-        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16, 7), Utc(2026, 11, 16, 20)));
+        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16, 7), Utc(2026, 11, 16, 20), TimeZoneInfo.Utc));
 
     /// <summary>AK 5: the 31st is not a refill day, the 1st is (both in UTC). Red when monthly counts days instead of months.</summary>
     [Fact]
     public void Monatlich_Nur_Am_Ersten()
     {
-        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 15), Utc(2026, 10, 31, 23, 59)));
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 15), Utc(2026, 11, 1, 0, 1)));
+        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 15), Utc(2026, 10, 31, 23, 59), TimeZoneInfo.Utc));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 15), Utc(2026, 11, 1, 0, 1), TimeZoneInfo.Utc));
     }
 
     /// <summary>AK 3, two 1sts skipped (31 Oct → 2 Dec) count twice; across the year change too.</summary>
     [Fact]
     public void Monatlich_Zaehlt_Verpasste_Erste_Auch_Ueber_Den_Jahreswechsel()
     {
-        Assert.Equal(2, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 31), Utc(2026, 12, 2)));
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 12, 20), Utc(2027, 1, 1)));
+        Assert.Equal(2, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 10, 31), Utc(2026, 12, 2), TimeZoneInfo.Utc));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Monthly, null, null, Utc(2026, 12, 20), Utc(2027, 1, 1), TimeZoneInfo.Utc));
     }
 
     /// <summary>Twice a day: midnight and noon. Red when the noon instant is dropped.</summary>
     [Fact]
     public void Zweimal_Taeglich_Zaehlt_Mittag_Und_Mitternacht()
     {
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.TwiceDaily, null, null, Utc(2026, 11, 18, 8), Utc(2026, 11, 18, 13)));
-        Assert.Equal(3, ShopRefillSchedule.DueRefills(ShopRefillKind.TwiceDaily, null, null, Utc(2026, 11, 18, 8), Utc(2026, 11, 19, 13)));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.TwiceDaily, null, null, Utc(2026, 11, 18, 8), Utc(2026, 11, 18, 13), TimeZoneInfo.Utc));
+        Assert.Equal(3, ShopRefillSchedule.DueRefills(ShopRefillKind.TwiceDaily, null, null, Utc(2026, 11, 18, 8), Utc(2026, 11, 19, 13), TimeZoneInfo.Utc));
     }
 
     /// <summary>A stock never refilled owes one refill; Once only from its instant and only once.</summary>
     [Fact]
     public void Nie_Aufgefuellt_Und_Einmalig()
     {
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Daily, null, null, null, Utc(2026, 11, 18)));
-        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), null, Utc(2026, 11, 19)));
-        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), null, Utc(2026, 11, 21)));
-        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), Utc(2026, 11, 21), Utc(2026, 11, 30)));
-        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.None, null, null, null, Utc(2026, 11, 30)));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Daily, null, null, null, Utc(2026, 11, 18), TimeZoneInfo.Utc));
+        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), null, Utc(2026, 11, 19), TimeZoneInfo.Utc));
+        Assert.Equal(1, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), null, Utc(2026, 11, 21), TimeZoneInfo.Utc));
+        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.Once, null, Utc(2026, 11, 20), Utc(2026, 11, 21), Utc(2026, 11, 30), TimeZoneInfo.Utc));
+        Assert.Equal(0, ShopRefillSchedule.DueRefills(ShopRefillKind.None, null, null, null, Utc(2026, 11, 30), TimeZoneInfo.Utc));
     }
 
     /// <summary>
@@ -83,13 +83,13 @@ public class ShopRefillScheduleTests
     [Fact]
     public void Naechster_Termin()
     {
-        Assert.Equal(Utc(2026, 12, 1), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Monthly, null, null, Utc(2026, 11, 1), Utc(2026, 11, 19, 10)));
-        Assert.Equal(Utc(2026, 11, 23), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16), Utc(2026, 11, 16, 10)));
-        Assert.Equal(Utc(2026, 11, 23), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16), Utc(2026, 11, 19, 10)));
-        Assert.Equal(Utc(2026, 11, 19, 12), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.TwiceDaily, null, null, null, Utc(2026, 11, 19, 10)));
-        Assert.Equal(Utc(2026, 11, 20), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Daily, null, null, null, Utc(2026, 11, 19, 10)));
-        Assert.Null(ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.None, null, null, null, Utc(2026, 11, 19)));
-        Assert.Null(ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Once, null, Utc(2026, 11, 1), Utc(2026, 11, 1), Utc(2026, 11, 19)));
+        Assert.Equal(Utc(2026, 12, 1), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Monthly, null, null, Utc(2026, 11, 1), Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
+        Assert.Equal(Utc(2026, 11, 23), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16), Utc(2026, 11, 16, 10), TimeZoneInfo.Utc));
+        Assert.Equal(Utc(2026, 11, 23), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 11, 16), Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
+        Assert.Equal(Utc(2026, 11, 19, 12), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.TwiceDaily, null, null, null, Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
+        Assert.Equal(Utc(2026, 11, 20), ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Daily, null, null, null, Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
+        Assert.Null(ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.None, null, null, null, Utc(2026, 11, 19), TimeZoneInfo.Utc));
+        Assert.Null(ShopRefillSchedule.NextRefillAtUtc(ShopRefillKind.Once, null, Utc(2026, 11, 1), Utc(2026, 11, 1), Utc(2026, 11, 19), TimeZoneInfo.Utc));
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class ShopRefillScheduleTests
         Assert.Equal((0, (DateTime?)Utc(2026, 11, 19)), ShopRefillSchedule.StartStock(ShopRefillKind.Daily, null, 3, 5, Utc(2026, 11, 19)));
         Assert.Equal((0, (DateTime?)null), ShopRefillSchedule.StartStock(ShopRefillKind.Once, Utc(2026, 11, 21), 2, 0, Utc(2026, 11, 19)));
         Assert.Equal((4, (DateTime?)null), ShopRefillSchedule.StartStock(ShopRefillKind.None, null, 4, 0, Utc(2026, 11, 19)));
-        Assert.Equal(Utc(2026, 11, 16), ShopRefillSchedule.PeriodStartUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 1, 1), Utc(2026, 11, 19, 10)));
-        Assert.Equal(Utc(2026, 11, 1), ShopRefillSchedule.PeriodStartUtc(ShopRefillKind.Monthly, null, null, Utc(2026, 1, 1), Utc(2026, 11, 19, 10)));
+        Assert.Equal(Utc(2026, 11, 16), ShopRefillSchedule.PeriodStartUtc(ShopRefillKind.Weekly, Monday, null, Utc(2026, 1, 1), Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
+        Assert.Equal(Utc(2026, 11, 1), ShopRefillSchedule.PeriodStartUtc(ShopRefillKind.Monthly, null, null, Utc(2026, 1, 1), Utc(2026, 11, 19, 10), TimeZoneInfo.Utc));
     }
 }

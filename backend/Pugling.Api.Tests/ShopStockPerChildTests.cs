@@ -439,7 +439,7 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
         var winner = new WinnerInterceptor(connectionString, listingId, a.Id, now);
         var options = new DbContextOptionsBuilder<PuglingDbContext>().UseSqlite(connectionString).AddInterceptors(winner).Options;
         await using var db = new PuglingDbContext(options);
-        var shop = new ShopService(db, new WalletService(db));
+        var shop = new ShopService(db, new WalletService(db, TestLearningDay.Utc), TestLearningDay.Utc);
 
         var listings = await shop.ListingsForStudentAsync(a.Id, activeOnly: true, now, CancellationToken.None);
 

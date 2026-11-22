@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimeProvider time) : ControllerBase
+public class StudyPlansController(PuglingDbContext db, AuthAccess access, LearningDay learningDay) : ControllerBase
 {
     /// <summary>In-memory projection of a tracked container, with the unit label and position count read separately.</summary>
     private static PlanResponse Map(StudyPlan p, string? unitLabel, int positionCount, DateOnly today) =>
@@ -51,7 +51,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         [FromQuery] int? childId = null, [FromQuery] int skip = 0, [FromQuery] int? take = null,
         CancellationToken ct = default)
     {
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         IQueryable<StudyPlan> scoped = db.StudyPlans.AsNoTracking();
         if (User.IsStudent())
         {
@@ -76,7 +76,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
     public async Task<ActionResult<PlanResponse>> Get(int planId, CancellationToken ct = default)
     {
         var plan = await db.StudyPlans.AsNoTracking().Where(p => p.Id == planId)
-            .Select(ToResponse(DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime))).FirstOrDefaultAsync(ct);
+            .Select(ToResponse(learningDay.Today)).FirstOrDefaultAsync(ct);
         return plan is null ? NotFound() : plan;
     }
 
@@ -103,7 +103,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         if (subjectError is not null) return this.ProblemWithCode(ApiErrors.ValidationError, subjectError);
         if (subjectId is null) return this.ProblemWithCode(ApiErrors.ValidationError, SubjectRequired);
 
-        var start = dto.StartDate ?? DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var start = dto.StartDate ?? learningDay.Today;
         var duration = dto.DurationDays > 0 ? dto.DurationDays : 10;
         var plan = new StudyPlan
         {
@@ -126,7 +126,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         // and it deliberately leaves the running plan alone.
         if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);
         return CreatedAtAction(nameof(Get), new { planId = plan.Id },
-            Map(plan, unit?.Label, 0, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime)));
+            Map(plan, unit?.Label, 0, learningDay.Today));
     }
 
     private const string SubjectRequired =
@@ -234,7 +234,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         plan.SeriesUnitId = unit?.Id;
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
-        var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);
+        var today = learningDay.Today;
         // B-613: only the switch from off to on moves the date; a repeated "active: true" must not shift it.
         if (dto.Active == true && !plan.Active) plan.ActivatedAt = today;
         if (dto.Active is not null) plan.Active = dto.Active.Value;
@@ -261,7 +261,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, TimePr
         // After activating, moving to another child or changing the subject, restore "one active plan per subject".
         if (plan.Active) await DeactivateSameSubjectPlansAsync(plan, ct);
         var positionCount = await db.PlanPositions.CountAsync(pp => pp.StudyPlanId == planId, ct);
-        return Map(plan, unit?.Label, positionCount, DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime));
+        return Map(plan, unit?.Label, positionCount, learningDay.Today);
     }
 
     /// <summary>

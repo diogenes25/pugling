@@ -52,6 +52,20 @@ beforeEach(() => {
 const optionLabels = (select: HTMLElement) => Array.from((select as HTMLSelectElement).options).map((o) => o.textContent);
 
 describe("Neuer Lehrplan", () => {
+  // B-730 AK 6: um 00:30 deutscher Zeit (23:30 UTC im Winter) ist der Lerntag schon der neue. Rot mit
+  // `new Date().toISOString().slice(0, 10)` – das belegte den Start mit gestern vor.
+  it("belegt den Start mit dem Lerntag vor, nicht mit dem UTC-Tag", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2027, 0, 14, 23, 30)));
+      render(<MemoryRouter><VaterPlanCreate /></MemoryRouter>);
+      await settle();
+      expect((screen.getByLabelText("Start", { exact: true }) as HTMLInputElement).value).toBe("2027-01-15");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Rot, wenn der Knopf wieder nur an `busy` hängt: dann ist er ohne Fach anklickbar und der Server antwortet 400.
   it("sperrt Speichern, bis ein Fach gewählt ist, und schickt Fach und Unit mit", async () => {
     render(<MemoryRouter><VaterPlanCreate /></MemoryRouter>);

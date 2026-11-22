@@ -11,7 +11,7 @@ namespace Pugling.Api.Services.Shared;
 /// from their own wallet (coins/gems debited immediately), stock is reduced and the child's aggregated
 /// inventory increased. The adult approves or rejects the child's activation requests.
 /// </summary>
-public class ShopService(PuglingDbContext db, WalletService wallet)
+public class ShopService(PuglingDbContext db, WalletService wallet, LearningDay learningDay)
 {
     /// <summary>Cause of failure for a shop operation (None = successful).</summary>
     public enum ShopError
@@ -550,7 +550,7 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
             foreach (var (listing, childId) in missing)
             {
                 var periodStart = ShopRefillSchedule.PeriodStartUtc(
-                    listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, listing.CreatedAt, nowUtc);
+                    listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, listing.CreatedAt, nowUtc, learningDay.Zone);
                 var own = purchases.Count(p => p.ListingId == listing.Id && p.ChildId == childId && p.PurchasedAt >= periodStart);
                 var (stock, last) = ShopRefillSchedule.StartStock(listing.RefillKind, listing.RefillAtUtc, listing.MaxStock, own, nowUtc);
                 listing.Stocks.Add(new ShopListingStock
@@ -577,10 +577,10 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
     /// Applies the due refills to one child's stock: every refill instant since its last refill adds
     /// <see cref="ShopListing.RefillQuantity"/>, capped at <see cref="ShopListing.MaxStock"/> (B-645, decision 4).
     /// </summary>
-    public static bool ApplyDueRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc)
+    public bool ApplyDueRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc)
     {
         var due = ShopRefillSchedule.DueRefills(
-            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc);
+            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc, learningDay.Zone);
         if (due <= 0 || listing.MaxStock <= 0) return false;
 
         // A one-off fills to the cap, whatever the quantity says: a child whose row was created after the instant starts at
@@ -622,11 +622,11 @@ public class ShopService(PuglingDbContext db, WalletService wallet)
         }
     }
 
-    private static DateTime? NextRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc) =>
+    private DateTime? NextRefill(ShopListing listing, ShopListingStock stock, DateTime nowUtc) =>
         ShopRefillSchedule.NextRefillAtUtc(
-            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc);
+            listing.RefillKind, listing.RefillDayOfWeek, listing.RefillAtUtc, stock.LastRefilledAtUtc, nowUtc, learningDay.Zone);
 
-    private static ListingView ToView(ShopListing listing, IReadOnlyDictionary<int, string> linked, DateTime nowUtc)
+    private ListingView ToView(ShopListing listing, IReadOnlyDictionary<int, string> linked, DateTime nowUtc)
     {
         var eligible = Eligible(listing, linked.Keys.ToList()).ToHashSet();
         var stocks = listing.Stocks

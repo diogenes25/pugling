@@ -12,7 +12,7 @@ namespace Pugling.Api.Services.Shared;
 /// former plan-wide progress service – mandatory goal and points now hang off the exercise, not the plan.
 /// </summary>
 public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry,
-    TimeProvider time)
+    TimeProvider time, LearningDay learningDay)
 {
     /// <summary>Default pass threshold of a plan-position test when the position doesn't set its own.</summary>
     private const int DefaultPassPercent = 80;
@@ -56,13 +56,13 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         && !(pos.Cadence == GoalCadence.UntilDone && pos.CompletedOn is { } end && day > end);
 
     /// <summary>
-    /// The first day the position carries a duty at all (B-613): the later of its creation day (UTC) and
+    /// The first day the position carries a duty at all (B-613): the later of its creation day (the learning day of <c>CreatedAt</c>, B-730) and
     /// <see cref="PlanPosition.DutySince"/> - a free position switched to a cadence owes nothing for the days it was free.
     /// The plan's start is not part of it; the callers walk the plan's runtime anyway (<see cref="FirstDueDay"/> adds it).
     /// </summary>
-    public static DateOnly DutyBegins(PlanPosition pos)
+    public DateOnly DutyBegins(PlanPosition pos)
     {
-        var created = DateOnly.FromDateTime(pos.CreatedAt);
+        var created = learningDay.DayOf(pos.CreatedAt);
         return pos.DutySince > created ? pos.DutySince : created;
     }
 
@@ -72,7 +72,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// and it does not count in the child's favour either. Deliberately not part of <see cref="IsGoalMetAsync"/>, which
     /// also feeds rewards - a reward for such a day goes in the child's favour.
     /// </summary>
-    public static bool IsObligationOn(PlanPosition pos, DateOnly day) => HasDutyOn(pos, day) && day >= DutyBegins(pos);
+    public bool IsObligationOn(PlanPosition pos, DateOnly day) => HasDutyOn(pos, day) && day >= DutyBegins(pos);
 
     /// <summary>
     /// Was the plan switched on on <paramref name="day"/> (B-613)? Active now and the day not before its last switch-on
@@ -712,9 +712,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     /// <summary>
     /// The day the position becomes due for the first time: <c>max(</c><see cref="DutyBegins"/><c>, plan.StartDate)</c>
-    /// (B-432, B-613). CreatedAt is stored in UTC, so its date is the UTC calendar day like every other day in this service.
+    /// (B-432, B-613). CreatedAt is stored in UTC; its day is the learning day it falls on (B-730).
     /// </summary>
-    private static DateOnly FirstDueDay(PlanPosition pos, StudyPlan plan)
+    private DateOnly FirstDueDay(PlanPosition pos, StudyPlan plan)
     {
         var begins = DutyBegins(pos);
         return begins > plan.StartDate ? begins : plan.StartDate;
@@ -728,7 +728,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// The rule only spares the penalty; it does NOT count as goal met (no reward, no daily box, the overview keeps the
     /// goal open), which is why it lives here and not in <see cref="IsGoalMetAsync"/>: introducing deliberately earns
     /// nothing. The introduction day is the first day the position owes anything: its first due day,
-    /// <c>max(CreatedAt as UTC date, plan.StartDate)</c>, or the child's first play day in the plan when that is later
+    /// <c>max(learning day of CreatedAt, plan.StartDate)</c>, or the child's first play day in the plan when that is later
     /// (B-535 - before it nothing is settled, so a fixed earlier day would never be spared). Both are fixed once reached,
     /// so skipping cannot push the exception to tomorrow. Daily cadence only - a weekly goal leaves
     /// days to practise. The portion is the whole pool, or <c>min(dose, pool)</c> under a daily dose (whose positions

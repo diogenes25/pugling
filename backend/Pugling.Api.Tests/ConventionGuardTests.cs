@@ -667,6 +667,66 @@ public class ConventionGuardTests
             + string.Join("\n", offenders));
     }
 
+    // ─────────────────────────────────────────── (z) one learning day (B-730)
+
+    /// <summary>
+    /// "Today" and "the day of a stored instant" are formed only in <c>LearningDay</c> (B-730). A day taken from the UTC
+    /// date - or from the server's own zone - ends at 1 or 2 a.m. for the family, and two day numbers that disagree around
+    /// midnight are exactly the defect this story removed from 36 places.
+    /// <para>
+    /// <b>Scope.</b> Controllers and services, where every product day is formed. The seed (demo data on a fresh
+    /// database) is outside it on purpose. The shop's refill calendar does its own arithmetic on a wall clock that
+    /// <c>LearningDay</c>'s zone produced - its one <c>FromDateTime</c> is the blessed exception.
+    /// </para>
+    /// </summary>
+    [Fact]
+    public void Tage_Entstehen_Nur_Im_Lerntag()
+    {
+        var apiDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api");
+        var files = Directory.GetFiles(Path.Combine(apiDir, "Controllers"), "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.GetFiles(Path.Combine(apiDir, "Services"), "*.cs", SearchOption.AllDirectories))
+            .Where(f => !f.EndsWith("LearningDay.cs", StringComparison.Ordinal))
+            .ToArray();
+
+        // Every spelling of "a calendar day from a clock" found in the code before B-730, plus the server-zone readers.
+        var forbidden = new Regex(
+            @"DateOnly\.FromDateTime\s*\(|TimeOnly\.FromDateTime\s*\(|GetLocalNow\s*\(|DateTime\.(Today|Now)\b|UtcNow\(\)\.Date\b"
+            + @"|UtcNow\.Date\b|UtcDateTime\.Date\b|\.ToDateTime\s*\(\s*TimeOnly",
+            RegexOptions.Compiled);
+        var allowed = new[]
+        {
+            "ShopRefillSchedule.cs:private static int DayNumber(DateTime wallClock)",
+            // The time-slot multiplier reads the hour of a wall clock its callers take from LearningDay.LocalNow.
+            "ScoringService.cs:MultiplierAt(TimeOnly.FromDateTime(nowLocal)",
+        };
+
+        var offenders = new List<string>();
+        foreach (var file in files)
+        {
+            var lineNo = 0;
+            foreach (var raw in File.ReadLines(file))
+            {
+                lineNo++;
+                var line = raw.TrimStart();
+                if (line.StartsWith("//", StringComparison.Ordinal) || line.StartsWith('*'))
+                    continue; // comments quote the rule, they do not break it.
+                if (!forbidden.IsMatch(line))
+                    continue;
+                if (allowed.Any(a => file.EndsWith(a.Split(':')[0], StringComparison.Ordinal)
+                                     && line.Contains(a.Split(':')[1], StringComparison.Ordinal)))
+                    continue;
+                offenders.Add($"{Path.GetFileName(file)}:{lineNo}: {line}");
+            }
+        }
+
+        // Self-protection: a wrong path would make this green by finding nothing.
+        Assert.True(files.Length >= 40, $"Too few source files found ({files.Length}) - wrong path?");
+        Assert.True(offenders.Count == 0,
+            "A calendar day is formed outside LearningDay - use learningDay.Today / DayOf(instant) / StartUtc(day), so every "
+            + "day number follows the family's zone and ends at local midnight (B-730).\n"
+            + string.Join("\n", offenders));
+    }
+
     // ─────────────────────────────────────────── (y) contract XML docs reach the document (B-142 retro)
 
     /// <summary>

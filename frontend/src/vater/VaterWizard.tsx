@@ -24,7 +24,7 @@ import {
 import type { WizardProgress } from "./wizardFinish";
 import { PlanUnitSelect } from "./PlanUnitSelect";
 import { radioGroupKeys } from "../lib/ui";
-import { formatDate } from "../lib/datum";
+import { formatDate, heuteImLerntag } from "../lib/datum";
 import type {
   CategoryResponse, ChildResponse, ExerciseSummary, GrammarTopicResponse, Paged, SchoolType, SubjectResponse,
 } from "../lib/types";
@@ -59,7 +59,8 @@ const GOALS: Record<Goal, { label: string; emoji: string; hint: string; duration
 
 const STEPS = ["Kind", "Problemfeld", "Übungen", "Feinschliff", "Überblick"] as const;
 
-function todayIso(): string { return new Date().toISOString().slice(0, 10); }
+// Der Lerntag des Servers, nicht der UTC-Tag: um 00:30 deutscher Zeit ist schon morgen (B-730).
+const todayIso = (): string => heuteImLerntag();
 
 export function VaterWizard() {
   const { session } = useAuth();
