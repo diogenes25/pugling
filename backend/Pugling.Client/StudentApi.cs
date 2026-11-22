@@ -114,6 +114,18 @@ public sealed class StudentApi(HttpClient http)
 
     // ---------------------------------------------------------------- Bonus training
 
+    /// <summary>The vocabulary positions the child's tower game can build a run from.</summary>
+    public Task<TowerGameOverview> GetTowerGameAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<TowerGameOverview>($"{Root}/children/{childId}/tower-game", ct);
+
+    /// <summary>Starts a tower-game run from one plan position - the child's own seat only.</summary>
+    public Task<TowerRunResponse> StartTowerRunAsync(int childId, StartTowerRunDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TowerRunResponse>($"{Root}/children/{childId}/tower-game/runs", dto, ct);
+
+    /// <summary>Assigns a token to a tower and returns the server's grading.</summary>
+    public Task<TowerAssignResult> AssignTowerTokenAsync(int childId, AssignTowerTokenDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TowerAssignResult>($"{Root}/children/{childId}/tower-game/assign", dto, ct);
+
     /// <summary>Today's bonus training of the child: open or locked, bonus coins against the cap, the exercise pool.</summary>
     public Task<ExtraTrainingOverview> GetExtraTrainingAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<ExtraTrainingOverview>($"{Root}/children/{childId}/extra-training", ct);

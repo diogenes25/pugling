@@ -176,6 +176,9 @@ builder.Services.Configure<DailyBoxOptions>(builder.Configuration.GetSection(Dai
 builder.Services.AddScoped<DailyBoxService>();
 builder.Services.Configure<ExtraTrainingOptions>(builder.Configuration.GetSection(ExtraTrainingOptions.SectionName));
 builder.Services.AddScoped<ExtraTrainingService>();
+builder.Services.AddScoped<TowerGameService>();
+// Tower-game ids are encrypted item references (B-851); the key ring persists in the user profile on Windows.
+builder.Services.AddDataProtection();
 // The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<ExerciseFeedbackService>();

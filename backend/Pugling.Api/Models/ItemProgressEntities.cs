@@ -1,10 +1,11 @@
 namespace Pugling.Api.Models;
 
-/// <summary>Where a recorded answer came from: free practice (Leitner) or a final test.</summary>
+/// <summary>Where a recorded answer came from: free practice (Leitner), a final test or the tower game (B-851).</summary>
 public enum ItemReviewSource
 {
     Practice = 0,
     Test = 1,
+    Game = 2,
 }
 
 /// <summary>

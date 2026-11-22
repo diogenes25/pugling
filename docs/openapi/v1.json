@@ -12941,6 +12941,222 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/tower-game": {
+      "get": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "The vocabulary positions of the child\u0027s playable plans a run can be built from.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerGameOverview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/runs": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Starts a run from the position\u0027s words: towers (meanings) and tokens (words) with opaque ids and no mapping\nbetween them. \u0060404\u0060 when the position is not a playable vocabulary position of the child with at least five\nwords.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTowerRunDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTowerRunDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTowerRunDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerRunResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/assign": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Grades the assignment of a token to a tower and records it in the child\u0027s learning progress (source\n\u0060Game\u0060). \u0060404\u0060 for an unknown or foreign id, or a position that is no longer playable.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTowerTokenDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTowerTokenDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTowerTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerAssignResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/creator/cloze-texts": {
       "get": {
         "tags": [
@@ -30935,6 +31151,31 @@
         },
         "description": "Input for directly assigning exercises to a class test."
       },
+      "AssignTowerTokenDto": {
+        "required": [
+          "planPositionId",
+          "tokenId",
+          "towerId"
+        ],
+        "type": "object",
+        "properties": {
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tokenId": {
+            "type": "string"
+          },
+          "towerId": {
+            "type": "string"
+          }
+        },
+        "description": "Assigns a token to a tower; both ids come from the same run of PlanPositionId."
+      },
       "AttemptDetail": {
         "required": [
           "correctItems",
@@ -47160,6 +47401,23 @@
         },
         "description": "Start payload of the class test. \u0060Day\u0060 only for backfilling (supervisor); otherwise today."
       },
+      "StartTowerRunDto": {
+        "required": [
+          "planPositionId"
+        ],
+        "type": "object",
+        "properties": {
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Starts a tower-game run from the vocabulary of one plan position."
+      },
       "SubjectProgressResponse": {
         "required": [
           "active",
@@ -48253,6 +48511,158 @@
           }
         },
         "description": "The child\u0027s day across all of its active, running plans (B-606): the one place that says whether today\u0027s duty is\ndone, whether the day\u0027s rewards are unlocked, how long the streak is and whether the daily chest is earned. With a\nsingle active plan it reads the same as that plan\u0027s OverviewResponse."
+      },
+      "TowerAssignResult": {
+        "required": [
+          "correct",
+          "expected"
+        ],
+        "type": "object",
+        "properties": {
+          "correct": {
+            "type": "boolean"
+          },
+          "expected": {
+            "type": "string"
+          }
+        },
+        "description": "The graded assignment. Expected is the word the tower asked for (revealed after the answer)."
+      },
+      "TowerGameOverview": {
+        "required": [
+          "positions"
+        ],
+        "type": "object",
+        "properties": {
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TowerGamePosition"
+            }
+          }
+        },
+        "description": "The child\u0027s tower game: the plan positions whose vocabulary a run can be built from."
+      },
+      "TowerGamePosition": {
+        "required": [
+          "exerciseTitle",
+          "planPositionId",
+          "planTitle",
+          "wordCount"
+        ],
+        "type": "object",
+        "properties": {
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "planTitle": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "wordCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A vocabulary position of a playable plan. WordCount is the number of words in the exercise; a run\nneeds at least five."
+      },
+      "TowerRunResponse": {
+        "required": [
+          "goal",
+          "planPositionId",
+          "tokens",
+          "towerSlots",
+          "towers"
+        ],
+        "type": "object",
+        "properties": {
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "goal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "towerSlots": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "towers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TowerTarget"
+            }
+          },
+          "tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TowerToken"
+            }
+          }
+        },
+        "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal correct assignments win the\nlevel. Tokens are shuffled and hold the words of all towers, so a token whose tower is not on the\nfield yet acts as a distractor."
+      },
+      "TowerTarget": {
+        "required": [
+          "prompt",
+          "towerId"
+        ],
+        "type": "object",
+        "properties": {
+          "towerId": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          }
+        },
+        "description": "A tower: an opaque id and the meaning (German) it asks for."
+      },
+      "TowerToken": {
+        "required": [
+          "tokenId",
+          "word"
+        ],
+        "type": "object",
+        "properties": {
+          "tokenId": {
+            "type": "string"
+          },
+          "word": {
+            "type": "string"
+          }
+        },
+        "description": "A dropped vocabulary token: an opaque id and the foreign word it carries."
       },
       "TranslationConfig": {
         "required": [
@@ -51109,6 +51519,9 @@
     },
     {
       "name": "Student \u2013 Today"
+    },
+    {
+      "name": "Student \u2013 Tower Game"
     },
     {
       "name": "Student \u2013 Vocabulary Progress"
