@@ -157,8 +157,9 @@ Godot exportiert **nativ** (kein WebView) und deckt „mindestens Android, gerne
 ab. iOS braucht zum Bauen einen Mac + Apple-Developer-Konto (99 $/Jahr); Android läuft per APK direkt auf
 dem Handy der Söhne, ohne Store.
 
-Vor dem Bau ein **Technik-Spike** (1–2 Abende): leeres Godot-C#-Projekt → APK auf Friedrichs Handy, ein
-HTTPS-Aufruf gegen `auth/child` im Heimnetz. Erst wenn der Weg steht, das Spiel bauen.
+Der **Technik-Spike ist gelaufen** (2026-11-22, [B-850](backlog/B-850-vokabel-tuerme-technik-spike.md)):
+Godot-4.7.2-.NET-APK auf einem echten Android-Handy, Login per `auth/child`, HTTPS aus der eingebetteten
+Laufzeit — alles grün. Das Spiel zielt auf `net9.0` und kompiliert die Quellen von `Pugling.Contracts` mit.
 
 ### Client-Architektur
 
