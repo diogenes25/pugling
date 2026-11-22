@@ -141,3 +141,20 @@ Regel „neues Tor → Halt" schützt: B-730 hat per Akzeptanzkriterium ein neue
 geändert und den Tagesbegriff der echten `pugling.db` verschoben – und fünf seiner Entscheidungen (4–8) sind stellvertretend
 und unbestätigt. Die nächsten Kandidaten nach Priorität (B-731, dann B-733 ff.) bauen alle auf B-730 auf; sie jetzt zu bauen,
 hieße unbestätigte Entscheidungen zu stapeln. Ein Morgen mit dem Nutzer ist billiger als ein Rückbau.
+
+## Stand am Ende von Lauf 2026-11-23-a
+
+- **Branch:** `claude/nachtlauf-a-be895d` (Worktree), Basis `main` `ec0c705a`. Nichts gepusht, nichts gemergt.
+- **Abgenommen:** B-791 + B-800 (`d9af0c17`), B-730 (`3c0122fa`). **Verworfen:** B-670 (stellvertretend). Backlog-Commits
+  `f8c3f055`, `f05fa2d0` und dieser Abschluss.
+- **Neu vergeben:** nur B-800 (Bereich B-800…B-819).
+- **Entscheidungen zum Umstoßen** (alle stellvertretend): B-670 verworfen; B-791 E1/E2 (`""` statt Schalter; Audio-URL
+  normalisiert der Server); B-800 E1 (`ClearGrade` additiv); B-730 E4–E8 (Suite auf UTC, Shop-Kalender und Arcade-Fristen in
+  deutscher Zeit, Zone im Frontend gespiegelt, Multiplikator-Uhr, Seed außen vor).
+- **Beim Merge beachten:** `PuglingWebAppFactory`, `ConventionGuardTests`, `lib/datum.ts` und `planSubject.test.tsx` sind
+  geändert – kollidiert Lauf B dort, `Tage_Entstehen_Nur_Im_Lerntag` nach dem Merge laufen lassen (ein neuer Aufruf von
+  `DateOnly.FromDateTime(…UtcNow…)` aus Lauf B fiele dort auf). Keine Migration.
+- **Heimnetz:** beim nächsten Start rechnet „heute" in deutscher Zeit; keine Datenänderung.
+- **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 115 (Tor gegen `|| null`/`=== "" ? null` in Bearbeiten-Zweigen)
+  und 116 (Frontend-Tor gegen `toISOString().slice(0, 10)`/`T00:00:00Z`); die Aufrufer-Tests für Wizard und Zeitachse.
+- **Nächste Kandidaten:** B-731 (nach Bestätigung von B-730), B-732, B-700.
