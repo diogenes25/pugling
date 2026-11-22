@@ -15,7 +15,7 @@ namespace Pugling.Api.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.15");
 
             modelBuilder.Entity("Pugling.Api.Models.Account", b =>
                 {
@@ -637,6 +637,12 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("BuildLevel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BuildTargetExerciseId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("CategoryId")
                         .HasColumnType("INTEGER");
 
@@ -706,6 +712,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorAdultId");
+
+                    b.HasIndex("BuildTargetExerciseId");
 
                     b.HasIndex("CategoryId");
 
@@ -3200,6 +3208,11 @@ namespace Pugling.Api.Data.Migrations
                         .HasForeignKey("AuthorAdultId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Pugling.Api.Models.Exercise", "BuildTarget")
+                        .WithMany()
+                        .HasForeignKey("BuildTargetExerciseId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Pugling.Api.Models.ExerciseCategory", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
@@ -3212,6 +3225,8 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Author");
+
+                    b.Navigation("BuildTarget");
 
                     b.Navigation("Category");
 

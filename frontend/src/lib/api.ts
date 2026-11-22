@@ -161,6 +161,12 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   unit_content_in_use:
     "Inhalte daraus werden noch benutzt – eine Übung in einem Lehrplan, einer Klassenarbeit oder als Etappe eines Ziels, "
     + "oder ein Ziel zeigt mit einer Etappe auf eine Unit selbst; vielleicht auch bei einem Kind, das du nicht betreust.",
+  // B-700: eigener Code neben `exercise_in_use`, weil „Verwendung“ keine Vorstufen zeigt. Der Ausweg ist der Bearbeiten-Dialog
+  // der Vorstufe (Abschnitt „Aufbau-Weg“); die Ziel-Übung nennt ihre Vorstufen dort selbst. Fremde Vorstufen nimmt nur ihr Autor
+  // heraus – das sagt der Satz, statt einen Weg zu versprechen, den der Vater nicht gehen kann.
+  exercise_is_build_target:
+    "Diese Übung ist Ziel von Vorstufen und lässt sich darum nicht löschen. Nimm die Vorstufen zuerst im Bearbeiten-Dialog "
+    + "aus dem Aufbau-Weg; bei Vorstufen, die dir nicht gehören, kann das nur ihr Autor.",
   // Seit B-205 ein eigener Code: nichts wird gelöscht, und Anhängen bleibt erlaubt – das sagte der Löschtext falsch.
   exercise_items_locked:
     "Diese Übung steckt in einem Lehrplan. Wörter entfernen oder umsortieren würde den gespeicherten "

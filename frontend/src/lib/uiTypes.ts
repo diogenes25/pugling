@@ -162,6 +162,12 @@ export interface CreateExercisePayload {
    * `interestTagIds`: ein Weglassen im PUT nimmt sie der Übung.
    */
   grammarTopicIds?: number[] | null;
+  /**
+   * Aufbau-Weg (B-700): Stufe 1 oder 2 einer Vorstufe und ihre Ziel-Übung derselben Unit – beides oder keins. Dieselbe
+   * Vollersatz-Falle: ein Weglassen im PUT nimmt die Übung aus dem Weg.
+   */
+  buildLevel?: number | null;
+  buildTargetExerciseId?: number | null;
 }
 
 /**

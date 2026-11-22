@@ -142,7 +142,9 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
                 ItemCountOf(registry, logger, e.Id, e.Type, e.ConfigJson, db.ExerciseItems.Count(i => i.ExerciseId == e.Id)),
                 // B-140: the execute rule of ExercisePermissionService.CanExecuteAsync, written for SQL - a call would
                 // load the grants per row. ExerciseSharingTests compares both on every constellation.
-                e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid))))
+                e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid)),
+                // B-700: the build path, so a unit listing shows which exercises are prerequisites of which.
+                e.BuildLevel, e.BuildTargetExerciseId))
             .ToPagedListAsync(Response, skip, take, ct);
     }
 
@@ -235,7 +237,7 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
             [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(x => x)],
             // B-20: the execute rule of the search projection above, on the loaded grants.
             e.ExecutePublic || isAdmin || (fid != null && e.Grants.Any(g => g.CreatorId == fid)),
-            e.BookPages);
+            e.BookPages, e.BuildLevel, e.BuildTargetExerciseId);
     }
 
     /// <summary>

@@ -33,6 +33,8 @@ beforeEach(() => {
   vi.spyOn(api, "getExercise").mockResolvedValue(DETAIL);
   vi.spyOn(api, "interestTags").mockResolvedValue([]);
   vi.spyOn(api, "grammarTopics").mockResolvedValue([]);
+  // Der Abschnitt „Aufbau-Weg" (B-700) liest die Übungen der Unit.
+  vi.spyOn(api, "searchExercises").mockResolvedValue({ items: [], total: 0 });
   vi.spyOn(api, "categories").mockResolvedValue([]);
   vi.spyOn(api, "exerciseGrants").mockResolvedValue([]);
   vi.spyOn(api, "exerciseMedia").mockResolvedValue([]);

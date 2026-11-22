@@ -140,6 +140,12 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError UnitContentInUse = new("unit_content_in_use", 409, "Unit content is in use.");
     /// <summary>
+    /// The exercise is the build target of prerequisite exercises and cannot be deleted (409, B-700). A code of its own next
+    /// to <see cref="ExerciseInUse"/>: the usage display never shows prerequisites, so a translation pointing there would send
+    /// the user to a place that does not explain the lock (the B-413 trap).
+    /// </summary>
+    public static readonly ApiError ExerciseIsBuildTarget = new("exercise_is_build_target", 409, "Exercise is a build target.");
+    /// <summary>
     /// The exercise is played in a study plan, so its items cannot be removed or reordered (409, B-205). A code of its
     /// own next to <see cref="ExerciseInUse"/>, because the rule differs: nothing is deleted, appending stays allowed,
     /// and the progress anchored on the item order is what is protected.

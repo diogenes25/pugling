@@ -33,12 +33,17 @@ namespace Pugling.Contracts.Creator;
 /// <c>CanAssign</c> (B-140) says whether the requester may put the exercise into a study plan or class test: it is
 /// public, or the requester holds any grant on it, or is an admin - the rule <c>POST …/positions</c> enforces, so a
 /// picker can lock a withdrawn exercise before the save fails with <c>exercise_not_executable</c>.
+///
+/// <c>BuildLevel</c>/<c>BuildTargetExerciseId</c> (B-700): the build path - which target exercise this one is a prerequisite
+/// of, and on which level; both <c>null</c> on every other exercise. On the lean row because a unit listing is where the
+/// editor finds a prerequisite's possible targets and a target's prerequisites.
 /// </summary>
 public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? SubjectId, string Type, string Title,
     int? GradeMin, int? GradeMax, SchoolTypes SchoolTypes, string? Source, int? CategoryId, string? CategoryName,
     int? AuthorAdultId, string? AuthorName, bool IsOwn, bool IsOwner, bool ExecutePublic, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, int? DefaultItemCount, int RewardPoints,
-    int SuggestedGoalPoints, double? AverageRating, int RatingCount, int? ItemCount, bool CanAssign);
+    int SuggestedGoalPoints, double? AverageRating, int RatingCount, int? ItemCount, bool CanAssign,
+    int? BuildLevel = null, int? BuildTargetExerciseId = null);
 
 /// <summary>
 /// Complete, type-spanning view of an exercise including raw config and all metadata –
@@ -58,6 +63,7 @@ public record ExerciseSummary(int Id, int SeriesId, int SeriesUnitId, int? Subje
 /// into a study plan or class test? Lets a caller holding only an id (the agent's <c>assign</c>, B-20) refuse it
 /// before the first write instead of failing halfway with <c>exercise_not_executable</c>.
 /// <c>BookPages</c> (B-588): the textbook page reference; the editor reads it back here, because the PUT replaces it.
+/// <c>BuildLevel</c>/<c>BuildTargetExerciseId</c> (B-700): the build path, read back for the same reason.
 /// </summary>
 public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string SeriesUnitLabel, int? SubjectId, string SubjectName,
     string Type, string Title, int OrderIndex, int RewardPoints, int? GradeMin, int? GradeMax,
@@ -67,7 +73,7 @@ public record ExerciseDetail(int Id, int SeriesId, int SeriesUnitId, string Seri
     JsonElement Config, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest, IReadOnlyList<int> InterestTagIds,
     double? AverageRating, int RatingCount, IReadOnlyList<int> GrammarTopicIds, bool CanAssign = false,
-    string? BookPages = null);
+    string? BookPages = null, int? BuildLevel = null, int? BuildTargetExerciseId = null);
 
 /// <summary>A study plan in which an exercise is used as a position.</summary>
 public record PlanUsage(int PlanId, string PlanTitle, int ChildId, string ChildName);

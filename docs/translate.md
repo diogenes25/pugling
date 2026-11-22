@@ -78,6 +78,7 @@ Bedeutung am Code ausrichten, nicht Wort für Wort übersetzen.
 | „Buchung" (Punkte/Wallet) | **ledger entry** | `PointLedger`; „booking" wäre im Shop-Kontext irreführend. |
 | „Beherrschung" | **mastery** | |
 | „Leitner-Stufe" / „Box" | **Leitner box** | Ein Begriff für beides, `BoxIntervalDays`. |
+| „Aufbau-Stufe" / „Vorstufe" | **build level** / **prerequisite** | `Exercise.BuildLevel`, `BuildTargetExerciseId` (B-700); nie `stage` – das ist die Spielform innerhalb einer Übung. |
 | „Pflichtziel" | **mandatory goal** | Der „Stick" hängt daran (`PenaltyCoins`). |
 | „Übersteuerung" (Bild) | **override** | Positions-Bild schlägt Store-Bild. |
 | „Reihe" (Buchreihe) | **series** | `Textbook`/Units. |

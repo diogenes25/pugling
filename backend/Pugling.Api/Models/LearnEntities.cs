@@ -181,6 +181,28 @@ public class Exercise
     /// </summary>
     public List<ExerciseGrammarTopic> GrammarTopicLinks { get; set; } = [];
 
+    /// <summary>
+    /// Build level of a <b>prerequisite</b> exercise on the way to <see cref="BuildTargetExerciseId"/> (B-700):
+    /// 1 = recognize, 2 = fill in with a choice. <c>null</c> on every exercise that is no prerequisite - a target
+    /// exercise counts as the top level (<see cref="BuildLevelTarget"/>) without carrying a value. Named "build
+    /// level" because "stage" already means the play form inside one exercise.
+    /// </summary>
+    public int? BuildLevel { get; set; }
+
+    /// <summary>
+    /// The target exercise this one is a prerequisite of (B-700); set together with <see cref="BuildLevel"/>.
+    /// Same unit, one level deep: a prerequisite is never itself a target. Deleting the target is refused while a
+    /// prerequisite points at it, so a learning path never vanishes silently.
+    /// </summary>
+    public int? BuildTargetExerciseId { get; set; }
+    public Exercise? BuildTarget { get; set; }
+
+    /// <summary>Highest build level a prerequisite may carry; the target exercise itself is the level above.</summary>
+    public const int BuildLevelMaxPrerequisite = 2;
+
+    /// <summary>The level a target exercise stands for (it carries no <see cref="BuildLevel"/> of its own).</summary>
+    public const int BuildLevelTarget = 3;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

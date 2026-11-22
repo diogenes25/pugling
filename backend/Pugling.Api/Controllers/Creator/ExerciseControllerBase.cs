@@ -273,7 +273,35 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             // loaded - both read paths and both write paths do that.
             [.. e.InterestLinks.Select(l => l.InterestTagId).OrderBy(id => id)],
             [.. e.GrammarTopicLinks.Select(l => l.GrammarTopicId).OrderBy(id => id)],
-            e.BookPages);
+            e.BookPages, e.BuildLevel, e.BuildTargetExerciseId);
+    }
+
+    /// <summary>
+    /// Validates the build path (B-700) and returns the problem, or <c>null</c>. <paramref name="selfId"/> is the
+    /// exercise being replaced (<c>null</c> on create). The path is one level deep and stays inside one unit: a
+    /// prerequisite of another unit would be the stuff of another lesson, and a chain over two levels has no place
+    /// in the position that plays it. The write right on the prerequisite is the caller's check; the target only
+    /// needs to be readable, which every exercise is.
+    /// </summary>
+    private async Task<RequestProblem?> BuildPathProblemAsync(
+        int seriesUnitId, int? selfId, int? level, int? targetId, CancellationToken ct)
+    {
+        if (level is null && targetId is null) return null;
+        if (level is null || targetId is null)
+            return RequestProblem.Invalid("buildLevel and buildTargetExerciseId are set together or not at all.");
+        if (level is < 1 or > Exercise.BuildLevelMaxPrerequisite)
+            return RequestProblem.Invalid($"buildLevel of a prerequisite must be between 1 and {Exercise.BuildLevelMaxPrerequisite}; the target exercise is the top level.");
+        if (targetId == selfId) return RequestProblem.Invalid("An exercise cannot be a prerequisite of itself.");
+        var target = await db.Exercises.AsNoTracking().Where(e => e.Id == targetId)
+            .Select(e => new { e.SeriesUnitId, e.BuildTargetExerciseId }).FirstOrDefaultAsync(ct);
+        if (target is null) return RequestProblem.UnknownReference($"Unknown target exercise id: {targetId}.");
+        if (target.SeriesUnitId != seriesUnitId)
+            return RequestProblem.Invalid("A prerequisite must be in the same unit as its target exercise.");
+        if (target.BuildTargetExerciseId is not null)
+            return RequestProblem.Invalid("The target exercise is itself a prerequisite; a build path is one level deep.");
+        if (selfId is not null && await db.Exercises.AnyAsync(e => e.BuildTargetExerciseId == selfId, ct))
+            return RequestProblem.Invalid("This exercise has prerequisites of its own; a build path is one level deep.");
+        return null;
     }
 
     /// <summary>
@@ -424,6 +452,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(createTagErr.Error, createTagErr.Detail);
         if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } createTopicErr)
             return this.ProblemWithCode(createTopicErr.Error, createTopicErr.Detail);
+        if (await BuildPathProblemAsync(seriesUnitId, null, body.BuildLevel, body.BuildTargetExerciseId, ct) is { } createBuildErr)
+            return this.ProblemWithCode(createBuildErr.Error, createBuildErr.Detail);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } createErr) return this.ProblemWithCode(createErr.Error, createErr.Detail);
         NormalizeConfig(config);
         await NormalizeConfigAsync(seriesId, config, ct);
@@ -443,6 +473,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             SchoolTypes = body.SchoolTypes,
             Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim(),
             BookPages = NormalizeBookPages(body.BookPages),
+            BuildLevel = body.BuildLevel,
+            BuildTargetExerciseId = body.BuildTargetExerciseId,
             CategoryId = body.CategoryId,
             DefaultUseLeitner = body.DefaultUseLeitner,
             DefaultRequireTypedTest = body.DefaultRequireTypedTest,
@@ -517,6 +549,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
             return this.ProblemWithCode(updateTagErr.Error, updateTagErr.Detail);
         if (await GrammarTopicsProblemAsync(seriesId, body.GrammarTopicIds, ct) is { } updateTopicErr)
             return this.ProblemWithCode(updateTopicErr.Error, updateTopicErr.Detail);
+        if (await BuildPathProblemAsync(seriesUnitId, exerciseId, body.BuildLevel, body.BuildTargetExerciseId, ct) is { } updateBuildErr)
+            return this.ProblemWithCode(updateBuildErr.Error, updateBuildErr.Detail);
         if (await ValidateConfigAsync(seriesId, config, ct) is { } updateErr) return this.ProblemWithCode(updateErr.Error, updateErr.Detail);
         NormalizeConfig(config);
         if (await UpdateConflictAsync(exercise, config, ct) is { } conflict) return conflict;
@@ -535,6 +569,8 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         exercise.SchoolTypes = body.SchoolTypes;
         exercise.Source = string.IsNullOrWhiteSpace(body.Source) ? null : body.Source.Trim();
         exercise.BookPages = NormalizeBookPages(body.BookPages);
+        exercise.BuildLevel = body.BuildLevel;
+        exercise.BuildTargetExerciseId = body.BuildTargetExerciseId;
         exercise.CategoryId = body.CategoryId;
         exercise.DefaultUseLeitner = body.DefaultUseLeitner;
         exercise.DefaultRequireTypedTest = body.DefaultRequireTypedTest;
@@ -572,6 +608,13 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         var usage = await ExerciseUsageQueries.CountBlockingAsync(db, exerciseId, User.AdultId(), ct);
         if (usage.Any)
             return this.ProblemWithCode(ApiErrors.ExerciseInUse, ExerciseUsageQueries.Explain(usage));
+        // A target with prerequisites stays (B-700): deleting it would cut a learning path that may belong to other
+        // authors. The detail names the lock only; the way out depends on who owns each prerequisite.
+        var prerequisiteIds = await db.Exercises.Where(e => e.BuildTargetExerciseId == exerciseId)
+            .OrderBy(e => e.Id).Select(e => e.Id).ToListAsync(ct);
+        if (prerequisiteIds.Count > 0)
+            return this.ProblemWithCode(ApiErrors.ExerciseIsBuildTarget,
+                $"This exercise is the build target of prerequisite exercise(s) {string.Join(", ", prerequisiteIds)}.");
         db.Exercises.Remove(exercise);
         await db.SaveChangesAsync(ct);
         return NoContent();

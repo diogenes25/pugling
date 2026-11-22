@@ -563,6 +563,16 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .HasForeignKey(e => e.AuthorAdultId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Prerequisite → target exercise (B-700). The delete endpoint refuses a target with prerequisites (409), so
+        // neither Cascade (deletes foreign exercises) nor SetNull (orphaned levels) is wanted. NoAction rather than
+        // Restrict: SQLite checks RESTRICT per row, so deleting a unit - which cascades to a target and its
+        // prerequisite in one statement - would fail; NO ACTION is checked at the end of that statement.
+        modelBuilder.Entity<Exercise>()
+            .HasOne(e => e.BuildTarget)
+            .WithMany()
+            .HasForeignKey(e => e.BuildTargetExerciseId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         /*
          * Der DB-Default gehört ins Modell, nicht nur in eine alte Migration.
          *

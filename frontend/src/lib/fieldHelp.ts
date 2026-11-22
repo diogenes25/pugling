@@ -243,6 +243,12 @@ export const FIELD_HELP = {
     text: "Woher der Stoff stammt, z. B. „Access 5, Unit 3“. Frei formulierbar – der Filter über den "
       + "Übungen sucht darin.",
   },
+  exerciseBuildPath: {
+    title: "Aufbau-Weg",
+    text: "Macht diese Übung zu einer leichteren Vorstufe einer anderen Übung derselben Unit: Stufe 1 heißt erkennen, "
+      + "Stufe 2 einsetzen mit Auswahl; die Ziel-Übung ist die oberste Stufe. Ein Weg ist eine Ebene tief – eine "
+      + "Vorstufe ist nie selbst Ziel.",
+  },
   exerciseBookPages: {
     title: "Buchseite(n)",
     text: "Die Seite im Lehrbuch, wie gedruckt – „42“, „42–43“ oder „WB 12“ (höchstens 20 Zeichen). Anders als "

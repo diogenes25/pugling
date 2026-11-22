@@ -26,6 +26,13 @@ namespace Pugling.Contracts.Creator;
 /// <paramref name="BookPages"/> (B-588) is the textbook page reference as printed ("42–43", "WB 12"), at most 20
 /// characters, trimmed, blank = none. Full representation like <paramref name="Source"/>: a PUT without it clears it.
 /// The child sees it on its daily overview, so it can look the exercise up in the book.
+///
+/// <paramref name="BuildLevel"/> and <paramref name="BuildTargetExerciseId"/> (B-700) mark this exercise as an easier
+/// prerequisite of a target exercise in the <b>same unit</b>: level 1 (recognize) or 2 (fill in with a choice); the
+/// target itself is the top level and carries neither field. Both or neither; a target that is itself a
+/// prerequisite, an exercise that already has prerequisites, and a reference to itself are a
+/// <c>validation_error</c>, an unknown target an <c>invalid_reference</c>. Full representation: a PUT without them
+/// removes the exercise from the path.
 /// </summary>
 public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardPoints, TConfig Config,
     SuggestedBonus? SuggestedBonus = null,
@@ -34,7 +41,7 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
     bool DefaultUseLeitner = false, bool DefaultRequireTypedTest = false, int? DefaultStage = null,
     int? DefaultItemCount = null, bool ExecutePublic = true,
     IReadOnlyList<int>? InterestTagIds = null, IReadOnlyList<int>? GrammarTopicIds = null,
-    string? BookPages = null);
+    string? BookPages = null, int? BuildLevel = null, int? BuildTargetExerciseId = null);
 
 /// <summary>
 /// Exercise in the response. <paramref name="IsOwn"/> = the requesting creator may <b>change</b> it (owner or
@@ -45,6 +52,8 @@ public record ExercisePayload<TConfig>(string Title, int OrderIndex, int RewardP
 /// between two exercises without sorting first - that comparison is the whole point of the field, and
 /// B-18 will build the child-fit filter on it. <paramref name="GrammarTopicIds"/> (B-155) follows the same
 /// ordering rule. <paramref name="BookPages"/> is the textbook page reference (B-588), <c>null</c> = none.
+/// <paramref name="BuildLevel"/>/<paramref name="BuildTargetExerciseId"/> (B-700): the prerequisite's level and its
+/// target exercise, both <c>null</c> on an exercise that is no prerequisite.
 /// </summary>
 public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, string Title,
     int OrderIndex, int RewardPoints, DateTime CreatedAt, TConfig Config, SuggestedBonus? SuggestedBonus,
@@ -52,7 +61,7 @@ public record ExerciseResponse<TConfig>(int Id, int SeriesUnitId, string Type, s
     int? AuthorAdultId, bool IsOwn, bool IsOwner, bool ExecutePublic, int GrantCount, string? Description,
     bool DefaultUseLeitner, bool DefaultRequireTypedTest,
     int? DefaultStage, int? DefaultItemCount, IReadOnlyList<int> InterestTagIds, IReadOnlyList<int> GrammarTopicIds,
-    string? BookPages = null);
+    string? BookPages = null, int? BuildLevel = null, int? BuildTargetExerciseId = null);
 
 /// <summary>
 /// Child's answers for a direct catalog check, position-based (index in the problem/pair list).

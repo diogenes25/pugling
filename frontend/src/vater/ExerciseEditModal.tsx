@@ -22,6 +22,7 @@ import { useExerciseTypes } from "../lib/exerciseTypes";
 import { ExerciseCoverSection, GrantsSection } from "./ExerciseSharingPanels";
 import { ExerciseItemMediaPanel } from "./VocabMediaPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
+import { BuildPathField } from "./BuildPathField";
 
 /**
  * Die Frage vor dem Entfernen einer Vokabel aus der Übung. Der Server nimmt sie nur aus einer Übung, die in keinem
@@ -267,6 +268,9 @@ export function payloadFrom(detail: ExerciseDetail, form: MetaForm, config: unkn
     interestTagIds: form.interestTagIds,
     // Dieselbe Falle, viertes Feld (B-155): ohne diese Zeile nähme der Vollersatz der Übung ihre Themen.
     grammarTopicIds: form.grammarTopicIds,
+    // Fünftes Feld derselben Falle (B-700 AK 3): ohne diese Zeilen nähme jedes Speichern der Vorstufe ihren Platz im Weg.
+    buildLevel: form.buildTargetExerciseId === null || form.buildLevel === "" ? null : form.buildLevel,
+    buildTargetExerciseId: form.buildLevel === "" ? null : form.buildTargetExerciseId,
   };
 }
 
@@ -303,6 +307,10 @@ interface MetaForm {
   grammarTopicIds: number[];
   /** Die Art (Kategorie) der Übung, `null` = keine (B-407) – aus den Arten des Reihen-Fachs. */
   categoryId: number | null;
+  /** Aufbau-Stufe einer Vorstufe (B-700), leer = keine Vorstufe. Reist nur zusammen mit dem Ziel. */
+  buildLevel: number | "";
+  /** Die Ziel-Übung dieser Vorstufe (B-700), `null` = keine. */
+  buildTargetExerciseId: number | null;
 }
 
 export function initialForm(d: ExerciseDetail): MetaForm {
@@ -326,6 +334,8 @@ export function initialForm(d: ExerciseDetail): MetaForm {
     interestTagIds: [...d.interestTagIds],
     grammarTopicIds: [...d.grammarTopicIds],
     categoryId: d.categoryId ?? null,
+    buildLevel: d.buildLevel ?? "",
+    buildTargetExerciseId: d.buildTargetExerciseId ?? null,
     ...langsOf(d),
     articleRequired: (d.config as { articleRequired?: unknown } | null)?.articleRequired === true,
   };
@@ -429,6 +439,14 @@ function MetaEditor({ detail, form, setForm, type, onSubmit, busy, formId }: {
         onChange={(ids) => up("grammarTopicIds", ids)}
         disabled={busy}
         id="ed-grammar-topics"
+      />
+      <BuildPathField
+        selfId={detail.id}
+        seriesUnitId={detail.seriesUnitId}
+        level={form.buildLevel}
+        targetId={form.buildTargetExerciseId}
+        onChange={(next) => setForm((f) => ({ ...(f ?? form), buildLevel: next.level, buildTargetExerciseId: next.targetId }))}
+        disabled={busy}
       />
       <div className="field" role="group" aria-labelledby={`${groupId}-standards`}>
         <label><span id={`${groupId}-standards`}>Lern-Standards</span> <span className="muted">(Lehrplan-Positionen erben diese, können sie aber übersteuern)</span></label>

@@ -29,6 +29,8 @@ beforeEach(() => {
     [{ type: "Birkenbihl", label: "Birkenbihl", authoringRoute: "birkenbihl" } as unknown as ExerciseTypeManifest]);
   vi.spyOn(api, "interestTags").mockResolvedValue([]);
   vi.spyOn(api, "grammarTopics").mockResolvedValue([]);
+  // Der Abschnitt „Aufbau-Weg" (B-700) liest die Übungen der Unit.
+  vi.spyOn(api, "searchExercises").mockResolvedValue({ items: [], total: 0 });
   // B-407: der Dialog lädt die Arten des Fachs. Ungemockt ginge der Abruf ins Netz und brächte einen zweiten
   // „Erneut laden“-Knopf – der Fall unten fände dann nicht mehr den des Nachladens.
   vi.spyOn(api, "categories").mockResolvedValue([]);

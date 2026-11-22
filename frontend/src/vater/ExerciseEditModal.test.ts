@@ -36,6 +36,8 @@ const BASE: ExerciseDetail = {
   averageRating: 4.5, ratingCount: 2,
   grammarTopicIds: [],
   bookPages: "42–43",
+  buildLevel: null,
+  buildTargetExerciseId: null,
 };
 
 function detailWith(over: Partial<ExerciseDetail> = {}): ExerciseDetail {
@@ -79,7 +81,35 @@ describe("payloadFrom – der Vollersatz-PUT darf nichts verlieren, was das Form
       executePublic: false,
       interestTagIds: [3, 7],
       grammarTopicIds: [],
+      buildLevel: null,
+      buildTargetExerciseId: null,
     });
+  });
+
+  /*
+   * B-700 AK 3 am Editor: der Aufbau-Weg reist im Vollersatz mit. Rote Probe: die zwei Zeilen in `payloadFrom` entfernen
+   * (der Server löschte die Stufe beim nächsten Speichern) oder `detail.buildLevel` statt des Formulars schreiben (die
+   * Abwahl käme nicht an – darum der zweite Fall mit geladener Stufe 2 und abgewähltem Ziel).
+   */
+  it("schickt den Aufbau-Weg aus dem Formular, auch eine Abwahl", () => {
+    const detail = detailWith({ buildLevel: 2, buildTargetExerciseId: 11 });
+    const kept = payloadFrom(detail, initialForm(detail), {});
+    expect([kept.buildLevel, kept.buildTargetExerciseId]).toEqual([2, 11]);
+
+    const cleared = payloadFrom(detail, { ...initialForm(detail), buildLevel: "", buildTargetExerciseId: null }, {});
+    expect([cleared.buildLevel, cleared.buildTargetExerciseId]).toEqual([null, null]);
+  });
+
+  /*
+   * Beides oder keins (B-700): ein halber Stand – Stufe ohne Ziel oder Ziel ohne Stufe – geht als „keine Vorstufe" raus
+   * statt als sicherer 400. Rote Probe: die Bedingungen in `payloadFrom` streichen (dann reist das halbe Paar).
+   */
+  it("schickt ein halbes Paar als keine Vorstufe", () => {
+    const detail = detailWith();
+    const onlyLevel = payloadFrom(detail, { ...initialForm(detail), buildLevel: 1, buildTargetExerciseId: null }, {});
+    expect([onlyLevel.buildLevel, onlyLevel.buildTargetExerciseId]).toEqual([null, null]);
+    const onlyTarget = payloadFrom(detail, { ...initialForm(detail), buildLevel: "", buildTargetExerciseId: 11 }, {});
+    expect([onlyTarget.buildLevel, onlyTarget.buildTargetExerciseId]).toEqual([null, null]);
   });
 
   it("schickt eine leere Einkleidung als leere Liste, nicht als fehlendes Feld", () => {

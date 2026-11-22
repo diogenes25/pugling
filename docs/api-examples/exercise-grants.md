@@ -147,7 +147,9 @@ Response — `HTTP 201`:
   "defaultItemCount": null,
   "interestTagIds": [],
   "grammarTopicIds": [],
-  "bookPages": null
+  "bookPages": null,
+  "buildLevel": null,
+  "buildTargetExerciseId": null
 }
 ```
 

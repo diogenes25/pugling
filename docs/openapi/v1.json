@@ -34776,9 +34776,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them.\n\u0060CanAssign\u0060: the same rule as on ExerciseSummary (B-140) - may the requester put the exercise\ninto a study plan or class test? Lets a caller holding only an id (the agent\u0027s \u0060assign\u0060, B-20) refuse it\nbefore the first write instead of failing halfway with \u0060exercise_not_executable\u0060.\n\u0060BookPages\u0060 (B-588): the textbook page reference; the editor reads it back here, because the PUT replaces it."
+        "description": "Complete, type-spanning view of an exercise including raw config and all metadata \u2013\nthe basis for editing (load config into the type-specific editor; saving goes through\nthe per-type PUT \u0060.../textbook-series/{seriesId}/units/{seriesUnitId}/\u0026lt;type\u0026gt;/{id}\u0060,\nwhere int ExerciseDetail.SeriesId supplies the route segment the flat cross-catalog view has no other way to know).\n\n\u0060InterestTagIds\u0060 is the dressing (B-46) - metadata, and this view promises all of it. It stays off\nExerciseSummary for the reason that row gives about itself: the lean row carries what the\nsupervisor\u0027s form pre-fills from, and a dressing pre-fills nothing. The fit filter B-18 will build\nbelongs in the *query* anyway, not in a list the client scans.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060: the same aggregate as on ExerciseSummary (B-12).\n\u0060GrammarTopicIds\u0060 (B-155): the topics the exercise practices, ascending like the dressing - the editor\nreads them back here and the PUT has to carry them, or the full replacement drops them.\n\u0060CanAssign\u0060: the same rule as on ExerciseSummary (B-140) - may the requester put the exercise\ninto a study plan or class test? Lets a caller holding only an id (the agent\u0027s \u0060assign\u0060, B-20) refuse it\nbefore the first write instead of failing halfway with \u0060exercise_not_executable\u0060.\n\u0060BookPages\u0060 (B-588): the textbook page reference; the editor reads it back here, because the PUT replaces it.\n\u0060BuildLevel\u0060/\u0060BuildTargetExerciseId\u0060 (B-700): the build path, read back for the same reason."
       },
       "ExerciseFeedbackSummary": {
         "required": [
@@ -34976,9 +34994,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfArithmeticDrillConfig": {
         "required": [
@@ -35132,9 +35168,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfBirkenbihlConfig": {
         "required": [
@@ -35288,9 +35342,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfClozeConfig": {
         "required": [
@@ -35444,9 +35516,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfEssayConfig": {
         "required": [
@@ -35600,9 +35690,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfGrammarConfig": {
         "required": [
@@ -35756,9 +35864,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfListConfig": {
         "required": [
@@ -35912,9 +36038,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfListeningConfig": {
         "required": [
@@ -36068,9 +36212,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfMatchingConfig": {
         "required": [
@@ -36224,9 +36386,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfReadingConfig": {
         "required": [
@@ -36380,9 +36560,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfTranslationConfig": {
         "required": [
@@ -36536,9 +36734,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExercisePayloadOfVocabularyConfig": {
         "required": [
@@ -36692,9 +36908,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book."
+        "description": "Exercise for creating/changing: shared fields \u002B type-specific config \u002B optional bonus suggestion.\nThe metadata (grade level, school type, source, kind) serves study-plan pre-filtering and is optional.\n\nRewardPoints is a **recommendation**, not a setting: a new study-plan position\ninherits it as its target reward when the supervisor states nothing, and stays free to override. It is\nread at that moment only - raising it later does not move plans already running. Unusable figures (0,\nnegative, implausibly large) fall back to the position\u0027s default of 20.\n\nInterestTagIds names the interests the exercise is **dressed** in (B-46) - ids of\nthe shared taxonomy that the child\u0027s interests and the images already use. It is a full representation\nlike every other field here: what the payload does not list is removed. An unknown id is an\n\u0060invalid_reference\u0060 (B-329), never a silent skip.\n\nGrammarTopicIds names the grammar topics the exercise practices (B-155), with the same\nfull-representation semantics. An unknown id is an \u0060invalid_reference\u0060; a topic of another subject than the\nseries\u0027 is a \u0060validation_error\u0060.\n\nBookPages (B-588) is the textbook page reference as printed (\u002242\u201343\u0022, \u0022WB 12\u0022), at most 20\ncharacters, trimmed, blank = none. Full representation like Source: a PUT without it clears it.\nThe child sees it on its daily overview, so it can look the exercise up in the book.\n\nBuildLevel and BuildTargetExerciseId (B-700) mark this exercise as an easier\nprerequisite of a target exercise in the **same unit**: level 1 (recognize) or 2 (fill in with a choice); the\ntarget itself is the top level and carries neither field. Both or neither; a target that is itself a\nprerequisite, an exercise that already has prerequisites, and a reference to itself are a\n\u0060validation_error\u0060, an unknown target an \u0060invalid_reference\u0060. Full representation: a PUT without them\nremoves the exercise from the path."
       },
       "ExerciseProgressResponse": {
         "required": [
@@ -36999,9 +37233,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfArithmeticDrillConfig": {
         "required": [
@@ -37211,9 +37463,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfBirkenbihlConfig": {
         "required": [
@@ -37423,9 +37693,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfClozeConfig": {
         "required": [
@@ -37635,9 +37923,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfEssayConfig": {
         "required": [
@@ -37847,9 +38153,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfGrammarConfig": {
         "required": [
@@ -38059,9 +38383,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfListConfig": {
         "required": [
@@ -38271,9 +38613,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfListeningConfig": {
         "required": [
@@ -38483,9 +38843,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfMatchingConfig": {
         "required": [
@@ -38695,9 +39073,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfReadingConfig": {
         "required": [
@@ -38907,9 +39303,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfTranslationConfig": {
         "required": [
@@ -39119,9 +39533,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseResponseOfVocabularyConfig": {
         "required": [
@@ -39331,9 +39763,27 @@
               "null",
               "string"
             ]
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none."
+        "description": "Exercise in the response. IsOwn = the requesting creator may **change** it (owner or\nwrite grant); IsOwner = may **manage** it (owner: delete, grant permissions,\ntoggle visibility); ExecutePublic = assignable to everyone.\n\nInterestTagIds is the dressing (B-46), **ascending** and therefore comparable\nbetween two exercises without sorting first - that comparison is the whole point of the field, and\nB-18 will build the child-fit filter on it. GrammarTopicIds (B-155) follows the same\nordering rule. BookPages is the textbook page reference (B-588), \u0060null\u0060 = none.\nBuildLevel/BuildTargetExerciseId (B-700): the prerequisite\u0027s level and its\ntarget exercise, both \u0060null\u0060 on an exercise that is no prerequisite."
       },
       "ExerciseSharingResponse": {
         "required": [
@@ -39558,9 +40008,27 @@
           },
           "canAssign": {
             "type": "boolean"
+          },
+          "buildLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "buildTargetExerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty.\n\n\u0060CanAssign\u0060 (B-140) says whether the requester may put the exercise into a study plan or class test: it is\npublic, or the requester holds any grant on it, or is an admin - the rule \u0060POST \u2026/positions\u0060 enforces, so a\npicker can lock a withdrawn exercise before the save fails with \u0060exercise_not_executable\u0060."
+        "description": "Lean hit row of the exercise search (child-neutral catalog). \u0060AuthorAdultId\u0060/\u0060AuthorName\u0060 carry the\nattribution of the shared library (\u0060null\u0060 = seeded system exercise); \u0060IsOwn\u0060 = the requesting supervisor\nmay change/delete the exercise.\n\nThe four \u0060Default\u2026\u0060/\u0060RewardPoints\u0060 values are the creator\u0027s **recommendations**, not settings: the\nsupervisor\u0027s form pre-fills from them and stays free to override (B-45). They belong on the lean row rather than\nonly on ExerciseDetail because the form pre-fills straight from the search hit - fetching the\ndetail just to read one number would be a round trip per keystroke in the list.\n\nThe \u0060SuggestedGoalPoints\u0060 figure is what a position would actually inherit from \u0060RewardPoints\u0060 -\nthe raw value only when it is plausible, otherwise the model default (B-192). Both travel, and that is the\npoint: the form shows the effective one, while the raw one stays readable for anyone editing the exercise.\nDeriving the effective figure client-side would copy a server rule, and the copy is what drifts.\n\n\u0060AverageRating\u0060/\u0060RatingCount\u0060 are the other creators\u0027 verdict (B-12): \u0060null\u0060/\u00600\u0060 while\nnobody has rated. They sit on the lean row because the whole point is to tell proven material apart while\nbrowsing - the same reason \u0060sort=rating\u0060 exists.\n\n\u0060ItemCount\u0060 (B-424) is how many content atoms the exercise holds - vocabulary items, cloze gaps, list entries - so a\nsupervisor sees the size of what he assigns. It is the size of the exercise, not of a round: the per-round limit is\n\u0060DefaultItemCount\u0060 here and \u0060ItemCount\u0060 on a position, a different figure under a similar name. Its unit is the type\u0027s\n\u0060ExerciseTypeManifest.ItemNoun\u0060; \u0060null\u0060 where the type has no countable atoms (essay, generated drill), and\n\u00600\u0060 only for an exercise that really is empty.\n\n\u0060CanAssign\u0060 (B-140) says whether the requester may put the exercise into a study plan or class test: it is\npublic, or the requester holds any grant on it, or is an admin - the rule \u0060POST \u2026/positions\u0060 enforces, so a\npicker can lock a withdrawn exercise before the save fails with \u0060exercise_not_executable\u0060.\n\n\u0060BuildLevel\u0060/\u0060BuildTargetExerciseId\u0060 (B-700): the build path - which target exercise this one is a prerequisite\nof, and on which level; both \u0060null\u0060 on every other exercise. On the lean row because a unit listing is where the\neditor finds a prerequisite\u0027s possible targets and a target\u0027s prerequisites."
       },
       "ExerciseTypeManifest": {
         "required": [
@@ -44610,6 +45078,7 @@
               "duplicate_vocabulary_in_exercise",
               "exercise_empty",
               "exercise_in_use",
+              "exercise_is_build_target",
               "exercise_items_locked",
               "exercise_not_assigned",
               "exercise_not_executable",
