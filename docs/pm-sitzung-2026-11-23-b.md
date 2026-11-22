@@ -94,3 +94,66 @@ Meldung, egal wie die Ausgabe gefiltert wurde. Kosten: eine gitignorte Datei je 
 
 **Bewusst ungedeckt:** Die Fehlerklasse „Titel neben gleichnamigem Knopf“. Die Suche des Reviewers fand keine zweite
 Stelle; ein Tor dafür wäre nicht treffsicher.
+
+## Sprint B2 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Sohnes reißt seine Serie nur, wenn er selbst einen Tag verpasst hat – nicht, weil Papa eine
+Pflicht später auf Kür stellt oder einen gespielten Plan wegräumt. Widerlegbar durch eine Pflicht, die nach dem Wechsel auf
+Kür ihre erfüllten Tage verliert, oder einen gespielten Plan, der sich löschen lässt.
+
+**Umfang:** [B-659](backlog/B-659-pflicht-wird-kuer-bricht-die-serie.md) (Defekt, L, `geschaetzt`, Entscheidungen
+stellvertretend im Vorbereitungslauf 2026-11-20).
+
+**Entwickler-Brief:** Quelle der Wahrheit ist ein Helfer `DutyCadenceOn` (die Senke aller Tagesfragen), die Abrechnung bleibt
+roh (Entscheidung 5). Migration nur angehängt, an einer Kopie der echten DB geprobt. Lauf A ist über die Migration in den
+Notizen informiert (Snapshot-Kollision beim Merge möglich).
+
+## Iteration B2 — umgesetzt (`edaacfd9`)
+
+- **Backend:** Spalten `DutyUntil`/`CadenceUntil`, Helfer an fünf Lesestellen, `CloseDutyAsync` im PATCH (vor allen anderen
+  Zuweisungen), Löschsperre über den vorhandenen `PlanHasPlayDataAsync` (B-673) mit dem vorhandenen Code `plan_has_data`.
+- **Frontend:** deutscher Satz zu `plan_has_data` nennt beide Sperren, den Ausweg „Deaktivieren“ nur am Löschen;
+  Bestätigungsfrage vor dem Löschen kündigt die Sperre an; neue Spec `plan-loeschen-gesperrt.spec.ts`.
+- **Rote Probe vor dem Fix:** 7 failed / 5 passed, wie erwartet (Einzelheiten im Verlauf der Story).
+- **Mutanten:** 15 gemessen, 14 rot am benannten Fall, 1 erwartet grün (Fortschrittsbalken eines offenen Ziels innerhalb
+  einer Spanne, als ungetragen beschriftet).
+- **Migration an einer Kopie der echten DB:** angewendet, 204 Positionen ohne Spanne.
+- **Review `pugling-reviewer`:** 2× 🟡 behoben und gezählt (Zähler B2: 2 von 5), 🟢 eingearbeitet bzw. als
+  [B-820](backlog/B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) angelegt.
+- **Voller Lauf:** Backend 2041/2041 (Release), Vitest 1327/1327, `tsc`, Format sauber. Der volle Lauf fand außerdem
+  `ActivatedAtMigrationTests` rot (lud die ganze Entity auf einem älteren Migrationsstand) – behoben per Projektion.
+
+## Runde 3 — Re-Review / Abnahme Sprint B2
+
+- **Vater** (seine Ebene hat sich geändert): Maschinengang `plan-loeschen-gesperrt` – er liest auf Deutsch, warum der
+  gespielte Plan nicht gelöscht wird und dass „Deaktivieren“ hilft; der Plan bleibt. `plan-umhaengen-gesperrt` grün mit dem
+  geänderten Satz. Den Wechsel Pflicht → Kür hat niemand in der Oberfläche geklickt; Ersatz ist der PATCH des
+  Positions-Formulars in den Integrationstests. **Abgenommen**, mit diesem benannten Ersatz.
+- **Sohn:** Seine Serie, Tagesansicht und Tageskiste folgen der Historie (Integrationstests); `full-flow`, `pfad`,
+  `heute-dran-nach-antworten`, `erfolge-woche-frist`, beide Belohnungs-Specs grün. **Abgenommen.**
+- **Creator:** Regressionszeuge, kein Pfad im Diff, Suite grün.
+- 8 passed auf :5207/:5179, Server aus dem Endstand.
+
+## Retrospektive Sprint B2
+
+**Nachschau:** Sprint B1 (B-787 `7b501ed4`, B-788 `d7b7546b`) nachgesehen, Prüfpunkte im Verlauf beider Stories; kein
+Befund, `nachgeschaut` gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:**
+
+- Der Helfer wich von Entscheidung 2 ab („danach `None`“), und AK 9 trug die Abweichung nicht – gefunden vom Review, nicht
+  von der Mutanten-Probe, weil ich die Mutante für genau diese Zeile nicht geschrieben hatte. Danach M14 plus Einzelfall.
+- Der geteilte Fehlercode `plan_has_data` bekam einen Ausweg, der nur für eine der beiden Sperren gilt – gefunden vom
+  Review. Die Regel „Ausweg nur für die Sperre, die er hebt“ steht in `pm-loop` Step 5; ich habe sie auf den Satz, nicht auf
+  den Code angewendet.
+- `ActivatedAtMigrationTests` fiel an der neuen Spalte; gefunden vom vollen Lauf.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** Ein Tor in `SchemaGuardTests`, das in `*MigrationTests.cs` nach dem
+Zurücksetzen auf einen älteren Stand kein Laden ganzer Entitäten erlaubt (nur `Select`-Projektionen). Jede künftige Spalte
+bricht sonst wieder einen alten Migrationstest. Vor dem Scharfstellen messen: heute 5 Klassen, davon 1 betroffen gewesen.
+
+**Bewusst ungedeckt:** Die Fehlerklasse „Entscheidung sagt X, Code tut Y, kein Fall unterscheidet“ deckt nur eine Mutante
+je Entscheidungs-Satz. Kein Mechanismus erzwingt, dass es sie gibt.
+
+**Werkzeug-Lehre:** `DocsCaptureTests` schreibt im Worktree alle `docs/api-examples` mit LF neu; `git diff
+--ignore-cr-at-eol` trennt das Rauschen vom echten Unterschied (hier nur `docs/openapi/v1.json`).

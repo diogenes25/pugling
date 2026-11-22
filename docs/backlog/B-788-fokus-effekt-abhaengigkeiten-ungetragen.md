@@ -8,6 +8,7 @@ groesse: XS
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: "Nachtlauf B 2026-11-22, Review und Abhängigkeits-Mutanten zu B-603 (docs/pm-sitzung-2026-11-22-b.md)"
 grund: ""
 ersetzt_durch: []
@@ -104,3 +105,5 @@ the sheep|1|false|false|false|false|true    neue Frage, cursor 1 und busy aus im
   `action.busy` als Sicherung stehen bleibt (ein künftiges `await` nach `setItem` in `run`). Batching-Argument im echten
   Browser bestätigt (reine Mikrotask-Kette vor dem geplanten Render).
 - **2026-11-22** — abgenommen (d7b7546b). Rollengang Sprint B1 als Maschinengang: E2E `full-flow`, `test-durchgefallen-ueben`, `erfolge-woche-frist`, `karten-umdrehen` auf :5207/:5179 gegen eine Wegwerf-DB, 4 passed; Vitest voll 1327/1327. Sohn: Klausur und Erfolge laufen wie zuvor (kein sichtbarer Unterschied – reine Test-/Abhängigkeitsänderung); Vater und Creator: Regressionszeugen, kein Pfad im Diff.
+
+- **2026-11-22** — Nachschau (Retro Sprint B2): `git show d7b7546b`: Dep-Array genau um `cursor` gekürzt, `action.busy` steht; die Kommentare entsprechen der Mutanten-Tabelle; Vitest voll nach Sprint B2 1327/1327; kein Befund.

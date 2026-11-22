@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Pflicht zur Kür, gelöschte Pflicht bricht die Serie]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: L
@@ -328,3 +328,14 @@ mit einem umzuschreibenden Test. Jeder Teil ist klein, die Streuung der Lesestel
   | M12 Spanne bleibt beim Zurück | PlanPositionsController.cs:357 | red | red | AK 9 |
   | M13 Löschen offen | StudyPlansController.cs:283 | red | red | AK 5 (beide Fälle) |
   | E1 Löschen offen (E2E) | StudyPlansController.cs:283 | red | red | `plan-loeschen-gesperrt.spec.ts` |
+
+- **2026-11-22** — abgenommen (`edaacfd9`). Verifikation nach der letzten Änderung: Backend voll (Release) 2041/2041,
+  Vitest voll 1327/1327, `tsc -b` und `dotnet format --verify-no-changes` sauber. Rollengang Sprint B2 als Maschinengang
+  auf :5207/:5179 gegen eine Wegwerf-DB, Server aus dem Endstand gestartet: `plan-loeschen-gesperrt`,
+  `plan-umhaengen-gesperrt`, `full-flow`, `belohnung-trotz-wochenziel`, `belohnung-ueber-faecher`, `erfolge-woche-frist`,
+  `heute-dran-nach-antworten`, `pfad` – 8 passed. **Vater:** Löschen eines gespielten Plans sagt auf Deutsch warum und was
+  stattdessen geht, der Plan bleibt (Spec); Umhängen sagt weiter „keinem anderen Kind“. Den Wechsel Pflicht → Kür hat
+  niemand in der Oberfläche geklickt: Ersatz ist der PATCH, den das Positions-Formular schickt, in
+  `PflichtWirdKuerSerieTests` (12+2 Fälle). **Sohn:** Serie, Tagesansicht und Tageskiste folgen der Historie
+  (Integrationstests); seine Specs grün. **Creator:** Regressionszeuge, kein Pfad im Diff. Nach dem Merge muss der
+  Heimnetz-Start die Migration `DutyUntilCadenceUntil` einspielen (an einer Kopie geprobt, siehe oben).
