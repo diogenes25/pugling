@@ -78,3 +78,66 @@ Muster (`|| null`, `=== "" ? null`) in den Bearbeiten-Zweigen mit Ausnahmeliste.
 vorgeschlagen.
 
 Kein Halt-Grund: kein Tor gelandet, kein Fund im Increment (Zähler 0).
+
+## Sprint 116 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Sohns endet „bis heute Abend" um Mitternacht deutscher Zeit – eine Antwort um 23:30 zählt für
+den alten Tag, eine um 00:30 für den neuen, und jede Tageszahl (Serie, Pflicht, Truhe, Woche, Shop, Zeitachse) sagt dasselbe.
+Widerlegbar durch eine Stelle, die um 00:30 noch den Vortag nennt.
+
+**Umfang:** [B-730](backlog/B-730-tagesbegriff-in-deutscher-zeit.md) (P1, `Wunsch`, `geschaetzt` → baubar nach Freigabe 8;
+erste Etappe der Planer-Kette aus B-644).
+
+**Entwickler-Brief:** Ein Dienst `LearningDay` (Today, DayOf, StartUtc, LocalNow) als einzige Senke; alle 36 direkten
+UTC-Tagesbildungen und die Zeitstempel-Umrechnungen darauf; ein Quelltext-Tor dahinter. Keine Migration, kein Vertragsbruch.
+Testweg: eigene Berlin-Fabrik mit eingefrorener Uhr; die übrige Suite bleibt auf UTC.
+
+## Iteration 116 — umgesetzt
+
+- **Backend:** `LearningDay` + `LearningDayOptions` (Startprüfung der Zone), 15 Controller/Dienste umgestellt, `DutyBegins`,
+  `DailyTestPortion`, Wochenvergleich der Münzen, Schwachwort-Pflicht, Multiplikator-Uhr; `ShopRefillSchedule` rechnet auf der
+  Wanduhr der Zone. Swagger-Texte nennen den Lerntag statt UTC.
+- **Frontend:** `lib/datum.ts` – `LERNTAG_ZONE`, `heuteImLerntag`, `beginnDesLerntags`; Arcade-Fristen nach Mitternacht
+  deutscher Zeit; Vater-Web belegt „heute" im Lerntag vor; Shop schickt/liest ein einmaliges Auffüllen als Mitternacht
+  deutscher Zeit.
+- **Tests:** `TagesbegriffTests` (6), `LerntagUmstellungTests` (4), Tor `Tage_Entstehen_Nur_Im_Lerntag`; Vitest-Fälle in
+  `datum.test.ts` (5), `planSubject.test.tsx`, `VaterShopEinmalTermin.test.tsx`; umgeschrieben mit Grund: `pfad.test.ts`,
+  `SohnHome.test.tsx`.
+- **Mutanten:** 16 von 16 rot (D1–D9, F1–F4, S1–S2), Grundlinien grün.
+- **Reviews:** beide ohne 🔴; je ein 🟡 (Swagger-Text „UTC" – Doku; Einmal-Auffüllen um 00:00 UTC – außerhalb des Diffs),
+  beide behoben, **Zähler 0**. 🟢 überwiegend behoben; offen bewusst: Aufrufer-Tests für Wizard und Zeitachse.
+- **Volle Suite:** Backend 2039/2039 (Release), Vitest 1338/1338, `dotnet format Pugling.sln` sauber.
+- Commit `3c0122fa`. Root-`CLAUDE.md` „Zeit/UTC" auf die neue Regel korrigiert (eine Zeile ersetzt, keine dazu).
+
+## Runde 3 — Rollengang Sprint 116
+
+- **Sohn — abgenommen** (API an der eingestellten Uhr gegen einen Server in Europe/Berlin, `TagesbegriffTests`; E2E gegen
+  frisch gestarteten Server in Europe/Berlin: `pfad`, `truhe`, `erfolge-woche-frist`, `full-flow`): eine Runde um 23:30 zählt
+  heute, um 00:30 morgen; ein Wort, nach Mitternacht zweimal richtig, zahlt einmal; die Münze von 00:10 am Montag steht in der
+  neuen Woche; der Pfad zeigt die Frist bis Mitternacht deutscher Zeit. „Wenn da ‚noch 2 Std.' steht, stimmt das jetzt auch."
+- **Vater — abgenommen** (E2E `vater-zeitachse`, `shop-einmal-termin-bearbeiten`, `vater-felder-leeren`; Shop-Bestand füllt sich
+  um Mitternacht Ortszeit, `Taeglicher_Shop_Bestand_…`): Zeitachse und Tagesstatus nennen denselben Tag wie das Kind.
+- **Creator — Regressionszeuge:** keine Creator-Fläche im Diff; Suite grün.
+- **Nicht maschinell:** ein Gang um echte Mitternacht (die E2E-Uhr ist die Wanduhr) – die Grenze belegen die API-Fälle mit
+  eingestellter Uhr.
+
+## Retrospektive (Sprint 116)
+
+**Nachschau:** Sprint 115 nachgesehen (B-791, B-800, `nachgeschaut: 2026-11-22`, Prüfpunkte in den Stories) – kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:** meine Senkensuche im Frontend. Ich habe nach „heute aus der Uhr"
+(`toISOString().slice`, `getUTC*`) gesucht, nicht nach der Gegenrichtung „Tag → Zeitpunkt" (`${tag}T00:00:00Z`). Genau dort
+saß das einmalige Auffüllen im Shop; gefunden hat es der `frontend-reviewer`. Das Backend-Tor hatte dieselbe Lücke in kleinerer
+Form (Muster `TimeOnly.FromDateTime`, `GetUtcNow().Date`) – vom `pugling-reviewer` benannt, im Sprint geschlossen.
+
+**Vorschlag (nur Vorschlag, nicht gelandet – Freigabe 3):** ein Vitest-Tor im Stil von `datum.test.ts`, das in `frontend/src`
+außerhalb von `lib/datum.ts` jedes `toISOString().slice(0, 10)` und jedes Literal `T00:00:00Z` in Quelltext meldet – das
+Frontend-Gegenstück zu `Tage_Entstehen_Nur_Im_Lerntag`. Ein neues Tor, darum hier nur vorgeschlagen.
+
+## Halt nach Sprint 116 (begründet)
+
+Kein formaler Halt-Grund der Freigaben (kein Retro-Tor gelandet, Zähler 0). Ich halte trotzdem an, aus dem Grund, den die
+Regel „neues Tor → Halt" schützt: B-730 hat per Akzeptanzkriterium ein neues Quelltext-Tor gesetzt, die Root-`CLAUDE.md`
+geändert und den Tagesbegriff der echten `pugling.db` verschoben – und fünf seiner Entscheidungen (4–8) sind stellvertretend
+und unbestätigt. Die nächsten Kandidaten nach Priorität (B-731, dann B-733 ff.) bauen alle auf B-730 auf; sie jetzt zu bauen,
+hieße unbestätigte Entscheidungen zu stapeln. Ein Morgen mit dem Nutzer ist billiger als ein Rückbau.

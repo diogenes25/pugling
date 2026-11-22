@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Tagesbegriff, Ortszeit, Lerntag Kalendertag, Etappe E0a]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -64,6 +64,33 @@ Gemessen am 2026-11-20 auf `main`. Pfade relativ zu `backend/`.
    36 Stellen.
 3. **Zuschnitt als eigene Story** (B-644 Entscheidung 26, stellvertretend, unbestätigt): E0 ist von Planer und
    Auswertung unabhängig und gehört deshalb vor alles andere.
+
+## Entscheidungen beim Bau (Nachtlauf 2026-11-23-a)
+
+*Stellvertretend in der übertragenen PO-Rolle getroffen, unbestätigt – zum Umstoßen. Keine davon ändert eine geerbte
+Entscheidung; sie füllen, was die Story offenließ.*
+
+4. **Die Testsuite zählt weiter im UTC-Kalender** (`LearningDay:TimeZone = UTC` in der Testfabrik), eine eigene
+   `BerlinWebAppFactory` prüft die Zonen-Regel. Grund: 39 Stellen in 20 Testdateien bilden „heute" selbst aus
+   `DateTime.UtcNow`; auf Berlin liefen sie jede Nacht zwischen 0 und 2 Uhr gegen den Server. Kosten: die Suite beweist
+   die Geschäftsregeln im UTC-Kalender; dass jede Stelle den Dienst benutzt, hält das Quelltext-Tor (AK 2), dass der
+   Dienst richtig rechnet, `TagesbegriffTests`/`LerntagUmstellungTests`.
+5. **Der Shop-Auffüllkalender folgt dem Lerntag** (`ShopRefillSchedule` bekommt die Zone, rechnet auf der Wanduhr, gibt
+   UTC-Augenblicke zurück). Der Ist-Stand nannte ihn; „täglich" beginnt damit um Mitternacht deutscher Zeit wie der Tag.
+   Kosten: ein Auffüllen, das bisher um 1 bzw. 2 Uhr kam, kommt eine bis zwei Stunden früher.
+6. **Die Fristen der Sohn-Arcade** (`stundenBisServerTagesende`, `istServerSonntag` in `frontend/src/lib/datum.ts`, B-525)
+   rechnen mit derselben Zone – sie zeigten bisher Mitternacht UTC und hätten nach dem Umbau der Buchung widersprochen.
+   Die Zone steht im Frontend als Konstante `LERNTAG_ZONE`, gespiegelt aus `appsettings.json` (der Browser kennt die des
+   Servers nicht). Kosten: zwei Orte für eine Einstellung; ändert sie sich, ändern sich beide.
+7. **Die Tageszeit-Multiplikatoren** lesen die Wanduhr des Lerntags (`LearningDay.LocalNow`) statt der Server-Zone
+   (`GetLocalNow`). Auf dem Heimserver (Windows in deutscher Zeit) ändert das nichts; auf einem Host in UTC hätten sie
+   bisher falsch gewichtet.
+8. **Der Seed bleibt außerhalb** (Demo-Daten einer frischen DB, `Data/Seed.cs:370`, `:888`); das Tor scannt
+   `Controllers/` und `Services/`.
+
+**Wirkung auf die echte DB beim Einspielen:** keine Migration. Gespeicherte `DateOnly`-Werte behalten ihren Tag; ab dem
+Start rechnet „heute" in deutscher Zeit. In der ersten Nacht endet der Tag um 0 statt um 1 Uhr – die Abrechnung eines
+Tages kommt damit früher, nicht doppelt (sie ist je Tag idempotent).
 
 ## Akzeptanzkriterien
 
@@ -137,3 +164,42 @@ Abhängigkeit nach vorn. Voraussetzung für [B-733](B-733-tagesauswertung-und-le
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E0a) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 geerbt. Nachgesehen: 36 statt 35 Stellen, dazu sieben Zeitstempel-Umrechnungen und
   drei Frontend-Stellen, die B-644 nicht nennt. M, beides, keine Migration, kein Vertragsbruch.
+- **2026-11-22** — gebaut im Nachtlauf 2026-11-23-a, Sprint 116 (Freigabe 8: `geschaetzt` + `Wunsch` ist baubar; die
+  Entscheidungen 4–8 oben füllen offene Handwerksfragen, keine ändert eine geerbte).
+  - AK 1 → `TagesbegriffTests.Antwort_Um_2330_…` (Winter/Sommer), D1 (`DayOf` = UTC-Datum) → rot; D8 (eine Stelle bildet
+    den Tag wieder selbst) → rot über das Tor.
+  - AK 2 → `ConventionGuardTests.Tage_Entstehen_Nur_Im_Lerntag`, D8 → rot. Ausnahmen mit Grund: die Wanduhr-Rechnung des
+    Shop-Kalenders, die Multiplikator-Stunde aus `LocalNow`.
+  - AK 3 → `TagesbegriffTests.Antwort_Um_2330_Zaehlt_Fuer_Den_Alten_Um_0030_Fuer_Den_Neuen_Tag` (2 Fälle), D1 → rot.
+  - AK 4 → `LerntagUmstellungTests.Umstellungstag_…` (23 h / 25 h, jeder Tag genau einmal) und `Tag_Beginnt_Um_Mitternacht_Ortszeit`,
+    D1 → rot, D2 (`StartUtc` = UTC-Mitternacht) → rot; Frontend `datum.test.ts` „…über die Zeitumstellung", F2 → rot.
+  - AK 5 → `LastReviewedAt`: `Zweite_Richtige_Antwort_Nach_Mitternacht_…`, D3 → rot; `CreatedAt`/`DutySince`:
+    `Position_Kurz_Nach_Mitternacht_…`, D9 → rot; Woche: `Muenze_Nach_Mitternacht_Am_Montag_…`, D4 (Montag aus UTC) → rot,
+    D5 (Wochenbeginn UTC-Mitternacht) → rot; Shop: `Taeglicher_Shop_Bestand_…`, D6 (Zone nicht durchgereicht) → rot, D7
+    (Kalender ignoriert die Zone) → rot.
+  - AK 6 → `planSubject.test.tsx` „belegt den Start mit dem Lerntag vor", F1 → rot; `datum.test.ts` `heuteImLerntag`, F4 → rot;
+    Arcade-Fristen `pfad.test.ts`/`datum.test.ts`, F2 → rot, F3 (Sonntag nach UTC) → rot; Shop-Termin
+    `VaterShopEinmalTermin.test.tsx`, S1 (Mitternacht UTC senden) → rot, S2 (Tag per `slice` zurücklesen) → rot.
+    Nicht je Aufrufer gemessen: `VaterWizard.tsx:63` und `ChildrenTimeline.tsx:48` rufen denselben Helfer, ein Rückbau dort
+    fiele keinem Test auf (frontend-reviewer 🟢, bewusst offen).
+  - AK 7 → umgeschrieben mit Grund im Kommentar: `pfad.test.ts`, `SohnHome.test.tsx` (behaupteten Mitternacht UTC),
+    `VaterShopEinmalTermin.test.tsx` (Mitternacht des gewählten Tags), `TagesportionTests`/`ShopFlowTests`/`ShopStockPerChildTests`
+    (Dienst von Hand gebaut, UTC-Kalender); die übrige Suite blieb unverändert grün auf UTC (Entscheidung 4).
+  - Messung `.claude/scripts/mutant-probe.py` nach der letzten Änderung: 16 von 16 rot (D1–D9, F1–F4, S1–S2; S1 nach
+    korrigierter Ortsangabe neu gemessen), Grundlinien grün. Nicht gemessen: `lastWeekNow` über eine Umstellungswoche
+    (Review-🟢, behoben ohne eigenen Test).
+- **2026-11-22** — Reviews: `pugling-reviewer` kein 🔴; 🟡 Swagger-Texte nannten „today, UTC" (`ChildrenDashboardController`,
+  `ChildrenOverviewController`) → behoben (nur Doku, ohne Zählung); 🟢 veraltete UTC-Kommentare (5) → behoben; 🟢
+  `lastWeekNow` 168 h statt Wanduhr → behoben; 🟢 Zone mit Umstellung um Mitternacht → als „nicht unterstützt" dokumentiert;
+  🟢 Tor-Muster → um `TimeOnly.FromDateTime`/`GetUtcNow().Date` erweitert; 🟢 `DutyBegins` ohne Verhaltenstest → Test + D9.
+  `frontend-reviewer` kein 🔴; 🟡 einmaliges Auffüllen im Shop kam weiter um 00:00 UTC (außerhalb des Diffs, ohne Zählung)
+  → behoben (`beginnDesLerntags`, Rücklesen über `tagDes`); 🟢 Zonen-Spiegel ohne Prüfung → Test gegen `appsettings.json`;
+  🟢 Formatierer je Aufruf → Cache; 🟢 Import-Reihenfolge → behoben; 🟢 Aufrufer-Tests Wizard/Zeitachse → offen (s. o.).
+  **Zähler 0.**
+- **2026-11-22** — abgenommen (`3c0122fa`, Sprint 116). Backend 2039/2039 (Release, nach der letzten Änderung), Vitest
+  1338/1338, `dotnet format Pugling.sln` sauber. Rollengang: Sohn per API an der eingestellten Uhr (23:30/00:30 im Winter und
+  Sommer, Antwort nach Mitternacht, Truhe/Woche – `TagesbegriffTests` gegen einen Server in Europe/Berlin) und per E2E gegen
+  frisch gestarteten Server in Europe/Berlin (5211/5184): `pfad`, `truhe`, `erfolge-woche-frist`, `full-flow`; Vater
+  `vater-zeitachse`, `shop-einmal-termin-bearbeiten`, `vater-felder-leeren` – 8/8 grün. Ein Gang um echte Mitternacht ist
+  maschinell nicht möglich (die E2E-Uhr ist die Wanduhr); das Verhalten an der Grenze belegen die API-Fälle.
+

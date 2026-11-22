@@ -12,6 +12,7 @@ quelle: "Review von B-789 im Nachtlauf A 2026-11-22 (docs/pm-sitzung-2026-11-22.
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-22"
 ---
 
 # B-791 · Drei Vater-Formulare leeren ein Feld nicht, sondern lassen es beim Server stehen
@@ -132,4 +133,8 @@ mit; `""` statt `null` heißt dort „leer setzen", was der angezeigte (leere) S
   `vater-felder-leeren` gegen frisch gestarteten Server (5211/5184, Wegwerf-DB): Plan-Beschreibung, Unit-Grammatik, Band und
   Audio-URL nach dem Neuladen leer. Sohn Regressionszeuge (`full-flow` grün; die Audio-URL erreicht die Karte nur gesetzt
   oder `null`). Creator Regressionszeuge (Vokabel-Store und Units sind Creator-Fläche; dieselbe E2E fährt sie).
+- **2026-11-22** — nachgeschaut (Retro Sprint 116). Prüfpunkte: `d9af0c17` sendet `clearGrade` nur im Bearbeiten-Zweig
+  (`VaterLehrwerke.tsx:819`), das Anlegen bekommt das DTO ohne den Schalter (sonst `unknown_field`); der Agent
+  (`UnitNotesFiller.cs:142`) schickt `null` und lässt damit alles stehen, was er nicht setzt; `AudioUrlOrNull` ist der
+  einzige Schreiber der Audio-URL (Review-Befund). Kein Befund.
 
