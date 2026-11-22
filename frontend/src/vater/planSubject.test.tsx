@@ -154,6 +154,17 @@ describe("Plan bearbeiten", () => {
 
     expect(onSave).toHaveBeenCalledWith({ subjectId: 4, clearSeriesUnit: true });
   });
+
+  // B-791 AK 1. Rot mit `form.description.trim() || null`: `null` hieße beim PATCH „unverändert", die alte Beschreibung bliebe.
+  it("schickt eine geleerte Beschreibung als leeren Text", async () => {
+    const onSave = vi.fn();
+    render(<MemoryRouter><PlanEditForm plan={plan({ description: "Erst Vokabeln" })} childName="Theo" busy={false} onSave={onSave} /></MemoryRouter>);
+    await settle();
+    fireEvent.change(screen.getByLabelText(/^Beschreibung/), { target: { value: "  " } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+
+    expect(onSave).toHaveBeenCalledWith({ description: "" });
+  });
 });
 
 describe("Plan-Seite: Aktivieren", () => {

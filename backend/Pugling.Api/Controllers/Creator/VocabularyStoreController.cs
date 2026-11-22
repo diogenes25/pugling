@@ -290,7 +290,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
             Verb = dto.Verb,
             BaseFormId = baseFormId,
             BaseFormRelation = string.IsNullOrWhiteSpace(dto.BaseFormRelation) ? null : dto.BaseFormRelation.Trim(),
-            PronunciationAudioUrl = dto.PronunciationAudioUrl,
+            PronunciationAudioUrl = AudioUrlOrNull(dto.PronunciationAudioUrl),
         };
         db.Vocabularies.Add(vocab);
         await ApplyTagsAsync(vocab, dto.Tags, ct);
@@ -342,7 +342,7 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         if (dto.PartOfSpeech is not null) vocab.PartOfSpeech = dto.PartOfSpeech.Value;
         if (dto.Noun is not null) vocab.Noun = dto.Noun;
         if (dto.Verb is not null) vocab.Verb = dto.Verb;
-        if (dto.PronunciationAudioUrl is not null) vocab.PronunciationAudioUrl = dto.PronunciationAudioUrl;
+        if (dto.PronunciationAudioUrl is not null) vocab.PronunciationAudioUrl = AudioUrlOrNull(dto.PronunciationAudioUrl);
 
         if (dto.BaseFormKey is not null)
         {
@@ -369,6 +369,12 @@ public class VocabularyStoreController(PuglingDbContext db, VocabularyStoreServi
         await LoadGraphAsync(vocab, ct);
         return (UpdateStatus.Ok, vocab, null);
     }
+
+    /// <summary>
+    /// A blank pronunciation URL means "no URL": the edit form sends a cleared field as <c>""</c>, and the store keeps a
+    /// single state for "none" so no reader has to know two (B-791).
+    /// </summary>
+    private static string? AudioUrlOrNull(string? url) => string.IsNullOrWhiteSpace(url) ? null : url.Trim();
 
     /// <summary>
     /// Deletes a vocabulary entry. Not possible while it is the base form of other entries or while an exercise (vocabulary

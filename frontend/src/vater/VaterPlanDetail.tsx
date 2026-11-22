@@ -154,8 +154,8 @@ export function PlanEditForm({ plan, childName, busy, onSave }: {
       else dto.seriesUnitId = form.seriesUnitId;
     }
     if (form.title.trim() !== "" && form.title !== plan.title) dto.title = form.title.trim();
-    // Beschreibung immer mitschicken (auch Leeren erlaubt → null), wenn geändert.
-    if ((form.description ?? "") !== (plan.description ?? "")) dto.description = form.description.trim() || null;
+    // Geändert → mitschicken, auch leer: `""` leert am Server, `null` hieße beim PATCH „unverändert" (B-791).
+    if ((form.description ?? "") !== (plan.description ?? "")) dto.description = form.description.trim();
     if (form.startDate && form.startDate !== plan.startDate) dto.startDate = form.startDate;
     if (form.endDate && form.endDate !== plan.endDate) dto.endDate = form.endDate;
     if (form.childId !== plan.childId) dto.childId = form.childId;

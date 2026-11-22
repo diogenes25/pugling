@@ -49175,9 +49175,13 @@
               ],
               "format": "int32"
             }
+          },
+          "clearGrade": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a unit; omitted fields remain unchanged. \u0060GrammarTopicIds\u0060 replaces the list entirely."
+        "description": "Partial change to a unit; omitted fields remain unchanged. \u0060GrammarTopicIds\u0060 replaces the list entirely.\n\u0060ClearGrade\u0060 removes the band - \u0060null\u0060 alone means \u0022unchanged\u0022 (B-800)."
       },
       "UpdateShopArticleDto": {
         "type": "object",

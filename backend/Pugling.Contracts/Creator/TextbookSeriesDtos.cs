@@ -62,6 +62,9 @@ public record SeriesUnitResponse(int Id, int SeriesId, int? Grade, int OrderInde
 public record CreateSeriesUnitDto(string Label, int? Grade, int? OrderIndex, BookType? BookType,
     List<string>? Topics, string? Grammar, string? VocabularyNotes, List<int>? GrammarTopicIds = null);
 
-/// <summary>Partial change to a unit; omitted fields remain unchanged. <c>GrammarTopicIds</c> replaces the list entirely.</summary>
+/// <summary>
+/// Partial change to a unit; omitted fields remain unchanged. <c>GrammarTopicIds</c> replaces the list entirely.
+/// <c>ClearGrade</c> removes the band - <c>null</c> alone means "unchanged" (B-800).
+/// </summary>
 public record UpdateSeriesUnitDto(string? Label, int? Grade, int? OrderIndex, BookType? BookType,
-    List<string>? Topics, string? Grammar, string? VocabularyNotes, List<int>? GrammarTopicIds = null);
+    List<string>? Topics, string? Grammar, string? VocabularyNotes, List<int>? GrammarTopicIds = null, bool ClearGrade = false);
