@@ -176,3 +176,52 @@ statt Bericht). Prosa in `docs/nachtlauf.md`, kein Tor.
 
 Kein Halt-Grund: kein neues Tor; der Fund im Increment ist behoben, Zähler 1 von 5.
 
+## Sprint 113 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Sohns hält die Bonusrunde, was sie zeigt: der Aufwärm-Hinweis verspricht nur die Stufe, die
+wirklich mehr zahlt, und wer mit Tastatur spielt, verliert nach „Aufdecken“ und am Ergebnis nicht die Stelle. Widerlegbar
+durch „ab der Auswahl gibt es mehr“ oder einen Fokus auf `body` nach „Aufdecken“/am Ergebnis.
+
+**Umfang:** [B-785](backlog/B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md),
+[B-778](backlog/B-778-bonus-fokus-ergebnis-und-aufdecken.md) – beide von `idee` bis `geschaetzt` im Lauf (Defekt, autonom).
+
+**Entwickler-Brief:** B-785: fester Text, Voraussetzung am Server festgeschrieben (keine Vertragsänderung für einen Satz).
+B-778: Muster des Tests (`SohnTest.tsx`) übernehmen – eine Absicht, ein Effekt; nach der letzten Karte wartet sie aufs
+Ergebnis. Keine Migration, kein Vertrag.
+
+## Iteration 113 — umgesetzt
+
+- `SohnBonus.tsx`: Absicht in `onReveal`, Effekt auf `[cursor, revealed, result, error, run]`, `resultTitleRef` am
+  Ergebnis. `de.ts`/`en.ts`: `bonus.hintSelf` „beim Tippen gibt es mehr“. `ExtraTrainingRatesTests` (2 Fälle).
+- **Review (`frontend-reviewer`):** ein 🟡 behoben – der getippte Weg zum Ergebnis war ungetestet; **Zähler 1 von 5**.
+  🟢: Wortlaut „Tippen“ statt „Schreiben“ übernommen (gleiche Seite nennt die Form so); Fokus, den das Kind während der
+  Auswertung verschiebt, wird überholt – wie im Test, belassen.
+- **Mutanten nach der letzten Änderung:** Q1–Q6, R1–R3 rot; E2E-Probe E4 rot.
+- **Volle Suite:** Backend 2023/2023 (Release); Vitest 1323/1324 im Gesamtlauf – der eine rote Fall
+  (`SohnPractice.test.tsx`, Fokus beim Kartenwechsel) liegt in einer Datei ohne Diff dieses Laufs und war einzeln zweimal
+  grün (52/52): das Last-Flackern aus B-603, das Lauf B auf seinem Branch bearbeitet. Nicht repariert (fremder Bereich).
+
+## Runde 5 — Rollengang Sprint 113
+
+- **Sohn — abgenommen** (E2E `bonus`, erweitert; Server frisch auf 5201/5174): Vokabel-Aufwärmen – oben steht „jedes
+  gewusste Wort bringt 1 🪙, beim Tippen gibt es mehr“; nach „Aufdecken“ steht der Fokus auf „Nicht gewusst“, am Ende auf
+  „4 / 4 richtig“. „Mit Enter und Tab komm ich jetzt durch, ohne zu suchen.“ Zusätzlich grün: `bonus-satz-je-karte`.
+- **Vater — Regressionszeuge:** `bonus-deckel`, `full-flow` grün.
+- **Creator — Regressionszeuge:** `full-flow`; keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 113)
+
+**Nachschau:** Sprint 112 nachgesehen (B-786, `nachgeschaut: 2026-11-22`). Geprüft: jeder Wert, den `ListingRow` beim Öffnen
+übernimmt (`editForm`, `editPlan`, Zielgruppe), gegen `UpdateShopListingDto`; die Zeile ist `key={l.id}`, `startEditing`
+liest bei jedem Klick die aktuelle Prop. Kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:** Ein Test-Helfer mit einem Parameter, den kein Fall nutzte (`starte("Typed")`) –
+er sah wie Abdeckung aus. Gefunden hat es der Reviewer. Die Mutante Q6 hätte es auch gezeigt, war aber nicht in der ersten
+Liste: die Mutanten folgten den Zeilen des Diffs, nicht den Wegen in die neue Bedingung.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Für eine neue Warte-Bedingung (hier `waitingForResult`) je Weg, der sie
+erreicht, eine Mutante am *Eingang* des Wegs (`answer()`, `onReveal`), nicht nur an der Bedingung selbst. Zeile in
+`pm-loop` Step 5. Prosa, kein Tor.
+
+Kein Halt-Grund: kein neues Tor; der Fund im Increment ist behoben, Zähler 1 von 5.
+

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Review von B-782 im Nachtlauf A 2026-11-22 (docs/pm-sitzung-2026-11-22.md)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: []
 ---
 
@@ -88,3 +89,4 @@ gewählt habe – nicht einen alten oder einen, den ich mit „Abbrechen“ verw
   - Messung 00:46 nach der letzten Änderung: N1–N8 rot, Grundlinie grün.
 - **2026-11-22** — Review `frontend-reviewer`: 🟡 1 behoben (verborgene Uhrzeit des Rest-Termins ging bei gleichem Tag hinaus; `planDto` bekommt den geladenen Termin nur bei „einmalig“), **Zähler 1 von 5**. 🟢 ohne Zählung: „OK“ schließt vor dem Ergebnis, nach einem Server-Fehler beginnt das erneute Öffnen beim gespeicherten Stand (Folge von Entscheidung 1, gewollt); geleerter Titel bleibt stehen → [B-789](B-789-angebotstitel-leeren-bleibt-stehen.md).
 - **2026-11-22** — abgenommen (`4013ead9`, Sprint 112): Rollengang Vater per E2E `shop-einmal-termin-bearbeiten` (2 Fälle, frisch auf 5201/5174); Sohn Regressionszeuge (`shop-verlauf`, `full-flow`), Creator ohne Fläche im Diff.
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 112): jeder beim Öffnen übernommene Wert gegen `UpdateShopListingDto` gelegt; `key={l.id}` und `startEditing` lesen die aktuelle Prop. Kein Befund.
