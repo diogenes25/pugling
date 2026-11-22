@@ -82,8 +82,15 @@ export function SohnTest() {
    * B-541 (Regel aus B-531): nimmt eine Handlung des Kindes den fokussierten Knopf mit – Aufdecken, Antwort, „Weiter
    * versuchen", „Nochmal versuchen" –, landet der Fokus dort, wo es als Nächstes handelt: erstes Bedienbares der
    * Antwortzone, sonst die Überschrift des Ergebnisses oder die Fehlermeldung. Die Absicht wird erst verbraucht, wenn
-   * ein Ziel da ist: die neue Frage steht schon, während `action.busy` ihre Optionen noch sperrt – ein Lauf in diesem
-   * Augenblick fände nichts und ließe den Fokus auf `body`. Der erste Aufbau setzt die Absicht nicht (B-443).
+   * ein Ziel da ist: der Klick schaltet zuerst `action.busy` ein, und dieser Lauf sieht noch die alte, gesperrte Frage –
+   * verbrauchte er die Absicht, ließe er den Fokus auf `body`. Der erste Aufbau setzt die Absicht nicht (B-443).
+   *
+   * Abhängigkeiten (B-788, gemessen): `action.busy` steht hier, weil der Effekt es liest; die neue Frage kommt aber im
+   * selben Render wie `busy = false` (React bündelt `setItem` und das `finally` von `run`), darum trägt kein Ablauf
+   * einen Wechsel von `busy` allein. Es bleibt trotzdem stehen: käme je ein `await` nach `setItem` in `run`, landeten
+   * Frage und `busy = false` in zwei Renders, und nur diese Abhängigkeit löste dann den Lauf aus, der fokussiert.
+   * `cursor` stand früher mit im Feld; es wird nicht gelesen und bestimmt kein Ziel (wo es sich ändert, ändert sich im
+   * selben Render `item` oder `result`).
    */
   const focusIntent = useRef(false);
   const answerRef = useRef<HTMLDivElement>(null);
@@ -98,7 +105,7 @@ export function SohnTest() {
     if (!target) return;
     target.focus();
     focusIntent.current = false;
-  }, [item, cursor, revealed, error, result, action.busy]);
+  }, [item, revealed, error, result, action.busy]);
 
   async function finish(id: number) {
     if (!planId) return;
