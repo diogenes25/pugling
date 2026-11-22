@@ -8,6 +8,7 @@ groesse: S
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: Sprint 82, Rollengang und volle E2E-Suite (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -251,3 +252,4 @@ Proben; zusammen etwas über dem XS-Anker (zwei Sätze plus ein prüfender E2E).
   - In beiden Läufen kam keine Meldung „did not exit“. **Zähler „nicht reproduzierbar“: 2 von 5** volle Läufe ohne Hänger
     (Vorschlag aus Entscheidung 3, die Verwerfung entscheidet der Nutzer).
   - Rollengang entfällt: Es ist Testwerkzeug ohne Oberfläche.
+- **2026-11-22** — Nachschau (Nachtlauf B 2026-11-23, Retro Sprint B1, Agent `frontend-reviewer`): Variable gegen Playwright 1.65.1 `runner/index.js:2107-2118` geprüft (Frist ab letztem Herzschlag, `??=` lässt äußere Frist gewinnen); kein Befund.

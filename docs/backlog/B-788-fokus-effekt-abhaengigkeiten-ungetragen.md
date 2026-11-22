@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/test, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/test, rolle/entwickler]
 aliases: [Fokus-Effekt-Abhängigkeiten ungetragen]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -103,4 +103,4 @@ the sheep|1|false|false|false|false|true    neue Frage, cursor 1 und busy aus im
   wechselt nie ohne `item`“ stimmt bei `start()` aus dem Ergebnisbild nicht wörtlich (dort wechselt `result`); und warum
   `action.busy` als Sicherung stehen bleibt (ein künftiges `await` nach `setItem` in `run`). Batching-Argument im echten
   Browser bestätigt (reine Mikrotask-Kette vor dem geplanten Render).
-
+- **2026-11-22** — abgenommen (d7b7546b). Rollengang Sprint B1 als Maschinengang: E2E `full-flow`, `test-durchgefallen-ueben`, `erfolge-woche-frist`, `karten-umdrehen` auf :5207/:5179 gegen eine Wegwerf-DB, 4 passed; Vitest voll 1327/1327. Sohn: Klausur und Erfolge laufen wie zuvor (kein sichtbarer Unterschied – reine Test-/Abhängigkeitsänderung); Vater und Creator: Regressionszeugen, kein Pfad im Diff.

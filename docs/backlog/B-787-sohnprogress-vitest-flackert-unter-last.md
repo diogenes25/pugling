@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/test, rolle/entwickler]
+tags: [typ/story, status/abgenommen, bereich/test, rolle/entwickler]
 aliases: [SohnProgress-Vitest flackert]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -90,4 +90,4 @@ Gruppe (`Plan 99`) hatte dieselbe Lücke, nur trat sie im Lauf vom 2026-11-22 ni
 - **2026-11-22** — Review `frontend-reviewer`: keine Funde. Nebenbefund: die alte Suche löste schon der Knopf allein auf; erst
   die neue prüft wirklich, dass der Titel aus der Antwort für Plan 5 kommt. Suche nach derselben Fehlerklasse (Titel neben
   gleichnamigem Knopf) in allen `*.test.tsx`: keine weitere Stelle.
-
+- **2026-11-22** — abgenommen (7b501ed4). Rollengang Sprint B1 als Maschinengang: E2E `full-flow`, `test-durchgefallen-ueben`, `erfolge-woche-frist`, `karten-umdrehen` auf :5207/:5179 gegen eine Wegwerf-DB, 4 passed; Vitest voll 1327/1327. Sohn: Klausur und Erfolge laufen wie zuvor (kein sichtbarer Unterschied – reine Test-/Abhängigkeitsänderung); Vater und Creator: Regressionszeugen, kein Pfad im Diff.

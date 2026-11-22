@@ -8,6 +8,7 @@ groesse: M
 wo: frontend
 migration: nein
 vertragsbruch: nein
+nachgeschaut: "2026-11-22"
 quelle: Sprint 82, Verifikation von B-598 (pm-sitzung-2026-11-16-backlog-lauf.md)
 grund: ""
 ersetzt_durch: []
@@ -260,3 +261,4 @@ zwei Testdateien und 16 Probeläufe an acht Fokus-Aufrufen; jede Stelle ist klei
 - **2026-11-22**: **abgenommen** (`20ca1ce2`, Branch `claude/serene-bhabha-1b1ff6`).
   - Ein Rollengang ist nicht nötig, kein Verhalten ändert sich.
   - Regressionszeugen: voller Vitest-Lauf 1304/1304 (zweimal) und volle E2E-Suite 185/185.
+- **2026-11-22** — Nachschau (Nachtlauf B 2026-11-23, Retro Sprint B1, Agent `frontend-reviewer`): 24 Aufrufe `erwarteFokus` nachgezählt (16+8), Helfer kann nicht leer durchlaufen (`waitFor` + `toBe`, kein `useFakeTimers` in beiden Dateien), 87/87 grün; kein Befund.
