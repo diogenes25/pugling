@@ -225,3 +225,62 @@ erreicht, eine Mutante am *Eingang* des Wegs (`answer()`, `onReveal`), nicht nur
 
 Kein Halt-Grund: kein neues Tor; der Fund im Increment ist behoben, Zähler 1 von 5.
 
+## Sprint 114 — Ziel & Umfang
+
+**Sprint-Ziel:** Aus Sicht des Vaters ist ein Shop-Feld, das er leert und speichert, danach wirklich leer. Widerlegbar durch
+einen Titel oder eine Beschreibung, die nach „gespeichert“ und Neuladen wieder dasteht.
+
+**Umfang:** [B-789](backlog/B-789-angebotstitel-leeren-bleibt-stehen.md) (aus dem Review von Sprint 112, im Lauf
+ausformuliert – die Artikel-Beschreibung hat denselben Fehler –, gegrillt und geschätzt; Defekt, autonom).
+
+**Entwickler-Brief:** Der Server leert mit `""` schon; der Fehler sitzt im Client (`|| null`). Keine Vertragsänderung, eine
+Festschreibung am Server. Keine Migration.
+
+## Iteration 114 — umgesetzt
+
+- `VaterShop.tsx`: `ListingRow` und `ArticleRow` schicken das getrimmte Feld, auch leer. Vitest `VaterShopLeeren.test.tsx`
+  (2), Fakt `B789_…` in `ShopStockPerChildTests`, E2E `shop-felder-leeren` (neu).
+- **Mutanten:** T1–T4 rot, E2E-Probe E5 rot.
+- **Review (`frontend-reviewer`):** kein 🟡/🔴, **Zähler 0**. 🟢: dieselbe Falle an drei Stellen außerhalb des Shops →
+  [B-791](backlog/B-791-geleerte-felder-ausserhalb-des-shops.md) (Nummer vor dem Anlegen in der gemeinsamen Notiz reserviert).
+- **Volle Suite:** Backend 2024/2024 (Release); Vitest `src/vater` 545/545. Das Stop-Tor lief einmal in meinen eigenen
+  Release-Lauf (MSB3027, gesperrte DLLs) – kein Testergebnis, der Lauf selbst war grün.
+
+## Runde 6 — Rollengang Sprint 114
+
+- **Vater — abgenommen** (E2E `shop-felder-leeren`, Server frisch auf 5201/5174): Angebotstitel geleert → die Zeile zeigt
+  „(ohne Titel)“; Artikel-Beschreibung geleert → nach dem Neuladen leer. „Was ich lösche, ist weg.“
+- **Sohn — Regressionszeuge:** `shop-verlauf`, `full-flow` grün; der Sohn-Shop zeigt bei leerem Angebotstitel den Artikeltitel
+  (Server, `MeController.cs:414`).
+- **Creator — Regressionszeuge:** keine Creator-Fläche im Diff.
+
+## Retrospektive (Sprint 114)
+
+**Nachschau:** Sprint 113 nachgesehen (B-778, B-785, `nachgeschaut: 2026-11-22`). Geprüft: alle Texte der Sohn-App, die einen
+Münzsatz versprechen (`bonus.*` in `de.ts`/`en.ts`), gegen `ExtraTrainingOptions` (1/1/3) – stimmig; der Fokus-Effekt verbraucht
+die Absicht in jedem Endzustand (Ergebnis, Fehler, Abbruch durch Verlassen). Kein Befund.
+
+**Was die eigenen Tore durchgelassen haben:** nichts im Increment. Der Fehler selbst ist eine Klasse (`|| null` vor einem
+PATCH), die schon an sechs Stellen saß; kein Tor sucht sie.
+
+**Vorschlag (nur Vorschlag, nicht gelandet):** Ein Vitest-Tor in der Art von `src/lesefehler.test.ts`, das in
+`frontend/src/vater` jedes `.trim() || null` in einem Update-Aufruf meldet, mit Ausnahmeliste für Anlege-Formulare. Das wäre
+ein **neues Tor** – darum hier nur als Vorschlag; es würde B-791 vorab rot machen.
+
+Kein Halt-Grund im Sinne der Freigaben: kein Tor gelandet, kein Fund im Increment (Zähler 0).
+
+## Stand am Ende von Lauf A
+
+- **Abgenommen:** B-607 (`dd06a3dd`), B-782 (`fbf1bd94`), B-786 (`4013ead9`), B-785 + B-778 (`b2081837`), B-789 (`28fce14d`).
+  Nichts gepusht.
+- **Neu:** B-786 und B-789 (im Lauf gebaut), [B-791](backlog/B-791-geleerte-felder-ausserhalb-des-shops.md) (`idee`).
+- **Parallelbetrieb:** Lauf B (Worktree, Branch `claude/serene-bhabha-1b1ff6`) vergab B-787, B-788, B-790. Eine kurze
+  Doppelvergabe von B-787 ist auf B-789 umnummeriert. Beim Merge von Lauf B nach `main`: `docs/backlog` auf Doppel-Ids prüfen.
+  Lauf B meldet außerdem, dass `plan-umhaengen-gesperrt.spec.ts` auf `main` fest rot ist (B-790, sein Bereich).
+- **Entscheidungen zum Umstoßen** (alle stellvertretend, Defekte): B-782 E1 (Rundweg im Client statt Normalisierung am
+  Server), B-786 E2 (Datum bei wiederkehrenden Angeboten leer), B-785 E1 („beim Tippen“, Voraussetzung als Server-Test),
+  B-789 E1 (`""` statt `Clear…`-Schalter).
+- **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 110–114; der Tor-Vorschlag aus Sprint 114.
+- **Nächste Kandidaten:** B-791 (Defekt, `idee`), B-670 (Defekt, `ausformuliert`), B-659 (Defekt L).
+- `INDEX.md` nicht neu erzeugt (fremde Änderungen im Arbeitsbaum).
+

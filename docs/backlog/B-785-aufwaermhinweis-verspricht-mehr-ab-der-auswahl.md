@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Review Sprint 108 (B-608, frontend-reviewer 🟢) im Nachtlauf 2026-11-21, docs/pm-sitzung-2026-11-21.md"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: [B-657]
 ---
 
@@ -60,3 +61,4 @@ Als Sohn möchte ich, dass der Hinweis über einer Aufwärm-Runde nur verspricht
   - AK 2 → `ExtraTrainingRatesTests`, R2 (`appsettings.json` Tippen 1) → rot, R3 (Vorgabe Tippen 1) → rot. Messung 00:56 nach der letzten Änderung, Grundlinie grün.
 - **2026-11-22** — Review `frontend-reviewer` (gemeinsam mit B-778): 🟢 Wortlaut übernommen – „beim Tippen“ statt „beim Schreiben“, weil die Liste derselben Seite die Form „Tippen“ nennt (Entscheidung 1 damit angepasst); kein 🟡/🔴. Mutanten nach der letzten Änderung (R1 neu gefasst) rot.
 - **2026-11-22** — abgenommen (`b2081837`, Sprint 113): Rollengang Sohn per E2E `bonus` (Hinweistext im Aufwärmen) gegen frisch gestarteten Server; Vater/Creator Regressionszeugen. Backend 2023/2023 (Release).
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 113): Münzsatz-Texte gegen `ExtraTrainingOptions` (1/1/3) und Fokus-Absicht in jedem Endzustand geprüft. Kein Befund.

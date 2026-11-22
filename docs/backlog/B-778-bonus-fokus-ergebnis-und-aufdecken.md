@@ -12,6 +12,7 @@ quelle: "Review von B-671 im Nachtlauf 2026-11-21 (frontend-reviewer), docs/pm-s
 unverifiziert: true
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-22"
 entgangen_bei: []
 ---
 
@@ -57,3 +58,4 @@ suchen müssen, wo ich bin.
   - AK 3 → „fokussiert beim Laden der Runde nichts“, Q5 (ohne Wächter) → rot. Messung 00:56 nach der letzten Änderung, Grundlinie grün.
 - **2026-11-22** — Review `frontend-reviewer`: 🟡 behoben – der getippte Weg zum Ergebnis war nicht getestet (`starte("Typed")` ungenutzt); neuer Fall „nach der letzten getippten Karte“, Q6 (`answer()` ohne Absicht) → rot. **Zähler 1 von 5.** 🟢 ohne Zählung: ein Fokus, den das Kind während „Wird ausgewertet …“ selbst verschiebt, wird vom Ergebnis überholt (wie im Test, Fenster kurz, belassen).
 - **2026-11-22** — abgenommen (`b2081837`, Sprint 113): Rollengang Sohn per E2E `bonus` (Fokus nach „Aufdecken“ auf „Nicht gewusst“, Ergebnisüberschrift fokussiert; Probe E4 → rot) gegen frisch gestarteten Server; Vater/Creator Regressionszeugen. Backend 2023/2023 (Release).
+- **2026-11-22** — nachgeschaut (Nachschau Sprint 113): Münzsatz-Texte gegen `ExtraTrainingOptions` (1/1/3) und Fokus-Absicht in jedem Endzustand geprüft. Kein Befund.
