@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/lehrplan, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/api, bereich/lehrplan, rolle/student, rolle/supervisor]
 aliases: [Gestufte Position, Aufstieg nach Test, Position auf Vorstufe]
-status: geschaetzt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: L
@@ -10,8 +10,8 @@ migration: ja
 vertragsbruch: nein
 quelle: B-536
 unverifiziert: false
-grund: ""
-ersetzt_durch: []
+grund: geteilt
+ersetzt_durch: [B-848, B-849]
 wartet_auf: ""
 ---
 
@@ -85,6 +85,27 @@ einschalten, indem ich nur das Ziel wähle.
    die Oberfläche (B-704) schaltet die Wahl erst frei, wenn B-702 gebaut ist. Begründung: sonst bliebe eine Woche
    genau so gesperrt, wie es B-535 gelöst hat. Kosten: die Funktion ist bis B-702 für Pflichten gesperrt. Schließt
    aus: eine Auslieferung, die Friedrich im Pflichtfall wieder sperrt.
+
+7. **Der Positions-Lernstand hängt an der gespielten Übung: `PositionItemProgress.ExerciseId` (Pflicht).** Schlüssel
+   `(PlanPositionId, ExerciseId, ItemIndex)`; die Migration füllt die Spalte für den Bestand mit der Übung der Position.
+   Begründung: der `ItemIndex` gehört fachlich zur Übung; so bleibt der Stand der alten Stufe liegen und die neue beginnt
+   leer (Entscheidung 4), ohne den SQLite-Fallstrick „NULL ist nicht gleich NULL“ einer nullable Stufen-Spalte.
+   Verworfen: Stufe als nullable Spalte (zwei gefilterte Unique-Indizes); Löschen beim Aufstieg (widerspricht
+   Entscheidung 4, Vater-Auswertung der Vorstufe ginge verloren). Kosten: Migration einer Tabelle mit echtem Lernstand,
+   jeder der rund 50 Zugriffe filtert zusätzlich auf die Übung. *Entschieden vom Nutzer im Dialog, 2026-11-22.*
+8. **Ein Aufstieg wirkt ab dem nächsten Lerntag.** Der bestandene Test setzt die Stufe sofort, gespielt wird sie ab
+   morgen; heute laufen angefangene Sitzung (eingefrorene Reihenfolge), Tagesdosis und Lernkarten-Stand auf der alten
+   Stufe zu Ende. Verworfen: sofort (laufende Sitzung müsste enden, die Tagesdosis bräuchte eine Regel über beide Stufen).
+   Kosten: das Kind wartet einen Tag auf die neue Stufe. *Entschieden vom Nutzer im Dialog, 2026-11-22.*
+9. **Das Kind sieht die gespielte Stufe, der Vater das Ziel.** Sohn-Pfad und Tagesübersicht des Kindes zeigen Titel und
+   Buchseite der gerade gespielten Übung (dort schlägt es nach); Vater-Übersicht und Bericht zeigen die Ziel-Übung als
+   Identität der Position plus „Stufe n von m · gerade: <Vorstufe>“ (passt zu B-841 Entscheidung 4). Verworfen: überall
+   das Ziel (die Buchseite führte das Kind zur schweren Aufgabe); überall die Stufe (der Vater verlöre das Ziel aus dem
+   Blick). *Entschieden vom Nutzer im Dialog, 2026-11-22.*
+10. **Geteilt in zwei Stories:** [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) (Stufe spielen: wirksame Übung an
+    allen Spielpfaden, Lernstand je Übung, Start-Stufe, Anzeige) und [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md)
+    (Aufstieg nach bestandenem Test samt `TestAttempt.BuildLevel` und Ziel-Filter). *Entschieden vom Nutzer im Dialog,
+    2026-11-22.*
 
 ## Akzeptanzkriterien
 
@@ -169,3 +190,6 @@ zentralen Inhaltsauswahl, die jeden Spielpfad trägt, und ein Zustandsübergang 
   `BookPages`); (d) Teilen in zwei Stories, etwa „Stufe spielen (wirksame Übung an allen Spielpfaden,
   stufengebundener Stand)" und „Aufstieg nach bestandenem Test samt `TestAttempt.BuildLevel` und Ziel-Filter". Die
   Größe ist mit diesen Antworten eher XL als L.
+- **2026-11-22** — Gegrillt im Dialog (die vier offenen Punkte der Nachprüfung): Entscheidungen 7–10 vom Nutzer, jeweils
+  die Empfehlung. Danach geteilt in [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) und
+  [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md); beide erben Entscheidungen und Akzeptanzkriterien von hier.

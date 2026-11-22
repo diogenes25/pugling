@@ -12,7 +12,7 @@ quelle: B-704
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "B-701 (Position spielt die Aufbau-Stufe) – nicht bauen, bevor B-701 gebaut ist"
+wartet_auf: "B-848 (Start-Stufe, gespielte Stufe); das Stufenband nach einem Aufstieg braucht B-849"
 ---
 
 # B-841 · Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung
@@ -45,3 +45,4 @@ B-704 AK 3, 4, 5, 6 wörtlich (siehe dort), dazu AK 7 für die neuen Felder.
 
 - **2026-11-22** — Aus B-704 geteilt (Nachtlauf 2026-11-22-c, Opus). Wartet auf B-701; der Zuschnitt von B-701 ist
   offen (siehe dort, Nachprüfung vom 2026-11-22).
+- **2026-11-22** — B-701 ist geteilt (B-848, B-849); wartet jetzt auf B-848, das Stufenband nach einem Aufstieg auf B-849.
