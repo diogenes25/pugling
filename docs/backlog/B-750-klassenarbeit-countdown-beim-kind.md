@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/training, bereich/api, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/training, bereich/api, rolle/student]
 aliases: [Klausur-Countdown, Klassenarbeit in der Sohn-App]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -122,3 +122,4 @@ Final. Je Kriterium die Änderung, die es rot macht (aus B-248 AK 1 und 2, hier 
 - **2026-11-23** — Rollengang (maschinell): E2E `e2e/klassenarbeit-countdown.spec.ts` 1 passed auf den Ausweichports 5231/5204 nach der
   letzten Änderung (Vater plant zwei Arbeiten über die API, das Kind sieht auf der Startseite die frühere mit Fach, Datum, „in 5 Tagen“
   und „0 von 2 Wörtern sicher“); `e2e/pfad.spec.ts` 1 passed als Zeuge für den Zweig mit Tagespflicht.
+- **2026-11-24** — `in-arbeit` → `abgenommen` (Nachtlauf I, Sprint 133): Commit `65f4d2a7`; Backend-Suite 2185/2185 grün (Release, nach der letzten Änderung; vorher 2175), Frontend `vitest` 1393/1393, `tsc -b` grün, E2E `klassenarbeit-countdown` + `pfad` 2 passed; beide Reviewer gelaufen (keine offene 🔴/🟡); Rollengang maschinell (E2E, siehe oben).

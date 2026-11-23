@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-24"
 wartet_auf: ""
 ---
 
@@ -63,3 +64,4 @@ Kommentarzeilen.
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 125), Commit `617f50fd`. Beleg statt Rollengang (kein Rollenpfad
   berührt): Suite 2173/2173 (Release) vor den Nachträgen, danach die betroffenen Klassen 199/199 und Build grün; Diff nur
   in Kommentaren.
+- **2026-11-24** — Nachschau (Nachtlauf I, Retro Sprint 133), kein Befund. Prüfpunkte: die acht Stellen `PlanPositionCrudTests.cs:418`, `ComboTests.cs:17, 41`, `SampleJson.cs:57`, `ApiVersioningTests.cs:38`, `PositionReportTests.cs:48`, `SpeedBonusTests.cs:74`, `AssignAgentTests.cs:121` einzeln gelesen – englisch; dazu `grep` über `//`-Zeilen in `Pugling.Api.Tests/*.cs` mit den Funktionswörtern der/die/das/nicht/wird/und außerhalb von Anführungszeichen: 0 Treffer.

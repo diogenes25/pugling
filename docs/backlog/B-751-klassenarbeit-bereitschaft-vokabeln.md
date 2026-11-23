@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/training, bereich/auswertung, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/training, bereich/auswertung, rolle/student]
 aliases: [Bereitschaft wackelig sicher, Klausur-Bereitschaft]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -125,3 +125,4 @@ einer Zählung über `ExerciseItem` und `ItemProgress` entsteht, im Frontend ein
   dadurch, dass der Controller keine Kopie mehr trägt (Review).
 - **2026-11-23** — Review und Rollengang gemeinsam mit B-750 (siehe dort): keine 🔴, `pugling-reviewer` ohne 🟡; E2E
   `klassenarbeit-countdown.spec.ts` prüft „0 von 2 Wörtern sicher“.
+- **2026-11-24** — `in-arbeit` → `abgenommen` (Nachtlauf I, Sprint 133): Commit `65f4d2a7`; Backend-Suite 2185/2185 grün (Release, nach der letzten Änderung; vorher 2175), Frontend `vitest` 1393/1393, `tsc -b` grün, E2E `klassenarbeit-countdown` + `pfad` 2 passed; beide Reviewer gelaufen (keine offene 🔴/🟡); Rollengang maschinell (E2E, siehe oben).

@@ -86,3 +86,36 @@ Zeitzone – behoben ohne Zählung.
 auf die Funktion ergänzt (eigener Fund); (2) Datum fehlte in der Karte (🟡 Reviewer); (3) roter Wächter
 `Unpaginierte_Array_GETs_Sind_Gepinnt` (Zählerzeile 31 → 32); (4) roter Wächter
 `Sammlungs_Segment_Traegt_Hoechstens_Einen_Platzhalternamen` (`{classTestId}` → `{id}`).
+
+## Runde 133 — Abnahme
+
+- **Sohn — abgenommen (maschinell):** „Auf meiner Startseite steht mein Vokabeltest mit Datum und „in 5 Tagen“, und darunter,
+  wie viele Wörter ich schon sicher kann. Die spätere Arbeit steht nicht davor.“ Gegangen in E2E
+  `klassenarbeit-countdown.spec.ts` (echter Browser gegen frischen Server, Ports 5231/5204) nach der letzten Änderung. Nicht
+  beurteilt: wie die Karte sich anfühlt (Platz über dem Pfad) – das sieht ein Mensch am Gerät.
+- **Vater — Regressionszeuge:** `practice`/`repeat` laufen über die geteilte Bündel-Regel; `KlassenarbeitenTests` unverändert
+  grün. Er sieht in dieser Runde nichts Neues.
+- **Creator — Regressionszeuge:** kein Pfad des Creators im Diff; Suite grün.
+- **Belege:** Backend 2185/2185 (Release, nach der letzten Änderung; Ausgangsstand 2175), Frontend `vitest` 1393/1393, `tsc -b`
+  grün, E2E 2 passed (`klassenarbeit-countdown`, `pfad`). Commit `65f4d2a7`.
+
+## Retrospektive Sprint 133
+
+**Nachschau:** B-863 (Sprint 125, Nachtlauf E – der jüngste abgenommene Sprint ohne `nachgeschaut`): acht übersetzte Stellen
+einzeln gelesen und ein `grep` über deutsche Funktionswörter in `//`-Zeilen des Testprojekts (0 Treffer) – kein Befund,
+`nachgeschaut: "2026-11-24"` gesetzt. Den Index (`backlog-index.sh`) habe ich nicht gezogen: `INDEX.md` gehört in diesem
+Parallel-Lauf nicht mir.
+
+**Was die eigenen Tore durchgelassen haben:** (a) Die Mutanten-Probe fand eine Regel ohne Test (Dubletten im Bündel), weil
+jeder Leser mit `Contains` filtert und eine Dublette schluckt – die Senke war nur über ihre Leser geprüft. (b) Die Karte
+erfüllte AK 1 ohne Datum; mein eigener Test war als „AK 1“ beschriftet und prüfte das Datum nicht – genau die Familie aus der
+Root-`CLAUDE.md` („eine Zusicherung, die den Ausgangszustand prüft“), hier: ein AK-Fall ohne Zeile. Gefunden vom
+`frontend-reviewer`, nicht von einem Tor. (c) Zwei Konventions-Wächter erst im vollen Lauf – richtig so, sie sind dafür da.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (DB) Je AK-Kriterium mit Aufzählung („Titel, Fach, Datum und Tage“) eine
+`## Verlauf`-Zeile je **Glied der Aufzählung**, nicht je Kriterium – die pm-loop-Regel „one line per AK case“ deckt das dem
+Wortlaut nach, aber ich habe das Kriterium als einen Fall gelesen. Mechanismus wäre eine Zeile in pm-loop Step 5:
+„Ein AK mit Aufzählung hat so viele Fälle wie Glieder.“
+
+**Bewusst ungedeckt:** die Rückwärts-Kopie der Bündel-Regel in `ExerciseCatalogController.cs:296-300` (Creator-Fläche, außerhalb
+des Pakets; im Kommentar der Senke benannt).
