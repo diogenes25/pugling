@@ -7,7 +7,18 @@ $godot = Join-Path $env:LOCALAPPDATA 'Programs\Godot\Godot_v4.7.2-stable_mono_wi
 $game = Resolve-Path (Join-Path $PSScriptRoot '..')
 $apk = Join-Path $game 'build\pugling-tower-emulator.apk'
 
+# One-time before the first export: .\game\tools\godot-einrichten.ps1 (templates, keystore, SDK paths).
+$started = Get-Date
 & $godot --headless --path $game --export-debug Android-Emulator $apk
+# Godot reports a failed export only as text; a stale APK from an earlier run must not be installed instead.
+if (-not (Test-Path $apk) -or (Get-Item $apk).LastWriteTime -lt $started) {
+    Write-Warning 'Export fehlgeschlagen – einmalig .\game\tools\godot-einrichten.ps1 ausführen.'; return
+}
+
+# "Can't find service: package" means Android is still booting: wait until the package manager is up.
+& $adb wait-for-device
+while ((& $adb shell getprop sys.boot_completed) -ne '1') { 'Emulator startet noch …'; Start-Sleep -Seconds 3 }
+
 # Uninstall first: an in-place update needs room for two copies, which the AVD does not have.
 & $adb shell pm uninstall de.pugling.tower | Out-Null
 & $adb install $apk
