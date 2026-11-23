@@ -109,3 +109,8 @@ halbfertig liegt; ein weiterer Sprint wurde nicht begonnen.
 Durable Liste: [docs/backlog/](backlog/INDEX.md). Als Nächstes B-849 (Aufstieg ab dem nächsten Lerntag – `PlayedExercise`
 braucht dafür den Tag, das zieht sich durch alle Aufrufer der Naht), danach B-702 (Pflicht auf der aktuellen Stufe, hebt
 die Kadenz-Sperre) und B-841 (Oberfläche). B-863 bleibt mechanische Übersetzungsarbeit, B-860 im Dialog.
+
+## Nachtrag — Zählregel entschieden
+
+Am 2026-11-23 im Dialog: Eigene Funde und rote Wächter zählen auf den Fünfer-Zähler (die strenge Lesart). Der Halt nach
+Sprint 121 war damit richtig. Festgehalten als Freigabe 11 in [nachtlauf.md](nachtlauf.md).

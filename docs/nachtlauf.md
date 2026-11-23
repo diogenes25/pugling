@@ -97,6 +97,13 @@ Neu seit dem 2026-10-27, Freigabe 3 an genau einer Stelle einschränkend:
     Zählung" ausgewiesen. Grund: am 2026-10-26 lagen sechs Stories nur wegen des Zählers
     zurückgestellt, mehr als die Hälfte davon 🟢-Hinweise.
 
+Neu seit dem 2026-11-23, Freigabe 10 an genau einer Stelle präzisierend:
+11. Ein Fund ohne Reviewer-Einstufung – ein eigener Fund beim Bauen oder Prüfen, ein roter
+    Wächter- oder Bestandstest – zählt ebenfalls auf den Fünfer-Zähler, wenn seine Behebung
+    Code oder Tests ändert. Er gilt als 🟡; als „ohne Zählung“ läuft nur, was ausdrücklich
+    🟢-artig ist (Kommentar, Doku, Kosmetik). Grund: Nachtlauf D vom 2026-11-23 stand
+    wörtlich bei 4, mit Selbst-Fund und rotem Wächter bei 6 – die strenge Lesart war gemeint.
+
 Sonst gilt das Verfahren unverändert: Sprint-Ziel aus Rollensicht, rote Probe vor dem Fix,
 Rollengang als E2E, Nachschau als erste Pflichthandlung der Retro, Commits selbst setzen,
 Push bleibt bei mir.
