@@ -181,3 +181,4 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
   Leerzeichen trennt zwei verlangte Formen (gebaut in B-625), Reihenfolge B-624 → B-626 → B-625.
 - **2026-11-17** — geschätzt: M, backend, keine Migration, kein Vertragsbruch; die Sohn-App zeigt feste
   Maskenzeichen schon, Erkennbarkeit klärt der Rollengang.
+- **2026-11-21** — Beleg aus Theodors Rückmeldungen (Übung 15): „(to) turn sth. up/down“ meldete er als „zu viel verlangt“ (er tippte „turn sth. up/down“ ohne „(to)“, gewertet falsch), „towards the station/Mr Bell“ als „zu streng“. „(to) turn“ und „(to) turn sth. up/down“ liegen als zwei Karten nebeneinander und werden verwechselt. Nicht neu bewertet, nur als Fall für Entscheidung und Akzeptanzkriterien festgehalten.

@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (89)
+### Offen (101)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,11 +22,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `geschaetzt` | P1 | L | backend | — |
-| [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
-| [B-701](B-701-position-spielt-die-aufbau-stufe.md) | Eine Position spielt ihre aktuelle Aufbau-Stufe und steigt nach dem bestandenen Test auf | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | Wunsch | `geschaetzt` | P1 | M | backend | — |
-| [B-704](B-704-aufbau-weg-in-der-oberflaeche.md) | Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
@@ -35,6 +32,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) | Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
+| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | Wunsch | `geschaetzt` | P1 | M | frontend | — |
+| [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) | Eine gestufte Position spielt die Übung ihrer aktuellen Stufe | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
+| [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -90,8 +90,16 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) | Stellt der Vater eine laufende Nacharbeit auf Kür, fallen ihre erfüllten Tage aus der Serie | Defekt | `idee` | P3 | — | backend | — |
+| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | Defekt | `idee` | P3 | — | frontend | Migration? + Vertrag? |
+| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | Defekt | `idee` | P3 | — | frontend | Migration? + Vertrag? |
+| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
+| [B-822](B-822-vokabel-tuerme-natives-spiel.md) | Vokabel-Türme: ein natives Tower-Defense-Spiel als eigener Übungsbereich | Wunsch | `gegrillt` | P3 | — | — | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
@@ -104,10 +112,14 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-641](B-641-mathe-generator-je-aufgabenmuster.md) | Mathe-Generator: Leitner je Aufgabenmuster statt je Aufgabe | Wunsch | `idee` | P3 | — | — | — |
 | [B-642](B-642-sachaufgaben-als-gefuehrte-schritte.md) | Sachaufgaben als geführte Schritte | Wunsch | `idee` | P3 | — | — | — |
 | [B-684](B-684-korrigierte-klausur-einscannen.md) | Die korrigierte Klausur einscannen: Note und Fehler erfassen | Wunsch | `idee` | P3 | — | — | — |
+| [B-850](B-850-vokabel-tuerme-technik-spike.md) | Vokabel-Türme: Godot-C#-App meldet sich auf dem Android-Handy an | Wunsch | `idee` | P3 | — | — | — |
+| [B-851](B-851-vokabel-tuerme-backend-run.md) | Vokabel-Türme: Spiel-Run mit Bewertung je Zuweisung, Münzdeckel und Minutenlimit | Wunsch | `idee` | P3 | — | backend | — |
+| [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
+| [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 
 <details>
-<summary>Abgenommen (573)</summary>
+<summary>Abgenommen (575)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -641,6 +653,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ | Wunsch | `abgenommen` | P1 | S | beides | — |
 | [B-69](B-69-wiederhol-felder-alternativen.md) | Kommagetrennte Sammelfelder: einer davon nimmt gar keine zweite Alternative an | Defekt | `abgenommen` | P2 | M | frontend | — |
 | [B-70](B-70-selbsteinschaetzung-nur-primaerloesung.md) | Die Selbsteinschätzung zeigt nur die primäre Übersetzung | Defekt | `abgenommen` | P2 | S | beides | — |
+| [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung | Wunsch | `abgenommen` | P1 | M | backend | Migration |
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
 | [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
@@ -676,6 +689,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-83](B-83-loesungsfeld-regel-residenter-kontext.md) | Die Lösungsfeld-Regel steht nur als Kommentar am Wächter | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `abgenommen` | P3 | S | doku | — |
+| [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren | Wunsch | `abgenommen` | P1 | S | frontend | — |
 | [B-88](B-88-scoring-uhrzeit-am-timeprovider.md) | Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider` | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus | Defekt | `abgenommen` | P3 | L | frontend | — |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | Zwei Birkenbihl-Einstellungen, die lautlos nichts tun | Defekt | `abgenommen` | P3 | S | beides | — |
@@ -687,7 +701,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (9)
+### Wartet auf Zutun von außen (11)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -703,10 +717,12 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
+| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | `geschaetzt` | B-848 (Start-Stufe, gespielte Stufe); das Stufenband nach einem Aufstieg braucht B-849 |
+| [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | `geschaetzt` | B-848 (gestufte Position spielt ihre Stufe) – baut auf PlayedExercise auf |
 
-### Nach der Abnahme entgangen (209)
+### Nach der Abnahme entgangen (215)
 
-**Nachgeschaut: 542 von 573 abgenommenen** — und in 191 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 31 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 544 von 575 abgenommenen** — und in 193 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 31 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -919,6 +935,12 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | Der Aufwärm-Hinweis verspricht „ab der Auswahl gibt es mehr“, die Auswahl zahlt aber gleich viel | [B-657] | `abgenommen` |
 | [B-788](B-788-fokus-effekt-abhaengigkeiten-ungetragen.md) | Zwei Abhängigkeiten des Fokus-Effekts im Test trägt kein Fall | [B-541] | `abgenommen` |
 | [B-790](B-790-plan-umhaengen-spec-trifft-zwei-bearbeiten.md) | `plan-umhaengen-gesperrt.spec.ts` trifft zwei „Bearbeiten“-Knöpfe | [B-673] | `abgenommen` |
+| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | [B-730] | `idee` |
+| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | [B-730] | `idee` |
+| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | [B-730] | `idee` |
+| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | [B-660] | `idee` |
+| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | [B-660] | `idee` |
+| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | [B-660] | `idee` |
 
 <details>
 <summary>Nie nachgeschaut (31) — Arbeitsvorrat der Nachschau</summary>
@@ -956,9 +978,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
-| [B-660](B-660-tagesaufgaben-beliebig-oft-mit-sinkenden-muenzen.md) | Tagesaufgaben beliebig oft spielen, die Münzen sinken je Wiederholung bis 0 |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
-| [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) |
+| [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
+| [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
 
 </details>
 
@@ -1120,6 +1142,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | `idee` | Abschnitt „Verlauf" |
 | [B-778](B-778-bonus-fokus-ergebnis-und-aufdecken.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-783](B-783-verlaengerter-plan-holt-abgelaufene-tage-zurueck.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…" |
+| [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | `idee` | Abschnitt „Verlauf" |
 | [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-786](B-786-shop-bearbeiten-uebernimmt-alten-termin.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-787](B-787-sohnprogress-vitest-flackert-unter-last.md) | `abgenommen` | Abschnitt „User Story" |
@@ -1129,9 +1152,17 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) | `idee` | `unverifiziert: true` |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | `idee` | `unverifiziert: true` |
+| [B-840](B-840-aufbau-weg-im-uebungseditor.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-841](B-841-start-stufe-und-stufenband.md) | `geschaetzt` | Abschnitt „Ist-Stand…" |
+| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | `idee` | `unverifiziert: true` |
+| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | `idee` | `unverifiziert: true` |
+| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | `idee` | `unverifiziert: true` |
+| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | `idee` | `unverifiziert: true` |
+| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | `idee` | `unverifiziert: true` |
+| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (59)</summary>
+<summary>Verworfen (61)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1188,6 +1219,8 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-682](B-682-notenstufe-je-fach-statt-liga.md) | Notenstufe je Fach: das Kind ist auf dem Stand eines Einser- bis Sechser-Schülers | geteilt, faktisch XL: Notenschlüssel, Berechnung mit Tabelle, Lese-Endpunkte und Anzeige sind vier einzeln baubare Stücke → [B-740, B-741, B-742, B-743] |
 | [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) | Die echte Klausurnote lässt aufsteigen oder absteigen und eicht die Prognose | geteilt, faktisch XL: Prognose-Schnappschuss mit Migration, Wirkung der Note und Abweichungsanzeige sind drei einzeln baubare Stücke → [B-744, B-745, B-746] |
 | [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | geteilt, zu groß für eine Stufe (faktisch XL) → [B-760, B-761, B-762, B-763] |
+| [B-701](B-701-position-spielt-die-aufbau-stufe.md) | Eine Position spielt ihre aktuelle Aufbau-Stufe und steigt nach dem bestandenen Test auf | geteilt → [B-848, B-849] |
+| [B-704](B-704-aufbau-weg-in-der-oberflaeche.md) | Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind | geteilt → [B-840, B-841] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |
 | [B-87](B-87-vater-web-franzoesisch-server-sprachfeld.md) | Rest des Mehrsprachigkeits-Programms: Vater-Web, Französisch, Server-Sprachfeld | "geteilt — selbst noch ein Programm (Entscheidung 1); siehe die recherchierte Grundlage oben und die → [B-91, B-92, B-90] |
