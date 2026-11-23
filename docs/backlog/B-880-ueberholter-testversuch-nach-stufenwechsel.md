@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/training, rolle/student]
 aliases: [Überholter Testversuch, Versuch nach Stufenwechsel]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: S
@@ -38,3 +38,7 @@ heute fort), darum P2.
   `PositionTestsController`, Test `AufbauStufeAufstiegTests.Ueberholter_Versuch_Wird_Nicht_Mehr_Gewertet`
   (Mutanten M19 Answer, M20 Submit → rot). Entgangen bei B-848: dort fehlte schon die Prüfung, B-849 hat die Folge
   verschärft. Die Schwester für Übungsrunden ist [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md).
+- **2026-11-23** — abgenommen (Nachtlauf E, Sprint 122), Commit `2bf20d88`. Rollengang maschinell: Sohn über die
+  HTTP-Pipeline mit Kind-Login (`AufbauStufeAufstiegTests`, Berlin-Host mit eingefrorener Uhr über zwei Lerntage), Vater
+  über die Supervisor-API (Bericht, Stufe setzen), Creator als Regressionszeuge (E2E `aufbau-weg-editor` grün).
+  Mensch offen: Migration `BuildLevelPromotion` beim nächsten Heimnetz-Start (an einer Kopie geprobt).

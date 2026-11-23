@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/lehrplan, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/lehrplan, bereich/training, rolle/student]
 aliases: [Aufstieg der Aufbau-Stufe, TestAttempt.BuildLevel]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -163,3 +163,7 @@ Spielpfade in B-848 schon auf `PlayedExercise` laufen.
 | M21 ungewertet hebt | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:483 | red | red |  |
 
 Grundlinie nach dem Zurückspielen: green.
+- **2026-11-23** — abgenommen (Nachtlauf E, Sprint 122), Commit `2bf20d88`. Rollengang maschinell: Sohn über die
+  HTTP-Pipeline mit Kind-Login (`AufbauStufeAufstiegTests`, Berlin-Host mit eingefrorener Uhr über zwei Lerntage), Vater
+  über die Supervisor-API (Bericht, Stufe setzen), Creator als Regressionszeuge (E2E `aufbau-weg-editor` grün).
+  Mensch offen: Migration `BuildLevelPromotion` beim nächsten Heimnetz-Start (an einer Kopie geprobt).
