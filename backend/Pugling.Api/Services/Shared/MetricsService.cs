@@ -22,10 +22,7 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
 
         return metric switch
         {
-            ProgressMetric.NewWords => await db.PositionItemProgress
-                .Where(p => p.PlanPosition!.StudyPlan!.ChildId == childId && p.IntroducedAt != null
-                    && p.IntroducedAt >= lo && p.IntroducedAt <= hi)
-                .CountAsync(ct),
+            ProgressMetric.NewWords => await NewWordsAsync(childId, lo, hi, ct),
 
             ProgressMetric.CorrectReviews => await db.ReviewEvents
                 .Where(r => r.WasCorrect && r.PracticeSession!.StudyPlan!.ChildId == childId
@@ -48,6 +45,32 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
 
             _ => 0,
         };
+    }
+
+    /// <summary>
+    /// Contents the child met for the first time within [<paramref name="lo"/>, <paramref name="hi"/>]. A position on a
+    /// build path keeps one progress row per exercise it played, so the same word is introduced again on every level;
+    /// it counts only on the exercise the position introduced first. Otherwise a mission for new words would pay the
+    /// path's words once per level. Contents only a later level brings are not counted - the cautious side for a
+    /// metric that pays coins.
+    /// </summary>
+    private async Task<int> NewWordsAsync(int childId, DateOnly lo, DateOnly hi, CancellationToken ct)
+    {
+        var introduced = db.PositionItemProgress.AsNoTracking()
+            .Where(p => p.PlanPosition!.StudyPlan!.ChildId == childId && p.IntroducedAt != null);
+        var plain = await introduced
+            .Where(p => p.PlanPosition!.CurrentBuildLevel == null && p.IntroducedAt >= lo && p.IntroducedAt <= hi)
+            .CountAsync(ct);
+        // Which exercise came first is a question per position; answered in memory over the few staged positions.
+        var staged = await introduced
+            .Where(p => p.PlanPosition!.CurrentBuildLevel != null)
+            .Select(p => new { p.Id, p.PlanPositionId, p.ExerciseId, Day = p.IntroducedAt!.Value })
+            .ToListAsync(ct);
+        return plain + staged.GroupBy(p => p.PlanPositionId).Sum(rows =>
+        {
+            var first = rows.OrderBy(p => p.Day).ThenBy(p => p.Id).First().ExerciseId;
+            return rows.Count(p => p.ExerciseId == first && p.Day >= lo && p.Day <= hi);
+        });
     }
 
     /// <summary>

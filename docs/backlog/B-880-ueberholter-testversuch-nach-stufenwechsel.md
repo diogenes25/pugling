@@ -46,3 +46,9 @@ heute fort), darum P2.
 - **2026-11-23** — Nachschau (Nachtlauf E, Sprint 123): Prüfpunkt – alle Aktionen des `PositionTestsController`, die
   eine Versuchs-Id nehmen (`Get`, `Next`, `Answer`, `Submit`): die drei spielenden prüfen (seit B-881 über
   `IsOvertaken`), `Get` gibt nur Ergebnisse heraus und darf überholte Versuche zeigen → kein Befund.
+- **2026-11-23** — Nach `/code-review`, vom Nutzer beauftragt: `Start` setzte einen überholten offenen Versuch von heute
+  weiter fort (er prüfte `IsStale` nicht). Erreichbar ohne den Vater: der Creator nimmt die gespielte Vorstufe aus dem
+  Weg oder verschiebt ihre Stufe (`build_level_in_play` sperrt nur den Vater). Das Kind bekam dann bei jedem Start
+  denselben Versuch, dessen Fragen 404 antworten. Jetzt wird ein überholter Versuch nicht fortgesetzt, ein neuer
+  entsteht. Test `Ueberholter_Versuch_Wird_Nicht_Fortgesetzt`, rot gegen den alten Stand. Offen gelassen: der überholte
+  Versuch zählt weiter als einer der zwei des Tages und hält `InPlayTodayAsync` bis Mitternacht.

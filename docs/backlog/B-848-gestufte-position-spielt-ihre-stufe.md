@@ -211,3 +211,8 @@ Schlüssel), eine zentrale Naht für 61 Lesestellen und 50 Zugriffe mit neuem Fi
   (b) die Sperre `InPlayTodayAsync` gegen offene Versuche und Runden **früherer** Tage – Fund: beide bleiben beantwortbar
   und werten nach einem Stufenwechsel gegen die neue Übung → [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md)
   (Test, im Sprint 122 behoben) und [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) (Runde, offen).
+- **2026-11-23** — Nach `/code-review` des ungepushten Stands, vom Nutzer beauftragt: „bewusst unverändert“ gilt für
+  `MetricsService.NewWords` nicht mehr. Eine gestufte Position zählt neue Wörter nur noch auf der Übung, die sie zuerst
+  eingeführt hat; sonst zahlte eine Mission „neue Wörter“ die Wörter des Wegs je Stufe einmal. Inhalte, die erst eine
+  spätere Stufe bringt, zählen nicht (die vorsichtige Seite). Test
+  `AufbauStufeAufstiegTests.Neue_Woerter_Zaehlen_Nur_Auf_Der_Zuerst_Gespielten_Stufe`, rot gegen den alten Stand (2 statt 1).

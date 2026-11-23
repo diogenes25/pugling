@@ -579,4 +579,60 @@ public class AufbauStufeAufstiegTests(BerlinWebAppFactory factory) : IClassFixtu
         Assert.Equal("2", answers["1 + 1"]);
         Assert.Null(answers["2 + 2"]);
     }
+
+    /// <summary>
+    /// An open attempt of today that a level change has overtaken is not resumed: the creator takes the level-1 exercise
+    /// off the path while the child's test on it is open, so the position plays the target. The next start opens a fresh
+    /// attempt on the target. Red: a resume without the level check hands back the old attempt, whose questions answer
+    /// 404 for the rest of the day.
+    /// </summary>
+    [Fact]
+    public async Task Ueberholter_Versuch_Wird_Nicht_Fortgesetzt()
+    {
+        factory.Clock.FreezeAt(Local(15, 10));
+        var p = await PathAsync(startLevel: 1, secondLevel: false);
+        var overtaken = await TestApi.IdWithKeyAsync(await p.Child.PostAsJsonAsync(Tests(p), new { }), "attemptId");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var targetId = db.PlanPositions.Single(x => x.Id == p.PositionId).ExerciseId;
+            var prerequisite = db.Exercises.Single(e => e.BuildTargetExerciseId == targetId);
+            prerequisite.BuildLevel = null;
+            prerequisite.BuildTargetExerciseId = null;
+            await db.SaveChangesAsync();
+        }
+
+        var again = await p.Child.PostAsJsonAsync(Tests(p), new { });
+        Assert.True(again.IsSuccessStatusCode, await again.Content.ReadAsStringAsync());
+        var fresh = await TestApi.IdWithKeyAsync(again, "attemptId");
+
+        Assert.NotEqual(overtaken, fresh);
+        var next = await p.Child.GetFromJsonAsync<JsonElement>($"{Tests(p)}/{fresh}/next");
+        Assert.Equal("2 + 3", next.GetProperty("item").GetProperty("prompt").GetString());
+    }
+
+    /// <summary>
+    /// A word introduced again on a later level of a build path is no new word: the position keeps one progress row per
+    /// exercise played, and the metric counts only the exercise it introduced first. Red, first assertion: a count over
+    /// every introduced row (2). Red, second assertion: the same, or a rule that counts the latest exercise (1).
+    /// </summary>
+    [Fact]
+    public async Task Neue_Woerter_Zaehlen_Nur_Auf_Der_Zuerst_Gespielten_Stufe()
+    {
+        factory.Clock.FreezeAt(Local(15, 10));
+        var p = await PathAsync(startLevel: 1);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var targetId = db.PlanPositions.Single(x => x.Id == p.PositionId).ExerciseId;
+        var levelOne = db.Exercises.Single(e => e.BuildTargetExerciseId == targetId && e.BuildLevel == 1).Id;
+        var nextDay = Day15.AddDays(1);
+        db.PositionItemProgress.AddRange(
+            new PositionItemProgress { PlanPositionId = p.PositionId, ExerciseId = levelOne, ItemIndex = 0, IntroducedAt = Day15 },
+            new PositionItemProgress { PlanPositionId = p.PositionId, ExerciseId = targetId, ItemIndex = 0, IntroducedAt = nextDay });
+        await db.SaveChangesAsync();
+
+        var metrics = scope.ServiceProvider.GetRequiredService<MetricsService>();
+        Assert.Equal(1, await metrics.ValueAsync(p.ChildId, ProgressMetric.NewWords, null, null, nextDay));
+        Assert.Equal(0, await metrics.ValueAsync(p.ChildId, ProgressMetric.NewWords, nextDay, nextDay, nextDay));
+    }
 }

@@ -142,10 +142,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         {
             // Resume instead of creating anew: cursor and order are persisted. Without that, an accidental
             // reload would burn one of the scarce attempts - the cap would then punish bad luck instead of farming.
-            if (await db.TestAttempts
+            // An attempt a level change has overtaken is not resumed: its questions can no longer be answered (IsStale),
+            // so handing it back would lock the child out of the test for the day. The level check runs in memory.
+            if ((await db.TestAttempts.AsNoTracking()
                     .Where(t => t.PlanPositionId == positionId && t.Day == day && t.CompletedAt == null && !t.BySupervisor)
                     .OrderBy(t => t.Id)
-                    .FirstOrDefaultAsync(ct) is { } open)
+                    .ToListAsync(ct))
+                .FirstOrDefault(t => !IsStale(pos, t)) is { } open)
                 return new AttemptResponse(open.Id, planId, positionId, open.Day, open.StageValue, open.TotalItems);
 
             // The START is counted, not the submission - by the same count the practice screen shows (B-522).
