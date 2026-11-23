@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (94)
+### Offen (93)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -109,10 +109,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
 | [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
-| [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` | Aufräumen | `idee` | P3 | — | backend | Migration? + Vertrag? |
 
 <details>
-<summary>Abgenommen (589)</summary>
+<summary>Abgenommen (590)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -695,6 +694,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | Wunsch | `abgenommen` | P1 | M | backend | Migration |
 | [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | Ein deutscher Block-Kommentar im Löschen einer Übung | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | Defekt | `abgenommen` | P3 | S | beides | — |
+| [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` | Aufräumen | `abgenommen` | P3 | S | backend | — |
 | [B-88](B-88-scoring-uhrzeit-am-timeprovider.md) | Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider` | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md) | Ein offener Testversuch von gestern wird nach einem Stufenwechsel gegen die falsche Übung gewertet | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | Eine offene Übungsrunde von gestern spielt nach einem Stufenwechsel die falsche Übung | Defekt | `abgenommen` | P3 | S | backend | Migration |
@@ -727,7 +727,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (219)
 
-**Nachgeschaut: 557 von 589 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 558 von 590 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -990,7 +990,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung |
+| [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` |
 
 </details>
 
@@ -1165,6 +1165,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-841](B-841-start-stufe-und-stufenband.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
+| [B-863](B-863-deutsche-kommentare-in-den-tests.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Akzeptanzkriterien" |
 | [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | `idee` | `unverifiziert: true` |

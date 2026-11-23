@@ -12,6 +12,7 @@ quelle: B-704
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-23"
 wartet_auf: ""
 ---
 
@@ -101,3 +102,8 @@ Grundlinie nach dem Zurückspielen: green.
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 124), Commit `34d6becc`. Rollengang: E2E `aufbau-stufen.spec.ts`
   gegen echten Server und echtes UI – Vater legt die Position mit Start-Stufe an, Sohn sieht „Stufe 1 von 2“ im Kopf der
   Runde. Ob das Band am Handy gut sitzt (Kopfzeile bei 360 Pixeln), ist ein Blick für einen Menschen.
+- **2026-11-23** — Nachschau (Nachtlauf E, Sprint 125): Prüfpunkte – jeder Leser von `currentBuildLevel`/`build` im
+  Frontend per grep (Positionsformular schreibt, Zeile/Report/Bearbeiten lesen, Sohn-Kopf liest; der Assistent legt
+  Positionen ohne Stufe an, was B-704 E1 „im Positionsformular“ entspricht); `staged` im Bearbeiten
+  (`currentBuildLevel != null`) gegen die Server-Regel `BuildLevelCadenceProblem` (`level is not null`) – gleich. Kein
+  Befund.

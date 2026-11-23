@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: []
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Aufräumen
 groesse: S
@@ -55,3 +55,11 @@ Kommentarzeilen.
 - **2026-11-23** — angelegt aus dem Review von B-861 (Nachtlauf 2026-11-23-c), bewusst nicht im Sprint 120.
 - **2026-11-23** — ausformuliert, gegrillt, geschätzt und gebaut (Nachtlauf E, Sprint 125): zehn Dateien übersetzt;
   `git diff -U0` zeigt außer Kommentarzeilen nur drei Zeilenend-Kommentare (`// Feature aus` u. a.), keinen Code.
+- **2026-11-23** — Review `pugling-reviewer` (nur gelesen): Übersetzungen sinngetreu, Diff nur Kommentare (gegen HEAD
+  ohne Kommentare verglichen); 🟡 ohne Zählung (Freigabe 11: nur Kommentar): fünf übersehene Stellen (`SampleJson.cs:57`,
+  `ComboTests.cs:41, 51`, `ApiVersioningTests.cs:38`, `PositionReportTests.cs:48`) und „curriculum“ gegen das Glossar
+  (`docs/translate.md`: Lehrplan = study plan) – nachgezogen, zwei 🟢-Formulierungen geglättet. Meine Suche nach deutschen
+  Funktionswörtern hatte die kurzen Zeilen ohne solche Wörter nicht gefunden.
+- **2026-11-23** — abgenommen (Nachtlauf E, Sprint 125), Commit `617f50fd`. Beleg statt Rollengang (kein Rollenpfad
+  berührt): Suite 2173/2173 (Release) vor den Nachträgen, danach die betroffenen Klassen 199/199 und Build grün; Diff nur
+  in Kommentaren.

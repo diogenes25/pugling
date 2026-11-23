@@ -229,3 +229,71 @@ Bedingung wegfällt – sonst bleibt eine Wahl stehen, die niemand getroffen hat
 
 **Bewusst ungedeckt:** der Ladehinweis des Stufenfelds (ein schneller Vater legt eine Position ohne Weg an); der Gerätecheck
 des Bands.
+
+## Runde 4 — Auswahl nach Sprint 124
+
+Der Aufbau-Faden ist ausgeschöpft: B-702 wartet auf eine Entscheidung (Widerspruch zu B-849 E6, Nacharbeit nach dem
+Aufstieg), B-882 ist ein ungegrillter Wunsch. Autonom grillbar bleiben B-863 (Aufräumen) und B-860/B-649. B-863 als
+eigener kleiner Sprint; B-860 und B-649 siehe Abschluss.
+
+| Sprint | Stories | Thema |
+| --- | --- | --- |
+| 125 | B-863 | Code-Doku auf Englisch im Testprojekt |
+
+## Sprint 125 — Ziel & Umfang
+
+**Sprint-Ziel:** Ein Leser des Testprojekts trifft keine deutsche Kommentar-Prosa mehr an – Zitate deutscher Produkttexte
+ausgenommen –, und kein Test verhält sich anders.
+**Umfang:** B-863 (S, backend, nur Kommentare). Refinement: nachgezählt, zwei Entscheidungen (alles übersetzen, kein Tor).
+
+## Iteration 125 — umgesetzt
+
+Zwölf Dateien in `Pugling.Api.Tests` übersetzt, nur Kommentare (gegen HEAD ohne Kommentare verglichen). Suite 2173/2173
+(Release); nach den Nachträgen aus dem Review die betroffenen Klassen 199/199. Review `pugling-reviewer`: sinngetreu; fünf
+übersehene Stellen und ein Glossar-Verstoß („curriculum“) nachgezogen – ohne Zählung (nur Kommentar, Freigabe 11).
+
+## Runde 125 — Abnahme
+
+Kein Rollenpfad berührt: alle drei Rollen sind Regressionszeugen über die grüne Suite. B-863 abgenommen (`617f50fd`).
+
+## Retrospektive Sprint 125
+
+**Nachschau:** B-841 (Sprint 124), Prüfpunkte im Verlauf dort: jeder Leser von `currentBuildLevel`/`build` im Frontend;
+`staged` im Bearbeiten gegen die Server-Regel. Kein Befund, `nachgeschaut` gesetzt. Index: Nachgeschaut 558 von 590.
+
+**Was die eigenen Tore durchgelassen haben:** Mein Inventar war eine Suche nach deutschen Funktionswörtern; kurze Zeilen
+ohne solche Wörter („Basis 7 × Meilenstein 1“) fielen durch, der Reviewer fand fünf. Bei einer Aufräum-Story ist das
+Inventar der eigentliche Beleg.
+
+**Kein neuer Mechanismus, begründet:** Ein Tor über Kommentarsprache träfe die erlaubten Zitate und bräuchte eine
+Ausnahmeliste je Zitat (Entscheidung 2 in B-863); der Reviewer-Blick hat die Lücke in einem Durchgang geschlossen.
+
+## Abschluss des Laufs
+
+**Halt nach Sprint 125, begründet:** kein weiteres Thema autonom baubar. B-702 braucht eine Produktentscheidung (siehe
+Retro Sprint 122); B-882 ist ein ungegrillter `Wunsch`. B-860 (`Defekt`) hat der Lauf C bewusst dem Dialog überlassen (Wahl
+zwischen Schreibsperre und DB-Regel), und B-649 (`Aufräumen`) entfernt bzw. verschiebt Einträge der echten DB und ändert den
+Vertrag der Übersetzungsübung – das entscheidet hier niemand nachts. Fehlerzähler je Sprint: 3, 2, 2, 0 – keine Halt-Grenze
+erreicht.
+
+**Ergebnis:** abgenommen B-849, B-880 (Sprint 122), B-881 (123), B-841 (124), B-863 (125); neu B-882 (Idee). Commits auf
+`main`, **ungepusht**: `2bf20d88`, `8f2c549a`, `e5c2430c`, `e618f94a`, `34d6becc`, `a728884d`, `617f50fd` und dieser.
+
+**Zum Umstoßen am Morgen:**
+1. Ein Probe-Test des Vaters (`BySupervisor`) hebt die Stufe nicht (B-849, Abweichung b).
+2. Ein Aufstieg zählt nur, wo er das Ziel auch erfüllen könnte: unter „nur getippte Tests“ hebt ein selbst eingeschätzter
+   Test nicht.
+3. Eine von einer Stufenänderung überholte Runde bzw. ein überholter Versuch antwortet 404 („belongs to a level the position
+   no longer plays“) statt weiterzulaufen (B-880/B-881).
+4. Die Start-Stufe im Formular ist nach dem Platz auf dem Weg beschriftet („Stufe 1 von 2 · erkennen“).
+
+**Zur Entscheidung (Produkt):** B-702 Entscheidung 2 gegen B-849 E6; Nacharbeit (`CompletedOn`) nach einem Aufstieg; B-882
+(wartenden Aufstieg zeigen, Stufe im Bearbeiten). Retro-Vorschläge (DC), (DD), (DE).
+
+**Menschlicher Check offen:** Migrationen `BuildLevelPromotion` und `PracticeSessionBuildLevel` beim nächsten
+Heimnetz-Start (zusammen an einer Kopie der echten DB geprobt, Startskript sichert vorher); das Stufenband am Handy.
+
+## Offene Roadmap (priorisiert)
+
+Durable Liste: [docs/backlog/](backlog/INDEX.md). Als Nächstes im Dialog: B-702 (nach der Entscheidung baubar, hebt die
+Kadenz-Sperre gestufter Positionen), dann B-882 und B-703; B-860 und B-649 brauchen je eine Wahl.
