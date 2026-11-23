@@ -168,6 +168,124 @@ public class TagesbegriffTests(BerlinWebAppFactory factory) : IClassFixture<Berl
         Assert.Equal(1, await StockAsync(child, listingId));
     }
 
+    // B-842: the previous week is cut at the same wall-clock time, not at the same elapsed time since Monday - a week with
+    // a clock change is 167 or 169 hours long. Spring: Sunday 12:00 summer time against last Sunday 12:00 winter time.
+    // Red with "lastWeekStart + (now - weekStart)": that lands on 11:00 winter time (10:00Z) and leaves the 10:30Z coin out.
+    [Fact]
+    public async Task Vorwoche_Im_Fruehjahr_Endet_Zur_Selben_Wanduhrzeit()
+    {
+        var (child, childId) = await WeekChildAsync(Utc(2027, 3, 21, 9), "7304");
+        BookCoins(childId, 5, Utc(2027, 3, 21, 10, 30)); // Sunday 11:30 winter time
+        factory.Clock.FreezeAt(Utc(2027, 3, 28, 10)); // Sunday 12:00 summer time
+
+        var week = await child.GetFromJsonAsync<JsonElement>("/api/v1/student/me/points/week");
+
+        Assert.Equal(5, week.GetProperty("lastWeekSoFar").GetInt32());
+    }
+
+    // B-842, autumn: Sunday 12:00 winter time against last Sunday 12:00 summer time (10:00Z). A coin at 12:30 summer time
+    // (10:30Z) is after that moment. Red with the elapsed-time cut: it lands on 13:00 summer time (11:00Z) and counts it.
+    [Fact]
+    public async Task Vorwoche_Im_Herbst_Endet_Zur_Selben_Wanduhrzeit()
+    {
+        var (child, childId) = await WeekChildAsync(Utc(2027, 10, 24, 9), "7305");
+        BookCoins(childId, 5, Utc(2027, 10, 24, 10, 30)); // Sunday 12:30 summer time
+        factory.Clock.FreezeAt(Utc(2027, 10, 31, 11)); // Sunday 12:00 winter time
+
+        var week = await child.GetFromJsonAsync<JsonElement>("/api/v1/student/me/points/week");
+
+        Assert.Equal(0, week.GetProperty("lastWeekSoFar").GetInt32());
+        Assert.Equal(5, week.GetProperty("lastWeekTotal").GetInt32());
+    }
+
+    // B-842: one week after the spring change, 02:30 summer time has no twin last Sunday (02:00-03:00 was skipped). The
+    // comparison moves an hour on instead of failing. Red when the skipped wall clock goes to UTC unguarded (it throws).
+    [Fact]
+    public async Task Vorwoche_Mit_Uebersprungener_Wanduhrzeit_Wirft_Nicht()
+    {
+        var (child, childId) = await WeekChildAsync(Utc(2027, 3, 28, 0, 15), "7306");
+        BookCoins(childId, 4, Utc(2027, 3, 28, 0, 45)); // Sunday 01:45 winter time, before the skipped hour
+        factory.Clock.FreezeAt(Utc(2027, 4, 4, 0, 30)); // Sunday 02:30 summer time
+
+        var res = await child.GetAsync("/api/v1/student/me/points/week");
+
+        res.EnsureSuccessStatusCode();
+        Assert.Equal(4, (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("lastWeekSoFar").GetInt32());
+    }
+
+    // B-844: the title of a weak-word review carries the learning day, like its DutySince. 23:30Z in January is 00:30 on
+    // the 16th in Berlin. Red when the title formats the UTC instant (15.01.2027).
+    [Fact]
+    public async Task Schwachwort_Wiederholung_Traegt_Den_Lerntag_Im_Titel()
+    {
+        factory.Clock.FreezeAt(Utc(2027, 1, 15, 10));
+        var father = await TestApi.AdultAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Titel-Kind"), pin = "7307" }));
+        var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
+            new { name = TestApi.UniqueName("Englisch-Titel") }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
+        var exerciseId = await TestApi.IdAsync(await father.PostAsJsonAsync(
+            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/vocabulary", new
+            {
+                title = "Wörter",
+                orderIndex = 1,
+                rewardPoints = 10,
+                config = new
+                {
+                    direction = "front-to-back",
+                    sourceLang = "en",
+                    targetLang = "de",
+                    items = new[] { new { front = TestApi.UniqueName("dog"), back = "Hund" } },
+                },
+            }));
+        int vocabularyId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var item = db.ExerciseItems.Single(i => i.ExerciseId == exerciseId);
+            vocabularyId = item.VocabularyId;
+            db.ItemProgress.Add(new ItemProgress { ChildId = childId, ItemId = item.Id, ExerciseId = exerciseId, VocabularyId = vocabularyId });
+            db.SaveChanges();
+        }
+        var planId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/study-plans",
+            new { childId, title = "Plan", durationDays = 7, subjectId }));
+
+        factory.Clock.FreezeAt(Utc(2027, 1, 15, 23, 30));
+        var res = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/from-words",
+            new { vocabularyIds = new[] { vocabularyId } });
+
+        res.EnsureSuccessStatusCode();
+        var reviewId = (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("exerciseId").GetInt32();
+        using var check = factory.Services.CreateScope();
+        var title = check.ServiceProvider.GetRequiredService<PuglingDbContext>().Exercises.Single(e => e.Id == reviewId).Title;
+        Assert.EndsWith("16.01.2027)", title, StringComparison.Ordinal);
+    }
+
+    private async Task<(HttpClient Child, int ChildId)> WeekChildAsync(DateTimeOffset at, string pin)
+    {
+        factory.Clock.FreezeAt(at);
+        var father = await TestApi.AdultAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Umstellungs-Kind"), pin }));
+        return (await TestApi.ChildAsync(factory, childId, pin), childId);
+    }
+
+    private void BookCoins(int childId, int amount, DateTimeOffset at)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.ChildPointsEntries.Add(new ChildPointsEntry
+        {
+            ChildId = childId,
+            Kind = PointKind.Base,
+            Amount = amount,
+            Reason = "B-842",
+            CreatedAt = at.UtcDateTime,
+        });
+        db.SaveChanges();
+    }
+
     private static async Task<int> StockAsync(HttpClient child, int listingId)
     {
         var view = await child.GetFromJsonAsync<JsonElement>("/api/v1/student/me/shop");

@@ -50,7 +50,7 @@ public class WalletService(PuglingDbContext db, LearningDay learningDay)
     /// <summary>
     /// The child's earned coins this week against its own previous week (B-253, user decision G-6: no siblings, no
     /// ranks). The week runs Monday to Sunday on the learning-day calendar (B-730), like weekly missions and weekly duties. The
-    /// previous week is cut at the same moment (<paramref name="now"/> minus seven days), so a Monday morning is not
+    /// previous week is cut at the same wall-clock time seven calendar days earlier (B-842), so a Monday morning is not
     /// measured against a full week; the whole previous week rides along beside it. Summed in the database.
     /// </summary>
     public async Task<WeekCoinsResponse> WeekCoinsAsync(int childId, DateTime now, CancellationToken ct)
@@ -60,7 +60,7 @@ public class WalletService(PuglingDbContext db, LearningDay learningDay)
         var weekStart = learningDay.StartUtc(monday);
         var lastWeekStart = learningDay.StartUtc(monday.AddDays(-7));
         // The same time into last week on the wall clock, not 168 h back: a week with a clock change is 167 or 169 h long.
-        var lastWeekNow = lastWeekStart + (now - weekStart);
+        var lastWeekNow = learningDay.SameTimeDaysEarlier(now, 7);
         var earned = db.ChildPointsEntries.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Amount > 0 && EarnedCoinKinds.Contains(p.Kind));
 

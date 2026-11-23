@@ -55,6 +55,20 @@ public sealed class LearningDay
     public DateTime StartUtc(DateOnly day) =>
         DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(day.ToDateTime(TimeOnly.MinValue), Zone), DateTimeKind.Utc);
 
+    /// <summary>
+    /// The instant that shows the same wall-clock time <paramref name="days"/> calendar days earlier (B-842). A week with a
+    /// clock change is 167 or 169 hours long, so subtracting hours would shift the time of day. A wall clock the spring
+    /// change skipped moves on by an hour (the size of Europe/Berlin's change); a doubled one in autumn reads as standard
+    /// time.
+    /// </summary>
+    public DateTime SameTimeDaysEarlier(DateTime utc, int days)
+    {
+        var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Zone).AddDays(-days);
+        if (Zone.IsInvalidTime(local))
+            local = local.AddHours(1);
+        return DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(local, Zone), DateTimeKind.Utc);
+    }
+
     /// <summary>Finds a zone by id, failing with a message that names the setting.</summary>
     public static TimeZoneInfo Resolve(string id)
     {

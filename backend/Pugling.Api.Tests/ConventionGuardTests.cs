@@ -674,30 +674,44 @@ public class ConventionGuardTests
     /// date - or from the server's own zone - ends at 1 or 2 a.m. for the family, and two day numbers that disagree around
     /// midnight are exactly the defect this story removed from 36 places.
     /// <para>
-    /// <b>Scope.</b> Controllers and services, where every product day is formed. The seed (demo data on a fresh
-    /// database) is outside it on purpose. The shop's refill calendar does its own arithmetic on a wall clock that
-    /// <c>LearningDay</c>'s zone produced - its one <c>FromDateTime</c> is the blessed exception.
+    /// <b>Scope.</b> The whole API project (B-843). The seed (demo data on a fresh database) and the generated migrations
+    /// are outside it on purpose. The shop's refill calendar does its own arithmetic on a wall clock that
+    /// <c>LearningDay</c>'s zone produced - its <c>FromDateTime</c> and <c>.Date</c> are the blessed exceptions.
+    /// </para>
+    /// <para>
+    /// <b>Only partly covered:</b> <c>.DayOfWeek</c>. A pattern cannot see the type, and the calls today read a
+    /// <c>DateOnly</c>, a wall clock or an entity column; only <c>.DayOfWeek</c> straight on a UTC clock is rejected.
+    /// </para>
+    /// <para>
+    /// <b>False alarms by design:</b> a date format on a <c>DateOnly</c> that already came from <c>LearningDay</c> and sits
+    /// in a variable, and a property named <c>Date</c>. Both are rare; name the line below rather than loosening the pattern.
     /// </para>
     /// </summary>
     [Fact]
     public void Tage_Entstehen_Nur_Im_Lerntag()
     {
         var apiDir = Path.Combine(RepoRoot(), "backend", "Pugling.Api");
-        var files = Directory.GetFiles(Path.Combine(apiDir, "Controllers"), "*.cs", SearchOption.AllDirectories)
-            .Concat(Directory.GetFiles(Path.Combine(apiDir, "Services"), "*.cs", SearchOption.AllDirectories))
-            .Where(f => !f.EndsWith("LearningDay.cs", StringComparison.Ordinal))
+        var sep = Path.DirectorySeparatorChar;
+        // Filtered on the path inside the project, so a checkout under a folder named "bin" does not empty the scan.
+        var files = Directory.GetFiles(apiDir, "*.cs", SearchOption.AllDirectories)
+            .Where(f => (sep + Path.GetRelativePath(apiDir, f)) is var rel
+                        && !rel.Contains($"{sep}bin{sep}", StringComparison.Ordinal)
+                        && !rel.Contains($"{sep}obj{sep}", StringComparison.Ordinal)
+                        && !rel.Contains($"{sep}Migrations{sep}", StringComparison.Ordinal)
+                        && !rel.EndsWith($"{sep}Data{sep}Seed.cs", StringComparison.Ordinal)
+                        && !rel.EndsWith($"{sep}LearningDay.cs", StringComparison.Ordinal))
             .ToArray();
 
-        // Every spelling of "a calendar day from a clock" found in the code before B-730, plus the server-zone readers.
-        var forbidden = new Regex(
-            @"DateOnly\.FromDateTime\s*\(|TimeOnly\.FromDateTime\s*\(|GetLocalNow\s*\(|DateTime\.(Today|Now)\b|UtcNow\(\)\.Date\b"
-            + @"|UtcNow\.Date\b|UtcDateTime\.Date\b|\.ToDateTime\s*\(\s*TimeOnly",
-            RegexOptions.Compiled);
-        var allowed = new[]
+        var forbidden = DayFromClock;
+        // (file, fragment of the line): a tuple, because fragments may hold a colon themselves ("HH:mm").
+        var allowed = new (string File, string Fragment)[]
         {
-            "ShopRefillSchedule.cs:private static int DayNumber(DateTime wallClock)",
+            ("ShopRefillSchedule.cs", "private static int DayNumber(DateTime wallClock)"),
+            ("ShopRefillSchedule.cs", "var today = Utc(now.Date);"),
             // The time-slot multiplier reads the hour of a wall clock its callers take from LearningDay.LocalNow.
-            "ScoringService.cs:MultiplierAt(TimeOnly.FromDateTime(nowLocal)",
+            ("ScoringService.cs", "MultiplierAt(TimeOnly.FromDateTime(nowLocal)"),
+            // The remark export labels its stamps as UTC on purpose: it is a log, not a learning day.
+            ("RemarkExportService.cs", "ToString(\"yyyy-MM-dd HH:mm 'UTC'\""),
         };
 
         var offenders = new List<string>();
@@ -712,20 +726,59 @@ public class ConventionGuardTests
                     continue; // comments quote the rule, they do not break it.
                 if (!forbidden.IsMatch(line))
                     continue;
-                if (allowed.Any(a => file.EndsWith(a.Split(':')[0], StringComparison.Ordinal)
-                                     && line.Contains(a.Split(':')[1], StringComparison.Ordinal)))
+                if (allowed.Any(a => file.EndsWith(sep + a.File, StringComparison.Ordinal)
+                                     && line.Contains(a.Fragment, StringComparison.Ordinal)))
                     continue;
                 offenders.Add($"{Path.GetFileName(file)}:{lineNo}: {line}");
             }
         }
 
-        // Self-protection: a wrong path would make this green by finding nothing.
+        // Self-protection: a wrong path would make this green by finding nothing, and a scope shrunk back to two folders
+        // would miss the exercise engines.
         Assert.True(files.Length >= 40, $"Too few source files found ({files.Length}) - wrong path?");
+        Assert.Contains(files, f => f.Contains($"{sep}Exercises{sep}", StringComparison.Ordinal));
         Assert.True(offenders.Count == 0,
             "A calendar day is formed outside LearningDay - use learningDay.Today / DayOf(instant) / StartUtc(day), so every "
             + "day number follows the family's zone and ends at local midnight (B-730).\n"
             + string.Join("\n", offenders));
     }
+
+    // Every spelling of "a calendar day from a clock": the forms found before B-730, the server-zone readers, and the forms
+    // B-843 added - any `.Date`, a DateOnly rebuilt from Year/Month/Day, a day number, `ToDateTime(default)`, and a date
+    // format on an instant (in an interpolation hole or ToString) unless the hole itself reads LearningDay.
+    private static readonly Regex DayFromClock = new(
+        @"DateOnly\.FromDateTime\s*\(|TimeOnly\.FromDateTime\s*\(|GetLocalNow\s*\(|DateTime\.(Today|Now)\b"
+        + @"|\.Date\b|\.ToDateTime\s*\(\s*(TimeOnly|default)"
+        + @"|new\s+DateOnly\s*\(\s*[\w.]+\.Year\s*,\s*[\w.]+\.Month\s*,\s*[\w.]+\.Day\s*\)|DateOnly\.FromDayNumber\s*\("
+        + @"|\{(?![^{}]*(DayOf\(|Today))[^{}]*:[^{}]*\b(dd|yyyy)\b[^{}]*\}|\.ToString\(\s*""[^""]*\b(dd|yyyy)\b"
+        + @"|(UtcNow|UtcDateTime|GetUtcNow\(\))\.DayOfWeek\b",
+        RegexOptions.Compiled);
+
+    /// <summary>
+    /// The guard's own pattern bites every form it promises (B-843 AK 1); the last three lines are the legal neighbours
+    /// it must let through. Red when an alternative goes missing from <see cref="DayFromClock"/>.
+    /// </summary>
+    [Theory]
+    [InlineData("var d = DateOnly.FromDateTime(now);", true)]
+    [InlineData("var t = time.GetUtcNow().UtcDateTime.Date;", true)]
+    [InlineData("var t = stamp.Date;", true)]
+    [InlineData("var d = new DateOnly(now.Year, now.Month, now.Day);", true)]
+    [InlineData("var d = DateOnly.FromDayNumber(n);", true)]
+    [InlineData("var t = day.ToDateTime(default);", true)]
+    [InlineData("Title = $\"Wiederholung ({name}, {now:dd.MM.yyyy})\",", true)]
+    [InlineData("var s = now.ToString(\"yyyy-MM-dd\");", true)]
+    [InlineData("var x = DateTime.Now;", true)]
+    [InlineData("var x = DateTime.Today;", true)]
+    [InlineData("var h = TimeOnly.FromDateTime(now);", true)]
+    [InlineData("var l = time.GetLocalNow();", true)]
+    [InlineData("var t = day.ToDateTime(TimeOnly.MinValue);", true)]
+    [InlineData("var w = time.GetUtcNow().UtcDateTime.DayOfWeek;", true)]
+    [InlineData("var w = day.DayOfWeek;", false)]
+    [InlineData("Title = $\"Wiederholung ({name}, {learningDay.DayOf(now):dd.MM.yyyy})\",", false)]
+    [InlineData("var first = new DateOnly(day.Year, day.Month, 1);", false)]
+    [InlineData("var d = learningDay.Today;", false)]
+    public void Lerntag_Tor_Faengt_Jede_Form(string line, bool hit) =>
+        Assert.Equal(hit, DayFromClock.IsMatch(line));
 
     // ─────────────────────────────────────────── (y) contract XML docs reach the document (B-142 retro)
 

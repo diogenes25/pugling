@@ -108,7 +108,7 @@ public class WeakWordReviewService(PuglingDbContext db, ExerciseItemService item
         {
             SeriesUnitId = unitId,
             Type = ExerciseTypeKeys.Vocabulary,
-            Title = $"Wiederholung: schwache Wörter ({childName}, {now:dd.MM.yyyy})",
+            Title = $"Wiederholung: schwache Wörter ({childName}, {learningDay.DayOf(now):dd.MM.yyyy})",
             RewardPoints = GoalPointsPolicy.Fallback,
             ConfigJson = JsonSerializer.Serialize(config, JsonOptions),
             DefaultUseLeitner = true,
