@@ -181,3 +181,11 @@ Fremdschlüssel entsteht.
   gegen frischen Server auf :5207/:5179, 1 passed (mit `einkleidung.spec.ts` und `grammatik-themen.spec.ts`: 3 passed).
   Die Editor-Oberfläche ist [B-840](B-840-aufbau-weg-im-uebungseditor.md). Heimnetz (:5200) unberührt.
 - **2026-11-22** — `abgenommen` (Nachtlauf 2026-11-22-c): Commit `e36a5c79`. Creator abgenommen im Maschinengang; Vater und Sohn als Regressionszeugen (Suite grün, kein Pfad ihrer Ebenen im Diff).
+- **2026-11-23** — nachgeschaut (Retro Sprint 117, `pugling-reviewer`, nur gelesen). Prüfpunkte: `BuildPathProblemAsync`
+  läuft in Create (`ExerciseControllerBase.cs:455`) und Update (`:552`) vor der ersten Zuweisung; kein weiterer Schreibweg
+  setzt die Felder (`new Exercise` nur dort, in `Seed` und `WeakWordReviewService.cs:107`, kein Kopier-Endpunkt,
+  `CreatorApi.UpdateExerciseAsync` ohne Aufrufer); Löschsperre nach der Verwendungsprüfung, FK `NoAction` in Kontext,
+  Snapshot und G-Pin; Migration nur zwei nullable Spalten + Index + FK, `AufbauStufeMigrationTests` belegt die Altzeilen.
+  Befund: 🟢 die Behauptung im Verlauf, ein Wettlauf ende „in 500 statt stillem Verlust“, stimmt für die Ein-Ebenen-Regel
+  nicht → [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md); 🟢 deutscher Block-Kommentar in `Delete` (`:602-607`) →
+  [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md).

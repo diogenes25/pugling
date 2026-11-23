@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-730)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 entgangen_bei: [B-730]
 wartet_auf: ""
 ---
@@ -66,3 +67,9 @@ XS, backend, keine Migration, kein Vertragsbruch. Angriffsplan: Tests in `Tagesb
   - AK 1 → `TagesbegriffTests.Vorwoche_Im_Fruehjahr_Endet_Zur_Selben_Wanduhrzeit`, M1 (alte Rechnung in `WalletService.cs:63`) → rot.
   - AK 2 → `TagesbegriffTests.Vorwoche_Im_Herbst_Endet_Zur_Selben_Wanduhrzeit`, M1 → rot.
   - AK 3 → `TagesbegriffTests.Vorwoche_Mit_Uebersprungener_Wanduhrzeit_Wirft_Nicht`, M2 (Schutz in `LearningDay.cs:66` aus) → rot.
+  Review (`pugling-reviewer`): 🟢 Kopf von `WeekCoinsAsync` noch alt → behoben (ohne Zählung); 🟢 `AddHours(1)` nimmt eine Umstellung um eine Stunde an → im Kommentar benannt (ohne Zählung).
+- **2026-11-23** — abgenommen (`e3f51ee7`, Sprint 117). Verifikation: Backend 2126/2126 (Release, nach der letzten
+  Änderung), Mutanten M1–M13 alle rot, Grundlinie danach grün; `dotnet format --verify-no-changes` meldet nur vier Dateien
+  außerhalb des Diffs (Altbestand). Rollengang: Sohn (Wochenvergleich) bzw. Vater (Titel) maschinell über die
+  Integrationstests der Berlin-Fabrik – der Fall braucht eine eingefrorene Uhr in einer Umstellungswoche, die ein laufender
+  Server nicht hat; die anderen Rollen Regressionszeugen (volle Suite grün, keine Oberfläche im Diff).

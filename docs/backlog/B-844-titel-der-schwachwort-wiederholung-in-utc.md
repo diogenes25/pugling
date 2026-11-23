@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: XS
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-730)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 entgangen_bei: [B-730]
 wartet_auf: ""
 ---
@@ -47,3 +48,8 @@ XS, backend, keine Migration, kein Vertragsbruch. Testweg: Integrationstest in `
 - **2026-11-23** — in-arbeit (Sprint 117). Rote Probe: `Schwachwort_Wiederholung_Traegt_Den_Lerntag_Im_Titel` erwartet rot,
   gemessen rot (1/1, Titel endete auf „15.01.2027)“).
   - AK 1 → `TagesbegriffTests.Schwachwort_Wiederholung_Traegt_Den_Lerntag_Im_Titel`, M3 (`{now:dd.MM.yyyy}`) → rot.
+- **2026-11-23** — abgenommen (`e3f51ee7`, Sprint 117). Verifikation: Backend 2126/2126 (Release, nach der letzten
+  Änderung), Mutanten M1–M13 alle rot, Grundlinie danach grün; `dotnet format --verify-no-changes` meldet nur vier Dateien
+  außerhalb des Diffs (Altbestand). Rollengang: Sohn (Wochenvergleich) bzw. Vater (Titel) maschinell über die
+  Integrationstests der Berlin-Fabrik – der Fall braucht eine eingefrorene Uhr in einer Umstellungswoche, die ein laufender
+  Server nicht hat; die anderen Rollen Regressionszeugen (volle Suite grün, keine Oberfläche im Diff).

@@ -62,3 +62,9 @@ Beim Bauen ohne Produktfolge festgelegt (Darstellung, keine neue Regel):
   Hinweis, wenn eine Unit mehr Übungen hat als geladen. 🟢 offen: Komponententest der Wechsel-Semantik (Ziel wählen setzt
   Stufe 1), E2E mit zwei Speichern im selben Dialog.
 - **2026-11-22** — `abgenommen` (Nachtlauf 2026-11-22-c): Commit `e36a5c79`. Creator abgenommen im Maschinengang; Vater und Sohn als Regressionszeugen (Suite grün, kein Pfad ihrer Ebenen im Diff).
+- **2026-11-23** — nachgeschaut (Retro Sprint 117, `pugling-reviewer`, nur gelesen). Prüfpunkte: Feldnamen
+  `buildLevel`/`buildTargetExerciseId` in `CreateExercisePayload` gleich dem DTO; einziger PUT-Aufrufer
+  `ExerciseEditModal.tsx:150` schickt beide aus dem Formular (`:271-272`), halbes Paar → null/null, `ExerciseEditModal.test.ts`
+  fällt ohne die Zeilen; `buildTargetOptions` je Regel ein Fall; AK 1 trägt `aufbau-weg-editor.spec.ts` mit Rücklesen über
+  die API. Kein Befund; die zwei 🟢 des Abnahme-Reviews (kein Komponententest „Ziel wählen setzt Stufe 1“, kein doppeltes
+  Speichern im selben Dialog) bleiben offen, sie sind Testlücken ohne Fehlverhalten.

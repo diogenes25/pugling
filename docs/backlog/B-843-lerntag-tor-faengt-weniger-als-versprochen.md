@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/backend]
+tags: [typ/story, status/abgenommen, bereich/backend]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-730)"
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 entgangen_bei: [B-730]
 wartet_auf: ""
 ---
@@ -69,3 +70,9 @@ Ausgangsstand laufen lassen (muss B-844 finden) → B-844 bauen → grün. Testw
     Interpolationsloch, M10 Ausnahme `DayOf(`/`Today` im Loch, M11 `ToString("…dd…")` → alle rot.
   - AK 2 → `Tage_Entstehen_Nur_Im_Lerntag`, M3 (B-844 zurück) → rot.
   - AK 3 → `Tage_Entstehen_Nur_Im_Lerntag` (`Assert.Contains … Exercises`), M4 (Scan nur `Services/`) → rot.
+  Review (`pugling-reviewer`): 🟡 die Ausnahme `RemarkExportService` wurde am zweiten Doppelpunkt (`HH:mm`) abgeschnitten und prüfte `'UTC'` nie → Ausnahmen als `(Datei, Fragment)`-Tupel (**gezählt**, 1/5); 🟢 Ausschluss `LearningDay.cs` und Dateinamen ohne Pfadtrenner, Filter auf dem absoluten Pfad, Selbsttest ohne die älteren Formen, `.DayOfWeek` auf UTC-Uhren schmal fangbar, Fehlalarm-Klassen ungenannt → alle behoben (ohne Zählung). Nachgemessen: M12 (`DayOfWeek`-Alternative raus) und M13 (`TimeOnly.FromDateTime` raus) → rot; der Tupel-Abgleich selbst ist ungemessen (es gibt heute keine verletzende Zeile mit `HH:mm`), nur gelesen.
+- **2026-11-23** — abgenommen (`e3f51ee7`, Sprint 117). Verifikation: Backend 2126/2126 (Release, nach der letzten
+  Änderung), Mutanten M1–M13 alle rot, Grundlinie danach grün; `dotnet format --verify-no-changes` meldet nur vier Dateien
+  außerhalb des Diffs (Altbestand). Rollengang: Sohn (Wochenvergleich) bzw. Vater (Titel) maschinell über die
+  Integrationstests der Berlin-Fabrik – der Fall braucht eine eingefrorene Uhr in einer Umstellungswoche, die ein laufender
+  Server nicht hat; die anderen Rollen Regressionszeugen (volle Suite grün, keine Oberfläche im Diff).
