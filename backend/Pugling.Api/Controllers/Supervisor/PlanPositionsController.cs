@@ -43,14 +43,17 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
             p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
-            types.ByKey(p.Exercise?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
-            p.ForgivingDemotion, p.Remediation, p.CompletionBonus, p.CompletedOn);
+            // B-848: judged on the exercise the position plays, whose type a prerequisite may not share.
+            types.ByKey(PositionPlayService.PlayedExercise(p)?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
+            p.ForgivingDemotion, p.Remediation, p.CompletionBonus, p.CompletedOn, p.CurrentBuildLevel,
+            PositionPlayService.BuildPathOf(p));
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
     public async Task<IEnumerable<PositionResponse>> List(int planId, CancellationToken ct = default)
     {
-        var positions = await db.PlanPositions.AsNoTracking().Include(p => p.Exercise)
+        var positions = await db.PlanPositions.AsNoTracking()
+            .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
             .ToListAsync(ct);
@@ -60,7 +63,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
     // No default for `ct` (as in IsUnfilledAsync): it would make the call site look correct while the
     // client's cancellation fizzles out.
     private Task<PlanPosition?> FindAsync(int planId, int positionId, CancellationToken ct) =>
-        db.PlanPositions.Include(p => p.Exercise)
+        db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     /*
@@ -147,6 +150,55 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
                 ? $"The completion bonus must be between 0 and {MaxCompletionBonus} (got {bonus})."
                 : null;
 
+    // B-848: a build level needs a prerequisite on that level (level 3, the target, needs any), and the three are all.
+    // Judged only when a level is set now: a prerequisite the creator moves later must not lock the father out of the rest.
+    private static string? BuildLevelProblem(Exercise exercise, int? level)
+    {
+        if (level is null) return null;
+        if (level is < 1 or > Exercise.BuildLevelTarget)
+            return $"currentBuildLevel must be between 1 and {Exercise.BuildLevelTarget} ({Exercise.BuildLevelTarget} = the exercise itself).";
+        var prerequisites = exercise.Prerequisites ?? [];
+        if (prerequisites.Count == 0)
+            return "This exercise has no prerequisites, so it has no build path; omit currentBuildLevel.";
+        return level < Exercise.BuildLevelTarget && !prerequisites.Any(e => e.BuildLevel == level)
+            ? $"This exercise has no prerequisite on build level {level}."
+            : null;
+    }
+
+    // B-848: the exercise a level plays - the target's prerequisite on it (lowest id, as PositionPlayService picks), or the
+    // target itself. The checks that judge what the child plays (execute right, remediation) run on this one.
+    private static Exercise PlayedAt(Exercise target, int? level) =>
+        level is { } l && l < Exercise.BuildLevelTarget
+            ? (target.Prerequisites ?? []).Where(e => e.BuildLevel == l).MinBy(e => e.Id) ?? target
+            : target;
+
+    private const string PrerequisiteNotExecutable =
+        "The exercise on this build level is not publicly assignable; you need execute permission from its owner.";
+
+    // B-848: the round frozen at its start and the open test hold item indices of the old level's exercise - switching
+    // under them would grade the child's answers against another exercise. Today's only: an abandoned round of an earlier
+    // day plays nothing any more.
+    private async Task<bool> InPlayTodayAsync(int positionId, CancellationToken ct)
+    {
+        var today = learningDay.Today;
+        if (await db.TestAttempts.AnyAsync(t => t.PlanPositionId == positionId && t.Day == today && t.CompletedAt == null
+                && !t.BySupervisor, ct))
+            return true;
+        // Order is a JSON column; the cursor comparison runs in memory over today's few rounds.
+        return (await db.PracticeSessions.AsNoTracking()
+                .Where(s => s.PlanPositionId == positionId && s.Day == today && s.Mode == PlayMode.Lern && s.EndedAt == null)
+                .Select(s => new { s.Cursor, s.Order })
+                .ToListAsync(ct))
+            .Any(s => s.Cursor < s.Order.Count);
+    }
+
+    // B-848, decision 3 (B-701 E6): until a duty can follow the level (B-702), a build path takes no daily or weekly duty -
+    // the goal would be judged on whatever level the child happens to play.
+    private static string? BuildLevelCadenceProblem(int? level, GoalCadence cadence) =>
+        level is not null && cadence is GoalCadence.Daily or GoalCadence.Weekly
+            ? "A position on a build path takes no daily or weekly duty yet; choose no duty or \"daily, until done\"."
+            : null;
+
     // Why an invalid stage matters (it reveals the answer instead of breaking) and why the check is shared with
     // the creator's `DefaultStage`: see StageValidation. The schedule is checked step by step - one bad day would
     // be enough to hand out the solutions on that day.
@@ -172,7 +224,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if ((ThresholdProblem(dto.GoalThreshold) ?? TimeSlotProblem(dto.TimeSlots) ?? DoseProblem(dto.NewItemsPerDay)) is { } problem)
             return this.ProblemWithCode(ApiErrors.ValidationError, problem);
 
-        var exercise = await db.Exercises.FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
+        var exercise = await db.Exercises.Include(e => e.Prerequisites).FirstOrDefaultAsync(e => e.Id == dto.ExerciseId, ct);
         if (exercise is null) return this.ProblemWithCode(ApiErrors.InvalidReference, $"Exercise {dto.ExerciseId} not found.");
         // Execute gate: an exercise that is not publicly executable may only be assigned by someone holding an owner/write/execute right.
         if (!await perms.CanExecuteAsync(User, exercise, ct))
@@ -204,6 +256,17 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             return this.ProblemWithCode(ApiErrors.ValidationError, remediationProblem);
         if (UntilDoneProblem(dto.Cadence ?? GoalCadence.None, dto.Remediation ?? false, dto.CompletionBonus) is { } untilDoneProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, untilDoneProblem);
+        if ((BuildLevelProblem(exercise, dto.CurrentBuildLevel)
+                ?? BuildLevelCadenceProblem(dto.CurrentBuildLevel, dto.Cadence ?? GoalCadence.None)) is { } buildProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, buildProblem);
+        // The child plays the prerequisite: its execute gate and its fitness for remediation count, not only the target's.
+        if (PlayedAt(exercise, dto.CurrentBuildLevel) is var createPlayed && createPlayed.Id != exercise.Id)
+        {
+            if (!await perms.CanExecuteAsync(User, createPlayed, ct))
+                return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, PrerequisiteNotExecutable);
+            if (dto.Remediation == true && RemediationProblem(types.ByKey(createPlayed.Type), createPlayed) is { } playedRemediation)
+                return this.ProblemWithCode(ApiErrors.ValidationError, playedRemediation);
+        }
 
         var order = dto.Order ?? ((await db.PlanPositions.Where(p => p.StudyPlanId == planId)
             .MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
@@ -256,6 +319,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // the teaching material. An empty list is stored as null, so "no window" has one spelling only.
             TimeSlots = dto.TimeSlots is { Count: > 0 } ? dto.TimeSlots : null,
             NewItemsPerDay = dto.NewItemsPerDay ?? 0,
+            CurrentBuildLevel = dto.CurrentBuildLevel,
         };
         db.PlanPositions.Add(pos);
         await db.SaveChangesAsync(ct);
@@ -337,6 +401,24 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         // Judged on the state after the patch: switching remediation off must take "until done" with it.
         if (UntilDoneProblem(dto.Cadence ?? pos.Cadence, dto.Remediation ?? pos.Remediation, dto.CompletionBonus) is { } untilDoneProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, untilDoneProblem);
+        // Judged on the state after the patch: a level changed now (a CHANGE, not a sent field, as for B-552 above - the
+        // creator may move a prerequisite later), and the cadence against the level the position keeps.
+        var levelChanges = dto.CurrentBuildLevel is { } levelSent && levelSent != pos.CurrentBuildLevel;
+        if (((levelChanges ? BuildLevelProblem(exercise, dto.CurrentBuildLevel) : null)
+                ?? BuildLevelCadenceProblem(dto.CurrentBuildLevel ?? pos.CurrentBuildLevel, dto.Cadence ?? pos.Cadence))
+            is { } buildProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, buildProblem);
+        var playedAfter = PlayedAt(exercise, dto.CurrentBuildLevel ?? pos.CurrentBuildLevel);
+        if (levelChanges && playedAfter.Id != exercise.Id && !await perms.CanExecuteAsync(User, playedAfter, ct))
+            return this.ProblemWithCode(ApiErrors.ExerciseNotExecutable, PrerequisiteNotExecutable);
+        // Remediation on the exercise played after the patch, when either of the two changes now.
+        if ((dto.Remediation ?? pos.Remediation) && (levelChanges || (dto.Remediation == true && !pos.Remediation))
+            && playedAfter.Id != exercise.Id
+            && RemediationProblem(types.ByKey(playedAfter.Type), playedAfter) is { } playedRemediation)
+            return this.ProblemWithCode(ApiErrors.ValidationError, playedRemediation);
+        if (levelChanges && await InPlayTodayAsync(pos.Id, ct))
+            return this.ProblemWithCode(ApiErrors.BuildLevelInPlay,
+                "The child has a round or a test on this position open today; the level can change once it is finished.");
         if ((DoseNeedsLeitnerProblem(dto.NewItemsPerDay ?? pos.NewItemsPerDay, dto.UseLeitner ?? pos.UseLeitner)
                 ?? (dto.NewItemsPerDay is { } dose && dose != pos.NewItemsPerDay ? DoseOnSetProblem(exercise, dose) : null))
             is { } doseProblem)
@@ -399,6 +481,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.TimeSlots is not null) pos.TimeSlots = dto.TimeSlots.Count > 0 ? dto.TimeSlots : null;
         if (dto.ClearTimeSlots) pos.TimeSlots = null;
         if (dto.NewItemsPerDay is not null) pos.NewItemsPerDay = dto.NewItemsPerDay.Value;
+        if (dto.CurrentBuildLevel is not null) pos.CurrentBuildLevel = dto.CurrentBuildLevel;
         // B-636: a remediation already finished when it becomes "until done" ends at once, or it never could.
         await progress.StampFinishedRemediationAsync(pos, ct);
 

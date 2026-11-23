@@ -38,7 +38,7 @@ public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService
     {
         if (!User.IsStudent() || User.StudentId() is not { } childId)
             return this.ProblemWithCode(ApiErrors.Forbidden, "Only the child reports feedback on its cards.");
-        var pos = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
+        var pos = await db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites).Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
         if (pos is null) return this.ProblemWithCode(ApiErrors.NotFound, "Position not found.");
         // The plan filter also lets a supervisor of the plan's child through; an account that is both supervisor and

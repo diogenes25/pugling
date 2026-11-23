@@ -476,7 +476,7 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             db.PlanPositions.Single(p => p.Id == positionId).NewItemsPerDay = 6;
             foreach (var i in new[] { 0, 1 })
                 db.PositionItemProgress.Add(new PositionItemProgress
-                { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+                { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
             return db.SaveChanges();
         });
         var child = await TestApi.ChildAsync(factory, childId, pin);
@@ -573,7 +573,7 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             position.Scope = scope;
             foreach (var i in new[] { 0, 1 })
                 db.PositionItemProgress.Add(new PositionItemProgress
-                { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+                { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
             return db.SaveChanges();
         });
         return (await TestApi.ChildAsync(factory, childId, pin), childId, planId, positionId);
@@ -658,7 +658,7 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             db.PlanPositions.Single(p => p.Id == s.PositionId).Scope = ItemScope.New;
             foreach (var i in new[] { 0, 1 })
                 db.PositionItemProgress.Add(new PositionItemProgress
-                { PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
+                { PlanPositionId = s.PositionId, ExerciseId = TestApi.ExerciseOf(db, s.PositionId), ItemIndex = i, IntroducedAt = yesterday, DueOn = yesterday });
             return db.SaveChanges();
         });
 
@@ -694,7 +694,7 @@ public class LernkarteTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         {
             foreach (var i in Enumerable.Range(0, Words.Length))
                 db.PositionItemProgress.Add(new PositionItemProgress
-                { PlanPositionId = s.PositionId, ItemIndex = i, IntroducedAt = day, DueOn = day });
+                { PlanPositionId = s.PositionId, ExerciseId = TestApi.ExerciseOf(db, s.PositionId), ItemIndex = i, IntroducedAt = day, DueOn = day });
             return db.SaveChanges();
         });
     }

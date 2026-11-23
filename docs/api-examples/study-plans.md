@@ -122,7 +122,9 @@ Response — `HTTP 201`:
   "forgivingDemotion": false,
   "remediation": false,
   "completionBonus": 0,
-  "completedOn": null
+  "completedOn": null,
+  "currentBuildLevel": null,
+  "build": null
 }
 ```
 
@@ -661,7 +663,8 @@ Response — `HTTP 200`:
         "planId": 4,
         "planTitle": "Doku-Lehrplan",
         "subjectName": "Doku-Fach",
-        "imprintedCount": 0
+        "imprintedCount": 0,
+        "build": null
       }
     ],
     "rewardsUnlocked": true

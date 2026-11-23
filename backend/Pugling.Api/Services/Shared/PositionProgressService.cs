@@ -112,9 +112,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // ---- Done rule per check mode ---- ----
 
-    /// <summary>Check mode of this position's exercise (default <see cref="ExerciseCheckMode.None"/>).</summary>
+    /// <summary>Check mode of the exercise the position plays (B-848; default <see cref="ExerciseCheckMode.None"/>).</summary>
     private ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
-        pos.Exercise is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
+        PositionPlayService.PlayedExercise(pos) is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
     /// Is the stage that applies on <paramref name="day"/> a free display stage (B-96)? Such a day has no
@@ -123,7 +123,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     /// <remarks>Judged at the stage the test plays (B-598): a learn-card day is tested at its target, never shown only.</remarks>
     public bool IsDisplayOnlyDay(PlanPosition pos, StudyPlan plan, DateOnly day) =>
-        pos.Exercise is { } ex && registry.ByKey(ex.Type) is { } type
+        PositionPlayService.PlayedExercise(pos) is { } ex && registry.ByKey(ex.Type) is { } type
             && type.IsDisplayOnlyStage(PositionPlayService.TestTargetStage(type, pos,
                 PositionPlayService.StageForDay(pos, plan, day, type)));
 
@@ -320,6 +320,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit).ThenInclude(u => u!.Series)
             .ThenInclude(s => s!.Subject)
+            // B-848: the child sees unit and pages of the prerequisite it plays.
+            .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites!).ThenInclude(e => e.SeriesUnit)
+            .ThenInclude(u => u!.Series)
             .Where(p => p.StudyPlanId == planId)
             .OrderBy(p => p.Order).ThenBy(p => p.Id)
             .ToListAsync(ct);
@@ -347,15 +350,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         // pool must not count words beyond it (B-478).
         var introducedByPosition = (await db.PositionItemProgress.AsNoTracking()
                 .Where(p => p.PlanPosition!.StudyPlanId == plan.Id && p.IntroducedAt != null)
-                .Select(p => new { p.PlanPositionId, p.ItemIndex, Imprinted = p.ImprintedAt != null })
+                .Select(p => new { p.PlanPositionId, p.ExerciseId, p.ItemIndex, Imprinted = p.ImprintedAt != null })
                 .ToListAsync(ct))
+            // B-848: counted on the exercise the position plays - a word met on the easier level is new on the target.
+            .Where(p => positions.Any(pos => pos.Id == p.PlanPositionId && PositionPlayService.PlayedExerciseId(pos) == p.ExerciseId))
             .ToLookup(p => p.PlanPositionId, p => (p.ItemIndex, p.Imprinted));
         var planSubject = await PlanSubjectNameAsync(plan, ct);
 
         // A remediation that ended before this day has left the mission (B-636); on its last day it still shows as met.
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.UntilDone || HasDutyOn(p, day)))
         {
-            var type = pos.Exercise is { } ex ? registry.ByKey(ex.Type) : null;
+            // B-848: on a build path the child plays, sees and looks up the prerequisite (decision 5).
+            var played = PositionPlayService.PlayedExercise(pos);
+            var type = played is { } ex ? registry.ByKey(ex.Type) : null;
             var manifest = type?.Manifest;
             var checkMode = CheckModeOf(pos);
             // B-613: before the position became a duty it is a free position on that day - no open goal, no price.
@@ -370,18 +377,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var testable = IsTestable(pos, plan, day);
 
             statuses.Add(new PositionStatus(
-                pos.Id, pos.ExerciseId, pos.Exercise?.Title ?? "", pos.Exercise?.Type.ToString() ?? "",
+                pos.Id, played?.Id ?? pos.ExerciseId, played?.Title ?? "", played?.Type.ToString() ?? "",
                 manifest?.Renderer ?? "", pos.Order, cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, goalProgress, dueCount, poolSize, pos.PointsGoalMet,
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize),
                 // A free position is never charged, so it must not advertise a price either.
                 cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
-                pos.Exercise?.SeriesUnitId ?? 0, pos.Exercise?.SeriesUnit?.Label ?? "",
-                pos.Exercise?.SeriesUnit?.Series?.Name ?? "", pos.Exercise?.BookPages,
+                played?.SeriesUnitId ?? 0, played?.SeriesUnit?.Label ?? "",
+                played?.SeriesUnit?.Series?.Name ?? "", played?.BookPages,
                 plan.Id, plan.Title, planSubject ?? SeriesSubjectNameOf(pos),
                 // B-643: the golden ring - imprinted words, or introduced ones where a content needs no learn card.
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize && (p.Imprinted
-                    || type is null || !PositionPlayService.NeedsImprint(type, items[p.ItemIndex])))));
+                    || type is null || !PositionPlayService.NeedsImprint(type, items[p.ItemIndex]))),
+                PositionPlayService.BuildPathOf(pos)));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.
@@ -692,8 +700,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var total = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
         if (total == 0) return null;
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
         var doneDays = await db.PositionItemProgress.AsNoTracking()
-            .Where(p => p.PlanPositionId == pos.Id && p.RemediationDoneAt != null && p.ItemIndex < total)
+            .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.RemediationDoneAt != null
+                && p.ItemIndex < total)
             .Select(p => p.RemediationDoneAt!.Value)
             .ToListAsync(ct);
         return doneDays.Count < total ? null : doneDays.Max();
@@ -784,8 +794,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var pool = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
         if (pool == 0) return false;
         var portion = play.DailyDose(pos) is > 0 and var dose ? Math.Min(dose, pool) : pool;
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
         var introduced = await db.PositionItemProgress.CountAsync(
-            p => p.PlanPositionId == pos.Id && p.IntroducedAt == introductionDay, ct);
+            p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.IntroducedAt == introductionDay, ct);
         return introduced >= portion;
     }
 
@@ -806,7 +817,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
         // Only punishable positions: a real obligation (daily/weekly) with a penalty set, from the child's plans. The raw
         // cadence on purpose, not DutyCadenceOn (decision 5 of B-659): freeing a duty waives its unsettled periods.
-        var positions = await db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan)
+        var positions = await db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
+            .Include(p => p.StudyPlan)
             .Where(p => p.StudyPlan!.ChildId == childId && p.Cadence != GoalCadence.None && p.PenaltyCoins > 0)
             .ToListAsync(ct);
         if (positions.Count == 0) return 0;

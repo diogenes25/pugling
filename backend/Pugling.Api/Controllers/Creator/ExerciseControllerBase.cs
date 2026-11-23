@@ -127,9 +127,11 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
     /// <summary>
     /// Is the exercise played in a study plan? Then <see cref="PositionItemProgress"/> anchors the Leitner progress per
     /// position on the (positional) item order - index-shifting mutations would bend stored progress onto the wrong entry.
+    /// A prerequisite counts once a build path has played it (B-848): its progress is anchored the same way.
     /// </summary>
-    protected Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
-        db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct);
+    protected async Task<bool> ExerciseInPlanAsync(int exerciseId, CancellationToken ct) =>
+        await db.PlanPositions.AnyAsync(p => p.ExerciseId == exerciseId, ct)
+        || await db.PositionItemProgress.AnyAsync(p => p.ExerciseId == exerciseId, ct);
 
     /// <summary>The 409 for an item mutation that would shift a played vocabulary exercise's item order.</summary>
     protected ObjectResult ShiftBlockedProblem() =>

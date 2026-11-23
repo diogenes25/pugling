@@ -41,7 +41,7 @@ public class DosisResteTests(PuglingWebAppFactory factory) : IClassFixture<Pugli
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
             var yesterday = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
             foreach (var index in new[] { 0, 1, 5, 6, 7, 8, 9 })
-                db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ItemIndex = index, IntroducedAt = yesterday });
+                db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = index, IntroducedAt = yesterday });
             db.SaveChanges();
         }
         (await father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}", new { itemCount = 5 }))

@@ -21,7 +21,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
     /// <summary>Report of the position, or <c>null</c> if it (with exercise) does not exist in the plan.</summary>
     public async Task<Report?> BuildAsync(int planId, int positionId, CancellationToken ct = default)
     {
-        var pos = await db.PlanPositions.AsNoTracking().Include(p => p.Exercise)
+        var pos = await db.PlanPositions.AsNoTracking().Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
         if (pos?.Exercise is null) return null;
 
@@ -29,8 +29,10 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
         var items = await play.ItemsOfAsync(pos, ct: ct);
 
         // Leitner/introduction state per item (one plan = one child), filtered in the DB.
+        // B-848: on a build path the items and the progress of the exercise played now.
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
         var progress = await db.PositionItemProgress.AsNoTracking()
-            .Where(p => p.PlanPositionId == positionId)
+            .Where(p => p.PlanPositionId == positionId && p.ExerciseId == exerciseId)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
         // Test hit rate per item from completed attempts of this position.
@@ -45,7 +47,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
 
         var maxBox = pos.MaxBox;
         // B-637: the stages in the order the child steps down them; a stage off the ladder (none today) sorts last.
-        var ladder = pos.Remediation ? play.TypeOf(pos.Exercise)?.EaseLadder ?? [] : [];
+        var ladder = pos.Remediation ? (PositionPlayService.PlayedExercise(pos) is { } played ? play.TypeOf(played)?.EaseLadder : null) ?? [] : [];
         // Only tasks of the pool are remediated; an item beyond a position's item count would show as open forever.
         var pool = play.PoolSize(pos, items.Count);
         var rows = items.Select(item =>
@@ -62,7 +64,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
 
         return new Report(pos.Id, pos.ExerciseId, pos.Exercise.Title, pos.Exercise.Type.ToString(),
             maxBox, rows.Count, rows.Count(r => r.Introduced), rows.Count(r => r.Box >= maxBox), rows,
-            pos.Remediation, pos.CompletedOn);
+            pos.Remediation, pos.CompletedOn, PositionPlayService.BuildPathOf(pos));
     }
 
     // The cue is the gap's German prompt, which the content item carries as its hint (ClozeGaps.WithPrompt).

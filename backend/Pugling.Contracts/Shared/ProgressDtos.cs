@@ -41,13 +41,31 @@ namespace Pugling.Contracts.Shared;
 /// ("eingeprägt") - the golden ring. For contents without a learn card (recognition cards, other types) the server counts
 /// them once introduced, so the client needs no rule of its own.
 /// </para>
+/// <para>
+/// On a build path (B-848) the exercise fields - id, title, type, unit, book pages - name the exercise the position
+/// <b>plays</b>, the easier prerequisite while it is on one: the child looks up and plays that one. <c>Build</c> carries
+/// the level and the target for the supervisor; <c>null</c> = no build path.
+/// </para>
 /// </summary>
 public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
     bool GoalMet, double GoalProgress, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
     int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
-    int PlanId = 0, string PlanTitle = "", string SubjectName = "", int ImprintedCount = 0);
+    int PlanId = 0, string PlanTitle = "", string SubjectName = "", int ImprintedCount = 0, BuildPath? Build = null);
+
+/// <summary>
+/// Where a position stands on its build path (B-848): level <paramref name="Level"/> of <paramref name="Of"/>, counted over
+/// the prerequisites the target has plus the target itself ("Stufe 1 von 3 · gerade: Wörter erkennen").
+/// </summary>
+/// <param name="Level">1-based place of the played exercise on the path; equal to <paramref name="Of"/> on the target.</param>
+/// <param name="Of">Number of levels: the target's prerequisites plus the target.</param>
+/// <param name="PlayedExerciseId">The exercise played now.</param>
+/// <param name="PlayedTitle">Its title.</param>
+/// <param name="TargetExerciseId">The position's own exercise, the goal of the path.</param>
+/// <param name="TargetTitle">Its title.</param>
+public record BuildPath(int Level, int Of, int PlayedExerciseId, string PlayedTitle, int TargetExerciseId,
+    string TargetTitle);
 
 /// <summary>
 /// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and

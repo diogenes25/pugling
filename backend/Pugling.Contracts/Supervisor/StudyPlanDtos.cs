@@ -1,3 +1,5 @@
+using Pugling.Contracts.Shared;
+
 namespace Pugling.Contracts.Supervisor;
 
 // Contract of the study plan: the plan is a pure container, everything learning-specific (goal, points,
@@ -147,13 +149,19 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// The day the last remediation task was done (B-636); <c>null</c> = still open. A position "daily, until done" carries
 /// no duty from the day after.
 /// </param>
+/// <param name="CurrentBuildLevel">
+/// The build level the position plays (B-848): 1 or 2 = the target's prerequisite on that level, 3 = the target itself;
+/// <c>null</c> = no build path. <c>ExerciseId</c>/<c>ExerciseTitle</c> stay the target's.
+/// </param>
+/// <param name="Build">Level n of m and the exercise played now, for the supervisor's view; <c>null</c> = no build path.</param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
     List<int>? BoxIntervalDays, List<StageStep>? StageSchedule, int PointsGoalMet, int PenaltyCoins,
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
     List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null,
-    bool ForgivingDemotion = false, bool Remediation = false, int CompletionBonus = 0, DateOnly? CompletedOn = null);
+    bool ForgivingDemotion = false, bool Remediation = false, int CompletionBonus = 0, DateOnly? CompletedOn = null,
+    int? CurrentBuildLevel = null, BuildPath? Build = null);
 
 /// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
 public enum LearningCheckKind
@@ -218,12 +226,18 @@ public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 /// <param name="ForgivingDemotion">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c> (hard reset). Not inherited from the exercise.</param>
 /// <param name="Remediation">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c>.</param>
 /// <param name="CompletionBonus">As in <see cref="PositionResponse"/>; <c>null</c> = 0. 0 to 1000.</param>
+/// <param name="CurrentBuildLevel">
+/// Start level on the exercise's build path (B-848, see <see cref="PositionResponse"/>); <c>null</c> = no build path.
+/// The exercise must have a prerequisite on that level (or any prerequisite for 3), and the position takes no daily or
+/// weekly duty while on a path.
+/// </param>
 public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
-    int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null, int? CompletionBonus = null);
+    int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null, int? CompletionBonus = null,
+    int? CurrentBuildLevel = null);
 
 /// <summary>
 /// The weak words of the plan's child to review daily (B-584): ids of vocabulary store entries the child already has
@@ -292,6 +306,10 @@ public record CreateReviewFromWordsDto(List<int> VocabularyIds);
 /// <param name="ForgivingDemotion">Forgiving demotion (see <see cref="PositionResponse"/>); <c>false</c> switches it off.</param>
 /// <param name="Remediation">Remediation (see <see cref="PositionResponse"/>); <c>false</c> switches it off, the done tasks stay.</param>
 /// <param name="CompletionBonus">Completion bonus (see <see cref="PositionResponse"/>); <c>0</c> = none. 0 to 1000.</param>
+/// <param name="CurrentBuildLevel">
+/// Moves the position to this level of its build path (B-848, rules as in <see cref="CreatePositionDto"/>). There is no
+/// way back to "no build path" in this story; level 3 plays the target.
+/// </param>
 public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScope? Scope,
     GoalCadence? Cadence, PracticeOrder? OrderStrategy, int? GoalThreshold, bool? RequireTypedTest,
     bool? UseLeitner, int? MaxBox, List<int>? BoxIntervalDays, List<StageStep>? StageSchedule,
@@ -299,4 +317,4 @@ public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScop
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
     bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false,
     bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null, bool? Remediation = null,
-    int? CompletionBonus = null);
+    int? CompletionBonus = null, int? CurrentBuildLevel = null);

@@ -286,7 +286,9 @@ public class ExerciseCatalogController(PuglingDbContext db, ExerciseTypeRegistry
         var fid = User.AdultId();
 
         var plans = (await db.PlanPositions.AsNoTracking()
-                .Where(p => p.ExerciseId == id && p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+                // The same positions the delete counts (B-848: a played prerequisite included), or the 409 would be a mystery.
+                .Where(ExerciseUsageQueries.UsedBy(id))
+                .Where(p => p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
                 .Select(p => new PlanUsage(p.StudyPlanId, p.StudyPlan!.Title, p.StudyPlan.ChildId, p.StudyPlan.Child!.Name))
                 .ToListAsync(ct))
             .DistinctBy(u => u.PlanId).ToList();

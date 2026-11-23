@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/api, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Stufe spielen, wirksame Übung, Lernstand je Übung]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -116,3 +116,86 @@ Schlüssel), eine zentrale Naht für 61 Lesestellen und 50 Zugriffe mit neuem Fi
 
 - **2026-11-22** — Aus B-701 geteilt, nachdem die Story im Dialog gegrillt war; der Nutzer hat die Entscheidungen
   bestätigt. Geschätzt: L, backend, Migration ja, Vertrag additiv.
+- **2026-11-23** — in-arbeit (Nachtlauf D, Sprint 121). Gebaut nach den Entscheidungen 1–5 (Freigabe 8). Drei
+  Bau-Entscheidungen, die aus den AK folgen und keine neue Produktregel sind:
+  - Die Naht liest die neue Navigation `Exercise.Prerequisites`; `null` heißt „nicht geladen“ und **wirft** auf einer
+    gestuften Position. Das ist das Quelltext-Tor aus den Risiken, nur als Laufzeit-Tor: ein vergessenes Include wird ein
+    lauter Fehler statt eines still gespielten Ziels.
+  - `Stage`/`StageSchedule` der Position gelten nicht, solange eine Vorstufe gespielt wird: der Vater hat sie gegen den
+    Typ der Ziel-Übung gesetzt (AK 3: die Vorgabe-Stufe kommt von der gespielten Übung). Eigener Fund vor dem Review,
+    **gezählt** (Zähler 1/5).
+  - Eine gespielte Vorstufe ist nicht löschbar (FK Restrict am Lernstand, `ExerciseUsageQueries` zählt die Position) –
+    409 `exercise_in_use` statt 500; die Item-Sperren (B-328) gelten für sie, sobald sie Lernstand trägt.
+  Bewusst unverändert: `MetricsService.NewWords` zählt eingeführte Wörter über beide Übungen (ein Wort, das auf der
+  Vorstufe und am Ziel neu war, zählt zweimal); die Test-Trefferquote im Vater-Bericht mischt Versuche beider Stufen, bis
+  B-849 den Versuch mit `BuildLevel` stempelt; ein Wechsel der Stufe durch den Vater mitten in einer offenen Runde
+  oder einem offenen Test ist nicht gesperrt (B-849 macht den Wechsel tageweise).
+  Rote Probe vor dem Bau gibt es für einen Wunsch nicht; der Beleg ist die Mutanten-Tabelle unten.
+  Verifikation je AK (Fall → Test → Mutante, gemessen nach der letzten Code-Änderung, `mutant-probe.py`, 15:15):
+  - AK 1, Üben/Test → `AufbauStufePlayTests.Ueben_Spielt_Die_Vorstufe_Mit_Ihrem_Typ`, `Test_Spielt_Die_Vorstufe_Bis_Zur_Abgabe` → M1 rot.
+  - AK 2, `null`/Stufe 3 → `Ohne_Stufe_Und_Auf_Der_Zielstufe_Spielt_Die_Zieluebung` → M2 rot. Die Mutante „Stufe 3 als
+    Vorstufen-Stufe gelesen“ (Runde 1, M3) ist **äquivalent**: ohne Vorstufe auf Stufe 3 fällt die Naht ohnehin auf das
+    Ziel zurück – gemessen grün, darum aus Runde 2 genommen, kein Beleg.
+  - AK 3, je Pfad: Üben → M7, Test-Next → M9, Sammel-Abgabe (`Sammelabgabe_Wertet_Mit_Dem_Typ_Der_Vorstufe`, nach Runde 1
+    ergänzt: M10 war dort grün) → M10, Positions-Stufe → M22, leichtere Stufe → `Leichtere_Stufe_Bleibt_Auf_Der_Vorstufe`
+    (dieselbe Naht wie M1; ein eigener Mutant nur für `Easier` fehlt – der Pfad liest nichts außer `ItemsOfAsync`/`TypeOf`).
+  - AK 4 → `Lernstand_Liegt_Je_Gespielter_Uebung_Getrennt` → M4 (Lesefilter), M5 (Zeile anlegen).
+  - AK 5 → derselbe Test (Historie `ItemReviewEvent.ExerciseId`) → M8.
+  - AK 6 → `Startstufe_Wird_Gesetzt_Gelesen_Und_Geprueft` → M11–M15.
+  - AK 7 → `Kind_Sieht_Die_Vorstufe_Vater_Das_Ziel_Mit_Stufe` → M16–M19.
+  - AK 8 → `AufbauStufePlayMigrationTests.Bestand_Bekommt_Die_Uebung_Seiner_Position` → M20; dazu Probe gegen eine Kopie
+    der echten `pugling.db` (SQLite-Backup, Stand `TowerGameRuns`): 662 Lernstand-Zeilen, 0 ungefüllt, 0 abweichend von der
+    Übung ihrer Position, `foreign_key_check` leer. EF warnt wie bei `AufbauStufe`, dass der Tabellen-Neubau nicht in
+    einer Transaktion läuft (bekannt, siehe Gedächtnis „nicht-transaktionale Altmigration“) – das Startskript sichert vorher.
+  - Naht wirft → `Gespielte_Uebung_Ohne_Geladene_Vorstufen_Wirft` → M6; Löschschutz → `Gespielte_Vorstufe_Ist_Nicht_Loeschbar` → M21, M28.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 AK1 Inhalt | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:110 | red | red |  |
+  | M2 AK2 null | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:35 | red | red |  |
+  | M4 AK4 Karten-Filter | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:220 | red | red |  |
+  | M5 AK4 Zeile anlegen | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:717 | red | red |  |
+  | M6 Naht wirft | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:36 | red | red |  |
+  | M7 AK3 Typ Ueben | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:488 | red | red |  |
+  | M8 AK5 Historie | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:915 | red | red |  |
+  | M9 AK3 Typ Test-Next | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:235 | red | red |  |
+  | M10 AK3 Typ Test-Abgabe | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:380 | red | red |  |
+  | M22 Stufe der Position | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:47 | red | red |  |
+  | M11 AK6 Vorstufe fehlt | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:163 | red | red |  |
+  | M12 AK6 ohne Weg | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:161 | red | red |  |
+  | M13 AK6 Kadenz | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:198 | red | red |  |
+  | M14 AK6 Kadenz nach PATCH | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:408 | red | red |  |
+  | M15 AK6 PATCH setzt | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:484 | red | red |  |
+  | M16 AK7 Kind Titel | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:380 | red | red |  |
+  | M17 AK7 Kind Buchseite | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:387 | red | red |  |
+  | M18 AK7 Bericht Stufe | backend/Pugling.Api/Services/Supervisor/PositionReportService.cs:67 | red | red |  |
+  | M19 AK7 Stufe n | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:74 | red | red |  |
+  | M20 AK8 Fuellung | backend/Pugling.Api/Data/Migrations/20261123125626_BuildLevelPlayed.cs:29 | red | red |  |
+  | M21 Loeschschutz | backend/Pugling.Api/Services/Shared/ExerciseUsageQueries.cs:66 | red | red |  |
+  | M23 offene Runde | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:419 | red | red |  |
+  | M24 Ausfuehrungsrecht | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:265 | red | red |  |
+  | M25 Aenderung statt gesendet | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:406 | red | red |  |
+  | M26 Nacharbeit Anlegen | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:267 | red | red |  |
+  | M27 Nacharbeit PATCH | backend/Pugling.Api/Controllers/Supervisor/PlanPositionsController.cs:417 | red | red |  |
+  | M28 Verwendungsanzeige | backend/Pugling.Api/Controllers/Creator/ExerciseCatalogController.cs:290 | red | red |  |
+
+  Grundlinie nach dem Zurückspielen grün. Runde 1 (14:40, vor dem Review) hatte 18/21 rot; M2 kompilierte nicht
+  (umformuliert), M3 äquivalent, M10 grün (Lücke → Test ergänzt).
+  Review (`pugling-reviewer`): kein 🔴, sieben 🟡, fünf 🟢.
+  - 🟡 offene Runde/offener Test beim Stufenwechsel → 409 `build_level_in_play` (Test `Stufe_Wechselt_Nicht_Unter_Einer_Offenen_Runde`, M23) – **gezählt**.
+  - 🟡 Ausführungsrecht nur am Ziel geprüft → auch an der Vorstufe (`Private_Vorstufe_Braucht_Das_Ausfuehrungsrecht`, M24) – **gezählt**.
+  - 🟡 PATCH prüfte die gesendete statt der geänderten Stufe → Änderung (M25) – **gezählt**.
+  - 🟡 Nacharbeit am Ziel statt an der gespielten Übung geprüft → beide (`Nacharbeit_Wird_An_Der_Gespielten_Vorstufe_Geprueft`, M26, M27) – **gezählt**.
+  - 🟡 Verwendungsanzeige ≠ 409-Zählung → `UsedBy` auch in der Anzeige (M28) – außerhalb des Diffs, ohne Zählung.
+  - 🟡 Pflicht-Sperre auch auf der Zielstufe, keine Rückkehr zu `null` → nach B-702 notiert (dort wird die Sperre aufgehoben).
+  - 🟡 Trefferquote im Bericht/Antwort zur Rückmeldung mischen Stufen; `CompletedOn` überlebt den Aufstieg → nach B-849 notiert.
+  - 🟢 Wahl bei zwei Vorstufen derselben Stufe jetzt explizit (kleinste Id); Kommentar an `AnyBlockingAsync` – behoben,
+    ohne Zählung. 🟢 Turm-Spiel und Bonus-Training spielen das Ziel, `NewWords` zählt doppelt, „unerreichbar“-Anzeige auf
+    einer Vorstufe ohne getippte Stufe – zurückgestellt (keine Pflicht kann dort entstehen), ohne Zählung.
+  Ein roter Wächter vor dem Abschluss: `ProblemTextGuardTests` – der neue 409-Code hatte keinen deutschen Text im Vater-Web
+  (`frontend/src/lib/api.ts`), behoben. **Zähler:** wörtlich nach Freigabe 10 (Reviewer-🟡 mit Code-Änderung) 4/5; mit dem
+  eigenen Fund (Positions-Stufe) und dem roten Wächter 6 – nach der strengeren Lesart ist das die Endlosschleifen-Grenze,
+  darum endet der Lauf nach diesem Sprint (Protokoll `pm-sitzung-2026-11-23-d.md`).
+  Suite nach der letzten Backend-Änderung: 2148/2149 (Release), die eine rote war der Wächter oben; danach
+  `ProblemTextGuardTests` 2/2, Vitest `src/lib` 196/196.
+

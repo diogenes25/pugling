@@ -301,6 +301,7 @@ public class PositionPlayModesTests(PuglingWebAppFactory factory) : IClassFixtur
                 db.PositionItemProgress.Add(new PositionItemProgress
                 {
                     PlanPositionId = positionId,
+                    ExerciseId = TestApi.ExerciseOf(db, positionId),
                     ItemIndex = i,
                     Box = 2,
                     DueOn = tomorrow,

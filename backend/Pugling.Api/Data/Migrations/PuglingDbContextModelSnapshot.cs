@@ -1756,6 +1756,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("CurrentBuildLevel")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("DutySince")
                         .HasColumnType("TEXT");
 
@@ -1940,6 +1943,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateOnly?>("DueOn")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly?>("ImprintedAt")
                         .HasColumnType("TEXT");
 
@@ -1972,7 +1978,9 @@ namespace Pugling.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PlanPositionId", "ItemIndex")
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("PlanPositionId", "ExerciseId", "ItemIndex")
                         .IsUnique();
 
                     b.ToTable("PositionItemProgress");
@@ -3282,7 +3290,7 @@ namespace Pugling.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Pugling.Api.Models.Exercise", "BuildTarget")
-                        .WithMany()
+                        .WithMany("Prerequisites")
                         .HasForeignKey("BuildTargetExerciseId")
                         .OnDelete(DeleteBehavior.NoAction);
 
@@ -3795,11 +3803,19 @@ namespace Pugling.Api.Data.Migrations
 
             modelBuilder.Entity("Pugling.Api.Models.PositionItemProgress", b =>
                 {
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
                         .WithMany("ItemProgress")
                         .HasForeignKey("PlanPositionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Exercise");
 
                     b.Navigation("PlanPosition");
                 });
@@ -4288,6 +4304,8 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Grants");
 
                     b.Navigation("InterestLinks");
+
+                    b.Navigation("Prerequisites");
 
                     b.Navigation("Ratings");
                 });

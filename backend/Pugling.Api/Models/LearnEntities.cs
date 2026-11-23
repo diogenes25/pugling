@@ -197,6 +197,13 @@ public class Exercise
     public int? BuildTargetExerciseId { get; set; }
     public Exercise? BuildTarget { get; set; }
 
+    /// <summary>
+    /// The prerequisites pointing at this exercise (B-848), the inverse of <see cref="BuildTarget"/>. <c>null</c> means
+    /// "not loaded", not "none": a play path that forgot the include must fail loudly instead of silently playing the
+    /// target (<c>PositionPlayService.PlayedExercise</c>).
+    /// </summary>
+    public List<Exercise>? Prerequisites { get; set; }
+
     /// <summary>Highest build level a prerequisite may carry; the target exercise itself is the level above.</summary>
     public const int BuildLevelMaxPrerequisite = 2;
 

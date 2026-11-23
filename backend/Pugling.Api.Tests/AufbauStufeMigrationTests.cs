@@ -66,10 +66,11 @@ public sealed class AufbauStufeMigrationTests
                 db.AddRange(item, grant, plan);
                 await db.SaveChangesAsync();
                 var progress = new ItemProgress { ChildId = childId, ItemId = item.Id, ExerciseId = exerciseId, VocabularyId = vocab.Id, Box = 3 };
-                var position = new PlanPosition { StudyPlanId = plan.Id, ExerciseId = exerciseId };
-                db.AddRange(progress, position);
+                db.Add(progress);
                 await db.SaveChangesAsync();
-                (itemId, progressId, grantId, positionId) = (item.Id, progress.Id, grant.Id, position.Id);
+                // The position table gained a column after this step (B-848), so the position goes in as a raw row.
+                var position = await LegacyPositionRow.InsertAsync(db, plan.Id, exerciseId);
+                (itemId, progressId, grantId, positionId) = (item.Id, progress.Id, grant.Id, position);
 
                 await db.GetService<IMigrator>().MigrateAsync(Target);
             }
@@ -87,7 +88,8 @@ public sealed class AufbauStufeMigrationTests
                 Assert.Equal(exerciseId, (await db.ExerciseItems.AsNoTracking().SingleAsync(i => i.Id == itemId)).ExerciseId);
                 Assert.Equal(3, (await db.ItemProgress.AsNoTracking().SingleAsync(p => p.Id == progressId)).Box);
                 Assert.Equal(exerciseId, (await db.ExerciseGrants.AsNoTracking().SingleAsync(g => g.Id == grantId)).ExerciseId);
-                Assert.Equal(exerciseId, (await db.PlanPositions.AsNoTracking().SingleAsync(p => p.Id == positionId)).ExerciseId);
+                Assert.Equal(exerciseId, await db.PlanPositions.AsNoTracking().Where(p => p.Id == positionId)
+                    .Select(p => p.ExerciseId).SingleAsync());
             }
         }
         finally

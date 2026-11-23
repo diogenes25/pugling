@@ -153,7 +153,7 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         using var scope = f.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         for (var i = 0; i < count; i++)
-            db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i, IntroducedAt = day, DueOn = day });
+            db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = i, IntroducedAt = day, DueOn = day });
         db.SaveChanges();
     }
 

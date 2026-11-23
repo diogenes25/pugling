@@ -571,7 +571,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // prerequisite in one statement - would fail; NO ACTION is checked at the end of that statement.
         modelBuilder.Entity<Exercise>()
             .HasOne(e => e.BuildTarget)
-            .WithMany()
+            .WithMany(e => e.Prerequisites)
             .HasForeignKey(e => e.BuildTargetExerciseId)
             .OnDelete(DeleteBehavior.NoAction);
 
@@ -689,9 +689,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         // at most one progress row per item index per position.
         modelBuilder.Entity<PositionItemProgress>(e =>
         {
-            e.HasIndex(p => new { p.PlanPositionId, p.ItemIndex }).IsUnique();
+            // B-848: one row per item of each exercise the position played (target and prerequisites apart).
+            e.HasIndex(p => new { p.PlanPositionId, p.ExerciseId, p.ItemIndex }).IsUnique();
             e.HasOne(p => p.PlanPosition).WithMany(pos => pos.ItemProgress).HasForeignKey(p => p.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // Restrict: the child's progress on a played prerequisite blocks deleting it (counted in ExerciseUsageQueries).
+            e.HasOne(p => p.Exercise).WithMany().HasForeignKey(p => p.ExerciseId).OnDelete(DeleteBehavior.Restrict);
             // Remediation counters per stage (B-635) as a JSON object - the ValueComparer catches in-place changes.
             e.Property(p => p.SolvedByStage).HasConversion(
                 v => v == null ? null : JsonSerializer.Serialize(v, JsonOptions),

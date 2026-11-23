@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -54,6 +55,17 @@ public readonly record struct BlockingUsage(
 public static class ExerciseUsageQueries
 {
     /// <summary>
+    /// The positions that use an exercise (B-848): the one they point at, the prerequisite they play now, and every
+    /// exercise their child has progress on. The last two are the build path's - progress rows hold the exercise with a
+    /// Restrict key, so leaving them out would turn the 409 into a 500.
+    /// </summary>
+    internal static Expression<Func<PlanPosition, bool>> UsedBy(int exerciseId) => p =>
+        p.ExerciseId == exerciseId
+        || (p.CurrentBuildLevel != null
+            && p.Exercise!.Prerequisites!.Any(e => e.Id == exerciseId && e.BuildLevel == p.CurrentBuildLevel))
+        || p.ItemProgress.Any(ip => ip.ExerciseId == exerciseId);
+
+    /// <summary>
     /// Counts what blocks deletion, split into "visible to <paramref name="fid"/>" and "hidden".
     /// Without <paramref name="fid"/> (creator without an adult profile) everything is hidden – they supervise no child.
     /// </summary>
@@ -63,11 +75,9 @@ public static class ExerciseUsageQueries
         // Four plain counts instead of one GroupBy projection: SQLite would group over a subquery expression
         // here, and the gain would be one round trip on a path that runs once per delete attempt.
         // Readability beats that.
-        var planTotal = await db.PlanPositions.AsNoTracking()
-            .CountAsync(p => p.ExerciseId == exerciseId, ct);
-        var planMine = await db.PlanPositions.AsNoTracking()
-            .CountAsync(p => p.ExerciseId == exerciseId
-                && p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
+        var planTotal = await db.PlanPositions.AsNoTracking().Where(UsedBy(exerciseId)).CountAsync(ct);
+        var planMine = await db.PlanPositions.AsNoTracking().Where(UsedBy(exerciseId))
+            .CountAsync(p => p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid), ct);
         var testTotal = await db.KlassenarbeitExercises.AsNoTracking()
             .CountAsync(x => x.ExerciseId == exerciseId, ct);
         var testMine = await db.KlassenarbeitExercises.AsNoTracking()
@@ -84,9 +94,8 @@ public static class ExerciseUsageQueries
         // How many distinct CHILDREN are behind the hidden usages - not how many places. Three positions in the
         // plans of the same child are one user, not three; and for a creator without children of their own it
         // is the only number that says anything.
-        var hiddenLearners = await db.PlanPositions.AsNoTracking()
-            .Where(p => p.ExerciseId == exerciseId
-                && !p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
+        var hiddenLearners = await db.PlanPositions.AsNoTracking().Where(UsedBy(exerciseId))
+            .Where(p => !p.StudyPlan!.Child!.SupervisorLinks.Any(l => l.SupervisorId == fid))
             .Select(p => p.StudyPlan!.ChildId)
             .Union(db.KlassenarbeitExercises.AsNoTracking()
                 .Where(x => x.ExerciseId == exerciseId
@@ -124,6 +133,8 @@ public static class ExerciseUsageQueries
     {
         var ids = scope.Select(x => x.Id);
         var seriesUnitIds = seriesUnitScope.Select(u => u.Id);
+        // Only the position's own exercise: a prerequisite sits in its target's unit (B-700), so the target's position
+        // already blocks a scope that holds a played prerequisite (B-848). A cross-unit path would need UsedBy here.
         return await db.PlanPositions.AsNoTracking().AnyAsync(p => ids.Contains(p.ExerciseId), ct)
             || await db.KlassenarbeitExercises.AsNoTracking().AnyAsync(x => ids.Contains(x.ExerciseId), ct)
             // Goal milestones point at the exercise OR directly at the series unit - both FKs are Restrict, and a

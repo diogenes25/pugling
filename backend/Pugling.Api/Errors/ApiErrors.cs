@@ -146,6 +146,11 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError ExerciseIsBuildTarget = new("exercise_is_build_target", 409, "Exercise is a build target.");
     /// <summary>
+    /// The child has a round or a test of today open on the position, so its build level cannot change now (409, B-848):
+    /// the round's frozen cards and the test's questions belong to the exercise of the old level.
+    /// </summary>
+    public static readonly ApiError BuildLevelInPlay = new("build_level_in_play", 409, "The position is being played.");
+    /// <summary>
     /// The exercise is played in a study plan, so its items cannot be removed or reordered (409, B-205). A code of its
     /// own next to <see cref="ExerciseInUse"/>, because the rule differs: nothing is deleted, appending stays allowed,
     /// and the progress anchored on the item order is what is protected.

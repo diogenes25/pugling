@@ -296,6 +296,8 @@ public class SchemaGuardTests
             ["PositionGoalPenalty.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionGoalReward.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionItemProgress.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            // B-848: progress on a played prerequisite is the child's record; the delete is refused with a 409 first.
+            ["PositionItemProgress.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise
             // SetNull, so that no second cascade path (plan → position → session/test) arises in SQLite next to
             // plan → session/test; both already hang on the plan.
             ["PracticeSession.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition

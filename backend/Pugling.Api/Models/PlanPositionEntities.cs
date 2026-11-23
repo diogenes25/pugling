@@ -27,6 +27,14 @@ public class PlanPosition
     /// <summary>Order within the plan (grouping by subject follows from the exercise).</summary>
     public int Order { get; set; }
 
+    /// <summary>
+    /// The build level the position plays (B-848): 1 or 2 plays the prerequisite of <see cref="Exercise"/> with that
+    /// <see cref="Models.Exercise.BuildLevel"/>, <see cref="Models.Exercise.BuildLevelTarget"/> plays the target itself.
+    /// <c>null</c> = no build path, the position plays its exercise as always. The one reader is
+    /// <c>PositionPlayService.PlayedExercise</c>.
+    /// </summary>
+    public int? CurrentBuildLevel { get; set; }
+
     // --- Overrides (null = inherit the exercise's suggestion) ---
     /// <summary>Overridden test stage (interpreted per method); null = the exercise's default.</summary>
     public int? Stage { get; set; }
@@ -255,6 +263,14 @@ public class PositionItemProgress
     public int Id { get; set; }
     public int PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
+
+    /// <summary>
+    /// The exercise this progress was made on (B-848): the position's exercise, or the prerequisite it played on a build
+    /// path. One position keeps a separate state per exercise, so a word learnt on the easier level is not counted as
+    /// known on the target. Restrict: a played prerequisite is not deleted with the child's progress on it.
+    /// </summary>
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
 
     /// <summary>Index of the content in the item list of the referenced exercise.</summary>
     public int ItemIndex { get; set; }

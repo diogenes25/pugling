@@ -292,7 +292,7 @@ internal static class TestApi
         for (var i = 0; i < count; i++)
         {
             if (!existing.TryGetValue(i, out var prog))
-                db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = i });
+                db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = i });
             prog.IntroducedAt ??= yesterday;
             // B-643: a word seen in an earlier round counts as known only once imprinted - as the migration's backfill does.
             prog.ImprintedAt ??= prog.IntroducedAt;
@@ -300,6 +300,13 @@ internal static class TestApi
         }
         db.SaveChanges();
     }
+
+    /// <summary>
+    /// The exercise a seeded progress row belongs to (B-848): the position's own one - a test that seeds rows plays no
+    /// build path unless it says so.
+    /// </summary>
+    public static int ExerciseOf(PuglingDbContext db, int positionId) =>
+        db.PlanPositions.Where(p => p.Id == positionId).Select(p => p.ExerciseId).Single();
 
     /// <summary>The first Leitner box at which a vocabulary card is asked at its position's own stage (B-476).</summary>
     public const int ClimbedBox = 3;

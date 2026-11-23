@@ -224,6 +224,7 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             db.PositionItemProgress.Add(new PositionItemProgress
             {
                 PlanPositionId = positionId,
+                ExerciseId = TestApi.ExerciseOf(db, positionId),
                 ItemIndex = 0,
                 IntroducedAt = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1),
                 // B-643: a known word is one written from memory once, not only seen.
@@ -276,7 +277,7 @@ public class ErstbegegnungTests(PuglingWebAppFactory factory) : IClassFixture<Pu
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
         var prog = db.PositionItemProgress.SingleOrDefault(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex);
-        if (prog is null) db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ItemIndex = itemIndex });
+        if (prog is null) db.PositionItemProgress.Add(prog = new PositionItemProgress { PlanPositionId = positionId, ExerciseId = TestApi.ExerciseOf(db, positionId), ItemIndex = itemIndex });
         change(prog);
         db.SaveChanges();
     }

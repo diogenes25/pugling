@@ -92,7 +92,9 @@ Response — `HTTP 201`:
   "forgivingDemotion": false,
   "remediation": false,
   "completionBonus": 0,
-  "completedOn": null
+  "completedOn": null,
+  "currentBuildLevel": null,
+  "build": null
 }
 ```
 

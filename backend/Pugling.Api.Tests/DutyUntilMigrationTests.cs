@@ -55,7 +55,10 @@ public sealed class DutyUntilMigrationTests
 
             await using (var db = new PuglingDbContext(options))
             {
-                var positions = await db.PlanPositions.AsNoTracking().Where(p => positionIds.Contains(p.Id)).ToListAsync();
+                // Projected: the current model has columns a later migration adds (B-848), absent at this target.
+                var positions = await db.PlanPositions.AsNoTracking().Where(p => positionIds.Contains(p.Id))
+                    .Select(p => new PlanPosition { Id = p.Id, Cadence = p.Cadence, DutyUntil = p.DutyUntil, CadenceUntil = p.CadenceUntil })
+                    .ToListAsync();
                 Assert.Equal(2, positions.Count);
                 Assert.All(positions, p =>
                 {

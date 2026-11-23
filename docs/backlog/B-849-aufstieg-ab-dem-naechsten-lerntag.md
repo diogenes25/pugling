@@ -87,3 +87,10 @@ Spielpfade in B-848 schon auf `PlayedExercise` laufen.
 
 - **2026-11-22** — Aus B-701 geteilt, nachdem die Story im Dialog gegrillt war; der Nutzer hat die Entscheidungen
   bestätigt. Geschätzt: M, backend, Migration ja, Vertrag additiv. Wartet auf B-848.
+- **2026-11-23** — Hinweise aus dem Review von B-848 (Nachtlauf D, Sprint 121), hier hingehörend, weil diese Story den
+  Versuch mit der Stufe stempelt (E5): Die Trefferquote je Aufgabe im Vater-Bericht (`PositionReportService`) und die
+  Kind-Antwort zu einer Rückmeldung (`ExerciseFeedbackService.ChildAnswerAsync`) gruppieren Testergebnisse nur nach
+  `ItemIndex` und mischen darum Versuche beider Stufen – mit `TestAttempt.BuildLevel` filtern. Außerdem: eine auf der
+  Vorstufe beendete Nacharbeit hinterlässt `CompletedOn` an der Position; beim Aufstieg muss das zurückgesetzt werden, sonst
+  wird „bis erledigt“ auf der nächsten Stufe nie wieder Pflicht. B-848 sperrt bis dahin nur den Wechsel unter einer offenen
+  Runde oder einem offenen Test von heute (`build_level_in_play`).

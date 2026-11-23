@@ -34,18 +34,20 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
     {
         var now = time.GetUtcNow().UtcDateTime;
         var itemIndex = card?.Index;
+        // B-848: the card belongs to the exercise the position plays, the prerequisite on a build path.
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
         var entries = new List<ExerciseFeedback>();
         foreach (var reason in reasons.Count > 0 ? reasons.Select(r => (FeedbackReason?)r) : [null])
         {
             var entry = await db.ExerciseFeedbacks.FirstOrDefaultAsync(f => f.ChildId == childId
-                && f.ExerciseId == pos.ExerciseId && f.ItemIndex == itemIndex && f.Reason == reason
+                && f.ExerciseId == exerciseId && f.ItemIndex == itemIndex && f.Reason == reason
                 && f.Status == FeedbackStatus.Open, ct);
             if (entry is null)
             {
                 entry = new ExerciseFeedback
                 {
                     ChildId = childId,
-                    ExerciseId = pos.ExerciseId,
+                    ExerciseId = exerciseId,
                     ItemIndex = itemIndex,
                     ExerciseItemId = card?.ItemId,
                     VocabularyId = card?.VocabularyId,

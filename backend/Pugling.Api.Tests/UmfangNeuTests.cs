@@ -165,6 +165,7 @@ public class UmfangNeuTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
             db.PositionItemProgress.Add(new PositionItemProgress
             {
                 PlanPositionId = positionId,
+                ExerciseId = TestApi.ExerciseOf(db, positionId),
                 ItemIndex = 1,
                 IntroducedAt = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1),
                 ImprintedAt = DateOnly.FromDateTime(factory.Clock.GetUtcNow().UtcDateTime).AddDays(-1), // B-643: known

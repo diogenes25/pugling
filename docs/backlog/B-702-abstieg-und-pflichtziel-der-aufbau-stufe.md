@@ -155,3 +155,7 @@ Schema mit Bestandsdaten berührt werden.
   Punkte die Malus-Regel und die Münz-Ökonomie berühren; Stufe `gegrillt` mit offener Frage, `wartet_auf` gesetzt.
 - **2026-11-20** — Die offenen Punkte stellvertretend entschieden (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers, unbestätigt), Stufe bleibt `gegrillt`, `wartet_auf` geleert. Kern: Abstieg nach zwei Versuchen unter 50 % ohne Buchung; Ziel ist die aktuelle Stufe mit halben Zielpunkten auf Vorstufen, aber Serie und Truhe zählen voll (Abweichung von der Empfehlung, begründet); keine harte Frist, nur Sichtbarkeit.
 - **2026-11-20** — geschaetzt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers): M, backend, Migration ja, Vertrag nein. Zwei der Akzeptanzkriterien (6, 8) sind im Ausgangszustand schon grün und als Gegenproben zu führen; der halbe Zielbetrag muss den Versuch statt der Position lesen (Reihenfolge Aufstieg/Zahlung). Hängt an B-701 und B-700.
+- **2026-11-23** — Hinweis aus dem Review von B-848 (Nachtlauf D, Sprint 121): Die Sperre „keine Tages- oder
+  Wochenpflicht auf einem Aufbau-Weg“ (B-848 E3) gilt auch auf der Zielstufe 3, und `CurrentBuildLevel` lässt sich nicht
+  zurück auf `null` setzen – eine Position am Ende ihres Wegs kann darum nie wieder Pflicht werden. Diese Story hebt die
+  Sperre auf; dabei mitentscheiden, ob die Zielstufe sie ohnehin aufhebt oder ein `ClearCurrentBuildLevel` kommt.

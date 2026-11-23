@@ -1,3 +1,5 @@
+using Pugling.Contracts.Shared;
+
 namespace Pugling.Contracts.Supervisor;
 
 // Contract of the position-bound learning report. It lives on the supervisor tier because it carries the
@@ -31,8 +33,10 @@ public record StageSolveCount(int Stage, int Count);
 
 /// <summary>
 /// Report of a position including headline metrics (introduced/mastered). <c>Remediation</c>/<c>CompletedOn</c> (B-637,
-/// B-636): whether the position runs as remediation, and the day its last task was done.
+/// B-636): whether the position runs as remediation, and the day its last task was done. On a build path (B-848) the
+/// title is the target's, <c>Build</c> names the level and the exercise played now, and the items are those of the
+/// played exercise with the progress made on it.
 /// </summary>
 public record Report(int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType,
     int MaxBox, int TotalItems, int IntroducedItems, int MasteredItems, IReadOnlyList<ItemReport> Items,
-    bool Remediation = false, DateOnly? CompletedOn = null);
+    bool Remediation = false, DateOnly? CompletedOn = null, BuildPath? Build = null);

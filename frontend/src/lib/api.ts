@@ -167,6 +167,10 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   exercise_is_build_target:
     "Diese Übung ist Ziel von Vorstufen und lässt sich darum nicht löschen. Nimm die Vorstufen zuerst im Bearbeiten-Dialog "
     + "aus dem Aufbau-Weg; bei Vorstufen, die dir nicht gehören, kann das nur ihr Autor.",
+  // B-848: die offene Runde oder der offene Test des Kindes hält die Stufe; einen Ausweg hat der Vater nicht – er wartet.
+  build_level_in_play:
+    "Das Kind spielt diese Position heute gerade (eine Runde oder ein Test ist offen). Die Stufe lässt sich ändern, "
+    + "sobald es damit fertig ist.",
   // Seit B-205 ein eigener Code: nichts wird gelöscht, und Anhängen bleibt erlaubt – das sagte der Löschtext falsch.
   exercise_items_locked:
     "Diese Übung steckt in einem Lehrplan. Wörter entfernen oder umsortieren würde den gespeicherten "
