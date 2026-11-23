@@ -228,3 +228,8 @@ Schnappschuss-Tests mit Mutanten „erstmals setzen“ und „ändern“; (DA) L
 Durable Liste: [docs/backlog/](backlog/INDEX.md). Für den nächsten Lauf: B-863 (Aufräumen, mechanisch), danach B-860 im
 Dialog (Wahl Sperre vs. Datenbank-Regel). Die B-644-Kette (B-731 ff.) wartet weiter auf die Bestätigung der fünf
 B-730-Entscheidungen.
+
+## Nachtrag — Entscheidungen bestätigt
+
+Am 2026-11-23 im Dialog: alle drei Punkte „zum Umstoßen“ vom Nutzer bestätigt – B-820 Entscheidung 1 (Nacharbeit
+behält ihre Tage), B-862 Entscheidung 3 (eigener Abruf im Teaser), B-843 Entscheidung 2 (`.Date` bleibt verboten).

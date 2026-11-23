@@ -98,3 +98,4 @@ Sitzung geseedet, Wechsel über die Vater-API, Serie über `ChildStreakAsync`).
   Tagesansicht über den Dienst) plus E2E `nacharbeit` und `nacharbeit-bis-erledigt` gegen frisch gestartete Server
   (5211/5184) – 2 passed. Creator Regressionszeuge (Suite grün).
 - **2026-11-23** — nachgeschaut (Retro Sprint 120, Selbst-Check). Prüfpunkte: alle Leser der Spanne liegen in `PositionProgressService` (6× `DutyCadenceOn`, kein Aufrufer außerhalb); der Filter der Tagesansicht (`:356`) liest die rohe Taktung – mit der Begrenzung auf `CompletedOn` liefert `DutyCadenceOn` nach dem Ende `None`, der Geister-Fall ist zu. Kein Befund.
+- **2026-11-23** — Entscheidung 1 vom Nutzer bestätigt (behalten: B-659 Entscheidung 2 ist für die Nacharbeit aufgehoben).

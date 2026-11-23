@@ -84,3 +84,4 @@ S, beides, keine Migration, additiv. Testweg: `ExtraTrainingTests.Runde_Nennt_Di
   `bonus`, `bonus-deckel`, `bonus-deckel-voll`, `bonus-satz-je-karte`, `nochmal-nach-pflicht`, `full-flow` – 6 passed.
   Der Fall „Deckel 0 auf der Startseite“ ist nur auf Komponentenebene gegangen (keine Spec setzt den Deckel auf 0 und
   öffnet danach die Startseite). Vater Regressionszeuge (`bonus-deckel`), Creator Regressionszeuge (Suite grün).
+- **2026-11-23** — Entscheidung 3 vom Nutzer bestätigt (eigener Abruf im Teaser, kein Feld an der Tagesübersicht).
