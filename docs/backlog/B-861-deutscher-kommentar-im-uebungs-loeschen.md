@@ -56,7 +56,7 @@ XS, backend, keine Migration, kein Vertragsbruch.
   Review (`pugling-reviewer`): alle sechs Übersetzungen behalten Warum und Regel; 🟡 deutsche `//`/`///`-Absätze in
   `Pugling.Api.Tests` außerhalb des Diffs → [B-863](B-863-deutsche-kommentare-in-den-tests.md) (ohne Zählung). AK 1 gilt nur
   für `/* */`.
-- **2026-11-23** — abgenommen (Sprint 120, Commit HASH). Verifikation nach der letzten Änderung: Backend 2134/2134
+- **2026-11-23** — abgenommen (Sprint 120, `635b68b4`). Verifikation nach der letzten Änderung: Backend 2134/2134
   (Release), Vitest 1371/1371, `tsc -b` sauber; Rollengang Sohn per E2E gegen frisch gestartete Server (5211/5184):
   `bonus`, `bonus-deckel`, `bonus-deckel-voll`, `bonus-satz-je-karte`, `nochmal-nach-pflicht`, `full-flow` – 6 passed.
   Der Fall „Deckel 0 auf der Startseite“ ist nur auf Komponentenebene gegangen (keine Spec setzt den Deckel auf 0 und

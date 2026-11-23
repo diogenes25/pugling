@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachtlauf B 2026-11-23, Review von B-659 (pugling-reviewer, 🟢4)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: []
 ---
 
@@ -97,3 +97,4 @@ Sitzung geseedet, Wechsel über die Vater-API, Serie über `ChildStreakAsync`).
   2131/2131 (Release); Rollengang Vater/Sohn maschinell über die Integrationstests (Wechsel über die Vater-API, Serie und
   Tagesansicht über den Dienst) plus E2E `nacharbeit` und `nacharbeit-bis-erledigt` gegen frisch gestartete Server
   (5211/5184) – 2 passed. Creator Regressionszeuge (Suite grün).
+- **2026-11-23** — nachgeschaut (Retro Sprint 120, Selbst-Check). Prüfpunkte: alle Leser der Spanne liegen in `PositionProgressService` (6× `DutyCadenceOn`, kein Aufrufer außerhalb); der Filter der Tagesansicht (`:356`) liest die rohe Taktung – mit der Begrenzung auf `CompletedOn` liefert `DutyCadenceOn` nach dem Ende `None`, der Geister-Fall ist zu. Kein Befund.

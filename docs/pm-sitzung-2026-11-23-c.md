@@ -156,3 +156,75 @@ each“) – die Regel stand da, sie wurde nicht befolgt.
 
 **Vorschlag (nicht gelandet):** keiner neu – die Regel existiert; (CY)/(CZ) bleiben offen. Ehrlich: kein Mechanismus hätte
 das gefangen, außer der gelesenen Aufruferliste.
+
+## Sprint 120 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn liest nirgends im Bonus-Training ein Münzversprechen, das der Deckel heute nicht hält – weder
+auf der Startseite noch in der Liste, über der Karte oder auf dem Ergebnisblatt.
+**Umfang:** B-862 (S, beides, additiv) und B-861 (XS, Aufräumen) – beide aus Funden dieser Nacht (Review B-845,
+Nachschau B-700). B-860 bleibt liegen (siehe Offene Roadmap).
+**Entwickler-Brief:** Quelle der Wahrheit ist der Deckel des Servers: `ExtraRunResponse.CoinsLeftToday` für die Runde,
+`ExtraTrainingOverview` für Liste und Teaser. Vorhandene Sätze (`capZero`, `capReached`, `vocabNoWorth`, `hintNoWorth`)
+statt neuer.
+
+## Iteration 120 — umgesetzt
+
+- **Backend:** `CoinsLeftToday` am Start/Fortsetzen; sechs deutsche `/* */`-Blöcke übersetzt.
+- **Frontend:** Hinweis, Listenzeile, Ergebnis-Vorschau (nur Formname am vollen Deckel, neue Schlüssel `formName*`) und
+  Teaser (lädt die Übersicht, im Ladezustand ohne Satz).
+- **Verifikation:** rote Probe Backend 2/2; Mutanten G1–G9, B1–B3 rot nach der letzten Änderung. Backend 2134/2134,
+  Vitest 1371/1371, tsc sauber. Commit `635b68b4`.
+- **Review:** drei 🟡 im Diff (Teaser-Blitzen, Gegenfall im Ladezustand, aufgebrauchter Deckel im Backend-Test) – alle
+  behoben, **Zähler 3/5**; ein 🟡 außerhalb (Ergebnis-Vorschau) in B-862 genommen; deutsche `//`-Absätze in den Tests →
+  [B-863](backlog/B-863-deutsche-kommentare-in-den-tests.md).
+
+## Runde 120 — Abnahme
+
+- **Sohn — abgenommen:** „Bei Deckel 0 sagt mir die Startseite gleich, dass es keine Bonus-Münzen gibt, und keine Karte
+  verspricht mir 3 🪙.“ Gegangen per E2E (6 Specs, frische Server) für den Weg; der Deckel-0-Fall auf der Startseite nur
+  auf Komponentenebene – **ein Mensch klickt das am Gerät nach** (Vater stellt Deckel 0, Sohn öffnet die Startseite).
+- **Vater — Regressionszeuge:** `bonus-deckel` grün.
+- **Creator — Regressionszeuge:** Suite grün.
+
+## Retrospektive Sprint 120
+
+**Nachschau:** B-820 (Sprint 119), Selbst-Check – alle Leser der Spanne gezählt, Filter der Tagesansicht gegen die
+Begrenzung gelesen; kein Befund, `nachgeschaut` gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** Zwei Tests, die einen Zwischenzustand statt des Ziels prüften (Teaser vor
+der Antwort; Deckel ohne verdiente Münzen) – dieselbe Klasse wie in Sprint 118. Gefunden von Reviewern, nicht von der
+Mutanten-Probe, weil ich die passenden Mutanten (falsch nur im geladenen Zweig; Deckel statt Rest) nicht geschrieben hatte.
+
+**Vorschlag (nicht gelandet):** (DA) Für `useAsync`-Zweige: je Komponente ein Fall, der den **Ladezustand** zusichert, und
+die anderen Fälle erst nach `await act(…)` – als Satz in `frontend/CLAUDE.md` neben der B-284-Regel. Stützt (CZ).
+
+## Abschluss des Laufs
+
+**Halt nach Sprint 120, begründet:** Kein Halt-Tor hat gegriffen (keine Retro hat ein Tor gelandet, kein Zähler über 5).
+Offen und autonom grillbar sind noch B-860 (Defekt) und B-863 (Aufräumen). B-860 lasse ich bewusst liegen: der Fix
+verlangt eine Wahl zwischen Schreibsperre um Prüfen+Speichern und einer Datenbank-Regel gegen Ketten – beides berührt jeden
+Übungs-Schreibweg und ist eher eine Architektur- als eine „richtig herstellen“-Entscheidung. B-863 ist reine
+Übersetzungsarbeit für einen nächsten Lauf.
+
+**Ergebnis:** 9 Stories abgenommen – B-842, B-843, B-844 (117), B-845, B-846, B-847 (118), B-820 (119), B-861, B-862 (120);
+4 neu (B-860, B-861, B-862, B-863 – davon B-861/B-862 im selben Lauf erledigt). Fehlerzähler je Sprint: 1, 1, 1, 3.
+Commits auf `main`, **ungepusht**: `e3f51ee7`, `54f354b7`, `08a421cb`, `15921baf`, `f294e804`, `de974cf0`, `635b68b4` und
+der Abschluss-Commit.
+
+**Zum Umstoßen am Morgen:**
+1. B-820 Entscheidung 1 hebt B-659 Entscheidung 2 („nur Daily/Weekly“) für die Nacharbeit auf.
+2. B-862 Entscheidung 3: der Startseiten-Teaser lädt die Bonus-Übersicht selbst (ein Abruf mehr) statt eines Feldes an
+   der Tagesübersicht.
+3. B-843: `.Date` ist jetzt überall im API-Projekt verboten (Ausnahmen benannt) – ein künftiges DTO-Feld `Date` braucht
+   eine Zeile in der Ausnahmeliste.
+
+**Retro-Vorschläge zur Entscheidung:** (CY) Ausnahmelisten als Tupel + „jede Ausnahme trifft genau eine Zeile“; (CZ)
+Schnappschuss-Tests mit Mutanten „erstmals setzen“ und „ändern“; (DA) Ladezustand je `useAsync`-Komponente.
+
+**Menschlicher Check offen:** Deckel 0 → Sohn-Startseite am Gerät (B-862).
+
+## Offene Roadmap (priorisiert)
+
+Durable Liste: [docs/backlog/](backlog/INDEX.md). Für den nächsten Lauf: B-863 (Aufräumen, mechanisch), danach B-860 im
+Dialog (Wahl Sperre vs. Datenbank-Regel). Die B-644-Kette (B-731 ff.) wartet weiter auf die Bestätigung der fünf
+B-730-Entscheidungen.
