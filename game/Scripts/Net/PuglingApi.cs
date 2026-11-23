@@ -86,7 +86,16 @@ public sealed class PuglingApi : IDisposable
                     var code => $"Fehler vom Server (HTTP {code}).",
                 }, problem.Contains("tower_game_run_closed"));
             }
-            return (await response.Content.ReadFromJsonAsync<T>())!;
+            // A 200 that is not the expected JSON (wrong host, a router page) must reach the screen like any failure.
+            try
+            {
+                return await response.Content.ReadFromJsonAsync<T>()
+                    ?? throw new ApiException("Unerwartete Antwort vom Server.");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                throw new ApiException($"Unerwartete Antwort vom Server ({ex.GetType().Name}).");
+            }
         }
     }
 }

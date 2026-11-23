@@ -27,7 +27,7 @@ public sealed class EndpointCoverageGuard : IAsyncDisposable
     /// actions against <see cref="Exceptions"/>. If coverage increases, the countermeasure below
     /// requires updating this value accordingly.
     /// </summary>
-    private const int FullRunTouchedActions = 296;
+    private const int FullRunTouchedActions = 301;
 
     /// <summary>
     /// From what percentage of the full inventory the guard judges at all.

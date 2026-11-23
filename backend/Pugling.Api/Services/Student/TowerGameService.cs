@@ -61,7 +61,10 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
                 PlanTitle = p.StudyPlan!.Title,
                 SubjectName = p.StudyPlan.Subject != null ? p.StudyPlan.Subject.Name : null,
                 ExerciseTitle = p.Exercise!.Title,
-                Words = db.ExerciseItems.Count(i => i.ExerciseId == p.ExerciseId),
+                // The same words a run is built from (WordsAsync): an entry without word or meaning is no tower, and a
+                // position listed by its raw item count would answer the start with 404.
+                Words = db.ExerciseItems.Count(i => i.ExerciseId == p.ExerciseId
+                    && db.Vocabularies.Any(v => v.Id == i.VocabularyId && v.Word.Trim() != "" && v.Translation.Trim() != "")),
                 p.StudyPlanId,
                 p.Order,
             })
@@ -128,7 +131,8 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
     /// one marks the tower solved. A token also counts as right when it carries the same word or the same meaning as the
     /// tower's own one - the child cannot tell two such words apart. The Leitner box rises only with the first hit per
     /// word and day (B-822 E3), a miss resets it like in practice. Fails with <c>not_found</c> for a forged or foreign id
-    /// and with <c>tower_game_run_closed</c> once the run ended or its grace time is over.
+    /// and with <c>tower_game_run_closed</c> once the run ended, its day is over or its grace time is over. Every
+    /// assignment also counts as play time, clamped like a heartbeat.
     /// </summary>
     public async Task<Outcome<TowerAssignResult>> AssignAsync(int childId, AssignTowerTokenDto dto, CancellationToken ct)
     {
@@ -138,7 +142,9 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         var run = await db.TowerGameRuns.Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.Id == dto.RunId && r.ChildId == childId, ct);
         if (run is null) return Outcome<TowerAssignResult>.NotFound;
-        if (run.EndedAt is not null || await TimeUpAsync(childId, ct))
+        // A run of an earlier day is over: its time counts against the day it started on, so playing it on would
+        // run outside today's minute limit.
+        if (run.EndedAt is not null || run.Day != learningDay.Today || await TimeUpAsync(childId, ct))
             return Outcome<TowerAssignResult>.Fail(ApiErrors.TowerGameRunClosed, "This level is over.");
         if (!await PlayableAsync(childId, run.PlanPositionId, ct)) return Outcome<TowerAssignResult>.NotFound;
 
@@ -162,6 +168,8 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         await progress.RecordAsync(childId, tower.ExerciseId, item, correct, 0, token.Foreign, ItemReviewSource.Game,
             run.PlanPositionId, today, countsForMastery, ct);
         if (correct) runItem.SolvedAt ??= time.GetUtcNow().UtcDateTime;
+        // Playing is play time, with or without heartbeats: a client that never beats must not escape the minute limit.
+        Beat(run);
         await db.SaveChangesAsync(ct);
 
         return new TowerAssignResult(correct, tower.Foreign);
@@ -169,20 +177,24 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
 
     /// <summary>
     /// Adds the time since the last beat to the run, clamped to <see cref="TowerGameOptions.MaxSecondsPerBeat"/>, and
-    /// reports today's play time. An ended run adds nothing. <c>null</c> when the run is not the child's.
+    /// reports today's play time. An ended run adds nothing; neither does a run of an earlier day, which is reported as
+    /// time up. <c>null</c> when the run is not the child's.
     /// </summary>
     public async Task<TowerHeartbeatResult?> HeartbeatAsync(int childId, int runId, CancellationToken ct)
     {
         var run = await db.TowerGameRuns.FirstOrDefaultAsync(r => r.Id == runId && r.ChildId == childId, ct);
         if (run is null) return null;
-        if (run.EndedAt is null)
+        var today = learningDay.Today;
+        // A run of an earlier day adds nothing and is reported as over (see AssignAsync).
+        var stale = run.Day != today;
+        if (run.EndedAt is null && !stale)
         {
             Beat(run);
             await db.SaveChangesAsync(ct);
         }
-        var played = await PlayedSecondsAsync(childId, learningDay.Today, ct);
+        var played = await PlayedSecondsAsync(childId, today, ct);
         var limit = await LimitSecondsAsync(childId, ct);
-        return new TowerHeartbeatResult(played, limit, played >= limit + opts.GraceMinutes * 60);
+        return new TowerHeartbeatResult(played, limit, stale || played >= limit + opts.GraceMinutes * 60);
     }
 
     /// <summary>

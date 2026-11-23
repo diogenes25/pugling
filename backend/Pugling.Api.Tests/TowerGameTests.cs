@@ -224,6 +224,83 @@ public class TowerGameTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.False(beat.TimeUp);
     }
 
+    private int PlayedSecondsOf(int runId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        return db.TowerGameRuns.Where(r => r.Id == runId).Select(r => r.PlayedSeconds).Single();
+    }
+
+    [Fact]
+    public async Task Assign_ZaehltSpielzeit_AuchOhneHeartbeat()
+    {
+        ResetTowerGame();
+        var (child, _, run) = await StartAsync();
+        SetRun(run.RunId, r => r.LastBeatAt = r.LastBeatAt.AddMinutes(-5));
+
+        await child.PostAsJsonAsync($"{Base()}/assign",
+            new AssignTowerTokenDto(run.RunId, TokenOf(run, "dog"), TowerOf(run, "Hund")));
+
+        // Red if only heartbeats counted: a client that never beats would keep 0 seconds and never reach the limit.
+        Assert.Equal(20, PlayedSecondsOf(run.RunId));
+    }
+
+    [Fact]
+    public async Task RunVomVortag_IstVorbei_UndZaehltKeineZeitMehr()
+    {
+        ResetTowerGame();
+        var (child, _, run) = await StartAsync();
+        SetRun(run.RunId, r =>
+        {
+            r.Day = r.Day.AddDays(-1);
+            r.LastBeatAt = r.LastBeatAt.AddMinutes(-5);
+        });
+
+        // Red if a run of an earlier day stayed playable: its time would be booked outside today's limit.
+        var late = await child.PostAsJsonAsync($"{Base()}/assign",
+            new AssignTowerTokenDto(run.RunId, TokenOf(run, "dog"), TowerOf(run, "Hund")));
+        Assert.Equal(HttpStatusCode.Conflict, late.StatusCode);
+        Assert.Contains("tower_game_run_closed", await late.Content.ReadAsStringAsync());
+
+        var beat = await (await child.PostAsync($"{Base()}/runs/{run.RunId}/heartbeat", null))
+            .Content.ReadFromJsonAsync<TowerHeartbeatResult>();
+        // Red if the beat did not tell the app to end the level.
+        Assert.True(beat!.TimeUp);
+        // Red if the beat still added its seconds to yesterday's run.
+        Assert.Equal(0, PlayedSecondsOf(run.RunId));
+    }
+
+    [Fact]
+    public async Task Uebersicht_ZaehltNurWoerter_AusDenenEinRunGebautWird()
+    {
+        ResetTowerGame();
+        var (child, positionId, _) = await StartAsync();
+        int vocabularyId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var exerciseId = db.PlanPositions.Where(p => p.Id == positionId).Select(p => p.ExerciseId).Single();
+            vocabularyId = db.ExerciseItems.Where(i => i.ExerciseId == exerciseId)
+                .Join(db.Vocabularies, i => i.VocabularyId, v => v.Id, (i, v) => v)
+                .Where(v => v.Word == "bread").Select(v => v.Id).Single();
+            db.Vocabularies.Where(v => v.Id == vocabularyId).ExecuteUpdate(v => v.SetProperty(x => x.Translation, ""));
+        }
+        try
+        {
+            var overview = await child.GetFromJsonAsync<TowerGameOverview>(Base());
+
+            // Red if the overview counted raw items: it would announce six words where a run holds five.
+            Assert.Contains(overview!.Positions, p => p.PlanPositionId == positionId && p.WordCount == Words.Length - 1);
+        }
+        finally
+        {
+            // The store entry is shared with the other tests of this class.
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            db.Vocabularies.Where(v => v.Id == vocabularyId).ExecuteUpdate(v => v.SetProperty(x => x.Translation, "Brot"));
+        }
+    }
+
     [Fact]
     public async Task Minutenlimit_SperrtDenStart_LaesstDasLaufendeLevelNochDieNachspielzeit()
     {

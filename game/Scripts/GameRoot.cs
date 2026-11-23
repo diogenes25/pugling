@@ -197,9 +197,14 @@ public partial class GameRoot : Control
         {
             error = ex.Message;
         }
-        var title = end?.Won == true ? "Level geschafft!" : timeUp ? "Spielzeit für heute ist um." : "Die Monster sind durchgebrochen.";
+        // Without the server's answer nobody knows whether the level is won: say so and offer the end call again
+        // (it is idempotent), instead of showing a won level as lost and never booking its coins.
+        var title = end is null ? "Ergebnis noch nicht gespeichert."
+            : end.Won ? "Level geschafft!" : timeUp ? "Spielzeit für heute ist um." : "Die Monster sind durchgebrochen.";
         var box = Page(title);
         box.AddChild(Text($"{correct} von {total} Zuweisungen richtig.", 30));
+        if (end is null)
+            box.AddChild(Action("Ergebnis nochmal senden", () => _ = ShowResultAsync(runId, correct, total, timeUp)));
         if (end is not null)
             box.AddChild(Text(end.CoinsAwarded > 0
                 ? $"+{end.CoinsAwarded} 🪙  (heute {end.CoinsToday}/{end.DailyCoinCap})"
