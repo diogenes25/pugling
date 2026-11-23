@@ -11051,6 +11051,130 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/mixed-review": {
+      "get": {
+        "tags": [
+          "Student \u2013 Mixed Review"
+        ],
+        "summary": "Today\u0027s mixed review: the bonus lock, the cards due for it, an open round and the shared bonus coins.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MixedReviewOverview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/mixed-review/runs": {
+      "post": {
+        "tags": [
+          "Student \u2013 Mixed Review"
+        ],
+        "summary": "Starts a mixed review round - or resumes today\u0027s open one with the same cards. \u0060409 extra_training_locked\u0060\nbefore the goals the bonus training waits for are done, \u0060409 mixed_review_empty\u0060 when no card is due in a\nposition the round may draw from.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MixedReviewRunResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/me/interests": {
       "get": {
         "tags": [
@@ -43649,6 +43773,166 @@
         },
         "description": "Status of a mission from the child\u0027s perspective: target, current value, completed?\nDaysLeft (B-528) counts the days after today until the period ends on the UTC calendar - 0 on\nits last day, \u0060null\u0060 for a one-off mission, which has no period. The server computes it because the day\nboundary is UTC; a client counting on its local clock would say \u0022today only\u0022 on the wrong side of midnight."
       },
+      "MixedReviewCardView": {
+        "required": [
+          "card",
+          "cardId",
+          "exerciseTitle",
+          "planTitle",
+          "positionId",
+          "stage",
+          "typed"
+        ],
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "planTitle": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "typed": {
+            "type": "boolean"
+          },
+          "card": {
+            "$ref": "#/components/schemas/ExtraCard"
+          }
+        },
+        "description": "One card of a mixed review round, addressed by CardId in the answer. It comes from position\nPositionId of plan PlanTitle (subject SubjectName) and is\nasked at that position\u0027s stage of the day, Stage - never an easier one. Card\ncarries the facets of a bonus card; its \u0060CoinsPerHit\u0060 is 0 where the stage is self-assessed, because only a\nchecked hit pays."
+      },
+      "MixedReviewOverview": {
+        "required": [
+          "coinsToday",
+          "dueCards",
+          "outstanding",
+          "roundSize",
+          "unlocked"
+        ],
+        "type": "object",
+        "properties": {
+          "unlocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outstanding": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dueCards": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "roundSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openRunId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The child\u0027s mixed review for today. Unlocked, LockReason and\nOutstanding are the bonus training\u0027s lock (\u0060no_plan\u0060, \u0060duty_open\u0060).\nDueCards counts the cards a round may draw now - due, already met, in a playable plan and in a\nposition without an open duty; a round asks at most RoundSize of them. OpenRunId\nnames today\u0027s started round, which a start resumes. CoinsToday is the bonus coins of the day over the\nbonus training and the mixed review together, against the shared DailyCoinCap (\u0060null\u0060 = no cap)."
+      },
+      "MixedReviewRunResponse": {
+        "required": [
+          "cards",
+          "runId"
+        ],
+        "type": "object",
+        "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MixedReviewCardView"
+            }
+          },
+          "coinsLeftToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A started (or resumed) mixed review round with its cards, in the order they are asked. CoinsLeftToday\nis what the shared bonus cap still pays as of this start: 0 when it is used up, \u0060null\u0060 without any cap."
+      },
       "MyActivationResponse": {
         "required": [
           "actionType",
@@ -45651,6 +45935,9 @@
               "media_upload_too_large",
               "media_variant_exists",
               "media_variant_not_found",
+              "mixed_review_completed",
+              "mixed_review_empty",
+              "mixed_review_stale",
               "no_checkable_content",
               "no_tag_matches",
               "not_author",
@@ -51967,6 +52254,9 @@
     },
     {
       "name": "Student \u2013 Missions"
+    },
+    {
+      "name": "Student \u2013 Mixed Review"
     },
     {
       "name": "Student \u2013 Objectives"

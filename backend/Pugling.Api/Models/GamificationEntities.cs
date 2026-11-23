@@ -190,6 +190,55 @@ public class TowerGameRunItem
     public DateTime? SolvedAt { get; set; }
 }
 
+/// <summary>
+/// One mixed review round (B-764): the cards due across all of the child's playable Leitner positions, frozen at start
+/// as <see cref="MixedReviewCard"/>s so a resumed round asks the same cards. Voluntary like the bonus training and behind
+/// its lock; it creates no practice session, so it meets no goal and misses none. At most one open round per child,
+/// held by a filtered unique index; a round left open from an earlier day is drawn afresh.
+/// </summary>
+public class MixedReviewRun
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>Learning day the round was drawn on: its cards were due on that day, and its coins count against that day's cap.</summary>
+    public DateOnly Day { get; set; }
+    public DateTime StartedAt { get; set; }
+    /// <summary>Set on submit; <c>null</c> while the round waits for its answers.</summary>
+    public DateTime? CompletedAt { get; set; }
+    public int CorrectCount { get; set; }
+    /// <summary>Coins booked for the round - part of the bonus cap the bonus training shares (B-765).</summary>
+    public int CoinsAwarded { get; set; }
+    public List<MixedReviewCard> Cards { get; set; } = [];
+}
+
+/// <summary>
+/// One card of a mixed review round: an item of the exercise a position played on the round's day, with the stage it is
+/// asked at. Grading moves the Leitner box of exactly this position (B-765), never another position's of the same word.
+/// </summary>
+public class MixedReviewCard
+{
+    public int Id { get; set; }
+    public int RunId { get; set; }
+    public MixedReviewRun? Run { get; set; }
+    public int PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
+    /// <summary>The exercise the position played on the round's day (B-848) - the key of its learning state.</summary>
+    public int ExerciseId { get; set; }
+    public Exercise? Exercise { get; set; }
+    public int ItemIndex { get; set; }
+    /// <summary>Place of the card in the round.</summary>
+    public int Order { get; set; }
+    /// <summary>The position's stage on the round's day, frozen at start (B-765 decision 2: never easier).</summary>
+    public int Stage { get; set; }
+    /// <summary>Fingerprint of the exercise content at start: a card whose exercise changed since is not graded.</summary>
+    public string? ContentHash { get; set; }
+    public string? GivenAnswer { get; set; }
+    /// <summary>Set on submit; <c>null</c> while open, or when the card was skipped (no longer due, content changed).</summary>
+    public bool? WasCorrect { get; set; }
+    public int CoinsAwarded { get; set; }
+}
+
 // Note: the former "offer" system (Reward/RewardRedemption/OfferPeriod) was removed - the family shop
 // (ShopArticle/ShopListing/ShopPurchase/ActivationRequest) is the only way coins are spent.
 // The ledger kind PointKind.Reward remains only as a tombstone for historical entries.

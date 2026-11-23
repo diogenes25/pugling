@@ -516,6 +516,9 @@ export const en = {
       extra_run_stale: "This exercise was changed after you started – start it again from the bonus training.",
       extra_cap_reached: "Your bonus coin limit is reached – this exercise would only show you the solutions, without coins. So it can't be played right now.",
       daily_box_none: "No chest is waiting for you right now.",
+      mixed_review_empty: "No card is due right now that a mixed round may use.",
+      mixed_review_completed: "This mixed round has already been handed in.",
+      mixed_review_stale: "This mixed round is from yesterday – start a new one.",
     },
   },
 } as const;
