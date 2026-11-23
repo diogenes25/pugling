@@ -529,6 +529,12 @@ export type OverviewResponse = S["OverviewResponse"];
 /** Kind-Tagessicht über alle aktiven Pläne (B-606): Pflichten, Serie, Truhe. */
 export type TodayResponse = S["TodayResponse"];
 
+/** Eine anstehende Klassenarbeit aus Sicht des Kindes (B-750): ohne Note und Kommentar. */
+export type UpcomingClassTest = S["UpcomingClassTestResponse"];
+
+/** Wie sicher das Kind im Vokabelstoff einer Klassenarbeit ist (B-751); ohne Vokabeln kein Maß (`null`). */
+export type ClassTestReadiness = S["ClassTestReadinessResponse"];
+
 /** Ein Tag im Verlauf (Vater-Auswertung). */
 export type ProgressDay = S["ProgressDay"];
 

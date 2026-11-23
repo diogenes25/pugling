@@ -309,21 +309,11 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
-    /// <summary>
-    /// Merges (without duplicates) the directly assigned exercises and those relevant via linked
-    /// tags of the given class tests.
-    /// </summary>
+    /// <summary>The bundle of the given class tests (<see cref="ClassTestBundle"/>) as exercise briefs.</summary>
     private async Task<List<ExerciseBrief>> LoadRelevantExercisesAsync(IReadOnlyCollection<int> klassenarbeitIds, CancellationToken ct)
     {
-        var directIds = await db.KlassenarbeitExercises
-            .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.ExerciseId).ToListAsync(ct);
-        var tagIds = await db.KlassenarbeitTags
-            .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.TagId).ToListAsync(ct);
-
-        return await LoadExercisesAsync(e => directIds.Contains(e.Id)
-            || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)), ct);
+        var ids = await ClassTestBundle.ExerciseIdsAsync(db, klassenarbeitIds, ct);
+        return await LoadExercisesAsync(e => ids.Contains(e.Id), ct);
     }
 
     /// <summary>Checks the exercise ids (existence + execute permission) and attaches new assignments; returns an error result or null.</summary>

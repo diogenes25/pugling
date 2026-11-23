@@ -101,3 +101,24 @@ Final. Je Kriterium die Änderung, die es rot macht (aus B-248 AK 1 und 2, hier 
 
 - **2026-11-20** — angelegt beim Teilen von [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) und geschätzt (Vorbereitungslauf,
   Sonnet): M, beides, keine Migration, kein Vertragsbruch. Entscheidungen stellvertretend, unbestätigt.
+- **2026-11-23** — `geschaetzt` → `in-arbeit` (Nachtlauf I, Sprint 133, Freigabe 8; Quelle B-248 trägt die Freigabe des Nutzers vom
+  2026-10-23). Gebaut: `GET api/v1/student/children/{childId}/class-tests/upcoming` (`Controllers/Student/ChildClassTestsController.cs`,
+  `ChildOwnershipFilter`, „heute“ aus `LearningDay` – der Risiko-Satz „UTC“ oben ist seit B-730 überholt), Antwortform
+  `UpcomingClassTestResponse` ohne Note (`Contracts/Student/ClassTestCountdownDtos.cs`), Client-Methode, Karte
+  `frontend/src/sohn/KlassenarbeitKarte.tsx` in beiden Zweigen von `SohnHome` (mit und ohne Tagespflicht). Lesart: die Liste trägt
+  alle anstehenden Arbeiten, früheste zuerst; die Sohn-App zeigt die erste (AK 4). Ein Fehler beim Lesen blendet die Karte aus (Hinweis,
+  kein Weg; im Kommentar begründet).
+- **2026-11-23** — Belege je AK-Fall (Mutanten-Probe nach der letzten Änderung, Tabelle im Protokoll `pm-sitzung-2026-11-23-i.md`):
+  AK 1 Status → `KlassenarbeitCountdownTests.Zeigt_Nur_Geplante_Ab_Heute_Frueheste_Zuerst`, M1 rot; Datum → derselbe, M2 rot; Tage →
+  derselbe, M4 rot; Datum in der Karte → `KlassenarbeitKarte.test.tsx` „nennt Titel, Fach…“, F9 rot; heute/morgen → F3 rot. AK 2 →
+  `Antwort_Traegt_Weder_Note_Noch_Notenkommentar`, M5 (Feld `GradeComment` im DTO) rot. AK 3 → `Fremdes_Kind_Und_Fremder_Vater_…`, M6
+  (Filter auf `PlanOwnershipFilter` getauscht) rot. AK 4 früheste → M3 rot (Server), F1 rot (Karte); ohne Arbeit kein Kasten → F2 rot.
+  Kindwechsel zeigt keine alte Arbeit → F10 rot.
+- **2026-11-23** — Review: `pugling-reviewer` ohne 🔴/🟡 (🟢: Bündel-Regel rückwärts noch in `ExerciseCatalogController`, Kommentar
+  präzisiert; doppelte Unterabfrage, belassen). `frontend-reviewer`: 🟡 Datum fehlte in der Karte (AK 1) – behoben mit Test (F9);
+  🟢 Kommentar zum Lesefehler präzisiert, zwei ungeprüfte Wächter (`stale`, Bereitschafts-Id) mit Test belegt (F10, F11), E2E-Kommentar
+  zur Zeitzone korrigiert. Zwei rote Wächter im vollen Lauf behoben: `UnpaginatedArrayGetCount` 31 → 32 (bewusste Zeile), Platzhalter
+  `{classTestId}` → `{id}` wie im Vater-Controller.
+- **2026-11-23** — Rollengang (maschinell): E2E `e2e/klassenarbeit-countdown.spec.ts` 1 passed auf den Ausweichports 5231/5204 nach der
+  letzten Änderung (Vater plant zwei Arbeiten über die API, das Kind sieht auf der Startseite die frühere mit Fach, Datum, „in 5 Tagen“
+  und „0 von 2 Wörtern sicher“); `e2e/pfad.spec.ts` 1 passed als Zeuge für den Zweig mit Tagespflicht.

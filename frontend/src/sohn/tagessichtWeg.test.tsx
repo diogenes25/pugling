@@ -23,6 +23,8 @@ vi.mock("../lib/api", async (importOriginal) => {
       today: (childId: number) => today(childId),
       // Der Interessen-Hinweis ist hier kein Thema – stumm, ohne Netz.
       myInterests: () => Promise.resolve({ needsIntro: false }),
+      // Die Klassenarbeit-Karte (B-750) ebenso: ohne Arbeit steht sie nicht da.
+      upcomingClassTests: () => Promise.resolve([]),
     },
   };
 });

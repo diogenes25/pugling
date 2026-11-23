@@ -24,6 +24,7 @@ import {
 import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
 import type { TruhenZiele } from "./pfad";
 import { MeldungsHinweis } from "./KartenMeldung";
+import { KlassenarbeitKarte } from "./KlassenarbeitKarte";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -69,6 +70,7 @@ export function SohnHome() {
           <div className="screen-title">{t("home.noMissionTitle")}</div>
           <p className="sub">{t("home.noMissionText")}</p>
         </div>
+        <KlassenarbeitKarte childId={childId} />
         <button type="button" className="btn ghost" onClick={signOut}>{t("home.signOut")}</button>
       </div>
     );
@@ -127,6 +129,9 @@ export function SohnHome() {
       {/* Scheitert das Neuladen (etwa nach `daily_box_none`), bleibt die alte Übersicht stehen – der Fehler muss
           trotzdem sichtbar sein, sonst wartet das Kind auf einen Stand, der nie kommt. */}
       <NeuLadenFehler fehler={sicht.error} laedt={sicht.loading} onRetry={sicht.reload} />
+
+      {/* B-750: wofür das Kind gerade lernt – über dem Pfad, aber nach der Tagespflicht. */}
+      <KlassenarbeitKarte childId={childId} />
 
       {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad – als aufklappbarer Reiter, damit das zweite Fach nicht
           erst nach dem ganzen ersten kommt. Offen startet das Fach mit dem START – und ein einziges Fach immer. */}
