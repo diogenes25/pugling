@@ -6,8 +6,8 @@ using Pugling.Api.Errors;
 namespace Pugling.Api.Controllers.Student;
 
 /// <summary>
-/// "Vokabel-Türme", the native tower game (B-851 core): runs built from the vocabulary of a plan position, and
-/// server-side grading of every token-to-tower assignment (<see cref="TowerGameService"/>). The supervisor may read the
+/// "Vokabel-Türme", the native tower game (B-851): levels built from the vocabulary of a plan position,
+/// server-side grading of every token-to-tower assignment, play time and coins (<see cref="TowerGameService"/>). The supervisor may read the
 /// overview; playing writes the child's learning progress and is the child's own.
 /// </summary>
 [ApiController]
@@ -27,35 +27,68 @@ public class TowerGameController(TowerGameService game) : ControllerBase
         await game.OverviewAsync(childId, ct);
 
     /// <summary>
-    /// Starts a run from the position's words: towers (meanings) and tokens (words) with opaque ids and no mapping
-    /// between them. <c>404</c> when the position is not a playable vocabulary position of the child with at least five
-    /// words.
+    /// Starts a level from the position's words: towers (meanings) and tokens (words) with opaque ids and no mapping
+    /// between them; the words are frozen on the run. <c>404</c> when the position is not a playable vocabulary position
+    /// of the child with at least five words, <c>409 tower_game_time_limit</c> once today's minutes are used up.
     /// </summary>
     [HttpPost("runs")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TowerRunResponse>> Start(int childId, StartTowerRunDto dto, CancellationToken ct)
     {
         if (!User.IsStudent()) return Forbid();
-        return await game.StartAsync(childId, dto.PlanPositionId, ct) is { } run
-            ? run
-            : this.ProblemWithCode(ApiErrors.NotFound, "No playable vocabulary position with at least five words.");
+        var outcome = await game.StartAsync(childId, dto.PlanPositionId, ct);
+        return outcome.Value is { } run ? run : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
     }
 
     /// <summary>
     /// Grades the assignment of a token to a tower and records it in the child's learning progress (source
-    /// <c>Game</c>). <c>404</c> for an unknown or foreign id, or a position that is no longer playable.
+    /// <c>Game</c>). <c>404</c> for an unknown or foreign id, <c>409 tower_game_run_closed</c> once the level ended or
+    /// its grace time after the daily limit is over.
     /// </summary>
     [HttpPost("assign")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TowerAssignResult>> Assign(int childId, AssignTowerTokenDto dto, CancellationToken ct)
     {
         if (!User.IsStudent()) return Forbid();
-        return await game.AssignAsync(childId, dto, ct) is { } result
-            ? result
-            : this.ProblemWithCode(ApiErrors.NotFound, "Tower or token not found in a playable run of this child.");
+        var outcome = await game.AssignAsync(childId, dto, ct);
+        return outcome.Value is { } result ? result : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
+    }
+
+    /// <summary>
+    /// Counts play time while the level is in the foreground (the app beats about every 15 seconds; each beat adds at most
+    /// a few seconds, so a forged or delayed beat cannot add more). <c>timeUp</c> tells the app to end the level.
+    /// </summary>
+    [HttpPost("runs/{runId:int}/heartbeat")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TowerHeartbeatResult>> Heartbeat(int childId, int runId, CancellationToken ct)
+    {
+        if (!User.IsStudent()) return Forbid();
+        return await game.HeartbeatAsync(childId, runId, ct) is { } beat
+            ? beat
+            : this.ProblemWithCode(ApiErrors.NotFound, "Tower-game run not found for this child.");
+    }
+
+    /// <summary>
+    /// Ends the level. The server decides by its own count of solved towers whether it is won and pays the coins, cut
+    /// to today's tower-game cap; ending twice returns the same result.
+    /// </summary>
+    [HttpPost("runs/{runId:int}/end")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TowerRunEndResult>> End(int childId, int runId, CancellationToken ct)
+    {
+        if (!User.IsStudent()) return Forbid();
+        var outcome = await game.EndAsync(childId, runId, ct);
+        return outcome.Value is { } result ? result : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
     }
 }

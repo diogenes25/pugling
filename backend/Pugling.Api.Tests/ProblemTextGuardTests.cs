@@ -27,6 +27,8 @@ public class ProblemTextGuardTests
     private static readonly Dictionary<string, string> Exceptions = new()
     {
         ["conflict"] = "Generic default; no action returns it with this code.",
+        ["tower_game_time_limit"] = "Only the native tower game (game/) starts runs; it has its own German text in PuglingApi.cs.",
+        ["tower_game_run_closed"] = "Only the native tower game (game/) plays runs; it has its own German text in PuglingApi.cs.",
     };
 
     [Fact]

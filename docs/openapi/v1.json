@@ -12998,7 +12998,7 @@
         "tags": [
           "Student \u2013 Tower Game"
         ],
-        "summary": "Starts a run from the position\u0027s words: towers (meanings) and tokens (words) with opaque ids and no mapping\nbetween them. \u0060404\u0060 when the position is not a playable vocabulary position of the child with at least five\nwords.",
+        "summary": "Starts a level from the position\u0027s words: towers (meanings) and tokens (words) with opaque ids and no mapping\nbetween them; the words are frozen on the run. \u0060404\u0060 when the position is not a playable vocabulary position\nof the child with at least five words, \u0060409 tower_game_time_limit\u0060 once today\u0027s minutes are used up.",
         "parameters": [
           {
             "name": "childId",
@@ -13062,6 +13062,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -13080,7 +13090,7 @@
         "tags": [
           "Student \u2013 Tower Game"
         ],
-        "summary": "Grades the assignment of a token to a tower and records it in the child\u0027s learning progress (source\n\u0060Game\u0060). \u0060404\u0060 for an unknown or foreign id, or a position that is no longer playable.",
+        "summary": "Grades the assignment of a token to a tower and records it in the child\u0027s learning progress (source\n\u0060Game\u0060). \u0060404\u0060 for an unknown or foreign id, \u0060409 tower_game_run_closed\u0060 once the level ended or\nits grace time after the daily limit is over.",
         "parameters": [
           {
             "name": "childId",
@@ -13136,6 +13146,170 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/runs/{runId}/heartbeat": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Counts play time while the level is in the foreground (the app beats about every 15 seconds; each beat adds at most\na few seconds, so a forged or delayed beat cannot add more). \u0060timeUp\u0060 tells the app to end the level.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerHeartbeatResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/runs/{runId}/end": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Ends the level. The server decides by its own count of solved towers whether it is won and pays the coins, cut\nto today\u0027s tower-game cap; ending twice returns the same result.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerRunEndResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -31153,13 +31327,13 @@
       },
       "AssignTowerTokenDto": {
         "required": [
-          "planPositionId",
+          "runId",
           "tokenId",
           "towerId"
         ],
         "type": "object",
         "properties": {
-          "planPositionId": {
+          "runId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -31174,7 +31348,7 @@
             "type": "string"
           }
         },
-        "description": "Assigns a token to a tower; both ids come from the same run of PlanPositionId."
+        "description": "Assigns a token to a tower; both ids come from the run RunId."
       },
       "AttemptDetail": {
         "required": [
@@ -32133,9 +32307,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "towerGameMinutesPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins; \u0060null\u0060 = the server default."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off);\n\u0060null\u0060 = the server default for both."
       },
       "ChildTimeline": {
         "required": [
@@ -32468,6 +32651,15 @@
             ]
           },
           "bonusDailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "towerGameMinutesPerDay": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
@@ -44140,10 +44332,11 @@
           "DailyBoxCoins",
           "DailyBoxGems",
           "ExtraTrainingCoins",
-          "RemediationBonus"
+          "RemediationBonus",
+          "TowerGameCoins"
         ],
         "type": "string",
-        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus."
+        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus, TowerGameCoins."
       },
       "PointsEntryDto": {
         "required": [
@@ -45376,6 +45569,8 @@
               "test_already_submitted",
               "test_attempts_exhausted",
               "timetable_slot_taken",
+              "tower_game_run_closed",
+              "tower_game_time_limit",
               "typed_test_unreachable",
               "unauthorized",
               "unit_content_in_use",
@@ -48530,6 +48725,10 @@
       },
       "TowerGameOverview": {
         "required": [
+          "coinsToday",
+          "dailyCoinCap",
+          "limitSeconds",
+          "playedSecondsToday",
           "positions"
         ],
         "type": "object",
@@ -48539,9 +48738,41 @@
             "items": {
               "$ref": "#/components/schemas/TowerGamePosition"
             }
+          },
+          "playedSecondsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "limitSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "The child\u0027s tower game: the plan positions whose vocabulary a run can be built from."
+        "description": "The child\u0027s tower game: the plan positions whose vocabulary a run can be built from, today\u0027s play time against the\nlimit (LimitSeconds 0 = the game is off) and today\u0027s tower-game coins against their own cap."
       },
       "TowerGamePosition": {
         "required": [
@@ -48583,16 +48814,112 @@
         },
         "description": "A vocabulary position of a playable plan. WordCount is the number of words in the exercise; a run\nneeds at least five."
       },
+      "TowerHeartbeatResult": {
+        "required": [
+          "limitSeconds",
+          "playedSecondsToday",
+          "timeUp"
+        ],
+        "type": "object",
+        "properties": {
+          "playedSecondsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "limitSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "timeUp": {
+            "type": "boolean"
+          }
+        },
+        "description": "Play time after a heartbeat. TimeUp is set once the daily limit plus the grace time for the running\nlevel is used up: the run takes no more assignments and the app ends the level."
+      },
+      "TowerRunEndResult": {
+        "required": [
+          "coinsAwarded",
+          "coinsToday",
+          "dailyCoinCap",
+          "goal",
+          "solved",
+          "won"
+        ],
+        "type": "object",
+        "properties": {
+          "won": {
+            "type": "boolean"
+          },
+          "solved": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "goal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The ended level, by the server\u0027s own count. CoinsAwarded is cut to what is left of today\u0027s cap;\nending a run twice returns the same result and pays nothing more."
+      },
       "TowerRunResponse": {
         "required": [
           "goal",
           "planPositionId",
+          "runId",
           "tokens",
           "towerSlots",
           "towers"
         ],
         "type": "object",
         "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "planPositionId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -48630,7 +48957,7 @@
             }
           }
         },
-        "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal correct assignments win the\nlevel. Tokens are shuffled and hold the words of all towers, so a token whose tower is not on the\nfield yet acts as a distractor."
+        "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal solved towers win the level.\nTokens are shuffled and hold the words of all towers, so a token whose tower is not on the field\nyet acts as a distractor. The app sends a heartbeat about every 15 seconds while the level is in the foreground."
       },
       "TowerTarget": {
         "required": [
@@ -48918,9 +49245,22 @@
           "clearBonusDailyCoinCap": {
             "type": "boolean",
             "default": false
+          },
+          "towerGameMinutesPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearTowerGameMinutesPerDay": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap and \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
       },
       "UpdateClassTestDto": {
         "type": "object",

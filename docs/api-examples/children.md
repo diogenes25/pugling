@@ -29,7 +29,8 @@ Response — `HTTP 200`:
     "createdAt": "<timestamp>",
     "coins": 50,
     "gems": 300,
-    "bonusDailyCoinCap": null
+    "bonusDailyCoinCap": null,
+    "towerGameMinutesPerDay": null
   }
 ]
 ```
@@ -65,7 +66,8 @@ Response — `HTTP 201`:
   "createdAt": "<timestamp>",
   "coins": 0,
   "gems": 0,
-  "bonusDailyCoinCap": null
+  "bonusDailyCoinCap": null,
+  "towerGameMinutesPerDay": null
 }
 ```
 
@@ -119,7 +121,8 @@ Response — `HTTP 200`:
   "createdAt": "<timestamp>",
   "coins": 0,
   "gems": 0,
-  "bonusDailyCoinCap": null
+  "bonusDailyCoinCap": null,
+  "towerGameMinutesPerDay": null
 }
 ```
 
@@ -153,7 +156,8 @@ Response — `HTTP 200`:
   "createdAt": "<timestamp>",
   "coins": 0,
   "gems": 0,
-  "bonusDailyCoinCap": null
+  "bonusDailyCoinCap": null,
+  "towerGameMinutesPerDay": null
 }
 ```
 

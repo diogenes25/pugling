@@ -14,7 +14,7 @@ import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
   ChildInterestResponse, ChildResponse, ContentRating, ExtraTrainingOverview, Gender, InterestFacet,
-  InterestTagResponse, SchoolType, SubjectResponse, UpdateChildDto,
+  InterestTagResponse, SchoolType, SubjectResponse, TowerGameOverview, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { SectionPanel, SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
@@ -125,6 +125,7 @@ export function VaterKind() {
         <RatingSection child={me} onSaved={child.reload} />
         {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
         <BonusSection key={me.id} child={me} onSaved={child.reload} />
+        <TowerGameSection key={`tower-${me.id}`} child={me} onSaved={child.reload} />
       </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}
@@ -397,6 +398,64 @@ function BonusSection({ child, onSaved }: { child: ChildResponse; onSaved: () =>
         )}
       </form>
       {!valid && <p className="sub">Erlaubt sind ganze Zahlen von 0 bis 1000.</p>}
+      <StatusBanner message={action.message} style={{ marginTop: 0 }} />
+    </section>
+  );
+}
+
+/**
+ * Das Spielzeit-Limit des Handyspiels Vokabel-Türme (B-851): Minuten je Tag, leer = Vorgabe des Servers, 0 = aus.
+ * Daneben der heutige Stand aus der Spiel-Sicht des Kindes, damit der Vater die Wirkung sieht.
+ */
+function TowerGameSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+  const own = child.towerGameMinutesPerDay ?? null;
+  const [value, setValue] = useState(own?.toString() ?? "");
+  // Wie beim Bonus-Deckel: ein halb getipptes Zahlenfeld meldet sich als leer, und leer hieße „Vorgabe“.
+  const [badInput, setBadInput] = useState(false);
+  const today = useAsync<TowerGameOverview>(() => api.towerGame(child.id), [child.id, own]);
+  const action = useAction();
+  const minutes = value.trim() === "" ? null : Number(value);
+  const valid = !badInput && (minutes === null || (Number.isInteger(minutes) && minutes >= 0 && minutes <= 240));
+
+  async function save(next: number | null) {
+    const dto: UpdateChildDto = next === null ? { clearTowerGameMinutesPerDay: true } : { towerGameMinutesPerDay: next };
+    if (await action.run(() => api.updateChild(child.id, dto), next === null ? "Vorgabe gilt wieder." : "Spielzeit gespeichert.")) {
+      if (next === null) setValue("");
+      onSaved();
+    }
+  }
+
+  return (
+    <section>
+      <h3 className="h-section">Vokabel-Türme (Handyspiel)</h3>
+      <p className="sub">
+        Im Spiel weist {child.name} englische Wörter den passenden Türmen zu; jede Zuweisung zählt für den Lernstand.
+        Ein gewonnenes Level bringt Münzen, mit eigenem Tagesdeckel.
+      </p>
+      <ListenAusfall was="Der heutige Spielstand" fehler={today.error} laedt={today.loading} onRetry={today.reload} schluessel={child.id} />
+      {today.data && (
+        <p className="sub">
+          Heute gespielt: <strong>{Math.floor(today.data.playedSecondsToday / 60)}</strong> von{" "}
+          {today.data.limitSeconds === 0 ? "0 Minuten (Spiel aus)" : <>{today.data.limitSeconds / 60} Minuten</>}
+          {own === null && " – Vorgabe des Servers"} · Münzen heute: {today.data.coinsToday} von {today.data.dailyCoinCap} 🪙
+        </p>
+      )}
+      <form className="row" style={{ alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}
+        onSubmit={(e) => { e.preventDefault(); if (valid && minutes !== own) void save(minutes); }}>
+        <div className="field" style={{ maxWidth: 220, marginBottom: 0 }}>
+          <FieldLabel htmlFor="tower-minutes" topic="towerGameMinutesPerDay">Minuten je Tag</FieldLabel>
+          <input id="tower-minutes" type="number" min={0} max={240} step={1} inputMode="numeric" placeholder="Vorgabe"
+            value={value} onChange={(e) => { setValue(e.target.value); setBadInput(e.target.validity.badInput); }}
+            aria-invalid={!valid || undefined} />
+        </div>
+        <button type="submit" className="btn small" style={{ width: "auto" }} disabled={action.busy || !valid || minutes === own}>Speichern</button>
+        {own !== null && (
+          <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={() => save(null)}>
+            Auf Vorgabe zurück
+          </button>
+        )}
+      </form>
+      {!valid && <p className="sub">Erlaubt sind ganze Zahlen von 0 bis 240.</p>}
       <StatusBanner message={action.message} style={{ marginTop: 0 }} />
     </section>
   );

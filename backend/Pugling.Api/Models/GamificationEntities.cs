@@ -150,6 +150,46 @@ public class ExtraTrainingRun
     public int CoinsAwarded { get; set; }
 }
 
+/// <summary>
+/// One level of the tower game "Vokabel-Türme" (B-851). The words are frozen as <see cref="TowerGameRunItem"/>s at start,
+/// so the server - not the client - knows which towers a level holds and how many of them the child solved. The play
+/// time is counted from heartbeats, clamped per beat, so an app left open in the background does not eat the limit
+/// and a forged beat cannot fake an hour; the coins are booked on <see cref="EndedAt"/> by the server's own count.
+/// </summary>
+public class TowerGameRun
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    public int PlanPositionId { get; set; }
+    public PlanPosition? PlanPosition { get; set; }
+    /// <summary>Learning day the run was started on - the day its play time counts against.</summary>
+    public DateOnly Day { get; set; }
+    public DateTime StartedAt { get; set; }
+    /// <summary>Last heartbeat (or the start): the next beat adds at most the clamp since this point.</summary>
+    public DateTime LastBeatAt { get; set; }
+    /// <summary>Play time counted from heartbeats.</summary>
+    public int PlayedSeconds { get; set; }
+    /// <summary>Set by the end call; <c>null</c> while the level runs.</summary>
+    public DateTime? EndedAt { get; set; }
+    /// <summary>Whether the server counted enough solved towers when the run ended.</summary>
+    public bool Won { get; set; }
+    public int CoinsAwarded { get; set; }
+    public List<TowerGameRunItem> Items { get; set; } = [];
+}
+
+/// <summary>One word of a tower-game run, frozen at start in tower order; <see cref="SolvedAt"/> marks its tower as solved.</summary>
+public class TowerGameRunItem
+{
+    public int Id { get; set; }
+    public int RunId { get; set; }
+    public TowerGameRun? Run { get; set; }
+    public int ExerciseItemId { get; set; }
+    public ExerciseItem? ExerciseItem { get; set; }
+    public int Order { get; set; }
+    public DateTime? SolvedAt { get; set; }
+}
+
 // Note: the former "offer" system (Reward/RewardRedemption/OfferPeriod) was removed - the family shop
 // (ShopArticle/ShopListing/ShopPurchase/ActivationRequest) is the only way coins are spent.
 // The ledger kind PointKind.Reward remains only as a tombstone for historical entries.

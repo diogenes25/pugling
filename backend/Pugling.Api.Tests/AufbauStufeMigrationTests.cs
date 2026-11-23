@@ -55,16 +55,17 @@ public sealed class AufbauStufeMigrationTests
 
                 // Children of the exercise, written with today's model: their tables are unchanged by this step.
                 var adult = new Adult { Name = "Vater" };
-                var child = new Child { Name = "Kind" };
                 var vocab = new Vocabulary { Key = "en-de:dog", SourceLanguage = "en", TargetLanguage = "de", Word = "dog", Translation = "Hund" };
-                db.AddRange(adult, child, vocab);
+                db.AddRange(adult, vocab);
                 await db.SaveChangesAsync();
+                // The child table gained columns after this step, so the child goes in as a raw row.
+                var childId = await LegacyChildRow.InsertAsync(db, "Kind");
                 var item = new ExerciseItem { ExerciseId = exerciseId, OrderIndex = 0, VocabularyId = vocab.Id };
                 var grant = new ExerciseGrant { ExerciseId = exerciseId, CreatorId = adult.Id, Permission = GrantPermission.Owner, GrantedByAdultId = adult.Id };
-                var plan = new StudyPlan { ChildId = child.Id, Title = "Plan" };
+                var plan = new StudyPlan { ChildId = childId, Title = "Plan" };
                 db.AddRange(item, grant, plan);
                 await db.SaveChangesAsync();
-                var progress = new ItemProgress { ChildId = child.Id, ItemId = item.Id, ExerciseId = exerciseId, VocabularyId = vocab.Id, Box = 3 };
+                var progress = new ItemProgress { ChildId = childId, ItemId = item.Id, ExerciseId = exerciseId, VocabularyId = vocab.Id, Box = 3 };
                 var position = new PlanPosition { StudyPlanId = plan.Id, ExerciseId = exerciseId };
                 db.AddRange(progress, position);
                 await db.SaveChangesAsync();

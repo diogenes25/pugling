@@ -344,6 +344,10 @@ public class SchemaGuardTests
             // The two sides are deliberately asymmetric (B-144): deleting the child takes its timetable
             // along, deleting a subject must not - the entry was typed by hand and belongs to the child.
             ["TimetableEntry.SubjectId"] = DeleteBehavior.Restrict, // -> Subject
+            ["TowerGameRun.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["TowerGameRun.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition (coins stay in the ledger, answers in the item history)
+            ["TowerGameRunItem.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
+            ["TowerGameRunItem.RunId"] = DeleteBehavior.Cascade, // -> TowerGameRun
             ["VocabTagLink.VocabTagId"] = DeleteBehavior.Cascade, // -> VocabTag
             ["VocabTagLink.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
             // Restrict: the base form must not disappear while an inflection points at it.

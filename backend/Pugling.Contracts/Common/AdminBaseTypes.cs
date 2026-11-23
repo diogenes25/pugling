@@ -78,4 +78,6 @@ public enum PointKind
     ExtraTrainingCoins = 16,
     /// <summary>One-off bonus when the last task of a remediation position "daily, until done" is done (B-636).</summary>
     RemediationBonus = 17,
+    /// <summary>Coins for a level won in the tower game "Vokabel-Türme" (B-851), capped per day on its own.</summary>
+    TowerGameCoins = 18,
 }

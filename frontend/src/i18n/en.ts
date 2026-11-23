@@ -165,6 +165,7 @@ export const en = {
       DailyBoxGems: "Daily reward box (gems)",
       ExtraTrainingCoins: "Bonus training",
       RemediationBonus: "Catch-up finished",
+      TowerGameCoins: "Vocab Towers",
     },
     bonus: {
       title: "Bonus training",

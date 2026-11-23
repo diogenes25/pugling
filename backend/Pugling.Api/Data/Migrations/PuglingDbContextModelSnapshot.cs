@@ -297,6 +297,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("TowerGameMinutesPerDay")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("Children");
@@ -2868,6 +2871,76 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("TimetableEntries");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoinsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastBeatAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlayedSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Won")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanPositionId");
+
+                    b.HasIndex("ChildId", "Day");
+
+                    b.ToTable("TowerGameRuns");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameRunItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RunId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("SolvedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseItemId");
+
+                    b.HasIndex("RunId", "ExerciseItemId")
+                        .IsUnique();
+
+                    b.ToTable("TowerGameRunItems");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.VocabTag", b =>
                 {
                     b.Property<int>("Id")
@@ -4101,6 +4174,44 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameRun", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
+                        .WithMany()
+                        .HasForeignKey("PlanPositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("PlanPosition");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameRunItem", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.ExerciseItem", "ExerciseItem")
+                        .WithMany()
+                        .HasForeignKey("ExerciseItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.TowerGameRun", "Run")
+                        .WithMany("Items")
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ExerciseItem");
+
+                    b.Navigation("Run");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.VocabTagLink", b =>
                 {
                     b.HasOne("Pugling.Api.Models.VocabTag", "VocabTag")
@@ -4275,6 +4386,11 @@ namespace Pugling.Api.Data.Migrations
             modelBuilder.Entity("Pugling.Api.Models.TextbookSeries", b =>
                 {
                     b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameRun", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.VocabTag", b =>

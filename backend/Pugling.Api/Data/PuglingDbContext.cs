@@ -98,6 +98,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// <summary>Daily reward box: one claim per (child, day) - the positive counterpart to <see cref="PositionGoalPenalty"/>.</summary>
     public DbSet<DailyBoxClaim> DailyBoxClaims => Set<DailyBoxClaim>();
     public DbSet<ExtraTrainingRun> ExtraTrainingRuns => Set<ExtraTrainingRun>();
+    public DbSet<TowerGameRun> TowerGameRuns => Set<TowerGameRun>();
+    public DbSet<TowerGameRunItem> TowerGameRunItems => Set<TowerGameRunItem>();
 
     // Family shop: the supervisor's catalog (articles + listings), the child's aggregated inventory,
     // purchase history and activation requests
@@ -904,6 +906,22 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(r => new { r.ChildId, r.Day });
             e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(r => r.Exercise).WithMany().HasForeignKey(r => r.ExerciseId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Tower-game runs (B-851): the (child, day) index serves the daily minute limit. Cascade with child and position -
+        // the coins stay in the ledger and the answers in the item history, the run is only the play log. A word appears
+        // once per run.
+        modelBuilder.Entity<TowerGameRun>(e =>
+        {
+            e.HasIndex(r => new { r.ChildId, r.Day });
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<TowerGameRunItem>(e =>
+        {
+            e.HasIndex(i => new { i.RunId, i.ExerciseItemId }).IsUnique();
+            e.HasOne(i => i.Run).WithMany(r => r.Items).HasForeignKey(i => i.RunId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(i => i.ExerciseItem).WithMany().HasForeignKey(i => i.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Shop article: a family-internal article number, unique; belongs to the adult (cascade).

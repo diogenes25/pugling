@@ -507,6 +507,13 @@ export const FIELD_HELP = {
       + "Münzen aus dem Lernpfad. Leer lassen heißt: die Vorgabe des Servers gilt. 0 heißt: üben ja, Münzen "
       + "nein. Erlaubt sind 0 bis 1000.",
   },
+  towerGameMinutesPerDay: {
+    title: "Spielzeit Vokabel-Türme",
+    text: "So viele Minuten am Tag darf dein Kind das Handyspiel Vokabel-Türme spielen. Gezählt wird nur, "
+      + "solange das Spiel im Vordergrund läuft. Ist die Zeit um, startet kein neues Level mehr; ein "
+      + "laufendes darf noch bis zu 5 Minuten zu Ende gespielt werden. Leer lassen heißt: Vorgabe des "
+      + "Servers (20 Minuten). 0 heißt: das Spiel ist aus. Erlaubt sind 0 bis 240.",
+  },
   interestFacet: {
     title: "Art des Interesses",
     text: "Ob es um ein Thema geht (Pokémon, Fußball) oder um einen Stil (Comic, Foto). Beides wird bei der "

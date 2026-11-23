@@ -227,6 +227,13 @@ public static class ApiErrors
     /// resets the next day; vocabulary is never refused for this (409).
     /// </summary>
     public static readonly ApiError ExtraExerciseDone = new("extra_exercise_done", 409, "Bonus exercise worth nothing more today.");
+    /// <summary>
+    /// The child's tower-game minutes of the day are used up (B-851): no new level starts until tomorrow; a level already
+    /// running may finish within the grace time (409).
+    /// </summary>
+    public static readonly ApiError TowerGameTimeLimit = new("tower_game_time_limit", 409, "Tower game time used up for today.");
+    /// <summary>The tower-game run has ended, or its grace time after the daily limit is over: it takes no more assignments (409).</summary>
+    public static readonly ApiError TowerGameRunClosed = new("tower_game_run_closed", 409, "Tower game run is closed.");
     /// <summary>The bonus run has already been submitted (409).</summary>
     public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
     /// <summary>

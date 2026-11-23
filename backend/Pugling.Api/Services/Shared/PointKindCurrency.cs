@@ -20,7 +20,7 @@ public static class PointKindCurrency
     {
         PointKind.Base or PointKind.Goal or PointKind.Manual or PointKind.ShopCoins
             or PointKind.GoalPenalty or PointKind.ObjectiveCoins or PointKind.DailyBoxCoins
-            or PointKind.ExtraTrainingCoins or PointKind.RemediationBonus => Currency.Coins,
+            or PointKind.ExtraTrainingCoins or PointKind.RemediationBonus or PointKind.TowerGameCoins => Currency.Coins,
         PointKind.Combo or PointKind.Speed or PointKind.Mission
             or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems
             or PointKind.ManualGems or PointKind.ObjectiveGems or PointKind.DailyBoxGems => Currency.Gems,

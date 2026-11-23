@@ -15,7 +15,7 @@ import type {
   ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
-  ExtraTrainingOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
@@ -744,6 +744,9 @@ export const api = {
   // Eine Runde wird am Stück abgegeben; der Server wählt die Form, wertet und bucht die Münzen.
   extraTraining: (childId: number) =>
     http<ExtraTrainingOverview>(`${V1}/student/children/${childId}/extra-training`),
+  // ---- Vokabel-Türme (natives Spiel, B-851): das Web liest nur den Tagesstand für die Vater-Einstellung ----
+  towerGame: (childId: number) =>
+    http<TowerGameOverview>(`${V1}/student/children/${childId}/tower-game`),
   startExtraRun: (childId: number, exerciseId: number) =>
     http<ExtraRunResponse>(`${V1}/student/children/${childId}/extra-training/${exerciseId}/runs`, "POST"),
   submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>

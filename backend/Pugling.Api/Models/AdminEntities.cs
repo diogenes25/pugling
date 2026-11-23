@@ -96,6 +96,12 @@ public class Child
     public int? BonusDailyCoinCap { get; set; }
 
     /// <summary>
+    /// Minutes per day this child may play the tower game (B-851), set by the supervisor; <c>null</c> = the server default
+    /// (<c>Gamification:TowerGame:MinutesPerDay</c>), 0 = the game is off. Keeps the game a supplement to practice.
+    /// </summary>
+    public int? TowerGameMinutesPerDay { get; set; }
+
+    /// <summary>
     /// Weighted interests from the controlled taxonomy (including dislikes at a negative weight).
     /// Complements the free-form <see cref="Interests"/>, it does not replace it: free text is the language
     /// of the AI creator, referenced tags are the basis of the machine-driven image selection.

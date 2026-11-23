@@ -44,9 +44,17 @@ public sealed class PuglingApi : IDisposable
             new StartTowerRunDto(planPositionId));
 
     /// <summary>Lets the server grade a token-to-tower assignment.</summary>
-    public Task<TowerAssignResult> AssignAsync(int planPositionId, string tokenId, string towerId) =>
+    public Task<TowerAssignResult> AssignAsync(int runId, string tokenId, string towerId) =>
         SendAsync<TowerAssignResult>(HttpMethod.Post, $"student/children/{ChildId}/tower-game/assign",
-            new AssignTowerTokenDto(planPositionId, tokenId, towerId));
+            new AssignTowerTokenDto(runId, tokenId, towerId));
+
+    /// <summary>Reports that the level is still in the foreground; the server counts the play time.</summary>
+    public Task<TowerHeartbeatResult> HeartbeatAsync(int runId) =>
+        SendAsync<TowerHeartbeatResult>(HttpMethod.Post, $"student/children/{ChildId}/tower-game/runs/{runId}/heartbeat", null);
+
+    /// <summary>Ends the level; the server decides by its own count whether it is won and pays the coins.</summary>
+    public Task<TowerRunEndResult> EndAsync(int runId) =>
+        SendAsync<TowerRunEndResult>(HttpMethod.Post, $"student/children/{ChildId}/tower-game/runs/{runId}/end", null);
 
     private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body)
     {
@@ -64,17 +72,28 @@ public sealed class PuglingApi : IDisposable
         using (response)
         {
             if (!response.IsSuccessStatusCode)
+            {
+                // The ProblemDetails body carries a stable code; only the 409 cases need telling apart here.
+                var problem = await response.Content.ReadAsStringAsync();
                 throw new ApiException((int)response.StatusCode switch
                 {
                     401 => "PIN falsch oder Anmeldung abgelaufen.",
                     404 => "Nicht gefunden – ist der Plan aktiv?",
+                    409 when problem.Contains("tower_game_time_limit") => "Deine Spielzeit für heute ist um. Morgen geht's weiter!",
+                    409 when problem.Contains("tower_game_run_closed") => "Das Level ist vorbei.",
+                    409 => "Gerade kam etwas dazwischen – bitte nochmal.",
                     429 => "Zu viele Versuche, kurz warten.",
                     var code => $"Fehler vom Server (HTTP {code}).",
-                });
+                }, problem.Contains("tower_game_run_closed"));
+            }
             return (await response.Content.ReadFromJsonAsync<T>())!;
         }
     }
 }
 
-/// <summary>A failed API call with a message ready for the screen.</summary>
-public sealed class ApiException(string message) : Exception(message);
+/// <summary>A failed API call with a message ready for the screen; <see cref="RunClosed"/> means the level is over.</summary>
+public sealed class ApiException(string message, bool runClosed = false) : Exception(message)
+{
+    /// <summary>The server took no more assignments for this run (ended, or the grace time after the limit is over).</summary>
+    public bool RunClosed { get; } = runClosed;
+}

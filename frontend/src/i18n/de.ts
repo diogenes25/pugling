@@ -177,6 +177,7 @@ export const de = {
       DailyBoxGems: "Tägliche Belohnungsbox (Gems)",
       ExtraTrainingCoins: "Bonus-Training",
       RemediationBonus: "Nacharbeit geschafft",
+      TowerGameCoins: "Vokabel-Türme",
     },
     // Bonus-Training: Extra-Übungen zum aktuellen Thema, offen nach der Tagespflicht.
     bonus: {

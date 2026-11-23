@@ -15,7 +15,7 @@ namespace PuglingTower;
 public partial class Level : Node2D
 {
     /// <summary>Raised once when the level ends: won?, correct and total assignments.</summary>
-    public event Action<bool, int, int>? Finished;
+    public event Action<int, int, int, bool>? Finished;
 
     private static readonly Vector2[] Path =
         [new(1340, 110), new(930, 110), new(930, 610), new(470, 610), new(470, 230), new(70, 230)];
@@ -64,7 +64,10 @@ public partial class Level : Node2D
     private TowerToken? _carried;
     private int _correct, _total, _lives = BaseLives;
     private float _spawnTimer = 1f, _elapsed;
-    private bool _busy, _over;
+    private bool _busy, _over, _beating;
+    private double _sinceBeat;
+    /// <summary>The app reports the foreground play time about this often (B-851: the server clamps each beat).</summary>
+    private const double BeatInterval = 15;
 
     // Left thumb: virtual joystick.
     private int _stickFinger = -1;
@@ -171,6 +174,8 @@ public partial class Level : Node2D
         if (_over) return;
         var dt = (float)delta;
         _elapsed += dt;
+        _sinceBeat += delta;
+        if (_sinceBeat >= BeatInterval && !_beating) _ = BeatAsync();
 
         // Keyboard as a desktop fallback for the left thumb.
         var keys = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
@@ -204,7 +209,7 @@ public partial class Level : Node2D
             if (m.Distance >= length)
             {
                 _monsters.RemoveAt(i);
-                if (--_lives <= 0) End(false);
+                if (--_lives <= 0) End(timeUp: false);
                 UpdateHud();
                 continue;
             }
@@ -290,7 +295,7 @@ public partial class Level : Node2D
         _assignPanel.Visible = false;
         try
         {
-            var result = await _api.AssignAsync(_run.PlanPositionId, token.TokenId, target.TowerId);
+            var result = await _api.AssignAsync(_run.RunId, token.TokenId, target.TowerId);
             _total++;
             _carried = null;
             GD.Print($"TURM assign '{token.Word}' -> '{target.Prompt}': {(result.Correct ? "richtig" : "falsch, erwartet " + result.Expected)}");
@@ -301,7 +306,7 @@ public partial class Level : Node2D
                 tower.Ammo += RefillAmmo;
                 tower.Target = _nextTargets.Count > 0 ? _nextTargets.Dequeue() : null;
                 Flash($"Richtig! „{token.Word}“ = „{target.Prompt}“", Colors.LightGreen);
-                if (_correct >= _run.Goal) End(true);
+                if (_correct >= _run.Goal) End(timeUp: false);
             }
             else
             {
@@ -313,6 +318,7 @@ public partial class Level : Node2D
         catch (ApiException ex)
         {
             Flash(ex.Message, Colors.Orange);
+            if (ex.RunClosed) End(timeUp: true);
         }
         finally
         {
@@ -335,13 +341,37 @@ public partial class Level : Node2D
         _carry.Text = _carried is null ? "" : $"Du trägst: {_carried.Word}";
     }
 
-    private void End(bool won)
+    private async Task BeatAsync()
+    {
+        _beating = true;
+        _sinceBeat = 0;
+        try
+        {
+            var beat = await _api.HeartbeatAsync(_run.RunId);
+            if (beat.TimeUp)
+            {
+                Flash("Die Spielzeit für heute ist um.", Colors.Orange);
+                End(timeUp: true);
+            }
+        }
+        catch (ApiException)
+        {
+            // A lost beat costs only its seconds; the next one goes out in 15 s.
+        }
+        finally
+        {
+            _beating = false;
+        }
+    }
+
+    // The server decides whether the level is won (its own count of solved towers); the client only says it is over.
+    private void End(bool timeUp)
     {
         if (_over) return;
         _over = true;
         _assignPanel.Visible = false;
-        GD.Print($"TURM ende {(won ? "gewonnen" : "verloren")} {_correct}/{_total}");
-        Finished?.Invoke(won, _correct, _total);
+        GD.Print($"TURM ende {(timeUp ? "zeit um" : "")} {_correct}/{_total}");
+        Finished?.Invoke(_run.RunId, _correct, _total, timeUp);
     }
 
     private static float PathLength()

@@ -1,4 +1,5 @@
 using Godot;
+using Pugling.Contracts.Student;
 using PuglingTower.Net;
 
 namespace PuglingTower;
@@ -109,6 +110,8 @@ public partial class GameRoot : Control
         try
         {
             var overview = await _api.OverviewAsync();
+            var minutesLeft = Math.Max(0, overview.LimitSeconds - overview.PlayedSecondsToday) / 60;
+            box.AddChild(Text($"Spielzeit heute noch {minutesLeft} Min.  ·  Münzen heute {overview.CoinsToday}/{overview.DailyCoinCap} 🪙", 26));
             if (overview.Positions.Count == 0) _status.Text = "Kein aktiver Plan mit genug Wörtern.";
             foreach (var p in overview.Positions)
                 box.AddChild(Action($"{p.SubjectName} · {p.ExerciseTitle} ({p.WordCount})", () => _ = StartAsync(p.PlanPositionId)));
@@ -128,7 +131,7 @@ public partial class GameRoot : Control
             _lastPosition = planPositionId;
             var level = new Level();
             level.Setup(_api, run);
-            level.Finished += (won, correct, total) => ShowResult(won, correct, total);
+            level.Finished += (runId, correct, total, timeUp) => _ = ShowResultAsync(runId, correct, total, timeUp);
             Replace(level);
         }
         catch (ApiException ex)
@@ -137,12 +140,28 @@ public partial class GameRoot : Control
         }
     }
 
-    private void ShowResult(bool won, int correct, int total)
+    private async Task ShowResultAsync(int runId, int correct, int total, bool timeUp)
     {
-        var box = Page(won ? "Level geschafft!" : "Die Monster sind durchgebrochen.");
+        TowerRunEndResult? end = null;
+        string? error = null;
+        try
+        {
+            end = await _api.EndAsync(runId);
+        }
+        catch (ApiException ex)
+        {
+            error = ex.Message;
+        }
+        var title = end?.Won == true ? "Level geschafft!" : timeUp ? "Spielzeit für heute ist um." : "Die Monster sind durchgebrochen.";
+        var box = Page(title);
         box.AddChild(Text($"{correct} von {total} Zuweisungen richtig.", 30));
+        if (end is not null)
+            box.AddChild(Text(end.CoinsAwarded > 0
+                ? $"+{end.CoinsAwarded} 🪙  (heute {end.CoinsToday}/{end.DailyCoinCap})"
+                : end.Won ? $"Münzdeckel für heute erreicht ({end.CoinsToday}/{end.DailyCoinCap} 🪙)." : "Keine Münzen diesmal.", 30));
         box.AddChild(Action("Noch ein Level", () => _ = StartAsync(_lastPosition)));
         box.AddChild(Action("Andere Wörter", () => _ = ShowPositionsAsync()));
         box.AddChild(_status);
+        if (error is not null) _status.Text = error;
     }
 }

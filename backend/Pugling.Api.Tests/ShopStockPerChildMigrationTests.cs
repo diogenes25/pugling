@@ -36,17 +36,15 @@ public sealed class ShopStockPerChildMigrationTests
             {
                 await db.GetService<IMigrator>().MigrateAsync(Before);
                 var adult = new Adult { Name = "Vater" };
-                var childA = new Child { Name = "A" };
-                var childB = new Child { Name = "B" };
-                db.AddRange(adult, childA, childB);
+                db.Add(adult);
                 await db.SaveChangesAsync();
+                (a, b) = (await LegacyChildRow.InsertAsync(db, "A"), await LegacyChildRow.InsertAsync(db, "B"));
                 db.SupervisorLinks.AddRange(
-                    new SupervisorLink { SupervisorId = adult.Id, StudentId = childA.Id },
-                    new SupervisorLink { SupervisorId = adult.Id, StudentId = childB.Id });
+                    new SupervisorLink { SupervisorId = adult.Id, StudentId = a },
+                    new SupervisorLink { SupervisorId = adult.Id, StudentId = b });
                 var article = new ShopArticle { AdultId = adult.Id, ArticleNumber = "M-1", Title = "Zocken" };
                 db.ShopArticles.Add(article);
                 await db.SaveChangesAsync();
-                (a, b) = (childA.Id, childB.Id);
 
                 // Old shape: one family stock and one refill time on the listing.
                 daily = await ListingAsync(db, article.Id, "Daily", current: 2, max: 3, last: "2026-11-18 06:00:00");
