@@ -117,3 +117,42 @@ Mutante, die sie **erstmals** setzt (`??=`) und eine, die sie **ändert** – de
 weil kein Tor die Zielspalten eines Schnappschusses kennt.
 
 **Bewusst ungedeckt:** Plural `_other` mit Deckel 0 (die Schlüssel existieren, i18n-Parität prüft sie).
+
+## Sprint 119 — Ziel & Umfang
+
+**Sprint-Ziel:** Stellt der Vater eine Nacharbeit „täglich, bis erledigt“ auf Kür, behält der Sohn jeden Tag, an dem er
+sie erfüllt hat, in seiner Serie – und keinen Tag mehr.
+**Umfang:** B-820 (XS→S, backend, keine Migration).
+**Entwickler-Brief:** Quelle der Wahrheit ist die Spanne `DutyUntil`/`CadenceUntil` (B-659) neben `CompletedOn` (B-636);
+der Schreiber ist `CloseDutyAsync`, die Leser `DutyCadenceOn`/`HasDutyOn` und die Tagesansicht.
+
+## Iteration 119 — umgesetzt
+
+- **Backend:** `CloseDutyAsync` schließt auch `UntilDone`; die Spanne endet spätestens an `CompletedOn`.
+- **Verifikation:** rote Proben 2/2 und 1/1 (Begrenzung); Mutanten R1–R3 rot; Backend 2131/2131 (Release, nach der letzten
+  Änderung). Commit `f294e804`.
+- **Review** (`pugling-reviewer`): ein 🟡 – eine **beendete** Nacharbeit kam beim Freigeben als erfüllte Pflicht in die
+  Tagesansicht zurück und hätte Truhe und Bonus-Training ohne Spielen geöffnet → Begrenzung (**gezählt, 1/5**); zwei 🟢
+  (Story-Text, eine Serien-Zeile ohne Beweiskraft) nachgezogen.
+
+## Runde 119 — Abnahme
+
+- **Sohn — abgenommen:** „Papa hat meine Nacharbeit freigegeben, und mein Tag von heute bleibt in der Serie.“ Maschinell
+  (Integrationstests mit Wechsel über die Vater-API) und E2E `nacharbeit`, `nacharbeit-bis-erledigt` (2 passed).
+- **Vater — abgenommen:** „Freigeben verschenkt nichts: eine beendete Nacharbeit öffnet keine Truhe.“
+  (`Beendete_Nacharbeit_Auf_Kuer_Endet_Am_Tag_Ihres_Endes`).
+- **Creator — Regressionszeuge:** Suite grün.
+- **Zum Umstoßen:** Entscheidung 1 hebt B-659 Entscheidung 2 („nur Daily/Weekly“) für die Nacharbeit auf.
+
+## Retrospektive Sprint 119
+
+**Nachschau:** B-845, B-846, B-847 (Sprint 118), Selbst-Check mit benannten Prüfpunkten (Bedingung gegen `capZero`,
+Spec-Kopf gegen gemessene Mutanten, Schnappschuss gegen alle Spalten der Entität); kein Befund, `nachgeschaut` gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** Der erste Fix war im Kleinen richtig und öffnete einen Nachbarweg – die
+Tagesansicht liest die Spanne, nicht `CompletedOn`. Mein Brief nannte die Leser, ich habe sie aber nicht einzeln gegen
+den neuen Wert gelesen; der Reviewer hat es getan. Genau das verlangt `pm-loop` Step 4 („grep its callers and re-read
+each“) – die Regel stand da, sie wurde nicht befolgt.
+
+**Vorschlag (nicht gelandet):** keiner neu – die Regel existiert; (CY)/(CZ) bleiben offen. Ehrlich: kein Mechanismus hätte
+das gefangen, außer der gelesenen Aufruferliste.

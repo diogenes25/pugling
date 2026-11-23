@@ -93,7 +93,7 @@ Sitzung geseedet, Wechsel über die Vater-API, Serie über `ChildStreakAsync`).
   - AK 3 → `RemediationPositionTests.Beendete_Nacharbeit_Auf_Kuer_Endet_Am_Tag_Ihres_Endes`, rote Probe vor der Begrenzung
     erwartet rot, gemessen rot (1/1, `DutyUntil` 23.11. statt 21.11.); R3 (Begrenzung aus) → rot. R1/R2 nach der letzten
     Änderung erneut rot.
-- **2026-11-23** — abgenommen (Sprint 119, Commit siehe Protokoll). Verifikation nach der letzten Änderung: Backend
+- **2026-11-23** — abgenommen (`f294e804`, Sprint 119). Verifikation nach der letzten Änderung: Backend
   2131/2131 (Release); Rollengang Vater/Sohn maschinell über die Integrationstests (Wechsel über die Vater-API, Serie und
   Tagesansicht über den Dienst) plus E2E `nacharbeit` und `nacharbeit-bis-erledigt` gegen frisch gestartete Server
   (5211/5184) – 2 passed. Creator Regressionszeuge (Suite grün).

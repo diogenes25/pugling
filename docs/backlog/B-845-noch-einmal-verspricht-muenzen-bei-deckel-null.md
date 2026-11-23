@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-660)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: [B-660]
 wartet_auf: ""
 ---
@@ -66,3 +66,4 @@ XS, frontend, keine Migration, kein Vertragsbruch. Testweg: `NochEinmal.test.tsx
   gestartete Server (Ausweichports 5211/5184): `nochmal-nach-pflicht`, `bonus`, `bonus-deckel`, `bonus-deckel-voll`,
   `bonus-satz-je-karte`, `nacharbeit`, `nacharbeit-bis-erledigt` – 7 passed. Vater und Creator Regressionszeugen (Suite
   grün, `bonus-deckel` fährt die Vater-Seite des Deckels).
+- **2026-11-23** — nachgeschaut (Retro Sprint 119, Selbst-Check). Prüfpunkte: Bedingung `dailyCoinCap === 0` gleich `capZero` (`SohnBonus.tsx:87`); `null`/fehlend behält das Versprechen wie `capReached` (`!= null`); alle vier Schlüssel in de/en. Kein Befund.

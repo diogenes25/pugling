@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-660)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: [B-660]
 wartet_auf: ""
 ---
@@ -64,3 +64,4 @@ XS, backend (nur Tests), keine Migration, kein Vertragsbruch. Testweg: `ExtraTra
   gestartete Server (Ausweichports 5211/5184): `nochmal-nach-pflicht`, `bonus`, `bonus-deckel`, `bonus-deckel-voll`,
   `bonus-satz-je-karte`, `nacharbeit`, `nacharbeit-bis-erledigt` – 7 passed. Vater und Creator Regressionszeugen (Suite
   grün, `bonus-deckel` fährt die Vater-Seite des Deckels).
+- **2026-11-23** — nachgeschaut (Retro Sprint 119, Selbst-Check). Prüfpunkte: der Schnappschuss nennt jede Datenspalte von `PositionItemProgress` (`PlanPositionEntities.cs:253ff`, 12 von 12 ohne Id/Fremdschlüssel); der Aufbau enthält je eine Zeile ohne Präge- und ohne Einführungstag und plan-weite Zeilen. Kein Befund.
