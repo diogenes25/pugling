@@ -437,7 +437,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             var plan = await db.StudyPlans.AsNoTracking().FirstAsync(p => p.Id == planId, ct);
             await progress.CloseDutyAsync(pos, plan, learningDay.Today, ct);
         }
-        else if (dto.Cadence is { } dutyAgain && dutyAgain != GoalCadence.None)
+        // Only a real change of cadence clears the span (B-752): a preparation duty carries an end while it stays daily, and the
+        // form sends the cadence with every save - a mere save must not turn it into a daily duty without end.
+        else if (dto.Cadence is { } dutyAgain && dutyAgain != GoalCadence.None && dutyAgain != pos.Cadence)
         {
             pos.DutyUntil = null;
             pos.CadenceUntil = null;

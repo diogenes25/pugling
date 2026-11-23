@@ -152,6 +152,11 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         {
             // No plan in the subject: nothing arises, and the test is not frozen - a plan switched on later starts it then.
             if (await PlanForAsync(k, ct) is not { } plan) continue;
+            // Claim the start in the database first: two logins at once (or a login and the father's change) both read the
+            // test as not started, and only the one whose update lands may add the positions - else they come twice.
+            var claimed = await db.Klassenarbeiten.Where(x => x.Id == k.Id && x.PrepStartedOn == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.PrepStartedOn, today), ct);
+            if (claimed == 0) continue;
             await StartAsync(k, plan, today, ct);
             // Saved per test: the next test's "already in the plan?" reads the database, and must see these positions.
             await db.SaveChangesAsync(ct);
@@ -229,7 +234,8 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
                 || (k.SubjectId == pos.StudyPlan!.SubjectId && bundles[k.Id].Contains(pos.ExerciseId))).ToList();
             if (covering.Count == 0)
             {
-                if (pos.DutyUntil is not { } end || end < today) continue; // already over
+                // Already over. A preparation duty without an end (its span cleared by a cadence switch) is still running and closes.
+                if (pos.DutyUntil is { } end && end < today) continue;
                 await progress.CloseDutyAsync(pos, pos.StudyPlan!, today, ct);
                 changed = true;
                 continue;

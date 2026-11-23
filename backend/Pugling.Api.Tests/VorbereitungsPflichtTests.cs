@@ -126,6 +126,78 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
     }
 
     [Fact]
+    public async Task Spaeter_Erster_Login_Im_Fenster_Bucht_Nichts_Rueckwirkend()
+    {
+        // AK 1's red condition: the child first logs in three days into the window. The duty owes from that day, not from the
+        // window's start - although the child already played in the plan before (so B-535's first-play clamp does not hide it).
+        var k = await KindAsync();
+        var andere = await VokabelnAsync(k.Father);
+        var frei = 0;
+        Db(db =>
+        {
+            var p = new PlanPosition { StudyPlanId = k.PlanId, ExerciseId = andere, Cadence = GoalCadence.None };
+            db.PlanPositions.Add(p);
+            db.SaveChanges();
+            frei = p.Id;
+        });
+        GespieltAm(k.PlanId, frei, D.AddDays(3));
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(10), [ex]); // window begins D+3
+
+        Vorspulen(6);
+        await LoginAsync(k);
+        var pos = Positionen(k.PlanId).Single(p => p.ExerciseId == ex);
+        Assert.Equal(D.AddDays(6), pos.DutySince);
+
+        Vorspulen(2);
+        await LoginAsync(k);
+        Assert.Equal(-10, Strafen(k.ChildId)); // D+6 and D+7 - never D+3 to D+5
+    }
+
+    [Fact]
+    public async Task Speichern_Der_Position_Nach_Dem_Termin_Macht_Keine_Endlose_Pflicht()
+    {
+        // Review B-752 (red): the father's form sends the cadence with every save; a save after the test day must not clear
+        // the duty's end and leave a daily duty with penalty that never stops.
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(3), [ex]);
+        await LoginAsync(k);
+        var pos = Assert.Single(Positionen(k.PlanId));
+        GespieltAm(k.PlanId, pos.Id, D);
+
+        Vorspulen(5);
+        await LoginAsync(k);
+        Assert.Equal(-15, Strafen(k.ChildId)); // D, D+1, D+2 missed
+        (await k.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{k.PlanId}/positions/{pos.Id}",
+            new { cadence = "Daily", penaltyCoins = 3 })).EnsureSuccessStatusCode();
+
+        Vorspulen(2);
+        await LoginAsync(k);
+        Assert.Equal(-15, Strafen(k.ChildId));
+        Assert.Equal(D.AddDays(2), Assert.Single(Positionen(k.PlanId)).DutyUntil);
+    }
+
+    [Fact]
+    public async Task Kauf_Gleicht_Ab_Wie_Der_Login()
+    {
+        // The second settlement seam (MeController purchase): a child that stays logged in still gets its duty in the window.
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(10), [ex]); // window begins D+3
+        var child = await LoginAsync(k);
+        (await k.Father.PostAsJsonAsync($"/api/v1/supervisor/children/{k.ChildId}/points", new { amount = 5, reason = "Start" }))
+            .EnsureSuccessStatusCode();
+        var listing = await TestApi.CreateShopListingAsync(k.Father, $"KA-{Guid.NewGuid():N}"[..12], coinPrice: 1,
+            unitsPerPurchase: 1, stock: 5);
+
+        Vorspulen(3);
+        (await child.PostAsJsonAsync($"/api/v1/student/me/shop/listings/{listing}/purchase", new { })).EnsureSuccessStatusCode();
+
+        Assert.Equal(D.AddDays(3), Assert.Single(Positionen(k.PlanId)).DutySince);
+    }
+
+    [Fact]
     public async Task Termintag_Und_Danach_Schulden_Nichts_Auch_Spaet_Abgerechnet()
     {
         var k = await KindAsync();
@@ -165,6 +237,64 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         await LoginAsync(k);
 
         Assert.Equal([ex], Positionen(k.PlanId).Select(p => p.ExerciseId));
+
+        // The other half of the frozen bundle: an exercise taken out of the test after the start keeps its duty.
+        (await k.Father.DeleteAsync($"/api/v1/supervisor/class-tests/{arbeit}/exercises/{ex}")).EnsureSuccessStatusCode();
+        Vorspulen(1);
+        await LoginAsync(k);
+        Assert.Equal(D.AddDays(3), Assert.Single(Positionen(k.PlanId)).DutyUntil);
+    }
+
+    [Fact]
+    public async Task Inaktiver_Plan_Im_Fach_Zaehlt_Nicht()
+    {
+        var k = await KindAsync();
+        Db(db => db.StudyPlans.Single(p => p.Id == k.PlanId).Active = false);
+        var ex = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(3), [ex]);
+
+        await LoginAsync(k);
+
+        Assert.Empty(Positionen(k.PlanId));
+        var liste = await k.Father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/class-tests?childId={k.ChildId}");
+        Assert.Equal("no_active_plan", liste.EnumerateArray().Single(a => a.GetProperty("id").GetInt32() == arbeit)
+            .GetProperty("prepBlockedReason").GetString());
+    }
+
+    [Fact]
+    public async Task Leere_Uebung_Wird_Keine_Pflicht()
+    {
+        // An exercise with nothing to play would be a duty nobody can meet - and a penalty every day.
+        var k = await KindAsync();
+        var leer = await VokabelnAsync(k.Father);
+        var voll = await VokabelnAsync(k.Father);
+        Db(db => db.ExerciseItems.RemoveRange(db.ExerciseItems.Where(i => i.ExerciseId == leer)));
+        await ArbeitAsync(k, D.AddDays(3), [leer, voll]);
+
+        await LoginAsync(k);
+
+        Assert.Equal([voll], Positionen(k.PlanId).Select(p => p.ExerciseId));
+    }
+
+    [Fact]
+    public async Task Vom_Vater_Freigegebene_Position_Bleibt_Frei()
+    {
+        // Decision 8: after the start the position is the father's. Freeing it must not be undone by the next reconcile.
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(5), [ex]);
+        await LoginAsync(k);
+        var pos = Assert.Single(Positionen(k.PlanId));
+        (await k.Father.PatchAsJsonAsync($"/api/v1/supervisor/study-plans/{k.PlanId}/positions/{pos.Id}", new { cadence = "None" }))
+            .EnsureSuccessStatusCode();
+        var frei = Assert.Single(Positionen(k.PlanId));
+
+        Vorspulen(1);
+        await LoginAsync(k);
+
+        var danach = Assert.Single(Positionen(k.PlanId));
+        Assert.Equal(GoalCadence.None, danach.Cadence);
+        Assert.Equal(frei.DutyUntil, danach.DutyUntil);
     }
 
     [Fact]
@@ -282,17 +412,17 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
     public async Task Dosis_Ist_Aufgerundet_Je_Tag_Und_Gedeckelt_Ohne_Tagesdosis_Traegt_ItemCount_Den_Deckel()
     {
         var k = await KindAsync();
-        var neun = await VokabelnAsync(k.Father, words: 9);
+        var zehn = await VokabelnAsync(k.Father, words: 10);
         var vierzig = await VokabelnAsync(k.Father, words: 40);
         var (_, _, rechnen) = await TestApi.CreateArithmeticExerciseAsync(k.Father);
-        await ArbeitAsync(k, D.AddDays(3), [neun, vierzig, rechnen]); // three days to go
+        await ArbeitAsync(k, D.AddDays(3), [zehn, vierzig, rechnen]); // three days to go
 
         await LoginAsync(k);
 
         var byExercise = Positionen(k.PlanId).ToDictionary(p => p.ExerciseId);
-        Assert.Equal(3, byExercise[neun].NewItemsPerDay);     // ceil(9 / 3)
-        Assert.Null(byExercise[neun].ItemCount);
-        Assert.True(byExercise[neun].UseLeitner);
+        Assert.Equal(4, byExercise[zehn].NewItemsPerDay);     // ceil(10 / 3), not 3
+        Assert.Null(byExercise[zehn].ItemCount);
+        Assert.True(byExercise[zehn].UseLeitner);
         Assert.Equal(10, byExercise[vierzig].NewItemsPerDay); // ceil(40 / 3) = 14, capped at 10
         Assert.Equal(0, byExercise[rechnen].NewItemsPerDay);  // no daily dose without the Leitner box
         Assert.Equal(10, byExercise[rechnen].ItemCount);

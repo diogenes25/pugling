@@ -52,6 +52,27 @@ public sealed class VorbereitungsPflichtMigrationTests
                 await db.SaveChangesAsync();
                 positionIds = plan.Positions.Select(p => p.Id).ToList();
                 testId = test.Id;
+                // Rows hanging on the positions (cascade children): the FK added to PlanPositions rebuilds that table in
+                // SQLite, and a rebuild with foreign keys on would take the child's penalty history and progress with it.
+                var daily = plan.Positions.First();
+                db.PositionGoalPenalties.Add(new PositionGoalPenalty
+                {
+                    PlanPositionId = daily.Id,
+                    Cadence = GoalCadence.Daily,
+                    PeriodStart = start,
+                    Day = start,
+                    Points = 5,
+                    AppliedAt = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                });
+                db.PositionItemProgress.Add(new PositionItemProgress { PlanPositionId = daily.Id, ExerciseId = exercise.Id, ItemIndex = 0, Box = 3 });
+                db.TestAttempts.Add(new TestAttempt
+                {
+                    StudyPlanId = plan.Id,
+                    PlanPositionId = daily.Id,
+                    Day = start,
+                    StartedAt = start.ToDateTime(new TimeOnly(10, 0), DateTimeKind.Utc),
+                });
+                await db.SaveChangesAsync();
 
                 var migrator = db.GetService<IMigrator>();
                 await migrator.MigrateAsync(Before);
@@ -73,6 +94,11 @@ public sealed class VorbereitungsPflichtMigrationTests
                 Assert.Null(test.PrepStartedOn);
                 Assert.Null(test.PrepWindowDays);
                 Assert.Equal(KlassenarbeitStatus.Planned, test.Status);
+
+                var daily = positionIds[0];
+                Assert.Equal(1, await db.PositionGoalPenalties.CountAsync(p => p.PlanPositionId == daily));
+                Assert.Equal(3, await db.PositionItemProgress.Where(p => p.PlanPositionId == daily).Select(p => p.Box).SingleAsync());
+                Assert.Equal(1, await db.TestAttempts.CountAsync(t => t.PlanPositionId == daily));
             }
         }
         finally
