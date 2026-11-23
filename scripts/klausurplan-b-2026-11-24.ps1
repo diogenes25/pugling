@@ -10,7 +10,8 @@
     Theodor (Child 1), Plan 13: Part C und seine Generalprobe werden Kür, Part B wird wieder tägliche Pflicht.
 
     Friedrich (Child 3)
-    - Plan 15: Die täglichen Testpositionen Unité 5 Découvertes / Atelier A (165/166) werden Kür. Die
+    - Plan 15: Die täglichen Testpositionen Unité 5 Découvertes / Atelier A (165/166) und die Testsätze und
+      Grammatik zum Petit contrôle (214–217, Testvorbereitung vom 22.11.) werden Kür. Die
       Wochenpflichten 167/168 bleiben als Generalprobe für die Contrôle am 8.12. Unité 5 Atelier B wird tägliche
       Pflicht (2 Wörter am Tag, 20 Wörter bis zum 4.12. eingeführt).
     - Plan 16: Generalprobe als Wochenpflicht für die Englisch-Klassenarbeit am 4.12. (Part A und B, 80 %, kein
@@ -64,14 +65,14 @@ foreach ($planId in $plans.Keys) {
     if ($p.childId -ne $plans[$planId] -or -not $p.active) { throw "Plan $planId ist nicht der aktive Plan von Kind $($plans[$planId]) – Abbruch, nichts geändert." }
     $positions[$planId] = @(Invoke-Api GET "supervisor/study-plans/$planId/positions" $null)
 }
-$expected = @{ 100 = 14; 102 = 15; 165 = 111; 166 = 112; 202 = 131 }
+$expected = @{ 100 = 14; 102 = 15; 165 = 111; 166 = 112; 202 = 131; 214 = 146; 215 = 147; 216 = 148; 217 = 149 }
 function Pos([int]$planId, [int]$posId) {
     $hit = @($positions[$planId] | Where-Object { $_.id -eq $posId })
     if ($hit.Count -ne 1 -or $hit[0].exerciseId -ne $expected[$posId]) { throw "Position $posId in Plan $planId trägt nicht Übung $($expected[$posId]) – Abbruch, nichts geändert." }
     $hit[0]
 }
 $null = 100, 102 | ForEach-Object { Pos 13 $_ }
-$null = 165, 166, 202 | ForEach-Object { Pos 15 $_ }
+$null = 165, 166, 202, 214, 215, 216, 217 | ForEach-Object { Pos 15 $_ }
 if ((Pos 15 165).cadence -eq 'None') { throw 'Pos. 165 ist schon Kür – Paket B ist gelaufen, nichts geändert.' }
 if (@($positions[16] | Where-Object { $_.cadence -eq 'Weekly' }).Count -gt 0) { throw 'Plan 16 hat schon eine Generalprobe – Paket B ist gelaufen, nichts geändert.' }
 $rehearsalC = @($positions[13] | Where-Object { $_.exerciseId -eq 15 -and $_.cadence -eq 'Weekly' })
@@ -119,6 +120,8 @@ Write-Host ''
 Write-Host 'Friedrich – Plan 15 Französisch (Contrôle 8.12.):'
 Patch 15 165 $free
 Patch 15 166 $free
+# Testsätze und Grammatik zum Petit contrôle (Testvorbereitung vom 22.11.): Termin vorbei, sonst 8 Tagespflichten.
+214, 215, 216, 217 | ForEach-Object { Patch 15 $_ $free }
 Patch 15 202 (Duty 4)                   # Atelier B
 Write-Host 'Friedrich – Plan 16 Englisch (Klassenarbeit 4.12.):'
 Show (Invoke-Api POST 'supervisor/study-plans/16/positions' (Rehearsal 78 80))
