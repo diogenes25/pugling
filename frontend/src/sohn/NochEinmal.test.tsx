@@ -139,6 +139,32 @@ describe("NochEinmal, Sperre zu", () => {
     expect(container.textContent).toBe("");
   });
 
+  // B-845 AK 1/2: hat der Vater den Bonus-Deckel auf 0 gesetzt, gibt es nach der Sperre nie Münzen – der Satz verspricht
+  // sie dann nicht, ob Tages- oder Wochenziel. Rot ohne die Abfrage des Deckels oder wenn nur der Tagessatz sie bekommt.
+  it.each([
+    ["Daily", "Noch 1 Tagesziel offen – danach kannst du Übungen im Bonus-Training wiederholen."],
+    ["Weekly", "Noch 1 Wochenziel offen – danach kannst du Übungen im Bonus-Training wiederholen."],
+  ])("verspricht bei Deckel 0 keine Münzen (%s)", async (rewardCadence, satz) => {
+    extraTraining.mockResolvedValue({
+      unlocked: false, outstanding: ["A"], rewardCadence, exercises: [exercise(42, 100)], coinsToday: 0, dailyCoinCap: 0,
+    });
+    await zeige();
+
+    expect(screen.getByText(satz)).toBeTruthy();
+    expect(screen.queryByText(/für Münzen/)).toBeNull();
+  });
+
+  // B-845 AK 3: ohne Deckel (null) und mit Deckel über 0 bleibt das Versprechen. Rot, wenn die Abfrage `!dailyCoinCap`
+  // liest (fängt null mit) oder den Satz dauerhaft umstellt.
+  it.each([[null], [90]])("verspricht bei Deckel %s weiter Münzen", async (dailyCoinCap) => {
+    extraTraining.mockResolvedValue({
+      unlocked: false, outstanding: ["A"], rewardCadence: "Daily", exercises: [exercise(42, 100)], coinsToday: 0, dailyCoinCap,
+    });
+    await zeige();
+
+    expect(screen.getByText(/danach kannst du Übungen im Bonus-Training für Münzen wiederholen/)).toBeTruthy();
+  });
+
   // Rot, wenn der Block ohne offene Ziele trotzdem „noch 0 offen“ verspricht.
   it("bleibt leer, wenn die Sperre keine offenen Ziele nennt", async () => {
     extraTraining.mockResolvedValue({ unlocked: false, outstanding: [], rewardCadence: "None", exercises: [exercise(42, 100)] });

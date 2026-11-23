@@ -5,13 +5,16 @@ import { pfadStart, sohnLogin } from "./helpers";
  * B-660 – Rollengang Sprint B3 als Sohn: eine erledigte Pflicht führt im Üben nicht ins Leere. Nach dem bestandenen Test
  * ist nichts mehr fällig; der Leerzustand sagt, was die Übung im Bonus-Training heute noch wert ist, und führt genau dort
  * hinein. Die Regeln (Wert je Runde, Deckel, Sperre) hält der Server (`ExtraTrainingTests`); die Spec belegt den Weg vom
- * Knoten bis in die Runde. Rot, wenn der Leerzustand nur „Nichts fällig“ zeigt oder der Knopf in eine andere Übung führt.
+ * Knoten bis in die Runde. Rot, wenn der Leerzustand nur „Nichts fällig“ zeigt oder der Knopf in eine andere Übung führt:
+ * eine zweite Pflicht (`Farben`) steht als erste Position im Plan, die Rechen-Übung steht im Bonus-Vorrat vorn
+ * (`orderIndex: 0`) – wer die erste Position oder die erste Übung des Vorrats nimmt, landet nicht in den Tieren (B-846).
  *
  * Eigenes Kind: je Kind und Fach ist genau ein aktiver Plan spielbar.
  */
 
 const RUN = Date.now().toString(36).slice(-5);
 const WORDS = [["dog", "Hund"], ["cat", "Katze"], ["house", "Haus"], ["tree", "Baum"]] as const;
+const FARBEN = [["red", "rot"], ["blue", "blau"]] as const;
 
 async function postId(request: APIRequestContext, url: string, headers: Record<string, string>, data: unknown, key = "id") {
   const res = await request.post(url, { headers, data });
@@ -33,17 +36,25 @@ test("Nichts fällig führt weiter: nach erfüllter Pflicht geht es aus dem Übe
   });
   const units = `/api/v1/creator/textbook-series/${seriesId}/units`;
   const unitId = await postId(request, units, vater, { label: `Unit ${RUN}`, orderIndex: 1 });
-  const VOKABELN = `Tiere ${RUN}`, RECHNEN = `Rechnen ${RUN}`;
+  const VOKABELN = `Tiere ${RUN}`, RECHNEN = `Rechnen ${RUN}`, FARB_TITEL = `Farben ${RUN}`;
   const exVokabeln = await postId(request, `${units}/${unitId}/vocabulary`, vater, {
     title: VOKABELN, orderIndex: 1, rewardPoints: 10,
     config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: WORDS.map(([front, back]) => ({ front, back })) },
   });
   await postId(request, `${units}/${unitId}/arithmetic`, vater, {
-    title: RECHNEN, orderIndex: 2, rewardPoints: 10,
+    title: RECHNEN, orderIndex: 0, rewardPoints: 10,
     config: { problems: [{ prompt: "2 + 3", answer: 5, tolerance: 0 }, { prompt: "4 × 4", answer: 16, tolerance: 0 }] },
   });
 
+  const exFarben = await postId(request, `${units}/${unitId}/vocabulary`, vater, {
+    title: FARB_TITEL, orderIndex: 3, rewardPoints: 10,
+    config: { direction: "front-to-back", sourceLang: "en", targetLang: "de", items: FARBEN.map(([front, back]) => ({ front, back })) },
+  });
+
   const planId = await postId(request, "/api/v1/supervisor/study-plans", vater, { childId, subjectId, title: `Nochmal-Plan ${RUN}`, durationDays: 7, active: true });
+  // Zuerst angelegt, also erste Position des Plans.
+  const farbenId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
+    { exerciseId: exFarben, stage: 4, cadence: "Daily", useLeitner: false });
   const positionId = await postId(request, `/api/v1/supervisor/study-plans/${planId}/positions`, vater,
     { exerciseId: exVokabeln, stage: 4, cadence: "Daily", useLeitner: false });
 
@@ -61,20 +72,23 @@ test("Nichts fällig führt weiter: nach erfüllter Pflicht geht es aus dem Übe
   await sohnLogin(page, { id: String(childId), pin });
   await pfadStart(page, "practice", VOKABELN);
   await expect(page.getByText("Nichts fällig 🎉")).toBeVisible();
-  await expect(page.getByText("Noch 1 Tagesziel offen – danach kannst du Übungen im Bonus-Training für Münzen wiederholen.")).toBeVisible();
+  await expect(page.getByText("Noch 2 Tagesziele offen – danach kannst du Übungen im Bonus-Training für Münzen wiederholen.")).toBeVisible();
   await expect(page.getByRole("link", { name: "🔁 Noch einmal im Bonus-Training" })).toHaveCount(0);
 
-  // Die Pflicht über die API erfüllen: ein bestandener Test der Position.
+  // Die Pflichten über die API erfüllen: je Position ein bestandener Test.
   const kindLogin = await request.post("/api/v1/auth/child", { data: { childId, pin } });
   expect(kindLogin.ok(), await kindLogin.text()).toBeTruthy();
   const kind = { Authorization: `Bearer ${(await kindLogin.json()).token}` };
-  const tests = `/api/v1/student/study-plans/${planId}/positions/${positionId}/tests`;
-  const attemptId = await postId(request, tests, kind, {}, "attemptId");
-  const submit = await request.post(`${tests}/${attemptId}/submit`, {
-    // B-597: Freitext fragt das Fremdwort ab, die Vorderseite.
-    headers: kind, data: { answers: WORDS.map(([front], itemIndex) => ({ itemIndex, givenAnswer: front })) },
-  });
-  expect(submit.ok(), await submit.text()).toBeTruthy();
+  for (const [pos, words] of [[positionId, WORDS], [farbenId, FARBEN]] as const) {
+    const tests = `/api/v1/student/study-plans/${planId}/positions/${pos}/tests`;
+    const attemptId = await postId(request, tests, kind, {}, "attemptId");
+    const submit = await request.post(`${tests}/${attemptId}/submit`, {
+      // B-597: Freitext fragt das Fremdwort ab, die Vorderseite.
+      headers: kind, data: { answers: words.map(([front], itemIndex) => ({ itemIndex, givenAnswer: front })) },
+    });
+    expect(submit.ok(), await submit.text()).toBeTruthy();
+    expect((await submit.json()).passed, `Test der Position ${pos}`).toBeTruthy();
+  }
 
   // Nach der Pflicht: noch einmal, für Münzen, in genau dieser Übung (der Vorrat trägt auch die Rechen-Übung).
   await page.reload();

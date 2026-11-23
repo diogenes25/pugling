@@ -942,25 +942,61 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
     /// B-660, AK 7 (B-533 decision 7): a bonus run on an exercise that is also a plan position leaves that position's box,
     /// due date and review count alone - the empty practice screen now sends the child there, so a run must not push the
     /// card away from its due day. Red when the bonus submit writes <see cref="PositionItemProgress"/> (e.g. through the
-    /// Leitner review of the position).
+    /// Leitner review of the position). B-847: once per form - after 0, 2 and 4 earlier runs the run is self-assessed, a
+    /// choice and typed - and the snapshot carries every column of the row plus the plan-wide learning state, so a write
+    /// that only some forms make or that only stamps a day is red as well. One row starts without an imprint day and one
+    /// without an introduction day: the code stamps them with <c>??=</c>, which a row that already has them would hide.
     /// </summary>
-    [Fact]
-    public async Task Bonus_Runde_Laesst_Den_Kasten_Der_Position_Unberuehrt()
+    [Theory]
+    [InlineData(0, "SelfAssess")]
+    [InlineData(2, "Choice")]
+    [InlineData(4, "Typed")]
+    public async Task Bonus_Runde_Laesst_Den_Kasten_Der_Position_Unberuehrt(int earlierRuns, string form)
     {
         var s = await SetupAsync();
+        SeedCompletedRuns(s, earlierRuns);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var rows = db.PositionItemProgress
+                .Where(p => p.PlanPosition!.ExerciseId == s.VocabId && p.PlanPosition.StudyPlan!.ChildId == s.ChildId)
+                .OrderBy(p => p.ItemIndex).ToList();
+            rows[0].ImprintedAt = null;
+            rows[1].IntroducedAt = null;
+            rows[1].ImprintedAt = null;
+            // Plan-wide learning state for every word, so a write to an existing row shows - not only a new one.
+            foreach (var item in db.ExerciseItems.Where(i => i.ExerciseId == s.VocabId).ToList())
+                if (!db.ItemProgress.Any(p => p.ChildId == s.ChildId && p.ItemId == item.Id))
+                    db.ItemProgress.Add(new ItemProgress
+                    {
+                        ChildId = s.ChildId,
+                        ItemId = item.Id,
+                        ExerciseId = s.VocabId,
+                        VocabularyId = item.VocabularyId,
+                    });
+            db.SaveChanges();
+        }
         List<string> Snapshot()
         {
             using var scope = factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-            return db.PositionItemProgress.Where(p => p.PlanPosition!.ExerciseId == s.VocabId && p.PlanPosition.StudyPlan!.ChildId == s.ChildId)
+            var rows = db.PositionItemProgress
+                .Where(p => p.PlanPosition!.ExerciseId == s.VocabId && p.PlanPosition.StudyPlan!.ChildId == s.ChildId)
                 .OrderBy(p => p.ItemIndex)
-                .Select(p => $"{p.ItemIndex}:{p.Box}:{p.DueOn}:{p.ReviewCount}:{p.LastReviewedAt}")
-                .ToList();
+                .ToList()
+                .Select(p => $"{p.ItemIndex}:{p.Box}:{p.DueOn}:{p.ReviewCount}:{p.LastReviewedAt}:{p.IntroducedAt}:{p.ImprintedAt}"
+                             + $":{p.NewBonusPaidAt}:{p.LastMissed}:{p.RemediationDoneAt}"
+                             + $":{string.Join(",", (p.SolvedByStage ?? []).OrderBy(e => e.Key).Select(e => $"{e.Key}={e.Value}"))}");
+            // B-533 decision 7 says "no Leitner box" without naming the table: the plan-wide state counts as well.
+            var planWide = db.ItemProgress.Where(p => p.ChildId == s.ChildId)
+                .OrderBy(p => p.ItemId).Select(p => $"item {p.ItemId}:{p.Box}").ToList();
+            return [.. rows, .. planWide, $"events {db.ItemReviewEvents.Count(e => e.ChildId == s.ChildId)}"];
         }
         var before = Snapshot();
         Assert.NotEmpty(before);
 
         var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+        Assert.Equal(form, run.GetProperty("form").GetString());
         var result = await JsonAsync(await s.Child.PostAsJsonAsync(
             $"{Base(s)}/runs/{run.GetProperty("runId").GetInt32()}/submit", new { answers = RightVocabAnswers(run) }));
 

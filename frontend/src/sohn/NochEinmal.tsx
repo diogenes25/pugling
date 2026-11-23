@@ -38,9 +38,15 @@ export function NochEinmal({ planId, positionId }: { planId: number; positionId:
     // Die Sperre zählt die Ziele, die der Server als offen meldet; ohne offene Ziele (kein Plan, gesperrter Tag) gibt es
     // hier nichts zu versprechen.
     if (b.outstanding.length === 0) return null;
+    // Ein Deckel von 0 zahlt nie (B-845, Muster `capZero` in `SohnBonus.tsx`) – dann verspricht der Satz keine Münzen.
+    // `null` heißt „kein Deckel“ und zahlt.
+    const woche = truhenZiele(b.rewardCadence) === "woche";
+    const key = b.dailyCoinCap === 0
+      ? (woche ? "practice.againLockedWeekNoCoins" : "practice.againLockedNoCoins")
+      : (woche ? "practice.againLockedWeek" : "practice.againLocked");
     return (
       <p className="sub" data-testid="noch-einmal">
-        {t(truhenZiele(b.rewardCadence) === "woche" ? "practice.againLockedWeek" : "practice.againLocked", { count: b.outstanding.length })}
+        {t(key, { count: b.outstanding.length })}
       </p>
     );
   }
