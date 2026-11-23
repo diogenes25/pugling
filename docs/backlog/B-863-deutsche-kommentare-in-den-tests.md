@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-24"
 wartet_auf: ""
 ---
 
@@ -63,3 +64,6 @@ Kommentarzeilen.
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 125), Commit `617f50fd`. Beleg statt Rollengang (kein Rollenpfad
   berührt): Suite 2173/2173 (Release) vor den Nachträgen, danach die betroffenen Klassen 199/199 und Build grün; Diff nur
   in Kommentaren.
+- **2026-11-24** — Nachschau (Sprint 126): `grep` auf deutsche Funktionswörter in `//`- und `///`-Zeilen des
+  Testprojekts. Übrig sind nur Zitate deutscher Produkttexte (`CreatorAgentTests`, `OpenApiExampleCatalogConcurrencyTests`,
+  `PositionPracticeFlowTests`), die nach Entscheidung 2 erlaubt sind. Kein Befund.

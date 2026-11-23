@@ -478,17 +478,19 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             : (int)Math.Round(100.0 * attempt.CorrectItems / attempt.TotalItems);
         attempt.Passed = attempt.ScorePercent >= passPercent;
         attempt.CompletedAt = time.GetUtcNow().UtcDateTime;
-        // B-849: the child's passed test raises the level at once, in the same save as its completion; the child plays it
-        // from the next learning day. The new level comes from the level examined, not the position's, so a second pass
-        // or a parallel completion raises nothing more. A supervisor's preview stays out of the child's path, and an attempt
-        // that could not meet the goal (self-assessed under "typed tests only") does not raise either.
-        if (attempt.Passed && !attempt.BySupervisor && (!pos.RequireTypedTest || attempt.Graded)
-            && PositionPlayService.PromotedBuildLevel(pos, attempt.BuildLevel) is { } raised)
-        {
-            pos.CurrentBuildLevel = raised;
-            pos.BuildLevelEffectiveOn = learningDay.Today.AddDays(1);
-        }
+        // B-849, B-702: promotion and descent in the same save as the completion; the rules live in MoveBuildPath.
+        PositionPlayService.MoveBuildPath(pos, attempt, learningDay.Today);
+
+        // One completion per attempt (B-702): two submits of the same attempt at once both passed the check above, and
+        // the second would count the attempt again towards a descent. The conditional update decides which one completes;
+        // the transaction holds it together with the rest of the completion.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var completedAt = attempt.CompletedAt;
+        if (await db.TestAttempts.Where(t => t.Id == attempt.Id && t.CompletedAt == null)
+                .ExecuteUpdateAsync(u => u.SetProperty(t => t.CompletedAt, completedAt), ct) == 0)
+            return this.ProblemWithCode(ApiErrors.TestAlreadySubmitted, "The test has already been submitted.");
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
 
         // Book the position's goal points (idempotent) BEFORE the gamification, so that coin-based missions
         // already see the fresh credit.

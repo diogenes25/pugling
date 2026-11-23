@@ -31836,6 +31836,14 @@
           "targetTitle": {
             "type": "string",
             "description": "Its title."
+          },
+          "since": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The learning day from which the child plays this level (B-702): how long it has stood on it.\n\u0060null\u0060 = unknown - a position from before the date was kept, or a promotion still waiting for its day.",
+            "format": "date"
           }
         },
         "description": "Where a position stands on its build path (B-848): level Level of Of, counted over\nthe prerequisites the target has plus the target itself (\u0022Stufe 1 von 3 \u00B7 gerade: W\u00F6rter erkennen\u0022)."

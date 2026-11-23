@@ -323,8 +323,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // the teaching material. An empty list is stored as null, so "no window" has one spelling only.
             TimeSlots = dto.TimeSlots is { Count: > 0 } ? dto.TimeSlots : null,
             NewItemsPerDay = dto.NewItemsPerDay ?? 0,
-            CurrentBuildLevel = dto.CurrentBuildLevel,
         };
+        PositionPlayService.SetBuildLevel(pos, dto.CurrentBuildLevel, learningDay.Today);
         db.PlanPositions.Add(pos);
         await db.SaveChangesAsync(ct);
 
@@ -487,9 +487,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.NewItemsPerDay is not null) pos.NewItemsPerDay = dto.NewItemsPerDay.Value;
         if (levelChanges)
         {
-            // The father's level counts at once (B-849): it replaces a raise still waiting for the next learning day.
-            pos.CurrentBuildLevel = dto.CurrentBuildLevel;
-            pos.BuildLevelEffectiveOn = null;
+            // The father's level counts at once (B-849): it replaces a raise still waiting for the next learning day, and
+            // the count towards a descent starts over (B-702).
+            PositionPlayService.SetBuildLevel(pos, dto.CurrentBuildLevel, learningDay.Today);
         }
         // B-636: a remediation already finished when it becomes "until done" ends at once, or it never could.
         await progress.StampFinishedRemediationAsync(pos, learningDay.Today, ct);

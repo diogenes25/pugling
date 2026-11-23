@@ -1762,6 +1762,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("CurrentBuildLevel")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateOnly?>("CurrentBuildLevelSince")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateOnly>("DutySince")
                         .HasColumnType("TEXT");
 
@@ -1769,6 +1772,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FailedBuildTestsInRow")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("ForgivingDemotion")

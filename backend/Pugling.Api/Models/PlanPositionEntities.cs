@@ -43,6 +43,20 @@ public class PlanPosition
     /// </summary>
     public DateOnly? BuildLevelEffectiveOn { get; set; }
 
+    /// <summary>
+    /// The learning day from which the child plays <see cref="CurrentBuildLevel"/> (B-702, decision 3): the father sees how
+    /// long the child has stood on a level instead of a hard deadline. Set by every level change. <c>null</c> = unknown
+    /// (a position from before the column, or no build path).
+    /// </summary>
+    public DateOnly? CurrentBuildLevelSince { get; set; }
+
+    /// <summary>
+    /// The child's completed tests of <see cref="CurrentBuildLevel"/> in a row that scored under 50 % (B-702, decision 1);
+    /// the second one lowers the level by one. A test from 50 % on resets it, and so does every level change. <c>null</c>
+    /// counts as 0.
+    /// </summary>
+    public int? FailedBuildTestsInRow { get; set; }
+
     // --- Overrides (null = inherit the exercise's suggestion) ---
     /// <summary>Overridden test stage (interpreted per method); null = the exercise's default.</summary>
     public int? Stage { get; set; }

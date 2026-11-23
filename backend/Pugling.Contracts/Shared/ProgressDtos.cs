@@ -64,8 +64,10 @@ public record PositionStatus(
 /// <param name="PlayedTitle">Its title.</param>
 /// <param name="TargetExerciseId">The position's own exercise, the goal of the path.</param>
 /// <param name="TargetTitle">Its title.</param>
+/// <param name="Since">The learning day from which the child plays this level (B-702): how long it has stood on it.
+/// <c>null</c> = unknown - a position from before the date was kept, or a promotion still waiting for its day.</param>
 public record BuildPath(int Level, int Of, int PlayedExerciseId, string PlayedTitle, int TargetExerciseId,
-    string TargetTitle);
+    string TargetTitle, DateOnly? Since = null);
 
 /// <summary>
 /// Daily rollup of a study plan across its positions. <see cref="DutyDone"/> counts every goal (daily and weekly) and

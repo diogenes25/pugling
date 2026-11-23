@@ -110,6 +110,78 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// A completed test scoring below this percentage counts towards a descent (B-702, decision 1): below half is "too
+    /// hard", a test missed narrowly (70 % against a bar of 80 %) is not.
+    /// </summary>
+    public const int DemotionBelowPercent = 50;
+
+    /// <summary>Failed tests in a row (each below <see cref="DemotionBelowPercent"/>) that lower the level by one.</summary>
+    public const int DemotionAfterFailures = 2;
+
+    /// <summary>
+    /// May this completed attempt move the position along its build path (B-849, B-702)? The same admission as the goal:
+    /// the child's own attempt, and not a self-assessed one where the father demands typed tests. A promotion and a
+    /// descent read this one predicate, so neither can be reached by a test the goal would not count.
+    /// </summary>
+    public static bool MovesBuildPath(PlanPosition pos, TestAttempt attempt) =>
+        !attempt.BySupervisor && (!pos.RequireTypedTest || attempt.Graded);
+
+    /// <summary>
+    /// The level a descent from level <paramref name="examined"/> lowers the position to (B-702, decision 1): the next lower
+    /// level on its path, or <c>null</c> where nothing sinks - no build path, or the lowest level reached. Whether the test
+    /// examined the level the position plays is <see cref="MoveBuildPath"/>'s question, asked before.
+    /// </summary>
+    public static int? DemotedBuildLevel(PlanPosition pos, int? examined)
+    {
+        if (examined is not { } from) return null;
+        var below = PathLevels(pos).LastOrDefault(l => l < from);
+        return below > 0 ? below : null;
+    }
+
+    /// <summary>
+    /// The one way a position changes its build level (B-702): the level, the day it is played from, and a fresh count of
+    /// failed tests - a descent must be earned on the new level, not carried over from the old one.
+    /// <paramref name="effectiveOn"/> <c>null</c> plays the level at once (the father's choice, a descent); a promotion
+    /// passes the next learning day.
+    /// </summary>
+    public static void SetBuildLevel(PlanPosition pos, int? level, DateOnly today, DateOnly? effectiveOn = null)
+    {
+        pos.CurrentBuildLevel = level;
+        pos.BuildLevelEffectiveOn = effectiveOn;
+        pos.CurrentBuildLevelSince = level is null ? null : effectiveOn ?? today;
+        pos.FailedBuildTestsInRow = level is null ? null : 0;
+    }
+
+    /// <summary>
+    /// What a completed test does to the position's build path (B-849, B-702), in the completion's own save. Promotion:
+    /// a passed test of the level raises it from the next learning day. Descent: the
+    /// <see cref="DemotionAfterFailures"/>-th test in a row below <see cref="DemotionBelowPercent"/> lowers it at once
+    /// (the user's decision); a test from 50 % on - or any passed one, even below 50 % under a low bar - resets the count.
+    /// Only tests of the level the position plays now count: one of the level below on the day of a waiting promotion
+    /// examined an older level. Neither direction books points or a penalty.
+    /// </summary>
+    public static void MoveBuildPath(PlanPosition pos, TestAttempt attempt, DateOnly today)
+    {
+        if (!MovesBuildPath(pos, attempt)) return;
+        if (attempt.Passed && PromotedBuildLevel(pos, attempt.BuildLevel) is { } raised)
+        {
+            SetBuildLevel(pos, raised, today, effectiveOn: today.AddDays(1));
+            return;
+        }
+        if (attempt.BuildLevel is not { } examined || examined != pos.CurrentBuildLevel) return;
+        if (attempt.Passed || attempt.ScorePercent >= DemotionBelowPercent)
+        {
+            pos.FailedBuildTestsInRow = 0;
+            return;
+        }
+        var failures = (pos.FailedBuildTestsInRow ?? 0) + 1;
+        if (failures >= DemotionAfterFailures && DemotedBuildLevel(pos, examined) is { } lowered)
+            SetBuildLevel(pos, lowered, today);
+        else
+            pos.FailedBuildTestsInRow = failures;
+    }
+
+    /// <summary>
     /// The position's own stage (B-848): its override, but not while it plays a prerequisite. The father set and the server
     /// checked it against the target's type; a prerequisite may be of another type, where the same number names another
     /// form or none, so it plays its own default stage.
@@ -142,7 +214,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         List<int> levels = [.. (target.Prerequisites ?? []).Where(e => e.BuildLevel is not null)
             .Select(e => e.BuildLevel!.Value).Distinct().Order(), Exercise.BuildLevelTarget];
         var current = played.Id == target.Id ? Exercise.BuildLevelTarget : played.BuildLevel ?? Exercise.BuildLevelTarget;
-        return new BuildPath(levels.IndexOf(current) + 1, levels.Count, played.Id, played.Title, target.Id, target.Title);
+        // The date belongs to the current level; while a promotion waits, the child still plays the one below.
+        var since = PlayedBuildLevel(pos, today) == pos.CurrentBuildLevel ? pos.CurrentBuildLevelSince : null;
+        return new BuildPath(levels.IndexOf(current) + 1, levels.Count, played.Id, played.Title, target.Id, target.Title,
+            since);
     }
 
     /// <summary>

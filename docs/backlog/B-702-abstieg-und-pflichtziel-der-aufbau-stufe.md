@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
 aliases: [Abstieg ohne Malus, Pflichtziel der aktuellen Stufe, Stufen und Stick]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: S
@@ -74,7 +74,7 @@ Final. Je Kriterium die Änderung, die es rot macht.
 7. ~~Halbe Zielpunktzahl auf der Vorstufe.~~ Entfällt mit der ersetzten Entscheidung 2.
 8. ~~Vorstufen-Tag zählt für Serie und Truhe.~~ Entfällt mit der ersetzten Entscheidung 2.
 9. Zwei parallele Abschlüsse senken die Stufe nicht doppelt (idempotent über den Versuch). *Rot, wenn* der Abstieg ohne Ref-Gate oder Nebenläufigkeitsschutz läuft.
-10. Die Migration nimmt vorhandene Positionen mit Zähler 0 und ohne Stufen-Datum mit. *Rot, wenn* die Spalten nicht nullbar sind oder Bestandszeilen verändert werden.
+10. Die Migration nimmt vorhandene Positionen mit Zähler `null` (= 0) und ohne Stufen-Datum mit. *Rot, wenn* die Spalten nicht nullbar sind oder Bestandszeilen verändert werden.
 
 ## Schätzung
 
@@ -176,3 +176,42 @@ Schema mit Bestandsdaten berührt werden.
 - **2026-11-23** — Hinweis (2) vom Nutzer entschieden („Nein, bleibt erledigt“): Ein Aufstieg setzt eine auf der
   Vorstufe beendete Nacharbeit (`CompletedOn`) nicht zurück; kein neuer Malus auf der neuen Stufe. Nichts zu bauen,
   der Code verhält sich so. `wartet_auf` geleert – die Story ist baubar.
+- **2026-11-23** — in-arbeit (Sprint 126). Lesart vom Nutzer entschieden: Der Abstieg gilt **sofort** wie die Stufe
+  des Vaters (`BuildLevelEffectiveOn` = null), nicht ab dem nächsten Lerntag wie der Aufstieg; eine offene Runde der
+  alten Stufe ist damit überholt (B-881). Lesarten beim Bau, ohne neue Entscheidung: gezählt werden nur Versuche, die das
+  Ziel erfüllen könnten (dieselbe Zulassung wie der Aufstieg: Kind, nicht selbst eingeschätzt unter „nur getippt“), und
+  nur Versuche der Stufe, die die Position gerade spielt (ein Versuch der Vorstufe am Tag eines wartenden Aufstiegs zählt
+  nicht); „eine Stufe ab“ heißt die nächstniedrigere Stufe auf dem Weg, der Boden ist die unterste; ein bestandener
+  Versuch setzt die Zählung immer auf 0. `CurrentBuildLevelSince` wird bei jedem Stufenwechsel gesetzt (Anlegen, Vater,
+  Aufstieg = Wirktag, Abstieg = heute) und als trailing optionales `BuildPath.Since` gezeigt, solange die gespielte Stufe
+  die aktuelle ist.
+- **2026-11-24** — Gebaut (Sprint 126). Quelle der Wahrheit: `PositionPlayService.SetBuildLevel` ist der einzige Schreiber
+  der Stufe (Anlegen, Vater, Aufstieg, Abstieg); die Regeln stehen in `MoveBuildPath`, die Zulassung in `MovesBuildPath`
+  (geteilt mit dem Aufstieg). `Submit` schließt einen Versuch über ein bedingtes Update in einer Transaktion ab (Muster
+  `DailyBoxService.OpenAsync`). Migration `BuildLevelDemotion` (zwei nullable Spalten, keine Füllung), `BuildPath.Since`
+  trailing optional. Belege je Fall:
+  - AK 1, zweiter Versuch unter 50 % senkt sofort → `AufbauStufeAbstiegTests.cs:109`, M8/M9/M10 → rot.
+  - AK 1, 50 % unter Schwelle 80 zählt nicht und setzt zurück → `AufbauStufeAbstiegTests.cs:127`, M1/M2 → rot.
+  - Lesart „bestanden setzt immer zurück“ (Schwelle 30, 33 % auf dem Ziel) → `AufbauStufeAbstiegTests.cs:146`, M3 → rot.
+  - AK 2, Vater-Versuche → `AufbauStufeAbstiegTests.cs:161`, M4 → rot.
+  - AK 3, Boden → `AufbauStufeAbstiegTests.cs:174`, M6 → rot.
+  - AK 4, keine Buchung → `AufbauStufeAbstiegTests.cs:189`, Absichtserklärung (kein Buchungscode, den eine Mutante entfernen könnte).
+  - AK 5, Malus gilt trotz Abstieg (Gegenprobe) → `AufbauStufeAbstiegTests.cs:213`, M18 (gestufte Positionen aus der Abrechnung genommen) → rot.
+  - AK 6, Vorstufen-Test erfüllt das Ziel nicht → `AufbauStufeAufstiegTests.cs:276` (B-849), unverändert grün.
+  - Lesart „nur die aktuelle Stufe zählt“ → `AufbauStufeAbstiegTests.cs:247`, M7 → rot.
+  - Zählung beginnt nach Aufstieg / Vater-Stufe neu → `AufbauStufeAbstiegTests.cs:267` / `AufbauStufeAbstiegTests.cs:285`, M19 / M11, M17 → rot.
+  - Zulassung „nur getippt“ → `AufbauStufeAbstiegTests.cs:304`, M5 → rot.
+  - AK 9, Verlierer einer doppelten Abgabe zählt nicht → `AufbauStufeAbstiegTests.cs:355`, M15 → rot. Die erste Fassung (zwei echte parallele
+    Abgaben) war **grün ohne die Sperre** (gemessen, erste Probe M15 `abweichend`): der TestServer erreicht das Rennfenster
+    nie. Ersetzt durch einen Interceptor, der den Versuch auf der Verbindung der Anfrage abschließt.
+  - Entscheidung 3, `Since` (Anlegen, Abstieg, null bei wartendem Aufstieg, Wirktag) → `AufbauStufeAbstiegTests.cs:411`, M12/M13/M14/M16 → rot.
+  - AK 10, Migration → `AufbauStufeAbstiegMigrationTests.cs:24`, M20 (Füllung 0) → rot.
+  Mutanten-Probe nach der letzten Änderung (`python -I .claude/scripts/mutant-probe.py`, Debug, gemessen an
+  `8dc2af6d` + Arbeitsbaum, 2026-11-24 00:03): **20/20 rot am benannten Test**, Grundlinie danach grün.
+  Migration an einer Kopie der echten DB (`dotnet-ef database update --connection`): von `PracticeSessionBuildLevel` auf
+  `BuildLevelDemotion`, 208 Positionen, keine gestuft, neue Felder leer.
+  Review `pugling-reviewer`: keine 🔴/🟡. 🟢 eingearbeitet: Test für den Neubeginn der Zählung nach einem Aufstieg; AK 10
+  sprachlich an `null` (= 0) angeglichen. 🟢 bewusst offen: (a) ein offener Versuch von gestern und einer von heute,
+  parallel abgegeben, lesen beide den alten Zähler – ein Fehlversuch geht verloren (nur zugunsten des Kindes, Start setzt
+  nur Versuche desselben Tages fort); (b) `Since` beginnt neu, wenn der Vater bei wartendem Aufstieg auf die gespielte
+  Stufe zurückstellt → als Hinweis in B-882.

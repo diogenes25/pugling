@@ -39,3 +39,7 @@ Zwei Lücken an derselben Stelle des Vater-Webs, beide aus Reviews des Aufbau-We
 
 - **2026-11-23** — Aus den Reviews von B-849 und B-841 aufgenommen (Nachtlauf E); bewusst nicht im Sprint gebaut, weil
   beide Punkte eine Entscheidung brauchen, die B-704 nicht hergibt.
+- **2026-11-24** — Hinweis aus dem Review von B-702 (Sprint 126): `BuildPath.Since` ist seit B-702 im Vertrag (der Tag, ab
+  dem die gespielte Stufe gilt; `null`, solange ein Aufstieg wartet). Wer die Zeit auf der Stufe zeigt, entscheidet mit:
+  Setzt der Vater bei wartendem Aufstieg die Stufe zurück auf die, die das Kind gerade spielt, beginnt `Since` heute –
+  der Beginn der Vorstufe ist beim Aufstieg schon überschrieben worden.
