@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-848]
+nachgeschaut: "2026-11-23"
 wartet_auf: ""
 ---
 
@@ -120,3 +121,7 @@ Grundlinie nach dem Zurückspielen: green.
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 123), Commit `e5c2430c`. Rollengang maschinell: Sohn über die
   HTTP-Pipeline (überholte Runde, Nacharbeit startet neu), Vater als Auslöser über die Supervisor-API (Stufe setzen),
   Creator Regressionszeuge (E2E). Mensch offen: Migration `PracticeSessionBuildLevel` beim nächsten Heimnetz-Start.
+- **2026-11-23** — Nachschau (Nachtlauf E, Sprint 124): Prüfpunkte – `GetSession(` hat 10 Aufrufer im
+  `PositionPracticeController`: 5 mit `IsOvertaken` (Cards, ReshuffleImage, Next, Easier, Review), 1 mit eigener Prüfung
+  (`OpenRemediationRoundAsync`), 4 bewusst ohne (Get, Shown, Heartbeat, End – geben keine Karte heraus); `new
+  PracticeSession` gibt es außerhalb der Tests genau einmal (`Start`, stempelt). Kein Befund.

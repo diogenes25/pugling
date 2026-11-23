@@ -170,3 +170,62 @@ nicht nur die, die es benutzen.*
 
 **Bewusst ungedeckt:** `Heartbeat` und `Shown` auf einer überholten Runde (zählen Sekunden bzw. setzen einen Zeitstempel,
 geben nichts heraus – vom Reviewer als unschädlich bestätigt).
+
+## Runde 3 — Auswahl nach Sprint 123
+
+Kein Halt-Grund (Fehlerzähler 2, Retro nur Vorschlag). Im Faden baubar: B-841 (`geschaetzt`, Wunsch, Entscheidungen 1, 3,
+4 aus B-704 vom Nutzer bestätigt; `wartet_auf` B-849 ist erfüllt). Was B-704 nicht entscheidet – einen auf morgen wartenden
+Aufstieg anzeigen, die Stufe im Bearbeiten ändern – bleibt draußen (B-882, Idee).
+
+| Sprint | Stories | Thema |
+| --- | --- | --- |
+| 124 | B-841 | Aufbau-Weg in der Oberfläche: Start-Stufe, Stufenband, Stufe in der Auswertung |
+
+## Sprint 124 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Vater legt im Positionsformular eine Position mit Start-Stufe an, ohne über Stufen-Zahlen oder einen
+abgelehnten Rhythmus zu stolpern, und der Sohn sieht im Kopf seiner Runde „Stufe n von m“.
+**Umfang:** B-841 (M, frontend).
+**Entwickler-Brief:** Quelle der Wahrheit ist der Vertrag (`CreatePositionDto.currentBuildLevel`, `PositionResponse.build`,
+`PositionStatus.build`, `Report.build`), kein Backend-Umbau. Feld nur bei Vorstufen (Unit-Liste, `buildTargetExerciseId`);
+Rhythmus-Regel des Servers (kein Tages-/Wochenziel auf dem Weg) im Formular gespiegelt. Testweg: Vitest für Regeln und
+Band, E2E `aufbau-stufen.spec.ts` als Rollengang.
+
+## Iteration 124 — umgesetzt
+
+**Frontend:** `StartLevelField` + `startLevelOptions`, `cadencesFor(…, staged)`, `withStaged` (verdrängtes Ziel kommt
+zurück), `aufbauStufeText` in Zeile und Report, `useRundenKopf` (Buchbezug + Stufenband) in Üben und Test, i18n
+`pfad.buildLevel`, Feldhilfe `startBuildLevel`. Kein Backend.
+
+**Verifikation:** Vitest 1383/1383, `tsc -b` grün, Produktions-Build grün; Mutanten-Probe nach der letzten Änderung 15/15 rot
+(10 über Vitest, 5 über die E2E-Spec; Tabelle in B-841); E2E 13 passed über 8 Specs (Ausweichports).
+
+**Review:** `frontend-reviewer` – keine 🔴, zwei 🟡 behoben (Fehlerzähler **2**): verdrängtes Ziel blieb „frei“ nach Wegfall des
+Wegs (still pflichtfreie Position); zwei Bedeutungen von „Stufe“ auf einem Bildschirm (Katalog-Stufe im Feld, Platz auf dem
+Weg in Zeile und Band). 🟢 notiert in B-841 bzw. B-882.
+
+## Runde 124 — Abnahme
+
+- **Vater — abgenommen (E2E):** „Das Feld kommt nur, wo es Vorstufen gibt; es spricht dieselbe Sprache wie die Zeile
+  (‚Stufe 1 von 2‘); und wenn ich den Weg wieder wegnehme, steht mein Wochenziel wieder da.“ Offen für ihn: ein wartender
+  Aufstieg und die Stufe im Bearbeiten (B-882).
+- **Sohn — abgenommen (E2E), Gerätecheck offen:** „Oben steht, auf welcher Stufe ich bin.“ Ob die Pille neben Buchbezug und
+  Tempo am Handy (360 px) sauber sitzt, sieht nur ein Mensch am Gerät.
+- **Creator — Regressionszeuge:** kein Pfad des Creators im Diff; E2E `aufbau-weg-editor` lief in Sprint 122/123 grün.
+
+## Retrospektive Sprint 124
+
+**Nachschau:** B-881 (Sprint 123), Prüfpunkte im Verlauf dort: die 10 Aufrufer von `GetSession(` je Pfad eingeordnet (5
+prüfen, 1 eigene Prüfung, 4 geben nichts heraus); `new PracticeSession` genau einmal (stempelt). Kein Befund,
+`nachgeschaut` gesetzt. Index: Nachgeschaut: 557 von 589.
+
+**Was die eigenen Tore durchgelassen haben:** Beide 🟡 waren Zustand, den das Formular **selbst** erzwang und dann vergaß
+bzw. nicht erklärte: ein Rhythmus, den die Regel verschoben hatte, und eine Zahl, die zwei Skalen bedeutete. Die Probe konnte
+keinen von beiden sehen – sie misst gebaute Regeln, und die Rückgabe des verdrängten Ziels gab es noch nicht.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (DE) In `frontend/CLAUDE.md` ein Satz bei den Formular-Regeln: *Setzt ein Feld
+den Wert eines anderen zwangsweise (eine Regel des Servers im Formular gespiegelt), nimmt es die Änderung zurück, wenn die
+Bedingung wegfällt – sonst bleibt eine Wahl stehen, die niemand getroffen hat.*
+
+**Bewusst ungedeckt:** der Ladehinweis des Stufenfelds (ein schneller Vater legt eine Position ohne Weg an); der Gerätecheck
+des Bands.

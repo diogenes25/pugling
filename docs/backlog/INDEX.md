@@ -32,7 +32,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) | Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
-| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -87,6 +86,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
+| [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
@@ -112,7 +112,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` | Aufräumen | `idee` | P3 | — | backend | Migration? + Vertrag? |
 
 <details>
-<summary>Abgenommen (588)</summary>
+<summary>Abgenommen (589)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -684,6 +684,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-83](B-83-loesungsfeld-regel-residenter-kontext.md) | Die Lösungsfeld-Regel steht nur als Kommentar am Wächter | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `abgenommen` | P3 | S | doku | — |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren | Wunsch | `abgenommen` | P1 | S | frontend | — |
+| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | Wunsch | `abgenommen` | P1 | M | frontend | — |
 | [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | Defekt | `abgenommen` | P3 | XS | backend | — |
@@ -707,7 +708,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (10)
+### Wartet auf Zutun von außen (9)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -723,11 +724,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
-| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | `geschaetzt` | B-849 (Stufenband nach einem Aufstieg); B-848 ist gebaut (828cb8e5) |
 
 ### Nach der Abnahme entgangen (219)
 
-**Nachgeschaut: 556 von 588 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 557 von 589 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -990,7 +990,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | Eine offene Übungsrunde von gestern spielt nach einem Stufenwechsel die falsche Übung |
+| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung |
 
 </details>
 
@@ -1162,11 +1162,12 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | `idee` | `unverifiziert: true` |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
-| [B-841](B-841-start-stufe-und-stufenband.md) | `geschaetzt` | Abschnitt „Ist-Stand…" |
+| [B-841](B-841-start-stufe-und-stufenband.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-882](B-882-stufe-im-positions-bearbeiten.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (61)</summary>

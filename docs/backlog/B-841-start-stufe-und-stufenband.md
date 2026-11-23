@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor, rolle/student]
 aliases: [Start-Stufe im Positionsformular, Stufenband]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -67,3 +67,37 @@ B-704 AK 3, 4, 5, 6 wörtlich (siehe dort), dazu AK 7 für die neuen Felder.
   `PlanPositionsAufbau.test.tsx`/`SohnStufenband.test.tsx` heißen `StartLevelField.test.ts` bzw. liegen in
   `SohnPractice.test.tsx`/`SohnTest.test.tsx`; kein Ladehinweis, solange die Unit des Felds lädt (ein schneller Vater
   legt dann eine Position ohne Weg an – hingenommen).
+- **2026-11-23** — AK → Test, Mutante → rot (gemessen nach der letzten Änderung, 15/15, Grundlinie grün): AK 3 kein Feld
+  ohne Vorstufe → `StartLevelField.test.ts` „hat ohne Vorstufen keine Optionen“ (F1), E2E `aufbau-stufen.spec.ts`
+  (F11 Feld immer sichtbar); AK 4 Wert erreicht die Position → E2E (F10 Stufe nicht im Payload), Optionen nur der eigenen
+  Vorstufen (F2), Beschriftung nach dem Platz (F15); AK 5 Band nur an gestufter Position → `SohnPractice.test.tsx` /
+  `SohnTest.test.tsx` (F7 Band ohne Weg, F8/F9 Band fehlt); AK 6 Rhythmus → `StartLevelField.test.ts` (F3, F4b, F5) und
+  das verdrängte Ziel (F12 Helfer, F13 Stufenfeld, F14 Übungswechsel – die beiden letzten über das E2E); Entscheidung 4
+  Vater-Auswertung → `aufbauStufeText` (F6). AK 7 (Beschriftung, Tastatur): natives `select` mit `FieldLabel`, im E2E
+  über `getByLabel("Start-Stufe", { exact: true })` angesprochen – ohne eigene Mutante. Vitest 1383/1383, `tsc -b` grün,
+  E2E 13 passed (`aufbau-stufen`, `planbau-ladefenster`, `punkte-empfehlung`, `position-zurueck-auf-standard`,
+  `nacharbeit`, `pfad`, `lektion`, `full-flow`; Ausweichports).
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| F1 Optionen ohne Vorstufe | frontend/src/vater/StartLevelField.tsx:22 | red | red |  |
+| F2 fremde Vorstufen | frontend/src/vater/StartLevelField.tsx:20 | red | red |  |
+| F3 Rhythmus ungesperrt | frontend/src/vater/PlanPositions.tsx:44 | red | red |  |
+| F5 Nacharbeit-Abwahl aufs Tagesziel | frontend/src/vater/PlanPositions.tsx:50 | red | red |  |
+| F6 Zusatz fehlt | frontend/src/vater/StartLevelField.tsx:75 | red | red |  |
+| F7 Band auch ohne Weg | frontend/src/sohn/buchbezug.ts:30 | red | red |  |
+| F8 Band fehlt im Üben | frontend/src/sohn/SohnPractice.tsx:529 | red | red |  |
+| F9 Band fehlt im Test | frontend/src/sohn/SohnTest.tsx:254 | red | red |  |
+| F10 Stufe nicht im Payload | frontend/src/vater/PlanPositions.tsx:755 | red | red |  |
+| F11 Feld immer sichtbar | frontend/src/vater/StartLevelField.tsx:57 | red | red |  |
+| F4b Weg verdraengt nicht | frontend/src/vater/PlanPositions.tsx:60 | red | red |  |
+| F12 Ziel kommt nicht zurueck | frontend/src/vater/PlanPositions.tsx:64 | red | red |  |
+| F13 Stufenfeld vergisst Ziel | frontend/src/vater/PlanPositions.tsx:743 | red | red |  |
+| F14 Uebungswechsel vergisst Ziel | frontend/src/vater/PlanPositions.tsx:865 | red | red |  |
+| F15 Katalogstufe als Beschriftung | frontend/src/vater/StartLevelField.tsx:30 | red | red |  |
+
+Grundlinie nach dem Zurückspielen: green.
+
+- **2026-11-23** — abgenommen (Nachtlauf E, Sprint 124), Commit `34d6becc`. Rollengang: E2E `aufbau-stufen.spec.ts`
+  gegen echten Server und echtes UI – Vater legt die Position mit Start-Stufe an, Sohn sieht „Stufe 1 von 2“ im Kopf der
+  Runde. Ob das Band am Handy gut sitzt (Kopfzeile bei 360 Pixeln), ist ein Blick für einen Menschen.
