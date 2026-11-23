@@ -450,9 +450,9 @@ public class AufbauStufePlayTests(PuglingWebAppFactory factory) : IClassFixture<
     public void Gespielte_Uebung_Ohne_Geladene_Vorstufen_Wirft()
     {
         var pos = new PlanPosition { Id = 7, CurrentBuildLevel = 1, Exercise = new Exercise { Id = 1, Title = "Ziel" } };
-        Assert.Throws<InvalidOperationException>(() => PositionPlayService.PlayedExercise(pos));
+        Assert.Throws<InvalidOperationException>(() => PositionPlayService.PlayedExercise(pos, default));
         // Without a level nothing needs loading.
         pos.CurrentBuildLevel = null;
-        Assert.Same(pos.Exercise, PositionPlayService.PlayedExercise(pos));
+        Assert.Same(pos.Exercise, PositionPlayService.PlayedExercise(pos, default));
     }
 }

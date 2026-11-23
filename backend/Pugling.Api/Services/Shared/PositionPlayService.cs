@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Errors;
@@ -24,15 +25,40 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public IExerciseType? TypeOf(Exercise exercise) => registry.ByKey(exercise.Type);
 
     /// <summary>
-    /// The exercise the position plays (B-848): its own exercise, or on a build path the prerequisite of its
-    /// <see cref="PlanPosition.CurrentBuildLevel"/>. The one place a play path asks "which exercise" - type, config,
-    /// default stage, item count and learning state all follow it. A level whose prerequisite is gone plays the target.
-    /// A build path read without <c>Exercise</c> and <c>Exercise.Prerequisites</c> loaded throws: a forgotten include
-    /// would otherwise play the target in silence.
+    /// The build level the position plays on <paramref name="today"/> (B-849): <see cref="PlanPosition.CurrentBuildLevel"/>,
+    /// or before <see cref="PlanPosition.BuildLevelEffectiveOn"/> the level below it on the path - a passed test raises the
+    /// level at once, the child plays it from the next learning day. <c>null</c> without a build path. Needs what
+    /// <see cref="PlayedExercise"/> needs.
     /// </summary>
-    public static Exercise? PlayedExercise(PlanPosition pos)
+    public static int? PlayedBuildLevel(PlanPosition pos, DateOnly today)
     {
-        if (pos.CurrentBuildLevel is not { } level || level >= Exercise.BuildLevelTarget) return pos.Exercise;
+        if (pos.CurrentBuildLevel is not { } level) return null;
+        if (pos.BuildLevelEffectiveOn is not { } from || today >= from) return level;
+        return PathLevels(pos).LastOrDefault(l => l < level) is var below and > 0 ? below : level;
+    }
+
+    /// <summary>
+    /// The levels of the position's build path in order (B-848, decision 5): the target's prerequisite levels plus the
+    /// target. Throws like <see cref="PlayedExercise"/> when the prerequisites are not loaded.
+    /// </summary>
+    public static IReadOnlyList<int> PathLevels(PlanPosition pos)
+    {
+        var prerequisites = pos.Exercise?.Prerequisites ?? throw new InvalidOperationException(
+            $"Position {pos.Id} has a build path; load Exercise.Prerequisites to resolve its levels.");
+        return [.. prerequisites.Where(e => e.BuildLevel is < Exercise.BuildLevelTarget).Select(e => e.BuildLevel!.Value)
+            .Distinct().Order(), Exercise.BuildLevelTarget];
+    }
+
+    /// <summary>
+    /// The exercise the position plays on <paramref name="today"/> (B-848, B-849): its own exercise, or on a build path
+    /// the prerequisite of its <see cref="PlayedBuildLevel"/>. The one place a play path asks "which exercise" - type,
+    /// config, default stage, item count and learning state all follow it. A level whose prerequisite is gone plays the
+    /// target. A build path read without <c>Exercise</c> and <c>Exercise.Prerequisites</c> loaded throws: a forgotten
+    /// include would otherwise play the target in silence.
+    /// </summary>
+    public static Exercise? PlayedExercise(PlanPosition pos, DateOnly today)
+    {
+        if (PlayedBuildLevel(pos, today) is not { } level || level >= Exercise.BuildLevelTarget) return pos.Exercise;
         var prerequisites = pos.Exercise?.Prerequisites ?? throw new InvalidOperationException(
             $"Position {pos.Id} plays build level {level}; load Exercise.Prerequisites to resolve the played exercise.");
         // Lowest id first: nothing forbids two prerequisites on one level, and the choice must not hang on load order.
@@ -40,33 +66,69 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>
+    /// The level a test started on <paramref name="today"/> examines (B-849, decision 3), as stamped on
+    /// <see cref="TestAttempt.BuildLevel"/>: the place of the played exercise on the path - the target counts as
+    /// <see cref="Exercise.BuildLevelTarget"/>, also where a gone prerequisite made it the one played. <c>null</c> without a
+    /// build path.
+    /// </summary>
+    public static int? ExaminedBuildLevel(PlanPosition pos, DateOnly today) =>
+        pos.CurrentBuildLevel is null ? null
+        : PlayedExercise(pos, today) is { } played && played.Id != pos.ExerciseId && played.BuildLevel is { } level ? level
+        : Exercise.BuildLevelTarget;
+
+    /// <summary>
+    /// The attempts that examined <paramref name="level"/> (B-849): a prerequisite's by its level; the target's on the
+    /// target level or without one - an attempt from before the path was set examined the same exercise. For views that
+    /// group test results by item index, which names another card on another level.
+    /// </summary>
+    public static Expression<Func<TestAttempt, bool>> AttemptsOnLevel(int? level) =>
+        level is { } l && l < Exercise.BuildLevelTarget
+            ? t => t.BuildLevel == l
+            : t => t.BuildLevel == null || t.BuildLevel >= Exercise.BuildLevelTarget;
+
+    /// <summary>
+    /// The level a passed test of level <paramref name="examined"/> raises the position to (B-849, decisions 1 and 2): the
+    /// next level on its path, or <c>null</c> where nothing rises - no build path, the target examined, or the position
+    /// already at or above that level. The last case makes the promotion idempotent: a second pass of the same level, or
+    /// two completions at once, raise it once.
+    /// </summary>
+    public static int? PromotedBuildLevel(PlanPosition pos, int? examined)
+    {
+        if (examined is not { } from || pos.CurrentBuildLevel is not { } current || from >= Exercise.BuildLevelTarget)
+            return null;
+        var next = PathLevels(pos).First(l => l > from);
+        return next > current ? next : null;
+    }
+
+    /// <summary>
     /// The position's own stage (B-848): its override, but not while it plays a prerequisite. The father set and the server
     /// checked it against the target's type; a prerequisite may be of another type, where the same number names another
     /// form or none, so it plays its own default stage.
     /// </summary>
-    private static int? OwnStage(PlanPosition pos) => PlaysPrerequisite(pos) ? null : pos.Stage;
+    private static int? OwnStage(PlanPosition pos, DateOnly today) => PlaysPrerequisite(pos, today) ? null : pos.Stage;
 
     /// <summary>The position's stage schedule (B-848), by the same rule as <see cref="OwnStage"/>.</summary>
-    private static List<StageStep>? OwnSchedule(PlanPosition pos) => PlaysPrerequisite(pos) ? null : pos.StageSchedule;
+    private static List<StageStep>? OwnSchedule(PlanPosition pos, DateOnly today) =>
+        PlaysPrerequisite(pos, today) ? null : pos.StageSchedule;
 
-    private static bool PlaysPrerequisite(PlanPosition pos) =>
-        pos.CurrentBuildLevel is not null && !ReferenceEquals(PlayedExercise(pos), pos.Exercise);
+    private static bool PlaysPrerequisite(PlanPosition pos, DateOnly today) =>
+        pos.CurrentBuildLevel is not null && !ReferenceEquals(PlayedExercise(pos, today), pos.Exercise);
 
     /// <summary>
     /// The id the position's learning state is kept under (B-848, <see cref="PositionItemProgress.ExerciseId"/>): the
     /// played exercise's. Without a build path it needs nothing loaded.
     /// </summary>
-    public static int PlayedExerciseId(PlanPosition pos) =>
-        pos.CurrentBuildLevel is null ? pos.ExerciseId : PlayedExercise(pos)?.Id ?? pos.ExerciseId;
+    public static int PlayedExerciseId(PlanPosition pos, DateOnly today) =>
+        pos.CurrentBuildLevel is null ? pos.ExerciseId : PlayedExercise(pos, today)?.Id ?? pos.ExerciseId;
 
     /// <summary>
     /// Level n of m on the position's build path (B-848, decision 5): the target's prerequisite levels plus the target,
-    /// in order, and the place of the exercise played now. <c>null</c> without a build path. Needs what
-    /// <see cref="PlayedExercise"/> needs.
+    /// in order, and the place of the exercise played on <paramref name="today"/>. <c>null</c> without a build path. Needs
+    /// what <see cref="PlayedExercise"/> needs.
     /// </summary>
-    public static BuildPath? BuildPathOf(PlanPosition pos)
+    public static BuildPath? BuildPathOf(PlanPosition pos, DateOnly today)
     {
-        if (pos.CurrentBuildLevel is null || pos.Exercise is not { } target || PlayedExercise(pos) is not { } played)
+        if (pos.CurrentBuildLevel is null || pos.Exercise is not { } target || PlayedExercise(pos, today) is not { } played)
             return null;
         List<int> levels = [.. (target.Prerequisites ?? []).Where(e => e.BuildLevel is not null)
             .Select(e => e.BuildLevel!.Value).Distinct().Order(), Exercise.BuildLevelTarget];
@@ -80,14 +142,14 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// a right answer outside the day's portion would count as wrong. Assigning rejects the combination; this covers the
     /// list a creator switches to any order after it was assigned (B-478).
     /// </summary>
-    public int DailyDose(PlanPosition pos) => DailyDose(pos, registry);
+    public int DailyDose(PlanPosition pos, DateOnly day) => DailyDose(pos, registry, day);
 
     /// <summary>
-    /// <see cref="DailyDose(PlanPosition)"/> for callers without the service (the position response, B-480) - the one place
+    /// <see cref="DailyDose(PlanPosition, DateOnly)"/> for callers without the service (the position response, B-480) - the one place
     /// the rule lives, so what the father reads and what the play applies cannot drift apart. Needs the exercise loaded.
     /// </summary>
-    public static int DailyDose(PlanPosition pos, ExerciseTypeRegistry types) =>
-        pos.NewItemsPerDay > 0 && PlayedExercise(pos) is { } exercise && types.ByKey(exercise.Type)?.GradesAsSet(ConfigOf(exercise)) == true
+    public static int DailyDose(PlanPosition pos, ExerciseTypeRegistry types, DateOnly today) =>
+        pos.NewItemsPerDay > 0 && PlayedExercise(pos, today) is { } exercise && types.ByKey(exercise.Type)?.GradesAsSet(ConfigOf(exercise)) == true
             ? 0
             : pos.NewItemsPerDay;
 
@@ -105,9 +167,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// <b>freezes</b> the child's motif for good (see <c>MediaSelector</c>), so a path that renders no image
     /// would silently decide what the child sees later.
     /// </summary>
-    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, int? childId = null,
+    public async Task<IReadOnlyList<ContentItem>> ItemsOfAsync(PlanPosition pos, DateOnly day, int? childId = null,
         CancellationToken ct = default) =>
-        PlayedExercise(pos) is { } ex ? await content.ItemsOfAsync(ex, childId, ct) : [];
+        PlayedExercise(pos, day) is { } ex ? await content.ItemsOfAsync(ex, childId, ct) : [];
 
     /// <summary>
     /// May the child play this plan today (practice/test)? Only an active plan within its
@@ -124,11 +186,11 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static int StageForDay(PlanPosition pos, StudyPlan plan, DateOnly day, IExerciseType type)
     {
         var dayNumber = day.DayNumber - plan.StartDate.DayNumber + 1;
-        var step = OwnSchedule(pos)?
+        var step = OwnSchedule(pos, day)?
             .Where(s => s.DayNumber <= dayNumber)
             .OrderByDescending(s => s.DayNumber)
             .FirstOrDefault();
-        return step?.Stage ?? OwnStage(pos) ?? PlayedExercise(pos)?.DefaultStage ?? type.DefaultStage;
+        return step?.Stage ?? OwnStage(pos, day) ?? PlayedExercise(pos, day)?.DefaultStage ?? type.DefaultStage;
     }
 
     /// <summary>
@@ -138,9 +200,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// a display stage (playthrough), a typed stage (graded) or a self-assessed one. "Typed tests only" makes a
     /// self-assessed day unreachable, since such an attempt is never graded.
     /// </summary>
-    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type) =>
-        LearningCheckOf(type, pos.RequireTypedTest, OwnStage(pos) ?? PlayedExercise(pos)?.DefaultStage ?? type.DefaultStage,
-            OwnSchedule(pos));
+    public static LearningCheck LearningCheckOf(PlanPosition pos, IExerciseType type, DateOnly today) =>
+        LearningCheckOf(type, pos.RequireTypedTest,
+            OwnStage(pos, today) ?? PlayedExercise(pos, today)?.DefaultStage ?? type.DefaultStage, OwnSchedule(pos, today));
 
     /// <summary>
     /// The same rule over loose values (B-552), so a request can be judged before anything is written: validation and
@@ -190,8 +252,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         : baseStage;
 
     /// <summary><see cref="TestTargetStage(IExerciseType, int, int)"/> for a position: its base stage as in <see cref="StageForDay"/>.</summary>
-    public static int TestTargetStage(IExerciseType type, PlanPosition pos, int stage) =>
-        TestTargetStage(type, OwnStage(pos) ?? PlayedExercise(pos)?.DefaultStage ?? type.DefaultStage, stage);
+    public static int TestTargetStage(IExerciseType type, PlanPosition pos, int stage, DateOnly today) =>
+        TestTargetStage(type, OwnStage(pos, today) ?? PlayedExercise(pos, today)?.DefaultStage ?? type.DefaultStage, stage);
 
     // The type's free display stage, if it has one.
     private static int? DisplayStage(IExerciseType type) =>
@@ -213,9 +275,9 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// projection needs: presence tells an introduction from a regular card (<see cref="IsIntroduction"/>), box and date
     /// pick the card's rung (<see cref="CardStage"/>).
     /// </summary>
-    public async Task<Dictionary<int, CardProgress>> IntroducedCardsAsync(PlanPosition pos, CancellationToken ct)
+    public async Task<Dictionary<int, CardProgress>> IntroducedCardsAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
     {
-        var exerciseId = PlayedExerciseId(pos);
+        var exerciseId = PlayedExerciseId(pos, day);
         return await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.IntroducedAt != null)
             .ToDictionaryAsync(p => p.ItemIndex, p => new CardProgress(p.Box, p.IntroducedAt!.Value, p.ImprintedAt,
@@ -314,8 +376,8 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     }
 
     /// <summary>Number of content items used by the position (override, exercise default, otherwise all available).</summary>
-    public int PoolSize(PlanPosition pos, int available) =>
-        (pos.ItemCount ?? PlayedExercise(pos)?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;
+    public int PoolSize(PlanPosition pos, DateOnly day, int available) =>
+        (pos.ItemCount ?? PlayedExercise(pos, day)?.DefaultItemCount) is > 0 and var count ? Math.Min(count, available) : available;
 
     /// <summary>
     /// Selects the item indices due today: limited to the pool (<see cref="PlanPosition.ItemCount"/>),
@@ -327,16 +389,16 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public async Task<IReadOnlyList<int>> DueItemIndicesAsync(PlanPosition pos, DateOnly day,
         PracticeOrder strategy = PracticeOrder.WeakestFirst, bool dueOnly = true, CancellationToken ct = default)
     {
-        var items = await ItemsOfAsync(pos, ct: ct);
-        var poolSize = PoolSize(pos, items.Count);
+        var items = await ItemsOfAsync(pos, day, ct: ct);
+        var poolSize = PoolSize(pos, day, items.Count);
         if (poolSize == 0) return [];
 
-        var exerciseId = PlayedExerciseId(pos);
+        var exerciseId = PlayedExerciseId(pos, day);
         var progress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
-        var type = PlayedExercise(pos) is { } ex ? TypeOf(ex) : null;
+        var type = PlayedExercise(pos, day) is { } ex ? TypeOf(ex) : null;
         IEnumerable<(int Index, PositionItemProgress? Prog)> due = Enumerable.Range(0, poolSize)
             .Select(i => (Index: i, Prog: progress.GetValueOrDefault(i)))
             .Where(x => ScopeMatch(pos.Scope, x.Prog, day, type, items) && (!dueOnly || !pos.UseLeitner || IsDue(x.Prog, day)))
@@ -347,7 +409,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         // the day's new words - 6 a day with 2 open from yesterday are 2 open and 4 new. Counted from this round's own
         // contents (a word the scope or its due date keeps out takes no place), and for the whole day: imprinted in the
         // first round, it still took its place, or a second round would bring new words beyond the dose.
-        if (dueOnly && DailyDose(pos) is > 0 and var dose)
+        if (dueOnly && DailyDose(pos, day) is > 0 and var dose)
             due = WithinDailyDose(due, dose, progress.Values.Count(p => p.IntroducedAt == day)
                 + OpenLearnCards(pos, items, due.Select(x => x.Prog), day));
 
@@ -359,10 +421,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// "der Reihe nach". No Leitner due date and no dose: a remediation round is the list of what is still open, and the
     /// next round is the same rule read again, so a task made easier comes back there and not in this round.
     /// </summary>
-    public async Task<IReadOnlyList<int>> RemediationRoundAsync(PlanPosition pos, CancellationToken ct)
+    public async Task<IReadOnlyList<int>> RemediationRoundAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
     {
-        var poolSize = PoolSize(pos, (await ItemsOfAsync(pos, ct: ct)).Count);
-        var exerciseId = PlayedExerciseId(pos);
+        var poolSize = PoolSize(pos, day, (await ItemsOfAsync(pos, day, ct: ct)).Count);
+        var exerciseId = PlayedExerciseId(pos, day);
         var done = await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.RemediationDoneAt != null)
             .Select(p => p.ItemIndex).ToListAsync(ct);
@@ -406,7 +468,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// </summary>
     public int OpenLearnCards(PlanPosition pos, IReadOnlyList<ContentItem> items, IEnumerable<PositionItemProgress?> progress,
         DateOnly day) =>
-        PlayedExercise(pos) is { } ex && TypeOf(ex) is { } type
+        PlayedExercise(pos, day) is { } ex && TypeOf(ex) is { } type
             ? progress.Count(p => IsOpenLearnCard(type, items, p, day))
             : 0;
 
@@ -480,7 +542,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     {
         foreach (var index in itemIndices)
         {
-            var prog = await ProgressForAsync(pos, index, ct);
+            var prog = await ProgressForAsync(pos, day, index, ct);
             if (prog.IntroducedAt is not null) continue;
             prog.IntroducedAt = day;
             prog.DueOn ??= day;
@@ -701,10 +763,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// Retrieves the progress record of a position's content atom on the exercise it plays (B-848), or creates it
     /// (tracked) if missing.
     /// </summary>
-    public async Task<PositionItemProgress> ProgressForAsync(PlanPosition pos, int itemIndex, CancellationToken ct)
+    public async Task<PositionItemProgress> ProgressForAsync(PlanPosition pos, DateOnly day, int itemIndex, CancellationToken ct)
     {
         var positionId = pos.Id;
-        var exerciseId = PlayedExerciseId(pos);
+        var exerciseId = PlayedExerciseId(pos, day);
         // The tracker first: a row added earlier in the same request (introduce, then imprint - B-658) is not in the
         // database yet, and a second Add would violate the unique (position, exercise, item) index on save.
         var prog = db.PositionItemProgress.Local

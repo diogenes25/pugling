@@ -19,7 +19,8 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(PlanOwnershipFilter))]
-public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService play, ExerciseFeedbackService feedback)
+public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService play, ExerciseFeedbackService feedback,
+    LearningDay learningDay)
     : ControllerBase
 {
     /// <summary>
@@ -56,16 +57,18 @@ public class ExerciseFeedbackController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.ValidationError,
                 $"The text must not exceed {ExerciseFeedbackService.MaxTextLength} characters.");
 
+        // The card as the child plays it today (B-849): a level raised today is played from tomorrow.
+        var today = learningDay.Today;
         ContentItem? card = null;
         if (dto.ItemIndex is { } index)
         {
-            card = (await play.ItemsOfAsync(pos, ct: ct)).ElementAtOrDefault(index);
+            card = (await play.ItemsOfAsync(pos, today, ct: ct)).ElementAtOrDefault(index);
             if (index < 0 || card is null)
                 return this.ProblemWithCode(ApiErrors.ItemNotFound, "This card does not belong to the position's exercise.");
         }
         // No lock for an open test (B-685): the test screen offers no report button, and a report changes nothing of the
         // game - so the only case a lock would catch is practising after leaving a test with "later".
-        var ids = await feedback.ReportAsync(childId, pos, card, reasons, text, ct);
+        var ids = await feedback.ReportAsync(childId, pos, today, card, reasons, text, ct);
         return StatusCode(StatusCodes.Status201Created, new FeedbackReceipt(ids));
     }
 }

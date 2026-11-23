@@ -159,3 +159,13 @@ Schema mit Bestandsdaten berührt werden.
   Wochenpflicht auf einem Aufbau-Weg“ (B-848 E3) gilt auch auf der Zielstufe 3, und `CurrentBuildLevel` lässt sich nicht
   zurück auf `null` setzen – eine Position am Ende ihres Wegs kann darum nie wieder Pflicht werden. Diese Story hebt die
   Sperre auf; dabei mitentscheiden, ob die Zielstufe sie ohnehin aufhebt oder ein `ClearCurrentBuildLevel` kommt.
+- **2026-11-23** — Hinweis aus dem Bau von B-849 (Nachtlauf E, Sprint 122), **zur Entscheidung im Dialog**:
+  (1) Entscheidung 2 hier („ein bestandener Test der aktuellen Stufe erfüllt das Ziel“, stellvertretend 2026-11-20)
+  widerspricht B-849 E6 (vom Nutzer am 2026-11-19 bestätigt: „Ein Test einer Vorstufe zählt nicht für das
+  Pflichtziel“). B-849 ist so gebaut: `IsGoalMetAsync` zählt nur Versuche mit `BuildLevel` null oder Zielstufe. Wer B-702
+  baut, muss diesen Filter für die aktuelle Stufe öffnen – erst nach der Entscheidung, welche Regel gilt.
+  (2) Offen: Eine auf der Vorstufe beendete Nacharbeit lässt `CompletedOn` stehen; nach dem Aufstieg ist „bis erledigt“
+  damit nie wieder Pflicht. Zurücksetzen hieße neuer Malus auf der neuen Stufe – eine Stick-Entscheidung.
+  (3) `PositionPlayService.PlayedBuildLevel` kennt nur einen Schritt Historie (vor `BuildLevelEffectiveOn` die Stufe
+  darunter). Nach zwei Aufstiegen löst ein früherer Tag auf die vorletzte Stufe auf – egal, solange gestufte Positionen
+  keine Tages-/Wochenpflicht tragen; wer die Sperre hebt, braucht für Serie und Abrechnung den Stand je Tag.

@@ -37,16 +37,20 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         types.ByKey(exercise.Type)?.StoreResolution == StoreResolution.ItemTable
         && !await db.ExerciseItems.AnyAsync(i => i.ExerciseId == exercise.Id, ct);
 
-    private PositionResponse Map(PlanPosition p) =>
+    // The supervisor reads the position as it plays today (B-849): a level raised today shows from tomorrow.
+    private PositionResponse Map(PlanPosition p) => Map(p, learningDay.Today);
+
+    private PositionResponse Map(PlanPosition p, DateOnly today) =>
         new(p.Id, p.StudyPlanId, p.ExerciseId, p.Exercise?.Title ?? "", p.Exercise?.Type.ToString() ?? "",
             p.Order, p.Stage, p.ItemCount, p.Scope, p.Cadence, p.OrderStrategy, p.GoalThreshold, p.RequireTypedTest,
             p.UseLeitner, p.MaxBox, p.BoxIntervalDays, p.StageSchedule, p.PointsGoalMet, p.PenaltyCoins, p.NewContentPoints,
             p.ComboThreshold, p.ComboBonusPoints, p.SpeedThresholdSeconds, p.SpeedBonusPoints, p.TimeSlots,
-            p.NewItemsPerDay, PositionPlayService.DailyDose(p, types),
+            p.NewItemsPerDay, PositionPlayService.DailyDose(p, types, today),
             // B-848: judged on the exercise the position plays, whose type a prerequisite may not share.
-            types.ByKey(PositionPlayService.PlayedExercise(p)?.Type ?? "") is { } type ? PositionPlayService.LearningCheckOf(p, type) : null,
+            types.ByKey(PositionPlayService.PlayedExercise(p, today)?.Type ?? "") is { } type
+                ? PositionPlayService.LearningCheckOf(p, type, today) : null,
             p.ForgivingDemotion, p.Remediation, p.CompletionBonus, p.CompletedOn, p.CurrentBuildLevel,
-            PositionPlayService.BuildPathOf(p));
+            PositionPlayService.BuildPathOf(p, today));
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -481,9 +485,14 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.TimeSlots is not null) pos.TimeSlots = dto.TimeSlots.Count > 0 ? dto.TimeSlots : null;
         if (dto.ClearTimeSlots) pos.TimeSlots = null;
         if (dto.NewItemsPerDay is not null) pos.NewItemsPerDay = dto.NewItemsPerDay.Value;
-        if (dto.CurrentBuildLevel is not null) pos.CurrentBuildLevel = dto.CurrentBuildLevel;
+        if (levelChanges)
+        {
+            // The father's level counts at once (B-849): it replaces a raise still waiting for the next learning day.
+            pos.CurrentBuildLevel = dto.CurrentBuildLevel;
+            pos.BuildLevelEffectiveOn = null;
+        }
         // B-636: a remediation already finished when it becomes "until done" ends at once, or it never could.
-        await progress.StampFinishedRemediationAsync(pos, ct);
+        await progress.StampFinishedRemediationAsync(pos, learningDay.Today, ct);
 
         await db.SaveChangesAsync(ct);
         return Map(pos);

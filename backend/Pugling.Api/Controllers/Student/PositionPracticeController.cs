@@ -48,8 +48,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (s.PlanPosition is not { Remediation: true } pos || s.Mode != PlayMode.Lern) return null;
         var round = await db.PracticeSessions.CountAsync(
             x => x.PlanPositionId == pos.Id && x.Mode == PlayMode.Lern && x.Id <= s.Id, ct);
-        var total = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var total = play.PoolSize(pos, s.Day, (await play.ItemsOfAsync(pos, s.Day, ct: ct)).Count);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, s.Day);
         var done = await db.PositionItemProgress.CountAsync(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId
             && p.RemediationDoneAt != null && p.ItemIndex < total, ct);
         return new RemediationState(round, done, total);
@@ -123,10 +123,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A remediation round (B-635) is the list of tasks still open, in order; free practice stays as it is.
         if (pos.Remediation && dto.Mode == PlayMode.Lern)
         {
-            session.Order = [.. await play.RemediationRoundAsync(pos, ct)];
+            session.Order = [.. await play.RemediationRoundAsync(pos, day, ct)];
             // B-636: nothing open any more although no answer finished it (the pool shrank) - the end is stamped here, or a
             // duty "until done" would cost its penalty every day with nothing left to play.
-            if (session.Order.Count == 0) await progress.StampFinishedRemediationAsync(pos, ct);
+            if (session.Order.Count == 0) await progress.StampFinishedRemediationAsync(pos, day, ct);
         }
         else
         {
@@ -158,11 +158,11 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     private async Task<IReadOnlyList<int>> IntroductionsFirstAsync(PlanPosition pos, DateOnly day, PlayMode mode,
         IReadOnlyList<int> order, CancellationToken ct)
     {
-        if (PositionPlayService.PlayedExercise(pos) is not { } played || pos.StudyPlan is null || play.TypeOf(played) is not { } type)
+        if (PositionPlayService.PlayedExercise(pos, day) is not { } played || pos.StudyPlan is null || play.TypeOf(played) is not { } type)
             return order;
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, day, type);
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
-        var items = await play.ItemsOfAsync(pos, ct: ct);
+        var introduced = await play.IntroducedCardsAsync(pos, day, ct);
+        var items = await play.ItemsOfAsync(pos, day, ct: ct);
         return [.. order.OrderBy(i =>
         {
             var card = CardOf(introduced, i);
@@ -183,8 +183,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         stage != dayStage && !type.IsTypedStage(stage) && !type.IsDisplayOnlyStage(stage) && !type.IsLearnCardStage(stage);
 
     /// <summary>The position's point settings for <see cref="ScoringService"/>; the label names plan and exercise in the ledger.</summary>
-    private static ScoringService.ScoreConfig ScoreConfigOf(StudyPlan plan, PlanPosition pos) =>
-        new($"{plan.Title} · {PositionPlayService.PlayedExercise(pos)!.Title}", pos.NewContentPoints, pos.ComboThreshold, pos.ComboBonusPoints,
+    private static ScoringService.ScoreConfig ScoreConfigOf(StudyPlan plan, PlanPosition pos, DateOnly day) =>
+        new($"{plan.Title} · {PositionPlayService.PlayedExercise(pos, day)!.Title}", pos.NewContentPoints, pos.ComboThreshold, pos.ComboBonusPoints,
             pos.SpeedThresholdSeconds, pos.SpeedBonusPoints, pos.TimeSlots);
 
     /// <summary>
@@ -288,7 +288,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     private static PracticeCard BuildCard(PlanPosition pos, IExerciseType type, int dayStage, PracticeSession session,
         Dictionary<int, CardProgress> introduced, IReadOnlyList<ContentItem> items, int position)
     {
-        var exercise = PositionPlayService.PlayedExercise(pos)!;
+        var exercise = PositionPlayService.PlayedExercise(pos, session.Day)!;
         var index = session.Order[position];
         var card = CardOf(introduced, index);
         var introduction = PositionPlayService.IsIntroduction(type, dayStage, session.Mode,
@@ -367,7 +367,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var today = learningDay.Today;
         var todayFrom = learningDay.StartUtc(today);
         var todayTo = learningDay.StartUtc(today.AddDays(1));
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         return [.. await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId
                 && ((p.LastReviewedAt >= dayFrom && p.LastReviewedAt < dayTo)
@@ -393,13 +393,13 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
+        var introduced = await play.IntroducedCardsAsync(pos, session.Day, ct);
 
         // The frozen order; skip items removed since the start (item CRUD). By position: a learn card coming back (B-598)
         // stands twice in the order and is played as the repeat the second time.
@@ -431,7 +431,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var session = await GetSession(planId, positionId, sessionId, ct);
         if (session is null) return NotFound();
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos?.StudyPlan is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos?.StudyPlan is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
         if (User.IsStudent()
             && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
@@ -441,7 +441,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // exercise - including those of cards this session never shows.
         if (!session.Order.Contains(itemIndex)) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan.ChildId, ct);
         if (items.FirstOrDefault(i => i.Index == itemIndex) is not
             { ItemId: { } itemId, VocabularyId: { } vocabId } item)
             return NotFound();
@@ -452,7 +452,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // everywhere else, never from the client.
         // An introduction (B-419) is shown at the display stage and therefore does show its image.
         var dayStage = PositionPlayService.StageForDay(pos, pos.StudyPlan, session.Day, type);
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
+        var introduced = await play.IntroducedCardsAsync(pos, session.Day, ct);
         // The card the round shows at the cursor - a learn card coming back (B-598) shows its image like the first time.
         var stage = session.Cursor < session.Order.Count && session.Order[session.Cursor] == itemIndex
             ? StageAt(type, pos, dayStage, session, introduced, items, session.Cursor)
@@ -482,9 +482,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var stage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
@@ -493,7 +493,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (cursor != session.Cursor) { session.Cursor = cursor; await db.SaveChangesAsync(ct); }
         if (cursor >= session.Order.Count) return new NextResponse(null, true, cursor, session.Order.Count);
 
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
+        var introduced = await play.IntroducedCardsAsync(pos, session.Day, ct);
         var card = BuildCard(pos, type, stage, session, introduced, items, cursor);
         return new NextResponse(card, false, cursor, session.Order.Count);
     }
@@ -521,17 +521,17 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var position = session.Cursor;
         if (position >= session.Order.Count || session.Order[position] != dto.ItemIndex)
             return this.ProblemWithCode(ApiErrors.CannotEase, "Only the current card of the round can be made easier.");
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
+        var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
         if (dto.ItemIndex < 0 || dto.ItemIndex >= items.Count) return NotFound();
         var dayStage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
+        var introduced = await play.IntroducedCardsAsync(pos, session.Day, ct);
         var stage = StageAt(type, pos, dayStage, session, introduced, items, position);
         var baseStage = StageAt(type, pos, dayStage, session, introduced, items, position, ignoreEased: true);
         // Only a remediation task or a learn card's recall (B-643) can be made easier.
@@ -571,17 +571,17 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
 
         // Info mode: free practice without any learning feedback - record nothing, score nothing.
         if (session.Mode == PlayMode.Info) return NoContent();
 
-        var items = await play.ItemsOfAsync(pos, pos.StudyPlan?.ChildId, ct);
-        if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, items.Count))
+        var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
+        if (dto.ItemIndex < 0 || dto.ItemIndex >= play.PoolSize(pos, session.Day, items.Count))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content does not belong to this position.");
         // Under a daily dose (B-04) only the cards of this round can be reviewed: any other index would introduce a
         // content the day has no room for, and the dose would be a suggestion.
-        if (play.DailyDose(pos) > 0 && !session.Order.Contains(dto.ItemIndex))
+        if (play.DailyDose(pos, session.Day) > 0 && !session.Order.Contains(dto.ItemIndex))
             return this.ProblemWithCode(ApiErrors.NotFound, "The content is not part of this practice round.");
 
         // Enforce the stage server-side (not selectable by the client) and grade type-agnostically.
@@ -590,7 +590,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var dayStage = PositionPlayService.StageForDay(pos, plan, session.Day, type);
         // The card's own stage, not the day's (B-419, B-476): a card is graded as what it was shown as - an
         // introduction earns nothing, a choice rung is checked as a choice - so the client cannot pick its form.
-        var introduced = await play.IntroducedCardsAsync(pos, ct);
+        var introduced = await play.IntroducedCardsAsync(pos, session.Day, ct);
         // The card at the cursor when the answer is for it; otherwise (an offline batch) its first place in the round.
         var position = session.Cursor < session.Order.Count && session.Order[session.Cursor] == dto.ItemIndex
             ? session.Cursor : session.Order.IndexOf(dto.ItemIndex);
@@ -656,7 +656,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, staged);
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
-        var prog = creditedIndex is { } credited ? await play.ProgressForAsync(pos, credited, ct) : null;
+        var prog = creditedIndex is { } credited ? await play.ProgressForAsync(pos, session.Day, credited, ct) : null;
         // B-433: a review with no answer at all on an atom introduced today and never checked is no verdict. The card
         // the child was served was an introduction that asked for nothing; the atom was introduced elsewhere since
         // (a second tab), so the server now sees an asked card. Judging the empty "next" as wrong would be unfair and
@@ -736,7 +736,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A review without a verdict (B-433) leaves no history entry: the introduction it answers was recorded already.
         if (creditedIndex is { } recorded && !noVerdict)
         {
-            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos), staged[recorded], wasCorrect && !displayOnly,
+            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), staged[recorded], wasCorrect && !displayOnly,
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
         }
 
@@ -759,7 +759,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // as the box does on a Leitner position. A miss leaves no stamp - the word may still be got right today.
             else if (wasCorrect) prog.LastReviewedAt = now;
 
-            var cfg = ScoreConfigOf(plan, pos);
+            var cfg = ScoreConfigOf(plan, pos, session.Day);
             var score = scoring.ScoreReview(cfg, isNew, preBox, prog.Box, wasCorrect, combo,
                 learningDay.LocalNow, elapsedSeconds);
             foreach (var c in score.Contributions)
@@ -790,7 +790,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // card, whose preview by the supervisor introduces nothing and so learns nothing to pay for.
             if (wasCorrect)
             {
-                var claim = ScoringService.ScoreClaim(ScoreConfigOf(plan, pos));
+                var claim = ScoringService.ScoreClaim(ScoreConfigOf(plan, pos, session.Day));
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = claim.Kind, Amount = claim.Amount, Reason = claim.Reason, CreatedAt = now });
                 awarded = claim.Amount;
             }
@@ -873,7 +873,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             && session.EasedStages?.ContainsKey(position - 1) == true
             && !(session.CardShownAt is { } shownAt && lastAnswerAt is { } la && shownAt > la);
         var recallCounts = recalled && easedStage is null && position >= session.Cursor && !echoOfEased;
-        var prog = await play.ProgressForAsync(pos, index, ct);
+        var prog = await play.ProgressForAsync(pos, session.Day, index, ct);
         // Only the child's own encounter introduces (B-433), as in every other review.
         if (User.IsStudent() && prog.IntroducedAt is null)
         {
@@ -886,7 +886,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var awarded = 0;
         if (User.IsStudent() && recallCounts && prog.ImprintedAt is null && prog.NewBonusPaidAt is null)
         {
-            var learnt = scoring.ScoreNewWordRecall(ScoreConfigOf(plan, pos), learningDay.LocalNow);
+            var learnt = scoring.ScoreNewWordRecall(ScoreConfigOf(plan, pos, session.Day), learningDay.LocalNow);
             // A position may set its new-content points to 0, and a time slot may round them down to 0: no empty row.
             if (learnt.Amount > 0)
                 db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = plan.ChildId, Kind = learnt.Kind, Amount = learnt.Amount, Reason = learnt.Reason, CreatedAt = now });
@@ -905,14 +905,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var verdict = dto.GaveUp || dto.WasKnown is not null || !string.IsNullOrWhiteSpace(dto.GivenAnswer);
         if (dto.WasKnown is { } wasKnown)
         {
-            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos), item, wasKnown,
+            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, wasKnown,
                 (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false,
                 ct: ct);
         }
         // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
         if (verdict)
         {
-            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos), item, recalled, easedStage ?? (int)TestStage.LearnCard,
+            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, recalled, easedStage ?? (int)TestStage.LearnCard,
                 string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
                 session.Day, countsForMastery: false, ct: ct);
         }

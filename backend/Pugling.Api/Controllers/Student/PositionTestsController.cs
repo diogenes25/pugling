@@ -41,6 +41,14 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             .ThenInclude(u => u!.Series)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
+    // B-849: the level the attempt examined is no longer the one its day resolves to - the father changed the level since.
+    // Its frozen questions are indices of another exercise; answering would grade them against the wrong cards.
+    private static bool IsStale(PlanPosition pos, TestAttempt attempt) =>
+        attempt.BuildLevel != PositionPlayService.ExaminedBuildLevel(pos, attempt.Day);
+
+    private ActionResult StaleAttempt() =>
+        this.ProblemWithCode(ApiErrors.NotFound, "This test belongs to a level the position no longer plays.");
+
     private Task<TestAttempt?> LoadAttempt(int planId, int positionId, int attemptId, CancellationToken ct) =>
         db.TestAttempts.Include(t => t.Results)
             .FirstOrDefaultAsync(t => t.Id == attemptId && t.StudyPlanId == planId && t.PlanPositionId == positionId, ct);
@@ -112,19 +120,20 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     {
         var plan = await GetPlan(planId, ct);
         if (plan is null) return NotFound();
+        // The test plays the exercise of its day (B-849): a level raised today is played from tomorrow.
+        var today = learningDay.Today;
+        var day = dto.Day ?? today;
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, day) is not { } played) return NotFound();
 
-        var items = await play.ItemsOfAsync(pos, ct: ct);
-        var poolSize = play.PoolSize(pos, items.Count);
+        var items = await play.ItemsOfAsync(pos, day, ct: ct);
+        var poolSize = play.PoolSize(pos, day, items.Count);
         if (poolSize == 0) return this.ProblemWithCode(ApiErrors.NoCheckableContent, "The exercise contains no checkable content.");
 
-        var today = learningDay.Today;
         if (dto.Day is { } dd && dd != today && !User.IsSupervisor()) return Forbid();
         // Anti-cheat: the child may only test its active, running plan (see the practice start).
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
-        var day = dto.Day ?? today;
 
         // The child does not walk out of a running attempt and gets only a limited number per day.
         // The supervisor stays exempt: they use the endpoint for preview/catch-up with a stage of their own.
@@ -153,7 +162,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // A learn card is never tested (B-598, decision 9): it shows the solution. Its day - or the supervisor's pick of it -
         // is tested at the station's target.
         var stage = PositionPlayService.TestTargetStage(type, pos,
-            explicitStage ? dto.Stage!.Value : PositionPlayService.StageForDay(pos, plan, day, type));
+            explicitStage ? dto.Stage!.Value : PositionPlayService.StageForDay(pos, plan, day, type), day);
         // A free display stage (B-96) has no question to grade - a test without a question is not a test,
         // regardless of who requests it (student schedule or supervisor preview).
         if (type.IsDisplayOnlyStage(stage))
@@ -162,13 +171,13 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
 
         // The test is a position check: test the contents already introduced, otherwise the whole pool
         // (it does not block when practice has nothing "due" yet).
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         var atomProgress = await db.PositionItemProgress
             .Where(p => p.PlanPositionId == positionId && p.ExerciseId == exerciseId && p.ItemIndex < poolSize)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
         var introduced = atomProgress.Values.Where(p => p.IntroducedAt != null).Select(p => p.ItemIndex).ToList();
         // With a daily dose (B-04) the test checks the day's portion; otherwise everything introduced.
-        var dose = play.DailyDose(pos);
+        var dose = play.DailyDose(pos, day);
         var pool = dose > 0
             ? PositionPlayService.DailyTestPortion(dose, poolSize, atomProgress.Values, day, learningDay)
             : introduced.Count > 0 ? introduced : Enumerable.Range(0, poolSize).ToList();
@@ -183,6 +192,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             StageValue = stage,
             StartedAt = time.GetUtcNow().UtcDateTime,
             Graded = typed,
+            BuildLevel = PositionPlayService.ExaminedBuildLevel(pos, day),
             // Stamp the actor: everything below the child's rules (resume, attempt cap) keys off it.
             BySupervisor = !User.IsStudent(),
             TotalItems = pool.Count,
@@ -229,9 +239,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, attempt.Day) is not { } played) return NotFound();
+        if (IsStale(pos, attempt)) return StaleAttempt();
 
-        var items = await play.ItemsOfAsync(pos, ct: ct);
+        var items = await play.ItemsOfAsync(pos, attempt.Day, ct: ct);
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var cursor = PositionPlayService.SkipRemoved(attempt.Order, attempt.Cursor, items.Count);
@@ -265,9 +276,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, attempt.Day) is not { } played) return NotFound();
+        if (IsStale(pos, attempt)) return StaleAttempt();
 
-        var items = await play.ItemsOfAsync(pos, ct: ct);
+        var items = await play.ItemsOfAsync(pos, attempt.Day, ct: ct);
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -334,7 +346,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         CancellationToken ct)
     {
         if (attempt.BySupervisor || !User.IsStudent() || type.EaseLadder.Count == 0 || stage != type.EaseLadder[0]) return;
-        var prog = await play.ProgressForAsync(pos, index, ct);
+        var prog = await play.ProgressForAsync(pos, attempt.Day, index, ct);
         prog.ImprintedAt ??= attempt.Day;
     }
 
@@ -374,9 +386,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         if (User.IsStudent() && !PositionPlayService.PlanPlayableForChild(plan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
-        if (pos is null || PositionPlayService.PlayedExercise(pos) is not { } played) return NotFound();
+        if (pos is null || PositionPlayService.PlayedExercise(pos, attempt.Day) is not { } played) return NotFound();
+        if (IsStale(pos, attempt)) return StaleAttempt();
 
-        var items = await play.ItemsOfAsync(pos, ct: ct);
+        var items = await play.ItemsOfAsync(pos, attempt.Day, ct: ct);
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var typed = type.IsTypedStage(attempt.StageValue);
@@ -450,7 +463,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             var item = staged[index];
             var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, staged);
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
-            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos), item, r.WasCorrect, r.StageValue,
+            await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, attempt.Day), item, r.WasCorrect, r.StageValue,
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }
 
@@ -463,6 +476,16 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             : (int)Math.Round(100.0 * attempt.CorrectItems / attempt.TotalItems);
         attempt.Passed = attempt.ScorePercent >= passPercent;
         attempt.CompletedAt = time.GetUtcNow().UtcDateTime;
+        // B-849: the child's passed test raises the level at once, in the same save as its completion; the child plays it
+        // from the next learning day. The new level comes from the level examined, not the position's, so a second pass
+        // or a parallel completion raises nothing more. A supervisor's preview stays out of the child's path, and an attempt
+        // that could not meet the goal (self-assessed under "typed tests only") does not raise either.
+        if (attempt.Passed && !attempt.BySupervisor && (!pos.RequireTypedTest || attempt.Graded)
+            && PositionPlayService.PromotedBuildLevel(pos, attempt.BuildLevel) is { } raised)
+        {
+            pos.CurrentBuildLevel = raised;
+            pos.BuildLevelEffectiveOn = learningDay.Today.AddDays(1);
+        }
         await db.SaveChangesAsync(ct);
 
         // Book the position's goal points (idempotent) BEFORE the gamification, so that coin-based missions

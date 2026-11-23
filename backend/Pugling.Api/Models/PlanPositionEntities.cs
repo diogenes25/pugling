@@ -35,6 +35,14 @@ public class PlanPosition
     /// </summary>
     public int? CurrentBuildLevel { get; set; }
 
+    /// <summary>
+    /// The learning day from which <see cref="CurrentBuildLevel"/> is played (B-849, decision 5). A passed test raises the
+    /// level at once, but the child finishes today's round, dose and learn cards on the level it started the day with;
+    /// before this day the position plays the level below on its path. <c>null</c> = the level is played at once (set by
+    /// the father, or never raised).
+    /// </summary>
+    public DateOnly? BuildLevelEffectiveOn { get; set; }
+
     // --- Overrides (null = inherit the exercise's suggestion) ---
     /// <summary>Overridden test stage (interpreted per method); null = the exercise's default.</summary>
     public int? Stage { get; set; }

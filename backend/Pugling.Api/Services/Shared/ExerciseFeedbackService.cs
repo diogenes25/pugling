@@ -29,13 +29,13 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
     /// </para>
     /// </summary>
     /// <returns>The entries written or merged into, in the order of the reasons.</returns>
-    public async Task<IReadOnlyList<int>> ReportAsync(int childId, PlanPosition pos, ContentItem? card,
+    public async Task<IReadOnlyList<int>> ReportAsync(int childId, PlanPosition pos, DateOnly day, ContentItem? card,
         IReadOnlyList<FeedbackReason> reasons, string? text, CancellationToken ct)
     {
         var now = time.GetUtcNow().UtcDateTime;
         var itemIndex = card?.Index;
         // B-848: the card belongs to the exercise the position plays, the prerequisite on a build path.
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         var entries = new List<ExerciseFeedback>();
         foreach (var reason in reasons.Count > 0 ? reasons.Select(r => (FeedbackReason?)r) : [null])
         {
@@ -66,6 +66,9 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         await db.SaveChangesAsync(ct);
         return [.. entries.Select(e => e.Id)];
     }
+
+    // A position over a bare exercise: it has no build path, so the day it is resolved for reads nothing.
+    private static PlanPosition BareExercise(Exercise exercise) => new() { Exercise = exercise };
 
     // The texts of a merged entry, newest last; over the column's length the oldest characters go.
     private static string? Join(string? before, string? added)
@@ -99,7 +102,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
             if (f.ItemIndex is { } index && f.Exercise is { } exercise)
             {
                 if (!cards.TryGetValue(exercise.Id, out var items))
-                    cards[exercise.Id] = items = await play.ItemsOfAsync(new PlanPosition { Exercise = exercise }, ct: ct);
+                    cards[exercise.Id] = items = await play.ItemsOfAsync(BareExercise(exercise), default, ct: ct);
                 card = items.ElementAtOrDefault(index);
             }
             result.Add(new FeedbackResponse(f.Id, f.ChildId, f.Child?.Name ?? "", f.PlanPosition?.StudyPlanId,
@@ -117,10 +120,15 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
     private async Task<string?> ChildAnswerAsync(ExerciseFeedback f, CancellationToken ct)
     {
         if (f.ItemIndex is not { } index) return null;
+        // B-849: only attempts on the exercise reported on - on a build path an index of another level names another
+        // card. A prerequisite is examined on its own level; the position's own exercise on the target level, or without
+        // a level where the position had no build path then.
+        int? prerequisiteLevel = f.PlanPosition is { } p && p.ExerciseId != f.ExerciseId ? f.Exercise?.BuildLevel : null;
         var tested = f.PlanPositionId is { } positionId
             // TestItemResult has no DbSet of its own; it is reached through its attempt. A scalar subquery, not a
             // SelectMany: the latter needs SQL APPLY, which SQLite does not have.
             ? await db.TestAttempts.AsNoTracking()
+                .Where(PositionPlayService.AttemptsOnLevel(prerequisiteLevel))
                 .Where(t => t.PlanPositionId == positionId && !t.BySupervisor && t.CompletedAt != null
                     && t.Results.Any(r => r.ItemIndex == index && r.GivenAnswer != null))
                 .OrderByDescending(t => t.CompletedAt).ThenByDescending(t => t.Id)
@@ -199,7 +207,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
             if (f.ItemIndex is { } index && f.Exercise is { } exercise)
             {
                 if (!cards.TryGetValue(exercise.Id, out var items))
-                    cards[exercise.Id] = items = await play.ItemsOfAsync(new PlanPosition { Exercise = exercise }, ct: ct);
+                    cards[exercise.Id] = items = await play.ItemsOfAsync(BareExercise(exercise), default, ct: ct);
                 cue = items.ElementAtOrDefault(index)?.Prompt;
             }
             notices.Add(new FeedbackNotice(f.Id, f.ExerciseId, f.Exercise?.Title ?? "", f.ItemIndex, cue, f.Reason,

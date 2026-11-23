@@ -10,7 +10,7 @@ namespace Pugling.Api.Services.Supervisor;
 /// question "which vocabulary is mastered, which isn't" – reconstructed in the position model from
 /// <see cref="PositionItemProgress"/> and <see cref="TestItemResult"/> (replaces the plan-wide report of the old model).
 /// </summary>
-public class PositionReportService(PuglingDbContext db, PositionPlayService play)
+public class PositionReportService(PuglingDbContext db, PositionPlayService play, LearningDay learningDay)
 {
     // ItemReport/Report live in the contract project (Pugling.Contracts.Supervisor).
 
@@ -25,19 +25,23 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
         if (pos?.Exercise is null) return null;
 
-        // Contents of the exercise (type-agnostic) - order = the stable ItemIndex.
-        var items = await play.ItemsOfAsync(pos, ct: ct);
+        // Contents of the exercise (type-agnostic) - order = the stable ItemIndex. B-849: the level played today.
+        var today = learningDay.Today;
+        var items = await play.ItemsOfAsync(pos, today, ct: ct);
 
         // Leitner/introduction state per item (one plan = one child), filtered in the DB.
         // B-848: on a build path the items and the progress of the exercise played now.
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, today);
         var progress = await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == positionId && p.ExerciseId == exerciseId)
             .ToDictionaryAsync(p => p.ItemIndex, ct);
 
-        // Test hit rate per item from completed attempts of this position.
+        // Test hit rate per item from completed attempts of this position - on the level shown (B-849): an index of another
+        // level names another exercise's item.
+        var level = PositionPlayService.ExaminedBuildLevel(pos, today);
         var testResults = await db.TestAttempts.AsNoTracking()
             .Where(a => a.PlanPositionId == positionId && a.CompletedAt != null)
+            .Where(PositionPlayService.AttemptsOnLevel(level))
             .SelectMany(a => a.Results)
             .Where(r => r.ItemIndex != null)
             .Select(r => new { Index = r.ItemIndex!.Value, r.WasCorrect })
@@ -47,9 +51,9 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
 
         var maxBox = pos.MaxBox;
         // B-637: the stages in the order the child steps down them; a stage off the ladder (none today) sorts last.
-        var ladder = pos.Remediation ? (PositionPlayService.PlayedExercise(pos) is { } played ? play.TypeOf(played)?.EaseLadder : null) ?? [] : [];
+        var ladder = pos.Remediation ? (PositionPlayService.PlayedExercise(pos, today) is { } played ? play.TypeOf(played)?.EaseLadder : null) ?? [] : [];
         // Only tasks of the pool are remediated; an item beyond a position's item count would show as open forever.
-        var pool = play.PoolSize(pos, items.Count);
+        var pool = play.PoolSize(pos, today, items.Count);
         var rows = items.Select(item =>
         {
             progress.TryGetValue(item.Index, out var ip);
@@ -64,7 +68,7 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
 
         return new Report(pos.Id, pos.ExerciseId, pos.Exercise.Title, pos.Exercise.Type.ToString(),
             maxBox, rows.Count, rows.Count(r => r.Introduced), rows.Count(r => r.Box >= maxBox), rows,
-            pos.Remediation, pos.CompletedOn, PositionPlayService.BuildPathOf(pos));
+            pos.Remediation, pos.CompletedOn, PositionPlayService.BuildPathOf(pos, today));
     }
 
     // The cue is the gap's German prompt, which the content item carries as its hint (ClozeGaps.WithPrompt).

@@ -1734,6 +1734,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("BoxIntervalDays")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("BuildLevelEffectiveOn")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Cadence")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -2640,6 +2643,9 @@ namespace Pugling.Api.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BuildLevel")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("BySupervisor")

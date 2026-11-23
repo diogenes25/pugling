@@ -196,6 +196,13 @@ public class TestAttempt
     public bool Passed { get; set; }
 
     /// <summary>
+    /// The build level this attempt examined (B-849, decision 3): the level the position played when the test started,
+    /// <c>Exercise.BuildLevelTarget</c> for the target itself, <c>null</c> on a position without a build path. Promotion
+    /// and the goal read it, never the position's level at the time they run - that may have moved since.
+    /// </summary>
+    public int? BuildLevel { get; set; }
+
+    /// <summary>
     /// Examination order (item indexes) frozen at the start according to <see cref="PlanPosition.OrderStrategy"/>.
     /// The class-test mode is strictly server-driven: one question after another, no going back.
     /// </summary>

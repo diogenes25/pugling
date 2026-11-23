@@ -46,3 +46,8 @@ B-704 AK 3, 4, 5, 6 wörtlich (siehe dort), dazu AK 7 für die neuen Felder.
 - **2026-11-22** — Aus B-704 geteilt (Nachtlauf 2026-11-22-c, Opus). Wartet auf B-701; der Zuschnitt von B-701 ist
   offen (siehe dort, Nachprüfung vom 2026-11-22).
 - **2026-11-22** — B-701 ist geteilt (B-848, B-849); wartet jetzt auf B-848, das Stufenband nach einem Aufstieg auf B-849.
+- **2026-11-23** — Hinweis aus dem Review von B-849 (Nachtlauf E): Seit B-849 kann ein Aufstieg auf den nächsten Lerntag
+  warten (`PlanPosition.BuildLevelEffectiveOn`). `PositionResponse` gibt dann die rohe `CurrentBuildLevel` (neu) neben
+  `Build` (heute gespielt) aus, ohne den Unterschied zu erklären; ein trailing optionales `BuildLevelEffectiveOn` im
+  Vertrag gehört hierher. Der Vater kann einen wartenden Aufstieg auch nicht „sofort“ setzen: dieselbe Stufe zu senden ist
+  keine Änderung.

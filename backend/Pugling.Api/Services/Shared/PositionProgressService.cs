@@ -113,8 +113,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     // ---- Done rule per check mode ---- ----
 
     /// <summary>Check mode of the exercise the position plays (B-848; default <see cref="ExerciseCheckMode.None"/>).</summary>
-    private ExerciseCheckMode CheckModeOf(PlanPosition pos) =>
-        PositionPlayService.PlayedExercise(pos) is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
+    private ExerciseCheckMode CheckModeOf(PlanPosition pos, DateOnly day) =>
+        PositionPlayService.PlayedExercise(pos, day) is { } ex ? registry.ByKey(ex.Type)?.Manifest.CheckMode ?? ExerciseCheckMode.None : ExerciseCheckMode.None;
 
     /// <summary>
     /// Is the stage that applies on <paramref name="day"/> a free display stage (B-96)? Such a day has no
@@ -123,9 +123,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     /// <remarks>Judged at the stage the test plays (B-598): a learn-card day is tested at its target, never shown only.</remarks>
     public bool IsDisplayOnlyDay(PlanPosition pos, StudyPlan plan, DateOnly day) =>
-        PositionPlayService.PlayedExercise(pos) is { } ex && registry.ByKey(ex.Type) is { } type
+        PositionPlayService.PlayedExercise(pos, day) is { } ex && registry.ByKey(ex.Type) is { } type
             && type.IsDisplayOnlyStage(PositionPlayService.TestTargetStage(type, pos,
-                PositionPlayService.StageForDay(pos, plan, day, type)));
+                PositionPlayService.StageForDay(pos, plan, day, type), day));
 
     /// <summary>
     /// Is the position testable on <paramref name="day"/>? False for content types without a check mode
@@ -134,7 +134,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// test/exam action has to gate on this rather than on the exercise type alone.
     /// </summary>
     public bool IsTestable(PlanPosition pos, StudyPlan plan, DateOnly day) =>
-        CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
+        CheckModeOf(pos, day) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day);
 
     /// <summary>
     /// How many test attempts the child gets per <b>day</b>. A second chance is pedagogically right, the
@@ -210,12 +210,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var cadence = DutyCadenceOn(pos, day);
         if (cadence == GoalCadence.UntilDone) return await RemediationDayMetAsync(pos, day, ct);
         var (from, to) = PeriodRange(cadence, day);
-        if (CheckModeOf(pos) == ExerciseCheckMode.None || IsDisplayOnlyDay(pos, plan, day))
-            return await PlayedRoundMeetsGoalAsync(pos, from, to, ct);
+        if (CheckModeOf(pos, day) == ExerciseCheckMode.None || IsDisplayOnlyDay(pos, plan, day))
+            return await PlayedRoundMeetsGoalAsync(pos, day, from, to, ct);
 
+        // B-849, decision 4: a passed test of a prerequisite raises the level but meets no goal - only the target does.
         return await db.TestAttempts.AnyAsync(t =>
             t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
-            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded), ct);
+            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded)
+            && (t.BuildLevel == null || t.BuildLevel >= Exercise.BuildLevelTarget), ct);
     }
 
     /// <summary>
@@ -264,7 +266,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// and closing a round, which is exactly the presence this rule exists to reject.
     /// </para>
     /// </summary>
-    private async Task<bool> PlayedRoundMeetsGoalAsync(PlanPosition pos, DateOnly from, DateOnly to,
+    private async Task<bool> PlayedRoundMeetsGoalAsync(PlanPosition pos, DateOnly day, DateOnly from, DateOnly to,
         CancellationToken ct)
     {
         // Only real learning sessions count towards the goal - info sessions (free practice without
@@ -281,8 +283,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         if (emptyRounds.Count == 0) return false;
         // The pool is the only thing that separates "nothing was due" from "there is nothing at all";
         // it is queried here and not above so that the normal, played round costs no extra round-trip.
-        var items = await play.ItemsOfAsync(pos, ct: ct);
-        if (play.PoolSize(pos, items.Count) > 0) return true;
+        var items = await play.ItemsOfAsync(pos, day, ct: ct);
+        if (play.PoolSize(pos, day, items.Count) > 0) return true;
         // Contentless exercise: there is no cursor to measure. What is left as evidence is that the child
         // stayed for a while and closed the round on purpose - see MinSecondsForContentlessRound.
         return emptyRounds.Any(r => r.EndedAt != null && r.ActiveSeconds >= MinSecondsForContentlessRound);
@@ -298,7 +300,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var cadence = DutyCadenceOn(pos, day);
         var untilDone = cadence == GoalCadence.UntilDone;
-        if (!untilDone && CheckModeOf(pos) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
+        if (!untilDone && CheckModeOf(pos, day) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
         var (from, to) = PeriodRange(cadence, day);
         var rounds = await db.PracticeSessions.AsNoTracking()
             .Where(s => s.PlanPositionId == pos.Id && s.Day >= from && s.Day <= to && s.Mode == PlayMode.Lern)
@@ -353,7 +355,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 .Select(p => new { p.PlanPositionId, p.ExerciseId, p.ItemIndex, Imprinted = p.ImprintedAt != null })
                 .ToListAsync(ct))
             // B-848: counted on the exercise the position plays - a word met on the easier level is new on the target.
-            .Where(p => positions.Any(pos => pos.Id == p.PlanPositionId && PositionPlayService.PlayedExerciseId(pos) == p.ExerciseId))
+            .Where(p => positions.Any(pos => pos.Id == p.PlanPositionId && PositionPlayService.PlayedExerciseId(pos, day) == p.ExerciseId))
             .ToLookup(p => p.PlanPositionId, p => (p.ItemIndex, p.Imprinted));
         var planSubject = await PlanSubjectNameAsync(plan, ct);
 
@@ -361,14 +363,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         foreach (var pos in positions.Where(p => p.Cadence != GoalCadence.UntilDone || HasDutyOn(p, day)))
         {
             // B-848: on a build path the child plays, sees and looks up the prerequisite (decision 5).
-            var played = PositionPlayService.PlayedExercise(pos);
+            var played = PositionPlayService.PlayedExercise(pos, day);
             var type = played is { } ex ? registry.ByKey(ex.Type) : null;
             var manifest = type?.Manifest;
-            var checkMode = CheckModeOf(pos);
+            var checkMode = CheckModeOf(pos, day);
             // B-613: before the position became a duty it is a free position on that day - no open goal, no price.
             var cadence = day >= DutyBegins(pos) ? DutyCadenceOn(pos, day) : GoalCadence.None;
-            var items = await play.ItemsOfAsync(pos, ct: ct);
-            var poolSize = play.PoolSize(pos, items.Count);
+            var items = await play.ItemsOfAsync(pos, day, ct: ct);
+            var poolSize = play.PoolSize(pos, day, items.Count);
             var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day, ct: ct)).Count : 0;
             var goalMet = cadence == GoalCadence.None || await IsGoalMetAsync(pos, plan, day, ct);
             var goalProgress = goalMet ? 1 : await OpenGoalProgressAsync(pos, plan, day, ct);
@@ -389,7 +391,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 // B-643: the golden ring - imprinted words, or introduced ones where a content needs no learn card.
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize && (p.Imprinted
                     || type is null || !PositionPlayService.NeedsImprint(type, items[p.ItemIndex]))),
-                PositionPlayService.BuildPathOf(pos)));
+                PositionPlayService.BuildPathOf(pos, day)));
         }
 
         // The day's obligation = every position with a goal (daily today / weekly this week) done.
@@ -655,7 +657,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public async Task<int> CompleteRemediationIfDoneAsync(PlanPosition pos, StudyPlan plan, DateOnly day,
         CancellationToken ct)
     {
-        if (!pos.Remediation || pos.CompletedOn is not null || await LastTaskDoneOnAsync(pos, ct) is null) return 0;
+        if (!pos.Remediation || pos.CompletedOn is not null || await LastTaskDoneOnAsync(pos, day, ct) is null) return 0;
 
         pos.CompletedOn = day;
         var bonus = pos.Cadence == GoalCadence.UntilDone ? pos.CompletionBonus : 0;
@@ -696,11 +698,11 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// The day the last remediation task was done, or <c>null</c> while one is open (or the pool is empty) - the one
     /// count behind the finish of an answer and the stamp of a switch.
     /// </summary>
-    private async Task<DateOnly?> LastTaskDoneOnAsync(PlanPosition pos, CancellationToken ct)
+    private async Task<DateOnly?> LastTaskDoneOnAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
     {
-        var total = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
+        var total = play.PoolSize(pos, day, (await play.ItemsOfAsync(pos, day, ct: ct)).Count);
         if (total == 0) return null;
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         var doneDays = await db.PositionItemProgress.AsNoTracking()
             .Where(p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.RemediationDoneAt != null
                 && p.ItemIndex < total)
@@ -715,10 +717,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// finish it, so without the stamp the duty would charge its penalty forever. No bonus - neither the father's switch nor
     /// a shrunk pool is the child's achievement. Does not save; the caller's save carries it.
     /// </summary>
-    public async Task StampFinishedRemediationAsync(PlanPosition pos, CancellationToken ct)
+    public async Task StampFinishedRemediationAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
     {
         if (pos is { Remediation: true, Cadence: GoalCadence.UntilDone, CompletedOn: null })
-            pos.CompletedOn = await LastTaskDoneOnAsync(pos, ct);
+            pos.CompletedOn = await LastTaskDoneOnAsync(pos, day, ct);
     }
 
     // ---- Penalty for not learning (lazy settlement) ---- ----
@@ -791,10 +793,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var introductionDay = firstPlay > firstDue ? firstPlay : firstDue;
         if (day != introductionDay) return false;
 
-        var pool = play.PoolSize(pos, (await play.ItemsOfAsync(pos, ct: ct)).Count);
+        var pool = play.PoolSize(pos, day, (await play.ItemsOfAsync(pos, day, ct: ct)).Count);
         if (pool == 0) return false;
-        var portion = play.DailyDose(pos) is > 0 and var dose ? Math.Min(dose, pool) : pool;
-        var exerciseId = PositionPlayService.PlayedExerciseId(pos);
+        var portion = play.DailyDose(pos, day) is > 0 and var dose ? Math.Min(dose, pool) : pool;
+        var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         var introduced = await db.PositionItemProgress.CountAsync(
             p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.IntroducedAt == introductionDay, ct);
         return introduced >= portion;

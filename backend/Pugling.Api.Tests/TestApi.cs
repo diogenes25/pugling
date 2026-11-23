@@ -286,7 +286,8 @@ internal static class TestApi
         var pos = db.PlanPositions.Include(p => p.Exercise).Include(p => p.StudyPlan).Single(p => p.Id == positionId);
         // Only a type that introduces its cards has a first contact to skip; the others keep no progress here.
         if (play.TypeOf(pos.Exercise!) is not { } type || PositionPlayService.IntroductionStage(type) is null) return;
-        var count = play.ItemsOfAsync(pos, pos.StudyPlan!.ChildId, CancellationToken.None).GetAwaiter().GetResult().Count;
+        var today = scope.ServiceProvider.GetRequiredService<LearningDay>().Today;
+        var count = play.ItemsOfAsync(pos, today, pos.StudyPlan!.ChildId, CancellationToken.None).GetAwaiter().GetResult().Count;
         var yesterday = DateOnly.FromDateTime(scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow().UtcDateTime).AddDays(-1);
         var existing = db.PositionItemProgress.Where(p => p.PlanPositionId == positionId).ToDictionary(p => p.ItemIndex);
         for (var i = 0; i < count; i++)

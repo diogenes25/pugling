@@ -12,6 +12,7 @@ quelle: B-701
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-23"
 wartet_auf: ""
 ---
 
@@ -204,3 +205,9 @@ Schlüssel), eine zentrale Naht für 61 Lesestellen und 50 Zugriffe mit neuem Fi
   frisch gestartete Server (5211/5184): `full-flow`, `aufbau-weg-editor`, `lernkarte-leichter`, `nacharbeit` – 4 passed.
   **Menschlicher Check offen:** vor dem nächsten Heimnetz-Start läuft die Migration `BuildLevelPlayed` gegen die echte DB
   (an einer Kopie geprobt, siehe oben).
+- **2026-11-23** — Nachschau (Nachtlauf E, beim Bau von B-849 über dieselbe Naht): Prüfpunkte (a) jeder Aufrufer von
+  `PlayedExercise`/`PlayedExerciseId` per grep gegen „lädt er `Exercise.Prerequisites`?“ – alle Positions-Loader tun es
+  (Compiler-Liste von 35 Aufrufern beim Umbau auf `PlayedExercise(pos, day)`, keiner wirft im Lauf der 2170 Tests);
+  (b) die Sperre `InPlayTodayAsync` gegen offene Versuche und Runden **früherer** Tage – Fund: beide bleiben beantwortbar
+  und werten nach einem Stufenwechsel gegen die neue Übung → [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md)
+  (Test, im Sprint 122 behoben) und [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) (Runde, offen).
