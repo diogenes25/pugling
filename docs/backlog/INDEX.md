@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (101)
+### Offen (96)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -89,13 +89,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
-| [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) | Stellt der Vater eine laufende Nacharbeit auf Kür, fallen ihre erfüllten Tage aus der Serie | Defekt | `idee` | P3 | — | backend | — |
-| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
-| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
-| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
-| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | Defekt | `idee` | P3 | — | frontend | Migration? + Vertrag? |
-| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | Defekt | `idee` | P3 | — | frontend | Migration? + Vertrag? |
-| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
@@ -117,9 +111,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
 | [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` | Aufräumen | `idee` | P3 | — | backend | Migration? + Vertrag? |
 
 <details>
-<summary>Abgenommen (575)</summary>
+<summary>Abgenommen (584)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -687,9 +682,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | Ein geleerter „Band" einer Unit wird als gespeichert gemeldet und bleibt stehen | Defekt | `abgenommen` | P3 | XS | beides | — |
 | [B-81](B-81-vokabel-tags-geben-uebersetzungen-preis.md) | Über die Vokabel-Tags kann ein Kind jede Übersetzung des Stores lesen | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-82](B-82-positions-report-gibt-loesungen-preis.md) | Über den Positions-Report kann ein Kind die Lösung jeder Karte lesen | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
+| [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) | Stellt der Vater eine laufende Nacharbeit auf Kür, fallen ihre erfüllten Tage aus der Serie | Defekt | `abgenommen` | P3 | S | backend | — |
 | [B-83](B-83-loesungsfeld-regel-residenter-kontext.md) | Die Lösungsfeld-Regel steht nur als Kommentar am Wächter | Aufräumen | `abgenommen` | P3 | XS | doku | — |
 | [B-84](B-84-api-beispiele-behaupten-unerreichbarkeit.md) | Die API-Beispiele behaupten Unerreichbarkeit, wo nur nichts mitgeschnitten wurde | Defekt | `abgenommen` | P3 | S | doku | — |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren | Wunsch | `abgenommen` | P1 | S | frontend | — |
+| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | Defekt | `abgenommen` | P3 | S | backend | — |
+| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | Ein deutscher Block-Kommentar im Löschen einer Übung | Aufräumen | `abgenommen` | P3 | XS | backend | — |
+| [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-88](B-88-scoring-uhrzeit-am-timeprovider.md) | Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider` | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-89](B-89-positionsliste-haengt-report-aus.md) | Die Positionsliste hängt bei jeder Änderung den aufgeklappten Report aus | Defekt | `abgenommen` | P3 | L | frontend | — |
 | [B-93](B-93-birkenbihl-einstellungen-ohne-wirkung.md) | Zwei Birkenbihl-Einstellungen, die lautlos nichts tun | Defekt | `abgenommen` | P3 | S | beides | — |
@@ -720,9 +724,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | `geschaetzt` | B-848 (Start-Stufe, gespielte Stufe); das Stufenband nach einem Aufstieg braucht B-849 |
 | [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | `geschaetzt` | B-848 (gestufte Position spielt ihre Stufe) – baut auf PlayedExercise auf |
 
-### Nach der Abnahme entgangen (215)
+### Nach der Abnahme entgangen (217)
 
-**Nachgeschaut: 544 von 575 abgenommenen** — und in 193 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 31 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 551 von 584 abgenommenen** — und in 193 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 33 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -935,15 +939,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-785](B-785-aufwaermhinweis-verspricht-mehr-ab-der-auswahl.md) | Der Aufwärm-Hinweis verspricht „ab der Auswahl gibt es mehr“, die Auswahl zahlt aber gleich viel | [B-657] | `abgenommen` |
 | [B-788](B-788-fokus-effekt-abhaengigkeiten-ungetragen.md) | Zwei Abhängigkeiten des Fokus-Effekts im Test trägt kein Fall | [B-541] | `abgenommen` |
 | [B-790](B-790-plan-umhaengen-spec-trifft-zwei-bearbeiten.md) | `plan-umhaengen-gesperrt.spec.ts` trifft zwei „Bearbeiten“-Knöpfe | [B-673] | `abgenommen` |
-| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | [B-730] | `idee` |
-| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | [B-730] | `idee` |
-| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | [B-730] | `idee` |
-| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | [B-660] | `idee` |
-| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | [B-660] | `idee` |
-| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | [B-660] | `idee` |
+| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | Wochenvergleich der Münzen verrutscht in einer Umstellungswoche um eine Stunde | [B-730] | `abgenommen` |
+| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | Das Tor gegen UTC-Tagesbildung fängt weniger Formen, als B-730 AK 2 verspricht | [B-730] | `abgenommen` |
+| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | Der Titel der Schwachwort-Wiederholung trägt das UTC-Datum | [B-730] | `abgenommen` |
+| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | [B-660] | `abgenommen` |
+| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | [B-660] | `abgenommen` |
+| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | [B-660] | `abgenommen` |
+| [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | [B-700] | `idee` |
+| [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | [B-660] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (31) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (33) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -981,6 +987,8 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
+| [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | Ein deutscher Block-Kommentar im Löschen einer Übung |
+| [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht |
 
 </details>
 
@@ -1150,16 +1158,11 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-789](B-789-angebotstitel-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-791](B-791-geleerte-felder-ausserhalb-des-shops.md) | `abgenommen` | Abschnitt „Schätzung" |
 | [B-800](B-800-band-einer-unit-leeren-bleibt-stehen.md) | `abgenommen` | Abschnitt „Schätzung" |
-| [B-820](B-820-laufende-nacharbeit-zur-kuer-bricht-die-serie.md) | `idee` | `unverifiziert: true` |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | `idee` | `unverifiziert: true` |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 | [B-841](B-841-start-stufe-und-stufenband.md) | `geschaetzt` | Abschnitt „Ist-Stand…" |
-| [B-842](B-842-wochenvergleich-verrutscht-in-der-umstellungswoche.md) | `idee` | `unverifiziert: true` |
-| [B-843](B-843-lerntag-tor-faengt-weniger-als-versprochen.md) | `idee` | `unverifiziert: true` |
-| [B-844](B-844-titel-der-schwachwort-wiederholung-in-utc.md) | `idee` | `unverifiziert: true` |
-| [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | `idee` | `unverifiziert: true` |
-| [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | `idee` | `unverifiziert: true` |
-| [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | `idee` | `unverifiziert: true` |
+| [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | `abgenommen` | Abschnitt „User Story" |
+| [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | `abgenommen` | Abschnitt „Ist-Stand…" |
 
 <details>
 <summary>Verworfen (61)</summary>
