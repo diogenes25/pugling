@@ -32998,6 +32998,15 @@
               ],
               "format": "int32"
             }
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Input for scheduling a class test (or recording one already written)."
@@ -42874,6 +42883,7 @@
           "createdAt",
           "directExerciseCount",
           "id",
+          "prepWindowDefault",
           "scheduledDate",
           "status",
           "tags",
@@ -42960,9 +42970,41 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepWindowDefault": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepCardsPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepBlockedReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Class test in list/summary view."
+        "description": "Class test in list/summary view. The preparation fields (B-752/B-757): \u0060PrepWindowDays\u0060 is the test\u0027s own window\n(\u0060null\u0060 = the default \u0060PrepWindowDefault\u0060, 0 = no preparation duty), \u0060PrepCardsPerDay\u0060 the server\u0027s \u0022about N\ncards a day\u0022 of the duty (\u0060null\u0060 when none arises), \u0060PrepBlockedReason\u0060 why none arises for a planned test\n(ClassTestPrepBlockReasons)."
       },
       "KlassenarbeitStatus": {
         "enum": [
@@ -49669,6 +49711,19 @@
               "null",
               "string"
             ]
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearPrepWindow": {
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "Partial change \u2013 among other things, recording a grade and setting status. \u0060ClearGrade\u0060 deletes the grade."

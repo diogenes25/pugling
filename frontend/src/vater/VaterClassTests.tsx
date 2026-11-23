@@ -60,6 +60,8 @@ export function ClassTestManager({ childId }: { childId: number }) {
   const [form, setForm] = useState<CreateKlassenarbeitDto>({
     childId, title: "", topic: "", subjectId: null, scheduledDate: "",
   });
+  // Leer = der Standard des Servers (B-757); als Text gehalten, damit „leer“ und „0“ (aus) unterscheidbar bleiben.
+  const [fenster, setFenster] = useState("");
   function up<K extends keyof CreateKlassenarbeitDto>(k: K, v: CreateKlassenarbeitDto[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
@@ -74,9 +76,11 @@ export function ClassTestManager({ childId }: { childId: number }) {
     if (!title || !form.scheduledDate) return;
     const ok = await action.run(() => api.createClassTest({
       ...form, childId, title, topic: form.topic?.trim() || null, subjectId: form.subjectId || null,
+      prepWindowDays: fensterWert(fenster),
     }), `Klassenarbeit „${title}" geplant.`);
     if (!ok) return;
     setForm((f) => ({ ...f, title: "", topic: "" }));
+    setFenster("");
     reloadAll();
   }
 
@@ -110,6 +114,9 @@ export function ClassTestManager({ childId }: { childId: number }) {
             </select></div>
           <div className="field"><label htmlFor="ct-date">Termin <Pflicht /></label>
             <input id="ct-date" title="Termin" type="date" value={form.scheduledDate} onChange={(e) => up("scheduledDate", e.target.value)} /></div>
+          <div className="field" style={{ maxWidth: 170 }}><label htmlFor="ct-prep">Vorbereitung (Tage)</label>
+            <input id="ct-prep" type="number" min={0} max={MAX_FENSTER} value={fenster} onChange={(e) => setFenster(e.target.value)}
+              placeholder="Standard" /></div>
           <button type="submit" className="btn inline-btn" style={{ width: "auto" }}
             disabled={action.busy || !form.title.trim() || !form.scheduledDate}>{action.busy ? "Plane…" : "Planen"}</button>
         </form>
@@ -121,7 +128,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Note</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Vorbereitung</th><th>Note</th><th>Aktion</th></tr></thead>
               <tbody>
                 {list.data?.items.map((k) => (
                   <tr key={k.id}>
@@ -132,6 +139,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
                       ? <span className="pill lime">{STATUS_LABEL[k.status]}</span>
                       : <span className="pill">{STATUS_LABEL[k.status]}</span>}</td>
                     <td className="num">{k.directExerciseCount}{k.tags.length > 0 ? ` +${k.tags.length}🏷️` : ""}</td>
+                    <td><VorbereitungsZelle k={k} /></td>
                     <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade ?? null} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -140,7 +148,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
                     </td>
                   </tr>
                 ))}
-                {list.data?.total === 0 && <tr><td colSpan={6} className="muted">Noch keine Klassenarbeiten.</td></tr>}
+                {list.data?.total === 0 && <tr><td colSpan={7} className="muted">Noch keine Klassenarbeiten.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -152,6 +160,63 @@ export function ClassTestManager({ childId }: { childId: number }) {
 
       <RepeatPanel repeat={repeat} />
     </>
+  );
+}
+
+/** Obergrenze des Vorbereitungs-Fensters – dieselbe wie auf dem Server (`ClassTestPrepOptions.MaxWindowDays`). */
+export const MAX_FENSTER = 60;
+
+/** Das Fenster aus dem Feld: leer = Standard (`null`), sonst die ganze Zahl. */
+export const fensterWert = (text: string): number | null => (text.trim() === "" ? null : Math.trunc(Number(text)));
+
+const GRUND: Record<string, string> = {
+  no_subject: "keine Pflicht: die Arbeit hat kein Fach",
+  no_active_plan: "keine Pflicht: kein aktiver Plan im Fach",
+};
+
+/**
+ * Was die Vorbereitung dem Kind abverlangt (B-757): „etwa N Karten je Tag“ mit der Zahl des Servers, oder warum keine
+ * Pflicht entsteht. Gerechnet wird hier nichts – die Dosisregel steht an einer Stelle, auf dem Server.
+ */
+export function VorbereitungsZelle({ k }: { k: KlassenarbeitResponse }) {
+  if (k.status !== "Planned") return <span className="muted">–</span>;
+  const tage = k.prepWindowDays ?? k.prepWindowDefault;
+  if (tage === 0) return <span className="muted">aus</span>;
+  if (k.prepBlockedReason) return <span className="muted">{GRUND[k.prepBlockedReason] ?? "keine Pflicht"}</span>;
+  return (
+    <span>
+      {k.prepCardsPerDay != null ? `etwa ${k.prepCardsPerDay} Karten je Tag` : "–"}
+      <span className="muted"> · {tage} Tage{k.prepWindowDays == null ? " (Standard)" : ""}</span>
+    </span>
+  );
+}
+
+/**
+ * Das Vorbereitungs-Fenster einer bestehenden Arbeit ändern (B-757): eine Zahl (0 = aus) oder leer für den Standard. Leer
+ * speichert über `clearPrepWindow` – ein fehlendes Feld ließe den alten Wert stehen (PATCH-Semantik).
+ */
+export function FensterEditor({ k, onSaved }: { k: KlassenarbeitResponse; onSaved: () => void }) {
+  const [text, setText] = useState(k.prepWindowDays != null ? String(k.prepWindowDays) : "");
+  const action = useAction();
+  const wert = fensterWert(text);
+  const gueltig = wert === null || (Number.isFinite(wert) && wert >= 0 && wert <= MAX_FENSTER);
+  async function speichern(e: React.FormEvent) {
+    e.preventDefault();
+    if (!gueltig) return;
+    const ok = await action.run(
+      () => api.updateClassTest(k.id, wert === null ? { clearPrepWindow: true } : { prepWindowDays: wert }),
+      wert === null ? "Vorbereitung zurück auf den Standard." : wert === 0 ? "Vorbereitung abgeschaltet." : `Vorbereitung: ${wert} Tage.`);
+    if (ok) onSaved();
+  }
+  return (
+    <form className="row" onSubmit={speichern} style={{ marginTop: 6, alignItems: "end" }}>
+      <div className="field" style={{ maxWidth: 220 }}><label htmlFor={`ct-prep-${k.id}`}>Vorbereitung (Tage, leer = Standard {k.prepWindowDefault})</label>
+        <input id={`ct-prep-${k.id}`} type="number" min={0} max={MAX_FENSTER} value={text} onChange={(e) => setText(e.target.value)}
+          placeholder="Standard" /></div>
+      <button type="submit" className="btn ghost inline-btn" style={{ width: "auto" }} disabled={action.busy || !gueltig}>
+        Fenster speichern</button>
+      <StatusBanner message={action.message} />
+    </form>
   );
 }
 
@@ -203,6 +268,8 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             {practice.data && <span className="pill" style={{ marginLeft: "auto" }}>
               {practice.data.daysUntil >= 0 ? `noch ${practice.data.daysUntil} Tage` : "Termin vorbei"}</span>}
           </div>
+          <FensterEditor key={`${id}-${detail.data.klassenarbeit.prepWindowDays ?? ""}`} k={detail.data.klassenarbeit}
+            onSaved={() => { detail.reload(); onChanged(); }} />
 
           <h4 className="h-section" style={{ marginTop: 10 }}>Zugewiesene Übungen ({detail.data.assignedExercises.length})</h4>
           {detail.data.assignedExercises.length === 0 ? <p className="muted">Noch keine – unten aus dem Katalog zuweisen.</p> : (
