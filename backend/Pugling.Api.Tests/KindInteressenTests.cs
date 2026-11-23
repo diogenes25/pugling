@@ -288,8 +288,8 @@ public class KindInteressenTests(PuglingWebAppFactory factory) : IClassFixture<P
         var (_, child) = await ChildAsync(father, "auswahlliste");
         var styleTag = await TagAsync(father, TestApi.UniqueName("Pixelkunst"), "Style");
 
-        // Über die Facette geholt statt über den vollen Bestand: die Taxonomie ist global und wächst mit
-        // jedem Testlauf, ein `take=500` über alles liefe irgendwann in den Deckel und der Fund wäre weg.
+        // Fetched through the facet, not the whole stock: the taxonomy is global and grows with every test run, so a
+        // `take=500` over everything would hit the cap one day and the hit would be gone.
         var all = await JsonAsync(child, "/api/v1/student/interest-tags?facet=Style&take=500");
         var entry = all.EnumerateArray().Single(t => t.GetProperty("id").GetInt32() == styleTag);
         Assert.Equal("Style", entry.GetProperty("facet").GetString());

@@ -83,12 +83,12 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// Aus dem Review zu B-46. Die Taxonomie hat seit dieser Story <b>drei</b> Referenzierer, und die
-    /// Aufräum-Sicht kannte zwei. Ein Stichwort, das nur eine Übung einkleidet, sah damit „unbenutzt" aus —
-    /// und das Löschen ist bewusst ohne Riegel, die Einkleidung wäre also lautlos per Cascade weg.
+    /// From the review of B-46. Since that story the taxonomy has <b>three</b> referrers, and the cleanup view knew
+    /// two. A tag that only dresses an exercise therefore looked "unused" - and deleting has deliberately no lock, so
+    /// the dressing would silently go by cascade.
     /// <para>
-    /// Rote Probe: <c>ExerciseLinks.Count == 0</c> aus dem <c>unused</c>-Filter nehmen ⇒ die zweite
-    /// Zusicherung fällt; <c>ExerciseCount</c> aus der Projektion nehmen ⇒ die erste.
+    /// Red probe: take <c>ExerciseLinks.Count == 0</c> out of the <c>unused</c> filter ⇒ the second assertion fails;
+    /// take <c>ExerciseCount</c> out of the projection ⇒ the first.
     /// </para>
     /// </summary>
     [Fact]
@@ -100,7 +100,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         var tag = await father.PostAsJsonAsync("/api/v1/creator/interest-tags", new { label = slug });
         var tagId = await TestApi.IdAsync(tag);
 
-        // Weder Bild noch Kind zeigen darauf - nur die Übung. Genau der Fall, den die alte Fassung übersah.
+        // Neither an image nor a child points at it - only the exercise. Exactly the case the old version missed.
         var subjectId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects",
             new { name = TestApi.UniqueName("Einkleidung-Fach") }));
         var (seriesId, seriesUnitId) = await TestApi.CreateSeriesAndUnitAsync(father, subjectId);
@@ -122,7 +122,7 @@ public class InterestTaxonomyTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(0, gefunden[0].GetProperty("childCount").GetInt32());
         Assert.Equal(1, gefunden[0].GetProperty("exerciseCount").GetInt32());
 
-        // Und die Aufräum-Sicht bietet es nicht mehr zum Wegwerfen an.
+        // And the cleanup view no longer offers it for disposal.
         var unbenutzt = await GetAsync(father, $"/api/v1/creator/interest-tags?unused=true&search={slug}");
         Assert.Equal(0, unbenutzt.GetArrayLength());
     }

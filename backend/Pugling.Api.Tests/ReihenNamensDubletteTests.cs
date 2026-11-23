@@ -71,8 +71,8 @@ public class ReihenNamensDubletteTests(PuglingWebAppFactory factory) : IClassFix
     {
         var client = await TestApi.AdultAsync(factory);
 
-        // Erste Reihe: unter einem Namen anlegen, dann umbenennen - danach ist ihr Slug eingefroren und
-        // zeigt nicht mehr auf ihren Anzeigenamen.
+        // First series: create it under one name, then rename it - its slug is frozen from then on and no longer
+        // points at its display name.
         var tarnName = Eindeutig("Tarnung");
         var zielName = Eindeutig("Zielname");
         var ersteId = await TestApi.IdAsync(await client.PostAsJsonAsync(
@@ -83,8 +83,8 @@ public class ReihenNamensDubletteTests(PuglingWebAppFactory factory) : IClassFix
         var zweiteId = await TestApi.IdAsync(await client.PostAsJsonAsync(
             "/api/v1/creator/textbook-series", new { name = Eindeutig("Andere") }));
 
-        // Der Slug von `zielName` ist frei - nur der Namensvergleich kann das noch abfangen, und nur
-        // dank NOCASE trotz anderer Schreibweise.
+        // The slug of `zielName` is free - only the name comparison can still catch it, and only thanks to NOCASE
+        // despite the different spelling.
         var response = await client.PatchAsJsonAsync(
             $"/api/v1/creator/textbook-series/{zweiteId}", new { name = zielName.ToUpperInvariant() });
 
@@ -106,7 +106,7 @@ public class ReihenNamensDubletteTests(PuglingWebAppFactory factory) : IClassFix
         (await client.PatchAsJsonAsync($"/api/v1/creator/textbook-series/{id}",
             new { name = neu })).EnsureSuccessStatusCode();
 
-        // Der ALTE Name: sein Slug trifft die Reihe weiter, ihr Anzeigename ist aber inzwischen ein anderer.
+        // The OLD name: its slug still hits the series, but the series' display name has changed since.
         var response = await client.PostAsJsonAsync("/api/v1/creator/textbook-series", new { name = alt });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
@@ -123,9 +123,8 @@ public class ReihenNamensDubletteTests(PuglingWebAppFactory factory) : IClassFix
         var (eigner, ersteId) = await ReiheAsync(factory, Eindeutig("Tarnung"));
         var zielName = Eindeutig("Geteilt");
 
-        // Umbenennen entkoppelt Name und Slug. Ohne das griffe beim gleichen Namen der idempotente
-        // Slug-Treffer und antwortete zu Recht mit 200 - die Namensprüfung waere nie befragt, und der
-        // Fall belegte nichts ueber ihre Reichweite.
+        // Renaming decouples name and slug. Without it the same name would take the idempotent slug hit and rightly
+        // answer 200 - the name check would never be asked, and the case would prove nothing about its reach.
         (await eigner.PatchAsJsonAsync($"/api/v1/creator/textbook-series/{ersteId}",
             new { name = zielName })).EnsureSuccessStatusCode();
 

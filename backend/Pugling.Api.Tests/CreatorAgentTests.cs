@@ -722,15 +722,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// Aus dem Review zu B-46. Die Auflösung fragt seither <b>je Slug</b> beim Server nach, weil eine
-    /// Vollauflistung bei 100 Einträgen abschneidet und jedes weitere Stichwort als Tippfehler gemeldet
-    /// hätte. <c>search</c> ist aber ein Teilstring über Slug <i>oder</i> Label — der exakte Vergleich
-    /// danach ist deshalb tragend, und dieser Fall ist sein Beleg: zwei Stichworte, von denen eines das
-    /// andere enthält.
+    /// From the review of B-46. Since then the resolution asks the server <b>per slug</b>, because a full listing cuts
+    /// off at 100 entries and would have reported every further tag as a typo. <c>search</c>, however, is a substring
+    /// over slug <i>or</i> label - so the exact comparison after it carries the weight, and this case is its proof: two
+    /// tags, one of which contains the other.
     /// <para>
-    /// Nicht abgedeckt und bewusst so: die 100er-Grenze selbst. Ein Fall dafür bräuchte 101 Stichworte in
-    /// der geteilten Klassen-DB und würde die Nachbarfälle vergiften — der Fix ist stattdessen so gebaut,
-    /// dass die Grenze nicht mehr erreicht wird.
+    /// Deliberately not covered: the 100 limit itself. A case for it would need 101 tags in the shared class database
+    /// and would poison the neighbouring cases - the fix is built so the limit is no longer reached instead.
     /// </para>
     /// </summary>
     [Fact]
@@ -739,10 +737,10 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         var (pipeline, creator, _) = BuildAgent(VocabularyJson);
         var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Einkleidung-Exakt");
 
-        // Das gesuchte Stichwort sortiert absichtlich SPAET (`zzz-`), der Lockvogel FRUEH (`aaa-`) und
-        // enthält den gesuchten Slug vollständig. Die Serverliste ist nach Slug sortiert, „nimm den ersten
-        // Treffer" greift hier also nachweisbar den Falschen. Eine erste Fassung dieses Falls hatte die
-        // Reihenfolge umgekehrt - und blieb bei genau diesem Defekt gruen (gemessen).
+        // The tag looked for sorts LATE on purpose (`zzz-`), the decoy EARLY (`aaa-`), and the decoy contains the wanted
+        // slug in full. The server list is sorted by slug, so "take the first hit" demonstrably grabs the wrong one
+        // here. A first version of this case had the order reversed - and stayed green with exactly this defect
+        // (measured).
         var gesucht = await creator.CreateInterestTagAsync(new CreateInterestTagDto(TestApi.UniqueName("zzz-einhorn")));
         var lockvogel = await creator.CreateInterestTagAsync(new CreateInterestTagDto("Aaa " + gesucht.Slug));
         Assert.Contains(gesucht.Slug, lockvogel.Slug, StringComparison.Ordinal);
@@ -2998,22 +2996,20 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
-    /// „Vollständig" schließt den Selbsttest ein – und nimmt den Trockenlauf ausdrücklich aus.
+    /// "Complete" includes the self-test - and explicitly leaves out the dry run.
     /// <para>
-    /// Ohne <c>--strict</c> bleibt eine Übung, deren eigene Lösungen nur zu 60 % passen, im Katalog
-    /// (<c>RolledBack: false</c>) und würde hier ein <b>Tagesziel mit Münz-Malus</b>. <c>create</c> meldet
-    /// für dieselbe Übung längst Exit 1; der Lehrplan hätte sie als fertigen Plan durchgewinkt.
+    /// Without <c>--strict</c> an exercise whose own solutions match only 60 % stays in the catalog
+    /// (<c>RolledBack: false</c>) and would become a <b>daily goal with a coin penalty</b> here. <c>create</c> has long
+    /// reported exit 1 for the same exercise; the `plan` run would have waved it through as a finished study plan.
     /// </para>
     /// <para>
-    /// Ausnahmsweise ein Unit-Test statt eines Integrationstests: <c>Complete</c> ist ein reines Prädikat,
-    /// und ein Selbsttest unter 100 % ohne Regelverstoß ist über den <c>FakeChatClient</c> nur mit einem
-    /// Entwurf zu erzwingen, dessen Zustandekommen selbst von Store-Verhalten abhinge – der Fall wäre dann
-    /// an das gebunden, was er nicht prüfen will.
+    /// A unit test instead of an integration test by exception: <c>Complete</c> is a pure predicate, and a self-test
+    /// below 100 % without a rule violation can only be forced through the <c>FakeChatClient</c> with a draft whose
+    /// outcome would itself depend on store behaviour - the case would then be tied to what it does not mean to check.
     /// </para>
     /// <para>
-    /// Rote Proben: die Selbsttest-Bedingung aus <c>PlanOutcome.Complete</c> entfernen → der erste Fall
-    /// fällt; die Ausnahme <c>ExerciseId is null</c> entfernen → der dritte fällt (der Trockenlauf hat
-    /// weder Id noch Prozentzahl).
+    /// Red probes: remove the self-test condition from <c>PlanOutcome.Complete</c> → the first case fails; remove the
+    /// exception <c>ExerciseId is null</c> → the third fails (the dry run has neither id nor percentage).
     /// </para>
     /// </summary>
     [Fact]
@@ -3025,13 +3021,13 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         static GenerationOutcome Lauf(int? exerciseId, int? selfTestPercent) =>
             new("Vocabulary", "Titel", "{}", [], exerciseId, selfTestPercent, RolledBack: false);
 
-        // Angelegt, regelkonform, aber die Übung widerspricht ihren eigenen Lösungen.
+        // Created and within the rules, but the exercise contradicts its own solutions.
         Assert.False(Mit(Lauf(exerciseId: 42, selfTestPercent: 60)).Complete);
-        // Sauber durchgelaufen.
+        // Ran through cleanly.
         Assert.True(Mit(Lauf(exerciseId: 42, selfTestPercent: 100)).Complete);
-        // Trockenlauf: keine Übung, kein Selbsttest – und trotzdem ein vollständiger Lauf.
+        // Dry run: no exercise, no self-test - and still a complete run.
         Assert.True(Mit(Lauf(exerciseId: null, selfTestPercent: null)).Complete);
-        // Eine nicht angelegte Position macht den Plan unvollständig, auch wenn jede Übung sauber ist.
+        // A position that was not created makes the plan incomplete, even if every exercise is clean.
         Assert.False(new PlanOutcome("Lehrplan: Test", [new GeneratedPart("Vocabulary", Lauf(42, 100), null)],
             [42], PlanId: 7, PositionIds: [], FailedPositions: [new FailedPosition(42, "exercise_empty")], WordLists: []).Complete);
     }

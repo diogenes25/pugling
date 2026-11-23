@@ -118,7 +118,7 @@ public class AssignAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pugl
     /// <summary>
     /// AK 3. Red when the pre-check against the plan's positions is missing: the server would add a duplicate, and the
     /// second run would report exit 0 instead of 3. Exit 3, not the story's 2: 2 means "invoked incorrectly" across the
-    /// console (Stakeholder-Entscheidung im Auftrag des Nutzers, Story-Verlauf 2026-11-14).
+    /// console (a stakeholder decision on the user's behalf, story history 2026-11-14).
     /// </summary>
     [Fact]
     public async Task Vorhandene_Position_Wird_Uebersprungen_Und_Nichts_Neues_Ist_Exit_3()

@@ -14,7 +14,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
     private async Task<(int planId, int positionId, int sessionId)> SetupAsync(int threshold, int bonus)
     {
         var father = await TestApi.AdultAsync(factory);
-        var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello, goodbye → 2 fällige Items
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father); // hello, goodbye → 2 due items
         var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)TestStage.SelfAssess,
             comboThreshold: threshold, comboBonusPoints: bonus);
         var child = await TestApi.ChildAsync(factory);
@@ -38,7 +38,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
 
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
         Assert.Equal(2, second.GetProperty("combo").GetInt32());
-        Assert.Equal(7, second.GetProperty("comboBonus").GetInt32()); // Basis 7 × Meilenstein 1
+        Assert.Equal(7, second.GetProperty("comboBonus").GetInt32()); // base 7 × milestone 1
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         var child = await TestApi.ChildAsync(factory);
 
         await ReviewAsync(child, planId, positionId, sid, 0);
-        await ReviewAsync(child, planId, positionId, sid, 1); // Schwelle 2 erreicht → Combo-Bonus
+        await ReviewAsync(child, planId, positionId, sid, 1); // threshold 2 reached → combo bonus
 
         var father = await TestApi.AdultAsync(factory);
         var points = await (await father.GetAsync("/api/v1/supervisor/children/1/points"))
@@ -68,6 +68,6 @@ public class ComboTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWeb
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
 
         Assert.Equal(2, second.GetProperty("combo").GetInt32());
-        Assert.Equal(0, second.GetProperty("comboBonus").GetInt32()); // Feature aus
+        Assert.Equal(0, second.GetProperty("comboBonus").GetInt32()); // feature off
     }
 }

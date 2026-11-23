@@ -45,7 +45,7 @@ public class PositionReportTests(PuglingWebAppFactory factory) : IClassFixture<P
         var attemptId = await TestApi.IdWithKeyAsync(await child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
         var answers = new[]
         {
-            new { itemIndex = 0, givenAnswer = "hello" },  // hello → hallo (richtig)
+            new { itemIndex = 0, givenAnswer = "hello" },  // hello → hallo (correct)
             new { itemIndex = 1, givenAnswer = "falsch" }, // goodbye → falsch
         };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });

@@ -54,7 +54,7 @@ internal static class SampleJson
         if (underlying != typeof(string) && typeof(IEnumerable).IsAssignableFrom(underlying))
             return new JsonArray();
 
-        if (depth >= 3) return new JsonObject(); // Schutz gegen zyklische Vertragsgraphen.
+        if (depth >= 3) return new JsonObject(); // Guard against cyclic contract graphs.
 
         var obj = new JsonObject();
         var ctor = underlying.GetConstructors()

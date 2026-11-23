@@ -239,8 +239,8 @@ public class PositionPracticeFlowTests(PuglingWebAppFactory factory) : IClassFix
         Assert.False(reread.GetProperty("testable").GetBoolean());
     }
 
-    /// <summary>Gegenprobe zu <see cref="ShowBoth_PracticeSessionTraegtTestableFalse"/>: eine normale,
-    /// getippte Stufe bleibt testbar.</summary>
+    /// <summary>Counter-proof to <see cref="ShowBoth_PracticeSessionTraegtTestableFalse"/>: a normal typed stage stays
+    /// testable.</summary>
     [Fact]
     public async Task GetippteStufe_PracticeSessionTraegtTestableTrue()
     {

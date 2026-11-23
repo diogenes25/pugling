@@ -415,9 +415,8 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         var father = await TestApi.AdultAsync(_factory);
         var (_, key) = await TestApi.CreateStoreVocabAsync(father, "harbour", "Hafen");
 
-        // Zwei Uebungen, die sich nur in der Empfehlung unterscheiden - die eine plausibel, die andere
-        // jenseits jeder Grenze. Ohne BEIDE Faelle koennte der Test nicht zwischen "durchgereicht" und
-        // "wirksam gerechnet" unterscheiden.
+        // Two exercises that differ only in their suggestion - one plausible, one beyond every bound. Without BOTH
+        // cases the test could not tell "passed through" from "computed as effective".
         var brauchbar = await TestApi.CreateVocabRefExerciseAsync(father, 30, key);
         var unsinnig = await TestApi.CreateVocabRefExerciseAsync(father, 100_000, key);
 
@@ -428,15 +427,15 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
         Assert.Equal(30, a.GetProperty("suggestedGoalPoints").GetInt32());
 
         var b = zeilen.Single(z => z.GetProperty("id").GetInt32() == unsinnig);
-        // Der rohe Wert bleibt lesbar - wer die Uebung bearbeitet, soll sehen, was dort steht.
+        // The raw value stays readable - whoever edits the exercise should see what is stored there.
         Assert.Equal(100_000, b.GetProperty("rewardPoints").GetInt32());
-        // Der wirksame nicht: genau das haette das Formular vorbelegt, und genau das war der Defekt.
+        // The effective one does not: the form would have prefilled exactly that, and that was the defect.
         Assert.Equal(20, b.GetProperty("suggestedGoalPoints").GetInt32());
 
-        // Der negative Fall zog mit B-192 hierher um. Er war bis dahin NUR im Frontend gepinnt
-        // (`PlanPositions.test.ts`), und dort entscheidet das Formular jetzt nichts mehr - ohne diesen
-        // Fall waere die Abdeckung beim Umzug der Regel verloren gegangen. `0` ist in JS ohnehin falsy,
-        // `-5` nicht: das ist der einzige Fall, fuer den die untere Grenze ueberhaupt traegt.
+        // The negative case moved here with B-192. Until then it was pinned ONLY in the frontend
+        // (`PlanPositions.test.ts`), where the form no longer decides anything - without this case the coverage
+        // would have been lost when the rule moved. `0` is falsy in JS anyway, `-5` is not: it is the only case where
+        // the lower bound matters at all.
         var negativ = await TestApi.CreateVocabRefExerciseAsync(father, -5, key);
         var c = (await KatalogZeilenAsync(father))
             .Single(z => z.GetProperty("id").GetInt32() == negativ);
@@ -445,9 +444,9 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
-    /// B-192: was der Katalog als wirksamen Vorschlag nennt, ist auch das, was die angelegte Position
-    /// traegt. Ohne diese Zusicherung koennten beide Seiten je fuer sich richtig sein und trotzdem
-    /// auseinanderlaufen - der Katalog rechnet, der Controller rechnet, und niemand vergleicht.
+    /// B-192: what the catalog names as the effective suggestion is also what the created position carries.
+    /// Without this assertion both sides could each be right on their own and still drift apart - the catalog
+    /// computes, the controller computes, and nobody compares.
     /// </summary>
     [Fact]
     public async Task Wirksamer_Vorschlag_Und_Angelegte_Position_Stimmen_Ueberein()
@@ -468,11 +467,11 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
 
         Assert.Equal(vorschlag, position.GetProperty("pointsGoalMet").GetInt32());
 
-        // Und derselbe Abgleich mit einer PLAUSIBLEN Empfehlung. Ohne dieses Paar faehrt der Test nur den
-        // Rueckfall-Zweig - dort sind beide Seiten 20, und 20 ist zugleich der Entity-Vorgabewert. Eine
-        // Fassung, die die Vererbung im Create-Pfad GANZ entfernt (`?? 20`), bliebe damit gruen; genau das
-        // hat der `pugling-reviewer` per Defekt-Injektion gemessen. Erst hier loest der Test seine eigene
-        // Doku ein: "beide Seiten je fuer sich richtig und trotzdem auseinander".
+        // And the same comparison with a PLAUSIBLE suggestion. Without this pair the test only runs the fallback
+        // branch - there both sides are 20, and 20 is also the entity default. A version that drops the inheritance
+        // in the create path ENTIRELY (`?? 20`) would stay green; the `pugling-reviewer` measured exactly that by
+        // defect injection. Only here does the test make good on its own doc comment: "each side right on its own and
+        // still apart".
         var (_, key2) = await TestApi.CreateStoreVocabAsync(father, "anchor", "Anker");
         var plausibel = await TestApi.CreateVocabRefExerciseAsync(father, 35, key2);
         var vorschlag2 = (await KatalogZeilenAsync(father))

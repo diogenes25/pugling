@@ -111,7 +111,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         await creator.PostAsJsonAsync($"{SeriesRoot}/{matchId}/units", new { label = "Unit 1", grade = 7 });
         await creator.PostAsJsonAsync($"{SeriesRoot}/{matchId}/units", new { label = "Unit 2", grade = 13 });
 
-        // Andere Reihe: anderer Verlag, andere Schulart, andere Klasse - darf in keinem der drei Filter auftauchen.
+        // Another series: another publisher, school type and grade - must show up in none of the three filters.
         var otherId = await TestApi.IdAsync(await creator.PostAsJsonAsync(SeriesRoot, new
         {
             name = TestApi.UniqueName("Green Line"),
@@ -130,7 +130,7 @@ public class CreatorProfileTests(PuglingWebAppFactory factory) : IClassFixture<P
         var byGrade = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}?grade=13");
         Assert.Equal(matchId, byGrade.EnumerateArray().Single().GetProperty("id").GetInt32());
 
-        // Aggregation: berechnet aus den Units, keine gespeicherte Kopie.
+        // Aggregation: computed from the units, not a stored copy.
         var match = await creator.GetFromJsonAsync<JsonElement>($"{SeriesRoot}/{matchId}");
         Assert.Equal(7, match.GetProperty("gradeMin").GetInt32());
         Assert.Equal(13, match.GetProperty("gradeMax").GetInt32());

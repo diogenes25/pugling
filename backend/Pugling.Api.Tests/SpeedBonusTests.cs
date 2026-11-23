@@ -71,7 +71,7 @@ public class SpeedBonusTests : IClassFixture<PuglingWebAppFactory>
         await ReviewAsync(child, planId, positionId, sid, 0);
         _factory.Clock.Advance(TimeSpan.FromSeconds(2));
         var second = await ReviewAsync(child, planId, positionId, sid, 1);
-        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32()); // Feature aus
+        Assert.Equal(0, second.GetProperty("speedBonus").GetInt32()); // feature off
     }
 
     /// <summary>
