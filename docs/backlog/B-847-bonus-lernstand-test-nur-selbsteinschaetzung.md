@@ -58,7 +58,7 @@ XS, backend (nur Tests), keine Migration, kein Vertragsbruch. Testweg: `ExtraTra
   setzt → eine Zeile ohne Prägetag, eine ohne Einführungstag (**gezählt**, 1/5); 🟢 vier Spalten fehlten im Schnappschuss
   (`NewBonusPaidAt`, `LastMissed`, `RemediationDoneAt`, `SolvedByStage`) → ergänzt; 🟢 plan-weiter Lernstand
   (`ItemProgress`, `ItemReviewEvent`) ungeprüft → ergänzt (beide ohne Zählung).
-- **2026-11-23** — abgenommen (Sprint 118, Commit siehe Protokoll `docs/pm-sitzung-2026-11-23-c.md`). Verifikation nach
+- **2026-11-23** — abgenommen (Sprint 118, `08a421cb`). Verifikation nach
   der letzten Änderung: Backend 2130/2130 (Release), Vitest 1361/1361, `tsc -b` sauber; Mutanten F1–F3, E1–E2, K1–K10 rot
   (K10 erst nach plan-weiten Lernstand-Zeilen im Aufbau, vorher grün = ohne Beleg). Rollengang Sohn per E2E gegen frisch
   gestartete Server (Ausweichports 5211/5184): `nochmal-nach-pflicht`, `bonus`, `bonus-deckel`, `bonus-deckel-voll`,

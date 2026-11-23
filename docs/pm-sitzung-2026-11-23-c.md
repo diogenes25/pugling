@@ -72,3 +72,48 @@ plus ein Test, dass jede Ausnahme **genau eine** heutige Zeile trifft – fängt
 zweite Fall mit `Split(':')` steht noch in `ConventionGuardTests.cs:654` (heute ohne Doppelpunkt im Fragment).
 
 **Bewusst ungedeckt:** `.DayOfWeek` auf einem Zeitpunkt in einer Variablen; Standard-Datumsformate (`{x:d}`).
+
+## Sprint 118 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn bekommt im leeren Üben nur versprochen, was das Bonus-Training wirklich zahlt, und der Weg
+dorthin führt nachweislich in genau seine Übung.
+**Umfang:** B-845 (frontend), B-846 (E2E), B-847 (Backend-Test) – alle XS, keine Migration.
+**Entwickler-Brief:** Quelle der Wahrheit ist `ExtraTrainingOverview` (`dailyCoinCap`, `exercises`); die Sohn-App spiegelt
+`capZero` aus `SohnBonus.tsx`. Die Spec bekommt eine zweite Pflicht als erste Position und die Rechen-Übung vorn im Vorrat;
+der Backend-Test eine Theorie über die drei Formen. Reihenfolge beliebig (disjunkte Dateien), E2E auf Ausweichports
+(5200 trägt den Heimnetz-Server).
+
+## Iteration 118 — umgesetzt
+
+- **Frontend:** `NochEinmal.tsx` wählt bei `dailyCoinCap === 0` die neuen Sätze `againLocked(Week)NoCoins` (de/en);
+  `nochmal-nach-pflicht.spec.ts` mit `Farben` als erster Position und der Rechen-Übung vorn im Vorrat.
+- **Backend-Test:** `Bonus_Runde_Laesst_Den_Kasten_Der_Position_Unberuehrt` als Theorie über drei Formen, voller
+  Schnappschuss (alle Spalten, ungestempelte Tage, plan-weiter Lernstand).
+- **Verifikation:** rote Probe B-845 2/2; Mutanten F1–F3, E1–E2, K1–K10 rot (K10 zunächst grün, weil der Aufbau keine
+  plan-weiten Zeilen hatte – nach dem Nachtrag rot). Backend 2130/2130, Vitest 1361/1361, tsc sauber. Commit `08a421cb`.
+- **Review:** `frontend-reviewer` – im Diff nur ein 🟡 am Story-Text (B-846, Text nachgezogen, ohne Zählung), drei Stellen
+  außerhalb → [B-862](backlog/B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md); `pugling-reviewer` – ein 🟡
+  (`??=`-Stempel unsichtbar, **gezählt, 1/5**), zwei 🟢 behoben.
+
+## Runde 118 — Abnahme
+
+- **Sohn — abgenommen:** „Wenn Papa den Bonus auf 0 stellt, verspricht mir die App vorher keine Münzen mehr, und der Knopf
+  führt in meine Tiere, nicht in Farben oder Rechnen.“ Gegangen per E2E (7 Specs, frisch gestartete Server).
+- **Vater — Regressionszeuge:** `bonus-deckel` (Deckel setzen, zurücksetzen) grün.
+- **Creator — Regressionszeuge:** Suite grün, keine Creator-Fläche im Diff.
+
+## Retrospektive Sprint 118
+
+**Nachschau:** B-842, B-843, B-844 (Sprint 117), Selbst-Check – Ausnahmen des Tors gezählt, Aufrufer des neuen Helfers
+gezählt, Grenzen nachgerechnet; kein Befund, `nachgeschaut` gesetzt.
+
+**Was die eigenen Tore durchgelassen haben:** Zweimal ein Test, der einen Zustand prüfte, den der Aufbau gar nicht
+herstellte – vorgefüllte Tage verdeckten `??=` (Reviewer), fehlende plan-weite Zeilen machten K10 grün (Mutanten-Probe).
+Die Probe fing den zweiten Fall, weil die Mutante eine Wirkung auf **vorhandene** Zeilen hatte; die Leitlinie in
+`CLAUDE.md` („eine Zusicherung, die den Ausgangszustand prüft …“) war bekannt und half beim Schreiben nicht.
+
+**Vorschlag (nicht gelandet):** (CZ) In `pm-loop` Step 5 ein Satz: „Für einen Unverändert-Schnappschuss je Spalte eine
+Mutante, die sie **erstmals** setzt (`??=`) und eine, die sie **ändert** – der Aufbau muss beide Lagen enthalten.“ Prosa,
+weil kein Tor die Zielspalten eines Schnappschusses kennt.
+
+**Bewusst ungedeckt:** Plural `_other` mit Deckel 0 (die Schlüssel existieren, i18n-Parität prüft sie).

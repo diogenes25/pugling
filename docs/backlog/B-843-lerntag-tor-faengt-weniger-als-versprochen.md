@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-730)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: [B-730]
 wartet_auf: ""
 ---
@@ -76,3 +76,4 @@ Ausgangsstand laufen lassen (muss B-844 finden) → B-844 bauen → grün. Testw
   außerhalb des Diffs (Altbestand). Rollengang: Sohn (Wochenvergleich) bzw. Vater (Titel) maschinell über die
   Integrationstests der Berlin-Fabrik – der Fall braucht eine eingefrorene Uhr in einer Umstellungswoche, die ein laufender
   Server nicht hat; die anderen Rollen Regressionszeugen (volle Suite grün, keine Oberfläche im Diff).
+- **2026-11-23** — nachgeschaut (Retro Sprint 118, Selbst-Check). Prüfpunkte: jede der vier Ausnahmen gegen den Code gezählt – `DayNumber` 1, `Utc(now.Date)` 2 (`ShopRefillSchedule.cs:60/86`, beide Wanduhr, gewollt), `MultiplierAt` 1, `RemarkExportService` 1; der Tupel-Abgleich prüft das ganze Fragment inklusive `'UTC'`. Kein Befund.

@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau Nachtlauf 2026-11-22-c (Review von B-730)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: [B-730]
 wartet_auf: ""
 ---
@@ -53,3 +53,4 @@ XS, backend, keine Migration, kein Vertragsbruch. Testweg: Integrationstest in `
   außerhalb des Diffs (Altbestand). Rollengang: Sohn (Wochenvergleich) bzw. Vater (Titel) maschinell über die
   Integrationstests der Berlin-Fabrik – der Fall braucht eine eingefrorene Uhr in einer Umstellungswoche, die ein laufender
   Server nicht hat; die anderen Rollen Regressionszeugen (volle Suite grün, keine Oberfläche im Diff).
+- **2026-11-23** — nachgeschaut (Retro Sprint 118, Selbst-Check). Prüfpunkte: Titel und `DutySince` lesen denselben `learningDay.DayOf(now)` (`WeakWordReviewService.cs:111/136`). Kein Befund.

@@ -59,7 +59,7 @@ XS, frontend (nur E2E), keine Migration, kein Vertragsbruch. Testweg: Mutanten-P
   - AK 3 → Grundlinie vor und nach den Mutanten grün.
   Review (`frontend-reviewer`): 🟡 Entscheidung 1 und AK 1 beschrieben die Rechen-Übung als Position, gebaut ist
   `Farben` → Story nachgezogen (nur Text, ohne Zählung); 🟢 zwei Hinweise ohne Handlungsbedarf.
-- **2026-11-23** — abgenommen (Sprint 118, Commit siehe Protokoll `docs/pm-sitzung-2026-11-23-c.md`). Verifikation nach
+- **2026-11-23** — abgenommen (Sprint 118, `08a421cb`). Verifikation nach
   der letzten Änderung: Backend 2130/2130 (Release), Vitest 1361/1361, `tsc -b` sauber; Mutanten F1–F3, E1–E2, K1–K10 rot
   (K10 erst nach plan-weiten Lernstand-Zeilen im Aufbau, vorher grün = ohne Beleg). Rollengang Sohn per E2E gegen frisch
   gestartete Server (Ausweichports 5211/5184): `nochmal-nach-pflicht`, `bonus`, `bonus-deckel`, `bonus-deckel-voll`,

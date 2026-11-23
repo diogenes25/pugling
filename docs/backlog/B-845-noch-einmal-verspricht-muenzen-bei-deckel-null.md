@@ -60,7 +60,7 @@ XS, frontend, keine Migration, kein Vertragsbruch. Testweg: `NochEinmal.test.tsx
   Review (`frontend-reviewer`): kein Befund im Diff; drei Stellen außerhalb mit demselben falschen Versprechen bei Deckel 0
   oder erreichtem Deckel (Runden-Hinweis, Startseiten-Teaser, Listenzeilen) → [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md),
   bewusst nicht in B-845: das Sprint-Ziel hält ohne sie, und der Teaser braucht ein Vertragsfeld.
-- **2026-11-23** — abgenommen (Sprint 118, Commit siehe Protokoll `docs/pm-sitzung-2026-11-23-c.md`). Verifikation nach
+- **2026-11-23** — abgenommen (Sprint 118, `08a421cb`). Verifikation nach
   der letzten Änderung: Backend 2130/2130 (Release), Vitest 1361/1361, `tsc -b` sauber; Mutanten F1–F3, E1–E2, K1–K10 rot
   (K10 erst nach plan-weiten Lernstand-Zeilen im Aufbau, vorher grün = ohne Beleg). Rollengang Sohn per E2E gegen frisch
   gestartete Server (Ausweichports 5211/5184): `nochmal-nach-pflicht`, `bonus`, `bonus-deckel`, `bonus-deckel-voll`,
