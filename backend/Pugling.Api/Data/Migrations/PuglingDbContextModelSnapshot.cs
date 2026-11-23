@@ -1321,6 +1321,12 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateOnly?>("PrepStartedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PrepWindowDays")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("ScheduledDate")
                         .HasColumnType("TEXT");
 
@@ -1812,6 +1818,9 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("SourceKlassenarbeitId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("SpeedBonusPoints")
                         .HasColumnType("INTEGER");
 
@@ -1836,6 +1845,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseId");
+
+                    b.HasIndex("SourceKlassenarbeitId");
 
                     b.HasIndex("StudyPlanId", "Order", "Id");
 
@@ -3766,6 +3777,11 @@ namespace Pugling.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Pugling.Api.Models.Klassenarbeit", "SourceKlassenarbeit")
+                        .WithMany()
+                        .HasForeignKey("SourceKlassenarbeitId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pugling.Api.Models.StudyPlan", "StudyPlan")
                         .WithMany("Positions")
                         .HasForeignKey("StudyPlanId")
@@ -3773,6 +3789,8 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Exercise");
+
+                    b.Navigation("SourceKlassenarbeit");
 
                     b.Navigation("StudyPlan");
                 });

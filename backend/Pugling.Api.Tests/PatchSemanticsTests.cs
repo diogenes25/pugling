@@ -270,12 +270,12 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var childId = await NeuesKindAsync(c);
             // `Create` returns `KlassenarbeitDetail` - the id sits one level deeper than usual.
             var angelegt = await c.PostAsJsonAsync("/api/v1/supervisor/class-tests",
-                new { childId, title = "Vokabeltest", scheduledDate = "2026-09-01", grade = 2.0m });
+                new { childId, title = "Vokabeltest", scheduledDate = "2026-09-01", grade = 2.0m, prepWindowDays = 3 });
             angelegt.EnsureSuccessStatusCode();
             var id = (await angelegt.Content.ReadFromJsonAsync<JsonElement>())
                 .GetProperty("klassenarbeit").GetProperty("id").GetInt32();
             return new Ziel(c, $"/api/v1/supervisor/class-tests/{id}");
-        }, [new("clearGrade", "grade")]),
+        }, [new("clearGrade", "grade"), new("clearPrepWindow", "prepWindowDays")]),
 
         new(typeof(UpdatePlanDto), "title", "Plan neu", async f =>
         {

@@ -849,6 +849,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
+                // A duty with an end while its cadence stays (B-752: the preparation before a class test ends the day before
+                // the test) owes nothing after that end - also for days settled only later. A freed duty never gets here.
+                if (pos.DutyUntil is { } until && from > until) continue;
                 // Goal rewarded (reached) in the period, or already punished - also under the other daily cadence
                 // (B-666)? → nothing to catch up on.
                 if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id

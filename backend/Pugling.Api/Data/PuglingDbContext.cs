@@ -671,6 +671,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(p => p.Exercise).WithMany().HasForeignKey(p => p.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // B-752: a preparation position outlives its class test - deleting the test must not delete the child's plan rows.
+            e.HasOne(p => p.SourceKlassenarbeit).WithMany().HasForeignKey(p => p.SourceKlassenarbeitId)
+                .OnDelete(DeleteBehavior.SetNull);
             e.Property(p => p.BoxIntervalDays).HasConversion(
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions))

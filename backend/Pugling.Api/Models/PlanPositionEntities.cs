@@ -24,6 +24,13 @@ public class PlanPosition
     public int ExerciseId { get; set; }
     public Exercise? Exercise { get; set; }
 
+    /// <summary>
+    /// The class test this position was made for as its preparation duty (B-752); <c>null</c> = an ordinary position. The
+    /// reconcile only ever moves the duty span of such a position. Deleting the test keeps the position (SetNull).
+    /// </summary>
+    public int? SourceKlassenarbeitId { get; set; }
+    public Klassenarbeit? SourceKlassenarbeit { get; set; }
+
     /// <summary>Order within the plan (grouping by subject follows from the exercise).</summary>
     public int Order { get; set; }
 

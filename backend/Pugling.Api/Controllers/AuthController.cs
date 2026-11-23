@@ -17,7 +17,8 @@ namespace Pugling.Api.Controllers;
 [Tags("Auth")]
 [Produces("application/json")]
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
-    Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay) : ControllerBase
+    Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay,
+    Services.Shared.ClassTestPrepService classTestPrep) : ControllerBase
 {
     /// <summary>
     /// The <b>primary tier</b> for UI routing – where the user belongs after logging in.
@@ -82,6 +83,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         // Settle open mandatory periods on login: a penalty for not learning lands before the child sees its
         // balance or spends anything (there is no scheduler; idempotent).
         var today = learningDay.Today;
+        // B-752: first the preparation duties of class tests in their window, or the first period would lack the position.
+        await classTestPrep.ReconcileAsync(child.Id, today, ct);
         await progress.SettleClosedPeriodsAsync(child.Id, today, ct);
         // Likewise credit the earned rewards of reached big goals idempotently (the carrot), so the child has
         // them on the account right at login.
