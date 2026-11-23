@@ -70,18 +70,63 @@ public partial class GameRoot : Control
         return button;
     }
 
+    /// <summary>Servers to pick with one tap: the emulator reaches the throwaway API via `adb reverse`, the phone the home server in the WLAN.</summary>
+    private static readonly (string Label, string Url)[] Servers =
+        [("Emulator", "http://127.0.0.1:5280"), ("Heimnetz", "http://192.168.178.55:5200")];
+
     private void ShowLogin()
     {
         var box = Page("Vokabel-Türme");
-        // The emulator and a USB phone both reach the PC through `adb reverse tcp:5280 tcp:5280`.
-        var server = Field("http://127.0.0.1:5280", "Server");
+        var server = Field(Servers[0].Url, "Server");
         var child = Field("3", "Kind-Nr.");
         var pin = Field("", "PIN", secret: true);
-        box.AddChild(server);
-        box.AddChild(child);
-        box.AddChild(pin);
-        box.AddChild(Action("Anmelden", () => _ = LoginAsync(server.Text, child.Text, pin.Text)));
-        box.AddChild(_status);
+
+        // The Android soft keyboard does not open for a Godot LineEdit in this setup (focus yes, IME no), so the login
+        // never depends on it: servers are presets and digits come from an on-screen keypad. The fields stay editable
+        // for a hardware keyboard.
+        var presets = new HBoxContainer();
+        presets.AddThemeConstantOverride("separation", 12);
+        foreach (var (label, url) in Servers)
+        {
+            var preset = Action(label, () => server.Text = url);
+            preset.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            presets.AddChild(preset);
+        }
+
+        var target = pin;
+        child.FocusEntered += () => target = child;
+        pin.FocusEntered += () => target = pin;
+
+        var form = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        form.AddThemeConstantOverride("separation", 14);
+        form.AddChild(server);
+        form.AddChild(presets);
+        form.AddChild(Text("Kind-Nr. und PIN antippen, dann mit den Ziffern rechts eingeben.", 22));
+        form.AddChild(child);
+        form.AddChild(pin);
+        form.AddChild(Action("Anmelden", () => _ = LoginAsync(server.Text, child.Text, pin.Text)));
+        form.AddChild(_status);
+
+        var keypad = new GridContainer { Columns = 3 };
+        keypad.AddThemeConstantOverride("h_separation", 10);
+        keypad.AddThemeConstantOverride("v_separation", 10);
+        foreach (var key in new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "C" })
+        {
+            var button = Action(key, () => target.Text = key switch
+            {
+                "⌫" => target.Text.Length > 0 ? target.Text[..^1] : "",
+                "C" => "",
+                _ => target.Text + key,
+            });
+            button.CustomMinimumSize = new Vector2(110, 80);
+            keypad.AddChild(button);
+        }
+
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 30);
+        row.AddChild(form);
+        row.AddChild(keypad);
+        box.AddChild(row);
     }
 
     private async Task LoginAsync(string server, string child, string pin)
