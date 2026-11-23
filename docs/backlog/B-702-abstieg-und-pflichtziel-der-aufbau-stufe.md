@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/gamification, bereich/lehrplan, rolle/student, rolle/supervisor]
 aliases: [Abstieg ohne Malus, Pflichtziel der aktuellen Stufe, Stufen und Stick]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -215,3 +215,6 @@ Schema mit Bestandsdaten berührt werden.
   parallel abgegeben, lesen beide den alten Zähler – ein Fehlversuch geht verloren (nur zugunsten des Kindes, Start setzt
   nur Versuche desselben Tages fort); (b) `Since` beginnt neu, wenn der Vater bei wartendem Aufstieg auf die gespielte
   Stufe zurückstellt → als Hinweis in B-882.
+- **2026-11-24** — abgenommen (Sprint 126, Commit `29a247b8`). Rollengang maschinell: Sohn über die HTTP-Pipeline mit
+  Kind-Login (Berlin-Host, zwei Lerntage), Vater über die API, Creator als Regressionszeuge (E2E `aufbau-weg-editor`).
+  Offen für einen Menschen: Migration `BuildLevelDemotion` beim nächsten Heimnetz-Start.
