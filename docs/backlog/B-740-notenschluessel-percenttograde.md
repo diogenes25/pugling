@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/klassenarbeit, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/klassenarbeit, rolle/student]
 aliases: [Notenschlüssel, PercentToGrade]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -91,3 +91,25 @@ Je Kriterium die Änderung, die es rot macht.
 
 - **2026-11-20** — angelegt aus [B-682](B-682-notenstufe-je-fach-statt-liga.md) (geteilt); `geschaetzt`: S, backend, keine
   Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-23** — `in-arbeit` (Nachtlauf G, Sprint 127). Gebaut: `Services/Shared/GradeKey.cs` (`PercentToGrade`,
+  `ShareToGrade`, Umkehr `MinPartForGrade` für B-742), `Services/Shared/GradingOptions.cs`, Tabelle
+  `Grading:Thresholds` = 92/81/67/50/30 in `appsettings.json` (Vorschlag aus den Risiken übernommen; ein Wert zum
+  Bestätigen), Bindung in `Program.cs`. Rückgabe ganze Note `int` (Vorschlag aus den Risiken; Zehntelnoten bleiben bei
+  B-249). Vergleich als `decimal`. Keine Vorgabe im Code (AK 2): eine Listen-Eigenschaft mit Vorgabewerten würde der
+  Binder ohnehin anhängen statt ersetzen. Eine kaputte Tabelle (nicht genau fünf, nicht streng fallend, außerhalb 0–100)
+  wirft laut. Eigener Fund beim Prüfen, ohne Zählung (nur Kommentar): die erste Fassung behauptete, `double` lege 23/25
+  unter 92 – nachgerechnet für alle Zählungen bis 400 gegen die fünf Grenzen: kein Fall; Kommentar in `GradeKey` und Test
+  berichtigt.
+- **2026-11-23** — AK → Test (`backend/Pugling.Api.Tests/PercentToGradeTests.cs`), Mutante → rot (Tabelle aus
+  `.claude/scripts/mutant-probe.py`, gemessen an `a782b4b2` + Arbeitsbaum, 2026-11-23 23:49, Filter
+  `PercentToGradeTests|ChildSubjectLevelTests`):
+  AK 1 Grenze in der besseren Note → `Grenze_liegt_in_der_besseren_Note`, M1 (`>=` → `>`, `GradeKey.cs:30`) → rot ·
+  Umkehr stimmt an jeder Grenze → `Umkehr_stimmt_an_jeder_Grenze_mit_der_Note_ueberein`, M2 (`Ceiling` → `Floor`, `:56`)
+  → rot · kaputte Tabelle → `Kaputte_Tabelle_wird_abgewiesen`, M3 (`>=` → `>` in der Prüfung, `:69`) → rot ·
+  AK 2 → `Andere_Tabelle_ergibt_andere_Note` und `Tabelle_kommt_aus_der_Konfiguration` (liest die gebundenen Optionen des
+  Hosts; rot, wenn die Tabelle aus `appsettings.json` fehlt oder abweicht – nicht als Mutante gemessen) ·
+  AK 3 → `Werte_ausserhalb_werden_auf_den_Rand_gezogen`: **strukturell**, nicht durch das `Math.Clamp` getragen – die
+  Schleife liefert für jeden Wert ohnehin 1 bis 6; ein Mutant ohne Clamp wäre äquivalent, darum nicht gemessen ·
+  AK 4 → `Es_gibt_genau_eine_Umrechnung` (Reflexion: keine Methode `…ToGrade` außerhalb `GradeKey`; rot, sobald eine
+  entsteht; Absichtserklärung gegen andere Namen).
+  Kein Rollengang nötig, nichts wird sichtbar (Testweg der Story); der Gang läuft mit B-743.

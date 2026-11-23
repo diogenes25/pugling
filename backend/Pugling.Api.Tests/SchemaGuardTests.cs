@@ -214,6 +214,8 @@ public class SchemaGuardTests
             ["ChildMediaPick.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["ChildMediaPick.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
             ["ChildPointsEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ChildSubjectLevel.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["ChildSubjectLevel.SubjectId"] = DeleteBehavior.Cascade, // -> Subject (derived level; without material it measures nothing, B-741)
             ["CreatorProfile.OwnerAdultId"] = DeleteBehavior.SetNull, // -> Adult
             ["CreatorProfile.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
             ["CreatorProfile.SubjectId"] = DeleteBehavior.SetNull, // -> Subject

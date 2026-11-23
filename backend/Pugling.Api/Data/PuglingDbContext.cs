@@ -98,6 +98,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     /// <summary>Daily reward box: one claim per (child, day) - the positive counterpart to <see cref="PositionGoalPenalty"/>.</summary>
     public DbSet<DailyBoxClaim> DailyBoxClaims => Set<DailyBoxClaim>();
     public DbSet<ExtraTrainingRun> ExtraTrainingRuns => Set<ExtraTrainingRun>();
+    /// <summary>Grade level per (child, vocabulary subject), B-741.</summary>
+    public DbSet<ChildSubjectLevel> ChildSubjectLevels => Set<ChildSubjectLevel>();
     public DbSet<TowerGameRun> TowerGameRuns => Set<TowerGameRun>();
     public DbSet<TowerGameRunItem> TowerGameRunItems => Set<TowerGameRunItem>();
 
@@ -896,6 +898,17 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(c => new { c.ChildId, c.Day }).IsUnique();
             e.HasOne(c => c.Child).WithMany().HasForeignKey(c => c.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Grade level (B-741): one row per (child, subject) - the unique index is also the loser guard when two first
+        // reads of a day race to create it. Cascade with the child like every per-child log; Cascade with the subject
+        // too, because the level is derived data: a subject only goes once no exercise carries it, and a level without
+        // material measures nothing (Restrict would turn the subject delete into a bare 500).
+        modelBuilder.Entity<ChildSubjectLevel>(e =>
+        {
+            e.HasIndex(l => new { l.ChildId, l.SubjectId }).IsUnique();
+            e.HasOne(l => l.Child).WithMany().HasForeignKey(l => l.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(l => l.Subject).WithMany().HasForeignKey(l => l.SubjectId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Bonus training runs: at most one OPEN run per (child, exercise) - a started run is resumed, never replaced,

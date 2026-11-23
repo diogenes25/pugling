@@ -134,6 +134,24 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
         return acc;
     }
 
+    /// <summary>
+    /// The measure of the grade level (B-741): per subject, the mastered and the total items of the vocabulary exercises
+    /// referenced by an ACTIVE plan of the child - the whole material, not only the introduced words, so three perfect
+    /// words out of 200 stay a small share. Inactive plans and progress without a plan do not count. A subject without
+    /// items in an active plan is absent: it has no measure.
+    /// </summary>
+    internal async Task<Dictionary<int, (int Mastered, int Total)>> ActiveSubjectMeasuresAsync(int childId, CancellationToken ct)
+    {
+        var relevant = (await LoadRelevantAsync(childId, ct)).Where(r => r.Active).ToList();
+        if (relevant.Count == 0) return [];
+
+        var (total, prog) = await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
+        return relevant.GroupBy(r => r.SubjectId)
+            .Select(g => (SubjectId: g.Key, Agg: Combine(g.Select(r => AggFor(r.ExerciseId, total, prog)))))
+            .Where(x => x.Agg.TotalItems > 0)
+            .ToDictionary(x => x.SubjectId, x => (x.Agg.Mastered, x.Agg.TotalItems));
+    }
+
     /// <summary>Empty roll-up (scope without relevant exercises / without progress).</summary>
     public static readonly MasteryRollup EmptyRollup = new(0, 0, 0, 0, 0, 0, 0, 0, null);
 

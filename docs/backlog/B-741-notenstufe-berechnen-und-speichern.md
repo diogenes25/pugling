@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/lernstand, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/lernstand, rolle/student]
 aliases: [Notenstufe berechnen, ChildSubjectLevel]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -130,3 +130,44 @@ Rollup-Filter und zwei Einhängestellen.
 
 - **2026-11-20** — angelegt aus [B-682](B-682-notenstufe-je-fach-statt-liga.md) (geteilt); `geschaetzt`: M, backend, Migration ja,
   kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-23** — `in-arbeit` (Nachtlauf G, Sprint 127). Gebaut: Entität `ChildSubjectLevel` (`Models/SubjectLevelEntities.cs`:
+  Stufe, Bestwert, `LastLoweredOn`, `EvaluatedOn`, eindeutiger Index (Kind, Fach)), Migration
+  `20261123220126_NotenstufeChildSubjectLevel` (nur `CreateTable` + zwei Indizes, gelesen), G2-Zeilen in
+  `SchemaGuardTests`. Maß: neue interne Methode `ChildLearnProgressService.ActiveSubjectMeasuresAsync` (dieselbe
+  Rechnung `LoadRelevantAsync`/`LoadAggAsync`/`Combine`, gefiltert auf `Active`, Fächer mit `TotalItems == 0` fehlen).
+  Dienst `Services/Student/SubjectLevelService.cs` (`EvaluateAsync(childId, day)`, `Apply`), träge an der
+  Kind-Anmeldung (`AuthController.LoginChild`, nach `objectiveRewards.SettleAsync`). Abweichungen ohne neue
+  Entscheidung: (a) **Fach-FK `Cascade` statt `Restrict`** (Risiken nannten Restrict nur als Vorschlag): die Stufe ist
+  abgeleitet, ein Fach ist erst löschbar, wenn keine Übung es trägt (`SubjectsController.Delete`), und `Restrict`
+  ohne Vorprüfung machte aus dem Löschen eine nackte 500; (b) **„aktiver Plan“ heißt alle aktiven Pläne** des Kindes
+  (seit B-539 einer je Fach), Rahmen = Übungen, die ein aktiver Plan referenziert, wie das `Active`-Merkmal des
+  Rollups; (c) Senkung: die erste Senkung darf sofort kommen (kein Datum), jede weitere erst sieben Tage nach der
+  vorigen; ein Anstieg setzt die Frist nicht zurück; (d) der Verlierer zweier gleichzeitiger Erst-Anlagen löst seine
+  Zeilen vom Tracker (Unique-Verletzung, Muster `ShopService.TrySaveAsync`) – nicht gemessen, kein Test (Rennen ist im
+  In-Process-Host nicht deterministisch herstellbar).
+- **2026-11-23** — Testweg-Abweichung: Die Beherrschung wird in `ChildSubjectLevelTests` als `ItemProgress`-Zeile
+  geschrieben statt über die Spiel-Endpunkte erspielt (Box 5 braucht Wochen von Leitner-Tagen je Wort). Die Stufe liest
+  nur, was die Wertungsstellen schreiben; deren Weg in `ItemProgress` hat eigene Tests (`ChildLearnProgressTests`). Den
+  Tag übergibt der Test ausdrücklich, die Sieben-Tage-Regel braucht darum keine Uhr.
+- **2026-11-23** — AK → Test (`backend/Pugling.Api.Tests/ChildSubjectLevelTests.cs`), Mutante → rot (Tabellen aus
+  `.claude/scripts/mutant-probe.py`, gemessen an `a782b4b2` + Arbeitsbaum, 2026-11-23 23:49 und 2026-11-24 00:10):
+  AK 1 (Nenner/Antwortzahl) → `Null_beherrscht_steht_unter_alles_beherrscht`, M6 (Maß = `Correct/Seen`,
+  `ChildLearnProgressService.cs:152`) → rot · AK 2 (`AvgMastery`-artig) → `Drei_von_200_ist_schlechter_als_150_von_200`,
+  M5 (Nenner = eingeführte Wörter, `:152`) → rot · AK 3/5 (einmal je Tag) → `Zweiter_Lauf_am_selben_Tag_aendert_nichts`,
+  M8 (`else if (row.EvaluatedOn < day)` → `else`, `SubjectLevelService.cs:58`) → rot · Anstieg auch um genau eine
+  Stufe → `Absturz_senkt_eine_Stufe_je_sieben_Tage_Bestwert_bleibt` (letzter Abschnitt), M12 (`measured < row.Level - 1`,
+  `:86`) → rot · AK 4 (Frist) → derselbe Test, M9 (Frist 0 statt 7, `:89`) → rot; (eine Stufe) M10
+  (`row.Level = measured`, `:91`) → rot · AK 6 (Bestwert) → derselbe Test, M11 (`BestLevel = row.Level`, `:94`) → rot ·
+  AK 7 (Fach ohne Maß) → `Fach_ohne_Wortschatz_bekommt_keine_Zeile`: **zwei redundante Wächter**, keiner allein rot zu
+  machen – M7 (`TotalItems > 0` → `>= 0`, `:151`) grün/abweichend und M7b (Typfilter `KeysSupportingItemProgress` in
+  `LoadRelevantAsync` entfernt, `:74`) grün wie erwartet; die Rechenübung fällt am jeweils anderen. Der Test belegt das
+  Verhalten, nicht eine einzelne Zeile · AK 8 (nur aktiver Plan) → `Nur_der_aktive_Plan_zaehlt`, M4 (`.Where(r =>
+  r.Active)` entfernt, `:145`) → rot · AK 9 (keine Buchung) → `Stufenwechsel_bucht_nichts` (Ledger-Zählung vor/nach;
+  nicht als Mutante gemessen – der Dienst hat keinen Buchungsweg, eine Mutante müsste ihn erst erfinden) · Anmeldung
+  bewertet → `Kind_Anmeldung_bewertet_den_Tag`, M13 (`if (child.Id < 0)` vor dem Aufruf, `AuthController.cs:91`) → rot
+  (erste Fassung `await Task.CompletedTask` kompilierte nicht: ungenutzter Primärkonstruktor-Parameter) ·
+  AK 10 Absichtserklärung (kein schreibender Endpunkt) · Migration → `NotenstufeMigrationTests` (Bestand bleibt,
+  Eindeutigkeit (Kind, Fach)).
+- **2026-11-23** — Eigener Fund der Mutanten-Probe (Freigabe 11, als 🟡 gezählt, Sprint-Zähler **1**): M12 blieb grün –
+  kein Test stieg um genau eine Stufe. Behoben mit einem Abschnitt im Sturz-Test (9 von 10 = Note 2 am Tag nach der
+  zweiten Senkung), danach M12 rot.
