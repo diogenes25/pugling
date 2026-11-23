@@ -153,6 +153,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     {
         var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
+        // B-758: what the preparation duty follows - compared after the change, so a mere re-save moves nothing.
+        var prepBefore = (k.ScheduledDate, k.Status, k.PrepWindowDays, k.SubjectId);
 
         if (dto.Title is not null)
         {
@@ -187,7 +189,14 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (dto.Status is not null) k.Status = dto.Status.Value;
         else if (k.Grade is not null && k.Status == KlassenarbeitStatus.Planned) k.Status = KlassenarbeitStatus.Written;
 
-        await db.SaveChangesAsync(ct);
+        // One transaction: a failed reconcile must not leave the test changed and its duty behind.
+        await using (var tx = await db.Database.BeginTransactionAsync(ct))
+        {
+            await db.SaveChangesAsync(ct);
+            if (prepBefore != (k.ScheduledDate, k.Status, k.PrepWindowDays, k.SubjectId))
+                await prep.ReconcileAsync(k.ChildId, learningDay.Today, ct);
+            await tx.CommitAsync(ct);
+        }
         return await MapAsync(k, ct);
     }
 
@@ -200,8 +209,18 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     {
         var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        // B-758: a deleted test ends its preparation duty like a cancelled one - closed first, while its positions still
+        // point at it (the delete sets that link to null, and an unlinked position is no longer reconciled).
+        if (k.Status == KlassenarbeitStatus.Planned && k.PrepStartedOn is not null)
+        {
+            k.Status = KlassenarbeitStatus.Cancelled;
+            await db.SaveChangesAsync(ct);
+            await prep.ReconcileAsync(k.ChildId, learningDay.Today, ct);
+        }
         db.Klassenarbeiten.Remove(k);
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return NoContent();
     }
 

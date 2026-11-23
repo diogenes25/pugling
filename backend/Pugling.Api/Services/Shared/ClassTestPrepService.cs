@@ -36,7 +36,7 @@ public sealed class ClassTestPrepOptions
 /// position knows the test it was made for (<see cref="PlanPosition.SourceKlassenarbeitId"/>).
 /// </summary>
 public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver content, ExerciseTypeRegistry types,
-    TimeProvider time, LearningDay learningDay, IOptions<ClassTestPrepOptions> options)
+    TimeProvider time, LearningDay learningDay, IOptions<ClassTestPrepOptions> options, PositionProgressService progress)
 {
     /// <summary>Upper bound of a test's own window - beyond it a typo, not a setting (the supervisor's form uses the same).</summary>
     public const int MaxWindowDays = 60;
@@ -203,10 +203,17 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     /// Lets every running preparation position of the child end the day before the latest test it prepares (decision 5):
     /// its own test, and every other started test in its window whose bundle holds the exercise. A position the father
     /// freed or switched to weekly is his and stays as it is.
+    /// <para>
+    /// B-758: when no test covers a running position any more (cancelled, written, moved out of its window, window 0), its
+    /// duty is closed by the rule of B-659 - a met day counts, an open one does not, nothing is owed afterwards. A closed
+    /// position that a test covers again (moved back into its window) owes from today on, never for the days in between.
+    /// </para>
     /// </summary>
     private async Task<bool> AlignSpansAsync(int childId, DateOnly today, List<Klassenarbeit> inWindow, CancellationToken ct)
     {
+        // Exercise and its prerequisites: closing judges "met today?" on the exercise the position plays (B-848).
         var positions = await db.PlanPositions.Include(p => p.StudyPlan)
+            .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
             .Where(p => p.SourceKlassenarbeitId != null && p.StudyPlan!.ChildId == childId && p.Cadence == GoalCadence.Daily)
             .ToListAsync(ct);
         if (positions.Count == 0) return false;
@@ -220,8 +227,16 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         {
             var covering = started.Where(k => k.Id == pos.SourceKlassenarbeitId
                 || (k.SubjectId == pos.StudyPlan!.SubjectId && bundles[k.Id].Contains(pos.ExerciseId))).ToList();
-            if (covering.Count == 0) continue;
+            if (covering.Count == 0)
+            {
+                if (pos.DutyUntil is not { } end || end < today) continue; // already over
+                await progress.CloseDutyAsync(pos, pos.StudyPlan!, today, ct);
+                changed = true;
+                continue;
+            }
             var until = covering.Max(k => k.ScheduledDate).AddDays(-1);
+            // Reopened after a close: the duty begins again today - the days it was closed cannot have been missed.
+            if (pos.DutyUntil is { } closed && closed < today) pos.DutySince = today;
             if (pos.DutyUntil == until && pos.CadenceUntil == GoalCadence.Daily) continue;
             pos.DutyUntil = until;
             pos.CadenceUntil = GoalCadence.Daily;
