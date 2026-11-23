@@ -114,6 +114,14 @@ public class PracticeSession
     public int? PlanPositionId { get; set; }
     public PlanPosition? PlanPosition { get; set; }
     public DateOnly Day { get; set; }
+
+    /// <summary>
+    /// The build level the round plays (B-881), stamped at its start like <see cref="TestAttempt.BuildLevel"/>: its frozen
+    /// order holds item indices of that level's exercise, so a round the father's level change has overtaken is no longer
+    /// played. <c>null</c> on a position without a build path.
+    /// </summary>
+    public int? BuildLevel { get; set; }
+
     public DateTime StartedAt { get; set; } = DateTime.UtcNow;
     public DateTime? EndedAt { get; set; }
     /// <summary>Seconds actively practiced (only time with interaction).</summary>

@@ -77,6 +77,15 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         : Exercise.BuildLevelTarget;
 
     /// <summary>
+    /// Has the father's level change overtaken a round or a test (B-880, B-881)? It was stamped with the level it played
+    /// (<paramref name="stamped"/>); its frozen order holds item indices of that level's exercise. If its day no longer
+    /// resolves to that level, those indices name another exercise's cards and must not be played or graded. The one
+    /// answer for rounds and tests alike.
+    /// </summary>
+    public static bool IsOvertaken(PlanPosition pos, int? stamped, DateOnly day) =>
+        stamped != ExaminedBuildLevel(pos, day);
+
+    /// <summary>
     /// The attempts that examined <paramref name="level"/> (B-849): a prerequisite's by its level; the target's on the
     /// target level or without one - an attempt from before the path was set examined the same exercise. For views that
     /// group test results by item index, which names another card on another level.

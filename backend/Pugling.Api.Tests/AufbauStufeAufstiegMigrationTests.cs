@@ -87,4 +87,70 @@ public sealed class AufbauStufeAufstiegMigrationTests
             File.Delete(dbPath);
         }
     }
+
+    /// <summary>
+    /// B-881 AC 4: the migration <c>PracticeSessionBuildLevel</c> stamps a round on a staged position with the position's
+    /// level and leaves every other round without one. Red when the fill is missing, constant, or stamps free positions.
+    /// </summary>
+    [Fact]
+    public async Task Runde_Bekommt_Die_Stufe_Ihrer_Position()
+    {
+        const string before = "20261123151427_BuildLevelPromotion";
+        const string target = "20261123165222_PracticeSessionBuildLevel";
+        var dbPath = Path.Combine(Path.GetTempPath(), $"pugling-practicesessionbuildlevel-{Guid.NewGuid():N}.db");
+        var connectionString = $"Data Source={dbPath}";
+        try
+        {
+            var options = new DbContextOptionsBuilder<PuglingDbContext>().UseSqlite(connectionString).Options;
+            int staged, free, planId;
+            await using (var db = new PuglingDbContext(options))
+            {
+                await db.GetService<IMigrator>().MigrateAsync(before);
+                var subject = new Subject { Name = "Englisch" };
+                db.Subjects.Add(subject);
+                await db.SaveChangesAsync();
+                var series = new TextbookSeries { Name = "Access", Slug = "access", SubjectId = subject.Id };
+                db.TextbookSeries.Add(series);
+                await db.SaveChangesAsync();
+                var unit = new SeriesUnit { SeriesId = series.Id, Label = "Unit 1", OrderIndex = 1 };
+                db.SeriesUnits.Add(unit);
+                await db.SaveChangesAsync();
+                var exercise = new Exercise { SeriesUnitId = unit.Id, Type = "Vocabulary", Title = "Ziel", ConfigJson = "{}" };
+                db.Exercises.Add(exercise);
+                await db.SaveChangesAsync();
+                var childId = await LegacyChildRow.InsertAsync(db, "Kind");
+                await db.Database.ExecuteSqlAsync($"""
+                    INSERT INTO StudyPlans (ChildId, Title, StartDate, EndDate, Active, CreatedAt)
+                    VALUES ({childId}, 'Plan', '2026-11-01', '2026-11-30', 1, '2026-11-01 08:00:00')
+                    """);
+                planId = await db.Database.SqlQuery<int>($"SELECT MAX(Id) AS Value FROM StudyPlans").SingleAsync();
+                staged = await LegacyPositionRow.InsertAsync(db, planId, exercise.Id);
+                free = await LegacyPositionRow.InsertAsync(db, planId, exercise.Id);
+                await db.Database.ExecuteSqlAsync($"UPDATE PlanPositions SET CurrentBuildLevel = 2 WHERE Id = {staged}");
+                await db.Database.ExecuteSqlAsync($"""
+                    INSERT INTO PracticeSessions (StudyPlanId, PlanPositionId, Day, StartedAt, EndedAt, ActiveSeconds, Mode,
+                        "Order", Cursor)
+                    VALUES ({planId}, {staged}, '2026-11-20', '2026-11-20 10:00:00', NULL, 30, 'Lern', '[0,1]', 1),
+                           ({planId}, {free}, '2026-11-20', '2026-11-20 11:00:00', NULL, 40, 'Lern', '[0]', 0)
+                    """);
+
+                await db.GetService<IMigrator>().MigrateAsync(target);
+            }
+
+            await using (var db = new PuglingDbContext(options))
+            {
+                var rounds = await db.PracticeSessions.AsNoTracking().OrderBy(s => s.Id)
+                    .Select(s => new { s.PlanPositionId, s.BuildLevel, s.Cursor, s.ActiveSeconds }).ToListAsync();
+                Assert.Equal(2, rounds.Count);
+                Assert.Equal((staged, 2), (rounds[0].PlanPositionId!.Value, rounds[0].BuildLevel!.Value));
+                Assert.Null(rounds[1].BuildLevel);
+                Assert.Equal((1, 30), (rounds[0].Cursor, rounds[0].ActiveSeconds));
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            File.Delete(dbPath);
+        }
+    }
 }

@@ -1998,6 +1998,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ActiveSeconds")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("BuildLevel")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("CardShownAt")
                         .HasColumnType("TEXT");
 

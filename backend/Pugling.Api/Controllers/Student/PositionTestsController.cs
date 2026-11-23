@@ -41,10 +41,9 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             .ThenInclude(u => u!.Series)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
-    // B-849: the level the attempt examined is no longer the one its day resolves to - the father changed the level since.
-    // Its frozen questions are indices of another exercise; answering would grade them against the wrong cards.
+    // B-880: the father's level change has overtaken the attempt; its questions are another exercise's.
     private static bool IsStale(PlanPosition pos, TestAttempt attempt) =>
-        attempt.BuildLevel != PositionPlayService.ExaminedBuildLevel(pos, attempt.Day);
+        PositionPlayService.IsOvertaken(pos, attempt.BuildLevel, attempt.Day);
 
     private ActionResult StaleAttempt() =>
         this.ProblemWithCode(ApiErrors.NotFound, "This test belongs to a level the position no longer plays.");

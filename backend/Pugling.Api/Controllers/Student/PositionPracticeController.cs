@@ -77,6 +77,10 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             .Include(p => p.StudyPlan)
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
+    // B-881: the father's level change has overtaken the round; its frozen order names another exercise's cards.
+    private ActionResult OvertakenRound() =>
+        this.ProblemWithCode(ApiErrors.NotFound, "This round belongs to a level the position no longer plays.");
+
     private Task<PracticeSession?> GetSession(int planId, int positionId, int sessionId, CancellationToken ct) =>
         db.PracticeSessions.Include(s => s.Reviews)
             .Include(s => s.PlanPosition!).ThenInclude(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
@@ -103,7 +107,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var day = dto.Day ?? today;
         // B-635: an open remediation round of the day is continued, not replaced. A new round would bring a task the child
         // just made easier back as free text - quitting after seeing the solution and starting over would finish it.
-        if (pos.Remediation && dto.Mode == PlayMode.Lern && await OpenRemediationRoundAsync(planId, positionId, day, ct) is { } open)
+        if (pos.Remediation && dto.Mode == PlayMode.Lern && await OpenRemediationRoundAsync(pos, day, ct) is { } open)
             return Ok(await MapAsync(open, withAttempts: true, ct));
         // Assigned directly (not reloaded via GetSession) so MapAsync() can compute Testable right away - pos
         // already carries Exercise + StudyPlan from GetPosition above.
@@ -112,6 +116,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             StudyPlanId = planId,
             PlanPositionId = positionId,
             Day = day,
+            BuildLevel = PositionPlayService.ExaminedBuildLevel(pos, day),
             Mode = dto.Mode,
             PlanPosition = pos,
             StartedAt = time.GetUtcNow().UtcDateTime,
@@ -139,14 +144,15 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
     }
 
     // B-635: the latest learn round of this remediation position on the day that still has cards to play.
-    private async Task<PracticeSession?> OpenRemediationRoundAsync(int planId, int positionId, DateOnly day,
-        CancellationToken ct)
+    // B-881: a round the father's level change has overtaken is not continued - a fresh round on the new level starts.
+    private async Task<PracticeSession?> OpenRemediationRoundAsync(PlanPosition pos, DateOnly day, CancellationToken ct)
     {
         var candidate = await db.PracticeSessions.AsNoTracking()
-            .Where(s => s.PlanPositionId == positionId && s.StudyPlanId == planId && s.Mode == PlayMode.Lern && s.Day == day)
+            .Where(s => s.PlanPositionId == pos.Id && s.StudyPlanId == pos.StudyPlanId && s.Mode == PlayMode.Lern && s.Day == day)
             .OrderByDescending(s => s.Id).FirstOrDefaultAsync(ct);
         return candidate is not null && candidate.Cursor < candidate.Order.Count
-            ? await GetSession(planId, positionId, candidate.Id, ct)
+            && !PositionPlayService.IsOvertaken(pos, candidate.BuildLevel, day)
+            ? await GetSession(pos.StudyPlanId, pos.Id, candidate.Id, ct)
             : null;
     }
 
@@ -394,6 +400,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
+        if (PositionPlayService.IsOvertaken(pos, session.BuildLevel, session.Day)) return OvertakenRound();
 
         var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(played) is not { } type)
@@ -432,6 +439,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (session is null) return NotFound();
         var pos = await GetPosition(planId, positionId, ct);
         if (pos?.StudyPlan is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
+        if (PositionPlayService.IsOvertaken(pos, session.BuildLevel, session.Day)) return OvertakenRound();
         if (User.IsStudent()
             && !PositionPlayService.PlanPlayableForChild(pos.StudyPlan, learningDay.Today))
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
@@ -483,6 +491,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
+        if (PositionPlayService.IsOvertaken(pos, session.BuildLevel, session.Day)) return OvertakenRound();
 
         var items = await play.ItemsOfAsync(pos, session.Day, pos.StudyPlan?.ChildId, ct);
         if (play.TypeOf(played) is not { } type)
@@ -522,6 +531,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
+        if (PositionPlayService.IsOvertaken(pos, session.BuildLevel, session.Day)) return OvertakenRound();
         if (play.TypeOf(played) is not { } type)
             return this.ProblemWithCode(ApiErrors.UnknownExerciseType, "The exercise has an unknown type.");
         var position = session.Cursor;
@@ -572,6 +582,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             return this.ProblemWithCode(ApiErrors.PlanInactive, "This study plan is not currently active. Ask your parent.");
         var pos = await GetPosition(planId, positionId, ct);
         if (pos is null || PositionPlayService.PlayedExercise(pos, session.Day) is not { } played) return NotFound();
+        if (PositionPlayService.IsOvertaken(pos, session.BuildLevel, session.Day)) return OvertakenRound();
 
         // Info mode: free practice without any learning feedback - record nothing, score nothing.
         if (session.Mode == PlayMode.Info) return NoContent();

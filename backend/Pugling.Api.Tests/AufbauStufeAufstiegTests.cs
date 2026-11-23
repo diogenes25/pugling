@@ -368,6 +368,91 @@ public class AufbauStufeAufstiegTests(BerlinWebAppFactory factory) : IClassFixtu
     }
 
     /// <summary>
+    /// B-881 AC 1 and 2: a round the father's level change has overtaken is no longer played - started yesterday on level
+    /// 2, the father sets level 1 today. Every path that serves or grades its cards answers 404, and level 1's learning
+    /// state stays untouched. Red: any one of the five paths without the check.
+    /// </summary>
+    [Fact]
+    public async Task Ueberholte_Runde_Wird_Nicht_Mehr_Gespielt()
+    {
+        factory.Clock.FreezeAt(Local(15, 10));
+        var p = await PathAsync(startLevel: 2);
+        var sessionId = await TestApi.StartPositionSessionAsync(p.Child, p.PlanId, p.PositionId);
+        var round = $"{TestApi.PracticeBase(p.PlanId, p.PositionId)}/{sessionId}";
+
+        factory.Clock.FreezeAt(Local(16, 10));
+        var patch = await p.Father.PatchAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{p.PlanId}/positions/{p.PositionId}", new { currentBuildLevel = 1 });
+        Assert.True(patch.IsSuccessStatusCode, await patch.Content.ReadAsStringAsync());
+
+        // The round's own refusal, not just any 404: an arithmetic card has no vocabulary, so the image path answers 404
+        // further down even without the check.
+        static async Task Overtaken(HttpResponseMessage res, string path)
+        {
+            Assert.Equal(System.Net.HttpStatusCode.NotFound, res.StatusCode);
+            var body = await res.Content.ReadAsStringAsync();
+            Assert.True(body.Contains("no longer plays", StringComparison.Ordinal), $"{path}: {body}");
+        }
+        await Overtaken(await p.Child.GetAsync($"{round}/next"), "next");
+        await Overtaken(await p.Child.GetAsync($"{round}/cards"), "cards");
+        await Overtaken(await p.Child.PostAsJsonAsync($"{round}/easier", new { itemIndex = 0 }), "easier");
+        await Overtaken(await p.Child.PostAsync($"{round}/cards/0/image/reshuffle", null), "reshuffle");
+        await Overtaken(await TestApi.PositionReviewAsync(p.Child, p.PlanId, p.PositionId, sessionId, 0, givenAnswer: "2"),
+            "review");
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        Assert.Equal(0, db.PositionItemProgress.Count(x => x.PlanPositionId == p.PositionId && x.LastReviewedAt != null));
+    }
+
+    /// <summary>
+    /// B-881, remediation: the open round of the day is continued (B-635) - but not one the father's level change has
+    /// overtaken, or every start would hand back a round that answers 404 and lock the child out for the day. The round is
+    /// ended first (as the app's cleanup does), so the father's lock does not hold. Red: continuing without the check (the
+    /// second start returns the first round).
+    /// </summary>
+    [Fact]
+    public async Task Nacharbeit_Setzt_Keine_Ueberholte_Runde_Fort()
+    {
+        factory.Clock.FreezeAt(Local(15, 10));
+        var father = await TestApi.AdultAsync(factory);
+        const string pin = "8493";
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Stufen-Kind"), pin }));
+        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(father, await TestApi.DefaultSubjectIdAsync(father));
+        var cloze = $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/cloze";
+        object Cloze(string title, string answer, int? level = null, int? target = null) => new
+        {
+            title,
+            orderIndex = 1,
+            rewardPoints = 10,
+            config = new { text = "I fell {{1}}.", gaps = new object[] { new { index = 1, answer, prompt = "Ich schlief ein." } } },
+            buildLevel = level,
+            buildTargetExerciseId = target,
+        };
+        var targetId = await TestApi.IdAsync(await father.PostAsJsonAsync(cloze, Cloze("Ziel", "asleep")));
+        await TestApi.IdAsync(await father.PostAsJsonAsync(cloze, Cloze("Stufe 1", "down", 1, targetId)));
+        await TestApi.IdAsync(await father.PostAsJsonAsync(cloze, Cloze("Stufe 2", "over", 2, targetId)));
+        var planId = await TestApi.CreateEmptyPlanAsync(father, childId);
+        var created = await father.PostAsJsonAsync($"/api/v1/supervisor/study-plans/{planId}/positions",
+            new { exerciseId = targetId, currentBuildLevel = 2, remediation = true });
+        Assert.True(created.IsSuccessStatusCode, await created.Content.ReadAsStringAsync());
+        var positionId = await TestApi.IdAsync(created);
+        var child = await TestApi.ChildAsync(factory, childId, pin);
+
+        var first = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+        (await child.PostAsync($"{TestApi.PracticeBase(planId, positionId)}/{first}/end", null)).EnsureSuccessStatusCode();
+        var patch = await father.PatchAsJsonAsync(
+            $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}", new { currentBuildLevel = 1 });
+        Assert.True(patch.IsSuccessStatusCode, await patch.Content.ReadAsStringAsync());
+
+        var second = await TestApi.StartPositionSessionAsync(child, planId, positionId);
+        Assert.NotEqual(first, second);
+        var next = await child.GetAsync($"{TestApi.PracticeBase(planId, positionId)}/{second}/next");
+        Assert.True(next.IsSuccessStatusCode, await next.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
     /// Under "typed tests only" a self-assessed pass raises nothing - it could not meet the goal either. The prerequisite
     /// plays its own default stage (self-assessment), the position demands typed tests. Red: a promotion without the
     /// graded check (tapping "known" would climb the path).
