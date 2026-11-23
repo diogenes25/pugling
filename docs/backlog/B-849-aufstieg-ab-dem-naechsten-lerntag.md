@@ -12,7 +12,7 @@ quelle: B-701
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "B-848 (gestufte Position spielt ihre Stufe) – baut auf PlayedExercise auf"
+wartet_auf: ""
 ---
 
 # B-849 · Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag

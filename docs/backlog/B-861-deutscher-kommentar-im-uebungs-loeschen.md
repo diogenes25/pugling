@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Nachschau von B-700 im Nachtlauf 2026-11-23-c (docs/pm-sitzung-2026-11-23-c.md, pugling-reviewer 🟢)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: []
 wartet_auf: ""
 ---
@@ -61,3 +61,4 @@ XS, backend, keine Migration, kein Vertragsbruch.
   `bonus`, `bonus-deckel`, `bonus-deckel-voll`, `bonus-satz-je-karte`, `nochmal-nach-pflicht`, `full-flow` – 6 passed.
   Der Fall „Deckel 0 auf der Startseite“ ist nur auf Komponentenebene gegangen (keine Spec setzt den Deckel auf 0 und
   öffnet danach die Startseite). Vater Regressionszeuge (`bonus-deckel`), Creator Regressionszeuge (Suite grün).
+- **2026-11-23** — nachgeschaut (Nachtlauf D, Retro Sprint 121, Selbst-Check). Prüfpunkte: `grep` über alle fünf Backend-Projekte (ohne Migrationen) nach `/*`-Blockzeilen mit deutschen Funktionswörtern (nicht/wird/und/der/die/das) – 0 Treffer; die sechs übersetzten Blöcke aus `635b68b4` gelesen, Inhalt deckungsgleich mit dem deutschen Original. Kein Befund.

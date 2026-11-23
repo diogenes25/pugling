@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Review von B-845 im Nachtlauf 2026-11-23-c (docs/pm-sitzung-2026-11-23-c.md, frontend-reviewer 🟡)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-23"
 entgangen_bei: [B-660]
 wartet_auf: ""
 ---
@@ -85,3 +85,4 @@ S, beides, keine Migration, additiv. Testweg: `ExtraTrainingTests.Runde_Nennt_Di
   Der Fall „Deckel 0 auf der Startseite“ ist nur auf Komponentenebene gegangen (keine Spec setzt den Deckel auf 0 und
   öffnet danach die Startseite). Vater Regressionszeuge (`bonus-deckel`), Creator Regressionszeuge (Suite grün).
 - **2026-11-23** — Entscheidung 3 vom Nutzer bestätigt (eigener Abruf im Teaser, kein Feld an der Tagesübersicht).
+- **2026-11-23** — nachgeschaut (Nachtlauf D, Retro Sprint 121, Selbst-Check). Prüfpunkte: `CoinsLeftToday` hat genau einen Erzeuger (`ExtraTrainingService.StartAsync:132–135`), und Start wie Wiederaufnahme laufen beide durch diese eine Rückgabe (die Wiederaufnahme nach einem parallelen Start im `catch` ebenso) – die Vertragsbehauptung „as of the last start or resume“ stimmt; „kein Deckel“ reist als `null`, `CapOf` liefert bei fehlendem Deckel `int.MaxValue` und wird an dieser Stelle umgesetzt. Kein Befund.

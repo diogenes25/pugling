@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Stufe spielen, wirksame Übung, Lernstand je Übung]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -198,4 +198,9 @@ Schlüssel), eine zentrale Naht für 61 Lesestellen und 50 Zugriffe mit neuem Fi
   darum endet der Lauf nach diesem Sprint (Protokoll `pm-sitzung-2026-11-23-d.md`).
   Suite nach der letzten Backend-Änderung: 2148/2149 (Release), die eine rote war der Wächter oben; danach
   `ProblemTextGuardTests` 2/2, Vitest `src/lib` 196/196.
-
+- **2026-11-23** — abgenommen (`828cb8e5`, Sprint 121). Rollengang maschinell: Sohn und Vater über
+  `AufbauStufePlayTests` (15 Fälle durch die HTTP-Pipeline, Kind-Login und Vater-Login wie im echten Betrieb) – eine
+  Oberfläche für die Start-Stufe gibt es erst mit B-841, die API ist bis dahin der einzige Weg. Regressionszeugen E2E gegen
+  frisch gestartete Server (5211/5184): `full-flow`, `aufbau-weg-editor`, `lernkarte-leichter`, `nacharbeit` – 4 passed.
+  **Menschlicher Check offen:** vor dem nächsten Heimnetz-Start läuft die Migration `BuildLevelPlayed` gegen die echte DB
+  (an einer Kopie geprobt, siehe oben).

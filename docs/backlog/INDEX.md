@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (96)
+### Offen (95)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -33,7 +33,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | Wunsch | `geschaetzt` | P1 | M | frontend | — |
-| [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) | Eine gestufte Position spielt die Übung ihrer aktuellen Stufe | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
@@ -114,7 +113,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-863](B-863-deutsche-kommentare-in-den-tests.md) | Deutsche `//`- und `///`-Absätze in `Pugling.Api.Tests` | Aufräumen | `idee` | P3 | — | backend | Migration? + Vertrag? |
 
 <details>
-<summary>Abgenommen (584)</summary>
+<summary>Abgenommen (585)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -692,6 +691,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-845](B-845-noch-einmal-verspricht-muenzen-bei-deckel-null.md) | „Noch einmal“ verspricht Münzen, auch wenn der Vater den Bonus-Deckel auf 0 gesetzt hat | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-846](B-846-nochmal-spec-kopf-behauptet-mehr.md) | Der Kopf von `nochmal-nach-pflicht.spec.ts` verspricht ein Rot, das zwei Mutanten nicht liefern | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-847](B-847-bonus-lernstand-test-nur-selbsteinschaetzung.md) | B-660 AK 7 ist nur für die Selbsteinschätzungs-Form gemessen | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) | Eine gestufte Position spielt die Übung ihrer aktuellen Stufe | Wunsch | `abgenommen` | P1 | L | backend | Migration |
 | [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | Ein deutscher Block-Kommentar im Löschen einer Übung | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | Defekt | `abgenommen` | P3 | S | beides | — |
 | [B-88](B-88-scoring-uhrzeit-am-timeprovider.md) | Die Punkte-Uhrzeit kommt von der Wanduhr, nicht vom `TimeProvider` | Aufräumen | `abgenommen` | P3 | XS | backend | — |
@@ -705,7 +705,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (11)
+### Wartet auf Zutun von außen (10)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -721,12 +721,11 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
-| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | `geschaetzt` | B-848 (Start-Stufe, gespielte Stufe); das Stufenband nach einem Aufstieg braucht B-849 |
-| [B-849](B-849-aufstieg-ab-dem-naechsten-lerntag.md) | Aufstieg nach bestandenem Test, wirksam ab dem nächsten Lerntag | `geschaetzt` | B-848 (gestufte Position spielt ihre Stufe) – baut auf PlayedExercise auf |
+| [B-841](B-841-start-stufe-und-stufenband.md) | Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung | `geschaetzt` | B-849 (Stufenband nach einem Aufstieg); B-848 ist gebaut (828cb8e5) |
 
 ### Nach der Abnahme entgangen (217)
 
-**Nachgeschaut: 551 von 584 abgenommenen** — und in 193 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 33 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 553 von 585 abgenommenen** — und in 193 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -949,7 +948,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | [B-660] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (33) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (32) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -987,8 +986,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-861](B-861-deutscher-kommentar-im-uebungs-loeschen.md) | Ein deutscher Block-Kommentar im Löschen einer Übung |
-| [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht |
+| [B-848](B-848-gestufte-position-spielt-ihre-stufe.md) | Eine gestufte Position spielt die Übung ihrer aktuellen Stufe |
 
 </details>
 

@@ -12,7 +12,7 @@ quelle: B-704
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "B-848 (Start-Stufe, gespielte Stufe); das Stufenband nach einem Aufstieg braucht B-849"
+wartet_auf: "B-849 (Stufenband nach einem Aufstieg); B-848 ist gebaut (828cb8e5)"
 ---
 
 # B-841 · Start-Stufe im Positionsformular, Stufenband beim Kind, Stufe in der Vater-Auswertung
