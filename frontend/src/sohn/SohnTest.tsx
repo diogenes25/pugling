@@ -13,7 +13,7 @@ import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform, istDiktat } from "./aufgabenform";
 import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
-import { useBuchbezug } from "./buchbezug";
+import { useRundenKopf } from "./buchbezug";
 import type { AnswerDto, TestItem, TestSubmitResponse } from "../lib/types";
 
 // Vokabel-Teststufen (numerisch, serverseitig erzwungen): 1 Zeigen … 7 Ordnen.
@@ -45,7 +45,7 @@ export function SohnTest() {
   const { planId, refreshWallet, setStreak, skin, celebrate } = useSohn();
   const { positionId: positionIdRaw } = useParams();
   const positionId = Number(positionIdRaw);
-  const buchbezug = useBuchbezug(planId, positionId);
+  const { buchbezug, stufe } = useRundenKopf(planId, positionId);
   const nav = useNavigate();
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
@@ -249,7 +249,12 @@ export function SohnTest() {
       schliessenName={t("test.later")} onSchliessen={() => nav("/sohn")}
       zaehler={t("test.questionOf", { n: Math.min(cursor + 1, total), total })} anteil={total > 0 ? cursor / total : 0}
       // B-686: führt der Knoten direkt hierher, ist das die einzige Stelle, an der das Kind die Buchseite sieht.
-      unterKopf={buchbezug && <div className="row lektion-unterkopf"><span className="pill pfad-buchbezug">{buchbezug}</span></div>}
+      unterKopf={(buchbezug || stufe) && (
+        <div className="row lektion-unterkopf">
+          {stufe && <span className="pill pfad-stufe">{stufe}</span>}
+          {buchbezug && <span className="pill pfad-buchbezug">{buchbezug}</span>}
+        </div>
+      )}
       // Das Wort „Test" steht in der Anweisung: der Aufbau ist derselbe wie beim Üben, die Klausur muss erkennbar bleiben.
       anweisung={t("lektion.inTest", { task: t(form.anweisung) })}
       hinweis={typed ? t("test.typedHint") : t("test.selfHint")}

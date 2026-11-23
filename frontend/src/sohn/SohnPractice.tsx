@@ -10,7 +10,7 @@ import { TaskAnnouncer } from "../components/ClozePrompt";
 import { RevealAlternatives } from "../components/RevealAlternatives";
 import { aufgabenform, istDiktat } from "./aufgabenform";
 import { Lernkarte } from "./Lernkarte";
-import { useBuchbezug } from "./buchbezug";
+import { useRundenKopf } from "./buchbezug";
 import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen, RueckmeldungsBlatt, type Rueckmeldung } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
@@ -98,7 +98,7 @@ export function SohnPractice() {
   const vorDemSchalten = useRef(new Map<number, PracticeCard>());
   // B-635: der Stand einer Nacharbeit (Runde, erledigt, gesamt) – vom Server beim Start, „erledigt“ wächst je Antwort.
   const [nacharbeit, setNacharbeit] = useState<{ round: number; done: number; total: number } | null>(null);
-  const buchbezug = useBuchbezug(planId, positionId);
+  const { buchbezug, stufe } = useRundenKopf(planId, positionId);
   // Abwechslung: Tipp erst auf Wunsch aufdecken; Tempo-Modus (persistiert) blendet eine Countdown-Leiste ein.
   const [hintShown, setHintShown] = useState(false);
   const [tempo, setTempo] = useState(() => localStorage.getItem("pugling.tempo") === "1");
@@ -526,6 +526,7 @@ export function SohnPractice() {
         <>
           {/* Combo und Tempo in einer eigenen Zeile: im Kopf neben Balken und Zähler stünde er bei 360 Pixeln über. */}
           <div className="row lektion-unterkopf">
+            {stufe && <span className="pill pfad-stufe">{stufe}</span>}
             {buchbezug && <span className="pill pfad-buchbezug">{buchbezug}</span>}
             {nacharbeit && <span className="pill cyan">{t("practice.remediation", nacharbeit)}</span>}
             {combo >= 2 && <span className="pill mag">⚡ COMBO ×{combo}</span>}

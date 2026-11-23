@@ -21,6 +21,7 @@ import { ratingSummary } from "./ExerciseRatingPanel";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
 import { formatDate } from "../lib/datum";
 import { leiterText } from "./wizardFinish";
+import { aufbauStufeText, StartLevelField } from "./StartLevelField";
 
 /*
  * Positions-UI des neuen Lehrplan-Modells: Ein Plan ist ein Container aus Katalog-Übungen. Jede
@@ -39,10 +40,30 @@ const CADENCES: GoalCadence[] = ["Daily", "Weekly", "UntilDone", "None"];
  * Server lehnt sie ab. Darum gibt es den Rhythmus nur mit Nacharbeit, und wer die Nacharbeit abwählt, fällt aufs
  * Tagesziel zurück, statt einen Stand zu bauen, den erst das Speichern als Fehler meldet.
  */
-export const cadencesFor = (remediation: boolean): GoalCadence[] =>
-  CADENCES.filter((c) => c !== "UntilDone" || remediation);
-export const withRemediation = (s: PositionSettings, remediation: boolean): PositionSettings =>
-  ({ ...s, remediation, cadence: !remediation && s.cadence === "UntilDone" ? "Daily" : s.cadence });
+export const cadencesFor = (remediation: boolean, staged = false): GoalCadence[] =>
+  CADENCES.filter((c) => (c !== "UntilDone" || remediation) && !(staged && (c === "Daily" || c === "Weekly")));
+/*
+ * B-841 (B-704 AK 6): eine Position auf einem Aufbau-Weg trägt bis B-702 kein Tages- oder Wochenziel (der Server lehnt es
+ * ab, B-848 E3) – nur „frei“ oder „bis erledigt“. Fällt eine Wahl weg, landet sie auf dem Rhythmus, den es noch gibt.
+ */
+export const withRemediation = (s: PositionSettings, remediation: boolean, staged = false): PositionSettings =>
+  ({ ...s, remediation, cadence: !remediation && s.cadence === "UntilDone" ? (staged ? "None" : "Daily") : s.cadence });
+/*
+ * Der Wechsel auf einen Weg und zurück (B-841): ein Tages- oder Wochenziel, das der Weg verdrängt, wird gemerkt und kommt
+ * zurück, sobald der Weg wegfällt (Stufe „ohne Weg“, andere Übung) – sonst entstünde still eine Position ohne Pflicht,
+ * die der Vater nie gewählt hat. Hat er den Rhythmus inzwischen selbst gesetzt, gilt seiner.
+ */
+export function withStaged(s: PositionSettings, staged: boolean, verdraengt: GoalCadence | null):
+  { settings: PositionSettings; verdraengt: GoalCadence | null } {
+  if (staged) {
+    return s.cadence === "Daily" || s.cadence === "Weekly"
+      ? { settings: { ...s, cadence: "None" }, verdraengt: s.cadence }
+      : { settings: s, verdraengt };
+  }
+  return verdraengt && s.cadence === "None"
+    ? { settings: { ...s, cadence: verdraengt }, verdraengt: null }
+    : { settings: s, verdraengt: null };
+}
 const ORDER_LABEL: Record<PracticeOrder, string> = {
   WeakestFirst: "Schwächste zuerst", Serial: "Reihenfolge", Random: "Zufällig", NewestWeighted: "Neue bevorzugt",
 };
@@ -413,10 +434,12 @@ function kannNacharbeit(types: ReturnType<typeof useExerciseTypes>, type: string
   return types.byType.get(type)?.capabilities.includes("remediation") ?? false;
 }
 
-function PositionFields({ value, onChange, stages, nacharbeit = false }: {
+function PositionFields({ value, onChange, stages, nacharbeit = false, staged = false }: {
   value: PositionSettings; onChange: (next: PositionSettings) => void; stages: readonly ExercisePreviewStage[];
   /** B-635: Der Typ kann leichter geschaltet werden (Manifest-Fähigkeit „remediation“) – nur dann gibt es den Schalter. */
   nacharbeit?: boolean;
+  /** B-841: Die Position steht auf einem Aufbau-Weg – kein Tages- oder Wochenziel. */
+  staged?: boolean;
 }) {
   const uid = useId();
   const up = <K extends keyof PositionSettings>(k: K, v: PositionSettings[K]) => onChange({ ...value, [k]: v });
@@ -433,7 +456,7 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
         <FieldLabel htmlFor={`${uid}-cadence`} topic="cadence">Ziel-Rhythmus</FieldLabel>
         <select id={`${uid}-cadence`} aria-label="Ziel-Rhythmus" value={value.cadence}
           onChange={(e) => up("cadence", e.target.value as GoalCadence)}>
-          {cadencesFor(value.remediation).map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
+          {cadencesFor(value.remediation, staged).map((c) => <option key={c} value={c}>{CADENCE_LABEL[c]}</option>)}
         </select>
       </div>
       {/* Der Server wertet die Schwelle als Bestehens-Prozentsatz des Abschlusstests aus (Standard 80). */}
@@ -552,7 +575,7 @@ function PositionFields({ value, onChange, stages, nacharbeit = false }: {
         <span className="label-row">
           <label className="checkline">
             <input type="checkbox" checked={value.remediation}
-              onChange={(e) => onChange(withRemediation(value, e.target.checked))} /> Nacharbeit
+              onChange={(e) => onChange(withRemediation(value, e.target.checked, staged))} /> Nacharbeit
           </label>
           <InfoHint topic="remediation" />
         </span>
@@ -711,15 +734,30 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
    * jeder Wert bereits eine gespeicherte Aussage).
    */
   const [punkteGetippt, setPunkteGetippt] = useState(false);
+  // B-841: die Start-Stufe auf dem Aufbau-Weg der gewählten Übung; "" = ohne Weg. Gehört zur Übung und fällt mit ihr.
+  const [startLevel, setStartLevel] = useState<number | "">("");
+  // Das Ziel, das die Start-Stufe verdrängt hat – es kommt zurück, wenn der Weg wegfällt (`withStaged`).
+  const [verdraengt, setVerdraengt] = useState<GoalCadence | null>(null);
+  function stufeSetzen(next: number | "") {
+    setStartLevel(next);
+    const r = withStaged(settings, next !== "", verdraengt);
+    setSettings(r.settings);
+    setVerdraengt(r.verdraengt);
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (exerciseId === "") { action.fail("Bitte eine Übung aus der Liste wählen."); return; }
     const settingsProblem = positionSettingsProblem(settings);
     if (settingsProblem) { action.fail(settingsProblem); return; }
-    const dto: CreatePositionDto = { exerciseId: Number(exerciseId), ...settingsToDto(settings) };
+    const dto: CreatePositionDto = {
+      exerciseId: Number(exerciseId), ...settingsToDto(settings),
+      ...(startLevel === "" ? {} : { currentBuildLevel: startLevel }),
+    };
     if (!await action.run(() => api.addPosition(planId, dto), "Übung als Position hinzugefügt.")) return;
     setExerciseId("");
+    setStartLevel("");
+    setVerdraengt(null);
     /*
      * Mit der Position endet auch die Aussage, die zu ihr gehoerte (Reviewer-Fund). Ohne dieses
      * Zuruecksetzen belegte KEINE weitere Uebung mehr vor: Position 2..n truegen die Zahl, die der Vater
@@ -820,8 +858,11 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
                   // ganz außen vor – für ihn gibt es keine Empfehlung, er ist eine Aussage des Vaters.
                   onChange={() => {
                     setExerciseId(ex.id);
+                    setStartLevel("");
+                    setVerdraengt(null);
                     setSettings((cur) => withRemediation({
-                      ...cur,
+                      // B-841: ein Ziel, das die Start-Stufe der vorigen Übung verdrängt hat, kommt zurück.
+                      ...withStaged(cur, false, verdraengt).settings,
                       useLeitner: ex.defaultUseLeitner || Number(cur.newItemsPerDay) > 0,
                       requireTypedTest: ex.defaultRequireTypedTest,
                       itemCount: ex.defaultItemCount?.toString() ?? "",
@@ -880,7 +921,11 @@ function AddPosition({ planId, onAdded }: { planId: number; onAdded: () => void 
           oben setzt `settings` dagegen direkt und läuft hier nicht durch. Damit braucht `PositionFields`
           keinen zusätzlichen Prop, und die Unterscheidung hängt an dem, was ohnehin verschieden ist:
           dem Weg, auf dem der Wert entsteht. */}
-      <PositionFields value={settings} stages={gewaehlt ? types.stages(gewaehlt.type) : []}
+      {gewaehlt && (
+        <StartLevelField exercise={gewaehlt} value={startLevel} disabled={action.busy}
+          onChange={stufeSetzen} />
+      )}
+      <PositionFields value={settings} stages={gewaehlt ? types.stages(gewaehlt.type) : []} staged={!!gewaehlt && startLevel !== ""}
         nacharbeit={!!gewaehlt && kannNacharbeit(types, gewaehlt.type)} onChange={(next) => {
         if (next.pointsGoalMet !== settings.pointsGoalMet) setPunkteGetippt(true);
         setSettings(next);
@@ -985,6 +1030,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
               ))}
           </td>
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}
+            {pos.build && <> <span className="pill cyan">{aufbauStufeText(pos.build)}</span></>}
             {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}
             {pos.completedOn && <> <span className="pill lime">geschafft am {formatDate(pos.completedOn)}</span></>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
@@ -1012,6 +1058,7 @@ function PositionRow({ planId, pos, onChanged, action }: {
       <td>{pos.exerciseTitle} <span className="muted">· {typeLabel(pos.exerciseType)}</span></td>
       <td colSpan={3}>
         <PositionFields value={settings} onChange={setSettings} stages={types.stages(pos.exerciseType)}
+          staged={pos.currentBuildLevel != null}
           nacharbeit={kannNacharbeit(types, pos.exerciseType)} />
       </td>
       <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
@@ -1042,12 +1089,15 @@ function PositionReportPanel({ planId, positionId, stufenName }: {
   if (report.error || !report.data) return <div className="banner err">{report.error ?? "Report nicht verfügbar."}</div>;
   const r = report.data;
 
-  if (r.totalItems === 0) return <div className="muted">Diese Übung hat keine einzeln auswertbaren Inhalte.</div>;
+  // B-841: der Report zeigt die Inhalte der Stufe, die das Kind heute spielt – das sagt die Zeile über ihm.
+  const stufe = r.build && <p className="sub" style={{ margin: "4px 2px" }}>{aufbauStufeText(r.build)}</p>;
+  if (r.totalItems === 0) return <>{stufe}<div className="muted">Diese Übung hat keine einzeln auswertbaren Inhalte.</div></>;
 
-  if (r.remediation) return <NacharbeitReport report={r} stufenName={stufenName} />;
+  if (r.remediation) return <>{stufe}<NacharbeitReport report={r} stufenName={stufenName} /></>;
 
   return (
     <div style={{ padding: "6px 2px" }}>
+      {stufe}
       <p className="muted" style={{ marginTop: 0 }}>
         {r.introducedItems}/{r.totalItems} eingeführt · {r.masteredItems} sitzen sicher (Box {r.maxBox})
       </p>

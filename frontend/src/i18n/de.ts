@@ -61,6 +61,7 @@ export const de = {
       goalProgress: "Ziel zu {{percent}} % geschafft",
       // B-588: wo die Übung im Buch steht – Reihe · Unit · Seite(n).
       bookRef: "{{series}} · {{unit}} · S. {{pages}}",
+      buildLevel: "Stufe {{n}} von {{of}}",
       hoursLeft_one: "noch {{count}} Std.",
       hoursLeft_other: "noch {{count}} Std.",
       untilSunday: "bis Sonntag",

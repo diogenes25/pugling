@@ -666,3 +666,27 @@ describe("SohnTest, Buchbezug im Kopf", () => {
     expect(overview).toHaveBeenCalledWith(3);
   });
 });
+
+/* B-841 (B-704 AK 5): das Stufenband steht auch im Kopf des Tests – nur an einer gestuften Position. */
+describe("SohnTest, Stufenband im Kopf", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+  const mitBuild = (build: unknown) => overview.mockResolvedValue({
+    currentStreak: 4,
+    today: { positions: [{ positionId: 5, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: "42", build }] },
+  });
+
+  // Rot, wenn der Test die Stufe nicht zeigt.
+  it("zeigt die Stufe einer gestuften Position", async () => {
+    mitBuild({ level: 1, of: 3, playedExerciseId: 8, playedTitle: "Wörter erkennen", targetExerciseId: 5, targetTitle: "Tiere" });
+    renderTest();
+    expect((await screen.findByText("Stufe 1 von 3")).classList).toContain("pfad-stufe");
+  });
+
+  // Rot, wenn das Band auch ohne Aufbau-Weg erscheint.
+  it("zeigt ohne Aufbau-Weg kein Band", async () => {
+    mitBuild(null);
+    renderTest();
+    await screen.findByText("Access 3 · Unit 2 · S. 42");
+    expect(document.querySelector(".pfad-stufe")).toBeNull();
+  });
+});

@@ -249,6 +249,13 @@ export const FIELD_HELP = {
       + "Stufe 2 einsetzen mit Auswahl; die Ziel-Übung ist die oberste Stufe. Ein Weg ist eine Ebene tief – eine "
       + "Vorstufe ist nie selbst Ziel.",
   },
+  startBuildLevel: {
+    title: "Start-Stufe",
+    text: "Die Übung hat leichtere Vorstufen. Hier legst du fest, auf welcher Stufe des Wegs dein Kind beginnt – die "
+      + "letzte ist die Übung selbst. Ein bestandener Test hebt die Stufe um eins, wirksam ab dem nächsten Tag. Solange "
+      + "eine Position auf einem Aufbau-Weg ist, gibt es kein Tages- oder Wochenziel – nur „frei“ oder „täglich, bis "
+      + "erledigt“.",
+  },
   exerciseBookPages: {
     title: "Buchseite(n)",
     text: "Die Seite im Lehrbuch, wie gedruckt – „42“, „42–43“ oder „WB 12“ (höchstens 20 Zeichen). Anders als "

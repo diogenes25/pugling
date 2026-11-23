@@ -1052,3 +1052,29 @@ describe("SohnPractice, Buchbezug im Kopf", () => {
     expect(document.querySelector(".pfad-buchbezug")).toBeNull();
   });
 });
+
+/*
+ * B-841 (B-704 AK 5): das Stufenband „Stufe n von m“ im Kopf der Runde, nur an einer gestuften Position.
+ */
+describe("SohnPractice, Stufenband im Kopf", () => {
+  beforeEach(async () => { await setLanguage("de"); });
+  const mitBuild = (build: unknown) => overview.mockResolvedValue({
+    currentStreak: 0,
+    today: { positions: [{ positionId: 5, seriesName: "Access 3", seriesUnitLabel: "Unit 2", bookPages: "42", build }] },
+  });
+
+  // Rot, wenn die Runde die Stufe der gestuften Position nicht zeigt.
+  it("zeigt die Stufe einer gestuften Position", async () => {
+    mitBuild({ level: 1, of: 3, playedExerciseId: 8, playedTitle: "Wörter erkennen", targetExerciseId: 5, targetTitle: "Tiere" });
+    renderPractice();
+    expect((await screen.findByText("Stufe 1 von 3")).classList).toContain("pfad-stufe");
+  });
+
+  // Rot, wenn das Band auch ohne Aufbau-Weg gezeichnet wird. Der Buchbezug derselben Antwort beweist, dass sie gelesen ist.
+  it("zeigt ohne Aufbau-Weg kein Band", async () => {
+    mitBuild(null);
+    renderPractice();
+    await screen.findByText("Access 3 · Unit 2 · S. 42");
+    expect(document.querySelector(".pfad-stufe")).toBeNull();
+  });
+});

@@ -389,6 +389,7 @@ export type UpdateVocabularyDto = S["UpdateVocabularyDto"];
 
 /** Schlanke Trefferzeile der Übungssuche (Metadaten-Filter über den Katalog). */
 export type ExerciseSummary = S["ExerciseSummary"];
+export type BuildPath = S["BuildPath"];
 
 /**
  * Ein **Lehrer-Konto**: ein Erwachsener, der Inhalte erstellt und kein Kind betreut. `roles` enthält darum

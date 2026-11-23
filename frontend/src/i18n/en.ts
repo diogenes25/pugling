@@ -55,6 +55,7 @@ export const en = {
       goalMet: "goal met",
       goalProgress: "goal {{percent}}% done",
       bookRef: "{{series}} · {{unit}} · p. {{pages}}",
+      buildLevel: "Level {{n}} of {{of}}",
       hoursLeft_one: "{{count}} hr left",
       hoursLeft_other: "{{count}} hrs left",
       untilSunday: "by Sunday",
