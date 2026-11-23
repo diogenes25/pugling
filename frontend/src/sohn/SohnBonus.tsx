@@ -27,6 +27,11 @@ const FORM_KEY = {
   SelfAssess: "bonus.formSelfAssess", Choice: "bonus.formChoice", Typed: "bonus.formTyped",
 } as const satisfies Record<ExtraForm, string>;
 
+/** B-862: nur der Name der Form – wo ein Satz je Treffer nichts mehr zahlt (voller Deckel). */
+const NAME_KEY = {
+  SelfAssess: "bonus.formNameSelfAssess", Choice: "bonus.formNameChoice", Typed: "bonus.formNameTyped",
+} as const satisfies Record<ExtraForm, string>;
+
 /** B-608: dieselben Formen mit „bis zu“ – für eine Runde, deren Karten verschieden zahlen. */
 const MIXED_KEY = {
   SelfAssess: "bonus.formSelfAssessMixed", Choice: "bonus.formChoiceMixed", Typed: "bonus.formTypedMixed",
@@ -59,13 +64,25 @@ function clearAnswers(runId: number) {
 /** Der Einstieg auf dem Pfad: gesperrt, bis die Belohnungsziele (Tag oder Woche) erfüllt sind – die Sperre hält der Server. */
 export function BonusEinstieg({ offen, ziele = "tag" }: { offen: boolean; ziele?: TruhenZiele }) {
   const { t } = useTranslation();
+  const { childId } = useSohn();
+  // B-862: offen verspricht der Teaser „Extra-Münzen“ – bei Deckel 0 oder vollem Deckel sagt er stattdessen, was gilt.
+  // Beiwerk: ohne Antwort (Ladefehler) bleibt der allgemeine Satz.
+  const bonus = useAsync<ExtraTrainingOverview | null>(
+    () => (offen ? api.extraTraining(childId) : Promise.resolve(null)), [offen, childId]);
+  const b = bonus.data;
+  // Bis die Antwort da ist, kein Satz – sonst blitzte genau das Versprechen auf, das bei Deckel 0 nicht gilt.
+  const offenText = bonus.error ? t("bonus.teaserOpen")
+    : !b ? null
+    : b.dailyCoinCap === 0 ? t("bonus.capZero")
+    : b.dailyCoinCap != null && b.coinsToday >= b.dailyCoinCap ? t("bonus.capReached")
+    : t("bonus.teaserOpen");
   return (
     <div className="card bonus-einstieg" style={{ borderColor: offen ? "var(--gold)" : undefined }}>
       <div className="row">
         <span style={{ fontSize: 26 }} aria-hidden="true">{offen ? "⭐" : "🔒"}</span>
         <b>{t("bonus.title")}</b>
       </div>
-      <p className="sub" style={{ margin: "6px 0" }}>{offen ? t("bonus.teaserOpen") : ziele === "woche" ? t("bonus.teaserLockedWeek") : t("bonus.teaserLocked")}</p>
+      <p className="sub" style={{ margin: "6px 0" }}>{offen ? offenText : ziele === "woche" ? t("bonus.teaserLockedWeek") : t("bonus.teaserLocked")}</p>
       {offen && (
         <Link to="/sohn/bonus" className="btn gold small" style={{ textDecoration: "none", textAlign: "center" }}>{t("bonus.enter")}</Link>
       )}
@@ -142,7 +159,10 @@ function BonusZeile({ e, capReached, capZero }: { e: ExtraExercise; capReached: 
         {e.unitLabel && <span className="pill" style={{ marginLeft: "auto" }}>{e.unitLabel}</span>}
       </div>
       <div className="sub" style={{ margin: "4px 0 8px" }}>
-        {e.done && !e.repeatable ? t(capZero ? "bonus.doneTodayNoCoins" : "bonus.doneToday") : formText(e.nextForm, e.coinsPerHit, e.mixedRates)}
+        {e.done && !e.repeatable ? t(capZero ? "bonus.doneTodayNoCoins" : "bonus.doneToday")
+          // B-862: am vollen Deckel zahlt eine Vokabelrunde nichts – kein Münzsatz je Treffer unter der Deckel-Karte.
+          : capReached && e.repeatable ? t("bonus.vocabNoWorth")
+          : formText(e.nextForm, e.coinsPerHit, e.mixedRates)}
         {/* B-538: jede weitere Runde derselben Übung am selben Tag zahlt die Hälfte – der Wert steht vor dem Spielen da. Am
             vollen Deckel zahlt ohnehin nichts mehr; dann sagt es die Deckel-Karte, nicht ein Prozentwert. */}
         {!capReached && e.repeatable && e.done && <> · {t("bonus.vocabNoWorth")}</>}
@@ -285,7 +305,11 @@ export function SohnBonusRun() {
           <p className="sub">{result.coinsAwarded > 0 ? t("bonus.earned", { coins: result.coinsAwarded }) : t("bonus.noCoins")}</p>
           {result.capReached && <p className="sub">{t("bonus.capCut")}</p>}
           {next && next.repeatable && next.nextForm !== result.form && (
-            <p className="sub">{t("bonus.nextHarder", { form: formText(next.nextForm, next.coinsPerHit, next.mixedRates) })}</p>
+            // B-862: am vollen Deckel nennt die Vorschau nur die Form – ein Satz je Treffer zahlte dort nichts.
+            <p className="sub">{t("bonus.nextHarder", {
+              form: result.dailyCoinCap != null && result.coinsToday >= result.dailyCoinCap
+                ? t(NAME_KEY[next.nextForm]) : formText(next.nextForm, next.coinsPerHit, next.mixedRates),
+            })}</p>
           )}
           <div className="card" style={{ width: "100%", textAlign: "left" }}>
             {result.items.map((o) => (
@@ -326,7 +350,8 @@ export function SohnBonusRun() {
         schliessenName={t("bonus.later")} onSchliessen={() => nav("/sohn/bonus")}
         zaehler={t("bonus.cardOf", { n: cursor + 1, total: run.cards.length })} anteil={cursor / run.cards.length}
         anweisung={t(form.anweisung)}
-        hinweis={run.runPercent === 0 ? t("bonus.hintNoWorth")
+        // B-862: auch ein leerer Tagesdeckel (0 oder aufgebraucht) zahlt nichts, egal was die Runde wert wäre.
+        hinweis={run.runPercent === 0 || run.coinsLeftToday === 0 ? t("bonus.hintNoWorth")
           // B-657: auch die Karteikarte zahlt – ihr Hinweis bittet trotzdem um eine ehrliche Einschätzung.
           : run.form === "SelfAssess" && run.runPercent === 100 ? t("bonus.hintSelf", { coins: card.coinsPerHit })
           // B-538: die Runde nennt ihren heutigen Wert, nicht den vollen Satz – sonst verspräche der Hinweis zu viel.

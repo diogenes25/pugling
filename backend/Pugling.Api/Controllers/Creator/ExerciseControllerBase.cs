@@ -600,10 +600,10 @@ public abstract class ExerciseControllerBase<TConfig>(PuglingDbContext db, Exerc
         if (exercise is null) return NotFound();
         if (EnsureCanAdminister(exercise) is { } forbidden) return forbidden;
         /*
-         * Verwendete Übungen schützen: der FK PlanPosition→Exercise ist Restrict (sonst 500 statt klarer
-         * Fehler). Die Zählung kommt aus derselben Quelle wie die Verwendungs-Anzeige, und die Meldung nennt
-         * die Verwendungen, die der Aufrufer **nicht sehen kann** – vorher log ein „nirgends" in der Anzeige
-         * gegen ein 409 hier, und der Autor hatte keinen Weg, den Widerspruch aufzulösen (Anmerkung 14).
+         * Protect exercises in use: the FK PlanPosition→Exercise is Restrict (a 500 instead of a clear error
+         * otherwise). The count comes from the same source as the usage display, and the message names the uses
+         * the caller **cannot see** - a display saying "nowhere" next to a 409 here left the author no way to
+         * resolve the contradiction (remark 14).
          */
         var usage = await ExerciseUsageQueries.CountBlockingAsync(db, exerciseId, User.AdultId(), ct);
         if (usage.Any)

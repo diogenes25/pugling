@@ -51,9 +51,12 @@ public record ExtraExercise(int ExerciseId, string Title, string Type, string Un
 /// rate of the run's form; what a hit on a single card pays is <see cref="ExtraCard.CoinsPerHit"/> (B-608).
 /// <paramref name="RunPercent"/> is the share of those rates this run is worth as of its start (B-538). The submit judges
 /// by the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less.
+/// <paramref name="CoinsLeftToday"/> is what today's bonus cap still pays as of the last start or resume (B-862): 0 when
+/// today's cap (the child's own or the server default) is 0 or used up, <c>null</c> without any cap. The submit pays at
+/// most what is left when it is handed in.
 /// </summary>
 public record ExtraRunResponse(int RunId, int ExerciseId, string Title, string Type, ExtraForm Form, int Stage,
-    bool Typed, int CoinsPerHit, IReadOnlyList<ExtraCard> Cards, int RunPercent);
+    bool Typed, int CoinsPerHit, IReadOnlyList<ExtraCard> Cards, int RunPercent, int? CoinsLeftToday = null);
 
 /// <summary>
 /// One card of a bonus run - the same facets a practice card carries, without an image.

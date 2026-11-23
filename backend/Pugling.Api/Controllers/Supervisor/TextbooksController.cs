@@ -102,12 +102,12 @@ public class TextbooksController(PuglingDbContext db) : ControllerBase
         if (dto.SubjectId is int sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "SubjectId does not reference an existing subject.");
         /*
-         * Gegen den Zielzustand prüfen, nicht gegen den Payload: wer nur die Unit nachträgt, muss die schon
-         * gesetzte Reihe nicht mitschicken – die Unit muss aber zu ihr gehören.
+         * Checked against the target state, not the payload: a caller who only adds the unit need not resend the
+         * series already set - but the unit must belong to it.
          *
-         * Beim **Reihenwechsel** ist die gespeicherte Unit hinfällig: sie gehört zur alten Reihe. Sie hier
-         * mitzuprüfen hieße, den Wechsel an einer Unit scheitern zu lassen, die der Aufrufer gerade ersetzt –
-         * bei einer Reihe ohne Units wäre er nie möglich. Sie fällt darum weg, statt zu blockieren.
+         * On a **series change** the stored unit is void: it belongs to the old series. Checking it here would let
+         * the change fail on a unit the caller is replacing - for a series without units it would never be
+         * possible. So it is dropped instead of blocking.
          */
         var seriesId = dto.ClearSeries ? null : dto.SeriesId ?? book.SeriesId;
         var seriesChanged = seriesId != book.SeriesId;

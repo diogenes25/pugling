@@ -668,6 +668,45 @@ public class ExtraTrainingTests(PuglingWebAppFactory factory) : IClassFixture<Pu
             HttpStatusCode.Conflict, "extra_cap_reached");
     }
 
+    // B-862 AK 1: a started run says how many bonus coins are left today, so its hint does not promise coins the cap no
+    // longer pays. Red when the field is missing, reads the server default instead of the child's own cap (0 and 3 would
+    // both show the default 30), or returns the bare cap without today's coins (the 3-minus-2 case would show 3). The
+    // mapping "no cap → null" is not covered: the shared factory always carries a server default.
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(3, 0, 3)]
+    [InlineData(3, 2, 1)]
+    public async Task Runde_Nennt_Die_Heute_Verbleibenden_Muenzen(int cap, int earnedToday, int left)
+    {
+        var s = await SetupAsync();
+        (await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}", new { bonusDailyCoinCap = cap }))
+            .EnsureSuccessStatusCode();
+        if (earnedToday > 0)
+        {
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var now = factory.Clock.GetUtcNow().UtcDateTime;
+            db.ExtraTrainingRuns.Add(new ExtraTrainingRun
+            {
+                ChildId = s.ChildId,
+                ExerciseId = s.VocabId,
+                Day = DateOnly.FromDateTime(now),
+                Pass = 1,
+                Form = ExtraForm.SelfAssess,
+                Stage = (int)TestStage.SelfAssess,
+                StartedAt = now,
+                CompletedAt = now,
+                ItemCount = Words.Length,
+                CoinsAwarded = earnedToday,
+            });
+            db.SaveChanges();
+        }
+
+        var run = await JsonAsync(await s.Child.PostAsync($"{Base(s)}/{s.VocabId}/runs", null));
+
+        Assert.Equal(left, run.GetProperty("coinsLeftToday").GetInt32());
+    }
+
     // B-543 AK 3: an open one-shot run is not resumed at a full cap either. Red if the check sits only before a new run
     // is created.
     [Fact]

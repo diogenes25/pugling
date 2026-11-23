@@ -576,13 +576,12 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             .OnDelete(DeleteBehavior.NoAction);
 
         /*
-         * Der DB-Default gehört ins Modell, nicht nur in eine alte Migration.
+         * The database default belongs in the model, not only in an old migration.
          *
-         * `ExecutePublic` bekam seinen `DEFAULT 1` einst über `AddColumn(defaultValue: true)`. SQLite baut
-         * eine Tabelle bei jeder Spaltenumbenennung neu – und ein Neubau folgt dem **Modell**. Beim Umbau
-         * Father→Adult wäre der Default darum lautlos verschwunden; ein Fremd-`INSERT` ohne die Spalte
-         * scheiterte plötzlich. Hier steht er als Absicht: neue Übungen sind öffentlich zuweisbar, solange
-         * niemand widerspricht.
+         * SQLite rebuilds a table on every column rename, and a rebuild follows the **model**: a default that lived
+         * only in a migration's `AddColumn(defaultValue: true)` would silently vanish, and a foreign `INSERT`
+         * without the column would suddenly fail. Stated here as intent: new exercises are publicly assignable
+         * unless someone objects.
          */
         modelBuilder.Entity<Exercise>().Property(e => e.ExecutePublic).HasDefaultValue(true);
 

@@ -129,12 +129,11 @@ public class PositionTestFlowTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /*
-     * Die Einheit der Schwelle ist auch bei einem Katalog-Check-Verfahren PROZENT – nicht die Anzahl
-     * richtiger Aufgaben. Das stand einmal anders in der Doku (und der Seed setzte danach Trefferzahlen),
-     * war aber nie implementiert: ein TestAttempt entsteht nur hier, und hier wird verglichen.
+     * The threshold's unit is PERCENT also for a catalog check - not the number of right answers. A TestAttempt is
+     * created only here, and here is where it is compared.
      *
-     * Der Test nagelt beide Richtungen fest, weil die falsche Lesart lautlos schadet: als Prozentwert
-     * gelesen macht eine „3" die Pflicht wirkungslos, statt sie zu verschärfen.
+     * The test pins both directions because the wrong reading harms silently: read as a percentage, a "3" makes the
+     * duty toothless instead of sharpening it.
      */
     [Theory]
     [InlineData(3, true)]    // if the number were a hit count, 2 of 4 would be too few - as 3 % it suffices

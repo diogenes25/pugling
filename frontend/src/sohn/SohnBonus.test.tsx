@@ -27,7 +27,7 @@ vi.mock("../lib/api", async (importOriginal) => {
 });
 
 const { ApiError } = await import("../lib/api");
-const { SohnBonus, SohnBonusRun } = await import("./SohnBonus");
+const { BonusEinstieg, SohnBonus, SohnBonusRun } = await import("./SohnBonus");
 
 afterEach(() => sessionStorage.clear());
 
@@ -525,5 +525,100 @@ describe("Bonus-Runde – Fokus nach Aufdecken und am Ergebnis (B-778)", () => {
   it("fokussiert beim Laden der Runde nichts", async () => {
     await starte("SelfAssess", 7783);
     expect(document.activeElement).toBe(document.body);
+  });
+});
+
+/*
+ * B-862 – drei Stellen versprachen Bonus-Münzen auch bei Deckel 0 oder vollem Deckel. Je Stelle ein Fall mit leerem Deckel
+ * und ein Gegenfall mit Münzen übrig, damit eine dauerhaft umgestellte Zeile ebenso fällt.
+ */
+describe("Bonus-Versprechen am leeren Deckel (B-862)", () => {
+  const zeile = (titel: string) => screen.getByText(titel).closest(".bonus-zeile")!.textContent ?? "";
+
+  // AK 3. Rot, wenn die Vokabelzeile am vollen Deckel weiter „3 🪙 je Treffer“ zeigt, oder wenn sie es mit Münzen übrig nicht tut.
+  it("nennt in der Vokabelzeile am vollen Deckel keinen Münzsatz", async () => {
+    await zeige(30, 30);
+    expect(zeile("Tiere")).toContain("heute ohne Münzen – üben darfst du weiter");
+    expect(zeile("Tiere")).not.toContain("🪙");
+  });
+  it("nennt mit Münzen übrig den Satz je Treffer", async () => {
+    await zeige(0, 30);
+    expect(zeile("Tiere")).toContain("🪙");
+    expect(zeile("Tiere")).not.toContain("heute ohne Münzen");
+  });
+
+  // AK 1. Rot, wenn der Hinweis über der Karte nur den Wert der Runde liest (100 %) und nicht, was der Deckel noch zahlt.
+  it.each([
+    [0, "Diese Runde bringt heute keine Münzen mehr – üben lohnt sich trotzdem."],
+    [null, "Jede richtige Antwort bringt 3 🪙 – ausgewertet wird am Ende."],
+  ])("Runden-Hinweis bei %s Münzen übrig", async (coinsLeftToday, hinweis) => {
+    startExtraRun.mockResolvedValue({
+      runId: 862, exerciseId: 8, title: "Tiere", type: "Vocabulary", form: "Typed", stage: 4, typed: true,
+      coinsPerHit: 3, runPercent: 100, coinsLeftToday, cards: [{ itemIndex: 0, coinsPerHit: 3, prompt: "die Insel", answerLength: 6 }],
+    } as unknown as ExtraRunResponse);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/8"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("die Insel");
+    expect(screen.getByText(hinweis)).toBeTruthy();
+  });
+
+  // AK 2. Rot, wenn der offene Startseiten-Teaser bei Deckel 0 oder vollem Deckel „Extra-Münzen“ verspricht, oder wenn er
+  // es mit Münzen übrig nicht mehr tut.
+  it.each([
+    [0, 0, "Bonus-Münzen gibt es gerade keine – Vokabeln üben darfst du weiter. Die anderen Übungen warten, bis es wieder Münzen gibt."],
+    [30, 30, "Tagesdeckel erreicht – Vokabeln üben darfst du weiter, ohne Münzen. Die anderen Übungen warten bis morgen."],
+    [0, 30, /^Extra-Münzen für extra Übung/],
+  ])("Startseiten-Teaser bei %s von %s Münzen", async (coinsToday, dailyCoinCap, satz) => {
+    extraTraining.mockResolvedValue({
+      unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday, dailyCoinCap, exercises: [],
+    } as unknown as ExtraTrainingOverview);
+    render(<MemoryRouter><BonusEinstieg offen /></MemoryRouter>);
+    // Erst nach der Antwort: vorher steht bewusst kein Satz da, der Gegenfall prüfte sonst nur den Ladezustand.
+    await act(async () => {});
+    expect(extraTraining).toHaveBeenCalledWith(7);
+    expect(screen.getByText(satz)).toBeTruthy();
+  });
+
+  // Review B-862: bis die Übersicht da ist, verspricht der Teaser nichts – sonst blitzte „Extra-Münzen“ auch bei Deckel 0
+  // auf. Rot, wenn der Ladezustand auf `teaserOpen` zurückfällt.
+  it("verspricht im Ladezustand keine Münzen", async () => {
+    extraTraining.mockReturnValue(new Promise(() => {}));
+    render(<MemoryRouter><BonusEinstieg offen /></MemoryRouter>);
+    await act(async () => {});
+    expect(screen.queryByText(/Extra-Münzen/)).toBeNull();
+    expect(screen.getByRole("link", { name: /Bonus-Training/ })).toBeTruthy();
+  });
+
+  // Review B-862: das Ergebnisblatt kündigt die nächste Form an – am vollen Deckel ohne Münzsatz. Rot, wenn die Vorschau
+  // den Satz je Treffer auch dann nennt, oder ihn mit Münzen übrig nicht mehr nennt.
+  it.each([
+    [30, "Nächstes Mal wird es schwerer: Tippen"],
+    [null, "Nächstes Mal wird es schwerer: Tippen · 3 🪙 je Treffer"],
+  ])("Vorschau der nächsten Runde bei Deckel %s", async (dailyCoinCap, satz) => {
+    startExtraRun.mockResolvedValue({
+      runId: 8621, exerciseId: 8, title: "Wörter", type: "Vocabulary", form: "SelfAssess", stage: 2, typed: false,
+      coinsPerHit: 1, runPercent: 100, cards: [{ itemIndex: 0, coinsPerHit: 1, prompt: "la maison", reveal: "das Haus" }],
+    } as unknown as ExtraRunResponse);
+    submitExtraRun.mockResolvedValue({
+      runId: 8621, form: "SelfAssess", total: 1, correct: 1, coinsAwarded: 0, capReached: true, coinsToday: 30, dailyCoinCap,
+      coinsPerHit: 1, runPercent: 100, coinsEarned: 1, coinsForHits: 1,
+      items: [{ itemIndex: 0, prompt: "la maison", expected: "das Haus", givenAnswer: "das Haus", wasCorrect: true, gapIndex: null }],
+    } as ExtraRunResult);
+    extraTraining.mockResolvedValue({
+      unlocked: true, lockReason: null, outstanding: [], rewardCadence: "Daily", coinsToday: 30, dailyCoinCap,
+      exercises: [uebung({ exerciseId: 8, title: "Wörter", nextForm: "Typed", coinsPerHit: 3, completedRuns: 1 })],
+    } as ExtraTrainingOverview);
+    render(
+      <MemoryRouter initialEntries={["/sohn/bonus/8"]}>
+        <Routes><Route path="/sohn/bonus/:exerciseId" element={<SohnBonusRun />} /></Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText("la maison");
+    fireEvent.click(screen.getByRole("button", { name: /Aufdecken/ }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Gewusst" })); });
+    expect(await screen.findByText(satz)).toBeTruthy();
   });
 });

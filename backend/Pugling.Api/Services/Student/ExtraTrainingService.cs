@@ -129,7 +129,10 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             }
         }
 
-        return new Outcome<ExtraRunResponse>(BuildRun(run, entry.Exercise, entry.Type, entry.Items, entry.Row.NextRunPercent));
+        // B-862: the hint must not promise coins the cap no longer pays; "no cap" travels as null, not as int.MaxValue.
+        var left = await CoinsLeftTodayAsync(childId, today, ct);
+        var response = BuildRun(run, entry.Exercise, entry.Type, entry.Items, entry.Row.NextRunPercent);
+        return new Outcome<ExtraRunResponse>(response with { CoinsLeftToday = left == int.MaxValue ? null : left });
     }
 
     /// <summary>

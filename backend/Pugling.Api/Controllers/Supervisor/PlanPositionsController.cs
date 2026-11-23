@@ -64,10 +64,9 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             .FirstOrDefaultAsync(p => p.Id == positionId && p.StudyPlanId == planId, ct);
 
     /*
-     * Die Ziel-Schwelle ist ein PROZENTWERT (siehe PlanPosition.GoalThreshold). Ohne diese Prüfung ist eine
-     * Verwechslung mit einer Trefferzahl lautlos und wirkt genau falsch: „3" nimmt der Pflicht die Zähne,
-     * statt sie zu verschärfen (jeder Versuch über 3 % gilt als bestanden). Genau das stand einmal im Seed.
-     * `null` bleibt der Weg, „Standard" zu sagen – 0 wäre eine zweite Schreibweise dafür.
+     * The goal threshold is a PERCENTAGE (see PlanPosition.GoalThreshold). Without this check, mistaking it for a
+     * hit count is silent and works exactly backwards: "3" takes the teeth out of the duty instead of sharpening it
+     * (every attempt above 3 % passes). `null` stays the way to say "default" - 0 would be a second spelling of it.
      */
     private static string? ThresholdProblem(int? goalThreshold) =>
         goalThreshold is null or (>= 1 and <= 100)

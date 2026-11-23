@@ -40954,9 +40954,18 @@
               "string"
             ],
             "format": "int32"
+          },
+          "coinsLeftToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning\n(string? ExtraCard.Reveal) is shown only on the self-assessed form. CoinsPerHit is the full\nrate of the run\u0027s form; what a hit on a single card pays is int ExtraCard.CoinsPerHit (B-608).\nRunPercent is the share of those rates this run is worth as of its start (B-538). The submit judges\nby the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less."
+        "description": "A started bonus run with its cards. The cards follow the stage rules of the practice cards: the meaning\n(string? ExtraCard.Reveal) is shown only on the self-assessed form. CoinsPerHit is the full\nrate of the run\u0027s form; what a hit on a single card pays is int ExtraCard.CoinsPerHit (B-608).\nRunPercent is the share of those rates this run is worth as of its start (B-538). The submit judges\nby the runs completed on the day it is handed in, so a run handed in after midnight can be worth more, never less.\nCoinsLeftToday is what today\u0027s bonus cap still pays as of the last start or resume (B-862): 0 when\ntoday\u0027s cap (the child\u0027s own or the server default) is 0 or used up, \u0060null\u0060 without any cap. The submit pays at\nmost what is left when it is handed in."
       },
       "ExtraRunResult": {
         "required": [

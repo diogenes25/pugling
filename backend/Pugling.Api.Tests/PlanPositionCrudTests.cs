@@ -229,9 +229,8 @@ public class PlanPositionCrudTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /*
-     * `goalThreshold` ist eine Prozent-Bestehensgrenze. Wer sie mit einer Trefferzahl verwechselt, soll ein
-     * 400 sehen statt einer Pflicht, die lautlos jeden Versuch durchwinkt – 0 und 120 sind beides keine
-     * Prozentangaben, und „Standard" sagt man mit dem Auslassen des Feldes.
+     * `goalThreshold` is a pass percentage. Whoever mistakes it for a hit count gets a 400 instead of a duty that
+     * silently waves every attempt through - 0 and 120 are no percentages, and "default" is said by omitting the field.
      */
     [Theory]
     [InlineData(0)]
