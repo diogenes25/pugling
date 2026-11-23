@@ -100,3 +100,73 @@ relevant).
 B-849 E6 („Vorstufen-Test zählt nicht“, vom Nutzer bestätigt) widersprechen sich; gebaut ist E6. Dazu: Setzt ein Aufstieg
 eine auf der Vorstufe beendete Nacharbeit (`CompletedOn`) zurück – also wird „bis erledigt“ auf der neuen Stufe wieder
 Pflicht mit Malus? Beides in B-702 notiert. B-702 ist bis dahin nicht baubar.
+
+## Runde 2 — Auswahl nach Sprint 122
+
+Kein Halt-Grund: Fehlerzähler 3, die Retro hat nur vorgeschlagen. Im Faden baubar bleiben: B-881 (Defekt aus der
+Nachschau, autonom grillbar), B-841 (Oberfläche, `geschaetzt`). B-702 ist gesperrt, bis der Widerspruch zu B-849 E6
+entschieden ist. B-881 zuerst: dieselbe Frage wie B-880, solange das Prädikat frisch ist.
+
+| Sprint | Stories | Thema |
+| --- | --- | --- |
+| 123 | B-881 | Überholte Übungsrunde nach Stufenwechsel |
+
+**Refinement:** B-881 am Code belegt (fünf Spielpfade ohne Prüfung, `InPlayTodayAsync` nur für heute, keine
+Fortsetzung alter Runden in der Sohn-App → P3), autonom gegrillt (zwei Entscheidungen: Stempel wie beim Versuch über ein
+gemeinsames Prädikat; `End`/`Get` bleiben offen), geschätzt S.
+
+## Sprint 123 — Ziel & Umfang
+
+**Sprint-Ziel:** Eine Übungsrunde, die eine Stufenänderung des Vaters überholt hat, spielt und wertet keine Karte mehr –
+der Lernstand der neuen Stufe bleibt unberührt.
+**Umfang:** B-881 (S, backend, Migration).
+**Entwickler-Brief:** Quelle der Wahrheit ist `PositionPlayService.IsOvertaken(pos, stamped, day)` – eine Frage für
+Runde und Versuch (B-880 wird darauf umgestellt). Stempel `PracticeSession.BuildLevel` im `Start`; Prüfung in `Cards`,
+`ReshuffleImage`, `Next`, `Easier`, `Review`. Migration `PracticeSessionBuildLevel` hinter `BuildLevelPromotion`.
+
+## Iteration 123 — umgesetzt
+
+**Backend:** `PracticeSession.BuildLevel` (Stempel im `Start`), `PositionPlayService.IsOvertaken` als eine Frage für Runde
+und Versuch (B-880 umgestellt), Prüfung in `Cards`, `ReshuffleImage`, `Next`, `Easier`, `Review`; die Nacharbeit setzt
+keine überholte Runde fort. Migration `PracticeSessionBuildLevel`. Kein Vertragsbruch, kein Frontend.
+
+**Verifikation:** Suite 2173/2173 (Release); Mutanten-Probe nach der letzten Änderung 10/10 rot am benannten Test (Tabelle
+in B-881); E2E 6 passed (`nacharbeit`, `nacharbeit-bis-erledigt`, `ueben-ohne-leitner`, `uebung-abbruch`,
+`aufbau-weg-editor`, `test-durchgefallen-ueben`; Ausweichports); Migrationen `BuildLevelPromotion` +
+`PracticeSessionBuildLevel` an einer Kopie der echten DB: 226 Runden, 118 Versuche, alle ohne Stempel.
+
+**Funde (Fehlerzähler 2):** eigener Fund der Probe – die erste Zusicherung „404“ auf `ReshuffleImage` war schon ohne
+Prüfung erfüllt (R2 grün), jetzt verlangt der Test den Text der überholten Runde; Review 🟡 – die Fortsetzung der offenen
+Nacharbeitsrunde gab eine überholte Runde zurück und sperrte das Kind für den Tag aus, behoben mit Test. 🟢 ohne Zählung:
+Füllung der Migration für Runden am Tag eines wartenden Aufstiegs als hingenommen kommentiert.
+
+## Runde 123 — Abnahme
+
+- **Sohn — abgenommen (maschinell):** „Hat Papa meine Stufe umgestellt, spielt die alte Runde nicht weiter – ich fange neu
+  an und lande auf der neuen Stufe, auch in der Nacharbeit.“ HTTP-Pipeline mit Kind-Login.
+- **Vater — Regressionszeuge mit Auslöserrolle:** setzt die Stufe über die API; sein Pfad ist unverändert.
+- **Creator — Regressionszeuge:** E2E `aufbau-weg-editor` grün.
+- **Offen für einen Menschen:** Migrationen `BuildLevelPromotion` und `PracticeSessionBuildLevel` beim nächsten
+  Heimnetz-Start (zusammen an einer Kopie geprobt).
+
+## Retrospektive Sprint 123
+
+**Nachschau:** B-849 und B-880 (Sprint 122), Prüfpunkte im Verlauf je Story: jeder Leser von `TestAttempt.Passed` per grep
+(Ziel gefiltert, Aufstieg mit Ziel-Zulassung, `MetricsService` zählt Vorstufen-Tests für Missionen – nicht Pflichtziel, kein
+Befund); `PromotedBuildLevel` bei fehlender Vorstufe nachgerechnet (kein Aufstieg, kein Wurf); alle Aktionen mit
+Versuchs-Id im `PositionTestsController` (drei spielende prüfen, `Get` darf zeigen). Kein Befund, `nachgeschaut` gesetzt.
+Index: Nachgeschaut 556 von 588.
+
+**Was die eigenen Tore durchgelassen haben:** (1) Eine Zusicherung, die der Ausgangszustand schon erfüllt – genau die Regel
+aus der Root-`CLAUDE.md`; diesmal hat die Probe sie gefunden, weil je Pfad eine eigene Mutante lief (bei einer Mutante für
+alle fünf wäre sie durchgerutscht). (2) Ein Pfad, der das abgewiesene Objekt **wieder herausgibt**, statt es zu spielen:
+die Fortsetzung im `Start`. Ich hatte alle Pfade gesucht, die Karten einer Runde lesen – nicht die, die eine Runde
+zurückgeben.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (DD) In `pm-loop` Step 5 zur Mutanten-Regel: *Eine Prüfung, die an mehreren
+Pfaden steht, bekommt je Pfad eine Mutante* (eine Sammel-Mutante beweist nur, dass irgendein Pfad trägt). Und zu Step 4:
+*Wer ein Objekt neu abweist, sucht auch jeden Pfad, der es wieder herausgibt (fortsetzen, „offene Runde“, Liste),
+nicht nur die, die es benutzen.*
+
+**Bewusst ungedeckt:** `Heartbeat` und `Shown` auf einer überholten Runde (zählen Sekunden bzw. setzen einen Zeitstempel,
+geben nichts heraus – vom Reviewer als unschädlich bestätigt).

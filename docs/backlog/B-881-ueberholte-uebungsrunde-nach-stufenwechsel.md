@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/api, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/api, bereich/training, rolle/student]
 aliases: [Überholte Übungsrunde, Runde nach Stufenwechsel]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Defekt
 groesse: S
@@ -94,3 +94,29 @@ Autonom gegrillt (Defekt, Freigabe 1, Nachtlauf E).
   `Nacharbeit_Setzt_Keine_Ueberholte_Runde_Fort`. 🟢 ohne Zählung: die Füllung der Migration stempelt eine Runde vom Tag
   eines wartenden Aufstiegs mit der neuen Stufe – im Migrations-Kommentar als hingenommen benannt (nur DBs, die
   `BuildLevelPromotion` schon allein hatten; eine neue Runde lässt sich starten). Fehlerzähler Sprint 123: 2.
+- **2026-11-23** — AK → Test (`AufbauStufeAufstiegTests`), Mutante → rot (gemessen nach der letzten Änderung, 10/10):
+  AK 1+2 → `Ueberholte_Runde_Wird_Nicht_Mehr_Gespielt` (R1–R5 je Pfad, R9 Prädikat); AK 3 →
+  `Runde_Ueber_Mitternacht_Bleibt_Auf_Ihrer_Stufe` (R6 kein Stempel, R7 Prüfung mit „heute“); AK 4 →
+  `AufbauStufeAufstiegMigrationTests.Runde_Bekommt_Die_Stufe_Ihrer_Position` (R8); Nacharbeit →
+  `Nacharbeit_Setzt_Keine_Ueberholte_Runde_Fort` (R10). Suite 2173/2173 (Release); E2E `nacharbeit`,
+  `nacharbeit-bis-erledigt`, `ueben-ohne-leitner`, `uebung-abbruch`, `aufbau-weg-editor`, `test-durchgefallen-ueben`
+  6 passed (Ausweichports); Migration an einer Kopie der echten DB: 226 Runden, 118 Versuche, alle ohne Stempel.
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| R1 Cards ohne Pruefung | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:403 | red | red |  |
+| R2 ReshuffleImage ohne Pruefung | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:442 | red | red |  |
+| R3 Next ohne Pruefung | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:494 | red | red |  |
+| R4 Easier ohne Pruefung | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:534 | red | red |  |
+| R5 Review ohne Pruefung | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:585 | red | red |  |
+| R6 kein Stempel | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:119 | red | red |  |
+| R7 Pruefung mit heute | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:494 | red | red |  |
+| R8 Migration ohne Fuellung | backend/Pugling.Api/Data/Migrations/20261123165222_PracticeSessionBuildLevel.cs:28 | red | red |  |
+| R9 Test-Pruefung immer frisch | backend/Pugling.Api/Services/Shared/PositionPlayService.cs:86 | red | red |  |
+| R10 Nacharbeit setzt ueberholte Runde fort | backend/Pugling.Api/Controllers/Student/PositionPracticeController.cs:154 | red | red |  |
+
+Grundlinie nach dem Zurückspielen: green.
+
+- **2026-11-23** — abgenommen (Nachtlauf E, Sprint 123), Commit `e5c2430c`. Rollengang maschinell: Sohn über die
+  HTTP-Pipeline (überholte Runde, Nacharbeit startet neu), Vater als Auslöser über die Supervisor-API (Stufe setzen),
+  Creator Regressionszeuge (E2E). Mensch offen: Migration `PracticeSessionBuildLevel` beim nächsten Heimnetz-Start.

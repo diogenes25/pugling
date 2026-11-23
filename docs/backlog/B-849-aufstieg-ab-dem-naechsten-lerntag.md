@@ -12,6 +12,7 @@ quelle: B-701
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-23"
 wartet_auf: ""
 ---
 
@@ -167,3 +168,8 @@ Grundlinie nach dem Zurückspielen: green.
   HTTP-Pipeline mit Kind-Login (`AufbauStufeAufstiegTests`, Berlin-Host mit eingefrorener Uhr über zwei Lerntage), Vater
   über die Supervisor-API (Bericht, Stufe setzen), Creator als Regressionszeuge (E2E `aufbau-weg-editor` grün).
   Mensch offen: Migration `BuildLevelPromotion` beim nächsten Heimnetz-Start (an einer Kopie geprobt).
+- **2026-11-23** — Nachschau (Nachtlauf E, Sprint 123): Prüfpunkte (a) jeder Leser von `TestAttempt.Passed` per grep
+  (`Passed &&`, `t.Passed`): `IsGoalMetAsync` (gefiltert), der Aufstieg (Zulassung wie das Ziel) und
+  `MetricsService` (Mission/Auszeichnung „Tests bestanden“) – letzterer zählt auch Vorstufen-Tests; E6 spricht vom
+  Pflichtziel, nicht von Missionen → kein Befund; (b) `PromotedBuildLevel` gegen eine fehlende Vorstufe nachgerechnet:
+  `ExaminedBuildLevel` stempelt dann 3, `PromotedBuildLevel(pos, 3)` = null → kein Aufstieg, kein Wurf. Sauber.

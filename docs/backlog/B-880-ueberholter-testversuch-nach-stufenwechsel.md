@@ -12,6 +12,7 @@ quelle: "Review von B-849 im Nachtlauf 2026-11-23-e (docs/pm-sitzung-2026-11-23-
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-848]
+nachgeschaut: "2026-11-23"
 wartet_auf: ""
 ---
 
@@ -42,3 +43,6 @@ heute fort), darum P2.
   HTTP-Pipeline mit Kind-Login (`AufbauStufeAufstiegTests`, Berlin-Host mit eingefrorener Uhr über zwei Lerntage), Vater
   über die Supervisor-API (Bericht, Stufe setzen), Creator als Regressionszeuge (E2E `aufbau-weg-editor` grün).
   Mensch offen: Migration `BuildLevelPromotion` beim nächsten Heimnetz-Start (an einer Kopie geprobt).
+- **2026-11-23** — Nachschau (Nachtlauf E, Sprint 123): Prüfpunkt – alle Aktionen des `PositionTestsController`, die
+  eine Versuchs-Id nehmen (`Get`, `Next`, `Answer`, `Submit`): die drei spielenden prüfen (seit B-881 über
+  `IsOvertaken`), `Get` gibt nur Ergebnisse heraus und darf überholte Versuche zeigen → kein Befund.
