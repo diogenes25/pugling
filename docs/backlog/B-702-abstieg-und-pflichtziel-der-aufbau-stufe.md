@@ -12,7 +12,7 @@ quelle: B-536
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Entscheidung: Nacharbeit-CompletedOn nach Aufstieg"
+wartet_auf: ""
 ---
 
 # B-702 · Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe
@@ -173,3 +173,6 @@ Schema mit Bestandsdaten berührt werden.
   Pflichtziel, keine halbe Zahlung; B-849 E6 gilt wie gebaut. AK 6 neu als Gegenprobe, AK 7 und 8 entfallen, Größe S.
   Hinweis (1) oben erledigt; offen bleibt (2), ob ein Aufstieg die Nacharbeit-`CompletedOn` zurücksetzt (`wartet_auf`).
   Die Sperre aus B-848 E3 bleibt; (3) wird erst relevant, wenn sie fällt.
+- **2026-11-23** — Hinweis (2) vom Nutzer entschieden („Nein, bleibt erledigt“): Ein Aufstieg setzt eine auf der
+  Vorstufe beendete Nacharbeit (`CompletedOn`) nicht zurück; kein neuer Malus auf der neuen Stufe. Nichts zu bauen,
+  der Code verhält sich so. `wartet_auf` geleert – die Story ist baubar.
