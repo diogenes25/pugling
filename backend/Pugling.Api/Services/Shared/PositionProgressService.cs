@@ -219,17 +219,23 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// Keeps the duty phase of a position the father frees (B-659, closing rule): called on the switch from Daily or Weekly
-    /// to <see cref="GoalCadence.None"/>, BEFORE the cadence is overwritten, because "met?" is judged by the old cadence.
-    /// A met running period counts to its end (a weekly goal met on Wednesday keeps Thursday to Sunday), an open one does not
-    /// count at all - the duty then ends the day before the period begins. Only one earlier phase is kept; the switch back to
-    /// a duty clears it (decision 3).
+    /// Keeps the duty phase of a position the father frees (B-659, closing rule): called on the switch from Daily, Weekly or
+    /// a running remediation "daily, until done" (B-820) to <see cref="GoalCadence.None"/>, BEFORE the cadence is
+    /// overwritten, because "met?" is judged by the old cadence. A met running period counts to its end (a weekly goal met
+    /// on Wednesday keeps Thursday to Sunday), an open one does not count at all - the duty then ends the day before the
+    /// period begins. A remediation's period is one day; its end after the last task stays with <c>CompletedOn</c>, which
+    /// <see cref="HasDutyOn"/> reads beside the span. Only one earlier phase is kept; the switch back to a duty clears it
+    /// (decision 3).
     /// </summary>
     public async Task CloseDutyAsync(PlanPosition pos, StudyPlan plan, DateOnly today, CancellationToken ct)
     {
-        if (pos.Cadence is not (GoalCadence.Daily or GoalCadence.Weekly)) return;
+        if (pos.Cadence is not (GoalCadence.Daily or GoalCadence.Weekly or GoalCadence.UntilDone)) return;
         var (from, to) = PeriodRange(pos.Cadence, today);
         pos.DutyUntil = await IsGoalMetAsync(pos, plan, today, ct) ? to : from.AddDays(-1);
+        // An ended remediation counts as met from its end on; the span stops there, or the day view - which reads the
+        // span, not CompletedOn - would bring the ended duty back as a met one and unlock the chest without play.
+        if (pos.Cadence == GoalCadence.UntilDone && pos.CompletedOn is { } end && end < pos.DutyUntil)
+            pos.DutyUntil = end;
         pos.CadenceUntil = pos.Cadence;
     }
 

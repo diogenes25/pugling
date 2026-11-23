@@ -345,8 +345,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
 
         // B-659: freeing a duty keeps the days the child met it (the old cadence up to DutyUntil); a duty again clears that
         // span, or "after the span, no duty" would deny the new one. Before any setting is written: "met?" is judged by the
-        // settings the period ran under. CloseDutyAsync acts only on the switch from Daily or Weekly: the form sends cadence
-        // with every save, and saving a free position again must not move the span.
+        // settings the period ran under. CloseDutyAsync acts only on the switch from a duty (Daily, Weekly, UntilDone): the
+        // form sends cadence with every save, and saving a free position again must not move the span.
         if (dto.Cadence == GoalCadence.None)
         {
             var plan = await db.StudyPlans.AsNoTracking().FirstAsync(p => p.Id == planId, ct);

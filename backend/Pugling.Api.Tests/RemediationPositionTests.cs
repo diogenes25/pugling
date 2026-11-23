@@ -677,6 +677,93 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
     }
 
     /// <summary>
+    /// B-820: a running remediation "daily, until done" that the father frees keeps the day the child met it, like every
+    /// other duty since B-659 - the round played today stays in the streak. A day without a played round is an open period
+    /// and does not count: the duty then ends yesterday. Red when the closing rule skips <c>UntilDone</c> (no span is
+    /// written, today reads cadence None and the streak falls to 0), or when it always writes today.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Laufende_Nacharbeit_Auf_Kuer_Behaelt_Ihren_Erfuellten_Tag(bool playedToday)
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Kuer-Nacharbeit"), pin = "4820" }));
+        var exerciseId = await NacharbeitAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.TranslationWordBank,
+            childId: childId, useLeitner: false);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        (await father.PatchAsJsonAsync(url, new { remediation = true, cadence = "UntilDone" })).EnsureSuccessStatusCode();
+        if (playedToday)
+            await WithServiceAsync(async (db, _) =>
+            {
+                // One round through all three tasks, as RemediationDayMetAsync counts it - with no task done, so the
+                // remediation keeps running.
+                db.PracticeSessions.Add(new PracticeSession
+                {
+                    StudyPlanId = planId,
+                    PlanPositionId = positionId,
+                    Day = Today(),
+                    Mode = PlayMode.Lern,
+                    Order = [0, 1, 2],
+                    Cursor = 3,
+                });
+                return await db.SaveChangesAsync();
+            });
+        Task<int> StreakAsync() => WithServiceAsync((_, progress) =>
+            progress.ChildStreakAsync(childId, Today(), 10, CancellationToken.None));
+        Assert.Equal(playedToday ? 1 : 0, await StreakAsync());
+
+        (await father.PatchAsJsonAsync(url, new { cadence = "None" })).EnsureSuccessStatusCode();
+
+        // The streak carries the played case; in the unplayed one it is 0 either way (context, not evidence) - that case is
+        // carried by DutyUntil.
+        Assert.Equal(playedToday ? 1 : 0, await StreakAsync());
+        var position = await WithServiceAsync((db, _) => db.PlanPositions.AsNoTracking().SingleAsync(p => p.Id == positionId));
+        Assert.Null(position.CompletedOn);
+        Assert.Equal(playedToday ? Today() : Today().AddDays(-1), position.DutyUntil);
+        Assert.Equal(GoalCadence.UntilDone, position.CadenceUntil);
+    }
+
+    /// <summary>
+    /// B-820, review finding: a remediation that already ended two days ago and is freed today keeps its span up to its end,
+    /// not up to today - "met?" answers yes for every day from the end on, and a span reaching today would bring the ended
+    /// duty back into today's day view as a met duty, unlocking chest and bonus training without play. Red when the span is
+    /// not clamped to <see cref="PlanPosition.CompletedOn"/> (DutyUntil = today, the day counts one met goal).
+    /// </summary>
+    [Fact]
+    public async Task Beendete_Nacharbeit_Auf_Kuer_Endet_Am_Tag_Ihres_Endes()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
+            new { name = TestApi.UniqueName("Kuer-Beendet"), pin = "4821" }));
+        var exerciseId = await NacharbeitAsync(father);
+        var (planId, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, (int)ClozeStage.TranslationWordBank,
+            childId: childId, useLeitner: false);
+        var url = $"/api/v1/supervisor/study-plans/{planId}/positions/{positionId}";
+        (await father.PatchAsJsonAsync(url, new { remediation = true, cadence = "UntilDone" })).EnsureSuccessStatusCode();
+        var end = Today().AddDays(-2);
+        await WithServiceAsync(async (db, _) =>
+        {
+            db.StudyPlans.Single(p => p.Id == planId).StartDate = Today().AddDays(-4);
+            var pos = db.PlanPositions.Single(p => p.Id == positionId);
+            pos.CreatedAt = Today().AddDays(-4).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            pos.DutySince = Today().AddDays(-4);
+            pos.CompletedOn = end;
+            return await db.SaveChangesAsync();
+        });
+
+        (await father.PatchAsJsonAsync(url, new { cadence = "None" })).EnsureSuccessStatusCode();
+
+        var position = await WithServiceAsync((db, _) => db.PlanPositions.AsNoTracking().SingleAsync(p => p.Id == positionId));
+        Assert.Equal(end, position.DutyUntil);
+        var day = await WithServiceAsync((_, progress) => progress.ComputeChildDayAsync(childId, Today(), CancellationToken.None));
+        Assert.Equal(0, day.GoalsMet);
+        Assert.False(day.RewardsUnlocked);
+    }
+
+    /// <summary>
     /// An ended remediation is no duty any more, so it cannot carry the streak: a child whose only duty it was has no
     /// complete day after the end. Red if the duty state counts the ended position as a met duty - the streak would then
     /// grow every day without playing. Own child, so no other plan of the fixture decides the day.
