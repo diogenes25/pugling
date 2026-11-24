@@ -295,6 +295,8 @@ export type MasteryRollup = S["MasteryRollup"];
 
 /** `active` = enthält mindestens eine über einen aktiven Plan zugewiesene Übung (sonst nur Historie). */
 export type SubjectProgress = S["SubjectProgressResponse"];
+/** Die Notenstufe je Kind und Vokabel-Fach (B-742). */
+export type SubjectLevel = S["SubjectLevelResponse"];
 
 export type SeriesUnitProgress = S["SeriesUnitProgressResponse"];
 

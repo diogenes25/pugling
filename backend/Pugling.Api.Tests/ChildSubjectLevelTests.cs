@@ -49,11 +49,13 @@ public class ChildSubjectLevelTests(PuglingWebAppFactory factory) : IClassFixtur
             }));
     }
 
-    private int SeedPlan(bool active, params int[] exerciseIds)
+    private int SeedPlan(bool active, params int[] exerciseIds) => SeedPlanIn(null, active, exerciseIds);
+
+    private int SeedPlanIn(int? subjectId, bool active, params int[] exerciseIds)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        var plan = new StudyPlan { ChildId = 1, Title = "Notenstufe", StartDate = Day0, EndDate = Day0.AddDays(60), Active = active };
+        var plan = new StudyPlan { ChildId = 1, SubjectId = subjectId, Title = "Notenstufe", StartDate = Day0, EndDate = Day0.AddDays(60), Active = active };
         var order = 0;
         foreach (var id in exerciseIds)
             plan.Positions.Add(new PlanPosition { ExerciseId = id, Order = order++, Stage = (int)TestStage.FreeText, Cadence = GoalCadence.Daily, UseLeitner = true });
@@ -217,6 +219,24 @@ public class ChildSubjectLevelTests(PuglingWebAppFactory factory) : IClassFixtur
         await EvaluateAsync(Day0);
 
         Assert.Equal(6, LevelOf(subjectId)!.Level);
+    }
+
+    // The level hangs on the subject of the active plan - the subject the child's day view files the card under - and
+    // on the series' subject only for a plan without one. Red if the measure grouped by the series' subject: then the
+    // level sat on a subject without a card and the card stayed empty (review finding, Sprint 127).
+    [Fact]
+    public async Task Stufe_haengt_am_Fach_des_Plans()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var planSubject = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/creator/subjects", new { name = TestApi.UniqueName("StufePlanfach") }));
+        var (seriesSubject, ex) = await VocabSubjectAsync(father, "StufeReihenfach", 10);
+        SeedPlanIn(planSubject, true, ex);
+        SetBoxes(ex, 10, ItemProgress.MaxBox);
+
+        await EvaluateAsync(Day0);
+
+        Assert.Equal(1, LevelOf(planSubject)!.Level);
+        Assert.Null(LevelOf(seriesSubject));
     }
 
     // AK 9: a level change books nothing. Red if a ChildPointsEntry appeared with the change.

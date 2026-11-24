@@ -12,8 +12,9 @@ namespace Pugling.Api.Services.Student;
 /// the one grading key (<see cref="GradeKey"/>).
 /// <para>
 /// <b>Once per learning day, lazily.</b> There is no scheduler; the evaluation runs on the first access of the day
-/// (child login, reading the levels). A child that does not show up for days is not re-evaluated - deliberately: no
-/// lowering without learning. Once a daily planner exists (B-644), the call moves there.
+/// (child login, the child reading its levels, and - B-742 decision 3 - the supervisor reading them). So a level can
+/// sink while the child stays away, if its material grew or its words fell back; without any read nothing moves.
+/// Once a daily planner exists (B-644), the call moves there.
 /// </para>
 /// <para>
 /// A rise applies at once and without limit; a lowering through the learning state moves at most one step and at most
@@ -33,10 +34,15 @@ public class SubjectLevelService(PuglingDbContext db, ChildLearnProgressService 
     /// Evaluates every measured subject of the child for <paramref name="day"/>, creating missing rows. Idempotent per
     /// day: a row already evaluated on that day stays as it is.
     /// </summary>
-    public async Task EvaluateAsync(int childId, DateOnly day, CancellationToken ct)
+    public async Task EvaluateAsync(int childId, DateOnly day, CancellationToken ct) =>
+        await EvaluateAndMeasureAsync(childId, day, ct);
+
+    // Evaluates and hands back the measures it used, so a read shows the levels and the words to the next level from
+    // one and the same snapshot instead of computing the rollup twice.
+    private async Task<Dictionary<int, (int Mastered, int Total)>> EvaluateAndMeasureAsync(int childId, DateOnly day, CancellationToken ct)
     {
         var measures = await progress.ActiveSubjectMeasuresAsync(childId, ct);
-        if (measures.Count == 0) return;
+        if (measures.Count == 0) return measures;
 
         var rows = await db.ChildSubjectLevels.Where(l => l.ChildId == childId).ToDictionaryAsync(l => l.SubjectId, ct);
         var changed = false;
@@ -61,7 +67,7 @@ public class SubjectLevelService(PuglingDbContext db, ChildLearnProgressService 
                 changed = true;
             }
         }
-        if (!changed) return;
+        if (!changed) return measures;
 
         try
         {
@@ -69,12 +75,45 @@ public class SubjectLevelService(PuglingDbContext db, ChildLearnProgressService 
         }
         catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
         {
-            // Two first accesses of the same day raced to create the row; the other one won with the same data and the
-            // same day, so its row is this one's result. Detach ours so a later SaveChanges of the request does not
-            // trip over it again.
+            // Two first accesses of the same day raced to create the row and the other one won - from nearly the same
+            // data (an answer committed in between may differ), which the next day's evaluation evens out anyway.
+            // Detach ours so a later SaveChanges of the request does not trip over it again.
             foreach (var entry in db.ChangeTracker.Entries<ChildSubjectLevel>().ToList())
                 entry.State = EntityState.Detached;
         }
+        return measures;
+    }
+
+    /// <summary>
+    /// Evaluates the day (if not done yet) and returns the child's levels, one per measured subject, sorted by subject
+    /// name. A stored level whose subject has no measure any more (plan deactivated) is kept for its best value but not
+    /// listed - without material there is no goal to show. <see cref="SubjectLevelResponse.WordsToNextLevel"/> is counted
+    /// live from today's data against the bound of the next better grade (<see cref="GradeKey.MinPartForGrade"/>), so it
+    /// drops with every mastered word while the level itself waits for the next day's evaluation.
+    /// </summary>
+    public async Task<List<SubjectLevelResponse>> ReadAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var measures = await EvaluateAndMeasureAsync(childId, day, ct);
+        if (measures.Count == 0) return [];
+        var subjectIds = measures.Keys.ToList();
+        var rows = await db.ChildSubjectLevels.AsNoTracking()
+            .Where(l => l.ChildId == childId && subjectIds.Contains(l.SubjectId))
+            .ToListAsync(ct);
+        var names = await db.Subjects.AsNoTracking().Where(s => subjectIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Name, ct);
+
+        var thresholds = grading.Value.Thresholds;
+        return rows
+            .Select(r =>
+            {
+                var (mastered, total) = measures[r.SubjectId];
+                int? toNext = r.Level == GradeKey.BestGrade
+                    ? null
+                    : Math.Max(0, GradeKey.MinPartForGrade(r.Level - 1, total, thresholds) - mastered);
+                return new SubjectLevelResponse(r.SubjectId, names.GetValueOrDefault(r.SubjectId, ""), r.Level, r.BestLevel, toNext);
+            })
+            .OrderBy(r => r.SubjectName, StringComparer.CurrentCulture).ThenBy(r => r.SubjectId)
+            .ToList();
     }
 
     /// <summary>

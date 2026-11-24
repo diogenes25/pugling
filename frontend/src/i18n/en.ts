@@ -47,6 +47,13 @@ export const en = {
       extraTitle_one: "➕ {{count}} extra exercise",
       extraTitle_other: "➕ {{count}} extra exercises",
       extraHint: "optional, no duty",
+      levelStand1: "🏅 Grade-1 standing",
+      levelStand2: "⭐ Grade-2 standing",
+      levelStand3: "Grade-3 standing",
+      levelGoal_one: "{{count}} more word to master for the next level",
+      levelGoal_other: "{{count}} more words to master for the next level",
+      levelReached: "next level reached – it counts from tomorrow",
+      levelKeepGoing: "keep going",
     },
     pfad: {
       section: "Section {{number}}",

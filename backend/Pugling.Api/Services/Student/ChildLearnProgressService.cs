@@ -139,14 +139,29 @@ public class ChildLearnProgressService(PuglingDbContext db, ExerciseTypeRegistry
     /// referenced by an ACTIVE plan of the child - the whole material, not only the introduced words, so three perfect
     /// words out of 200 stay a small share. Inactive plans and progress without a plan do not count. A subject without
     /// items in an active plan is absent: it has no measure.
+    /// <para>
+    /// The subject is the one of the active plan, the series' subject only for a plan without one - the same rule the
+    /// child's day view groups its subject cards by (<c>PositionProgressService</c>, B-614). Otherwise a plan filed under
+    /// "Französisch" over a series filed under another subject would put its level on a card the child never sees.
+    /// </para>
     /// </summary>
     internal async Task<Dictionary<int, (int Mastered, int Total)>> ActiveSubjectMeasuresAsync(int childId, CancellationToken ct)
     {
         var relevant = (await LoadRelevantAsync(childId, ct)).Where(r => r.Active).ToList();
         if (relevant.Count == 0) return [];
 
+        // One active plan per subject (B-539), so an exercise normally has one plan subject; should two active plans of
+        // different subjects share it, the lower id decides - deterministic, and the material is counted once.
+        var planSubjects = (await (
+                from pp in db.PlanPositions.AsNoTracking()
+                where pp.StudyPlan!.ChildId == childId && pp.StudyPlan.Active && pp.StudyPlan.SubjectId != null
+                select new { pp.ExerciseId, SubjectId = pp.StudyPlan!.SubjectId!.Value })
+            .ToListAsync(ct))
+            .GroupBy(x => x.ExerciseId)
+            .ToDictionary(g => g.Key, g => g.Min(x => x.SubjectId));
+
         var (total, prog) = await LoadAggAsync(childId, relevant.Select(r => r.ExerciseId).ToList(), ct);
-        return relevant.GroupBy(r => r.SubjectId)
+        return relevant.GroupBy(r => planSubjects.GetValueOrDefault(r.ExerciseId, r.SubjectId))
             .Select(g => (SubjectId: g.Key, Agg: Combine(g.Select(r => AggFor(r.ExerciseId, total, prog)))))
             .Where(x => x.Agg.TotalItems > 0)
             .ToDictionary(x => x.SubjectId, x => (x.Agg.Mastered, x.Agg.TotalItems));

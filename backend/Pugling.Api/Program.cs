@@ -168,7 +168,10 @@ builder.Services.AddSingleton<LearningDay>();
 builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 builder.Services.AddScoped<ScoringService>();
 // B-740: the one grading key (share in percent -> grade 1..6); the table is configuration, not code.
-builder.Services.Configure<GradingOptions>(builder.Configuration.GetSection(GradingOptions.SectionName));
+builder.Services.AddOptions<GradingOptions>().Bind(builder.Configuration.GetSection(GradingOptions.SectionName))
+    .Validate(o => GradeKey.IsValid(o.Thresholds),
+        "Grading:Thresholds braucht genau fünf streng fallende Grenzen zwischen 0 und 100 (Note 1 zuerst).")
+    .ValidateOnStart();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();

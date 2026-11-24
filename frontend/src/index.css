@@ -179,6 +179,8 @@ a { color: var(--cyan); }
 .fach-chip { font: 800 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: rgba(4, 6, 26, .32); white-space: nowrap; }
 .fach-chip.fertig { background: rgba(60, 232, 92, .9); color: #0b2a12; }
 .fach-chip.muenzen { background: rgba(255, 199, 56, .95); color: #3a2400; }
+/* B-743: die Notenstufe als eigene Zeile unter Name und Chips – ein Zielsatz ist zu lang für einen Chip. */
+.fach-stufe { order: 10; flex: 1 1 100%; font: 800 13px/1.25 var(--font-body); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
 .fach-pfeil { font-size: 16px; transition: transform .15s ease; }
 .fach-karte:not(.offen) .fach-kopf .fach-pfeil { transform: rotate(-90deg); }
 .fach-inhalt[hidden] { display: none; }

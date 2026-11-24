@@ -56,6 +56,14 @@ public static class GradeKey
         return (int)Math.Ceiling(thresholds[grade - 1] * total / 100m);
     }
 
+    /// <summary>Whether <paramref name="thresholds"/> is a usable table - checked at startup, so a broken
+    /// configuration stops the host instead of every child login.</summary>
+    public static bool IsValid(IReadOnlyList<decimal> thresholds)
+    {
+        try { Validate(thresholds); return true; }
+        catch (InvalidOperationException) { return false; }
+    }
+
     // A broken table must fail loudly: a silently shorter table would hand out grades from the wrong bounds.
     private static void Validate(IReadOnlyList<decimal> thresholds)
     {

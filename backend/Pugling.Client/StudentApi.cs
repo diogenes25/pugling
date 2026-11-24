@@ -93,6 +93,10 @@ public sealed class StudentApi(HttpClient http)
         Http.GetAsync<IReadOnlyList<InterestTagOptionResponse>>($"{Root}/interest-tags"
             + PuglingHttp.Query(("facet", facet), ("skip", skip), ("take", take)), ct);
 
+    /// <summary>Own grade levels per vocabulary subject (B-742); the first read of a day evaluates it.</summary>
+    public Task<IReadOnlyList<SubjectLevelResponse>> ListMySubjectLevelsAsync(CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<SubjectLevelResponse>>($"{Root}/me/subject-levels", ct);
+
     /// <summary>The logged-in child's own interest profile (weighted keywords plus free-text wishes).</summary>
     public Task<MyInterestProfileResponse> GetMyInterestsAsync(CancellationToken ct = default) =>
         Http.GetAsync<MyInterestProfileResponse>($"{Root}/me/interests", ct);

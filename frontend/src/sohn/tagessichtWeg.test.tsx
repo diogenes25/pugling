@@ -23,6 +23,8 @@ vi.mock("../lib/api", async (importOriginal) => {
       today: (childId: number) => today(childId),
       // Der Interessen-Hinweis ist hier kein Thema – stumm, ohne Netz.
       myInterests: () => Promise.resolve({ needsIntro: false }),
+      // Die Notenstufe (B-743) ist hier kein Thema – leer, ohne Netz.
+      mySubjectLevels: () => Promise.resolve([]),
     },
   };
 });
