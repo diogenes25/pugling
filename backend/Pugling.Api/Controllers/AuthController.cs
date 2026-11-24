@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers;
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
     Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay,
     Services.Student.SubjectLevelService subjectLevels,
-    Services.Shared.ClassTestPrepService classTestPrep) : ControllerBase
+    Services.Shared.ClassTestPrepService classTestPrep, Services.Shared.HomeworkService homework) : ControllerBase
 {
     /// <summary>
     /// The <b>primary tier</b> for UI routing – where the user belongs after logging in.
@@ -87,6 +87,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         // B-752: first the preparation duties of class tests in their window, or the first period would lack the position.
         await classTestPrep.ReconcileAsync(child.Id, today, ct);
         await progress.SettleClosedPeriodsAsync(child.Id, today, ct);
+        // B-760: the penalty of a homework handed in nothing by its due day, at the same seam as the duty's.
+        await homework.SettleAsync(child.Id, today, ct);
         // Likewise credit the earned rewards of reached big goals idempotently (the carrot), so the child has
         // them on the account right at login.
         await objectiveRewards.SettleAsync(child.Id, today, ct);

@@ -94,6 +94,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   // Ohne Zielart in der Antwort neutral: bei reinen Wochenzielen hängt die Sperre an ihnen (B-612).
   extra_training_locked: "Das Bonus-Training öffnet, sobald deine Ziele erfüllt sind.",
   extra_exercise_done: "Diese Bonus-Übung bringt heute nichts mehr.",
+  // Hausaufgaben (B-760): die Sperre nennt, was gebucht ist bzw. worauf sie wartet.
+  homework_accepted: "Diese Hausaufgabe ist schon angenommen, die Münzen sind gebucht.",
+  homework_not_submitted: "Zu dieser Hausaufgabe liegt keine neue Abgabe vor – annehmen geht erst, wenn das Kind (wieder) abgegeben hat.",
   // B-584: dieselbe Wortmenge zweimal wäre dieselbe Pflicht doppelt – auch, wenn es die Übung ist, aus der die Wörter stammen.
   review_already_in_plan: "Genau diese Wörter übt dieser Plan schon in einer Position.",
   review_subject_mismatch: "Diese Wörter gehören zu einem anderen Fach als dieser Plan.",

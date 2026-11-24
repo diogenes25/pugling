@@ -194,4 +194,12 @@ public sealed class StudentApi(HttpClient http)
     /// <summary>The fixed feedback reasons with their reach (B-628).</summary>
     public Task<IReadOnlyList<FeedbackReasonInfo>> ListFeedbackReasonsAsync(CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<FeedbackReasonInfo>>($"{Root}/feedback-reasons", ct);
+
+    /// <summary>The child's own homework with its hand-ins (B-760).</summary>
+    public Task<IReadOnlyList<HomeworkResponse>> ListMyHomeworkAsync(int? take = null, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<HomeworkResponse>>($"{Root}/homework" + PuglingHttp.Query(("take", take)), ct);
+
+    /// <summary>Hands a homework in - the child's own seat only (B-760).</summary>
+    public Task<HomeworkResponse> SubmitHomeworkAsync(int homeworkId, CancellationToken ct = default) =>
+        Http.PostAsync<HomeworkResponse>($"{Root}/homework/{homeworkId}/submissions", null, ct);
 }

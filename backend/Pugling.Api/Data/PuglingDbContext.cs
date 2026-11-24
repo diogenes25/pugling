@@ -129,6 +129,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
     // A child's feedback on a card (B-628): seen and handled by the supervisors, counted for the creator
     public DbSet<ExerciseFeedback> ExerciseFeedbacks => Set<ExerciseFeedback>();
+    public DbSet<Homework> Homeworks => Set<Homework>();
+    public DbSet<HomeworkSubmission> HomeworkSubmissions => Set<HomeworkSubmission>();
+    public DbSet<HomeworkPenalty> HomeworkPenalties => Set<HomeworkPenalty>();
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -1122,6 +1125,27 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // The read paths: a child's list and notices (supervisor view, child notices) and the creator's count.
             e.HasIndex(f => new { f.ChildId, f.Status });
             e.HasIndex(f => f.ExerciseId);
+        });
+
+        // A child's homework (B-760): it disappears with the child, its hand-ins and its settlement key with it. A deleted
+        // subject only takes the label away (SetNull) - the homework and any booked coins stay.
+        modelBuilder.Entity<Homework>(e =>
+        {
+            e.HasOne(h => h.Child).WithMany().HasForeignKey(h => h.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(h => h.Subject).WithMany().HasForeignKey(h => h.SubjectId).OnDelete(DeleteBehavior.SetNull);
+            // The read paths: a child's list and the settlement's window over the due days.
+            e.HasIndex(h => new { h.ChildId, h.DueOn });
+        });
+        modelBuilder.Entity<HomeworkSubmission>(e =>
+        {
+            e.HasOne(s => s.Homework).WithMany(h => h.Submissions).HasForeignKey(s => s.HomeworkId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(s => s.HomeworkId);
+        });
+        // One penalty per homework at most: the unique index is the guarantee against two parallel logins.
+        modelBuilder.Entity<HomeworkPenalty>(e =>
+        {
+            e.HasOne(p => p.Homework).WithMany().HasForeignKey(p => p.HomeworkId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => p.HomeworkId).IsUnique();
         });
 
         ApplyEnumConvention(modelBuilder);

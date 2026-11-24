@@ -33,6 +33,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     private static bool TowerMinutesAcceptable(int? minutes) => minutes is null or (>= 0 and <= MaxTowerGameMinutes);
 
+    /// <summary>Upper bound of a child's homework amounts (B-760): the same typo guard as the bonus cap.</summary>
+    private const int MaxHomeworkCoins = 1000;
+    private const string HomeworkCoinsMessage = "The homework coins and the homework penalty must be between 0 and 1000.";
+
+    private static bool HomeworkCoinsAcceptable(int? coins) => coins is null or (>= 0 and <= MaxHomeworkCoins);
+
     private const string SchoolTypeMessage = "A child attends exactly one school type; send a single value or None.";
 
     /// <summary>
@@ -54,7 +60,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
-                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay))
+                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins))
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of students supervised by the logged-in supervisor.</summary>
@@ -75,7 +81,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
-                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay))
+                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins))
             .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
@@ -98,6 +104,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
         if (!TowerMinutesAcceptable(dto.TowerGameMinutesPerDay)) return this.ProblemWithCode(ApiErrors.ValidationError, TowerMinutesMessage);
+        if (!HomeworkCoinsAcceptable(dto.HomeworkCoins) || !HomeworkCoinsAcceptable(dto.HomeworkPenaltyCoins))
+            return this.ProblemWithCode(ApiErrors.ValidationError, HomeworkCoinsMessage);
         if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         var child = new Child
@@ -113,6 +121,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             AllowedContentRating = dto.AllowedContentRating ?? ContentRating.Everyone,
             BonusDailyCoinCap = dto.BonusDailyCoinCap,
             TowerGameMinutesPerDay = dto.TowerGameMinutesPerDay,
+            HomeworkCoins = dto.HomeworkCoins,
+            HomeworkPenaltyCoins = dto.HomeworkPenaltyCoins,
         };
         db.Children.Add(child);
         // Establish supervision by the creating supervisor (a student can get more later) - in the SAME commit
@@ -128,7 +138,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
             child.AllowedContentRating, child.CreatedAt, 0, 0, child.BonusDailyCoinCap,
-            child.TowerGameMinutesPerDay);
+            child.TowerGameMinutesPerDay, child.HomeworkCoins, child.HomeworkPenaltyCoins);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
@@ -142,6 +152,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.Pin is not null && !PinHasher.IsAcceptable(dto.Pin)) return this.ProblemWithCode(ApiErrors.ValidationError, PinHasher.TooShortMessage);
         if (!BonusCapAcceptable(dto.BonusDailyCoinCap)) return this.ProblemWithCode(ApiErrors.ValidationError, BonusCapMessage);
         if (!TowerMinutesAcceptable(dto.TowerGameMinutesPerDay)) return this.ProblemWithCode(ApiErrors.ValidationError, TowerMinutesMessage);
+        if (!HomeworkCoinsAcceptable(dto.HomeworkCoins) || !HomeworkCoinsAcceptable(dto.HomeworkPenaltyCoins))
+            return this.ProblemWithCode(ApiErrors.ValidationError, HomeworkCoinsMessage);
         if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
@@ -160,6 +172,10 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.ClearBonusDailyCoinCap) child.BonusDailyCoinCap = null;
         if (dto.TowerGameMinutesPerDay.HasValue) child.TowerGameMinutesPerDay = dto.TowerGameMinutesPerDay;
         if (dto.ClearTowerGameMinutesPerDay) child.TowerGameMinutesPerDay = null;
+        if (dto.HomeworkCoins.HasValue) child.HomeworkCoins = dto.HomeworkCoins;
+        if (dto.ClearHomeworkCoins) child.HomeworkCoins = null;
+        if (dto.HomeworkPenaltyCoins.HasValue) child.HomeworkPenaltyCoins = dto.HomeworkPenaltyCoins;
+        if (dto.ClearHomeworkPenaltyCoins) child.HomeworkPenaltyCoins = null;
         // Mirror the name onto the login account - in the SAME commit, or a renamed child is still greeted with the
         // old name after the next login (the display name comes from the account). See AccountService.MirrorAsync.
         // The PIN lives on the account only (B-230).

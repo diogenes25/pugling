@@ -80,4 +80,9 @@ public enum PointKind
     RemediationBonus = 17,
     /// <summary>Coins for a level won in the tower game "Vokabel-Türme" (B-851), capped per day on its own.</summary>
     TowerGameCoins = 18,
+    /// <summary>
+    /// Coins for a homework the supervisor accepted (B-760): booked once, when he accepts the child's hand-in. Its
+    /// counterpart, the penalty for a homework handed in nothing by its due day, is a <see cref="GoalPenalty"/>.
+    /// </summary>
+    HomeworkCoins = 19,
 }

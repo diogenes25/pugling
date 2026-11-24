@@ -187,12 +187,14 @@ builder.Services.Configure<ExtraTrainingOptions>(builder.Configuration.GetSectio
 builder.Services.AddScoped<ExtraTrainingService>();
 builder.Services.AddScoped<MixedReviewService>();
 builder.Services.Configure<TowerGameOptions>(builder.Configuration.GetSection(TowerGameOptions.SectionName));
+builder.Services.Configure<HomeworkOptions>(builder.Configuration.GetSection(HomeworkOptions.SectionName));
 builder.Services.AddScoped<TowerGameService>();
 // Tower-game ids are encrypted item references (B-851); the key ring persists in the user profile on Windows.
 builder.Services.AddDataProtection();
 // The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<ExerciseFeedbackService>();
+builder.Services.AddScoped<HomeworkService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
 // The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.

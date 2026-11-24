@@ -2779,6 +2779,433 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/homework": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Homework"
+        ],
+        "summary": "The child\u0027s homework with its hand-ins, latest due day first. \u0060take\u0060 bounds the list (no default - the list grows\nby a school day at a time, and a silent cut would hide an open homework).",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomeworkResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Homework"
+        ],
+        "summary": "Sets a homework. A due day already over is allowed for the record; such a homework costs no penalty.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHomeworkDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHomeworkDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHomeworkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/homework/{homeworkId}/accept": {
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Homework"
+        ],
+        "summary": "Accepts the hand-in: the child\u0027s homework coins are booked once. Needs a hand-in; final.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/homework/{homeworkId}/rework": {
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Homework"
+        ],
+        "summary": "Gives the hand-in back for rework with a note; no coins, and the due day stays.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReworkHomeworkDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReworkHomeworkDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ReworkHomeworkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/homework/{homeworkId}": {
+      "delete": {
+        "tags": [
+          "Supervisor \u2013 Homework"
+        ],
+        "summary": "Removes a homework; coins or a penalty already booked stay in the ledger.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/objectives/{objectiveId}/key-results": {
       "post": {
         "tags": [
@@ -11412,6 +11839,153 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MixedReviewResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/homework": {
+      "get": {
+        "tags": [
+          "Student \u2013 Homework"
+        ],
+        "summary": "The own homework with its hand-ins, latest due day first; \u0060take\u0060 bounds the list (no default).",
+        "parameters": [
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomeworkResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/homework/{homeworkId}/submissions": {
+      "post": {
+        "tags": [
+          "Student \u2013 Homework"
+        ],
+        "summary": "Hands the homework in. Another hand-in after a rework note is the way back; after acceptance there is nothing to hand\nin. Somebody else\u0027s homework answers like an unknown one.",
+        "parameters": [
+          {
+            "name": "homeworkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeworkResponse"
                 }
               }
             }
@@ -32833,9 +33407,27 @@
               "string"
             ],
             "format": "int32"
+          },
+          "homeworkCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "homeworkPenaltyCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off);\n\u0060null\u0060 = the server default for both."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off),\n\u0060HomeworkCoins\u0060 what an accepted homework books and \u0060HomeworkPenaltyCoins\u0060 what a homework without a hand-in by\nits due day costs (B-760); \u0060null\u0060 = the server default for each."
       },
       "ChildTimeline": {
         "required": [
@@ -33246,6 +33838,24 @@
               "string"
             ],
             "format": "int32"
+          },
+          "homeworkCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "homeworkPenaltyCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Input for creating a child. \u0060SchoolType\u0060 is a single value or \u0060None\u0060 (\u0022not specified\u0022): a child attends one\nschool, so a combination of flags or an undefined bit is rejected with \u0060validation_error\u0060 (B-152)."
@@ -33605,6 +34215,35 @@
           }
         },
         "description": "Creating a topic. The slug is derived from the label; if the subject already carries it, the endpoint returns\nthe existing entry (idempotent), so a label typed twice never becomes two topics."
+      },
+      "CreateHomeworkDto": {
+        "required": [
+          "dueOn",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The subject, optional.",
+            "format": "int32"
+          },
+          "text": {
+            "type": "string",
+            "description": "What is to be done, required."
+          },
+          "dueOn": {
+            "type": "string",
+            "description": "The due day. A homework set after its due day costs no penalty.",
+            "format": "date"
+          }
+        },
+        "description": "A new homework for a child."
       },
       "CreateInterestTagDto": {
         "required": [
@@ -42562,6 +43201,160 @@
         },
         "description": "A logged answer event from the item history."
       },
+      "HomeworkResponse": {
+        "required": [
+          "childId",
+          "createdAt",
+          "dueOn",
+          "id",
+          "penaltyCharged",
+          "penaltyCoins",
+          "rewardCoins",
+          "status",
+          "submissions",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The homework.",
+            "format": "int32"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The child it belongs to.",
+            "format": "int32"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The subject, or \u0060null\u0060 when none was given or it was deleted since.",
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its name, or \u0060null\u0060."
+          },
+          "text": {
+            "type": "string",
+            "description": "What is to be done."
+          },
+          "dueOn": {
+            "type": "string",
+            "description": "The due day: a hand-in by the end of it averts the penalty.",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the supervisor set it.",
+            "format": "date-time"
+          },
+          "status": {
+            "description": "Where it stands.",
+            "$ref": "#/components/schemas/HomeworkStatus"
+          },
+          "reworkNote": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The supervisor\u0027s note when he last gave it back, or \u0060null\u0060; it stays after a new hand-in."
+          },
+          "reviewedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the supervisor last accepted it or gave it back, or \u0060null\u0060.",
+            "format": "date-time"
+          },
+          "rewardCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Coins an acceptance books - the amount booked once accepted, else the child\u0027s current amount.",
+            "format": "int32"
+          },
+          "penaltyCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Coins missing the due day costs - the amount booked once charged, else the child\u0027s current amount.",
+            "format": "int32"
+          },
+          "penaltyCharged": {
+            "type": "boolean",
+            "description": "Whether the penalty was booked; a later hand-in does not take it back."
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeworkSubmissionResponse"
+            },
+            "description": "The hand-ins, oldest first."
+          }
+        },
+        "description": "A homework of a child with its hand-ins."
+      },
+      "HomeworkStatus": {
+        "enum": [
+          "Open",
+          "Submitted",
+          "Accepted",
+          "Rework"
+        ],
+        "type": "string",
+        "description": "Where a homework stands (B-760). Whether it was handed in by its due day is a separate question: the penalty asks only\nthat, and no state here averts or causes it.\n\nAllowed values: Open, Submitted, Accepted, Rework."
+      },
+      "HomeworkSubmissionResponse": {
+        "required": [
+          "id",
+          "inTime",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The hand-in.",
+            "format": "int32"
+          },
+          "submittedAt": {
+            "type": "string",
+            "description": "Server time of the hand-in; the supervisor compares it with the homework.",
+            "format": "date-time"
+          },
+          "inTime": {
+            "type": "boolean",
+            "description": "Whether it came by the end of the due day, so that it averts the penalty."
+          }
+        },
+        "description": "One hand-in of a homework."
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
@@ -45341,10 +46134,11 @@
           "DailyBoxGems",
           "ExtraTrainingCoins",
           "RemediationBonus",
-          "TowerGameCoins"
+          "TowerGameCoins",
+          "HomeworkCoins"
         ],
         "type": "string",
-        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus, TowerGameCoins."
+        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus, TowerGameCoins, HomeworkCoins."
       },
       "PointsEntryDto": {
         "required": [
@@ -46563,6 +47357,8 @@
               "extra_training_locked",
               "forbidden",
               "grammar_topic_in_use",
+              "homework_accepted",
+              "homework_not_submitted",
               "http_error",
               "insufficient_coins",
               "insufficient_gems",
@@ -47569,6 +48365,19 @@
           }
         },
         "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);\nnull where no atom was hit; null for content that has no explanation.bool ReviewOutcome.RepeatsAtEnd (B-598): a learn card given up or recalled wrong comes back once at the end of this round.bool ReviewOutcome.TaskDone (B-635): this answer finished a remediation task - typed freely right, without easing.int ReviewOutcome.CompletionBonus (B-636): coins booked because this answer finished the last task of a remediation\n\u0022daily, until done\u0022; 0 otherwise."
+      },
+      "ReworkHomeworkDto": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "What is missing, required (one line)."
+          }
+        },
+        "description": "Gives a hand-in back for rework; the due day stays."
       },
       "RubricCriterion": {
         "required": [
@@ -50430,9 +51239,35 @@
           "clearTowerGameMinutesPerDay": {
             "type": "boolean",
             "default": false
+          },
+          "homeworkCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearHomeworkCoins": {
+            "type": "boolean",
+            "default": false
+          },
+          "homeworkPenaltyCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearHomeworkPenaltyCoins": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap and \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap, \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes and \u0060ClearHomeworkCoins\u0060 /\n\u0060ClearHomeworkPenaltyCoins\u0060 the homework amounts to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
       },
       "UpdateClassTestDto": {
         "type": "object",
@@ -52984,6 +53819,9 @@
       "name": "Supervisor \u2013 Feedback"
     },
     {
+      "name": "Supervisor \u2013 Homework"
+    },
+    {
       "name": "Supervisor \u2013 Missions"
     },
     {
@@ -53027,6 +53865,9 @@
     },
     {
       "name": "Student \u2013 Feedback"
+    },
+    {
+      "name": "Student \u2013 Homework"
     },
     {
       "name": "Student \u2013 Interests"

@@ -225,10 +225,12 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         {
             var c = await TestApi.AdultAsync(f);
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/children",
-                new { name = Eindeutig("Kind"), birthYear = 2013, grade = 6, pin = "1111", bonusDailyCoinCap = 10, towerGameMinutesPerDay = 15 }));
+                new { name = Eindeutig("Kind"), birthYear = 2013, grade = 6, pin = "1111", bonusDailyCoinCap = 10, towerGameMinutesPerDay = 15,
+                    homeworkCoins = 25, homeworkPenaltyCoins = 4 }));
             return new Ziel(c, $"/api/v1/supervisor/children/{id}");
         }, [new("clearBirthYear", "birthYear"), new("clearGrade", "grade"), new("clearBonusDailyCoinCap", "bonusDailyCoinCap"),
-            new("clearTowerGameMinutesPerDay", "towerGameMinutesPerDay")]),
+            new("clearTowerGameMinutesPerDay", "towerGameMinutesPerDay"), new("clearHomeworkCoins", "homeworkCoins"),
+            new("clearHomeworkPenaltyCoins", "homeworkPenaltyCoins")]),
 
         new(typeof(UpdateTextbookDto), "title", "Access 7", async f =>
         {

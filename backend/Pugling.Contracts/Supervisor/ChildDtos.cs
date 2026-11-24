@@ -8,13 +8,14 @@ namespace Pugling.Contracts.Supervisor;
 /// part of the profile (language for the AI creator); the weighted, referenced interests used for
 /// image selection live under <c>children/{id}/interests</c>. <c>AllowedContentRating</c> is the
 /// upper bound of image suitability – only the supervisor may raise it. <c>BonusDailyCoinCap</c> is the child's own
-/// daily cap of bonus-training coins, <c>TowerGameMinutesPerDay</c> its play minutes per day in the tower game (0 = off);
-/// <c>null</c> = the server default for both.
+/// daily cap of bonus-training coins, <c>TowerGameMinutesPerDay</c> its play minutes per day in the tower game (0 = off),
+/// <c>HomeworkCoins</c> what an accepted homework books and <c>HomeworkPenaltyCoins</c> what a homework without a hand-in by
+/// its due day costs (B-760); <c>null</c> = the server default for each.
 /// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
     ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems, int? BonusDailyCoinCap,
-    int? TowerGameMinutesPerDay);
+    int? TowerGameMinutesPerDay, int? HomeworkCoins, int? HomeworkPenaltyCoins);
 
 /// <summary>
 /// Input for creating a child. <c>SchoolType</c> is a single value or <c>None</c> ("not specified"): a child attends one
@@ -22,21 +23,25 @@ public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
 /// </summary>
 public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
-    ContentRating? AllowedContentRating = null, int? BonusDailyCoinCap = null, int? TowerGameMinutesPerDay = null);
+    ContentRating? AllowedContentRating = null, int? BonusDailyCoinCap = null, int? TowerGameMinutesPerDay = null,
+    int? HomeworkCoins = null, int? HomeworkPenaltyCoins = null);
 
 /// <summary>
 /// Partial change to a child; omitted fields stay unchanged. <c>null</c> means "not specified"
 /// and therefore cannot <b>clear</b> anything – that is what the <c>Clear…</c> switches are for (cf.
 /// <c>ClearGrade</c> on the class test): <c>ClearBirthYear</c> removes the birth year,
 /// <c>ClearGrade</c> the grade level (the child then drops out of grade filters), <c>ClearBonusDailyCoinCap</c> returns
-/// the bonus cap and <c>ClearTowerGameMinutesPerDay</c> the tower-game minutes to the server default. A sent <c>SchoolType</c> must be a single value or <c>None</c> (B-152); a stored
+/// the bonus cap, <c>ClearTowerGameMinutesPerDay</c> the tower-game minutes and <c>ClearHomeworkCoins</c> /
+/// <c>ClearHomeworkPenaltyCoins</c> the homework amounts to the server default. A sent <c>SchoolType</c> must be a single value or <c>None</c> (B-152); a stored
 /// combination from before that rule survives a PATCH that does not send the field.
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
     ContentRating? AllowedContentRating = null,
     bool ClearBirthYear = false, bool ClearGrade = false, int? BonusDailyCoinCap = null, bool ClearBonusDailyCoinCap = false,
-    int? TowerGameMinutesPerDay = null, bool ClearTowerGameMinutesPerDay = false);
+    int? TowerGameMinutesPerDay = null, bool ClearTowerGameMinutesPerDay = false,
+    int? HomeworkCoins = null, bool ClearHomeworkCoins = false, int? HomeworkPenaltyCoins = null,
+    bool ClearHomeworkPenaltyCoins = false);
 
 /// <summary>A supervision relationship: which supervisor supervises the student since when.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

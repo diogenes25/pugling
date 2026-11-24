@@ -102,6 +102,18 @@ public class Child
     public int? TowerGameMinutesPerDay { get; set; }
 
     /// <summary>
+    /// Coins an accepted homework books for this child (B-760), set by the supervisor; <c>null</c> = the server default
+    /// (<c>Gamification:Homework:Coins</c>). Fixed per child, so the supervisor does no sums when accepting.
+    /// </summary>
+    public int? HomeworkCoins { get; set; }
+
+    /// <summary>
+    /// Coins a homework costs this child when nothing was handed in by its due day (B-760); <c>null</c> = the server default
+    /// (<c>Gamification:Homework:PenaltyCoins</c>). A separate amount from the reward, like goal points and penalty of a position.
+    /// </summary>
+    public int? HomeworkPenaltyCoins { get; set; }
+
+    /// <summary>
     /// Weighted interests from the controlled taxonomy (including dislikes at a negative weight).
     /// Complements the free-form <see cref="Interests"/>, it does not replace it: free text is the language
     /// of the AI creator, referenced tags are the basis of the machine-driven image selection.
