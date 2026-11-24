@@ -1,7 +1,7 @@
 namespace Pugling.Contracts.Student;
 
 // The child's view on its class tests (B-750/B-751): when the next one is and how sure it already is in its vocabulary.
-// Deliberately its own shape, not KlassenarbeitResponse - grade and grade comment are the supervisor's data.
+// Deliberately its own shape, not KlassenarbeitResponse - grade, grade comment and predicted level are the supervisor's data.
 
 /// <summary>
 /// An upcoming class test as the child sees it: title, subject, date and the days until it (0 = today). No grade, no

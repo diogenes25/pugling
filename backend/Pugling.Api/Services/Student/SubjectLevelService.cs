@@ -67,21 +67,49 @@ public class SubjectLevelService(PuglingDbContext db, ChildLearnProgressService 
                 changed = true;
             }
         }
-        if (!changed) return measures;
-
-        try
+        if (changed)
         {
-            await db.SaveChangesAsync(ct);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
+            {
+                // Two first accesses of the same day raced to create the row and the other one won - from nearly the same
+                // data (an answer committed in between may differ), which the next day's evaluation evens out anyway.
+                // Detach ours so a later SaveChanges of the request does not trip over it again.
+                foreach (var entry in db.ChangeTracker.Entries<ChildSubjectLevel>().ToList())
+                    entry.State = EntityState.Detached;
+            }
         }
-        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
-        {
-            // Two first accesses of the same day raced to create the row and the other one won - from nearly the same
-            // data (an answer committed in between may differ), which the next day's evaluation evens out anyway.
-            // Detach ours so a later SaveChanges of the request does not trip over it again.
-            foreach (var entry in db.ChangeTracker.Entries<ChildSubjectLevel>().ToList())
-                entry.State = EntityState.Detached;
-        }
+        await SnapshotTestDayAsync(childId, day, measures.Keys.ToList(), ct);
         return measures;
+    }
+
+    /// <summary>
+    /// B-744: writes the evaluated level of each measured subject onto the child's class tests of <paramref name="day"/>
+    /// that have a subject and no snapshot yet. Runs on every access of the test day, not only the first, so a level that
+    /// first comes into being later that day still fills it (AK 4); a subject without a measure leaves it empty instead
+    /// of writing a stand-in value. One conditional UPDATE: of two racing requests the loser finds the column set and
+    /// writes nothing, and no later day - nor a moved test date - ever replaces a snapshot. No ledger booking.
+    /// </summary>
+    private async Task SnapshotTestDayAsync(int childId, DateOnly day, List<int> measuredSubjectIds, CancellationToken ct)
+    {
+        // One filter for the probe and the write, so the two can never disagree about which test is due.
+        var due = db.Klassenarbeiten
+            .Where(k => k.ChildId == childId)
+            .Where(k => k.ScheduledDate == day)
+            .Where(k => k.PredictedLevel == null)
+            .Where(k => k.SubjectId != null && measuredSubjectIds.Contains(k.SubjectId.Value))
+            .Where(k => db.ChildSubjectLevels.Any(l => l.ChildId == childId && l.SubjectId == k.SubjectId));
+        // A read first: an UPDATE takes SQLite's write lock even when it matches nothing, and nearly every access is on
+        // a day without a due test.
+        if (!await due.AnyAsync(ct)) return;
+        await due
+            .ExecuteUpdateAsync(s => s.SetProperty(
+                k => k.PredictedLevel,
+                k => db.ChildSubjectLevels.Where(l => l.ChildId == childId && l.SubjectId == k.SubjectId)
+                    .Select(l => (int?)l.Level).FirstOrDefault()), ct);
     }
 
     /// <summary>

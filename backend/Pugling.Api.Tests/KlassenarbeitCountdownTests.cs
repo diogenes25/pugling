@@ -67,6 +67,8 @@ public class KlassenarbeitCountdownTests(PuglingWebAppFactory factory) : IClassF
 
         Assert.False(entry.TryGetProperty("grade", out _));
         Assert.False(entry.TryGetProperty("gradeComment", out _));
+        // B-746 AK 3: the prediction beside the grade is the supervisor's, too. Red if the child's shape carried it.
+        Assert.False(entry.TryGetProperty("predictedLevel", out _));
         Assert.DoesNotContain("nur für den Vater", entry.GetRawText());
     }
 
