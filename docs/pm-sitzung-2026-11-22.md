@@ -283,4 +283,3 @@ Kein Halt-Grund im Sinne der Freigaben: kein Tor gelandet, kein Fund im Incremen
 - **Offen beim Nutzer:** die Retro-Vorschläge der Sprints 110–114; der Tor-Vorschlag aus Sprint 114.
 - **Nächste Kandidaten:** B-791 (Defekt, `idee`), B-670 (Defekt, `ausformuliert`), B-659 (Defekt L).
 - `INDEX.md` nicht neu erzeugt (fremde Änderungen im Arbeitsbaum).
-

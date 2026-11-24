@@ -97,6 +97,7 @@ halbfertig liegt; ein weiterer Sprint wurde nicht begonnen.
 `828cb8e5` und der Abschluss-Commit.
 
 **Zum Umstoßen am Morgen:**
+
 1. Positions-`Stage`/`StageSchedule` gelten nicht, solange eine Vorstufe gespielt wird (die Vorstufe spielt ihre eigene
    Vorgabe-Stufe).
 2. Stufenwechsel durch den Vater wird unter einer offenen Runde oder einem offenen Test von heute mit 409 abgewiesen.

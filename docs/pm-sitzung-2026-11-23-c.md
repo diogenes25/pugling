@@ -212,6 +212,7 @@ Commits auf `main`, **ungepusht**: `e3f51ee7`, `54f354b7`, `08a421cb`, `15921baf
 der Abschluss-Commit.
 
 **Zum Umstoßen am Morgen:**
+
 1. B-820 Entscheidung 1 hebt B-659 Entscheidung 2 („nur Daily/Weekly“) für die Nacharbeit auf.
 2. B-862 Entscheidung 3: der Startseiten-Teaser lädt die Bonus-Übersicht selbst (ein Abruf mehr) statt eines Feldes an
    der Tagesübersicht.

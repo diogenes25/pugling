@@ -88,6 +88,7 @@ Gruppe (`Plan 99`) hatte dieselbe Lücke, nur trat sie im Lauf vom 2026-11-22 ni
   |---|---|---|---|
   | M1-spielbar (`?? plans.data.find((p) => p.isPlayable)` gestrichen) | frontend/src/sohn/useChosenPlan.ts:18 | red | red |
   | M2-gemerkt (`find((p) => p.id === planId) ??` gestrichen) | frontend/src/sohn/useChosenPlan.ts:18 | red | red |
+
 - **2026-11-22** — Review `frontend-reviewer`: keine Funde. Nebenbefund: die alte Suche löste schon der Knopf allein auf; erst
   die neue prüft wirklich, dass der Titel aus der Antwort für Plan 5 kommt. Suche nach derselben Fehlerklasse (Titel neben
   gleichnamigem Knopf) in allen `*.test.tsx`: keine weitere Stelle.

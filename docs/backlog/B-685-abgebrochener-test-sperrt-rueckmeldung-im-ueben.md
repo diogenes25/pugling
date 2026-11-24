@@ -226,11 +226,11 @@ vier Texten geht, zwei Tests ändern sich, ein E2E-Schritt kommt dazu. Kein Umba
   - **AK 4:** Absichtserklärung; die Suche nach Resten in Backend, Frontend, Client und Agent ergab keine Fundstelle.
   - Proben:
 
-| Probe | Stelle | erwartet | gemessen |
-| --- | --- | --- | --- |
-| Sperre zurück (drei Backend-Dateien aus `HEAD`) | `ExerciseFeedbackController.cs` | E2E 5b rot | rot, `rueckmeldung.spec.ts:110` „Danke, ist angekommen!“ fehlt |
-| `KartenMeldung` aus dem Ergebnisblatt | `SohnTest.tsx:393`, `:406` | E2E 6 rot | rot, `:118` |
-| `ReportAsync` stempelt den offenen Versuch | `ExerciseFeedbackService.cs:36` | AK-2-Test rot | rot, 1 failed von 11 |
+    | Probe | Stelle | erwartet | gemessen |
+    | --- | --- | --- | --- |
+    | Sperre zurück (drei Backend-Dateien aus `HEAD`) | `ExerciseFeedbackController.cs` | E2E 5b rot | rot, `rueckmeldung.spec.ts:110` „Danke, ist angekommen!“ fehlt |
+    | `KartenMeldung` aus dem Ergebnisblatt | `SohnTest.tsx:393`, `:406` | E2E 6 rot | rot, `:118` |
+    | `ReportAsync` stempelt den offenen Versuch | `ExerciseFeedbackService.cs:36` | AK-2-Test rot | rot, 1 failed von 11 |
 
   - **Review `pugling-reviewer`:**
     - 🟡 Die Swagger-Summary versprach noch die Absage → umformuliert (Kommentar, ohne Zählung).

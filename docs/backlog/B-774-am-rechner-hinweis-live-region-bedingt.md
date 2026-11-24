@@ -87,6 +87,7 @@ Playwright-Probe bei 390 px aus B-663 (`e2e/vater-schmal.spec.ts`).
 | --- | --- | --- | --- |
 | Region ohne `banner info` | `VaterApp.tsx` | `vater-schmal` rot | rot (`toHaveClass(/banner/)`) |
 | `banner info` bedingungslos | `VaterApp.tsx` | `vater-schmal` rot | rot (`not.toHaveClass`, 1 failed) |
+
 - **2026-11-21** — `abgenommen` mit `9ab66ecc`. Rollengang als Maschinenlauf gegen den nach dem letzten Edit gestarteten
   Server (Ausweichports 5201/5174): volle E2E-Suite **179/179**, Vitest **1297/1297**. Vater: `vater-schmal` (390 px) zeigt
   den Hinweis mit Banner-Optik und davor eine leere Region ohne Banner. Sohn: `full-flow` und `shop-verlauf` zeigen die

@@ -197,5 +197,6 @@ Hinweis, drei Teststufen. Kein XL: alles liegt in `frontend/src/vater/` und `lib
 | B663-F1 Breite ignoriert | frontend/src/vater/navigation.ts:168 | red | red |  |
 | B663-F2 Creator verliert Werkstatt am Telefon | frontend/src/vater/navigation.ts:167 | red | red |  |
 | B663-F3 Vorbelegung ignoriert | frontend/src/vater/VaterWahl.tsx:31 | red | red |  |
+
 - **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).
 - **2026-11-21** — Nachschau (Nachtlauf): **Entgangen:** der Hinweis „nur am Rechner“ entstand zusammen mit seiner Live-Region, `liveRegions.test.ts` war seit `5f024e2b` rot → B-774 (abgenommen `9ab66ecc`). Geprüft außerdem (frontend-reviewer): AK 1 an `perspektiven.spec.ts`, AK 3 an `navigation.test.ts` (drei Fälle, jeder trägt), Hooks vor den frühen Returns. 🟢 ohne Story: ein reines Supervisor-Konto ist in keinem Test gegen den Wahlschritt abgedeckt.

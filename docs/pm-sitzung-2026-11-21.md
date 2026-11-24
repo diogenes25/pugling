@@ -108,6 +108,7 @@ weiter“ verlassen hat. Widerlegbar: `rueckmeldung.spec.ts` 5b oder die Fokus-T
 [B-671](backlog/B-671-bonus-sonderzeichen-landet-im-falschen-kaestchen.md) (S, frontend), beide `Defekt`, geschätzt im
 Vorbereitungslauf.
 **Entwickler-Brief:**
+
 - B-685 baut das Backend zuerst: Sperre und Fehlercode entfernen, Vertrag und Beispiele neu erzeugen. Danach kommen die
   Frontend-Texte und die E2E.
 - B-671 folgt dem Fokus-Muster aus `SohnTest.tsx:89-102`, ohne `LetterBoxes` anzufassen.
@@ -147,6 +148,7 @@ Commit `1793475e`, B-671 und B-685 `abgenommen`.
 ## Retrospektive (Sprint 99)
 
 **Nachschau:** Sprint 98 nachgesehen (B-774, B-775, `nachgeschaut: 2026-11-21`):
+
 - Diff `9ab66ecc` gegen die Akzeptanzkriterien gelesen.
 - Die leere Region ist außerhalb des Flusses der Flex-Spalte.
 - Keine ungefilterte `getByRole("status")`-Spec trifft die neue Region.
@@ -154,6 +156,7 @@ Commit `1793475e`, B-671 und B-685 `abgenommen`.
 - Kein Befund.
 
 **Was die eigenen Tore durchgelassen haben:**
+
 - Beide 🟡 aus dem Frontend-Review sind „Zusicherung, die den Ausgangszustand prüft“: Der Lade-Test war im
   Ausgangszustand grün und blieb es auch ohne Wächter. Diese Regel steht schon im Root-`CLAUDE.md`, und ich habe sie beim
   Schreiben trotzdem verfehlt. Die Story hatte den Fall sogar als Festschreibung beschriftet, ehrlich, aber schwach.
@@ -171,6 +174,7 @@ sonst wird er gestrichen. Das ist der B-157-Befund aus dem Root-`CLAUDE.md` in e
 Zweiter Start am Nachmittag mit dem Auftrag „nachtlauf“ und freier Auswahl. Es gelten die Freigaben 1–10.
 
 **Auswahl:** Kandidaten aus der Nachschau von Sprint 97 waren B-776 und B-777. Gewählt wurde der Shop als Themengebiet:
+
 - [B-776](backlog/B-776-wechsel-auf-einmalig-loest-nie-aus.md), Defekt, P2;
 - [B-772](backlog/B-772-bestand-setzen-antwortet-mit-altem-geschwisterbestand.md), Defekt, P3.
 
@@ -184,6 +188,7 @@ füllt zum Termin auf, und die Antwort auf „Bestand setzen“ zeigt die Geschw
 durch einen Bestand, der nach dem Termin leer bleibt, oder durch ein Geschwister mit altem Wert in der Antwort.
 
 **Entwickler-Brief:**
+
 - Quelle der Wahrheit ist der Bestand je Kind (`ShopListingStock.LastRefilledAtUtc`), gelesen über
   `ShopRefillSchedule.DueRefills`.
 - Senken: der PATCH für alles, was die Regel ändert, und `ToViewAsync` für die Vater-Sicht eines geladenen Angebots.
@@ -234,11 +239,13 @@ Der Server wurde nach der letzten Änderung von Playwright frisch gestartet, auf
 ## Retrospektive (Sprint 100)
 
 **Nachschau:** Sprint 99 nachgesehen (B-685, B-671, `nachgeschaut: 2026-11-21`):
+
 - B-685: Nach Resten der entfernten Sperre über Backend, Frontend, Doku und Wiki gegrept: keine.
 - B-671: Der Fokus-Effekt in `SohnBonus.tsx:222-240` verbraucht die Absicht auch nach der letzten Karte.
 - Kein Befund.
 
 **Was die eigenen Tore durchgelassen haben:**
+
 - Der Reviewer-Fund 1 entstand aus der eigenen Entscheidung 4 („ein Termin in der Vergangenheit feuert sofort“). Gedacht
   war sie für einen Termin, den der Vater ausdrücklich setzt. Der PATCH führt aber `dto.X ?? listing.X` zusammen, und dadurch
   kann ein **weggelassenes** Feld einen Altwert tragen, den niemand gesehen hat. Keine meiner Mutanten konnte das finden, weil
@@ -266,6 +273,7 @@ Größe XS, die Reparatur liegt entgegen der ersten Notiz im **Backend**.
 Antwortzahl. Wer heute geantwortet hat, steht auf „dran“. Widerlegbar ist das durch ein Kind mit Antworten unter „offen“.
 
 **Entwickler-Brief:**
+
 - Quelle der Wahrheit ist `ChildDay.Practiced`, also die Senke im Vertrag. Der einzige Leser ist `VaterDashboard.tsx:113`,
   und das Frontend bleibt unverändert.
 - Keine Migration, kein Vertragsbruch.
@@ -296,6 +304,7 @@ Der Server wurde nach der letzten Änderung von Playwright frisch gestartet, auf
 ## Retrospektive (Sprint 101)
 
 **Nachschau:** Sprint 100 nachgesehen (B-776, B-772, `nachgeschaut: 2026-11-21`):
+
 - B-776 gegen die einzige schreibende Stelle für `RefillAtUtc` gelesen (`VaterShop.tsx:228`, immer Mitternacht mit `Z`).
   **Befund:** Ein per API mit Uhrzeit angelegter „einmalig“-Termin zählt beim späteren Bearbeiten im Vater-Web als neuer
   Termin und füllt erneut auf → [B-782](backlog/B-782-einmal-termin-mit-uhrzeit-faellt-beim-bearbeiten-erneut.md)
@@ -303,6 +312,7 @@ Der Server wurde nach der letzten Änderung von Playwright frisch gestartet, auf
 - B-772: kein Befund.
 
 **Was die eigenen Tore durchgelassen haben:**
+
 - B-782 ist derselbe Mechanismus wie der Reviewer-Fund 1 aus Sprint 100. Ein Vergleich „neu gegen alt“ sieht den Wert,
   den der **Client zurückschickt**, und das ist nicht unbedingt der Wert, den er geladen hat. In Sprint 100 war es das
   weggelassene Feld, hier ist es das abgeschnittene.
@@ -344,6 +354,7 @@ B-782). Reihenfolge: erst B-672 (geschätzt, Malus und Serie, also der Kern „v
 denen er den Plan nicht spielen konnte. Widerlegbar durch einen Malus oder einen Serienbruch an einem solchen Tag.
 
 **Entwickler-Brief:**
+
 - Quelle der Wahrheit ist `StudyPlan.ActivatedAt`; die einzige Stelle, die beim Verlegen schreibt, ist
   `StudyPlansController.Update` (die Senke). Die Verbraucher `PlanDueForPeriod` und `ActiveOn` bleiben unverändert.
 - Alten Start vor dem Überschreiben festhalten, dann anheben auf `min(alter Start, heute)`, dann das bestehende Absenken.

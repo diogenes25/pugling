@@ -69,4 +69,3 @@ ihn bei leerem Feld; oder ein leerer String heißt am Server „leeren“.
   (`grep "|| null" VaterShop.tsx`: nur `:63` Anlegen und `:348` Anlegen); (c) `ShopStockPerChildTests.B789_…` prüft beide
   Richtungen (`""` leert, `null` lässt stehen). Kein Befund im Increment; dieselbe Klasse außerhalb des Shops war schon als
   B-791 aus dem Review erfasst (kein Entgangenes).
-

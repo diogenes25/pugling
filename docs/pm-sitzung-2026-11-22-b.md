@@ -46,6 +46,7 @@ bleibt.
 2026-11-19, sie sind unbestätigt. Dazu kam B-790 (Defekt XS) aus der eigenen Suite, siehe unten.
 
 **Entwickler-Brief:**
+
 - Kein Produktcode wird geändert.
 - **B-602:** Die Wartebedingung steht einmal in `planAnlegen`. Ein Spät-Fall mit verzögerter Suche hält sie ehrlich.
 - **B-605:** eine Zeile `PWTEST_CHILD_PROCESS_TIMEOUT ??= "45000"`, geprüft mit einer Wegwerf-Konfiguration außerhalb des Repos.

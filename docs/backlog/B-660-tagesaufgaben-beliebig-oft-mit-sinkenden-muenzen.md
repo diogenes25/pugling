@@ -281,6 +281,7 @@ daneben tritt.
   | N7 Pool ignoriert (erste Übung) | NochEinmal.tsx:43 | red | red |
   | N8 Sperre ignoriert | :32 | red | red |
   | E2 Block fehlt (E2E) | SohnPractice.tsx:446 | red | red |
+
 - **2026-11-22** — Review (`frontend-reviewer`) und Selbst-Check, Zähler Sprint B3: 2 von 5. **Selbst-Check vor dem Review,
   gezählt:** ein voller Tagesdeckel versprach „noch 100 % wert“ – jetzt wie die Bonus-Liste (`capReached`: Vokabeln ohne
   Münzen weiter, feste Übung wartet), Satz ohne „morgen“ (galt bei Deckel 0 nie). Der Reviewer fand dasselbe als 🟡1 (einmal

@@ -34,6 +34,7 @@ Die Lücke stammt also nicht aus B-603 (`waitFor`), sondern bestand schon vorher
 kommt nicht. Das ist eine Zusicherung, die nur als Kommentar existiert (Regel in der Root-`CLAUDE.md`).
 
 Offen für die Ausformulierung:
+
 - Ob `action.busy` und `cursor` im Dep-Array überhaupt nötig sind. Vielleicht deckt eine andere Abhängigkeit jeden
   echten Wechsel ab. Dann wären sie Ballast, und der Kommentar wäre falsch.
 - Oder ob es einen Ablauf gibt, in dem nur sie wechseln. Dann fehlt ein Fall, der sie trägt.
@@ -100,6 +101,7 @@ the sheep|1|false|false|false|false|true    neue Frage, cursor 1 und busy aus im
   | M1-busy-gestrichen | frontend/src/sohn/SohnTest.tsx:106 | green | green |
   | M2-cursor-zurueck | frontend/src/sohn/SohnTest.tsx:106 | green | green |
   | M3-absicht-ohne-ziel-verbraucht (`if (!target) { focusIntent.current = false; return; }`) | frontend/src/sohn/SohnTest.tsx:103 | red | red (Fall AK 3) |
+
 - **2026-11-22** — Review `frontend-reviewer`: keine 🔴/🟡. Zwei 🟢 zum Kommentar eingearbeitet (ohne Zählung): „`cursor`
   wechselt nie ohne `item`“ stimmt bei `start()` aus dem Ergebnisbild nicht wörtlich (dort wechselt `result`); und warum
   `action.busy` als Sicherung stehen bleibt (ein künftiges `await` nach `setItem` in `run`). Batching-Argument im echten

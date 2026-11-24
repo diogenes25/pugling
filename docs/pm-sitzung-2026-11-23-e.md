@@ -280,6 +280,7 @@ erreicht.
 `main`, **ungepusht**: `2bf20d88`, `8f2c549a`, `e5c2430c`, `e618f94a`, `34d6becc`, `a728884d`, `617f50fd` und dieser.
 
 **Zum Umstoßen am Morgen:**
+
 1. Ein Probe-Test des Vaters (`BySupervisor`) hebt die Stufe nicht (B-849, Abweichung b).
 2. Ein Aufstieg zählt nur, wo er das Ziel auch erfüllen könnte: unter „nur getippte Tests“ hebt ein selbst eingeschätzter
    Test nicht.

@@ -164,6 +164,7 @@ Spielpfade in B-848 schon auf `PlayedExercise` laufen.
 | M21 ungewertet hebt | backend/Pugling.Api/Controllers/Student/PositionTestsController.cs:483 | red | red |  |
 
 Grundlinie nach dem Zurückspielen: green.
+
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 122), Commit `2bf20d88`. Rollengang maschinell: Sohn über die
   HTTP-Pipeline mit Kind-Login (`AufbauStufeAufstiegTests`, Berlin-Host mit eingefrorener Uhr über zwei Lerntage), Vater
   über die Supervisor-API (Bericht, Stufe setzen), Creator als Regressionszeuge (E2E `aufbau-weg-editor` grün).

@@ -71,6 +71,7 @@ Gemessen am 2026-11-20 auf `main`. Pfade relativ zu `backend/`.
 *Stellvertretend in der übertragenen PO-Rolle getroffen, unbestätigt – zum Umstoßen. Keine davon ändert eine geerbte
 Entscheidung; sie füllen, was die Story offenließ.*
 
+<!-- markdownlint-disable MD029 -- die Nummern setzen die geerbten Entscheidungen 1–3 fort, Verweise zielen darauf -->
 4. **Die Testsuite zählt weiter im UTC-Kalender** (`LearningDay:TimeZone = UTC` in der Testfabrik), eine eigene
    `BerlinWebAppFactory` prüft die Zonen-Regel. Grund: 39 Stellen in 20 Testdateien bilden „heute" selbst aus
    `DateTime.UtcNow`; auf Berlin liefen sie jede Nacht zwischen 0 und 2 Uhr gegen den Server. Kosten: die Suite beweist
@@ -88,6 +89,7 @@ Entscheidung; sie füllen, was die Story offenließ.*
    bisher falsch gewichtet.
 8. **Der Seed bleibt außerhalb** (Demo-Daten einer frischen DB, `Data/Seed.cs:370`, `:888`); das Tor scannt
    `Controllers/` und `Services/`.
+<!-- markdownlint-enable MD029 -->
 
 **Wirkung auf die echte DB beim Einspielen:** keine Migration. Gespeicherte `DateOnly`-Werte behalten ihren Tag; ab dem
 Start rechnet „heute" in deutscher Zeit. In der ersten Nacht endet der Tag um 0 statt um 1 Uhr – die Abrechnung eines

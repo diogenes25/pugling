@@ -20,6 +20,7 @@ entgangen_bei: [B-673]
 Die volle E2E-Suite von Sprint B1 lief auf 5202/5175 mit Basis `9abb6aa6`. Im Diff des Branches gibt es weder
 Produktcode noch diese Spec. Trotzdem fiel `plan-umhaengen-gesperrt.spec.ts:23` mit einer strict-mode-Verletzung:
 `getByRole('button', { name: 'Bearbeiten' })` fand zwei Elemente, und zwar
+
 - `btn inline-btn`: den Plan im Kopf von `VaterPlanDetail.tsx:63`,
 - `btn ghost inline-btn`: die Position in `PlanPositions.tsx:993`.
 

@@ -55,7 +55,7 @@ Anmelden, ob er als Vater oder als Creator arbeitet.
 
 ## Iteration 97 — umgesetzt
 
-**Backend**
+### Backend
 
 - `GET supervisor/shop/activations?status=&skip=&take=` (`ShopController.AllActivations`) mit `X-Total-Count`. Dazu
   kommt die Client-Methode `ListAllActivationsAsync`.
@@ -67,7 +67,7 @@ Anmelden, ob er als Vater oder als Creator arbeitet.
   - der Start legt je Frage eine Zeile vorab an (Review-Fund).
 - Abdeckungs-Wächter auf 296 Actions.
 
-**Frontend**
+### Frontend
 
 - **Wahlschritt nach der PIN** (`VaterWahl`), nur für Konten mit beiden Rollen. Er ist mit der gemerkten Wahl
   vorbelegt und hat einen Ausgang „Abmelden“.
@@ -81,7 +81,7 @@ Anmelden, ob er als Vater oder als Creator arbeitet.
 - **E2E:** 15 Login-Stellen gehen jetzt über den Helfer `alsVaterStarten`. Neue Specs: `vater-schmal.spec.ts` und
   `vater-handy.spec.ts`.
 
-**Verifikation**
+### Verifikation
 
 - **Backend:** `dotnet test Pugling.sln -c Release` lief mit 1926/1926 grün und Exit-Code 0.
 - **Vitest:** 717/717 in `src/vater` und `src/lib`. Ein Fokus-Fall flackerte einmal im vollen Lauf und war einzeln grün

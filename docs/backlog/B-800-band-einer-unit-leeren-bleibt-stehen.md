@@ -71,4 +71,3 @@ auch keinen trägt – ein leeres Feld nach „Gespeichert." muss leer bleiben.
   (`VaterLehrwerke.tsx:819`), das Anlegen bekommt das DTO ohne den Schalter (sonst `unknown_field`); der Agent
   (`UnitNotesFiller.cs:142`) schickt `null` und lässt damit alles stehen, was er nicht setzt; `AudioUrlOrNull` ist der
   einzige Schreiber der Audio-URL (Review-Befund). Kein Befund.
-

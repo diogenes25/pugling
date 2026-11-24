@@ -109,5 +109,6 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 | B747-M2 ohne Kind-Bindung | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:495 | red | red |  |
 | B747-M3 ohne Statusfilter | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:496 | red | red |  |
 | B747-M4 ohne Tiebreaker | backend/Pugling.Api/Controllers/Supervisor/ShopController.cs:500 | red | red |  |
+
 - **2026-11-20** — `abgenommen` mit `5f024e2b`: Rollengang = voller Playwright-Lauf nach dem letzten Edit, 176 grün und 3 rot. Die 3 roten (`full-flow`, `shop-verlauf`, `taschengeld-monatlich`) warten auf `.cel-title` aus fremder, ungecommitteter Celebration-Arbeit; kein Pfad dieser Story ist darunter. Backend 1926/1926 grün mit Exit 0, Vitest 717/717. Vater abgenommen; das Gefühl am echten Handy prüft der Vater selbst ([Protokoll](../pm-sitzung-2026-11-20.md)).
 - **2026-11-21** — Nachschau (Nachtlauf, pugling-reviewer): Eigentum `ShopController.cs:493-495` gegen AK 1/6 nachgerechnet (Aussteller und Bindung, Fall Kind auch bei Vater B, Fall entbunden), Status-Bindung 400 statt stilles „alle“, Zählung über `ToPagedListAsync` auf der gefilterten Abfrage, Reihenfolge gleich der Variante je Kind; Frontend `api.allActivations` über `httpPaged` (frontend-reviewer). Kein Befund.

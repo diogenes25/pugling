@@ -144,7 +144,7 @@ Neue Tabellen (Migration **anhängen**, nie falten): `TowerGameRun` (Kind, Level
 
 ## Technik der App
 
-### Empfehlung: Godot 4 mit C#
+### Empfehlung: Godot 4 mit C# als Sprache
 
 | Option | Für | Gegen |
 | --- | --- | --- |
@@ -163,7 +163,7 @@ Laufzeit — alles grün. Das Spiel zielt auf `net9.0` und kompiliert die Quelle
 
 ### Client-Architektur
 
-```
+```text
 game/                     (Ordner in diesem Repo, Entscheidung 9)
   Scenes/                 Map, Tower, Monster, Player, Hud
   Scripts/Core/           reine Spiellogik (Wellen, Schaden, Munition) – engine-frei, unit-getestet
