@@ -22,6 +22,9 @@ vi.mock("../lib/api", async (importOriginal) => {
       extraTraining: (childId: number) => extraTraining(childId),
       startExtraRun: (childId: number, exerciseId: number) => startExtraRun(childId, exerciseId),
       submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) => submitExtraRun(childId, runId, answers),
+      // B-766: the overview also loads the mixed review's entry; here it has nothing due, so it stays away.
+      mixedReview: () => Promise.resolve({ unlocked: true, lockReason: null, outstanding: [], dueCards: 0, roundSize: 10,
+        openRunId: null, coinsToday: 0, dailyCoinCap: null }),
     },
   };
 });

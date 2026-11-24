@@ -15,7 +15,7 @@ import type {
   ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
-  ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, MixedReviewOverview, MixedReviewRunResponse, MixedReviewAnswer, MixedReviewResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
@@ -758,6 +758,13 @@ export const api = {
     http<ExtraRunResponse>(`${V1}/student/children/${childId}/extra-training/${exerciseId}/runs`, "POST"),
   submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>
     http<ExtraRunResult>(`${V1}/student/children/${childId}/extra-training/runs/${runId}/submit`, "POST", { answers }),
+  // ---- Sohn: Mischrunde (B-766) – fällige Karten aus allen Plänen, hinter der Sperre des Bonus-Trainings ----
+  mixedReview: (childId: number) =>
+    http<MixedReviewOverview>(`${V1}/student/children/${childId}/mixed-review`),
+  startMixedReview: (childId: number) =>
+    http<MixedReviewRunResponse>(`${V1}/student/children/${childId}/mixed-review/runs`, "POST"),
+  submitMixedReview: (childId: number, runId: number, answers: MixedReviewAnswer[]) =>
+    http<MixedReviewResult>(`${V1}/student/children/${childId}/mixed-review/runs/${runId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Kind-Tagessicht (B-606) ----
   // Die Pflichten aller aktiven Pläne an einer Stelle, mit Serie und Truhe – die Startseite der Arcade.

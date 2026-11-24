@@ -16,6 +16,7 @@ import { SohnShop } from "./SohnShop";
 import { SohnKonto } from "./SohnKonto";
 import { SohnInterests } from "./SohnInterests";
 import { SohnBonus, SohnBonusRun } from "./SohnBonus";
+import { SohnMischrunde } from "./SohnMischrunde";
 import { DadShowcase } from "./DadShowcase";
 import { Mascot } from "../components/Mascot";
 import { CelebrationLayer, useCelebration } from "../components/Celebration";
@@ -181,6 +182,7 @@ function SohnShell({ childId }: { childId: number }) {
           <Route path="ich" element={<SohnInterests />} />
           <Route path="dad" element={<DadShowcase />} />
           <Route path="bonus" element={<SohnBonus />} />
+          <Route path="bonus/misch" element={<SohnMischrunde />} />
           <Route path="bonus/:exerciseId" element={<SohnBonusRun />} />
           <Route path="*" element={<Navigate to="/sohn" replace />} />
         </Routes>
