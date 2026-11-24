@@ -12,6 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-24"
 wartet_auf: ""
 ---
 
@@ -126,3 +127,4 @@ einer Zählung über `ExerciseItem` und `ItemProgress` entsteht, im Frontend ein
 - **2026-11-23** — Review und Rollengang gemeinsam mit B-750 (siehe dort): keine 🔴, `pugling-reviewer` ohne 🟡; E2E
   `klassenarbeit-countdown.spec.ts` prüft „0 von 2 Wörtern sicher“.
 - **2026-11-24** — `in-arbeit` → `abgenommen` (Nachtlauf I, Sprint 133): Commit `65f4d2a7`; Backend-Suite 2185/2185 grün (Release, nach der letzten Änderung; vorher 2175), Frontend `vitest` 1393/1393, `tsc -b` grün, E2E `klassenarbeit-countdown` + `pfad` 2 passed; beide Reviewer gelaufen (keine offene 🔴/🟡); Rollengang maschinell (E2E, siehe oben).
+- **2026-11-24** — nachgeschaut (Retro Sprint 135): Commit 65f4d2a7 gelesen; ein Wort in zwei Übungen des Bündels zählt doppelt → [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md).

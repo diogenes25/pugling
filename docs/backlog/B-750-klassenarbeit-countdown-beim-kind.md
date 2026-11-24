@@ -12,6 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-24"
 wartet_auf: ""
 ---
 
@@ -123,3 +124,4 @@ Final. Je Kriterium die Änderung, die es rot macht (aus B-248 AK 1 und 2, hier 
   letzten Änderung (Vater plant zwei Arbeiten über die API, das Kind sieht auf der Startseite die frühere mit Fach, Datum, „in 5 Tagen“
   und „0 von 2 Wörtern sicher“); `e2e/pfad.spec.ts` 1 passed als Zeuge für den Zweig mit Tagespflicht.
 - **2026-11-24** — `in-arbeit` → `abgenommen` (Nachtlauf I, Sprint 133): Commit `65f4d2a7`; Backend-Suite 2185/2185 grün (Release, nach der letzten Änderung; vorher 2175), Frontend `vitest` 1393/1393, `tsc -b` grün, E2E `klassenarbeit-countdown` + `pfad` 2 passed; beide Reviewer gelaufen (keine offene 🔴/🟡); Rollengang maschinell (E2E, siehe oben).
+- **2026-11-24** — nachgeschaut (Retro Sprint 135): Commit 65f4d2a7 gelesen, kein Befund.

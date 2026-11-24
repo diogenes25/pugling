@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme"
+wartet_auf: "Nutzer: Mutanten-Probe über die AK-Fälle (in Lauf I vorbereitet, nie gelaufen; dazu die Fixes aus 6162599c) und Migration ClassTestPrepDuty an einer DB-Kopie proben"
 ---
 
 # B-757 · Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“
@@ -98,3 +98,4 @@ Final. Je Kriterium die Änderung, die es rot macht (aus Entscheidungen 1 bis 3;
   verschwindet nach dem Speichern → [B-942](B-942-fenster-editor-meldung-verschwindet.md), 🟡 eine Zusicherung ohne Biss →
   [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md); 🟢 in [B-944](B-944-vorbereitungs-pflicht-restpunkte.md). Keine
   Frontend-Mutanten-Probe gelaufen (der Lauf endete vorher).
+- **2026-11-24** — Sprint 135: die blockierenden Defekte B-940–B-943 sind abgenommen (Commit `1b92cd02`). E2E `klassenarbeit-vorbereitung` erwartete noch „etwa 2 Karten je Tag“; seit `6162599c` startet die Pflicht schon beim Zuweisen und verteilt auf die verbleibenden Tage (3). Die Spec ist angepasst, am HEAD-Backend ohne Sprint 135 ebenso rot gemessen; jetzt 1 passed. Bleibt `in-arbeit`: die Mutanten-Probe über die AK-Fälle ist nie gelaufen (pm-loop Step 5), die Fixes aus `6162599c` sind ungeprobt, und die Migration `ClassTestPrepDuty` ist nicht an einer Kopie der echten DB geprobt.

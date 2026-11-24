@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme"
+wartet_auf: "Nutzer: Mutanten-Probe über die AK-Fälle (in Lauf I vorbereitet, nie gelaufen; dazu die Fixes aus 6162599c) und Migration ClassTestPrepDuty an einer DB-Kopie proben"
 ---
 
 # B-758 · Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben
@@ -107,3 +107,4 @@ Schließ-Regel wiederverwenden, kein neues Schema.
   ist idempotent, keine Änderung macht ihn rot). Löschen → `Geloeschte_Arbeit…`. Mutanten-Probe über diese Fälle nicht gelaufen (Lauf endete am Fehlerzähler).
 - **2026-11-24** — Review gemeinsam mit B-752 (siehe dort); die Funde zum Schließen nach einem Positions-Speichern sind behoben, offen bleiben
   B-940/B-941/B-944. Rollengang: E2E `klassenarbeit-vorbereitung` deckt das Folgen nicht ab (Integrationstests tragen es); Ersatz benannt.
+- **2026-11-24** — Sprint 135: die blockierenden Defekte B-940–B-943 sind abgenommen (Commit `1b92cd02`). E2E `klassenarbeit-vorbereitung` erwartete noch „etwa 2 Karten je Tag“; seit `6162599c` startet die Pflicht schon beim Zuweisen und verteilt auf die verbleibenden Tage (3). Die Spec ist angepasst, am HEAD-Backend ohne Sprint 135 ebenso rot gemessen; jetzt 1 passed. Bleibt `in-arbeit`: die Mutanten-Probe über die AK-Fälle ist nie gelaufen (pm-loop Step 5), die Fixes aus `6162599c` sind ungeprobt, und die Migration `ClassTestPrepDuty` ist nicht an einer Kopie der echten DB geprobt.

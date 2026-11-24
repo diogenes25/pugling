@@ -35,3 +35,4 @@ selbst, Fenster-Editor auch bei geschriebenen Arbeiten, E2E-`getByLabel` ohne `e
 
 - **2026-11-24** — angelegt im Nachtlauf I (Sprint 134): 🟢-Hinweise der Reviews, gesammelt und zurückgestellt (ohne Zählung,
   Freigabe 10); der Lauf endete am Fehlerzähler. Protokoll [pm-sitzung-2026-11-23-i.md](../pm-sitzung-2026-11-23-i.md).
+- **2026-11-24** — aus den Reviews von Sprint 135 (🟢, ohne Zählung): (a) `FensterEditor` liest den Wert nur beim Einhängen – ein Wert, den ein anderer Erwachsener ändert, erscheint erst nach dem Neuladen der Seite; die Liste zeigt ihn richtig. (b) `page.context().clearCookies()` in den Klassenarbeits-Specs tut nichts (die Sitzung liegt im `localStorage`); ein eigener Browser-Kontext wäre der saubere Rollenwechsel. (c) `MapAsync` stellt je Arbeit jetzt drei Abfragen.
