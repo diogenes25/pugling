@@ -519,6 +519,27 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
 
+    // 6162599c, third path: linking a tag to a test in its window reconciles at once, like creating it and assigning
+    // exercises. Red when the link only saves - the duty would wait for the child's next login.
+    [Fact]
+    public async Task Schlagwort_Verknuepfen_Im_Fenster_Legt_Die_Pflicht_Ohne_Login_An()
+    {
+        var k = await KindAsync();
+        var arbeit = await ArbeitAsync(k, D.AddDays(3), []);
+        var ex = await VokabelnAsync(k.Father);
+        var tagId = await TestApi.IdAsync(await k.Father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = k.ChildId, name = TestApi.UniqueName("Verknuepfen") }));
+        (await k.Father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises", new { exerciseIds = new[] { ex } }))
+            .EnsureSuccessStatusCode();
+        Assert.Empty(Positionen(k.PlanId));
+
+        (await k.Father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{arbeit}/tags/{tagId}", new { })).EnsureSuccessStatusCode();
+
+        var pos = Assert.Single(Positionen(k.PlanId));
+        Assert.Equal(ex, pos.ExerciseId);
+        Assert.Equal(arbeit, pos.SourceKlassenarbeitId);
+    }
+
     // ---- B-941: only executable material becomes a duty ----
 
     /// <summary>Leaves <paramref name="exerciseId"/> with a grant only to <paramref name="grantTo"/> (<c>null</c> a stranger

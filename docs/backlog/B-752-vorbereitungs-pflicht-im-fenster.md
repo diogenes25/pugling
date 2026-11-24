@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Mutanten-Probe über die AK-Fälle (in Lauf I vorbereitet, nie gelaufen; dazu die Fixes aus 6162599c) und Migration ClassTestPrepDuty an einer DB-Kopie proben"
+wartet_auf: "Nutzer: Migration ClassTestPrepDuty an einer Kopie der echten DB proben (AK 8); Fairness der Last am Gerät"
 ---
 
 # B-752 · Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel
@@ -202,3 +202,17 @@ wäre es XL gewesen, darum der Schnitt.
   Fenster 12, sieht „etwa 2 Karten je Tag“, das Kind findet nach dem Login die Pflicht als Knoten auf seinem Pfad. Bleibt `in-arbeit`:
   zwei 🟡 offen (B-940, B-941), der Lauf endete am Fehlerzähler.
 - **2026-11-24** — Sprint 135: die blockierenden Defekte B-940–B-943 sind abgenommen (Commit `1b92cd02`). E2E `klassenarbeit-vorbereitung` erwartete noch „etwa 2 Karten je Tag“; seit `6162599c` startet die Pflicht schon beim Zuweisen und verteilt auf die verbleibenden Tage (3). Die Spec ist angepasst, am HEAD-Backend ohne Sprint 135 ebenso rot gemessen; jetzt 1 passed. Bleibt `in-arbeit`: die Mutanten-Probe über die AK-Fälle ist nie gelaufen (pm-loop Step 5), die Fixes aus `6162599c` sind ungeprobt, und die Migration `ClassTestPrepDuty` ist nicht an einer Kopie der echten DB geprobt.
+- **2026-11-24** — Mutanten-Probe über die AK-Fälle nachgeholt. Belege je Fall:
+  - AK 1 Fensterbeginn → `Pflicht_Entsteht_Erst_Im_Fenster`, P1 rot; Login gleicht ab → P23 rot; rückwirkender Malus → `Spaeter_Erster_Login…`
+  - AK 2 Termintag schuldet nichts → `Termintag_Und_Danach…`, P16b (Abrechnung ohne Obergrenze) rot, P12b (Ende am Termin in Align) rot
+  - AK 3 Idempotenz/Einfrieren → `Zweiter_Abgleich_Und_Nachgetaggte…`, P10b (beide Wächter, von Hand) rot, P17 rot
+  - AK 4 schon im Plan → `Uebung_Schon_Im_Plan…`, P8 rot
+  - AK 5 Malus verteilt, keine Ziel-Belohnung → `Malus_Eines_Tages…`, P13 und P14 rot
+  - AK 6 ohne Fach/aktiven Plan, Grund → `Ohne_Fach_Oder_Ohne_Aktiven_Plan…`, P4, P28 rot; inaktiver Plan → P5 rot
+  - AK 7 zwei Arbeiten, eine Position bis zum späteren Termin → `Zwei_Arbeiten…`/`Spaetere_Arbeit…`, P18 rot
+  - AK 9 Fenster 0 → `Fenster_Null_Schaltet…`, P27, P30 rot; Fenstergrenzen → P26 rot
+  - AK 10 Dosis aufgerundet, gedeckelt, ohne Tagesdosis `ItemCount` → `Dosis_Ist_Aufgerundet…`, P6, P7, P15 rot; leere Übung → P9 rot
+  - `6162599c`: leeres Bündel friert nicht ein (F1), Anlegen/Zuweisen/Verknüpfen gleichen sofort ab (F2, F3, F4 – F4 mit neuem Test `Schlagwort_Verknuepfen_Im_Fenster…`), beendete Spanne bleibt (F5) – alle rot. Kauf gleicht ab → P24 rot; freigegebene Position → P29 rot.
+  - Ungemessen und benannt: Transaktion um Anspruch und Positionen, gleichzeitige Logins (B-944).
+  - Mutanten-Probe am 2026-11-24 auf Wunsch des Nutzers (Lauf-I-Liste neu verortet, dazu `6162599c` und B-757; Tabelle und Auflösung der sechs zunächst belegfreien Zeilen in [pm-sitzung-2026-11-24.md](../pm-sitzung-2026-11-24.md), Runde 136); Backend-Suite danach 2310/2310 grün (Release).
+  - Bleibt `in-arbeit`: AK 8 verlangt die Migration an einer **Kopie der echten DB** – der Migrationstest (`VorbereitungsPflichtMigrationTests`) ist grün, die Kopie ist Sache des Nutzers. Dazu die Gerät-Prüfung, ob die Last fair wirkt.

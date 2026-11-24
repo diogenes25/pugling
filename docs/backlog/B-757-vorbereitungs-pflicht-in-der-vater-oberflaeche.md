@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
 aliases: [Fenster und Vorschau im Klassenarbeiten-Dialog]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Mutanten-Probe über die AK-Fälle (in Lauf I vorbereitet, nie gelaufen; dazu die Fixes aus 6162599c) und Migration ClassTestPrepDuty an einer DB-Kopie proben"
+wartet_auf: ""
 ---
 
 # B-757 · Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“
@@ -99,3 +99,5 @@ Final. Je Kriterium die Änderung, die es rot macht (aus Entscheidungen 1 bis 3;
   [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md); 🟢 in [B-944](B-944-vorbereitungs-pflicht-restpunkte.md). Keine
   Frontend-Mutanten-Probe gelaufen (der Lauf endete vorher).
 - **2026-11-24** — Sprint 135: die blockierenden Defekte B-940–B-943 sind abgenommen (Commit `1b92cd02`). E2E `klassenarbeit-vorbereitung` erwartete noch „etwa 2 Karten je Tag“; seit `6162599c` startet die Pflicht schon beim Zuweisen und verteilt auf die verbleibenden Tage (3). Die Spec ist angepasst, am HEAD-Backend ohne Sprint 135 ebenso rot gemessen; jetzt 1 passed. Bleibt `in-arbeit`: die Mutanten-Probe über die AK-Fälle ist nie gelaufen (pm-loop Step 5), die Fixes aus `6162599c` sind ungeprobt, und die Migration `ClassTestPrepDuty` ist nicht an einer Kopie der echten DB geprobt.
+- **2026-11-24** — Mutanten-Probe nachgeholt: AK 1 Anlegen schickt das Fenster → U1 rot; AK 2 keine Zahl bei Fenster 0 → U2 rot (dazu B-943); AK 3 Grund → U3 rot; AK 4 zurück auf Standard → U4 rot (Server-Seite P25b rot); alle in `frontend/src/vater/VaterClassTests.test.tsx`, Vitest. Grundlinie danach grün.
+- **2026-11-24** — `in-arbeit` → `abgenommen`: Commits `1333ae02` und `1b92cd02` (B-941/942/943); `frontend-reviewer` in Lauf I und in Sprint 135; Vitest 1426/1426, `tsc -b` grün. Rollengang maschinell: E2E `klassenarbeit-vorbereitung` und `klassenarbeit-stoff-dicht` 1+1 passed (Ports 5231/5204, Server von Playwright gestartet).

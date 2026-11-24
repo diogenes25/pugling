@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/gamification, bereich/api, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/gamification, bereich/api, rolle/supervisor]
 aliases: [Zusatzpflicht bei Terminverschiebung, Absage und Schreiben schließen die Vorbereitung]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Mutanten-Probe über die AK-Fälle (in Lauf I vorbereitet, nie gelaufen; dazu die Fixes aus 6162599c) und Migration ClassTestPrepDuty an einer DB-Kopie proben"
+wartet_auf: ""
 ---
 
 # B-758 · Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben
@@ -108,3 +108,10 @@ Schließ-Regel wiederverwenden, kein neues Schema.
 - **2026-11-24** — Review gemeinsam mit B-752 (siehe dort); die Funde zum Schließen nach einem Positions-Speichern sind behoben, offen bleiben
   B-940/B-941/B-944. Rollengang: E2E `klassenarbeit-vorbereitung` deckt das Folgen nicht ab (Integrationstests tragen es); Ersatz benannt.
 - **2026-11-24** — Sprint 135: die blockierenden Defekte B-940–B-943 sind abgenommen (Commit `1b92cd02`). E2E `klassenarbeit-vorbereitung` erwartete noch „etwa 2 Karten je Tag“; seit `6162599c` startet die Pflicht schon beim Zuweisen und verteilt auf die verbleibenden Tage (3). Die Spec ist angepasst, am HEAD-Backend ohne Sprint 135 ebenso rot gemessen; jetzt 1 passed. Bleibt `in-arbeit`: die Mutanten-Probe über die AK-Fälle ist nie gelaufen (pm-loop Step 5), die Fixes aus `6162599c` sind ungeprobt, und die Migration `ClassTestPrepDuty` ist nicht an einer Kopie der echten DB geprobt.
+- **2026-11-24** — Mutanten-Probe nachgeholt. Belege je Fall:
+  - AK 1 Termin/Fenster verschoben → `Verschobener_Termin…` (`backend/Pugling.Api.Tests/VorbereitungsPflichtFolgtTests.cs`), P21 (PATCH gleicht nicht ab) rot; Wiederbeginn → `Aus_Dem_Fenster_Geschoben…`, P20 rot
+  - AK 2 Fenster 0 schließt → P19b rot; AK 3 abgesagt/geschrieben → `Abgesagt_Oder_Geschrieben…`, P19b rot; gelöscht → `Geloeschte_Arbeit…`, P22 rot
+  - AK 4 zweite Arbeit hält die Pflicht → `Zwei_Arbeiten…`, P18 rot
+  - AK 5 ist eine Gegenprobe (im Ausgangszustand schon so, als solche beschriftet).
+  - Mutanten-Probe am 2026-11-24 auf Wunsch des Nutzers (Lauf-I-Liste neu verortet, dazu `6162599c` und B-757; Tabelle und Auflösung der sechs zunächst belegfreien Zeilen in [pm-sitzung-2026-11-24.md](../pm-sitzung-2026-11-24.md), Runde 136); Backend-Suite danach 2310/2310 grün (Release).
+- **2026-11-24** — `in-arbeit` → `abgenommen`: Commits `03e77040`, `d0fe6477`, `6162599c` (dazu `1b92cd02` für die blockierenden Defekte); `pugling-reviewer` in Lauf I (🔴 behoben, 🟡 in B-940/941, beide abgenommen). Rollengang: **nur maschinell über Integrationstests**, keine E2E fährt Verschieben oder Absagen durch die Oberfläche. Ein Mensch müsste noch klicken: Arbeit planen, Termin verschieben, dann absagen – und dabei den Pfad des Sohns ansehen. Die Migration teilt sich die Story mit B-752 (wartet dort).

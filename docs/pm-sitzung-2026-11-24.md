@@ -168,16 +168,81 @@ schon vor diesem Sprint rund 1,7 KB über ihrem Budget (`context-budget.sh`). Ei
 **Bewusst ungedeckt:** Das Verlängern laufender Positionen über eine spätere Arbeit prüft kein Ausführ-Recht (es ist keine neue
 Zuweisung; im Code begründet). Gleichzeitige Logins bleiben ohne deterministischen Test (B-944).
 
+## Runde 136 — Mutanten-Probe B-752/B-757/B-758
+
+**Auftrag des Nutzers (2026-11-24):** die fehlende Probe laufen lassen. Grundlage war die in Lauf I vorbereitete Liste (28 Mutanten);
+jede Zeile wurde an der heutigen Stelle über ihren genauen Text neu verortet. Dazu kamen fünf Mutanten für die Korrekturen aus
+`6162599c` (F1–F5) und vier für die Vater-Oberfläche (U1–U4). Gemessen in Debug, die Grundlinie war vor und nach jedem Lauf grün.
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| I-P1 Fensterbeginn ignoriert | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:59 | red | red |  |
+| I-P4 Plan anderen Fachs | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:65 | red | red |  |
+| I-P5 inaktiver Plan zaehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:65 | red | red |  |
+| I-P6 Dosis abgerundet | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:98 | red | red |  |
+| I-P7 Deckel fehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:98 | red | red |  |
+| I-P8 Dublette im Plan | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:157 | red | red |  |
+| I-P9 leere Uebung | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:161 | red | red |  |
+| I-P13 Malus je Uebung voll | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:240 | red | red |  |
+| I-P14 Ziel-Belohnung | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:241 | red | red |  |
+| I-P15 Dosis ohne Leitner | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:238 | red | red |  |
+| I-P17 eigene Arbeit deckt nicht | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:274 | red | red |  |
+| I-P18 frueheste Arbeit gewinnt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:284 | red | red |  |
+| I-P20 Wiederbeginn rueckwirkend | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:286 | red | red |  |
+| I-P21 PATCH gleicht nicht ab | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:210 | red | red |  |
+| I-P22 Loeschen schliesst nicht | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:231 | red | red |  |
+| I-P23 Login gleicht nicht ab | backend/Pugling.Api/Controllers/AuthController.cs:88 | red | red |  |
+| I-P24 Kauf gleicht nicht ab | backend/Pugling.Api/Controllers/Student/MeController.cs:297 | red | red |  |
+| I-P26 negatives Fenster erlaubt | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:62 | red | red |  |
+| I-P27 Karten bei Fenster 0 | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:107 | red | red |  |
+| I-P28 Grund ohne Fach fehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:75 | red | red |  |
+| I-P29 freigegebene Position | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:261 | red | red |  |
+| I-P30 Fenster beim Anlegen ignoriert | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:146 | red | red |  |
+| F1-leer-friert | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:189 | red | red |  |
+| F2-anlegen | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:153 | red | red |  |
+| F3-zuweisen | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:255 | red | red |  |
+| F5-spanne | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:237 | red | red |  |
+| U1-anlegen | frontend/src/vater/VaterClassTests.tsx:79 | red | red |  |
+| U2-aus | frontend/src/vater/VaterClassTests.tsx:184 | red | red |  |
+| U3-grund | frontend/src/vater/VaterClassTests.tsx:185 | red | red |  |
+| U4-standard | frontend/src/vater/VaterClassTests.tsx:210 | red | red |  |
+| I-P12b Ende am Termin (Align) | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:284 | red | red |  |
+| I-P16b Abrechnung ohne Obergrenze | backend/Pugling.Api/Services/Shared/PositionProgressService.cs:857 | red | red |  |
+| I-P19b nichts schliessen (`_ = progress;`) | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:280 | red | red |  |
+| I-P25b Zuruecksetzen wirkungslos | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:200 | red | red |  |
+| F4-tag (mit neuem Test) | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:290 | red | red |  |
+| I-P10b Bündel nicht eingefroren (zwei Zeilen, von Hand) | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:176+188 | red | red | Schleifenfilter und Anspruch zugleich entfernt |
+
+**Sechs Zeilen trugen im ersten Lauf keinen Beleg; so wurden sie aufgelöst:**
+
+1. **P12** (`DutyUntil` am Termin in `StartAsync`) blieb grün, weil der Mutant gleichwertig ist: `AlignSpansAsync` setzt das Ende
+   im selben Abgleich neu. Die Zeile, die AK 2 trägt, ist die `until`-Zeile in Align → P12b rot.
+2. **P16 und P19** kompilierten nicht (`if (false)` ist unerreichbarer Code; ohne den Aufruf war `progress` ungelesen) →
+   umformuliert als P16b und P19b, beide rot.
+3. **P25** fiel, aber im Testfall `Clear_Schalter_Leert_Und_Gewinnt`, nicht im erwarteten Namen. Neu gemessen mit dem richtigen
+   Namen (P25b), rot.
+4. **P10:** Das Einfrieren hat zwei unabhängige Wächter – den Schleifenfilter auf den geladenen Stand und den DB-Anspruch, der
+   gleichzeitige Logins abfängt. Kein einzeiliger Mutant macht AK 3 rot. Die Zeile `k.PrepStartedOn = today` fiel an anderer
+   Stelle: Sie speist das `started` von Align im Speicher. Darum von Hand mit beiden Zeilen gemessen: AK 3 rot, nach
+   `git checkout` grün.
+5. **F4 war eine echte Lücke:** Kein Test prüfte, dass das Verknüpfen eines Schlagworts im Fenster sofort abgleicht. Neuer Test
+   `Schlagwort_Verknuepfen_Im_Fenster_Legt_Die_Pflicht_Ohne_Login_An` → F4 rot.
+
+**Bewusst ungemessen:** die Transaktion um Anspruch und Positionen (`6162599c`) und gleichzeitige Logins. Beides lässt sich nicht
+deterministisch auslösen (B-944).
+
 ## Offene Roadmap (priorisiert)
 
-Durable Liste: `docs/backlog/`. Reihenfolge-Begründung:
+Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 
-1. **B-752/B-757/B-758 abschließen:** Mutanten-Probe über ihre AK-Fälle und die Fixes aus `6162599c`. Dann die Migration an einer
-   DB-Kopie proben (Nutzer), bevor der Heimnetz-Server sie einspielt.
+1. **B-752:** Die Migration `ClassTestPrepDuty` an einer Kopie der echten DB proben (AK 8, Nutzer), bevor der Heimnetz-Server sie
+   einspielt. Danach bleibt nur der Blick am Gerät, ob die Last fair wirkt. B-757 und B-758 sind seit Runde 136 abgenommen.
 2. **B-945** prüfen (unverifiziert): Ein falsches „x von y Wörtern“ trifft das Kind direkt.
-3. **B-944** Restpunkte.
+3. **B-944** Restpunkte, darunter die nicht deterministisch messbare Nebenläufigkeit.
 
 ## Konkreter Änderungsstand (für Review)
 
 `1b92cd02` – Code, Tests, Vertrag, generierte Doku, E2E. Danach ein Doku-Commit: Stories, dieses Protokoll, pm-loop-Regel,
 B-945, Nachschau.
+
+Runde 136: ein Test (`Schlagwort_Verknuepfen_Im_Fenster…`), Belege und Abnahme von B-757/B-758 – eigener Commit.
