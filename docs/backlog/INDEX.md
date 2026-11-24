@@ -101,7 +101,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (611)</summary>
+<summary>Abgenommen (612)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -712,6 +712,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-949](B-949-bereitschaft-in-der-vater-liste.md) | Der Vater sieht in der Klassenarbeiten-Liste „x von y Wörtern sicher“ | Wunsch | `abgenommen` | P1 | S | frontend | — |
 | [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-950](B-950-offene-rueckmeldungen-auf-heute.md) | Die Vater-Startseite „Heute“ zeigt offene Kartenmeldungen der Kinder | Wunsch | `abgenommen` | P1 | S | frontend | — |
+| [B-951](B-951-malus-nennt-den-verpassten-tag.md) | Ein Malus nennt nicht den Tag, den das Kind verpasst hat | Defekt | `abgenommen` | P1 | S | backend | — |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created` | Defekt | `abgenommen` | P2 | S | backend | Vertrag |
@@ -740,7 +741,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (223)
 
-**Nachgeschaut: 570 von 611 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 41 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 574 von 612 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -969,7 +970,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-948](B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt | [B-757] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (41) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (38) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1013,10 +1014,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird |
-| [B-948](B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt |
-| [B-949](B-949-bereitschaft-in-der-vater-liste.md) | Der Vater sieht in der Klassenarbeiten-Liste „x von y Wörtern sicher“ |
-| [B-950](B-950-offene-rueckmeldungen-auf-heute.md) | Die Vater-Startseite „Heute“ zeigt offene Kartenmeldungen der Kinder |
+| [B-951](B-951-malus-nennt-den-verpassten-tag.md) | Ein Malus nennt nicht den Tag, den das Kind verpasst hat |
 
 </details>
 

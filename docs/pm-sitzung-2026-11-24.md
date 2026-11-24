@@ -417,13 +417,101 @@ API auf `:5201` (weigert sich bei 5200), Migrationen laufen dabei gegen die Kopi
 
 **Bewusst ungedeckt:** Ob ein Rollengang die Kopie wirklich nutzt, prüft niemand; das Skript senkt nur die Kosten.
 
+## Runde 139 — Vorstellung & Feedback
+
+Gegangen an einer frischen **Kopie der echten DB** (`kopie-server.sh`, Stand 16:01, `:5201`; `:5200` unberührt, PID geprüft,
+bevor der Kopie-Server für den Build beendet wurde).
+
+### Feedback Sohn (aus den Daten)
+
+- Theodor meldet sich am Dienstag um 16:02 an und bekommt fünfmal −2 Münzen. Gemeint ist der Montag, an dem er nicht gelernt
+  hat, aber im Konto steht nur „Pflicht gerissen (Malus) · […] **Tagesziel gerissen**“, ohne Datum. Um 16 Uhr ist sein
+  Dienstag noch offen; die Zeile liest sich, als sei er schon verloren. Dazu kommt „Wochenziel gerissen“ für die Vorwoche,
+  während „Heute“ dasselbe Wochenziel als offen zeigt. **Fund → B-951.**
+- Friedrich: Petit contrôle Unité 5 **heute**. 223 Antworten bis zum Nachmittag, 2 von 10 Zielen. Die vier Testsatz-Positionen
+  (214–217, 0 eingeführt, 0 fällig) lassen sich spielen (Sitzung startet im Lern-Modus). Kein Fund.
+- **Top-3:** wissen, wofür ein Abzug ist · nichts Neues am Spiel · (Theodor) die Part-C-Meldungen.
+
+### Feedback Vater (aus den Daten)
+
+- Im Kind-Konto steht beim Malus das **Buchungsdatum** 24.11. Der Vater liest „heute verpasst“, obwohl der Montag gemeint ist
+  (dieselbe Senke wie beim Sohn, B-951).
+- Theodor hat bis 16 Uhr nichts gespielt; „Heute“ zeigt das richtig (0 Antworten, 0 von 6). Seine vier Kartenmeldungen sind
+  weiter offen. Sie stehen seit Sprint 138 auf „Heute“; antworten muss der Vater (Handlung, keine Story).
+- **Top-3:** ehrliche Malus-Zeile · Theodors Meldungen beantworten · B-748 (Klausurchance) bleibt der nächste Wunsch.
+
+### Feedback Creator
+
+- Kein Creator-Pfad berührt, keine neuen Daten. Die Meldungen zu Übung 15 bleiben bei B-630.
+
+## PM-Synthese & Priorisierung (Runde 139)
+
+| Prio | Story | Was | Größe | Wo |
+|---|---|---|---|---|
+| P1 | [B-951](backlog/B-951-malus-nennt-den-verpassten-tag.md) | Malus nennt den verpassten Tag bzw. die Woche | S | backend |
+
+Gegrillt im Dialog (2026-11-24): Periode im Ledger-Text, Form „vom Mo 23.11.“ bzw. „der Woche 16.–22.11.“, Altbestand bleibt.
+
+**Roter Faden:** Ein Abzug muss sagen, wofür er ist; sonst hält ihn das Kind für einen Fehler der App, und der Stock verliert
+seine Wirkung.
+
+## Sprint 139 — Ziel & Umfang
+
+**Sprint-Ziel:** Ein Malus, der am nächsten Tag gebucht wird, nennt in Sohn- und Vater-Konto den Tag bzw. die Woche, die das
+Kind verpasst hat, nicht den Tag der Abrechnung.
+**Umfang:** B-951.
+**Entwickler-Brief:** Die Senke ist die einzige Schreibstelle eines `GoalPenalty` (`PositionProgressService.SettleClosedPeriodsAsync`).
+Die Periode `(from, to)` liegt dort in der Schleife. Formatierer `MissedPeriodLabel` mit fester Wochentag-Liste, keine Kultur
+(ICU auf Linux schreibt „Mo.“). Kein Vertrag, keine Migration. Testweg: `PflichtMalusTests` (Integration, exakte Texte je
+Tag und Woche) und eine Theorie mit festen Daten.
+
+## Iteration 139 — umgesetzt
+
+Commit `04827f89`.
+
+- **Backend:** `PositionProgressService.MissedPeriodLabel` schreibt die verpasste Periode in den `GoalPenalty`-Text.
+  Wochentage kommen aus einer festen Liste. Kein Vertrag, keine Migration, kein Frontend.
+- **Verifikation:** .NET 2334/2334 (Release, vorher 2323; dazu die Theorie mit 11 Fällen). Mutanten-Probe 6/6 rot am
+  richtigen Test (Tabelle in B-951). `pugling-reviewer`: kein Korrektheitsfund, zwei Kommentar-Punkte übernommen.
+
+## Runde 139 — Re-Review / Abnahme
+
+Server: nach dem letzten Edit an einer frischen Kopie der echten DB gestartet (`:5201`).
+
+- **Sohn – abgenommen:** „Da steht jetzt ‚Tagesziel vom Mo 23.11. gerissen‘. Montag hab ich nichts gemacht, das stimmt. Heute
+  kann ich noch.“ (Theodors Anmeldung an der Kopie, fünf Zeilen, alle mit Montag bzw. der Woche 16.–22.11.)
+- **Vater – abgenommen:** Er liest denselben Text in seinem Konto. Das Buchungsdatum 24.11. daneben ist jetzt als
+  „gemerkt am“ lesbar, nicht als „verpasst am“.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
+
+**Stand:** B-951 `abgenommen`.
+
+## Retrospektive (Sprint 139)
+
+**Nachschau:** Sprint 138 (B-947–B-950, `08933431`) gelesen: `CardsPerDayAsync` zählt keine Kandidaten doppelt (sie schließen
+Planübungen aus), `PullInAsync` beansprucht den Schnappschuss über ein `ExecuteUpdate` und bucht nur, wenn das Update greift,
+die beiden Frontend-Zeilen hängen am Endpunkt des Kindes bzw. an der Liste offener Meldungen. Kein Befund. `nachgeschaut:
+2026-11-24` an allen vier. Index: Nachgeschaut 574 von 612.
+
+**Was die eigenen Tore durchgelassen haben:** Nichts aus diesem Sprint. Der Fund selbst ist alt: Der Ledger-Text stammt aus der
+Zeit vor der lazy Abrechnung und war nie falsch, nur ohne Bezug. Kein Test, kein Review und kein E2E hätte ihn gefunden, denn
+auf Wegwerf-Daten entsteht kein Malus über Nacht. Gefunden hat ihn der Rollengang an der Kopie der echten DB, also das Werkzeug
+aus Retro 138.
+
+**Der eine Mechanismus:** Keiner. Das Werkzeug aus Retro 138 hat in seinem ersten Einsatz einen Fund geliefert, den keine
+Wegwerf-DB zeigt. Ein weiteres Tor (etwa „jeder Ledger-Text nennt sein Datum“) träfe nur diese eine Senke, die jetzt ein Test
+hält. Kein neues Tor, darum kein Halt.
+
+**Bewusst ungedeckt:** Ob andere lazy gebuchte Texte (Truhe, Serie) ihren Tag nennen müssten, ist nicht geprüft. Der
+Rollengang zeigte nur den Malus.
+
 ## Offene Roadmap (priorisiert)
 
 Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 
 1. **B-752:** Die Migration `ClassTestPrepDuty` an einer Kopie der echten DB proben (AK 8, Nutzer), bevor der Heimnetz-Server sie
    einspielt. Danach bleibt nur der Blick am Gerät, ob die Last fair wirkt. B-757 und B-758 sind seit Runde 136 abgenommen.
-2. B-945–B-950 abgenommen. Nächster Kandidat aus dem Rollengang: B-748 (Klausurchance in der Vater-Übersicht) – der Wortstand
+2. B-945–B-951 abgenommen. Nächster Kandidat aus dem Rollengang: B-748 (Klausurchance in der Vater-Übersicht) – der Wortstand
    steht jetzt in der Liste, die Prognose fehlt.
 3. **B-944** Restpunkte, darunter die nicht deterministisch messbare Nebenläufigkeit.
 
@@ -433,3 +521,5 @@ Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 B-945, Nachschau.
 
 Runde 136: ein Test (`Schlagwort_Verknuepfen_Im_Fenster…`), Belege und Abnahme von B-757/B-758 – eigener Commit.
+
+Runde 139: `04827f89` – Code und Test zu B-951. Danach ein Doku-Commit: Story, dieses Protokoll, Nachschau Sprint 138.

@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-757]
 wartet_auf: ""
+nachgeschaut: 2026-11-24
 ---
 
 # B-948 · „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt

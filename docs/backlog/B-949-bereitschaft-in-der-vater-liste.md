@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-24
 ---
 
 # B-949 · Der Vater sieht in der Klassenarbeiten-Liste „x von y Wörtern sicher“
