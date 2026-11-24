@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
 aliases: [Abweichung Prognose Note, Eichung von Hand]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: B-683
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-746 · Prognose und Note nebeneinander: die Abweichung für den Vater
@@ -96,3 +98,43 @@ Gemessen am 2026-11-20 auf `main`.
 
 - **2026-11-20** — angelegt aus [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) (geteilt); `geschaetzt`: S, beides (Backend
   zuerst), keine Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-24** — Nachprüfung vor dem Bau (Nachtlauf L, Sprint 161, [Protokoll](../pm-sitzung-2026-11-24-l.md)): Ist-Stand
+  bestätigt; `KlassenarbeitResponse` wird nur im Mapper `KlassenarbeitenController.MapAsync` gebaut (kein Konstruktor in
+  Tests), die Liste ist der einzige Ort im Frontend, der sie zeigt. Die Differenz braucht die offene Umrechnung
+  Kommanote → Stufe aus B-745 nicht: sie ist Note minus Stufe. `in-arbeit`.
+- **2026-11-24** — gebaut: `KlassenarbeitResponse.PredictedLevel` (`int?`, additiv am Ende), Mapper reicht die Spalte durch,
+  `docs/openapi/v1.json` und `contract.ts` neu erzeugt. Frontend: Spalte „Prognose“ in `VaterClassTests.tsx` mit
+  `PrognoseZelle` („Stufe N“, mit Note „· 0,5 besser“ / „· 2 schlechter“ / „· wie erwartet“, ohne Schnappschuss „keine
+  Prognose“), reine Funktionen `prognoseAbstand` (Note minus Stufe, roh) und `abstandText` (Zehntel, symmetrisch über
+  `toLocaleString`, auf 0 gerundet = „wie erwartet“). Kein Student-Endpunkt trägt das Feld.
+- **2026-11-24** — AK → Test: AK 1 mit Schnappschuss und Note → `VaterClassTests.test.tsx` „zeigt Stufe und Abstand in
+  Worten“ (F1 Richtung gekippt, F6 Worte vertauscht) · AK 1 ohne Schnappschuss → „zeigt ohne Schnappschuss ‚keine
+  Prognose‘“ (F4) · Schnappschuss ohne Note → „zeigt vor der Note nur die Stufe“ (F3) · Gleichstand → „nennt den
+  Gleichstand“ (F5) · Rundung → „rechnet Note minus Stufe und rundet erst in der Anzeige“ (F2) · AK 1 in der Zeile der
+  echten Liste → E2E `klassenarbeit-abweichung.spec.ts` (Stufe 6 · 2 besser, „keine Prognose“ ohne Fach) · AK 2 →
+  `KlassenarbeitPrognoseTests.Vater_liest_die_Prognose_an_der_Arbeit` (M11 Mapper `null` → rot, M12 `?? 0` → rot) ·
+  AK 3 → `KlassenarbeitCountdownTests.Antwort_Traegt_Weder_Note_Noch_Notenkommentar` um `predictedLevel` erweitert (M13:
+  das Feld am Schülervertrag → rot).
+- **2026-11-24** — Review `frontend-reviewer` (Agent, Vitest/`tsc` selbst gelaufen): kein 🔴. 🟡 **Das Vorzeichen trug die
+  Bedeutung nur im `title`** – ein Vater liest „−“ leicht als „schlechter“, und `title` erreicht Handy und Tastatur nicht.
+  Behoben (gezählt, Sprint 161: 2): Richtung in Worten („besser“/„schlechter“), kein `title` mehr. 🟡 **Doku „ungerundet“,
+  Code rundete auf Zehntel mit `Math.round` (asymmetrisch: 2,25 → −0,7, 3,75 → +0,8; 3,04 → „wie erwartet“)**. Behoben
+  (gezählt, Sprint 161: 3): `prognoseAbstand` liefert roh, gerundet wird nur in `abstandText` über `toLocaleString`
+  (symmetrisch, 2,25 und 3,75 beide 0,8). 🟢 zurückgestellt ohne Zählung: eine noch geplante Arbeit zeigt „keine Prognose“,
+  was nach „etwas fehlt“ klingen kann – AK 1 verlangt genau diesen Text; ein „kommt am Klausurtag“ wäre eine
+  Wortlautentscheidung (B-980).
+- **2026-11-24** — Mutanten-Probe Frontend nach der letzten Änderung (Vitest `VaterClassTests.test.tsx`, 2026-11-24 22:14, an
+  `5993c86b + Arbeitsbaum geändert`, Grundlinie danach grün); die Backend-Mutanten M11–M13 stehen in B-744:
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | F1 Richtung gekippt | frontend/src/vater/VaterClassTests.tsx:174 | red | red |  |
+  | F2 ganze Noten | frontend/src/vater/VaterClassTests.tsx:182 | red | red |  |
+  | F3 fehlende Note als 0 | frontend/src/vater/VaterClassTests.tsx:173 | red | red |  |
+  | F4 ohne Schnappschuss eine Zahl | frontend/src/vater/VaterClassTests.tsx:193 | red | red |  |
+  | F5 Gleichstand als Zahl | frontend/src/vater/VaterClassTests.tsx:183 | red | red |  |
+  | F6 Worte vertauscht | frontend/src/vater/VaterClassTests.tsx:184 | red | red |  |
+- **2026-11-24** — Verifikation nach der letzten Änderung: .NET 2353/2353 (Release, Ausgangsstand 2343), Vitest 130 Dateien /
+  1445 Tests, `tsc -b` sauber, `dotnet format --verify-no-changes` sauber. Rollengang: E2E `klassenarbeit-abweichung.spec.ts` (Vater liest „Stufe 6 · 2 besser“ und „keine Prognose“) mit den Zeugen `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `notenstufe` – 4 passed; dieselbe Spalte an der Kopie der echten DB über die API gelesen (Friedrich: `predictedLevel` 6). `abgenommen`, Code in Commit
+  `2886acf6`. Die `## Entscheidungen` sind weiter „stellvertretend, unbestätigt“ (Vorbereitungslauf 2026-11-20); die
+  Bestätigung durch den Nutzer steht aus.

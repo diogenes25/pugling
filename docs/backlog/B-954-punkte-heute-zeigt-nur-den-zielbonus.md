@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-24.md#runde-140--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-662, B-770]
+nachgeschaut: 2026-11-24
 ---
 
 # B-954 · „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus
@@ -141,3 +142,9 @@ Vitest für die Beschriftungen, Rollengang an einer frischen Kopie der echten DB
   `thisWeek` der Sohn-App. Die Oberfläche selbst ist an der Kopie nicht geklickt; sie ist durch Vitest und E2E belegt.
 - **2026-11-24** — abgenommen, Commit `ddf6d1d6`. Vater an der Kopie der echten DB (Zahlen gegen das Ledger), Sohn und
   Creator als Regressionszeugen (Protokoll Runde 140).
+- **2026-11-24** — Nachschau (Nachtlauf L, [Protokoll](../pm-sitzung-2026-11-24-l.md)): Behauptung „dieselbe Definition wie
+  ‚diese Woche‘“ nachgerechnet – `WalletService.EarnedCoinsByDayAsync` (`WalletService.cs:83-94`) und `WeekCoinsAsync`
+  (`:58-75`) filtern beide über das eine `EarnedCoins` (`:97-99`, positive Einträge der verdienten Arten) und schneiden am
+  Lerntag (`learningDay.StartUtc`). Einziger Unterschied: die Woche begrenzt oben mit `<= now`, der Tag mit dem Ende des
+  Lerntags – trifft nur Einträge mit Zeitstempel nach der Serveruhr, die es nicht gibt. Beide Aufrufer
+  (`ChildrenDashboardService.cs:32`, `:98`) gelesen: Tag und Zeitleiste nehmen dieselbe Methode. Kein Befund.

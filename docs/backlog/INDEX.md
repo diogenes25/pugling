@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (86)
+### Offen (85)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,9 +58,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-739](B-739-foerder-uebungen-und-zusammenfassung.md) | Der KI-Creator baut nachts Förder-Übungen und schreibt eine kurze Zusammenfassung (B-644, Etappe E5) | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
-| [B-744](B-744-klausur-prognose-schnappschuss.md) | Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel` | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | Wunsch | `geschaetzt` | P2 | M | backend | Migration? |
-| [B-746](B-746-klausur-abweichung-fuer-den-vater.md) | Prognose und Note nebeneinander: die Abweichung für den Vater | Wunsch | `geschaetzt` | P2 | S | beides | — |
 | [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) | Hausaufgaben-Kern: Ressource am Kind, Abgabe, Abnahme, Münzen und Malus beim Login (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md) | Hausaufgaben im Vater-Web: anlegen, Abgaben mit Foto ansehen, annehmen oder zur Nacharbeit zurückgeben | Wunsch | `geschaetzt` | P2 | M | frontend | — |
@@ -99,12 +97,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
 | [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
 | [B-953](B-953-vokabel-tuerme-zielwahl-und-grafik.md) | Vokabel-Türme: Kanone mit einstellbarer Zielwahl und echte Grafik für Figur und Türme | Wunsch | `idee` | P3 | — | — | — |
+| [B-980](B-980-prognose-vor-dem-klausurtag-wortlaut.md) | „keine Prognose“ steht auch an jeder Arbeit, deren Tag noch nicht da ist | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 | [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (613)</summary>
+<summary>Abgenommen (615)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -648,6 +647,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern | Wunsch | `abgenommen` | P2 | M | backend | Migration |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater | Wunsch | `abgenommen` | P2 | S | backend | — |
+| [B-744](B-744-klausur-prognose-schnappschuss.md) | Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel` | Wunsch | `abgenommen` | P2 | M | backend | Migration |
+| [B-746](B-746-klausur-abweichung-fuer-den-vater.md) | Prognose und Note nebeneinander: die Abweichung für den Vater | Wunsch | `abgenommen` | P2 | S | beides | — |
 | [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um | Wunsch | `abgenommen` | P2 | L | frontend | — |
 | [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
@@ -724,7 +725,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (11)
+### Wartet auf Zutun von außen (12)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -740,12 +741,13 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | `in-arbeit` | Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert) |
+| [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | `geschaetzt` | Nutzer-Entscheidung: Anker gegen den Tageslauf (Migration?), Kommanote → Stufe, ClearGrade |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
 ### Nach der Abnahme entgangen (224)
 
-**Nachgeschaut: 575 von 613 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 576 von 615 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 39 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -975,7 +977,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus | [B-662, B-770] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (38) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (39) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1016,10 +1018,11 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
+| [B-744](B-744-klausur-prognose-schnappschuss.md) | Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel` |
+| [B-746](B-746-klausur-abweichung-fuer-den-vater.md) | Prognose und Note nebeneinander: die Abweichung für den Vater |
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus |
 
 </details>
 
@@ -1198,6 +1201,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | `idee` | `unverifiziert: true` |
+| [B-980](B-980-prognose-vor-dem-klausurtag-wortlaut.md) | `idee` | `unverifiziert: true` |
 
 <details>
 <summary>Verworfen (61)</summary>

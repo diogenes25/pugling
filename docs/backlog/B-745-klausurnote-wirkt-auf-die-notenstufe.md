@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-683
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Nutzer-Entscheidung: Anker gegen den Tageslauf (Migration?), Kommanote → Stufe, ClearGrade"
 ---
 
 # B-745 · Die eingetragene Klausurnote hebt oder senkt die Notenstufe
@@ -117,3 +118,12 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 
 - **2026-11-20** — angelegt aus [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) (geteilt); `geschaetzt`: M, backend,
   Migration offen (Anker), kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-24** — Nachprüfung vor dem Bau (Nachtlauf L, [Protokoll](../pm-sitzung-2026-11-24-l.md)): **angehalten,
+  nicht gebaut (Freigabe 8).** Die Frage des Ankers ist weiter offen und am Code bestätigt: `SubjectLevelService.Apply`
+  (B-741) hebt die Stufe am nächsten bewerteten Lerntag sofort und unbegrenzt auf das gemessene Niveau und senkt sie um eine
+  Stufe je sieben Tage – eine Klausurwirkung ohne Anker hielte also nur bis zum nächsten Zugriff (Abstieg) bzw. bis zur
+  nächsten Senkung (Aufstieg). Gebraucht werden drei Entscheidungen des Nutzers: **(1)** Anker ja/nein (ja = Spalte an
+  `ChildSubjectLevel`, also Migration; dann: wann überholt der Lernstand den Anker?); **(2)** Kommanote → Stufe (4,5 → 4
+  wie der Vorschlag aus B-740, oder kaufmännisch → 5?); **(3)** `ClearGrade` dreht die Stufe nicht zurück (Vorschlag) –
+  bestätigen. Seit B-744 (Nachtlauf L) gilt außerdem: ein Fachwechsel verwirft den Schnappschuss; die Note einer solchen
+  Arbeit wirkt dann nicht (AK 5 „ohne Schnappschuss“).
