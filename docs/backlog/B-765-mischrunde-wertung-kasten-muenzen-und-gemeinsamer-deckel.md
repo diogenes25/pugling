@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/student]
 aliases: [Mischwiederholung Wertung, Mischrunde Münzen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -12,7 +12,7 @@ quelle: "B-218"
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: pugling-reviewer (Review am Sprintende 130, gemeinsam mit B-764)
+wartet_auf: ""
 ---
 
 # B-765 · Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend)
@@ -134,3 +134,4 @@ Nachgesehen am 2026-11-20:
 | N17 | MixedReviewService.cs:181 (Leitner bei Abgabe) | red | red |
 | N18 | MixedReviewService.cs:224 (heute eingeführt) | red | red |
 | N19 | MixedReviewService.cs:226 (heute getestet) | red | red |
+- 2026-11-24 · **abgenommen** (Nachtlauf H, Sprint 130). Commit `1e3b42f7`. Suite (Release) 2204/2204; `pugling-reviewer` (🟡 behoben, 🟢 behoben bzw. zurückgestellt); Mutanten 19/19 rot; Rollengang als Live-Probe gegen die laufende API (Abgabe 4/4, Kästen 1→2, doppelte Abgabe abgewiesen, Bonus-Übersicht mit derselben Tagessumme, 0 Münzen für heute gelernte Wörter) – Protokoll `docs/pm-sitzung-2026-11-23-h.md`, Runde 130. Zur Bestätigung am Morgen: die Auslegungen (a)–(d) und die Erweiterung des Zahl-Tors auf „heute schon begegnet“ (Review- und Rollengang-Fund).

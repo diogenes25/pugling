@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/student]
 aliases: [Mischwiederholung Auswahl, Mischrunde Start]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -12,7 +12,7 @@ quelle: "B-218"
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-wartet_auf: pugling-reviewer (Review am Sprintende 130, gemeinsam mit B-765)
+wartet_auf: ""
 ---
 
 # B-764 · Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend)
@@ -128,3 +128,5 @@ Nachgesehen am 2026-11-20:
 | M12 | MixedReviewService.cs:124 (`PlanPlayableForChild`) | red | red |
 
 - 2026-11-24 · Suite (Release) 2186/2187: rot war nur der Wächter `ProblemTextGuardTests.Every_409_Code_Has_A_German_Text_Or_A_Reasoned_Exception` (erwartet 0 Codes ohne deutschen Text, gemessen 3: `mixed_review_completed`, `mixed_review_empty`, `mixed_review_stale`). Behoben: deutsche Texte in `frontend/src/lib/api.ts` (`GERMAN_PROBLEM_TEXT`) und `i18n/de.ts`/`en.ts`; danach die Wächter-Klassen (ProblemText, Schema, OpenApi, EndpointCoverage, Ownership) 47/47 grün. **Fehlerzähler Sprint 130: 1** (roter Wächter, Behebung ändert Code – Freigabe 11). `dotnet format --verify-no-changes` auf den berührten Dateien: ein Objekt-Initialisierer in `MischrundeAuswahlTests.cs` einzeilig → formatiert (ohne Zählung, Kosmetik).
+- 2026-11-24 · Review `pugling-reviewer` (Sprint 130, gemeinsam mit B-765): für die Auswahl keine 🔴/🟡; geprüft und bestätigt: Sperre bei Start und Abgabe, offene Pflicht bei Auswahl **und** Abgabe ausgeschlossen, nie gesehene und nicht eingeprägte Karten ausgeschlossen, Stufe nie leichter als `TestTargetStage(StageForDay)`, `ChildOwnershipFilter` + Student-Prüfung, Migration nur additiv. Die Funde betrafen die Wertung und stehen in B-765. Hilfen der Testklasse nach `MischrundeTestBase.cs` gezogen (geteilt mit `MischrundeWertungTests`), Fälle unverändert.
+- 2026-11-24 · **abgenommen** (Nachtlauf H, Sprint 130). Commits `64c14761` (Bau) und `1e3b42f7` (Hilfen nach `MischrundeTestBase`, gemeinsam mit B-765). Suite (Release) 2204/2204; `pugling-reviewer` ohne Fund an der Auswahl; Rollengang als Live-Probe gegen die laufende API (Port 5221, Wegwerf-DB: Sperre vor der Pflicht, 4 fällige Karten nach Lernrunde und Test, Start, Fortsetzen, Vater liest/darf nicht starten) – Protokoll `docs/pm-sitzung-2026-11-23-h.md`, Runde 130. Ein Browser-Rollengang entfällt für das Backend-Increment; die E2E trägt B-766.
