@@ -262,6 +262,63 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
     }
 
     [Fact]
+    public async Task Leeres_Buendel_Friert_Nicht_Ein_Und_Zuweisen_Legt_Die_Pflicht_An()
+    {
+        // Review: the father plans the test first and assigns its exercises afterwards. Red when a reconcile in between
+        // freezes the empty bundle (PrepStartedOn set, no position ever), or when assigning does not reconcile.
+        var k = await KindAsync();
+        var arbeit = await ArbeitAsync(k, D.AddDays(3), []);
+        await LoginAsync(k);
+        Assert.Null(Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepStartedOn));
+
+        var ex = await VokabelnAsync(k.Father);
+        (await k.Father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{arbeit}/exercises", new { exerciseIds = new[] { ex } }))
+            .EnsureSuccessStatusCode();
+
+        var pos = Assert.Single(Positionen(k.PlanId));
+        Assert.Equal(ex, pos.ExerciseId);
+        Assert.Equal(arbeit, pos.SourceKlassenarbeitId);
+        Assert.Equal(D, Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepStartedOn));
+    }
+
+    [Fact]
+    public async Task Anlegen_Im_Fenster_Legt_Die_Pflicht_Ohne_Login_An()
+    {
+        // Review: a child that stays logged in must not lose the days until its next login. Red when planning a test
+        // inside its window leaves the plan without the position.
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(3), [ex]);
+
+        var pos = Assert.Single(Positionen(k.PlanId));
+        Assert.Equal(D, pos.DutySince);
+        Assert.Equal(D.AddDays(2), pos.DutyUntil);
+    }
+
+    [Fact]
+    public async Task Beendete_Pflicht_Laesst_Sich_Ueber_Kuer_Neu_Beginnen()
+    {
+        // Review: after the test day the position still reads "daily" but owes nothing. Freeing it must keep the old end
+        // (red when the close stretches the span to today), and a duty again begins today without an end (red when the span
+        // survives the switch back).
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        await ArbeitAsync(k, D.AddDays(3), [ex]);
+        var pos = Assert.Single(Positionen(k.PlanId));
+        var url = $"/api/v1/supervisor/study-plans/{k.PlanId}/positions/{pos.Id}";
+
+        Vorspulen(6);
+        (await k.Father.PatchAsJsonAsync(url, new { cadence = "None" })).EnsureSuccessStatusCode();
+        Assert.Equal(D.AddDays(2), Assert.Single(Positionen(k.PlanId)).DutyUntil);
+
+        (await k.Father.PatchAsJsonAsync(url, new { cadence = "Daily" })).EnsureSuccessStatusCode();
+        var neu = Assert.Single(Positionen(k.PlanId));
+        Assert.Null(neu.DutyUntil);
+        Assert.Equal(GoalCadence.Daily, neu.Cadence);
+        Assert.Equal(D.AddDays(6), neu.DutySince);
+    }
+
+    [Fact]
     public async Task Leere_Uebung_Wird_Keine_Pflicht()
     {
         // An exercise with nothing to play would be a duty nobody can meet - and a penalty every day.

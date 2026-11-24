@@ -44,6 +44,19 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return mapped;
     }
 
+    /// <summary>
+    /// Saves a new test or a grown bundle and reconciles the child's preparation duties in the same transaction: a test
+    /// planned inside its window owes from today on, not from the child's next login - a child that stays logged in would
+    /// otherwise lose those days and get the bundle squeezed into the rest.
+    /// </summary>
+    private async Task SaveAndReconcileAsync(int childId, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await db.SaveChangesAsync(ct);
+        await prep.ReconcileAsync(childId, learningDay.Today, ct);
+        await tx.CommitAsync(ct);
+    }
+
     private static string? ValidatePrepWindow(int? days) =>
         days is < 0 or > ClassTestPrepService.MaxWindowDays
             ? $"prepWindowDays must be between 0 and {ClassTestPrepService.MaxWindowDays} (0 = no preparation duty; omit it for the default)."
@@ -136,7 +149,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (await BuildTagLinksAsync(dto.ChildId, dto.TagIds, k.Tags, ct) is { } tagErr) return this.ProblemWithCode(ApiErrors.InvalidReference, tagErr);
 
         db.Klassenarbeiten.Add(k);
-        await db.SaveChangesAsync(ct);
+        await SaveAndReconcileAsync(k.ChildId, ct);
 
         var created = (await FindOwnedAsync(k.Id, ct))!;
         var exIds = created.Exercises.Select(x => x.ExerciseId).ToList();
@@ -238,7 +251,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (dto.ExerciseIds is not { Count: > 0 }) return this.ProblemWithCode(ApiErrors.ValidationError, "At least one exercise is required.");
         if (await BuildExerciseLinksAsync(k.ChildId, dto.ExerciseIds, k.Exercises, ct) is { } error) return error;
 
-        await db.SaveChangesAsync(ct);
+        await SaveAndReconcileAsync(k.ChildId, ct);
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
         return new KlassenarbeitDetail(await MapAsync(k, ct), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct));
     }
@@ -273,7 +286,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (k.Tags.All(t => t.TagId != tagId))
         {
             k.Tags.Add(new KlassenarbeitTag { TagId = tagId });
-            await db.SaveChangesAsync(ct);
+            await SaveAndReconcileAsync(k.ChildId, ct);
         }
         return await MapAsync((await FindOwnedAsync(id, ct))!, ct);
     }

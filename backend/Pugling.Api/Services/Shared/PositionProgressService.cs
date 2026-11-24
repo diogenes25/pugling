@@ -232,6 +232,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public async Task CloseDutyAsync(PlanPosition pos, StudyPlan plan, DateOnly today, CancellationToken ct)
     {
         if (pos.Cadence is not (GoalCadence.Daily or GoalCadence.Weekly or GoalCadence.UntilDone)) return;
+        // A duty that ended earlier while its cadence stayed (B-752) keeps that end: closing it again would stretch the
+        // span up to today and turn the dutiless days in between into missed ones.
+        if (pos.DutyUntil is { } ended && ended < today) return;
         var (from, to) = PeriodRange(pos.Cadence, today);
         pos.DutyUntil = await IsGoalMetAsync(pos, plan, today, ct) ? to : from.AddDays(-1);
         // An ended remediation counts as met from its end on; the span stops there, or the day view - which reads the

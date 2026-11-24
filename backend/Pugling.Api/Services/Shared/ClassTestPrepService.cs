@@ -31,7 +31,8 @@ public sealed class ClassTestPrepOptions
 /// <summary>
 /// The preparation duty before a class test (B-752): in the window before a planned test, every exercise of its bundle
 /// becomes a daily duty in the child's active plan of the test's subject, ending the day before the test. Reconciled on
-/// the child's login (and before a purchase), right before the penalty settlement - never on a GET and never by a job.
+/// the child's login (and before a purchase), right before the penalty settlement, and when the supervisor plans or changes
+/// the test or its bundle - never on a GET and never by a job.
 /// Idempotent: a test is started once (<see cref="Klassenarbeit.PrepStartedOn"/>, the bundle is frozen then), and a
 /// position knows the test it was made for (<see cref="PlanPosition.SourceKlassenarbeitId"/>).
 /// </summary>
@@ -152,6 +153,12 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         {
             // No plan in the subject: nothing arises, and the test is not frozen - a plan switched on later starts it then.
             if (await PlanForAsync(k, ct) is not { } plan) continue;
+            // An empty bundle is not frozen either: the father plans the test first and assigns its exercises afterwards,
+            // and a start in between would leave the test without a duty for good.
+            if ((await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct)).Count == 0) continue;
+            // Claim and positions in one transaction (the caller's, if it holds one): a start that fails or is cancelled
+            // half-way must not leave the test claimed without its positions - it would never be started again.
+            await using var tx = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(ct) : null;
             // Claim the start in the database first: two logins at once (or a login and the father's change) both read the
             // test as not started, and only the one whose update lands may add the positions - else they come twice.
             var claimed = await db.Klassenarbeiten.Where(x => x.Id == k.Id && x.PrepStartedOn == null)
@@ -160,6 +167,7 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             await StartAsync(k, plan, today, ct);
             // Saved per test: the next test's "already in the plan?" reads the database, and must see these positions.
             await db.SaveChangesAsync(ct);
+            if (tx is not null) await tx.CommitAsync(ct);
         }
         if (await AlignSpansAsync(childId, today, inWindow, ct)) await db.SaveChangesAsync(ct);
     }
