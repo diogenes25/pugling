@@ -19,6 +19,7 @@ import type {
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
+  SubjectLevel,
   CreateKeyResultRequest, CreateObjectiveRequest, GoalStatus, KeyResult,
   Objective, ObjectiveKind, UpdateKeyResultRequest, UpdateObjectiveRequest,
   ShopArticle, CreateShopArticleDto, UpdateShopArticleDto, ShopListing, CreateShopListingDto, UpdateShopListingDto,
@@ -798,6 +799,11 @@ export const api = {
     const qs = q.toString();
     return httpPaged<Objective>(`${V1}/student/me/objectives${qs ? `?${qs}` : ""}`);
   },
+
+  // Die eigene Notenstufe je Vokabel-Fach (B-742/B-743). Der erste Abruf des Tages bewertet neu (träge, kein Planer).
+  mySubjectLevels: () => http<SubjectLevel[]>(`${V1}/student/me/subject-levels`),
+  // Dieselben Zahlen für den Vater, je Kind (nie mehrere Kinder nebeneinander, B-682 Entscheidung 6).
+  childSubjectLevels: (childId: number) => http<SubjectLevel[]>(`${V1}/supervisor/children/${childId}/subject-levels`),
 
   // ---- Sohn: Skins (Besitz server-autoritativ; Kauf bucht Münzen ab) ----
   skins: () => http<SkinState>(`${V1}/student/me/skins`),

@@ -189,7 +189,9 @@ public class ConventionGuardTests
     // student plans) gained an optional `take` without a default.
     // 31 since B-628: the fixed feedback reasons (eight, closed in the contract) and the child's unseen notices (only
     // entries a supervisor marked done and the child has not acknowledged). The supervisor's feedback list takes `take`.
-    private const int UnpaginatedArrayGetCount = 31;
+    // 33 since B-742: the grade levels of one child, child and supervisor side - one row per vocabulary subject of the
+    // child's active plans (one active plan per subject), so bounded by the subjects it learns.
+    private const int UnpaginatedArrayGetCount = 33;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

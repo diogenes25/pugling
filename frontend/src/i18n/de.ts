@@ -51,6 +51,14 @@ export const de = {
       extraTitle_one: "➕ {{count}} Zusatzübung",
       extraTitle_other: "➕ {{count}} Zusatzübungen",
       extraHint: "freiwillig, ohne Pflicht",
+      // Die Notenstufe je Fach (B-743): nur Stufe 1 bis 3 tragen einen Namen, darunter steht allein das nächste Ziel.
+      levelStand1: "🏅 Einser-Stand",
+      levelStand2: "⭐ Zweier-Stand",
+      levelStand3: "Dreier-Stand",
+      levelGoal_one: "noch {{count}} Wort sicher bis zur nächsten Stufe",
+      levelGoal_other: "noch {{count}} Wörter sicher bis zur nächsten Stufe",
+      levelReached: "nächste Stufe geschafft – sie zählt ab morgen",
+      levelKeepGoing: "weiter so",
     },
     // Der Lernpfad auf der Startseite (B-525).
     pfad: {

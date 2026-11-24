@@ -21,7 +21,8 @@ import {
   zielAnteil,
   type Frist,
 } from "./pfad";
-import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, TodayResponse } from "../lib/types";
+import type { DailyBoxOpened, DailyBoxStatus, PositionStatus, SubjectLevel, TodayResponse } from "../lib/types";
+import { notenstufeText } from "./notenstufe";
 import type { TruhenZiele } from "./pfad";
 import { MeldungsHinweis } from "./KartenMeldung";
 
@@ -49,6 +50,9 @@ export function SohnHome() {
   const skinText = useSkinText();
   const titelPraefix = useId();
   const sicht = useAsync<TodayResponse>(() => api.today(childId), [childId]);
+  // Die Notenstufe je Fach (B-743) ist Beiwerk: scheitert ihr Abruf, erscheinen die Fachkarten ohne Stufenzeile – die
+  // Tagessicht hängt nie an ihr. Darum ein eigener Abruf, dessen Fehler hier niemand meldet.
+  const stufen = useAsync<SubjectLevel[]>(() => api.mySubjectLevels(), [childId]);
 
   useEffect(() => {
     if (sicht.data) setStreak(sicht.data.currentStreak);
@@ -130,9 +134,13 @@ export function SohnHome() {
 
       {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad – als aufklappbarer Reiter, damit das zweite Fach nicht
           erst nach dem ganzen ersten kommt. Offen startet das Fach mit dem START – und ein einziges Fach immer. */}
+      {/* Die Stufe findet ihre Karte über den Fachnamen: die Positionen tragen nur ihn. Der Server ordnet die Stufe dem
+          Fach des Plans zu, nach derselben Regel wie die Karten (B-614); offen bleibt nur ein doppelter Fachname
+          (zwei Fächer „Englisch“) – dort teilen sich beide ohnehin eine Karte, und sie zeigt die erste Stufe. */}
       {faecher.map((f, i) => (
         <FachKarte key={f.fach} id={`${titelPraefix}-fach-${i}`} farbe={i} titel={f.fach || t("home.noSubject")}
-          positions={f.positions} naechsteId={naechste} einzig={faecher.length === 1} />
+          positions={f.positions} naechsteId={naechste} einzig={faecher.length === 1}
+          stufe={f.fach ? stufen.data?.find((s) => s.subjectName === f.fach) : undefined} />
       ))}
 
       {/* Der letzte Knoten des Pfads (B-527): erst die Pflicht, dann die Truhe, dann die Kür. */}
@@ -155,10 +163,12 @@ const FACH_FARBEN = 5;
  * Ziel-Münzen), aufgeklappt erst der Pflicht-Pfad, darunter – selbst zugeklappt – die Zusatzübungen ohne Takt.
  * Zugeklappt rendert der Inhalt nicht: ein verstecktes Fach soll weder Tab-Stopps noch Vorlesetext tragen.
  */
-export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = false }: {
+export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = false, stufe }: {
   id: string; farbe: number; titel: string; positions: PositionStatus[]; naechsteId: number | null;
   /** Das einzige Fach des Tages: Zuklappen trennt dann nichts, es kostet nur einen Tipp. */
   einzig?: boolean;
+  /** Die Notenstufe dieses Fachs (B-743); fehlt sie (kein Vokabel-Fach, Abruf gescheitert), gibt es keine Stufenzeile. */
+  stufe?: SubjectLevel;
 }) {
   const { t } = useTranslation();
   const stand = fachStand(positions);
@@ -180,6 +190,9 @@ export function FachKarte({ id, farbe, titel, positions, naechsteId, einzig = fa
           onClick={() => setOffen((o) => !o)}>
           <FachHintergrund motiv={motiv} />
           <span id={`${id}-name`} className="fach-name">{titel}</span>
+          {stufe && (
+            <span className="fach-stufe" data-testid="fach-stufe">{notenstufeText(t, stufe.level, stufe.wordsToNextLevel)}</span>
+          )}
           <span className="fach-stand">
             {stand.heute.total > 0 && (
               <span className={`fach-chip${stand.heute.met === stand.heute.total ? " fertig" : ""}`}>

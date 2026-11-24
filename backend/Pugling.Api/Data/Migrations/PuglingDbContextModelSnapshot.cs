@@ -465,6 +465,40 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("ChildPointsEntries");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.ChildSubjectLevel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BestLevel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("EvaluatedOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("LastLoweredOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("ChildId", "SubjectId")
+                        .IsUnique();
+
+                    b.ToTable("ChildSubjectLevels");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ClozeText", b =>
                 {
                     b.Property<int>("Id")
@@ -3344,6 +3378,25 @@ namespace Pugling.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Child");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ChildSubjectLevel", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.CreatorProfile", b =>

@@ -17,7 +17,8 @@ namespace Pugling.Api.Controllers;
 [Tags("Auth")]
 [Produces("application/json")]
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
-    Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay) : ControllerBase
+    Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay,
+    Services.Student.SubjectLevelService subjectLevels) : ControllerBase
 {
     /// <summary>
     /// The <b>primary tier</b> for UI routing – where the user belongs after logging in.
@@ -86,6 +87,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         // Likewise credit the earned rewards of reached big goals idempotently (the carrot), so the child has
         // them on the account right at login.
         await objectiveRewards.SettleAsync(child.Id, today, ct);
+        // The daily evaluation of the grade level (B-741) - first access of the day, no scheduler; idempotent per day.
+        await subjectLevels.EvaluateAsync(child.Id, today, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }

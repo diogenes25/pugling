@@ -167,6 +167,11 @@ builder.Services.AddSingleton<LearningDay>();
 // a pure function that needs neither a DB nor a cancellation token.
 builder.Services.Configure<ScoringOptions>(builder.Configuration.GetSection(ScoringOptions.SectionName));
 builder.Services.AddScoped<ScoringService>();
+// B-740: the one grading key (share in percent -> grade 1..6); the table is configuration, not code.
+builder.Services.AddOptions<GradingOptions>().Bind(builder.Configuration.GetSection(GradingOptions.SectionName))
+    .Validate(o => GradeKey.IsValid(o.Thresholds),
+        "Grading:Thresholds braucht genau fünf streng fallende Grenzen zwischen 0 und 100 (Note 1 zuerst).")
+    .ValidateOnStart();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();
 builder.Services.AddScoped<MetricsService>();
@@ -227,6 +232,8 @@ builder.Services.AddScoped<WeakWordReviewService>();
 builder.Services.AddScoped<ItemProgressService>();
 // Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→series unit→exercise→item).
 builder.Services.AddScoped<ChildLearnProgressService>();
+// B-741: the grade level per child and vocabulary subject, evaluated lazily once per learning day.
+builder.Services.AddScoped<SubjectLevelService>();
 // Outcome/mastery goals per child on a catalog scope; evaluated live against the learning state.
 // "Big goals" (the OKR core): evaluation (learning state + class test grade), supervisor CRUD and idempotent rewards.
 builder.Services.AddScoped<ObjectiveEvaluationService>();

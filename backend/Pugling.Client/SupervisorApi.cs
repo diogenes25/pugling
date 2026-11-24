@@ -155,6 +155,10 @@ public sealed class SupervisorApi(HttpClient http)
     public Task DeletePositionAsync(int planId, int positionId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/study-plans/{planId}/positions/{positionId}", null, ct);
 
+    /// <summary>Grade levels of a child per vocabulary subject (B-742); the first read of a day evaluates it.</summary>
+    public Task<IReadOnlyList<SubjectLevelResponse>> ListSubjectLevelsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<SubjectLevelResponse>>($"{Root}/children/{childId}/subject-levels", ct);
+
     // ---------------------------------------------------------------- Objectives (OKR)
 
     /// <summary>Objectives (a dated wrapper around several milestones) of a child.</summary>

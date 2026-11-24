@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
+import { NotenstufenSection } from "./NotenstufenSection";
 import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
 import { StatusBanner } from "../components/StatusBanner";
 import { Pflicht } from "../components/Pflicht";
@@ -88,6 +89,7 @@ export function VaterKind() {
       <SectionPanel section="profil" active={tab}><CoreDataSection child={me} onSaved={child.reload} /></SectionPanel>
 
       <SectionPanel section="schule" active={tab}>
+        <NotenstufenSection childId={childId} childName={me.name} />
         {/* Die Fächer speisen die Fach-Auswahl in Unterrichtsmaterial UND Stundenplan (B-172) – scheitert
             der Abruf, fehlt dort die Auswahl. Beide stehen auf diesem Reiter, die Meldung also direkt davor. */}
         <ListenAusfall was="Die Fächer" fehler={subjects.error} laedt={subjects.loading} onRetry={subjects.reload} />

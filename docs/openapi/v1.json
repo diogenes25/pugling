@@ -2518,6 +2518,71 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/subject-levels": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Subject Levels"
+        ],
+        "summary": "The child\u0027s grade levels with best level and the words to the next level, one per vocabulary subject of its\nactive plans (sorted by subject name). Reading evaluates the day if nobody did yet. 404 for a child you do not\nsupervise.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectLevelResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/feedback": {
       "get": {
         "tags": [
@@ -11585,6 +11650,49 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/subject-levels": {
+      "get": {
+        "tags": [
+          "Student \u2013 Subject Levels"
+        ],
+        "summary": "Own grade levels, one per vocabulary subject of the active plans (sorted by subject name). A subject without\nvocabulary in an active plan has no measure and is missing.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectLevelResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -48328,6 +48436,59 @@
         },
         "description": "Starts a tower-game run from the vocabulary of one plan position."
       },
+      "SubjectLevelResponse": {
+        "required": [
+          "bestLevel",
+          "level",
+          "subjectId",
+          "subjectName"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The subject.",
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string",
+            "description": "Its name - the child\u0027s day view groups its positions by this name."
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current level, evaluated once per learning day; 1 is the best.",
+            "format": "int32"
+          },
+          "bestLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The best level ever reached; never gets worse.",
+            "format": "int32"
+          },
+          "wordsToNextLevel": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Further mastered words of the material that lift the share to the next better level, counted live; 0 = reached, the\nlevel follows with the next day\u0027s evaluation; \u0060null\u0060 on the best level.",
+            "format": "int32"
+          }
+        },
+        "description": "The grade level of a child in one vocabulary subject (B-742): Level 1 (best) to 6 and the best\nlevel ever reached. The server sends the number for every level; the wording is the client\u0027s business - the child\napp names only levels 1 to 3 and otherwise shows the next goal (B-743). Never sent for several children at once."
+      },
       "SubjectProgressResponse": {
         "required": [
           "active",
@@ -52547,6 +52708,9 @@
       "name": "Supervisor \u2013 Shop"
     },
     {
+      "name": "Supervisor \u2013 Subject Levels"
+    },
+    {
       "name": "Supervisor \u2013 Textbooks"
     },
     {
@@ -52599,6 +52763,9 @@
     },
     {
       "name": "Student \u2013 Shop"
+    },
+    {
+      "name": "Student \u2013 Subject Levels"
     },
     {
       "name": "Student \u2013 Today"

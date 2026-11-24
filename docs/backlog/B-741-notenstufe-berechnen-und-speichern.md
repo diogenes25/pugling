@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/lernstand, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/lernstand, rolle/student]
 aliases: [Notenstufe berechnen, ChildSubjectLevel]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -130,3 +130,90 @@ Rollup-Filter und zwei Einhängestellen.
 
 - **2026-11-20** — angelegt aus [B-682](B-682-notenstufe-je-fach-statt-liga.md) (geteilt); `geschaetzt`: M, backend, Migration ja,
   kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-23** — `in-arbeit` (Nachtlauf G, Sprint 127). Gebaut: Entität `ChildSubjectLevel` (`Models/SubjectLevelEntities.cs`:
+  Stufe, Bestwert, `LastLoweredOn`, `EvaluatedOn`, eindeutiger Index (Kind, Fach)), Migration
+  `20261123220126_NotenstufeChildSubjectLevel` (nur `CreateTable` + zwei Indizes, gelesen), G2-Zeilen in
+  `SchemaGuardTests`. Maß: neue interne Methode `ChildLearnProgressService.ActiveSubjectMeasuresAsync` (dieselbe
+  Rechnung `LoadRelevantAsync`/`LoadAggAsync`/`Combine`, gefiltert auf `Active`, Fächer mit `TotalItems == 0` fehlen).
+  Dienst `Services/Student/SubjectLevelService.cs` (`EvaluateAsync(childId, day)`, `Apply`), träge an der
+  Kind-Anmeldung (`AuthController.LoginChild`, nach `objectiveRewards.SettleAsync`). Abweichungen ohne neue
+  Entscheidung: (a) **Fach-FK `Cascade` statt `Restrict`** (Risiken nannten Restrict nur als Vorschlag): die Stufe ist
+  abgeleitet, ein Fach ist erst löschbar, wenn keine Übung es trägt (`SubjectsController.Delete`), und `Restrict`
+  ohne Vorprüfung machte aus dem Löschen eine nackte 500; (b) **„aktiver Plan“ heißt alle aktiven Pläne** des Kindes
+  (seit B-539 einer je Fach), Rahmen = Übungen, die ein aktiver Plan referenziert, wie das `Active`-Merkmal des
+  Rollups; (c) Senkung: die erste Senkung darf sofort kommen (kein Datum), jede weitere erst sieben Tage nach der
+  vorigen; ein Anstieg setzt die Frist nicht zurück; (d) der Verlierer zweier gleichzeitiger Erst-Anlagen löst seine
+  Zeilen vom Tracker (Unique-Verletzung, Muster `ShopService.TrySaveAsync`) – nicht gemessen, kein Test (Rennen ist im
+  In-Process-Host nicht deterministisch herstellbar).
+- **2026-11-23** — Testweg-Abweichung: Die Beherrschung wird in `ChildSubjectLevelTests` als `ItemProgress`-Zeile
+  geschrieben statt über die Spiel-Endpunkte erspielt (Box 5 braucht Wochen von Leitner-Tagen je Wort). Die Stufe liest
+  nur, was die Wertungsstellen schreiben; deren Weg in `ItemProgress` hat eigene Tests (`ChildLearnProgressTests`). Den
+  Tag übergibt der Test ausdrücklich, die Sieben-Tage-Regel braucht darum keine Uhr.
+- **2026-11-23** — AK → Test (`backend/Pugling.Api.Tests/ChildSubjectLevelTests.cs`), Mutante → rot (Tabellen aus
+  `.claude/scripts/mutant-probe.py`, gemessen an `a782b4b2` + Arbeitsbaum, 2026-11-23 23:49 und 2026-11-24 00:10):
+  AK 1 (Nenner/Antwortzahl) → `Null_beherrscht_steht_unter_alles_beherrscht`, M6 (Maß = `Correct/Seen`,
+  `ChildLearnProgressService.cs:152`) → rot · AK 2 (`AvgMastery`-artig) → `Drei_von_200_ist_schlechter_als_150_von_200`,
+  M5 (Nenner = eingeführte Wörter, `:152`) → rot · AK 3/5 (einmal je Tag) → `Zweiter_Lauf_am_selben_Tag_aendert_nichts`,
+  M8 (`else if (row.EvaluatedOn < day)` → `else`, `SubjectLevelService.cs:58`) → rot · Anstieg auch um genau eine
+  Stufe → `Absturz_senkt_eine_Stufe_je_sieben_Tage_Bestwert_bleibt` (letzter Abschnitt), M12 (`measured < row.Level - 1`,
+  `:86`) → rot · AK 4 (Frist) → derselbe Test, M9 (Frist 0 statt 7, `:89`) → rot; (eine Stufe) M10
+  (`row.Level = measured`, `:91`) → rot · AK 6 (Bestwert) → derselbe Test, M11 (`BestLevel = row.Level`, `:94`) → rot ·
+  AK 7 (Fach ohne Maß) → `Fach_ohne_Wortschatz_bekommt_keine_Zeile`: **zwei redundante Wächter**, keiner allein rot zu
+  machen – M7 (`TotalItems > 0` → `>= 0`, `:151`) grün/abweichend und M7b (Typfilter `KeysSupportingItemProgress` in
+  `LoadRelevantAsync` entfernt, `:74`) grün wie erwartet; die Rechenübung fällt am jeweils anderen. Der Test belegt das
+  Verhalten, nicht eine einzelne Zeile · AK 8 (nur aktiver Plan) → `Nur_der_aktive_Plan_zaehlt`, M4 (`.Where(r =>
+  r.Active)` entfernt, `:145`) → rot · AK 9 (keine Buchung) → `Stufenwechsel_bucht_nichts` (Ledger-Zählung vor/nach;
+  nicht als Mutante gemessen – der Dienst hat keinen Buchungsweg, eine Mutante müsste ihn erst erfinden) · Anmeldung
+  bewertet → `Kind_Anmeldung_bewertet_den_Tag`, M13 (`if (child.Id < 0)` vor dem Aufruf, `AuthController.cs:91`) → rot
+  (erste Fassung `await Task.CompletedTask` kompilierte nicht: ungenutzter Primärkonstruktor-Parameter) ·
+  AK 10 Absichtserklärung (kein schreibender Endpunkt) · Migration → `NotenstufeMigrationTests` (Bestand bleibt,
+  Eindeutigkeit (Kind, Fach)).
+- **2026-11-23** — Eigener Fund der Mutanten-Probe (Freigabe 11, als 🟡 gezählt, Sprint-Zähler **1**): M12 blieb grün –
+  kein Test stieg um genau eine Stufe. Behoben mit einem Abschnitt im Sturz-Test (9 von 10 = Note 2 am Tag nach der
+  zweiten Senkung), danach M12 rot.
+- **2026-11-24** — Review `pugling-reviewer` (Agent, nur gelesen, Sprint 127, B-740 bis B-742 gemeinsam): keine 🔴.
+  Bestätigt: ein Schreiber der Stufe (`SubjectLevelService`), eine Umrechnung (`GradeKey`), das Maß aus
+  `ChildLearnProgressService` ohne Kopie, Tag nur aus `LearningDay`, Verlierer-Pfad am eindeutigen Index. 🟡 „Doku
+  widerspricht dem Verhalten“: der Satz „ein Kind, das tagelang fehlt, wird nicht neu bewertet“ stimmte nicht, weil auch
+  der Vater-Lesepfad bewertet (B-742 Entscheidung 3) – Satz berichtigt, ohne Zählung (nur Doku); die Spannung zur Risiko-
+  Notiz „keine Senkung ohne Lernen“ ist als offene Frage im Protokoll. 🟢 ohne Zählung, behoben: (1) das Maß wurde je
+  Lesen zweimal gerechnet – `EvaluateAndMeasureAsync` gibt es jetzt zurück; (2) eine kaputte Tabelle hätte jede
+  Kind-Anmeldung geworfen – Prüfung beim Start (`AddOptions…Validate(GradeKey.IsValid).ValidateOnStart()`); (3) Kommentar
+  am Verlierer-Pfad präzisiert („nahezu dieselben Daten“). 🟢 nicht behoben: Rennen ungetestet (nicht deterministisch
+  herstellbar), Student-Endpunkt `[Authorize(Roles = Student)]` statt `[Authorize]` inline (strenger, `/me` braucht keinen
+  Supervisor), AK-5-Endpunkttest schwach (Tagesprüfung trägt `ChildSubjectLevelTests`).
+- **2026-11-24** — Review `frontend-reviewer` 🟡 (gezählt, Sprint-Zähler **3**): Die Fachkarte des Kindes hängt am Fach
+  des **Plans** (B-614), das Maß gruppierte nach dem Fach der **Reihe** – ein Plan unter „Französisch“ über einer Reihe
+  unter einem anders benannten Fach hätte seine Stufe auf ein Fach ohne Karte gelegt. Behoben in
+  `ActiveSubjectMeasuresAsync`: Fach des aktiven Plans, das der Reihe nur bei einem Plan ohne Fach; neuer Test
+  `Stufe_haengt_am_Fach_des_Plans` (rot mit P1, Tabelle unten). Rest: zwei Fächer gleichen Namens teilen sich ohnehin eine
+  Karte (Kommentar in `SohnHome.tsx`).
+- **2026-11-24** — Mutanten-Probe nach der letzten Änderung (B-740 bis B-743 gemeinsam), `.claude/scripts/mutant-probe.py`:
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/GradeKey.cs:30 | red | red |  |
+  | M4 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:150 | red | red |  |
+  | P1 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:164 | red | red |  |
+  | M5 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:167 | red | red |  |
+  | M6 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:167 | red | red |  |
+  | M8 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:64 | red | red |  |
+  | M12 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:125 | red | red |  |
+  | M9 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:128 | red | red |  |
+  | M10 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:130 | red | red |  |
+  | M11 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:133 | red | red |  |
+  | N1 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:112 | red | red |  |
+  | N2 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:110 | red | red |  |
+  | N3 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:96 | red | red |  |
+  | N4 | backend/Pugling.Api/Controllers/Supervisor/ChildSubjectLevelsController.cs:17 | red | red |  |
+  | N5 | backend/Pugling.Api/Controllers/Student/MySubjectLevelsController.cs:30 | red | red |  |
+  | M13 | backend/Pugling.Api/Controllers/AuthController.cs:91 | red | red |  |
+  | F1 | frontend/src/sohn/notenstufe.ts:24 | red | red |  |
+  | F2 | frontend/src/sohn/notenstufe.ts:21 | red | red |  |
+  | F3 | frontend/src/sohn/SohnHome.tsx:143 | red | red |  |
+  | F4 | frontend/src/sohn/SohnHome.tsx:63 | red | red |  |
+  | E1 | frontend/src/vater/NotenstufenSection.tsx:34 | red | unklar |  |
+
+  Rollengang: maschinell über `frontend/e2e/notenstufe.spec.ts` (Ports 5211/5184, Wegwerf-DB): ein frisches Kind mit
+  Vokabel- und Mathe-Plan meldet sich an (Bewertung an der Anmeldung), die Startseite liest die Stufe, der Vater liest sie
+  im Kind-Hub. `abgenommen`; Commits `1835a938`, `4aae8d36`.

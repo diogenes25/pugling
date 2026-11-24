@@ -68,3 +68,9 @@ Kommentarzeilen.
   Testprojekts. Übrig sind nur Zitate deutscher Produkttexte (`CreatorAgentTests`, `OpenApiExampleCatalogConcurrencyTests`,
   `PositionPracticeFlowTests`), die nach Entscheidung 2 erlaubt sind. Kein Befund.
 - **2026-11-24** — Nachschau (Nachtlauf H, Retro Sprint 130): Prüfpunkt „bleibt deutsche Kommentar-Prosa im Testprojekt?“ – `grep` über `//`/`///`-Zeilen aller `backend/Pugling.Api.Tests/*.cs` mit den Funktionswörtern der/die/das/und/nicht/wird/eine/keine/bei/wenn: 16 Treffer in 9 Dateien, jeder gelesen, alle sind Zitate deutscher Produkttexte oder Beispielwörter in englischer Prosa (z. B. `AnswerGraderTests.cs:4` „die Stadt“, `CreatorAgentTests.cs:1702` „nicht sichtbar“) – kein Befund, keine Entgleitung.
+- **2026-11-24** — Nachschau (Nachtlauf G, Retro Sprint 127): Prüfpunkt die sieben in der Story genannten Dateien
+  (`PlanPositionCrudTests`, `CreatorAgentTests`, `InterestTaxonomyTests`, `ReihenNamensDubletteTests`,
+  `KindInteressenTests`, `CreatorProfileTests`, `ComboTests`) – alle `//`-/`///`-Zeilen nach deutschen Funktionswörtern
+  („und|nicht|ist|wird|eine|wenn|weil|oder“) gegrept: 0 Treffer. Die Umlaut-Treffer im übrigen Testprojekt
+  (`AnswerVariantsTests`, `BeideRichtungenTests`, …) stehen nur in zitierten deutschen Beispielwörtern („die Straße“,
+  „für“), die erlaubt sind. Kein Fund.
