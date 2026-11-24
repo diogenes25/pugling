@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-24.md#runde-140--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-662, B-770]
+nachgeschaut: 2026-11-24
 ---
 
 # B-954 · „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus
@@ -141,3 +142,8 @@ Vitest für die Beschriftungen, Rollengang an einer frischen Kopie der echten DB
   `thisWeek` der Sohn-App. Die Oberfläche selbst ist an der Kopie nicht geklickt; sie ist durch Vitest und E2E belegt.
 - **2026-11-24** — abgenommen, Commit `ddf6d1d6`. Vater an der Kopie der echten DB (Zahlen gegen das Ledger), Sohn und
   Creator als Regressionszeugen (Protokoll Runde 140).
+- **2026-11-24** — nachgeschaut (Nachtlauf J, Retro Sprint 141): Behauptung „dieselbe Definition wie ‚diese Woche‘“
+  nachgelesen – `WeekCoinsAsync` und `EarnedCoinsByDayAsync` gehen beide über `EarnedCoins` (`WalletService.cs:107-109`:
+  positive Buchung, Art in `EarnedCoinKinds`), der Tag über `learningDay.DayOf` (`:101`); `ChildrenDashboardService.cs:32`
+  und `:98` lesen nur diese Abfrage. Folge für B-760 geprüft: die neue Art `HomeworkCoins` zählt damit am Annahmetag auch
+  in „Münzen heute“ des Vaters – gewollt (verdient), kein Befund.

@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (86)
+### Offen (85)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -61,7 +61,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-744](B-744-klausur-prognose-schnappschuss.md) | Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel` | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | Wunsch | `geschaetzt` | P2 | M | backend | Migration? |
 | [B-746](B-746-klausur-abweichung-fuer-den-vater.md) | Prognose und Note nebeneinander: die Abweichung für den Vater | Wunsch | `geschaetzt` | P2 | S | beides | — |
-| [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) | Hausaufgaben-Kern: Ressource am Kind, Abgabe, Abnahme, Münzen und Malus beim Login (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md) | Hausaufgaben im Vater-Web: anlegen, Abgaben mit Foto ansehen, annehmen oder zur Nacharbeit zurückgeben | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-763](B-763-hausaufgaben-sohn-app-karte-und-foto-abgabe.md) | Hausaufgaben in der Sohn-App: Karte mit Frist, Foto aufnehmen und abgeben, Nacharbeit lesen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
@@ -104,7 +103,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (613)</summary>
+<summary>Abgenommen (614)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -656,6 +655,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) | Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“ | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben | Wunsch | `abgenommen` | P2 | M | backend | — |
 | [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) | Hausaufgaben-Kern: Ressource am Kind, Abgabe, Abnahme, Münzen und Malus beim Login (Backend) | Wunsch | `abgenommen` | P2 | L | backend | Migration |
 | [B-764](B-764-mischrunde-auswahl-und-eingefrorener-lauf.md) | Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend) | Wunsch | `abgenommen` | P2 | M | backend | Migration |
 | [B-765](B-765-mischrunde-wertung-kasten-muenzen-und-gemeinsamer-deckel.md) | Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend) | Wunsch | `abgenommen` | P2 | L | backend | — |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis | Wunsch | `abgenommen` | P2 | M | frontend | — |
@@ -745,7 +745,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (224)
 
-**Nachgeschaut: 575 von 613 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 576 von 614 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1017,9 +1017,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
+| [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) | Hausaufgaben-Kern: Ressource am Kind, Abgabe, Abnahme, Münzen und Malus beim Login (Backend) |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus |
 
 </details>
 

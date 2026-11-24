@@ -101,3 +101,8 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-687 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): M (L mit Dienst), backend, Migration ja, kein Vertragsbruch. **Bau-Sperre:** Ablageweg mit B-684 (`idee`) offen, deshalb `wartet_auf`.
+- **2026-11-24** — geprüft im Nachtlauf J, **nicht gebaut**: `wartet_auf` gilt weiter, B-684 steht auf `idee`, der Ablageweg
+  (Ort, Auslieferung hinter der Anmeldung, Mechanik und Länge der Löschfrist) ist nirgends entschieden. B-760 liefert die Naht:
+  `HomeworkSubmission` (eine Zeile je Abgabe mit `SubmittedAt`) bekommt hier die Datei-Referenz, AK 5 („zählt erst mit Foto“)
+  setzt an `HomeworkService.SettleAsync`/`InTime` an. Aus dem Review von B-760 (🟢, hierher verschoben): die Abgabe-Route kennt
+  keine Obergrenze je Hausaufgabe – mit Dateien braucht sie eine (oder „letzte ersetzen“).

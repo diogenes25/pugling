@@ -72,3 +72,8 @@ Die gesamte Oberfläche; das Backend (B-760, B-761) liefert die Wege.
 ## Verlauf
 
 - 2026-11-20 · aus B-687 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch. Baut nach B-760 und B-761.
+- **2026-11-24** — geprüft im Nachtlauf J, **angehalten**: AK 2 (Fotos ansehen) hängt an B-761 (`wartet_auf`). Allein gebaut
+  wäre die Seite schädlich: der Vater könnte Hausaufgaben anlegen, die das Kind in der App nicht abgeben kann (B-763 fehlt) –
+  jede würde zur Frist den Malus kosten. Die Backend-Wege aus B-760 stehen bereit (`supervisor/children/{childId}/homework`,
+  `…/accept`, `…/rework`, `DELETE`, `take`); die Beträge je Kind gehören als zwei Felder auf die Kind-Einstellungen
+  (Muster `towerGameMinutesPerDay` in `VaterKind.tsx`). Offene Entscheidung im Protokoll `pm-sitzung-2026-11-24-j.md`.

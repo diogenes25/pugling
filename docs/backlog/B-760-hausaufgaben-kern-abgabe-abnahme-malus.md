@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/belohnung, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/belohnung, rolle/student, rolle/supervisor]
 aliases: [Hausaufgabe Backend, Hausaufgaben-Kern]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -136,3 +136,85 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-687 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): L, backend, Migration ja, kein Vertragsbruch. Baubar ohne den Ablageweg der Fotos. Reihenfolge: B-760, dann B-761, dann B-762 und B-763.
+- **2026-11-24** — in Arbeit (Nachtlauf J, Sprint 141, Worktree `nachtlauf-j`). Gebaut nach Freigabe 8 auf den Entscheidungen 1–5.
+  Am Code vorher geprüft: `MaxSettleLookbackDays` privat (jetzt `internal`, geteilt), `PointKind` endet bei `TowerGameCoins = 18`
+  (neu `HomeworkCoins = 19`), Nähte Login/Kauf wie beschrieben. Migration `20261124201850_Homework` (angehängt: zwei nullbare
+  Spalten am Kind, drei Tabellen, kein `UPDATE`, kein Default). Startwerte `Gamification:Homework` 20/2 (= Beträge einer
+  Vokabel-Tagespflicht der echten Pläne; Risiko 6). Zusätzlich gebaut, weil die Entscheidungen es tragen und ein Vater sonst
+  nicht korrigieren kann: `DELETE` einer Hausaufgabe, `take` an beiden Listen (Tor „unpaginierte Array-GETs“).
+- Entscheidungs-Auslegungen ohne neue Produktfrage (im Protokoll benannt): Annahme nur aus `Submitted` (Review-Fund 1);
+  „zur Frist“ = Abgabe bis Ende des Fälligkeitstags im Lerntag; eine Abgabe nach der Frist ist erlaubt, wendet aber nichts ab;
+  Betrag 0 bucht nichts und schreibt keinen Schlüssel (wie die Pflicht mit `PenaltyCoins = 0`).
+- AK 1, fremde Hausaufgabe abgeben → `HausaufgabenTests.Kind_Sieht_Und_Abgibt_Nur_Eigene_Hausaufgaben` (404, keine Zeile;
+  Vater-Token 403), M1 → rot.
+- AK 2, Malus einmal, Betrag des Kindes, Stamp → `Ohne_Abgabe_Kostet_Den_Malus_Des_Kindes_Genau_Einmal` (−7 statt Vorgabe −2),
+  M3 (Stamp) / M4 (Betrag) / M19b (Login-Naht) → rot; Abgabe am Fälligkeitstag 23:30 und Nacharbeit kosten nichts →
+  `Abgabe_Bis_Zur_Frist_Und_Nacharbeit_Kosten_Nichts`, M6 → rot; Abgabe 00:30 am Folgetag wendet nichts ab →
+  `Spaete_Abgabe_Wendet_Den_Malus_Nicht_Ab`, M5 → rot. Doppelbuchung: der eindeutige Schlüssel ist die Garantie; ein Mutant
+  auf die Existenzprüfung bliebe grün (der Index fängt ihn), darum keine Zeile dafür.
+- AK 3, Nachtrag nach der Frist / Frist −15 / Grenze −14 → `Nachtrag_Und_Alte_Frist_Kosten_Nichts` (genau die Grenze wird
+  belastet), M7 (Anlegezeit) / M8 (Fenster zu weit) / M9 (Grenze ausgeschlossen) → rot.
+- AK 4, Annahme einmal, Betrag des Kindes (25 statt 20), zählt als verdient → `Annahme_Bucht_Einmal_Und_Zaehlt_Als_Verdient`,
+  M10 (zweite Annahme) / M11 (Betrag) / M12 (Stamp) / M13 (ohne Abgabe) / M14 (aus `EarnedCoinKinds` gefallen) → rot.
+- AK 5, Notiz lesbar, Frist bleibt, leere Notiz 400, Annahme nach Rückgabe ohne neue Abgabe 409 →
+  `Nacharbeit_Ist_Lesbar_Und_Verschiebt_Die_Frist_Nicht`, M13b / M15 / M16 / M17 → rot.
+- AK 6 → `Offene_Hausaufgabe_Aendert_Den_Tag_Nicht`, **Absichtserklärung** (kein Mutant: nichts liest Hausaufgaben im Tag).
+- AK 7, Liste je Kind → M2 → rot (zwei Kinder im Fall); `take` und Löschen → `Vater_Begrenzt_Die_Liste_Und_Loescht`, M20 / M21 → rot.
+- AK 8 → `HausaufgabenMigrationTests.Bestand_Hat_Leere_Betraege_Und_Unveraenderten_Kontostand`, M23 (Default 20) → rot.
+- AK 9, **Absichtserklärung** (wie in der Story beschriftet): `Spaete_Abgabe_…` zeigt, dass eine spätere Abgabe nichts zurücknimmt.
+- AK 10, Kauf rechnet vor der Kontoprüfung ab → `Kauf_Rechnet_Den_Malus_Vor_Der_Kontopruefung_Ab` (10 Münzen, Preis 10,
+  Malus 5 → `insufficient_coins`), M18b → rot.
+- Anlegen ohne `dueOn` → 400 (Review-Fund 2) → `Anlegen_Prueft_Text_Und_Fach`, M22b → rot.
+- Mutanten-Probe nach dem letzten Edit (Debug, `python -I .claude/scripts/mutant-probe.py`), 24 Zeilen; die drei
+  `ungemessen` (M18/M19/M22: Mutant kompilierte nicht) neu gemessen als M18b/M19b/M22b:
+
+  Grundlinie: dotnet test backend/Pugling.Api.Tests -c Debug --no-build --filter FullyQualifiedName~Hausaufgaben
+  Gemessen an `5993c86b + Arbeitsbaum geändert`, 2026-11-24 23:01.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:70 | red | red |  |
+  | M2 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:45 | red | red |  |
+  | M3 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:186 | red | red |  |
+  | M4 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:169 | red | red |  |
+  | M5 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:165 | red | red |  |
+  | M6 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:165 | red | red |  |
+  | M7 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:164 | red | red |  |
+  | M8 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:159 | red | red |  |
+  | M9 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:159 | red | red |  |
+  | M10 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:91 | red | red |  |
+  | M11 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:96 | red | red |  |
+  | M12 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:111 | red | red |  |
+  | M13 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:92 | red | red |  |
+  | M13b | backend/Pugling.Api/Services/Shared/HomeworkService.cs:92 | red | red |  |
+  | M14 | backend/Pugling.Api/Services/Shared/WalletService.cs:50 | red | red |  |
+  | M15 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:137 | red | red |  |
+  | M16 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:136 | red | red |  |
+  | M17 | backend/Pugling.Api/Controllers/Supervisor/HomeworkController.cs:74 | red | red |  |
+  | M18 | backend/Pugling.Api/Controllers/Student/MeController.cs:299 | red | ungemessen | kompiliert nicht |
+  | M19 | backend/Pugling.Api/Controllers/AuthController.cs:91 | red | ungemessen | kompiliert nicht |
+  | M20 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:145 | red | red |  |
+  | M21 | backend/Pugling.Api/Services/Shared/HomeworkService.cs:45 | red | red |  |
+  | M22 | backend/Pugling.Api/Controllers/Supervisor/HomeworkController.cs:47 | red | ungemessen | kompiliert nicht |
+  | M23 | backend/Pugling.Api/Data/Migrations/20261124201850_Homework.cs:18 | red | red |  |
+
+  Grundlinie nach dem Zurückspielen: green.
+
+  Gemessen an `5993c86b + Arbeitsbaum geändert`, 2026-11-24 23:05.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M18b | backend/Pugling.Api/Controllers/Student/MeController.cs:299 | red | red |  |
+  | M19b | backend/Pugling.Api/Controllers/AuthController.cs:91 | red | red |  |
+  | M22b | backend/Pugling.Api/Controllers/Supervisor/HomeworkController.cs:47 | red | red |  |
+
+  Grundlinie nach dem Zurückspielen: green.
+- **2026-11-24** — Review `pugling-reviewer`: 🟡 Annahme aus `Rework` + gleichzeitige Abgabe → zweite Buchung möglich; behoben
+  (Annahme nur aus `Submitted`, M13b). 🟢 behoben: `dueOn` Pflicht (M22b), gelöschtes Kind → leere Liste statt 500. 🟢
+  zurückgestellt: Betrag 0 schiebt auf statt zu erlassen (Frage an den Nutzer im Protokoll), Obergrenze der Abgaben (→ B-761).
+  Verifikation: .NET 2357/2357 Release, Vitest 1441/1441, `tsc` sauber. Fehlerzähler Sprint 141: 4.
+- **2026-11-24** — Rollengang an der API einer Kopie der echten DB (`:5212`, Migration lief dort ein): Vater legt an, gibt
+  zurück, nimmt an (Testjunge 2640 → 2660), zweites Annehmen 409; Sohn sieht, gibt ab, liest die Notiz; fremdes Kind 404;
+  Kontostände nach der Migration unverändert (275 / 2138 / 2640). Der Malus selbst lief nicht an der Kopie (braucht einen
+  abgelaufenen Tag) – belegt durch die Integrationstests. Kein Browser: es gibt keine Oberfläche.
+- **2026-11-24** — abgenommen, Commit `788921d6` (Branch `nachtlauf/2026-11-24-j`, ungemergt).
