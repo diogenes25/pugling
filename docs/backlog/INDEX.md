@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (92)
+### Offen (89)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -32,7 +32,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
+| [B-940](B-940-kind-verkleinert-sein-vorbereitungs-buendel.md) | Das Kind kann das Bündel seiner Vorbereitungs-Pflicht über Schlagwörter verkleinern | Defekt | `idee` | P2 | — | backend | — |
+| [B-941](B-941-vorbereitung-umgeht-das-ausfuehr-recht.md) | Die Vorbereitungs-Pflicht legt Schlagwort-Übungen ohne Ausführ-Recht als Position an | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
+| [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
+| [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) | Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“ | Wunsch | `in-arbeit` | P2 | S | frontend | — |
+| [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben | Wunsch | `in-arbeit` | P2 | M | backend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -56,25 +62,13 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-739](B-739-foerder-uebungen-und-zusammenfassung.md) | Der KI-Creator baut nachts Förder-Übungen und schreibt eine kurze Zusammenfassung (B-644, Etappe E5) | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
-| [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` | Wunsch | `geschaetzt` | P2 | S | backend | — |
-| [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
-| [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater | Wunsch | `geschaetzt` | P2 | S | backend | — |
-| [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-744](B-744-klausur-prognose-schnappschuss.md) | Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel` | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | Wunsch | `geschaetzt` | P2 | M | backend | Migration? |
 | [B-746](B-746-klausur-abweichung-fuer-den-vater.md) | Prognose und Note nebeneinander: die Abweichung für den Vater | Wunsch | `geschaetzt` | P2 | S | beides | — |
-| [B-750](B-750-klassenarbeit-countdown-beim-kind.md) | Das Kind sieht in der Sohn-App, wann seine nächste Klassenarbeit ist | Wunsch | `geschaetzt` | P2 | M | beides | — |
-| [B-751](B-751-klassenarbeit-bereitschaft-vokabeln.md) | Das Kind sieht, wie sicher es im Vokabelstoff seiner Klassenarbeit schon ist | Wunsch | `geschaetzt` | P2 | M | beides | — |
-| [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
-| [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) | Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“ | Wunsch | `geschaetzt` | P2 | S | frontend | — |
-| [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-760](B-760-hausaufgaben-kern-abgabe-abnahme-malus.md) | Hausaufgaben-Kern: Ressource am Kind, Abgabe, Abnahme, Münzen und Malus beim Login (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md) | Hausaufgaben im Vater-Web: anlegen, Abgaben mit Foto ansehen, annehmen oder zur Nacharbeit zurückgeben | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-763](B-763-hausaufgaben-sohn-app-karte-und-foto-abgabe.md) | Hausaufgaben in der Sohn-App: Karte mit Frist, Foto aufnehmen und abgeben, Nacharbeit lesen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
-| [B-764](B-764-mischrunde-auswahl-und-eingefrorener-lauf.md) | Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
-| [B-765](B-765-mischrunde-wertung-kasten-muenzen-und-gemeinsamer-deckel.md) | Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | — |
-| [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-767](B-767-meldung-zeigt-auf-die-antwort-und-bekommt-einen-ausgang.md) | Eine Meldung zeigt auf die beanstandete Test-Antwort, und der Vater erledigt sie mit „berechtigt“ oder „abgewiesen“ (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung | Wunsch | `geschaetzt` | P2 | S | frontend | — |
@@ -87,6 +81,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-942](B-942-fenster-editor-meldung-verschwindet.md) | Die Erfolgsmeldung des Fenster-Editors verschwindet sofort nach dem Speichern | Defekt | `idee` | P3 | — | frontend | — |
+| [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md) | Die Zusicherung „keine Zahl bei geschriebener oder abgesagter Arbeit“ kann nicht fallen | Defekt | `idee` | P3 | — | frontend | — |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
@@ -108,9 +104,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
 | [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (591)</summary>
+<summary>Abgenommen (599)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -651,10 +648,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
+| [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` | Wunsch | `abgenommen` | P2 | S | backend | — |
+| [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern | Wunsch | `abgenommen` | P2 | M | backend | Migration |
+| [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-747](B-747-einloesungen-aller-kinder-endpunkt.md) | Offene Einlöse-Anfragen aller Kinder in einem Aufruf | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-749](B-749-vater-startseite-entruempeln-und-einloesen.md) | Die Vater-Startseite zeigt Arbeit, Tagesziel, Einlösen; die Verwaltung zieht um | Wunsch | `abgenommen` | P2 | L | frontend | — |
 | [B-75](B-75-lese-hoerverstehen-ohne-inhalt.md) | Lese- und Hörverstehen kommen ohne ihren Inhalt beim Kind an | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
+| [B-750](B-750-klassenarbeit-countdown-beim-kind.md) | Das Kind sieht in der Sohn-App, wann seine nächste Klassenarbeit ist | Wunsch | `abgenommen` | P2 | M | beides | — |
+| [B-751](B-751-klassenarbeit-bereitschaft-vokabeln.md) | Das Kind sieht, wie sicher es im Vokabelstoff seiner Klassenarbeit schon ist | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-76](B-76-lueckentext-karte-ohne-luecke.md) | Der Lückentext sagt dem Kind nicht, welche Lücke gemeint ist | Defekt | `abgenommen` | P1 | M | beides | — |
+| [B-764](B-764-mischrunde-auswahl-und-eingefrorener-lauf.md) | Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend) | Wunsch | `abgenommen` | P2 | M | backend | Migration |
+| [B-765](B-765-mischrunde-wertung-kasten-muenzen-und-gemeinsamer-deckel.md) | Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend) | Wunsch | `abgenommen` | P2 | L | backend | — |
+| [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis | Wunsch | `abgenommen` | P2 | M | frontend | — |
 | [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | Defekt | `abgenommen` | P2 | S | backend | — |
@@ -708,7 +713,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (9)
+### Wartet auf Zutun von außen (13)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -723,11 +728,15 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
+| [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | `in-arbeit` | Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert) |
+| [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme |
+| [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) | Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“ | `in-arbeit` | Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme |
+| [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben | `in-arbeit` | Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
 ### Nach der Abnahme entgangen (219)
 
-**Nachgeschaut: 559 von 591 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 32 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 561 von 599 abgenommenen** — und in 194 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -952,7 +961,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | Eine offene Übungsrunde von gestern spielt nach einem Stufenwechsel die falsche Übung | [B-848] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (32) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (38) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -990,6 +999,12 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
+| [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
+| [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
+| [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
+| [B-750](B-750-klassenarbeit-countdown-beim-kind.md) | Das Kind sieht in der Sohn-App, wann seine nächste Klassenarbeit ist |
+| [B-751](B-751-klassenarbeit-bereitschaft-vokabeln.md) | Das Kind sieht, wie sicher es im Vokabelstoff seiner Klassenarbeit schon ist |
+| [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
 
 </details>
