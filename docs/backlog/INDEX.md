@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (83)
+### Offen (85)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -82,6 +82,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-822](B-822-vokabel-tuerme-natives-spiel.md) | Vokabel-Türme: ein natives Tower-Defense-Spiel als eigener Übungsbereich | Wunsch | `gegrillt` | P3 | — | — | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
+| [B-952](B-952-vokabel-tuerme-buchstaben-modus.md) | Vokabel-Türme: Buchstaben-Modus – Monster lassen Buchstaben fallen, der Turm wird buchstabiert | Wunsch | `ausformuliert` | P3 | — | — | — |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
@@ -97,6 +98,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-851](B-851-vokabel-tuerme-backend-run.md) | Vokabel-Türme: Spiel-Run mit Bewertung je Zuweisung, Münzdeckel und Minutenlimit | Wunsch | `idee` | P3 | — | backend | — |
 | [B-852](B-852-vokabel-tuerme-pflicht-anrechnung.md) | Vokabel-Türme: N bestandene Level erfüllen die Pflicht einer Position | Wunsch | `idee` | P3 | — | beides | — |
 | [B-853](B-853-vokabel-tuerme-prototyp.md) | Vokabel-Türme: spielbarer Prototyp mit einer Karte und fünf Türmen | Wunsch | `idee` | P3 | — | — | — |
+| [B-953](B-953-vokabel-tuerme-zielwahl-und-grafik.md) | Vokabel-Türme: Kanone mit einstellbarer Zielwahl und echte Grafik für Figur und Türme | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 
