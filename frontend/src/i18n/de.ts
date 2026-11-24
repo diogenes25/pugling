@@ -191,6 +191,7 @@ export const de = {
       ShopGems: "Im Shop gekauft (Gems)",
       ManualGems: "Papa-Geschenk (Gems)",
       GoalPenalty: "Pflicht gerissen (Malus)",
+      GoalPenaltyRefund: "Malus zurückgenommen",
       ObjectiveCoins: "Ziel-Etappe erreicht",
       ObjectiveGems: "Ziel-Etappe erreicht (Gems)",
       DailyBoxCoins: "Tägliche Belohnungsbox",
@@ -456,6 +457,7 @@ export const de = {
       // Der Hinweis nach „erledigt" (Entscheidung 8): einmal, mit dem Wort der Karte, wenn es eins gibt.
       notice: "Deine Meldung zu „{{cue}}“ wurde erledigt ✔",
       noticeExercise: "Deine Meldung zu „{{title}}“ wurde erledigt ✔",
+      noticeJustified: "Du hattest recht: der Test ist nachgerechnet. Kasten, Missionen und eine schon geöffnete Kiste bleiben, wie sie sind.",
       noticeOk: "Alles klar",
     },
     practice: {

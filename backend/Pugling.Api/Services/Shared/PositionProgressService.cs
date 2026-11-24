@@ -18,6 +18,12 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private const int DefaultPassPercent = 80;
 
     /// <summary>
+    /// The score a test of the position must reach to pass: its own threshold, else the default. The one rule for handing
+    /// in a test and for correcting it later (B-768).
+    /// </summary>
+    public static int TestPassPercent(PlanPosition pos) => pos.GoalThreshold is > 0 ? pos.GoalThreshold.Value : DefaultPassPercent;
+
+    /// <summary>
     /// How far back the lazy settlement (<see cref="SettleClosedPeriodsAsync"/>) recalculates at most. In
     /// normal operation the only open period is "yesterday"; the cap only limits catch-up recalculation
     /// after a longer absence, without ever scanning the entire history.
@@ -230,9 +236,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             return await PlayedRoundMeetsGoalAsync(pos, day, from, to, ct);
 
         // B-849, decision 4: a passed test of a prerequisite raises the level but meets no goal - only the target does.
-        return await db.TestAttempts.AnyAsync(t =>
+        // "Passed" after a confirmed correction (B-768).
+        return await db.TestAttempts.Where(TestAttempt.CountsAsPassed).AnyAsync(t =>
             t.PlanPositionId == pos.Id && t.Day >= from && t.Day <= to
-            && t.CompletedAt != null && t.Passed && (!pos.RequireTypedTest || t.Graded)
+            && t.CompletedAt != null && (!pos.RequireTypedTest || t.Graded)
             && (t.BuildLevel == null || t.BuildLevel >= Exercise.BuildLevelTarget), ct);
     }
 
@@ -618,35 +625,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var now = time.GetUtcNow().UtcDateTime;
-        foreach (var pos in positions.Where(p => HasDutyOn(p, day) && p.PointsGoalMet > 0))
-        {
-            if (!await IsGoalMetAsync(pos, plan, day, ct)) continue;
-            // The cadence of that day, not today's (B-659): a weekly goal freed after it paid must find its own week's row.
-            var cadence = DutyCadenceOn(pos, day);
-            var periodStart = PeriodStart(cadence, day);
-            var samePeriod = SamePeriodCadences(cadence);
-            if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
-                    && samePeriod.Contains(r.Cadence) && r.PeriodStart == periodStart, ct))
-                continue;
-
-            db.PositionGoalRewards.Add(new PositionGoalReward
-            {
-                PlanPositionId = pos.Id,
-                Cadence = cadence,
-                PeriodStart = periodStart,
-                Day = day,
-                Points = pos.PointsGoalMet,
-                AwardedAt = now,
-            });
-            db.ChildPointsEntries.Add(new ChildPointsEntry
-            {
-                ChildId = plan.ChildId,
-                Kind = PointKind.Goal,
-                Amount = pos.PointsGoalMet,
-                Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} erreicht",
-                CreatedAt = now,
-            });
-        }
+        foreach (var pos in positions) await AddGoalRewardIfDueAsync(pos, plan, day, now, ct);
 
         try
         {
@@ -662,6 +641,55 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             // not stumble over it again; whatever reads the day afterwards reads it fresh from the database.
             db.ChangeTracker.Clear();
         }
+    }
+
+    /// <summary>
+    /// Adds the goal reward of the position's period around <paramref name="day"/> when the goal is met there and the
+    /// period is not paid yet - unsaved; the caller saves and handles the unique index (see
+    /// <see cref="EvaluateAndAwardAsync"/>). Also the path a confirmed correction books a missing reward through (B-768).
+    /// </summary>
+    /// <returns>Whether a reward was added.</returns>
+    public async Task<bool> AddGoalRewardIfDueAsync(PlanPosition pos, StudyPlan plan, DateOnly day, DateTime now,
+        CancellationToken ct)
+    {
+        if (!HasDutyOn(pos, day) || pos.PointsGoalMet <= 0 || !await IsGoalMetAsync(pos, plan, day, ct)) return false;
+        // The cadence of that day, not today's (B-659): a weekly goal freed after it paid must find its own week's row.
+        var cadence = DutyCadenceOn(pos, day);
+        var periodStart = PeriodStart(cadence, day);
+        var samePeriod = SamePeriodCadences(cadence);
+        if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
+                && samePeriod.Contains(r.Cadence) && r.PeriodStart == periodStart, ct))
+            return false;
+
+        db.PositionGoalRewards.Add(new PositionGoalReward
+        {
+            PlanPositionId = pos.Id,
+            Cadence = cadence,
+            PeriodStart = periodStart,
+            Day = day,
+            Points = pos.PointsGoalMet,
+            AwardedAt = now,
+        });
+        db.ChildPointsEntries.Add(new ChildPointsEntry
+        {
+            ChildId = plan.ChildId,
+            Kind = PointKind.Goal,
+            Amount = pos.PointsGoalMet,
+            Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} erreicht",
+            CreatedAt = now,
+        });
+        return true;
+    }
+
+    /// <summary>
+    /// The penalty booked for the position's period around <paramref name="day"/> and not taken back yet, whatever the
+    /// cadence was when it was booked (a daily row for the day, a weekly row for its week), or <c>null</c> (B-768).
+    /// </summary>
+    public Task<PositionGoalPenalty?> OpenPenaltyAroundAsync(int positionId, DateOnly day, CancellationToken ct)
+    {
+        var monday = WeekMonday(day);
+        return db.PositionGoalPenalties.FirstOrDefaultAsync(p => p.PlanPositionId == positionId && p.RefundedAt == null
+            && (p.Cadence == GoalCadence.Weekly ? p.PeriodStart == monday : p.PeriodStart == day), ct);
     }
 
     /// <summary>

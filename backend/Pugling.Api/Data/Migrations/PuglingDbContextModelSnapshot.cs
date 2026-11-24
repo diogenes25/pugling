@@ -824,6 +824,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("LastReportedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Outcome")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("PlanPositionId")
                         .HasColumnType("INTEGER");
 
@@ -836,6 +839,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("TestItemResultId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Text")
                         .HasMaxLength(2000)
@@ -853,6 +859,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("ExerciseItemId");
 
                     b.HasIndex("PlanPositionId");
+
+                    b.HasIndex("TestItemResultId");
 
                     b.HasIndex("ChildId", "Status");
 
@@ -2031,7 +2039,15 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RefundedByFeedbackId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RefundedByFeedbackId");
 
                     b.HasIndex("PlanPositionId", "Cadence", "PeriodStart")
                         .IsUnique();
@@ -2798,6 +2814,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("CorrectItems")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CorrectedItems")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Cursor")
                         .HasColumnType("INTEGER");
 
@@ -2812,6 +2831,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Passed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool?>("PassedAfterCorrection")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("PlanPositionId")
@@ -3527,6 +3549,11 @@ namespace Pugling.Api.Data.Migrations
                         .HasForeignKey("PlanPositionId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Pugling.Api.Models.TestItemResult", "TestItemResult")
+                        .WithMany()
+                        .HasForeignKey("TestItemResultId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Child");
 
                     b.Navigation("DoneByAdult");
@@ -3536,6 +3563,8 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("ExerciseItem");
 
                     b.Navigation("PlanPosition");
+
+                    b.Navigation("TestItemResult");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ExerciseGrammarTopic", b =>
@@ -3998,7 +4027,14 @@ namespace Pugling.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Pugling.Api.Models.ExerciseFeedback", "RefundedByFeedback")
+                        .WithMany()
+                        .HasForeignKey("RefundedByFeedbackId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("PlanPosition");
+
+                    b.Navigation("RefundedByFeedback");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.PositionGoalReward", b =>

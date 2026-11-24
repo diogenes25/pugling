@@ -229,7 +229,10 @@ Response — `HTTP 200`:
     "status": "Open",
     "createdAt": "<timestamp>",
     "lastReportedAt": "<timestamp>",
-    "doneAt": null
+    "doneAt": null,
+    "testItemResultId": null,
+    "testAnswerCorrect": null,
+    "outcome": null
   },
   {
     "id": 1,
@@ -250,7 +253,10 @@ Response — `HTTP 200`:
     "status": "Open",
     "createdAt": "<timestamp>",
     "lastReportedAt": "<timestamp>",
-    "doneAt": null
+    "doneAt": null,
+    "testItemResultId": null,
+    "testAnswerCorrect": null,
+    "outcome": null
   }
 ]
 ```
@@ -318,7 +324,10 @@ Response — `HTTP 200`:
   "status": "Done",
   "createdAt": "<timestamp>",
   "lastReportedAt": "<timestamp>",
-  "doneAt": "<timestamp>"
+  "doneAt": "<timestamp>",
+  "testItemResultId": null,
+  "testAnswerCorrect": null,
+  "outcome": null
 }
 ```
 
@@ -383,7 +392,8 @@ Response — `HTTP 200`:
     "itemIndex": 0,
     "cue": "hello",
     "reason": "WrongTranslation",
-    "doneAt": "<timestamp>"
+    "doneAt": "<timestamp>",
+    "outcome": null
   }
 ]
 ```

@@ -749,6 +749,9 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(r => new { r.PlanPositionId, r.Cadence, r.PeriodStart }).IsUnique();
             e.HasOne(r => r.PlanPosition).WithMany().HasForeignKey(r => r.PlanPositionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            // The feedback that took the penalty back (B-768) may fade; the refund mark stays on the row.
+            e.HasOne(r => r.RefundedByFeedback).WithMany().HasForeignKey(r => r.RefundedByFeedbackId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Completion bonus of a remediation position (B-636): a position finishes once, so one row per position is the
@@ -1119,6 +1122,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(f => f.PlanPosition).WithMany().HasForeignKey(f => f.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(f => f.ExerciseItem).WithMany().HasForeignKey(f => f.ExerciseItemId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(f => f.DoneByAdult).WithMany().HasForeignKey(f => f.DoneByAdultId).OnDelete(DeleteBehavior.SetNull);
+            // The answer reported on (B-767) may fade with its attempt; the report stays as an observation.
+            e.HasOne(f => f.TestItemResult).WithMany().HasForeignKey(f => f.TestItemResultId).OnDelete(DeleteBehavior.SetNull);
             // The read paths: a child's list and notices (supervisor view, child notices) and the creator's count.
             e.HasIndex(f => new { f.ChildId, f.Status });
             e.HasIndex(f => f.ExerciseId);

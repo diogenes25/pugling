@@ -117,7 +117,7 @@ describe("MeldungsHinweis (B-629 AK 3)", () => {
   // Rot, wenn der Hinweis das Wort der Karte nicht nennt, nach „Alles klar“ stehen bleibt oder nicht quittiert wird.
   it("zeigt den erledigten Fall einmal und quittiert ihn", async () => {
     vi.spyOn(api, "feedbackNotices").mockResolvedValue([
-      { id: 5, exerciseId: 9, exerciseTitle: "Unité 5", itemIndex: 2, cue: "voyage", reason: "WrongTranslation", doneAt: "2026-11-18T20:00:00Z" },
+      { id: 5, exerciseId: 9, exerciseTitle: "Unité 5", itemIndex: 2, cue: "voyage", reason: "WrongTranslation", doneAt: "2026-11-18T20:00:00Z", outcome: null },
     ]);
     const ack = vi.spyOn(api, "ackFeedbackNotice").mockResolvedValue(undefined);
     render(<MeldungsHinweis childId={4} />);
@@ -129,5 +129,25 @@ describe("MeldungsHinweis (B-629 AK 3)", () => {
 
     expect(ack).toHaveBeenCalledWith(4, 5);
     expect(screen.queryByText(/wurde erledigt/)).toBeNull();
+  });
+
+  // B-769 AK 3: nach „berechtigt“ sagt der Hinweis, dass Kasten und Missionen nicht neu gebucht werden; ohne Urteil steht der
+  // Satz nicht da. Rot, wenn der Satz fehlt oder an jedem Hinweis steht.
+  it("nennt nach berechtigt, was nicht nachgebucht wird", async () => {
+    vi.spyOn(api, "feedbackNotices").mockResolvedValue([
+      { id: 6, exerciseId: 9, exerciseTitle: "Unité 5", itemIndex: 2, cue: "voyage", reason: "TooStrict", doneAt: "2026-11-18T20:00:00Z", outcome: "Justified" },
+    ]);
+    const { unmount } = render(<MeldungsHinweis childId={4} />);
+    await act(async () => {});
+    expect(screen.getByText(/Kasten, Missionen/)).toBeTruthy();
+    unmount();
+
+    vi.spyOn(api, "feedbackNotices").mockResolvedValue([
+      { id: 7, exerciseId: 9, exerciseTitle: "Unité 5", itemIndex: 2, cue: "voyage", reason: "TooStrict", doneAt: "2026-11-18T20:00:00Z", outcome: "Rejected" },
+    ]);
+    render(<MeldungsHinweis childId={4} />);
+    await act(async () => {});
+    expect(screen.getByText("Deine Meldung zu „voyage“ wurde erledigt ✔")).toBeTruthy();
+    expect(screen.queryByText(/Kasten, Missionen/)).toBeNull();
   });
 });

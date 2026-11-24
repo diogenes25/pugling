@@ -236,6 +236,7 @@ public class SchemaGuardTests
             ["ExerciseFeedback.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             ["ExerciseFeedback.ExerciseItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
             ["ExerciseFeedback.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
+            ["ExerciseFeedback.TestItemResultId"] = DeleteBehavior.SetNull, // -> TestItemResult
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             // B-12: a rating is an opinion of one creator about one exercise - without either it says nothing.
@@ -302,6 +303,7 @@ public class SchemaGuardTests
             ["PlanPosition.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
             ["PositionCompletionBonus.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionGoalPenalty.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            ["PositionGoalPenalty.RefundedByFeedbackId"] = DeleteBehavior.SetNull, // -> ExerciseFeedback
             ["PositionGoalReward.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionItemProgress.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             // B-848: progress on a played prerequisite is the child's record; the delete is refused with a 409 first.

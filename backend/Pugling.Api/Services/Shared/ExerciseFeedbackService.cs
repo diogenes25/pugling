@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Errors;
 using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
@@ -36,12 +37,21 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         var itemIndex = card?.Index;
         // B-848: the card belongs to the exercise the position plays, the prerequisite on a build path.
         var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
+        // B-767, decision 1: the answer is frozen now - a later answer to the same card must not change what is judged.
+        int? resultId = itemIndex is { } index
+            ? await AnsweredTestsOf(pos.Id, index, PrerequisiteLevel(pos, exerciseId, day))
+                .Select(t => t.Results.Where(r => r.ItemIndex == index && r.GivenAnswer != null)
+                    .OrderByDescending(r => r.Id).Select(r => (int?)r.Id).FirstOrDefault())
+                .FirstOrDefaultAsync(ct)
+            : null;
         var entries = new List<ExerciseFeedback>();
         foreach (var reason in reasons.Count > 0 ? reasons.Select(r => (FeedbackReason?)r) : [null])
         {
+            // Decision 3 of B-767: one entry per answer - a report about another answer of the same card opens its own
+            // entry, or one judgement would have to stand for several answers.
             var entry = await db.ExerciseFeedbacks.FirstOrDefaultAsync(f => f.ChildId == childId
                 && f.ExerciseId == exerciseId && f.ItemIndex == itemIndex && f.Reason == reason
-                && f.Status == FeedbackStatus.Open, ct);
+                && f.TestItemResultId == resultId && f.Status == FeedbackStatus.Open, ct);
             if (entry is null)
             {
                 entry = new ExerciseFeedback
@@ -51,6 +61,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
                     ItemIndex = itemIndex,
                     ExerciseItemId = card?.ItemId,
                     VocabularyId = card?.VocabularyId,
+                    TestItemResultId = resultId,
                     Reason = reason,
                     Count = 0,
                     CreatedAt = now,
@@ -66,6 +77,24 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         await db.SaveChangesAsync(ct);
         return [.. entries.Select(e => e.Id)];
     }
+
+    // B-849: the level whose attempts examined the exercise reported on - a prerequisite's own level, or null for the
+    // position's own exercise (the target level, or no build path).
+    private static int? PrerequisiteLevel(PlanPosition pos, int exerciseId, DateOnly day) =>
+        exerciseId != pos.ExerciseId ? PositionPlayService.PlayedExercise(pos, day)?.BuildLevel : null;
+
+    /// <summary>
+    /// The child's own completed tests on the position that stored an answer to the card, newest first. Only attempts on
+    /// the reported exercise's level: on a build path an index of another level names another card (B-849).
+    /// TestItemResult has no DbSet of its own; it is reached through its attempt, by scalar subqueries - a SelectMany
+    /// needs SQL APPLY, which SQLite does not have.
+    /// </summary>
+    private IQueryable<TestAttempt> AnsweredTestsOf(int positionId, int index, int? prerequisiteLevel) =>
+        db.TestAttempts.AsNoTracking()
+            .Where(PositionPlayService.AttemptsOnLevel(prerequisiteLevel))
+            .Where(t => t.PlanPositionId == positionId && !t.BySupervisor && t.CompletedAt != null
+                && t.Results.Any(r => r.ItemIndex == index && r.GivenAnswer != null))
+            .OrderByDescending(t => t.CompletedAt).ThenByDescending(t => t.Id);
 
     // A position over a bare exercise: it has no build path, so the day it is resolved for reads nothing.
     private static PlanPosition BareExercise(Exercise exercise) => new() { Exercise = exercise };
@@ -86,7 +115,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         int? take, CancellationToken ct)
     {
         var query = db.ExerciseFeedbacks.AsNoTracking()
-            .Include(f => f.Child).Include(f => f.Exercise).Include(f => f.PlanPosition)
+            .Include(f => f.Child).Include(f => f.Exercise).Include(f => f.PlanPosition).Include(f => f.TestItemResult)
             .Where(f => childIds.Contains(f.ChildId) && (status == null || f.Status == status))
             // Open first as a comparison, not by the column: the status is stored as text, and "Done" sorts before
             // "Open" - with `take` the open reports would be the ones cut off.
@@ -107,8 +136,9 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
             }
             result.Add(new FeedbackResponse(f.Id, f.ChildId, f.Child?.Name ?? "", f.PlanPosition?.StudyPlanId,
                 f.PlanPositionId, f.ExerciseId, f.Exercise?.Title ?? "", f.ItemIndex, card?.Prompt, card?.Answer,
-                await ChildAnswerAsync(f, ct), f.Reason, f.Reason is { } r ? FeedbackReasons.ReachOf(r) : null, f.Count,
-                f.Text, f.Status, f.CreatedAt, f.LastReportedAt, f.DoneAt));
+                f.TestItemResult is { } answered ? answered.GivenAnswer : await ChildAnswerAsync(f, ct), f.Reason,
+                f.Reason is { } r ? FeedbackReasons.ReachOf(r) : null, f.Count, f.Text, f.Status, f.CreatedAt,
+                f.LastReportedAt, f.DoneAt, f.TestItemResultId, f.TestItemResult?.WasCorrect, f.Outcome));
         }
         return result;
     }
@@ -125,13 +155,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         // a level where the position had no build path then.
         int? prerequisiteLevel = f.PlanPosition is { } p && p.ExerciseId != f.ExerciseId ? f.Exercise?.BuildLevel : null;
         var tested = f.PlanPositionId is { } positionId
-            // TestItemResult has no DbSet of its own; it is reached through its attempt. A scalar subquery, not a
-            // SelectMany: the latter needs SQL APPLY, which SQLite does not have.
-            ? await db.TestAttempts.AsNoTracking()
-                .Where(PositionPlayService.AttemptsOnLevel(prerequisiteLevel))
-                .Where(t => t.PlanPositionId == positionId && !t.BySupervisor && t.CompletedAt != null
-                    && t.Results.Any(r => r.ItemIndex == index && r.GivenAnswer != null))
-                .OrderByDescending(t => t.CompletedAt).ThenByDescending(t => t.Id)
+            ? await AnsweredTestsOf(positionId, index, prerequisiteLevel)
                 .Select(t => new
                 {
                     GivenAnswer = t.Results.Where(r => r.ItemIndex == index && r.GivenAnswer != null)
@@ -152,18 +176,45 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         return practiced.At > tested.At ? practiced.GivenAnswer : tested.GivenAnswer;
     }
 
-    /// <summary>Marks the entry done (for every supervisor) or open again; a new done raises a fresh notice for the child.</summary>
-    public async Task SetStatusAsync(ExerciseFeedback entry, FeedbackStatus status, int? adultId, CancellationToken ct)
+    /// <summary>
+    /// Marks the entry done (for every supervisor) or open again; a new done - or a new judgement on a done entry - raises
+    /// a fresh notice for the child. <paramref name="outcome"/> <c>null</c> keeps the judgement of a done entry (PATCH
+    /// semantics); opening the entry again drops it. The caller has checked the change (<see cref="CheckChange"/>) and
+    /// saves.
+    /// </summary>
+    public void SetStatus(ExerciseFeedback entry, FeedbackStatus status, FeedbackOutcome? outcome, int? adultId)
     {
-        if (entry.Status != status)
+        var done = status == FeedbackStatus.Done;
+        var judgedAnew = done && outcome is not null && outcome != entry.Outcome;
+        if (entry.Status != status || judgedAnew)
         {
             entry.Status = status;
-            var done = status == FeedbackStatus.Done;
             entry.DoneAt = done ? time.GetUtcNow().UtcDateTime : null;
             entry.DoneByAdultId = done ? adultId : null;
             entry.SeenByChildAt = null;
         }
-        await db.SaveChangesAsync(ct);
+        entry.Outcome = done ? outcome ?? entry.Outcome : null;
+    }
+
+    /// <summary>
+    /// Why the change cannot be made, or <c>null</c> (B-767). A judgement belongs to a done entry; "justified" needs the
+    /// test answer the report is about (decision 1); and a justified entry is final - its correction is booked (B-768)
+    /// and no path books it back, so opening it again or judging it otherwise would leave the booking standing under
+    /// another verdict.
+    /// </summary>
+    public static (ApiError Error, string Detail)? CheckChange(ExerciseFeedback entry, FeedbackStatus status,
+        FeedbackOutcome? outcome)
+    {
+        if (outcome is not null && status != FeedbackStatus.Done)
+            return (ApiErrors.ValidationError, "An outcome is only given together with the status Done.");
+        if (entry.Outcome == FeedbackOutcome.Justified
+            && (status != FeedbackStatus.Done || outcome is not (null or FeedbackOutcome.Justified)))
+            return (ApiErrors.FeedbackJustified,
+                "This feedback was judged justified and its correction is booked; it stays done and justified.");
+        if (outcome == FeedbackOutcome.Justified && entry.TestItemResultId is null)
+            return (ApiErrors.FeedbackWithoutTestAnswer,
+                "This feedback refers to no test answer, so there is nothing to correct; mark it done or rejected.");
+        return null;
     }
 
     /// <summary>
@@ -211,7 +262,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
                 cue = items.ElementAtOrDefault(index)?.Prompt;
             }
             notices.Add(new FeedbackNotice(f.Id, f.ExerciseId, f.Exercise?.Title ?? "", f.ItemIndex, cue, f.Reason,
-                f.DoneAt!.Value));
+                f.DoneAt!.Value, f.Outcome));
         }
         return notices;
     }

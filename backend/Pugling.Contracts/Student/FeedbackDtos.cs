@@ -32,5 +32,6 @@ public record FeedbackReasonInfo(FeedbackReason Reason, FeedbackReach Reach);
 /// <param name="Cue">What the card showed the child (its prompt), or <c>null</c> for the whole exercise.</param>
 /// <param name="Reason">The reported reason, or <c>null</c> for a text-only feedback.</param>
 /// <param name="DoneAt">When a supervisor marked it done.</param>
+/// <param name="Outcome">How the supervisor judged it (B-767), or <c>null</c> for done without a judgement.</param>
 public record FeedbackNotice(int Id, int ExerciseId, string ExerciseTitle, int? ItemIndex, string? Cue,
-    FeedbackReason? Reason, DateTime DoneAt);
+    FeedbackReason? Reason, DateTime DoneAt, FeedbackOutcome? Outcome);

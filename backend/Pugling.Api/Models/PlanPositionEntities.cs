@@ -280,6 +280,17 @@ public class PositionGoalPenalty
     /// <summary>Coins deducted (a positive value; the ledger entry is negative).</summary>
     public int Points { get; set; }
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// When the penalty was taken back by a positive <see cref="PointKind.GoalPenalty"/> booking (B-768, decision 6):
+    /// a feedback judged justified made the period met. The row itself stays, or the settlement would book the penalty
+    /// again; the mark sits here, not on the feedback, so two feedbacks of the same period refund it once.
+    /// </summary>
+    public DateTime? RefundedAt { get; set; }
+
+    /// <summary>The feedback whose confirmation took the penalty back; may fade.</summary>
+    public int? RefundedByFeedbackId { get; set; }
+    public ExerciseFeedback? RefundedByFeedback { get; set; }
 }
 
 /// <summary>

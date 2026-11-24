@@ -7,7 +7,8 @@ import { formatDate } from "../lib/datum";
 import { feedbackReasonLabel } from "../lib/labels";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
-import type { ChildResponse, FeedbackEntry, FeedbackStatus } from "../lib/types";
+import { confirmAction } from "../lib/ui";
+import type { ChildResponse, FeedbackEntry, FeedbackOutcome, FeedbackStatus } from "../lib/types";
 
 /** Der Status-Filter der Seite: offen (Vorgabe – das ist die Arbeit), erledigt oder alle. */
 type StatusFilter = FeedbackStatus | "alle";
@@ -15,7 +16,9 @@ type StatusFilter = FeedbackStatus | "alle";
 /**
  * Die Rückmeldungen der eigenen Kinder zu Karten (B-629, B-623 Entscheidung 7): je Meldung Kind, Übung, Karte samt
  * Lösung, die letzte gespeicherte Antwort des Kindes und sein Text. „Erledigt“ gilt für alle Betreuer des Kindes, und das
- * Kind bekommt einmal einen Hinweis. Ein Fehler in der Karte wird an der Übung korrigiert – der Sprung führt zum Plan,
+ * Kind bekommt einmal einen Hinweis. Zeigt die Meldung auf eine Test-Antwort, erledigt der Vater sie mit einem Urteil
+ * (B-769): „Berechtigt“ rechnet den Test nach und bucht Pflicht, Belohnung und Malus nach (B-768) – endgültig, darum mit
+ * Rückfrage und ohne „Wieder öffnen“ –, „Abgewiesen“ ändert nichts. Ein Fehler in der Karte wird an der Übung korrigiert – der Sprung führt zum Plan,
  * in dem das Kind sie spielt.
  */
 export function VaterRueckmeldungen() {
@@ -47,11 +50,19 @@ export function VaterRueckmeldungen() {
   // sperren, nicht ausblenden – sonst erledigte ein Klick im Ladefenster eine Meldung, die der Vater gar nicht mehr sieht.
   const veraltet = list.stale;
 
-  async function setze(entry: FeedbackEntry, next: FeedbackStatus) {
-    if (await action.run(() => api.updateFeedback(entry.id, next),
-      next === "Done" ? "Als erledigt markiert – das Kind bekommt einen Hinweis." : "Wieder geöffnet."))
+  async function setze(entry: FeedbackEntry, next: FeedbackStatus, outcome?: FeedbackOutcome) {
+    if (outcome === "Justified" && !confirmAction(
+      "Berechtigt ist endgültig: der Test wird nachgerechnet, ein Malus zurückgenommen und eine fehlende Belohnung nachgebucht. Fortfahren?"))
+      return;
+    const meldung = next === "Open" ? "Wieder geöffnet."
+      : outcome === "Justified" ? "Als berechtigt erledigt – der Test ist nachgerechnet, das Kind bekommt einen Hinweis."
+      : outcome === "Rejected" ? "Als abgewiesen erledigt – das Kind bekommt einen Hinweis."
+      : "Als erledigt markiert – das Kind bekommt einen Hinweis.";
+    if (await action.run(() => api.updateFeedback(entry.id, next, outcome), meldung))
       list.reload();
   }
+
+  const gesperrt = action.busy || veraltet;
 
   return (
     <section>
@@ -99,13 +110,32 @@ export function VaterRueckmeldungen() {
                       {f.itemIndex == null && <div className="muted">ganze Übung</div>}
                     </td>
                     <td>{feedbackReasonLabel(f.reason)}{f.count > 1 && <span className="muted"> ×{f.count}</span>}</td>
-                    <td className="muted">{f.childAnswer ?? "—"}</td>
+                    <td className="muted">
+                      {f.childAnswer ?? "—"}
+                      {f.testAnswerCorrect === false && <div>im Test als falsch gewertet</div>}
+                    </td>
                     <td style={{ whiteSpace: "pre-line" }}>{f.text ?? <span className="muted">—</span>}</td>
                     <td className="muted">{formatDate(f.lastReportedAt)}</td>
                     <td>
                       {f.status === "Open"
-                        ? <button type="button" className="btn small" disabled={action.busy || veraltet} onClick={() => setze(f, "Done")}>Erledigt</button>
-                        : <button type="button" className="btn ghost small" disabled={action.busy || veraltet} onClick={() => setze(f, "Open")}>Wieder öffnen</button>}
+                        // Ein Urteil nur mit Test-Antwort (B-769 Entscheidung 1): ohne sie gibt es nichts nachzurechnen.
+                        ? f.testItemResultId != null
+                          ? (
+                            <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                              <button type="button" className="btn small" disabled={gesperrt} onClick={() => setze(f, "Done", "Justified")}>Berechtigt</button>
+                              <button type="button" className="btn ghost small" disabled={gesperrt} onClick={() => setze(f, "Done", "Rejected")}>Abgewiesen</button>
+                            </div>
+                          )
+                          : <button type="button" className="btn small" disabled={gesperrt} onClick={() => setze(f, "Done")}>Erledigt</button>
+                        : (
+                          <>
+                            {f.outcome && <div className="muted">{f.outcome === "Justified" ? "berechtigt" : "abgewiesen"}</div>}
+                            {/* Berechtigt ist endgültig: die Nachbuchung nimmt niemand zurück (B-767). */}
+                            {f.outcome !== "Justified" && (
+                              <button type="button" className="btn ghost small" disabled={gesperrt} onClick={() => setze(f, "Open")}>Wieder öffnen</button>
+                            )}
+                          </>
+                        )}
                     </td>
                   </tr>
                 ))}

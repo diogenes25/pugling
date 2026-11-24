@@ -163,6 +163,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     public static void MoveBuildPath(PlanPosition pos, TestAttempt attempt, DateOnly today)
     {
         if (!MovesBuildPath(pos, attempt)) return;
+        // The attempt's own finding, not TestAttempt.CountsAsPassed: a later correction (B-768) does not move the level.
         if (attempt.Passed && PromotedBuildLevel(pos, attempt.BuildLevel) is { } raised)
         {
             SetBuildLevel(pos, raised, today, effectiveOn: today.AddDays(1));

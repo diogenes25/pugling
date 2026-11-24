@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
@@ -10,15 +10,18 @@ const offen: FeedbackEntry = {
   id: 11, childId: 2, childName: "Theo", studyPlanId: 5, planPositionId: 8, exerciseId: 9, exerciseTitle: "Unit 1",
   itemIndex: 0, cue: "voyage", solution: "Reise", childAnswer: "Reiße", reason: "WrongTranslation", reach: "Everyone",
   count: 1, text: "stimmt nicht", status: "Open", createdAt: "2026-11-18T20:00:00Z", lastReportedAt: "2026-11-18T20:00:00Z",
-  doneAt: null,
+  doneAt: null, testItemResultId: null, testAnswerCorrect: null, outcome: null,
 };
+
+// B-767: eine Meldung, die auf eine im Test falsch gewertete Antwort zeigt.
+const mitTestAntwort: FeedbackEntry = { ...offen, id: 12, reason: "TooStrict", testItemResultId: 77, testAnswerCorrect: false };
 
 /**
  * B-629 AK 4, Review-Fund: nach einem Filterwechsel stehen bis zur Antwort die alten Zeilen da – ihre Knöpfe sind gesperrt.
  * Rot, wenn die Seite `stale` nicht liest (ein Klick im Ladefenster erledigte eine Meldung des vorigen Filters).
  */
 describe("VaterRueckmeldungen", () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
   it("sperrt die Knöpfe der alten Zeilen, solange der neue Filter lädt", async () => {
     vi.spyOn(api, "children").mockResolvedValue([]);
@@ -82,5 +85,78 @@ describe("VaterRueckmeldungen", () => {
     fireEvent.change(screen.getByLabelText("Kind"), { target: { value: "" } });
     await act(async () => {});
     expect(ort).toBe("");
+  });
+
+  // B-769 AK 1: das Urteil gibt es nur für eine Meldung mit Test-Antwort, ohne sie bleibt „Erledigt“. Rot, wenn „Berechtigt“
+  // auch ohne Bezug erscheint oder mit Bezug fehlt.
+  it("zeigt Berechtigt und Abgewiesen nur an einer Meldung mit Test-Antwort", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([]);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([offen, mitTestAntwort]);
+    render(<AuthProvider><MemoryRouter><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+
+    const zeilen = screen.getAllByRole("row").slice(1);
+    expect(within(zeilen[0]).getByRole("button", { name: "Erledigt" })).toBeTruthy();
+    expect(within(zeilen[0]).queryByRole("button", { name: "Berechtigt" })).toBeNull();
+    expect(within(zeilen[1]).getByRole("button", { name: "Berechtigt" })).toBeTruthy();
+    expect(within(zeilen[1]).getByRole("button", { name: "Abgewiesen" })).toBeTruthy();
+    expect(within(zeilen[1]).queryByRole("button", { name: "Erledigt" })).toBeNull();
+    expect(within(zeilen[1]).getByText("im Test als falsch gewertet")).toBeTruthy();
+  });
+
+  // B-769 AK 2: während „Berechtigt“ unterwegs ist, sind die Knöpfe gesperrt, und ein zweiter Klick sendet nichts. Rot, wenn
+  // `disabled={busy}` fehlt (der Knopf bliebe klickbar) oder das Urteil nicht mitgeschickt wird.
+  it("sperrt die Knöpfe, solange das Urteil gesendet wird", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([]);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([mitTestAntwort]);
+    vi.stubGlobal("confirm", () => true);
+    const update = vi.spyOn(api, "updateFeedback").mockImplementation(() => new Promise(() => {}));
+    render(<AuthProvider><MemoryRouter><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+
+    const berechtigt = screen.getByRole("button", { name: "Berechtigt" }) as HTMLButtonElement;
+    fireEvent.click(berechtigt);
+    await act(async () => {});
+    fireEvent.click(berechtigt);
+
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(12, "Done", "Justified");
+    expect(berechtigt.disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Abgewiesen" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // B-767: „berechtigt“ ist endgültig – die erledigte Meldung zeigt ihr Urteil und kein „Wieder öffnen“, eine abgewiesene
+  // schon. Rot, wenn der Knopf an einer berechtigten Meldung steht (der Server lehnte ihn mit 409 ab).
+  it("bietet an einer berechtigten Meldung kein Wieder öffnen an", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([]);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([
+      { ...mitTestAntwort, status: "Done", outcome: "Justified" },
+      { ...mitTestAntwort, id: 13, status: "Done", outcome: "Rejected" },
+    ]);
+    render(<AuthProvider><MemoryRouter><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+
+    const zeilen = screen.getAllByRole("row").slice(1);
+    expect(within(zeilen[0]).getByText("berechtigt")).toBeTruthy();
+    expect(within(zeilen[0]).queryByRole("button", { name: "Wieder öffnen" })).toBeNull();
+    expect(within(zeilen[1]).getByText("abgewiesen")).toBeTruthy();
+    expect(within(zeilen[1]).getByRole("button", { name: "Wieder öffnen" })).toBeTruthy();
+  });
+
+  // Review-Fund: „Berechtigt“ ist endgültig, darum fragt die Seite vorher. Rot, wenn ein „Abbrechen“ trotzdem sendet oder
+  // einen Erfolg meldet (die Rückfrage fehlt oder steht in `run`).
+  it("sendet nach Abbrechen der Rückfrage nichts", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([]);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([mitTestAntwort]);
+    vi.stubGlobal("confirm", () => false);
+    const update = vi.spyOn(api, "updateFeedback");
+    render(<AuthProvider><MemoryRouter><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+
+    fireEvent.click(screen.getByRole("button", { name: "Berechtigt" }));
+    await act(async () => {});
+
+    expect(update).not.toHaveBeenCalled();
+    expect(screen.queryByText(/Als berechtigt erledigt/)).toBeNull();
   });
 });

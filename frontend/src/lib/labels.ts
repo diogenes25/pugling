@@ -25,7 +25,18 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   RemediationBonus: "Nacharbeit geschafft",
   TowerGameCoins: "Vokabel-Türme",
 };
-export const pointKindLabel = (k: PointKind): string => POINT_KIND_LABELS[k] ?? k;
+/**
+ * Die Beschriftungs-Art einer Buchung: die Art selbst, außer bei einem **positiven** Malus-Eintrag – das ist die Rücknahme
+ * eines Malus nach einer berechtigten Meldung (B-768), kein gerissenes Ziel (B-769). Vater-Web und Sohn-Arcade lesen
+ * beide hierüber, damit das Vorzeichen nicht an einer Stelle vergessen wird.
+ */
+export const ledgerLabelKey = (k: PointKind, amount: number): PointKind | "GoalPenaltyRefund" =>
+  k === "GoalPenalty" && amount > 0 ? "GoalPenaltyRefund" : k;
+
+export const pointKindLabel = (k: PointKind, amount = 0): string => {
+  const key = ledgerLabelKey(k, amount);
+  return key === "GoalPenaltyRefund" ? "Malus zurückgenommen" : POINT_KIND_LABELS[key] ?? k;
+};
 
 /**
  * Ein Buchungsbetrag mit Vorzeichen und Währungssymbol („+300 💎", „−5 🪙") – für Vater-Konto und Sohn-Arcade gleich (B-425).

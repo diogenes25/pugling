@@ -193,6 +193,8 @@ builder.Services.AddDataProtection();
 // The position-based learning engine: practice/Leitner per study plan position.
 builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<ExerciseFeedbackService>();
+// The supervisor's judgement of a feedback and the correction a justified one books (B-767, B-768).
+builder.Services.AddScoped<FeedbackCorrectionService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
 // The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.

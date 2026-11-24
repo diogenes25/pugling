@@ -67,6 +67,16 @@ public static class ApiErrors
     public static readonly ApiError InsufficientInventory = new("insufficient_inventory", 400, "Not enough units in inventory.");
     /// <summary>Activation request is not (or no longer) pending – already approved/rejected (409).</summary>
     public static readonly ApiError ActivationNotPending = new("activation_not_pending", 409, "Activation request is not pending.");
+    /// <summary>
+    /// A feedback judged justified is final (409, B-767): its correction is booked (B-768) and no path books it back, so
+    /// it can be neither opened again nor judged otherwise.
+    /// </summary>
+    public static readonly ApiError FeedbackJustified = new("feedback_justified", 409, "Feedback already judged justified.");
+    /// <summary>
+    /// "Justified" on a feedback without a test answer (409, B-767 decision 1): there is no graded answer to correct -
+    /// a report from practice only, about the whole exercise, or from before the answer was recorded.
+    /// </summary>
+    public static readonly ApiError FeedbackWithoutTestAnswer = new("feedback_without_test_answer", 409, "Feedback refers to no test answer.");
     /// <summary>Key already exists (e.g. vocabulary/cloze/media key) (409).</summary>
     public static readonly ApiError DuplicateKey = new("duplicate_key", 409, "Key already exists.");
     /// <summary>A textbook series without a subject may not host any exercise (B-106 T-01) (400).</summary>

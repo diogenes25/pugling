@@ -2692,7 +2692,7 @@
         "tags": [
           "Supervisor \u2013 Feedback"
         ],
-        "summary": "Marks a feedback done - for every supervisor of the child, and the child gets a notice once - or open again.",
+        "summary": "Marks a feedback done - for every supervisor of the child, and the child gets a notice once - or open again. With\ndone comes an optional judgement (B-767): \u0060Justified\u0060 (only for a feedback about a test answer, final) or\n\u0060Rejected\u0060. \u0022Justified\u0022 corrects the reported test and books what the right grading would have (B-768).",
         "parameters": [
           {
             "name": "feedbackId",
@@ -2748,6 +2748,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -31889,13 +31899,31 @@
             "format": "int32"
           },
           "passed": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "The attempt\u0027s own finding at hand-in."
           },
           "results": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ItemResultDto"
             }
+          },
+          "correctedItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Wrongly graded answers a supervisor confirmed as justified (B-768), or \u0060null\u0060 without one; the results keep their\nown grading.",
+            "format": "int32"
+          },
+          "passedAfterCorrection": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Passed once the corrections count - what the duty and the missions read - or \u0060null\u0060 without a correction."
           }
         },
         "description": "A test attempt with all individual results."
@@ -41821,9 +41849,28 @@
             "type": "string",
             "description": "When a supervisor marked it done.",
             "format": "date-time"
+          },
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "How the supervisor judged it (B-767), or \u0060null\u0060 for done without a judgement.",
+                "$ref": "#/components/schemas/FeedbackOutcome"
+              }
+            ]
           }
         },
         "description": "A feedback of the child that a supervisor has marked done and the child has not acknowledged yet (B-623, decision 8)."
+      },
+      "FeedbackOutcome": {
+        "enum": [
+          "Justified",
+          "Rejected"
+        ],
+        "type": "string",
+        "description": "Allowed values: Justified, Rejected."
       },
       "FeedbackReach": {
         "enum": [
@@ -42073,6 +42120,34 @@
             ],
             "description": "When it was marked done, or \u0060null\u0060.",
             "format": "date-time"
+          },
+          "testItemResultId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The test answer the report is about, frozen when it was sent (B-767), or \u0060null\u0060 - then it cannot be judged\njustified, and ChildAnswer is the child\u0027s most recent stored answer to the card instead.",
+            "format": "int32"
+          },
+          "testAnswerCorrect": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "How the test graded that answer, or \u0060null\u0060 without one."
+          },
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The supervisor\u0027s judgement, or \u0060null\u0060 (open, or done without one).",
+                "$ref": "#/components/schemas/FeedbackOutcome"
+              }
+            ]
           }
         },
         "description": "A child\u0027s feedback as the supervisor sees it."
@@ -46561,6 +46636,8 @@
               "extra_run_completed",
               "extra_run_stale",
               "extra_training_locked",
+              "feedback_justified",
+              "feedback_without_test_answer",
               "forbidden",
               "grammar_topic_in_use",
               "http_error",
@@ -50688,6 +50765,17 @@
           "status": {
             "description": "The new state.",
             "$ref": "#/components/schemas/FeedbackStatus"
+          },
+          "outcome": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The judgement, only with \u0060Done\u0060 (B-767): \u0060Justified\u0060 needs a test answer and is final; \u0060null\u0060 keeps the\njudgement of a done feedback; opening it again drops it.",
+                "$ref": "#/components/schemas/FeedbackOutcome"
+              }
+            ]
           }
         },
         "description": "Changes the processing state of a feedback; done holds for all supervisors of the child."
