@@ -2,8 +2,8 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
-import { ClassTestManager, FensterEditor, RepeatPanel, VorbereitungsZelle } from "./VaterClassTests";
-import type { KlassenarbeitRepeat, KlassenarbeitResponse } from "../lib/types";
+import { BereitschaftZeile, ClassTestManager, FensterEditor, RepeatPanel, VorbereitungsZelle } from "./VaterClassTests";
+import type { ClassTestReadiness, KlassenarbeitRepeat, KlassenarbeitResponse } from "../lib/types";
 
 /*
  * B-496: „keine schwach benotete Arbeit" ist auch die Antwort für ein Kind ganz ohne bewertete Arbeit. Der Leerfall darf
@@ -175,5 +175,66 @@ describe("Vorbereitungs-Fenster (B-757)", () => {
     await act(async () => {});
     expect(detail).toHaveBeenCalledTimes(2); // das Neuladen ist wirklich passiert
     expect(screen.getByText("Vorbereitung: 3 Tage.")).toBeTruthy();
+  });
+});
+
+/*
+ * B-949: der Vater liest „x von y Wörtern sicher“ vom selben Endpunkt wie das Kind. Gefälscht wird der Abruf des Bausteins.
+ */
+describe("Bereitschaft in der Vater-Liste (B-949)", () => {
+  afterEach(() => vi.restoreAllMocks());
+  const arbeit = (over: Partial<KlassenarbeitResponse>): KlassenarbeitResponse => ({
+    id: 7, childId: 3, status: "Planned", directExerciseCount: 1, tags: [], ...over,
+  } as KlassenarbeitResponse);
+  const stand = (over: Partial<ClassTestReadiness>) => ({
+    classTestId: 7, exerciseCount: 2, vocabularyExerciseCount: 1, totalItems: 209, secureItems: 21, weakBelowPercent: 50, ...over,
+  } as ClassTestReadiness);
+
+  // AK 1. Rot, wenn die Zeile fehlt, andere Zahlen zeigt oder Kind und Arbeit nicht an den Endpunkt reicht.
+  it("zeigt die Zahlen des Servers für eine geplante Arbeit", async () => {
+    const abruf = vi.spyOn(api, "classTestReadiness").mockResolvedValue(stand({}));
+    render(<AuthProvider><BereitschaftZeile k={arbeit({})} /></AuthProvider>);
+    await act(async () => {});
+    expect(screen.getByText("21 von 209 Wörtern sicher")).toBeTruthy();
+    expect(abruf).toHaveBeenCalledWith(3, 7);
+  });
+
+  // AK 2. Rot, wenn ein Bündel ohne Vokabeln „0 von 0“ oder „null von null“ zeigt.
+  it("zeigt nichts ohne Vokabeln", async () => {
+    vi.spyOn(api, "classTestReadiness").mockResolvedValue(stand({ totalItems: null, secureItems: null }));
+    const { container } = render(<AuthProvider><BereitschaftZeile k={arbeit({})} /></AuthProvider>);
+    await act(async () => {});
+    expect(container.textContent).toBe("");
+  });
+
+  // AK 3. Rot, wenn eine geschriebene oder abgesagte Arbeit abfragt oder eine Zeile zeigt.
+  it("fragt bei geschriebenen und abgesagten Arbeiten nicht", async () => {
+    const abruf = vi.spyOn(api, "classTestReadiness").mockResolvedValue(stand({}));
+    for (const status of ["Written", "Cancelled"] as const) {
+      const { container, unmount } = render(<AuthProvider><BereitschaftZeile k={arbeit({ status })} /></AuthProvider>);
+      await act(async () => {});
+      expect(container.textContent).toBe("");
+      unmount();
+    }
+    expect(abruf).not.toHaveBeenCalled();
+  });
+
+  // AK 4. Rot, wenn die Zeile einen Fehler als Text (Meldung, Fehlerkasten) in die Liste bringt.
+  it("lässt die Zeile nach einem Fehler weg", async () => {
+    vi.spyOn(api, "classTestReadiness").mockRejectedValue(new Error("kaputt"));
+    const { container } = render(<AuthProvider><BereitschaftZeile k={arbeit({})} /></AuthProvider>);
+    await act(async () => {});
+    expect(container.textContent).toBe("");
+  });
+
+  // Review-Fund: weist der Vater Übungen zu, lädt die Liste neu – die Zahl muss mitziehen. Rot, wenn die Abhängigkeiten das
+  // Bündel nicht kennen (die Zeile bliebe beim alten Stand bzw. erschiene nie).
+  it("lädt neu, wenn sich das Bündel ändert", async () => {
+    const abruf = vi.spyOn(api, "classTestReadiness").mockResolvedValue(stand({}));
+    const { rerender } = render(<AuthProvider><BereitschaftZeile k={arbeit({ directExerciseCount: 1, tags: [] })} /></AuthProvider>);
+    await act(async () => {});
+    rerender(<AuthProvider><BereitschaftZeile k={arbeit({ directExerciseCount: 2, tags: [] })} /></AuthProvider>);
+    await act(async () => {});
+    expect(abruf).toHaveBeenCalledTimes(2);
   });
 });

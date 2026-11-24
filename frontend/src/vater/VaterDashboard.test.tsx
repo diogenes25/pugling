@@ -3,8 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
-import type { ActivationRequest, ChildrenDashboard, ChildrenOverview } from "../lib/types";
-import { VaterDashboard } from "./VaterDashboard";
+import type { ActivationRequest, ChildrenDashboard, ChildrenOverview, FeedbackEntry } from "../lib/types";
+import { offeneJeKind, VaterDashboard } from "./VaterDashboard";
 import { useOffeneEinloesungenZahl } from "./einloesungen";
 
 /*
@@ -31,6 +31,7 @@ beforeEach(() => {
   vi.stubGlobal("confirm", () => true);
   vi.spyOn(api, "childrenDaily").mockResolvedValue(tag);
   vi.spyOn(api, "childrenOverview").mockResolvedValue({ children: [] } as unknown as ChildrenOverview);
+  vi.spyOn(api, "listFeedback").mockResolvedValue([]);
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); localStorage.removeItem("pugling.session"); });
 
@@ -131,5 +132,61 @@ describe("Zähler offener Einlösungen (B-749 AK 3)", () => {
     renderHook(() => useOffeneEinloesungenZahl(false, "/vater"));
     await act(async () => {});
     expect(liste).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * B-950: offene Kartenmeldungen stehen auf „Heute“, je Kind gezählt, mit Link zur Rückmeldungs-Seite.
+ */
+const meldung = (id: number, childId: number, childName: string, count = 1) =>
+  ({ id, childId, childName, count, status: "Open" }) as unknown as FeedbackEntry;
+
+describe("Offene Rückmeldungen auf der Startseite (B-950)", () => {
+  // AK 1, 3. Rot, wenn die Seite nicht nur „Open“ abfragt, nicht je Kind zählt oder nach `count` statt je Meldung zählt
+  // (Friedrichs zweite Meldung trägt count 2 – gezählt werden zwei Meldungen, nicht drei), oder der Link das Kind nicht mitnimmt.
+  it("zählt je Kind die offenen Meldungen und verlinkt", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    const abruf = vi.spyOn(api, "listFeedback").mockResolvedValue(
+      [meldung(1, 3, "Theodor"), meldung(2, 1, "Friedrich"), meldung(3, 3, "Theodor", 2)]);
+    await zeige();
+
+    expect(abruf).toHaveBeenCalledWith(undefined, "Open");
+    const zeilen = within(screen.getByRole("list", { name: "Offene Rückmeldungen" })).getAllByRole("listitem");
+    expect(zeilen.map((z) => z.textContent)).toEqual([
+      "Theodor: 2 offene Rückmeldungen ansehen →", "Friedrich: 1 offene Rückmeldung ansehen →",
+    ]);
+    expect(within(zeilen[0]).getByRole("link").getAttribute("href")).toBe("/vater/rueckmeldungen?childId=3");
+  });
+
+  // AK 2. Rot, wenn der Abschnitt auch ohne offene Meldung (als leere Überschrift) erscheint.
+  it("zeigt ohne offene Meldung keinen Abschnitt", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    await zeige();
+    expect(screen.queryByRole("heading", { name: "Rückmeldungen" })).toBeNull();
+  });
+
+  // AK 4. Rot, wenn ein Ladefehler den Abschnitt still verschwinden lässt.
+  it("zeigt einen Ladefehler mit Wiederholen", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    vi.spyOn(api, "listFeedback").mockRejectedValue(new Error("kaputt"));
+    await zeige();
+    expect(screen.getByRole("heading", { name: "Rückmeldungen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /erneut|wiederholen/i })).toBeTruthy();
+  });
+
+  // Die reine Zählung. Rot, wenn sie nach `count` summiert.
+  it("zählt Meldungen, nicht Wiederholungen", () => {
+    expect(offeneJeKind([meldung(1, 3, "Theodor", 5)])).toEqual([{ childId: 3, name: "Theodor", anzahl: 1 }]);
+  });
+
+  // Review-Fund: „Erneut laden“ darf den Abschnitt samt Fehlerkasten nicht aushängen (B-216). Rot, wenn die Bedingung nur
+  // `error` und Treffer kennt – der Retry setzt `error` zurück, bevor eine Antwort da ist.
+  it("bleibt beim erneuten Laden stehen", async () => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    vi.spyOn(api, "listFeedback").mockRejectedValueOnce(new Error("kaputt")).mockImplementationOnce(() => new Promise(() => {}));
+    await zeige();
+    fireEvent.click(screen.getByRole("button", { name: /erneut|wiederholen/i }));
+    await act(async () => {});
+    expect(screen.getByRole("heading", { name: "Rückmeldungen" })).toBeTruthy();
   });
 });

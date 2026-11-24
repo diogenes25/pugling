@@ -1053,6 +1053,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasOne(k => k.Child).WithMany().HasForeignKey(k => k.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(k => k.Subject).WithMany().HasForeignKey(k => k.SubjectId).OnDelete(DeleteBehavior.SetNull);
             e.Property(k => k.Grade).HasPrecision(3, 1);
+            e.Property(k => k.PrepLeftOutExerciseIds).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<int>>(s, JsonOptions))
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<int>?>());
         });
 
         // Class test <-> exercise: every exercise at most once per test.
@@ -1254,6 +1258,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         ["CreatorProfile.DefaultTypes"] = "Preferred exercise types as a JSON list.",
         ["SeriesUnit.Topics"] = "Topics of the unit as a JSON list - grows with the material.",
         ["PlanPosition.BoxIntervalDays"] = "Leitner intervals as a JSON list.",
+        ["Klassenarbeit.PrepLeftOutExerciseIds"] = "Exercises the preparation start left out, as a JSON list.",
         ["PlanPosition.StageSchedule"] = "Stage schedule as a JSON list.",
         ["PlanPosition.TimeSlots"] = "Points time slots of this obligation as a JSON list.",
         ["PracticeSession.Order"] = "Frozen play-out order as a JSON list - as long as the pool.",

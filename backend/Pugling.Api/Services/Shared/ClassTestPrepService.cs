@@ -99,32 +99,39 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         Math.Min(c.TakesDose ? (int)Math.Ceiling(c.Cards / (double)Math.Max(1, days)) : c.Cards, Options.MaxCardsPerDay);
 
     /// <summary>
-    /// "About N cards a day" for the supervisor's list (B-757): the sum of the daily cards the duty asks - of the positions
-    /// it made once started, otherwise of the bundle exercises it would make over the whole window. <c>null</c> when no
-    /// duty arises (not planned, window 0, blocked, the test day reached).
+    /// "About N cards a day" for the supervisor's list (B-757): what the child plays daily for this test - every position of
+    /// the subject's active plan that is a daily duty today and plays a bundle exercise or was made for the test (B-948: the
+    /// load already in the plan counts too, else a test whose exercises are all assigned reads "0"), plus, before the start,
+    /// the positions the duty would still make over its window. <c>null</c> when no duty arises (not planned, window 0,
+    /// blocked, the test day reached).
     /// </summary>
     public async Task<int?> CardsPerDayAsync(Klassenarbeit k, DateOnly today, CancellationToken ct)
     {
         if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0 || today >= k.ScheduledDate) return null;
-        if (k.PrepStartedOn is not null)
-        {
-            var made = await db.PlanPositions.AsNoTracking().Where(p => p.SourceKlassenarbeitId == k.Id)
-                .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites).ToListAsync(ct);
-            var started = 0;
-            foreach (var p in made)
-            {
-                if (p.NewItemsPerDay > 0) { started += p.NewItemsPerDay; continue; }
-                // Without a dose the position's ItemCount is only a cap: the list shows the round the child really plays
-                // today - the played exercise's cards under the cap, through the play service's one pool rule (B-946).
-                started += play.PoolSize(p, today, (await play.ItemsOfAsync(p, today, ct: ct)).Count);
-            }
-            return started;
-        }
         if (await PlanForAsync(k, ct) is not { } plan) return null;
+        var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
+        var positions = await db.PlanPositions.AsNoTracking()
+            .Where(p => p.StudyPlanId == plan.Id && (p.SourceKlassenarbeitId == k.Id || bundle.Contains(p.ExerciseId)))
+            .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites).ToListAsync(ct);
         var sum = 0;
-        foreach (var c in await NewCandidatesAsync(k, plan, ct)) sum += DailyCards(c, WindowOf(k));
+        foreach (var p in positions.Where(p => AsksDailyOn(p, today)))
+        {
+            if (p.NewItemsPerDay > 0) { sum += p.NewItemsPerDay; continue; }
+            // Without a dose the position's ItemCount is only a cap: the list shows the round the child really plays
+            // today - the played exercise's cards under the cap, through the play service's one pool rule (B-946).
+            sum += play.PoolSize(p, today, (await play.ItemsOfAsync(p, today, ct: ct)).Count);
+        }
+        if (k.PrepStartedOn is null)
+            foreach (var c in await NewCandidatesAsync(k, plan, ct)) sum += DailyCards(c, WindowOf(k));
         return sum;
     }
+
+    /// <summary>
+    /// Does the position ask something of the child on <paramref name="day"/> (B-948)? A duty on that day - begun, not ended -
+    /// with a daily cadence; a free or weekly position asks nothing of a given day.
+    /// </summary>
+    private bool AsksDailyOn(PlanPosition p, DateOnly day) =>
+        progress.IsObligationOn(p, day) && PositionProgressService.IsDailyDuty(PositionProgressService.DutyCadenceOn(p, day));
 
     /// <summary>
     /// The bundle exercises a supervisor of the test's child may assign (B-941): publicly executable, or granted to one of
@@ -144,13 +151,22 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     {
         // No duty, nothing left out of it - the same bounds as CardsPerDayAsync.
         if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0 || today >= k.ScheduledDate) return 0;
+        var leftOut = await LeftOutAsync(k, ct);
+        // After the start the hint counts only what a grant still pulls in (B-947): the start's snapshot. Anything that
+        // joined the frozen bundle later would never become a duty, so the hint must not advise a grant for it.
+        return k.PrepStartedOn is null ? leftOut.Count : leftOut.Count(id => k.PrepLeftOutExerciseIds?.Contains(id) == true);
+    }
+
+    /// <summary>The bundle exercises the duty leaves out right now: not executable for the child's supervisors and not in the plan.</summary>
+    private async Task<List<int>> LeftOutAsync(Klassenarbeit k, CancellationToken ct)
+    {
         var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
-        if (bundle.Count == 0) return 0;
+        if (bundle.Count == 0) return [];
         var executable = await ExecutableFor(k.ChildId).Where(e => bundle.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
         var inPlan = await PlanForAsync(k, ct) is { } plan
             ? await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct)
             : [];
-        return bundle.Count(id => !executable.Contains(id) && !inPlan.Contains(id));
+        return bundle.Where(id => !executable.Contains(id) && !inPlan.Contains(id)).ToList();
     }
 
     /// <summary>
@@ -209,7 +225,36 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             await db.SaveChangesAsync(ct);
             if (tx is not null) await tx.CommitAsync(ct);
         }
+        foreach (var k in inWindow.Where(k => k.PrepStartedOn is not null && k.PrepLeftOutExerciseIds is { Count: > 0 }))
+            if (await PlanForAsync(k, ct) is { } plan) await PullInAsync(k, plan, today, ct);
         if (await AlignSpansAsync(childId, today, inWindow, ct)) await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Makes a duty of the exercises the start left out for lack of an execute permission once a grant arrives (B-947):
+    /// only those of the start's snapshot, only while still in the bundle, executable and not in the plan - the sink
+    /// <see cref="NewCandidatesAsync"/> decides the last three. Owing from today, like a start on this day.
+    /// </summary>
+    private async Task PullInAsync(Klassenarbeit k, StudyPlan plan, DateOnly today, CancellationToken ct)
+    {
+        var snapshot = k.PrepLeftOutExerciseIds!;
+        var candidates = (await NewCandidatesAsync(k, plan, ct)).Where(c => snapshot.Contains(c.Exercise.Id)).ToList();
+        if (candidates.Count == 0) return;
+        var remaining = snapshot.Where(id => candidates.All(c => c.Exercise.Id != id)).ToList();
+
+        await using var tx = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(ct) : null;
+        // Claim like the start: of two logins at once only the one whose update lands adds the positions.
+        var claimed = await db.Klassenarbeiten.Where(x => x.Id == k.Id && x.PrepLeftOutExerciseIds == snapshot)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.PrepLeftOutExerciseIds, remaining), ct);
+        if (claimed == 0) return;
+        k.PrepLeftOutExerciseIds = remaining;
+        // The running positions keep their penalty: a lowered share would change days not yet settled. The new ones bear
+        // the share the test's daily penalty gives every position now.
+        var made = await db.PlanPositions.CountAsync(p => p.SourceKlassenarbeitId == k.Id, ct);
+        var share = Math.Max(1, Options.PenaltyCoinsPerDay / (made + candidates.Count));
+        await AddPositionsAsync(k, plan, today, candidates, _ => share, ct);
+        await db.SaveChangesAsync(ct);
+        if (tx is not null) await tx.CommitAsync(ct);
     }
 
     /// <summary>
@@ -220,13 +265,25 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     private async Task StartAsync(Klassenarbeit k, StudyPlan plan, DateOnly today, CancellationToken ct)
     {
         k.PrepStartedOn = today;
+        // What the start leaves out for lack of permission - a later grant pulls exactly these in (B-947).
+        k.PrepLeftOutExerciseIds = await LeftOutAsync(k, ct);
         var candidates = await NewCandidatesAsync(k, plan, ct);
         if (candidates.Count == 0) return;
 
-        var now = time.GetUtcNow().UtcDateTime;
-        var days = k.ScheduledDate.DayNumber - today.DayNumber;
         var share = Options.PenaltyCoinsPerDay / candidates.Count;
         var rest = Options.PenaltyCoinsPerDay - share * candidates.Count;
+        await AddPositionsAsync(k, plan, today, candidates, i => share + (i == 0 ? rest : 0), ct);
+    }
+
+    /// <summary>
+    /// Adds a daily preparation position for each candidate, owing from today on (no retroactive penalty), ending the day
+    /// before the test, dosed over the days left and with no goal reward - the one place that makes them (start and pull-in).
+    /// </summary>
+    private async Task AddPositionsAsync(Klassenarbeit k, StudyPlan plan, DateOnly today, List<Candidate> candidates,
+        Func<int, int> penaltyOf, CancellationToken ct)
+    {
+        var now = time.GetUtcNow().UtcDateTime;
+        var days = k.ScheduledDate.DayNumber - today.DayNumber;
         var order = ((await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).MaxAsync(p => (int?)p.Order, ct)) ?? -1) + 1;
         for (var i = 0; i < candidates.Count; i++)
         {
@@ -246,7 +303,7 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
                 UseLeitner = c.Exercise.DefaultUseLeitner,
                 NewItemsPerDay = c.TakesDose ? dose : 0,
                 ItemCount = c.TakesDose ? null : Options.MaxCardsPerDay,
-                PenaltyCoins = share + (i == 0 ? rest : 0),
+                PenaltyCoins = penaltyOf(i),
                 PointsGoalMet = 0,
             });
         }

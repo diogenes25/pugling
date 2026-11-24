@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
-import { sohnLogin } from "./helpers";
+import { sohnLogin, vaterLogin } from "./helpers";
 
 /*
  * B-750/B-751 – der Rollengang des Sohns: der Vater plant eine Klassenarbeit mit Vokabelstoff, das Kind sieht auf seiner
@@ -50,4 +50,11 @@ test("das Kind sieht seine nächste Klassenarbeit und wie sicher es im Stoff ist
   await expect(karte).not.toContainText("Spätere Arbeit");
   // B-751: zwei Wörter im Bündel, noch keins geübt.
   await expect(karte).toContainText("0 von 2 Wörtern sicher");
+
+  // B-949: der Vater liest in seiner Liste dieselbe Zahl wie das Kind auf seiner Karte.
+  await vaterLogin(page, { id: "1", pin: "0000" });
+  await page.goto(`/vater/class-tests?childId=${childId}`);
+  const zeile = page.getByRole("row").filter({ hasText: `Vokabeltest ${RUN}` });
+  await expect(zeile).toContainText("0 von 2 Wörtern sicher");
+  await expect(page.getByRole("row").filter({ hasText: `Spätere Arbeit ${RUN}` })).not.toContainText("Wörtern sicher");
 });

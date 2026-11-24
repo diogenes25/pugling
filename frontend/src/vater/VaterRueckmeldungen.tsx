@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
@@ -20,7 +20,18 @@ type StatusFilter = FeedbackStatus | "alle";
  */
 export function VaterRueckmeldungen() {
   const children = useAsync<ChildResponse[]>(() => api.children(), []);
-  const [childId, setChildId] = useState<number | "">("");
+  // Die Kind-Auswahl lebt in der URL (B-950): der Link der Startseite wählt vor, ein Wechsel schreibt zurück, und ein Kind,
+  // das es (nicht mehr) gibt, gilt als „alle Kinder“ – sonst zeigte die Auswahl „alle“, während die Liste gefiltert ist.
+  const [params, setParams] = useSearchParams();
+  const ausUrl = Number(params.get("childId"));
+  const gewaehlt = Number.isInteger(ausUrl) && ausUrl > 0 ? ausUrl : null;
+  const childId: number | "" = gewaehlt !== null && (children.data === null || children.data.some((c) => c.id === gewaehlt))
+    ? gewaehlt : "";
+  const setChildId = (id: number | "") => setParams((p) => {
+    const next = new URLSearchParams(p);
+    if (id === "") next.delete("childId"); else next.set("childId", String(id));
+    return next;
+  }, { replace: true });
   const [status, setStatus] = useState<StatusFilter>("Open");
   const list = useAsync<FeedbackEntry[]>(
     () => api.listFeedback(childId === "" ? undefined : childId, status === "alle" ? undefined : status),

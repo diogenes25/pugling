@@ -66,7 +66,12 @@ test("Rückmeldung: Sohn meldet eine Karte, Vater erledigt, Ersteller zählt, So
 
   // ---- 2. Vater: sieht die Meldung und erledigt sie ----
   await vaterLogin(page, { id: "1", pin: "0000" });
-  await page.getByRole("link", { name: "💬 Rückmeldungen" }).click();
+  // B-950: die Meldung steht schon auf „Heute“; ihr Link öffnet die Rückmeldungen mit dem Kind vorgewählt.
+  const offen = page.getByRole("list", { name: "Offene Rückmeldungen" }).getByRole("listitem").filter({ hasText: `Melder ${RUN}` });
+  await expect(offen).toContainText("1 offene Rückmeldung");
+  await offen.getByRole("link", { name: "ansehen →" }).click();
+  await expect(page).toHaveURL(new RegExp(`/vater/rueckmeldungen\\?childId=${childId}$`));
+  await expect(page.getByLabel("Kind")).toHaveValue(String(childId));
   const zeile = page.getByRole("row").filter({ hasText: `heißt anders ${RUN}` });
   await expect(zeile).toContainText(exerciseTitle);
   await expect(zeile).toContainText("Falsch übersetzt");

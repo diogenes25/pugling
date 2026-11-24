@@ -41,8 +41,8 @@ Die Zahl heißt „was die Vorbereitung abverlangt“, zählt aber nur, was sie 
 
 1. **Nutzer, 2026-11-24: Gesamtlast zählen.** Die Zahl umfasst die Pflicht-Positionen der Bündel-Übungen, die schon im aktiven Plan
    des Fachs liegen. Verworfen: „0 mit Server-Grund“ (ehrlich, aber der Vater erfährt die Last nicht).
-2. Gezählt wird eine Position, wenn sie heute eine **tägliche** Pflicht trägt (`Cadence == Daily`, `DutySince` leer oder ≤ heute,
-   `DutyUntil` leer oder ≥ heute) – stellvertretend entschieden. Eine Kür- oder Wochenposition verlangt nichts „je Tag“. Kosten: Eine
+2. Gezählt wird eine Position, wenn sie heute eine **tägliche** Pflicht trägt – über die geteilten Regeln `IsObligationOn` und
+   `IsDailyDuty(DutyCadenceOn(…))`, also `Daily` oder Nacharbeit (`UntilDone`), begonnen und nicht beendet – stellvertretend entschieden. Eine Kür- oder Wochenposition verlangt nichts „je Tag“. Kosten: Eine
    wöchentliche Pflicht der Bündel-Übung erscheint nicht in der Zahl.
 3. Je Position gilt die Regel aus B-946: `NewItemsPerDay`, sonst `PositionPlayService.PoolSize`. Vor dem Start kommen die Kandidaten
    dazu, die die Vorbereitung neu anlegen würde (wie bisher). Nach dem Start sind deren Positionen Pflicht-Positionen des Plans und

@@ -7,7 +7,7 @@ import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import type {
-  ChildResponse, CreateKlassenarbeitDto, ExerciseSummary, KlassenarbeitDetail,
+  ChildResponse, ClassTestReadiness, CreateKlassenarbeitDto, ExerciseSummary, KlassenarbeitDetail,
   KlassenarbeitPractice, KlassenarbeitRepeat, KlassenarbeitResponse, KlassenarbeitStatus, Paged, SubjectResponse,
 } from "../lib/types";
 import { PAGE_SIZE, Pager, TruncationHint } from "../components/ListControls";
@@ -139,7 +139,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
                       ? <span className="pill lime">{STATUS_LABEL[k.status]}</span>
                       : <span className="pill">{STATUS_LABEL[k.status]}</span>}</td>
                     <td className="num">{k.directExerciseCount}{k.tags.length > 0 ? ` +${k.tags.length}🏷️` : ""}</td>
-                    <td><VorbereitungsZelle k={k} /></td>
+                    <td><VorbereitungsZelle k={k} /><BereitschaftZeile k={k} /></td>
                     <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade ?? null} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -192,6 +192,23 @@ export function VorbereitungsZelle({ k }: { k: KlassenarbeitResponse }) {
         {" · "}{k.prepNotExecutableCount} {k.prepNotExecutableCount === 1 ? "Übung" : "Übungen"} ohne Ausführ-Recht ausgelassen</span>}
     </span>
   );
+}
+
+/**
+ * Wie weit das Kind für eine geplante Arbeit ist (B-949): „x von y Wörtern sicher“ – dieselbe Zahl vom selben Endpunkt wie auf
+ * der Karte des Kindes, kein zweites Rechenmodell. Ohne Vokabeln, bei geschriebenen oder abgesagten Arbeiten und nach einem
+ * Fehler steht nichts; die Liste bleibt davon unberührt.
+ */
+export function BereitschaftZeile({ k }: { k: KlassenarbeitResponse }) {
+  const geplant = k.status === "Planned";
+  const stand = useAsync<ClassTestReadiness | null>(
+    () => (geplant ? api.classTestReadiness(k.childId, k.id) : Promise.resolve(null)),
+    // Das Bündel gehört zu den Abhängigkeiten: weist der Vater Übungen zu, lädt die Liste neu, und die Zahl muss mitziehen.
+    [k.childId, k.id, geplant, k.directExerciseCount, k.tags.map((t) => t.id).join("|")]);
+  const s = stand.data;
+  // Ein Fehler lässt `data` leer, die Zeile entfällt über `!s`; ein veralteter Stand gehört zum Bündel vor der Änderung.
+  if (!geplant || stand.stale || !s || s.totalItems == null || s.secureItems == null) return null;
+  return <div className="muted">{s.secureItems} von {s.totalItems} Wörtern sicher</div>;
 }
 
 /**

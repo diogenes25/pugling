@@ -11,9 +11,11 @@ public record TagRef(int Id, string Name, string? Color);
 /// <summary>
 /// Class test in list/summary view. The preparation fields (B-752/B-757): <c>PrepWindowDays</c> is the test's own window
 /// (<c>null</c> = the default <c>PrepWindowDefault</c>, 0 = no preparation duty), <c>PrepCardsPerDay</c> the server's "about N
-/// cards a day" of the duty (<c>null</c> when none arises), <c>PrepBlockedReason</c> why none arises for a planned test
+/// cards a day" the child plays for the test - the daily duties of its bundle exercises already in the plan plus what the
+/// duty adds (B-948; <c>null</c> when none arises), <c>PrepBlockedReason</c> why none arises for a planned test
 /// (<see cref="ClassTestPrepBlockReasons"/>), <c>PrepNotExecutableCount</c> how many exercises of its bundle the duty leaves
-/// out because no supervisor of the child may assign them (withdrawn material, B-941; 0 when no duty runs).
+/// out because no supervisor of the child may assign them (withdrawn material, B-941; 0 when no duty runs). After the start
+/// it counts only those a grant still turns into a duty (B-947).
 /// </summary>
 public record KlassenarbeitResponse(int Id, int ChildId, int? SubjectId, string? SubjectName,
     string Title, string? Topic, DateOnly ScheduledDate, KlassenarbeitStatus Status,

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
@@ -35,5 +35,39 @@ describe("VaterRueckmeldungen", () => {
 
     expect(list).toHaveBeenLastCalledWith(undefined, "Done");
     expect((screen.getByRole("button", { name: "Erledigt" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // B-950: der Link der Startseite wählt das Kind vor. Rot, wenn die Seite `?childId=` nicht liest (sie fragt dann alle Kinder ab).
+  it("wählt das Kind aus dem Link vor", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([{ id: 2, name: "Theo" }] as never);
+    const list = vi.spyOn(api, "listFeedback").mockResolvedValue([offen]);
+    render(<AuthProvider><MemoryRouter initialEntries={["/vater/rueckmeldungen?childId=2"]}><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+    expect(list).toHaveBeenCalledWith(2, "Open");
+  });
+
+  // Review-Fund: ein Kind, das es nicht gibt, gilt als „alle Kinder“ – sonst zeigte die Auswahl „alle“, während die Liste
+  // nach einer fremden Id filtert. Rot, wenn die Seite die Id ungeprüft übernimmt.
+  it("nimmt ein unbekanntes Kind aus dem Link als „alle Kinder“", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([{ id: 5, name: "Fritz" }] as never);
+    const list = vi.spyOn(api, "listFeedback").mockResolvedValue([]);
+    render(<AuthProvider><MemoryRouter initialEntries={["/vater/rueckmeldungen?childId=2"]}><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+    expect(list).toHaveBeenLastCalledWith(undefined, "Open");
+    expect((screen.getByLabelText("Kind") as HTMLSelectElement).value).toBe("");
+  });
+
+  // Review-Fund: die Auswahl schreibt in die URL zurück, „alle Kinder“ entfernt den Parameter. Rot, wenn der Wechsel nur im
+  // State lebt (F5 oder Zurück brächte das alte Kind wieder).
+  it("schreibt die Auswahl in die URL", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([{ id: 2, name: "Theo" }] as never);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([]);
+    let ort = "";
+    const Ort = () => { ort = useLocation().search; return null; };
+    render(<AuthProvider><MemoryRouter initialEntries={["/vater/rueckmeldungen?childId=2"]}><VaterRueckmeldungen /><Ort /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+    fireEvent.change(screen.getByLabelText("Kind"), { target: { value: "" } });
+    await act(async () => {});
+    expect(ort).toBe("");
   });
 });

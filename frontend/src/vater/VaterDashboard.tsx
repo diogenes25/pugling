@@ -9,7 +9,7 @@ import { formatDate } from "../lib/datum";
 import { ChildrenTimeline } from "./ChildrenTimeline";
 import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import { useAuth } from "../lib/auth";
-import type { ActivationRequest, ChildDay, ChildrenDashboard, Paged } from "../lib/types";
+import type { ActivationRequest, ChildDay, ChildrenDashboard, FeedbackEntry, Paged } from "../lib/types";
 
 /*
  * Layout inline statt in index.css: kein Stilblock, den andere Seiten mitlesen, und eine Liste aus Karten statt einer
@@ -32,6 +32,8 @@ export function VaterDashboard() {
   const today = useAsync<ChildrenDashboard>(() => api.childrenDaily(), [adultId]);
   const offen = useAsync<Paged<ActivationRequest>>(
     () => api.allActivations({ status: "Pending", take: 100 }), [adultId]);
+  // B-950: eine Kartenmeldung des Kindes gehört dorthin, wo der Vater täglich hinsieht – nur die offenen.
+  const meldungen = useAsync<FeedbackEntry[]>(() => api.listFeedback(undefined, "Open"), [adultId]);
   const action = useAction();
 
   // Der Kindname je Zeile kommt aus der Tagesübersicht (B-747 Entscheidung 2: kein Namensfeld im Vertrag). Beide listen
@@ -60,6 +62,26 @@ export function VaterDashboard() {
             </ul>
         )}
       </section>
+
+      {/* Sichtbar bei offenen Meldungen und nach einem Fehler – auch während „Erneut laden“ (B-216): nach einem abgeschlossenen
+          Versuch heißt `data === null`, dass der letzte scheiterte; der Abschnitt darf dann nicht samt Fehlerkasten verschwinden. */}
+      {((meldungen.data === null && !meldungen.showPlaceholder) || (meldungen.data?.length ?? 0) > 0) && (
+        <section>
+          <h2 className="h-section">Rückmeldungen</h2>
+          <ListenAusfall was="Die offenen Rückmeldungen" fehler={meldungen.error} laedt={meldungen.loading}
+            onRetry={meldungen.reload} />
+          {meldungen.data && meldungen.data.length > 0 && (
+            <ul className="vater-rueckmeldungen" aria-label="Offene Rückmeldungen" style={LISTE}>
+              {offeneJeKind(meldungen.data).map((m) => (
+                <li key={m.childId} className="card">
+                  <strong>{m.name}</strong>: {m.anzahl} {m.anzahl === 1 ? "offene Rückmeldung" : "offene Rückmeldungen"}{" "}
+                  <Link to={`/vater/rueckmeldungen?childId=${m.childId}`}>ansehen →</Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section>
         <h2 className="h-section">Einlösen</h2>
@@ -120,4 +142,18 @@ function HeuteKind({ c }: { c: ChildDay }) {
       </dl>
     </li>
   );
+}
+
+/**
+ * Die offenen Kartenmeldungen je Kind (B-950), in der Reihenfolge, in der die Kinder zuerst vorkommen. Gezählt wird je
+ * Meldung, nicht nach `count`: eine wiederholte Meldung ist dieselbe offene Frage.
+ */
+export function offeneJeKind(entries: FeedbackEntry[]): { childId: number; name: string; anzahl: number }[] {
+  const je = new Map<number, { childId: number; name: string; anzahl: number }>();
+  for (const e of entries) {
+    const m = je.get(e.childId) ?? { childId: e.childId, name: e.childName, anzahl: 0 };
+    m.anzahl += 1;
+    je.set(e.childId, m);
+  }
+  return [...je.values()];
 }

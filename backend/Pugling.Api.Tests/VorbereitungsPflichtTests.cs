@@ -527,6 +527,110 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Equal(10, await KartenAsync());
     }
 
+    private async Task<int> KartenJeTagAsync(Kind k, int arbeit) =>
+        (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepCardsPerDay").GetInt32();
+
+    private int Position(Kind k, int exerciseId, GoalCadence cadence, int newItemsPerDay, int? planId = null) =>
+        Read(db =>
+        {
+            var p = new PlanPosition
+            {
+                StudyPlanId = planId ?? k.PlanId,
+                ExerciseId = exerciseId,
+                Cadence = cadence,
+                NewItemsPerDay = newItemsPerDay,
+                UseLeitner = true,
+                CreatedAt = Start.UtcDateTime,
+                DutySince = D,
+            };
+            db.PlanPositions.Add(p);
+            db.SaveChanges();
+            return p.Id;
+        });
+
+    // B-948 AK 1, 2. Red when the load in the plan is left out (the test reads 0, as on the real database), or when a free
+    // or weekly position of a bundle exercise counts as a daily ask.
+    [Fact]
+    public async Task Karten_Je_Tag_Zaehlen_Die_Taegliche_Pflicht_Im_Plan_Vor_Dem_Start()
+    {
+        var k = await KindAsync();
+        var taeglich = await VokabelnAsync(k.Father, words: 20);
+        var kuer = await VokabelnAsync(k.Father, words: 20);
+        var woechentlich = await VokabelnAsync(k.Father, words: 20);
+        Position(k, taeglich, GoalCadence.Daily, newItemsPerDay: 4);
+        Position(k, kuer, GoalCadence.None, newItemsPerDay: 6);
+        Position(k, woechentlich, GoalCadence.Weekly, newItemsPerDay: 5);
+        var arbeit = await ArbeitAsync(k, D.AddDays(20), [taeglich, kuer, woechentlich]);
+
+        Assert.Equal(4, await KartenJeTagAsync(k, arbeit));
+    }
+
+    // B-948 AK 3. Red when the count reads a daily position of the exercise in another plan of the child - here an inactive
+    // plan of the same subject; another subject's plan goes through the same plan clause.
+    [Fact]
+    public async Task Karten_Je_Tag_Zaehlen_Nur_Den_Aktiven_Plan_Des_Fachs()
+    {
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father, words: 20);
+        var anderer = Read(db =>
+        {
+            var plan = new StudyPlan
+            {
+                ChildId = k.ChildId,
+                Title = "Alter Plan",
+                SubjectId = k.SubjectId,
+                Active = false,
+                StartDate = D,
+                EndDate = D.AddDays(30)
+            };
+            db.StudyPlans.Add(plan);
+            db.SaveChanges();
+            return plan.Id;
+        });
+        Position(k, ex, GoalCadence.Daily, newItemsPerDay: 4, planId: anderer);
+        var arbeit = await ArbeitAsync(k, D.AddDays(20), [ex]);
+
+        // Only the candidate the duty would make counts: ceil(20 / 7).
+        Assert.Equal(3, await KartenJeTagAsync(k, arbeit));
+    }
+
+    // B-948 AK 4. Red when a daily duty that ended (freed with its span in the past) still counts.
+    [Fact]
+    public async Task Karten_Je_Tag_Zaehlen_Keine_Beendete_Pflicht()
+    {
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father, words: 20);
+        var id = Position(k, ex, GoalCadence.Daily, newItemsPerDay: 4);
+        var arbeit = await ArbeitAsync(k, D.AddDays(20), [ex]);
+        Assert.Equal(4, await KartenJeTagAsync(k, arbeit));
+
+        Db(db =>
+        {
+            var p = db.PlanPositions.Single(p => p.Id == id);
+            p.Cadence = GoalCadence.None;
+            p.DutyUntil = D.AddDays(-1);
+            p.CadenceUntil = GoalCadence.Daily;
+        });
+        Assert.Equal(0, await KartenJeTagAsync(k, arbeit));
+    }
+
+    // B-948 AK 5. Red when, after the start, only the positions made for the test count (the old rule) and the daily duty
+    // already in the plan drops out again.
+    [Fact]
+    public async Task Karten_Je_Tag_Zaehlen_Nach_Dem_Start_Gemachte_Und_Vorhandene()
+    {
+        var k = await KindAsync();
+        var vorhanden = await VokabelnAsync(k.Father, words: 20);
+        var neu = await VokabelnAsync(k.Father, words: 14);
+        Position(k, vorhanden, GoalCadence.Daily, newItemsPerDay: 4);
+        var arbeit = await ArbeitAsync(k, D.AddDays(7), [vorhanden, neu]);
+
+        await LoginAsync(k);
+        var gemacht = Positionen(k.PlanId).Single(p => p.ExerciseId == neu);
+        Assert.Equal(arbeit, gemacht.SourceKlassenarbeitId);
+        Assert.Equal(4 + gemacht.NewItemsPerDay, await KartenJeTagAsync(k, arbeit));
+    }
+
     [Fact]
     public async Task Liste_Nennt_Fenster_Standard_Und_Karten_Je_Tag()
     {
@@ -681,6 +785,93 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         Vorspulen(-10);
         Db(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).Status = KlassenarbeitStatus.Cancelled);
         Assert.Equal(0, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+    }
+
+    private int VaterVon(Kind k) =>
+        Read(db => db.SupervisorLinks.Where(l => l.StudentId == k.ChildId).Select(l => l.SupervisorId).First());
+
+    // B-947 AK 1, 2, 5. The remedy is taken AFTER the one-shot start and its effect asserted (pm-loop Step 5). Red when the
+    // start forgets what it left out, when the reconcile never pulls a granted exercise in, when the pulled-in position owes
+    // from another day than today or ends elsewhere than the day before the test, or when the hint keeps counting it.
+    [Fact]
+    public async Task Freigabe_Nach_Dem_Start_Zieht_Die_Ausgelassene_Uebung_Nach()
+    {
+        var k = await KindAsync();
+        var offen = await VokabelnAsync(k.Father);
+        var gesperrt = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [offen]);
+        await UeberSchlagwortAsync(k, arbeit, gesperrt);
+        Zurueckgezogen(gesperrt, grantTo: null);
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        Assert.Equal(offen, Assert.Single(Positionen(k.PlanId)).ExerciseId);
+        Assert.Equal([gesperrt], Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepLeftOutExerciseIds));
+        Assert.Equal(1, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+
+        Vorspulen(1);
+        Zurueckgezogen(gesperrt, grantTo: VaterVon(k));
+        Assert.Equal(0, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+        await LoginAsync(k);
+
+        var nach = Positionen(k.PlanId).Single(p => p.ExerciseId == gesperrt);
+        Assert.Equal(arbeit, nach.SourceKlassenarbeitId);
+        Assert.Equal(GoalCadence.Daily, nach.Cadence);
+        Assert.Equal(D.AddDays(4), nach.DutySince);
+        Assert.Equal(D.AddDays(9), nach.DutyUntil);
+        Assert.Equal(2, nach.PenaltyCoins); // 5 / (1 made + 1 pulled in)
+        Assert.Equal(5, Positionen(k.PlanId).Single(p => p.ExerciseId == offen).PenaltyCoins); // unchanged
+        Assert.Empty(Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepLeftOutExerciseIds)!);
+    }
+
+    // B-947 AK 3, 5. Red when the pull-in reads the live bundle instead of the start's snapshot (the frozen bundle would come
+    // alive again), or when the hint after the start counts an exercise no grant would pull in. The start leaves one
+    // exercise out on purpose: with an empty snapshot the pull-in would never run, and the case could not fail (Sprint 138).
+    [Fact]
+    public async Task Nach_Dem_Start_Ins_Buendel_Gekommenes_Wird_Nicht_Nachgezogen()
+    {
+        var k = await KindAsync();
+        var offen = await VokabelnAsync(k.Father);
+        var gesperrt = await VokabelnAsync(k.Father);
+        var spaeter = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [offen, gesperrt]);
+        Zurueckgezogen(gesperrt, grantTo: null);
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        await UeberSchlagwortAsync(k, arbeit, spaeter);
+        Zurueckgezogen(spaeter, grantTo: null);
+        Assert.Equal(1, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32()); // gesperrt only
+
+        Zurueckgezogen(gesperrt, grantTo: VaterVon(k));
+        Zurueckgezogen(spaeter, grantTo: VaterVon(k));
+        await LoginAsync(k);
+        Assert.Equal([offen, gesperrt], Positionen(k.PlanId).Select(p => p.ExerciseId).Order().ToArray());
+    }
+
+    // B-947 AK 4, 6. Red when the pull-in ignores that the father took the exercise out of the bundle, or adds the same
+    // exercise again on a second reconcile. "Once" has two independent guards (the plan's duplicate filter and the shortened
+    // snapshot): only removing both turns it red, measured by hand in Sprint 138. A race of two logins is not reproducible here.
+    [Fact]
+    public async Task Nachziehen_Nur_Was_Noch_Im_Buendel_Steht_Und_Nur_Einmal()
+    {
+        var k = await KindAsync();
+        var offen = await VokabelnAsync(k.Father);
+        var raus = await VokabelnAsync(k.Father);
+        var bleibt = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [offen, raus, bleibt]);
+        Zurueckgezogen(raus, grantTo: null);
+        Zurueckgezogen(bleibt, grantTo: null);
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        Db(db => db.KlassenarbeitExercises.Remove(db.KlassenarbeitExercises.Single(x => x.KlassenarbeitId == arbeit && x.ExerciseId == raus)));
+        Zurueckgezogen(raus, grantTo: VaterVon(k));
+        Zurueckgezogen(bleibt, grantTo: VaterVon(k));
+        await LoginAsync(k);
+        await LoginAsync(k);
+
+        Assert.Equal([offen, bleibt], Positionen(k.PlanId).Select(p => p.ExerciseId).Order().ToArray());
     }
 
     // AK 2. Red when the sink drops the grant clause (a supervisor's own withdrawn-but-granted material would vanish) or

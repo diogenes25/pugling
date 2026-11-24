@@ -92,6 +92,12 @@ public class Klassenarbeit
     /// starts it a second time. <c>null</c> = not started.
     /// </summary>
     public DateOnly? PrepStartedOn { get; set; }
+    /// <summary>
+    /// The bundle exercises the start left out for lack of an execute permission (B-947), as a JSON list. A grant given
+    /// later makes exactly these a duty on the next reconcile; anything that joins the bundle after the start stays out,
+    /// because the bundle is frozen (B-752 decision 3). <c>null</c> = not started, or started before this column existed.
+    /// </summary>
+    public List<int>? PrepLeftOutExerciseIds { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<KlassenarbeitExercise> Exercises { get; set; } = new();
