@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/lernstand, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/lernstand, rolle/student, rolle/supervisor]
 aliases: [Notenstufe lesen, Stufe Endpunkte]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -103,3 +103,34 @@ Dienst, ein DTO.
 
 - **2026-11-20** — angelegt aus [B-682](B-682-notenstufe-je-fach-statt-liga.md) (geteilt); `geschaetzt`: S, backend, keine
   Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-24** — `in-arbeit` und gebaut (Nachtlauf G, Sprint 127): DTO `SubjectLevelResponse`
+  (`Pugling.Contracts/Student/SubjectLevelDtos.cs`, mit `SubjectName`, weil die Tagessicht ihre Fachkarten nach Namen
+  gliedert), `MySubjectLevelsController` (`student/me/subject-levels`, `Roles.Student`, Kind aus dem Token),
+  `ChildSubjectLevelsController` (`supervisor/children/{childId}/subject-levels`, `Roles.Supervisor` +
+  `ChildOwnershipFilter`), `SubjectLevelService.ReadAsync` (bewertet den Tag, listet nur Fächer mit Maß, sortiert nach
+  Name; eine Zeile ohne Maß bleibt gespeichert, erscheint aber nicht). `WordsToNextLevel`: live gezählt gegen die Grenze
+  der nächstbesseren Note über `GradeKey.MinPartForGrade` (die Umkehr aus B-740, keine zweite Tabelle); `0` = erreicht,
+  die Stufe folgt mit der Bewertung des nächsten Tages – eine Ausführungsfrage innerhalb Entscheidung 2, Wortlaut im
+  Frontend. Client: `StudentApi.ListMySubjectLevelsAsync`, `SupervisorApi.ListSubjectLevelsAsync`. Tor
+  `Unpaginierte_Array_GETs_Sind_Gepinnt` 31 → 33 mit Begründung (roter Wächter, Freigabe 11, gezählt, Sprint-Zähler **2**).
+- **2026-11-24** — AK → Test (`backend/Pugling.Api.Tests/SubjectLevelEndpointTests.cs`): AK 1 →
+  `Kind_liest_eigene_Stufen_Fach_ohne_Mass_fehlt` (N3: Lesen ohne Bewertung → rot) · AK 2/4 →
+  `Fremde_lesen_nicht_mit_und_Geschwister_bleiben_getrennt` (N4 Besitz-Filter weg → rot, N5 fremdes Kind aus `/me` → rot;
+  dazu `OwnershipMatrixTests` über alle `{childId}`-Actions) · AK 3 → `Woerter_bis_zur_naechsten_Stufe_sinken_mit_jedem_Wort`
+  (N1 falsche Grenze → rot, N2 kein `null` auf Stufe 1 → rot) · AK 5 → `Zwei_Lesezugriffe_am_selben_Tag_senken_nur_einmal`:
+  **doppelt gehalten** (Tagesprüfung und Sieben-Tage-Frist), keine Einzelmutante macht ihn rot; die Tagesprüfung trägt
+  `ChildSubjectLevelTests` (M8) · AK 6 → `ContractDocumentTests` grün, `docs/openapi/v1.json` nur ergänzt (+167 Zeilen).
+  Tabelle: B-741.
+- **2026-11-24** — Review `pugling-reviewer` (Agent, nur gelesen, Sprint 127, B-740 bis B-742 gemeinsam): keine 🔴.
+  Bestätigt: ein Schreiber der Stufe (`SubjectLevelService`), eine Umrechnung (`GradeKey`), das Maß aus
+  `ChildLearnProgressService` ohne Kopie, Tag nur aus `LearningDay`, Verlierer-Pfad am eindeutigen Index. 🟡 „Doku
+  widerspricht dem Verhalten“: der Satz „ein Kind, das tagelang fehlt, wird nicht neu bewertet“ stimmte nicht, weil auch
+  der Vater-Lesepfad bewertet (B-742 Entscheidung 3) – Satz berichtigt, ohne Zählung (nur Doku); die Spannung zur Risiko-
+  Notiz „keine Senkung ohne Lernen“ ist als offene Frage im Protokoll. 🟢 ohne Zählung, behoben: (1) das Maß wurde je
+  Lesen zweimal gerechnet – `EvaluateAndMeasureAsync` gibt es jetzt zurück; (2) eine kaputte Tabelle hätte jede
+  Kind-Anmeldung geworfen – Prüfung beim Start (`AddOptions…Validate(GradeKey.IsValid).ValidateOnStart()`); (3) Kommentar
+  am Verlierer-Pfad präzisiert („nahezu dieselben Daten“). 🟢 nicht behoben: Rennen ungetestet (nicht deterministisch
+  herstellbar), Student-Endpunkt `[Authorize(Roles = Student)]` statt `[Authorize]` inline (strenger, `/me` braucht keinen
+  Supervisor), AK-5-Endpunkttest schwach (Tagesprüfung trägt `ChildSubjectLevelTests`).
+- **2026-11-24** — `/smoke-test` ersetzt durch die E2E `frontend/e2e/notenstufe.spec.ts` gegen eine Wegwerf-DB auf :5211
+  (beide Endpunkte über die echte Oberfläche). `abgenommen`; Commit `4aae8d36`.

@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: "2026-11-24"
 wartet_auf: ""
 ---
 
@@ -63,3 +64,9 @@ Kommentarzeilen.
 - **2026-11-23** — abgenommen (Nachtlauf E, Sprint 125), Commit `617f50fd`. Beleg statt Rollengang (kein Rollenpfad
   berührt): Suite 2173/2173 (Release) vor den Nachträgen, danach die betroffenen Klassen 199/199 und Build grün; Diff nur
   in Kommentaren.
+- **2026-11-24** — Nachschau (Nachtlauf G, Retro Sprint 127): Prüfpunkt die sieben in der Story genannten Dateien
+  (`PlanPositionCrudTests`, `CreatorAgentTests`, `InterestTaxonomyTests`, `ReihenNamensDubletteTests`,
+  `KindInteressenTests`, `CreatorProfileTests`, `ComboTests`) – alle `//`-/`///`-Zeilen nach deutschen Funktionswörtern
+  („und|nicht|ist|wird|eine|wenn|weil|oder“) gegrept: 0 Treffer. Die Umlaut-Treffer im übrigen Testprojekt
+  (`AnswerVariantsTests`, `BeideRichtungenTests`, …) stehen nur in zitierten deutschen Beispielwörtern („die Straße“,
+  „für“), die erlaubt sind. Kein Fund.

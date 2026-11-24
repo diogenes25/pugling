@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/lernstand, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/lernstand, rolle/student]
 aliases: [Notenstufe berechnen, ChildSubjectLevel]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -171,3 +171,49 @@ Rollup-Filter und zwei Einhängestellen.
 - **2026-11-23** — Eigener Fund der Mutanten-Probe (Freigabe 11, als 🟡 gezählt, Sprint-Zähler **1**): M12 blieb grün –
   kein Test stieg um genau eine Stufe. Behoben mit einem Abschnitt im Sturz-Test (9 von 10 = Note 2 am Tag nach der
   zweiten Senkung), danach M12 rot.
+- **2026-11-24** — Review `pugling-reviewer` (Agent, nur gelesen, Sprint 127, B-740 bis B-742 gemeinsam): keine 🔴.
+  Bestätigt: ein Schreiber der Stufe (`SubjectLevelService`), eine Umrechnung (`GradeKey`), das Maß aus
+  `ChildLearnProgressService` ohne Kopie, Tag nur aus `LearningDay`, Verlierer-Pfad am eindeutigen Index. 🟡 „Doku
+  widerspricht dem Verhalten“: der Satz „ein Kind, das tagelang fehlt, wird nicht neu bewertet“ stimmte nicht, weil auch
+  der Vater-Lesepfad bewertet (B-742 Entscheidung 3) – Satz berichtigt, ohne Zählung (nur Doku); die Spannung zur Risiko-
+  Notiz „keine Senkung ohne Lernen“ ist als offene Frage im Protokoll. 🟢 ohne Zählung, behoben: (1) das Maß wurde je
+  Lesen zweimal gerechnet – `EvaluateAndMeasureAsync` gibt es jetzt zurück; (2) eine kaputte Tabelle hätte jede
+  Kind-Anmeldung geworfen – Prüfung beim Start (`AddOptions…Validate(GradeKey.IsValid).ValidateOnStart()`); (3) Kommentar
+  am Verlierer-Pfad präzisiert („nahezu dieselben Daten“). 🟢 nicht behoben: Rennen ungetestet (nicht deterministisch
+  herstellbar), Student-Endpunkt `[Authorize(Roles = Student)]` statt `[Authorize]` inline (strenger, `/me` braucht keinen
+  Supervisor), AK-5-Endpunkttest schwach (Tagesprüfung trägt `ChildSubjectLevelTests`).
+- **2026-11-24** — Review `frontend-reviewer` 🟡 (gezählt, Sprint-Zähler **3**): Die Fachkarte des Kindes hängt am Fach
+  des **Plans** (B-614), das Maß gruppierte nach dem Fach der **Reihe** – ein Plan unter „Französisch“ über einer Reihe
+  unter einem anders benannten Fach hätte seine Stufe auf ein Fach ohne Karte gelegt. Behoben in
+  `ActiveSubjectMeasuresAsync`: Fach des aktiven Plans, das der Reihe nur bei einem Plan ohne Fach; neuer Test
+  `Stufe_haengt_am_Fach_des_Plans` (rot mit P1, Tabelle unten). Rest: zwei Fächer gleichen Namens teilen sich ohnehin eine
+  Karte (Kommentar in `SohnHome.tsx`).
+- **2026-11-24** — Mutanten-Probe nach der letzten Änderung (B-740 bis B-743 gemeinsam), `.claude/scripts/mutant-probe.py`:
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 | backend/Pugling.Api/Services/Shared/GradeKey.cs:30 | red | red |  |
+  | M4 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:150 | red | red |  |
+  | P1 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:164 | red | red |  |
+  | M5 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:167 | red | red |  |
+  | M6 | backend/Pugling.Api/Services/Student/ChildLearnProgressService.cs:167 | red | red |  |
+  | M8 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:64 | red | red |  |
+  | M12 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:125 | red | red |  |
+  | M9 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:128 | red | red |  |
+  | M10 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:130 | red | red |  |
+  | M11 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:133 | red | red |  |
+  | N1 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:112 | red | red |  |
+  | N2 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:110 | red | red |  |
+  | N3 | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:96 | red | red |  |
+  | N4 | backend/Pugling.Api/Controllers/Supervisor/ChildSubjectLevelsController.cs:17 | red | red |  |
+  | N5 | backend/Pugling.Api/Controllers/Student/MySubjectLevelsController.cs:30 | red | red |  |
+  | M13 | backend/Pugling.Api/Controllers/AuthController.cs:91 | red | red |  |
+  | F1 | frontend/src/sohn/notenstufe.ts:24 | red | red |  |
+  | F2 | frontend/src/sohn/notenstufe.ts:21 | red | red |  |
+  | F3 | frontend/src/sohn/SohnHome.tsx:143 | red | red |  |
+  | F4 | frontend/src/sohn/SohnHome.tsx:63 | red | red |  |
+  | E1 | frontend/src/vater/NotenstufenSection.tsx:34 | red | unklar |  |
+
+  Rollengang: maschinell über `frontend/e2e/notenstufe.spec.ts` (Ports 5211/5184, Wegwerf-DB): ein frisches Kind mit
+  Vokabel- und Mathe-Plan meldet sich an (Bewertung an der Anmeldung), die Startseite liest die Stufe, der Vater liest sie
+  im Kind-Hub. `abgenommen`; Commits `1835a938`, `4aae8d36`.

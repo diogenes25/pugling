@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/klassenarbeit, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/klassenarbeit, rolle/student]
 aliases: [Notenschlüssel, PercentToGrade]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -113,3 +113,18 @@ Je Kriterium die Änderung, die es rot macht.
   AK 4 → `Es_gibt_genau_eine_Umrechnung` (Reflexion: keine Methode `…ToGrade` außerhalb `GradeKey`; rot, sobald eine
   entsteht; Absichtserklärung gegen andere Namen).
   Kein Rollengang nötig, nichts wird sichtbar (Testweg der Story); der Gang läuft mit B-743.
+- **2026-11-24** — Review `pugling-reviewer` (Agent, nur gelesen, Sprint 127, B-740 bis B-742 gemeinsam): keine 🔴.
+  Bestätigt: ein Schreiber der Stufe (`SubjectLevelService`), eine Umrechnung (`GradeKey`), das Maß aus
+  `ChildLearnProgressService` ohne Kopie, Tag nur aus `LearningDay`, Verlierer-Pfad am eindeutigen Index. 🟡 „Doku
+  widerspricht dem Verhalten“: der Satz „ein Kind, das tagelang fehlt, wird nicht neu bewertet“ stimmte nicht, weil auch
+  der Vater-Lesepfad bewertet (B-742 Entscheidung 3) – Satz berichtigt, ohne Zählung (nur Doku); die Spannung zur Risiko-
+  Notiz „keine Senkung ohne Lernen“ ist als offene Frage im Protokoll. 🟢 ohne Zählung, behoben: (1) das Maß wurde je
+  Lesen zweimal gerechnet – `EvaluateAndMeasureAsync` gibt es jetzt zurück; (2) eine kaputte Tabelle hätte jede
+  Kind-Anmeldung geworfen – Prüfung beim Start (`AddOptions…Validate(GradeKey.IsValid).ValidateOnStart()`); (3) Kommentar
+  am Verlierer-Pfad präzisiert („nahezu dieselben Daten“). 🟢 nicht behoben: Rennen ungetestet (nicht deterministisch
+  herstellbar), Student-Endpunkt `[Authorize(Roles = Student)]` statt `[Authorize]` inline (strenger, `/me` braucht keinen
+  Supervisor), AK-5-Endpunkttest schwach (Tagesprüfung trägt `ChildSubjectLevelTests`).
+- **2026-11-24** — Mutanten-Probe nach der letzten Änderung (Tabelle in B-741, Zeile M1 rot). Rollengang: entfällt laut
+  Testweg (nichts sichtbar); die Umrechnung fährt sichtbar in `frontend/e2e/notenstufe.spec.ts` mit (Stufe 6 → „noch 1
+  Wort“ = Umkehr an der 30-Prozent-Grenze bei 3 Wörtern). Suite 2210/2210 vor den Review-Fixes, danach siehe Protokoll.
+  `abgenommen`; Commits `1835a938`, `4aae8d36`. Die Tabelle 92/81/67/50/30 bleibt ein Wert zum Bestätigen.

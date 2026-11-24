@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/frontend, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/frontend, rolle/student, rolle/supervisor]
 aliases: [Notenstufe anzeigen, Stand-Text]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-682
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert)"
 ---
 
 # B-743 · Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl
@@ -102,3 +103,29 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `frontend/src/`. Die Dateien
 
 - **2026-11-20** — angelegt aus [B-682](B-682-notenstufe-je-fach-statt-liga.md) (geteilt) und B-683 (Textregel);
   `geschaetzt`: M, frontend, keine Migration, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-24** — `in-arbeit` und gebaut (Nachtlauf G, Sprint 127): reine Textfunktion `sohn/notenstufe.ts`
+  (`notenstufeText(t, level, wordsToNext)`, Stand-Text nur für 1–3 über eine feste Schlüsselliste, darunter nur Zielsatz;
+  `0` → „nächste Stufe geschafft – sie zählt ab morgen“), Stufenzeile in `FachKarte` (`SohnHome.tsx`, eigener
+  `useAsync`, dessen Fehler still bleibt), `vater/NotenstufenSection.tsx` im Reiter „Schule“ des Kind-Hubs (Zahl, Bestwert,
+  Wörter bis zur nächsten Stufe; `ListenAusfall`), `api.mySubjectLevels`/`api.childSubjectLevels`, Typ `SubjectLevel`,
+  i18n de/en, CSS `.fach-stufe`. Die Sohn-Dateien trugen in diesem Worktree keine fremde Arbeit (Stand `a782b4b2` sauber).
+- **2026-11-24** — AK → Test: AK 1 → `sohn/notenstufe.test.ts` (F1: Grenze bei 4 statt 3 → rot) · Zielsatz/0 → dieselbe
+  Datei (F2 → rot) · AK 2 → dieselbe Datei, **als Absichtserklärung beschriftet** (die Funktion kennt die vorige Stufe
+  nicht) · AK 3 → `sohn/fachStufe.test.tsx` (F3: erste Stufe an jede Karte → rot) · AK 4 → `e2e/notenstufe.spec.ts`
+  (E1: Zahl leer → rot) · AK 5 → `sohn/fachStufe.test.tsx` (F4: Stufenfehler leert die Seite → rot) · AK 6
+  Absichtserklärung (keine Vergleichsansicht gebaut). Tabelle: B-741. Vitest 128 Dateien / 1396 Tests grün, `npm run
+  build` grün, E2E `notenstufe` + Zeugen `belohnung-ueber-faecher`, `bestaetigung-ueberlebt`, `pfad` 6 passed.
+- **2026-11-24** — Review `frontend-reviewer` (Agent, nur gelesen): keine 🔴. 🟡 Zuordnung über den Fachnamen (Karte =
+  Fach des Plans, Stufe = Fach der Reihe) – serverseitig behoben, siehe B-741. 🟡 **AK 2 gegen die Umsetzung**: wörtlich
+  verbietet AK 2 „eine Notenbezeichnung der neuen Stufe“ nach einem Abstieg; gebaut ist Entscheidung 1 (Stufe 2/3 tragen
+  ihren Namen immer) mit Entscheidung 2 gelesen als „keine *schlechtere* Bezeichnung als Dreier“. Ein Abstieg 1 → 2 zeigt
+  also „Zweier-Stand“. Das geben die `## Entscheidungen` nicht eindeutig her → **angehalten** (Freigabe 8), nicht selbst
+  entschieden. Varianten für den Nutzer: (a) AK 2 auf „nie ‚abgestiegen‘, unter 3 kein Stufenwort“ umschreiben (gebaut);
+  (b) die Funktion nimmt `bestLevel` und lässt das Stufenwort weg, solange `level > bestLevel`. 🟢 behoben ohne Zählung:
+  AK-2-Fälle als Absichtserklärung beschriftet (ungenutzte Spalte „vorher“ entfernt), englische Stufennamen „Grade-N
+  standing“. 🟢 offen: AK 4 nur per E2E, kein Vitest.
+- **2026-11-24** — Rollengang maschinell (`e2e/notenstufe.spec.ts`): Sohn liest auf Stufe 6 „noch 1 Wort sicher bis zur
+  nächsten Stufe“, kein Stufenwort auf der Seite, Mathe ohne Zeile; Vater liest im Kind-Hub 6 / 6 / „noch 1 Wort“. Nicht
+  gelaufen: ein Kind auf Stufe 1–3 im Browser (braucht Box 5, also Wochen) – die Texte trägt der Vitest. Offen für einen
+  Menschen: das sinnliche Urteil („fühlt sich der Zielsatz freundlich an“, Zeile am Handy). Code in Commit `4aae8d36`;
+  bleibt `in-arbeit` mit `wartet_auf` bis zur Entscheidung über AK 2.
