@@ -20,7 +20,7 @@ Automatisch erzeugt von `backend/Pugling.Api.Tests/DocsCaptureTests.cs`. Insgesa
 
 ## Fehler-Code-Abdeckung
 
-Verifiziert: **34 / 94** Codes aus `ApiErrors`.
+Verifiziert: **34 / 96** Codes aus `ApiErrors`.
 
 | Code | Beispiel |
 | --- | --- |

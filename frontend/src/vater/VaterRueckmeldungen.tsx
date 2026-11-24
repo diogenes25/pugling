@@ -118,8 +118,9 @@ export function VaterRueckmeldungen() {
                     <td className="muted">{formatDate(f.lastReportedAt)}</td>
                     <td>
                       {f.status === "Open"
-                        // Ein Urteil nur mit Test-Antwort (B-769 Entscheidung 1): ohne sie gibt es nichts nachzurechnen.
-                        ? f.testItemResultId != null
+                        // Ein Urteil nur mit einer im Test als falsch gewerteten Antwort (B-769 Entscheidung 1): ohne sie, oder
+                        // wenn der Test sie richtig gewertet hat, gibt es nichts nachzurechnen (Produktfrage dazu: B-970).
+                        ? f.testItemResultId != null && f.testAnswerCorrect === false
                           ? (
                             <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                               <button type="button" className="btn small" disabled={gesperrt} onClick={() => setze(f, "Done", "Justified")}>Berechtigt</button>

@@ -203,9 +203,14 @@ public class HomeworkService(PuglingDbContext db, TimeProvider time, LearningDay
     /// <summary>The homework as the ledger names it: "[Hausaufgabe Mathe] S. 12 Nr. 3".</summary>
     private static string Label(Homework homework)
     {
-        var text = homework.Text.Length > 60 ? homework.Text[..60] + "…" : homework.Text;
+        var text = homework.Text.Length > 60 ? Truncate(homework.Text, 60) + "…" : homework.Text;
         return homework.Subject is { } subject ? $"[Hausaufgabe {subject.Name}] {text}" : $"[Hausaufgabe] {text}";
     }
+
+    // Cut by code units, but never between the two halves of a surrogate pair: a lone half would land in the ledger as an
+    // unreadable character.
+    internal static string Truncate(string text, int max) =>
+        char.IsHighSurrogate(text[max - 1]) ? text[..(max - 1)] : text[..max];
 
     private IQueryable<Homework> Query() =>
         db.Homeworks.AsNoTracking().Include(h => h.Subject).Include(h => h.Submissions.OrderBy(s => s.SubmittedAt).ThenBy(s => s.Id));

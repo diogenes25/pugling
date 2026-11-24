@@ -104,6 +104,19 @@ describe("VaterRueckmeldungen", () => {
     expect(within(zeilen[1]).getByText("im Test als falsch gewertet")).toBeTruthy();
   });
 
+  // Review-Fund nach dem Merge der Nachtläufe: hat der Test die gemeldete Antwort richtig gewertet, rechnet „Berechtigt“
+  // nichts nach – das Kind läse trotzdem „der Test ist nachgerechnet“. Rot, wenn das Urteil nur an `testItemResultId` hängt.
+  it("bietet an einer im Test richtig gewerteten Antwort kein Urteil an", async () => {
+    vi.spyOn(api, "children").mockResolvedValue([]);
+    vi.spyOn(api, "listFeedback").mockResolvedValue([{ ...mitTestAntwort, testAnswerCorrect: true }]);
+    render(<AuthProvider><MemoryRouter><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+
+    const zeile = screen.getAllByRole("row")[1];
+    expect(within(zeile).getByRole("button", { name: "Erledigt" })).toBeTruthy();
+    expect(within(zeile).queryByRole("button", { name: "Berechtigt" })).toBeNull();
+  });
+
   // B-769 AK 2: während „Berechtigt“ unterwegs ist, sind die Knöpfe gesperrt, und ein zweiter Klick sendet nichts. Rot, wenn
   // `disabled={busy}` fehlt (der Knopf bliebe klickbar) oder das Urteil nicht mitgeschickt wird.
   it("sperrt die Knöpfe, solange das Urteil gesendet wird", async () => {

@@ -327,4 +327,16 @@ public class HausaufgabenTests(PuglingWebAppFactory factory) : IClassFixture<Pug
         Assert.False(string.IsNullOrEmpty(created.GetProperty("subjectName").GetString()));
         Assert.Equal(20, created.GetProperty("rewardCoins").GetInt32()); // the server default without an own amount
     }
+
+    // Review finding after merging the night runs: the ledger label cut the text by code units and could split an emoji.
+    // Red when Truncate cuts at the bare length again (the result would end in a lone high surrogate).
+    [Fact]
+    public void Ledger_label_does_not_split_a_surrogate_pair()
+    {
+        var text = new string('a', 59) + "📚" + "rest"; // the emoji takes positions 59 and 60
+        var cut = Pugling.Api.Services.Shared.HomeworkService.Truncate(text, 60);
+        Assert.Equal(new string('a', 59), cut);
+        Assert.False(char.IsHighSurrogate(cut[^1]));
+        Assert.Equal(new string('a', 60), Pugling.Api.Services.Shared.HomeworkService.Truncate(new string('a', 70), 60));
+    }
 }
