@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: 2026-11-24
 ---
 
 # B-765 · Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend)
@@ -134,4 +135,6 @@ Nachgesehen am 2026-11-20:
 | N17 | MixedReviewService.cs:181 (Leitner bei Abgabe) | red | red |
 | N18 | MixedReviewService.cs:224 (heute eingeführt) | red | red |
 | N19 | MixedReviewService.cs:226 (heute getestet) | red | red |
+
 - 2026-11-24 · **abgenommen** (Nachtlauf H, Sprint 130). Commit `1e3b42f7`. Suite (Release) 2204/2204; `pugling-reviewer` (🟡 behoben, 🟢 behoben bzw. zurückgestellt); Mutanten 19/19 rot; Rollengang als Live-Probe gegen die laufende API (Abgabe 4/4, Kästen 1→2, doppelte Abgabe abgewiesen, Bonus-Übersicht mit derselben Tagessumme, 0 Münzen für heute gelernte Wörter) – Protokoll `docs/pm-sitzung-2026-11-23-h.md`, Runde 130. Zur Bestätigung am Morgen: die Auslegungen (a)–(d) und die Erweiterung des Zahl-Tors auf „heute schon begegnet“ (Review- und Rollengang-Fund).
+- 2026-11-24 · Nachschau (Retro Sprint 131): Prüfpunkte (1) „sieht das Bonus-Training den gemeinsamen Deckel?“ – E2E `bonus.spec.ts`, `bonus-deckel.spec.ts`, `bonus-deckel-voll.spec.ts`, `bonus-satz-je-karte.spec.ts` nach dem Umbau von `CoinsTodayAsync` 4 passed; (2) „sagt das Ergebnis, warum es nichts zahlt?“ – der `frontend-reviewer` fand, dass `MixedReviewResult` keinen Grund trägt und die Oberfläche ihn aus `typed` der Karten herleiten muss (B-766 🟡 2); behoben in der Oberfläche, **kein Defekt der Wertung** (die Zahlbedingung `MixedReviewService.cs:240` stimmt), darum keine Entgleitung. Offen als möglicher späterer Vertragsschritt: ein Grund-Feld je Karte.

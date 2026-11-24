@@ -109,3 +109,76 @@ an der das Kind die Lösung am selben Tag schon gesehen haben kann (Lernkarte, T
 Runde), einen Test ‚Treffer danach zahlt nichts'." Billiger als ein Tor; ein Tor müsste die Schreiber von
 `ChildPointsEntries` und die Lösungs-zeigenden Antworten kennen, das kostet mehr, als es fängt. Bleibt ungedeckt:
 Lösungen, die außerhalb der App gezeigt werden (Buch).
+
+## Sprint 131 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Sohn findet im Bonus-Training einen Einstieg zur Mischrunde, sobald Karten fällig sind, spielt
+Karten aus mehreren Fächern in einer Runde und sieht am Ende, was sie gebracht hat und wo sein Tagesdeckel steht – und
+warum es keine Münzen gab, wenn es keine gab.
+**Umfang:** B-766 (M, frontend).
+**Entwickler-Brief:** Quelle der Wahrheit bleibt der Server (B-764/B-765); die Oberfläche liest `MixedReviewOverview`,
+startet über `POST runs` und gibt am Stück ab. Einstieg nur im offenen Zweig von `SohnBonus`, er liest die Sperre trotzdem
+selbst. Start als Mutation (`useAction`, `disabled={busy}`, `StatusBanner`), die gestartete Runde reist als Router-State
+und wird beim Lesen verbraucht. Spielseite nach dem Muster `SohnBonusRun` (Ref-Gate, `sessionStorage` je Runde, Fokus
+B-671/B-778). Typen nur als `S[…]`-Aliase aus dem erzeugten Vertrag. Testweg: Vitest `SohnMischrunde.test.tsx`, E2E
+`mischrunde.spec.ts` als Rollengang (Ausweichports 5221/5194), `frontend-reviewer`.
+
+## Iteration 131 — umgesetzt
+
+**Frontend:** `SohnMischrunde.tsx` (Einstieg, Spielseite, Ergebnis), Route `bonus/misch`, Client und Typen, i18n `mix`
+de/en, Mock in `SohnBonus.test.tsx`. **Verifikation:** `tsc -b` grün; Vitest 1396/1396; Mutanten 10/10 rot am benannten
+Test; E2E `mischrunde` + vier Bonus-Specs 5 passed. Der Wächter `liveRegions.test.ts` war einmal rot (Live-Region nach
+`return null`) und ist behoben. Ein Fokus-Fall in `SohnBonus.test.tsx` war in einem Paketlauf einmal rot und ließ sich
+nicht reproduzieren (allein 34/34, im Paket dreimal grün) – Code dort unberührt, ohne Zählung.
+
+**Review:** `frontend-reviewer`: keine 🔴, drei 🟡 behoben (Router-State nicht verbraucht; falscher Grund bei nur
+selbst eingeschätzten Treffern; Spielseite ohne Vitest), 🟢 teils übernommen (B-766 Verlauf).
+
+**Fehlerzähler Sprint 131: 4** – roter Wächter `liveRegions` und die drei 🟡. Unter 5.
+
+## Runde 131 — Re-Review / Abnahme
+
+**Rollengang (Sohn, E2E `frontend/e2e/mischrunde.spec.ts` gegen den echten Server, Wegwerf-DB, Ports 5221/5194):** zwei
+Pläne in zwei Fächern, die Wörter wie im Spiel gelernt und den Test bestanden; im Bonus-Training steht „4 fällige Karten
+aus all deinen Plänen – freiwillig, ohne Malus“, die Runde mischt beide Fächer, das Ergebnis sagt „4 / 4 richtig“,
+„Heute verdient: 0 / 90 🪙“ und warum es keine Münzen gab (heute gelernt), danach ist der Einstieg weg.
+
+- **Sohn:** abgenommen – „Ich seh im Bonus-Training, dass was fällig ist, spiel beide Fächer in einem Rutsch, und am Ende
+  steht da, warum's heute keine Münzen gab." Bleibt fürs Gerät: wie sich eine volle Runde mit zehn Karten anfühlt.
+- **Vater (Regressionszeuge):** die Bonus-Specs (Deckel je Kind, voller Deckel, Satz je Karte) laufen unverändert grün;
+  kein Vater-Pfad im Diff.
+- **Creator (Regressionszeuge):** kein Pfad im Diff; Vitest gesamt grün.
+
+## Retrospektive (Sprint 131)
+
+**Nachschau:** Sprint 130 (B-764, B-765) nachgesehen – Prüfpunkte und Ergebnis in beiden Verläufen; kein Befund, keine
+Entgleitung; `nachgeschaut: 2026-11-24` gesetzt. Ein Fund des Frontend-Reviews (das Ergebnis trägt keinen Grund) liegt am
+Vertrag, nicht an der Wertung, und ist als möglicher späterer Vertragsschritt notiert.
+
+**Was die eigenen Tore durchgelassen haben:** zweimal derselbe Kniff: ein Wert, der eine Seite verlässt und später
+zurückkommt (Router-State im Verlauf; das Ergebnis, das einen Grund herleitet, den der Server nicht nennt). Der Wächter
+`liveRegions` hat seinen Fall sofort gefangen – das Tor funktioniert.
+
+**Vorschlag (H2), nicht gelandet (Freigabe 3):** eine Zeile in `frontend/CLAUDE.md`: „Router-State, der eine Mutation
+mitbringt (gestarteter Lauf, Antwort), wird beim Lesen per `replace` verbraucht – der Browserverlauf hält ihn sonst über
+die Mutation hinaus." Kein Tor: die Stellen mit `location.state` sind wenige und lassen sich nicht mechanisch von harmlosen
+unterscheiden.
+
+## Offene Roadmap · Konkreter Änderungsstand
+
+Das Paket ist fertig: B-764, B-765, B-766 `abgenommen`. Der Lauf endet hier (Auftrag: nichts außerhalb der Liste).
+
+**Zur Entscheidung am Morgen** (keine davon blockiert, alle in den Verläufen der Stories):
+
+1. B-765 – Erweiterung des Zahl-Tors: eine Karte zahlt nur, wenn das Kind ihr heute noch nicht begegnet ist (eingeführt,
+   wiederholt oder im Test gefragt). Folge: am Lerntag selbst bringt die Mischrunde nur den Kasten voran.
+2. B-765 – „Karte ohne Antwort zählt als falsch" (Muster des Bonus-Trainings) oder „übersprungen"? Offener Punkt fürs
+   Grillen.
+3. B-765 – eine selbst eingeschätzte Karte bewegt den Kasten wie die Selbstauskunft im Üben und zahlt nichts (das
+   Bonus-Training zahlt dort 1).
+4. B-764 – Auslegungen (a)–(f), vor allem „nur eingeführte und eingeprägte Karten" und „ein geteiltes Wort einmal je
+   Runde".
+5. Retro-Vorschläge (H1) und (H2) – landen oder verwerfen.
+
+**Commits (Branch `worktree-agent-a0aab32232d36b515`, Basis `a782b4b2`, ungepusht):** `64c14761` B-764 · `1e3b42f7`
+B-765 · `d00b56d4` Sprint-130-Abnahme · `41c720d0` B-766 · danach der Abschluss-Commit dieses Protokolls.
