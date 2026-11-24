@@ -33,8 +33,10 @@ export function periodLabel(p: ChildPeriod, granularity: OverviewGranularity): s
   const wann = granularity === "Day" ? formatDate(p.start)
     : granularity === "Week" ? `Woche ab ${formatDate(p.start)}`
     : MONAT.format(new Date(`${p.start}T00:00:00Z`));
-  if (p.goalsTotal === 0) return `${wann}: kein Ziel`;
-  return `${wann}: ${p.goalsMet} von ${p.goalsTotal} Zielen${p.dutyDone ? " – Pflicht geschafft ✓" : ""}, ${p.points} Punkte`;
+  const muenzen = `${p.coins} ${p.coins === 1 ? "Münze" : "Münzen"}`;
+  // B-954: Münzen kommen aus dem Konto, also auch an einem Tag ohne Ziel (Kür, Truhe) – dort nur, wenn es welche gab.
+  if (p.goalsTotal === 0) return p.coins > 0 ? `${wann}: kein Ziel, ${muenzen}` : `${wann}: kein Ziel`;
+  return `${wann}: ${p.goalsMet} von ${p.goalsTotal} Zielen${p.dutyDone ? " – Pflicht geschafft ✓" : ""}, ${muenzen}`;
 }
 
 /**

@@ -11,7 +11,7 @@ import { ChildrenTimeline, periodLabel, rangeFor } from "./ChildrenTimeline";
  * sie Perioden trägt, mit Text neben der Farbe, und mit einem Weg in den Lernstand je Kind.
  */
 const periode = (start: string, goalsMet: number, goalsTotal: number, dutyDone = false): ChildPeriod =>
-  ({ start, end: start, goalsTotal, goalsMet, points: goalsMet * 5, dutyDone });
+  ({ start, end: start, goalsTotal, goalsMet, coins: goalsMet * 5, dutyDone });
 
 const antwort = (granularity: OverviewGranularity, perioden: ChildPeriod[]): ChildrenOverview => ({
   from: "2026-03-01", to: "2026-03-31", granularity,
@@ -46,8 +46,8 @@ describe("Zeitachse der Kinder (B-39)", () => {
     const balken = within(await screen.findByRole("list", { name: "Zeitachse von Friedrich" })).getAllByRole("listitem");
     // Als Text im Element (sr-only), nicht nur als `aria-label` am Listeneintrag – Review-Fund.
     expect(balken.map((b) => b.querySelector(".sr-only")?.textContent)).toEqual([
-      "Woche ab 02.03.2026: 7 von 7 Zielen – Pflicht geschafft ✓, 35 Punkte",
-      "Woche ab 09.03.2026: 3 von 7 Zielen, 15 Punkte",
+      "Woche ab 02.03.2026: 7 von 7 Zielen – Pflicht geschafft ✓, 35 Münzen",
+      "Woche ab 09.03.2026: 3 von 7 Zielen, 15 Münzen",
       "Woche ab 16.03.2026: kein Ziel",
     ]);
   });
@@ -83,6 +83,11 @@ describe("Zeitachse – Zeitraum je Raster", () => {
 
   // Review-Fund: der Monat heißt wie ein Monat. Rot, wenn er wieder als Datumsspanne erscheint.
   it("nennt einen Monat beim Namen", () => {
-    expect(periodLabel(periode("2026-06-01", 20, 30), "Month")).toBe("Juni 2026: 20 von 30 Zielen, 100 Punkte");
+    expect(periodLabel(periode("2026-06-01", 20, 30), "Month")).toBe("Juni 2026: 20 von 30 Zielen, 100 Münzen");
+    // B-954: die Zahl sind verdiente Münzen, und eine einzelne heißt „Münze“.
+    expect(periodLabel({ start: "2026-06-01", end: "2026-06-01", goalsTotal: 1, goalsMet: 0, coins: 1, dutyDone: false }, "Day")).toBe("01.06.2026: 0 von 1 Zielen, 1 Münze");
+    // Review-Fund: ein Tag ohne Ziel verschweigt verdiente Münzen nicht – und nennt keine, wenn es keine gab.
+    expect(periodLabel({ start: "2026-06-02", end: "2026-06-02", goalsTotal: 0, goalsMet: 0, coins: 12, dutyDone: false }, "Day")).toBe("02.06.2026: kein Ziel, 12 Münzen");
+    expect(periodLabel({ start: "2026-06-02", end: "2026-06-02", goalsTotal: 0, goalsMet: 0, coins: 0, dutyDone: false }, "Day")).toBe("02.06.2026: kein Ziel");
   });
 });

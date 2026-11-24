@@ -32431,11 +32431,11 @@
           "activePlans",
           "answersToday",
           "childId",
+          "coinsToday",
           "dutyDone",
           "goalsMet",
           "goalsTotal",
           "name",
-          "pointsToday",
           "practiced"
         ],
         "type": "object",
@@ -32475,7 +32475,7 @@
             ],
             "format": "int32"
           },
-          "pointsToday": {
+          "coinsToday": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -32498,7 +32498,7 @@
             "format": "int32"
           }
         },
-        "description": "Daily state of a child, aggregated across its active study plans. \u0060AnswersToday\u0060 counts the answers the child\ngave that day across all of its plans (practice cards plus test answers) - how much was done, independent of\nbonus points (B-770). \u0060Practiced\u0060 is true once \u0060AnswersToday\u0060 is above 0, a goal was met or points were earned that day (B-777)."
+        "description": "Daily state of a child, aggregated across its active study plans. \u0060AnswersToday\u0060 counts the answers the child\ngave that day across all of its plans (practice cards plus test answers) - how much was done, independent of\ncoins (B-770). \u0060CoinsToday\u0060 is what the child earned that learning day: the positive ledger entries of the\nearned coin kinds, the number the child reads as its week - no gems, fines, purchases or gifts (B-954).\n\u0060Practiced\u0060 is true once \u0060AnswersToday\u0060 is above 0 or a goal was met that day (B-777) - not on coins alone:\na chest opened that morning earns coins without learning."
       },
       "ChildInterestInput": {
         "required": [
@@ -32614,11 +32614,11 @@
       },
       "ChildPeriod": {
         "required": [
+          "coins",
           "dutyDone",
           "end",
           "goalsMet",
           "goalsTotal",
-          "points",
           "start"
         ],
         "type": "object",
@@ -32647,7 +32647,7 @@
             ],
             "format": "int32"
           },
-          "points": {
+          "coins": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -32659,7 +32659,7 @@
             "type": "boolean"
           }
         },
-        "description": "One period of a child\u0027s timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the\ndaily overview - per day, the goals of every cadence of the plans that run that day (a weekly goal counts on each of\nits days). A plan that is switched off now only counts in the child\u0027s favour (B-558): its met goals and points always,\nits goals total only on days it was used (a goal met or points earned), its duty only when met - a never used draft\nnever shows as missed. Start/End are the first and last day of the period\nthat lie in the range. DutyDone means: on every day of the period that had a goal, the duty was done\n- and there was at least one such day."
+        "description": "One period of a child\u0027s timeline (B-39): the sum of its days within the requested range, all learning days, counted like the\ndaily overview - per day, the goals of every cadence of the plans that run that day (a weekly goal counts on each of\nits days). A plan that is switched off now only counts in the child\u0027s favour (B-558): its met goals always,\nits goals total only on days it was used (a goal met or a goal bonus booked), its duty only when met - a never used draft\nnever shows as missed. Start/End are the first and last day of the period\nthat lie in the range. DutyDone means: on every day of the period that had a goal, the duty was done\n- and there was at least one such day. Coins is the sum of the child\u0027s earned coins on those days\n(as \u0060ChildDay.CoinsToday\u0060), independent of any plan (B-954)."
       },
       "ChildPointsResponse": {
         "required": [

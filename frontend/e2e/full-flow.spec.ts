@@ -179,12 +179,13 @@ test("Vater erstellt Plan mit Position, Sohn arbeitet ihn ab, Punkte fließen", 
 
   // ---------- VATER sieht Fortschritt ----------
   await vater.goto(planUrl);
-  await expect(vater.getByText("Punkte gesamt")).toBeVisible();
+  await expect(vater.getByText("Zielbonus gesamt")).toBeVisible();
   // Tagesverlauf-Tabelle zeigt den heute erledigten Tag des Sohns (Ziel erfüllt → "komplett").
   await expect(vater.locator("table .pill.lime", { hasText: "komplett" }).first()).toBeVisible();
-  // Punkte gesamt > 0 (Übung + Test sind beim Vater angekommen).
+  // Zielbonus gesamt > 0 (der bestandene Test ist beim Vater angekommen; B-954: die Zahl ist der Bonus, nicht alle Münzen).
+  await expect(vater.getByRole("columnheader", { name: "Zielbonus", exact: true })).toBeVisible();
   const totalCard = vater.locator(".vater-grid .card").first();
-  await expect(totalCard).toContainText("Punkte gesamt");
+  await expect(totalCard).toContainText("Zielbonus gesamt");
   expect(Number((await totalCard.textContent())!.replace(/\D/g, ""))).toBeGreaterThan(0);
 
   // ---------- VATER liest den Positions-Report (Vater-only) ----------

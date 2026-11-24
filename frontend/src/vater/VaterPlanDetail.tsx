@@ -90,7 +90,7 @@ export function VaterPlanDetail() {
 
       {prog.data && (
         <section className="vater-grid">
-          <div className="card"><div className="muted">Punkte gesamt</div><div className="h-section">{prog.data.totalPoints}</div></div>
+          <div className="card"><div className="muted">Zielbonus gesamt</div><div className="h-section">{prog.data.totalPoints}</div></div>
           <div className="card"><div className="muted">Tage geschafft</div><div className="h-section">{prog.data.daysComplete} / {prog.data.totalDays}</div></div>
           <div className="card"><div className="muted">Aktuelle Streak</div><div className="h-section">{prog.data.currentStreak} 🔥</div></div>
         </section>
@@ -103,7 +103,7 @@ export function VaterPlanDetail() {
           <h3 className="h-section">Tagesverlauf</h3>
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Tag</th><th className="num">Ziele</th><th className="num">Punkte</th><th>Status</th></tr></thead>
+              <thead><tr><th>Tag</th><th className="num">Ziele</th><th className="num">Zielbonus</th><th>Status</th></tr></thead>
               <tbody>
                 {prog.data.days.map((d) => (
                   <tr key={d.day}>

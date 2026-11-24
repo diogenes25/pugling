@@ -142,7 +142,7 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         var today = await father.GetFromJsonAsync<JsonElement>($"{Url}?granularity=Day&childId={childId}");
         var last = today.GetProperty("children")[0].GetProperty("periods").EnumerateArray().Last();
         JsonAssert.True(last, "dutyDone");
-        Assert.True(last.GetProperty("points").GetInt32() > 0);
+        Assert.True(last.GetProperty("coins").GetInt32() > 0);
 
         var (other, _) = await FreshAdultAsync();
         var openChild = await ChildAsync(other, "Dora");
@@ -200,7 +200,8 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         return pos.Id;
     }
 
-    // A passed test on a past day plus its goal reward, written straight into the database: the API only plays today.
+    // A passed test on a past day plus its goal reward and the reward's ledger entry (the timeline's coins read the
+    // ledger, B-954), written straight into the database: the API only plays today.
     private void SeedMetDay(int planId, int positionId, DateOnly day, int points = 20)
     {
         using var scope = factory.Services.CreateScope();
@@ -229,6 +230,8 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
             Points = points,
             AwardedAt = at,
         });
+        var childId = db.StudyPlans.Where(p => p.Id == planId).Select(p => p.ChildId).Single();
+        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Amount = points, Kind = PointKind.Goal, Reason = "Test", CreatedAt = at });
         db.SaveChanges();
     }
 
@@ -256,7 +259,7 @@ public class ChildrenOverviewTests(PuglingWebAppFactory factory) : IClassFixture
         var day = Assert.Single(await DaysAsync(father, childId, day1, day1));
         Assert.Equal(1, day.GetProperty("goalsTotal").GetInt32());
         Assert.Equal(1, day.GetProperty("goalsMet").GetInt32());
-        Assert.Equal(20, day.GetProperty("points").GetInt32());
+        Assert.Equal(20, day.GetProperty("coins").GetInt32());
         JsonAssert.True(day, "dutyDone");
     }
 

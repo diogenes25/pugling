@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
@@ -38,7 +39,8 @@ public class WalletService(PuglingDbContext db, LearningDay learningDay)
             .SumAsync(p => (int?)p.Amount, ct) ?? 0;
 
     /// <summary>
-    /// Coin kinds that count as "earned" in the week comparison (B-253): every coin kind except those that move coins
+    /// Coin kinds that count as "earned" in the week comparison (B-253) and the supervisor's daily figure
+    /// (B-954): every coin kind except those that move coins
     /// without learning. The comparison only sums positive entries, but each excluded kind can also be booked
     /// positive: <see cref="PointKind.Manual"/> is a gift, <see cref="PointKind.ShopCoins"/> a refund of a cancelled
     /// purchase and <see cref="PointKind.GoalPenalty"/> a fine (a positive one would be a correction) - none of them
@@ -61,8 +63,7 @@ public class WalletService(PuglingDbContext db, LearningDay learningDay)
         var lastWeekStart = learningDay.StartUtc(monday.AddDays(-7));
         // The same time into last week on the wall clock, not 168 h back: a week with a clock change is 167 or 169 h long.
         var lastWeekNow = learningDay.SameTimeDaysEarlier(now, 7);
-        var earned = db.ChildPointsEntries.AsNoTracking()
-            .Where(p => p.ChildId == childId && p.Amount > 0 && EarnedCoinKinds.Contains(p.Kind));
+        var earned = EarnedCoins(childId);
 
         // Upper bound `now` on both "so far" sums: an entry stamped after the server's clock is not this week's yet.
         var thisWeek = await earned.Where(p => p.CreatedAt >= weekStart && p.CreatedAt <= now)
@@ -73,4 +74,27 @@ public class WalletService(PuglingDbContext db, LearningDay learningDay)
             .SumAsync(p => (int?)p.Amount, ct) ?? 0;
         return new WeekCoinsResponse(monday, thisWeek, lastWeekSoFar, lastWeekTotal);
     }
+
+    /// <summary>
+    /// The child's earned coins per learning day from <paramref name="from"/> to <paramref name="to"/> (B-954) - the
+    /// same notion of "earned" as the week comparison, so supervisor and child read one number. Days without an entry
+    /// are absent. The day is the learning day the entry was booked on (B-730), not the UTC date.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<DateOnly, int>> EarnedCoinsByDayAsync(int childId, DateOnly from, DateOnly to,
+        CancellationToken ct)
+    {
+        var start = learningDay.StartUtc(from);
+        var end = learningDay.StartUtc(to.AddDays(1));
+        // Grouped in memory: the learning day of an instant is a zone conversion SQLite cannot do.
+        var entries = await EarnedCoins(childId)
+            .Where(p => p.CreatedAt >= start && p.CreatedAt < end)
+            .Select(p => new { p.CreatedAt, p.Amount })
+            .ToListAsync(ct);
+        return entries.GroupBy(e => learningDay.DayOf(e.CreatedAt)).ToDictionary(g => g.Key, g => g.Sum(e => e.Amount));
+    }
+
+    // The one definition of "earned": positive entries of the earned coin kinds.
+    private IQueryable<ChildPointsEntry> EarnedCoins(int childId) =>
+        db.ChildPointsEntries.AsNoTracking()
+            .Where(p => p.ChildId == childId && p.Amount > 0 && EarnedCoinKinds.Contains(p.Kind));
 }

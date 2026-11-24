@@ -8,14 +8,14 @@ import { offeneJeKind, VaterDashboard } from "./VaterDashboard";
 import { useOffeneEinloesungenZahl } from "./einloesungen";
 
 /*
- * B-749: die Betreuen-Startseite zeigt je Kind Antwortzahl, Tagesziel und Punkte, darunter die offenen Einlöse-Wünsche
+ * B-749: die Betreuen-Startseite zeigt je Kind Antwortzahl, Tagesziel und Münzen, darunter die offenen Einlöse-Wünsche
  * aller Kinder – und keine Verwaltung mehr. Gefälscht werden die Abrufe der Seite, nicht das `fetch`.
  */
 const tag = {
   date: "2026-11-20",
   children: [
-    { childId: 1, name: "Friedrich", activePlans: 2, goalsTotal: 4, goalsMet: 3, pointsToday: 40, dutyDone: false, practiced: true, answersToday: 37 },
-    { childId: 3, name: "Theodor", activePlans: 1, goalsTotal: 2, goalsMet: 2, pointsToday: 25, dutyDone: true, practiced: true, answersToday: 1 },
+    { childId: 1, name: "Friedrich", activePlans: 2, goalsTotal: 4, goalsMet: 3, coinsToday: 40, dutyDone: false, practiced: true, answersToday: 37 },
+    { childId: 3, name: "Theodor", activePlans: 1, goalsTotal: 2, goalsMet: 2, coinsToday: 25, dutyDone: true, practiced: true, answersToday: 1 },
   ],
 } as unknown as ChildrenDashboard;
 
@@ -41,16 +41,18 @@ const zeige = async () => {
 };
 
 describe("Vater-Startseite (B-749)", () => {
-  // AK 1. Rot, wenn die Antwortzahl fehlt oder aus den Punkten kommt (37 ≠ 40), das Tagesziel nicht „n von m" sagt,
+  // AK 1. Rot, wenn die Antwortzahl fehlt oder aus den Münzen kommt (37 ≠ 40), das Tagesziel nicht „n von m" sagt,
   // oder Tabelle, Anlegeformular bzw. Pläne-Karte zurück auf die Startseite wandern.
-  it("zeigt je Kind Antworten, Tagesziel und Punkte – ohne Verwaltung", async () => {
+  it("zeigt je Kind Antworten, Tagesziel und Münzen – ohne Verwaltung", async () => {
     vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
     await zeige();
 
     const friedrich = within(screen.getByRole("list", { name: "Kinder heute" })).getAllByRole("listitem")[0];
     expect(friedrich.textContent).toContain("37 Antworten");
     expect(friedrich.textContent).toContain("3 von 4");
-    expect(friedrich.textContent).toContain("40");
+    // B-954: die Zahl heißt „Münzen heute“ und kommt aus `coinsToday`. Rot, wenn die Beschriftung zurück zu „Punkte“ wandert.
+    expect(friedrich.textContent).toContain("Münzen heute40");
+    expect(friedrich.textContent).not.toContain("Punkte");
     const theodor = within(screen.getByRole("list", { name: "Kinder heute" })).getAllByRole("listitem")[1];
     expect(theodor.textContent).toContain("1 Antwort");
     expect(theodor.textContent).toContain("Tagesziel geschafft");

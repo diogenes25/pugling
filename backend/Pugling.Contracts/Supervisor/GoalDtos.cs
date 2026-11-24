@@ -35,10 +35,13 @@ public record UpdateKeyResultRequest(KeyResultMetric? Metric, int? TargetValue, 
 /// <summary>
 /// Daily state of a child, aggregated across its active study plans. <c>AnswersToday</c> counts the answers the child
 /// gave that day across all of its plans (practice cards plus test answers) - how much was done, independent of
-/// bonus points (B-770). <c>Practiced</c> is true once <c>AnswersToday</c> is above 0, a goal was met or points were earned that day (B-777).
+/// coins (B-770). <c>CoinsToday</c> is what the child earned that learning day: the positive ledger entries of the
+/// earned coin kinds, the number the child reads as its week - no gems, fines, purchases or gifts (B-954).
+/// <c>Practiced</c> is true once <c>AnswersToday</c> is above 0 or a goal was met that day (B-777) - not on coins alone:
+/// a chest opened that morning earns coins without learning.
 /// </summary>
 public record ChildDay(int ChildId, string Name, int ActivePlans, int GoalsTotal, int GoalsMet,
-    int PointsToday, bool DutyDone, bool Practiced, int AnswersToday);
+    int CoinsToday, bool DutyDone, bool Practiced, int AnswersToday);
 
 /// <summary>The daily overview across all children of a supervisor.</summary>
 public record Dashboard(DateOnly Date, IReadOnlyList<ChildDay> Children);
@@ -55,15 +58,16 @@ public enum OverviewGranularity
 }
 
 /// <summary>
-/// One period of a child's timeline (B-39): the sum of its days within the requested range, all in UTC, counted like the
+/// One period of a child's timeline (B-39): the sum of its days within the requested range, all learning days, counted like the
 /// daily overview - per day, the goals of every cadence of the plans that run that day (a weekly goal counts on each of
-/// its days). A plan that is switched off now only counts in the child's favour (B-558): its met goals and points always,
-/// its goals total only on days it was used (a goal met or points earned), its duty only when met - a never used draft
+/// its days). A plan that is switched off now only counts in the child's favour (B-558): its met goals always,
+/// its goals total only on days it was used (a goal met or a goal bonus booked), its duty only when met - a never used draft
 /// never shows as missed. <paramref name="Start"/>/<paramref name="End"/> are the first and last day of the period
 /// that lie in the range. <paramref name="DutyDone"/> means: on every day of the period that had a goal, the duty was done
-/// - and there was at least one such day.
+/// - and there was at least one such day. <paramref name="Coins"/> is the sum of the child's earned coins on those days
+/// (as <c>ChildDay.CoinsToday</c>), independent of any plan (B-954).
 /// </summary>
-public record ChildPeriod(DateOnly Start, DateOnly End, int GoalsTotal, int GoalsMet, int Points, bool DutyDone);
+public record ChildPeriod(DateOnly Start, DateOnly End, int GoalsTotal, int GoalsMet, int Coins, bool DutyDone);
 
 /// <summary>A child with its periods in the requested range, oldest first.</summary>
 public record ChildTimeline(int ChildId, string Name, IReadOnlyList<ChildPeriod> Periods);

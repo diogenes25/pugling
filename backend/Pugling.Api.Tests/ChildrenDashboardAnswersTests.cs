@@ -72,8 +72,8 @@ public class ChildrenDashboardAnswersTests(PuglingWebAppFactory factory) : IClas
 
         Assert.Equal(5, rowA.GetProperty("answersToday").GetInt32());
         Assert.Equal(13, rowB.GetProperty("answersToday").GetInt32());
-        // AK 1: answers are not points - no position, no points, yet answers.
-        Assert.Equal(0, rowA.GetProperty("pointsToday").GetInt32());
+        // AK 1: answers are not coins - no position, no coins, yet answers.
+        Assert.Equal(0, rowA.GetProperty("coinsToday").GetInt32());
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public class ChildrenDashboardAnswersTests(PuglingWebAppFactory factory) : IClas
         var rowIdle = rows.First(r => r.GetProperty("childId").GetInt32() == idle);
 
         Assert.Equal(0, rowBusy.GetProperty("goalsMet").GetInt32());
-        Assert.Equal(0, rowBusy.GetProperty("pointsToday").GetInt32());
+        Assert.Equal(0, rowBusy.GetProperty("coinsToday").GetInt32());
         Assert.True(rowBusy.GetProperty("practiced").GetBoolean());
         Assert.False(rowIdle.GetProperty("practiced").GetBoolean());
     }

@@ -122,8 +122,9 @@ export function VaterDashboard() {
 }
 
 /**
- * Ein Kind am heutigen Tag: Status, Antwortzahl (B-770: wie viel, unabhängig von Bonuspunkten), Tagesziel als „n von m"
- * und Punkte. Das Tagesziel liest `goalsMet`/`goalsTotal` (B-749 Entscheidung 3).
+ * Ein Kind am heutigen Tag: Status, Antwortzahl (B-770: wie viel, unabhängig von Münzen), Tagesziel als „n von m"
+ * und die an dem Tag verdienten Münzen (B-954: aus dem Konto, nicht der Zielbonus). Das Tagesziel liest
+ * `goalsMet`/`goalsTotal` (B-749 Entscheidung 3).
  */
 function HeuteKind({ c }: { c: ChildDay }) {
   return (
@@ -138,7 +139,7 @@ function HeuteKind({ c }: { c: ChildDay }) {
       <dl className="vater-heute-zahlen" style={ZAHLEN}>
         <div><dt className="muted" style={{ fontSize: 13 }}>Geübt heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.answersToday} {c.answersToday === 1 ? "Antwort" : "Antworten"}</dd></div>
         <div><dt className="muted" style={{ fontSize: 13 }}>Tagesziel</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.goalsTotal === 0 ? "–" : `${c.goalsMet} von ${c.goalsTotal}`}</dd></div>
-        <div><dt className="muted" style={{ fontSize: 13 }}>Punkte heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.pointsToday}</dd></div>
+        <div><dt className="muted" style={{ fontSize: 13 }}>Münzen heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.coinsToday}</dd></div>
       </dl>
     </li>
   );

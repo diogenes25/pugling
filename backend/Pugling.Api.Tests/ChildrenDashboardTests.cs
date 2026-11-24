@@ -40,12 +40,12 @@ public class ChildrenDashboardTests(PuglingWebAppFactory factory) : IClassFixtur
         };
         await child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers });
 
-        // After: the obligation is done, the day's points are visible, marked as "practiced".
+        // After: the obligation is done, the day's earned coins are visible, marked as "practiced".
         var after = await (await father.GetAsync("/api/v1/supervisor/children/daily-overview"))
             .Content.ReadFromJsonAsync<JsonElement>();
         var rowAfter = ChildRow(after, 1);
         JsonAssert.True(rowAfter, "dutyDone");
-        Assert.True(rowAfter.GetProperty("pointsToday").GetInt32() > 0);
+        Assert.True(rowAfter.GetProperty("coinsToday").GetInt32() > 0);
         JsonAssert.True(rowAfter, "practiced");
     }
 }

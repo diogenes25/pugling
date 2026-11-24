@@ -5,11 +5,11 @@ namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
 /// Cross-child daily dashboard for the supervisor: summarizes, per child, the status of a day across
-/// all active study plans (daily goals met?, points earned, practiced at all?) – answers "who
+/// all active study plans (daily goals met?, coins earned, practiced at all?) – answers "who
 /// achieved/missed what today or yesterday". Builds on the plan-wide daily rollup of
 /// <see cref="PositionProgressService"/>.
 /// </summary>
-public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress)
+public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress, WalletService wallet)
 {
     // ChildDay/Dashboard live in the contract project (Pugling.Contracts.Supervisor).
 
@@ -28,11 +28,13 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             // The child's one day view (B-606): only plans active and running on that day count, and the obligation is
             // met when there is a goal AND every goal of every such plan is met.
             var day = await progress.ComputeChildDayAsync(child.Id, date, ct);
-            var points = day.Plans.Sum(p => p.Overview.PointsAwarded);
+            // Earned coins from the ledger, not the plans' goal bonus (B-954): answers earn coins before any goal is met.
+            var coins = (await wallet.EarnedCoinsByDayAsync(child.Id, date, date, ct)).GetValueOrDefault(date);
             var answers = await CountAnswersAsync(child.Id, date, ct);
-            // B-777: an answer is practice even before a goal is met - points only come with a met goal.
-            rows.Add(new ChildDay(child.Id, child.Name, day.Plans.Count, day.GoalsTotal, day.GoalsMet, points,
-                day.DutyDone, day.GoalsMet > 0 || points > 0 || answers > 0, answers));
+            // B-777: an answer is practice even when no goal is met. Coins are not: a chest opened or an objective
+            // settled at login books earned coins without any learning that day (B-954).
+            rows.Add(new ChildDay(child.Id, child.Name, day.Plans.Count, day.GoalsTotal, day.GoalsMet, coins,
+                day.DutyDone, day.GoalsMet > 0 || answers > 0, answers));
         }
 
         return new Dashboard(date, rows);
@@ -69,8 +71,8 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
     /// (Monday to Sunday) or calendar month. Pages over the children, ordered by name; the total is the number of children.
     /// <para>
     /// Unlike the daily overview it also reads plans switched off since (B-558, the fairness rule of B-606 decision 6):
-    /// an active plan counts in full; an inactive one adds its met goals and points, its goals total only on days it
-    /// met a goal or earned points, and its duty only when met - its open duty never makes a day open.
+    /// an active plan counts in full; an inactive one adds its met goals, its goals total only on days it
+    /// met a goal or booked a goal bonus, and its duty only when met - its open duty never makes a day open.
     /// </para>
     /// </summary>
     public async Task<(IReadOnlyList<ChildTimeline> Rows, int Total)> TimelineAsync(int supervisorId, DateOnly from, DateOnly to,
@@ -92,29 +94,31 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             var plans = await db.StudyPlans.AsNoTracking().Include(p => p.Subject)
                 .Where(p => p.ChildId == child.Id && p.StartDate <= to && p.EndDate >= from)
                 .ToListAsync(ct);
-            var days = new List<(DateOnly Day, int GoalsTotal, int GoalsMet, int Points, bool? DutyDone)>();
+            // Earned coins come from the ledger and belong to the child's day, whatever became of its plans (B-954).
+            var coinsByDay = await wallet.EarnedCoinsByDayAsync(child.Id, from, to, ct);
+            var days = new List<(DateOnly Day, int GoalsTotal, int GoalsMet, int Coins, bool? DutyDone)>();
             for (var day = from; day <= to; day = day.AddDays(1))
             {
-                int goalsTotal = 0, goalsMet = 0, points = 0;
+                int goalsTotal = 0, goalsMet = 0;
                 var duties = new List<PositionProgressService.PlanDutyState>();
                 foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
                 {
                     var d = await progress.ComputeDayAsync(plan, day, ct);
                     goalsMet += d.GoalsMet;
-                    points += d.PointsAwarded;
                     var active = PositionProgressService.ActiveOn(plan, day);
-                    // An inactive plan's goals only enter the total on a day it was used, or a draft would read "0 of n".
+                    // An inactive plan's goals only enter the total on a day it was used (a goal met or its goal bonus
+                    // booked), or a draft would read "0 of n".
                     if (active || d.GoalsMet > 0 || d.PointsAwarded > 0) goalsTotal += d.GoalsTotal;
                     duties.Add(new(active, d.GoalsTotal > 0, d.DutyDone));
                 }
                 // null = no duty that day: such a day neither fulfils nor breaks a period's duty.
-                days.Add((day, goalsTotal, goalsMet, points, PositionProgressService.TimelineDutyDone(duties)));
+                days.Add((day, goalsTotal, goalsMet, coinsByDay.GetValueOrDefault(day), PositionProgressService.TimelineDutyDone(duties)));
             }
 
             var periods = days
                 .GroupBy(d => PeriodKey(granularity, d.Day))
                 .Select(g => new ChildPeriod(g.First().Day, g.Last().Day, g.Sum(d => d.GoalsTotal), g.Sum(d => d.GoalsMet),
-                    g.Sum(d => d.Points), g.Any(d => d.DutyDone is not null) && g.All(d => d.DutyDone != false)))
+                    g.Sum(d => d.Coins), g.Any(d => d.DutyDone is not null) && g.All(d => d.DutyDone != false)))
                 .ToList();
             rows.Add(new ChildTimeline(child.Id, child.Name, periods));
         }

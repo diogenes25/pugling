@@ -251,6 +251,15 @@ internal static class TestApi
             }));
     }
 
+    /// <summary>Books one ledger entry for a child at a fixed instant, straight into the database: the API only books "now".</summary>
+    public static void Book(WebApplicationFactory<Program> f, int childId, int amount, PointKind kind, DateTime at)
+    {
+        using var scope = f.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = childId, Amount = amount, Kind = kind, Reason = "Test", CreatedAt = at });
+        db.SaveChanges();
+    }
+
     /// <summary>
     /// Seeds a plan container directly with one (Leitner) position on the exercise. With
     /// <paramref name="introduced"/> (default) every atom counts as already shown, so the cards come at the stage
