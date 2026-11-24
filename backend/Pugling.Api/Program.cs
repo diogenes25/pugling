@@ -153,8 +153,12 @@ builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
 // ProblemDetailsFactory. Replace it here so that this path stamps a code as well.
 builder.Services.AddSingleton<Microsoft.AspNetCore.Mvc.Infrastructure.ProblemDetailsFactory,
     CodeStampingProblemDetailsFactory>();
+// Single query stated explicitly: it is EF's default anyway, and stating it silences the
+// MultipleCollectionIncludeWarning logged once per compiled query (media graph, class tests). A family's row
+// counts keep the cartesian product small; split queries would trade that for non-atomic reads.
 builder.Services.AddDbContext<PuglingDbContext>(o =>
-    o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db"));
+    o.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=pugling.db",
+        sqlite => sqlite.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery)));
 // The clock as a dependency: every rule in controllers and services reads it, so a test can freeze it for the
 // second range (the anti-farming lower bound of the fast-answer bonus) and advance it by days (a child
 // practising for four weeks). Token lifetime stays on the wall clock on purpose - a simulated month must not
