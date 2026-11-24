@@ -12,10 +12,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (84)
+### Offen (87)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-948](B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt | Defekt | `geschaetzt` | P1 | S | backend | — |
 | [B-780](B-780-muenzen-je-uebung-nachmessen.md) | Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen | Frage | `ausformuliert` | P1 | — | — | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
@@ -31,8 +32,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) | Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
+| [B-949](B-949-bereitschaft-in-der-vater-liste.md) | Der Vater sieht in der Klassenarbeiten-Liste „x von y Wörtern sicher“ | Wunsch | `geschaetzt` | P1 | S | frontend | — |
+| [B-950](B-950-offene-rueckmeldungen-auf-heute.md) | Die Vater-Startseite „Heute“ zeigt offene Kartenmeldungen der Kinder | Wunsch | `geschaetzt` | P1 | S | frontend | — |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
-| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | Defekt | `idee` | P2 | — | beides | — |
+| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | Defekt | `geschaetzt` | P2 | M | backend | Migration |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
@@ -732,10 +735,10 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | `in-arbeit` | Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert) |
-| [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Migration ClassTestPrepDuty an einer Kopie der echten DB proben (AK 8); Fairness der Last am Gerät |
+| [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (222)
+### Nach der Abnahme entgangen (223)
 
 **Nachgeschaut: 568 von 607 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 39 sind **unbeobachtet**, nicht sauber.
 
@@ -962,7 +965,8 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | Eine offene Übungsrunde von gestern spielt nach einem Stufenwechsel die falsche Übung | [B-848] | `abgenommen` |
 | [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht | [B-751] | `abgenommen` |
 | [B-946](B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) | Nach dem Start zeigt die Vater-Liste den Deckel statt der Karten einer kleinen Übung ohne Tagesdosis | [B-757] | `abgenommen` |
-| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | [B-941] | `idee` |
+| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | [B-941] | `geschaetzt` |
+| [B-948](B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt | [B-757] | `geschaetzt` |
 
 <details>
 <summary>Nie nachgeschaut (39) — Arbeitsvorrat der Nachschau</summary>

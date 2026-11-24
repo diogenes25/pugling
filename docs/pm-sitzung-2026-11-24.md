@@ -276,6 +276,66 @@ Verschwinden des Hinweises. Prosa im treibenden Skill, kein Tor – darum kein H
 Nachgetragen in Sitzung 2 vom 2026-11-24: Die erste Sitzung endete nach dem Code-Commit, bevor Protokoll und Story-Dateien
 committet waren.
 
+## Runde 138 — Vorstellung & Feedback
+
+Gegangen an einer **Kopie der echten DB** (Stand 13:49, Server auf `127.0.0.1:5201`, Release, Seed aus, Test-PIN nur in der Kopie;
+`:5200` unberührt). Kind-Anmeldung über `auth/child` wie die Sohn-App (die konto-zentrische Anmeldung rechnet nicht ab – kein Fund,
+mein Fehler im ersten Versuch).
+
+### Feedback Sohn (aus den Daten, nicht erfunden)
+
+- Friedrich: 2138 Münzen, Serie 0, heute 2 von 10 Zielen. Französisch-Test **heute** (Unité 5). Englisch-Arbeit am 4.12.:
+  **21 von 209 Wörtern sicher**. Am Montag Englisch ausgelassen (−4), Französisch gemacht.
+- Theodor: Montag gar nicht gelernt (−10 an fünf Positionen bei der Anmeldung). Hat seit dem 19.11. **vier Karten gemeldet**
+  („zu streng“ ×2, „zu viel verlangt“, „falsche Übersetzung“) – alle offen.
+- Notenstufe 6 in allen Fächern; die Anzeige spricht unterhalb von 3 nur vom Ziel (B-743), kein neuer Fund.
+- **Top-3:** gehört werden (Meldungen) · die Englisch-Arbeit ist weit weg vom Stand · nichts Neues am Spiel selbst.
+
+### Feedback Vater (aus den Daten)
+
+- Klassenarbeiten-Liste: Englisch, Französisch-Contrôle und Mathe zeigen **„etwa 0 Karten je Tag“** – alle Bündel-Übungen liegen
+  schon im Plan, die Zahl zählt nur die Zusatzlast.
+- Wie weit das Kind für eine Arbeit ist, sieht der Vater nirgends; nur das Kind auf seiner Karte.
+- Offene Kartenmeldungen erscheinen nicht auf „Heute“.
+- Malus 2 Münzen je Position gegen 2138 Münzen Guthaben – der Stock spürt sich kaum (Notiz, Stellschraube des Vaters, keine Story).
+- **Top-3:** ehrliche Last-Zahl · Stand je Arbeit · Meldungen sehen.
+
+### Feedback Creator
+
+- Theodors Meldungen treffen Übung 15 („remote control“, „(to) turn sth. up/down“, „(to) turn“, „towards the station“); der Creator
+  sieht sie nur aufgeklappt an der Übung. B-630 (KI-Creator liest Rückmeldungen) bleibt der Weg; kein neuer Fund.
+
+### Nebenbei erledigt
+
+- **B-752 AK 8** an einer Sicherungskopie von 06:15 gemessen: 75 Tabellen zeilengleich, neue Spalten `NULL`, FK-Check leer.
+  B-752 wartet nur noch auf die Gerät-Prüfung.
+
+## PM-Synthese & Priorisierung (Runde 138)
+
+| Prio | Story | Was | Größe | Wo |
+|---|---|---|---|---|
+| P1 | [B-948](backlog/B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „0 Karten“ → Gesamtlast | S | backend |
+| P1 | [B-949](backlog/B-949-bereitschaft-in-der-vater-liste.md) | Bereitschaft in der Vater-Liste | S | frontend |
+| P1 | [B-950](backlog/B-950-offene-rueckmeldungen-auf-heute.md) | Offene Meldungen auf „Heute“ | S | frontend |
+| P2 | [B-947](backlog/B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Freigabe nach dem Start zieht nach | M | backend + Migration |
+
+Entscheidungen des Nutzers (2026-11-24, im Dialog): Gesamtlast zählen; B-947 nachziehen; B-949 und B-950 in den Sprint.
+Die Unterentscheidungen (tägliche Pflicht als Zählregel, Momentaufnahme der Ausgelassenen, Malus der nachgezogenen Position) sind
+stellvertretend und in den Stories begründet.
+
+**Roter Faden:** Was der Vater über eine anstehende Arbeit und über sein Kind liest, stimmt und reicht zum Handeln.
+
+## Sprint 138 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Vater liest für jede geplante Arbeit eine Last, die das Kind wirklich trägt, und einen Wortstand, der dem des
+Kindes gleicht; eine Freigabe, zu der ihn der Hinweis rät, wirkt auch nach dem Start; und jede offene Kartenmeldung steht auf „Heute“.
+**Umfang:** B-948, B-947, B-949, B-950.
+**Entwickler-Brief:** Senke der Last ist `ClassTestPrepService.CardsPerDayAsync` (eine Positionsregel, B-946); Senke der
+Vorbereitungspositionen ist eine Anlege-Methode, die Start **und** Nachziehen nutzen; der Hinweis zählt an `NotExecutableCountAsync`.
+Wächter: Einfrieren (B-752 E3) bleibt für alles nach dem Start; Ausführ-Recht (B-941) gilt beim Nachziehen. Migration
+`PrepLeftOutExerciseIds` (nullable JSON, Comparer). Reihenfolge: B-948, B-947 (beide im selben Dienst), dann B-949, B-950.
+Testweg: `VorbereitungsPflichtTests`, Migrationstest, Vitest, E2E `klassenarbeit-*`.
+
 ## Offene Roadmap (priorisiert)
 
 Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:

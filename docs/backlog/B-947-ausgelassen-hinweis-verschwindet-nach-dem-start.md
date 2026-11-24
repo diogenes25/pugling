@@ -1,14 +1,13 @@
 ---
-tags: [typ/story, status/idee, bereich/klassenarbeit, rolle/supervisor]
+tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/supervisor]
 aliases: []
-status: idee
+status: geschaetzt
 prio: P2
 art: Defekt
-groesse: ""
-wo: "beides"
-migration: ""
-vertragsbruch: ""
-unverifiziert: true
+groesse: M
+wo: "backend"
+migration: "ja"
+vertragsbruch: "nein"
 quelle: "Nachschau Sprint 135 in der Retro von Sprint 137 (docs/pm-sitzung-2026-11-24.md)"
 grund: ""
 ersetzt_durch: []
@@ -27,15 +26,65 @@ Pflicht nur mit A. Der Vater sieht „1 Übung ohne Ausführ-Recht ausgelassen�
 fällt der Zähler auf 0, und der Hinweis verschwindet. B wird aber nie zur Position, und nichts sagt das dem Vater. Der Hinweis rät
 ihm also einen Ausweg, der nach dem Start nichts bewirkt. Das ist dieselbe Fehlerklasse wie die Ratschläge in B-508…B-516.
 
-Zu entscheiden (Dialog, darum `idee`):
+## User Story
 
-1. Nachziehen: Eine nach dem Start erteilte Freigabe macht B nachträglich zur Position.
-2. Ehrlich zählen: Nach dem Start zählt der Hinweis „Bündel minus Positionen“ und nennt als Grund „nach dem Start
-   hinzugekommen“ statt „ohne Ausführ-Recht“.
+Als Vater möchte ich, dass eine Freigabe, die ich nach dem Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“ hole, die Übung auch
+nach dem Start noch zur Vorbereitungs-Pflicht macht, damit der Hinweis mir keinen Ausweg rät, der nichts bewirkt.
 
-Ein Test muss die Reihenfolge „Start mit gemischtem Bündel, dann Freigabe“ fahren.
+## Ist-Stand am Code (2026-11-24, `f4324888`)
+
+- `ReconcileAsync` startet eine Arbeit genau einmal (`ClassTestPrepService.cs:196-215`); danach legt niemand mehr Positionen an.
+- `StartAsync` (`:223-256`) legt Positionen nur für `NewCandidatesAsync` an, also nur für ausführbare Übungen (B-941).
+- `NotExecutableCountAsync` (`:142-153`) zählt gegen den Live-Stand der Rechte, auch nach dem Start.
+- Welche Übungen beim Start ausgelassen wurden, steht nirgends: `KlassenarbeitTags` hat kein `CreatedAt`, das Bündel zum Startzeitpunkt
+  ist also nicht rekonstruierbar.
+
+## Die echte Lücke
+
+Der Hinweis nennt einen Ausweg, und der Start nimmt ihm nachträglich die Wirkung.
+
+## Entscheidungen
+
+1. **Nutzer, 2026-11-24: Nachziehen.** Eine nach dem Start ausführbar gewordene, beim Start ausgelassene Übung wird beim nächsten
+   Abgleich zur Position. Verworfen: „ehrlich zählen“ (der Ausweg bliebe wirkungslos).
+2. **Momentaufnahme statt lebendem Bündel** (stellvertretend): Der Start schreibt die ausgelassenen Übungen in eine neue JSON-Spalte
+   `Klassenarbeit.PrepLeftOutExerciseIds`. Nur sie dürfen nachgezogen werden, und nur solange sie noch im Bündel stehen. Begründung:
+   B-752 Entscheidung 3 (eingefrorenes Bündel) gilt weiter für alles, was nach dem Start ins Bündel kommt. Kosten: Migration (Spalte
+   nullable, Bestand `NULL` = nichts nachzuziehen) und ein `ValueComparer` (Tor G7).
+3. Die nachgezogene Position gleicht einer beim Start gemachten: tägliche Pflicht ab heute (kein rückwirkender Malus), Ende am Tag vor
+   der Arbeit, Dosis über die verbleibenden Tage, keine Ziel-Belohnung. **Malus** (stellvertretend): `PenaltyCoinsPerDay / Anzahl der
+   Vorbereitungspositionen der Arbeit nach dem Nachziehen`, mindestens 1; die laufenden Positionen behalten ihren Malus, damit sich
+   kein noch nicht abgerechneter Tag rückwirkend ändert. Kosten: Der Tagesmalus der Arbeit kann leicht über 5 steigen.
+4. Nach dem Start zählt der Hinweis nur noch die ausgelassenen Übungen der Momentaufnahme, die weiter nicht ausführbar sind und noch im
+   Bündel stehen – genau die, die eine Freigabe nachzieht. Vor dem Start bleibt die Zählung, wie sie ist.
+
+## Akzeptanzkriterien
+
+1. Gemischtes Bündel (A öffentlich, B zurückgezogen): Der Start legt nur A an und merkt sich B.
+2. Danach Freigabe für B, dann Kind-Login: B ist Position der Arbeit, `DutySince` = heute, `DutyUntil` = Vortag der Arbeit. (Die Probe
+   nimmt den Ausweg **nach** dem Start und prüft die Wirkung, pm-loop Step 5.)
+3. Eine nach dem Start neu ins Bündel gekommene, ausführbare Übung wird **nicht** nachgezogen (Einfrieren bleibt).
+4. Eine ausgelassene Übung, die vor der Freigabe aus dem Bündel genommen wurde, wird nicht nachgezogen.
+5. Nach dem Start zählt der Hinweis B, solange B nicht ausführbar ist, danach 0; eine nach dem Start neu gekommene, nicht
+   ausführbare Übung zählt nicht mit.
+6. Zweimaliges Abgleichen nach der Freigabe legt B nur einmal an.
+7. Migration: Bestand bleibt unverändert, neue Spalte `NULL` (Probe an einer Kopie der echten DB).
+
+## Schätzung
+
+- **Größe:** M, backend, Migration (eine nullable Spalte), kein Vertragsbruch.
+- **Risiko:** Positionsanlage aus `StartAsync` herauslösen, ohne B-752-Fälle zu verschieben (Mutanten-Probe danach).
+- **Testweg:** Integrationstests in `VorbereitungsPflichtTests` (AK 1–6), Migrationstest nach dem Muster
+  `VorbereitungsPflichtMigrationTests` (AK 7), Mutante je AK.
+
+## Angriffsplan
+
+Spalte und Comparer, Migration. `StartAsync` schreibt die Momentaufnahme; die Positionsanlage wird eine private Methode. In
+`ReconcileAsync` für gestartete Arbeiten im Fenster die nachziehbaren Übungen anlegen (gleiche Transaktion wie der Start nicht nötig:
+die Momentaufnahme wird im selben `SaveChanges` gekürzt). `NotExecutableCountAsync` nach dem Start auf die Momentaufnahme umstellen.
 
 ## Verlauf
 
 - **2026-11-24** — angelegt aus der Nachschau von Sprint 135 (Reviewer-Fund, von mir am Code nachgelesen). Bewusst nicht in Sprint
   137 genommen: Dessen Ziel hängt nicht daran, und der Ausweg ist eine Produktentscheidung.
+- **2026-11-24** — Runde 138: Entscheidung 1 vom Nutzer, Entscheidungen 2–4 stellvertretend; `geschaetzt` für Sprint 138.
