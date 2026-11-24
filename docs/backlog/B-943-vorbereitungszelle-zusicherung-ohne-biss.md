@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-943 · Die Zusicherung „keine Zahl bei geschriebener oder abgesagter Arbeit“ kann nicht fallen

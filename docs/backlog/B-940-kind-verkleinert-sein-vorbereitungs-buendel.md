@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-940 · Das Kind kann das Bündel seiner Vorbereitungs-Pflicht über Schlagwörter verkleinern

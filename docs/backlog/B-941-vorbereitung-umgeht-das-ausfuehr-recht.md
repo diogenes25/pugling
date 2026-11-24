@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-941 · Die Vorbereitungs-Pflicht legt Schlagwort-Übungen ohne Ausführ-Recht als Position an

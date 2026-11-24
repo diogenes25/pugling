@@ -231,13 +231,58 @@ jede Zeile wurde an der heutigen Stelle über ihren genauen Text neu verortet. D
 **Bewusst ungemessen:** die Transaktion um Anspruch und Positionen (`6162599c`) und gleichzeitige Logins. Beides lässt sich nicht
 deterministisch auslösen (B-944).
 
+## Sprint 137 — Ziel & Umfang
+
+**Sprint-Ziel:** Die Klassenarbeits-Zahlen sagen, was gespielt wird – das Kind sieht so viele Wörter, wie die Arbeit hat, und der
+Vater sieht nach dem Start dieselben „etwa N Karten je Tag“ wie vorher.
+**Umfang:** [B-945](backlog/B-945-bereitschaft-zaehlt-woerter-doppelt.md) (Nennerregel mit dem Nutzer entschieden: verschiedene
+Wörter, sicher = Schnitt über die Bündel-Zeilen ≥ `WeakBelowPercent`, ungeübt zählt 0),
+[B-946](backlog/B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) (aus B-944 Punkt 1 herausgelöst).
+**Entwickler-Brief:** Senke je Zahl – die Bereitschaft im Endpunkt `ChildClassTestsController` faltet nach `VocabularyId`; die
+Vater-Liste liest `PositionPlayService.PoolSize`, die Regel, nach der das Kind die Runde spielt. Keine Migration, kein Vertragsbruch
+(`TotalItems`/`SecureItems` bleiben, Doku sagt „Wörter“).
+
+## Iteration 137 — umgesetzt
+
+Commit `262bd5ae`. Volle Suite 2315/2315 grün (Release), Build ohne Warnung. Mutanten-Probe nach dem letzten Edit: B945-1…5 und
+B946-1/2 alle rot (Tabellen in den Stories). `pugling-reviewer`: B-945 ohne Fund; B-946 ein 🟡 (eigene Rechnung statt `PoolSize`,
+Deckel-Fall ungetestet), beides eingearbeitet und neu gemessen.
+
+## Runde 137 — Re-Review / Abnahme
+
+Server frisch gestartet auf Ausweichports (5201/5174, Release; `:5200` unberührt). `klassenarbeit-countdown` und
+`klassenarbeit-vorbereitung`: 2 passed. Die Specs fahren die Anzeige; Überlappungs- und Deckelfall tragen die Integrationstests.
+
+- **Sohn – abgenommen (maschinell):** Die Karte zeigt „x von y Wörtern sicher“; ein Wort in zwei Übungen zählt einmal.
+- **Vater – abgenommen (maschinell):** Die Karten je Tag springen nach dem Start nicht mehr auf den Deckel.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff, Suite grün.
+
+## Retrospektive (Sprint 137)
+
+**Nachschau:** Sprint 135 (B-940…B-943, `1b92cd02`) gelesen. Befund an B-941:
+[B-947](backlog/B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) – der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“
+zählt gegen den Live-Stand, das Bündel ist nach dem Start aber eingefroren; der geratene Ausweg (Freigabe holen) wirkt danach nicht.
+B-940, B-942, B-943 ohne Befund; dazu B-757 nachgesehen (→ B-946). `nachgeschaut: 2026-11-24` an allen. Index: Nachgeschaut
+568 von 607.
+
+**Was durchgelassen wurde:** Die Regel zu Fehlermeldungen mit Ausweg (pm-loop Step 5) deckte Hinweise/Zähler nicht, deren Grund
+einen Ausweg nahelegt, und keine Reihenfolge „einmaliger Übergang, dann Ausweg“.
+
+**Der eine Mechanismus (gelandet):** pm-loop Step 5 – ein Hinweis oder Zähler, dessen Grund einen Ausweg nahelegt, gilt als
+Ratschlag; ein Test nimmt den Ausweg **nach jedem einmaligen Übergang** (Start, Einfrieren) und prüft die Wirkung, nicht das
+Verschwinden des Hinweises. Prosa im treibenden Skill, kein Tor – darum kein Halt.
+
+**Bewusst ungedeckt:** B-947 selbst braucht eine Produktentscheidung (nachziehen oder ehrlich zählen) und bleibt `idee`.
+Nachgetragen in Sitzung 2 vom 2026-11-24: Die erste Sitzung endete nach dem Code-Commit, bevor Protokoll und Story-Dateien
+committet waren.
+
 ## Offene Roadmap (priorisiert)
 
 Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 
 1. **B-752:** Die Migration `ClassTestPrepDuty` an einer Kopie der echten DB proben (AK 8, Nutzer), bevor der Heimnetz-Server sie
    einspielt. Danach bleibt nur der Blick am Gerät, ob die Last fair wirkt. B-757 und B-758 sind seit Runde 136 abgenommen.
-2. **B-945** prüfen (unverifiziert): Ein falsches „x von y Wörtern“ trifft das Kind direkt.
+2. **B-947** (P2, Dialog): Nach dem Start rät der Hinweis einen Ausweg, der nichts bewirkt. B-945/B-946 sind abgenommen.
 3. **B-944** Restpunkte, darunter die nicht deterministisch messbare Nebenläufigkeit.
 
 ## Konkreter Änderungsstand (für Review)

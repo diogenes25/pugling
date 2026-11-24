@@ -117,7 +117,9 @@ are only unique per branch: a branch that created stories after its base meets t
 - Error messages name the lock and no way out beyond it **that this reader may take** (owner, base stock,
   foreign); a surface they point at must exist and show the lock. Prefer naming only the step that **lifts this
   lock**; any other way out is proven by a test that **takes it** (runs the advised call) past every lock — advice
-  through combinations escaped five times (B-508…B-516). A story about one sentence (lock, empty
+  through combinations escaped five times (B-508…B-516). A **hint or count whose reason implies a remedy** ("N left out
+  for lack of permission") counts as such advice: a test takes the remedy **after each one-shot transition** (start,
+  freeze) and asserts the effect, not that the hint vanished (B-947). A story about one sentence (lock, empty
   state, confirmation) greps every sentence of that kind, UI included. After rewording,
   `.claude/scripts/old-phrases.py` finds tests expecting the old text.
 - Run `pugling-reviewer` and/or `frontend-reviewer` (by the story's `wo`). Its brief names the sink; the reviewer

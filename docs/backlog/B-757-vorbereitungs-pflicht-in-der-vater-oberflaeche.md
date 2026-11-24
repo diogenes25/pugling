@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-757 · Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“

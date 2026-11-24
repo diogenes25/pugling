@@ -32,6 +32,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
+| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | Defekt | `idee` | P2 | — | beides | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
@@ -77,7 +78,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
-| [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht | Defekt | `idee` | P3 | — | backend | — |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
@@ -102,7 +102,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 
 <details>
-<summary>Abgenommen (605)</summary>
+<summary>Abgenommen (607)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -706,6 +706,8 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-941](B-941-vorbereitung-umgeht-das-ausfuehr-recht.md) | Die Vorbereitungs-Pflicht legt Schlagwort-Übungen ohne Ausführ-Recht als Position an | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-942](B-942-fenster-editor-meldung-verschwindet.md) | Die Erfolgsmeldung des Fenster-Editors verschwindet sofort nach dem Speichern | Defekt | `abgenommen` | P3 | XS | frontend | — |
 | [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md) | Die Zusicherung „keine Zahl bei geschriebener oder abgesagter Arbeit“ kann nicht fallen | Defekt | `abgenommen` | P3 | XS | frontend | — |
+| [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht | Defekt | `abgenommen` | P3 | XS | backend | — |
+| [B-946](B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) | Nach dem Start zeigt die Vater-Liste den Deckel statt der Karten einer kleinen Übung ohne Tagesdosis | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 | Defekt | `abgenommen` | P2 | XS | backend | — |
@@ -733,9 +735,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Migration ClassTestPrepDuty an einer Kopie der echten DB proben (AK 8); Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (220)
+### Nach der Abnahme entgangen (222)
 
-**Nachgeschaut: 563 von 605 abgenommenen** — und in 195 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 42 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 568 von 607 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 39 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -958,10 +960,12 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-862](B-862-bonus-versprechen-bei-deckel-null-ausserhalb-noch-einmal.md) | Bonus-Training verspricht Münzen an drei weiteren Stellen, auch wenn der Deckel 0 ist oder erreicht | [B-660] | `abgenommen` |
 | [B-880](B-880-ueberholter-testversuch-nach-stufenwechsel.md) | Ein offener Testversuch von gestern wird nach einem Stufenwechsel gegen die falsche Übung gewertet | [B-848] | `abgenommen` |
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | Eine offene Übungsrunde von gestern spielt nach einem Stufenwechsel die falsche Übung | [B-848] | `abgenommen` |
-| [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht | [B-751] | `idee` |
+| [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht | [B-751] | `abgenommen` |
+| [B-946](B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) | Nach dem Start zeigt die Vater-Liste den Deckel statt der Karten einer kleinen Übung ohne Tagesdosis | [B-757] | `abgenommen` |
+| [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | [B-941] | `idee` |
 
 <details>
-<summary>Nie nachgeschaut (42) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (39) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1002,14 +1006,11 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
-| [B-757](B-757-vorbereitungs-pflicht-in-der-vater-oberflaeche.md) | Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“ |
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-940](B-940-kind-verkleinert-sein-vorbereitungs-buendel.md) | Das Kind kann das Bündel seiner Vorbereitungs-Pflicht über Schlagwörter verkleinern |
-| [B-941](B-941-vorbereitung-umgeht-das-ausfuehr-recht.md) | Die Vorbereitungs-Pflicht legt Schlagwort-Übungen ohne Ausführ-Recht als Position an |
-| [B-942](B-942-fenster-editor-meldung-verschwindet.md) | Die Erfolgsmeldung des Fenster-Editors verschwindet sofort nach dem Speichern |
-| [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md) | Die Zusicherung „keine Zahl bei geschriebener oder abgesagter Arbeit“ kann nicht fallen |
+| [B-945](B-945-bereitschaft-zaehlt-woerter-doppelt.md) | Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht |
+| [B-946](B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) | Nach dem Start zeigt die Vater-Liste den Deckel statt der Karten einer kleinen Übung ohne Tagesdosis |
 
 </details>
 

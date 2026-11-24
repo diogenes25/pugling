@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: []
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-942 · Die Erfolgsmeldung des Fenster-Editors verschwindet sofort nach dem Speichern
