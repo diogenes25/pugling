@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Meldung Bezug Antwort, Ausgang berechtigt]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -99,3 +99,48 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-627 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): M, backend, Migration ja, kein Vertragsbruch. Zusammenführung berücksichtigt den Bezug (Annahme, unbestätigt); fremder Supervisor bekommt weiter `404`. Reihenfolge B-767, B-768, B-769; nach B-624, B-625 und B-626 messen.
+- **2026-11-24** — in Arbeit (Nachtlauf K, Sprint 151). Vor dem Bau gegen den Code geprüft (Stand 5993c86b): Zeilen
+  verschoben, Behauptungen stimmen. Gebaut: `ExerciseFeedback.TestItemResultId` (FK `SetNull`) und `Outcome`
+  (`FeedbackOutcome`, Text), Migration `20261124201543_FeedbackAnswerOutcome`; der Bezug wird in `ReportAsync` aus der
+  jüngsten eigenen, abgeschlossenen Test-Antwort zur Karte gesucht (dieselbe Abfrage wie die Anzeige, `AnsweredTestsOf`);
+  die Zusammenführung schlüsselt zusätzlich auf den Bezug; `UpdateFeedbackDto.Outcome` optional (PATCH: `null` behält,
+  `Open` löscht); Prüfungen in `ExerciseFeedbackService.CheckChange`. Die Liste zeigt bei Bezug die gemeldete Antwort,
+  dazu `testItemResultId`, `testAnswerCorrect`, `outcome`; der Hinweis an das Kind trägt `outcome`.
+- **Abgeleitet, unbestätigt (zum Umstoßen):** „berechtigt“ ist **endgültig** – Wieder öffnen oder Abweisen danach ergibt
+  `409 feedback_justified`. Grund: die Buchung aus B-768 hat keinen Rückweg, und ein „abgewiesen“ über einer gebuchten
+  Korrektur wäre eine falsche Auskunft. Die `## Entscheidungen` sagen dazu nichts; die Ableitung folgt aus B-768
+  Entscheidung 2/3 (Strafzeile bleibt, Gegenbuchung). Ebenso: „berechtigt“ an einer im Test **richtig** gewerteten Antwort
+  ist erlaubt (Grund „zu schwer“) und bucht nichts (Review-Hinweis, nicht geändert).
+- AK 1, Bezug beim Absenden, bleibt bei zweiter Antwort → `ExerciseFeedbackTests.Meldung_friert_die_beanstandete_Test_Antwort_ein`
+  (Meldung vor jedem Test und zur ganzen Übung → Bezug leer); Mutanten M1 (Bezug nicht gespeichert), M2 (Antwort erst beim
+  Lesen gesucht).
+- AK 2, berechtigt/abgewiesen/erledigt, 409 ohne Bezug, 400 ohne `Done`, endgültig → `Vater_erledigt_mit_berechtigt_oder_abgewiesen`;
+  M4 (Urteil nicht gespeichert), M5 (berechtigt umkehrbar), M6 (berechtigt ohne Antwort).
+- AK 3, fremder Supervisor 404, Kind 403 → `Nur_der_Betreuer_des_Kindes_setzt_den_Ausgang`; M7 (Eigentum), M8 (Rollenwand).
+- AK 4, Absichtserklärung → `Meldung_aendert_weder_Kasten_noch_Wallet_noch_Cursor` unverändert grün.
+- AK 5, Zusammenführung nur bei derselben Antwort → `Zusammenfuehrung_nur_bei_derselben_Antwort` (zweimal nach Test 1 =
+  Zähler 2, nach Test 2 neue Zeile); M3.
+- Migration ohne Rückfüllung, Zeilen überleben den Tabellen-Neubau → `MeldungBuchtNachMigrationTests`.
+- Mutanten-Probe (`.claude/scripts/mutant-probe.py`, Debug, Filter `MeldungBuchtNach|ExerciseFeedbackTests`), gemessen
+  an `5993c86b + Arbeitsbaum` nach dem letzten Code-Edit, 2026-11-24 23:10 (M7 nachgemessen 23:14 – die erste Form
+  kompilierte nicht, weil der Parameter `access` dann ungelesen war; `ungemessen` zählt nicht). Grundlinie danach grün.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M1 Bezug nicht gespeichert | ExerciseFeedbackService.cs:64 | red | red |  |
+  | M2 Antwort spaet gesucht | ExerciseFeedbackService.cs:139 | red | red |  |
+  | M3 Zusammenfuehrung ohne Bezug | ExerciseFeedbackService.cs:54 | red | red |  |
+  | M4 Urteil nicht gespeichert | ExerciseFeedbackService.cs:196 | red | red |  |
+  | M5 berechtigt umkehrbar | ExerciseFeedbackService.cs:210 | red | red |  |
+  | M6 berechtigt ohne Antwort | ExerciseFeedbackService.cs:214 | red | red |  |
+  | M7 Eigentum fehlt | FeedbackController.cs:65 | red | red | zweite Form (`&& false`) |
+  | M8 Rollenwand fehlt | FeedbackController.cs:20 | red | red |  |
+- **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
+  nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
+  „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,
+  danach genau eine (15); die erledigte Zeile trägt „berechtigt“ ohne „Wieder öffnen“; der Sohn liest den Satz über Kasten
+  und Missionen. Dazu `e2e/rueckmeldung.spec.ts` grün (2 passed). Migrationsprobe an einer Kopie der echten DB
+  (`kopie-server.sh`, :5222): beide Migrationen eingespielt, Zeilenzahlen und Salden gleich, keine Spalte gefüllt.
+  Verifikation: .NET 2356/2356 (Release), Vitest 1448/1448, `tsc` sauber, `dotnet format` gelaufen. Reviewer:
+  `pugling-reviewer` und `frontend-reviewer`. Commit `fcb04f56`. **Abgenommen.** Die Entscheidungen bleiben „stellvertretend,
+  unbestätigt“ (Vorbereitungslauf 2026-11-20) – zum Umstoßen im Protokoll.

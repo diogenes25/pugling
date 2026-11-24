@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (86)
+### Offen (85)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -65,9 +65,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md) | Hausaufgaben im Vater-Web: anlegen, Abgaben mit Foto ansehen, annehmen oder zur Nacharbeit zurückgeben | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-763](B-763-hausaufgaben-sohn-app-karte-und-foto-abgabe.md) | Hausaufgaben in der Sohn-App: Karte mit Frist, Foto aufnehmen und abgeben, Nacharbeit lesen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
-| [B-767](B-767-meldung-zeigt-auf-die-antwort-und-bekommt-einen-ausgang.md) | Eine Meldung zeigt auf die beanstandete Test-Antwort, und der Vater erledigt sie mit „berechtigt“ oder „abgewiesen“ (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
-| [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
-| [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung | Wunsch | `geschaetzt` | P2 | S | frontend | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
@@ -77,7 +74,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
+| [B-971](B-971-urteil-pruefung-ausserhalb-der-transaktion.md) | Zwei gleichzeitige Urteile über dieselbe Meldung können eine gebuchte Korrektur als „abgewiesen“ zeigen | Defekt | `idee` | P3 | — | — | — |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
+| [B-970](B-970-urteil-an-richtig-gewerteter-antwort.md) | „Berechtigt“ an einer im Test richtig gewerteten Antwort: was soll es heißen? | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
 | [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-822](B-822-vokabel-tuerme-natives-spiel.md) | Vokabel-Türme: ein natives Tower-Defense-Spiel als eigener Übungsbereich | Wunsch | `gegrillt` | P3 | — | — | — |
@@ -104,7 +103,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (613)</summary>
+<summary>Abgenommen (616)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -659,6 +658,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-764](B-764-mischrunde-auswahl-und-eingefrorener-lauf.md) | Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend) | Wunsch | `abgenommen` | P2 | M | backend | Migration |
 | [B-765](B-765-mischrunde-wertung-kasten-muenzen-und-gemeinsamer-deckel.md) | Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend) | Wunsch | `abgenommen` | P2 | L | backend | — |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis | Wunsch | `abgenommen` | P2 | M | frontend | — |
+| [B-767](B-767-meldung-zeigt-auf-die-antwort-und-bekommt-einen-ausgang.md) | Eine Meldung zeigt auf die beanstandete Test-Antwort, und der Vater erledigt sie mit „berechtigt“ oder „abgewiesen“ (Backend) | Wunsch | `abgenommen` | P2 | M | backend | Migration |
+| [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) | Wunsch | `abgenommen` | P2 | L | backend | Migration |
+| [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung | Wunsch | `abgenommen` | P2 | S | frontend | — |
 | [B-77](B-77-liste-menge-als-folge.md) | Beim Spielen wird eine ungeordnete Liste als Folge bewertet | Defekt | `abgenommen` | P1 | M | beides | Vertrag |
 | [B-770](B-770-antwortzahl-je-kind-und-tag.md) | Die Zahl der heute gewerteten Antworten je Kind | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-771](B-771-auffuellung-ohne-zeitpunkt-fuellt-sofort-auf.md) | Ein Bestand ohne Auffüll-Zeitpunkt füllt bei wiederkehrender Auffüllung sofort auf | Defekt | `abgenommen` | P2 | S | backend | — |
@@ -745,7 +747,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (224)
 
-**Nachgeschaut: 575 von 613 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 576 von 616 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 40 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -975,7 +977,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus | [B-662, B-770] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (38) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (40) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1018,8 +1020,10 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
+| [B-767](B-767-meldung-zeigt-auf-die-antwort-und-bekommt-einen-ausgang.md) | Eine Meldung zeigt auf die beanstandete Test-Antwort, und der Vater erledigt sie mit „berechtigt“ oder „abgewiesen“ (Backend) |
+| [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) |
+| [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus |
 
 </details>
 

@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-24.md#runde-140--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-662, B-770]
+nachgeschaut: 2026-11-24
 ---
 
 # B-954 · „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus
@@ -141,3 +142,6 @@ Vitest für die Beschriftungen, Rollengang an einer frischen Kopie der echten DB
   `thisWeek` der Sohn-App. Die Oberfläche selbst ist an der Kopie nicht geklickt; sie ist durch Vitest und E2E belegt.
 - **2026-11-24** — abgenommen, Commit `ddf6d1d6`. Vater an der Kopie der echten DB (Zahlen gegen das Ledger), Sohn und
   Creator als Regressionszeugen (Protokoll Runde 140).
+- **2026-11-24** — nachgeschaut (Nachtlauf K, Sprint 151): `WalletService.cs:99` filtert `Amount > 0 && EarnedCoinKinds` –
+  ein positiver `GoalPenalty` (die Malus-Rücknahme aus B-768) zählt darum nicht als „Münzen heute“, gemessen in
+  `MeldungBuchtNachTests.Malus_wird_durch_eine_positive_Gegenbuchung_zurueckgenommen` (Woche wächst nur um die Belohnung). Kein Befund.
