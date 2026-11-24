@@ -118,6 +118,9 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     /// plan title in the text. Two separate checks "some entry says daily goal" and "some entry says
     /// weekly goal" would be blind to exactly the swap meant here – both texts would occur either way.
     /// </para>
+    /// <para>
+    /// Since B-951 the text also names the missed period (day or week), not the day of the settlement at the next login.
+    /// </para>
     /// </summary>
     [Fact]
     public async Task MalusBuchungstext_BenenntTagesZielUndWochenziel_JeweilsRichtig()
@@ -140,12 +143,50 @@ public class PflichtMalusTests(PuglingWebAppFactory factory) : IClassFixture<Pug
             .Select(e => e.GetProperty("reason").GetString()!)
             .ToList();
 
-        Assert.All(reasons.Where(r => r.Contains("[Tages-Plan")), r => Assert.Contains("Tagesziel gerissen", r));
-        Assert.All(reasons.Where(r => r.Contains("[Wochen-Plan")), r => Assert.Contains("Wochenziel gerissen", r));
+        Assert.All(reasons.Where(r => r.Contains("[Tages-Plan")), r => Assert.Contains("Tagesziel vom ", r));
+        Assert.All(reasons.Where(r => r.Contains("[Wochen-Plan")), r => Assert.Contains("Wochenziel der Woche ", r));
         // Not vacuously green: both cadences must have been settled at all.
         Assert.Contains(reasons, r => r.Contains("[Tages-Plan"));
         Assert.Contains(reasons, r => r.Contains("[Wochen-Plan"));
+
+        // B-951: each line names the MISSED period, not the settlement day. Two missed days settled in one login carry
+        // two different days; the expectation is spelled out here independently of the production formatter.
+        string[] weekdays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+        string Day(DateOnly d) => $"Tagesziel vom {weekdays[(int)d.DayOfWeek]} {d.Day}.{d.Month}. gerissen";
+        var daily = reasons.Where(r => r.Contains("[Tages-Plan")).Select(r => r[(r.IndexOf(']') + 2)..]).Order().ToList();
+        Assert.Equal(new[] { Day(today.AddDays(-2)), Day(today.AddDays(-1)) }.Order(), daily);
+
+        var weekly = reasons.Where(r => r.Contains("[Wochen-Plan")).Select(r => r[(r.IndexOf(']') + 2)..]).ToList();
+        var lastClosedMonday = PositionProgressService.WeekMonday(today).AddDays(-7);
+        Assert.Contains(weekly, r => r == WeekText(lastClosedMonday));
+        Assert.DoesNotContain(weekly, r => r == WeekText(PositionProgressService.WeekMonday(today)));
+
+        static string WeekText(DateOnly monday)
+        {
+            var sunday = monday.AddDays(6);
+            var start = monday.Month == sunday.Month ? $"{monday.Day}." : $"{monday.Day}.{monday.Month}.";
+            return $"Wochenziel der Woche {start}–{sunday.Day}.{sunday.Month}. gerissen";
+        }
     }
+
+    /// <summary>
+    /// B-951: the period label with fixed dates - every weekday including Sunday (index 0 of <see cref="DayOfWeek"/>),
+    /// a single-digit day without a leading zero, a week inside one month and weeks across a month and a year boundary.
+    /// </summary>
+    [Theory]
+    [InlineData(GoalCadence.Daily, "2026-11-23", "2026-11-23", "Tagesziel vom Mo 23.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-24", "2026-11-24", "Tagesziel vom Di 24.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-25", "2026-11-25", "Tagesziel vom Mi 25.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-26", "2026-11-26", "Tagesziel vom Do 26.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-27", "2026-11-27", "Tagesziel vom Fr 27.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-28", "2026-11-28", "Tagesziel vom Sa 28.11.")]
+    [InlineData(GoalCadence.Daily, "2026-11-29", "2026-11-29", "Tagesziel vom So 29.11.")]
+    [InlineData(GoalCadence.Daily, "2026-12-03", "2026-12-03", "Tagesziel vom Do 3.12.")]
+    [InlineData(GoalCadence.Weekly, "2026-11-16", "2026-11-22", "Wochenziel der Woche 16.–22.11.")]
+    [InlineData(GoalCadence.Weekly, "2026-11-30", "2026-12-06", "Wochenziel der Woche 30.11.–6.12.")]
+    [InlineData(GoalCadence.Weekly, "2026-12-28", "2027-01-03", "Wochenziel der Woche 28.12.–3.1.")]
+    public void MissedPeriodLabel_NenntTagOderWoche(GoalCadence cadence, string from, string to, string expected) =>
+        Assert.Equal(expected, PositionProgressService.MissedPeriodLabel(cadence, DateOnly.Parse(from), DateOnly.Parse(to)));
 
     /// <summary>Marks the first <paramref name="count"/> items of the position as introduced on <paramref name="day"/>.</summary>
     private static void Introduce(PuglingWebAppFactory f, int positionId, int count, DateOnly day)

@@ -46,6 +46,22 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     private static DateOnly PeriodStart(GoalCadence cadence, DateOnly day) =>
         cadence == GoalCadence.Weekly ? WeekMonday(day) : day;
 
+    // Fixed list instead of the de-DE culture: culture data differs between ICU, NLS and invariant mode ("Mo." vs. "Mo").
+    private static readonly string[] GermanWeekdays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+    /// <summary>
+    /// The missed period as the penalty ledger names it (B-951): "Tagesziel vom Mo 23.11." or "Wochenziel der Woche 16.–22.11.".
+    /// The penalty is booked lazily at the next login, so the booking date says when the app noticed, not which day the
+    /// child missed - without the period a penalty booked on a still open day reads as "today is already lost".
+    /// </summary>
+    internal static string MissedPeriodLabel(GoalCadence cadence, DateOnly from, DateOnly to)
+    {
+        if (cadence != GoalCadence.Weekly)
+            return $"Tagesziel vom {GermanWeekdays[(int)from.DayOfWeek]} {from.Day}.{from.Month}.";
+        var start = from.Month == to.Month ? $"{from.Day}." : $"{from.Day}.{from.Month}.";
+        return $"Wochenziel der Woche {start}–{to.Day}.{to.Month}.";
+    }
+
     /// <summary>
     /// Does the position carry a duty on <paramref name="day"/>? The one rule behind every "is this an obligation" branch
     /// (B-636): a free position never does, and a position "daily, until done" stops after the day its last task was done
@@ -881,7 +897,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                     ChildId = childId,
                     Kind = PointKind.GoalPenalty,
                     Amount = -pos.PenaltyCoins,
-                    Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {(pos.Cadence == GoalCadence.Weekly ? "Wochenziel" : "Tagesziel")} gerissen",
+                    Reason = $"[{plan.Title} · {pos.Exercise?.Title}] {MissedPeriodLabel(cadence, from, to)} gerissen",
                     CreatedAt = now,
                 });
                 appliedCoins += pos.PenaltyCoins;
