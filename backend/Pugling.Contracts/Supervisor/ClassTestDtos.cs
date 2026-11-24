@@ -15,12 +15,15 @@ public record TagRef(int Id, string Name, string? Color);
 /// duty adds (B-948; <c>null</c> when none arises), <c>PrepBlockedReason</c> why none arises for a planned test
 /// (<see cref="ClassTestPrepBlockReasons"/>), <c>PrepNotExecutableCount</c> how many exercises of its bundle the duty leaves
 /// out because no supervisor of the child may assign them (withdrawn material, B-941; 0 when no duty runs). After the start
-/// it counts only those a grant still turns into a duty (B-947).
+/// it counts only those a grant still turns into a duty (B-947). <c>PredictedLevel</c> is the child's grade level in the
+/// test's subject as written on the test day (B-744/B-746), for the supervisor to set beside the grade; <c>null</c> = no
+/// prediction (the day has not come, nobody used the app on it, no subject or no measured level) - never a stand-in value.
 /// </summary>
 public record KlassenarbeitResponse(int Id, int ChildId, int? SubjectId, string? SubjectName,
     string Title, string? Topic, DateOnly ScheduledDate, KlassenarbeitStatus Status,
     decimal? Grade, string? GradeComment, int DirectExerciseCount, IReadOnlyList<TagRef> Tags, DateTime CreatedAt,
-    int? PrepWindowDays, int PrepWindowDefault, int? PrepCardsPerDay, string? PrepBlockedReason, int PrepNotExecutableCount);
+    int? PrepWindowDays, int PrepWindowDefault, int? PrepCardsPerDay, string? PrepBlockedReason, int PrepNotExecutableCount,
+    int? PredictedLevel);
 
 /// <summary>Why no preparation duty arises for a planned class test (B-752, decision 4) - stable codes, the UI words them.</summary>
 public static class ClassTestPrepBlockReasons

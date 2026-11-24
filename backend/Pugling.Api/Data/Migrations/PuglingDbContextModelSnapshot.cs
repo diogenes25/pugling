@@ -1355,6 +1355,9 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PredictedLevel")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("PrepLeftOutExerciseIds")
                         .HasColumnType("TEXT");
 

@@ -2,7 +2,9 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
-import { BereitschaftZeile, ClassTestManager, FensterEditor, RepeatPanel, VorbereitungsZelle } from "./VaterClassTests";
+import {
+  BereitschaftZeile, ClassTestManager, FensterEditor, PrognoseZelle, RepeatPanel, VorbereitungsZelle, abstandText, prognoseAbstand,
+} from "./VaterClassTests";
 import type { ClassTestReadiness, KlassenarbeitRepeat, KlassenarbeitResponse } from "../lib/types";
 
 /*
@@ -236,5 +238,58 @@ describe("Bereitschaft in der Vater-Liste (B-949)", () => {
     rerender(<AuthProvider><BereitschaftZeile k={arbeit({ directExerciseCount: 2, tags: [] })} /></AuthProvider>);
     await act(async () => {});
     expect(abruf).toHaveBeenCalledTimes(2);
+  });
+});
+
+/*
+ * B-746: die Prognose-Stufe vom Klausurtag neben der Note. Die Zahl kommt vom Server (`predictedLevel`), der Abstand ist
+ * Note minus Stufe und steht in Worten („besser“/„schlechter“). Je Fall steht, welche Änderung ihn rot macht.
+ */
+describe("Prognose neben der Note (B-746)", () => {
+  const arbeit = (over: Partial<KlassenarbeitResponse>): KlassenarbeitResponse => ({
+    id: 7, childId: 1, subjectId: 3, subjectName: "Englisch", title: "Vokabeltest", topic: null, scheduledDate: "2026-11-20",
+    status: "Written", grade: null, gradeComment: null, directExerciseCount: 0, tags: [], createdAt: "2026-11-10T10:00:00Z",
+    prepWindowDays: 0, prepWindowDefault: 7, prepCardsPerDay: null, prepBlockedReason: null, prepNotExecutableCount: 0,
+    predictedLevel: null, ...over,
+  } as KlassenarbeitResponse);
+
+  // AK 1, Zeile mit Schnappschuss und Note. Rot, wenn die Stufe oder der Abstand fehlt oder die Richtung kippt
+  // (Stufe minus Note statt Note minus Stufe: die 2,5 gegen Stufe 3 hieße „schlechter“).
+  it("zeigt Stufe und Abstand in Worten, wenn beides da ist", () => {
+    const { container } = render(<PrognoseZelle k={arbeit({ predictedLevel: 3, grade: 2.5 })} />);
+    expect(container.textContent).toBe("Stufe 3 · 0,5 besser");
+    const schlechter = render(<PrognoseZelle k={arbeit({ predictedLevel: 2, grade: 4 })} />);
+    expect(schlechter.container.textContent).toBe("Stufe 2 · 2 schlechter");
+  });
+
+  // AK 1, Zeile ohne Schnappschuss, aber mit Note. Rot, wenn eine Zeile ohne Schnappschuss eine Stufe oder eine Zahl
+  // zeigt (etwa die Note selbst als Prognose oder 0).
+  it("zeigt ohne Schnappschuss „keine Prognose“", () => {
+    const { container } = render(<PrognoseZelle k={arbeit({ predictedLevel: null, grade: 2 })} />);
+    expect(container.textContent).toBe("keine Prognose");
+  });
+
+  // Schnappschuss ohne Note (Arbeit geschrieben, Note fehlt noch). Rot, wenn eine fehlende Note als 0 gerechnet wird
+  // (es stünde „3 besser“).
+  it("zeigt vor der Note nur die Stufe", () => {
+    const { container } = render(<PrognoseZelle k={arbeit({ predictedLevel: 3, grade: null })} />);
+    expect(container.textContent).toBe("Stufe 3");
+  });
+
+  // Gleichstand, auch nach Gleitkomma-Rest (3,04 rundet auf 0). Rot, wenn er als „0 besser“/„0 schlechter“ erscheint.
+  it("nennt den Gleichstand „wie erwartet“", () => {
+    expect(render(<PrognoseZelle k={arbeit({ predictedLevel: 3, grade: 3 })} />).container.textContent).toBe("Stufe 3 · wie erwartet");
+    expect(abstandText(3.04 - 3)).toBe("wie erwartet");
+  });
+
+  // Rundung erst in der Anzeige, auf Zehntel und symmetrisch. Rot, wenn die Anzeige auf ganze Noten rundet (2,7 gegen 3
+  // hieße „wie erwartet“) oder die Funktion bei fehlender Seite eine Zahl liefert.
+  it("rechnet Note minus Stufe und rundet erst in der Anzeige", () => {
+    expect(prognoseAbstand(2.7, 3)).toBeCloseTo(-0.3);
+    expect(abstandText(2.7 - 3)).toBe("0,3 besser");
+    expect(abstandText(2.25 - 3)).toBe("0,8 besser");
+    expect(abstandText(3.75 - 3)).toBe("0,8 schlechter");
+    expect(prognoseAbstand(null, 3)).toBeNull();
+    expect(prognoseAbstand(2, null)).toBeNull();
   });
 });

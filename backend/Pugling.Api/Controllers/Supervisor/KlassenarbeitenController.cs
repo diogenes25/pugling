@@ -37,7 +37,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
                 .OrderBy(t => t.Name).ToList(),
             k.CreatedAt,
             k.PrepWindowDays, prep.DefaultWindowDays,
-            duty.CardsPerDay, duty.BlockedReason, duty.NotExecutableCount);
+            duty.CardsPerDay, duty.BlockedReason, duty.NotExecutableCount, k.PredictedLevel);
     }
 
     private async Task<List<KlassenarbeitResponse>> MapAllAsync(IEnumerable<Klassenarbeit> tests, CancellationToken ct)
@@ -181,6 +181,9 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (dto.SubjectId is { } sid)
         {
             if (!await db.Subjects.AnyAsync(s => s.Id == sid, ct)) return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
+            // B-744: a prediction belongs to the subject it was taken in. A corrected subject drops it - on the test day
+            // the next access takes it anew, later the test stays without one rather than compare against a foreign level.
+            if (k.SubjectId != sid) k.PredictedLevel = null;
             k.SubjectId = sid;
         }
         if (dto.ScheduledDate is not null) k.ScheduledDate = dto.ScheduledDate.Value;

@@ -98,6 +98,12 @@ public class Klassenarbeit
     /// because the bundle is frozen (B-752 decision 3). <c>null</c> = not started, or started before this column existed.
     /// </summary>
     public List<int>? PrepLeftOutExerciseIds { get; set; }
+    /// <summary>
+    /// The child's grade level in the test's subject, written once on the test day (B-744) so a grade entered days later
+    /// is compared with what the level predicted on that day, not with where it drifted since. <c>null</c> = no snapshot:
+    /// the day has not come, nobody accessed the app on it, the test has no subject or the subject had no measured level.
+    /// </summary>
+    public int? PredictedLevel { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<KlassenarbeitExercise> Exercises { get; set; } = new();

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/gamification, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/gamification, rolle/supervisor]
 aliases: [Prognose-Schnappschuss, PredictedLevel]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: B-683
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-744 · Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel`
@@ -107,3 +109,58 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
 
 - **2026-11-20** — angelegt aus [B-683](B-683-notenstufe-an-der-echten-klausur-eichen.md) (geteilt); `geschaetzt`: M, backend, Migration
   ja, kein Vertragsbruch (Vorbereitungslauf, Sonnet).
+- **2026-11-24** — Nachprüfung vor dem Bau (Nachtlauf L, Sprint 161, [Protokoll](../pm-sitzung-2026-11-24-l.md)): Ist-Stand
+  bestätigt (keine Prognose an `Klassenarbeit`, Stufe aus B-741 in `ChildSubjectLevel`, Lauf in `SubjectLevelService`).
+  Überholt ist die Risikozeile „Zeitzone“: der Klausurtag ist seit B-730 der Lerntag (`LearningDay.Today`, deutsche
+  Zeit), nicht das UTC-Datum. `in-arbeit`.
+- **2026-11-24** — gebaut: Spalte `Klassenarbeit.PredictedLevel` (nullable), Migration
+  `20261124201304_KlassenarbeitPredictedLevel` (nur `AddColumn`, kein Rückfüllen, Snapshot-Diff genau die Spalte).
+  `SubjectLevelService.SnapshotTestDayAsync` am Ende **jeder** Bewertung (die Senke aller drei Wege: Kind-Anmeldung,
+  `student/me/subject-levels`, `supervisor/children/{id}/subject-levels`): erst eine Leseprobe, dann ein bedingtes
+  `ExecuteUpdate` (`ScheduledDate == Lerntag`, Fach gesetzt **und** heute gemessen, `PredictedLevel IS NULL`, Wert = die
+  frisch bewertete `Level`-Zeile). Kein Ledger. Abweichend vom Angriffsplan keine eigene öffentliche Methode
+  `SnapshotDueAsync`: der Aufruf sitzt in der einen Bewertung, so kann kein Weg ihn vergessen.
+- **2026-11-24** — AK → Test (`KlassenarbeitPrognoseTests`): AK 1 → `Klausurtag_schreibt_die_Stufe_einmal` (M1) · AK 2 davor/
+  danach → `Nur_am_Klausurtag_nicht_davor_und_nicht_danach` (M3/M2) · AK 3 → `Ohne_Fach_kein_Schnappschuss`, **als
+  Absichtserklärung beschriftet** (ein NULL-Fach gleicht in SQL keiner Stufenzeile; keine einzeilige Änderung macht ihn
+  rot) · AK 4 ohne Maß → `Ohne_Mass_bleibt_der_Schnappschuss_leer` (M4) · AK 4 später am Tag / am Folgetag / Arbeit nach
+  der Tagesbewertung angelegt → `Spaeter_am_Klausurtag_entstandene_Stufe_fuellt_noch_am_Folgetag_nicht` (M5, M2) · AK 5 →
+  `Verschobener_Termin_laesst_den_Schnappschuss_stehen` (M7) · AK 6 → `Schnappschuss_bucht_nichts` (M8) · Migration →
+  `PredictedLevelMigrationTests`. Rote Probe (M0, Aufruf entfernt): erwartet 4 rot (`Klausurtag…`, `Spaeter…`,
+  `Verschobener…`, `bucht_nichts`), gemessen 4 – alle vier Namen in der Ausgabe; die drei Null-Fälle sind vor dem Fix
+  grün und tragen je ihren eigenen Mutanten.
+- **2026-11-24** — Review `pugling-reviewer` (Agent, nur gelesen): kein Blocker. 🟡 **Fachwechsel nach dem Schnappschuss
+  ließ die Stufe des alten Fachs stehen** – widerspricht Entscheidung 2. Behoben (gezählt, Sprint 161: 1):
+  `KlassenarbeitenController.Update` verwirft `PredictedLevel` bei einem echten Fachwechsel; am Klausurtag nimmt der nächste
+  Zugriff ihn im neuen Fach neu, danach bleibt „keine Prognose“. Test `Fachwechsel_verwirft_die_Prognose_des_alten_Fachs`
+  (M9 behält → rot, M10 verwirft auch beim gleichen Fach → rot). 🟢 ohne Zählung behoben: Leseprobe vor dem UPDATE (sonst
+  nimmt jeder Lesezugriff die SQLite-Schreibsperre; M6), AK-4-Test legt ein zweites gemessenes Fach an, damit der frühe
+  Rücksprung „Kind ohne Maß“ den Fall nicht verdeckt.
+- **2026-11-24** — eigener Fund bei der Mutanten-Probe (gezählt nach Freigabe 11, Sprint 161: 4): nach dem Einbau der
+  Leseprobe standen die Bedingungen doppelt – einmal in der Probe, einmal im `UPDATE`. M1–M4 am `UPDATE` blieben grün
+  (gemessen 4 von 4 „green (abweichend)“, erwartet rot), weil die Probe dieselbe Zeile schon aussiebte. Behoben: ein
+  Filter `due`, den Probe und `ExecuteUpdate` teilen, je Bedingung eine Zeile; die Probe danach neu gemessen.
+- **2026-11-24** — Mutanten-Probe nach der letzten Änderung (`.claude/scripts/mutant-probe.py`, Debug, Filter
+  `KlassenarbeitPrognoseTests|KlassenarbeitCountdownTests`; zwei Läufe, 2026-11-24 23:15 und 2026-11-24 23:21, beide an `5993c86b + Arbeitsbaum geändert`, Grundlinie
+  danach jeweils grün). Gilt zugleich für B-746 (M11–M13):
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M0 kein Schnappschuss | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:85 | red | red |  |
+  | M1 ueberschreibt | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:102 | red | red |  |
+  | M2 auch danach | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:101 | red | red |  |
+  | M3 auch davor | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:101 | red | red |  |
+  | M4 gespeicherte Stufe ohne Mass | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:103 | red | red |  |
+  | M5 nur bei geaenderter Zeile | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:85 | red | red |  |
+  | M6 Vorpruefung sperrt immer | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:107 | red | red |  |
+  | M7 Verschieben loescht | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:189 | red | red |  |
+  | M8 Buchung | backend/Pugling.Api/Services/Student/SubjectLevelService.cs:85 | red | red |  |
+  | M9 Fachwechsel behaelt | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:186 | red | red |  |
+  | M10 gleiches Fach verwirft | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:186 | red | red |  |
+  | M11 Mapper ohne Wert | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:40 | red | red |  |
+  | M12 Mapper Ersatzwert | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:40 | red | red |  |
+  | M13 Kind sieht Prognose | backend/Pugling.Contracts/Student/ClassTestCountdownDtos.cs:11 | red | red |  |
+- **2026-11-24** — Verifikation nach der letzten Änderung: .NET 2353/2353 (Release, Ausgangsstand 2343), Vitest 130 Dateien /
+  1445 Tests, `tsc -b` sauber, `dotnet format --verify-no-changes` sauber. Rollengang: Kopie der echten DB (:5232, Migration dort eingespielt) – Friedrichs Arbeit vom 24.11. trägt nach dem Lesen der Stufen durch den Vater die Prognose 6, Theodors Arbeit vom 23.11. bleibt leer; E2E `klassenarbeit-abweichung.spec.ts` grün. `abgenommen`, Code in Commit
+  `2886acf6`. Die `## Entscheidungen` sind weiter „stellvertretend, unbestätigt“ (Vorbereitungslauf 2026-11-20); die
+  Bestätigung durch den Nutzer steht aus.

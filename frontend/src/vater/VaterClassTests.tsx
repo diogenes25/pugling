@@ -128,7 +128,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
         {list.loading && list.data === null ? <div className="loading">Lade…</div> : list.error ? <div className="banner err">{list.error}</div> : (
           <div style={{ overflowX: "auto" }}>
             <table className="table">
-              <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Vorbereitung</th><th>Note</th><th>Aktion</th></tr></thead>
+              <thead><tr><th>Titel</th><th>Termin</th><th>Status</th><th>Übungen</th><th>Vorbereitung</th><th>Note</th><th>Prognose</th><th>Aktion</th></tr></thead>
               <tbody>
                 {list.data?.items.map((k) => (
                   <tr key={k.id}>
@@ -141,6 +141,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
                     <td className="num">{k.directExerciseCount}{k.tags.length > 0 ? ` +${k.tags.length}🏷️` : ""}</td>
                     <td><VorbereitungsZelle k={k} /><BereitschaftZeile k={k} /></td>
                     <td><GradeCell key={`${k.id}-${k.grade ?? ""}`} current={k.grade ?? null} busy={action.busy} onSave={(g) => saveGrade(k, g)} /></td>
+                    <td><PrognoseZelle k={k} /></td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
                         onClick={() => setOpenId(openId === k.id ? null : k.id)}>{openId === k.id ? "Schließen" : "Übungen & Vorbereiten"}</button>{" "}
@@ -148,7 +149,7 @@ export function ClassTestManager({ childId }: { childId: number }) {
                     </td>
                   </tr>
                 ))}
-                {list.data?.total === 0 && <tr><td colSpan={7} className="muted">Noch keine Klassenarbeiten.</td></tr>}
+                {list.data?.total === 0 && <tr><td colSpan={8} className="muted">Noch keine Klassenarbeiten.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -160,6 +161,42 @@ export function ClassTestManager({ childId }: { childId: number }) {
 
       <RepeatPanel repeat={repeat} />
     </>
+  );
+}
+
+/**
+ * Abstand der Note zur Prognose (B-746): Note minus prognostizierte Stufe, roh – 2,5 gegen Stufe 3 ist −0,5, also besser
+ * als erwartet (kleinere Note = besser). Gerundet wird erst in der Anzeige. Ohne Prognose oder ohne Note gibt es keinen
+ * Abstand. Die Stufe ist am Klausurtag festgeschrieben; gespeichert wird der Abstand nirgends.
+ */
+export function prognoseAbstand(grade: number | null | undefined, predicted: number | null | undefined): number | null {
+  if (grade == null || predicted == null) return null;
+  return grade - predicted;
+}
+
+/**
+ * Der Abstand in Worten statt mit Vorzeichen – ein „−“ liest sich leicht als „schlechter“, ist bei Noten aber besser.
+ * Auf Zehntel gerundet (symmetrisch, `toLocaleString`); was auf 0 rundet, ist „wie erwartet“.
+ */
+export function abstandText(abstand: number): string {
+  const betrag = Math.abs(abstand).toLocaleString("de-DE", { maximumFractionDigits: 1 });
+  if (betrag === "0") return "wie erwartet";
+  return `${betrag} ${abstand < 0 ? "besser" : "schlechter"}`;
+}
+
+/**
+ * Die Prognose-Spalte (B-746): die Stufe, die die App am Klausurtag für das Fach festgehalten hat, und – sobald die Note
+ * steht – wie weit die Note davon abweicht. Ohne Schnappschuss (Tag noch nicht da, an ihm keine Nutzung, kein Fach, keine
+ * Stufe) steht „keine Prognose“, nie eine Zahl.
+ */
+export function PrognoseZelle({ k }: { k: KlassenarbeitResponse }) {
+  if (k.predictedLevel == null) return <span className="muted">keine Prognose</span>;
+  const abstand = prognoseAbstand(k.grade, k.predictedLevel);
+  return (
+    <span>
+      Stufe {k.predictedLevel}
+      {abstand !== null && <span className="muted">{" · "}{abstandText(abstand)}</span>}
+    </span>
   );
 }
 
