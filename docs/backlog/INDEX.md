@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (85)
+### Offen (86)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -101,9 +101,10 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-953](B-953-vokabel-tuerme-zielwahl-und-grafik.md) | Vokabel-Türme: Kanone mit einstellbarer Zielwahl und echte Grafik für Figur und Türme | Wunsch | `idee` | P3 | — | — | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
+| [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (612)</summary>
+<summary>Abgenommen (613)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -715,6 +716,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-95](B-95-stufenwaechter-haengt-am-include.md) | Die Stufenprüfung beim PATCH einer Position hängt an einem `Include`, das niemand einfordert | Aufräumen | `abgenommen` | P3 | XS | backend | — |
 | [B-950](B-950-offene-rueckmeldungen-auf-heute.md) | Die Vater-Startseite „Heute“ zeigt offene Kartenmeldungen der Kinder | Wunsch | `abgenommen` | P1 | S | frontend | — |
 | [B-951](B-951-malus-nennt-den-verpassten-tag.md) | Ein Malus nennt nicht den Tag, den das Kind verpasst hat | Defekt | `abgenommen` | P1 | S | backend | — |
+| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus | Defekt | `abgenommen` | P1 | S | beides | Vertrag |
 | [B-96](B-96-showboth-stufe-ohne-mechanik.md) | „Beide zeigen (Kennenlernen)" ist eine Beschriftung ohne eigene Stufe | Defekt | `abgenommen` | P2 | M | beides | — |
 | [B-97](B-97-unique-index-ohne-vorpruefung.md) | Zwei Schreibpfade laufen ungeprüft in einen Unique-Index und antworten mit 500 | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-98](B-98-idempotenter-link-post-luegt.md) | Drei idempotente Schreibpfade antworten mit erfundenen Werten, zwei davon mit `201 Created` | Defekt | `abgenommen` | P2 | S | backend | Vertrag |
@@ -741,9 +743,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (223)
+### Nach der Abnahme entgangen (224)
 
-**Nachgeschaut: 574 von 612 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 575 von 613 abgenommenen** — und in 197 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 38 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -970,6 +972,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-946](B-946-karten-je-tag-nach-dem-start-zeigen-den-deckel.md) | Nach dem Start zeigt die Vater-Liste den Deckel statt der Karten einer kleinen Übung ohne Tagesdosis | [B-757] | `abgenommen` |
 | [B-947](B-947-ausgelassen-hinweis-verschwindet-nach-dem-start.md) | Nach dem Start verschwindet der Hinweis „N Übungen ohne Ausführ-Recht ausgelassen“, ohne dass die Übung je zur Pflicht wird | [B-941] | `abgenommen` |
 | [B-948](B-948-vorbereitung-zeigt-null-karten-bei-vorhandenen-positionen.md) | „etwa 0 Karten je Tag“, obwohl das Kind für die Arbeit täglich Pflichtkarten spielt | [B-757] | `abgenommen` |
+| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus | [B-662, B-770] | `abgenommen` |
 
 <details>
 <summary>Nie nachgeschaut (38) — Arbeitsvorrat der Nachschau</summary>
@@ -1016,7 +1019,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-758](B-758-vorbereitungs-pflicht-folgt-der-arbeit.md) | Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben |
 | [B-766](B-766-mischrunde-in-der-sohn-app.md) | Mischrunde in der Sohn-App: Einstieg im Bonus-Training, Runde spielen, Ergebnis |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-951](B-951-malus-nennt-den-verpassten-tag.md) | Ein Malus nennt nicht den Tag, den das Kind verpasst hat |
+| [B-954](B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ auf der Vater-Startseite zeigt nur den Tagesziel-Bonus |
 
 </details>
 

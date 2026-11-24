@@ -505,6 +505,105 @@ hält. Kein neues Tor, darum kein Halt.
 **Bewusst ungedeckt:** Ob andere lazy gebuchte Texte (Truhe, Serie) ihren Tag nennen müssten, ist nicht geprüft. Der
 Rollengang zeigte nur den Malus.
 
+## Runde 140 — Vorstellung & Feedback
+
+Gegangen an einer frischen **Kopie der echten DB** (`kopie-server.sh`, Stand 17:43, `:5201`; `:5200` unberührt, PID gegen den
+Port geprüft, bevor der Kopie-Server für den Build beendet wurde).
+
+### Feedback Vater (aus den Daten)
+
+- Die Startseite zeigt bei Friedrich „Geübt heute 223 Antworten · Tagesziel 2 von 10 · **Punkte heute 60**“. Sein Konto hat
+  an dem Tag 457 Münzen verdient (397 aus Antworten, 60 aus zwei Tageszielen) und 140 Gems. Die 60 sind nur der Zielbonus.
+  Der Vater liest also eine kleinere Zahl als der Sohn, und ein Kind ohne geschlossenes Ziel steht mit 0 da. **Fund → B-954.**
+- Theodor hat bis 17:45 nichts gespielt; „Heute“ zeigt das richtig (0 Antworten, 0 von 6). Seine Kartenmeldungen sind weiter
+  offen (Handlung des Vaters, keine Story).
+- B-752, AK 8: Die Migration `ClassTestPrepDuty` steht in der echten DB schon in `__EFMigrationsHistory` (30 Einträge, gleich
+  der Kopie). Die Probe an der Kopie ist damit überholt; offen bleibt nur der Blick am Gerät.
+- **Top-3:** eine Tageszahl, die stimmt · B-748 (Klausurchance) · Theodors Meldungen beantworten.
+
+### Feedback Sohn (aus den Daten und gespielt)
+
+- Beide Anmeldungen buchen den Malus für Montag mit Tag bzw. Woche im Text (B-951 hält an echten Daten).
+- Gespielt an der Kopie: Friedrich Position 214 (Testsätze, vier Karten), Theodor Position 102 (drei Karten), Friedrich
+  Mathe 211 (zwei Karten). Sitzung starten, Karte holen, antworten, beenden: keine Sackgasse, kein Fehlerstatus.
+- **Top-3:** kein neuer Fund aus diesem Gang.
+
+### Feedback Creator
+
+- Kein Creator-Pfad berührt, keine neuen Daten.
+
+## PM-Synthese & Priorisierung (Runde 140)
+
+| Prio | Story | Was | Größe | Wo |
+|---|---|---|---|---|
+| P1 | [B-954](backlog/B-954-punkte-heute-zeigt-nur-den-zielbonus.md) | „Punkte heute“ zeigt nur den Zielbonus | S | beides |
+
+Gegrillt im Dialog (2026-11-24): verdiente Münzen nach der Definition der Sohn-App, Beschriftung „Münzen heute“; Umfang nur
+dieser Fund. B-748 wird danach im Dialog ausformuliert.
+
+**Roter Faden:** Der Vater entscheidet an der Tageszahl, ob die Arbeit eine Einlösung trägt. Dafür muss sie dieselbe Zahl
+sein, die das Kind liest.
+
+## Sprint 140 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Vater liest auf der Startseite und in der Zeitleiste je Kind die Münzen, die das Kind an dem Tag
+verdient hat, und die Zahl stimmt mit dem Konto des Kindes überein.
+**Umfang:** B-954.
+**Entwickler-Brief:** Die Senke ist `WalletService`: eine Abfrage „verdiente Münzen je Lerntag“ über dieselbe Basis wie
+`WeekCoinsAsync` (`EarnedCoinKinds`, nur positive Buchungen). `ChildrenDashboardService` liest sie in der Tagesübersicht und
+in der Zeitleiste. Je Aufrufer der alten Zahl entschieden: `Practiced` liest die neue, die Fairness-Regel für abgeschaltete
+Pläne bleibt am Zielbonus des Plans, der Tagesverlauf eines Plans behält den Bonus und heißt „Zielbonus“. Vertrag:
+`pointsToday` → `coinsToday`, `points` → `coins`. Keine Migration. Testweg: Integration mit direkt gebuchten Ledger-Zeilen
+(Art, Vorzeichen, Tag), ein Fall in der Berlin-Fabrik für die Tagesgrenze, Vitest für die Beschriftungen.
+
+## Iteration 140 — umgesetzt
+
+- **Backend:** `WalletService.EarnedCoinsByDayAsync` (verdiente Münzen je Lerntag, dieselbe Basisabfrage wie „diese Woche“).
+  `ChildrenDashboardService` liest sie in Tagesübersicht und Zeitleiste. Vertrag: `ChildDay.coinsToday`, `ChildPeriod.coins`.
+  `Practiced` hängt nur noch an Antworten und erfüllten Zielen. Keine Migration.
+- **Frontend:** Startseite „Münzen heute“, Zeitleiste „N Münzen“ (auch an einer Periode ohne Ziel), Tagesverlauf eines Plans
+  „Zielbonus“ und „Zielbonus gesamt“.
+- **Verifikation:** .NET 2343/2343 (Release), Vitest 1440/1440, `tsc` sauber, E2E 5/5 auf Ausweichports. Mutanten-Probe 15/15
+  rot am benannten Test (Tabelle in B-954), gemessen nach dem letzten Edit. „Zielbonus“ im Plan ist nur durch den grünen
+  E2E-Lauf belegt, nicht durch einen Mutanten.
+- **Review:** `pugling-reviewer` und `frontend-reviewer` fanden zwei Defekte im Increment (Truhe macht „dran“; Zeitleiste
+  verschweigt Münzen ohne Ziel). Beide behoben, je ein Test und ein Mutant. Aufräum-Anschluss → B-955.
+
+## Runde 140 — Re-Review / Abnahme
+
+Server: nach dem letzten Edit an einer frischen Kopie der echten DB gestartet (`:5201`), danach beendet.
+
+- **Vater – abgenommen:** „Friedrich: 457 Münzen heute, 223 Antworten, 2 von 10. Das ist die Zahl aus seinem Konto, und die
+  Woche steht bei mir mit 544 wie bei ihm.“ Gelesen an der API der Kopie gegen das Ledger (Friedrich, Testjunge, Theodor,
+  heute und Montag; Zeitleiste 16.–24.11. je Tag und drei Wochen). Die Beschriftungen sind durch Vitest und E2E belegt,
+  an der Kopie nicht geklickt.
+- **Sohn – Regressionszeuge:** „diese Woche“ unverändert 544 an derselben Kopie; `WochenvergleichTests` grün; kein
+  Sohn-Pfad im Diff.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
+
+**Stand:** B-954 `abgenommen`.
+
+## Retrospektive (Sprint 140)
+
+**Nachschau:** Sprint 139 (B-951, `04827f89`) gelesen und an der Kopie gesehen: eine einzige `GoalPenalty`-Schreibstelle
+(`grep`), beide Söhne bekommen „Tagesziel vom Mo 23.11. gerissen“ bzw. „Wochenziel der Woche 16.–22.11. gerissen“. Kein
+Befund. `nachgeschaut: 2026-11-24` gesetzt. Der Review-Commit `c7842636` kam von außerhalb dieses Laufs und ist hier nicht
+nachgesehen.
+
+**Was die eigenen Tore durchgelassen haben:** Zwei Defekte standen im Increment, als es zum Review ging. Beim ersten hatte
+ich in der Story behauptet, verdiente Münzen entstünden nie ohne Antwort oder Ziel, ohne zu greppen, wer die verdienten
+Arten bucht (Truhe, Objective beim Login). Die Regel „je Aufrufer entscheiden“ aus Step 4 habe ich für `Practiced` mit einer
+Annahme statt mit einem `grep` erfüllt. Beim zweiten koppelte die Test-Fixture der Zeitleiste die Münzen an die erfüllten
+Ziele, darum gab es den Fall „kein Ziel, aber Münzen“ in keinem Test. Beide fand der Reviewer, kein Test und kein Mutant.
+Von außerhalb der Schleife kam nichts.
+
+**Der eine Mechanismus:** Keiner. Das Tor, das hier greifen sollte, ist das Review, und es hat gegriffen; beide Funde sind
+jetzt je ein Test mit Mutant. Eine weitere Prosa-Regel („Invariante erst greppen“) stünde neben der vorhandenen
+Aufrufer-Regel und sagte dasselbe. Kein neues Tor, darum kein Halt.
+
+**Bewusst ungedeckt:** Der Spaltenkopf „Zielbonus“ hat keinen Mutanten. Die Tagesgrenze ist nur in Winterzeit gemessen. Ein
+nachgetragener Test zeigt seinen Bonus am Tag des Nachtrags (B-954, Entscheidung 6).
+
 ## Offene Roadmap (priorisiert)
 
 Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
@@ -514,6 +613,8 @@ Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 2. B-945–B-951 abgenommen. Nächster Kandidat aus dem Rollengang: B-748 (Klausurchance in der Vater-Übersicht) – der Wortstand
    steht jetzt in der Liste, die Prognose fehlt.
 3. **B-944** Restpunkte, darunter die nicht deterministisch messbare Nebenläufigkeit.
+4. Runde 140: B-954 abgenommen. B-752 AK 8 ist überholt (die Migration steht in der echten DB); offen bleibt der Blick am
+   Gerät. Nächster Schritt im Dialog: B-748 ausformulieren und grillen. B-955 ist Aufräumen (P3).
 
 ## Konkreter Änderungsstand (für Review)
 
@@ -523,3 +624,6 @@ B-945, Nachschau.
 Runde 136: ein Test (`Schlagwort_Verknuepfen_Im_Fenster…`), Belege und Abnahme von B-757/B-758 – eigener Commit.
 
 Runde 139: `04827f89` – Code und Test zu B-951. Danach ein Doku-Commit: Story, dieses Protokoll, Nachschau Sprint 138.
+
+Runde 140: `ddf6d1d6` – Code-Commit zu B-954 (Backend, Vertrag, Frontend, Tests, E2E). Danach ein Doku-Commit: B-954, B-955,
+dieses Protokoll, Nachschau Sprint 139.

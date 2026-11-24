@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-24.md#runde-139--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: 2026-11-24
 ---
 
 # B-951 · Ein Malus nennt nicht den Tag, den das Kind verpasst hat
