@@ -119,3 +119,78 @@ Wortlaut nach, aber ich habe das Kriterium als einen Fall gelesen. Mechanismus w
 
 **Bewusst ungedeckt:** die Rückwärts-Kopie der Bündel-Regel in `ExerciseCatalogController.cs:296-300` (Creator-Fläche, außerhalb
 des Pakets; im Kommentar der Senke benannt).
+
+## Sprint 134 — Ziel & Umfang
+
+**Sprint-Ziel:** Plant der Vater eine Klassenarbeit, entsteht im Fenster davor beim nächsten Login des Sohns eine tägliche
+Pflicht über ihren Stoff – ohne rückwirkenden Malus, mit einem Standard-Malus je Tag statt je Übung, endend am Vortag; sie
+folgt Verschieben, Absagen und Schreiben, und der Vater stellt das Fenster ein und sieht die Last.
+**Umfang:** B-752 (L, backend, Migration), B-758 (M, backend), B-757 (S, frontend). B-752 war als L geschätzt; beim Bau nicht
+faktisch XL (eine Senke, eine Migration) – nicht weiter geteilt.
+**Entwickler-Brief:** Senke `ClassTestPrepService` (Abgleich vor jeder Abrechnung: Login, Kauf; dazu PATCH/DELETE der Arbeit).
+Idempotenz über `Klassenarbeit.PrepStartedOn` und `PlanPosition.SourceKlassenarbeitId`; Pflicht-Ende über die mit B-659 geteilte
+Spalte `DutyUntil`, Schließen über `CloseDutyAsync`; die Abrechnung liest `DutyUntil` als Obergrenze. Migration
+`ClassTestPrepDuty` ohne Backfill. Testweg: `VorbereitungsPflichtTests` (eingefrorene Uhr, Montag 2030-03-04),
+`VorbereitungsPflichtFolgtTests`, `VorbereitungsPflichtMigrationTests`, E2E `klassenarbeit-vorbereitung.spec.ts`.
+
+## Iteration 134 — umgesetzt
+
+**Backend:** `f1be5aba` (B-752), `03e77040` (B-758), `d0fe6477` (Review-Fixes). **Frontend:** `1333ae02` (B-757).
+Migration `20261123232647_ClassTestPrepDuty`: `PlanPositions.SourceKlassenarbeitId` (FK `SetNull`, Index),
+`Klassenarbeiten.PrepWindowDays`, `Klassenarbeiten.PrepStartedOn`; SQLite baut `PlanPositions` dabei neu (FK) – der
+Migrationstest prüft, dass Malus-Zeilen, Lernstand und Versuche das überleben. **An einer Kopie der echten DB nicht geprobt**
+(für den Nachtlauf tabu) – das gehört vor den nächsten Heimnetz-Start.
+
+**Verifikation:** Backend-Suite 2212/2215 im vollen Lauf (22 min unter Last dreier paralleler Nachtläufe); die drei roten
+(`OpenApiExampleTests`, `ContractDocumentTests`, `SecurityHardeningTests.Login_mit_unbekannter_Id…` – Zeit- bzw. Laufzeitmessungen)
+einzeln danach 16/16 grün. Frontend `tsc -b` grün, `VaterClassTests.test.tsx` 8/8; E2E `klassenarbeit-vorbereitung` 1 passed
+(5231/5204). Mutanten-Probe: nur die Review-Fixes gemessen – R1 (Speichern löscht das Ende) red, R2 (Start rückwirkend) red,
+R3 (Anspruch auf den Start entfernt) **green** wie erwartet: kein deterministischer Test für gleichzeitige Logins (B-944). Die
+vorbereitete Probe über die AK-Fälle (27 Mutanten) ist **nicht gelaufen**: der Lauf endete vorher.
+
+**Review:** `pugling-reviewer` – 🔴 1, 🟡 5; `frontend-reviewer` – 🟡 2. **Fehlerzähler Sprint 134:** (1) eigener Fund beim Bauen:
+zwei Arbeiten im selben Abgleich legten dieselbe Übung doppelt an (Speichern je Arbeit fehlte), behoben mit Test; (2) 🔴 Speichern
+der Position löschte das Ende der Vorbereitung, behoben mit Test (R1); (3) 🟡 gleichzeitige Abgleiche, behoben (Anspruch per
+`ExecuteUpdateAsync`, ohne roten Test); (4) 🟡 Rückwirken ungetestet, Test ergänzt (R2); (5) 🟡 Migrationstest ohne Abhängige,
+ergänzt. **Damit stand der Zähler bei 5; die übrigen vier 🟡** (Kind verkleinert sein Bündel → B-940, Ausführ-Recht umgangen →
+B-941, Meldung des Fenster-Editors verschwindet → B-942, Zusicherung ohne Biss → B-943) **hätten ihn überschritten – nach Freigabe
+3/11 endet der gesamte Lauf hier.** Sie sind als `Defekt` auf `idee` abgelegt, nicht behoben. 🟢 gesammelt in B-944 (ohne Zählung).
+
+## Runde 134 — Abnahme
+
+- **Vater — nicht abgenommen:** „Ich plane die Arbeit mit 12 Tagen Vorbereitung und sehe ‚etwa 2 Karten je Tag‘; ohne Plan im
+  Fach sagt die Liste, warum nichts entsteht.“ (E2E gegangen.) Offen: das Kind kann den Stoff über Schlagwörter verkleinern
+  (B-940), und zurückgezogenes Material kann über ein Schlagwort doch Pflicht werden (B-941) – beides untergräbt genau die
+  Erzwingung, die er will.
+- **Sohn — nicht abgenommen (maschinell gegangen):** nach dem Login steht die Vorbereitung als Knoten auf dem Pfad, die Karte
+  nennt die Arbeit. Ob die Last sich fair anfühlt, sieht nur ein Mensch.
+- **Creator — Regressionszeuge:** kein Creator-Pfad im Diff außer dem unveränderten Schlagwort-Endpunkt (Fund B-940 betrifft ihn).
+- **Stand:** B-752, B-758, B-757 bleiben `in-arbeit` mit `wartet_auf` (Nutzer: Lauf am Fehlerzähler beendet).
+
+## Retrospektive Sprint 134
+
+**Nachschau:** entfällt als eigene Handlung – der vorige Sprint (133) ist in dieser Nacht abgenommen und am selben Tag nicht neu
+zu besehen; B-863 ist in der Retro 133 nachgeschaut.
+
+**Was die eigenen Tore durchgelassen haben:** Der 🔴 entstand an einer Annahme, die B-659 still gemacht hatte („Taktung ≠ None und
+`DutyUntil` gesetzt gibt es nicht“) – B-752 hat genau diesen Zustand erzeugt. Die pm-loop-Regel „Changing a shared helper … is decided
+per caller“ hätte es gefangen, hätte ich `DutyUntil` als geteilten Zustand gelesen und alle Schreiber gegrept
+(`PlanPositionsController.cs:440`). Ich habe nur die Leser gegrept.
+
+**Vorschlag (nicht gelandet, Freigabe 3):** (DC) Ein Wächter-Test, der für jede Spalte mit dokumentierter Invariante „nur zusammen mit
+X“ (hier `DutyUntil` ↔ `Cadence`) alle Schreibstellen per Reflexion/Grep pinnt – eine neue Schreibstelle macht ihn rot. Billiger:
+pm-loop Step 4 um „ein neuer Zustand einer bestehenden Spalte: jeden **Schreiber** greppen, nicht nur die Leser“ ergänzen.
+
+**Bewusst ungedeckt:** gleichzeitige Logins (B-944 Punkt 9) – die Absicherung steht, ein Test, der sie rot zeigt, nicht.
+
+## Halt und offene Entscheidungen
+
+- **Halt:** Fehlerzähler Sprint 134 hätte 5 überschritten (Freigabe 3, 11). Kein Sprint 135.
+- **Für den Nutzer:** (1) B-940/B-941 vor der Abnahme von B-752 – beide sind Produktfragen am Rand (darf das Kind Schlagwörter seiner
+  Klassenarbeit lösen? zählt Material ohne Freigabe?), die Vorschläge stehen in den Stories. (2) Konfiguration `ClassTestPrep:MaxCardsPerDay`
+  = 10 ist nicht an echten Bündeln gemessen. (3) Migration `ClassTestPrepDuty` an einer Kopie der echten DB proben, bevor der
+  Heimnetz-Server sie einspielt. (4) Retro-Vorschläge (DB) und (DC).
+
+## Offene Roadmap
+
+Siehe `docs/backlog/`: B-940–B-943 (Defekte aus Sprint 134), B-944 (Restpunkte); B-752/B-758/B-757 warten auf sie.
