@@ -29,3 +29,32 @@ public record MixedReviewRunResponse(int RunId, IReadOnlyList<MixedReviewCardVie
 /// </summary>
 public record MixedReviewCardView(int CardId, int PositionId, string PlanTitle, string? SubjectName, string ExerciseTitle,
     int Stage, bool Typed, ExtraCard Card);
+
+/// <summary>One answer of a mixed review round, by card: typed or chosen (<paramref name="GivenAnswer"/>) or self-assessed (<paramref name="WasKnown"/>).</summary>
+public record MixedReviewAnswer(int CardId, string? GivenAnswer, bool? WasKnown);
+
+/// <summary>Body of the mixed review submit: all answers at once. A card without an answer counts as wrong.</summary>
+public record SubmitMixedReviewDto(List<MixedReviewAnswer> Answers);
+
+/// <summary>
+/// The graded mixed review round (B-765). <paramref name="Total"/> and <paramref name="Correct"/> count the graded cards;
+/// a skipped card (see <see cref="MixedReviewOutcome.Skipped"/>) counts in neither. <paramref name="CoinsAwarded"/> is
+/// what was booked: checked hits only, each at the rate of the form it was asked in, and only where the card is due again
+/// in the future and that the child did not meet earlier the same day - introduced, reviewed or asked in a test, each of
+/// which may have shown its answer;
+/// <paramref name="CoinsEarned"/> is that sum before the cap, and <paramref name="CapReached"/> says the shared bonus cap
+/// cut it. <paramref name="CoinsToday"/> is the day's bonus coins after this round, over the bonus
+/// training and the mixed review together, against <paramref name="DailyCoinCap"/> (<c>null</c> = no cap).
+/// </summary>
+public record MixedReviewResult(int RunId, int Total, int Correct, int CoinsAwarded, int CoinsEarned, bool CapReached,
+    int CoinsToday, int? DailyCoinCap, IReadOnlyList<MixedReviewOutcome> Items);
+
+/// <summary>
+/// One card of a graded round, revealed after the round (<paramref name="Expected"/> is the solution in hindsight).
+/// <paramref name="Box"/> and <paramref name="DueOn"/> are the card's place in its own position's Leitner box afterwards.
+/// <paramref name="Skipped"/> marks a card that was not graded and moved nothing: no longer due (practised in its position
+/// meanwhile), its position now carrying an open duty, no longer using Leitner or playing another exercise, or its
+/// exercise changed since the start.
+/// </summary>
+public record MixedReviewOutcome(int CardId, int PositionId, string ExerciseTitle, string? Prompt, string Expected,
+    string? GivenAnswer, bool WasCorrect, bool Skipped, int CoinsAwarded, int? Box, DateOnly? DueOn, int? GapIndex);

@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pugling.Api.Data;
-using Pugling.Api.Models;
 
 namespace Pugling.Api.Tests;
 
@@ -11,123 +10,8 @@ namespace Pugling.Api.Tests;
 /// The mixed review's draw (B-764): which cards a round takes across the child's positions, and how a round is started,
 /// resumed and kept apart from the duty.
 /// </summary>
-public class MischrundeAuswahlTests(PuglingWebAppFactory factory) : IClassFixture<PuglingWebAppFactory>
+public class MischrundeAuswahlTests(PuglingWebAppFactory factory) : MischrundeTestBase(factory), IClassFixture<PuglingWebAppFactory>
 {
-    private static readonly (string Front, string Back)[] Words =
-        [("dog", "Hund"), ("cat", "Katze"), ("house", "Haus"), ("tree", "Baum")];
-
-    private sealed record Kid(HttpClient Father, HttpClient Child, int ChildId);
-
-    private async Task<Kid> KidAsync()
-    {
-        var father = await TestApi.AdultAsync(factory);
-        var pin = "7" + Random.Shared.Next(100, 999);
-        var childId = await TestApi.IdAsync(await father.PostAsJsonAsync("/api/v1/supervisor/children",
-            new { name = TestApi.UniqueName("Misch-Kind"), pin }));
-        return new Kid(father, await TestApi.ChildAsync(factory, childId, pin), childId);
-    }
-
-    // A vocabulary exercise of four words in a unit of its own subject, assigned to the child as a Leitner position of a
-    // plan of that subject (one active plan per subject, B-539). Every word introduced and imprinted yesterday, box 3,
-    // due in the future - a test makes the cards it needs due.
-    // With an exercise given, a further position on that exercise, in a plan of another subject.
-    private async Task<(int PlanId, int PositionId)> PositionAsync(Kid k, GoalCadence cadence = GoalCadence.None,
-        int? exerciseId = null)
-    {
-        var subjectId = await TestApi.IdAsync(await k.Father.PostAsJsonAsync("/api/v1/creator/subjects",
-            new { name = TestApi.UniqueName("Misch-Fach") }));
-        var (seriesId, unitId) = await TestApi.CreateSeriesAndUnitAsync(k.Father, subjectId, sourceLanguage: "en");
-        var vocabId = exerciseId ?? await TestApi.IdAsync(await k.Father.PostAsJsonAsync(
-            $"/api/v1/creator/textbook-series/{seriesId}/units/{unitId}/vocabulary", new
-            {
-                title = TestApi.UniqueName("Woerter"),
-                orderIndex = 1,
-                rewardPoints = 10,
-                config = new
-                {
-                    direction = "front-to-back",
-                    sourceLang = "en",
-                    targetLang = "de",
-                    items = Words.Select(w => new { front = w.Front, back = w.Back }),
-                },
-            }));
-        var ids = TestApi.SeedLeitnerPosition(factory, vocabId, (int)TestStage.FreeText, childId: k.ChildId, cadence: cadence);
-        Db(db =>
-        {
-            db.StudyPlans.Single(p => p.Id == ids.planId).SubjectId = subjectId;
-            foreach (var row in db.PositionItemProgress.Where(p => p.PlanPositionId == ids.positionId)) row.DueOn = Today.AddDays(3);
-        });
-        return ids;
-    }
-
-    private DateOnly Today
-    {
-        get
-        {
-            using var scope = factory.Services.CreateScope();
-            return scope.ServiceProvider.GetRequiredService<LearningDay>().Today;
-        }
-    }
-
-    private void Db(Action<PuglingDbContext> change)
-    {
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        change(db);
-        db.SaveChanges();
-    }
-
-    private T Read<T>(Func<PuglingDbContext, T> query)
-    {
-        using var scope = factory.Services.CreateScope();
-        return query(scope.ServiceProvider.GetRequiredService<PuglingDbContext>());
-    }
-
-    private void SetDue(int positionId, int itemIndex, DateOnly? dueOn) => Db(db =>
-        db.PositionItemProgress.Single(p => p.PlanPositionId == positionId && p.ItemIndex == itemIndex).DueOn = dueOn);
-
-    // A passed test of today written straight into the database: meets the position's goal of the running period.
-    private void SeedPassedTest(int planId, int positionId) => Db(db =>
-    {
-        var at = Today.ToDateTime(new TimeOnly(10, 0), DateTimeKind.Utc);
-        db.TestAttempts.Add(new TestAttempt
-        {
-            StudyPlanId = planId,
-            PlanPositionId = positionId,
-            Day = Today,
-            StageValue = (int)TestStage.FreeText,
-            Graded = true,
-            StartedAt = at,
-            CompletedAt = at,
-            TotalItems = 4,
-            CorrectItems = 4,
-            ScorePercent = 100,
-            Passed = true,
-        });
-    });
-
-    private static string Base(Kid k) => $"/api/v1/student/children/{k.ChildId}/mixed-review";
-
-    private static async Task<JsonElement> StartAsync(Kid k)
-    {
-        var res = await k.Child.PostAsync($"{Base(k)}/runs", null);
-        Assert.True(res.IsSuccessStatusCode, $"{(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}");
-        return await res.Content.ReadFromJsonAsync<JsonElement>();
-    }
-
-    private static async Task AssertProblemAsync(HttpResponseMessage res, HttpStatusCode status, string code)
-    {
-        Assert.Equal(status, res.StatusCode);
-        var body = await res.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(code, body.GetProperty("code").GetString());
-    }
-
-    private static List<(int PositionId, int ItemIndex)> Cards(JsonElement run) =>
-    [
-        .. run.GetProperty("cards").EnumerateArray()
-            .Select(c => (c.GetProperty("positionId").GetInt32(), c.GetProperty("card").GetProperty("itemIndex").GetInt32())),
-    ];
-
     /// <summary>
     /// AK 1 and AK 2: one due card in each of two positions of two active plans - the round offers both, and none of the
     /// six cards due in three days. Red if the draw stays within one position, or filters by something else than the due
@@ -169,7 +53,7 @@ public class MischrundeAuswahlTests(PuglingWebAppFactory factory) : IClassFixtur
         var run = await StartAsync(k);
 
         Assert.Equal([(posDaily, 0)], Cards(run));
-        using var scope = factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var progress = scope.ServiceProvider.GetRequiredService<PositionProgressService>();
         var day = await progress.ComputeChildDayAsync(k.ChildId, Today, CancellationToken.None);
         Assert.False(day.Positions.Single(p => p.PositionId == posWeekly).GoalMet);
@@ -237,7 +121,7 @@ public class MischrundeAuswahlTests(PuglingWebAppFactory factory) : IClassFixtur
         SetDue(posOff, 0, Today);
         Db(db => db.StudyPlans.Single(p => p.Id == planOff).Active = false);
 
-        using var scope = factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var services = scope.ServiceProvider;
         var day = await services.GetRequiredService<PositionProgressService>()
             .ComputeChildDayAsync(k.ChildId, Today, CancellationToken.None);

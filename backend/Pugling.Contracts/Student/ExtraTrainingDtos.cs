@@ -23,7 +23,8 @@ public enum ExtraForm
 /// plans are met - every goal when no plan has a daily one (B-535/B-611; not <c>DutyDone</c>, which also counts weekly
 /// goals). <paramref name="LockReason"/>: <c>no_plan</c> or <c>duty_open</c>, with the goals still open in <paramref
 /// name="Outstanding"/> and their kind in <paramref name="RewardCadence"/> (<c>Daily</c>, <c>Weekly</c>, or <c>None</c>
-/// without any goal - B-612). <paramref name="DailyCoinCap"/> is <c>null</c> when there is no cap.
+/// without any goal - B-612). <paramref name="CoinsToday"/> counts bonus runs and mixed review rounds together, which share
+/// <paramref name="DailyCoinCap"/> (B-765); the cap is <c>null</c> when there is none.
 /// </summary>
 public record ExtraTrainingOverview(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding,
     int CoinsToday, int? DailyCoinCap, IReadOnlyList<ExtraExercise> Exercises, GoalCadence RewardCadence);
@@ -88,7 +89,8 @@ public record SubmitExtraRunDto(List<ExtraAnswer> Answers);
 
 /// <summary>
 /// The graded bonus run. <paramref name="CoinsAwarded"/> is what was booked; <paramref name="CapReached"/> says the
-/// daily cap cut it short. <paramref name="CoinsToday"/> is the day's bonus total after this run.
+/// daily cap cut it short. <paramref name="CoinsToday"/> is the day's bonus total after this run - bonus runs and mixed
+/// review rounds together, which share the cap (B-765).
 /// The breakdown lets the child follow the sum: <paramref name="CoinsPerHit"/> is the full rate per right answer,
 /// <paramref name="RunPercent"/> the share of it this run was worth at the submit (B-538), and
 /// <paramref name="CoinsEarned"/> the rounded-down result before the daily cap. <paramref name="CoinsForHits"/> is the

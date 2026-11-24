@@ -156,6 +156,10 @@ public sealed class StudentApi(HttpClient http)
     public Task<MixedReviewRunResponse> StartMixedReviewAsync(int childId, CancellationToken ct = default) =>
         Http.PostAsync<MixedReviewRunResponse>($"{Root}/children/{childId}/mixed-review/runs", null, ct);
 
+    /// <summary>Submits the answers of a mixed review round and returns the graded result with the coins booked.</summary>
+    public Task<MixedReviewResult> SubmitMixedReviewAsync(int childId, int runId, SubmitMixedReviewDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<MixedReviewResult>($"{Root}/children/{childId}/mixed-review/runs/{runId}/submit", dto, ct);
+
     // ---------------------------------------------------------------- The child's day
 
     /// <summary>Today's duties of all active plans of the child, with the streak and the daily chest (B-606).</summary>

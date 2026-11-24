@@ -20,7 +20,8 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class MixedReviewService(PuglingDbContext db, PositionProgressService progress, PositionPlayService play,
     ExerciseContentResolver content, ExerciseTypeRegistry registry, ExtraTrainingService extras,
-    IOptions<ExtraTrainingOptions> options, TimeProvider time, LearningDay learningDay)
+    ExercisePreviewService preview, ItemProgressService itemProgress, IOptions<ExtraTrainingOptions> options,
+    TimeProvider time, LearningDay learningDay)
 {
     private readonly ExtraTrainingOptions opts = options.Value;
 
@@ -102,6 +103,196 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
         var left = await extras.CoinsLeftTodayAsync(childId, today, ct);
         return new Outcome<MixedReviewRunResponse>(new MixedReviewRunResponse(run.Id, await CardViewsAsync(run, ct),
             left == int.MaxValue ? null : left));
+    }
+
+    /// <summary>
+    /// Grades a round once (B-765). Each card is graded at its frozen stage - the position's stage of the day, never an
+    /// easier one - against the exercise it came from; the box that moves is its own position's, by the shared Leitner
+    /// rule (forgiving demotion included), and the answer goes to the plan-spanning item history. Coins only for checked
+    /// hits that leave the card due in the future (decision 5) on its first review of the day, at the rate of the form the
+    /// card was asked in, never above
+    /// what is left of the bonus cap the bonus training shares. A card that is no longer due, whose position meanwhile
+    /// carries an open duty or plays another exercise, or whose exercise changed since the start is skipped: unpaid, and it
+    /// moves nothing. The child's concurrency stamp serializes the submit against every other one.
+    /// </summary>
+    public async Task<Outcome<MixedReviewResult>> SubmitAsync(int childId, int runId, IReadOnlyList<MixedReviewAnswer> answers,
+        CancellationToken ct)
+    {
+        // The child first: its stamp is the serialization point, and it only protects what is read AFTER it - loaded last,
+        // a second submit of the same round (double tap) would read it as still open and pay it twice.
+        var child = await db.Children.FirstAsync(c => c.Id == childId, ct);
+        var run = await db.MixedReviewRuns.Include(r => r.Cards)
+            .FirstOrDefaultAsync(r => r.Id == runId && r.ChildId == childId, ct);
+        if (run is null) return Outcome<MixedReviewResult>.Fail(ApiErrors.NotFound, "Mixed review round not found.");
+        if (run.CompletedAt is not null)
+            return Outcome<MixedReviewResult>.Fail(ApiErrors.MixedReviewCompleted, "This mixed review round has already been submitted.");
+
+        var today = learningDay.Today;
+        if (run.Day != today)
+        {
+            // Its cards were due on the day it was drawn; graded today they would move boxes on yesterday's verdict.
+            db.MixedReviewRuns.Remove(run);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // A parallel submit of the same round removed it first - the round is gone either way.
+                db.ChangeTracker.Clear();
+            }
+            return Outcome<MixedReviewResult>.Fail(ApiErrors.MixedReviewStale,
+                "This mixed review round was drawn on an earlier day; start a new one.");
+        }
+
+        var day = await progress.ComputeChildDayAsync(childId, today, ct);
+        if (!ExtraTrainingService.GateOf(day).Unlocked)
+            return Outcome<MixedReviewResult>.Fail(ApiErrors.ExtraTrainingLocked, LockedDetail);
+        var openDuty = day.Positions.Where(s => s.Cadence != GoalCadence.None && !s.GoalMet).Select(s => s.PositionId).ToHashSet();
+
+        var positionIds = run.Cards.Select(c => c.PlanPositionId).Distinct().ToList();
+        var positions = await db.PlanPositions.AsNoTracking().Include(p => p.StudyPlan)
+            .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites)
+            .Where(p => positionIds.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
+        var exerciseIds = run.Cards.Select(c => c.ExerciseId).Distinct().ToList();
+        var exercises = await db.Exercises.AsNoTracking().Where(e => exerciseIds.Contains(e.Id)).ToDictionaryAsync(e => e.Id, ct);
+        var itemsOf = new Dictionary<int, IReadOnlyList<ContentItem>>();
+        foreach (var exercise in exercises.Values) itemsOf[exercise.Id] = await content.ItemsOfAsync(exercise, ct: ct);
+        var progressRows = await db.PositionItemProgress
+            .Where(p => positionIds.Contains(p.PlanPositionId) && exerciseIds.Contains(p.ExerciseId))
+            .ToListAsync(ct);
+
+        // Items a test of today asked: its result showed their solutions (B-765 review, Sprint 130).
+        var testedToday = (await db.TestAttempts.AsNoTracking()
+                .Where(t => t.PlanPositionId != null && positionIds.Contains(t.PlanPositionId.Value) && t.Day == today)
+                .SelectMany(t => t.Results, (t, r) => new { t.PlanPositionId, r.ItemIndex })
+                .ToListAsync(ct))
+            .Where(r => r.PlanPositionId is not null && r.ItemIndex is not null)
+            .Select(r => (r.PlanPositionId!.Value, r.ItemIndex!.Value)).ToHashSet();
+
+        var byCard = new Dictionary<int, MixedReviewAnswer>();
+        foreach (var a in answers) byCard[a.CardId] = a;
+
+        // The cards that are still what they were at the start; everything else is skipped below.
+        var gradable = new List<(MixedReviewCard Card, PlanPosition Pos, Exercise Exercise, IExerciseType Type, PositionItemProgress Prog)>();
+        foreach (var card in run.Cards)
+        {
+            if (!positions.TryGetValue(card.PlanPositionId, out var pos) || pos.StudyPlan is not { } plan
+                || !PositionPlayService.PlanPlayableForChild(plan, today) || openDuty.Contains(pos.Id) || !pos.UseLeitner
+                || PositionPlayService.PlayedExerciseId(pos, today) != card.ExerciseId
+                || !exercises.TryGetValue(card.ExerciseId, out var exercise) || registry.ByKey(exercise.Type) is not { } type
+                || ExtraTrainingService.ContentFingerprint(exercise, itemsOf[exercise.Id]) != card.ContentHash
+                || card.ItemIndex >= itemsOf[exercise.Id].Count)
+                continue;
+            // Still due: a card got right in its position meanwhile is due in the future and is not graded again. A card
+            // missed there stays due today and is graded - like the practice asks a missed card again the same day.
+            if (progressRows.FirstOrDefault(p => p.PlanPositionId == pos.Id && p.ExerciseId == card.ExerciseId
+                    && p.ItemIndex == card.ItemIndex) is not { } prog
+                || prog.DueOn > today)
+                continue;
+            gradable.Add((card, pos, exercise, type, prog));
+        }
+
+        // One check per exercise and stage (risk 4): the grader takes one stage per call.
+        var verdicts = new Dictionary<int, PreviewItemOutcome>();
+        foreach (var group in gradable.GroupBy(g => (g.Exercise.Id, g.Card.Stage)))
+        {
+            var graded = await preview.CheckAsync(group.First().Exercise,
+                [.. group.Select(g => byCard.GetValueOrDefault(g.Card.Id) is { } a
+                    ? new PreviewAnswer(g.Card.ItemIndex, a.GivenAnswer, a.WasKnown)
+                    : new PreviewAnswer(g.Card.ItemIndex, null, null))],
+                group.Key.Stage, ct);
+            if (graded is null) continue;
+            foreach (var g in group)
+                if (graded.Items.FirstOrDefault(o => o.ItemIndex == g.Card.ItemIndex) is { } outcome)
+                    verdicts[g.Card.Id] = outcome;
+        }
+
+        var now = time.GetUtcNow().UtcDateTime;
+        var earned = new Dictionary<int, int>();
+        foreach (var (card, pos, exercise, type, prog) in gradable)
+        {
+            if (!verdicts.TryGetValue(card.Id, out var verdict)) continue;
+            var items = itemsOf[exercise.Id];
+            var cardStage = type.CardCeiling(items[card.ItemIndex], card.Stage);
+            // Only an answer the server checked on a typed stage is verified; a self-assessment is the child's claim.
+            var verified = type.IsTypedStage(cardStage);
+            var reviewCount = prog.ReviewCount;
+            // Met earlier today - introduced on its learn card, reviewed (missed in its position, or in an earlier round
+            // whose result showed the answer) or asked in a test whose result showed it: a hit now repeats what was just
+            // seen, and paying it would turn a word the child does not know into coins. The box moves all the same.
+            var seenToday = prog.IntroducedAt == today
+                || (prog.LastReviewedAt is { } last && learningDay.DayOf(last) == today)
+                || testedToday.Contains((pos.Id, card.ItemIndex));
+            play.ApplyReview(pos, prog, verdict.WasCorrect, verified, today, now);
+            // A claim moves the box like a review but is none for the score (pattern of the practice's self-assessment).
+            if (!verified) prog.ReviewCount = reviewCount;
+
+            var given = byCard.GetValueOrDefault(card.Id);
+            card.GivenAnswer = verified ? given?.GivenAnswer : null;
+            card.WasCorrect = verdict.WasCorrect;
+            await itemProgress.RecordAsync(childId, card.ExerciseId, PositionPlayService.AtStage(type, items, cardStage)[card.ItemIndex],
+                verdict.WasCorrect, cardStage, card.GivenAnswer, ItemReviewSource.Practice, pos.Id, today,
+                countsForMastery: verified, ct);
+
+            // Decision 5: a hit pays only when it leaves the card due in the future - with intervals of 0 days it would
+            // be due again at once and could be paid twice the same day - and only on the card's first review of the day.
+            if (verified && verdict.WasCorrect && prog.DueOn > today && !seenToday)
+                earned[card.Id] = extras.CardRate(exercise, type, items, items[card.ItemIndex], card.Stage);
+        }
+
+        var coinsBefore = await extras.CoinsTodayAsync(childId, today, ct);
+        var cap = extras.CapOf(child.BonusDailyCoinCap);
+        var left = cap is { } c ? Math.Max(0, c - coinsBefore) : int.MaxValue;
+        // The cap cuts in round order, so the result can say which card paid what.
+        foreach (var card in run.Cards.OrderBy(c => c.Order))
+        {
+            var pay = Math.Min(earned.GetValueOrDefault(card.Id), left);
+            card.CoinsAwarded = pay;
+            left -= pay;
+        }
+        var coins = run.Cards.Sum(c => c.CoinsAwarded);
+
+        run.CompletedAt = now;
+        run.CorrectCount = run.Cards.Count(c => c.WasCorrect == true);
+        run.CoinsAwarded = coins;
+        if (coins > 0)
+            db.ChildPointsEntries.Add(new ChildPointsEntry
+            {
+                ChildId = childId,
+                Kind = PointKind.ExtraTrainingCoins,
+                Amount = coins,
+                Reason = "Mischrunde",
+                CreatedAt = now,
+            });
+        // Booking coins credits the wallet - the stamp is bumped anyway, like the bonus training's submit: it serializes
+        // this submit against a second one of the same round and against every other wallet write.
+        child.ConcurrencyStamp = Guid.NewGuid();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            db.ChangeTracker.Clear();
+            return Outcome<MixedReviewResult>.Fail(ApiErrors.ConcurrencyConflict,
+                "Another round was saved at the same time. Please try again.");
+        }
+
+        var outcomes = new List<MixedReviewOutcome>(run.Cards.Count);
+        foreach (var card in run.Cards.OrderBy(c => c.Order))
+        {
+            var verdict = verdicts.GetValueOrDefault(card.Id);
+            var prog = gradable.FirstOrDefault(g => g.Card.Id == card.Id).Prog;
+            var title = exercises.TryGetValue(card.ExerciseId, out var ex) ? ex.Title : "";
+            outcomes.Add(new MixedReviewOutcome(card.Id, card.PlanPositionId, title, verdict?.Prompt, verdict?.Expected ?? "",
+                card.GivenAnswer, card.WasCorrect == true, card.WasCorrect is null, card.CoinsAwarded,
+                prog?.Box, prog?.DueOn, verdict?.GapIndex));
+        }
+        var total = run.Cards.Count(c => c.WasCorrect is not null);
+        var sumEarned = earned.Values.Sum();
+        return new Outcome<MixedReviewResult>(new MixedReviewResult(run.Id, total, run.CorrectCount, coins, sumEarned,
+            coins < sumEarned, coinsBefore + coins, cap, outcomes));
     }
 
     private Task<MixedReviewRun?> OpenRunAsync(int childId, CancellationToken ct) =>

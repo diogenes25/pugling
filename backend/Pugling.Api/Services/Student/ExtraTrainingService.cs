@@ -305,8 +305,13 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         return CapOf(childCap) is { } cap ? Math.Max(0, cap - await CoinsTodayAsync(childId, today, ct)) : int.MaxValue;
     }
 
+    /// <summary>
+    /// The bonus coins of a day - bonus runs and mixed review rounds together (B-765 decision 4): one cap for every extra
+    /// round, so the child sees one number and two kinds of rounds cannot pay the cap twice.
+    /// </summary>
     internal async Task<int> CoinsTodayAsync(int childId, DateOnly day, CancellationToken ct) =>
-        await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0;
+        (await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0)
+        + (await db.MixedReviewRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0);
 
     private record PoolEntry(ExtraExercise Row, Exercise Exercise, IExerciseType Type, int Stage, IReadOnlyList<ContentItem> Items);
 

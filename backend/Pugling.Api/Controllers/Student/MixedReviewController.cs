@@ -43,4 +43,22 @@ public class MixedReviewController(MixedReviewService mixed) : ControllerBase
         var outcome = await mixed.StartAsync(childId, ct);
         return outcome.Value is { } run ? run : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
     }
+
+    /// <summary>
+    /// Grades a mixed review round and books its coins (B-765): each card moves the box of its own position; checked hits
+    /// pay within the bonus cap the bonus training shares. A round is graded once: <c>409 mixed_review_completed</c> on a
+    /// second submit. <c>409 mixed_review_stale</c> for a round drawn on an earlier day - it is discarded unpaid.
+    /// <c>409 extra_training_locked</c> when the goals the bonus training waits for are not met (any more).
+    /// </summary>
+    [HttpPost("runs/{runId:int}/submit")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<MixedReviewResult>> Submit(int childId, int runId, SubmitMixedReviewDto dto, CancellationToken ct)
+    {
+        if (!User.IsStudent()) return Forbid();
+        var outcome = await mixed.SubmitAsync(childId, runId, dto.Answers, ct);
+        return outcome.Value is { } result ? result : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
+    }
 }
