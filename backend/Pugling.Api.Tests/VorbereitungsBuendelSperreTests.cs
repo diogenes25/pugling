@@ -102,6 +102,34 @@ public class VorbereitungsBuendelSperreTests(PuglingWebAppFactory factory) : ICl
         Assert.False(ganzesSchlagwort ? TagDa(f) : Verknuepft(f));
     }
 
+    // Review: a test nobody marked as written must not hold the tag for good. One row per side of the boundary and per
+    // way: red when the lock ignores the date (the overdue rows stay locked), and red when it already lets go on the
+    // test day itself (the rows of day 0 come free).
+    [Theory]
+    [InlineData(-1, false, false)]
+    [InlineData(-1, true, false)]
+    [InlineData(0, false, true)]
+    [InlineData(0, true, true)]
+    public async Task Eine_Ueberfaellige_Geplante_Arbeit_Sperrt_Nicht_Mehr(int tageBisZurArbeit, bool ganzesSchlagwort, bool gesperrt)
+    {
+        var f = await FallAsync();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var today = scope.ServiceProvider.GetRequiredService<LearningDay>().Today;
+            db.Klassenarbeiten.Single(k => k.Id == f.TestId).ScheduledDate = today.AddDays(tageBisZurArbeit);
+            db.SaveChanges();
+        }
+
+        var res = ganzesSchlagwort
+            ? await f.Child.DeleteAsync($"/api/v1/creator/tags/{f.TagId}")
+            : await f.Child.DeleteAsync($"/api/v1/creator/tags/{f.TagId}/exercises/{f.ExerciseId}");
+
+        if (gesperrt) await GesperrtAsync(res);
+        else Assert.Equal(HttpStatusCode.NoContent, res.StatusCode);
+        Assert.Equal(gesperrt, ganzesSchlagwort ? TagDa(f) : Verknuepft(f));
+    }
+
     // AK 4, one row per way. Red when the lock also applies to adults.
     [Theory]
     [InlineData(false)]

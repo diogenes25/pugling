@@ -25,8 +25,10 @@ export function VaterRueckmeldungen() {
   const [params, setParams] = useSearchParams();
   const ausUrl = Number(params.get("childId"));
   const gewaehlt = Number.isInteger(ausUrl) && ausUrl > 0 ? ausUrl : null;
-  const childId: number | "" = gewaehlt !== null && (children.data === null || children.data.some((c) => c.id === gewaehlt))
-    ? gewaehlt : "";
+  const childId: number | "" = gewaehlt !== null && children.data?.some((c) => c.id === gewaehlt) ? gewaehlt : "";
+  // Eine Id aus der URL ist erst geprüft, wenn die Kinder da sind: bis dahin wartet die Liste, statt mit einer fremden Id
+  // zu fragen. Scheitert das Laden der Kinder, gilt „alle Kinder“ – die Auswahl kann dann nichts anderes zeigen.
+  const wartetAufKinder = gewaehlt !== null && children.showPlaceholder;
   const setChildId = (id: number | "") => setParams((p) => {
     const next = new URLSearchParams(p);
     if (id === "") next.delete("childId"); else next.set("childId", String(id));
@@ -34,8 +36,10 @@ export function VaterRueckmeldungen() {
   }, { replace: true });
   const [status, setStatus] = useState<StatusFilter>("Open");
   const list = useAsync<FeedbackEntry[]>(
-    () => api.listFeedback(childId === "" ? undefined : childId, status === "alle" ? undefined : status),
-    [childId, status]);
+    () => (wartetAufKinder
+      ? new Promise<FeedbackEntry[]>(() => {})
+      : api.listFeedback(childId === "" ? undefined : childId, status === "alle" ? undefined : status)),
+    [childId, status, wartetAufKinder]);
   // Eine Instanz für die ganze Liste: eine laufende Änderung sperrt die übrigen Knöpfe sichtbar (`disabled={busy}`).
   const action = useAction();
 

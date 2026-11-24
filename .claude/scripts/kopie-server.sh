@@ -16,7 +16,10 @@
 # Bleibt der Prozess nach dem Stoppen am Port hängen: Pugling.Api.exe auf dem Port beenden.
 set -euo pipefail
 
-root="${CLAUDE_PROJECT_DIR:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
+# Zwei Orte: gebaut wird der Checkout, in dem dieses Skript liegt (aus einem Worktree also dessen Code und Migrationen –
+# nicht $CLAUDE_PROJECT_DIR, das auf den Haupt-Checkout zeigt); die echte DB ist gitignored und liegt nur im Haupt-Checkout.
+hier="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+haupt="$(dirname "$(git -C "$hier" rev-parse --path-format=absolute --git-common-dir)")"
 ziel="${1:-${TMPDIR:-/tmp}/pugling-kopie}"
 port="${2:-5201}"
 pin="${PUGLING_KOPIE_PIN:-4711}"
@@ -24,9 +27,12 @@ pin="${PUGLING_KOPIE_PIN:-4711}"
 
 mkdir -p "$ziel"
 kopie="$ziel/kopie.db"
+# Unter Git Bash als Windows-Pfad: Python bekäme /tmp/… als Argument übersetzt, die API im Verbindungsstring nicht –
+# beide müssen dieselbe Datei meinen.
+if command -v cygpath >/dev/null 2>&1; then kopie="$(cygpath -m "$kopie")"; fi
 rm -f "$kopie" "$kopie-wal" "$kopie-shm"
 
-python -I - "$root/backend/Pugling.Api/pugling.db" "$kopie" "$pin" <<'PY'
+python -I - "$haupt/backend/Pugling.Api/pugling.db" "$kopie" "$pin" <<'PY'
 import base64, hashlib, os, sqlite3, sys
 quelle, kopie, pin = sys.argv[1:4]
 src = sqlite3.connect(f"file:{quelle}?mode=ro", uri=True)
@@ -47,7 +53,7 @@ for k in konten:
 PY
 
 echo "Kopie: $kopie · API: http://127.0.0.1:$port/api/v1"
-cd "$root/backend/Pugling.Api"
+cd "$hier/backend/Pugling.Api"
 exec env ASPNETCORE_ENVIRONMENT=Production ASPNETCORE_URLS="http://127.0.0.1:$port" \
   "ConnectionStrings__Default=Data Source=$kopie" Jwt__Key="pm-walk-local-only-key-$(date +%s)-0123456789abcdef" \
   Seed__Enabled=false RateLimiting__LoginEnabled=false \

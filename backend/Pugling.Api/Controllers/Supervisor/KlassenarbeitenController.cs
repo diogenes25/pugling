@@ -26,17 +26,19 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     private const decimal DefaultBadGrade = 4.0m;
 
     /// <summary>The class test as the supervisor reads it, with what its preparation duty asks (B-752/B-757).</summary>
-    private async Task<KlassenarbeitResponse> MapAsync(Klassenarbeit k, CancellationToken ct) => new(
-        k.Id, k.ChildId, k.SubjectId, k.Subject?.Name, k.Title, k.Topic, k.ScheduledDate, k.Status,
-        k.Grade, k.GradeComment, k.Exercises.Count,
-        k.Tags.Where(t => t.Tag is not null)
-            .Select(t => new TagRef(t.Tag!.Id, t.Tag!.Name, t.Tag!.Color))
-            .OrderBy(t => t.Name).ToList(),
-        k.CreatedAt,
-        k.PrepWindowDays, prep.DefaultWindowDays,
-        await prep.CardsPerDayAsync(k, learningDay.Today, ct),
-        await prep.BlockReasonAsync(k, ct),
-        await prep.NotExecutableCountAsync(k, learningDay.Today, ct));
+    private async Task<KlassenarbeitResponse> MapAsync(Klassenarbeit k, CancellationToken ct)
+    {
+        var duty = await prep.SummaryAsync(k, learningDay.Today, ct);
+        return new(
+            k.Id, k.ChildId, k.SubjectId, k.Subject?.Name, k.Title, k.Topic, k.ScheduledDate, k.Status,
+            k.Grade, k.GradeComment, k.Exercises.Count,
+            k.Tags.Where(t => t.Tag is not null)
+                .Select(t => new TagRef(t.Tag!.Id, t.Tag!.Name, t.Tag!.Color))
+                .OrderBy(t => t.Name).ToList(),
+            k.CreatedAt,
+            k.PrepWindowDays, prep.DefaultWindowDays,
+            duty.CardsPerDay, duty.BlockedReason, duty.NotExecutableCount);
+    }
 
     private async Task<List<KlassenarbeitResponse>> MapAllAsync(IEnumerable<Klassenarbeit> tests, CancellationToken ct)
     {

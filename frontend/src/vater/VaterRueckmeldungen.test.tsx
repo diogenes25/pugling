@@ -54,7 +54,20 @@ describe("VaterRueckmeldungen", () => {
     render(<AuthProvider><MemoryRouter initialEntries={["/vater/rueckmeldungen?childId=2"]}><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
     await act(async () => {});
     expect(list).toHaveBeenLastCalledWith(undefined, "Open");
+    // Rot, wenn die Seite vor dem Laden der Kinder schon mit der ungeprüften Id fragt.
+    expect(list).not.toHaveBeenCalledWith(2, "Open");
     expect((screen.getByLabelText("Kind") as HTMLSelectElement).value).toBe("");
+  });
+
+  // Review-Fund: scheitert das Laden der Kinder, kann die Auswahl nur „alle Kinder“ zeigen – die Liste muss dazu passen.
+  // Rot, wenn die Seite dann bei der Id aus dem Link bleibt oder gar nicht mehr fragt.
+  it("fragt alle Kinder ab, wenn die Kinder nicht laden", async () => {
+    vi.spyOn(api, "children").mockRejectedValue(new Error("kaputt"));
+    const list = vi.spyOn(api, "listFeedback").mockResolvedValue([]);
+    render(<AuthProvider><MemoryRouter initialEntries={["/vater/rueckmeldungen?childId=2"]}><VaterRueckmeldungen /></MemoryRouter></AuthProvider>);
+    await act(async () => {});
+    expect(list).toHaveBeenLastCalledWith(undefined, "Open");
+    expect(list).not.toHaveBeenCalledWith(2, "Open");
   });
 
   // Review-Fund: die Auswahl schreibt in die URL zurück, „alle Kinder“ entfernt den Parameter. Rot, wenn der Wechsel nur im

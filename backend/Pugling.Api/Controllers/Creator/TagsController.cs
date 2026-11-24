@@ -19,7 +19,7 @@ namespace Pugling.Api.Controllers.Creator;
 [Tags("Creator – Tags")]
 [Produces("application/json")]
 [Authorize]
-public class TagsController(PuglingDbContext db, AuthAccess access) : ControllerBase
+public class TagsController(PuglingDbContext db, AuthAccess access, LearningDay learningDay) : ControllerBase
 {
     // Attribution of "who tagged": student → child, every adult (creator and/or supervisor) → supervisor.
     // Do not check IsSupervisor alone - a pure creator (teacher accounts) is an adult as well.
@@ -50,19 +50,23 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     /// The one lock for every way a student shrinks the exercises of a tag (B-940): while a planned class test is linked
     /// to the tag, its exercises are the test's material and the preparation duty reads them live. Returns the error
     /// result, or null when the change may proceed. Adults are never locked - the supervisor re-plans on purpose.
+    /// A planned test whose day has passed no longer locks: nothing is prepared for it any more, and a test nobody
+    /// marked as written would otherwise hold the child's tag for good.
     /// </summary>
     private async Task<ObjectResult?> ClassTestLockAsync(Tag tag, CancellationToken ct)
     {
         if (!User.IsStudent()) return null;
+        var today = learningDay.Today;
         var test = await db.KlassenarbeitTags.AsNoTracking()
-            .Where(kt => kt.TagId == tag.Id && kt.Klassenarbeit!.Status == KlassenarbeitStatus.Planned)
+            .Where(kt => kt.TagId == tag.Id && kt.Klassenarbeit!.Status == KlassenarbeitStatus.Planned
+                && kt.Klassenarbeit.ScheduledDate >= today)
             .OrderBy(kt => kt.Klassenarbeit!.ScheduledDate)
             .Select(kt => new { kt.Klassenarbeit!.Title, kt.Klassenarbeit.ScheduledDate })
             .FirstOrDefaultAsync(ct);
-        // The way out named is the only one that lifts the lock: the child cannot unlink the tag from the test itself.
+        // The ways out named are the only ones that lift the lock: the child cannot unlink the tag from the test itself.
         return test is null ? null : this.ProblemWithCode(ApiErrors.TagLockedByClassTest,
             $"The tag belongs to the class test '{test.Title}' on {test.ScheduledDate.ToString("O", CultureInfo.InvariantCulture)}. "
-            + "It stays as it is until the test is written or cancelled, or a supervisor removes the tag from the test.");
+            + "It stays as it is until the test day has passed, the test is written or cancelled, or a supervisor removes the tag from the test.");
     }
 
     /// <summary>All tags of a child (student: own only, adult: own children only).</summary>

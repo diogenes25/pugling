@@ -824,6 +824,34 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         Assert.Empty(Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepLeftOutExerciseIds)!);
     }
 
+    // Review: a start that made no position (its only assignable exercise was in the plan already) leaves the whole daily
+    // penalty to the pull-in. Red when the pulled-in positions take the plain share without the rest (2 + 2 = 4 of 5).
+    [Fact]
+    public async Task Nachziehen_Nach_Einem_Start_Ohne_Position_Verteilt_Den_Ganzen_Tagesmalus()
+    {
+        var k = await KindAsync();
+        var imPlan = await VokabelnAsync(k.Father);
+        var a = await VokabelnAsync(k.Father);
+        var b = await VokabelnAsync(k.Father);
+        Db(db => db.PlanPositions.Add(new PlanPosition { StudyPlanId = k.PlanId, ExerciseId = imPlan, Cadence = GoalCadence.None }));
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [imPlan, a, b]);
+        Zurueckgezogen(a, grantTo: null);
+        Zurueckgezogen(b, grantTo: null);
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        // The premise of the case: started, and nothing made for the test.
+        Assert.NotNull(Read(db => db.Klassenarbeiten.Single(x => x.Id == arbeit).PrepStartedOn));
+        Assert.DoesNotContain(Positionen(k.PlanId), p => p.SourceKlassenarbeitId == arbeit);
+
+        Zurueckgezogen(a, grantTo: VaterVon(k));
+        Zurueckgezogen(b, grantTo: VaterVon(k));
+        await LoginAsync(k);
+
+        var nach = Positionen(k.PlanId).Where(p => p.SourceKlassenarbeitId == arbeit).OrderBy(p => p.ExerciseId).ToList();
+        Assert.Equal([3, 2], nach.Select(p => p.PenaltyCoins).ToArray()); // 5 / 2 = 2, the rest on the first
+    }
+
     // B-947 AK 3, 5. Red when the pull-in reads the live bundle instead of the start's snapshot (the frozen bundle would come
     // alive again), or when the hint after the start counts an exercise no grant would pull in. The start leaves one
     // exercise out on purpose: with an empty snapshot the pull-in would never run, and the case could not fail (Sprint 138).

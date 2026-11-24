@@ -165,7 +165,7 @@ public static class ApiErrors
     /// <summary>
     /// A student tried to shrink a tag that a planned class test is linked to - remove an exercise from it or delete it
     /// (409, B-940). The tag is part of the test's material, and the preparation duty reads it live: the child would
-    /// otherwise decide what it has to prepare. Adults are not locked.
+    /// otherwise decide what it has to prepare. Adults are not locked, and a test whose day has passed no longer locks.
     /// </summary>
     public static readonly ApiError TagLockedByClassTest = new("tag_locked_by_class_test", 409, "Tag is linked to a planned class test.");
     /// <summary>

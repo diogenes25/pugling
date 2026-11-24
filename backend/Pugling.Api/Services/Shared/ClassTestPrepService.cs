@@ -15,8 +15,10 @@ public sealed class ClassTestPrepOptions
     public int DefaultWindowDays { get; set; } = 7;
 
     /// <summary>
-    /// The penalty one class test costs per missed day, spread over its preparation positions (decision 8). Same value as
-    /// the wizard's "normal" penalty (<c>VaterWizard.tsx</c>), which is still a client constant.
+    /// The penalty one class test costs per missed day, spread over the preparation positions its start makes (decision 8).
+    /// Positions pulled in after the start add their own share on top (B-947, decision 3): the running ones keep theirs,
+    /// so the sum can then exceed this value. Same value as the wizard's "normal" penalty (<c>VaterWizard.tsx</c>), which
+    /// is still a client constant.
     /// </summary>
     public int PenaltyCoinsPerDay { get; set; } = 5;
 
@@ -27,6 +29,13 @@ public sealed class ClassTestPrepOptions
     /// </summary>
     public int MaxCardsPerDay { get; set; } = 10;
 }
+
+/// <summary>
+/// What the supervisor's list shows of one test's preparation duty: "about N cards a day" (<c>null</c> when no duty
+/// arises), why none arises for a planned test, and how many bundle exercises the duty leaves out for lack of an execute
+/// permission.
+/// </summary>
+public sealed record ClassTestPrepSummary(int? CardsPerDay, string? BlockedReason, int NotExecutableCount);
 
 /// <summary>
 /// The preparation duty before a class test (B-752): in the window before a planned test, every exercise of its bundle
@@ -66,16 +75,9 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             : db.StudyPlans.Where(p => p.ChildId == k.ChildId && p.Active && p.SubjectId == subjectId)
                 .OrderByDescending(p => p.ActivatedAt).ThenByDescending(p => p.Id).FirstOrDefaultAsync(ct);
 
-    /// <summary>
-    /// Why no preparation duty arises for a planned test with a window (decision 4): no subject, or no active plan in it.
-    /// <c>null</c> when it can arise - and for tests that are not planned or have the duty switched off.
-    /// </summary>
-    public async Task<string?> BlockReasonAsync(Klassenarbeit k, CancellationToken ct)
-    {
-        if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0) return null;
-        if (k.SubjectId is null) return ClassTestPrepBlockReasons.NoSubject;
-        return await PlanForAsync(k, ct) is null ? ClassTestPrepBlockReasons.NoActivePlan : null;
-    }
+    /// <summary>The exercises that already have a position in <paramref name="plan"/> (none without a plan).</summary>
+    private async Task<List<int>> InPlanAsync(StudyPlan? plan, CancellationToken ct) =>
+        plan is null ? [] : await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct);
 
     // ---- Dose ----
 
@@ -99,17 +101,42 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         Math.Min(c.TakesDose ? (int)Math.Ceiling(c.Cards / (double)Math.Max(1, days)) : c.Cards, Options.MaxCardsPerDay);
 
     /// <summary>
-    /// "About N cards a day" for the supervisor's list (B-757): what the child plays daily for this test - every position of
-    /// the subject's active plan that is a daily duty today and plays a bundle exercise or was made for the test (B-948: the
-    /// load already in the plan counts too, else a test whose exercises are all assigned reads "0"), plus, before the start,
-    /// the positions the duty would still make over its window. <c>null</c> when no duty arises (not planned, window 0,
-    /// blocked, the test day reached).
+    /// The preparation duty of one test as the supervisor's list shows it. Plan, bundle and the plan's exercises are read
+    /// once and shared by the three figures - the list maps every row through here.
+    /// <para>
+    /// <c>BlockedReason</c> (decision 4): no subject, or no active plan in it; <c>null</c> when a duty can arise, and for
+    /// tests that are not planned or have the duty switched off.
+    /// </para>
+    /// <para>
+    /// <c>CardsPerDay</c> (B-757): what the child plays daily for this test - every position of the subject's active plan
+    /// that is a daily duty today and plays a bundle exercise or was made for the test (B-948: the load already in the plan
+    /// counts too, else a test whose exercises are all assigned reads "0"), plus, before the start, the positions the duty
+    /// would still make over its window. <c>null</c> when no duty arises (not planned, window 0, blocked, the test day reached).
+    /// </para>
+    /// <para>
+    /// <c>NotExecutableCount</c> (B-941): withdrawn material stops new assignments, and starting the duty is one - shown so
+    /// a silently shorter duty has a reason. An exercise already in the plan is not left out (it is played there), and from
+    /// the test day on nothing is owed.
+    /// </para>
     /// </summary>
-    public async Task<int?> CardsPerDayAsync(Klassenarbeit k, DateOnly today, CancellationToken ct)
+    public async Task<ClassTestPrepSummary> SummaryAsync(Klassenarbeit k, DateOnly today, CancellationToken ct)
     {
-        if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0 || today >= k.ScheduledDate) return null;
-        if (await PlanForAsync(k, ct) is not { } plan) return null;
+        if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0) return new(null, null, 0);
+        var plan = await PlanForAsync(k, ct);
+        var blocked = k.SubjectId is null ? ClassTestPrepBlockReasons.NoSubject
+            : plan is null ? ClassTestPrepBlockReasons.NoActivePlan : null;
+        if (today >= k.ScheduledDate) return new(null, blocked, 0);
+
         var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
+        var inPlan = await InPlanAsync(plan, ct);
+        var leftOut = await LeftOutAsync(k, bundle, inPlan, ct);
+        // After the start the hint counts only what a grant still pulls in (B-947): the start's snapshot. Anything that
+        // joined the frozen bundle later would never become a duty, so the hint must not advise a grant for it.
+        var notExecutable = k.PrepStartedOn is null
+            ? leftOut.Count
+            : leftOut.Count(id => k.PrepLeftOutExerciseIds?.Contains(id) == true);
+        if (plan is null) return new(null, blocked, notExecutable);
+
         var positions = await db.PlanPositions.AsNoTracking()
             .Where(p => p.StudyPlanId == plan.Id && (p.SourceKlassenarbeitId == k.Id || bundle.Contains(p.ExerciseId)))
             .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites).ToListAsync(ct);
@@ -122,8 +149,8 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             sum += play.PoolSize(p, today, (await play.ItemsOfAsync(p, today, ct: ct)).Count);
         }
         if (k.PrepStartedOn is null)
-            foreach (var c in await NewCandidatesAsync(k, plan, ct)) sum += DailyCards(c, WindowOf(k));
-        return sum;
+            foreach (var c in await NewCandidatesAsync(k, bundle, inPlan, ct)) sum += DailyCards(c, WindowOf(k));
+        return new(sum, blocked, notExecutable);
     }
 
     /// <summary>
@@ -142,42 +169,22 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         db.Exercises.Where(e => e.ExecutePublic || db.ExerciseGrants.Any(g => g.ExerciseId == e.Id
             && db.SupervisorLinks.Any(l => l.StudentId == childId && l.SupervisorId == g.CreatorId)));
 
-    /// <summary>
-    /// How many bundle exercises the duty leaves out for lack of an execute permission (B-941) - withdrawn material stops
-    /// new assignments, and starting the duty is one. Shown to the supervisor, so a silently shorter duty has a reason. An
-    /// exercise already in the plan is not left out (it is played there), and from the test day on nothing is owed.
-    /// </summary>
-    public async Task<int> NotExecutableCountAsync(Klassenarbeit k, DateOnly today, CancellationToken ct)
-    {
-        // No duty, nothing left out of it - the same bounds as CardsPerDayAsync.
-        if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0 || today >= k.ScheduledDate) return 0;
-        var leftOut = await LeftOutAsync(k, ct);
-        // After the start the hint counts only what a grant still pulls in (B-947): the start's snapshot. Anything that
-        // joined the frozen bundle later would never become a duty, so the hint must not advise a grant for it.
-        return k.PrepStartedOn is null ? leftOut.Count : leftOut.Count(id => k.PrepLeftOutExerciseIds?.Contains(id) == true);
-    }
-
     /// <summary>The bundle exercises the duty leaves out right now: not executable for the child's supervisors and not in the plan.</summary>
-    private async Task<List<int>> LeftOutAsync(Klassenarbeit k, CancellationToken ct)
+    private async Task<List<int>> LeftOutAsync(Klassenarbeit k, List<int> bundle, List<int> inPlan, CancellationToken ct)
     {
-        var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
         if (bundle.Count == 0) return [];
         var executable = await ExecutableFor(k.ChildId).Where(e => bundle.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
-        var inPlan = await PlanForAsync(k, ct) is { } plan
-            ? await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct)
-            : [];
         return bundle.Where(id => !executable.Contains(id) && !inPlan.Contains(id)).ToList();
     }
 
     /// <summary>
-    /// The bundle exercises that would become a new position in <paramref name="plan"/>: executable for the child's
-    /// supervisors (B-941), not already in it (decision 3, AK 4) and with something to play - an empty exercise would be a
-    /// duty nobody can meet. The one sink for both the start and the supervisor's "about N cards a day".
+    /// The bundle exercises that would become a new position in the plan: executable for the child's supervisors (B-941),
+    /// not already in it (decision 3, AK 4) and with something to play - an empty exercise would be a duty nobody can
+    /// meet. The one sink for the start, the pull-in and the supervisor's "about N cards a day".
     /// </summary>
-    private async Task<List<Candidate>> NewCandidatesAsync(Klassenarbeit k, StudyPlan plan, CancellationToken ct)
+    private async Task<List<Candidate>> NewCandidatesAsync(Klassenarbeit k, List<int> bundle, List<int> inPlan,
+        CancellationToken ct)
     {
-        var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
-        var inPlan = await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct);
         var exercises = await ExecutableFor(k.ChildId).Include(e => e.Prerequisites)
             .Where(e => bundle.Contains(e.Id) && !inPlan.Contains(e.Id))
             .OrderBy(e => e.Id).ToListAsync(ct);
@@ -220,7 +227,7 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             var claimed = await db.Klassenarbeiten.Where(x => x.Id == k.Id && x.PrepStartedOn == null)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.PrepStartedOn, today), ct);
             if (claimed == 0) continue;
-            await StartAsync(k, plan, today, ct);
+            await StartAsync(k, plan, bundle, today, ct);
             // Saved per test: the next test's "already in the plan?" reads the database, and must see these positions.
             await db.SaveChangesAsync(ct);
             if (tx is not null) await tx.CommitAsync(ct);
@@ -238,7 +245,9 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     private async Task PullInAsync(Klassenarbeit k, StudyPlan plan, DateOnly today, CancellationToken ct)
     {
         var snapshot = k.PrepLeftOutExerciseIds!;
-        var candidates = (await NewCandidatesAsync(k, plan, ct)).Where(c => snapshot.Contains(c.Exercise.Id)).ToList();
+        var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
+        var candidates = (await NewCandidatesAsync(k, bundle, await InPlanAsync(plan, ct), ct))
+            .Where(c => snapshot.Contains(c.Exercise.Id)).ToList();
         if (candidates.Count == 0) return;
         var remaining = snapshot.Where(id => candidates.All(c => c.Exercise.Id != id)).ToList();
 
@@ -248,11 +257,13 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.PrepLeftOutExerciseIds, remaining), ct);
         if (claimed == 0) return;
         k.PrepLeftOutExerciseIds = remaining;
-        // The running positions keep their penalty: a lowered share would change days not yet settled. The new ones bear
-        // the share the test's daily penalty gives every position now.
         var made = await db.PlanPositions.CountAsync(p => p.SourceKlassenarbeitId == k.Id, ct);
+        // The start made nothing (its exercises were all in the plan already): these are the test's first positions and
+        // split the whole daily penalty exactly like a start.
+        // Otherwise the running positions keep their penalty - a lowered share would change days not yet settled - and
+        // the new ones bear the share the test's daily penalty gives every position now, at least 1 (B-947, decision 3).
         var share = Math.Max(1, Options.PenaltyCoinsPerDay / (made + candidates.Count));
-        await AddPositionsAsync(k, plan, today, candidates, _ => share, ct);
+        await AddPositionsAsync(k, plan, today, candidates, made == 0 ? StartPenalty(candidates.Count) : _ => share, ct);
         await db.SaveChangesAsync(ct);
         if (tx is not null) await tx.CommitAsync(ct);
     }
@@ -262,17 +273,26 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     /// position for every bundle exercise not yet in the plan, owing from today on (no retroactive penalty), ending the
     /// day before the test, the test's daily penalty spread over them (rest on the first) and no goal reward (decision 8).
     /// </summary>
-    private async Task StartAsync(Klassenarbeit k, StudyPlan plan, DateOnly today, CancellationToken ct)
+    private async Task StartAsync(Klassenarbeit k, StudyPlan plan, List<int> bundle, DateOnly today, CancellationToken ct)
     {
         k.PrepStartedOn = today;
+        var inPlan = await InPlanAsync(plan, ct);
         // What the start leaves out for lack of permission - a later grant pulls exactly these in (B-947).
-        k.PrepLeftOutExerciseIds = await LeftOutAsync(k, ct);
-        var candidates = await NewCandidatesAsync(k, plan, ct);
+        k.PrepLeftOutExerciseIds = await LeftOutAsync(k, bundle, inPlan, ct);
+        var candidates = await NewCandidatesAsync(k, bundle, inPlan, ct);
         if (candidates.Count == 0) return;
+        await AddPositionsAsync(k, plan, today, candidates, StartPenalty(candidates.Count), ct);
+    }
 
-        var share = Options.PenaltyCoinsPerDay / candidates.Count;
-        var rest = Options.PenaltyCoinsPerDay - share * candidates.Count;
-        await AddPositionsAsync(k, plan, today, candidates, i => share + (i == 0 ? rest : 0), ct);
+    /// <summary>
+    /// The test's daily penalty spread over the <paramref name="count"/> first positions of its duty (decision 8): an equal
+    /// share each, the rest on the first - the sum is always the configured penalty.
+    /// </summary>
+    private Func<int, int> StartPenalty(int count)
+    {
+        var share = Options.PenaltyCoinsPerDay / count;
+        var rest = Options.PenaltyCoinsPerDay - share * count;
+        return i => share + (i == 0 ? rest : 0);
     }
 
     /// <summary>
