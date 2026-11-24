@@ -68,7 +68,7 @@ describe("Vorbereitungs-Fenster (B-757)", () => {
   const arbeit = (over: Partial<KlassenarbeitResponse>): KlassenarbeitResponse => ({
     id: 5, childId: 1, subjectId: 3, subjectName: "Englisch", title: "Vokabeltest", topic: null, scheduledDate: "2026-12-01",
     status: "Planned", grade: null, gradeComment: null, directExerciseCount: 2, tags: [], createdAt: "2026-11-23T10:00:00Z",
-    prepWindowDays: null, prepWindowDefault: 7, prepCardsPerDay: 4, prepBlockedReason: null, ...over,
+    prepWindowDays: null, prepWindowDefault: 7, prepCardsPerDay: 4, prepBlockedReason: null, prepNotExecutableCount: 0, ...over,
   } as KlassenarbeitResponse);
 
   // AK 1 (Anlegen). Rot, wenn das Formular `prepWindowDays` nicht schickt oder ein leeres Feld als 0 schickt.
@@ -100,10 +100,21 @@ describe("Vorbereitungs-Fenster (B-757)", () => {
     expect(container.textContent).toContain("7 Tage (Standard)");
     rerender(<VorbereitungsZelle k={arbeit({ prepWindowDays: 0, prepCardsPerDay: null })} />);
     expect(container.textContent).toBe("aus");
-    rerender(<VorbereitungsZelle k={arbeit({ status: "Written", prepCardsPerDay: null })} />);
-    expect(container.textContent).not.toMatch(/Karten/);
-    rerender(<VorbereitungsZelle k={arbeit({ status: "Cancelled", prepCardsPerDay: null })} />);
-    expect(container.textContent).not.toMatch(/Karten/);
+    // B-943: mit einer Zahl im Datensatz – sonst bleibt „Karten“ auch ohne die Statusprüfung fern.
+    rerender(<VorbereitungsZelle k={arbeit({ status: "Written", prepCardsPerDay: 4 })} />);
+    expect(container.textContent).toBe("–");
+    rerender(<VorbereitungsZelle k={arbeit({ status: "Cancelled", prepCardsPerDay: 4 })} />);
+    expect(container.textContent).toBe("–");
+  });
+
+  // B-941 AK 5. Rot, wenn der Hinweis fehlt oder bei 0 erscheint.
+  it("nennt ausgelassene Übungen ohne Ausführ-Recht – und nur, wenn es welche gibt", () => {
+    const { rerender, container } = render(<VorbereitungsZelle k={arbeit({ prepNotExecutableCount: 2 })} />);
+    expect(container.textContent).toContain("2 Übungen ohne Ausführ-Recht ausgelassen");
+    rerender(<VorbereitungsZelle k={arbeit({ prepNotExecutableCount: 1 })} />);
+    expect(container.textContent).toContain("1 Übung ohne Ausführ-Recht ausgelassen");
+    rerender(<VorbereitungsZelle k={arbeit({ prepNotExecutableCount: 0 })} />);
+    expect(container.textContent).not.toMatch(/ausgelassen/);
   });
 
   // AK 3. Rot, wenn der Grund fehlt oder bei vorhandener Pflicht ein Grund steht.
@@ -142,5 +153,27 @@ describe("Vorbereitungs-Fenster (B-757)", () => {
     fireEvent.change(screen.getByTitle("Note"), { target: { value: "2" } });
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "OK" })); });
     expect(aendern).toHaveBeenCalledWith(5, { grade: 2, status: "Written" });
+  });
+
+  // B-942. Rot, wenn die Detailkarte den Editor am gespeicherten Wert schlüsselt: das Neuladen nach dem Speichern bringt
+  // `prepWindowDays: 3` statt 5, der Editor würde neu montiert und verlöre die Meldung.
+  it("die Erfolgsmeldung des Fensters übersteht das Neuladen der Detailkarte", async () => {
+    vi.spyOn(api, "classTests").mockResolvedValue({ items: [arbeit({ prepWindowDays: 5 })], total: 1 } as never);
+    vi.spyOn(api, "subjects").mockResolvedValue([]);
+    vi.spyOn(api, "classTestRepeat").mockResolvedValue({ minBadGrade: 4, sources: [] } as never);
+    vi.spyOn(api, "classTestPractice").mockResolvedValue({ daysUntil: 7, exercises: [] } as never);
+    vi.spyOn(api, "searchExercises").mockResolvedValue({ items: [], total: 0 } as never);
+    const detail = vi.spyOn(api, "classTest")
+      .mockResolvedValueOnce({ klassenarbeit: arbeit({ prepWindowDays: 5 }), assignedExercises: [] } as never)
+      .mockResolvedValue({ klassenarbeit: arbeit({ prepWindowDays: 3 }), assignedExercises: [] } as never);
+    vi.spyOn(api, "updateClassTest").mockResolvedValue({} as never);
+    render(<AuthProvider><ClassTestManager childId={1} /></AuthProvider>);
+    await act(async () => {});
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Übungen & Vorbereiten" })); });
+    fireEvent.change(screen.getByLabelText("Vorbereitung (Tage, leer = Standard 7)"), { target: { value: "3" } });
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Fenster speichern" })); });
+    await act(async () => {});
+    expect(detail).toHaveBeenCalledTimes(2); // das Neuladen ist wirklich passiert
+    expect(screen.getByText("Vorbereitung: 3 Tage.")).toBeTruthy();
   });
 });

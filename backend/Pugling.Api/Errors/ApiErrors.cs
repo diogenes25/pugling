@@ -163,6 +163,12 @@ public static class ApiErrors
     /// </summary>
     public static readonly ApiError InterestTagInUse = new("interest_tag_in_use", 409, "Interest tag is in use.");
     /// <summary>
+    /// A student tried to shrink a tag that a planned class test is linked to - remove an exercise from it or delete it
+    /// (409, B-940). The tag is part of the test's material, and the preparation duty reads it live: the child would
+    /// otherwise decide what it has to prepare. Adults are not locked.
+    /// </summary>
+    public static readonly ApiError TagLockedByClassTest = new("tag_locked_by_class_test", 409, "Tag is linked to a planned class test.");
+    /// <summary>
     /// Grammar topic is carried by exercises or units and cannot be deleted (409, B-155). Same line as
     /// <see cref="InterestTagInUse"/>: the assignment is authored information nothing else records, so a
     /// cascade would erase it silently.

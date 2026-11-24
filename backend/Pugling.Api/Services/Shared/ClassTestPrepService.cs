@@ -118,14 +118,42 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
     }
 
     /// <summary>
-    /// The bundle exercises that would become a new position in <paramref name="plan"/>: not already in it (decision 3,
-    /// AK 4) and with something to play - an empty exercise would be a duty nobody can meet.
+    /// The bundle exercises a supervisor of the test's child may assign (B-941): publicly executable, or granted to one of
+    /// the child's supervisors. The rule of <c>ExercisePermissionService.CanExecuteAsync</c>, without a principal - the duty
+    /// starts on the child's login. A grant of any other adult does not count: it would let a stranger's material in.
+    /// </summary>
+    private IQueryable<Exercise> ExecutableFor(int childId) =>
+        db.Exercises.Where(e => e.ExecutePublic || db.ExerciseGrants.Any(g => g.ExerciseId == e.Id
+            && db.SupervisorLinks.Any(l => l.StudentId == childId && l.SupervisorId == g.CreatorId)));
+
+    /// <summary>
+    /// How many bundle exercises the duty leaves out for lack of an execute permission (B-941) - withdrawn material stops
+    /// new assignments, and starting the duty is one. Shown to the supervisor, so a silently shorter duty has a reason. An
+    /// exercise already in the plan is not left out (it is played there), and from the test day on nothing is owed.
+    /// </summary>
+    public async Task<int> NotExecutableCountAsync(Klassenarbeit k, DateOnly today, CancellationToken ct)
+    {
+        // No duty, nothing left out of it - the same bounds as CardsPerDayAsync.
+        if (k.Status != KlassenarbeitStatus.Planned || WindowOf(k) <= 0 || today >= k.ScheduledDate) return 0;
+        var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
+        if (bundle.Count == 0) return 0;
+        var executable = await ExecutableFor(k.ChildId).Where(e => bundle.Contains(e.Id)).Select(e => e.Id).ToListAsync(ct);
+        var inPlan = await PlanForAsync(k, ct) is { } plan
+            ? await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct)
+            : [];
+        return bundle.Count(id => !executable.Contains(id) && !inPlan.Contains(id));
+    }
+
+    /// <summary>
+    /// The bundle exercises that would become a new position in <paramref name="plan"/>: executable for the child's
+    /// supervisors (B-941), not already in it (decision 3, AK 4) and with something to play - an empty exercise would be a
+    /// duty nobody can meet. The one sink for both the start and the supervisor's "about N cards a day".
     /// </summary>
     private async Task<List<Candidate>> NewCandidatesAsync(Klassenarbeit k, StudyPlan plan, CancellationToken ct)
     {
         var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
         var inPlan = await db.PlanPositions.Where(p => p.StudyPlanId == plan.Id).Select(p => p.ExerciseId).ToListAsync(ct);
-        var exercises = await db.Exercises.Include(e => e.Prerequisites)
+        var exercises = await ExecutableFor(k.ChildId).Include(e => e.Prerequisites)
             .Where(e => bundle.Contains(e.Id) && !inPlan.Contains(e.Id))
             .OrderBy(e => e.Id).ToListAsync(ct);
         var candidates = new List<Candidate>();
@@ -154,8 +182,11 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
             // No plan in the subject: nothing arises, and the test is not frozen - a plan switched on later starts it then.
             if (await PlanForAsync(k, ct) is not { } plan) continue;
             // An empty bundle is not frozen either: the father plans the test first and assigns its exercises afterwards,
-            // and a start in between would leave the test without a duty for good.
-            if ((await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct)).Count == 0) continue;
+            // and a start in between would leave the test without a duty for good. "Empty" counts only what may be assigned
+            // (B-941): a bundle of withdrawn material stays unstarted, so a grant given later still starts the duty. A bundle
+            // already in the plan is started on purpose - it then lets those positions run to this test (AlignSpansAsync).
+            var bundle = await ClassTestBundle.ExerciseIdsAsync(db, [k.Id], ct);
+            if (!await ExecutableFor(k.ChildId).AnyAsync(e => bundle.Contains(e.Id), ct)) continue;
             // Claim and positions in one transaction (the caller's, if it holds one): a start that fails or is cancelled
             // half-way must not leave the test claimed without its positions - it would never be started again.
             await using var tx = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(ct) : null;
@@ -238,6 +269,8 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         var changed = false;
         foreach (var pos in positions)
         {
+            // Not filtered by execute permission (B-941): the position exists, and withdrawing stops only NEW assignments -
+            // letting a running duty reach a later test of the same bundle assigns nothing new.
             var covering = started.Where(k => k.Id == pos.SourceKlassenarbeitId
                 || (k.SubjectId == pos.StudyPlan!.SubjectId && bundles[k.Id].Contains(pos.ExerciseId))).ToList();
             if (covering.Count == 0)

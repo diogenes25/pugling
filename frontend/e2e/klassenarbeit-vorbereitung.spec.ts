@@ -55,8 +55,10 @@ test("Vater stellt das Fenster ein, sieht die Last, das Kind findet die Pflicht 
   await page.getByLabel("Suche im Katalog").fill(titel);
   await page.getByRole("button", { name: "Suchen" }).click();
   await page.getByRole("listitem").filter({ hasText: titel }).getByRole("button", { name: "zuweisen" }).click();
-  // 24 Karten über 12 Tage = 2 je Tag; die Zahl rechnet der Server.
-  await expect(zeile).toContainText("etwa 2 Karten je Tag");
+  // Das Zuweisen gleicht sofort ab (6162599c): das Fenster läuft schon, die Pflicht startet heute und verteilt 24 Karten auf
+  // die verbleibenden 10 Tage (9, wenn der Server in deutscher Zeit schon einen Tag weiter ist) – beides 3 je Tag. Die Zahl
+  // rechnet der Server.
+  await expect(zeile).toContainText("etwa 3 Karten je Tag");
   await expect(zeile).toContainText("12 Tage");
 
   // Das Kind ohne Plan im Fach: keine Pflicht, und die Liste sagt warum.

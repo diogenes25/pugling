@@ -518,4 +518,126 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
         });
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
     }
+
+    // ---- B-941: only executable material becomes a duty ----
+
+    /// <summary>Leaves <paramref name="exerciseId"/> with a grant only to <paramref name="grantTo"/> (<c>null</c> a stranger
+    /// adult, otherwise that adult) and withdraws it unless <paramref name="executePublic"/>.</summary>
+    private void Zurueckgezogen(int exerciseId, int? grantTo, bool executePublic = false)
+    {
+        Db(db =>
+        {
+            var ex = db.Exercises.Single(e => e.Id == exerciseId);
+            ex.ExecutePublic = executePublic;
+            db.ExerciseGrants.RemoveRange(db.ExerciseGrants.Where(g => g.ExerciseId == exerciseId));
+            var creator = grantTo;
+            if (creator is null)
+            {
+                var fremd = new Adult { Name = TestApi.UniqueName("Fremd") };
+                db.Adults.Add(fremd);
+                db.SaveChanges();
+                creator = fremd.Id;
+            }
+            db.ExerciseGrants.Add(new ExerciseGrant { ExerciseId = exerciseId, CreatorId = creator.Value, Permission = GrantPermission.Owner });
+        });
+    }
+
+    /// <summary>Puts <paramref name="exerciseId"/> into the bundle of <paramref name="arbeit"/> through a tag of the child.</summary>
+    private async Task UeberSchlagwortAsync(Kind k, int arbeit, int exerciseId)
+    {
+        var tagId = await TestApi.IdAsync(await k.Father.PostAsJsonAsync("/api/v1/creator/tags",
+            new { childId = k.ChildId, name = TestApi.UniqueName("Arbeit") }));
+        (await k.Father.PostAsJsonAsync($"/api/v1/creator/tags/{tagId}/exercises", new { exerciseIds = new[] { exerciseId } }))
+            .EnsureSuccessStatusCode();
+        Db(db => db.KlassenarbeitTags.Add(new KlassenarbeitTag { KlassenarbeitId = arbeit, TagId = tagId }));
+    }
+
+    private async Task<JsonElement> ArbeitLesenAsync(Kind k, int arbeit) =>
+        (await k.Father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/class-tests?childId={k.ChildId}"))
+            .EnumerateArray().Single(a => a.GetProperty("id").GetInt32() == arbeit);
+
+    // AK 1, 3, 4. Red when the sink lets a non-public exercise with only a stranger's grant in (any grant counts, or no
+    // filter at all), when the count before the start includes it, or when the supervisor's count stays 0.
+    [Fact]
+    public async Task Zurueckgezogenes_Material_Ueber_Schlagwort_Wird_Keine_Pflicht()
+    {
+        var k = await KindAsync();
+        var offen = await VokabelnAsync(k.Father);
+        var fremd = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [offen]);
+        await UeberSchlagwortAsync(k, arbeit, fremd);
+        Zurueckgezogen(fremd, grantTo: null);
+
+        var vorher = await ArbeitLesenAsync(k, arbeit);
+        Assert.Equal(1, vorher.GetProperty("prepCardsPerDay").GetInt32()); // ceil(2 / 7) for the public one only
+        Assert.Equal(1, vorher.GetProperty("prepNotExecutableCount").GetInt32());
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        var pos = Assert.Single(Positionen(k.PlanId));
+        Assert.Equal(offen, pos.ExerciseId);
+    }
+
+    // Review finding (Sprint 135): a bundle of withdrawn material only must not freeze the test. Red when the start claims
+    // on an unfiltered bundle - the later grant would then never start the duty.
+    [Fact]
+    public async Task Nur_Zurueckgezogenes_Friert_Die_Arbeit_Nicht_Ein()
+    {
+        var k = await KindAsync();
+        var ex = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [ex]);
+        Zurueckgezogen(ex, grantTo: null);
+
+        Vorspulen(3);
+        await LoginAsync(k);
+        Assert.Empty(Positionen(k.PlanId));
+        Assert.Null(Read(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).PrepStartedOn));
+
+        var vater = Read(db => db.SupervisorLinks.Where(l => l.StudentId == k.ChildId).Select(l => l.SupervisorId).First());
+        Zurueckgezogen(ex, grantTo: vater);
+        await LoginAsync(k);
+        Assert.Equal(ex, Assert.Single(Positionen(k.PlanId)).ExerciseId);
+    }
+
+    // The count's bounds. Red when it counts an exercise already in the plan (it is played there), or keeps counting on and
+    // after the test day, or for a test that is not planned.
+    [Fact]
+    public async Task Ausgelassen_Zaehlt_Nur_Was_Der_Pflicht_Wirklich_Fehlt()
+    {
+        var k = await KindAsync();
+        var imPlan = await VokabelnAsync(k.Father);
+        var fehlt = await VokabelnAsync(k.Father);
+        Db(db => db.PlanPositions.Add(new PlanPosition { StudyPlanId = k.PlanId, ExerciseId = imPlan, Cadence = GoalCadence.None }));
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [imPlan, fehlt]);
+        Zurueckgezogen(imPlan, grantTo: null);
+        Zurueckgezogen(fehlt, grantTo: null);
+        Assert.Equal(1, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+
+        Vorspulen(10); // the test day: nothing is owed any more
+        Assert.Equal(0, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+        Vorspulen(-10);
+        Db(db => db.Klassenarbeiten.Single(a => a.Id == arbeit).Status = KlassenarbeitStatus.Cancelled);
+        Assert.Equal(0, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+    }
+
+    // AK 2. Red when the sink drops the grant clause (a supervisor's own withdrawn-but-granted material would vanish) or
+    // the public clause (the public exercise, granted only to a stranger, would vanish).
+    [Fact]
+    public async Task Freigabe_Eines_Betreuers_Laesst_Die_Uebung_Pflicht_Werden()
+    {
+        var k = await KindAsync();
+        var offen = await VokabelnAsync(k.Father);
+        var freigegeben = await VokabelnAsync(k.Father);
+        var arbeit = await ArbeitAsync(k, D.AddDays(10), [offen]);
+        await UeberSchlagwortAsync(k, arbeit, freigegeben);
+        var vater = Read(db => db.SupervisorLinks.Where(l => l.StudentId == k.ChildId).Select(l => l.SupervisorId).First());
+        Zurueckgezogen(freigegeben, grantTo: vater);
+        // Public, but no supervisor of the child holds a grant: only the public clause lets it in.
+        Zurueckgezogen(offen, grantTo: null, executePublic: true);
+
+        Assert.Equal(0, (await ArbeitLesenAsync(k, arbeit)).GetProperty("prepNotExecutableCount").GetInt32());
+        Vorspulen(3);
+        await LoginAsync(k);
+        Assert.Equal([offen, freigegeben], Positionen(k.PlanId).Select(p => p.ExerciseId).Order().ToArray());
+    }
 }

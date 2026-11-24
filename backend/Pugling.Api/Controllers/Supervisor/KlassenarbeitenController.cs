@@ -35,7 +35,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         k.CreatedAt,
         k.PrepWindowDays, prep.DefaultWindowDays,
         await prep.CardsPerDayAsync(k, learningDay.Today, ct),
-        await prep.BlockReasonAsync(k, ct));
+        await prep.BlockReasonAsync(k, ct),
+        await prep.NotExecutableCountAsync(k, learningDay.Today, ct));
 
     private async Task<List<KlassenarbeitResponse>> MapAllAsync(IEnumerable<Klassenarbeit> tests, CancellationToken ct)
     {

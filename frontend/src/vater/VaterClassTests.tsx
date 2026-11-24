@@ -187,6 +187,9 @@ export function VorbereitungsZelle({ k }: { k: KlassenarbeitResponse }) {
     <span>
       {k.prepCardsPerDay != null ? `etwa ${k.prepCardsPerDay} Karten je Tag` : "–"}
       <span className="muted"> · {tage} Tage{k.prepWindowDays == null ? " (Standard)" : ""}</span>
+      {/* B-941: zurückgezogenes Material wird keine Pflicht – der Vater soll sehen, warum die Pflicht kürzer ist. */}
+      {k.prepNotExecutableCount > 0 && <span className="muted">
+        {" · "}{k.prepNotExecutableCount} {k.prepNotExecutableCount === 1 ? "Übung" : "Übungen"} ohne Ausführ-Recht ausgelassen</span>}
     </span>
   );
 }
@@ -268,7 +271,9 @@ function ClassTestDetail({ id, subjectId, onChanged }:
             {practice.data && <span className="pill" style={{ marginLeft: "auto" }}>
               {practice.data.daysUntil >= 0 ? `noch ${practice.data.daysUntil} Tage` : "Termin vorbei"}</span>}
           </div>
-          <FensterEditor key={`${id}-${detail.data.klassenarbeit.prepWindowDays ?? ""}`} k={detail.data.klassenarbeit}
+          {/* Schlüssel nur die Arbeit (B-942): mit dem gespeicherten Wert darin montierte das Neuladen den Editor neu und
+              nahm ihm die Erfolgsmeldung. */}
+          <FensterEditor key={id} k={detail.data.klassenarbeit}
             onSaved={() => { detail.reload(); onChanged(); }} />
 
           <h4 className="h-section" style={{ marginTop: 10 }}>Zugewiesene Übungen ({detail.data.assignedExercises.length})</h4>

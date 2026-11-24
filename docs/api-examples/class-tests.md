@@ -39,7 +39,8 @@ Response — `HTTP 201`:
     "prepWindowDays": null,
     "prepWindowDefault": 7,
     "prepCardsPerDay": null,
-    "prepBlockedReason": "no_subject"
+    "prepBlockedReason": "no_subject",
+    "prepNotExecutableCount": 0
   },
   "assignedExercises": []
 }

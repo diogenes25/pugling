@@ -43225,6 +43225,7 @@
           "createdAt",
           "directExerciseCount",
           "id",
+          "prepNotExecutableCount",
           "prepWindowDefault",
           "scheduledDate",
           "status",
@@ -43344,9 +43345,17 @@
               "null",
               "string"
             ]
+          },
+          "prepNotExecutableCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "Class test in list/summary view. The preparation fields (B-752/B-757): \u0060PrepWindowDays\u0060 is the test\u0027s own window\n(\u0060null\u0060 = the default \u0060PrepWindowDefault\u0060, 0 = no preparation duty), \u0060PrepCardsPerDay\u0060 the server\u0027s \u0022about N\ncards a day\u0022 of the duty (\u0060null\u0060 when none arises), \u0060PrepBlockedReason\u0060 why none arises for a planned test\n(ClassTestPrepBlockReasons)."
+        "description": "Class test in list/summary view. The preparation fields (B-752/B-757): \u0060PrepWindowDays\u0060 is the test\u0027s own window\n(\u0060null\u0060 = the default \u0060PrepWindowDefault\u0060, 0 = no preparation duty), \u0060PrepCardsPerDay\u0060 the server\u0027s \u0022about N\ncards a day\u0022 of the duty (\u0060null\u0060 when none arises), \u0060PrepBlockedReason\u0060 why none arises for a planned test\n(ClassTestPrepBlockReasons), \u0060PrepNotExecutableCount\u0060 how many exercises of its bundle the duty leaves\nout because no supervisor of the child may assign them (withdrawn material, B-941; 0 when no duty runs)."
       },
       "KlassenarbeitStatus": {
         "enum": [
@@ -46600,6 +46609,7 @@
               "skin_not_unlocked",
               "stage_not_testable",
               "subject_in_use",
+              "tag_locked_by_class_test",
               "test_already_submitted",
               "test_attempts_exhausted",
               "timetable_slot_taken",

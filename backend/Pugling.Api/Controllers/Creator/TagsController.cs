@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,25 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
             .FirstOrDefaultAsync(t => t.Id == tagId, ct);
         if (tag is null) return null;
         return await access.OwnsChildAsync(User, tag.ChildId, ct) ? tag : null;
+    }
+
+    /// <summary>
+    /// The one lock for every way a student shrinks the exercises of a tag (B-940): while a planned class test is linked
+    /// to the tag, its exercises are the test's material and the preparation duty reads them live. Returns the error
+    /// result, or null when the change may proceed. Adults are never locked - the supervisor re-plans on purpose.
+    /// </summary>
+    private async Task<ObjectResult?> ClassTestLockAsync(Tag tag, CancellationToken ct)
+    {
+        if (!User.IsStudent()) return null;
+        var test = await db.KlassenarbeitTags.AsNoTracking()
+            .Where(kt => kt.TagId == tag.Id && kt.Klassenarbeit!.Status == KlassenarbeitStatus.Planned)
+            .OrderBy(kt => kt.Klassenarbeit!.ScheduledDate)
+            .Select(kt => new { kt.Klassenarbeit!.Title, kt.Klassenarbeit.ScheduledDate })
+            .FirstOrDefaultAsync(ct);
+        // The way out named is the only one that lifts the lock: the child cannot unlink the tag from the test itself.
+        return test is null ? null : this.ProblemWithCode(ApiErrors.TagLockedByClassTest,
+            $"The tag belongs to the class test '{test.Title}' on {test.ScheduledDate.ToString("O", CultureInfo.InvariantCulture)}. "
+            + "It stays as it is until the test is written or cancelled, or a supervisor removes the tag from the test.");
     }
 
     /// <summary>All tags of a child (student: own only, adult: own children only).</summary>
@@ -118,6 +138,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
     {
         var tag = await FindOwnedAsync(tagId, ct);
         if (tag is null) return NotFound();
+        if (await ClassTestLockAsync(tag, ct) is { } locked) return locked;
         db.Tags.Remove(tag);
         await db.SaveChangesAsync(ct);
         return NoContent();
@@ -198,6 +219,7 @@ public class TagsController(PuglingDbContext db, AuthAccess access) : Controller
         if (tag is null) return NotFound();
         var link = tag.ExerciseTags.FirstOrDefault(x => x.ExerciseId == exerciseId);
         if (link is null) return NotFound();
+        if (await ClassTestLockAsync(tag, ct) is { } locked) return locked;
         db.ExerciseTags.Remove(link);
         await db.SaveChangesAsync(ct);
         return NoContent();
