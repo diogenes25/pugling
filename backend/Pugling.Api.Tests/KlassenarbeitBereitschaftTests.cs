@@ -32,6 +32,10 @@ public class KlassenarbeitBereitschaftTests(PuglingWebAppFactory factory) : ICla
         return new Setup(father, await TestApi.ChildAsync(factory, childId, pin), childId, classTestId);
     }
 
+    /// <summary>A vocabulary exercise with two words of its own, so two of them never share a store word (B-945).</summary>
+    private static Task<int> OwnWordsAsync(HttpClient father) => TestApi.CreateVocabExerciseAsync(father,
+        ($"w1-{Guid.NewGuid():N}"[..14], "Wort1"), ($"w2-{Guid.NewGuid():N}"[..14], "Wort2"));
+
     private static async Task AssignAsync(Setup s, params int[] exerciseIds) =>
         (await s.Father.PostAsJsonAsync($"/api/v1/supervisor/class-tests/{s.ClassTestId}/exercises",
             new { exerciseIds })).EnsureSuccessStatusCode();
@@ -75,8 +79,8 @@ public class KlassenarbeitBereitschaftTests(PuglingWebAppFactory factory) : ICla
     public async Task Buendel_Aus_Direkt_Und_Tag_Ohne_Dubletten_Wie_Im_Vater_Pfad()
     {
         var s = await SetupAsync();
-        var direct = await TestApi.CreateVocabExerciseAsync(s.Father);
-        var tagged = await TestApi.CreateVocabExerciseAsync(s.Father);
+        var direct = await OwnWordsAsync(s.Father);
+        var tagged = await OwnWordsAsync(s.Father);
         await AssignAsync(s, direct);
         await TagAsync(s, tagged, direct); // the direct one is tagged as well: it must count once
 
@@ -109,8 +113,8 @@ public class KlassenarbeitBereitschaftTests(PuglingWebAppFactory factory) : ICla
     public async Task Anteil_Zaehlt_Nicht_Schwache_Ueber_Alle_Items_Auch_Ungeuebte()
     {
         var s = await SetupAsync();
-        var a = await TestApi.CreateVocabExerciseAsync(s.Father);
-        var b = await TestApi.CreateVocabExerciseAsync(s.Father);
+        var a = await OwnWordsAsync(s.Father);
+        var b = await OwnWordsAsync(s.Father);
         await AssignAsync(s, a);
         await TagAsync(s, b);
         var itemsA = ItemIdsOf(a);
@@ -152,6 +156,69 @@ public class KlassenarbeitBereitschaftTests(PuglingWebAppFactory factory) : ICla
         Assert.Equal(0, readiness.GetProperty("vocabularyExerciseCount").GetInt32());
         Assert.Equal(JsonValueKind.Null, readiness.GetProperty("totalItems").ValueKind);
         Assert.Equal(JsonValueKind.Null, readiness.GetProperty("secureItems").ValueKind);
+    }
+
+    /// <summary>
+    /// B-945: two bundle exercises sharing one store word. Returns the setup and, per exercise, the item id of the shared
+    /// word; the first exercise holds one further word of its own.
+    /// </summary>
+    private async Task<(Setup S, int SharedInA, int SharedInB, int OwnInA)> SharedWordAsync()
+    {
+        var s = await SetupAsync();
+        var shared = ($"shared-{Guid.NewGuid():N}"[..14], "geteilt");
+        var own = ($"own-{Guid.NewGuid():N}"[..14], "eigen");
+        var a = await TestApi.CreateVocabExerciseAsync(s.Father, shared, own);
+        var b = await TestApi.CreateVocabExerciseAsync(s.Father, shared);
+        await AssignAsync(s, a, b);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var itemsA = db.ExerciseItems.Where(i => i.ExerciseId == a).OrderBy(i => i.OrderIndex).ToList();
+        var itemB = db.ExerciseItems.Single(i => i.ExerciseId == b);
+        // The premise of the case: both exercises reference the same store word.
+        Assert.Equal(itemsA[0].VocabularyId, itemB.VocabularyId);
+        return (s, itemsA[0].Id, itemB.Id, itemsA[1].Id);
+    }
+
+    [Fact]
+    public async Task Wort_In_Zwei_Uebungen_Zaehlt_Einmal_Und_Ein_Ungeuebtes_Item_Zieht_Nur_Den_Schnitt()
+    {
+        var (s, sharedInA, _, _) = await SharedWordAsync();
+        // Known in A, never practised in B: average (100 + 0) / 2 = 50, at the threshold - secure. "Secure in all its
+        // items" would say weak here.
+        SeedMastery(s.ChildId, sharedInA, 100);
+
+        var readiness = await s.Child.GetFromJsonAsync<JsonElement>(Readiness(s.ChildId, s.ClassTestId));
+
+        Assert.Equal(2, readiness.GetProperty("totalItems").GetInt32()); // two words, not three items
+        Assert.Equal(1, readiness.GetProperty("secureItems").GetInt32());
+    }
+
+    [Fact]
+    public async Task Wort_Ist_Erst_Sicher_Wenn_Sein_Schnitt_Ueber_Die_Buendel_Items_Reicht()
+    {
+        var (s, sharedInA, sharedInB, ownInA) = await SharedWordAsync();
+        // Secure in A, weak in B: average 35 - weak. "Secure in at least one item" would say secure here.
+        SeedMastery(s.ChildId, sharedInA, 60);
+        SeedMastery(s.ChildId, sharedInB, 10);
+        SeedMastery(s.ChildId, ownInA, ItemProgress.WeakBelowPercent);
+
+        var readiness = await s.Child.GetFromJsonAsync<JsonElement>(Readiness(s.ChildId, s.ClassTestId));
+
+        Assert.Equal(2, readiness.GetProperty("totalItems").GetInt32());
+        Assert.Equal(1, readiness.GetProperty("secureItems").GetInt32()); // only the own word
+    }
+
+    [Fact]
+    public async Task Ungeuebtes_Item_Zaehlt_Im_Schnitt_Als_Null_Statt_Zu_Verschwinden()
+    {
+        var (s, sharedInA, _, _) = await SharedWordAsync();
+        // Secure in A, never practised in B: average (80 + 0) / 2 = 40 - weak. Averaging only the practised items would
+        // say 80 and call a word secure the child never met in the repetition.
+        SeedMastery(s.ChildId, sharedInA, 80);
+
+        var readiness = await s.Child.GetFromJsonAsync<JsonElement>(Readiness(s.ChildId, s.ClassTestId));
+
+        Assert.Equal(0, readiness.GetProperty("secureItems").GetInt32());
     }
 
     [Fact]

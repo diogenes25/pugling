@@ -11,10 +11,11 @@ public record UpcomingClassTestResponse(int Id, string Title, int? SubjectId, st
     int DaysUntil);
 
 /// <summary>
-/// How sure the child already is in the vocabulary of a class test's bundle (B-751). <c>SecureItems</c> counts the
-/// vocabulary items whose mastery is not weak (at least <c>WeakBelowPercent</c>); <c>TotalItems</c> counts every
-/// vocabulary item of the bundle, practised or not. Both are null when the bundle holds no vocabulary item - there is no
-/// measure for other exercise types, and none is estimated.
+/// How sure the child already is in the vocabulary of a class test's bundle (B-751). Both counts are distinct store
+/// words, not exercise items: a word in two bundle exercises counts once (B-945). <c>TotalItems</c> counts every word of
+/// the bundle, practised or not; <c>SecureItems</c> the words whose average mastery over their bundle items (an
+/// unpractised item counts as 0) is at least <c>WeakBelowPercent</c>. Both are null when the bundle holds no vocabulary
+/// item - there is no measure for other exercise types, and none is estimated.
 /// </summary>
 public record ClassTestReadinessResponse(int ClassTestId, int ExerciseCount, int VocabularyExerciseCount,
     int? TotalItems, int? SecureItems, int WeakBelowPercent);

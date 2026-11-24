@@ -486,6 +486,48 @@ public class VorbereitungsPflichtTests : IClassFixture<PuglingWebAppFactory>
     }
 
     [Fact]
+    public async Task Karten_Je_Tag_Bleiben_Nach_Dem_Start_Bei_Einer_Kleinen_Uebung_Ohne_Dosis()
+    {
+        // B-946: a position without a daily dose carries the cap (10) as ItemCount, but a round of a three-problem exercise
+        // asks three cards - the list must show that before and after the start alike.
+        var k = await KindAsync();
+        var (_, _, rechnen) = await TestApi.CreateArithmeticExerciseAsync(k.Father, ("1 + 1", 2), ("2 + 2", 4), ("3 + 3", 6));
+        var id = await ArbeitAsync(k, D.AddDays(3), [rechnen]);
+
+        async Task<int> KartenAsync()
+        {
+            var liste = await k.Father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/class-tests?childId={k.ChildId}");
+            return liste.EnumerateArray().Single(a => a.GetProperty("id").GetInt32() == id).GetProperty("prepCardsPerDay").GetInt32();
+        }
+
+        Assert.Equal(3, await KartenAsync());
+        await LoginAsync(k);
+        // The premise: the start made the position with the cap, not with the exercise's size.
+        Assert.Equal(10, Positionen(k.PlanId).Single(p => p.ExerciseId == rechnen).ItemCount);
+        Assert.Equal(3, await KartenAsync());
+    }
+
+    [Fact]
+    public async Task Karten_Je_Tag_Bleiben_Nach_Dem_Start_Am_Deckel_Einer_Grossen_Uebung_Ohne_Dosis()
+    {
+        // B-946, the other side: twelve problems without a dose - the round asks the cap, before and after the start.
+        var k = await KindAsync();
+        var (_, _, rechnen) = await TestApi.CreateArithmeticExerciseAsync(k.Father,
+            [.. Enumerable.Range(1, 12).Select(i => ($"{i} + 1", i + 1))]);
+        var id = await ArbeitAsync(k, D.AddDays(3), [rechnen]);
+
+        async Task<int> KartenAsync()
+        {
+            var liste = await k.Father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/class-tests?childId={k.ChildId}");
+            return liste.EnumerateArray().Single(a => a.GetProperty("id").GetInt32() == id).GetProperty("prepCardsPerDay").GetInt32();
+        }
+
+        Assert.Equal(10, await KartenAsync());
+        await LoginAsync(k);
+        Assert.Equal(10, await KartenAsync());
+    }
+
+    [Fact]
     public async Task Liste_Nennt_Fenster_Standard_Und_Karten_Je_Tag()
     {
         var k = await KindAsync();

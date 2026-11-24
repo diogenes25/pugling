@@ -37,7 +37,8 @@ public sealed class ClassTestPrepOptions
 /// position knows the test it was made for (<see cref="PlanPosition.SourceKlassenarbeitId"/>).
 /// </summary>
 public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver content, ExerciseTypeRegistry types,
-    TimeProvider time, LearningDay learningDay, IOptions<ClassTestPrepOptions> options, PositionProgressService progress)
+    TimeProvider time, LearningDay learningDay, IOptions<ClassTestPrepOptions> options, PositionProgressService progress,
+    PositionPlayService play)
 {
     /// <summary>Upper bound of a test's own window - beyond it a typo, not a setting (the supervisor's form uses the same).</summary>
     public const int MaxWindowDays = 60;
@@ -108,8 +109,16 @@ public class ClassTestPrepService(PuglingDbContext db, ExerciseContentResolver c
         if (k.PrepStartedOn is not null)
         {
             var made = await db.PlanPositions.AsNoTracking().Where(p => p.SourceKlassenarbeitId == k.Id)
-                .Select(p => new { p.NewItemsPerDay, p.ItemCount }).ToListAsync(ct);
-            return made.Sum(p => p.NewItemsPerDay > 0 ? p.NewItemsPerDay : p.ItemCount ?? 0);
+                .Include(p => p.Exercise).ThenInclude(e => e!.Prerequisites).ToListAsync(ct);
+            var started = 0;
+            foreach (var p in made)
+            {
+                if (p.NewItemsPerDay > 0) { started += p.NewItemsPerDay; continue; }
+                // Without a dose the position's ItemCount is only a cap: the list shows the round the child really plays
+                // today - the played exercise's cards under the cap, through the play service's one pool rule (B-946).
+                started += play.PoolSize(p, today, (await play.ItemsOfAsync(p, today, ct: ct)).Count);
+            }
+            return started;
         }
         if (await PlanForAsync(k, ct) is not { } plan) return null;
         var sum = 0;

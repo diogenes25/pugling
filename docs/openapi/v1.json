@@ -8283,7 +8283,7 @@
         "tags": [
           "Student \u2013 Class Tests"
         ],
-        "summary": "How sure the child is in the vocabulary of the class test\u0027s bundle: of all vocabulary items of the bundle\n(practised or not), how many are not weak. A bundle without vocabulary has no measure (both counts null).",
+        "summary": "How sure the child is in the vocabulary of the class test\u0027s bundle: of all distinct words of the bundle (practised\nor not), how many are not weak. A bundle without vocabulary has no measure (both counts null).",
         "parameters": [
           {
             "name": "childId",
@@ -32925,7 +32925,7 @@
             "format": "int32"
           }
         },
-        "description": "How sure the child already is in the vocabulary of a class test\u0027s bundle (B-751). \u0060SecureItems\u0060 counts the\nvocabulary items whose mastery is not weak (at least \u0060WeakBelowPercent\u0060); \u0060TotalItems\u0060 counts every\nvocabulary item of the bundle, practised or not. Both are null when the bundle holds no vocabulary item - there is no\nmeasure for other exercise types, and none is estimated."
+        "description": "How sure the child already is in the vocabulary of a class test\u0027s bundle (B-751). Both counts are distinct store\nwords, not exercise items: a word in two bundle exercises counts once (B-945). \u0060TotalItems\u0060 counts every word of\nthe bundle, practised or not; \u0060SecureItems\u0060 the words whose average mastery over their bundle items (an\nunpractised item counts as 0) is at least \u0060WeakBelowPercent\u0060. Both are null when the bundle holds no vocabulary\nitem - there is no measure for other exercise types, and none is estimated."
       },
       "ClassTestUsage": {
         "required": [

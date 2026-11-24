@@ -43,8 +43,8 @@ public class ChildClassTestsController(PuglingDbContext db, ExerciseTypeRegistry
     }
 
     /// <summary>
-    /// How sure the child is in the vocabulary of the class test's bundle: of all vocabulary items of the bundle
-    /// (practised or not), how many are not weak. A bundle without vocabulary has no measure (both counts null).
+    /// How sure the child is in the vocabulary of the class test's bundle: of all distinct words of the bundle (practised
+    /// or not), how many are not weak. A bundle without vocabulary has no measure (both counts null).
     /// </summary>
     [HttpGet("{id:int}/readiness")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -64,11 +64,22 @@ public class ChildClassTestsController(PuglingDbContext db, ExerciseTypeRegistry
             .Where(e => types.ByKey(e.Type)?.StoreResolution == StoreResolution.ItemTable)
             .Select(e => e.Id).ToList();
 
-        var itemIds = db.ExerciseItems.Where(i => vocabIds.Contains(i.ExerciseId)).Select(i => i.Id);
-        var total = await itemIds.CountAsync(ct);
-        // Unpractised items have no progress row and count as not secure: the denominator is every item of the bundle.
-        var secure = total == 0 ? 0 : await db.ItemProgress.CountAsync(p => p.ChildId == childId
-            && itemIds.Contains(p.ItemId) && p.MasteryPercent >= ItemProgress.WeakBelowPercent, ct);
+        // The card says "x of y words": a store word in two bundle exercises is one word (B-945). It is secure when its
+        // average mastery over its bundle items reaches the weak threshold, and an unpractised item
+        // has no progress row and counts as 0, so it pulls the word down instead of vanishing.
+        var items = await db.ExerciseItems.AsNoTracking()
+            .Where(i => vocabIds.Contains(i.ExerciseId))
+            .Select(i => new { i.Id, i.VocabularyId })
+            .ToListAsync(ct);
+        var itemIds = items.Select(i => i.Id).ToList();
+        var mastery = await db.ItemProgress.AsNoTracking()
+            .Where(p => p.ChildId == childId && itemIds.Contains(p.ItemId))
+            .ToDictionaryAsync(p => p.ItemId, p => p.MasteryPercent, ct);
+        var words = items.GroupBy(i => i.VocabularyId)
+            .Select(g => g.Average(i => mastery.GetValueOrDefault(i.Id)))
+            .ToList();
+        var total = words.Count;
+        var secure = words.Count(avg => avg >= ItemProgress.WeakBelowPercent);
 
         return new ClassTestReadinessResponse(id, exerciseTypes.Count, vocabIds.Count,
             total == 0 ? null : total, total == 0 ? null : secure, ItemProgress.WeakBelowPercent);
