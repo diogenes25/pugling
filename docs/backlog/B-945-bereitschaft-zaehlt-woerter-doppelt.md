@@ -13,6 +13,7 @@ grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-751]
 wartet_auf: ""
+nachgeschaut: "2026-11-24"
 ---
 
 # B-945 · Die Bereitschaft „x von y Wörtern sicher“ zählt ein Wort doppelt, das in zwei Übungen des Bündels steht
@@ -96,3 +97,4 @@ Zurückspielen war grün. Die Zeilen 78–82 hat die spätere Kommentar-Korrektu
   eingearbeitet. Rollengang: `klassenarbeit-countdown.spec.ts` und `klassenarbeit-vorbereitung.spec.ts` gegen einen frisch
   gestarteten Server auf Ausweichports (5201/5174, Release), 2 passed. Die Specs fahren die Anzeige, nicht den Überlappungs- bzw.
   Deckelfall; den tragen die Integrationstests.
+- **2026-11-24** — nachgeschaut in der Retro von Sprint 138 (`262bd5ae`): ohne Befund.

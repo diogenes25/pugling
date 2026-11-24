@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, rolle/supervisor]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -88,3 +88,19 @@ die Momentaufnahme wird im selben `SaveChanges` gekürzt). `NotExecutableCountAs
 - **2026-11-24** — angelegt aus der Nachschau von Sprint 135 (Reviewer-Fund, von mir am Code nachgelesen). Bewusst nicht in Sprint
   137 genommen: Dessen Ziel hängt nicht daran, und der Ausweg ist eine Produktentscheidung.
 - **2026-11-24** — Runde 138: Entscheidung 1 vom Nutzer, Entscheidungen 2–4 stellvertretend; `geschaetzt` für Sprint 138.
+- AK 1, Start merkt sich B → `Freigabe_Nach_Dem_Start_Zieht_Die_Ausgelassene_Uebung_Nach`, B947-1 (leere Momentaufnahme) → rot.
+- AK 2, Freigabe nach dem Start wirkt → derselbe Test, B947-2 (nie nachziehen), B947-3 (`DutySince` einen Tag früher), B947-3b
+  (voller Malus) → rot. Die erste Form von B947-3 kompilierte nicht und ist umformuliert neu gemessen.
+- AK 3, Einfrieren bleibt → `Nach_Dem_Start_Ins_Buendel_Gekommenes_Wird_Nicht_Nachgezogen`, B947-4 (Momentaufnahme ignoriert). **Erster
+  Lauf grün:** Der Test ließ beim Start nichts aus, das Nachziehen lief also nie. Umgebaut (beim Start wird eine Übung ausgelassen),
+  danach rot.
+- AK 4, aus dem Bündel genommen → `Nachziehen_Nur_Was_Noch_Im_Buendel_Steht_Und_Nur_Einmal`, B947-5 → rot.
+- AK 5, Hinweis nach dem Start → B947-7 (Live-Zählung) und B947-7b (immer 0) → rot.
+- AK 6, nur einmal → zwei unabhängige Wächter (Dubletten-Filter, gekürzte Momentaufnahme). Einzeln grün (B947-6); von Hand beide
+  zugleich entfernt → rot, nach dem Zurückspielen grün.
+- AK 7, Migration → `PrepLeftOutMigrationTests`, B947-8 (`defaultValue: "[]"`) → rot. Die Migration ist ein reines nullable
+  `AddColumn`; gegen die Kopie der echten DB lief sie beim Start ohne Fehler.
+- `pugling-reviewer`: kein Blocker. Bewusst offen: Zwischen Freigabe und nächster Kind-Anmeldung zeigt der Hinweis schon 0, die Position
+  entsteht aber erst bei der Anmeldung (eine Freigabe gleicht nicht ab). Vor dem Start laufende Arbeiten haben keine Momentaufnahme
+  (`NULL`) – ihr Hinweis zählt nach dem Start 0, nachgezogen wird dort nichts.
+- **2026-11-24** — abgenommen in Sprint 138, Commit `08933431`. Volle Suite 2323/2323 grün (Release), Vitest 1439/1439, `npm run build` grün. Mutanten-Probe nach dem letzten Edit (`mutant-probe.py`, Tabelle im Protokoll Runde 138). Rollengang: Playwright auf Ausweichports 5201/5174, Server frisch gestartet: `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `klassenarbeit-stoff-dicht`, `rueckmeldung`, `pfad` – 5 passed.

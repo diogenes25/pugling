@@ -46,7 +46,7 @@ today's file. A goal named by the user seeds the agenda but still goes through a
 
 1. If a Befund exists under `docs/anmerkungen/`, read it first. It was observed by a real person and
    outranks anything you produce yourself; fold it into the matching role and mark it as observed.
-2. Make the product reachable (backend `:5200`, frontend `:5173`; `/smoke-test` or `curl` for API only).
+2. Walk a **copy of the real DB**: `bash .claude/scripts/kopie-server.sh` (`:5201`; never `:5200`, why: script header).
    The role skills `creator`, `supervisor`, `student` seat you quickly.
 3. Walk the product as each role and record concrete friction in that role's voice
    ("Münzen gehen beim Kauf nicht runter"), each role naming its **Top-3**.

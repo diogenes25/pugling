@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -63,3 +63,10 @@ nutzt.
 ## Verlauf
 
 - **2026-11-24** — angelegt im Rollengang Runde 138, vom Nutzer in den Sprint genommen, `geschaetzt` für Sprint 138.
+- AK 1 → `VaterClassTests.test.tsx` „zeigt die Zahlen des Servers…“, U949-1 (Kind/Arbeit vertauscht) → rot.
+- AK 2 → „zeigt nichts ohne Vokabeln“, U949-2 → rot. AK 3 → „fragt bei geschriebenen…“, U949-3 → rot.
+- AK 4 → „lässt die Zeile nach einem Fehler weg“ (rot, wenn ein Fehler Text in die Zeile bringt).
+- `frontend-reviewer`-Fund eingearbeitet: Die Zeile lud nach dem Zuweisen von Übungen nicht neu. Das Bündel steht jetzt in den
+  Abhängigkeiten, Test „lädt neu, wenn sich das Bündel ändert“, U949-5 → rot.
+- Rollengang: `klassenarbeit-countdown` prüft dieselbe Zahl beim Kind und in der Vater-Liste („0 von 2 Wörtern sicher“).
+- **2026-11-24** — abgenommen in Sprint 138, Commit `08933431`. Volle Suite 2323/2323 grün (Release), Vitest 1439/1439, `npm run build` grün. Mutanten-Probe nach dem letzten Edit (`mutant-probe.py`, Tabelle im Protokoll Runde 138). Rollengang: Playwright auf Ausweichports 5201/5174, Server frisch gestartet: `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `klassenarbeit-stoff-dicht`, `rueckmeldung`, `pfad` – 5 passed.

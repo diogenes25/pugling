@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, rolle/supervisor]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -71,3 +71,15 @@ Arbeit gemacht wurden, je mit der B-946-Regel; (b) vor dem Start plus `NewCandid
 ## Verlauf
 
 - **2026-11-24** — angelegt im Rollengang Runde 138, Entscheidung 1 vom Nutzer, `geschaetzt` für Sprint 138.
+- AK 1, tägliche Pflicht im Plan zählt → `VorbereitungsPflichtTests.Karten_Je_Tag_Zaehlen_Die_Taegliche_Pflicht_Im_Plan_Vor_Dem_Start`,
+  Mutante B948-1 (nur gemachte Positionen) → rot.
+- AK 2, Kür und Woche zählen nicht → derselbe Test, B948-2 (`AsksDailyOn` = true) und B948-2b (ohne `IsDailyDuty`) → rot.
+- AK 3, anderer Plan zählt nicht → `…Nur_Den_Aktiven_Plan_Des_Fachs`, B948-3 → rot.
+- AK 4, beendete Pflicht zählt nicht → `…Keine_Beendete_Pflicht`, B948-4 (Taktung ohne Spanne) → rot.
+- AK 5, nach dem Start beide → `…Nach_Dem_Start_Gemachte_Und_Vorhandene`, B948-1 → rot.
+- AK 6, B-757/B-946-Fälle grün in der vollen Suite.
+- `pugling-reviewer`: kein Korrektheitsfund. `null` nach dem Start ohne aktiven Plan ist gewollt (dann meldet `BlockReason` „kein aktiver
+  Plan“; vorher stand eine Zahl neben dem Sperrgrund).
+- An einer Kopie der echten DB (neuer Stand): Friedrichs Englisch-Arbeit zeigt jetzt 12 statt 0 Karten je Tag, die Französisch-Contrôle
+  28 statt 0. Die Mathe-Arbeit zeigt weiter 0, und das stimmt: Ihre vier Übungen liegen als Kür im Plan.
+- **2026-11-24** — abgenommen in Sprint 138, Commit `08933431`. Volle Suite 2323/2323 grün (Release), Vitest 1439/1439, `npm run build` grün. Mutanten-Probe nach dem letzten Edit (`mutant-probe.py`, Tabelle im Protokoll Runde 138). Rollengang: Playwright auf Ausweichports 5201/5174, Server frisch gestartet: `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `klassenarbeit-stoff-dicht`, `rueckmeldung`, `pfad` – 5 passed.

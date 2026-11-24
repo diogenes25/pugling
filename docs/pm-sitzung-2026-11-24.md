@@ -336,13 +336,95 @@ Wächter: Einfrieren (B-752 E3) bleibt für alles nach dem Start; Ausführ-Recht
 `PrepLeftOutExerciseIds` (nullable JSON, Comparer). Reihenfolge: B-948, B-947 (beide im selben Dienst), dann B-949, B-950.
 Testweg: `VorbereitungsPflichtTests`, Migrationstest, Vitest, E2E `klassenarbeit-*`.
 
+## Iteration 138 — umgesetzt
+
+Commit `08933431`.
+
+- **Backend (API-First):** `ClassTestPrepService.CardsPerDayAsync` zählt die täglichen Pflicht-Positionen der Bündel-Übungen im aktiven
+  Plan (`AsksDailyOn` über `IsObligationOn` + `IsDailyDuty`) plus vor dem Start die Kandidaten (B-948). Der Start schreibt
+  `Klassenarbeit.PrepLeftOutExerciseIds`; `PullInAsync` macht daraus nach einer Freigabe Positionen, über dieselbe Anlege-Methode wie
+  der Start (B-947). Migration `20261124131013_ClassTestPrepLeftOut` (nullable `AddColumn`). Vertragsdoku der beiden Felder
+  nachgezogen.
+- **Frontend:** `BereitschaftZeile` in der Klassenarbeiten-Liste (B-949), Abschnitt „Rückmeldungen“ auf „Heute“ und Kind-Auswahl
+  in der URL der Rückmeldungs-Seite (B-950).
+- **Verifikation:** .NET 2323/2323 (Release), Vitest 1439/1439, `npm run build` grün, E2E 5 passed (Ausweichports).
+
+**Mutanten-Probe** (nach dem letzten Edit, Debug):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| B948-1 vorhandene Pflicht fehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:114 | red | red |  |
+| B948-2 Kuer zaehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:134 | red | red |  |
+| B948-2b Woche zaehlt | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:134 | red | red |  |
+| B948-3 anderer Plan | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:114 | red | red |  |
+| B948-4 beendete Pflicht | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:134 | red | red |  |
+| B947-1 keine Momentaufnahme | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:269 | red | red |  |
+| B947-2 nie nachgezogen | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:229 | red | red |  |
+| B947-3 rueckwirkend ab Start | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:299 | red | ungemessen | kompiliert nicht |
+| B947-3b Malus voll | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:254 | red | red |  |
+| B947-4 lebendes Buendel | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:241 | red | green (abweichend) |  |
+| B947-5 Buendel ignoriert | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:182 | red | red |  |
+| B947-6 Dublette | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:182 | red | green (abweichend) |  |
+| B947-7 Hinweis live | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:157 | red | red |  |
+| B947-7b Hinweis 0 nach Start | backend/Pugling.Api/Services/Shared/ClassTestPrepService.cs:157 | red | red |  |
+| B947-8 Migration fuellt | backend/Pugling.Api/Data/Migrations/20261124131013_ClassTestPrepLeftOut.cs:17 | red | red |  |
+| U949-1 Kind/Arbeit vertauscht | frontend/src/vater/VaterClassTests.tsx:205 | red | red |  |
+| U949-2 ohne Vokabeln | frontend/src/vater/VaterClassTests.tsx:208 | red | red |  |
+| U949-3 geschrieben fragt | frontend/src/vater/VaterClassTests.tsx:203 | red | red |  |
+| U950-1 nicht nur offen | frontend/src/vater/VaterDashboard.tsx:36 | red | red |  |
+| U950-2 nach count | frontend/src/vater/VaterDashboard.tsx:153 | red | red |  |
+| U950-3 leere Ueberschrift | frontend/src/vater/VaterDashboard.tsx:66 | red | red |  |
+| U950-4 Fehler still | frontend/src/vater/VaterDashboard.tsx:66 | red | red |  |
+| U950-5 Link ohne Kind | frontend/src/vater/VaterDashboard.tsx:76 | red | red |  |
+| U950-6 keine Vorwahl | frontend/src/vater/VaterRueckmeldungen.tsx:26 | red | red |  |
+
+Nachgemessen nach Funden der Probe: B947-3 (neue Form), B947-4 (Test umgebaut), B947-7/7b – alle rot. B947-6 von Hand mit beiden
+Wächtern → rot. Frontend nach den Review-Korrekturen: U949-1…5, U950-3…9 rot.
+
+**Reviews:** `pugling-reviewer` – kein Korrektheitsfund, drei 🟢 eingearbeitet bzw. benannt. `frontend-reviewer` – drei Funde
+(Retry hängt den Abschnitt aus, Zeile lädt nach Zuweisen nicht neu, Kind-Auswahl nicht in der URL), alle eingearbeitet und gemessen.
+
+## Runde 138 — Re-Review / Abnahme
+
+Server: von Playwright nach dem letzten Edit gestartet (5201/5174, Wegwerf-DB); dazu der neue Stand gegen die **Kopie der echten DB**.
+
+- **Vater – abgenommen:** „Die Englisch-Arbeit sagt mir jetzt 12 Karten am Tag statt 0, die Contrôle 28. Bei Mathe steht 0 – und das
+  stimmt, die vier Übungen liegen nur als Kür im Plan. Darunter sehe ich ‚21 von 209 Wörtern sicher‘, dieselbe Zahl wie Friedrich. Auf
+  ‚Heute‘ steht ‚Theodor: 4 offene Rückmeldungen‘, der Link führt mich direkt zu seinen Meldungen.“ (E2E + Kopie)
+- **Sohn – Regressionszeuge, plus eigener Gewinn:** Seine Specs `klassenarbeit-countdown` und `pfad` grün; seine Meldungen erreichen
+  jetzt die Startseite des Vaters. Ob er eine Antwort bekommt, hängt am Vater.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
+
+**Stand:** B-947, B-948, B-949, B-950 `abgenommen`.
+
+**Für den Vater (Handlung, keine Story):** Theodors vier Kartenmeldungen warten seit dem 19.–21.11.; die Mathe-Arbeit am 16.12.
+bekommt keine Tagespflicht, solange ihre Übungen als Kür im Plan stehen.
+
+## Retrospektive (Sprint 138)
+
+**Nachschau:** Sprint 137 (B-945, B-946, `262bd5ae`) gelesen – ohne Befund (`VocabularyId` ist Pflichtfeld, die Faltung bildet keine
+Leerwörter; der Zweig von B-946 ist in B-948 aufgegangen). `nachgeschaut: 2026-11-24` an beiden.
+
+**Was die eigenen Tore durchgelassen haben:** Nichts aus diesem Sprint kam an Probe und Review vorbei. Die Probe fand einen Test, der
+nicht fallen konnte (AK 3 mit leerer Momentaufnahme), der Review drei Frontend-Fehler. Von **außerhalb** der eingebauten Tore kam
+dagegen der Inhalt des Sprints selbst: Drei der vier Funde standen nur in den echten Daten. Der Rollengang auf Seed- oder E2E-Daten
+hätte sie nie gezeigt, und B-948 ist ein Durchrutscher aus B-757. Dazu schickte pm-loop Step 2 den Rollengang an `:5200` – das ist der
+Heimnetz-Server mit der echten DB der Söhne.
+
+**Der eine Mechanismus (gelandet):** `.claude/scripts/kopie-server.sh` – Kopie der echten DB per SQLite-Backup, Test-PIN auf der Kopie,
+API auf `:5201` (weigert sich bei 5200), Migrationen laufen dabei gegen die Kopie. pm-loop Step 2 zeigt darauf statt auf `:5200`
+(netto +15 Byte; die Begründung steht im Skriptkopf). Ein Werkzeug, kein Tor – darum kein Halt.
+
+**Bewusst ungedeckt:** Ob ein Rollengang die Kopie wirklich nutzt, prüft niemand; das Skript senkt nur die Kosten.
+
 ## Offene Roadmap (priorisiert)
 
 Die Liste, die gilt, ist `docs/backlog/`. Begründung der Reihenfolge:
 
 1. **B-752:** Die Migration `ClassTestPrepDuty` an einer Kopie der echten DB proben (AK 8, Nutzer), bevor der Heimnetz-Server sie
    einspielt. Danach bleibt nur der Blick am Gerät, ob die Last fair wirkt. B-757 und B-758 sind seit Runde 136 abgenommen.
-2. **B-947** (P2, Dialog): Nach dem Start rät der Hinweis einen Ausweg, der nichts bewirkt. B-945/B-946 sind abgenommen.
+2. B-945–B-950 abgenommen. Nächster Kandidat aus dem Rollengang: B-748 (Klausurchance in der Vater-Übersicht) – der Wortstand
+   steht jetzt in der Liste, die Prognose fehlt.
 3. **B-944** Restpunkte, darunter die nicht deterministisch messbare Nebenläufigkeit.
 
 ## Konkreter Änderungsstand (für Review)

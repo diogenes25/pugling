@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/rueckmeldung, bereich/frontend, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/rueckmeldung, bereich/frontend, rolle/supervisor, rolle/student]
 aliases: []
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: S
@@ -63,3 +63,11 @@ Was der Vater nicht auf der Startseite sieht, existiert für ihn kaum; die Meldu
 ## Verlauf
 
 - **2026-11-24** — angelegt im Rollengang Runde 138, vom Nutzer in den Sprint genommen, `geschaetzt` für Sprint 138.
+- AK 1/3 → `VaterDashboard.test.tsx` „zählt je Kind…“, U950-1 (nicht nur offen), U950-5 (Link ohne Kind) → rot; Zählung je Meldung
+  U950-2 → rot.
+- AK 2 → „zeigt ohne offene Meldung keinen Abschnitt“, U950-3 → rot. AK 4 → „zeigt einen Ladefehler…“, U950-4 → rot.
+- `frontend-reviewer`-Funde eingearbeitet: (1) „Erneut laden“ hängte den Abschnitt samt Fehlerkasten aus (B-216-Muster) – Test „bleibt
+  beim erneuten Laden stehen“, U950-7 → rot; die Bedingung `meldungen.error` war danach überflüssig und ist entfallen. (2) Die
+  Rückmeldungs-Seite hält die Kind-Auswahl in der URL und nimmt ein unbekanntes Kind als „alle“ – U950-6, U950-8, U950-9 → rot.
+- Rollengang: `rueckmeldung.spec.ts` geht jetzt über „Heute“ und den Link der Zeile.
+- **2026-11-24** — abgenommen in Sprint 138, Commit `08933431`. Volle Suite 2323/2323 grün (Release), Vitest 1439/1439, `npm run build` grün. Mutanten-Probe nach dem letzten Edit (`mutant-probe.py`, Tabelle im Protokoll Runde 138). Rollengang: Playwright auf Ausweichports 5201/5174, Server frisch gestartet: `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `klassenarbeit-stoff-dicht`, `rueckmeldung`, `pfad` – 5 passed.
