@@ -156,6 +156,8 @@ export function MeldungsHinweis({ childId }: { childId: number }) {
           <p style={{ margin: 0 }}>
             {erster.cue ? t("feedback.notice", { cue: erster.cue }) : t("feedback.noticeExercise", { title: erster.exerciseTitle })}
           </p>
+          {/* B-769 Entscheidung 2: nach „berechtigt“ steht da, was nachgerechnet wurde und was nicht (B-627 Entscheidung 7). */}
+          {erster.outcome === "Justified" && <p className="sub" style={{ margin: "6px 0 0" }}>{t("feedback.noticeJustified")}</p>}
           <div className="lektion-fuss">
             <button type="button" className="btn lime small" disabled={action.busy} onClick={gesehen}>{t("feedback.noticeOk")}</button>
           </div>

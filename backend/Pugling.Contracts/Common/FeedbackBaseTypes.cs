@@ -45,6 +45,18 @@ public enum FeedbackStatus
     Done = 1,
 }
 
+/// <summary>
+/// How a supervisor judged a done feedback (B-767, decision 2 of B-627). Kept apart from <see cref="FeedbackStatus"/>:
+/// <c>Done</c> without an outcome stays valid for feedback handled before the outcome existed.
+/// </summary>
+public enum FeedbackOutcome
+{
+    /// <summary>The child was right: the app graded the reported test answer wrongly (B-768 corrects the test).</summary>
+    Justified = 0,
+    /// <summary>The app was right; nothing is changed.</summary>
+    Rejected = 1,
+}
+
 /// <summary>The fixed reach of every <see cref="FeedbackReason"/> - the one place B-630 reads it from.</summary>
 public static class FeedbackReasons
 {

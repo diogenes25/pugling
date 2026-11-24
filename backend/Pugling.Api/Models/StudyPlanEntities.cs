@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace Pugling.Api.Models;
 
 // Study plan model: a plan is a pure container of referenced catalog exercises (see PlanPosition). Time,
@@ -202,6 +204,27 @@ public class TestAttempt
     public int CorrectItems { get; set; }
     public int ScorePercent { get; set; }
     public bool Passed { get; set; }
+
+    /// <summary>
+    /// How many wrongly graded answers of this attempt a supervisor confirmed as justified (B-768, decision 1); <c>null</c>
+    /// while none was. The attempt keeps its own finding (<see cref="CorrectItems"/>, <see cref="ScorePercent"/>,
+    /// <see cref="TestItemResult.WasCorrect"/>); this is the correction trail beside it.
+    /// </summary>
+    public int? CorrectedItems { get; set; }
+
+    /// <summary>
+    /// Passed once the corrections count (B-768, decisions 1 and 7): computed when a supervisor confirms, with the pass
+    /// threshold of that moment, and stored - a later threshold change does not move what was booked. <c>null</c> without
+    /// a correction. Read only through <see cref="CountsAsPassed"/>.
+    /// </summary>
+    public bool? PassedAfterCorrection { get; set; }
+
+    /// <summary>
+    /// "Passed" for everything that books or counts (B-768, decision 1): after a correction its result, else
+    /// <see cref="Passed"/>. One expression for the duty and the mission count, translatable in the database.
+    /// </summary>
+    public static readonly Expression<Func<TestAttempt, bool>> CountsAsPassed =
+        t => t.PassedAfterCorrection ?? t.Passed;
 
     /// <summary>
     /// The build level this attempt examined (B-849, decision 3): the level the position played when the test started,

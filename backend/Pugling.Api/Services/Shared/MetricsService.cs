@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
+using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
@@ -29,8 +30,9 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
                     && r.PracticeSession!.Day >= lo && r.PracticeSession!.Day <= hi)
                 .CountAsync(ct),
 
-            ProgressMetric.TestsPassed => await db.TestAttempts
-                .Where(t => t.Passed && t.CompletedAt != null && t.StudyPlan!.ChildId == childId
+            // "Passed" after a confirmed correction (B-768).
+            ProgressMetric.TestsPassed => await db.TestAttempts.Where(TestAttempt.CountsAsPassed)
+                .Where(t => t.CompletedAt != null && t.StudyPlan!.ChildId == childId
                     && t.Day >= lo && t.Day <= hi)
                 .CountAsync(ct),
 

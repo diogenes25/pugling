@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Nachbuchen, Malus-Rücknahme]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -116,3 +116,65 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-627 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): L, backend, Migration ja, kein Vertragsbruch. Zwei Annahmen nachgetragen, unbestätigt: Marke an der Strafzeile (weicht von B-627 Entscheidung 8 im Wortlaut ab) und „bestanden nach Korrektur“ einmal berechnet. Baut nach B-767.
+- **2026-11-24** — in Arbeit (Nachtlauf K, Sprint 151). Gegen den Code geprüft: zwei Lesestellen von `Passed`
+  (`PositionProgressService.cs:235`, `MetricsService.cs:33`), keine Rücknahme, `EvaluateAndAwardAsync` ohne Bump –
+  stimmt. Gebaut: `TestAttempt.CorrectedItems`/`PassedAfterCorrection` und `TestAttempt.CountsAsPassed` (ein Ausdruck,
+  in der DB übersetzt; gelesen von Pflicht und Missionszahl), `PositionGoalPenalty.RefundedAt`/`RefundedByFeedbackId`,
+  Migration `20261124202234_FeedbackCorrection`. Senke `Services/Supervisor/FeedbackCorrectionService.JudgeAsync`: eine
+  Transaktion (SQLite `BEGIN IMMEDIATE`), Kind zuerst, Spur aus allen berechtigten falschen Antworten des Versuchs neu
+  gezählt, ein Stamp-Bump; dann – nur wenn die Periode jetzt erfüllt ist – positive `GoalPenalty` über die offene
+  Strafzeile (Marke daran) und die fehlende Belohnung über `AddGoalRewardIfDueAsync` (aus `EvaluateAndAwardAsync`
+  herausgezogen, Verhalten gleich). Die Schwelle ist `PositionProgressService.TestPassPercent` (eine Regel für Abgabe und
+  Korrektur); eine Korrektur nimmt ein Bestehen nie weg.
+- **AK 4 gelesen, wie der Code es erlaubt:** „Malus hing an einem zweiten, ebenfalls nicht bestandenen Versuch“ ist unter
+  „ein bestandener Versuch erfüllt die Periode“ nicht herstellbar; geprüft ist der Fall, dass die Periode trotz Korrektur
+  verfehlt bleibt (Review-Hinweis).
+- **Review-Fund (🟡, behoben, gezählt):** die Versuchsansicht (`AttemptDetail`) zeigte nach einer Korrektur weiter „nicht
+  bestanden“, während die Pflicht den Test als bestanden zählt → additive Felder `correctedItems`,
+  `passedAfterCorrection`; Test in `Berechtigt_rechnet_den_Versuch_ueber_die_Korrekturspur_neu`, M20.
+- **Bewusst nicht umgestellt:** der Stufenaufstieg (`PositionPlayService.cs:166`) liest den eigenen Befund – Entscheidung
+  2/5, Lernstand wird nicht neu bewertet; Kommentar dort.
+- AK 1, Spur statt Überschreiben, andere Antwort unberührt → `MeldungBuchtNachTests.Berechtigt_rechnet_den_Versuch_ueber_die_Korrekturspur_neu`;
+  M11 (Befund überschrieben), M12 (falscher Versuch).
+- AK 2, Pflicht und Missionszahl über `CountsAsPassed` → `Pflicht_und_Missionszahl_lesen_bestanden_nach_Korrektur`; M9, M10
+  (je eine Lesestelle auf `Passed`).
+- AK 3, Gegenbuchung, Strafzeile bleibt, zweite Abrechnung bucht nichts, zählt nicht als verdient → `Malus_wird_durch_eine_positive_Gegenbuchung_zurueckgenommen`;
+  M13 (Zeile gelöscht), M14 (als verdiente Art gebucht).
+- AK 4 → `Malus_bleibt_wenn_die_Periode_trotz_Korrektur_verfehlt_ist`; M15 (Malus blind aufgehoben).
+- AK 5, Belohnung einmal, zweite Bestätigung bucht nichts → `Fehlende_Belohnung_wird_einmal_nachgebucht`; M16.
+- AK 6, zwei Meldungen derselben Periode, eine Erstattung → `Zwei_Meldungen_derselben_Periode_erstatten_die_Strafe_nur_einmal`; M17
+  (Marke nicht gelesen).
+- AK 7 → `Nur_der_Betreuer_bestaetigt_und_bucht` (und B-767 AK 3); M7, M8.
+- AK 8, Absichtserklärung (Kasten unverändert) → im Fall zu AK 1, als solche beschriftet.
+- AK 9, Stamp auf jedem Weg → Zusicherungen in AK 3, AK 4, AK 5; M18. Ein Bump für alle Wirkungen: die Transaktion hält
+  die Schreibsperre, ein zweiter wäre nicht unterscheidbar.
+- Entscheidung 7, Bestehen bleibt bei angehobener Schwelle → `Korrektur_nimmt_ein_Bestehen_nicht_weg`; M19.
+- Migration → `MeldungBuchtNachMigrationTests` (keine Spur, keine Marke, Saldo unverändert).
+- Mutanten-Probe wie bei B-767 (dieselben Läufe, 23:10 und 23:14; M10 nachgemessen – die erste Form ließ `using
+  Pugling.Api.Models` ungenutzt und kompilierte darum nicht). Grundlinie danach grün.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | M7 Eigentum fehlt | FeedbackController.cs:65 | red | red | trifft auch `Nur_der_Betreuer_bestaetigt_und_bucht` |
+  | M8 Rollenwand fehlt | FeedbackController.cs:20 | red | red | ebenso |
+  | M9 Pflicht liest Passed | PositionProgressService.cs:240 | red | red |  |
+  | M10 Missionszahl liest Passed | MetricsService.cs:34 | red | red | zweite Form |
+  | M11 Befund ueberschrieben | FeedbackCorrectionService.cs:98 | red | red |  |
+  | M12 falscher Versuch | FeedbackCorrectionService.cs:40 | red | red |  |
+  | M13 Strafzeile geloescht | FeedbackCorrectionService.cs:52 | red | red |  |
+  | M14 Gegenbuchung als verdient | FeedbackCorrectionService.cs:58 | red | red |  |
+  | M15 Malus blind aufgehoben | FeedbackCorrectionService.cs:47 | red | red |  |
+  | M16 keine Belohnung nachgebucht | FeedbackCorrectionService.cs:64 | red | red |  |
+  | M17 Marke nicht gelesen | PositionProgressService.cs:691 | red | red |  |
+  | M18 kein Stamp-Bump | FeedbackCorrectionService.cs:42 | red | red |  |
+  | M19 Korrektur nimmt Bestehen | FeedbackCorrectionService.cs:99 | red | red |  |
+  | M20 Versuchsansicht ohne Spur | PositionTestsController.cs:366 | red | red |  |
+- **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
+  nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
+  „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,
+  danach genau eine (15); die erledigte Zeile trägt „berechtigt“ ohne „Wieder öffnen“; der Sohn liest den Satz über Kasten
+  und Missionen. Dazu `e2e/rueckmeldung.spec.ts` grün (2 passed). Migrationsprobe an einer Kopie der echten DB
+  (`kopie-server.sh`, :5222): beide Migrationen eingespielt, Zeilenzahlen und Salden gleich, keine Spalte gefüllt.
+  Verifikation: .NET 2356/2356 (Release), Vitest 1448/1448, `tsc` sauber, `dotnet format` gelaufen. Reviewer:
+  `pugling-reviewer` und `frontend-reviewer`. Commit `fcb04f56`. **Abgenommen.** Die Entscheidungen bleiben „stellvertretend,
+  unbestätigt“ (Vorbereitungslauf 2026-11-20) – zum Umstoßen im Protokoll.

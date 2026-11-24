@@ -177,6 +177,7 @@ export const en = {
       ShopGems: "Bought in the shop (gems)",
       ManualGems: "Gift from dad (gems)",
       GoalPenalty: "Duty missed (penalty)",
+      GoalPenaltyRefund: "Penalty taken back",
       ObjectiveCoins: "Goal stage reached",
       ObjectiveGems: "Goal stage reached (gems)",
       DailyBoxCoins: "Daily reward box",
@@ -432,6 +433,7 @@ export const en = {
       },
       notice: "Your feedback on “{{cue}}” has been handled ✔",
       noticeExercise: "Your feedback on “{{title}}” has been handled ✔",
+      noticeJustified: "You were right: the test has been recounted. Box, missions and a chest you already opened stay as they are.",
       noticeOk: "Got it",
     },
     practice: {

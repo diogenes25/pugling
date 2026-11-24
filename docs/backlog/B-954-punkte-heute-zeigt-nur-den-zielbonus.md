@@ -148,3 +148,6 @@ Vitest für die Beschriftungen, Rollengang an einer frischen Kopie der echten DB
   Lerntag (`learningDay.StartUtc`). Einziger Unterschied: die Woche begrenzt oben mit `<= now`, der Tag mit dem Ende des
   Lerntags – trifft nur Einträge mit Zeitstempel nach der Serveruhr, die es nicht gibt. Beide Aufrufer
   (`ChildrenDashboardService.cs:32`, `:98`) gelesen: Tag und Zeitleiste nehmen dieselbe Methode. Kein Befund.
+- **2026-11-24** — nachgeschaut (Nachtlauf K, Sprint 151): `WalletService.cs:99` filtert `Amount > 0 && EarnedCoinKinds` –
+  ein positiver `GoalPenalty` (die Malus-Rücknahme aus B-768) zählt darum nicht als „Münzen heute“, gemessen in
+  `MeldungBuchtNachTests.Malus_wird_durch_eine_positive_Gegenbuchung_zurueckgenommen` (Woche wächst nur um die Belohnung). Kein Befund.

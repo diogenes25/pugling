@@ -5,7 +5,7 @@ import type {
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
   CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
-  FeedbackStatus,
+  FeedbackOutcome, FeedbackStatus,
   CreateAdultDto, AdultResponse, UpdateAdultDto,
   ExerciseDetail, ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult, ExerciseTypeManifest,
   CreateChildTagDto, ExerciseWriteResult,
@@ -207,6 +207,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   timetable_slot_taken: "Dieses Fach steht an diesem Wochentag schon im Stundenplan.",
   purchase_not_open: "Dieser Kauf ist schon storniert.",
   activation_not_pending: "Diese Anfrage ist schon beantwortet.",
+  // B-767: ein zweiter Betreuer urteilt über eine Meldung, die schon als berechtigt gebucht ist – endgültig, kein Ausweg.
+  feedback_justified: "Diese Meldung ist schon als berechtigt erledigt – das bleibt so.",
+  feedback_without_test_answer: "Diese Meldung bezieht sich auf keine Test-Antwort – es gibt nichts nachzurechnen.",
   // Trifft den Vater beim Stornieren, Genehmigen oder Ablehnen im Familien-Shop, wenn zwei Speichervorgänge sich kreuzen
   // (ShopService). Dieselbe Handlung noch einmal ist kein Weg über eine zweite Sperre.
   concurrency_conflict: "Das hat sich gerade mit einer anderen Änderung überschnitten und wurde nicht gespeichert. Versuch es noch einmal.",
@@ -506,8 +509,9 @@ export const api = {
     const qs = q.toString();
     return http<FeedbackEntry[]>(`${V1}/supervisor/feedback${qs ? `?${qs}` : ""}`);
   },
-  updateFeedback: (feedbackId: number, status: FeedbackStatus) =>
-    http<FeedbackEntry>(`${V1}/supervisor/feedback/${feedbackId}`, "PATCH", { status }),
+  /** B-767: mit „erledigt“ optional ein Urteil – „berechtigt“ rechnet den Test nach (B-768) und ist endgültig. */
+  updateFeedback: (feedbackId: number, status: FeedbackStatus, outcome?: FeedbackOutcome) =>
+    http<FeedbackEntry>(`${V1}/supervisor/feedback/${feedbackId}`, "PATCH", outcome ? { status, outcome } : { status }),
   exerciseRatings: (exerciseId: number) =>
     http<ExerciseRating[]>(`${V1}/creator/exercises/${exerciseId}/ratings`),
   rateExercise: (exerciseId: number, stars: number, comment: string | null) =>

@@ -41,6 +41,15 @@ public class ExerciseFeedback
     /// <summary>Snapshot of the card's store word, so "wrong translation: voyage" survives the correction.</summary>
     public int? VocabularyId { get; set; }
 
+    /// <summary>
+    /// The child's test answer the report is about (B-767, decision 1): its most recent stored answer to the card in a
+    /// completed test of its own, frozen when the report is sent - a later answer must not change what the supervisor
+    /// judges. <c>null</c> without such an answer (a report from practice only, the whole exercise, reports from before
+    /// B-767); such a report cannot be judged justified. SetNull: the observation outlives its attempt.
+    /// </summary>
+    public int? TestItemResultId { get; set; }
+    public TestItemResult? TestItemResult { get; set; }
+
     /// <summary>The reported reason, or <c>null</c> for a text-only report.</summary>
     public FeedbackReason? Reason { get; set; }
 
@@ -57,6 +66,12 @@ public class ExerciseFeedback
 
     /// <summary>When a supervisor marked it done.</summary>
     public DateTime? DoneAt { get; set; }
+
+    /// <summary>
+    /// The supervisor's judgement when marking it done (B-767, decision 2); <c>null</c> while open and for feedback marked
+    /// done without one. A justified report is final: its correction is booked (B-768) and is never taken back.
+    /// </summary>
+    public FeedbackOutcome? Outcome { get; set; }
 
     /// <summary>Who marked it done; may fade.</summary>
     public int? DoneByAdultId { get; set; }

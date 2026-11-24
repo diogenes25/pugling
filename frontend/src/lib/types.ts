@@ -254,6 +254,7 @@ export type ExerciseRating = S["ExerciseRatingResponse"];
 export type FeedbackReason = S["FeedbackReason"];
 export type FeedbackReach = S["FeedbackReach"];
 export type FeedbackStatus = S["FeedbackStatus"];
+export type FeedbackOutcome = S["FeedbackOutcome"];
 export type CreateFeedbackDto = S["CreateFeedbackDto"];
 export type FeedbackReceipt = S["FeedbackReceipt"];
 /** Ein erledigter, noch nicht gesehener Fall – der Hinweis an das Kind (B-623, Entscheidung 8). */

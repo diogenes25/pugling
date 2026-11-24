@@ -23,11 +23,22 @@ namespace Pugling.Contracts.Supervisor;
 /// <param name="CreatedAt">First report.</param>
 /// <param name="LastReportedAt">Latest report.</param>
 /// <param name="DoneAt">When it was marked done, or <c>null</c>.</param>
+/// <param name="TestItemResultId">
+/// The test answer the report is about, frozen when it was sent (B-767), or <c>null</c> - then it cannot be judged
+/// justified, and <paramref name="ChildAnswer"/> is the child's most recent stored answer to the card instead.
+/// </param>
+/// <param name="TestAnswerCorrect">How the test graded that answer, or <c>null</c> without one.</param>
+/// <param name="Outcome">The supervisor's judgement, or <c>null</c> (open, or done without one).</param>
 public record FeedbackResponse(int Id, int ChildId, string ChildName, int? StudyPlanId, int? PlanPositionId,
     int ExerciseId, string ExerciseTitle, int? ItemIndex, string? Cue, string? Solution, string? ChildAnswer,
     FeedbackReason? Reason, FeedbackReach? Reach, int Count, string? Text, FeedbackStatus Status,
-    DateTime CreatedAt, DateTime LastReportedAt, DateTime? DoneAt);
+    DateTime CreatedAt, DateTime LastReportedAt, DateTime? DoneAt, int? TestItemResultId, bool? TestAnswerCorrect,
+    FeedbackOutcome? Outcome);
 
 /// <summary>Changes the processing state of a feedback; done holds for all supervisors of the child.</summary>
 /// <param name="Status">The new state.</param>
-public record UpdateFeedbackDto(FeedbackStatus Status);
+/// <param name="Outcome">
+/// The judgement, only with <c>Done</c> (B-767): <c>Justified</c> needs a test answer and is final; <c>null</c> keeps the
+/// judgement of a done feedback; opening it again drops it.
+/// </param>
+public record UpdateFeedbackDto(FeedbackStatus Status, FeedbackOutcome? Outcome = null);

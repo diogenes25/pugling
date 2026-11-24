@@ -18,7 +18,8 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Feedback")]
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
-public class FeedbackController(PuglingDbContext db, ExerciseFeedbackService feedback, AuthAccess access) : ControllerBase
+public class FeedbackController(PuglingDbContext db, ExerciseFeedbackService feedback,
+    FeedbackCorrectionService correction, AuthAccess access) : ControllerBase
 {
     /// <summary>
     /// The feedback of the caller's children, open first and newest report first; filtered by <c>childId</c> (one of the
@@ -45,21 +46,36 @@ public class FeedbackController(PuglingDbContext db, ExerciseFeedbackService fee
     }
 
     /// <summary>
-    /// Marks a feedback done - for every supervisor of the child, and the child gets a notice once - or open again.
+    /// Marks a feedback done - for every supervisor of the child, and the child gets a notice once - or open again. With
+    /// done comes an optional judgement (B-767): <c>Justified</c> (only for a feedback about a test answer, final) or
+    /// <c>Rejected</c>. "Justified" corrects the reported test and books what the right grading would have (B-768).
     /// </summary>
     [HttpPatch("{feedbackId:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FeedbackResponse>> Update(int feedbackId, UpdateFeedbackDto dto, CancellationToken ct)
     {
         if (!Enum.IsDefined(dto.Status)) return this.ProblemWithCode(ApiErrors.ValidationError, "Unknown status.");
+        if (dto.Outcome is { } outcome && !Enum.IsDefined(outcome))
+            return this.ProblemWithCode(ApiErrors.ValidationError, "Unknown outcome.");
         var entry = await db.ExerciseFeedbacks.FirstOrDefaultAsync(f => f.Id == feedbackId, ct);
         // Somebody else's child answers like an unknown id: the response must not tell which ids exist.
         if (entry is null || !await access.SupervisorOwnsChildAsync(User, entry.ChildId, ct))
             return this.ProblemWithCode(ApiErrors.NotFound, "Feedback not found.");
+        if (ExerciseFeedbackService.CheckChange(entry, dto.Status, dto.Outcome) is { } refused)
+            return this.ProblemWithCode(refused.Error, refused.Detail);
 
-        await feedback.SetStatusAsync(entry, dto.Status, User.AdultId(), ct);
+        try
+        {
+            await correction.JudgeAsync(entry, dto.Status, dto.Outcome, User.AdultId(), ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return this.ProblemWithCode(ApiErrors.ConcurrencyConflict,
+                "Another booking on the child's coins ran at the same time; please try again.");
+        }
         return (await feedback.ListAsync([entry.ChildId], null, null, ct)).Single(f => f.Id == entry.Id);
     }
 }

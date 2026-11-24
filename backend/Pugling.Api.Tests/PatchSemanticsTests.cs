@@ -57,8 +57,9 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
         // It has no optional field: `UpdateMediaLinkDto(int Weight)` requires the weight. "Not specified" cannot
         // be expressed in it at all, so there is no null semantics to check.
         ["UpdateMediaLinkDto"] = "the only field (Weight) is required - null cannot be expressed",
-        // Same shape (B-628): the status is the only field and required.
-        ["UpdateFeedbackDto"] = "the only field (Status) is required - null cannot be expressed",
+        // The status is required (B-628); the outcome (B-767) is part of the done state: null keeps it, opening again
+        // drops it - there is no field to clear on its own.
+        ["UpdateFeedbackDto"] = "Status is required; Outcome follows it (null keeps, Open drops) - no clear switch",
     };
 
     private static Fall[] Faelle =>

@@ -70,7 +70,7 @@ function AccountView({ childId }: { childId: number }) {
                 {account.data?.items.map((e) => (
                   <tr key={e.id}>
                     <td className="muted">{formatDate(e.createdAt)}</td>
-                    <td>{pointKindLabel(e.kind)}</td>
+                    <td>{pointKindLabel(e.kind, e.amount)}</td>
                     <td className="muted">{e.reason}</td>
                     <td className="num" style={{ color: e.amount < 0 ? "var(--danger, #c23a1d)" : "inherit" }}>
                       {signedAmount(e.amount, e.currency)}</td>

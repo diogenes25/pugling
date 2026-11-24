@@ -26,9 +26,6 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
     ItemProgressService itemProgress, DailyBoxService dailyBox, TimeProvider time, LearningDay learningDay) : ControllerBase
 {
-    /// <summary>Default pass threshold when the position sets no threshold of its own.</summary>
-    private const int DefaultPassPercent = 80;
-
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
     private Task<StudyPlan?> GetPlan(int planId, CancellationToken ct) =>
@@ -365,7 +362,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         return new AttemptDetail(a.Id, a.StudyPlanId, positionId, a.Day, a.StageValue, a.StartedAt, a.CompletedAt,
             a.TotalItems, a.CorrectItems, a.ScorePercent, a.Passed,
             a.Results.Where(r => r.ItemIndex is not null).OrderBy(r => r.ItemIndex)
-                .Select(r => new ItemResultDto(r.ItemIndex!.Value, r.GivenAnswer, r.WasCorrect, r.HintsUsed)).ToList());
+                .Select(r => new ItemResultDto(r.ItemIndex!.Value, r.GivenAnswer, r.WasCorrect, r.HintsUsed)).ToList(),
+            a.CorrectedItems, a.PassedAfterCorrection);
     }
 
 
@@ -469,7 +467,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
         }
 
-        var passPercent = pos.GoalThreshold is > 0 ? pos.GoalThreshold.Value : DefaultPassPercent;
+        var passPercent = PositionProgressService.TestPassPercent(pos);
         // The score is computed over the questions actually asked (still existing), not over the frozen start
         // count: an item deleted mid-test must not secretly lower the reachable score.
         attempt.TotalItems = scorable.Count;

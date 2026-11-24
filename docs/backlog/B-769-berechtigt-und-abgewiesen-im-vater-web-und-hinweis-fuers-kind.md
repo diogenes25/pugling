@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/gamification, rolle/supervisor, rolle/student, bereich/frontend]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/supervisor, rolle/student, bereich/frontend]
 aliases: [Meldung berechtigt Oberfläche]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -73,3 +73,40 @@ Neu aus den Entscheidungen; B-627 hatte keine Oberflächen-Kriterien.
 ## Verlauf
 
 - 2026-11-20 · aus B-627 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): S, frontend, keine Migration, kein Vertragsbruch. Baut nach B-767 und B-768; fremde Arbeit an `frontend/src/sohn/` abwarten.
+- **2026-11-24** — in Arbeit (Nachtlauf K, Sprint 151). Die fremde Arbeit an `frontend/src/sohn/` vom 2026-11-20 ist
+  längst committet (Arbeitsbaum sauber bei 5993c86b). Gebaut: `VaterRueckmeldungen` – an einer Meldung mit Test-Antwort
+  „Berechtigt“ (mit Rückfrage, endgültig) und „Abgewiesen“, sonst „Erledigt“; „im Test als falsch gewertet“ an der Antwort;
+  an einer erledigten Zeile das Urteil, „Wieder öffnen“ nicht bei „berechtigt“. `MeldungsHinweis` nennt nach „berechtigt“
+  Kasten, Missionen und eine geöffnete Kiste. `ledgerLabelKey`/`pointKindLabel(kind, amount)`: ein positiver
+  `GoalPenalty` heißt „Malus zurückgenommen“ (Vater-Konto und Sohn-Konto, i18n de/en). Deutsche Texte für die zwei neuen
+  409-Codes in `GERMAN_PROBLEM_TEXT`.
+- AK 1 → `VaterRueckmeldungen.test.tsx` „zeigt Berechtigt und Abgewiesen nur an einer Meldung mit Test-Antwort“.
+- AK 2 → „sperrt die Knöpfe, solange das Urteil gesendet wird“ (`disabled` im Ladefenster, ein Aufruf mit `Justified`).
+- AK 3 → `KartenMeldung.test.tsx` „nennt nach berechtigt, was nicht nachgebucht wird“ (und nicht nach „abgewiesen“).
+- AK 4 → `labels.test.ts` „Malus nach Vorzeichen“ (beide Helfer).
+- Endgültig → „bietet an einer berechtigten Meldung kein Wieder öffnen an“.
+- **Review-Funde (`frontend-reviewer`):** 🔴 die zwei neuen 409-Codes hatten keinen deutschen Text (Tor
+  `ProblemTextGuardTests`) → ergänzt; 🟡 ein „Abbrechen“ der Rückfrage war ungeprüft → Fall „sendet nach Abbrechen der
+  Rückfrage nichts“; 🟡 der AK-2-Fall verließ sich auf das `confirm` der Testumgebung → `vi.stubGlobal`. Alle behoben,
+  gezählt. 🟢 „Berechtigt“ auch an einer richtig gewerteten Antwort → so belassen (Vertrag, B-767), der Text sagt dann
+  „nachgerechnet“, obwohl nichts zu rechnen war.
+- Mutanten-Probe (Vitest, `VaterRueckmeldungen`/`KartenMeldung`/`labels`), gemessen an `5993c86b + Arbeitsbaum` nach dem
+  letzten Edit, 2026-11-24 23:15; Grundlinie danach grün.
+
+  | Mutante | Stelle | erwartet | gemessen | Anmerkung |
+  |---|---|---|---|---|
+  | F1 Urteil ohne Bezug | VaterRueckmeldungen.tsx:122 | red | red |  |
+  | F2 Berechtigt nicht gesperrt | VaterRueckmeldungen.tsx:125 | red | red |  |
+  | F3 Rueckfrage ignoriert | VaterRueckmeldungen.tsx:54 | red | red |  |
+  | F4 berechtigt wieder oeffnbar | VaterRueckmeldungen.tsx:134 | red | red |  |
+  | F5 Hinweissatz immer | KartenMeldung.tsx:160 | red | red |  |
+  | F6 Vorzeichen ignoriert | labels.ts:34 | red | red |  |
+- **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
+  nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
+  „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,
+  danach genau eine (15); die erledigte Zeile trägt „berechtigt“ ohne „Wieder öffnen“; der Sohn liest den Satz über Kasten
+  und Missionen. Dazu `e2e/rueckmeldung.spec.ts` grün (2 passed). Migrationsprobe an einer Kopie der echten DB
+  (`kopie-server.sh`, :5222): beide Migrationen eingespielt, Zeilenzahlen und Salden gleich, keine Spalte gefüllt.
+  Verifikation: .NET 2356/2356 (Release), Vitest 1448/1448, `tsc` sauber, `dotnet format` gelaufen. Reviewer:
+  `pugling-reviewer` und `frontend-reviewer`. Commit `fcb04f56`. **Abgenommen.** Die Entscheidungen bleiben „stellvertretend,
+  unbestätigt“ (Vorbereitungslauf 2026-11-20) – zum Umstoßen im Protokoll.

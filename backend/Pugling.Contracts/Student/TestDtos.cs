@@ -70,9 +70,28 @@ public record AnswerAck(bool Done, int Cursor, int Total);
 public record ItemResultDto(int ItemIndex, string? GivenAnswer, bool WasCorrect, int HintsUsed);
 
 /// <summary>A test attempt with all individual results.</summary>
+/// <param name="Id"></param>
+/// <param name="PlanId"></param>
+/// <param name="PositionId"></param>
+/// <param name="Day"></param>
+/// <param name="Stage"></param>
+/// <param name="StartedAt"></param>
+/// <param name="CompletedAt"></param>
+/// <param name="TotalItems"></param>
+/// <param name="CorrectItems"></param>
+/// <param name="ScorePercent"></param>
+/// <param name="Passed">The attempt's own finding at hand-in.</param>
+/// <param name="Results"></param>
+/// <param name="CorrectedItems">
+/// Wrongly graded answers a supervisor confirmed as justified (B-768), or <c>null</c> without one; the results keep their
+/// own grading.
+/// </param>
+/// <param name="PassedAfterCorrection">
+/// Passed once the corrections count - what the duty and the missions read - or <c>null</c> without a correction.
+/// </param>
 public record AttemptDetail(int Id, int PlanId, int PositionId, DateOnly Day, int Stage, DateTime StartedAt,
     DateTime? CompletedAt, int TotalItems, int CorrectItems, int ScorePercent, bool Passed,
-    IReadOnlyList<ItemResultDto> Results);
+    IReadOnlyList<ItemResultDto> Results, int? CorrectedItems, bool? PassedAfterCorrection);
 
 /// <summary>A submitted exam answer: typed (<paramref name="GivenAnswer"/>) or self-assessed (<paramref name="WasKnown"/>).</summary>
 public record AnswerDto(int ItemIndex, string? GivenAnswer, bool? WasKnown);

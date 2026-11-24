@@ -350,4 +350,144 @@ public class ExerciseFeedbackTests(PuglingWebAppFactory factory) : IClassFixture
             HttpStatusCode.Forbidden, "forbidden");
         Assert.Null(Rows(k.ChildId).Single().SeenByChildAt);
     }
+
+    // ── B-767: the report points at the test answer, and the supervisor judges it ─────────────────────────────────────
+
+    // The child sits a test of the kid's position and answers the two cards; returns the attempt.
+    private async Task<int> TakeTestAsync(Kid k, string first, string second)
+    {
+        var testsUrl = $"/api/v1/student/study-plans/{k.PlanId}/positions/{k.PositionId}/tests";
+        var attemptId = await TestApi.IdWithKeyAsync(await k.Child.PostAsJsonAsync(testsUrl, new { }), "attemptId");
+        var answers = new[] { new { itemIndex = 0, givenAnswer = first }, new { itemIndex = 1, givenAnswer = second } };
+        await OkJsonAsync(await k.Child.PostAsJsonAsync($"{testsUrl}/{attemptId}/submit", new { answers }));
+        return attemptId;
+    }
+
+    // The stored result line of the attempt for the card, with its grading.
+    private (int Id, bool WasCorrect) ResultOf(int attemptId, int itemIndex) => WithDb(db =>
+    {
+        var r = db.TestAttempts.Include(t => t.Results).Single(t => t.Id == attemptId).Results.Single(r => r.ItemIndex == itemIndex);
+        return (r.Id, r.WasCorrect);
+    });
+
+    private async Task<JsonElement> ReportAsync(Kid k, string reason, int? itemIndex) =>
+        await OkJsonAsync(await k.Child.PostAsJsonAsync(k.FeedbackUrl, new { reasons = new[] { reason }, itemIndex }));
+
+    private static int FirstId(JsonElement receipt) => receipt.GetProperty("ids")[0].GetInt32();
+
+    private static Task<HttpResponseMessage> JudgeAsync(HttpClient client, int id, string status, string? outcome) =>
+        client.PatchAsJsonAsync($"/api/v1/supervisor/feedback/{id}", new { status, outcome });
+
+    /// <summary>
+    /// B-767 AK 1: a report about a card answered in a test stores THAT answer when it is sent; the child answering the card
+    /// again in a second test does not move it, and the supervisor sees the reported answer with its grading. Without a
+    /// stored test answer - a report before any test, or about the whole exercise - the reference stays empty. Red if the
+    /// reference is not written when reporting, or if it is looked up later (the second test's "hallo" would show up).
+    /// </summary>
+    [Fact]
+    public async Task Meldung_friert_die_beanstandete_Test_Antwort_ein()
+    {
+        var k = await KidAsync();
+        var beforeTest = FirstId(await ReportAsync(k, "TooHard", 1));
+        var first = await TakeTestAsync(k, "halo", "tschüss");
+        var reported = ResultOf(first, 0);
+        Assert.False(reported.WasCorrect);
+
+        var id = FirstId(await ReportAsync(k, "TooStrict", 0));
+        var whole = FirstId(await ReportAsync(k, "TooHard", null));
+        // A second test answers the card anew: the newest stored answer is now "hallo", not the reported one.
+        await TakeTestAsync(k, "hallo", "tschüss");
+
+        var rows = Rows(k.ChildId).ToDictionary(r => r.Id);
+        Assert.Equal(reported.Id, rows[id].TestItemResultId);
+        Assert.Null(rows[beforeTest].TestItemResultId);
+        Assert.Null(rows[whole].TestItemResultId);
+        var list = (await OkJsonAsync(await k.Father.GetAsync($"/api/v1/supervisor/feedback?childId={k.ChildId}")))
+            .EnumerateArray().ToDictionary(e => e.GetProperty("id").GetInt32());
+        Assert.Equal((reported.Id, "halo", false),
+            (list[id].GetProperty("testItemResultId").GetInt32(), list[id].GetProperty("childAnswer").GetString(),
+             list[id].GetProperty("testAnswerCorrect").GetBoolean()));
+        Assert.Equal(JsonValueKind.Null, list[beforeTest].GetProperty("testItemResultId").ValueKind);
+    }
+
+    /// <summary>
+    /// B-767 AK 2: the supervisor marks a report done as justified or rejected; done without an outcome stays possible
+    /// (old feedback). A justified report needs a test answer (409 <c>feedback_without_test_answer</c>), an outcome needs
+    /// the status Done (400), and a justified report is final - opening it again or rejecting it is refused (409
+    /// <c>feedback_justified</c>), confirming it again is not. The child's notice carries the outcome. Red if the contract
+    /// knows no outcome, if "justified" is accepted without an answer, or if a justified report can be turned around.
+    /// </summary>
+    [Fact]
+    public async Task Vater_erledigt_mit_berechtigt_oder_abgewiesen()
+    {
+        var k = await KidAsync();
+        var withoutAnswer = FirstId(await ReportAsync(k, "TooHard", 1));
+        await TakeTestAsync(k, "halo", "tschüss");
+        var justified = FirstId(await ReportAsync(k, "TooStrict", 0));
+        var rejected = FirstId(await ReportAsync(k, "WrongTranslation", 0));
+
+        await AssertProblemAsync(await JudgeAsync(k.Father, withoutAnswer, "Done", "Justified"), HttpStatusCode.Conflict,
+            "feedback_without_test_answer");
+        await AssertProblemAsync(await JudgeAsync(k.Father, justified, "Open", "Justified"), HttpStatusCode.BadRequest,
+            "validation_error");
+        var plainDone = await OkJsonAsync(await JudgeAsync(k.Father, withoutAnswer, "Done", null));
+        Assert.Equal(JsonValueKind.Null, plainDone.GetProperty("outcome").ValueKind);
+
+        var j = await OkJsonAsync(await JudgeAsync(k.Father, justified, "Done", "Justified"));
+        Assert.Equal(("Done", "Justified"), (j.GetProperty("status").GetString(), j.GetProperty("outcome").GetString()));
+        var r = await OkJsonAsync(await JudgeAsync(k.Father, rejected, "Done", "Rejected"));
+        Assert.Equal("Rejected", r.GetProperty("outcome").GetString());
+
+        await AssertProblemAsync(await JudgeAsync(k.Father, justified, "Open", null), HttpStatusCode.Conflict, "feedback_justified");
+        await AssertProblemAsync(await JudgeAsync(k.Father, justified, "Done", "Rejected"), HttpStatusCode.Conflict, "feedback_justified");
+        Assert.Equal("Justified", (await OkJsonAsync(await JudgeAsync(k.Father, justified, "Done", "Justified")))
+            .GetProperty("outcome").GetString());
+        // A rejected report is not final: opened again it drops its outcome.
+        Assert.Equal(JsonValueKind.Null, (await OkJsonAsync(await JudgeAsync(k.Father, rejected, "Open", null)))
+            .GetProperty("outcome").ValueKind);
+
+        var notices = (await OkJsonAsync(await k.Child.GetAsync($"/api/v1/student/children/{k.ChildId}/feedback-notices")))
+            .EnumerateArray().ToDictionary(n => n.GetProperty("id").GetInt32(), n => n.GetProperty("outcome"));
+        Assert.Equal("Justified", notices[justified].GetString());
+        Assert.Equal(JsonValueKind.Null, notices[withoutAnswer].ValueKind);
+    }
+
+    /// <summary>
+    /// B-767 AK 3: only a supervisor of the child judges; a foreign supervisor gets 404 like an unknown id, the child 403
+    /// from the role wall - and neither changes the row. Red if the role or ownership check is missing.
+    /// </summary>
+    [Fact]
+    public async Task Nur_der_Betreuer_des_Kindes_setzt_den_Ausgang()
+    {
+        var k = await KidAsync();
+        await TakeTestAsync(k, "halo", "tschüss");
+        var id = FirstId(await ReportAsync(k, "TooStrict", 0));
+        var (stranger, _) = await OtherAdultAsync("5656");
+
+        await AssertProblemAsync(await JudgeAsync(stranger, id, "Done", "Justified"), HttpStatusCode.NotFound, "not_found");
+        Assert.Equal(HttpStatusCode.Forbidden, (await JudgeAsync(k.Child, id, "Done", "Justified")).StatusCode);
+
+        var row = Rows(k.ChildId).Single();
+        Assert.Equal((FeedbackStatus.Open, (FeedbackOutcome?)null), (row.Status, row.Outcome));
+    }
+
+    /// <summary>
+    /// B-767 AK 5 (decision 3): the same reason on the same card is merged only for the same answer - twice after one test
+    /// is one row with count 2, once more after a second wrong test is a new row bound to that answer. Red if the merge
+    /// ignores the answer (one row, count 3) or binds the merged row to the newer answer.
+    /// </summary>
+    [Fact]
+    public async Task Zusammenfuehrung_nur_bei_derselben_Antwort()
+    {
+        var k = await KidAsync();
+        var first = await TakeTestAsync(k, "halo", "tschüss");
+        await ReportAsync(k, "TooStrict", 0);
+        await ReportAsync(k, "TooStrict", 0);
+        var second = await TakeTestAsync(k, "hullo", "tschüss");
+        await ReportAsync(k, "TooStrict", 0);
+
+        var rows = Rows(k.ChildId);
+        Assert.Equal([(2, ResultOf(first, 0).Id), (1, ResultOf(second, 0).Id)],
+            rows.Select(r => (r.Count, r.TestItemResultId!.Value)));
+    }
 }
