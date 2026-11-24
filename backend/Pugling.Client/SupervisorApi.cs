@@ -290,4 +290,22 @@ public sealed class SupervisorApi(HttpClient http)
     /// <summary>Marks a feedback done for all supervisors of the child, or open again (B-628).</summary>
     public Task<FeedbackResponse> UpdateFeedbackAsync(int feedbackId, UpdateFeedbackDto dto, CancellationToken ct = default) =>
         Http.PatchAsync<FeedbackResponse>($"{Root}/feedback/{feedbackId}", dto, ct);
+
+    // ---------------------------------------------------------------- Homework (B-760)
+
+    /// <summary>The child's homework with its hand-ins, latest due day first.</summary>
+    public Task<IReadOnlyList<HomeworkResponse>> ListHomeworkAsync(int childId, int? take = null, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<HomeworkResponse>>($"{Root}/children/{childId}/homework" + PuglingHttp.Query(("take", take)), ct);
+
+    /// <summary>Sets a homework with a due day for the child.</summary>
+    public Task<HomeworkResponse> CreateHomeworkAsync(int childId, CreateHomeworkDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<HomeworkResponse>($"{Root}/children/{childId}/homework", dto, ct);
+
+    /// <summary>Accepts the hand-in; the child's homework coins are booked once.</summary>
+    public Task<HomeworkResponse> AcceptHomeworkAsync(int childId, int homeworkId, CancellationToken ct = default) =>
+        Http.PostAsync<HomeworkResponse>($"{Root}/children/{childId}/homework/{homeworkId}/accept", null, ct);
+
+    /// <summary>Gives the hand-in back for rework with a note.</summary>
+    public Task<HomeworkResponse> ReworkHomeworkAsync(int childId, int homeworkId, ReworkHomeworkDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<HomeworkResponse>($"{Root}/children/{childId}/homework/{homeworkId}/rework", dto, ct);
 }

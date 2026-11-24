@@ -151,3 +151,8 @@ Vitest für die Beschriftungen, Rollengang an einer frischen Kopie der echten DB
 - **2026-11-24** — nachgeschaut (Nachtlauf K, Sprint 151): `WalletService.cs:99` filtert `Amount > 0 && EarnedCoinKinds` –
   ein positiver `GoalPenalty` (die Malus-Rücknahme aus B-768) zählt darum nicht als „Münzen heute“, gemessen in
   `MeldungBuchtNachTests.Malus_wird_durch_eine_positive_Gegenbuchung_zurueckgenommen` (Woche wächst nur um die Belohnung). Kein Befund.
+- **2026-11-24** — nachgeschaut (Nachtlauf J, Retro Sprint 141): Behauptung „dieselbe Definition wie ‚diese Woche‘“
+  nachgelesen – `WeekCoinsAsync` und `EarnedCoinsByDayAsync` gehen beide über `EarnedCoins` (`WalletService.cs:107-109`:
+  positive Buchung, Art in `EarnedCoinKinds`), der Tag über `learningDay.DayOf` (`:101`); `ChildrenDashboardService.cs:32`
+  und `:98` lesen nur diese Abfrage. Folge für B-760 geprüft: die neue Art `HomeworkCoins` zählt damit am Annahmetag auch
+  in „Münzen heute“ des Vaters – gewollt (verdient), kein Befund.

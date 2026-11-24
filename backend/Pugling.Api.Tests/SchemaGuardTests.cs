@@ -237,6 +237,10 @@ public class SchemaGuardTests
             ["ExerciseFeedback.ExerciseItemId"] = DeleteBehavior.SetNull, // -> ExerciseItem
             ["ExerciseFeedback.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
             ["ExerciseFeedback.TestItemResultId"] = DeleteBehavior.SetNull, // -> TestItemResult
+            ["Homework.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["Homework.SubjectId"] = DeleteBehavior.SetNull, // -> Subject (the homework stays, only its label goes)
+            ["HomeworkPenalty.HomeworkId"] = DeleteBehavior.Cascade, // -> Homework (the ledger entry stays)
+            ["HomeworkSubmission.HomeworkId"] = DeleteBehavior.Cascade, // -> Homework
             ["ExerciseGrant.CreatorId"] = DeleteBehavior.Cascade, // -> Adult
             ["ExerciseGrant.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
             // B-12: a rating is an opinion of one creator about one exercise - without either it says nothing.

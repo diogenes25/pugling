@@ -272,6 +272,12 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("Grade")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("HomeworkCoins")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("HomeworkPenaltyCoins")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Interests")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -1139,6 +1145,94 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("GrammarTopics");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.Homework", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("AwardedCoins")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("DueOn")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReworkNote")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("ChildId", "DueOn");
+
+                    b.ToTable("Homeworks");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.HomeworkPenalty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AppliedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("HomeworkId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HomeworkId")
+                        .IsUnique();
+
+                    b.ToTable("HomeworkPenalties");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.HomeworkSubmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("HomeworkId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HomeworkId");
+
+                    b.ToTable("HomeworkSubmissions");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>
@@ -3721,6 +3815,46 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.Homework", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.HomeworkPenalty", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Homework", "Homework")
+                        .WithMany()
+                        .HasForeignKey("HomeworkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Homework");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.HomeworkSubmission", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Homework", "Homework")
+                        .WithMany("Submissions")
+                        .HasForeignKey("HomeworkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Homework");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ItemProgress", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4565,6 +4699,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("ExerciseLinks");
 
                     b.Navigation("UnitLinks");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.Homework", b =>
+                {
+                    b.Navigation("Submissions");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.InterestTag", b =>

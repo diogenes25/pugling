@@ -24,6 +24,7 @@ const POINT_KIND_LABELS: Record<PointKind, string> = {
   ExtraTrainingCoins: "Bonus-Training",
   RemediationBonus: "Nacharbeit geschafft",
   TowerGameCoins: "Vokabel-Türme",
+  HomeworkCoins: "Hausaufgabe angenommen",
 };
 /**
  * Die Beschriftungs-Art einer Buchung: die Art selbst, außer bei einem **positiven** Malus-Eintrag – das ist die Rücknahme

@@ -26,9 +26,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>
     /// How far back the lazy settlement (<see cref="SettleClosedPeriodsAsync"/>) recalculates at most. In
     /// normal operation the only open period is "yesterday"; the cap only limits catch-up recalculation
-    /// after a longer absence, without ever scanning the entire history.
+    /// after a longer absence, without ever scanning the entire history. Shared with the homework settlement (B-760), so both
+    /// sticks reach equally far back.
     /// </summary>
-    private const int MaxSettleLookbackDays = 14;
+    internal const int MaxSettleLookbackDays = 14;
 
     // PositionStatus/DayOverview/ProgressDay/ProgressView live in the contract project (Pugling.Contracts.Shared).
 

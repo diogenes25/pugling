@@ -185,6 +185,7 @@ export const en = {
       ExtraTrainingCoins: "Bonus training",
       RemediationBonus: "Catch-up finished",
       TowerGameCoins: "Vocab Towers",
+      HomeworkCoins: "Homework accepted",
     },
     bonus: {
       title: "Bonus training",

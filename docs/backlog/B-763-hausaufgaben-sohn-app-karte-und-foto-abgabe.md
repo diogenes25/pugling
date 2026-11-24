@@ -73,3 +73,8 @@ Die gesamte Kind-Oberfläche; das Backend liefert die Wege.
 ## Verlauf
 
 - 2026-11-20 · aus B-687 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): M, frontend, keine Migration, kein Vertragsbruch. Baut nach B-760 und B-761; fremde Arbeit an `SohnApp.tsx` abwarten.
+- **2026-11-24** — geprüft im Nachtlauf J, **angehalten**: Die Abgabe ist laut Entscheidung 1 ein Foto-Upload (B-761,
+  `wartet_auf`). Eine Zwischenlösung „Abgeben ohne Foto“ (die Route aus B-760, `POST student/homework/{id}/submissions`) wäre
+  eine Produktentscheidung, die die `## Entscheidungen` nicht hergeben: Sie ließe das Kind den Malus mit einem Tipp abwenden,
+  B-761 AK 5 sieht genau das erst mit Foto vor. Die fremde Arbeit an `SohnApp.tsx` ist inzwischen committet (Arbeitsbaum an
+  `5993c86b` sauber). Offene Entscheidung im Protokoll `pm-sitzung-2026-11-24-j.md`.

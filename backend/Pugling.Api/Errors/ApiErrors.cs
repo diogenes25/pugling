@@ -255,6 +255,13 @@ public static class ApiErrors
     public static readonly ApiError TowerGameTimeLimit = new("tower_game_time_limit", 409, "Tower game time used up for today.");
     /// <summary>The tower-game run has ended, or its grace time after the daily limit is over: it takes no more assignments (409).</summary>
     public static readonly ApiError TowerGameRunClosed = new("tower_game_run_closed", 409, "Tower game run is closed.");
+    /// <summary>The homework is accepted and its coins are booked (B-760): it takes no further hand-in or verdict (409).</summary>
+    public static readonly ApiError HomeworkAccepted = new("homework_accepted", 409, "Homework already accepted.");
+    /// <summary>
+    /// The homework waits for no hand-in (B-760): nothing handed in yet, or given back for rework and not handed in again. It can
+    /// be accepted only with a new hand-in (409).
+    /// </summary>
+    public static readonly ApiError HomeworkNotSubmitted = new("homework_not_submitted", 409, "No new hand-in.");
     /// <summary>The bonus run has already been submitted (409).</summary>
     public static readonly ApiError ExtraRunCompleted = new("extra_run_completed", 409, "Bonus run already submitted.");
     /// <summary>

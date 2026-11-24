@@ -30,7 +30,9 @@ Response — `HTTP 200`:
     "coins": 50,
     "gems": 300,
     "bonusDailyCoinCap": null,
-    "towerGameMinutesPerDay": null
+    "towerGameMinutesPerDay": null,
+    "homeworkCoins": null,
+    "homeworkPenaltyCoins": null
   }
 ]
 ```
@@ -67,7 +69,9 @@ Response — `HTTP 201`:
   "coins": 0,
   "gems": 0,
   "bonusDailyCoinCap": null,
-  "towerGameMinutesPerDay": null
+  "towerGameMinutesPerDay": null,
+  "homeworkCoins": null,
+  "homeworkPenaltyCoins": null
 }
 ```
 
@@ -122,7 +126,9 @@ Response — `HTTP 200`:
   "coins": 0,
   "gems": 0,
   "bonusDailyCoinCap": null,
-  "towerGameMinutesPerDay": null
+  "towerGameMinutesPerDay": null,
+  "homeworkCoins": null,
+  "homeworkPenaltyCoins": null
 }
 ```
 
@@ -157,7 +163,9 @@ Response — `HTTP 200`:
   "coins": 0,
   "gems": 0,
   "bonusDailyCoinCap": null,
-  "towerGameMinutesPerDay": null
+  "towerGameMinutesPerDay": null,
+  "homeworkCoins": null,
+  "homeworkPenaltyCoins": null
 }
 ```
 

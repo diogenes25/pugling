@@ -199,6 +199,7 @@ export const de = {
       ExtraTrainingCoins: "Bonus-Training",
       RemediationBonus: "Nacharbeit geschafft",
       TowerGameCoins: "Vokabel-Türme",
+      HomeworkCoins: "Hausaufgabe angenommen",
     },
     // Bonus-Training: Extra-Übungen zum aktuellen Thema, offen nach der Tagespflicht.
     bonus: {
