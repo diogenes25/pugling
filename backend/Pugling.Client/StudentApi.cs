@@ -170,6 +170,16 @@ public sealed class StudentApi(HttpClient http)
     public Task<TodayResponse> GetTodayAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<TodayResponse>($"{Root}/children/{childId}/today", ct);
 
+    // ---------------------------------------------------------------- Class tests
+
+    /// <summary>The child's upcoming class tests, earliest first, without grade (B-750).</summary>
+    public Task<IReadOnlyList<UpcomingClassTestResponse>> GetUpcomingClassTestsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<UpcomingClassTestResponse>>($"{Root}/children/{childId}/class-tests/upcoming", ct);
+
+    /// <summary>How sure the child is in the vocabulary of a class test's bundle (B-751).</summary>
+    public Task<ClassTestReadinessResponse> GetClassTestReadinessAsync(int childId, int classTestId, CancellationToken ct = default) =>
+        Http.GetAsync<ClassTestReadinessResponse>($"{Root}/children/{childId}/class-tests/{classTestId}/readiness", ct);
+
     // ---------------------------------------------------------------- Daily reward chest
 
     /// <summary>Opens the oldest waiting reward chest and books its draw - the child's own seat only.</summary>

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/frontend, rolle/supervisor]
 aliases: [Fenster und Vorschau im Klassenarbeiten-Dialog]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: S
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: ""
+wartet_auf: "Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme"
 ---
 
 # B-757 · Der Vater stellt das Vorbereitungs-Fenster ein und sieht „etwa N Karten je Tag“
@@ -89,3 +89,12 @@ Final. Je Kriterium die Änderung, die es rot macht (aus Entscheidungen 1 bis 3;
 
 - **2026-11-20** — angelegt beim Teilen von [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) und geschätzt (Vorbereitungslauf, Sonnet): S, frontend,
   keine Migration, kein Vertragsbruch. Hängt an B-752.
+- **2026-11-24** — `geschaetzt` → `in-arbeit` (Nachtlauf I, Sprint 134). Gebaut (`1333ae02`): Feld „Vorbereitung (Tage)“ beim Anlegen
+  (leer = Standard, 0 = aus), Spalte „Vorbereitung“ (`VorbereitungsZelle`: Zahl des Servers oder der Grund, „aus“ bei 0, „–“ für nicht
+  geplante), `FensterEditor` in der Detailkarte (leer → `clearPrepWindow`). Belege: `VaterClassTests.test.tsx` (AK 1 Anlegen und
+  Ändern, AK 2, AK 3, AK 4 inkl. „Note nachtragen schickt kein Fenster“); E2E `klassenarbeit-vorbereitung.spec.ts` 1 passed (Rollengang des
+  Vaters: Fenster 12, „etwa 2 Karten je Tag“, Grund „kein aktiver Plan im Fach“ für ein Kind ohne Plan).
+- **2026-11-24** — Review `frontend-reviewer`: keine 🔴; **nicht behoben**, weil der Fehlerzähler des Sprints bei 5 stand: 🟡 Erfolgsmeldung
+  verschwindet nach dem Speichern → [B-942](B-942-fenster-editor-meldung-verschwindet.md), 🟡 eine Zusicherung ohne Biss →
+  [B-943](B-943-vorbereitungszelle-zusicherung-ohne-biss.md); 🟢 in [B-944](B-944-vorbereitungs-pflicht-restpunkte.md). Keine
+  Frontend-Mutanten-Probe gelaufen (der Lauf endete vorher).

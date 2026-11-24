@@ -19,18 +19,35 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Tags("Supervisor – Class Tests")]
 [Produces("application/json")]
 [Authorize]
-public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms, LearningDay learningDay) : ControllerBase
+public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, ExercisePermissionService perms, LearningDay learningDay,
+    ClassTestPrepService prep) : ControllerBase
 {
     /// <summary>Threshold from which a grade counts as "bad" (German scale, higher = worse).</summary>
     private const decimal DefaultBadGrade = 4.0m;
 
-    private static KlassenarbeitResponse Map(Klassenarbeit k) => new(
+    /// <summary>The class test as the supervisor reads it, with what its preparation duty asks (B-752/B-757).</summary>
+    private async Task<KlassenarbeitResponse> MapAsync(Klassenarbeit k, CancellationToken ct) => new(
         k.Id, k.ChildId, k.SubjectId, k.Subject?.Name, k.Title, k.Topic, k.ScheduledDate, k.Status,
         k.Grade, k.GradeComment, k.Exercises.Count,
         k.Tags.Where(t => t.Tag is not null)
             .Select(t => new TagRef(t.Tag!.Id, t.Tag!.Name, t.Tag!.Color))
             .OrderBy(t => t.Name).ToList(),
-        k.CreatedAt);
+        k.CreatedAt,
+        k.PrepWindowDays, prep.DefaultWindowDays,
+        await prep.CardsPerDayAsync(k, learningDay.Today, ct),
+        await prep.BlockReasonAsync(k, ct));
+
+    private async Task<List<KlassenarbeitResponse>> MapAllAsync(IEnumerable<Klassenarbeit> tests, CancellationToken ct)
+    {
+        var mapped = new List<KlassenarbeitResponse>();
+        foreach (var k in tests) mapped.Add(await MapAsync(k, ct));
+        return mapped;
+    }
+
+    private static string? ValidatePrepWindow(int? days) =>
+        days is < 0 or > ClassTestPrepService.MaxWindowDays
+            ? $"prepWindowDays must be between 0 and {ClassTestPrepService.MaxWindowDays} (0 = no preparation duty; omit it for the default)."
+            : null;
 
     private IQueryable<Klassenarbeit> WithRelations() => db.Klassenarbeiten
         .Include(k => k.Subject)
@@ -69,7 +86,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (subjectId is not null) query = query.Where(k => k.SubjectId == subjectId);
 
         var list = await query.OrderBy(k => k.ScheduledDate).ThenBy(k => k.Id).ToPagedListAsync(Response, skip, take, ct);
-        return list.Select(Map).ToList();
+        return await MapAllAsync(list, ct);
     }
 
     /// <summary>A class test incl. the directly assigned exercises (own only).</summary>
@@ -82,7 +99,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
         var exercises = await LoadExercisesAsync(e => exIds.Contains(e.Id), ct);
-        return new KlassenarbeitDetail(Map(k), exercises);
+        return new KlassenarbeitDetail(await MapAsync(k, ct), exercises);
     }
 
     // ---- Create / change (supervisor only) ----
@@ -98,6 +115,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         if (string.IsNullOrWhiteSpace(dto.Title)) return this.ProblemWithCode(ApiErrors.ValidationError, "Title is required.");
         if (!await access.OwnsChildAsync(User, dto.ChildId, ct)) return Forbid();
         if (ValidateGrade(dto.Grade) is { } gradeError) return this.ProblemWithCode(ApiErrors.ValidationError, gradeError);
+        if (ValidatePrepWindow(dto.PrepWindowDays) is { } windowError) return this.ProblemWithCode(ApiErrors.ValidationError, windowError);
         if (dto.SubjectId is { } sid && !await db.Subjects.AnyAsync(s => s.Id == sid, ct))
             return this.ProblemWithCode(ApiErrors.InvalidReference, "Subject not found.");
 
@@ -111,6 +129,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             Status = dto.Status ?? (dto.Grade is not null ? KlassenarbeitStatus.Written : KlassenarbeitStatus.Planned),
             Grade = dto.Grade,
             GradeComment = dto.GradeComment?.Trim(),
+            PrepWindowDays = dto.PrepWindowDays,
         };
 
         if (await BuildExerciseLinksAsync(dto.ChildId, dto.ExerciseIds, k.Exercises, ct) is { } exErr) return exErr;
@@ -122,7 +141,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         var created = (await FindOwnedAsync(k.Id, ct))!;
         var exIds = created.Exercises.Select(x => x.ExerciseId).ToList();
         return CreatedAtAction(nameof(Get), new { id = k.Id },
-            new KlassenarbeitDetail(Map(created), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct)));
+            new KlassenarbeitDetail(await MapAsync(created, ct), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct)));
     }
 
     /// <summary>Partially changes a class test – among other things, records the grade and sets the status. Father only.</summary>
@@ -134,6 +153,8 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     {
         var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
+        // B-758: what the preparation duty follows - compared after the change, so a mere re-save moves nothing.
+        var prepBefore = (k.ScheduledDate, k.Status, k.PrepWindowDays, k.SubjectId);
 
         if (dto.Title is not null)
         {
@@ -159,12 +180,24 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             k.Grade = dto.Grade;
         }
 
+        // Value first, then the switch: "back to the default" wins when a form sends both.
+        if (ValidatePrepWindow(dto.PrepWindowDays) is { } windowError) return this.ProblemWithCode(ApiErrors.ValidationError, windowError);
+        if (dto.PrepWindowDays is not null) k.PrepWindowDays = dto.PrepWindowDays;
+        if (dto.ClearPrepWindow) k.PrepWindowDays = null;
+
         // A grade entered afterwards means: written. An explicitly set status takes precedence.
         if (dto.Status is not null) k.Status = dto.Status.Value;
         else if (k.Grade is not null && k.Status == KlassenarbeitStatus.Planned) k.Status = KlassenarbeitStatus.Written;
 
-        await db.SaveChangesAsync(ct);
-        return Map(k);
+        // One transaction: a failed reconcile must not leave the test changed and its duty behind.
+        await using (var tx = await db.Database.BeginTransactionAsync(ct))
+        {
+            await db.SaveChangesAsync(ct);
+            if (prepBefore != (k.ScheduledDate, k.Status, k.PrepWindowDays, k.SubjectId))
+                await prep.ReconcileAsync(k.ChildId, learningDay.Today, ct);
+            await tx.CommitAsync(ct);
+        }
+        return await MapAsync(k, ct);
     }
 
     /// <summary>Deletes a class test (assignments and tag links disappear with it). Father only.</summary>
@@ -176,8 +209,18 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
     {
         var k = await FindOwnedAsync(id, ct);
         if (k is null) return NotFound();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        // B-758: a deleted test ends its preparation duty like a cancelled one - closed first, while its positions still
+        // point at it (the delete sets that link to null, and an unlinked position is no longer reconciled).
+        if (k.Status == KlassenarbeitStatus.Planned && k.PrepStartedOn is not null)
+        {
+            k.Status = KlassenarbeitStatus.Cancelled;
+            await db.SaveChangesAsync(ct);
+            await prep.ReconcileAsync(k.ChildId, learningDay.Today, ct);
+        }
         db.Klassenarbeiten.Remove(k);
         await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return NoContent();
     }
 
@@ -197,7 +240,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
 
         await db.SaveChangesAsync(ct);
         var exIds = k.Exercises.Select(x => x.ExerciseId).ToList();
-        return new KlassenarbeitDetail(Map(k), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct));
+        return new KlassenarbeitDetail(await MapAsync(k, ct), await LoadExercisesAsync(e => exIds.Contains(e.Id), ct));
     }
 
     /// <summary>Removes the direct assignment of an exercise. Father only.</summary>
@@ -232,7 +275,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             k.Tags.Add(new KlassenarbeitTag { TagId = tagId });
             await db.SaveChangesAsync(ct);
         }
-        return Map((await FindOwnedAsync(id, ct))!);
+        return await MapAsync((await FindOwnedAsync(id, ct))!, ct);
     }
 
     /// <summary>Removes the link of a tag with the class test. Father only.</summary>
@@ -291,7 +334,7 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
             ? new List<ExerciseBrief>()
             : await LoadRelevantExercisesAsync(sources.Select(k => k.Id).ToList(), ct);
 
-        return new RepeatResponse(threshold, sources.Select(Map).ToList(), exercises);
+        return new RepeatResponse(threshold, await MapAllAsync(sources, ct), exercises);
     }
 
     // ---- Helpers ----
@@ -309,21 +352,11 @@ public class KlassenarbeitenController(PuglingDbContext db, AuthAccess access, E
         return exercises.Select(ExerciseBriefMapping.From).ToList();
     }
 
-    /// <summary>
-    /// Merges (without duplicates) the directly assigned exercises and those relevant via linked
-    /// tags of the given class tests.
-    /// </summary>
+    /// <summary>The bundle of the given class tests (<see cref="ClassTestBundle"/>) as exercise briefs.</summary>
     private async Task<List<ExerciseBrief>> LoadRelevantExercisesAsync(IReadOnlyCollection<int> klassenarbeitIds, CancellationToken ct)
     {
-        var directIds = await db.KlassenarbeitExercises
-            .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.ExerciseId).ToListAsync(ct);
-        var tagIds = await db.KlassenarbeitTags
-            .Where(x => klassenarbeitIds.Contains(x.KlassenarbeitId))
-            .Select(x => x.TagId).ToListAsync(ct);
-
-        return await LoadExercisesAsync(e => directIds.Contains(e.Id)
-            || db.ExerciseTags.Any(et => et.ExerciseId == e.Id && tagIds.Contains(et.TagId)), ct);
+        var ids = await ClassTestBundle.ExerciseIdsAsync(db, klassenarbeitIds, ct);
+        return await LoadExercisesAsync(e => ids.Contains(e.Id), ct);
     }
 
     /// <summary>Checks the exercise ids (existence + execute permission) and attaches new assignments; returns an error result or null.</summary>

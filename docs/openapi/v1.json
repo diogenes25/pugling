@@ -8223,6 +8223,123 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/class-tests/upcoming": {
+      "get": {
+        "tags": [
+          "Student \u2013 Class Tests"
+        ],
+        "summary": "The child\u0027s upcoming class tests, earliest first: planned ones dated today or later. Cancelled, written and\noverdue tests are not listed - the child should not count down to a test that no longer comes.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpcomingClassTestResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/class-tests/{id}/readiness": {
+      "get": {
+        "tags": [
+          "Student \u2013 Class Tests"
+        ],
+        "summary": "How sure the child is in the vocabulary of the class test\u0027s bundle: of all vocabulary items of the bundle\n(practised or not), how many are not weak. A bundle without vocabulary has no measure (both counts null).",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassTestReadinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/children/{childId}/learn/subjects": {
       "get": {
         "tags": [
@@ -32748,6 +32865,68 @@
         },
         "description": "A child with its periods in the requested range, oldest first."
       },
+      "ClassTestReadinessResponse": {
+        "required": [
+          "classTestId",
+          "exerciseCount",
+          "vocabularyExerciseCount",
+          "weakBelowPercent"
+        ],
+        "type": "object",
+        "properties": {
+          "classTestId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "vocabularyExerciseCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "secureItems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "weakBelowPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "How sure the child already is in the vocabulary of a class test\u0027s bundle (B-751). \u0060SecureItems\u0060 counts the\nvocabulary items whose mastery is not weak (at least \u0060WeakBelowPercent\u0060); \u0060TotalItems\u0060 counts every\nvocabulary item of the bundle, practised or not. Both are null when the bundle holds no vocabulary item - there is no\nmeasure for other exercise types, and none is estimated."
+      },
       "ClassTestUsage": {
         "required": [
           "childId",
@@ -33161,6 +33340,15 @@
               ],
               "format": "int32"
             }
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "Input for scheduling a class test (or recording one already written)."
@@ -43037,6 +43225,7 @@
           "createdAt",
           "directExerciseCount",
           "id",
+          "prepWindowDefault",
           "scheduledDate",
           "status",
           "tags",
@@ -43123,9 +43312,41 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepWindowDefault": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepCardsPerDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "prepBlockedReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         },
-        "description": "Class test in list/summary view."
+        "description": "Class test in list/summary view. The preparation fields (B-752/B-757): \u0060PrepWindowDays\u0060 is the test\u0027s own window\n(\u0060null\u0060 = the default \u0060PrepWindowDefault\u0060, 0 = no preparation duty), \u0060PrepCardsPerDay\u0060 the server\u0027s \u0022about N\ncards a day\u0022 of the duty (\u0060null\u0060 when none arises), \u0060PrepBlockedReason\u0060 why none arises for a planned test\n(ClassTestPrepBlockReasons)."
       },
       "KlassenarbeitStatus": {
         "enum": [
@@ -49960,6 +50181,56 @@
         "type": "string",
         "description": "Unit of measurement of the item \u2013 determines how quantities are displayed in the inventory and upon activation.\n\nAllowed values: Stueck, Minute, Stunde, Gramm, Mal, Euro."
       },
+      "UpcomingClassTestResponse": {
+        "required": [
+          "daysUntil",
+          "id",
+          "scheduledDate",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "scheduledDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysUntil": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "An upcoming class test as the child sees it: title, subject, date and the days until it (0 = today). No grade, no\ngrade comment."
+      },
       "UpdateAchievementDto": {
         "type": "object",
         "properties": {
@@ -50212,6 +50483,19 @@
               "null",
               "string"
             ]
+          },
+          "prepWindowDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearPrepWindow": {
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "Partial change \u2013 among other things, recording a grade and setting status. \u0060ClearGrade\u0060 deletes the grade."
@@ -52724,6 +53008,9 @@
     },
     {
       "name": "Student \u2013 Child Progress"
+    },
+    {
+      "name": "Student \u2013 Class Tests"
     },
     {
       "name": "Student \u2013 Daily Box"

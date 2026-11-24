@@ -191,6 +191,9 @@ builder.Services.AddScoped<PositionPlayService>();
 builder.Services.AddScoped<ExerciseFeedbackService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
+// The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.
+builder.Services.Configure<ClassTestPrepOptions>(builder.Configuration.GetSection(ClassTestPrepOptions.SectionName));
+builder.Services.AddScoped<ClassTestPrepService>();
 // Learning report per position: "which word sits and which does not" (box/mastery + test hit rate).
 builder.Services.AddScoped<PositionReportService>();
 // Birkenbihl automation: tokenize a sentence + look the words up in the vocabulary store (word-for-word decoding).

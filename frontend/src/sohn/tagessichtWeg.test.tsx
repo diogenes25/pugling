@@ -25,6 +25,8 @@ vi.mock("../lib/api", async (importOriginal) => {
       myInterests: () => Promise.resolve({ needsIntro: false }),
       // Die Notenstufe (B-743) ist hier kein Thema – leer, ohne Netz.
       mySubjectLevels: () => Promise.resolve([]),
+      // Die Klassenarbeit-Karte (B-750) ebenso: ohne Arbeit steht sie nicht da.
+      upcomingClassTests: () => Promise.resolve([]),
     },
   };
 });

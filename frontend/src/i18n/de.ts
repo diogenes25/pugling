@@ -76,6 +76,17 @@ export const de = {
       penalty_one: "sonst −{{count}} Münze",
       penalty_other: "sonst −{{count}} Münzen",
     },
+    // Die nächste Klassenarbeit auf der Startseite (B-750) und die Sicherheit im Vokabelstoff (B-751).
+    classTest: {
+      label: "Nächste Klassenarbeit",
+      today: "heute",
+      tomorrow: "morgen",
+      inDays_one: "in {{count}} Tag",
+      inDays_other: "in {{count}} Tagen",
+      secureWords_one: "{{secure}} von {{count}} Wort sicher",
+      secureWords_other: "{{secure}} von {{count}} Wörtern sicher",
+      noMeasure: "Für diese Arbeit gibt es kein Wörter-Maß.",
+    },
     // Die Tagestruhe am Ende des Pfads (B-527).
     truhe: {
       title: "Tagestruhe",

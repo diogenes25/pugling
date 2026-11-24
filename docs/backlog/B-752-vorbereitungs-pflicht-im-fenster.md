@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/gamification, bereich/lehrplan, bereich/api, rolle/student, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/gamification, bereich/lehrplan, bereich/api, rolle/student, rolle/supervisor]
 aliases: [Verdichtungs-Pflicht, Zusatzpflicht vor der Klassenarbeit, Vorbereitungs-Pflicht]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: ""
+wartet_auf: "Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme"
 ---
 
 # B-752 · Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel
@@ -173,3 +173,31 @@ wäre es XL gewesen, darum der Schnitt.
 
 - **2026-11-20** — angelegt beim Teilen von [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) und geschätzt (Vorbereitungslauf, Sonnet): L,
   backend, Migration ja, Vertrag additiv. Größtes Risiko: der Tagesplaner B-644 übernimmt die Terminpflicht und löst die Positions-Pflicht auf.
+- **2026-11-24** — `geschaetzt` → `in-arbeit` (Nachtlauf I, Sprint 134, Freigabe 8; B-248 trägt die Freigabe des Nutzers vom
+  2026-10-23). Vor dem Bau geprüft: B-644 ist verworfen/geteilt, die Positions-Pflicht besteht; Entscheidung 9 trägt den Bau.
+  Gebaut (`f1be5aba`, Review-Fixes `d0fe6477`): `Services/Shared/ClassTestPrepService.cs` (Abgleich beim Kind-Login und vor dem Kauf,
+  jeweils vor `SettleClosedPeriodsAsync`), Migration `20261123232647_ClassTestPrepDuty` (drei nullable Spalten, FK `SetNull`, kein
+  Backfill), Obergrenze `DutyUntil` in der Abrechnung, Felder an `KlassenarbeitResponse`/`Create…`/`UpdateClassTestDto` (additiv),
+  Konfiguration `ClassTestPrep` (Fenster 7, Malus 5, Deckel 10 – der Deckel ist **nicht** an echten Bündeln gemessen, die echte DB
+  ist für den Nachtlauf tabu). Lesarten: „Fenstertage“ der Dosis = Resttage bis zum Termin beim Start (am ersten Fenstertag = Fenster);
+  „Leitner-Karte“ = `Exercise.DefaultUseLeitner` und kein Mengen-Typ (`GradesAsSet`); eine Übung ohne Inhalt wird keine Pflicht.
+- **2026-11-24** — Belege je AK (je AK der tragende Test; **die Mutanten-Probe über diese Fälle ist nicht gelaufen** – der Lauf
+  endete vorher am Fehlerzähler; gemessen sind nur die Review-Fixes R1/R2/R3, Tabelle im Protokoll): AK 1 Fenster → `Pflicht_Entsteht_Erst_Im_Fenster…`, kein Rückwirken → `Spaeter_Erster_Login_Im_Fenster…` (R2,
+  vom Review gefunden: vorher kein Test); AK 2 → `Termintag_Und_Danach…`; AK 3 → `Zweiter_Abgleich…`; AK 4 →
+  `Uebung_Schon_Im_Plan…`; AK 5 → `Malus_Eines_Tages…`; AK 6 → `Ohne_Fach_Oder_Ohne_Aktiven_Plan…`,
+  `Inaktiver_Plan_Im_Fach…`; AK 7 → `Zwei_Arbeiten…`, `Spaetere_Arbeit_Verlaengert…`; AK 8 →
+  `VorbereitungsPflichtMigrationTests` (kein Backfill; nach dem Review auch Malus-Zeilen, Lernstand, Versuche überleben den
+  Tabellen-Neubau – ohne rote Probe, eine Kaskade lässt sich nicht als Zeilen-Mutante erzeugen); **an einer Kopie der echten DB nicht
+  geprüft** (tabu); AK 9 → `Fenster_Null_Schaltet…`; AK 10 → `Dosis_Ist_Aufgerundet…`. Zweiter Aufrufort →
+  `Kauf_Gleicht_Ab_Wie_Der_Login`.
+- **2026-11-24** — Review `pugling-reviewer`: 🔴 ein Speichern der Position (das Formular schickt die Taktung immer mit) löschte das Ende
+  der Vorbereitung → endlose Tagespflicht mit Malus; behoben in `PlanPositionsController` (nur ein echter Taktwechsel räumt die Spanne)
+  und im Abgleich (Vorbereitung ohne Ende schließt), Test `Speichern_Der_Position_Nach_Dem_Termin…`, R1 rot. 🟡 gleichzeitige Abgleiche
+  legten doppelt an → Start wird per `ExecuteUpdateAsync` beansprucht (ohne deterministischen Test; R3 bleibt grün, in B-944 benannt).
+  🟡 Rückwirken ungetestet → Test ergänzt. 🟡 Migrationstest sah keine Kaskade → Abhängige ergänzt. **Nicht behoben**, weil der
+  Fehlerzähler bei 5 stand: 🟡 Kind verkleinert sein Bündel über Schlagwörter → [B-940](B-940-kind-verkleinert-sein-vorbereitungs-buendel.md),
+  🟡 Ausführ-Recht umgangen → [B-941](B-941-vorbereitung-umgeht-das-ausfuehr-recht.md); 🟢 gesammelt in
+  [B-944](B-944-vorbereitungs-pflicht-restpunkte.md).
+- **2026-11-24** — Rollengang (maschinell): E2E `e2e/klassenarbeit-vorbereitung.spec.ts` 1 passed (Ports 5231/5204) – der Vater plant mit
+  Fenster 12, sieht „etwa 2 Karten je Tag“, das Kind findet nach dem Login die Pflicht als Knoten auf seinem Pfad. Bleibt `in-arbeit`:
+  zwei 🟡 offen (B-940, B-941), der Lauf endete am Fehlerzähler.

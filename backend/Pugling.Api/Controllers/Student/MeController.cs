@@ -20,7 +20,8 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Student)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
-    WalletService wallet, ShopService shop, PositionProgressService progress, TimeProvider time, LearningDay learningDay) : ControllerBase
+    WalletService wallet, ShopService shop, PositionProgressService progress, TimeProvider time, LearningDay learningDay,
+    ClassTestPrepService classTestPrep) : ControllerBase
 {
     /// <summary>Own wallet balance (coins + gems). The individual ledger entries live under <c>points/entries</c>.</summary>
     [HttpGet("points")]
@@ -293,6 +294,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
 
         // Settle open mandatory periods first: any penalty must reduce the coin balance BEFORE the funds check
         // applies - otherwise the child could dodge the stick by buying quickly.
+        await classTestPrep.ReconcileAsync(cid.Value, learningDay.Today, ct); // B-752: as on login, before the settlement
         await progress.SettleClosedPeriodsAsync(cid.Value, learningDay.Today, ct);
 
         var result = await shop.PurchaseAsync(cid.Value, listingId, time.GetUtcNow().UtcDateTime, ct);

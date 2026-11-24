@@ -35,7 +35,11 @@ Response — `HTTP 201`:
     "gradeComment": null,
     "directExerciseCount": 0,
     "tags": [],
-    "createdAt": "<timestamp>"
+    "createdAt": "<timestamp>",
+    "prepWindowDays": null,
+    "prepWindowDefault": 7,
+    "prepCardsPerDay": null,
+    "prepBlockedReason": "no_subject"
   },
   "assignedExercises": []
 }

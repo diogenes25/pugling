@@ -298,6 +298,7 @@ public class SchemaGuardTests
             ["ObjectiveReward.ObjectiveId"] = DeleteBehavior.Cascade, // -> Objective
             // Restrict: an exercise sitting in a study plan is not deleted along with it (409 instead of loss).
             ["PlanPosition.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise
+            ["PlanPosition.SourceKlassenarbeitId"] = DeleteBehavior.SetNull, // -> Klassenarbeit (B-752: the position outlives the test)
             ["PlanPosition.StudyPlanId"] = DeleteBehavior.Cascade, // -> StudyPlan
             ["PositionCompletionBonus.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             ["PositionGoalPenalty.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition

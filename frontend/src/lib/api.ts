@@ -12,7 +12,7 @@ import type {
   ExerciseSearchParams, ExerciseSharing, ExerciseSummary, MeResponse, TeacherAccount, CreateTeacherDto, UpdateMyAccountDto, ExerciseUsage, KlassenarbeitDetail, KlassenarbeitPractice, KlassenarbeitRepeat,
   KlassenarbeitResponse, KlassenarbeitStatus, LoginResponse, MissionDef, UpdateMissionDto, MissionStatus, PlanResponse,
   ChildrenDashboard, ChildrenOverview, OverviewGranularity, CreatePositionDto, CreateReviewFromWordsDto, PositionResponse, PositionReport, UpdatePositionDto, OverviewResponse, PositionSession, PracticeCard,
-  ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse,
+  ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse, UpcomingClassTest, ClassTestReadiness,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
   ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, MixedReviewOverview, MixedReviewRunResponse, MixedReviewAnswer, MixedReviewResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
@@ -770,6 +770,13 @@ export const api = {
   // ---- Sohn: Kind-Tagessicht (B-606) ----
   // Die Pflichten aller aktiven Pläne an einer Stelle, mit Serie und Truhe – die Startseite der Arcade.
   today: (childId: number) => http<TodayResponse>(`${V1}/student/children/${childId}/today`),
+
+  // ---- Sohn: Klassenarbeiten (B-750/B-751) ----
+  // Nur geplante ab heute, früheste zuerst; die Note bleibt beim Vater.
+  upcomingClassTests: (childId: number) =>
+    http<UpcomingClassTest[]>(`${V1}/student/children/${childId}/class-tests/upcoming`),
+  classTestReadiness: (childId: number, classTestId: number) =>
+    http<ClassTestReadiness>(`${V1}/student/children/${childId}/class-tests/${classTestId}/readiness`),
 
   // ---- Sohn: Tagestruhe (B-527) ----
   // Verdient beim Abschluss der Tagesziele, gebucht erst hier: der Server öffnet die älteste wartende Truhe.

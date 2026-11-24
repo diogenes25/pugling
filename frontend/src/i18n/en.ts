@@ -69,6 +69,16 @@ export const en = {
       penalty_one: "or −{{count}} coin",
       penalty_other: "or −{{count}} coins",
     },
+    classTest: {
+      label: "Next class test",
+      today: "today",
+      tomorrow: "tomorrow",
+      inDays_one: "in {{count}} day",
+      inDays_other: "in {{count}} days",
+      secureWords_one: "{{secure}} of {{count}} word secure",
+      secureWords_other: "{{secure}} of {{count}} words secure",
+      noMeasure: "There is no word measure for this test.",
+    },
     truhe: {
       title: "Daily chest",
       closed: "Finish your daily goals and the chest will open.",

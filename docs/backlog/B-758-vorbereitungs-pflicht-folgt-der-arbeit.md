@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/gamification, bereich/api, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/gamification, bereich/api, rolle/supervisor]
 aliases: [Zusatzpflicht bei Terminverschiebung, Absage und Schreiben schließen die Vorbereitung]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: ""
+wartet_auf: "Nutzer: Lauf I endete am Fehlerzähler; erst B-940/B-941 (und B-942/B-943), dann Abnahme"
 ---
 
 # B-758 · Die Vorbereitungs-Pflicht folgt der Klassenarbeit: verschoben, abgesagt, geschrieben
@@ -97,3 +97,13 @@ Schließ-Regel wiederverwenden, kein neues Schema.
 
 - **2026-11-20** — angelegt beim Teilen von [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) und geschätzt (Vorbereitungslauf, Sonnet): M, backend,
   keine Migration, kein Vertragsbruch. Hängt an B-752 und B-659.
+- **2026-11-24** — `geschaetzt` → `in-arbeit` (Nachtlauf I, Sprint 134). Gebaut (`03e77040`): der Abgleich läuft synchron im PATCH, nur
+  wenn Termin, Status, Fenster oder Fach sich ändern, in einer Transaktion mit dem Speichern; beim Löschen wird erst abgesagt und
+  abgeglichen (sonst entkoppelt `SetNull` die Position, bevor sie schließt). Schließen über `PositionProgressService.CloseDutyAsync`
+  (geteilt mit B-659, nicht kopiert); eine wieder gedeckte Position beginnt heute neu (`DutySince`), nie rückwirkend.
+- **2026-11-24** — Belege: AK 1 → `Verschobener_Termin…` (synchron nach dem PATCH) und `Aus_Dem_Fenster_Geschoben…` (beim Login);
+  AK 2 → `Fenster_Null_Schliesst…`; AK 3 → `Abgesagt_Oder_Geschrieben…` mit vier Fällen (abgesagt/geschrieben × erfüllt/offen)
+  ; AK 4 → `Zweite_Arbeit_Mit_Derselben_Uebung…`; AK 5 → `Speichern_Ohne_Aenderung…`, als Absichtserklärung beschriftet (der Abgleich
+  ist idempotent, keine Änderung macht ihn rot). Löschen → `Geloeschte_Arbeit…`. Mutanten-Probe über diese Fälle nicht gelaufen (Lauf endete am Fehlerzähler).
+- **2026-11-24** — Review gemeinsam mit B-752 (siehe dort); die Funde zum Schließen nach einem Positions-Speichern sind behoben, offen bleiben
+  B-940/B-941/B-944. Rollengang: E2E `klassenarbeit-vorbereitung` deckt das Folgen nicht ab (Integrationstests tragen es); Ersatz benannt.

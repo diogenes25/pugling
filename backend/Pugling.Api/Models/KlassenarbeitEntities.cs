@@ -82,6 +82,16 @@ public class Klassenarbeit
     public decimal? Grade { get; set; }
     /// <summary>Optional note on the grade (e.g. "vocabulary was solid, grammar weak").</summary>
     public string? GradeComment { get; set; }
+    /// <summary>
+    /// Days before the test in which its preparation duty runs (B-752); <c>null</c> = the configured default, 0 = no
+    /// preparation duty for this test.
+    /// </summary>
+    public int? PrepWindowDays { get; set; }
+    /// <summary>
+    /// The learning day the preparation duty was started (B-752): its bundle was frozen then, and the reconcile never
+    /// starts it a second time. <c>null</c> = not started.
+    /// </summary>
+    public DateOnly? PrepStartedOn { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<KlassenarbeitExercise> Exercises { get; set; } = new();

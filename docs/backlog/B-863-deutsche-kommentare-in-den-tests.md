@@ -74,3 +74,4 @@ Kommentarzeilen.
   („und|nicht|ist|wird|eine|wenn|weil|oder“) gegrept: 0 Treffer. Die Umlaut-Treffer im übrigen Testprojekt
   (`AnswerVariantsTests`, `BeideRichtungenTests`, …) stehen nur in zitierten deutschen Beispielwörtern („die Straße“,
   „für“), die erlaubt sind. Kein Fund.
+- **2026-11-24** — Nachschau (Nachtlauf I, Retro Sprint 133), kein Befund. Prüfpunkte: die acht Stellen `PlanPositionCrudTests.cs:418`, `ComboTests.cs:17, 41`, `SampleJson.cs:57`, `ApiVersioningTests.cs:38`, `PositionReportTests.cs:48`, `SpeedBonusTests.cs:74`, `AssignAgentTests.cs:121` einzeln gelesen – englisch; dazu `grep` über `//`-Zeilen in `Pugling.Api.Tests/*.cs` mit den Funktionswörtern der/die/das/nicht/wird/und außerhalb von Anführungszeichen: 0 Treffer.

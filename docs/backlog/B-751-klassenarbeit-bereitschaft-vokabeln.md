@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/klassenarbeit, bereich/training, bereich/auswertung, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/training, bereich/auswertung, rolle/student]
 aliases: [Bereitschaft wackelig sicher, Klausur-Bereitschaft]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -109,3 +109,20 @@ einer Zählung über `ExerciseItem` und `ItemProgress` entsteht, im Frontend ein
 
 - **2026-11-20** — angelegt beim Teilen von [B-248](B-248-klassenarbeit-countdown-treibt-den-plan.md) und geschätzt (Vorbereitungslauf,
   Sonnet): M, beides, keine Migration, kein Vertragsbruch. Der Nenner der Bereitschaft (alle Items des Bündels) steht als Risiko.
+- **2026-11-23** — `geschaetzt` → `in-arbeit` (Nachtlauf I, Sprint 133, Freigabe 8). Gebaut: geteilte Bündel-Regel
+  `Services/Shared/ClassTestBundle.ExerciseIdsAsync` (direkt + Tag, ohne Dubletten), `KlassenarbeitenController.LoadRelevantExercisesAsync`
+  ruft sie (`practice` und `repeat`); `GET api/v1/student/children/{childId}/class-tests/{id}/readiness` mit `ClassTestReadinessResponse`
+  (`TotalItems`/`SecureItems`, `null` ohne Vokabel-Items). Lesart aus dem Risiko übernommen: Nenner = alle Vokabel-Items des Bündels, auch nie
+  beantwortete; Zähler = `MasteryPercent >= ItemProgress.WeakBelowPercent`. „wackelig/sicher“ als Minimum „x von y Wörtern sicher“ ohne zweite
+  Schwelle. Das Maß hängt am Item der Übung (dieselbe Vokabel in zwei Übungen zählt zweimal), wie im Risiko benannt.
+- **2026-11-23** — Belege je AK-Fall (Mutanten-Probe, Tabelle im Protokoll): AK 1 direkt → `Anteil_Zaehlt_…` und
+  `KlassenarbeitenTests.Uebung_Zuweisen_…`, M15 (nur Tag-Übungen) rot; Tag → `Buendel_Aus_Direkt_Und_Tag_…`, M13 rot; Dublette →
+  `Geteilte_Buendel_Funktion_Liefert_Jede_Uebung_Einmal`, M14 rot (erste Messung **grün**: die bisherigen Leser filtern mit `Contains` und
+  verbergen eine Dublette – eigener Fund, Test auf die Funktion selbst ergänzt, Zähler +1). AK 2 Schwelle → M11 (`>`) rot; Nenner → M12 (nur
+  geübte Items) rot; kein Maß → M9 rot, Typfilter → M8 rot; fremdes Kind → M10 rot. AK 3 → M7 (Arbeit nicht am Kind geprüft) rot, M6 rot. AK 4
+  → `KlassenarbeitenTests` unverändert grün. Frontend: Anzeige → F7 rot, „kein Maß“ → F5 rot, ohne Übungen nichts → F6 rot, Bereitschaft der
+  falschen Arbeit → F8/F11 rot. Nicht messbar als Mutante: „im Controller abgeschrieben“ (AK 1) – eine Kopie liefert dasselbe; gehalten nur
+  dadurch, dass der Controller keine Kopie mehr trägt (Review).
+- **2026-11-23** — Review und Rollengang gemeinsam mit B-750 (siehe dort): keine 🔴, `pugling-reviewer` ohne 🟡; E2E
+  `klassenarbeit-countdown.spec.ts` prüft „0 von 2 Wörtern sicher“.
+- **2026-11-24** — `in-arbeit` → `abgenommen` (Nachtlauf I, Sprint 133): Commit `65f4d2a7`; Backend-Suite 2185/2185 grün (Release, nach der letzten Änderung; vorher 2175), Frontend `vitest` 1393/1393, `tsc -b` grün, E2E `klassenarbeit-countdown` + `pfad` 2 passed; beide Reviewer gelaufen (keine offene 🔴/🟡); Rollengang maschinell (E2E, siehe oben).
