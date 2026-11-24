@@ -11051,6 +11051,232 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/mixed-review": {
+      "get": {
+        "tags": [
+          "Student \u2013 Mixed Review"
+        ],
+        "summary": "Today\u0027s mixed review: the bonus lock, the cards due for it, an open round and the shared bonus coins.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MixedReviewOverview"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/mixed-review/runs": {
+      "post": {
+        "tags": [
+          "Student \u2013 Mixed Review"
+        ],
+        "summary": "Starts a mixed review round - or resumes today\u0027s open one with the same cards. \u0060409 extra_training_locked\u0060\nbefore the goals the bonus training waits for are done, \u0060409 mixed_review_empty\u0060 when no card is due in a\nposition the round may draw from.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MixedReviewRunResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/mixed-review/runs/{runId}/submit": {
+      "post": {
+        "tags": [
+          "Student \u2013 Mixed Review"
+        ],
+        "summary": "Grades a mixed review round and books its coins (B-765): each card moves the box of its own position; checked hits\npay within the bonus cap the bonus training shares. A round is graded once: \u0060409 mixed_review_completed\u0060 on a\nsecond submit. \u0060409 mixed_review_stale\u0060 for a round drawn on an earlier day - it is discarded unpaid.\n\u0060409 extra_training_locked\u0060 when the goals the bonus training waits for are not met (any more).",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitMixedReviewDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitMixedReviewDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitMixedReviewDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MixedReviewResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/me/interests": {
       "get": {
         "tags": [
@@ -41154,7 +41380,7 @@
             "default": 0
           }
         },
-        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run.\nThe breakdown lets the child follow the sum: CoinsPerHit is the full rate per right answer,\nRunPercent the share of it this run was worth at the submit (B-538), and\nCoinsEarned the rounded-down result before the daily cap. CoinsForHits is the\nhits\u0027 worth at the full rate: each hit pays by the form its card was asked in (B-597, B-599), so in a run that mixes\npicks and written answers it is not \u0060Correct \u00D7 CoinsPerHit\u0060."
+        "description": "The graded bonus run. CoinsAwarded is what was booked; CapReached says the\ndaily cap cut it short. CoinsToday is the day\u0027s bonus total after this run - bonus runs and mixed\nreview rounds together, which share the cap (B-765).\nThe breakdown lets the child follow the sum: CoinsPerHit is the full rate per right answer,\nRunPercent the share of it this run was worth at the submit (B-538), and\nCoinsEarned the rounded-down result before the daily cap. CoinsForHits is the\nhits\u0027 worth at the full rate: each hit pays by the form its card was asked in (B-597, B-599), so in a run that mixes\npicks and written answers it is not \u0060Correct \u00D7 CoinsPerHit\u0060."
       },
       "ExtraTrainingOverview": {
         "required": [
@@ -41208,7 +41434,7 @@
             "$ref": "#/components/schemas/GoalCadence"
           }
         },
-        "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals of all active\nplans are met - every goal when no plan has a daily one (B-535/B-611; not \u0060DutyDone\u0060, which also counts weekly\ngoals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding and their kind in RewardCadence (\u0060Daily\u0060, \u0060Weekly\u0060, or \u0060None\u0060\nwithout any goal - B-612). DailyCoinCap is \u0060null\u0060 when there is no cap."
+        "description": "The bonus training of a child for today. Unlocked is false until today\u0027s daily goals of all active\nplans are met - every goal when no plan has a daily one (B-535/B-611; not \u0060DutyDone\u0060, which also counts weekly\ngoals). LockReason: \u0060no_plan\u0060 or \u0060duty_open\u0060, with the goals still open in Outstanding and their kind in RewardCadence (\u0060Daily\u0060, \u0060Weekly\u0060, or \u0060None\u0060\nwithout any goal - B-612). CoinsToday counts bonus runs and mixed review rounds together, which share\nDailyCoinCap (B-765); the cap is \u0060null\u0060 when there is none."
       },
       "FeedbackCardCount": {
         "required": [
@@ -43657,6 +43883,365 @@
         },
         "description": "Status of a mission from the child\u0027s perspective: target, current value, completed?\nDaysLeft (B-528) counts the days after today until the period ends on the UTC calendar - 0 on\nits last day, \u0060null\u0060 for a one-off mission, which has no period. The server computes it because the day\nboundary is UTC; a client counting on its local clock would say \u0022today only\u0022 on the wrong side of midnight."
       },
+      "MixedReviewAnswer": {
+        "required": [
+          "cardId"
+        ],
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasKnown": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "One answer of a mixed review round, by card: typed or chosen (GivenAnswer) or self-assessed (WasKnown)."
+      },
+      "MixedReviewCardView": {
+        "required": [
+          "card",
+          "cardId",
+          "exerciseTitle",
+          "planTitle",
+          "positionId",
+          "stage",
+          "typed"
+        ],
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "planTitle": {
+            "type": "string"
+          },
+          "subjectName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "typed": {
+            "type": "boolean"
+          },
+          "card": {
+            "$ref": "#/components/schemas/ExtraCard"
+          }
+        },
+        "description": "One card of a mixed review round, addressed by CardId in the answer. It comes from position\nPositionId of plan PlanTitle (subject SubjectName) and is\nasked at that position\u0027s stage of the day, Stage - never an easier one. Card\ncarries the facets of a bonus card; its \u0060CoinsPerHit\u0060 is 0 where the stage is self-assessed, because only a\nchecked hit pays."
+      },
+      "MixedReviewOutcome": {
+        "required": [
+          "cardId",
+          "coinsAwarded",
+          "exerciseTitle",
+          "expected",
+          "positionId",
+          "skipped",
+          "wasCorrect"
+        ],
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "positionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expected": {
+            "type": "string"
+          },
+          "givenAnswer": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "wasCorrect": {
+            "type": "boolean"
+          },
+          "skipped": {
+            "type": "boolean"
+          },
+          "coinsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "box": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dueOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "gapIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "One card of a graded round, revealed after the round (Expected is the solution in hindsight).\nBox and DueOn are the card\u0027s place in its own position\u0027s Leitner box afterwards.\nSkipped marks a card that was not graded and moved nothing: no longer due (practised in its position\nmeanwhile), its position now carrying an open duty, no longer using Leitner or playing another exercise, or its\nexercise changed since the start."
+      },
+      "MixedReviewOverview": {
+        "required": [
+          "coinsToday",
+          "dueCards",
+          "outstanding",
+          "roundSize",
+          "unlocked"
+        ],
+        "type": "object",
+        "properties": {
+          "unlocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outstanding": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dueCards": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "roundSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openRunId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "The child\u0027s mixed review for today. Unlocked, LockReason and\nOutstanding are the bonus training\u0027s lock (\u0060no_plan\u0060, \u0060duty_open\u0060).\nDueCards counts the cards a round may draw now - due, already met, in a playable plan and in a\nposition without an open duty; a round asks at most RoundSize of them. OpenRunId\nnames today\u0027s started round, which a start resumes. CoinsToday is the bonus coins of the day over the\nbonus training and the mixed review together, against the shared DailyCoinCap (\u0060null\u0060 = no cap)."
+      },
+      "MixedReviewResult": {
+        "required": [
+          "capReached",
+          "coinsAwarded",
+          "coinsEarned",
+          "coinsToday",
+          "correct",
+          "items",
+          "runId",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "correct": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coinsEarned": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "capReached": {
+            "type": "boolean"
+          },
+          "coinsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyCoinCap": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MixedReviewOutcome"
+            }
+          }
+        },
+        "description": "The graded mixed review round (B-765). Total and Correct count the graded cards;\na skipped card (see bool MixedReviewOutcome.Skipped) counts in neither. CoinsAwarded is\nwhat was booked: checked hits only, each at the rate of the form it was asked in, and only where the card is due again\nin the future and that the child did not meet earlier the same day - introduced, reviewed or asked in a test, each of\nwhich may have shown its answer;\nCoinsEarned is that sum before the cap, and CapReached says the shared bonus cap\ncut it. CoinsToday is the day\u0027s bonus coins after this round, over the bonus\ntraining and the mixed review together, against DailyCoinCap (\u0060null\u0060 = no cap)."
+      },
+      "MixedReviewRunResponse": {
+        "required": [
+          "cards",
+          "runId"
+        ],
+        "type": "object",
+        "properties": {
+          "runId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MixedReviewCardView"
+            }
+          },
+          "coinsLeftToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A started (or resumed) mixed review round with its cards, in the order they are asked. CoinsLeftToday\nis what the shared bonus cap still pays as of this start: 0 when it is used up, \u0060null\u0060 without any cap."
+      },
       "MyActivationResponse": {
         "required": [
           "actionType",
@@ -45659,6 +46244,9 @@
               "media_upload_too_large",
               "media_variant_exists",
               "media_variant_not_found",
+              "mixed_review_completed",
+              "mixed_review_empty",
+              "mixed_review_stale",
               "no_checkable_content",
               "no_tag_matches",
               "not_author",
@@ -47870,6 +48458,21 @@
           }
         },
         "description": "Body of the bonus-run submit: all answers at once. A card without an answer counts as wrong."
+      },
+      "SubmitMixedReviewDto": {
+        "required": [
+          "answers"
+        ],
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MixedReviewAnswer"
+            }
+          }
+        },
+        "description": "Body of the mixed review submit: all answers at once. A card without an answer counts as wrong."
       },
       "SubmitResponse": {
         "required": [
@@ -51975,6 +52578,9 @@
     },
     {
       "name": "Student \u2013 Missions"
+    },
+    {
+      "name": "Student \u2013 Mixed Review"
     },
     {
       "name": "Student \u2013 Objectives"

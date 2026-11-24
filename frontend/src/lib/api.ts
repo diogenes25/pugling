@@ -15,7 +15,7 @@ import type {
   ProgressResponse, ReviewInput, ReviewOutcome, TodayResponse,
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
-  ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
+  ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, MixedReviewOverview, MixedReviewRunResponse, MixedReviewAnswer, MixedReviewResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
   VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
@@ -104,6 +104,9 @@ const GERMAN_PROBLEM_TEXT: Record<string, string> = {
   extra_run_stale: "Diese Übung wurde geändert, seit du angefangen hast – fang sie im Bonus-Training neu an.",
   extra_cap_reached: "Dein Bonus-Deckel ist voll – diese Übung würde dir jetzt nur die Lösungen zeigen, ohne Münzen. Darum geht sie gerade nicht.",
   daily_box_none: "Gerade wartet keine Truhe auf dich.",
+  mixed_review_empty: "Gerade ist keine Karte fällig, die in eine Mischrunde darf.",
+  mixed_review_completed: "Diese Mischrunde ist schon abgegeben.",
+  mixed_review_stale: "Diese Mischrunde ist von gestern – starte eine neue.",
   no_tag_matches: "Zu diesen Tags gibt es keine Vokabeln. Die Übung wurde nicht verändert.",
   // Seit B-123 ist das der wahrscheinlichste Fehlschlag im Reihen-Formular: vorher war der 409 über die
   // Oberfläche gar nicht erreichbar, weil Anlegen idempotent ist. Und die Feld-Erklärung bewirbt die
@@ -755,6 +758,13 @@ export const api = {
     http<ExtraRunResponse>(`${V1}/student/children/${childId}/extra-training/${exerciseId}/runs`, "POST"),
   submitExtraRun: (childId: number, runId: number, answers: ExtraAnswer[]) =>
     http<ExtraRunResult>(`${V1}/student/children/${childId}/extra-training/runs/${runId}/submit`, "POST", { answers }),
+  // ---- Sohn: Mischrunde (B-766) – fällige Karten aus allen Plänen, hinter der Sperre des Bonus-Trainings ----
+  mixedReview: (childId: number) =>
+    http<MixedReviewOverview>(`${V1}/student/children/${childId}/mixed-review`),
+  startMixedReview: (childId: number) =>
+    http<MixedReviewRunResponse>(`${V1}/student/children/${childId}/mixed-review/runs`, "POST"),
+  submitMixedReview: (childId: number, runId: number, answers: MixedReviewAnswer[]) =>
+    http<MixedReviewResult>(`${V1}/student/children/${childId}/mixed-review/runs/${runId}/submit`, "POST", { answers }),
 
   // ---- Sohn: Kind-Tagessicht (B-606) ----
   // Die Pflichten aller aktiven Pläne an einer Stelle, mit Serie und Truhe – die Startseite der Arcade.

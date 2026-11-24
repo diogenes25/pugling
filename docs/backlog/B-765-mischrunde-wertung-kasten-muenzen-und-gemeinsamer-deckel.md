@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/student]
 aliases: [Mischwiederholung Wertung, Mischrunde Münzen]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -12,6 +12,8 @@ quelle: "B-218"
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+wartet_auf: ""
+nachgeschaut: 2026-11-24
 ---
 
 # B-765 · Mischrunde: Wertung in der Stufe der Position, Kasten der Herkunftsposition, Münzen und gemeinsamer Tagesdeckel (Backend)
@@ -105,3 +107,34 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-218 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): L, backend, keine Migration (falls B-764 die Spalten anlegt), kein Vertragsbruch. Baut nach B-764. Zahl-Tor löst die offene Kosten-Frage der Mehrfachzahlung.
+- 2026-11-24 · in-arbeit (Nachtlauf H, Sprint 130, Freigabe 8). Gebaut: `MixedReviewService.SubmitAsync` + Endpunkt `POST student/children/{childId}/mixed-review/runs/{runId}/submit` (nur Student), Contract `MixedReviewAnswer`/`SubmitMixedReviewDto`/`MixedReviewResult`/`MixedReviewOutcome`, Client `SubmitMixedReviewAsync`. `ExtraTrainingService.CoinsTodayAsync` summiert jetzt Bonus-Läufe **und** Mischläufe (Angriffsplan Schritt 1, die Senke des Deckels); jede Lesestelle (Bonus-Übersicht, -Start, -Abgabe, `CoinsLeftTodayAsync`, Mischrunde) liest damit den gemeinsamen Stand. `migration: nein` hält: alle Spalten kamen mit B-764. Kind zuerst geladen, Stamp gebumpt, ein `SaveChanges` für Kasten, Item-Historie (`ItemReviewSource.Practice` mit `PlanPositionId`, kein neuer Enum-Wert) und Ledger (`PointKind.ExtraTrainingCoins`, Grund „Mischrunde").
+- 2026-11-24 · Auslegung innerhalb der Entscheidungen, zur Prüfung am Morgen benannt: (a) eine selbst eingeschätzte Karte (Stufe der Position ist Selbsteinschätzung) bewegt den Kasten wie die Selbstauskunft im Üben – hoch bei „gewusst", ohne als gewertete Wiederholung zu zählen – und zahlt **nichts** (Entscheidung 3 „nur geprüfte Treffer"; das Bonus-Training zahlt dort 1, B-657); (b) übersprungen und unbezahlt bleibt eine Karte, die bei der Abgabe nicht mehr fällig ist, deren Position inzwischen eine offene Pflicht trägt, kein Leitner mehr nutzt oder eine andere Übung spielt, oder deren Übung sich geändert hat (Risiko 5); (c) eine Runde von einem früheren Tag wird bei der Abgabe verworfen (`mixed_review_stale`) statt umgebucht; (d) eine Karte ohne Antwort zählt als falsch (Vertragstext, Muster des Bonus-Trainings) – der Reviewer schlug als 🟢 „ohne Antwort = übersprungen" vor; nicht übernommen, weil es eine Produktfrage ist, ob ein abgebrochenes Abgeben den Kasten schont: **offener Punkt fürs Grillen**.
+- 2026-11-24 · AK-Fälle → Test (`backend/Pugling.Api.Tests/MischrundeWertungTests.cs`) → Mutante: AK 1 → `Richtige_Karte_Steigt_Im_Kasten_Ihrer_Position` (N2 `ApplyReview` weg → rot) · AK 2 → `Falsche_Karte_Faellt_Nach_Der_Regel_Ihrer_Position` (verzeihend 3→2, streng 3→1; N2 → rot) · AK 3 → `Muenzen_Nur_Fuer_Treffer_Bis_Zum_Gemeinsamen_Deckel` (N1 Deckel nur eine Quelle → rot, N12 ohne Deckel → rot) und `Abgabe_Bei_Offener_Tagespflicht_Gesperrt` (N6 → rot) · AK 4 → `Runde_Beruehrt_Keine_Pflicht` (**Absichtserklärung**: keine Schreibstelle im Diff, keine Mutante) · AK 5 → `Karte_In_Der_Stufe_Der_Position` (N13 feste Stufe beim Einfrieren → rot) · AK 6 → `Bonusrunde_Bewegt_Weiter_Keinen_Kasten` (**Absichtserklärung**, wie die Story sagt) · AK 7 → `Karte_Die_Heute_Wieder_Faellig_Ist_Zahlt_Nicht` (N5 Zahl-Tor weg → rot) · AK 8 → `Doppelte_Abgabe_Bucht_Einmal_Und_Bumpt_Den_Stempel` (N7 Bump weg → rot, N8 Abgeschlossen-Prüfung weg → rot) · Auslegung (a) → `Selbsteinschaetzung_Bewegt_Den_Kasten_Und_Zahlt_Nichts` (N3, N4, N15 → rot) · (b) → `Inzwischen_Geuebte_Karte_Wird_Uebersprungen` (N9), `Karte_Einer_Inzwischen_Pflichtigen_Position_Wird_Uebersprungen` (N14), `Position_Ohne_Leitner_Bei_Der_Abgabe_Wird_Uebersprungen` (N17), `Geaenderte_Uebung_Wird_Uebersprungen` (N10) · (c) → `Runde_Von_Gestern_Wird_Verworfen` (N11) · Review-Fund → `Zweite_Runde_Desselben_Tages_Zahlt_Die_Gezeigte_Antwort_Nicht` (N16).
+- 2026-11-24 · Review `pugling-reviewer` (Sprint 130, B-764 + B-765 gemeinsam): keine 🔴. 🟡 1 **behoben**: eine in Runde 1 verfehlte Karte zeigt im Ergebnis ihre Lösung, ist sofort wieder fällig und zahlte in Runde 2 desselben Tages den vollen Satz – ein ungewusstes Wort wurde durch Abschreiben zu Münzen. Fix: eine Karte zahlt nur bei ihrer ersten Wiederholung des Tages (`LastReviewedAt` vor der Wertung, Lerntag über `LearningDay.DayOf`); der Kasten bewegt sich weiter. Das ist die Absicht von Entscheidung 5 („Mehrfachzahlung am selben Tag verhindern"), nicht eine neue Produktentscheidung – zur Bestätigung am Morgen benannt. Rote Probe: der neue Test erwartet `coinsAwarded` 0 und fällt mit Mutante N16 (Fix entfernt) am benannten Test; der Betrag, den er dann sieht, ist nicht ausgelesen (nach der Regel der Tippsatz 3). **Fehlerzähler Sprint 130: 2.** 🟢 ohne Zählung: Leitner bei der Abgabe neu geprüft (N17), Kommentar an der Überspring-Prüfung richtiggestellt (eine im Üben verfehlte Karte bleibt heute fällig und wird gewertet, wie das Üben sie am selben Tag wieder fragt); „ohne Antwort = übersprungen" zurückgestellt (s. o.).
+- 2026-11-24 · Rollengang Sprint 130 (Live-Probe gegen die laufende API, Port 5221, Wegwerf-DB `pugling_h130.db`, Skript im Protokoll beschrieben): als Vater Kind/Fach/Reihe/Unit/Vokabelübung/Plan mit Leitner-Tagespflicht angelegt, als Sohn eine echte Lernrunde (vier Lernkarten, Fremdwort aus dem Gedächtnis → eingeführt und eingeprägt), den Test bestanden, dann Mischrunde: vor der Pflicht `extra_training_locked`, danach `dueCards` 4, Start, zweiter Start setzt fort, Abgabe 4/4, doppelte Abgabe `mixed_review_completed`, Bonus-Übersicht zeigt dieselbe Tagessumme, danach `mixed_review_empty`; Vater liest 200, startet 403. **Fund:** die vier Wörter waren **heute** gelernt und heute im Test gefragt (dessen Ergebnis die Lösungen zeigt) – und zahlten trotzdem 12 Münzen zum Tippsatz. Dieselbe Lücke wie der Review-Fund 🟡 1, nur über Lernkarte und Test statt über eine Vorrunde, die `LastReviewedAt` nicht stempeln. Behoben: „heute schon begegnet" heißt jetzt eingeführt heute, wiederholt heute **oder** in einem Test von heute gefragt (`TestAttempts.Results` der Position und des Tages); der Kasten bewegt sich weiter. **Fehlerzähler Sprint 130: 3** (eigener Fund, Behebung ändert Code, Freigabe 11). Test `Heute_Gelernte_Oder_Getestete_Karte_Zahlt_Nicht` (N18, N19). Zwischenstand beim Bauen: die erste Fassung der Test-Abfrage (`SelectMany` mit `!.Value` in der Projektion) lieferte 500 – vor dem Commit umgeschrieben, kein eigener Fund.
+- 2026-11-24 · Mutanten-Probe nach der letzten Änderung (`.claude/scripts/mutant-probe.py`, Filter `MischrundeWertungTests`): gemessen an `64c14761 + Arbeitsbaum`, 02:28, ohne Mutante 17/17 grün: 19 von 19 rot am benannten Test, Grundlinie nach dem Zurückspielen grün (Tabelle unten). Eine erste Messung (00:53, vor dem Review-Fix) hatte N1–N15 15/15 rot, eine zweite (01:43, nach dem Review-Fix) N1–N17 17/17 rot.
+
+| Mutante | Stelle | erwartet | gemessen |
+|---|---|---|---|
+| N1 | ExtraTrainingService.cs:314 (Deckel: zweite Quelle) | red | red |
+| N2 | MixedReviewService.cs:227 (`ApplyReview`) | red | red |
+| N3 | MixedReviewService.cs:229 (Selbstauskunft zählt nicht) | red | red |
+| N4 | MixedReviewService.cs:240 (nur geprüft zahlt) | red | red |
+| N5 | MixedReviewService.cs:240 (Zahl-Tor) | red | red |
+| N6 | MixedReviewService.cs:149 (Sperre bei Abgabe) | red | red |
+| N7 | MixedReviewService.cs:270 (Stamp) | red | red |
+| N8 | MixedReviewService.cs:127 (schon abgegeben) | red | red |
+| N9 | MixedReviewService.cs:191 (nicht mehr fällig) | red | red |
+| N10 | MixedReviewService.cs:184 (Fingerabdruck) | red | red |
+| N11 | MixedReviewService.cs:131 (Runde von gestern) | red | red |
+| N12 | MixedReviewService.cs:250 (Deckel kappt) | red | red |
+| N13 | MixedReviewService.cs:86 (Stufe eingefroren) | red | red |
+| N14 | MixedReviewService.cs:181 (Pflicht bei Abgabe) | red | red |
+| N15 | MixedReviewService.cs:410 (Satz 0 bei Selbstauskunft) | red | red |
+| N16 | MixedReviewService.cs:240 (heute schon begegnet) | red | red |
+| N17 | MixedReviewService.cs:181 (Leitner bei Abgabe) | red | red |
+| N18 | MixedReviewService.cs:224 (heute eingeführt) | red | red |
+| N19 | MixedReviewService.cs:226 (heute getestet) | red | red |
+
+- 2026-11-24 · **abgenommen** (Nachtlauf H, Sprint 130). Commit `1e3b42f7`. Suite (Release) 2204/2204; `pugling-reviewer` (🟡 behoben, 🟢 behoben bzw. zurückgestellt); Mutanten 19/19 rot; Rollengang als Live-Probe gegen die laufende API (Abgabe 4/4, Kästen 1→2, doppelte Abgabe abgewiesen, Bonus-Übersicht mit derselben Tagessumme, 0 Münzen für heute gelernte Wörter) – Protokoll `docs/pm-sitzung-2026-11-23-h.md`, Runde 130. Zur Bestätigung am Morgen: die Auslegungen (a)–(d) und die Erweiterung des Zahl-Tors auf „heute schon begegnet“ (Review- und Rollengang-Fund).
+- 2026-11-24 · Nachschau (Retro Sprint 131): Prüfpunkte (1) „sieht das Bonus-Training den gemeinsamen Deckel?“ – E2E `bonus.spec.ts`, `bonus-deckel.spec.ts`, `bonus-deckel-voll.spec.ts`, `bonus-satz-je-karte.spec.ts` nach dem Umbau von `CoinsTodayAsync` 4 passed; (2) „sagt das Ergebnis, warum es nichts zahlt?“ – der `frontend-reviewer` fand, dass `MixedReviewResult` keinen Grund trägt und die Oberfläche ihn aus `typed` der Karten herleiten muss (B-766 🟡 2); behoben in der Oberfläche, **kein Defekt der Wertung** (die Zahlbedingung `MixedReviewService.cs:240` stimmt), darum keine Entgleitung. Offen als möglicher späterer Vertragsschritt: ein Grund-Feld je Karte.

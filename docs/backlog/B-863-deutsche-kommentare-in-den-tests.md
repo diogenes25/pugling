@@ -67,3 +67,4 @@ Kommentarzeilen.
 - **2026-11-24** — Nachschau (Sprint 126): `grep` auf deutsche Funktionswörter in `//`- und `///`-Zeilen des
   Testprojekts. Übrig sind nur Zitate deutscher Produkttexte (`CreatorAgentTests`, `OpenApiExampleCatalogConcurrencyTests`,
   `PositionPracticeFlowTests`), die nach Entscheidung 2 erlaubt sind. Kein Befund.
+- **2026-11-24** — Nachschau (Nachtlauf H, Retro Sprint 130): Prüfpunkt „bleibt deutsche Kommentar-Prosa im Testprojekt?“ – `grep` über `//`/`///`-Zeilen aller `backend/Pugling.Api.Tests/*.cs` mit den Funktionswörtern der/die/das/und/nicht/wird/eine/keine/bei/wenn: 16 Treffer in 9 Dateien, jeder gelesen, alle sind Zitate deutscher Produkttexte oder Beispielwörter in englischer Prosa (z. B. `AnswerGraderTests.cs:4` „die Stadt“, `CreatorAgentTests.cs:1702` „nicht sichtbar“) – kein Befund, keine Entgleitung.

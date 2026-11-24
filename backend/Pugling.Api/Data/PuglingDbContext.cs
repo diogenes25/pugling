@@ -100,6 +100,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ExtraTrainingRun> ExtraTrainingRuns => Set<ExtraTrainingRun>();
     public DbSet<TowerGameRun> TowerGameRuns => Set<TowerGameRun>();
     public DbSet<TowerGameRunItem> TowerGameRunItems => Set<TowerGameRunItem>();
+    public DbSet<MixedReviewRun> MixedReviewRuns => Set<MixedReviewRun>();
+    public DbSet<MixedReviewCard> MixedReviewCards => Set<MixedReviewCard>();
 
     // Family shop: the supervisor's catalog (articles + listings), the child's aggregated inventory,
     // purchase history and activation requests
@@ -924,6 +926,22 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(i => new { i.RunId, i.ExerciseItemId }).IsUnique();
             e.HasOne(i => i.Run).WithMany(r => r.Items).HasForeignKey(i => i.RunId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.ExerciseItem).WithMany().HasForeignKey(i => i.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Mixed review rounds (B-764): one open round per child (filtered unique index, a double tap resumes it), the
+        // (child, day) index serves the shared bonus cap (B-765). Cascade throughout - the coins stay in the ledger and
+        // the answers in the item history; a card dies with its round, position or exercise.
+        modelBuilder.Entity<MixedReviewRun>(e =>
+        {
+            e.HasIndex(r => r.ChildId).IsUnique().HasFilter("[CompletedAt] IS NULL");
+            e.HasIndex(r => new { r.ChildId, r.Day });
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<MixedReviewCard>(e =>
+        {
+            e.HasOne(c => c.Run).WithMany(r => r.Cards).HasForeignKey(c => c.RunId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(c => c.PlanPosition).WithMany().HasForeignKey(c => c.PlanPositionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(c => c.Exercise).WithMany().HasForeignKey(c => c.ExerciseId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Shop article: a family-internal article number, unique; belongs to the adult (cascade).

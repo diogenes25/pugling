@@ -15,6 +15,7 @@ import { aufgabenform, istDiktat } from "./aufgabenform";
 import { useVoiceFor } from "../components/SpeakButton";
 import { Antwortflaeche, Aufgabe, LektionsRahmen } from "./Lektion";
 import { SelfAssessAnswer } from "./SohnTest";
+import { MischrundeEinstieg } from "./SohnMischrunde";
 import type { ExtraAnswer, ExtraExercise, ExtraForm, ExtraRunResponse, ExtraRunResult, ExtraTrainingOverview } from "../lib/types";
 
 /*
@@ -135,6 +136,8 @@ export function SohnBonus() {
       ) : (
         <>
           {capReached && <div className="card" style={{ borderColor: "var(--gold)" }}><p className="sub" style={{ margin: 0 }}>{t(capZero ? "bonus.capZero" : "bonus.capReached")}</p></div>}
+          {/* B-766: die Mischrunde steht neben den Bonus-Übungen – nur im offenen Zweig, gesperrt zeigt die Seite den Grund. */}
+          <MischrundeEinstieg />
           {o.exercises.length === 0 && <div className="card"><p className="sub" style={{ margin: 0 }}>{t("bonus.empty")}</p></div>}
           {o.exercises.map((e) => <BonusZeile key={e.exerciseId} e={e} capReached={capReached} capZero={capZero} />)}
         </>

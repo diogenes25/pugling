@@ -696,6 +696,13 @@ export type ExtraRunResponse = S["ExtraRunResponse"];
 export type ExtraCard = S["ExtraCard"];
 export type ExtraAnswer = S["ExtraAnswer"];
 export type ExtraRunResult = S["ExtraRunResult"];
+// Mischrunde (B-764/B-765/B-766): fällige Karten aus allen Plänen, hinter der Sperre des Bonus-Trainings.
+export type MixedReviewOverview = S["MixedReviewOverview"];
+export type MixedReviewRunResponse = S["MixedReviewRunResponse"];
+export type MixedReviewCardView = S["MixedReviewCardView"];
+export type MixedReviewAnswer = S["MixedReviewAnswer"];
+export type MixedReviewResult = S["MixedReviewResult"];
+export type MixedReviewOutcome = S["MixedReviewOutcome"];
 // Tagestruhe (B-527): Stand in der Übersicht, Inhalt erst nach dem Öffnen.
 export type DailyBoxStatus = S["DailyBoxStatus"];
 export type DailyBoxOpened = S["DailyBoxOpened"];

@@ -266,6 +266,15 @@ public static class ApiErrors
     /// coins, so it is neither started nor graded and can be played once coins are left again (409).
     /// </summary>
     public static readonly ApiError ExtraCapReached = new("extra_cap_reached", 409, "Bonus coin cap reached.");
+    /// <summary>No card is due in a position the mixed review may draw from (B-764): nothing to repeat right now (409).</summary>
+    public static readonly ApiError MixedReviewEmpty = new("mixed_review_empty", 409, "Nothing due for a mixed review.");
+    /// <summary>The mixed review round has already been submitted (409).</summary>
+    public static readonly ApiError MixedReviewCompleted = new("mixed_review_completed", 409, "Mixed review already submitted.");
+    /// <summary>
+    /// The mixed review round was drawn on an earlier day (B-765): its cards were due then, not now. It is discarded
+    /// unpaid; starting again draws today's cards (409).
+    /// </summary>
+    public static readonly ApiError MixedReviewStale = new("mixed_review_stale", 409, "Mixed review is out of date.");
     /// <summary>No daily reward chest is waiting to be opened (B-527) - none earned yet, or all already opened (409).</summary>
     public static readonly ApiError DailyBoxNone = new("daily_box_none", 409, "No reward chest waiting.");
     /// <summary>All test attempts of the period are used up (409).</summary>

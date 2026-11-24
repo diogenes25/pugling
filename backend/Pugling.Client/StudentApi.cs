@@ -146,6 +146,20 @@ public sealed class StudentApi(HttpClient http)
     public Task<ExtraRunResult> SubmitExtraRunAsync(int childId, int runId, SubmitExtraRunDto dto, CancellationToken ct = default) =>
         Http.PostAsync<ExtraRunResult>($"{Root}/children/{childId}/extra-training/runs/{runId}/submit", dto, ct);
 
+    // ---------------------------------------------------------------- Mixed review (B-764)
+
+    /// <summary>Today's mixed review of the child: the bonus lock, the cards due for it, an open round, the shared coins.</summary>
+    public Task<MixedReviewOverview> GetMixedReviewAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<MixedReviewOverview>($"{Root}/children/{childId}/mixed-review", ct);
+
+    /// <summary>Starts (or resumes) a mixed review round - the child's own seat only.</summary>
+    public Task<MixedReviewRunResponse> StartMixedReviewAsync(int childId, CancellationToken ct = default) =>
+        Http.PostAsync<MixedReviewRunResponse>($"{Root}/children/{childId}/mixed-review/runs", null, ct);
+
+    /// <summary>Submits the answers of a mixed review round and returns the graded result with the coins booked.</summary>
+    public Task<MixedReviewResult> SubmitMixedReviewAsync(int childId, int runId, SubmitMixedReviewDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<MixedReviewResult>($"{Root}/children/{childId}/mixed-review/runs/{runId}/submit", dto, ct);
+
     // ---------------------------------------------------------------- The child's day
 
     /// <summary>Today's duties of all active plans of the child, with the streak and the daily chest (B-606).</summary>

@@ -285,6 +285,11 @@ public class SchemaGuardTests
             ["MediaTagLink.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["MediaTagLink.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["MediaVariant.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
+            // B-764: a mixed review round is a play log - the coins stay in the ledger, the answers in the item history.
+            ["MixedReviewCard.ExerciseId"] = DeleteBehavior.Cascade, // -> Exercise
+            ["MixedReviewCard.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
+            ["MixedReviewCard.RunId"] = DeleteBehavior.Cascade, // -> MixedReviewRun
+            ["MixedReviewRun.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["Mission.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["MissionAward.MissionId"] = DeleteBehavior.Cascade, // -> Mission
             ["Objective.ChildId"] = DeleteBehavior.Cascade, // -> Child

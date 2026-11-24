@@ -22,4 +22,6 @@ public class ExtraTrainingOptions
     public int SelfAssessRuns { get; set; } = 2;
     /// <summary>Completed runs on the choice form before a vocabulary exercise is asked typed for good.</summary>
     public int ChoiceRuns { get; set; } = 2;
+    /// <summary>Most cards one mixed review round asks (B-764) - the most overdue first.</summary>
+    public int MixedReviewRoundSize { get; set; } = 10;
 }

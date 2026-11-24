@@ -1645,6 +1645,90 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("MissionAwards");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.MixedReviewCard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoinsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContentHash")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("GivenAnswer")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ItemIndex")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RunId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool?>("WasCorrect")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("PlanPositionId");
+
+                    b.HasIndex("RunId");
+
+                    b.ToTable("MixedReviewCards");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.MixedReviewRun", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CoinsAwarded")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CorrectCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId")
+                        .IsUnique()
+                        .HasFilter("[CompletedAt] IS NULL");
+
+                    b.HasIndex("ChildId", "Day");
+
+                    b.ToTable("MixedReviewRuns");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Objective", b =>
                 {
                     b.Property<int>("Id")
@@ -3742,6 +3826,44 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Mission");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.MixedReviewCard", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
+                        .WithMany()
+                        .HasForeignKey("PlanPositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.MixedReviewRun", "Run")
+                        .WithMany("Cards")
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
+
+                    b.Navigation("PlanPosition");
+
+                    b.Navigation("Run");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.MixedReviewRun", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Objective", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4355,6 +4477,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("TagLinks");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.MixedReviewRun", b =>
+                {
+                    b.Navigation("Cards");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Objective", b =>

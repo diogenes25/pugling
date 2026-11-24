@@ -242,7 +242,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     /// and item id - in a fixed order, so the same content always gives the same value. Image, audio and hint stay out:
     /// a new picture changes no solution and must not cost a run.
     /// </summary>
-    private static string ContentFingerprint(Exercise exercise, IReadOnlyList<ContentItem> items)
+    internal static string ContentFingerprint(Exercise exercise, IReadOnlyList<ContentItem> items)
     {
         var text = new StringBuilder(exercise.ConfigJson);
         foreach (var i in items)
@@ -254,15 +254,21 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
     }
 
-    private record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans,
+    /// <summary>The bonus lock of a day: open or why not, and the playable plans the pool draws from.</summary>
+    internal record Gate(bool Unlocked, string? LockReason, IReadOnlyList<string> Outstanding, IReadOnlyList<StudyPlan> Plans,
         GoalCadence RewardCadence);
 
-    // Open once the reward goals of the child's day are met (the daily goals of all plans, B-535/B-611) - read from
-    // the child's one day view (B-606), the same that earns the daily box. A plan without any duty has nothing to come first, so it neither
-    // locks nor needs the box rule's "at least one goal".
-    private async Task<Gate> GateAsync(int childId, DateOnly today, CancellationToken ct)
+    private async Task<Gate> GateAsync(int childId, DateOnly today, CancellationToken ct) =>
+        GateOf(await progress.ComputeChildDayAsync(childId, today, ct));
+
+    /// <summary>
+    /// Open once the reward goals of the child's day are met (the daily goals of all plans, B-535/B-611) - read from the
+    /// child's one day view (B-606), the same that earns the daily box. A plan without any duty has nothing to come first,
+    /// so it neither locks nor needs the box rule's "at least one goal". The one lock of the bonus training and the mixed
+    /// review (B-764) alike.
+    /// </summary>
+    internal static Gate GateOf(ChildDayRollup day)
     {
-        var day = await progress.ComputeChildDayAsync(childId, today, ct);
         var plans = day.Plans.Select(p => p.Plan).ToList();
         if (plans.Count == 0) return new Gate(false, LockNoPlan, [], plans, GoalCadence.None);
 
@@ -272,7 +278,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     }
 
     // The supervisor's cap for this child wins over the server default.
-    private int? CapOf(int? childCap) => childCap ?? opts.DailyCoinCap;
+    internal int? CapOf(int? childCap) => childCap ?? opts.DailyCoinCap;
 
     // Names the lock only: with a cap of 0 there is no "tomorrow" to promise.
     private const string CapReachedDetail = "Today's bonus coin cap is reached; this exercise would show its solutions for no coins.";
@@ -293,14 +299,19 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     };
 
     // What is left of today's cap; without any cap there is always something left.
-    private async Task<int> CoinsLeftTodayAsync(int childId, DateOnly today, CancellationToken ct)
+    internal async Task<int> CoinsLeftTodayAsync(int childId, DateOnly today, CancellationToken ct)
     {
         var childCap = await db.Children.AsNoTracking().Where(c => c.Id == childId).Select(c => c.BonusDailyCoinCap).FirstAsync(ct);
         return CapOf(childCap) is { } cap ? Math.Max(0, cap - await CoinsTodayAsync(childId, today, ct)) : int.MaxValue;
     }
 
-    private async Task<int> CoinsTodayAsync(int childId, DateOnly day, CancellationToken ct) =>
-        await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0;
+    /// <summary>
+    /// The bonus coins of a day - bonus runs and mixed review rounds together (B-765 decision 4): one cap for every extra
+    /// round, so the child sees one number and two kinds of rounds cannot pay the cap twice.
+    /// </summary>
+    internal async Task<int> CoinsTodayAsync(int childId, DateOnly day, CancellationToken ct) =>
+        (await db.ExtraTrainingRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0)
+        + (await db.MixedReviewRuns.Where(r => r.ChildId == childId && r.Day == day).SumAsync(r => (int?)r.CoinsAwarded, ct) ?? 0);
 
     private record PoolEntry(ExtraExercise Row, Exercise Exercise, IExerciseType Type, int Stage, IReadOnlyList<ContentItem> Items);
 
@@ -408,7 +419,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
     // The rate of one card from the stage it is asked at: its ceiling (B-597) caps the run's stage, and a card offering
     // options or letter tiles is a pick, everything else typed - the same facets the card showed. The one source for what
     // the submit pays and what the card and the pool announce (B-608), so announcement and payment cannot drift apart.
-    private int CardRate(Exercise exercise, IExerciseType type, IReadOnlyList<ContentItem> items, ContentItem raw,
+    internal int CardRate(Exercise exercise, IExerciseType type, IReadOnlyList<ContentItem> items, ContentItem raw,
         int runStage)
     {
         var stage = type.CardCeiling(raw, runStage);

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/gamification, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/gamification, rolle/student]
 aliases: [Mischwiederholung Auswahl, Mischrunde Start]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -12,6 +12,8 @@ quelle: "B-218"
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+wartet_auf: ""
+nachgeschaut: 2026-11-24
 ---
 
 # B-764 · Mischrunde: fällige Karten über alle spielbaren Pläne wählen und als eingefrorenen Lauf starten (Backend)
@@ -106,3 +108,27 @@ Nachgesehen am 2026-11-20:
 ## Verlauf
 
 - 2026-11-20 · aus B-218 geteilt und geschaetzt (Vorbereitungslauf, Sonnet): M, backend, Migration ja, kein Vertragsbruch. Reihenfolge B-660, dann B-764, B-765, B-766 (nicht parallel mit B-660, beide hängen am Bonus-Training).
+- 2026-11-23 · in-arbeit (Nachtlauf H, Sprint 130, Freigabe 8: `geschaetzt` + `Wunsch`). Gebaut: Tabellen `MixedReviewRuns`/`MixedReviewCards` (Migration `20261123220000_MixMixedReviewRuns`, nur additiv, FKs Cascade, gefilterter Unique-Index „ein offener Lauf je Kind"; vier Zeilen in `SchemaGuardTests`), `MixedReviewService` (Auswahl `SelectAsync`, Start/Fortsetzen `StartAsync`, Übersicht), `MixedReviewController` unter `student/children/{childId}/mixed-review` (`GET`, `POST runs`, `ChildOwnershipFilter`, Start nur der Student), Fehlercodes `mixed_review_empty`, `mixed_review_completed`, `mixed_review_stale`, Option `MixedReviewRoundSize` = 10, Contract `MixedReviewDtos`, Client `GetMixedReviewAsync`/`StartMixedReviewAsync`. Die Sperre liest dieselbe Tagessicht wie das Bonus-Training (`ExtraTrainingService.GateOf`, aus `GateAsync` herausgezogen, Verhalten unverändert).
+- 2026-11-23 · Auslegung innerhalb der Entscheidungen, **keine neue Produktentscheidung**, aber zur Prüfung am Morgen benannt: (a) Entscheidung 4 „nur Karten mit Zeile" ist als „eingeführt und, wo nötig, eingeprägt" gebaut (`PositionPlayService.Known`, B-643) – ihr Grund (keine Erstbegegnung vorbei an Dosis und Lernkarte) gilt für eine eingeführte, nicht eingeprägte Karte genauso; (b) Risiko 3 entschieden als „ein Wort, das zwei Positionen teilen, einmal je Runde, aus der überfälligeren Position" – die andere Karte bleibt fällig; (c) Stufe einer Karte = `TestTargetStage(StageForDay(…))`: ein Lernkarten-Tag wird wie im Test an seinem Ziel gefragt, ein reiner Anzeige-Tag gibt keine Karte; (d) eine offene Runde vom Vortag wird beim Start verworfen und neu gezogen (ihre Karten waren gestern fällig); (e) Positionen mit Aufbau-Weg spielen über `PlayedExercise(pos, heute)` mit – die Stufen-Logik ist nur gelesen, nicht verändert; (f) `GradesAsSet`-Listen (beliebige Reihenfolge) geben keine Karte.
+- 2026-11-23 · AK-Fälle → Test (`backend/Pugling.Api.Tests/MischrundeAuswahlTests.cs`) → Mutante: AK 1 + AK 2 → `Runde_Nimmt_Faellige_Karten_Aus_Zwei_Plaenen_Und_Keine_Kuenftige` (M4 Fälligkeitsfilter weg → rot, M8 Sortierung weg → rot) · AK 3 → `Position_Mit_Offener_Pflicht_Gibt_Keine_Karte` (M2 → rot) · AK 4 → `Fremdes_Kind_Verboten_Vater_Liest_Nur` (fremdes Kind 404 wie unbekannt, Vater liest 200, startet 403; M9 → rot) · AK 5 → `Inaktiver_Und_Abgelaufener_Plan_Geben_Keine_Karte` und `Auswahl_Prueft_Selbst_Ob_Der_Plan_Spielbar_Ist` (M12 eigene Prüfung weg → rot; M10 Rollup-Prüfung weg → grün, erwartet: die eigene Prüfung trägt dann) · AK 6 → `Nie_Gesehene_Karte_Kommt_Nicht_Vor` (M3 Einführungsfilter weg → rot, M5 Einprägung weg → rot) · AK 7 → `Vor_Den_Tageszielen_Gesperrt_Danach_Offen` (M1 → rot) · AK 8 → `Offene_Runde_Wird_Fortgesetzt` + `Offene_Runde_Von_Gestern_Wird_Neu_Gezogen` (M6 → rot; M11 „nie nachschlagen" fällt nur bei „von gestern", nicht bei „fortgesetzt": das Fortsetzen hält zweifach – Nachschlagen **und** Unique-Index mit Fortsetzen im `catch` –, eine Einzelmutante macht es nicht rot; als Beleg für AK 8 zählt darum nur der grüne Doppelstart gegen den echten Index) · AK 9 → `Start_Legt_Keine_Lernsitzung_An` (**Absichtserklärung**: kein Code des Diffs legt eine Sitzung an, keine Mutante macht ihn rot) · Risiko 3 → `Dasselbe_Wort_In_Zwei_Positionen_Kommt_Einmal` (M7 → rot) · Leerfall → `Nichts_Faellig_Leere_Runde_Wird_Abgewiesen`.
+- 2026-11-24 · Mutanten-Probe nach der letzten Änderung (`.claude/scripts/mutant-probe.py`, gemessen an `a782b4b2 + Arbeitsbaum`, 00:15): M1–M9, M12 rot am benannten Test; M10 grün wie erwartet; M11 abweichend (s. o.); Grundlinie nach dem Zurückspielen grün. Erste Messung (23:51): M1 `if (false)` kompilierte nicht (CS0162 unter `TreatWarningsAsErrors`) → neu formuliert und gemessen. Rote Probe in Zahlen: `MischrundeAuswahlTests` ohne Mutante 12/12 grün, je rote Mutante ≥ 1 gefallen am benannten Test.
+
+| Mutante | Stelle | erwartet | gemessen |
+|---|---|---|---|
+| M1 | MixedReviewService.cs:60 (Sperre) | red | red |
+| M2 | MixedReviewService.cs:135 (offene Pflicht) | red | red |
+| M3 | MixedReviewService.cs:142 (eingeführt) | red | red |
+| M4 | MixedReviewService.cs:143 (fällig) | red | red |
+| M5 | MixedReviewService.cs:167 (eingeprägt) | red | red |
+| M6 | MixedReviewService.cs:64 (Runde von gestern) | red | red |
+| M7 | MixedReviewService.cs:175 (Doppel-Wort) | red | red |
+| M8 | MixedReviewService.cs:174 (Sortierung) | red | red |
+| M9 | MixedReviewController.cs:42 (nur Student) | red | red |
+| M10 | PositionProgressService.cs:467 (Rollup `Active`) | green | green |
+| M11 | MixedReviewService.cs:63 (Nachschlagen) | red | abweichend |
+| M12 | MixedReviewService.cs:124 (`PlanPlayableForChild`) | red | red |
+
+- 2026-11-24 · Suite (Release) 2186/2187: rot war nur der Wächter `ProblemTextGuardTests.Every_409_Code_Has_A_German_Text_Or_A_Reasoned_Exception` (erwartet 0 Codes ohne deutschen Text, gemessen 3: `mixed_review_completed`, `mixed_review_empty`, `mixed_review_stale`). Behoben: deutsche Texte in `frontend/src/lib/api.ts` (`GERMAN_PROBLEM_TEXT`) und `i18n/de.ts`/`en.ts`; danach die Wächter-Klassen (ProblemText, Schema, OpenApi, EndpointCoverage, Ownership) 47/47 grün. **Fehlerzähler Sprint 130: 1** (roter Wächter, Behebung ändert Code – Freigabe 11). `dotnet format --verify-no-changes` auf den berührten Dateien: ein Objekt-Initialisierer in `MischrundeAuswahlTests.cs` einzeilig → formatiert (ohne Zählung, Kosmetik).
+- 2026-11-24 · Review `pugling-reviewer` (Sprint 130, gemeinsam mit B-765): für die Auswahl keine 🔴/🟡; geprüft und bestätigt: Sperre bei Start und Abgabe, offene Pflicht bei Auswahl **und** Abgabe ausgeschlossen, nie gesehene und nicht eingeprägte Karten ausgeschlossen, Stufe nie leichter als `TestTargetStage(StageForDay)`, `ChildOwnershipFilter` + Student-Prüfung, Migration nur additiv. Die Funde betrafen die Wertung und stehen in B-765. Hilfen der Testklasse nach `MischrundeTestBase.cs` gezogen (geteilt mit `MischrundeWertungTests`), Fälle unverändert.
+- 2026-11-24 · **abgenommen** (Nachtlauf H, Sprint 130). Commits `64c14761` (Bau) und `1e3b42f7` (Hilfen nach `MischrundeTestBase`, gemeinsam mit B-765). Suite (Release) 2204/2204; `pugling-reviewer` ohne Fund an der Auswahl; Rollengang als Live-Probe gegen die laufende API (Port 5221, Wegwerf-DB: Sperre vor der Pflicht, 4 fällige Karten nach Lernrunde und Test, Start, Fortsetzen, Vater liest/darf nicht starten) – Protokoll `docs/pm-sitzung-2026-11-23-h.md`, Runde 130. Ein Browser-Rollengang entfällt für das Backend-Increment; die E2E trägt B-766.
+- 2026-11-24 · Nachschau (Retro Sprint 131): Prüfpunkt „trägt der Vertrag die Oberfläche, ohne dass sie raten muss?“ – `MixedReviewOverview` (`unlocked`, `dueCards`, `roundSize`, `openRunId`) gegen `MischrundeEinstieg` gelesen: jedes Feld genutzt, keines fehlt; die E2E `mischrunde.spec.ts` zeigt `dueCards` 4 aus zwei Plänen gegen den echten Server. Kein Befund, keine Entgleitung.
