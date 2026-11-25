@@ -61,7 +61,7 @@ test("Nacharbeit bis erledigt: Vater stellt ein, Kind schafft sie, Bonus und Rep
   await page.getByLabel("Ziel-Rhythmus", { exact: true }).selectOption({ label: "täglich, bis erledigt" });
   // Über den zugänglichen Namen, nicht den Label-Text: das 🪙 ist aria-hidden und gehört nicht zum Namen (B-652).
   await page.getByRole("spinbutton", { name: "Abschlussbonus", exact: true }).fill("30");
-  await page.getByRole("button", { name: "OK" }).click();
+  await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(zeile).toContainText("täglich, bis erledigt");
   await expect(zeile).toContainText("Abschluss +30🪙");
 

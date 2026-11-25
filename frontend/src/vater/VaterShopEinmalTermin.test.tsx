@@ -129,6 +129,13 @@ describe("Vater-Shop – Bearbeiten beginnt beim gespeicherten Angebot (B-786)",
     expect((screen.getByLabelText("Datum", { exact: true }) as HTMLInputElement).value).toBe("2026-11-12");
   });
 
+  // E2E-Lauf 2026-11-24 (CI in UTC): die Zeile zeigte den Termin in der Zone des Browsers, also den Vortag. Rot mit
+  // `formatDate` statt der Lerntag-Zone – aber nur in einem Prozess außerhalb deutscher Zeit (CI; lokal `TZ=UTC` setzen).
+  it("zeigt einen Termin um Mitternacht deutscher Zeit als seinen Tag", () => {
+    zeile({ ...ONCE, refillAtUtc: "2030-01-14T23:00:00Z" } as unknown as ShopListing);
+    expect(screen.getByText("Einmalig (15.01.2030)")).toBeTruthy();
+  });
+
   // B-730: ein Termin um Mitternacht deutscher Zeit liegt in UTC auf dem Vortag. Rot mit `refillAtUtc.slice(0, 10)`: dann
   // öffnete das Angebot mit dem 19. statt dem 20., und ein „OK“ ohne Änderung verschöbe den Termin um einen Tag.
   it("liest einen Termin um Mitternacht deutscher Zeit als seinen Tag zurück", () => {

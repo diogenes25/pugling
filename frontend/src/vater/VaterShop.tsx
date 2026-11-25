@@ -8,7 +8,7 @@ import { useAsync } from "../lib/useAsync";
 import { useChildSelection } from "../lib/useChildSelection";
 import { confirmAction } from "../lib/ui";
 import { ACTION_LABEL, ACTION_OPTIONS, REFILL_LABEL, UNIT_LABEL, UNIT_OPTIONS, priceLabel, unitAmount } from "../lib/shop";
-import { augenblick, beginnDesLerntags, formatDate, heuteImLerntag } from "../lib/datum";
+import { augenblick, beginnDesLerntags, formatDate, formatDateIn, heuteImLerntag, LERNTAG_ZONE } from "../lib/datum";
 import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import type {
   ActionType, ActivationRequest, ChildResponse, CreateShopArticleDto, CreateShopListingDto,
@@ -256,7 +256,8 @@ function refillText(l: ShopListing): string {
   let text = REFILL_LABEL[l.refillKind];
   if (l.refillKind === "Weekly" && l.refillDayOfWeek)
     text += ` (${WEEKDAYS.find((d) => d.value === l.refillDayOfWeek)?.short ?? l.refillDayOfWeek})`;
-  if (l.refillKind === "Once" && l.refillAtUtc) text += ` (${formatDate(l.refillAtUtc)})`;
+  // Der Termin liegt als Beginn eines Lerntags (deutsche Zeit) – er wird in dieser Zone gelesen, nicht in der des Browsers.
+  if (l.refillKind === "Once" && l.refillAtUtc) text += ` (${formatDateIn(l.refillAtUtc, LERNTAG_ZONE)})`;
   // Ansparen sichtbar machen, bei jeder Art – sonst sähe ein Spar-Angebot aus wie eines, dessen Reste verfallen.
   if (l.refillKind !== "None" && l.refillKind !== "Once" && l.refillQuantity < l.maxStock)
     text += `, +${l.refillQuantity} bis ${l.maxStock}`;

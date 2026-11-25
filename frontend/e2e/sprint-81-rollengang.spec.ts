@@ -65,7 +65,7 @@ test("B-219: der Vater verzeiht Ausrutscher an einer Leitner-Position, ohne Leit
   const zeileMit = page.getByRole("row", { name: new RegExp(MIT) });
   const zeileOhne = page.getByRole("row", { name: new RegExp(OHNE) });
   // Die Zeile im Bearbeiten-Modus ist die mit „OK“ – das Anlege-Formular trägt dieselben Felder.
-  const bearbeiten = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  const bearbeiten = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) });
   const verzeihen = bearbeiten.getByRole("checkbox", { name: "Ausrutscher verzeihen" });
 
   // Ausgangslage: Leitner an, aber nicht verzeihend – sonst bewiese das „verzeihend“ unten nichts.
@@ -76,7 +76,7 @@ test("B-219: der Vater verzeiht Ausrutscher an einer Leitner-Position, ohne Leit
   await expect(verzeihen).toBeEnabled();
   await expect(verzeihen).not.toBeChecked();
   await verzeihen.check();
-  await page.getByRole("button", { name: "OK" }).click();
+  await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText("Position gespeichert.")).toBeVisible();
   await expect(zeileMit).toContainText("· verzeihend");
 

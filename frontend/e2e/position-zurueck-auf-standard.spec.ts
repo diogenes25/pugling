@@ -49,13 +49,13 @@ test("Der Vater setzt Inhalte zurück auf Standard und kann keine unerreichbare 
   await page.goto(`/vater/plan/${planId}`);
   const zeile = page.getByRole("row", { name: new RegExp(titel) });
   // Die Zeile im Bearbeiten-Modus ist die mit „OK“ – das Anlege-Formular trägt dieselben Felder.
-  const bearbeiten = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  const bearbeiten = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) });
   const inhalte = bearbeiten.getByRole("spinbutton", { name: "Anzahl Inhalte" });
 
   // B-547: setzen …
   await zeile.getByRole("button", { name: "Bearbeiten" }).click();
   await inhalte.fill("5");
-  await page.getByRole("button", { name: "OK" }).click();
+  await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText("Position gespeichert.")).toBeVisible();
   await expect(zeile).toContainText("5 Inhalte");
 
@@ -63,14 +63,14 @@ test("Der Vater setzt Inhalte zurück auf Standard und kann keine unerreichbare 
   await zeile.getByRole("button", { name: "Bearbeiten" }).click();
   await expect(inhalte).toHaveValue("5");
   await inhalte.fill("");
-  await page.getByRole("button", { name: "OK" }).click();
+  await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText("Position gespeichert.")).toBeVisible();
   await expect(zeile).not.toContainText("Inhalte");
 
   // B-552: Häkchen an, Stufe bleibt „Standard der Übung“ (Vokabel-Vorgabe: Selbsteinschätzung) → abgelehnt.
   await zeile.getByRole("button", { name: "Bearbeiten" }).click();
   await bearbeiten.getByRole("checkbox", { name: "nur getippte Tests" }).check();
-  await page.getByRole("button", { name: "OK" }).click();
+  await page.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText("„Nur getippte Tests zählen“ braucht eine getippte Stufe – auf Selbsteinschätzung wäre die Pflicht nie erreichbar.")).toBeVisible();
   await page.getByRole("button", { name: "Abbrechen" }).click();
   await expect(zeile).not.toContainText("Ziel nicht erreichbar");

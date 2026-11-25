@@ -32,12 +32,12 @@ test("Nur den Preis ändern schickt den Termin mit Uhrzeit unverändert zurück"
   await page.goto("/vater/shop");
   await page.getByRole("row", { name: new RegExp(artikel) }).getByRole("button", { name: /Angebote/ }).click();
   await page.getByRole("row", { name: new RegExp(angebot) }).getByRole("button", { name: "Bearbeiten" }).click();
-  const zeile = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  const zeile = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) });
   await expect(zeile.getByLabel("Datum", { exact: true })).toHaveValue("2030-01-15");
   await zeile.getByLabel("Preis 🪙", { exact: true }).fill("12");
 
   const patch = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(`/listings/${listing.id}`));
-  await zeile.getByRole("button", { name: "OK" }).click();
+  await zeile.getByRole("button", { name: "OK", exact: true }).click();
   const body = (await patch).postDataJSON();
   expect(body.coinPrice).toBe(12);
   // Den Wert, den die Liste geliefert hat (dort ohne Offset, aus SQLite gelesen) – nicht Mitternacht.
@@ -61,7 +61,7 @@ test("Ein verworfenes Datum geht nach „Abbrechen“ nicht mit dem nächsten Sp
   await page.goto("/vater/shop");
   await page.getByRole("row", { name: new RegExp(artikel) }).getByRole("button", { name: /Angebote/ }).click();
   const angebotZeile = page.getByRole("row", { name: new RegExp(angebot) });
-  const zeile = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  const zeile = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) });
   await angebotZeile.getByRole("button", { name: "Bearbeiten" }).click();
   await zeile.getByLabel("Datum", { exact: true }).fill("2030-03-01");
   await zeile.getByRole("button", { name: "Abbrechen" }).click();
@@ -70,6 +70,6 @@ test("Ein verworfenes Datum geht nach „Abbrechen“ nicht mit dem nächsten Sp
   await expect(zeile.getByLabel("Datum", { exact: true })).toHaveValue("2030-02-01");
   await zeile.getByLabel("Preis 🪙", { exact: true }).fill("12");
   const patch = page.waitForRequest((r) => r.method() === "PATCH" && r.url().endsWith(`/listings/${listing.id}`));
-  await zeile.getByRole("button", { name: "OK" }).click();
+  await zeile.getByRole("button", { name: "OK", exact: true }).click();
   expect((await patch).postDataJSON().refillAtUtc).toMatch(/^2030-02-01T10:00:00/);
 });

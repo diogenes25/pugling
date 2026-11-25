@@ -69,8 +69,8 @@ test("Geleerte Plan-Beschreibung, Unit-Grammatik und Audio-URL bleiben nach dem 
   await page.getByRole("row", { name: new RegExp(wort) }).getByRole("button", { name: "Bearbeiten" }).click();
   await expect(page.getByLabel("Aussprache-Audio-URL", { exact: true })).toHaveValue(`https://example.org/${wort}.mp3`);
   await page.getByLabel("Aussprache-Audio-URL", { exact: true }).fill("");
-  await page.getByRole("button", { name: "OK" }).click();
-  await expect(page.getByRole("button", { name: "OK" })).toHaveCount(0);
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await expect(page.getByRole("button", { name: "OK", exact: true })).toHaveCount(0);
   const nachher = await call(page, "get", `/api/v1/creator/vocabulary/${vocab.id}`);
   expect(nachher.pronunciationAudioUrl).toBeNull();
   await page.reload();

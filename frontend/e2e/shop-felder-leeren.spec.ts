@@ -28,22 +28,23 @@ test("Geleerter Angebotstitel und geleerte Artikel-Beschreibung bleiben nach dem
   await page.goto("/vater/shop");
   const artikelZeile = page.getByRole("row", { name: new RegExp(artikel) });
   await artikelZeile.getByRole("button", { name: /Angebote/ }).click();
-  const offen = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) });
+  // `exact`: sonst trifft „OK“ als Teilstring auch „Bestand von Kontokind … füllen“ – ein Kind einer anderen Spec in der geteilten DB.
+  const offen = page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) });
 
   // Angebot: Titel leeren.
   await page.getByRole("row", { name: new RegExp(`Zoo-Angebot ${RUN}`) }).getByRole("button", { name: "Bearbeiten" }).click();
   await offen.getByLabel("Titel", { exact: true }).fill("");
-  await offen.getByRole("button", { name: "OK" }).click();
+  await offen.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText(`Zoo-Angebot ${RUN}`)).toHaveCount(0);
   await expect(page.getByText("(ohne Titel)").first()).toBeVisible();
 
   // Artikel: Beschreibung leeren, dann nach dem Neuladen nachsehen.
   await artikelZeile.getByRole("button", { name: "Bearbeiten" }).click();
   await offen.getByLabel("Beschreibung", { exact: true }).fill("");
-  await offen.getByRole("button", { name: "OK" }).click();
+  await offen.getByRole("button", { name: "OK", exact: true }).click();
   await expect(page.getByText("Artikel gespeichert.")).toBeVisible();
   await page.reload();
   await page.getByRole("row", { name: new RegExp(artikel) }).getByRole("button", { name: "Bearbeiten" }).click();
-  await expect(page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK" }) })
+  await expect(page.getByRole("row").filter({ has: page.getByRole("button", { name: "OK", exact: true }) })
     .getByLabel("Beschreibung", { exact: true })).toHaveValue("");
 });
