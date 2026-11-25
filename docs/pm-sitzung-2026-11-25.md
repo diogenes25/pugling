@@ -410,3 +410,7 @@ beide Söhne; Theodors Wochen-Nacharbeit 101 bleibt bei 2, Friedrichs Generalpro
 `penaltyCoins`. **Probe an einer frischen Kopie:** 23./24.11. zu je 2 abgerechnet (Theodor 2, Friedrich 4 Buchungen), nach dem
 Umstellen und erneutem Login keine Buchung zu 20; die Sohn-Sicht zeigt an 202/133/134/211 „20". Der neue Satz gilt ab heute,
 25.11. Am Heimnetz-Server führt der Vater es selbst aus (PINs).
+
+**Gelaufen am Heimnetz-Server (2026-11-25, ~14:06), lesend in `pugling.db` geprüft:** die acht Tagespflichten tragen 20, 101
+weiter 2, die Generalproben 0. Vor dem Umstellen zu je 2 abgerechnet: Theodor 2, Friedrich 4 Buchungen (23./24.11.), keine
+zu 20. Sicherung `pugling.db.bak-vor-malus-20-2026-11-25` (+ `-wal`).
