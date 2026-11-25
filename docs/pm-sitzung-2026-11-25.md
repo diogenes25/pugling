@@ -450,7 +450,7 @@ Kopie-Server nach der letzten Code-Änderung auf einer frischen Kopie gestartet,
 
 ## Retrospektive (Sprint 165)
 
-**Nachschau:** Sprint 164 (B-624) war schon in Runde 4 nachgeschaut; seither kein neuer Befund. Index: 582 von 623.
+**Nachschau:** Sprint 164 (B-624) war schon in Runde 4 nachgeschaut; seither kein neuer Befund. Index: 581 von 623.
 
 **Was durchkam:** Drei 🟡 fand erst der Review. Das wichtigste: `IsMisspelled`/`IsAccentSlip` lesen dieselbe Quelle wie
 `Matches` (`Normalize` der Antwort und der Lösungen), maßen aber ohne die neue Abbildung. Die Regel aus Step 4 („für einen
