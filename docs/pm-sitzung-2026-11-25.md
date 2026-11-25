@@ -117,7 +117,7 @@ Kopie-Server nach der letzten Backend-Änderung neu gestartet (`kopie-server.sh`
   einspielen und die Vokabeln 122/953 berichtigen (AK 7) – beides an der echten DB, beides bei ihm.
 
 **Stand:** B-626 bleibt `in-arbeit` mit `wartet_auf` (AK 7 an der echten DB, Blick am Gerät). Verifikation siehe
-Abschluss.
+Abschluss: .NET 2398/2398 grün (Release, Ausgangsstand 2394), `dotnet format --verify-no-changes` sauber, Mutanten 17/17 rot am benannten Test (Tabelle in B-626), Frontend unverändert (kein Vitest/E2E nötig).
 
 ## Retrospektive
 
