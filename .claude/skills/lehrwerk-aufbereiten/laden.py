@@ -115,7 +115,8 @@ def graded(word):
     while stripped and stripped[-1] in ".?!…":
         stripped = stripped[:-1].rstrip()
     # Split on any whitespace, like the server since B-497: a no-break space copied from a PDF is a space.
-    return " ".join((stripped or s).lower().split())
+    # Whitespace next to a slash does not count either (B-993): "up / down" is "up/down".
+    return " ".join((stripped or s).lower().split()).replace(" /", "/").replace("/ ", "/")
 
 
 def contains_word(text, word):

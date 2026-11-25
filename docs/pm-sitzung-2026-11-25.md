@@ -161,3 +161,109 @@ Vorprüfung ab, ohne etwas zu ändern. Lesend in `pugling.db` geprüft: Theodor 
 Friedrich täglich 202/133/134/211 + Generalproben 167/168/218/219. Für Friedrichs Vormittag zählt das nicht als Malus: die
 abgeschalteten Positionen trugen keinen (165/166/214–217: 0 Münzen), und eine freigegebene Pflicht verzichtet auf ihre
 offenen Perioden (B-659).
+
+## Runde 2 — Vorstellung & Feedback
+
+Zweiter Aufruf von `/pm-loop` am selben Tag, ohne Zielvorgabe. Rollengang an einer frischen Kopie der echten DB
+(`kopie-server.sh`, :5201, 09:54); :5200 unberührt. Kein neuer Export unter `docs/anmerkungen/`.
+
+### Feedback Vater (beobachtet, Rückmeldung 8 des Testjungen, 08:25)
+
+- **Stört:** „‚turn sth. up / down‘ hätte auch funktionieren sollen.“ An der Kopie nachgestellt (Vorschau, Übung 150):
+  „turn sth. up/down“ richtig, „turn sth. up / down“, „turn sth. up/ down“, „to turn sth. up / down“ falsch, je mit
+  „falsch geschrieben“. Umgekehrt trifft es seit B-626 AK 7 Vokabel 122 („towards the station / towards Mr Bell“): der ganze
+  Eintrag ohne Leerzeichen getippt ist falsch. 15 Store-Wörter tragen einen Schrägstrich ohne, 88 mit Leerzeichen.
+- **Wartet bei ihm:** [B-743](backlog/B-743-notenstufe-anzeige-kind-und-vater.md) (Entscheidung AK 2),
+  [B-752](backlog/B-752-vorbereitungs-pflicht-im-fenster.md) (Gerät: wirkt die Last fair?).
+- **Top-3:** (1) Leerzeichen am Schrägstrich, (2) B-743 AK 2 entscheiden, (3) Akzent-Milde für Friedrich (B-624).
+
+### Feedback Sohn (aus den offenen Rückmeldungen 2–7, unverändert seit Runde 1)
+
+- Theodors „zu streng“ ist nach B-626 noch zweimal offen: sein Kürzel „smb/smt“
+  ([B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md)) und „remote controll“
+  ([B-784](backlog/B-784-tippfehler-im-ueben-bei-theodor.md)). Friedrich tippt Französisch mit Akzenten – jeder Akzent ein
+  ganzer Fehler ([B-624](backlog/B-624-akzentfehler-nicht-ganzer-fehler.md), gegrillt und geschätzt, ungebaut).
+
+### Feedback Creator
+
+- Keine neue Reibung seit Runde 1; Regressionszeuge.
+
+## PM-Synthese & Priorisierung (Runde 2)
+
+Wieder kam der stärkste Befund von außen – vom Vater am Gerät, eine Stunde nach der Abnahme von B-626. Er ist ein Defekt im
+Kern des Übens und liegt auf dem roten Faden der Runde 1 („ein Fehler zählt nur, wenn das Kind das Wort nicht weiß“).
+
+| Prio | Punkt | Größe | Wo | Weg |
+| --- | --- | --- | --- | --- |
+| P1 | Leerzeichen am Schrägstrich | S | beides | neu [B-993](backlog/B-993-leerzeichen-um-den-schraegstrich.md), Defekt, dieser Sprint |
+| P2 | Akzentfehler zählt halb | L | beides | [B-624](backlog/B-624-akzentfehler-nicht-ganzer-fehler.md), geschätzt – nächster Sprint |
+| P2 | Kürzel des Kindes | ? | backend | [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md), Dialog |
+| — | B-743 AK 2, B-752 Gerät | — | — | beim Vater |
+
+**Roter Faden:** Ein Fehler zählt nur, wenn das Kind das Wort nicht weiß.
+
+## Sprint 163 — Ziel & Umfang
+
+**Sprint-Ziel:** Theodor verliert keine Karte mehr am Leerzeichen um einen Schrägstrich – im Üben, im Abschlusstest und in der
+Vorschau des Vaters gleich, in beide Richtungen („up / down“ für „up/down“ und umgekehrt).
+**Umfang:** B-993 (S, beides).
+**Entwickler-Brief:** Senke ist `StageMechanics.Normalize` – jeder Textvergleich läuft dort durch; die Fallliste
+`docs/fallliste-antwortvergleich.json` hält ihre zwei Spiegel (Vater-Web `normalizeAnswer`, Lehrwerk-Lader `graded()`) gleich,
+darum zuerst die Fälle (rot an allen drei Lesern), dann die drei Stellen. `AnswerVariants` teilt den **rohen** Eintrag am
+gespaceten `/` vor `Normalize` und bleibt unberührt. Keine Migration, kein Vertragsbruch.
+
+## Iteration 163 — umgesetzt
+
+**Backend (API-First):** `StageMechanics.Normalize` lässt Leerraum am `/` fallen (nach dem Zusammenziehen, also je Seite ein
+Leerzeichen). Die Bedeutungsteilung in `AnswerVariants` läuft vorher auf dem rohen Eintrag und bleibt, wie sie ist. Neue
+Pfad-Tests `SchraegstrichPfadTests` (Üben, Abschlusstest, Vorschau).
+**Spiegel:** `frontend/src/lib/answerNormalize.ts` und `graded()` im Lehrwerk-Lader, gehalten von fünf neuen Fällen der
+Fallliste (vor dem Bau rot an allen drei Lesern).
+**Verifikation:** .NET 2412/2412 (Release, Ausgangsstand 2398), Vitest 502/502, `test_laden.py` OK; Mutanten 7/7 rot am
+benannten Fall (Tabelle in B-993). **Review (`pugling-reviewer`):** kein 🔴/🟡; zwei 🟢 übernommen (Absichtserklärungen
+beschriftet, „turn up / down“ ergänzt). Den einzeiligen Frontend-Spiegel hat derselbe Review gelesen; `frontend-reviewer`
+lief nicht, weil keine Oberfläche berührt ist. **Fehlerzähler Sprint 163: 0.**
+
+## Runde 163 — Re-Review / Abnahme
+
+Kopie-Server nach der letzten Code-Änderung neu gestartet (frische Kopie, :5201), danach beendet.
+
+- **Sohn – abgenommen (maschinell an der Kopie):** Als Testjunge auf Position 220 die Karte „etwas lauter/leiser stellen“
+  mit „turn sth. up / down“ beantwortet → richtig, kein „falsch geschrieben“. Theodors eigene Rückmeldungen 3 und 7
+  („turn smt. up/down“) bleiben falsch – das ist sein Kürzel, [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md).
+- **Vater – abgenommen:** „Die Vorschau an Theodors Übung 15 sagt jetzt dasselbe wie mein Testjunge: ‚turn sth. up / down‘
+  und ‚turn up / down‘ zählen, ‚turn sth. up down‘ nicht.“ Seine Rückmeldung 8 kann er damit als erledigt beantworten.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff außer dem Lehrwerk-Lader, dessen `graded()` jetzt gleich
+  vergleicht (`test_laden.py` OK); Suite grün.
+
+**Stand:** B-993 `abgenommen`.
+
+## Retrospektive (Runde 2)
+
+**Nachschau:** Sprint 162 – B-626: ein Befund, B-993 (AK 7, Skript `0d88e81d`, schrieb Vokabel 122 auf „ / “ um; danach war
+der ganze Eintrag ohne Leerzeichen falsch). Gelesen: das Skript und die Bedeutungsteilung in `AnswerVariants`, sonst kein
+Fund. `nachgeschaut: 2026-11-25` an B-626.
+
+**Was durchkam und woher es kam:** Der Fund kam von außen – vom Vater am Gerät, eine Stunde nach der Abnahme von B-626, über
+den Rückmeldeknopf der Karte. Die Datenkorrektur AK 7 wurde an einer Kopie geprobt, aber nur auf „die Hälften zählen“, nicht
+auf „die alte Schreibweise zählt weiter“. Bei der eigenen Mutanten-Probe fiel M4 zuerst `abweichend` aus: mein Kommentar
+behauptete, die Pfad-Kontrolle fange „jedes Leerzeichen weg“; gemessen fing das nur die Fallliste. Die Probe am richtigen
+Ort hat die falsche Behauptung gefunden, bevor sie ins Commit ging.
+
+**Der eine Mechanismus:** keiner, begründet. Die Fallliste ist das Tor für diese Fehlerklasse und hat sofort gegriffen, als der
+Fall darin stand; gefehlt hat der Fall, nicht das Tor. Ein Tor „jede Store-Schreibweise wird getippt akzeptiert“ bräuchte die
+echte DB und liefe nicht in CI. Kein neues Tor – darum kein Halt.
+
+**Bewusst ungedeckt:** Leerraum an Komma und Bindestrich (nicht beobachtet, B-993 Entscheidung 2); der KI-Creator findet
+„up/down“ nicht in einem Lückentext mit „up / down“ (`ClozeMarkup.cs:91`, Erstellen statt Werten).
+
+## Offene Roadmap (Stand Runde 2)
+
+Die Liste, die gilt, ist `docs/backlog/`. Reihenfolge:
+
+1. **Beim Vater:** Entscheidung zu [B-743](backlog/B-743-notenstufe-anzeige-kind-und-vater.md) AK 2; der Blick am Gerät zu
+   [B-752](backlog/B-752-vorbereitungs-pflicht-im-fenster.md); Rückmeldung 8 und Theodors offene Rückmeldungen beantworten.
+2. [B-624](backlog/B-624-akzentfehler-nicht-ganzer-fehler.md) (L, gegrillt und geschätzt) als nächster Sprint – derselbe rote
+   Faden, und Friedrich tippt täglich Französisch. Vor dem Bau die Schätzung vom 17.11. gegen den Code prüfen
+   (Migrationskette, Pflicht-Zählung, Risiko 2).
+3. [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md) und [B-784](backlog/B-784-tippfehler-im-ueben-bei-theodor.md) im Dialog.

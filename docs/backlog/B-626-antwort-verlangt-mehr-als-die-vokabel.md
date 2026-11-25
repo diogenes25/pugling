@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-25"
 ---
 
 # B-626 · Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste
@@ -259,3 +259,7 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
 - **2026-11-25** — `abgenommen` (Code `459cb60b`, AK 7 `143ff649`). Blick am Gerät durch den Vater als Testjunge an der Testübung
   (Positionen 220/221 in Plan 17): fester Text und Kästchen sind deutlich getrennt – „passt so“. Alle sieben AK belegt
   (Tabelle oben); offen und als eigene Stories geführt: B-990 (eigene Kürzel des Kindes), B-991 („sb.'s“), B-992 (Salat).
+- **2026-11-25** — nachgeschaut (Runde 2 der PM-Sitzung): ein Befund, [B-993](B-993-leerzeichen-um-den-schraegstrich.md). AK 7
+  (`0d88e81d`) schrieb Vokabel 122 auf „towards the station / towards Mr Bell“ um; der ganze Eintrag ohne Leerzeichen
+  getippt war danach falsch. Der Vater fand die Gegenrichtung („up / down“) am Gerät. Gelesen: Skript `0d88e81d`, die
+  Bedeutungsteilung in `AnswerVariants`; sonst kein Fund.

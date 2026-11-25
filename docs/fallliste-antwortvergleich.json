@@ -126,6 +126,36 @@
       "b": "\u00e9cole",
       "gleich": true,
       "warum": "Gross/Klein ausserhalb von ASCII"
+    },
+    {
+      "a": "turn sth. up / down",
+      "b": "turn sth. up/down",
+      "gleich": true,
+      "warum": "Leerzeichen um den Schraegstrich (B-993)"
+    },
+    {
+      "a": "up/ down",
+      "b": "up /down",
+      "gleich": true,
+      "warum": "Leerzeichen auf einer Seite des Schraegstrichs (B-993)"
+    },
+    {
+      "a": "up /\tdown",
+      "b": "up/down",
+      "gleich": true,
+      "warum": "geschuetztes Leerzeichen und Tab am Schraegstrich (B-993)"
+    },
+    {
+      "a": "up down",
+      "b": "up/down",
+      "gleich": false,
+      "warum": "Leerzeichen ersetzt den Schraegstrich nicht (B-993)"
+    },
+    {
+      "a": "ice cream",
+      "b": "icecream",
+      "gleich": false,
+      "warum": "Leerzeichen zwischen Woertern zaehlt weiter (B-993 faltet nur am Schraegstrich)"
     }
   ]
 }

@@ -37,9 +37,11 @@ public static class StageMechanics
     /// </summary>
     // U+FEFF (zero width no-break space, a pasted BOM) is no whitespace for .NET and invisible to the reader - the
     // editor strips it, so the comparison drops it too, or two buttons that look alike would differ (B-501).
+    // Whitespace next to a slash is dropped (B-993): the word list prints "up/down" and "station / Mr Bell" alike, and
+    // which of the two the child types is not the vocabulary. Runs after the collapse, so one space per side is all left.
     public static string Normalize(string? s) =>
         string.Join(' ', WithoutClosingMarks(FoldApostrophes((s ?? "").Replace("\uFEFF", "")).Trim()).ToLowerInvariant()
-            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).Replace(" /", "/").Replace("/ ", "/");
 
     private static readonly char[] ClosingMarks = ['.', '?', '!', '…'];
 
