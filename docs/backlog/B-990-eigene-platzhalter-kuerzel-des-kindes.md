@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [smb statt sb, smt statt sth, eigene Kürzel beim Tippen]
-status: ausformuliert
+status: gegrillt
 prio: P2
 art: Wunsch
 groesse: ""
@@ -66,29 +66,60 @@ gängigen Abkürzung (smb., smth., smt.), bekommt die Karte falsch, obwohl er di
 Theodor: der Vater selbst tippt „smth.“. Beim zweiten Fall des Testjungen („hold on“ statt „hold onto“) wäre die Antwort auch
 mit Toleranz falsch – die Toleranz darf nur das Kürzel schlucken, nicht das Wort davor.
 
-## Akzeptanzkriterien (Entwurf)
+## Akzeptanzkriterien
 
-1. „turn to smb“ zählt für „(to) turn to sb.“, „turn smt. up/down“ für „(to) turn sth. up/down“, im Üben, im Test und in
-   der Vorschau gleich. *Rot, wenn* eine der drei Stellen das Kürzel anders wertet.
+1. „turn to smb“ zählt für „(to) turn to sb.“, „turn smt. up/down“ für „(to) turn sth. up/down“, im Üben, im Test, in der
+   Mischrunde und in der Vorschau gleich (Entscheidung 4). *Rot, wenn* eine dieser Stellen das Kürzel anders wertet.
 2. Ein Kürzel zählt nur dort, wo der Eintrag einen Platzhalter derselben Art hat: „turn to smth“ für „turn to sb.“ bleibt
-   falsch (wenn Punkt 2 so entschieden wird). *Rot, wenn* ein Sach-Kürzel einen Personen-Platzhalter ersetzt.
+   falsch (Entscheidung 3). *Rot, wenn* ein Sach-Kürzel einen Personen-Platzhalter ersetzt oder umgekehrt.
 3. Ein Kürzel allein macht keine Antwort richtig: „hold on smth.“ für „(to) hold onto sth.“ bleibt falsch.
-4. Der KI-Creator bleibt unberührt: die Kürzel des Kindes werden kein Platzhalter der Wortliste.
+4. Der KI-Creator bleibt unberührt: die Kürzel des Kindes werden kein Platzhalter der Wortliste
+   (`WordListPlaceholders` unverändert).
+5. Es zählen genau smb, smbd, sbd für „sb.“ und smth, smt, s.th. für „sth.“, je mit oder ohne Punkt, ohne Rücksicht auf
+   Groß-/Kleinschreibung (Entscheidung 2); „so“ und „s.o.“ nicht. *Rot, wenn* eine der sechs fehlt oder „so“ zählt.
+6. Französische und deutsche Platzhalter (qn/qc, jdn./jdm./etw.) bleiben wie heute (Entscheidung 5).
 
 ## Offene Punkte
 
-1. **Welche Kürzel zählen?** Belegt sind smb, smt, smth. Kandidaten dazu: smbd, sbd, s.o., s.th., sth/sb ohne Punkt gibt es
+1. ~~**Welche Kürzel zählen?** Belegt sind smb, smt, smth. Kandidaten dazu: smbd, sbd, s.o., s.th., sth/sb ohne Punkt gibt es
    schon. *Empfehlung:* nur die belegten plus ihre naheliegenden Geschwister (smb, smbd, sbd für Personen; smth, smt, s.th.
-   für Sachen). Nicht „so“/„s.o.“ – „so“ ist ein Wort.
-2. **Muss die Art passen** (Person-Kürzel nur für „sb.“, Sach-Kürzel nur für „sth.“)? *Empfehlung:* ja. Sonst zählt
-   „turn to smth“, und das ist eine andere Wendung.
-3. **Wo gilt die Toleranz – Üben und Test gleich?** Theodors Fälle fielen im Test. Der Grader hat heute eine Regel für alle
+   für Sachen). Nicht „so“/„s.o.“ – „so“ ist ein Wort.~~ → Entscheidung 2
+2. ~~**Muss die Art passen** (Person-Kürzel nur für „sb.“, Sach-Kürzel nur für „sth.“)? *Empfehlung:* ja. Sonst zählt
+   „turn to smth“, und das ist eine andere Wendung.~~ → Entscheidung 3
+3. ~~**Wo gilt die Toleranz – Üben und Test gleich?** Theodors Fälle fielen im Test. Der Grader hat heute eine Regel für alle
    Wege, anders als beim Akzentfehler (B-624), wo nur das Üben milde ist. *Empfehlung:* überall gleich. Ein Kürzel ist
-   keine Wissenslücke, und die Schule wertet „smb“ nicht als Fehler.
-4. **Toleranz oder Hinweis?** Statt die Kürzel zu erkennen, könnte die Karte sagen „den Platzhalter darfst du weglassen“.
-   *Empfehlung:* Toleranz. Der Hinweis ändert die Gewohnheit des Kindes nicht, und auch der Vater tippt „smth.“.
-5. **Gilt das auch für Französisch/Latein/Deutsch** (qn/qc, jdn./jdm./etw.)? *Empfehlung:* nur Englisch, solange kein Fall
-   belegt ist. Die Liste soll das Beobachtete abbilden, nicht raten.
+   keine Wissenslücke, und die Schule wertet „smb“ nicht als Fehler.~~ → Entscheidung 4
+4. ~~**Toleranz oder Hinweis?** Statt die Kürzel zu erkennen, könnte die Karte sagen „den Platzhalter darfst du weglassen“.
+   *Empfehlung:* Toleranz. Der Hinweis ändert die Gewohnheit des Kindes nicht, und auch der Vater tippt „smth.“.~~ → Entscheidung 1
+5. ~~**Gilt das auch für Französisch/Latein/Deutsch** (qn/qc, jdn./jdm./etw.)? *Empfehlung:* nur Englisch, solange kein Fall
+   belegt ist. Die Liste soll das Beobachtete abbilden, nicht raten.~~ → Entscheidung 5
+
+## Entscheidungen
+
+1. **Der Grader erkennt die Kürzel des Kindes; ein bloßer Hinweis auf der Karte reicht nicht.** (Vater, 2026-11-25, auf
+   Punkt 4.) Begründung: Ein Hinweis ändert die Schulgewohnheit nicht, auch der Vater tippt „smth.“, und die Schule wertet
+   „smb“ nicht als Fehler. Kosten: Die App nimmt mehr Schreibweisen an, als das Buch druckt. Es braucht eine zweite Liste
+   nur für die Antwortseite (die Liste der Wortliste und der KI-Creator bleiben unberührt), und jede Schreibweise braucht
+   einen Fall, der zeigt, dass sie nicht mehr durchlässt als das Kürzel (AK 3).
+2. **Es zählen die belegten Kürzel und ihre naheliegenden Geschwister:** für „sb.“ smb, smbd, sbd; für „sth.“ smth, smt,
+   s.th. – je mit oder ohne Punkt, Groß-/Kleinschreibung egal. „so“ und „s.o.“ zählen nicht. (Vater, 2026-11-25, auf
+   Punkt 1.) Begründung: Belegt sind smb, smt, smth (Theodor und der Vater); nur auf Belege zu warten hieße, dass jede neue
+   Schreibweise erst ein Kind eine Karte kostet. „so“ ist ein englisches Wort und ließe andere Wendungen durch. Kosten: sechs
+   Schreibweisen in der neuen Liste, je ein Testfall; eine, die nie jemand tippt, ist Ballast.
+3. **Die Art muss passen:** ein Personen-Kürzel zählt nur für „sb.“, ein Sach-Kürzel nur für „sth.“ – „turn to smth“ für
+   „(to) turn to sb.“ bleibt falsch (AK 2 gilt). (Vater, 2026-11-25, auf Punkt 2.) Begründung: Person und Sache machen
+   verschiedene Wendungen; wer sie verwechselt, kennt die Vokabel nicht ganz. In allen belegten Antworten passt die Art.
+   Kosten: Jedes Kürzel braucht die Zuordnung zu seinem Platzhalter statt einer flachen Liste, und ein Kind, das aus
+   Gewohnheit überall „smth“ tippt, verliert die Karte bei einer Person weiter.
+4. **Die Toleranz gilt überall gleich – Üben, Abschlusstest, Vorschau, Mischrunde.** (Vater, 2026-11-25, auf Punkt 3,
+   „nimm deine Empfehlung“.) Begründung: Theodors Fälle fielen im Test; die Schule wertet ein anderes Kürzel nicht als
+   Fehler, anders als einen Akzent (B-624, dort nur das Üben milde); und `AnswerGrader.Matches` ist heute die eine
+   Vergleichsstelle aller Wege, die Regel braucht keinen Sonderzweig. Kosten: Der Test nimmt mehr Schreibweisen an als das
+   Buch; bei einer Lehrerin, die auf „sb.“ besteht, ist er milder als die Klassenarbeit.
+5. **Vorerst nur Englisch.** (Vater, 2026-11-25, auf Punkt 5, „nimm deine Empfehlung“.) Begründung: Belegt sind nur
+   englische Kürzel; für qn/qc und jdn./jdm./etw. ist in den echten Antworten kein eigenes Kürzel aufgetaucht, und geratene
+   Schreibweisen („qqn“, „jmdn.“) nähmen an, was niemand tippt. Ein späterer Fall ist eine Zeile und ein Testfall. Kosten:
+   Tippt Friedrich „qqn“, verliert er die Karte, bis es gemeldet wird.
 
 ## Verlauf
 
@@ -97,3 +128,5 @@ mit Toleranz falsch – die Toleranz darf nur das Kürzel schlucken, nicht das W
 - **2026-11-25** — `idee` → `ausformuliert`: Platzhalter-Liste, Varianten und Vergleichsstelle am Code belegt; an der Kopie der
   echten DB vier Kürzel-Antworten gefunden (zwei von Theodor im Test, zwei vom Vater als Testjunge), alle falsch gewertet.
   Fünf offene Punkte mit Empfehlung für die Grill-Runde.
+- **2026-11-25** — `ausformuliert` → `gegrillt`: Grill-Runde mit dem Vater, fünf Entscheidungen (erkennen statt Hinweis,
+  sechs Kürzel, Art muss passen, überall gleich, nur Englisch); Akzeptanzkriterien final.
