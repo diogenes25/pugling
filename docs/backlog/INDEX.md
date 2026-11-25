@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (84)
+### Offen (85)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -35,6 +35,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
+| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“) | Wunsch | `in-arbeit` | P2 | S | backend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -60,7 +61,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
 | [B-762](B-762-hausaufgaben-vater-web-anlegen-und-abnehmen.md) | Hausaufgaben im Vater-Web: anlegen, Abgaben mit Foto ansehen, annehmen oder zur Nacharbeit zurückgeben | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-763](B-763-hausaufgaben-sohn-app-karte-und-foto-abgabe.md) | Hausaufgaben in der Sohn-App: Karte mit Frist, Foto aufnehmen und abgeben, Nacharbeit lesen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
-| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“) | Wunsch | `gegrillt` | P2 | — | backend | — |
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
@@ -71,6 +71,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
 | [B-971](B-971-urteil-pruefung-ausserhalb-der-transaktion.md) | Zwei gleichzeitige Urteile über dieselbe Meldung können eine gebuchte Korrektur als „abgewiesen“ zeigen | Defekt | `idee` | P3 | — | — | — |
+| [B-994](B-994-falsche-platzhalter-art-als-falsch-geschrieben.md) | Eine Antwort mit der falschen Platzhalter-Art erscheint als „falsch geschrieben“ | Defekt | `idee` | P3 | — | backend | — |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-970](B-970-urteil-an-richtig-gewerteter-antwort.md) | „Berechtigt“ an einer im Test richtig gewerteten Antwort: was soll es heißen? | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |

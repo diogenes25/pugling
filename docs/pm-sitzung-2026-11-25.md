@@ -414,3 +414,34 @@ Umstellen und erneutem Login keine Buchung zu 20; die Sohn-Sicht zeigt an 202/13
 **Gelaufen am Heimnetz-Server (2026-11-25, ~14:06), lesend in `pugling.db` geprüft:** die acht Tagespflichten tragen 20, 101
 weiter 2, die Generalproben 0. Vor dem Umstellen zu je 2 abgerechnet: Theodor 2, Friedrich 4 Buchungen (23./24.11.), keine
 zu 20. Sicherung `pugling.db.bak-vor-malus-20-2026-11-25` (+ `-wal`).
+
+## Sprint 165 — Ziel & Umfang
+
+Auf Wunsch des Vaters nach der Grill-Runde zu B-990 („Ja, schätzen und bauen“).
+
+**Sprint-Ziel:** Theodor verliert keine Karte mehr, weil er den Platzhalter in seinem Schulkürzel tippt – „turn to smb“ und
+„turn smt. up/down“ zählen im Üben, im Test und in der Vorschau gleich, „turn to smth“ für eine Person bleibt falsch.
+**Umfang:** [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md) (S, backend).
+**Entwickler-Brief:** Senke ist `AnswerGrader.Matches(given, expected, …)`, durch die jeder Weg geht (Üben, Lernkarte, Test,
+Satz-Wertung, Vorschau, Mischrunde, Ablenker-Filter). Die Kürzel-Abbildung kommt nicht in `Normalize` (sonst müssten die drei
+Spiegel nach) und nicht in `WordListPlaceholders` (die teilt der KI-Creator), sondern als `AnswerVariants.CanonicalSlots` auf
+beide Seiten. Keine Migration, kein Vertragsbruch.
+
+## Iteration 165 — umgesetzt
+
+**Backend:** `CanonicalSlots` (sechs Kürzel → „sb“/„sth“, ganzes Wort, Punkt optional), angewandt über den neuen Helfer
+`AnswerGrader.Comparable` – nach dem Review auch in „falsch geschrieben“, Akzent-Check und den Lösungs-Schreibweisen.
+**Verifikation:** .NET 2469/2469 (Release, Ausgangsstand 2440); 14 neue Fälle vor der Regel rot; Mutanten 13/13 rot am
+benannten Fall (Tabelle in B-990). **Review (`pugling-reviewer`):** kein 🔴, drei 🟡 übernommen (Anzeige maß ohne die
+Abbildung, blankes „sb“ und Wortgrenzen ungetestet). **Fehlerzähler Sprint 165: 0.**
+
+## Runde 165 — Re-Review / Abnahme
+
+Kopie-Server nach der letzten Code-Änderung auf einer frischen Kopie gestartet, danach beendet.
+
+- **Sohn – abgenommen (maschinell an der Kopie):** Im Abschlusstest an Position 220 (Testjunge, dieselben Karten) zählen
+  Theodors wörtliche Antworten „turn to smb“ und „turn smt. up/down“. Seine eigene Position 102 fragt die Karten nicht ab.
+- **Vater – abgenommen:** „In der Vorschau von Theodors Übung 15 zählen smb, smbd, smt und smth; die falsche Art und ‚so‘
+  nicht. Damit kann ich Theodors Rückmeldungen 3, 6 und 7 als erledigt beantworten.“ Nebenbefund: die falsche Art heißt im
+  Report jetzt „falsch geschrieben“ → [B-994](backlog/B-994-falsche-platzhalter-art-als-falsch-geschrieben.md), P3.
+- **Creator – Regressionszeuge:** `WordListPlaceholders` unverändert, der KI-Creator nicht im Diff; Suite grün.

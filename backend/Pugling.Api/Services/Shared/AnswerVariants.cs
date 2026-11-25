@@ -150,4 +150,20 @@ public static partial class AnswerVariants
 
     [GeneratedRegex(@"\(([^()]*)\)")]
     private static partial Regex Bracketed();
+
+    /// <summary>
+    /// <paramref name="normalized"/> with every English slot in its school abbreviation written as the bare slot (B-990):
+    /// "smb", "smbd", "sbd" → "sb", "smth", "smt", "s.th." → "sth", each with or without its dot, and "sb."/"sth." lose
+    /// theirs too. Applied to both sides of a comparison, a child who types the slot in its own spelling knows the phrase,
+    /// while a person slot stays apart from a thing slot. Deliberately not <see cref="WordListPlaceholders"/>: that list
+    /// describes the word list and is shared with the creator agent, these are only ways to type it. "so" is no
+    /// abbreviation here, it is a word.
+    /// </summary>
+    public static string CanonicalSlots(string normalized) =>
+        ChildSlot().Replace(normalized, m => m.Groups["thing"].Success ? "sth" : "sb");
+
+    // Whole words only: not inside a word ("smbx"), and not the tail of a dotted abbreviation ("s.o.sb").
+    [GeneratedRegex(@"(?<![\p{L}\p{N}.])(?:(?<thing>smth|smt|sth|s\.th)|smbd|smb|sbd|sb)\.?(?![\p{L}\p{N}])",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ChildSlot();
 }

@@ -24,13 +24,14 @@ public class AnswerGrader
     /// Text answer against one expected solution. An empty input is never correct. With
     /// <paramref name="articleOptionalIn"/> (the language of the expected answer, B-421) a leading article of that
     /// language may be left out - the meter is the word, not typing discipline. Only leaving it out is forgiven: an
-    /// added or a different article is still wrong.
+    /// added or a different article is still wrong. A slot typed in a school abbreviation ("smb" for "sb.") is the slot
+    /// (<see cref="AnswerVariants.CanonicalSlots"/>, B-990) - here, so practice, test and preview cannot differ.
     /// </summary>
     public bool Matches(string? given, string expected, string? articleOptionalIn)
     {
-        var g = StageMechanics.Normalize(given);
+        var g = Comparable(given);
         if (g.Length == 0) return false;
-        var e = StageMechanics.Normalize(expected);
+        var e = Comparable(expected);
         return g == e
             || (articleOptionalIn is { } language && StageMechanics.WithoutLeadingArticle(e, language) == g);
     }
@@ -49,7 +50,7 @@ public class AnswerGrader
     /// <param name="siblings">All atoms of the exercise; <paramref name="item"/> may be among them.</param>
     public bool IsMisspelled(string? given, ContentItem item, IReadOnlyList<ContentItem> siblings)
     {
-        var g = StageMechanics.Normalize(given);
+        var g = Comparable(given);
         // A wrong number is another number, not a spelling slip - "2,4" is one character off "2,5" (B-639).
         if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
         var own = Spellings(item, item).ToHashSet();
@@ -79,7 +80,7 @@ public class AnswerGrader
     /// </summary>
     public bool IsAccentSlip(string? given, ContentItem item)
     {
-        var g = StageMechanics.Normalize(given);
+        var g = Comparable(given);
         if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
         var folded = WithoutDiacritics(g);
         return Spellings(item, item).Any(a => WithoutDiacritics(a) == folded);
@@ -94,11 +95,15 @@ public class AnswerGrader
         return string.Concat(kept).Normalize(System.Text.NormalizationForm.FormC);
     }
 
+    // What every comparison of this class sees of a text: normalized, and a slot in a school abbreviation written as the
+    // slot (B-990). One helper, so the spelling categories measure against the same form Matches judged.
+    private static string Comparable(string? text) => AnswerVariants.CanonicalSlots(StageMechanics.Normalize(text));
+
     // The normalized solutions of an atom, each also without its leading article where the asked atom forgives one -
     // the same tolerance Matches grants: "chein" for "le chien" is measured against "chien", not against the article.
     private static IEnumerable<string> Spellings(ContentItem atom, ContentItem asked)
     {
-        foreach (var a in atom.GradedAnswers().Select(StageMechanics.Normalize).Where(a => a.Length > 0))
+        foreach (var a in atom.GradedAnswers().Select(Comparable).Where(a => a.Length > 0))
         {
             yield return a;
             if (asked.ArticleOptionalIn is { } language && StageMechanics.WithoutLeadingArticle(a, language) is { } bare)

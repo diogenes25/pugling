@@ -1,13 +1,13 @@
 ---
-tags: [typ/story, status/gegrillt, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [smb statt sb, smt statt sth, eigene Kürzel beim Tippen]
-status: gegrillt
+status: in-arbeit
 prio: P2
 art: Wunsch
-groesse: ""
+groesse: S
 wo: backend
-migration: ""
-vertragsbruch: ""
+migration: nein
+vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-25.md#runde-1--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
@@ -121,6 +121,37 @@ mit Toleranz falsch – die Toleranz darf nur das Kürzel schlucken, nicht das W
    Schreibweisen („qqn“, „jmdn.“) nähmen an, was niemand tippt. Ein späterer Fall ist eine Zeile und ein Testfall. Kosten:
    Tippt Friedrich „qqn“, verliert er die Karte, bis es gemeldet wird.
 
+## Schätzung
+
+**Größe S, `wo: backend`, keine Migration, kein Vertragsbruch.** Eine Regel an einer Senke, keine Datenänderung, kein
+Feld im Vertrag.
+
+**Senke:** `AnswerGrader.Matches(given, expected, articleOptionalIn)` (`backend/Pugling.Api/Services/Shared/AnswerGrader.cs:29`).
+Jeder Weg, der eine getippte Antwort wertet, landet dort: Üben (`PositionPracticeController.cs:662`), Lernkarte (`:893`),
+Abschlusstest (`PositionTestsController.cs:306`), Satz-Wertung (`PositionPlayService.cs:677`), Vorschau
+(`ExercisePreviewService.cs:94`), Mischrunde (über das Üben-Urteil), dazu die Ablenker-Filter der Typen
+(`BuiltInExerciseTypes.cs:290/334/670`) und die beiden Fehlerkategorien `IsMisspelled`/`IsAccentSlip`, die zuerst
+`Matches` fragen.
+
+**Angriffsplan:**
+
+1. Fälle zuerst: Unit-Fälle in `AnswerGraderTests` (AK 2, 3, 5, 6) und Pfad-Tests `KuerzelPfadTests` nach dem Muster von
+   `SchraegstrichPfadTests` (Üben, Abschlusstest, Vorschau; AK 1). Vor der Regel rot.
+2. Regel: `AnswerVariants.CanonicalSlots` bildet nach `Normalize` jedes Kind-Kürzel auf seinen Platzhalter ohne Punkt ab
+   (smb/smbd/sbd/sb → sb, smth/smt/s.th/sth → sth, nur als ganzes Wort); `Matches` wendet sie auf **beide** Seiten an. Die
+   Art passt damit von selbst (AK 2), und „hold on“ bleibt „hold on“ (AK 3).
+3. `WordListPlaceholders` bleibt unverändert (AK 4); die Spiegel (Vater-Web, Lader, Fallliste) betrifft die Regel nicht, weil
+   sie nicht in `Normalize` liegt.
+
+**Risiken:** (1) Die Abbildung gilt auch für „sth“ ohne Punkt gegen „sth.“ im Satzinneren – das ist Entscheidung 2 („mit
+oder ohne Punkt“), heute aber falsch; ein Fall hält es. (2) Die Ablenker-Filter sehen dieselbe Regel: ein Ablenker „turn to
+smb“ fiele aus der Auswahl – gewollt, er wäre eine richtige Antwort. (3) Ein echtes Wort „smt“/„sbd“ gibt es in keiner der
+Sprachen; eine falsche Abbildung in Französisch/Deutsch ist darum nicht zu erwarten (AK 6 hält qn/jdn).
+
+**Testweg:** `AnswerGraderTests` (Unit), `KuerzelPfadTests` (Integration, drei Wege), volle Suite `-c Release`; Mutanten
+mit `.claude/scripts/mutant-probe.py`; Rollengang an der Kopie mit Theodors echter Position 100/193 bzw. der
+Vorschau von Übung 15.
+
 ## Verlauf
 
 - **2026-11-25** — angelegt aus dem Rollengang der PM-Sitzung (Sohn-Sitz, echte Rückmeldungen 3/6/7). Produktfrage, darum
@@ -130,3 +161,48 @@ mit Toleranz falsch – die Toleranz darf nur das Kürzel schlucken, nicht das W
   Fünf offene Punkte mit Empfehlung für die Grill-Runde.
 - **2026-11-25** — `ausformuliert` → `gegrillt`: Grill-Runde mit dem Vater, fünf Entscheidungen (erkennen statt Hinweis,
   sechs Kürzel, Art muss passen, überall gleich, nur Englisch); Akzeptanzkriterien final.
+- **2026-11-25** — `gegrillt` → `geschaetzt`: S, Senke `AnswerGrader.Matches`, alle Aufrufer belegt, Testweg benannt.
+- **2026-11-25** — `geschaetzt` → `in-arbeit` (Sprint 165): `AnswerVariants.CanonicalSlots` bildet die sechs Kürzel auf
+  „sb“/„sth“ ab (ganzes Wort, Punkt optional); `AnswerGrader.Comparable` wendet sie mit `Normalize` auf beide Seiten an, in
+  `Matches`, `IsMisspelled`, `IsAccentSlip` und den Lösungs-Schreibweisen. Vor der Regel 14 neue Fälle rot, alle
+  „soll richtig sein“-Fälle; die „bleibt falsch“-Fälle grün (Absicht, im Test beschriftet).
+- **2026-11-25** — Verifikation je AK-Fall:
+  - AK 1, Üben/Test/Vorschau → `KuerzelPfadTests` (drei Theorien, je mit einer Zeile falscher Art), M1 → rot an allen drei.
+  - AK 2, falsche Art → `AnswerGraderTests.Falsches_Oder_Fremdes_Kuerzel_Bleibt_Falsch` Zeilen 1–2, M3 → rot.
+  - AK 3, „hold on smth.“ → dieselbe Theorie Zeile 3, Absichtserklärung (keine plausible Regel macht sie rot).
+  - AK 4, `WordListPlaceholders` → unverändert (`git diff` leer an der Datei).
+  - AK 5, je Kürzel → `Kuerzel_Des_Kindes_Zaehlt_Fuer_Seinen_Platzhalter`, M4–M7, M10 → rot; Punkt optional M8 → rot; „so“ M9 → rot.
+  - AK 6, qn/jdm → `Andere_Sprachen_Bleiben_Wie_Heute`, Absichtserklärung.
+  - Buch-Seite der Abbildung M2 → rot; Wortgrenzen M11 → rot („Gasmthaus“); „falsch geschrieben“ Kind-Seite M12, Lösungs-Seite M13 → rot.
+- **2026-11-25** — Mutanten nach der letzten Änderung (`.claude/scripts/mutant-probe.py`, Debug), gemessen an `4fcb5618 +
+  Arbeitsbaum`, 16:15:
+
+  | Mutante | Stelle | erwartet | gemessen |
+  | --- | --- | --- | --- |
+  | M1 Kind-Seite ohne Abbildung | `AnswerGrader.cs:32` | red | red |
+  | M2 Buch-Seite ohne Abbildung | `AnswerGrader.cs:34` | red | red |
+  | M3 Art egal (alles sth) | `AnswerVariants.cs:163` | red | red |
+  | M4 ohne smbd | `AnswerVariants.cs:166` | red | red |
+  | M5 ohne sbd | `AnswerVariants.cs:166` | red | red |
+  | M6 ohne s.th | `AnswerVariants.cs:166` | red | red |
+  | M7 ohne smth | `AnswerVariants.cs:166` | red | red |
+  | M8 Punkt nicht optional | `AnswerVariants.cs:166` | red | red |
+  | M9 so zählt (Absicht) | `AnswerVariants.cs:166` | red | red |
+  | M10 ohne blankes sb | `AnswerVariants.cs:166` | red | red |
+  | M11 ohne Wortgrenzen | `AnswerVariants.cs:166` | red | red |
+  | M12 falsch geschrieben ohne Abbildung | `AnswerGrader.cs:53` | red | red |
+  | M13 Lösungsseite ohne Abbildung | `AnswerGrader.cs:106` | red | red |
+
+  Grundlinie nach dem Zurückspielen grün. Suite .NET **2469/2469** (Release, Ausgangsstand 2440).
+- **2026-11-25** — Review `pugling-reviewer`: kein 🔴; drei 🟡 übernommen (Fehlerkategorien maßen ohne die Abbildung →
+  gemeinsamer Helfer `Comparable`; blankes „sb“ mitten in der Wendung ungetestet → „give sb. a hand“; Wortgrenzen
+  ungetestet → „Gasmthaus“). 🟢 nicht übernommen: doppelte Ablenker „for smb“/„for sb“ (kosmetisch), Kommentar in
+  `Lernkarte.tsx:34` (das Abschreiben-Signal vergleicht bewusst mit dem gedruckten Wort). Fehlerzähler Sprint 165: 0 (die
+  🟡 sind Lücken in Tests bzw. Anzeige, kein falsches Urteil im Increment).
+- **2026-11-25** — Rollengang an einer frischen Kopie (:5201, nach der letzten Änderung gestartet): Vater-Vorschau an
+  Theodors Übung 15 (Freitext, Deutsch→Englisch) – „turn smt. up/down“, „turn smth up/down“, „turn to smb“, „turn to smbd.“
+  richtig; „turn smb. up/down“, „turn to smth“, „turn to so“ falsch. Testjunge im Abschlusstest an Position 220: Theodors
+  wörtliche Antworten „turn to smb“ und „turn smt. up/down“ richtig. Theodors eigener Test an Position 102 fragt die beiden
+  Karten nicht ab (feste Auswahl 1–7, 16, 17), darum am Testjungen. Nebenbefund: eine Antwort falscher Art erscheint jetzt
+  als „falsch geschrieben“ (sth/sb liegen zwei Zeichen auseinander) – nur Anzeige, als [B-994](B-994-falsche-platzhalter-art-als-falsch-geschrieben.md)
+  abgelegt.
