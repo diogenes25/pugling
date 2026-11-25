@@ -169,6 +169,7 @@ Nachgesehen am 2026-11-20:
   | M18 kein Stamp-Bump | FeedbackCorrectionService.cs:42 | red | red |  |
   | M19 Korrektur nimmt Bestehen | FeedbackCorrectionService.cs:99 | red | red |  |
   | M20 Versuchsansicht ohne Spur | PositionTestsController.cs:366 | red | red |  |
+
 - **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
   nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
   „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,

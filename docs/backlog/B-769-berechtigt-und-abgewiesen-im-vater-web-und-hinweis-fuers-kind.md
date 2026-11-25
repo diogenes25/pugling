@@ -101,6 +101,7 @@ Neu aus den Entscheidungen; B-627 hatte keine Oberflächen-Kriterien.
   | F4 berechtigt wieder oeffnbar | VaterRueckmeldungen.tsx:134 | red | red |  |
   | F5 Hinweissatz immer | KartenMeldung.tsx:160 | red | red |  |
   | F6 Vorzeichen ignoriert | labels.ts:34 | red | red |  |
+
 - **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
   nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
   „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,

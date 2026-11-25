@@ -135,6 +135,7 @@ Nachgesehen am 2026-11-20:
   | M6 berechtigt ohne Antwort | ExerciseFeedbackService.cs:214 | red | red |  |
   | M7 Eigentum fehlt | FeedbackController.cs:65 | red | red | zweite Form (`&& false`) |
   | M8 Rollenwand fehlt | FeedbackController.cs:20 | red | red |  |
+
 - **2026-11-24** — Rollengang Sprint 151: `e2e/meldung-berechtigt.spec.ts` (Ausweichports 5221/5191, Server von Playwright
   nach dem letzten Edit gestartet) – Sohn verliert den Test an „eastward“, meldet „zu streng“ vom Ergebnisblatt; Vater sieht
   „im Test als falsch gewertet“, nur „Berechtigt“/„Abgewiesen“, bestätigt die Rückfrage; vorher keine Ziel-Belohnung,

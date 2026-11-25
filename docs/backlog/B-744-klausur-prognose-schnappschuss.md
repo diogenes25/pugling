@@ -160,6 +160,7 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `backend/Pugling.Api/`.
   | M11 Mapper ohne Wert | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:40 | red | red |  |
   | M12 Mapper Ersatzwert | backend/Pugling.Api/Controllers/Supervisor/KlassenarbeitenController.cs:40 | red | red |  |
   | M13 Kind sieht Prognose | backend/Pugling.Contracts/Student/ClassTestCountdownDtos.cs:11 | red | red |  |
+
 - **2026-11-24** — Verifikation nach der letzten Änderung: .NET 2353/2353 (Release, Ausgangsstand 2343), Vitest 130 Dateien /
   1445 Tests, `tsc -b` sauber, `dotnet format --verify-no-changes` sauber. Rollengang: Kopie der echten DB (:5232, Migration dort eingespielt) – Friedrichs Arbeit vom 24.11. trägt nach dem Lesen der Stufen durch den Vater die Prognose 6, Theodors Arbeit vom 23.11. bleibt leer; E2E `klassenarbeit-abweichung.spec.ts` grün. `abgenommen`, Code in Commit
   `2886acf6`. Die `## Entscheidungen` sind weiter „stellvertretend, unbestätigt“ (Vorbereitungslauf 2026-11-20); die

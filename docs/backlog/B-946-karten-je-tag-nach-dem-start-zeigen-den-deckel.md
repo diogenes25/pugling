@@ -75,6 +75,7 @@ Größenordnung wie der Zweig vor dem Start.
 
 Der erste Versuch von B946-1 (`p.ItemCount ?? 0`) kompilierte nicht. Er ist als kompilierbare Form neu gemessen, die das
 `await` behält.
+
 - **2026-11-24** — abgenommen in Sprint 137, Commit `262bd5ae`. Volle Suite 2315/2315 grün (Release), Build ohne Warnung.
   `pugling-reviewer`: für B-945 kein Fund, für B-946 ein 🟡 (eigene Rechnung statt `PoolSize`, Deckel-Fall ungetestet), beide
   eingearbeitet. Rollengang: `klassenarbeit-countdown.spec.ts` und `klassenarbeit-vorbereitung.spec.ts` gegen einen frisch

@@ -134,6 +134,7 @@ Gemessen am 2026-11-20 auf `main`.
   | F4 ohne Schnappschuss eine Zahl | frontend/src/vater/VaterClassTests.tsx:193 | red | red |  |
   | F5 Gleichstand als Zahl | frontend/src/vater/VaterClassTests.tsx:183 | red | red |  |
   | F6 Worte vertauscht | frontend/src/vater/VaterClassTests.tsx:184 | red | red |  |
+
 - **2026-11-24** — Verifikation nach der letzten Änderung: .NET 2353/2353 (Release, Ausgangsstand 2343), Vitest 130 Dateien /
   1445 Tests, `tsc -b` sauber, `dotnet format --verify-no-changes` sauber. Rollengang: E2E `klassenarbeit-abweichung.spec.ts` (Vater liest „Stufe 6 · 2 besser“ und „keine Prognose“) mit den Zeugen `klassenarbeit-countdown`, `klassenarbeit-vorbereitung`, `notenstufe` – 4 passed; dieselbe Spalte an der Kopie der echten DB über die API gelesen (Friedrich: `predictedLevel` 6). `abgenommen`, Code in Commit
   `2886acf6`. Die `## Entscheidungen` sind weiter „stellvertretend, unbestätigt“ (Vorbereitungslauf 2026-11-20); die

@@ -92,6 +92,7 @@ eigene Wörter umstellen. Rollengang über `e2e/klassenarbeit-countdown.spec.ts`
 
 Gemessen mit `mutant-probe.py` an `cfebfe60 + Arbeitsbaum`, je Zeile am genannten Test (`fails`); die Grundlinie nach dem
 Zurückspielen war grün. Die Zeilen 78–82 hat die spätere Kommentar-Korrektur nicht verschoben.
+
 - **2026-11-24** — abgenommen in Sprint 137, Commit `262bd5ae`. Volle Suite 2315/2315 grün (Release), Build ohne Warnung.
   `pugling-reviewer`: für B-945 kein Fund, für B-946 ein 🟡 (eigene Rechnung statt `PoolSize`, Deckel-Fall ungetestet), beide
   eingearbeitet. Rollengang: `klassenarbeit-countdown.spec.ts` und `klassenarbeit-vorbereitung.spec.ts` gegen einen frisch
