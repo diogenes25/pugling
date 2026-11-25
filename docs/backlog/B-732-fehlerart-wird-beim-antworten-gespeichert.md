@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auswertung, bereich/training, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/auswertung, bereich/training, rolle/student]
 aliases: [Fehlerart, Akzentfehler, Tippfehler, Etappe E1a]
-status: geschaetzt
+status: in-arbeit
+wartet_auf: Rollengang an der Kopie (Lauf endete am Fehlerzähler)
 prio: P1
 art: Wunsch
 groesse: M
@@ -138,3 +139,68 @@ kann parallel laufen. Vor [B-733](B-733-tagesauswertung-und-leistungsprofil.md).
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E1a) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 geerbt. Nachgesehen: B-624 ist nicht gebaut (keine Akzentregel), `IsMisspelled` ist nur
   Anzeige; `BoxBefore` als nötiger Zusatz für B-733 erkannt. M, backend, Migration, kein Vertragsbruch.
+- **2026-11-25** — `geschaetzt` → `in-arbeit` (Nachtlauf O, Sprint 191). Nachprüfung gegen den Code: der Ist-Stand „B-624 nicht
+  gebaut“ ist überholt – `AnswerGrader.IsAccentSlip` und `ItemReviewEvent.AccentSlip` gibt es seit `AccentLeniency`. Die Art
+  *Akzent* nimmt diese Regel als Quelle; das Flag bleibt die Wertung („halb gezählt“), die Art ist die Diagnose. Statt drei
+  sind es **sechs** Schreibwege (Üben, Lernkarte, Mischrunde, Test schrittweise, Test gesammelt, Fehlnennung einer Liste);
+  der Turm ist eine Auswahl und trägt keine Art.
+- **2026-11-25** — gebaut: `AnswerGrader.SpellingSlip` (Akzent vor Tippfehler, aus `IsAccentSlip`/`IsMisspelled`),
+  `AnswerErrorClassifier` als Senke (richtig → keine Art; Auswahl = die Karte bot Optionen, dieselbe Prüfung wie die
+  Ausspielung `IExerciseType.Choices`; dann Rechtschreibung, Synonym aus dem Vokabelspeicher, sonst falsches Wort).
+  `ItemProgressService.RecordAsync` nimmt die Art als Pflichtparameter und setzt `BoxBefore` selbst, wo der Kasten wandert.
+  Der Test klassifiziert beim Antworten (`Answer`/`Submit`/`CreditSetAnswerAsync`) und reicht die Art der Testzeile bei der
+  Abgabe an den Verlauf weiter – die Abgabe rechnet nicht neu (AK 6). Migration `20261125213822_AnswerErrorKind` (drei
+  nullable Spalten, Bestand bleibt leer).
+- **2026-11-25** — Ausführungsentscheidungen, die die `## Entscheidungen` nicht ausdrücklich nennen (aus der User Story
+  abgeleitet, Kosten benannt): (a) eine **leere** getippte Antwort und ein „aufgegeben“ auf der Lernkarte sind *falsches Wort*
+  („kennt das Wort nicht“) – Kosten: die Art unterscheidet „nichts getippt“ nicht von „anderes Wort“, der Verlauf (leere
+  Antwort) aber schon; eine nie erreichte Testfrage bleibt ohne Art. (b) *Synonym* nur auf Karten, deren Antwort das
+  Lernwort ist (Annahme 2 trägt) – der Speicher kennt keine deutschen Synonyme, und zwei Einträge mit gleichem Wort sind
+  Homonyme. (c) Eine Fehlnennung in einer Liste wird gegen die noch offenen Einträge gemessen, die genaueste Art gewinnt.
+- **2026-11-25** — Verifikation je AK-Fall (Tests in `backend/Pugling.Api.Tests/FehlerartTests.cs`):
+  - AK 1 Üben → `Ueben_Speichert_Akzent_Tippfehler_Und_Falsches_Wort`, M7 → rot; AK 1 Test schrittweise/gesammelt →
+    `Test_Speichert_Die_Art_An_Testzeile_Und_Verlauf` (Theorie), M14/M15/M11 → rot.
+  - AK 2 eine Abstandsregel → `Tippfehler_Ist_Die_Regel_Von_IsMisspelled`, M2 → rot; Reihenfolge Akzent vor Tippfehler →
+    `Rechtschreibart_Akzent_Vor_Tippfehler`, M1 → rot.
+  - AK 3 Nachbarwort → „racist“-Zeile im Üben-Fall (WrongWord, nicht Typo), M2 → rot.
+  - AK 4 Synonym → `Ueben_Erkennt_Das_Synonym_Aus_Dem_Speicher`, M4/M5 → rot; hinter dem Kandidaten-Deckel →
+    `Synonym_Bleibt_Auch_Hinter_Vielen_Aehnlichen_Woertern` (Review-Fund, nach der Probe ergänzt, M16 ungemessen).
+  - AK 5 richtig/Auswahl/Selbsteinschätzung → `Richtig_Auswahl_Und_Selbsteinschaetzung_Tragen_Keine_Art`, M3 → rot; M13
+    (richtig ohne Art) fiel **am falschen Ort** (`abweichend`): die Verlaufszeile schützt zusätzlich `RecordAsync`
+    (`ErrorKind = wasCorrect ? null : …`), rot wird nur die Testzeile in `Test_Speichert_…` – kein Beleg für den Üben-Fall.
+  - AK 6 Art steht fest → `Art_Bleibt_Wenn_Die_Loesung_Sich_Danach_Aendert`, M11 → rot.
+  - AK 7 Wertung binär → unverändert grün: `AkzentMildePfadTests`, `AnswerGraderTests`, ganze Suite (Absichtserklärung –
+    keine Zeile der Wertung geändert, `git diff` an `WasCorrect`-Zuweisungen leer).
+  - AK 8 `BoxBefore` → Üben-Fall (4 und 1) und Test-Fall (1), M6 → rot; Lernkarte ohne Box → `Lernkarte_Speichert_Die_Art_Des_Abrufs`.
+  - Weitere Schreibwege: Lernkarte M8, Fehlnennung M9/M10, Mischrunde M12 (`FehlerartMischrundeTests`) → rot.
+- **2026-11-25** — Mutanten (`.claude/scripts/mutant-probe.py`, Debug), gemessen an `6fa43808 + Arbeitsbaum`, 23:18 – vor dem
+  Review-Fix (Kandidaten-Deckel sortiert), danach keine erneute Probe (Lauf beendet):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  | --- | --- | --- | --- |
+  | M1 Reihenfolge | `AnswerGrader.cs:99` | red | red |
+  | M2 eigener Abstand | `AnswerGrader.cs:100` | red | red |
+  | M3 Auswahl | `AnswerErrorClassifier.cs:37` | red | red |
+  | M4 Synonym aus | `AnswerErrorClassifier.cs:39` | red | red |
+  | M5 Synonym ohne Bedeutung | `AnswerErrorClassifier.cs:84` | red | red |
+  | M6 BoxBefore | `ItemProgressService.cs:75` | red | red |
+  | M7 Üben | `PositionPracticeController.cs:765` | red | red |
+  | M8 Lernkarte | `PositionPracticeController.cs:956` | red | red |
+  | M9 Fehlnennung | `PositionTestsController.cs:105` | red | red |
+  | M10 Fehlnennung ohne Eintrag | `PositionTestsController.cs:103` | red | red |
+  | M11 Abgabe | `PositionTestsController.cs:482` | red | red |
+  | M12 Mischrunde | `MixedReviewService.cs:255` | red | red |
+  | M13 richtig ohne Art | `AnswerErrorClassifier.cs:37` | red | abweichend |
+  | M14 schrittweise | `PositionTestsController.cs:314` | red | red |
+  | M15 gesammelt | `PositionTestsController.cs:445` | red | red |
+
+- **2026-11-25** — `pugling-reviewer`: kein Blocker, ein 🟡 (Kandidaten-Deckel ohne Reihenfolge → behoben, Test ergänzt),
+  🟢 Doku (Art-null-Fälle, Fehlnennung „offene Einträge“, `ConfigOf`) behoben. Migrationsprobe an einer Kopie der echten DB
+  (SQLite-Backup, Quelle nur lesend; `database update` auf der Kopie, Kopie danach gelöscht): 81 Tabellen, Zeilenzahlen gleich
+  bis auf `__EFMigrationsHistory` 35 → 37, alle neuen Spalten leer. Ganze Suite (Release) 2505/2509 grün; von den vier roten
+  waren drei Lastflackern (einzeln grün), einer echt: `MeldungBuchtNachMigrationTests` las nach dem Zurückmigrieren
+  `TestItemResult` über das Modell und kannte die neue Spalte nicht – auf eine Zählung umgestellt, danach grün.
+- **2026-11-25** — **angehalten auf `in-arbeit`**: der Fehlerzähler von Sprint 191 überschritt 5 (Freigabe 3/11), der Lauf
+  endete. Es fehlt der Rollengang: die Fehlerart hat keine Oberfläche; als Ersatz geplant war eine Live-Probe an der Kopie
+  (Sohn tippt „ecole“, Zeile in `ItemReviewEvents` trägt `Accent`) – nicht mehr gelaufen. Nichts davon hängt an einer
+  Entscheidung; der nächste Lauf kann die Probe fahren und abnehmen.

@@ -1,7 +1,7 @@
 import type {
   AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
-  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto,
+  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto, ChildPause, CreateChildPauseDto,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
   CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
@@ -420,6 +420,13 @@ export const api = {
     http<TimetableEntry>(`${V1}/supervisor/children/${childId}/timetable`, "POST", dto),
   removeTimetableEntry: (childId: number, entryId: number) =>
     http<void>(`${V1}/supervisor/children/${childId}/timetable/${entryId}`, "DELETE"),
+  // Pausen (B-731): Tage, an denen das Kind weder Malus noch einen Serienbruch bekommt – auch rückwirkend für heute.
+  childPauses: (childId: number) =>
+    http<ChildPause[]>(`${V1}/supervisor/children/${childId}/pauses`),
+  addChildPause: (childId: number, dto: CreateChildPauseDto) =>
+    http<ChildPause>(`${V1}/supervisor/children/${childId}/pauses`, "POST", dto),
+  removeChildPause: (childId: number, pauseId: number) =>
+    http<void>(`${V1}/supervisor/children/${childId}/pauses/${pauseId}`, "DELETE"),
   createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/supervisor/children`, "POST", dto),
   updateChild: (childId: number, dto: UpdateChildDto) =>
     http<ChildResponse>(`${V1}/supervisor/children/${childId}`, "PATCH", dto),

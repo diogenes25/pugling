@@ -30,6 +30,18 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<ChildResponse> UpdateChildAsync(int childId, UpdateChildDto dto, CancellationToken ct = default) =>
         Http.PatchAsync<ChildResponse>($"{Root}/children/{childId}", dto, ct);
 
+    /// <summary>The child's pauses (B-731): days without duty - no penalty, the streak stands.</summary>
+    public Task<IReadOnlyList<ChildPauseResponse>> ListPausesAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<ChildPauseResponse>>($"{Root}/children/{childId}/pauses", ct);
+
+    /// <summary>Enters a pause, also after the fact.</summary>
+    public Task<ChildPauseResponse> AddPauseAsync(int childId, CreateChildPauseDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<ChildPauseResponse>($"{Root}/children/{childId}/pauses", dto, ct);
+
+    /// <summary>Removes a pause; its days owe their duty again.</summary>
+    public Task DeletePauseAsync(int childId, int pauseId, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/children/{childId}/pauses/{pauseId}", null, ct);
+
     /// <summary>
     /// The child's <b>weighted</b> interests – referenced against the shared taxonomy and thus
     /// machine-evaluable, unlike the free-form <c>ChildResponse.Interests</c> (which remains the language

@@ -21,7 +21,8 @@ namespace Pugling.Api.Services.Student;
 public class MixedReviewService(PuglingDbContext db, PositionProgressService progress, PositionPlayService play,
     ExerciseContentResolver content, ExerciseTypeRegistry registry, ExtraTrainingService extras,
     ExercisePreviewService preview, ItemProgressService itemProgress, IOptions<ExtraTrainingOptions> options,
-    TimeProvider time, LearningDay learningDay, AnswerGrader grader)
+    TimeProvider time, LearningDay learningDay, AnswerGrader grader,
+    AnswerErrorClassifier classifier)
 {
     private readonly ExtraTrainingOptions opts = options.Value;
 
@@ -226,7 +227,8 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
                 || (prog.LastReviewedAt is { } last && learningDay.DayOf(last) == today)
                 || testedToday.Contains((pos.Id, card.ItemIndex));
             var given = byCard.GetValueOrDefault(card.Id);
-            var asked = PositionPlayService.AtStage(type, items, cardStage)[card.ItemIndex];
+            var stagedCards = PositionPlayService.AtStage(type, items, cardStage);
+            var asked = stagedCards[card.ItemIndex];
             // B-624: the round writes the position's own box, so it follows the position's accent leniency like the
             // position's practice does - otherwise the box would depend on the screen the word was typed on. A slip holds
             // the box and pays nothing (only hits pay below).
@@ -243,9 +245,14 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
 
             card.GivenAnswer = verified ? given?.GivenAnswer : null;
             card.WasCorrect = verdict.WasCorrect;
+            // B-732: why a checked miss was wrong; a claim has no text to classify.
+            var errorKind = verified
+                ? await classifier.ClassifyAsync(type, exercise.ConfigJson, stagedCards, asked, cardStage, card.GivenAnswer,
+                    verdict.WasCorrect, ct)
+                : null;
             await itemProgress.RecordAsync(childId, card.ExerciseId, asked,
                 verdict.WasCorrect, cardStage, card.GivenAnswer, ItemReviewSource.Practice, pos.Id, today,
-                countsForMastery: verified, accentSlip: accentSlip, ct);
+                countsForMastery: verified, accentSlip: accentSlip, errorKind, ct);
 
             // Decision 5: a hit pays only when it leaves the card due in the future - with intervals of 0 days it would
             // be due again at once and could be paid twice the same day - and only on the card's first review of the day.

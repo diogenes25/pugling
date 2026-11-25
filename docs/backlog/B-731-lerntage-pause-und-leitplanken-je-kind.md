@@ -1,7 +1,8 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Lerntage, Sonntag frei, Pause je Kind, Leitplanken, Boden und Deckel, Etappe E0b]
-status: geschaetzt
+status: in-arbeit
+wartet_auf: Review-Funde B-1020 bis B-1022, Frage B-1023 und Rollengang (Lauf endete am Fehlerzähler)
 prio: P1
 art: Wunsch
 groesse: L
@@ -151,3 +152,44 @@ und die Pause lesen.
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E0b) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 geerbt. Nachgesehen: Sonntag bricht die Serie (`:479`) und kostet Malus (`:686`),
   keine Pause im Modell, `UntilDone` als vierte Taktung. L, beides, Migration, additiver Vertrag.
+- **2026-11-25** — `geschaetzt` → `in-arbeit` (Nachtlauf O, Sprint 191, zusammen mit B-732). Nachprüfung des Ist-Stands:
+  Zeilennummern verschoben (`ChildStreakAsync` jetzt `PositionProgressService.cs:563`, `ClosedPeriods` `:794`,
+  `SettleClosedPeriodsAsync` `:863`), die Aussagen gelten. Zusätzlich gefunden: zwei weitere Leser derselben Tagesregel –
+  die Serien-Mission (`MetricsService.CurrentStreak`, eigene Rückwärtsschleife) und die Zeitachse des Vaters
+  (`ChildrenDashboardService`, `TimelineDutyDone` je Tag). Beide lesen jetzt dieselben Lerntage (je Aufrufer entschieden,
+  pm-loop Step 4): sonst bräche die Serien-Mission jeden Montag, und die Woche hieße beim Vater „nicht geschafft“, nur weil
+  der Sonntag offen blieb.
+- **2026-11-25** — gebaut: `DutyCalendar`/`ChildDutyDays` (Montag–Samstag außerhalb der Pausen, Pausen einmal je Kind
+  geladen) als einzige Quelle; Serie, Malus, Serien-Mission und Zeitachse lesen sie. `ChildPause` + `ChildPausesController`
+  (`GET/POST/DELETE supervisor/children/{childId}/pauses`, Supervisor-Rolle, `ChildOwnershipFilter`, `Von` nach `Bis` →
+  `validation_error`, Notiz ≤ 200). Fünf nullable Spalten an `Child`, im Vertrag an `ChildResponse`/`UpdateChildDto`
+  (additiv) samt `ClearPlannerLimits`; geprüft auf den zusammengeführten Werten (Boden ≥ 1, Boden ≤ Deckel, Malus ≥ 0,
+  Tippfehler-Deckel 50/200/1000). Client: `ListPausesAsync`/`AddPauseAsync`/`DeletePauseAsync`. Migration
+  `20261125222202_LerntagePause`. Vater-Web: `PauseSection` und `LeitplankenSection` im Reiter „Einstellungen“ des Kind-Hubs.
+- **2026-11-25** — Ausführungsentscheidungen (stellvertretend, je mit Kosten; offene Frage an den Vater im Protokoll):
+  (a) **Eine Wochenpflicht, deren Woche eine Pause berührt, kostet keinen Malus** – die Entscheidung 4 sagt „in der Pause kein
+  Malus“, für eine Woche, die nur teilweise pausiert, sagt sie nichts. Gewählt die kindgünstige Lesart, weil nur der Vater
+  eine Pause setzt (kein Schlupfloch für das Kind). Kosten: ein einzelner Krankheitstag erlässt das ganze Wochenziel.
+  (b) **Die Testsuite rechnet ohne freien Sonntag** (`LearningDay:SundayFree=false` in der Basis-Factory), nur `LerntageTests`
+  mit eigener Factory und eingefrorener Uhr mit – sonst hinge jeder Test, der „heute“ aus der Wanduhr bildet, am Wochentag
+  des Laufs (Muster `Scoring:TimeSlotsEnabled`). Kosten: Sonntag-Wirkungen fremder Pfade sieht nur diese eine Klasse.
+  (c) Eine gelöschte Pause lässt ihre Tage beim nächsten Abrechnen wieder zählen (bis 14 Tage zurück) – folgt aus
+  „träge Abrechnung“; die Maske fragt vor dem Löschen nach und sagt das.
+- **2026-11-25** — Verifikation (Tests in `backend/Pugling.Api.Tests/LerntageTests.cs`, eigene Factory, Uhr Montag 2026-11-30):
+  AK 1 `Sonntag_Bricht_Die_Serie_Nicht_Und_Zaehlt_Nicht` (Theorie: Sonntag leer/erfüllt → 2); AK 2
+  `Offene_Tagespflicht_Kostet_Am_Sonntag_Nichts` (Fr+Sa gebucht, So nicht); AK 3 `Wochenpflicht_Wird_Genau_Einmal_Abgerechnet`;
+  AK 4 `Pause_Kostet_Keinen_Malus`, `Pause_Haelt_Die_Serie`, `Pause_Fuer_Heute_Rueckwirkend` (0 → 3),
+  `Wochenpflicht_In_Einer_Pausenwoche_Kostet_Nichts`; Leser `Zeitachse_Liest_Sonntag_Und_Pause_Nicht_Als_Versaeumt`,
+  `Serien_Mission_Liest_Dieselben_Lerntage`; AK 5 `Pausen_Endpunkte_Pruefen_Rolle_Eigentum_Und_Zeitraum` (403 Lehrer-Konto,
+  404 fremder Vater, 400 `validation_error`); AK 6 `Leitplanken_Werden_Gespeichert_Und_Geprueft`; AK 7
+  `Migration_Laesst_Bestandskinder_Unveraendert`; AK 8 Vitest `frontend/src/vater/LerntagePanels.test.tsx` (5) und E2E
+  `frontend/e2e/lerntage-und-pause.spec.ts` (geschrieben, **nicht gelaufen**). Alle grün (Debug, 48 Fälle mit Fehlerart und der
+  reparierten Migrationsklasse). Mutanten vorbereitet (L1–L16, `scratchpad/m731.jsonl`), **nicht gemessen** – der Lauf endete
+  vorher. Die rote Probe je Fall ist damit nicht belegt.
+- **2026-11-25** — Reviews: `pugling-reviewer` drei 🟡 (Einführungstag auf Sonntag/Pause → B-1021; Sohn-Tag zeigt Malus-Frist am
+  Sonntag → B-1022; Hausaufgaben-Malus in der Pause → Frage B-1023), `frontend-reviewer` ein 🔴 und zwei 🟡 (Bestätigung geht nach
+  dem Speichern verloren, Zurücklesen ungetestet, dritter „Speichern“-Knopf → B-1020). Der Fehlerzähler stand schon bei 5
+  (ein 🟡 aus B-732, drei rote Wächter mit Pin-Zeilen, ein roter Bestandstest), jeder weitere Fund beendet den Lauf –
+  darum nicht behoben, sondern als Stories abgelegt.
+- **2026-11-25** — Migrationsprobe an einer Kopie der echten DB (siehe B-732): `LerntagePause` eingespielt, Zeilenzahlen gleich,
+  `ChildPauses` leer, kein Kind mit Leitplanken. **Angehalten auf `in-arbeit`**, Rollengang nicht gelaufen.

@@ -104,10 +104,13 @@ public sealed class MeldungBuchtNachMigrationTests
                 var feedback = await db.ExerciseFeedbacks.AsNoTracking().SingleAsync(f => f.Id == feedbackId);
                 Assert.Equal((FeedbackStatus.Done, "nur ein l", (int?)null, (FeedbackOutcome?)null),
                     (feedback.Status, feedback.Text, feedback.TestItemResultId, feedback.Outcome));
-                var attempt = await db.TestAttempts.AsNoTracking().Include(t => t.Results).SingleAsync(t => t.Id == attemptId);
+                var attempt = await db.TestAttempts.AsNoTracking().SingleAsync(t => t.Id == attemptId);
+                // Counted, not loaded: the schema stands at the target, and a result column added by a later migration
+                // (B-732's ErrorKind) does not exist here yet.
+                var results = await db.Set<TestItemResult>().CountAsync(r => r.TestAttemptId == attemptId);
                 Assert.Equal((1, 50, false, (int?)null, (bool?)null, 1),
                     (attempt.CorrectItems, attempt.ScorePercent, attempt.Passed, attempt.CorrectedItems,
-                     attempt.PassedAfterCorrection, attempt.Results.Count));
+                     attempt.PassedAfterCorrection, results));
                 var penalty = await db.PositionGoalPenalties.AsNoTracking().SingleAsync(p => p.Id == penaltyId);
                 Assert.Equal((5, (DateTime?)null, (int?)null), (penalty.Points, penalty.RefundedAt, penalty.RefundedByFeedbackId));
                 Assert.Equal(-5, await db.ChildPointsEntries.Where(e => e.ChildId == childId).SumAsync(e => e.Amount));

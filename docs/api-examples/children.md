@@ -32,7 +32,12 @@ Response — `HTTP 200`:
     "bonusDailyCoinCap": null,
     "towerGameMinutesPerDay": null,
     "homeworkCoins": null,
-    "homeworkPenaltyCoins": null
+    "homeworkPenaltyCoins": null,
+    "dailyTasksMin": null,
+    "dailyTasksMax": null,
+    "dailyNewWordsMin": null,
+    "dailyNewWordsMax": null,
+    "penaltyCoinsPerMissedTask": null
   }
 ]
 ```
@@ -71,7 +76,12 @@ Response — `HTTP 201`:
   "bonusDailyCoinCap": null,
   "towerGameMinutesPerDay": null,
   "homeworkCoins": null,
-  "homeworkPenaltyCoins": null
+  "homeworkPenaltyCoins": null,
+  "dailyTasksMin": null,
+  "dailyTasksMax": null,
+  "dailyNewWordsMin": null,
+  "dailyNewWordsMax": null,
+  "penaltyCoinsPerMissedTask": null
 }
 ```
 
@@ -128,7 +138,12 @@ Response — `HTTP 200`:
   "bonusDailyCoinCap": null,
   "towerGameMinutesPerDay": null,
   "homeworkCoins": null,
-  "homeworkPenaltyCoins": null
+  "homeworkPenaltyCoins": null,
+  "dailyTasksMin": null,
+  "dailyTasksMax": null,
+  "dailyNewWordsMin": null,
+  "dailyNewWordsMax": null,
+  "penaltyCoinsPerMissedTask": null
 }
 ```
 
@@ -165,7 +180,12 @@ Response — `HTTP 200`:
   "bonusDailyCoinCap": null,
   "towerGameMinutesPerDay": null,
   "homeworkCoins": null,
-  "homeworkPenaltyCoins": null
+  "homeworkPenaltyCoins": null,
+  "dailyTasksMin": null,
+  "dailyTasksMax": null,
+  "dailyNewWordsMin": null,
+  "dailyNewWordsMax": null,
+  "penaltyCoinsPerMissedTask": null
 }
 ```
 

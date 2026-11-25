@@ -1578,6 +1578,229 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/pauses": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Pauses"
+        ],
+        "summary": "The child\u0027s pauses, latest first.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildPauseResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Pauses"
+        ],
+        "summary": "Enters a pause; both days count as paused. Overlapping pauses are allowed - a day paused twice is paused.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChildPauseDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChildPauseDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChildPauseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildPauseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/pauses/{pauseId}": {
+      "delete": {
+        "tags": [
+          "Supervisor \u2013 Pauses"
+        ],
+        "summary": "Removes a pause; its days owe their duty again from the next settlement on.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pauseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children": {
       "get": {
         "tags": [
@@ -33214,6 +33437,44 @@
         },
         "description": "Child login via domain child id \u002B PIN."
       },
+      "ChildPauseResponse": {
+        "required": [
+          "createdAt",
+          "from",
+          "id",
+          "until"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "until": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A pause of the child (B-731): from From to Until, both days included. No duty is\nowed on these days - no penalty, and the streak neither counts nor breaks."
+      },
       "ChildPeriod": {
         "required": [
           "coins",
@@ -33453,9 +33714,54 @@
               "string"
             ],
             "format": "int32"
+          },
+          "dailyTasksMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyTasksMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyNewWordsMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyNewWordsMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "penaltyCoinsPerMissedTask": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off),\n\u0060HomeworkCoins\u0060 what an accepted homework books and \u0060HomeworkPenaltyCoins\u0060 what a homework without a hand-in by\nits due day costs (B-760); \u0060null\u0060 = the server default for each."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off),\n\u0060HomeworkCoins\u0060 what an accepted homework books and \u0060HomeworkPenaltyCoins\u0060 what a homework without a hand-in by\nits due day costs (B-760); \u0060null\u0060 = the server default for each. \u0060DailyTasksMin\u0060/\u0060DailyTasksMax\u0060,\n\u0060DailyNewWordsMin\u0060/\u0060DailyNewWordsMax\u0060 and \u0060PenaltyCoinsPerMissedTask\u0060 are the supervisor\u0027s limits for the\nday planner (B-731): floor and ceiling of duty tasks and new words a day, and the penalty per missed task; all\n\u0060null\u0060 = the planner is not set up."
       },
       "ChildTimeline": {
         "required": [
@@ -33887,6 +34193,30 @@
           }
         },
         "description": "Input for creating a child. \u0060SchoolType\u0060 is a single value or \u0060None\u0060 (\u0022not specified\u0022): a child attends one\nschool, so a combination of flags or an undefined bit is rejected with \u0060validation_error\u0060 (B-152)."
+      },
+      "CreateChildPauseDto": {
+        "required": [
+          "from",
+          "until"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "until": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Input for a pause. Until before From is \u0060validation_error\u0060; a pause may lie\nin the past (entered after the fact, also for today). Note is free text of at most 200 characters."
       },
       "CreateClassTestDto": {
         "required": [
@@ -51380,9 +51710,58 @@
           "clearHomeworkPenaltyCoins": {
             "type": "boolean",
             "default": false
+          },
+          "dailyTasksMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyTasksMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyNewWordsMin": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dailyNewWordsMax": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "penaltyCoinsPerMissedTask": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "clearPlannerLimits": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap, \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes and \u0060ClearHomeworkCoins\u0060 /\n\u0060ClearHomeworkPenaltyCoins\u0060 the homework amounts to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap, \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes and \u0060ClearHomeworkCoins\u0060 /\n\u0060ClearHomeworkPenaltyCoins\u0060 the homework amounts to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field.\nThe planner limits (B-731) are checked on the values the child has after the change: a floor is at least 1 and not above\nits ceiling, the penalty at least 0, otherwise \u0060validation_error\u0060. \u0060ClearPlannerLimits\u0060 removes all five."
       },
       "UpdateClassTestDto": {
         "type": "object",
@@ -53959,6 +54338,9 @@
     },
     {
       "name": "Supervisor \u2013 Objectives"
+    },
+    {
+      "name": "Supervisor \u2013 Pauses"
     },
     {
       "name": "Supervisor \u2013 Plan Positions"

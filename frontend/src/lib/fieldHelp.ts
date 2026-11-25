@@ -521,6 +521,12 @@ export const FIELD_HELP = {
       + "Münzen aus dem Lernpfad. Leer lassen heißt: die Vorgabe des Servers gilt. 0 heißt: üben ja, Münzen "
       + "nein. Erlaubt sind 0 bis 1000.",
   },
+  plannerLimits: {
+    title: "Leitplanken des Tagesplaners",
+    text: "Boden und Deckel für Pflichtaufgaben und neue Wörter am Tag: der Tagesplaner bleibt innerhalb dieser Zahlen. "
+      + "Der Boden ist mindestens 1 und nie größer als der Deckel. Der Malus wird je verpasster Pflichtaufgabe "
+      + "abgezogen (0 heißt: kein Malus). Die Zahlen wirken erst mit dem Tagesplaner.",
+  },
   towerGameMinutesPerDay: {
     title: "Spielzeit Vokabel-Türme",
     text: "So viele Minuten am Tag darf dein Kind das Handyspiel Vokabel-Türme spielen. Gezählt wird nur, "

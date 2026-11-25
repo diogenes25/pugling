@@ -16,3 +16,21 @@ public class TimetableEntry
     public string? TimeOfDay { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+/// <summary>
+/// A pause of the child (B-731), from <see cref="From"/> to <see cref="Until"/>, both days included: no duty is owed - no
+/// penalty, and the streak neither counts nor breaks. Several per child, so the history stays readable.
+/// </summary>
+public class ChildPause
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>First paused day.</summary>
+    public DateOnly From { get; set; }
+    /// <summary>Last paused day.</summary>
+    public DateOnly Until { get; set; }
+    /// <summary>Optional reason ("krank").</summary>
+    public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

@@ -269,6 +269,11 @@ public class TestItemResult
     public string? GivenAnswer { get; set; }
     public bool WasCorrect { get; set; }
     /// <summary>
+    /// Why the typed answer was wrong, fixed when it is graded (B-732); <c>null</c> for a right answer, a pick, a
+    /// self-assessment and a question not answered. Handed on to the answer history on submission.
+    /// </summary>
+    public AnswerErrorKind? ErrorKind { get; set; }
+    /// <summary>
     /// Letter hints used. <b>Set by no path</b> and therefore always 0 – the column only remains because it is
     /// part of the contract through <c>ItemResultDto</c>; removing it would break the contract and therefore
     /// does not belong in a purely structural rebuild. Either fill it (the hints do exist during delivery) or

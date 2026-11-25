@@ -24,7 +24,8 @@ namespace Pugling.Api.Controllers.Student;
 [ServiceFilter(typeof(PlanOwnershipFilter))]
 public class PositionTestsController(PuglingDbContext db, PositionPlayService play,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
-    ItemProgressService itemProgress, DailyBoxService dailyBox, TimeProvider time, LearningDay learningDay) : ControllerBase
+    ItemProgressService itemProgress, DailyBoxService dailyBox, TimeProvider time, LearningDay learningDay,
+    AnswerErrorClassifier classifier) : ControllerBase
 {
     // No default for `ct`: it would make the call site look correct while the client's cancellation fizzles
     // out - neither CA2016 nor the guard sees an omitted optional argument.
@@ -83,8 +84,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
     /// Shared by the step-wise <see cref="Answer"/> and the bulk <see cref="Submit"/>, because a second copy of
     /// this rule is how the two paths would drift apart.
     /// </summary>
-    private static void CreditSetAnswer(TestAttempt attempt, IReadOnlyList<ContentItem> items,
-        HashSet<int> credited, string? given, AnswerGrader grader)
+    private async Task CreditSetAnswerAsync(TestAttempt attempt, IReadOnlyList<ContentItem> items,
+        HashSet<int> credited, string? given, CancellationToken ct)
     {
         if (PositionPlayService.MatchOpenEntry(items, attempt.Order.Where(i => !credited.Contains(i)), given, grader)
                 is { } hit
@@ -98,7 +99,10 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
         // A blank answer is a skipped card, not a mention: it names nothing, the result screen would drop it
         // again, and a child clicking through a 16-entry list would leave sixteen empty rows behind.
         if (string.IsNullOrWhiteSpace(given)) return;
-        attempt.Results.Add(new TestItemResult { ItemIndex = null, StageValue = attempt.StageValue, GivenAnswer = given });
+        // B-732: a wrong mention is typed and wrong - its kind is measured against the entries still open.
+        var kind = await classifier.ClassifyMentionAsync(items, attempt.Order.Where(i => !credited.Contains(i) && i < items.Count),
+            given, ct);
+        attempt.Results.Add(new TestItemResult { ItemIndex = null, StageValue = attempt.StageValue, GivenAnswer = given, ErrorKind = kind });
     }
 
     /// <summary>
@@ -294,7 +298,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             // nothing and is a wrong mention, exactly as the catalog check consumes a mention (B-77/E1, E2, E4).
             if (typed && type.GradesAsSet(PositionPlayService.ConfigOf(played)))
             {
-                CreditSetAnswer(attempt, items, CreditedEntries(attempt), dto.GivenAnswer, grader);
+                await CreditSetAnswerAsync(attempt, items, CreditedEntries(attempt), dto.GivenAnswer, ct);
                 await IntroduceAnsweredAsync(pos, attempt, [index], ct);
             }
             else
@@ -307,6 +311,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                 {
                     result.GivenAnswer = dto.GivenAnswer;
                     result.WasCorrect = correct;
+                    result.ErrorKind = itemTyped
+                        ? await classifier.ClassifyAsync(type, PositionPlayService.ConfigOf(played),
+                            PositionPlayService.AtStage(type, items, StageAt(attempt, index)), item, StageAt(attempt, index),
+                            dto.GivenAnswer, correct, ct)
+                        : null;
                 }
                 await IntroduceAnsweredAsync(pos, attempt, [index], ct);
                 if (correct) await ImprintAnsweredAsync(pos, attempt, type, index, StageAt(attempt, index), ct);
@@ -410,7 +419,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                 // thousand rows.
                 var credited = CreditedEntries(attempt);
                 foreach (var answer in bulk.Take(attempt.Order.Count))
-                    CreditSetAnswer(attempt, items, credited, answer.GivenAnswer, grader);
+                    await CreditSetAnswerAsync(attempt, items, credited, answer.GivenAnswer, ct);
             }
             else
             {
@@ -433,6 +442,11 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
                     result.WasCorrect = type.IsTypedStage(result.StageValue)
                         ? grader.Matches(answer.GivenAnswer, item)
                         : answer.WasKnown ?? false;
+                    result.ErrorKind = type.IsTypedStage(result.StageValue)
+                        ? await classifier.ClassifyAsync(type, PositionPlayService.ConfigOf(played),
+                            PositionPlayService.AtStage(type, items, result.StageValue), item, result.StageValue,
+                            answer.GivenAnswer, result.WasCorrect, ct)
+                        : null;
                     if (result.WasCorrect) await ImprintAnsweredAsync(pos, attempt, type, index, result.StageValue, ct);
                 }
             }
@@ -465,7 +479,7 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, attempt.Day), item, r.WasCorrect, r.StageValue,
                 type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true,
-                accentSlip: false, ct: ct);
+                accentSlip: false, r.ErrorKind, ct: ct);
         }
 
         var passPercent = PositionProgressService.TestPassPercent(pos);

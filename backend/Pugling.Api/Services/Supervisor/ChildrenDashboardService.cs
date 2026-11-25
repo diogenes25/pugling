@@ -9,7 +9,8 @@ namespace Pugling.Api.Services.Supervisor;
 /// achieved/missed what today or yesterday". Builds on the plan-wide daily rollup of
 /// <see cref="PositionProgressService"/>.
 /// </summary>
-public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress, WalletService wallet)
+public class ChildrenDashboardService(PuglingDbContext db, PositionProgressService progress, WalletService wallet,
+    DutyCalendar calendar)
 {
     // ChildDay/Dashboard live in the contract project (Pugling.Contracts.Supervisor).
 
@@ -96,6 +97,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
                 .ToListAsync(ct);
             // Earned coins come from the ledger and belong to the child's day, whatever became of its plans (B-954).
             var coinsByDay = await wallet.EarnedCoinsByDayAsync(child.Id, from, to, ct);
+            var dutyDays = await calendar.ForChildAsync(child.Id, ct);
             var days = new List<(DateOnly Day, int GoalsTotal, int GoalsMet, int Coins, bool? DutyDone)>();
             for (var day = from; day <= to; day = day.AddDays(1))
             {
@@ -111,8 +113,10 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
                     if (active || d.GoalsMet > 0 || d.PointsAwarded > 0) goalsTotal += d.GoalsTotal;
                     duties.Add(new(active, d.GoalsTotal > 0, d.DutyDone));
                 }
-                // null = no duty that day: such a day neither fulfils nor breaks a period's duty.
-                days.Add((day, goalsTotal, goalsMet, coinsByDay.GetValueOrDefault(day), PositionProgressService.TimelineDutyDone(duties)));
+                // null = no duty that day: such a day neither fulfils nor breaks a period's duty - also a Sunday or a
+                // paused day (B-731), whatever its plans asked.
+                days.Add((day, goalsTotal, goalsMet, coinsByDay.GetValueOrDefault(day),
+                    dutyDays.IsDutyDay(day) ? PositionProgressService.TimelineDutyDone(duties) : null));
             }
 
             var periods = days

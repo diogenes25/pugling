@@ -12,7 +12,7 @@ namespace Pugling.Api.Services.Shared;
 /// former plan-wide progress service – mandatory goal and points now hang off the exercise, not the plan.
 /// </summary>
 public class PositionProgressService(PuglingDbContext db, PositionPlayService play, ExerciseTypeRegistry registry,
-    TimeProvider time, LearningDay learningDay)
+    TimeProvider time, LearningDay learningDay, DutyCalendar calendar)
 {
     /// <summary>Default pass threshold of a plan-position test when the position doesn't set its own.</summary>
     private const int DefaultPassPercent = 80;
@@ -558,7 +558,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// The child's streak (B-606): consecutive complete days (<see cref="IsCompleteDay"/>) up to and including
     /// <paramref name="today"/>, walked backward over all of the child's plans and stopped at the first incomplete day or
     /// after <paramref name="maxDays"/>. Active plans are judged first, so an open active duty stops the day without
-    /// reading the inactive ones.
+    /// reading the inactive ones. A day without duty (Sunday, a pause - <see cref="DutyCalendar"/>, B-731) is stepped over:
+    /// it neither counts nor breaks the streak, also when the child learnt on it.
     /// </summary>
     public async Task<int> ChildStreakAsync(int childId, DateOnly today, int maxDays, CancellationToken ct)
     {
@@ -569,10 +570,12 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         if (plans.Count == 0) return 0;
 
         var positions = new Dictionary<int, List<PlanPosition>>();
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
         var firstDay = plans.Min(p => p.StartDate);
         var streak = 0;
         for (var day = today; streak < maxDays && day >= firstDay; day = day.AddDays(-1))
         {
+            if (!dutyDays.IsDutyDay(day)) continue;
             var states = new List<PlanDutyState>();
             foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
             {
@@ -875,6 +878,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
         var lookbackFloor = today.AddDays(-MaxSettleLookbackDays);
         var now = time.GetUtcNow().UtcDateTime;
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
         var appliedCoins = 0;
         var changed = false;
 
@@ -897,6 +901,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
+                // B-731: Sunday and a pause owe nothing; a week owes its goal unless a pause touches it.
+                if (!dutyDays.OwesDuty(from, to)) continue;
                 // A duty with an end while its cadence stays (B-752: the preparation before a class test ends the day before
                 // the test) owes nothing after that end - also for days settled only later. A freed duty never gets here.
                 if (pos.DutyUntil is { } until && from > until) continue;

@@ -166,7 +166,9 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         var item = new ContentItem(0, tower.Meaning, tower.Foreign, [tower.Foreign], ItemId: tower.ItemId,
             VocabularyId: tower.VocabularyId);
         await progress.RecordAsync(childId, tower.ExerciseId, item, correct, 0, token.Foreign, ItemReviewSource.Game,
-            run.PlanPositionId, today, countsForMastery, accentSlip: false, ct);
+            run.PlanPositionId, today, countsForMastery, accentSlip: false,
+            // B-732: a tower is a pick among the words on the board, never typed - no error kind.
+            errorKind: null, ct);
         if (correct) runItem.SolvedAt ??= time.GetUtcNow().UtcDateTime;
         // Playing is play time, with or without heartbeats: a client that never beats must not escape the minute limit.
         Beat(run);

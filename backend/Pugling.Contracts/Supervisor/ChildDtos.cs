@@ -10,12 +10,16 @@ namespace Pugling.Contracts.Supervisor;
 /// upper bound of image suitability – only the supervisor may raise it. <c>BonusDailyCoinCap</c> is the child's own
 /// daily cap of bonus-training coins, <c>TowerGameMinutesPerDay</c> its play minutes per day in the tower game (0 = off),
 /// <c>HomeworkCoins</c> what an accepted homework books and <c>HomeworkPenaltyCoins</c> what a homework without a hand-in by
-/// its due day costs (B-760); <c>null</c> = the server default for each.
+/// its due day costs (B-760); <c>null</c> = the server default for each. <c>DailyTasksMin</c>/<c>DailyTasksMax</c>,
+/// <c>DailyNewWordsMin</c>/<c>DailyNewWordsMax</c> and <c>PenaltyCoinsPerMissedTask</c> are the supervisor's limits for the
+/// day planner (B-731): floor and ceiling of duty tasks and new words a day, and the penalty per missed task; all
+/// <c>null</c> = the planner is not set up.
 /// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
     ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems, int? BonusDailyCoinCap,
-    int? TowerGameMinutesPerDay, int? HomeworkCoins, int? HomeworkPenaltyCoins);
+    int? TowerGameMinutesPerDay, int? HomeworkCoins, int? HomeworkPenaltyCoins,
+    int? DailyTasksMin, int? DailyTasksMax, int? DailyNewWordsMin, int? DailyNewWordsMax, int? PenaltyCoinsPerMissedTask);
 
 /// <summary>
 /// Input for creating a child. <c>SchoolType</c> is a single value or <c>None</c> ("not specified"): a child attends one
@@ -34,6 +38,8 @@ public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolType
 /// the bonus cap, <c>ClearTowerGameMinutesPerDay</c> the tower-game minutes and <c>ClearHomeworkCoins</c> /
 /// <c>ClearHomeworkPenaltyCoins</c> the homework amounts to the server default. A sent <c>SchoolType</c> must be a single value or <c>None</c> (B-152); a stored
 /// combination from before that rule survives a PATCH that does not send the field.
+/// The planner limits (B-731) are checked on the values the child has after the change: a floor is at least 1 and not above
+/// its ceiling, the penalty at least 0, otherwise <c>validation_error</c>. <c>ClearPlannerLimits</c> removes all five.
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
@@ -41,7 +47,9 @@ public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTyp
     bool ClearBirthYear = false, bool ClearGrade = false, int? BonusDailyCoinCap = null, bool ClearBonusDailyCoinCap = false,
     int? TowerGameMinutesPerDay = null, bool ClearTowerGameMinutesPerDay = false,
     int? HomeworkCoins = null, bool ClearHomeworkCoins = false, int? HomeworkPenaltyCoins = null,
-    bool ClearHomeworkPenaltyCoins = false);
+    bool ClearHomeworkPenaltyCoins = false,
+    int? DailyTasksMin = null, int? DailyTasksMax = null, int? DailyNewWordsMin = null, int? DailyNewWordsMax = null,
+    int? PenaltyCoinsPerMissedTask = null, bool ClearPlannerLimits = false);
 
 /// <summary>A supervision relationship: which supervisor supervises the student since when.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

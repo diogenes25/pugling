@@ -213,6 +213,7 @@ public class SchemaGuardTests
             ["ChildMediaPick.ExerciseItemId"] = DeleteBehavior.Cascade, // -> ExerciseItem
             ["ChildMediaPick.MediaAssetId"] = DeleteBehavior.Cascade, // -> MediaAsset
             ["ChildMediaPick.VocabularyId"] = DeleteBehavior.Cascade, // -> Vocabulary
+            ["ChildPause.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-731: a pause is the child's, like its timetable)
             ["ChildPointsEntry.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildSubjectLevel.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildSubjectLevel.SubjectId"] = DeleteBehavior.Cascade, // -> Subject (derived level; without material it measures nothing, B-741)

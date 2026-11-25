@@ -113,6 +113,20 @@ public class Child
     /// </summary>
     public int? HomeworkPenaltyCoins { get; set; }
 
+    // B-731: the supervisor's limits for the day planner (B-734). All five empty = the planner is not set up for this
+    // child. The floors are never 0 and never above their ceiling (checked in the controller).
+
+    /// <summary>Fewest duty tasks a day the planner may set (floor, at least 1).</summary>
+    public int? DailyTasksMin { get; set; }
+    /// <summary>Most duty tasks a day the planner may set (ceiling).</summary>
+    public int? DailyTasksMax { get; set; }
+    /// <summary>Fewest new words a day the planner may introduce (floor, at least 1).</summary>
+    public int? DailyNewWordsMin { get; set; }
+    /// <summary>Most new words a day the planner may introduce (ceiling).</summary>
+    public int? DailyNewWordsMax { get; set; }
+    /// <summary>Coins a missed duty task costs (0 = no penalty); booked by the planner's duty (B-736), not yet here.</summary>
+    public int? PenaltyCoinsPerMissedTask { get; set; }
+
     /// <summary>
     /// Weighted interests from the controlled taxonomy (including dislikes at a negative weight).
     /// Complements the free-form <see cref="Interests"/>, it does not replace it: free text is the language

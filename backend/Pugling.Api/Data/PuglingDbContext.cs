@@ -88,6 +88,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
 
     // Timetable control
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
+    public DbSet<ChildPause> ChildPauses => Set<ChildPause>();
 
     // Gamification: missions (time-bound goals) + awards (badges) per child, with an award log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -868,6 +869,13 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // what a timetable is. Deleting a SUBJECT must not - the entry was typed by hand and belongs to
             // the child, while the subject is shared catalog.
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // A pause belongs to its child and goes with it (B-731); read per child, by start.
+        modelBuilder.Entity<ChildPause>(e =>
+        {
+            e.HasIndex(p => new { p.ChildId, p.From });
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // A mission belongs to a child (cascade); every mission is rewarded at most once per period.
