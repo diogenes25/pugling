@@ -243,3 +243,9 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
   „turn to smb“ und „turn smt. up/down“ → falsch (B-990). Kästchen-Vorschau: „(to) ____ __ sb.“,
   „(to) ____ sth. __/____“. Theodors eigene Sitzung an Position 102 zeigte heute keine dieser Karten (Tagesdosis 9 Karten);
   der Kindpfad ist über `PlatzhalterPfadTests` belegt. Wartet auf den Vater (`wartet_auf`).
+- **2026-11-25** — AK 7 vorbereitet: `scripts/vokabel-schraegstrich-2026-11-25.ps1` ändert genau die zwei benannten Einträge
+  (Vorprüfung auf den alten Text, PIN verdeckt) – das ist die Handkorrektur aus Entscheidung 5, kein heuristischer Umbau.
+  122 → „towards the station / towards Mr Bell“, 953 → „(to) pose a risk / (to) pose a problem“ (Leer-Schrägstrich = zwei
+  Bedeutungen, jede zählt allein). An einer frischen Kopie geprobt: beide Bedeutungen einzeln richtig, „Mr Bell“ allein
+  falsch, zweiter Lauf bricht ab. Kosten: die Kästchen verlangen jetzt beide Bedeutungen
+  („_______ ___ _______ / _______ __ ____“). Der Lauf am echten Server steht beim Vater.
