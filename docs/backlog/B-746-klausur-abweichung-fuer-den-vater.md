@@ -12,7 +12,7 @@ quelle: B-683
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-25"
 ---
 
 # B-746 · Prognose und Note nebeneinander: die Abweichung für den Vater

@@ -90,23 +90,34 @@ public static partial class DraftRules
     /// The hard rule of the core principle: if a required vocabulary is prescribed, it must appear
     /// <b>in full</b>. <paramref name="exact"/> compares whole entries (vocabulary/cloze answers),
     /// otherwise occurrence within the text suffices (sentences, tasks).
+    /// <paramref name="slotFree"/> is set where the produced texts are answers checked by
+    /// <see cref="AnswerWithoutPlaceholder"/> (B-626): there the core of a required word covers it too.
     /// </summary>
     public static void CoversRequiredWords(Violations violations, CreatorBriefing briefing,
-        IEnumerable<string?>? produced, bool exact)
+        IEnumerable<string?>? produced, bool exact, bool slotFree)
     {
         if (briefing.RequiredWords.Count == 0) return;
 
         var haystack = (produced ?? []).Select(p => p?.Trim() ?? "").Where(p => p.Length > 0).ToList();
+        // B-626: a slot-free answer cannot hold "(to) point sth. out (to sb.)", so its core "point out" counts - demanding
+        // the whole entry would contradict AnswerWithoutPlaceholder in every repair round. Elsewhere (a vocabulary front
+        // must be the stored entry itself, or the weak word's store link is lost) only the entry counts.
         var missing = briefing.RequiredWords
-            .Where(word => !haystack.Any(candidate => exact
-                ? string.Equals(candidate, word, StringComparison.OrdinalIgnoreCase)
-                : candidate.Contains(word, StringComparison.OrdinalIgnoreCase)))
+            .Where(word => !haystack.Any(candidate => Covers(candidate, word, exact)
+                || slotFree && SlotFreeCore(word) is { Length: > 0 } core && Covers(candidate, core, exact)))
             .ToList();
 
         if (missing.Count > 0)
             violations.Add($"Diese Wörter aus dem Pflicht-Wortschatz fehlen: {string.Join(", ", missing)}. " +
                            "Der Wortschatz ist unveränderlich – ersetze ihn nicht durch andere Wörter.");
     }
+
+    // What is left of a word-list entry once its bracketed parts and slots go: "(to) point sth. out (to sb.)" -> "point out".
+    private static string SlotFreeCore(string word) => WordListPlaceholders.Core(RoundBrackets().Replace(word, " "));
+
+    private static bool Covers(string candidate, string word, bool exact) => exact
+        ? string.Equals(candidate, word, StringComparison.OrdinalIgnoreCase)
+        : candidate.Contains(word, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// The answer must not already stand in the task (B-458): "While they ___ (play) football …" beside "They were
@@ -123,6 +134,18 @@ public static partial class DraftRules
         if (ClozeMarkup.ContainsWord(readable, answer))
             violations.Add($"Aufgabe {index + 1}: die Lösung '{answer.Trim()}' steht schon in der Aufgabenstellung – " +
                            "das Kind könnte sie abschreiben.");
+    }
+
+    /// <summary>
+    /// An answer asks only the core of a word-list entry, never its slots (B-626): "point sth. out" in a gap makes the
+    /// child type "sth.", which the word list prints as a stand-in for the object the sentence names. The list is the
+    /// server's (<see cref="WordListPlaceholders"/>), so the agent rejects exactly what the grader treats as accessory.
+    /// </summary>
+    public static void AnswerWithoutPlaceholder(Violations violations, string? answer, string where)
+    {
+        if (string.IsNullOrWhiteSpace(answer) || !WordListPlaceholders.ContainsPlaceholder(answer)) return;
+        violations.Add($"{where}: die Lösung '{answer.Trim()}' enthält einen Platzhalter der Wortliste (sth., sb., qn, qc, " +
+                       "jdn., jdm., etw.) – setze das Wort ein, für das er steht, oder lass ihn weg.");
     }
 
     /// <summary>

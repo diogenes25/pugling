@@ -12,7 +12,7 @@ quelle: B-683
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: "2026-11-25"
 ---
 
 # B-744 · Am Klausurtag die Prognose festhalten: `Klassenarbeit.PredictedLevel`

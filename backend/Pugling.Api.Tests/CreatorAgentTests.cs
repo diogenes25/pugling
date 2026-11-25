@@ -1205,6 +1205,141 @@ public class CreatorAgentTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-626 AK 6: a gap - its answer or an accepted alternative - never holds a slot of the word list. Red if the cloze
+    /// stops checking its gaps (draft accepted), or checks only the answer and not the alternatives (one violation
+    /// instead of two).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Luecke_mit_Platzhalter_der_Wortliste_wird_abgelehnt()
+    {
+        const string cloze = """
+            {"title":"Platzhalter","text":"Tom [points sth. out] to Ann. She [marches|marche sur qc] home. They [feed] the horse.",
+             "distractors":["fence","tractor"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Platzhalter");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Cloze"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Collection(outcome.Violations,
+            v => Assert.StartsWith("Lücke 1: die Lösung 'points sth. out' enthält einen Platzhalter", v),
+            v => Assert.StartsWith("Lücke 2: die Lösung 'marche sur qc' enthält einen Platzhalter", v));
+        Assert.Empty(await creator.SearchExercisesAsync(subjectId: subjectId));
+    }
+
+    /// <summary>B-626 AK 6 for a grammar task's answer. Red if the grammar strategy does not call the rule.</summary>
+    [Fact]
+    public async Task Eine_Grammatikloesung_mit_Platzhalter_der_Wortliste_wird_abgelehnt()
+    {
+        const string grammar = """
+            {"title":"Verben mit Ergänzung","instruction":"Setze die richtige Form ein.","tasks":[
+              {"prompt":"Il ___ (penser à) son ami.","answer":"pense à qn","ruleHint":null},
+              {"prompt":"Nous ___ (aller) à Paris.","answer":"allons","ruleHint":null},
+              {"prompt":"Elle ___ (lire) un livre.","answer":"lit","ruleHint":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(grammar);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Grammar-Platzhalter");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Grammar"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.StartsWith("Aufgabe 1: die Lösung 'pense à qn' enthält einen Platzhalter", Assert.Single(outcome.Violations));
+    }
+
+    /// <summary>
+    /// B-626 AK 6, the other side of the rule: a required word that carries a slot is covered by its core - otherwise the
+    /// required-word rule would demand the slot the placeholder rule forbids, in every repair round. Weak words come as the
+    /// store prints them, brackets included. Red if <c>CoversRequiredWords</c> compares only the whole entry (both rows),
+    /// or strips the slots but not the brackets (second row: "(to) point out (to sb.)" is no gap answer).
+    /// </summary>
+    [Theory]
+    [InlineData("marcher sur qc")]
+    [InlineData("(to) point sth. out (to sb.)")]
+    public async Task Ein_Pflichtwort_mit_Platzhalter_ist_von_seinem_Kern_gedeckt(string requiredWord)
+    {
+        const string cloze = """
+            {"title":"Pflichtwort ohne Platzhalter","text":"Ann wants to [marcher sur] the beach. Tom will [point out] the way. They [clean] the yard.",
+             "distractors":["fence","tractor"]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(cloze);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Cloze-Pflichtwort-Kern");
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Cloze", words: [requiredWord]));
+
+        Assert.Empty(outcome.Violations);
+        Assert.True(outcome.DraftAccepted);
+    }
+
+    /// <summary>
+    /// B-626, the boundary of the core rule: a vocabulary front must be the stored entry itself - the store link of a weak
+    /// word hangs on it, and the grader forgives the slot anyway. Red if the vocabulary strategy lets the core count.
+    /// </summary>
+    [Fact]
+    public async Task Eine_Vokabel_deckt_ein_Pflichtwort_nicht_mit_seinem_Kern()
+    {
+        const string vocabulary = """
+            {"title":"Verben mit Ergänzung","items":[
+              {"front":"marcher sur","back":"auf etwas treten","hint":null},
+              {"front":"the sheep","back":"das Schaf","hint":null},
+              {"front":"the goat","back":"die Ziege","hint":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(vocabulary);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Vokabel-Pflichtwort-Kern");
+
+        var (_, outcome) = await pipeline.CreateAsync(
+            Request(subjectId, seriesId, seriesUnitId, "Vocabulary", words: ["marcher sur qc"]));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.StartsWith("Diese Wörter aus dem Pflicht-Wortschatz fehlen: marcher sur qc", Assert.Single(outcome.Violations));
+    }
+
+    /// <summary>
+    /// B-626 AK 6 for a translation: the target and its alternatives are what the child types. Red if the translation
+    /// strategy does not check them (draft accepted), or checks the target only (one violation instead of two).
+    /// </summary>
+    [Fact]
+    public async Task Eine_Uebersetzung_mit_Platzhalter_der_Wortliste_wird_abgelehnt()
+    {
+        const string translation = """
+            {"title":"Sätze mit Ergänzung","items":[
+              {"source":"Er weist auf den Fehler hin.","target":"He points sth. out.","alternatives":null},
+              {"source":"Ich füttere das Schaf.","target":"I feed the sheep.","alternatives":["I am feeding sb."]},
+              {"source":"Wir putzen den Stall.","target":"We clean the stable.","alternatives":null}]}
+            """;
+        var (pipeline, creator, _) = BuildAgent(translation);
+        var (subjectId, seriesId, seriesUnitId) = await FreshUnitAsync(creator, "Uebersetzung-Platzhalter");
+
+        var (_, outcome) = await pipeline.CreateAsync(Request(subjectId, seriesId, seriesUnitId, "Translation"));
+
+        Assert.False(outcome.DraftAccepted);
+        Assert.Collection(outcome.Violations,
+            v => Assert.StartsWith("Satz 1: die Lösung 'He points sth. out.' enthält einen Platzhalter", v),
+            v => Assert.StartsWith("Satz 2: die Lösung 'I am feeding sb.' enthält einen Platzhalter", v));
+    }
+
+    /// <summary>
+    /// B-626: a slot glued to a bracket ("(to sb.)") is a slot for the agent's check too. Red if
+    /// <c>ContainsPlaceholder</c> stops trimming brackets.
+    /// </summary>
+    [Fact]
+    public void Ein_Platzhalter_an_einer_Klammer_zaehlt()
+    {
+        Assert.True(WordListPlaceholders.ContainsPlaceholder("point out (to sb.)"));
+        Assert.False(WordListPlaceholders.ContainsPlaceholder("point out (to Ann)"));
+    }
+
+    /// <summary>
+    /// B-626 AK 6, the request half: the fixed rule block tells the model to leave the slots out. The validator above is
+    /// the guarantee; this pins the request, so a model is not sent into a repair round it could have been spared. Red if
+    /// rule 9 is dropped from the system prompt.
+    /// </summary>
+    [Fact]
+    public void Der_Systemprompt_verbietet_Platzhalter_in_Loesungen() =>
+        Assert.Contains("nie die Platzhalter der Wortliste (sth., sb., qn, qc", DraftPrompts.System);
+
+    /// <summary>
     /// A model is allowed to omit any field – <c>{"title":"Tiere"}</c> is valid JSON. The draft records
     /// declare their fields non-nullable, so the deserializer plugs in <c>null</c>. The validator must
     /// turn that into a <i>rule violation</i>: previously it crashed with a

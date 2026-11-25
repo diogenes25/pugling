@@ -95,11 +95,11 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
             // so demanding it would contradict SchoolTestRules in every repair round.
             var listed = briefing.RequiredWords.Where(w => PairOf(briefing, w) is not null).ToList();
             DraftRules.CoversRequiredWords(violations, briefing with { RequiredWords = listed },
-                ClozeMarkup.FormHints(parsed.Text).Select(h => h.Hint), exact: true);
+                ClozeMarkup.FormHints(parsed.Text).Select(h => h.Hint), exact: true, slotFree: false);
         }
         else
         {
-            DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true);
+            DraftRules.CoversRequiredWords(violations, briefing, parsed.Gaps.Select(g => g.Answer), exact: true, slotFree: true);
         }
 
         var hints = ClozeMarkup.FormHints(parsed.Text).ToList();
@@ -123,6 +123,11 @@ public sealed class ClozeStrategy(IChatClient chat, CreatorApi creator,
             if (!formTasks.Contains(index + 1) && ClozeMarkup.ContainsWord(readable, gap.Answer))
                 violations.Add($"Lücke {index + 1}: die Lösung '{gap.Answer}' steht außerhalb der Klammern im Text " +
                                "und ist damit verraten.");
+
+        // B-626: the gap asks the core; the slot word of a list entry stands only in the school test's round bracket.
+        foreach (var (gap, index) in parsed.Gaps.Select((gap, index) => (gap, index)))
+            foreach (var accepted in gap.Alternatives.Prepend(gap.Answer))
+                DraftRules.AnswerWithoutPlaceholder(violations, accepted, $"Lücke {index + 1}");
 
         if (request.SchoolTest) SchoolTestRules(violations, parsed, briefing, draft);
 

@@ -47,13 +47,16 @@ public sealed class TranslationStrategy(IChatClient chat, CreatorApi creator,
         DraftRules.Title(violations, draft.Title, briefing);
         DraftRules.Count(violations, items.Count, request);
         DraftRules.NoDuplicates(violations, items.Select(i => i?.Source), "Ausgangssätze");
-        DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Source), exact: false);
+        DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Source), exact: false, slotFree: false);
 
         foreach (var (item, index) in items.Select((item, index) => (item, index)))
         {
             DraftRules.NotBlank(violations, item?.Source, $"Satz {index + 1}: der Ausgangssatz");
             DraftRules.NotBlank(violations, item?.Target, $"Satz {index + 1}: die Übersetzung");
             DraftRules.PromptDiffersFromAnswer(violations, item?.Source, item?.Target, index);
+            // B-626: the target and its alternatives are what the child types.
+            foreach (var accepted in (item?.Alternatives ?? []).Prepend(item?.Target))
+                DraftRules.AnswerWithoutPlaceholder(violations, accepted, $"Satz {index + 1}");
         }
 
         return violations.Messages;

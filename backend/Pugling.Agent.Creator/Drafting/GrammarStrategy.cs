@@ -50,7 +50,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
         DraftRules.Count(violations, tasks.Count, request);
         DraftRules.NoDuplicates(violations, tasks.Select(t => t?.Prompt), "Aufgabenstellungen");
         DraftRules.CoversRequiredWords(violations, briefing,
-            tasks.Select(t => $"{t?.Prompt} {t?.Answer}"), exact: false);
+            tasks.Select(t => $"{t?.Prompt} {t?.Answer}"), exact: false, slotFree: true);
 
         foreach (var (task, index) in tasks.Select((task, index) => (task, index)))
         {
@@ -58,6 +58,7 @@ public sealed class GrammarStrategy(IChatClient chat, CreatorApi creator,
             DraftRules.NotBlank(violations, task?.Answer, $"Aufgabe {index + 1}: die Lösung");
             DraftRules.PromptDiffersFromAnswer(violations, task?.Prompt, task?.Answer, index);
             DraftRules.AnswerNotInPrompt(violations, task?.Prompt, task?.Answer, index);
+            DraftRules.AnswerWithoutPlaceholder(violations, task?.Answer, $"Aufgabe {index + 1}");
         }
 
         return violations.Messages;

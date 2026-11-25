@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Antwort zu umfangreich, umliegende Wörter abgefragt]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Vater: Berichtigung der Vokabeln 122 und 953 an der echten DB (AK 7); Blick am Gerät, ob „(to) ____ __ sb.“ fest und tippbar deutlich trennt"
 ---
 
 # B-626 · Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste
@@ -182,3 +183,63 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
 - **2026-11-17** — geschätzt: M, backend, keine Migration, kein Vertragsbruch; die Sohn-App zeigt feste
   Maskenzeichen schon, Erkennbarkeit klärt der Rollengang.
 - **2026-11-21** — Beleg aus Theodors Rückmeldungen (Übung 15): „(to) turn sth. up/down“ meldete er als „zu viel verlangt“ (er tippte „turn sth. up/down“ ohne „(to)“, gewertet falsch), „towards the station/Mr Bell“ als „zu streng“. „(to) turn“ und „(to) turn sth. up/down“ liegen als zwei Karten nebeneinander und werden verwechselt. Nicht neu bewertet, nur als Fall für Entscheidung und Akzeptanzkriterien festgehalten.
+- **2026-11-22** — (nachgetragen 2026-11-25) Teil gebaut in `1171f1f4`: Vergleich (Platzhalter dürfen fehlen) und
+  Kästchen-Maske teilen `AnswerVariants.AccessoryMask`; die Story blieb auf `geschaetzt`, ohne Verlaufszeile. Offen damals:
+  Creator-Regel, Pfad-Tests, Mutanten, Review, Rollengang, AK 7.
+- **2026-11-25** — `in-arbeit` (Sprint 162, [PM-Sitzung](../pm-sitzung-2026-11-25.md)). Die Platzhalter-Liste zieht nach
+  `Pugling.Contracts/Common/WordListPlaceholders.cs` (Server und KI-Creator teilen sie, Muster `VocabKey`).
+- **2026-11-25** — Belege je AK-Fall:
+  - AK 1, „marcher sur“/„marcher sur qc“, „point out“/„point sth. out“/„to point sth. out to sb.“ →
+    `AnswerVariantsTests.Platzhalter_Duerfen_Fehlen` (AnswerVariantsTests.cs:23), Mutant M1 → rot.
+  - AK 2, Maske „(to) _____ sth. ___ (to sb.)“ → `StageMechanicsTests.Eintrag_Maske_Setzt_Beiwerk_Fest` (:66) und an der
+    Karte `PlatzhalterPfadTests.Kaestchen_Zeigen_Beiwerk_Fest_Und_Der_Ganze_Wert_Zaehlt` (:127), M4/M5 → rot.
+  - AK 2, Risiko 2 (der Kästchen-Wert ist der ganze Eintrag und zählt) → dasselbe Kästchen-Test, zweite Zusicherung.
+  - AK 3, „be home“ falsch für „(to) be home to sth.“ → `AnswerVariantsTests.Kern_Und_Echte_Woerter_Bleiben_Pflicht` (:31),
+    M12 → rot (siehe Tabelle).
+  - AK 4, Eintrag ohne Beiwerk wie bisher („something“, „to grow up“) → `Eintrag_Maske_Setzt_Beiwerk_Fest`, M12 → rot;
+    die B-462-Tabelle in `AnswerVariantsTests` läuft unverändert grün.
+  - AK 5, je Pfad Kern richtig / zu kurzer Kern („point“) falsch → `PlatzhalterPfadTests` Üben (:37), Abschlusstest (:54),
+    Vorschau (:75), Bonus-Training getippte Form (:95); M3 (Resolver-Markierung aus) macht alle vier rot, M1 alle
+    Kern-Zeilen, M2 (Kern = erstes Wort) alle „point“-Zeilen. Die vier Pfade teilen eine Senke (`AnswerGrader` über
+    `GradedAnswers`), darum gibt es keinen Mutanten, der nur einen Pfad trifft.
+  - AK 6, Lücke mit Platzhalter (Antwort und Alternative) abgelehnt → `CreatorAgentTests.Eine_Luecke_mit_Platzhalter_der_Wortliste_wird_abgelehnt`
+    (CreatorAgentTests.cs:1213), M6/M7/M10 → rot; Grammatik-Lösung → `…Grammatikloesung…` (:1233), M8 → rot; Pflichtwort
+    „marcher sur qc“ von „marcher sur“ gedeckt (sonst Endlos-Reparatur) → `…Pflichtwort_mit_Platzhalter…` (:1256), M9 → rot;
+    Anfrage (Systemprompt-Regel 9) → `Der_Systemprompt_verbietet_Platzhalter_in_Loesungen` (:1279), M11 → rot.
+  - AK 7, Prüfung an der DB-Kopie vom 2026-11-25 (1587 Vokabeln in Übungen): Schrägstrich ohne Leerzeichen zwischen
+    **mehrwortigen** Seiten tragen 122 „towards the station/Mr Bell“ und 953 „(to) pose a risk/a problem“ (744 „a hotel/…“
+    steht in einer Aufzählung mit Leer-Schrägstrichen). Die Berichtigung an der echten DB steht aus (braucht den Vater).
+- **2026-11-25** — Review `pugling-reviewer`: drei 🟡 im KI-Creator, alle behoben mit Test – Pflichtwort mit Klammern
+  und Platzhalter (Kern ließ Klammern stehen, M16), Kern-Deckung lockerte die Vokabel-Strategie (jetzt Pflichtschalter
+  `slotFree`, M15), Übersetzung prüfte Ziel und Alternativen nicht (M13/M14); dazu 🟢 „(to sb.)“ (M17). Bewusst offen:
+  Salat (B-992), eine Lücke mit Store-Bezug ohne `Form` wertet das rohe Store-Wort samt Platzhalter
+  (`ExerciseContentResolver.cs:192`, von Hand angelegte Lückentexte; die Agenten-Schultests schreiben `Form`).
+- **2026-11-25** — Mutanten-Probe nach der letzten Änderung (M12 einzeln nachgemessen, die erste Fassung traf AK 3 nicht):
+
+| Mutante | Stelle | erwartet | gemessen | Anmerkung |
+|---|---|---|---|---|
+| M1 | backend/Pugling.Api/Services/Shared/AnswerVariants.cs:71 | red | red |  |
+| M2 | backend/Pugling.Api/Services/Shared/AnswerVariants.cs:70 | red | red |  |
+| M3 | backend/Pugling.Api/Services/Shared/ExerciseContentResolver.cs:135 | red | red |  |
+| M4 | backend/Pugling.Api/Exercises/VocabularyExerciseType.cs:163 | red | red |  |
+| M5 | backend/Pugling.Api/Services/Shared/AnswerVariants.cs:48 | red | red |  |
+| M6 | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:130 | red | red |  |
+| M7 | backend/Pugling.Agent.Creator/Drafting/ClozeStrategy.cs:129 | red | red |  |
+| M8 | backend/Pugling.Agent.Creator/Drafting/GrammarStrategy.cs:61 | red | red |  |
+| M9 | backend/Pugling.Agent.Creator/Drafting/DraftRules.cs:107 | red | red |  |
+| M10 | backend/Pugling.Agent.Creator/Drafting/DraftRules.cs:146 | red | red |  |
+| M11 | backend/Pugling.Agent.Creator/Drafting/DraftPrompts.cs:57 | red | red |  |
+| M13 | backend/Pugling.Agent.Creator/Drafting/TranslationStrategy.cs:58 | red | red |  |
+| M14 | backend/Pugling.Agent.Creator/Drafting/TranslationStrategy.cs:59 | red | red |  |
+| M15 | backend/Pugling.Agent.Creator/Drafting/VocabularyStrategy.cs:112 | red | red |  |
+| M16 | backend/Pugling.Agent.Creator/Drafting/DraftRules.cs:116 | red | red |  |
+| M17 | backend/Pugling.Contracts/Common/WordListPlaceholders.cs:32 | red | red |  |
+| M12 | backend/Pugling.Contracts/Common/WordListPlaceholders.cs:24 | red | red |  |
+
+  Grundlinie nach dem Zurückspielen jeweils grün. M12: `WordListPlaceholders.cs:24` „to“ als Platzhalter → rot an
+  `Kern_Und_Echte_Woerter_Bleiben_Pflicht` und `Eintrag_Maske_Setzt_Beiwerk_Fest`.
+- **2026-11-25** — Rollengang an der DB-Kopie (Server nach der letzten Änderung gestartet): Vater-Vorschau von Übung 15
+  (Theodors Part C) auf Freitext: „turn to“ → richtig, „turn up/down“ → richtig, „(to) turn sth. up/down“ → richtig,
+  „turn to smb“ und „turn smt. up/down“ → falsch (B-990). Kästchen-Vorschau: „(to) ____ __ sb.“,
+  „(to) ____ sth. __/____“. Theodors eigene Sitzung an Position 102 zeigte heute keine dieser Karten (Tagesdosis 9 Karten);
+  der Kindpfad ist über `PlatzhalterPfadTests` belegt. Wartet auf den Vater (`wartet_auf`).

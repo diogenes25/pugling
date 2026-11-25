@@ -109,7 +109,7 @@ public sealed class VocabularyStrategy(IChatClient chat, CreatorApi creator,
         // Folded like the server folds a word: it refuses a second item of the same word, and that 400 would end the
         // run instead of a repair round (B-336).
         DraftRules.NoDuplicates(violations, items.Select(i => i?.Front), "Vokabeln", VocabKey.Part);
-        DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Front), exact: true);
+        DraftRules.CoversRequiredWords(violations, briefing, items.Select(i => i?.Front), exact: true, slotFree: false);
 
         foreach (var (item, index) in items.Select((item, index) => (item, index)))
         {

@@ -54,6 +54,9 @@ public static class DraftPrompts
         6. Keine Dubletten, keine leeren Felder. Jede Aufgabe hat genau eine eindeutige Lösung.
         7. Ist ein Schwerpunkt genannt, übt jede Aufgabe genau diesen – nicht alles aus der Unit zugleich.
         8. Der Titel nennt den Lernstoff (Unit, Wortfeld oder Schwerpunkt), nie die Interessen des Kindes.
+        9. Eine Lösung enthält nie die Platzhalter der Wortliste (sth., sb., qn, qc, jdn., jdm., etw.). Gefragt ist
+           nur der Kern des Eintrags: aus "(to) point sth. out" wird im Satz "point the mistake out", in der Lücke
+           steht nur das Wort selbst.
         """;
 
     /// <summary>Builds the request part: briefing plus type-specific instruction.</summary>
