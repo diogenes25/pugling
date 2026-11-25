@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [up / down, Schrägstrich mit Leerzeichen]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -13,6 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-626]
+nachgeschaut: ""
 ---
 
 # B-993 · Ein Leerzeichen am Schrägstrich kostet die Karte
@@ -112,3 +113,4 @@ Kopie (Vorschau der Übung 150).
 - **2026-11-25** — Rollengang an einer frischen Kopie der echten DB (`kopie-server.sh` nach der letzten Änderung, :5201):
   Testjunge spielt Position 220, Karte „etwas lauter/leiser stellen“, tippt „turn sth. up / down“ → richtig. Vater, Vorschau
   an Theodors Übung 15 (Index 11): „turn sth. up / down“ und „turn up / down“ richtig, „turn sth. up down“ falsch.
+- **2026-11-25** — abgenommen in `dcdd8c32`: Sohn und Vater an der Kopie (Rollengang oben), Creator als Regressionszeuge.
