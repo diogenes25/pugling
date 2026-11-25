@@ -252,3 +252,7 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
 - **2026-11-25** — AK 7 erledigt: der Vater hat das Skript am echten Server laufen lassen (Log 08:01:41–08:01:43 UTC:
   2× GET, 2× PATCH, je 200). In `pugling.db` lesend geprüft: 122 „towards the station / towards Mr Bell“, 953
   „(to) pose a risk / (to) pose a problem“. Offen bleibt nur der Blick am Gerät (`wartet_auf`).
+- **2026-11-25** — Für den Blick am Gerät: `scripts/testjunge-platzhalter-2026-11-25.ps1` legt die Übung „Test: Platzhalter
+  (B-626)“ (fünf Store-Einträge mit sth./sb.) in Access Unit 1 an und hängt sie als Kür ohne Leitner auf Stufe 3 und 4 in
+  Plan 17 des Testjungen. An einer frischen Kopie geprobt: Runde 1 fünf Lernkarten (Rückruf „turn to“, „point out“ …
+  richtig), Runde 2 Kästchen „(to) ____ __ sb.“, „(to) _____ sth. ___ (to sb.)“; zweiter Lauf bricht ab.
