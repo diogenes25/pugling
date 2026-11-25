@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Akzent-Toleranz, Akzentfehler]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase mit Friedrich)"
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Blick am Gerät – halbes Blatt „Fast! Achte auf den Akzent“ (Farbe, Markierung, Maskottchen)"
+nachgeschaut: ""
 ---
 
 # B-624 · Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler
@@ -243,3 +243,4 @@ Spalten mit Bestandsdaten. Kein XL: kein neuer Endpunkt, und jede Stelle hat ein
   halb, Kasten 1 bleibt, morgen fällig statt heute; „une pausse“ → ganzer Fehler, Kasten 3 → 1, Combo 0. Vater-Report: „Akzent“
   1 bei péage und départ, 0 bei autoroute und pause. Abschlusstest derselben Position: „le peage“ falsch und „falsch
   geschrieben“. Offen für einen Menschen: das halbe Blatt am Handy (Gold statt Rot, Markierung, Maskottchen).
+- **2026-11-25** — abgenommen in `b7538326`: der Vater hat das halbe Blatt am Gerät gesehen („passt so“); Sohn damit abgenommen, Vater abgenommen (Report), Creator Regressionszeuge.

@@ -312,7 +312,7 @@ Kopie-Server nach der letzten Code-Änderung auf einer frischen Kopie gestartet 
   belegt, nicht im Browser geklickt.
 - **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
 
-**Stand:** B-624 `in-arbeit`, `wartet_auf` den Blick des Vaters am Gerät (wie bei B-626).
+**Stand:** B-624 `abgenommen` am selben Tag, nachdem der Vater das halbe Blatt am Gerät gesehen hat („passt so“).
 
 ## Retrospektive (Runde 3)
 
