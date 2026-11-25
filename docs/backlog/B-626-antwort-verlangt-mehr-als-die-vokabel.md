@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/katalog, bereich/training, rolle/creator, rolle/student, lerntechnik/vokabeln]
 aliases: [Antwort zu umfangreich, umliegende Wörter abgefragt]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Blick am Gerät, ob „(to) ____ __ sb.“ fest und tippbar deutlich trennt"
+nachgeschaut: ""
 ---
 
 # B-626 · Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste
@@ -256,3 +256,6 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
   (B-626)“ (fünf Store-Einträge mit sth./sb.) in Access Unit 1 an und hängt sie als Kür ohne Leitner auf Stufe 3 und 4 in
   Plan 17 des Testjungen. An einer frischen Kopie geprobt: Runde 1 fünf Lernkarten (Rückruf „turn to“, „point out“ …
   richtig), Runde 2 Kästchen „(to) ____ __ sb.“, „(to) _____ sth. ___ (to sb.)“; zweiter Lauf bricht ab.
+- **2026-11-25** — `abgenommen` (Code `459cb60b`, AK 7 `143ff649`). Blick am Gerät durch den Vater als Testjunge an der Testübung
+  (Positionen 220/221 in Plan 17): fester Text und Kästchen sind deutlich getrennt – „passt so“. Alle sieben AK belegt
+  (Tabelle oben); offen und als eigene Stories geführt: B-990 (eigene Kürzel des Kindes), B-991 („sb.'s“), B-992 (Salat).
