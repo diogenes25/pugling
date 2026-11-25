@@ -152,3 +152,12 @@ Die Liste, die gilt, ist `docs/backlog/`. Reihenfolge-Begründung für die näch
 3. [B-784](backlog/B-784-tippfehler-im-ueben-bei-theodor.md) (Tippfehler) und [B-624](backlog/B-624-akzentfehler-nicht-ganzer-fehler.md)
    gehören zum selben roten Faden „ein Fehler zählt nur, wenn das Kind das Wort nicht weiß“.
 4. Neu und klein: [B-991](backlog/B-991-besitz-platzhalter-sb-s-jds.md), [B-992](backlog/B-992-buchstabensalat-legt-platzhalter.md).
+
+## Nachtrag — Paket B
+
+Der Befund „Paket B ist in der echten DB nicht gelaufen" (Runde 1) galt für die Kopie von 07:01 Uhr. Das Skript lief am
+selben Morgen um 08:29 Uhr (Log 07:28:59–07:29:05 UTC, alle Aufrufe 200); ein zweiter Lauf um 10 Uhr brach an der eigenen
+Vorprüfung ab, ohne etwas zu ändern. Lesend in `pugling.db` geprüft: Theodor täglich 99/100/193/195 + Nacharbeit 101,
+Friedrich täglich 202/133/134/211 + Generalproben 167/168/218/219. Für Friedrichs Vormittag zählt das nicht als Malus: die
+abgeschalteten Positionen trugen keinen (165/166/214–217: 0 Münzen), und eine freigegebene Pflicht verzichtet auf ihre
+offenen Perioden (B-659).
