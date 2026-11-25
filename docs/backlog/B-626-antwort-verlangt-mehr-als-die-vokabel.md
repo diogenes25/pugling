@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase)"
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Vater: Berichtigung der Vokabeln 122 und 953 an der echten DB (AK 7); Blick am Gerät, ob „(to) ____ __ sb.“ fest und tippbar deutlich trennt"
+wartet_auf: "Vater: Blick am Gerät, ob „(to) ____ __ sb.“ fest und tippbar deutlich trennt"
 ---
 
 # B-626 · Eine Vokabel verlangt nur das Wort, nicht die Platzhalter und Ergänzungen der Wortliste
@@ -249,3 +249,6 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
   Bedeutungen, jede zählt allein). An einer frischen Kopie geprobt: beide Bedeutungen einzeln richtig, „Mr Bell“ allein
   falsch, zweiter Lauf bricht ab. Kosten: die Kästchen verlangen jetzt beide Bedeutungen
   („_______ ___ _______ / _______ __ ____“). Der Lauf am echten Server steht beim Vater.
+- **2026-11-25** — AK 7 erledigt: der Vater hat das Skript am echten Server laufen lassen (Log 08:01:41–08:01:43 UTC:
+  2× GET, 2× PATCH, je 200). In `pugling.db` lesend geprüft: 122 „towards the station / towards Mr Bell“, 953
+  „(to) pose a risk / (to) pose a problem“. Offen bleibt nur der Blick am Gerät (`wartet_auf`).
