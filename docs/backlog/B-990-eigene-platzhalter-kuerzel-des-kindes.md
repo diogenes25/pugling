@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, lerntechnik/vokabeln]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student, lerntechnik/vokabeln]
 aliases: [smb statt sb, smt statt sth, eigene Kürzel beim Tippen]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: S
@@ -206,3 +206,5 @@ Vorschau von Übung 15.
   Karten nicht ab (feste Auswahl 1–7, 16, 17), darum am Testjungen. Nebenbefund: eine Antwort falscher Art erscheint jetzt
   als „falsch geschrieben“ (sth/sb liegen zwei Zeichen auseinander) – nur Anzeige, als [B-994](B-994-falsche-platzhalter-art-als-falsch-geschrieben.md)
   abgelegt.
+- **2026-11-25** — `in-arbeit` → `abgenommen`: Commit `fc3c37f4`; Suite 2469/2469, Mutanten 13/13, Review ohne 🔴, Rollengang an
+  der Kopie (Sohn maschinell im Test des Testjungen, Vater in der Vorschau von Übung 15). Creator Regressionszeuge.

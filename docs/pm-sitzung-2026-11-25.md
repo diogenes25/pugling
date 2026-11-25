@@ -445,3 +445,24 @@ Kopie-Server nach der letzten Code-Änderung auf einer frischen Kopie gestartet,
   nicht. Damit kann ich Theodors Rückmeldungen 3, 6 und 7 als erledigt beantworten.“ Nebenbefund: die falsche Art heißt im
   Report jetzt „falsch geschrieben“ → [B-994](backlog/B-994-falsche-platzhalter-art-als-falsch-geschrieben.md), P3.
 - **Creator – Regressionszeuge:** `WordListPlaceholders` unverändert, der KI-Creator nicht im Diff; Suite grün.
+
+**Stand:** B-990 `abgenommen` (`fc3c37f4`).
+
+## Retrospektive (Sprint 165)
+
+**Nachschau:** Sprint 164 (B-624) war schon in Runde 4 nachgeschaut; seither kein neuer Befund. Index: 582 von 623.
+
+**Was durchkam:** Drei 🟡 fand erst der Review. Das wichtigste: `IsMisspelled`/`IsAccentSlip` lesen dieselbe Quelle wie
+`Matches` (`Normalize` der Antwort und der Lösungen), maßen aber ohne die neue Abbildung. Die Regel aus Step 4 („für einen
+Filter jeden anderen Leser seiner Quelle greppen“) hätte das gefunden. Ich hatte die *Aufrufer* von `Matches` gegreppt, nicht
+die *Leser* von `Normalize` in derselben Klasse. Die zwei Testlücken (blankes „sb“, Wortgrenzen) hätte eine Mutante je
+Bedingung des Regex gefunden; ich hatte nur je Kürzel eine geplant.
+
+**Der eine Mechanismus:** keiner, begründet. Beide Regeln stehen schon in pm-loop (Step 4 Leser greppen, Step 5 „per condition
+of a new query, one mutant“), und beide haben gewirkt, sobald sie angewandt wurden: im Review bzw. in der zweiten
+Mutanten-Runde, beides vor dem Commit. Eine weitere Zeile im Skill, das schon über dem Budget liegt, würde dieselbe Regel nur
+wiederholen. Kein neues Tor, darum kein Halt.
+
+**Bewusst ungedeckt:** [B-994](backlog/B-994-falsche-platzhalter-art-als-falsch-geschrieben.md) (Anzeige „falsch geschrieben“ bei
+falscher Art). Theodors eigene Testposition 102 fragt die beiden Karten nicht ab, darum hat der Rollengang sie am Testjungen
+gemessen, nicht an ihm.
