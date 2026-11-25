@@ -63,12 +63,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
+| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“) | Wunsch | `ausformuliert` | P2 | — | backend | — |
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | Learning Dad reagiert auf verfehlte Tagesziele vom Vortag (wütend → Monster → Kampfansage) | Wunsch | `idee` | P2 | — | — | — |
 | [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
 | [B-821](B-821-freies-ueben-info-modus-in-der-sohn-app.md) | Freies Üben ohne Münzen nach einer erledigten Aufgabe | Wunsch | `idee` | P2 | — | frontend | — |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | Die Stufe einer bestehenden Position ändern und einen wartenden Aufstieg sehen | Wunsch | `idee` | P2 | — | beides | — |
-| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“) | Wunsch | `idee` | P2 | — | backend | — |
 | [B-860](B-860-aufbau-weg-wettlauf-baut-kette.md) | Zwei gleichzeitige Bearbeitungen bauen am Aufbau-Weg eine Kette oder einen Kreis | Defekt | `idee` | P3 | — | backend | Migration? + Vertrag? |
 | [B-971](B-971-urteil-pruefung-ausserhalb-der-transaktion.md) | Zwei gleichzeitige Urteile über dieselbe Meldung können eine gebuchte Korrektur als „abgewiesen“ zeigen | Defekt | `idee` | P3 | — | — | — |
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
@@ -1211,7 +1211,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-881](B-881-ueberholte-uebungsrunde-nach-stufenwechsel.md) | `abgenommen` | Abschnitt „User Story" |
 | [B-882](B-882-stufe-im-positions-bearbeiten.md) | `idee` | `unverifiziert: true` |
 | [B-980](B-980-prognose-vor-dem-klausurtag-wortlaut.md) | `idee` | `unverifiziert: true` |
-| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | `idee` | `unverifiziert: true` |
 | [B-991](B-991-besitz-platzhalter-sb-s-jds.md) | `idee` | `unverifiziert: true` |
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | `idee` | `unverifiziert: true` |
 
