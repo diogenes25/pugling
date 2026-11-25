@@ -126,3 +126,6 @@ gibt es nur als Handmessung.
   Verhältnis ist großzügig, die Lücke liegt in Wahrnehmung („+1") und Theodors fehlender Truhe.
 - **2026-11-21** — Grill-Runde nach Punkt 1 vom Vater angehalten: vorerst nur die Unzufriedenheit festhalten
   (Entscheidung 1). Bleibt `ausformuliert`.
+- **2026-11-25** — AK 2 an einer Kopie geklärt (PM-Sitzung 2026-11-25, Runde 4): Theodor hat am 21. und 22.11. je eine Truhe
+  bekommen, an beiden Tagen waren die Tagesziele aller Pläne erfüllt (4 von 6, offen nur Wochenziele). Kein Defekt, die Regel
+  aus B-611 greift. Bleibt `ausformuliert`, die Punkte 2–6 warten auf den Vater.

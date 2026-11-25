@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase mit Friedrich)"
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-25
 ---
 
 # B-624 · Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler

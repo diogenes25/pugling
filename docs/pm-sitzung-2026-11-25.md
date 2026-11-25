@@ -331,3 +331,72 @@ verhindert hat, steht aus.
 
 **Bewusst ungedeckt:** Feldlisten in Skripten (`plan-kopieren.ps1`) hält kein Tor gegen den Vertrag; Report-Kategorie nur für
 Vokabeln.
+
+## Runde 4 — Vorstellung & Feedback
+
+Vierter Aufruf von `/pm-loop` am selben Tag, ohne Zielvorgabe. Rollengang an einer frischen Kopie der echten DB
+(`kopie-server.sh`, :5201, mittags, vor dem Üben der Söhne); :5200 unberührt. Kein neuer Export unter `docs/anmerkungen/`.
+
+### Feedback Sohn (an der Kopie gemessen, nicht befragt)
+
+- **Friedrich** übt, aber nicht mehr seine Tagespflicht: Seit dem 22.11. hat er nur die Generalproben 165–167 und 166 als
+  Test abgelegt (Vokabeltest am 24.11.), keine der Tagespositionen 202/133/134/211. Ziele 1–2 von 10, Münzen trotzdem
+  213/87/457 am Tag, Serie 0, letzte Truhe am 21.11. Saldo 2310 Münzen; der Malus kostete ihn 4 und 8 Münzen.
+- **Theodor** hat seit 21. und 22.11. zwei Truhen; am 23.11. nichts geübt, am 24.11. nur 99 und die Nacharbeit 102.
+  Saldo 621 nach zwei Käufen für 700 Münzen.
+
+### Feedback Vater
+
+- **Stört (gemessen):** Der Stock spürt sich nicht. 2 Münzen je verpasster Tagespflicht gegen ~450 Münzen Einnahmen an einem
+  Übungstag – Friedrich kann die Pflicht schwänzen und trotzdem reicher werden. Schon am 24.11. als Stellschraube des Vaters
+  notiert (`PenaltyCoins` je Position), keine Story. Neu ist nur, dass es seither drei Tage so lief.
+- **Wartet bei ihm:** B-743 AK 2, B-752 Gerät, B-780 Entscheidung zu den Punkten 2–6.
+
+### Feedback Creator
+
+- Keine neue Reibung; Regressionszeuge, nicht gegangen.
+
+## PM-Synthese & Priorisierung (Runde 4)
+
+Kein Code-Defekt im Rollengang. Die Reibung liegt in der Einstellung der Pläne (Malus-Höhe, Generalproben neben den
+Tagespflichten), und die entscheidet der Vater. Ein offener Punkt aus B-780 ist an den Daten geklärt: Theodors Truhe kommt,
+wenn er die Tagesziele aller Pläne erfüllt (21. und 22.11., je 4 von 6; die zwei offenen waren Wochenziele). AK 2 dort ist
+damit ohne Defekt erledigt.
+
+| Prio | Punkt | Größe | Wo | Weg |
+| --- | --- | --- | --- | --- |
+| P1 | Malus 2 gegen ~450 Einnahmen | — | Daten | Stellschraube des Vaters (Skript wie Paket B), keine Story |
+| P2 | Münzen „zu wenig" | ? | ? | [B-780](backlog/B-780-muenzen-je-uebung-nachmessen.md), Punkte 2–6 im Dialog |
+| P2 | Kürzel des Kindes | ? | backend | [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md), Dialog |
+| P3 | Wettläufe | ? | backend | [B-860](backlog/B-860-aufbau-weg-wettlauf-baut-kette.md), [B-971](backlog/B-971-urteil-pruefung-ausserhalb-der-transaktion.md) |
+
+**Roter Faden:** Die Pflicht muss mehr kosten als sie spart – sonst ist der Stock eine Zahl.
+
+**Kein Sprint in dieser Runde.** Alle Kandidaten mit Wirkung sind `Wunsch`/`Frage` oder reine Plan-Einstellungen; beides
+entscheidet der Vater im Dialog, eine autonome Freigabe gibt es für diese Runde nicht. Die zwei Defekte sind P3 und `idee`.
+
+## Retrospektive (Runde 4)
+
+**Nachschau:** Sprint 164 – B-624 (`b7538326`): alle Schreiber des Positions-Kastens und des Item-Stands gegreppt
+(`ApplyReview`, `ApplyAccentSlip`, `RecordAsync`). Üben und Mischrunde werten den Akzentfehler, die Selbsteinschätzung
+(`PositionPracticeController.cs:812`) ist ungetippt, Test, Lernkarte und Turmspiel bleiben streng wie entschieden. Kein Fund.
+`nachgeschaut: 2026-11-25` an B-624.
+
+**Was durchkam:** nichts Neues, es gab kein Increment. Der stärkste Befund dieser Runde (Stock zahnlos) war schon am 24.11.
+notiert und kam diesmal aus den Daten der Kopie, nicht aus einem Tor.
+
+**Der eine Mechanismus:** keiner, begründet. Ohne Increment gibt es keine Fehlerklasse, die ein Tor hätte fangen können. Die
+Malus-Höhe ist eine Plan-Einstellung des Vaters, kein Code. Ein Tor „Malus ≥ x % der Tageseinnahmen" würde in eine Entscheidung
+eingreifen, die bei ihm liegt.
+
+**Bewusst ungedeckt:** wie in Runde 3 (Feldlisten in Skripten, Report-Kategorie nur für Vokabeln). Das Aufräumen der
+pm-loop-Skill-Datei, die über ihrem Budget liegt, steht weiter aus.
+
+## Offene Roadmap (Stand Runde 4)
+
+Die Liste, die gilt, ist `docs/backlog/`. Reihenfolge:
+
+1. **Beim Vater:** Malus-Höhe in Friedrichs und Theodors Plänen (oder bewusst so lassen), B-780 Punkte 2–6, B-743 AK 2,
+   B-752 am Gerät.
+2. [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md) im Dialog – Theodors letztes offenes „zu streng".
+3. Der Rückbau von Paket B nach dem 4.12./8.12. (Pläne 13–16, Skript Paket B).
