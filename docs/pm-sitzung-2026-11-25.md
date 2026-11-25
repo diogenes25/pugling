@@ -400,3 +400,13 @@ Die Liste, die gilt, ist `docs/backlog/`. Reihenfolge:
    B-752 am Gerät.
 2. [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md) im Dialog – Theodors letztes offenes „zu streng".
 3. Der Rückbau von Paket B nach dem 4.12./8.12. (Pläne 13–16, Skript Paket B).
+
+## Nachtrag Runde 4 — Malus 20
+
+Entscheidung des Vaters (Chat, 2026-11-25): Malus je verpasster **Tagespflicht** 2 → **20 Münzen** (= `PointsGoalMet`),
+beide Söhne; Theodors Wochen-Nacharbeit 101 bleibt bei 2, Friedrichs Generalproben ohne Malus. Skript
+`scripts/malus-20-2026-11-25.ps1`: meldet erst beide Söhne an (rechnet geschlossene Tage zum alten Satz ab, weil
+`SettleClosedPeriodsAsync` den Malus beim Abrechnen liest), prüft Daily/2 je Position, sichert die echte DB, PATCHt
+`penaltyCoins`. **Probe an einer frischen Kopie:** 23./24.11. zu je 2 abgerechnet (Theodor 2, Friedrich 4 Buchungen), nach dem
+Umstellen und erneutem Login keine Buchung zu 20; die Sohn-Sicht zeigt an 202/133/134/211 „20". Der neue Satz gilt ab heute,
+25.11. Am Heimnetz-Server führt der Vater es selbst aus (PINs).
