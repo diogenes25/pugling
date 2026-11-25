@@ -24,10 +24,12 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
     /// is only advanced if the answer <paramref name="countsForMastery"/> is true – otherwise the box
     /// could be farmed up by repeating the same card within one session (anti-farming, as with the
     /// position engine). No <c>SaveChanges</c> – see class doc.
+    /// <paramref name="accentSlip"/> marks a miss that practice counted half (B-624); the learning progress still records
+    /// it as the miss <paramref name="wasCorrect"/> says (decision 7), the flag only tells the report why.
     /// </summary>
     public async Task RecordAsync(int childId, int exerciseId, ContentItem item, bool wasCorrect, int stageValue,
         string? givenAnswer, ItemReviewSource source, int? planPositionId, DateOnly today, bool countsForMastery,
-        CancellationToken ct = default)
+        bool accentSlip, CancellationToken ct = default)
     {
         if (item.ItemId is not { } itemId || item.VocabularyId is not { } vocabId) return;
 
@@ -45,6 +47,7 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
             StageValue = stageValue,
             GivenAnswer = givenAnswer,
             WasCorrect = wasCorrect,
+            AccentSlip = accentSlip,
             At = now,
         });
 

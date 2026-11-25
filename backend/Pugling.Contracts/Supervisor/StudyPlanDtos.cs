@@ -154,6 +154,11 @@ public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, 
 /// <c>null</c> = no build path. <c>ExerciseId</c>/<c>ExerciseTitle</c> stay the target's.
 /// </param>
 /// <param name="Build">Level n of m and the exercise played now, for the supervisor's view; <c>null</c> = no build path.</param>
+/// <param name="AccentLenient">
+/// Accent leniency (B-624): in practice, an answer wrong only by its diacritics ("ecole" for "école") counts half - the
+/// card keeps its box, earns no coins and does not break the combo. The final test and the cross-plan learning state
+/// per word stay strict. On by default.
+/// </param>
 public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string ExerciseTitle,
     string ExerciseType, int Order, int? Stage, int? ItemCount, ItemScope Scope, GoalCadence Cadence,
     PracticeOrder OrderStrategy, int? GoalThreshold, bool RequireTypedTest, bool UseLeitner, int MaxBox,
@@ -161,7 +166,7 @@ public record PositionResponse(int Id, int StudyPlanId, int ExerciseId, string E
     int NewContentPoints, int ComboThreshold, int ComboBonusPoints, int SpeedThresholdSeconds, int SpeedBonusPoints,
     List<ScoringTimeSlot>? TimeSlots, int NewItemsPerDay, int DailyDoseInForce, LearningCheck? LearningCheck = null,
     bool ForgivingDemotion = false, bool Remediation = false, int CompletionBonus = 0, DateOnly? CompletedOn = null,
-    int? CurrentBuildLevel = null, BuildPath? Build = null);
+    int? CurrentBuildLevel = null, BuildPath? Build = null, bool AccentLenient = true);
 
 /// <summary>What carries a position's goal - the honest answer to "how strictly is this duty checked?" (B-550).</summary>
 public enum LearningCheckKind
@@ -225,6 +230,7 @@ public record LearningCheck(LearningCheckKind Kind, int? TypedFromDay = null);
 /// <param name="NewItemsPerDay">Daily dose of new contents (see <see cref="PositionResponse"/>); <c>null</c> = 0 (no cap). 0 to 200.</param>
 /// <param name="ForgivingDemotion">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c> (hard reset). Not inherited from the exercise.</param>
 /// <param name="Remediation">As in <see cref="PositionResponse"/>; <c>null</c> = <c>false</c>.</param>
+/// <param name="AccentLenient">As in <see cref="PositionResponse"/>; <c>null</c> = <c>true</c> (lenient, B-624 decision 4).</param>
 /// <param name="CompletionBonus">As in <see cref="PositionResponse"/>; <c>null</c> = 0. 0 to 1000.</param>
 /// <param name="CurrentBuildLevel">
 /// Start level on the exercise's build path (B-848, see <see cref="PositionResponse"/>); <c>null</c> = no build path.
@@ -237,7 +243,7 @@ public record CreatePositionDto(int ExerciseId, int? Order, int? Stage, int? Ite
     int? PointsGoalMet, int? PenaltyCoins, int? NewContentPoints, int? ComboThreshold, int? ComboBonusPoints,
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
     int? NewItemsPerDay = null, bool? ForgivingDemotion = null, bool? Remediation = null, int? CompletionBonus = null,
-    int? CurrentBuildLevel = null);
+    int? CurrentBuildLevel = null, bool? AccentLenient = null);
 
 /// <summary>
 /// The weak words of the plan's child to review daily (B-584): ids of vocabulary store entries the child already has
@@ -305,6 +311,7 @@ public record CreateReviewFromWordsDto(List<int> VocabularyIds);
 /// </param>
 /// <param name="ForgivingDemotion">Forgiving demotion (see <see cref="PositionResponse"/>); <c>false</c> switches it off.</param>
 /// <param name="Remediation">Remediation (see <see cref="PositionResponse"/>); <c>false</c> switches it off, the done tasks stay.</param>
+/// <param name="AccentLenient">Accent leniency (see <see cref="PositionResponse"/>); <c>false</c> grades accents strictly.</param>
 /// <param name="CompletionBonus">Completion bonus (see <see cref="PositionResponse"/>); <c>0</c> = none. 0 to 1000.</param>
 /// <param name="CurrentBuildLevel">
 /// Moves the position to this level of its build path (B-848, rules as in <see cref="CreatePositionDto"/>). There is no
@@ -317,4 +324,4 @@ public record UpdatePositionDto(int? Order, int? Stage, int? ItemCount, ItemScop
     int? SpeedThresholdSeconds, int? SpeedBonusPoints, List<ScoringTimeSlot>? TimeSlots = null,
     bool ClearTimeSlots = false, int? NewItemsPerDay = null, bool ClearStage = false,
     bool ClearItemCount = false, bool ClearGoalThreshold = false, bool? ForgivingDemotion = null, bool? Remediation = null,
-    int? CompletionBonus = null, int? CurrentBuildLevel = null);
+    int? CompletionBonus = null, int? CurrentBuildLevel = null, bool? AccentLenient = null);

@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
+tags: [typ/story, status/in-arbeit, bereich/training, rolle/student, rolle/supervisor, lerntechnik/vokabeln]
 aliases: [Akzent-Toleranz, Akzentfehler]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: L
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: "Chat mit dem Vater, 2026-11-17 (Erfahrung aus der Testphase mit Friedrich)"
 grund: ""
 ersetzt_durch: []
+wartet_auf: "Vater: Blick am Gerät – halbes Blatt „Fast! Achte auf den Akzent“ (Farbe, Markierung, Maskottchen)"
 ---
 
 # B-624 · Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler
@@ -196,3 +197,49 @@ Spalten mit Bestandsdaten. Kein XL: kein neuer Endpunkt, und jede Stelle hat ein
   für den Abschlusstest.
 - **2026-11-17** — geschätzt: L, beides, Migration ja (Schalter an der Position mit Bestand an, „halb“ am
   `ReviewEvent` wegen der Combo), kein Vertragsbruch (nur additive Felder).
+- **2026-11-25** — Schätzung gegen den Code geprüft (Sprint 164): trägt. Risiko 2 erledigt – die Pflicht hängt am
+  Rundencursor bzw. am Test, nicht an Treffern. Neu: „falsch geschrieben“ wird nirgends gespeichert, darum ein drittes
+  Kennzeichen an `ItemReviewEvent` für den Report. AK 2 „und ‚falsch geschrieben‘“ gilt für „ecolle“/„école“ nicht (Abstand 2,
+  Schwelle aus B-422 bei fünf Buchstaben 1) – unverändertes Verhalten; geprüft wird, was AK 2 trägt.
+- **2026-11-25** — gebaut: `AnswerGrader.IsAccentSlip` (Faltung FormD ohne `NonSpacingMark`, über dieselben Schreibweisen wie
+  `IsMisspelled`); Migration `AccentLeniency` (Positions-Schalter, Bestand per `UPDATE` an; `AccentSlip` an `ReviewEvent` und
+  `ItemReviewEvent`); Vertrag additiv (`PositionResponse`/`Create`/`UpdatePositionDto.AccentLenient`,
+  `ReviewOutcome.AccentSlip`, `ItemReport.AccentSlips`, `MixedReviewOutcome.AccentSlip`); dritter Zweig im Üben
+  (`PositionPlayService.ApplyAccentSlip`: Kasten hält, Termin nach dem Intervall des Kastens; Combo überspringt den Fehler);
+  `ItemProgressService.RecordAsync` mit Pflichtparameter `accentSlip`. Frontend: halbes Blatt „Fast! Achte auf den Akzent:“
+  (gold, Stelle markiert), Schalter „Akzentfehler halb werten“ (Standard an) mit Erklärung, Report-Spalte „Akzent“, Hinweis
+  „Akzent streng“ in der Positionsliste, Mischrunden-Zeile „nur der Akzent – zählt halb“. `scripts/plan-kopieren.ps1` nimmt
+  das Feld mit.
+- **2026-11-25** — Reviews (`pugling-reviewer`, `frontend-reviewer`): kein 🔴. 🟡 übernommen: (1) die Mischrunde schreibt den
+  Kasten der Position und warf einen Akzentfehler auf Kasten 1 – folgt jetzt dem Schalter der Position (sonst hinge der
+  Kasten am Bildschirm); (2) `plan-kopieren.ps1` verlor das Feld; (3) die Verdrahtung in `SohnPractice` war ungetestet;
+  (4) eine leere Zusicherung („keine Münzen“ auf einem roten Blatt) entfernt. 🟢 übernommen: Report zählt nur gewertete
+  Akzentfehler, „ou“/„où“ dokumentiert, Listen-Hinweis, Spaltenerklärung. 🟢 bewusst nicht: Report nur für Vokabeln (Lücken
+  ohne `ItemId`), Verlauf je Wort ohne Kennzeichen, Maskottchen-Geste auf dem halben Blatt (Blick am Gerät). Bewusst streng
+  bleiben Abschlusstest, Bonus-Training, Turmspiel und Lernkarte (bewegen keinen Positions-Kasten). **Fehlerzähler: 2** (zwei 🟡
+  im Increment: Mischrunde, Kopier-Skript).
+- **2026-11-25** — Belege je AK-Fall (`AkzentMildeTests.cs`, `AkzentMildePfadTests.cs`, `MischrundeWertungTests.cs`, Vitest):
+  - AK 1 Kasten/Termin/Münzen → `Akzentfehler_Haelt_Den_Kasten_Und_Zahlt_Nichts`; M1, M8, M9, M16 rot
+  - AK 1 Combo → `Akzentfehler_Reisst_Die_Combo_Nicht` (1, 1, 2); M6, M7 rot
+  - AK 1 Blatt → `Lektion.test.tsx` „halbe Blatt“; F2, F3 rot · Verdrahtung → `SohnPractice.test.tsx`; F1, F7, F8 rot
+  - AK 1 „als gespielt gezählt“ → der Rundencursor rückt bei jeder Antwort vor (unbedingter Code, nicht eigens getestet)
+  - AK 2 Buchstabe falsch → `Buchstabenfehler_Bleibt_Ein_Ganzer_Fehler`, Unit-Fälle inkl. ß/œ; M2, M3 rot
+  - AK 3 Test bleibt binär → `Abschlusstest_Wertet_Den_Akzentfehler_Als_Falsch`, Absichtserklärung (grün auch vor B-624)
+  - AK 4 Haken aus → `Ohne_Haken_…`; M5 rot
+  - AK 5 neue Positionen, PATCH → `Neue_Position_Ist_Mild_Und_Abschaltbar`; M13, M14b rot · Vater-Web → `PlanPositions.test.ts`; F4–F6 rot
+  - AK 5 Bestand → `Migration_Schaltet_Bestehende_Positionen_Mild`; M12 rot
+  - AK 6 andere Sprachen → Unit-Fälle Umlaut, ñ; M1 rot
+  - AK 7 Report → `Report_Zaehlt_Akzentfehler_Je_Wort` (gewertet 1, Treffer 0, ungewertet nicht doppelt); M10, M11, M20 rot
+  - AK 8 Lernstand je Wort hart → `Planuebergreifender_Lernstand_…`; M15 rot
+  - Review-Fund Mischrunde → `Akzentfehler_Haelt_Den_Kasten_Nur_Auf_Milder_Position`; M17, M18, M19 rot · Zeile → F9 rot
+
+  Mutanten-Probe (`mutant-probe.py`), zwei Läufe: 11:40 (vor den Review-Fixes) und 11:56 (nach der letzten Code-Änderung):
+  M1–M3, M5–M13, M15, M16, F1–F6 rot (M14 kompilierte nicht, als M14b neu gemessen); M14b, M17–M20, F7–F9 rot. Grundlinie
+  nach dem Zurückspielen beide Male grün. M10 maß die Zeile vor ihrer Änderung zu `accentSlip && scored`; die neue Form trägt M20.
+- **2026-11-25** — Suite nach der letzten Code-Änderung: .NET 2440/2440 (Release, Ausgangsstand 2413), Vitest 1468/1468,
+  `tsc -b` sauber. Rollengang an einer frischen Kopie der echten DB (`kopie-server.sh`, :5201): der Start spielte
+  `AccentLeniency` ein (Migrationsprobe – alle 212 Positionen mild, `foreign_key_check` leer). Friedrich, Plan 15, Position 166,
+  eine Runde: „une autoroute“ richtig (Kasten 5, Combo 1); „le peage“ → halb, Kasten 4 bleibt, 0 Münzen, Combo 1; „le depart“ →
+  halb, Kasten 1 bleibt, morgen fällig statt heute; „une pausse“ → ganzer Fehler, Kasten 3 → 1, Combo 0. Vater-Report: „Akzent“
+  1 bei péage und départ, 0 bei autoroute und pause. Abschlusstest derselben Position: „le peage“ falsch und „falsch
+  geschrieben“. Offen für einen Menschen: das halbe Blatt am Handy (Gold statt Rot, Markierung, Maskottchen).

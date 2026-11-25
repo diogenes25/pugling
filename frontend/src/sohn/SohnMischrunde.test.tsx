@@ -143,6 +143,15 @@ describe("Mischrunde – Ergebnis mit Deckelstand (B-766 AK 3)", () => {
     expect(screen.getByText("Ohne Münzen: diese Wörter hattest du heute schon gesehen – sie rücken trotzdem in ihrem Kasten vor.")).toBeTruthy();
   });
 
+  // B-624: ein Akzentfehler steht als solcher da, nicht als „falsch“. Rot, wenn die Zeile `accentSlip` nicht liest.
+  it("nennt den Akzentfehler als halb gewertet", () => {
+    const items = [{ cardId: 1, positionId: 3, exerciseTitle: "Lieux", prompt: "Schule", expected: "école", givenAnswer: "ecole",
+      wasCorrect: false, skipped: false, coinsAwarded: 0, box: 4, dueOn: "2026-11-30", gapIndex: null, accentSlip: true }];
+    render(<Ergebnis result={ergebnis({ items, total: 1, correct: 0, coinsAwarded: 0, coinsEarned: 0 } as Partial<MixedReviewResult>)}
+      getippt={[1]} onZurueck={() => {}} skin={DEFAULT_SKIN} />);
+    expect(screen.getByText(/nur der Akzent – zählt halb/, { selector: ".falsch" })).toBeTruthy();
+  });
+
   // Rot, wenn das Ergebnis jeden Treffer ohne Münzen für „heute schon gesehen" hält: selbst eingeschätzte Karten zahlen nie.
   it("nennt bei nur selbst eingeschätzten Treffern deren eigenen Grund", () => {
     render(<Ergebnis result={ergebnis({ coinsAwarded: 0, coinsEarned: 0 })} getippt={[]} onZurueck={() => {}} skin={DEFAULT_SKIN} />);

@@ -86,7 +86,8 @@ the stories); each story already has its `Angriffsplan`. Build backend first, th
 the central client/types, following the `CLAUDE.md` of each area.
 
 **Put a rule at the sink, not at the sources:** the one place every result passes to reach the user (word bank,
-briefing); none? make one first – rules per path escaped six times. Reuse the neighbours' input cleanup. **A sink
+briefing); none? make one first – rules per path escaped six times. A rule about what an answer *does* has a second
+sink, the stored state: grep every writer of it (`ApplyReview` – the mixed review wrote the same box, Sprint 164). Reuse the neighbours' input cleanup. **A sink
 function called elsewhere gets the inputs the sink builds** (a sink method builds them; escaped twice, Sprint 45).
 **Changing a shared helper (a moved boundary, new state, a filter at a sink) is decided per caller:** grep its callers – for a filter, every other reader of its source, guards included – and re-read each: exceptions keyed on the old boundary move too (Sprint 73), a mere claim (self-report) must not move the state (Sprint 81), an "is it empty?" guard on the unfiltered source froze a test (Sprint 135); a loosening for some callers is a parameter
 without default (Sprint 162).

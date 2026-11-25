@@ -267,3 +267,67 @@ Die Liste, die gilt, ist `docs/backlog/`. Reihenfolge:
    Faden, und Friedrich tippt täglich Französisch. Vor dem Bau die Schätzung vom 17.11. gegen den Code prüfen
    (Migrationskette, Pflicht-Zählung, Risiko 2).
 3. [B-990](backlog/B-990-eigene-platzhalter-kuerzel-des-kindes.md) und [B-784](backlog/B-784-tippfehler-im-ueben-bei-theodor.md) im Dialog.
+
+## Sprint 164 — Ziel & Umfang
+
+Auf Wunsch des Vaters direkt nach Sprint 163 („Ja, B-624 bauen“).
+
+**Sprint-Ziel:** Friedrich verliert im Üben keine Karte mehr an einem Akzent – „ecole“ für „école“ hält den Kasten, zahlt
+nichts und reißt die Combo nicht, „ecolle“ bleibt ein ganzer Fehler, und der Abschlusstest wertet weiter wie die Schule.
+**Umfang:** [B-624](backlog/B-624-akzentfehler-nicht-ganzer-fehler.md) (L, beides, Migration).
+**Entwickler-Brief:** Das Urteil fällt an der Senke `AnswerGrader` (`IsAccentSlip`, dieselben Schreibweisen wie
+`IsMisspelled`, also mit Artikel-Toleranz). Was ein Akzentfehler kostet, entscheidet nur das Üben einer Position
+(`PositionPracticeController.Review`): dritter Zweig neben richtig/falsch, Leitner über `PositionPlayService.ApplyAccentSlip`
+(Kasten hält, Termin nach dem Intervall des aktuellen Kastens). Combo über `ReviewEvent.AccentSlip` (übersprungen, nicht
+gezählt), Report über `ItemReviewEvent.AccentSlip`. Test, Mischrunde, Bonus-Training, Lernkarte und Turmspiel bleiben
+streng – `ItemProgressService.RecordAsync` bekommt `accentSlip` als Pflichtparameter, damit jeder Aufrufer das entscheidet.
+Migration `AccentLeniency` hängt an `FeedbackCorrection` an, Bestand per `UPDATE` auf „an“ (Entscheidung 4).
+
+**Abgleich gegen den Code vor dem Bau (Schätzung vom 17.11.):** trägt. Risiko 2 ist erledigt: Die Pflicht hängt nicht an
+Treffern, der Rundencursor rückt bei jeder Antwort vor, und die Vokabel-Pflicht ist der Test. Neu gegenüber der Schätzung:
+„falsch geschrieben“ wird nirgends gespeichert, darum braucht die Report-Kategorie ein drittes Kennzeichen an
+`ItemReviewEvent`. AK 2 („ecolle“ ist „falsch geschrieben“) gilt nicht für fünf Buchstaben – „ecolle“ hat Abstand 2, die
+Schwelle aus B-422 ist dort 1; unverändertes Verhalten, der Test prüft, was AK 2 trägt (falsch, kein Akzentfehler, Kasten 1).
+
+## Iteration 164 — umgesetzt
+
+**Backend (API-First):** `AnswerGrader.IsAccentSlip`; Migration `AccentLeniency` (Positions-Schalter mit Bestand „an“,
+`AccentSlip` an beiden Antwort-Logs); dritter Zweig im Üben und – nach dem Review – in der Mischrunde, die denselben
+Positions-Kasten schreibt; Report-Spalte; Vertrag additiv. **Frontend:** halbes Blatt (gold), Ansage, Schalter mit
+Erklärung, Report-Spalte, Listen-Hinweis „Akzent streng“, Mischrunden-Zeile. `scripts/plan-kopieren.ps1` nimmt das Feld mit.
+**Verifikation:** .NET 2440/2440 (Release), Vitest 1468/1468, `tsc -b` sauber; Mutanten in zwei Läufen 28 rot am benannten
+Fall, eine Form kompilierte nicht und ist neu gemessen (Tabelle in B-624). **Reviews:** kein 🔴; vier 🟡 übernommen
+(Mischrunde, Kopier-Skript, ungetestete Verdrahtung, leere Zusicherung). **Fehlerzähler Sprint 164: 2** (Mischrunde,
+Kopier-Skript – im Increment, vom Review gefunden).
+
+## Runde 164 — Re-Review / Abnahme
+
+Kopie-Server nach der letzten Code-Änderung auf einer frischen Kopie gestartet (spielte die Migration ein), danach beendet.
+
+- **Sohn – geliefert, wartet auf den Blick am Gerät:** An Friedrichs echter Position 166 hält „le peage“ Kasten 4 ohne
+  Münzen, und die Combo bleibt stehen; „une pausse“ wirft die Karte wie bisher zurück. Ob das goldene Blatt sich am Handy
+  wie „fast“ anfühlt (Farbe, Markierung des é, das Maskottchen schlägt sich noch an die Stirn), muss ein Mensch sehen.
+- **Vater – abgenommen:** „Im Report sehe ich bei péage und départ je einen Akzentfehler und bei pause keinen – also fehlt
+  Friedrich dort der Akzent, nicht das Wort. Der Test bleibt streng.“ Schalter und Standard „an“ sind per API und Vitest
+  belegt, nicht im Browser geklickt.
+- **Creator – Regressionszeuge:** kein Creator-Pfad im Diff; Suite grün.
+
+**Stand:** B-624 `in-arbeit`, `wartet_auf` den Blick des Vaters am Gerät (wie bei B-626).
+
+## Retrospektive (Runde 3)
+
+**Nachschau:** Sprint 163 – B-993: `dcdd8c32` erneut gelesen, B-624 rührt `Normalize` nicht an (die Akzent-Faltung läuft
+danach); kein Fund. `nachgeschaut: 2026-11-25`.
+
+**Was durchkam:** Beide 🟡 des Backend-Reviews hat kein eigenes Tor gefunden. Die Mischrunde schreibt denselben
+Positions-Kasten wie das Üben. Ich hatte die Regel richtig an die Senke des *Urteils* gesetzt (`AnswerGrader`), aber nicht an
+alle Schreiber des *Zustands* (`ApplyReview` hat zwei Aufrufer, die das Kind erreichen). Das Kopier-Skript führt seine
+Feldliste von Hand. Von außen kam nichts.
+
+**Der eine Mechanismus:** ein Halbsatz an der Senken-Regel in pm-loop Step 4: eine Regel darüber, was eine Antwort *bewirkt*,
+hat eine zweite Senke, den gespeicherten Zustand – jeden Schreiber greppen. Kein neues Tor, darum kein Halt. Die Skill-Datei
+lag schon vorher über ihrem Budget (+2,1 kB, jetzt +2,3 kB); ein Aufräumgang mit Messung, welche Regel seit Sprints nichts
+verhindert hat, steht aus.
+
+**Bewusst ungedeckt:** Feldlisten in Skripten (`plan-kopieren.ps1`) hält kein Tor gegen den Vertrag; Report-Kategorie nur für
+Vokabeln.

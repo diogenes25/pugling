@@ -46,7 +46,7 @@ type ReviewAntwort = Omit<ReviewInput, "itemIndex">;
 export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displayOnly: boolean):
   | { kind: "none" }
   | { kind: "correct"; awarded: number; combo: number; comboBonus: number; speedBonus: number; box: number }
-  | { kind: "wrong"; expected: string | null; misspelled: boolean } {
+  | { kind: "wrong"; expected: string | null; misspelled: boolean; accentSlip: boolean } {
   if (!outcome || displayOnly) return { kind: "none" };
   if (outcome.wasCorrect) {
     return {
@@ -54,8 +54,12 @@ export function reviewFeedback(outcome: ReviewOutcome | null | undefined, displa
       comboBonus: outcome.comboBonus, speedBonus: outcome.speedBonus, box: outcome.box,
     };
   }
-  // B-422: nur ein Etikett – die Antwort bleibt falsch, der Kasten fällt wie sonst.
-  return { kind: "wrong", expected: outcome.expected ?? null, misspelled: outcome.misspelled ?? false };
+  // B-422: nur ein Etikett – die Antwort bleibt falsch, der Kasten fällt wie sonst. B-624: ein Akzentfehler zählt halb –
+  // falsch bleibt er (keine Münzen), aber der Kasten hält; das meldet der Server, die App rechnet es nicht nach.
+  return {
+    kind: "wrong", expected: outcome.expected ?? null, misspelled: outcome.misspelled ?? false,
+    accentSlip: outcome.accentSlip ?? false,
+  };
 }
 
 export function SohnPractice() {
@@ -314,11 +318,12 @@ export function SohnPractice() {
           if (!card.learnCard) setGeprueft((g) => ({ ...g, gesamt: g.gesamt + 1 }));
           setBlatt({
             richtig: false, gegeben: payload.givenAnswer ?? "", loesung: feedback.expected, muenzen: 0, comboBonus: 0,
-            tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled,
+            tempoBonus: 0, lob: 0, faelligAm: null, falschGeschrieben: feedback.misspelled, akzent: feedback.accentSlip,
             erklaerung: outcome?.explanation ?? null, nochmal: outcome?.repeatsAtEnd ?? false, naechsteRunde,
           });
           const absage = feedback.expected ? t("practice.solution", { expected: feedback.expected }) : t("practice.wrong");
-          setToast(feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
+          setToast(feedback.accentSlip && feedback.expected ? `${t("lektion.accentSlip")} ${feedback.expected}`
+            : feedback.misspelled ? `${t("test.misspelled")}. ${absage}` : absage);
           setPhase("blatt");
         }
         // feedback.kind === "none": kein Outcome ODER eine Anzeigenurstufe (ShowBoth) - kein Urteil, kein Blatt.

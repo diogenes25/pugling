@@ -471,4 +471,43 @@ public class MischrundeWertungTests(PuglingWebAppFactory factory) : MischrundeTe
         Assert.Equal(0, BonusCoins(k.ChildId));
         Assert.Equal(TestApi.ClimbedBox, Progress(pos, 0).Box);
     }
+    /// <summary>
+    /// B-624, review finding: the round writes the position's own box, so it follows the position's accent leniency. Item 0
+    /// of each position is turned into "café" in the store; "cafe" holds box 3 on a lenient position (due after box 3's
+    /// interval, flagged in the result and the history) and drops to box 1 on a strict one. Red when the round ignores the
+    /// leniency (lenient box 1) or the switch (strict box 3).
+    /// </summary>
+    [Fact]
+    public async Task Akzentfehler_Haelt_Den_Kasten_Nur_Auf_Milder_Position()
+    {
+        var k = await KidAsync();
+        var (_, lenient) = await PositionAsync(k);
+        var (_, strict) = await PositionAsync(k);
+        Db(db =>
+        {
+            db.PlanPositions.Single(p => p.Id == strict).AccentLenient = false;
+            foreach (var positionId in new[] { lenient, strict })
+            {
+                var exerciseId = db.PlanPositions.Single(p => p.Id == positionId).ExerciseId;
+                var item = db.ExerciseItems.Where(i => i.ExerciseId == exerciseId).OrderBy(i => i.OrderIndex).First();
+                db.Vocabularies.Single(v => v.Id == item.VocabularyId).Word = "café";
+            }
+        });
+        SetDue(lenient, 0, Today);
+        SetDue(strict, 0, Today);
+
+        var run = await StartAsync(k);
+        object Cafe(int positionId) => new { cardId = CardOf(run, positionId).GetProperty("cardId").GetInt32(), givenAnswer = "cafe", wasKnown = (bool?)null };
+        var result = await SubmitOkAsync(k, run, Cafe(lenient), Cafe(strict));
+
+        Assert.Equal((TestApi.ClimbedBox, (DateOnly?)Today.AddDays(4)), (Progress(lenient, 0).Box, Progress(lenient, 0).DueOn));
+        Assert.Equal((1, (DateOnly?)Today), (Progress(strict, 0).Box, Progress(strict, 0).DueOn));
+        var items = result.GetProperty("items").EnumerateArray().ToDictionary(i => i.GetProperty("positionId").GetInt32());
+        Assert.True(items[lenient].GetProperty("accentSlip").GetBoolean());
+        Assert.False(items[lenient].GetProperty("wasCorrect").GetBoolean());
+        Assert.False(items[strict].GetProperty("accentSlip").GetBoolean());
+        Assert.Equal(0, result.GetProperty("coinsAwarded").GetInt32());
+        Assert.True(Read(db => db.ItemReviewEvents.Any(e => e.PlanPositionId == lenient && e.AccentSlip)));
+        Assert.False(Read(db => db.ItemReviewEvents.Any(e => e.PlanPositionId == strict && e.AccentSlip)));
+    }
 }

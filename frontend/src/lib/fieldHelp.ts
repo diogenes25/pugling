@@ -129,6 +129,13 @@ export const FIELD_HELP = {
     text: "Münzen, die es genau einmal gibt, wenn die letzte Aufgabe der Nacharbeit frei getippt richtig war. Danach "
       + "verschwindet die Position aus der Tagesmission. 0 = kein Bonus.",
   },
+  accentLenient: {
+    title: "Akzentfehler halb werten",
+    text: "Nur im Üben: Ist ein Wort bis auf einen Akzent richtig („ecole“ statt „école“, „Madchen“ statt „Mädchen“), "
+      + "bleibt die Karte in ihrem Fach und kommt zum nächsten Termin wieder – keine Münzen, die Combo reißt nicht. "
+      + "Ein falscher Buchstabe bleibt ein ganzer Fehler. Der Abschlusstest und der Lernstand je Vokabel bleiben streng. "
+      + "Aus, wenn die Position gezielt Akzente üben soll.",
+  },
   forgivingDemotion: {
     title: "Ausrutscher verzeihen",
     text: "Nur mit Leitner-Kasten: Ein Fehler wirft ein Wort nur ein Fach zurück statt auf Fach 1; erst ein zweiter "

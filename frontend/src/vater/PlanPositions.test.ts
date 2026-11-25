@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExerciseFilter } from "./ExerciseFilterBar";
 import { planbauKriterien, planbauAuswahlSchluessel, dosisText, lernkontrolleText, schreibweise,
   REMOVE_POSITION_QUESTION, pointsFrom, settingsFrom, settingsToDto, settingsToUpdateDto, timeSlotProblem, withDose, withLeitner,
-  cadencesFor, stufenZaehler, withRemediation, positionSettingsProblem,
+  cadencesFor, stufenZaehler, withRemediation, positionSettingsProblem, defaultSettings,
   type PositionSettings,
 } from "./PlanPositions";
 import type { ExerciseSummary, PositionResponse, ScoringTimeSlot } from "../lib/types";
@@ -24,7 +24,7 @@ const LEER: PositionSettings = {
   cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "", orderStrategy: "WeakestFirst",
   pointsGoalMet: 20, penaltyCoins: 0,
   newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-  useLeitner: true, forgivingDemotion: false, remediation: false, completionBonus: 0, requireTypedTest: false,
+  useLeitner: true, forgivingDemotion: false, accentLenient: true, remediation: false, completionBonus: 0, requireTypedTest: false,
   stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
   timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
 };
@@ -469,6 +469,38 @@ describe("Ausrutscher verzeihen (B-219)", () => {
     expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: true }).forgivingDemotion).toBe(true);
     // Abwählen ist eine Aussage: `false`, nicht `null` – im PATCH bliebe die Milde sonst stehen.
     expect(settingsToUpdateDto({ ...LEER, forgivingDemotion: false }).forgivingDemotion).toBe(false);
+  });
+});
+
+/*
+ * B-624 AK 5: die Akzent-Milde reist beidseitig und steht ohne Angabe auf „an“ (Entscheidung 4).
+ */
+describe("Akzentfehler halb werten (B-624)", () => {
+  const stand = (accentLenient?: boolean) => settingsFrom({
+    timeSlots: null, cadence: "Daily", goalThreshold: null, itemCount: null, orderStrategy: "WeakestFirst",
+    pointsGoalMet: 20, penaltyCoins: 0, newContentPoints: 10, comboThreshold: 5, comboBonusPoints: 5,
+    useLeitner: true, requireTypedTest: false, newItemsPerDay: 0, accentLenient,
+    stage: null, scope: "All", speedThresholdSeconds: 0, speedBonusPoints: 0,
+  } as unknown as PositionResponse);
+
+  // Rot, wenn `settingsFrom` das Feld nicht liest (das Häkchen stünde beim Bearbeiten falsch, ein Speichern schaltete
+  // die Milde still um) oder eine Antwort ohne das Feld als „aus“ läse.
+  it("liest den gespeicherten Stand zurück, ohne Angabe an", () => {
+    expect(stand(false).accentLenient).toBe(false);
+    expect(stand(true).accentLenient).toBe(true);
+    expect(stand(undefined).accentLenient).toBe(true);
+  });
+
+  // Rot, wenn ein neues Formular die Milde aus hätte – dann legte das Vater-Web strenge Positionen an, anders als die API.
+  it("steht im neuen Formular auf an", () => {
+    expect(defaultSettings().accentLenient).toBe(true);
+  });
+
+  // Rot, wenn `settingsToDto`/`settingsToUpdateDto` das Feld nicht mitschicken; Abwählen ist `false`, nicht `null`.
+  it("schickt das Häkchen beim Anlegen und beim Ändern", () => {
+    expect(settingsToDto({ ...LEER, accentLenient: false }).accentLenient).toBe(false);
+    expect(settingsToUpdateDto({ ...LEER, accentLenient: false }).accentLenient).toBe(false);
+    expect(settingsToUpdateDto({ ...LEER, accentLenient: true }).accentLenient).toBe(true);
   });
 });
 

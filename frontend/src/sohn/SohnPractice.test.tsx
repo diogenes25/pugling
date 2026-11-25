@@ -531,6 +531,20 @@ describe("SohnPractice, falsche Antwort", () => {
     expect(toastRegion().textContent).toBe("Falsch geschrieben. Lösung: clinic");
   });
 
+  // B-624 AK 1, die Verdrahtung: das Kennzeichen des Servers erreicht Blatt und Ansage. Rot, wenn SohnPractice `akzent`
+  // nicht ins Blatt reicht (dann stünde das rote „Falsch geschrieben“ da) oder die Ansage den Akzent nicht nennt.
+  it("zeigt beim Akzentfehler das halbe Blatt und sagt den Akzent an", async () => {
+    review.mockResolvedValueOnce({ ...outcome(false, "école"), misspelled: true, accentSlip: true });
+    renderPractice();
+    await answerTyped("ecole");
+
+    const blatt = document.querySelector<HTMLElement>(".lektion-blatt.halb");
+    expect(blatt).not.toBeNull();
+    expect(blatt!.textContent).toContain(de.sohn.lektion.accentSlip);
+    expect(document.querySelector(".lektion-blatt.falsch")).toBeNull();
+    expect(toastRegion().textContent).toBe(`${de.sohn.lektion.accentSlip} école`);
+  });
+
   // B-422, AK 4, zweiter Teil. Rot, wenn das Etikett auch ohne Kennzeichen erscheint.
   // B-529 AK 5: die Erklärung der Bewertung landet auf dem Blatt. Rot, wenn SohnPractice `explanation` nicht ins Blatt
   // reicht – bei falsch wie bei richtig.

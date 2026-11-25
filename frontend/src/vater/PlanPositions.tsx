@@ -160,6 +160,8 @@ export interface PositionSettings {
   useLeitner: boolean;
   /** B-219: ein Ausrutscher senkt nur ein Fach, erst der zweite in Folge setzt auf Fach 1. Nur mit Leitner wirksam. */
   forgivingDemotion: boolean;
+  /** B-624: im Üben zählt ein Fehler nur am Akzent halb (Kasten bleibt, keine Münzen); der Test bleibt streng. Standard an. */
+  accentLenient: boolean;
   /** B-635: Nacharbeit – jede offene Aufgabe als Freitext, „leichter“ schaltbar, Runden bis alles frei getippt ist. */
   remediation: boolean;
   /** B-636: einmalige Münzen, wenn die letzte Aufgabe einer Nacharbeit „bis erledigt“ geschafft ist; 0 = keiner. */
@@ -308,13 +310,13 @@ export function pointsFrom(
  * die Übung beiträgt, trägt der `onChange` der Trefferliste nach – vorher stand hier ein `ex`-Parameter,
  * den nie ein Aufrufer belegte, und ein Kommentar, der das Gegenteil behauptete.
  */
-function defaultSettings(): PositionSettings {
+export function defaultSettings(): PositionSettings {
   return {
     cadence: "Daily", goalThreshold: "", itemCount: "", newItemsPerDay: "",
     orderStrategy: "WeakestFirst", pointsGoalMet: 20, penaltyCoins: 0,
     // Leer = Vorschlag der Übung übernehmen (siehe PositionSettings).
     newContentPoints: "", comboThreshold: "", comboBonusPoints: "",
-    useLeitner: false, forgivingDemotion: false, remediation: false, completionBonus: 0, requireTypedTest: false,
+    useLeitner: false, forgivingDemotion: false, accentLenient: true, remediation: false, completionBonus: 0, requireTypedTest: false,
     stage: "", stageStored: null, itemCountStored: null, goalThresholdStored: null, scope: "All", speedThresholdSeconds: "", speedBonusPoints: "",
     // Kein Fenster: eine Tageszeit ist eine Aussage über den Familienalltag, kein Vorschlag der Übung.
     timeSlotStart: "", timeSlotEnd: "", timeSlotMultiplier: "", timeSlotName: "", timeSlotStored: null,
@@ -337,6 +339,7 @@ export function settingsFrom(pos: PositionResponse): PositionSettings {
     comboBonusPoints: pos.comboBonusPoints.toString(),
     useLeitner: pos.useLeitner,
     forgivingDemotion: pos.forgivingDemotion ?? false,
+    accentLenient: pos.accentLenient ?? true,
     remediation: pos.remediation ?? false,
     completionBonus: pos.completionBonus ?? 0,
     requireTypedTest: pos.requireTypedTest,
@@ -392,6 +395,7 @@ export function settingsToDto(s: PositionSettings): Omit<CreatePositionDto, "exe
     comboBonusPoints: numOrNull(s.comboBonusPoints),
     useLeitner: s.useLeitner,
     forgivingDemotion: s.forgivingDemotion,
+    accentLenient: s.accentLenient,
     remediation: s.remediation,
     // B-652: der Bonus zahlt nur bei „bis erledigt“; bei anderem Rhythmus ist das Feld verborgen, und ein verborgener
     // Wert würde unsichtbar gespeichert. Gespeichert wird, was zu sehen ist.
@@ -563,6 +567,13 @@ function PositionFields({ value, onChange, stages, nacharbeit = false, staged = 
             onChange={(e) => up("forgivingDemotion", e.target.checked)} /> Ausrutscher verzeihen
         </label>
         <InfoHint topic="forgivingDemotion" />
+      </span>
+      <span className="label-row">
+        <label className="checkline">
+          <input type="checkbox" checked={value.accentLenient}
+            onChange={(e) => up("accentLenient", e.target.checked)} /> Akzentfehler halb werten
+        </label>
+        <InfoHint topic="accentLenient" />
       </span>
       <span className="label-row">
         <label className="checkline">
@@ -1032,6 +1043,8 @@ function PositionRow({ planId, pos, onChanged, action }: {
           <td>{pos.useLeitner ? <span className="pill lime">an · max {pos.maxBox}{pos.forgivingDemotion ? " · verzeihend" : ""}</span> : <span className="muted">aus</span>}
             {pos.build && <> <span className="pill cyan">{aufbauStufeText(pos.build)}</span></>}
             {pos.remediation && <> <span className="pill cyan">Nacharbeit</span></>}
+            {/* B-624: mild ist der Standard – sichtbar wird nur die seltene, bewusste Ausnahme. */}
+            {pos.accentLenient === false && <> <span className="pill">Akzent streng</span></>}
             {pos.completedOn && <> <span className="pill lime">geschafft am {formatDate(pos.completedOn)}</span></>}</td>
           <td className="row" style={{ gap: 6, justifyContent: "flex-end" }}>
             <button type="button" className="btn ghost inline-btn" style={{ width: "auto" }}
@@ -1103,7 +1116,8 @@ function PositionReportPanel({ planId, positionId, stufenName }: {
       </p>
       <div style={{ overflowX: "auto" }}>
         <table className="table">
-          <thead><tr><th>Inhalt</th><th>Lösung</th><th>Beherrschung</th><th className="num">Test</th><th>Fällig</th></tr></thead>
+          {/* B-624, Entscheidung 6: „Akzent“ zählt die im Üben halb gewerteten Antworten – fehlt das Wort oder nur der Akzent? */}
+          <thead><tr><th>Inhalt</th><th>Lösung</th><th>Beherrschung</th><th className="num">Test</th><th className="num" title="Antworten, die im Üben nur am Akzent falsch waren und halb zählten (der Test bleibt streng)">Akzent</th><th>Fällig</th></tr></thead>
           <tbody>
             {r.items.map((it) => { const sw = schreibweise(it); return (
               <tr key={it.itemIndex}>
@@ -1111,6 +1125,7 @@ function PositionReportPanel({ planId, positionId, stufenName }: {
                 <td className="muted">{it.answer}</td>
                 <td><MasteryPill it={it} maxBox={r.maxBox} /></td>
                 <td className="num">{it.testsSeen === 0 ? "—" : `${it.testsCorrect}/${it.testsSeen}`}</td>
+                <td className="num">{it.accentSlips ? it.accentSlips : "—"}</td>
                 <td className="muted">{it.dueOn ? formatDate(it.dueOn) : "—"}</td>
               </tr>
             ); })}

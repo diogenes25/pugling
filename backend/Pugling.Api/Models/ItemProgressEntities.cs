@@ -85,6 +85,11 @@ public class ItemReviewEvent
     public string? GivenAnswer { get; set; }
     /// <summary>Whether the answer was correct.</summary>
     public bool WasCorrect { get; set; }
+    /// <summary>
+    /// The wrong answer was right but for its diacritics and counted half in practice (B-624). The word's learning
+    /// state still records a miss; the flag lets the supervisor see whether words or only accents are missing.
+    /// </summary>
+    public bool AccentSlip { get; set; }
 
     public DateTime At { get; set; } = DateTime.UtcNow;
 }

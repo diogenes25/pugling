@@ -13,7 +13,7 @@ unverifiziert: false
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-626]
-nachgeschaut: ""
+nachgeschaut: "2026-11-25"
 ---
 
 # B-993 · Ein Leerzeichen am Schrägstrich kostet die Karte
@@ -114,3 +114,4 @@ Kopie (Vorschau der Übung 150).
   Testjunge spielt Position 220, Karte „etwas lauter/leiser stellen“, tippt „turn sth. up / down“ → richtig. Vater, Vorschau
   an Theodors Übung 15 (Index 11): „turn sth. up / down“ und „turn up / down“ richtig, „turn sth. up down“ falsch.
 - **2026-11-25** — abgenommen in `dcdd8c32`: Sohn und Vater an der Kopie (Rollengang oben), Creator als Regressionszeuge.
+- **2026-11-25** — nachgeschaut (Retro Sprint 164): `dcdd8c32` erneut gelesen – `Normalize` bleibt die eine Senke, B-624 rührt sie nicht an (die Akzent-Faltung läuft nach ihr, auf dem normalisierten Text); kein Fund.

@@ -209,6 +209,21 @@ describe("Blatt", () => {
     expect([...blatt.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["w"]);
   });
 
+  // B-624 AK 1 (Blatt): „Fast! Achte auf den Akzent: école“, weder grün noch rot, die Akzentstelle markiert. Rot, wenn das Blatt beim Akzentfehler „falsch“ bliebe, den Titel nicht zeigte oder die Stelle nicht markierte.
+  it("zeigt beim Akzentfehler das halbe Blatt mit markierter Stelle", () => {
+    // Der Server meldet bei „ecole“ auch `misspelled` – der Titel muss trotzdem der Akzent-Titel sein.
+    expect(zeige(r({ richtig: false, gegeben: "ecole", loesung: "école", akzent: true, falschGeschrieben: true }))
+      .textContent).toContain("Fast! Achte auf den Akzent:");
+    // Ohne `falschGeschrieben`, damit die Markierung am Akzent-Kennzeichen hängt und nicht am Schreibfehler.
+    const blatt = zeige(r({ richtig: false, gegeben: "ecole", loesung: "école", akzent: true, muenzen: 2 }));
+    expect(blatt.className).toContain("halb");
+    expect(blatt.className).not.toContain("falsch");
+    expect(blatt.textContent).toContain("Fast! Achte auf den Akzent:");
+    expect(blatt.textContent).toContain("Lösung: école");
+    expect([...blatt.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["é"]);
+    expect(blatt.textContent).not.toContain("Deine Antwort");
+  });
+
   // Rot, wenn ein nicht als Schreibfehler gemeldetes falsches Wort Markierungen bekäme – dort wären sie Rauschen.
   it("markiert nichts, wenn die Antwort ein anderes Wort ist", () => {
     const blatt = zeige(r({ richtig: false, gegeben: "vet", loesung: "wet" }));

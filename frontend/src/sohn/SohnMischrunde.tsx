@@ -267,7 +267,8 @@ export function Ergebnis({ result, getippt, titleRef, onZurueck, skin }: {
             o.skipped
               ? <div key={o.cardId} className="ergebnis-zeile sub">{t("mix.skipped", { title: o.exerciseTitle })}</div>
               : <ErgebnisZeile key={o.cardId} prompt={o.prompt} gapIndex={o.gapIndex} expected={o.expected}
-                  givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} zeigeAntwort={o.givenAnswer != null} />
+                  givenAnswer={o.givenAnswer} wasCorrect={o.wasCorrect} akzent={o.accentSlip ?? false}
+                  zeigeAntwort={o.givenAnswer != null} />
           ))}
         </div>
         <p className="sub">{t("mix.voluntary")}</p>

@@ -859,6 +859,9 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .lektion-blatt-titel { font-family: var(--font-display); font-size: 20px; }
 .lektion-blatt.richtig .lektion-blatt-titel { color: var(--lime); }
 .lektion-blatt.falsch .lektion-blatt-titel { color: #ff96aa; }
+/* B-624: ein Akzentfehler zählt halb – weder grün noch rot. */
+.lektion-blatt.halb { background: #3a3012; border-color: var(--gold); }
+.lektion-blatt.halb .lektion-blatt-titel { color: var(--gold); }
 .lektion-blatt .rev { font-size: 18px; font-weight: 800; }
 .lektion-fehlerstelle { background: none; color: var(--gold); text-decoration: underline 3px; text-underline-offset: 4px; }
 .lektion-blatt .sub { color: var(--ink); opacity: .85; }

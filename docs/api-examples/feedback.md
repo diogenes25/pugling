@@ -94,7 +94,8 @@ Response — `HTTP 201`:
   "completionBonus": 0,
   "completedOn": null,
   "currentBuildLevel": null,
-  "build": null
+  "build": null,
+  "accentLenient": true
 }
 ```
 

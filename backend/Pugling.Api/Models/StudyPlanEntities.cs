@@ -174,6 +174,11 @@ public class ReviewEvent
     public int PracticeSessionId { get; set; }
     public PracticeSession? PracticeSession { get; set; }
     public bool WasCorrect { get; set; }
+    /// <summary>
+    /// An accent slip counted half (B-624): not a hit (<see cref="WasCorrect"/> is false), but the combo streak skips
+    /// it instead of breaking on it.
+    /// </summary>
+    public bool AccentSlip { get; set; }
     public DateTime At { get; set; } = DateTime.UtcNow;
 }
 

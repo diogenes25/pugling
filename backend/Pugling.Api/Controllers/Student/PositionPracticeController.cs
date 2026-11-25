@@ -665,6 +665,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // as in the test (B-524). Set mode has no asked atom to measure against; the siblings keep a neighbouring word
         // from passing as a slip. Only on a miss: the distance runs over every atom of the exercise.
         var misspelled = typed && !setMode && !wasCorrect && grader.IsMisspelled(dto.GivenAnswer, item, staged);
+        // B-624: right but for its diacritics counts half in practice on a lenient position - the box holds, nothing is
+        // paid, the combo carries on. A grade, not a claim: only a typed answer the server checked can be a slip.
+        var accentSlip = typed && !setMode && !wasCorrect && pos.AccentLenient && grader.IsAccentSlip(dto.GivenAnswer, item);
 
         // Outside set mode the credited atom is always the card's own, so `prog` is never null there.
         var prog = creditedIndex is { } credited ? await play.ProgressForAsync(pos, session.Day, credited, ct) : null;
@@ -704,6 +707,8 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         var prevStreak = 0;
         foreach (var r in session.Reviews.OrderByDescending(r => r.At).ThenByDescending(r => r.Id))
         {
+            // An accent slip neither breaks the streak nor extends it (B-624, risk 1): skipped, not counted.
+            if (r.AccentSlip) continue;
             if (r.WasCorrect) prevStreak++; else break;
         }
         // Answer time and timestamp come from the SAME clock (TimeProvider): the gap between two answers is the
@@ -732,6 +737,9 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             PracticeSessionId = sessionId,
             WasCorrect = wasCorrect && scored,
+            // Only a graded slip is half; an unscored one (not due, already reviewed today) is a plain miss for the streak,
+            // as an unscored hit is no hit.
+            AccentSlip = accentSlip && scored,
             At = now,
         });
 
@@ -748,14 +756,22 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (creditedIndex is { } recorded && !noVerdict)
         {
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), staged[recorded], wasCorrect && !displayOnly,
-                stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored, ct: ct);
+                stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored,
+                accentSlip: accentSlip && scored, ct: ct);
         }
 
         // Points only for graded cards (anti-farming), the box only on Leitner positions. Otherwise 0.
         int awarded = 0, comboBonus = 0, speedBonus = 0, combo = 0;
         // B-657: every exercise pays - with or without a duty (reverses B-538's decision 4), with or without a card box.
         // `scored` already implies a credited atom; the null check is the compiler's proof, not a second rule.
-        if (scored && prog is not null)
+        if (scored && prog is not null && accentSlip)
+        {
+            // B-624 decision 3: half - the box holds and the card comes back at its next due date, no coins (not even the
+            // new-content points, which wait for the first right answer), the combo stays where it was.
+            combo = prevStreak;
+            if (pos.UseLeitner) play.ApplyAccentSlip(pos, prog, session.Day, now);
+        }
+        else if (scored && prog is not null)
         {
             combo = wasCorrect ? prevStreak + 1 : 0;
             var preBox = prog.Box;
@@ -849,7 +865,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         return new ReviewOutcome(wasCorrect, creditedIndex is { } shown ? staged[shown].Answer : null,
             awarded, prog?.Box ?? 0, prog?.DueOn, combo, comboBonus, speedBonus, next, done, misspelled,
             creditedIndex is { } explained ? staged[explained].Explanation : null, TaskDone: taskDone,
-            CompletionBonus: completionBonus);
+            CompletionBonus: completionBonus, AccentSlip: accentSlip);
     }
 
     /// <summary>
@@ -917,7 +933,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         if (dto.WasKnown is { } wasKnown)
         {
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, wasKnown,
-                (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false,
+                (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false, accentSlip: false,
                 ct: ct);
         }
         // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
@@ -925,7 +941,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, recalled, easedStage ?? (int)TestStage.LearnCard,
                 string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
-                session.Day, countsForMastery: false, ct: ct);
+                session.Day, countsForMastery: false, accentSlip: false, ct: ct);
         }
 
         // B-643 (decisions 4 and 8): given up, wrong or answered with help, the word comes back at the end of the round as a

@@ -21,7 +21,7 @@ namespace Pugling.Api.Services.Student;
 public class MixedReviewService(PuglingDbContext db, PositionProgressService progress, PositionPlayService play,
     ExerciseContentResolver content, ExerciseTypeRegistry registry, ExtraTrainingService extras,
     ExercisePreviewService preview, ItemProgressService itemProgress, IOptions<ExtraTrainingOptions> options,
-    TimeProvider time, LearningDay learningDay)
+    TimeProvider time, LearningDay learningDay, AnswerGrader grader)
 {
     private readonly ExtraTrainingOptions opts = options.Value;
 
@@ -210,6 +210,7 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
 
         var now = time.GetUtcNow().UtcDateTime;
         var earned = new Dictionary<int, int>();
+        var accentSlips = new HashSet<int>();
         foreach (var (card, pos, exercise, type, prog) in gradable)
         {
             if (!verdicts.TryGetValue(card.Id, out var verdict)) continue;
@@ -224,16 +225,27 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
             var seenToday = prog.IntroducedAt == today
                 || (prog.LastReviewedAt is { } last && learningDay.DayOf(last) == today)
                 || testedToday.Contains((pos.Id, card.ItemIndex));
-            play.ApplyReview(pos, prog, verdict.WasCorrect, verified, today, now);
+            var given = byCard.GetValueOrDefault(card.Id);
+            var asked = PositionPlayService.AtStage(type, items, cardStage)[card.ItemIndex];
+            // B-624: the round writes the position's own box, so it follows the position's accent leniency like the
+            // position's practice does - otherwise the box would depend on the screen the word was typed on. A slip holds
+            // the box and pays nothing (only hits pay below).
+            var accentSlip = verified && !verdict.WasCorrect && pos.AccentLenient
+                && grader.IsAccentSlip(given?.GivenAnswer, asked);
+            if (accentSlip)
+            {
+                play.ApplyAccentSlip(pos, prog, today, now);
+                accentSlips.Add(card.Id);
+            }
+            else play.ApplyReview(pos, prog, verdict.WasCorrect, verified, today, now);
             // A claim moves the box like a review but is none for the score (pattern of the practice's self-assessment).
             if (!verified) prog.ReviewCount = reviewCount;
 
-            var given = byCard.GetValueOrDefault(card.Id);
             card.GivenAnswer = verified ? given?.GivenAnswer : null;
             card.WasCorrect = verdict.WasCorrect;
-            await itemProgress.RecordAsync(childId, card.ExerciseId, PositionPlayService.AtStage(type, items, cardStage)[card.ItemIndex],
+            await itemProgress.RecordAsync(childId, card.ExerciseId, asked,
                 verdict.WasCorrect, cardStage, card.GivenAnswer, ItemReviewSource.Practice, pos.Id, today,
-                countsForMastery: verified, ct);
+                countsForMastery: verified, accentSlip: accentSlip, ct);
 
             // Decision 5: a hit pays only when it leaves the card due in the future - with intervals of 0 days it would
             // be due again at once and could be paid twice the same day - and only on the card's first review of the day.
@@ -287,7 +299,7 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
             var title = exercises.TryGetValue(card.ExerciseId, out var ex) ? ex.Title : "";
             outcomes.Add(new MixedReviewOutcome(card.Id, card.PlanPositionId, title, verdict?.Prompt, verdict?.Expected ?? "",
                 card.GivenAnswer, card.WasCorrect == true, card.WasCorrect is null, card.CoinsAwarded,
-                prog?.Box, prog?.DueOn, verdict?.GapIndex));
+                prog?.Box, prog?.DueOn, verdict?.GapIndex, accentSlips.Contains(card.Id)));
         }
         var total = run.Cards.Count(c => c.WasCorrect is not null);
         var sumEarned = earned.Values.Sum();

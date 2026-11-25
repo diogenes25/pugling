@@ -896,6 +896,21 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             if (verified) prog.LastMissed = true;
         }
     }
+
+    /// <summary>
+    /// Records an accent slip counted half (B-624 decision 3): the card keeps its box and comes back after the interval
+    /// of that box - due today again, it would be drawn once more in the same round. No climb before the spelling holds,
+    /// no fall for a known word. The miss marker of the forgiving demotion stays as it was: the slip is neither a hit
+    /// that clears it nor a miss that sets it. The caller saves.
+    /// </summary>
+    public void ApplyAccentSlip(PlanPosition pos, PositionItemProgress prog, DateOnly today, DateTime nowUtc)
+    {
+        var intervals = BoxIntervals(pos);
+        prog.ReviewCount++;
+        prog.LastReviewedAt = nowUtc;
+        prog.Box = Math.Max(1, prog.Box);
+        prog.DueOn = today.AddDays(intervals[Math.Min(prog.Box, intervals.Count - 1)]);
+    }
 }
 
 /// <summary>

@@ -50,7 +50,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             types.ByKey(PositionPlayService.PlayedExercise(p, today)?.Type ?? "") is { } type
                 ? PositionPlayService.LearningCheckOf(p, type, today) : null,
             p.ForgivingDemotion, p.Remediation, p.CompletionBonus, p.CompletedOn, p.CurrentBuildLevel,
-            PositionPlayService.BuildPathOf(p, today));
+            PositionPlayService.BuildPathOf(p, today), p.AccentLenient);
 
     /// <summary>All positions of the study plan in their order.</summary>
     [HttpGet]
@@ -299,6 +299,8 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
             // How hard a miss resets is a statement about this obligation, not the material: no exercise default.
             ForgivingDemotion = dto.ForgivingDemotion ?? false,
             Remediation = dto.Remediation ?? false,
+            // B-624 decision 4: lenient unless the father asks for strict accents.
+            AccentLenient = dto.AccentLenient ?? true,
             CompletionBonus = dto.CompletionBonus ?? 0,
             // Empty means "method default" here as in the PATCH (B-547) - no third state next to "default" and "own".
             BoxIntervalDays = dto.BoxIntervalDays is { Count: > 0 } intervals ? intervals : null,
@@ -469,6 +471,7 @@ public class PlanPositionsController(PuglingDbContext db, ExercisePermissionServ
         if (dto.MaxBox is > 0) pos.MaxBox = dto.MaxBox.Value;
         if (dto.ForgivingDemotion is not null) pos.ForgivingDemotion = dto.ForgivingDemotion.Value;
         if (dto.Remediation is not null) pos.Remediation = dto.Remediation.Value;
+        if (dto.AccentLenient is not null) pos.AccentLenient = dto.AccentLenient.Value;
         if (dto.CompletionBonus is not null) pos.CompletionBonus = dto.CompletionBonus.Value;
         // An empty list means "back to the method default" (B-547): no form sends these two, and storing an empty
         // schedule would be a third state next to "default" and "own" that play treats like the default anyway.

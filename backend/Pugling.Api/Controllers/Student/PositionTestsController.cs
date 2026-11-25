@@ -464,7 +464,8 @@ public class PositionTestsController(PuglingDbContext db, PositionPlayService pl
             var misspelled = !r.WasCorrect && type.IsTypedStage(r.StageValue) && grader.IsMisspelled(r.GivenAnswer, item, staged);
             outcomes.Add(new ItemOutcome(index, item.Prompt, item.Answer, r.GivenAnswer, r.WasCorrect, item.GapIndex, misspelled));
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, attempt.Day), item, r.WasCorrect, r.StageValue,
-                type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true, ct: ct);
+                type.IsTypedStage(r.StageValue) ? r.GivenAnswer : null, ItemReviewSource.Test, positionId, attempt.Day, countsForMastery: true,
+                accentSlip: false, ct: ct);
         }
 
         var passPercent = PositionProgressService.TestPassPercent(pos);

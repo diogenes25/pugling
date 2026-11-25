@@ -165,6 +165,13 @@ public class PlanPosition
     /// </summary>
     public bool ForgivingDemotion { get; set; }
     /// <summary>
+    /// Accent leniency (B-624): in practice, an answer wrong only by its diacritics ("ecole" for "école") counts half -
+    /// the card keeps its box and comes back at its next due date, no coins, the combo does not break. The final test
+    /// stays binary, and so does the cross-plan learning state per word. On by default, also for every position that
+    /// existed before (migration); the father switches it off for a position that trains accents on purpose.
+    /// </summary>
+    public bool AccentLenient { get; set; } = true;
+    /// <summary>
     /// Remediation (B-635, "Nacharbeit"): the round plays every task not yet done, in order, each starting as free text;
     /// the child may make the current card easier step by step, and a task is done only when typed freely right. Rounds
     /// repeat until every task is done. Only for a type with an ease ladder (<see cref="IExerciseType.EaseLadder"/>).

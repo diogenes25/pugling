@@ -1342,6 +1342,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("AccentSlip")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("At")
                         .HasColumnType("TEXT");
 
@@ -1963,6 +1966,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("AccentLenient")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("BoxIntervalDays")
                         .HasColumnType("TEXT");
 
@@ -2456,6 +2462,9 @@ namespace Pugling.Api.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AccentSlip")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("At")

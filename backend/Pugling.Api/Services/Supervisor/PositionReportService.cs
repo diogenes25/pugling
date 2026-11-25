@@ -49,6 +49,13 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
         var testsByItem = testResults.GroupBy(r => r.Index)
             .ToDictionary(g => g.Key, g => (Seen: g.Count(), Correct: g.Count(x => x.WasCorrect)));
 
+        // B-624 decision 6: accent slips per item of this position, from the answer history (filtered and counted in the DB).
+        var accentSlips = await db.ItemReviewEvents.AsNoTracking()
+            .Where(e => e.PlanPositionId == positionId && e.ExerciseId == exerciseId && e.AccentSlip && e.ItemId != null)
+            .GroupBy(e => e.ItemId!.Value)
+            .Select(g => new { ItemId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.ItemId, g => g.Count, ct);
+
         var maxBox = pos.MaxBox;
         // B-637: the stages in the order the child steps down them; a stage off the ladder (none today) sorts last.
         var ladder = pos.Remediation ? (PositionPlayService.PlayedExercise(pos, today) is { } played ? play.TypeOf(played)?.EaseLadder : null) ?? [] : [];
@@ -63,7 +70,8 @@ public class PositionReportService(PuglingDbContext db, PositionPlayService play
             return new ItemReport(item.Index, item.Prompt, item.Answer, introduced,
                 box, introduced ? MasteryOf(box, maxBox) : 0, ip?.ReviewCount ?? 0,
                 ip?.DueOn, ip?.LastReviewedAt, tests.Seen, tests.Correct, item.Written is not null, item.RecognitionOnly,
-                pos.Remediation && item.Index < pool ? RemediationOf(item, ip, ladder) : null);
+                pos.Remediation && item.Index < pool ? RemediationOf(item, ip, ladder) : null,
+                item.ItemId is { } itemId ? accentSlips.GetValueOrDefault(itemId) : 0);
         }).ToList();
 
         return new Report(pos.Id, pos.ExerciseId, pos.Exercise.Title, pos.Exercise.Type.ToString(),

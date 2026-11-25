@@ -34923,6 +34923,13 @@
             ],
             "description": "Start level on the exercise\u0027s build path (B-848, see PositionResponse); \u0060null\u0060 = no build path.\nThe exercise must have a prerequisite on that level (or any prerequisite for 3), and the position takes no daily or\nweekly duty while on a path.",
             "format": "int32"
+          },
+          "accentLenient": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "As in PositionResponse; \u0060null\u0060 = \u0060true\u0060 (lenient, B-624 decision 4)."
           }
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
@@ -43901,9 +43908,18 @@
                 "$ref": "#/components/schemas/RemediationTaskReport"
               }
             ]
+          },
+          "accentSlips": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
           }
         },
-        "description": "Report row for a single content item, including its solution. \u0060Prompt\u0060/\u0060Answer\u0060 are the card as the exercise\u0027s\ndirection asks it. B-597: \u0060TurnedWhenWritten\u0060 marks a card that is asked the other way round wherever the child\nwrites (German shown, the learnt word expected); \u0060RecognitionOnly\u0060 marks the forward card of a word asked both\nways, which is never written - its sibling is."
+        "description": "Report row for a single content item, including its solution. \u0060Prompt\u0060/\u0060Answer\u0060 are the card as the exercise\u0027s\ndirection asks it. B-597: \u0060TurnedWhenWritten\u0060 marks a card that is asked the other way round wherever the child\nwrites (German shown, the learnt word expected); \u0060RecognitionOnly\u0060 marks the forward card of a word asked both\nways, which is never written - its sibling is. B-624: \u0060AccentSlips\u0060 counts the practice answers of this position that\nwere right but for their diacritics and counted half - beside the box it tells whether the word or only its accents\nare missing. Vocabulary items only (they carry the stable item identity the history is kept by)."
       },
       "ItemResultDto": {
         "required": [
@@ -45268,9 +45284,13 @@
               "string"
             ],
             "format": "int32"
+          },
+          "accentSlip": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "One card of a graded round, revealed after the round (Expected is the solution in hindsight).\nBox and DueOn are the card\u0027s place in its own position\u0027s Leitner box afterwards.\nSkipped marks a card that was not graded and moved nothing: no longer due (practised in its position\nmeanwhile), its position now carrying an open duty, no longer using Leitner or playing another exercise, or its\nexercise changed since the start."
+        "description": "One card of a graded round, revealed after the round (Expected is the solution in hindsight).\nBox and DueOn are the card\u0027s place in its own position\u0027s Leitner box afterwards.\nSkipped marks a card that was not graded and moved nothing: no longer due (practised in its position\nmeanwhile), its position now carrying an open duty, no longer using Leitner or playing another exercise, or its\nexercise changed since the start. AccentSlip (B-624): wrong only by its diacritics on a position with\naccent leniency - WasCorrect stays false and nothing is paid, but the box held, as in the position\u0027s\nown practice."
       },
       "MixedReviewOverview": {
         "required": [
@@ -46607,6 +46627,11 @@
                 "$ref": "#/components/schemas/BuildPath"
               }
             ]
+          },
+          "accentLenient": {
+            "type": "boolean",
+            "description": "Accent leniency (B-624): in practice, an answer wrong only by its diacritics (\u0022ecole\u0022 for \u0022\u00E9cole\u0022) counts half - the\ncard keeps its box, earns no coins and does not break the combo. The final test and the cross-plan learning state\nper word stay strict. On by default.",
+            "default": true
           }
         },
         "description": "A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings."
@@ -48448,9 +48473,13 @@
             ],
             "format": "int32",
             "default": 0
+          },
+          "accentSlip": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);\nnull where no atom was hit; null for content that has no explanation.bool ReviewOutcome.RepeatsAtEnd (B-598): a learn card given up or recalled wrong comes back once at the end of this round.bool ReviewOutcome.TaskDone (B-635): this answer finished a remediation task - typed freely right, without easing.int ReviewOutcome.CompletionBonus (B-636): coins booked because this answer finished the last task of a remediation\n\u0022daily, until done\u0022; 0 otherwise."
+        "description": "Result of a Leitner review (graded server-side) incl. bonuses for feedback. PracticeCard? ReviewOutcome.Next\ncarries the next card directly in learn mode (no separate roundtrip needed); bool ReviewOutcome.Done signals\nthe end of the run. For cards that are not graded (not due / already graded today / not Leitner-based),\nthe points fields are 0, but grading and cursor still advance.\n\nstring? ReviewOutcome.Expected is nullable for the set-graded types: an answer that matches no open entry hits no\natom at all, and naming one particular entry as \u0022the\u0022 solution would be arbitrary while a dozen are still\nopen \u2013 it would also give away an entry the child is about to be asked for. int ReviewOutcome.Box is 0 and\nDateOnly? ReviewOutcome.DueOn null in that case for the same reason: nothing was reviewed, so nothing moved.\nbool ReviewOutcome.Misspelled marks a wrong typed answer that is the right word with a small spelling slip (B-422, the\nmeasure of B-524). Display only, as in the test: the review stays wrong - box, points and combo as for any miss -\nso practice prepares for the strict test; the mark only tells the child it knew the word.bool ReviewOutcome.AccentSlip (B-624): the answer was right but for its diacritics on a position with accent leniency, and\nit counted half - bool ReviewOutcome.WasCorrect stays false and nothing is paid, but the box stays where it was (the card\ncomes back at its next due date) and int ReviewOutcome.Combo carries on unbroken. Only in practice: the test stays strict.string? ReviewOutcome.Explanation (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);\nnull where no atom was hit; null for content that has no explanation.bool ReviewOutcome.RepeatsAtEnd (B-598): a learn card given up or recalled wrong comes back once at the end of this round.bool ReviewOutcome.TaskDone (B-635): this answer finished a remediation task - typed freely right, without easing.int ReviewOutcome.CompletionBonus (B-636): coins booked because this answer finished the last task of a remediation\n\u0022daily, until done\u0022; 0 otherwise."
       },
       "ReworkHomeworkDto": {
         "required": [
@@ -52365,6 +52394,13 @@
             ],
             "description": "Moves the position to this level of its build path (B-848, rules as in CreatePositionDto). There is no\nway back to \u0022no build path\u0022 in this story; level 3 plays the target.",
             "format": "int32"
+          },
+          "accentLenient": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Accent leniency (see PositionResponse); \u0060false\u0060 grades accents strictly."
           }
         },
         "description": "Partial change to the overrides/goals/points. The referenced exercise is immutable\n(progress indices).\n\n**PATCH semantics:** a \u0060null\u0060 means \u0022not specified\u0022 for *every* field \u2013 the previous\nvalue stays. It does **not** mean \u0022reset to default\u0022; that needs an explicit \u0060Clear\u0060 switch, and\nfour fields have one: bool UpdatePositionDto.ClearTimeSlots, bool UpdatePositionDto.ClearStage, bool UpdatePositionDto.ClearItemCount and\nbool UpdatePositionDto.ClearGoalThreshold. The two list fields \u0060BoxIntervalDays\u0060 and \u0060StageSchedule\u0060 take an\n**empty** list as \u0022back to the method default\u0022 instead (like \u0060TimeSlots\u0060). The other fields cannot be\nemptied: they are mandatory or carry \u0022off\u0022 as a value of their own (0)."

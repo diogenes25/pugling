@@ -54,7 +54,10 @@ public record MixedReviewResult(int RunId, int Total, int Correct, int CoinsAwar
 /// <paramref name="Box"/> and <paramref name="DueOn"/> are the card's place in its own position's Leitner box afterwards.
 /// <paramref name="Skipped"/> marks a card that was not graded and moved nothing: no longer due (practised in its position
 /// meanwhile), its position now carrying an open duty, no longer using Leitner or playing another exercise, or its
-/// exercise changed since the start.
+/// exercise changed since the start. <paramref name="AccentSlip"/> (B-624): wrong only by its diacritics on a position with
+/// accent leniency - <paramref name="WasCorrect"/> stays false and nothing is paid, but the box held, as in the position's
+/// own practice.
 /// </summary>
 public record MixedReviewOutcome(int CardId, int PositionId, string ExerciseTitle, string? Prompt, string Expected,
-    string? GivenAnswer, bool WasCorrect, bool Skipped, int CoinsAwarded, int? Box, DateOnly? DueOn, int? GapIndex);
+    string? GivenAnswer, bool WasCorrect, bool Skipped, int CoinsAwarded, int? Box, DateOnly? DueOn, int? GapIndex,
+    bool AccentSlip = false);

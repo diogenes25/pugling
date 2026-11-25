@@ -124,7 +124,8 @@ Response — `HTTP 201`:
   "completionBonus": 0,
   "completedOn": null,
   "currentBuildLevel": null,
-  "build": null
+  "build": null,
+  "accentLenient": true
 }
 ```
 
@@ -323,7 +324,8 @@ Response — `HTTP 200`:
   "explanation": null,
   "repeatsAtEnd": true,
   "taskDone": false,
-  "completionBonus": 0
+  "completionBonus": 0,
+  "accentSlip": false
 }
 ```
 

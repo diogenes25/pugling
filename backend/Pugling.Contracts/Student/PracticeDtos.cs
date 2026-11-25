@@ -171,6 +171,11 @@ public record CardShownDto(int ItemIndex);
 /// so practice prepares for the strict test; the mark only tells the child it knew the word.
 /// </para>
 /// <para>
+/// <see cref="AccentSlip"/> (B-624): the answer was right but for its diacritics on a position with accent leniency, and
+/// it counted half - <see cref="WasCorrect"/> stays false and nothing is paid, but the box stays where it was (the card
+/// comes back at its next due date) and <see cref="Combo"/> carries on unbroken. Only in practice: the test stays strict.
+/// </para>
+/// <para>
 /// <see cref="Explanation"/> (B-529) says why the answer is right or wrong - the rule hint of a rule task or the explanation of a vocabulary item (B-583);
 /// <c>null</c> where no atom was hit; <c>null</c> for content that has no explanation.
 /// </para>
@@ -188,4 +193,4 @@ public record CardShownDto(int ItemIndex);
 public record ReviewOutcome(bool WasCorrect, string? Expected, int Awarded, int Box,
     DateOnly? DueOn, int Combo, int ComboBonus, int SpeedBonus, PracticeCard? Next, bool Done, bool Misspelled = false,
     string? Explanation = null, bool RepeatsAtEnd = false, bool TaskDone = false,
-    int CompletionBonus = 0);
+    int CompletionBonus = 0, bool AccentSlip = false);

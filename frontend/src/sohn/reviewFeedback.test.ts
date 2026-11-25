@@ -34,17 +34,24 @@ describe("reviewFeedback", () => {
 
   it("meldet einen Fehlschlag mit Lösung auf einer normalen Stufe", () => {
     expect(reviewFeedback(outcome({ wasCorrect: false, expected: "hallo" }), false))
-      .toEqual({ kind: "wrong", expected: "hallo", misspelled: false });
+      .toEqual({ kind: "wrong", expected: "hallo", misspelled: false, accentSlip: false });
   });
 
   // B-422 AK 4. Rot, wenn `reviewFeedback` das Kennzeichen des Servers nicht durchreicht.
   it("reicht das Kennzeichen falsch geschrieben durch", () => {
     expect(reviewFeedback(outcome({ wasCorrect: false, expected: "clinic", misspelled: true }), false))
-      .toEqual({ kind: "wrong", expected: "clinic", misspelled: true });
+      .toEqual({ kind: "wrong", expected: "clinic", misspelled: true, accentSlip: false });
+  });
+
+  // B-624 AK 1. Rot, wenn `reviewFeedback` das Kennzeichen des Servers nicht durchreicht – das Blatt zeigte dann
+  // „Fast.“ in Rot statt „Fast! Achte auf den Akzent“.
+  it("reicht das Kennzeichen Akzentfehler durch", () => {
+    expect(reviewFeedback(outcome({ wasCorrect: false, expected: "école", misspelled: true, accentSlip: true }), false))
+      .toEqual({ kind: "wrong", expected: "école", misspelled: true, accentSlip: true });
   });
 
   it("meldet einen Fehlschlag ohne Lösung (Mengen-Modus: keine Zuordnung möglich)", () => {
     expect(reviewFeedback(outcome({ wasCorrect: false, expected: null }), false))
-      .toEqual({ kind: "wrong", expected: null, misspelled: false });
+      .toEqual({ kind: "wrong", expected: null, misspelled: false, accentSlip: false });
   });
 });

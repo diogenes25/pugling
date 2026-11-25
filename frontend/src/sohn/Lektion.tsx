@@ -231,6 +231,11 @@ export interface Rueckmeldung {
    */
   falschGeschrieben?: boolean;
   /**
+   * B-624: falsch nur am Akzent, im Üben halb gewertet (der Server meldet `accentSlip`): der Kasten bleibt, keine Münzen,
+   * die Combo reißt nicht. Das Blatt ist weder grün noch rot und markiert in der Lösung die Stelle.
+   */
+  akzent?: boolean;
+  /**
    * B-529: warum die Antwort richtig oder falsch war (heute der Regel-Hinweis einer Regelaufgabe). Der Server schickt
    * sie erst mit der Bewertung; `null`, wo der Inhalt keine kennt – dann steht auch keine leere Zeile da.
    */
@@ -246,7 +251,7 @@ export interface Rueckmeldung {
 
 /** Die Lösung; bei einem einfachen Verschreiben sind die Buchstaben hervorgehoben, an denen es lag. */
 function Loesung({ r, loesung }: { r: Rueckmeldung; loesung: string }) {
-  const stuecke = r.falschGeschrieben ? markiereSchreibfehler(r.gegeben, loesung) : null;
+  const stuecke = r.falschGeschrieben || r.akzent ? markiereSchreibfehler(r.gegeben, loesung) : null;
   if (!stuecke) return <>{loesung}</>;
   return <>{stuecke.map((s, k) => (s.falsch ? <mark key={k} className="lektion-fehlerstelle">{s.text}</mark> : s.text))}</>;
 }
@@ -275,12 +280,13 @@ export function RueckmeldungsBlatt({ r, weiterRef, onWeiter }: {
     r.tempoBonus > 0 ? t("lektion.speedPlus", { count: r.tempoBonus }) : null,
   ].filter(Boolean).join(" · ");
   return (
-    <div className={`lektion-blatt ${r.richtig ? "richtig" : "falsch"}`}>
+    <div className={`lektion-blatt ${r.richtig ? "richtig" : r.akzent ? "halb" : "falsch"}`}>
       <div className="row" style={{ alignItems: "center" }}>
         <div className="lektion-begleiter" aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <LearningDad action={r.richtig ? "thumbs-up" : "facepalm"} size={48} />
         </div>
-        <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : r.falschGeschrieben ? t("test.misspelled") : t("lektion.almost")}</b>
+        <b className="lektion-blatt-titel">{r.richtig ? t(LOB[Math.abs(r.lob) % LOB.length]) : r.akzent ? t("lektion.accentSlip")
+          : r.falschGeschrieben ? t("test.misspelled") : t("lektion.almost")}</b>
         {r.richtig && r.muenzen > 0 && <span className="pill gold" style={{ marginLeft: "auto" }}>+{r.muenzen} 🪙</span>}
       </div>
       {r.richtig ? (
@@ -294,7 +300,7 @@ export function RueckmeldungsBlatt({ r, weiterRef, onWeiter }: {
         <>
           {/* Nicht durchgestrichen: das machte das Wort schwer lesbar, und „falsch“ sagt schon das rote Blatt. Bei einem
               Schreibfehler fällt die Zeile ganz weg – die Lösung markiert dann die Stelle. Aufgegeben (B-598) gibt es keine. */}
-          {r.gegeben && !r.falschGeschrieben && <div className="sub">{t("practice.yourAnswerWas")} {r.gegeben}</div>}
+          {r.gegeben && !r.falschGeschrieben && !r.akzent && <div className="sub">{t("practice.yourAnswerWas")} {r.gegeben}</div>}
           <div className="rev">{r.loesung ? <>{t("practice.solutionLabel")} <Loesung r={r} loesung={r.loesung} /></> : t("practice.wrong")}</div>
           {r.nochmal && <div className="sub">{t("lektion.learnAgain")}</div>}
         </>

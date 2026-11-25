@@ -64,6 +64,36 @@ public class AnswerGrader
             .Any(a => Distance(g, a) <= nearest);
     }
 
+    /// <summary>
+    /// Is a wrong typed answer right but for its diacritics (B-624)? "ecole" for "école", "Strasse" never for "Straße":
+    /// only marks on or under a letter are folded away (é/è/ê → e, ç → c, ü → u, ñ → n), a wrong, missing or swapped
+    /// letter - ß, œ and æ included, which do not decompose - stays a miss. Measured after the full
+    /// <see cref="Matches(string?, ContentItem)"/> rule (article, meanings, alternatives), so it holds exactly where the
+    /// answer is wrong as typed and right once folded. Grading itself stays binary here; what a slip costs is the caller's
+    /// decision (practice counts it half, the test does not ask).
+    /// <para>
+    /// Unlike <see cref="IsMisspelled"/> there is no check against the exercise's other atoms: "ou" (or) typed for "où"
+    /// (where) counts as a slip even when "ou" is a card of its own - by decision 2 the rule is the characters, and the
+    /// half still does not move the box up.
+    /// </para>
+    /// </summary>
+    public bool IsAccentSlip(string? given, ContentItem item)
+    {
+        var g = StageMechanics.Normalize(given);
+        if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
+        var folded = WithoutDiacritics(g);
+        return Spellings(item, item).Any(a => WithoutDiacritics(a) == folded);
+    }
+
+    // Canonical decomposition, then every combining mark dropped. Letters that do not decompose (ß, œ, æ, ø) are kept.
+    private static string WithoutDiacritics(string s)
+    {
+        var decomposed = s.Normalize(System.Text.NormalizationForm.FormD);
+        var kept = decomposed.Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c)
+            != System.Globalization.UnicodeCategory.NonSpacingMark);
+        return string.Concat(kept).Normalize(System.Text.NormalizationForm.FormC);
+    }
+
     // The normalized solutions of an atom, each also without its leading article where the asked atom forgives one -
     // the same tolerance Matches grants: "chein" for "le chien" is measured against "chien", not against the article.
     private static IEnumerable<string> Spellings(ContentItem atom, ContentItem asked)

@@ -72,7 +72,7 @@ Write-Host "Plan $($plan.id) (Kind $ChildId): $($plan.title)  $($plan.startDate)
 $fields = 'exerciseId', 'stage', 'itemCount', 'scope', 'cadence', 'orderStrategy', 'goalThreshold',
     'requireTypedTest', 'useLeitner', 'maxBox', 'boxIntervalDays', 'stageSchedule', 'pointsGoalMet', 'penaltyCoins',
     'newContentPoints', 'comboThreshold', 'comboBonusPoints', 'speedThresholdSeconds', 'speedBonusPoints',
-    'timeSlots', 'newItemsPerDay', 'forgivingDemotion', 'remediation'
+    'timeSlots', 'newItemsPerDay', 'forgivingDemotion', 'remediation', 'accentLenient'
 foreach ($src in $positions) {
     $body = [ordered]@{}
     foreach ($f in $fields) {
