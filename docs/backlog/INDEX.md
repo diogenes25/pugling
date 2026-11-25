@@ -33,6 +33,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `in-arbeit` | P2 | L | beides | Migration |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -42,7 +43,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | Wunsch | `geschaetzt` | P2 | M | frontend | — |
-| [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | Wunsch | `geschaetzt` | P2 | L | beides | Migration |
 | [B-625](B-625-ein-eingabefeld-je-bedeutung.md) | Ein Eintrag mit mehreren Formen oder Bedeutungen bekommt je Teil ein eigenes Eingabefeld | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-631](B-631-buchimport-fuellt-vokabel-store-nur-flach.md) | Der Buchimport füllt vom Vokabel-Store nur Wort und Übersetzung | Wunsch | `geschaetzt` | P2 | M | doku | — |
 | [B-638](B-638-formeln-in-aufgabentext-anzeigen.md) | Formeln in Aufgabentext und Auswahl anzeigen | Wunsch | `geschaetzt` | P2 | L | frontend | — |
@@ -731,7 +731,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (12)
+### Wartet auf Zutun von außen (13)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -744,6 +744,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-619](B-619-faecher-verteilung-vater-web-und-sohn-app.md) | Der Vater stellt die Fächer-Verteilung mit Reglern ein, und der Sohn sieht sie | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
+| [B-624](B-624-akzentfehler-nicht-ganzer-fehler.md) | Ein falscher Akzent im Französischen zählt nicht als ganzer Fehler | `in-arbeit` | Vater: Blick am Gerät – halbes Blatt „Fast! Achte auf den Akzent“ (Farbe, Markierung, Maskottchen) |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | `in-arbeit` | Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert) |
@@ -753,7 +754,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (225)
 
-**Nachgeschaut: 579 von 621 abgenommenen** — und in 198 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 42 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 580 von 621 abgenommenen** — und in 198 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 41 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -984,7 +985,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (42) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (41) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1032,7 +1033,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) |
 | [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte |
 
 </details>
 
