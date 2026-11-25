@@ -19,6 +19,7 @@ des Rechners, in der Umgebung `Production`, mit der echten `backend/Pugling.Api/
 Adressen für Sohn und Vater, etwa `http://192.168.178.55:5200/sohn`. Beenden mit Strg+C.
 
 - `-SkipBuild` startet ohne Neubau, wenn sich am Code nichts geändert hat.
+- Vor dem Build prüft das Skript per `npm ls`, ob `frontend/node_modules` zum Lockfile passt, und installiert sonst per `npm ci` neu.
 - Gegen die echte `pugling.db` startet das Skript **nicht**, solange unter `backend/Pugling.Api/Data/Migrations` etwas
   ungecommittet ist: der Start spielte eine Migration ein, an der eine Sitzung noch arbeitet (Vorfall 2026-11-19,
   [PM-Sitzung](pm-sitzung-2026-11-19.md)). Bewusst trotzdem: `-AllowUncommittedMigrations`.

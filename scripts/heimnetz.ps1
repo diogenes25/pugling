@@ -124,6 +124,15 @@ if (-not $SkipBuild) {
     Write-Host 'Baue das Frontend …'
     Push-Location $frontend
     try {
+        # node_modules kann vom Lockfile abweichen, ohne dass sich das Lockfile ändert (2026-11-25: openapi-typescript
+        # fehlte, der Build brach erst im prebuild ab). `npm ls` meldet fehlende oder falsche Pakete mit Exit-Code ≠ 0;
+        # nur dann wird nach dem Lockfile neu installiert.
+        npm ls --depth=0 *> $null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host 'node_modules weicht vom Lockfile ab – installiere neu (npm ci) …'
+            npm ci
+            if ($LASTEXITCODE -ne 0) { throw 'npm ci fehlgeschlagen.' }
+        }
         npm run build
         if ($LASTEXITCODE -ne 0) { throw 'Frontend-Build fehlgeschlagen.' }
     } finally { Pop-Location }
