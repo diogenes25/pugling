@@ -135,4 +135,8 @@ ersten Spiel). Danach ist B-644 die nächste Etappe (B-733 Tagesauswertung baut 
 Änderungsstand: `4e70c583` (Code), danach ein Doku-Commit (Backlog, Protokoll, `pm-loop`-Regel). Ungepusht.
 
 **Nachtrag (2026-11-26):** Der Vater hat B-1024 entschieden – ein noch nie geöffneter Plan droht weiter Frist und Malus
-an. B-1024 `verworfen` mit Grund; offen bleibt B-1023.
+an. B-1024 `verworfen` mit Grund.
+
+**Nachtrag 2 (2026-11-26):** Der Vater hat B-1023 entschieden – eine Hausaufgabe mit Fälligkeit in einer Pause kostet keinen
+Malus. Gebaut und abgenommen in `9cf14491` (Suite 2611/2611, Review ohne Fund, Rollengang mangels Hausaufgaben-UI durch den
+Integrationstest ersetzt). Keine Frage aus diesem Sprint ist mehr offen.

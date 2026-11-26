@@ -78,3 +78,5 @@ Die gesamte Kind-Oberfläche; das Backend liefert die Wege.
   eine Produktentscheidung, die die `## Entscheidungen` nicht hergeben: Sie ließe das Kind den Malus mit einem Tipp abwenden,
   B-761 AK 5 sieht genau das erst mit Foto vor. Die fremde Arbeit an `SohnApp.tsx` ist inzwischen committet (Arbeitsbaum an
   `5993c86b` sauber). Offene Entscheidung im Protokoll `pm-sitzung-2026-11-24-j.md`.
+- **2026-11-26** — Hinweis aus B-1023: eine Hausaufgabe mit Fälligkeit in einer Pause kostet nichts, `HomeworkResponse.PenaltyCoins`
+  trägt aber weiter den Betrag des Kindes (`penaltyCharged: false`). Die Karte darf für sie keine Malus-Drohung zeigen.
