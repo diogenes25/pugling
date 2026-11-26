@@ -32,16 +32,24 @@ public static class NumericAnswer
     /// <summary>The fixed text for the empty set (B-710). Product text, compared like every typed answer.</summary>
     public const string NoSolution = "keine Lösung";
 
+    // The empty set as a keyboard without umlauts writes it - the same words, not a looser rule.
+    private static readonly string[] NoSolutionSpellings =
+        [StageMechanics.Normalize(NoSolution), "keine losung", "keine loesung"];
+
+    // NFC first: a pasted or dictated "ö" may arrive decomposed (o + U+0308) and would otherwise miss the fixed text.
+    private static bool IsNoSolution(string given) =>
+        NoSolutionSpellings.Contains(StageMechanics.Normalize(given.Normalize(System.Text.NormalizationForm.FormC)));
+
     /// <summary>
     /// Is the typed answer the expected solution set (B-710)? Complete and nothing wrong: the numbers are separated by
     /// <see cref="SetSeparator"/>, may come in any order, and are compared pairwise after sorting, each within the
     /// tolerance. A doubled number is a second element, not an emphasis ("3;3" is not {3}). The empty set is only
-    /// <see cref="NoSolution"/> - an empty input is never right.
+    /// <see cref="NoSolution"/> (also written "keine Losung" or "keine Loesung") - an empty input is never right.
     /// </summary>
     public static bool MatchesSet(string? given, IReadOnlyList<decimal> expected, decimal tolerance)
     {
         if (string.IsNullOrWhiteSpace(given)) return false;
-        if (StageMechanics.Normalize(given) == StageMechanics.Normalize(NoSolution)) return expected.Count == 0;
+        if (IsNoSolution(given)) return expected.Count == 0;
         var parts = given.Split(SetSeparator);
         if (parts.Length != expected.Count) return false;
         var values = new List<decimal>(parts.Length);

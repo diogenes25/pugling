@@ -80,10 +80,15 @@ public class QuadraticEquationExerciseTypeTests
     }
 
     // AK 3: the empty set is the fixed text, never an empty input or a zero. Red when an empty answer counts as the empty
-    // set or "0" as no solution.
+    // set or "0" as no solution. The last three rows are the review finding on B-710: a decomposed "ö" (o + U+0308, as a
+    // paste or dictation may send it) and the two spellings without umlaut - red when the comparison skips NFC or knows only
+    // the one spelling.
     [Theory]
     [InlineData("keine Lösung", true)]
     [InlineData("Keine Lösung.", true)]
+    [InlineData("keine Lösung", true)]
+    [InlineData("keine Losung", true)]
+    [InlineData("Keine Loesung", true)]
     [InlineData("", false)]
     [InlineData("0", false)]
     public void Leere_Menge_Ist_Keine_Loesung(string given, bool correct)

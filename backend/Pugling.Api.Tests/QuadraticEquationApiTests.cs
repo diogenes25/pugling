@@ -84,6 +84,24 @@ public class QuadraticEquationApiTests(PuglingWebAppFactory factory) : IClassFix
         Assert.Equal(1, preview.GetProperty("correct").GetInt32());
     }
 
+    // Review finding: the catalog check grades against the solution and is the creator's tool - a student account gets 403,
+    // also for an exercise that exists. Red when the check action leaves the class's Creator gate (e.g. [AllowAnonymous]
+    // or a bare [Authorize] override on it).
+    [Fact]
+    public async Task Katalog_Check_Ist_Dem_Sohn_Verwehrt()
+    {
+        var (father, seriesId, unitId) = await UnitAsync();
+        var id = await TestApi.IdAsync(await father.PostAsJsonAsync(Base(seriesId, unitId),
+            Body(new { a = 1, b = -6, c = 8, tolerance = 0.01 })));
+        var child = await TestApi.ChildAsync(factory);
+
+        var res = await child.PostAsJsonAsync($"{Base(seriesId, unitId)}/{id}/check", new
+        {
+            answers = new[] { new { index = 0, value = "2;4" } },
+        });
+        Assert.Equal(HttpStatusCode.Forbidden, res.StatusCode);
+    }
+
     // AK 2, 10: the child plays a position of the type and types the set into the text field. "4;2" carries the claim -
     // red when the play path grades past the AnswerGrader (text would reject the order); "2,4" being wrong is a statement
     // of intent (text comparison rejects it too).

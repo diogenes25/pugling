@@ -157,6 +157,31 @@ public class FehlerartTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
     }
 
     /// <summary>
+    /// A wrong solution set carries no kind: the kinds name what went wrong with a word, and "2;5" for {2, 4} is no other
+    /// word. Typed stage: red when the classifier loses its <see cref="Services.Shared.ContentItem.IsNumber"/> gate (the row
+    /// turns WrongWord). Choice stage: a pick carries none either way - kept so the two stages of a number task are pinned
+    /// together, not as a probe of the gate.
+    /// </summary>
+    [Theory]
+    [InlineData((int)QuadraticEquationStage.Direct)]
+    [InlineData((int)QuadraticEquationStage.Distractors)]
+    public async Task Falsche_Loesungsmenge_Traegt_Keine_Art(int stage)
+    {
+        var type = new Exercises.QuadraticEquationExerciseType();
+        var config = System.Text.Json.JsonSerializer.Serialize(
+            new QuadraticEquationConfig { Equations = [new QuadraticEquation(1, -6, 8)] },
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var items = type.ItemsOf(config);
+
+        using var scope = factory.Services.CreateScope();
+        var classifier = scope.ServiceProvider.GetRequiredService<Services.Shared.AnswerErrorClassifier>();
+        var kind = await classifier.ClassifyAsync(type, config, items, items[0], stage, "2;5", wasCorrect: false,
+            CancellationToken.None);
+
+        Assert.Null(kind);
+    }
+
+    /// <summary>
     /// Learn card path: a recall written with a slip is a typo, a recall given up is a word not known; neither row counts for
     /// mastery, so neither has a box before. Red when the learn card's recall row passes no kind, or a box is taken for it.
     /// </summary>
