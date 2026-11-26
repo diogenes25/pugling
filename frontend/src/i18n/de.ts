@@ -456,7 +456,9 @@ export const de = {
       remove: "Ziel entfernen",
       pin: "☆ Als Ziel",
       pinned: "★ Mein Ziel",
-      pinLabel: "„{{title}}“ als Ziel",
+      // Der Vorlesename beginnt mit dem sichtbaren Text des Knopfs (WCAG 2.5.3), der Stern ist Schmuck.
+      pinLabel: "Als Ziel: „{{title}}“",
+      pinnedLabel: "Mein Ziel: „{{title}}“",
     },
     // B-377: das Lob der Eltern. Der Lobtext reist als Platzhalter und wird nie übersetzt.
     lob: {

@@ -1,4 +1,4 @@
-using System.Data.Common;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Pugling.Api.Data;
 using Pugling.Api.Models;
@@ -13,6 +13,9 @@ namespace Pugling.Api.Services.Shared;
 /// </summary>
 public class SavingsGoalService(PuglingDbContext db, ShopService shop, WalletService wallet, LearningDay learningDay)
 {
+    // SQLITE_CONSTRAINT: the primary result code of every constraint failure, the foreign key's among them.
+    private const int SqliteConstraintViolation = 19;
+
     /// <summary>The span the pace is averaged over: the seven full learning days before today (decision 1).</summary>
     public const int PaceDays = 7;
 
@@ -67,9 +70,10 @@ public class SavingsGoalService(PuglingDbContext db, ShopService shop, WalletSer
                 .SetProperty(c => c.SavingsGoalListingId, listingId)
                 .SetProperty(c => c.SavingsGoalTitle, title), ct);
         }
-        catch (DbException)
+        catch (SqliteException e) when (e.SqliteErrorCode == SqliteConstraintViolation)
         {
-            // The listing was deleted between the check and the write (FK violation): as unknown as any other.
+            // The listing was deleted between the check and the write (FK violation): as unknown as any other. Only the
+            // constraint: a busy or broken database is a server error, not a missing listing.
             return false;
         }
         return true;

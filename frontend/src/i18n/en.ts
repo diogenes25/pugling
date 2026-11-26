@@ -433,7 +433,8 @@ export const en = {
       remove: "Remove goal",
       pin: "☆ Set as goal",
       pinned: "★ My goal",
-      pinLabel: "“{{title}}” as goal",
+      pinLabel: "Set as goal: “{{title}}”",
+      pinnedLabel: "My goal: “{{title}}”",
     },
     lob: {
       title: "Praise from {{name}}",

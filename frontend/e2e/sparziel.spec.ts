@@ -37,10 +37,11 @@ test("Sparziel anheften, auf der Startseite sehen, und nach dem Löschen bleibt 
   await expect(sohn.getByTestId("sparziel")).toHaveCount(0);
 
   await sohn.goto("/sohn/shop");
-  const anheften = sohn.getByRole("button", { name: `„${titel}“ als Ziel` });
+  const anheften = sohn.getByRole("button", { name: `Als Ziel: „${titel}“` });
   await expect(anheften).toHaveAttribute("aria-pressed", "false");
   await anheften.click();
-  await expect(anheften).toHaveAttribute("aria-pressed", "true");
+  // Angeheftet trägt der Vorlesename den sichtbaren Text „Mein Ziel“ (WCAG 2.5.3) – rot, wenn er beim alten Namen bleibt.
+  await expect(sohn.getByRole("button", { name: `Mein Ziel: „${titel}“` })).toHaveAttribute("aria-pressed", "true");
   await expect(sohn.getByTestId("sparziel")).toContainText(titel);
 
   await sohn.goto("/sohn");

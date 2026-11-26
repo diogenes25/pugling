@@ -646,7 +646,7 @@ function SparzielZeile({ childId }: { childId: number }) {
     : coins === 0 && gems === 0 ? "genug gespart"
     : [coins > 0 ? `noch ${coins} ${coins === 1 ? "Münze" : "Münzen"}` : null,
       gems > 0 ? `${coins > 0 ? "und" : "noch"} ${gems} ${gems === 1 ? "Gem" : "Gems"}` : null,
-      g.daysAtPace != null && coins > 0 ? `– bei seinem Tempo etwa ${g.daysAtPace} ${g.daysAtPace === 1 ? "Tag" : "Tage"}` : null]
+      g.daysAtPace != null && coins > 0 ? `– im bisherigen Tempo etwa ${g.daysAtPace} ${g.daysAtPace === 1 ? "Tag" : "Tage"}` : null]
       .filter(Boolean).join(" ");
   return <p className="sub" data-testid="sparziel-kind">🎯 Sparziel: <strong>{g.title}</strong> · {fehlt}</p>;
 }

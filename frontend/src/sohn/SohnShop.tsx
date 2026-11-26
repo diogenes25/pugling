@@ -280,7 +280,7 @@ function BuyTab({ listings, busy, onBuy, goalListingId, onToggleGoal }: {
                 <div className="sub" style={{ fontSize: 11 }}>{t("shop.backOn", { when: date(l.nextRefillAtUtc) })}</div>)}
             </button>
             <button type="button" className={`btn small${istZiel ? " gold" : " ghost"}`} aria-pressed={istZiel ? "true" : "false"}
-              aria-label={t("sparziel.pinLabel", { title: l.title || l.articleTitle })} disabled={busy} onClick={() => onToggleGoal(l)}>
+              aria-label={t(istZiel ? "sparziel.pinnedLabel" : "sparziel.pinLabel", { title: l.title || l.articleTitle })} disabled={busy} onClick={() => onToggleGoal(l)}>
               {istZiel ? t("sparziel.pinned") : t("sparziel.pin")}
             </button>
           </div>
