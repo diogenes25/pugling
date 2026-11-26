@@ -43,13 +43,15 @@ namespace Pugling.Contracts.Student;
 /// <c>KeyboardLang</c> (B-661) is the language the learner types in on this exercise: the learnt language of its
 /// textbook series. The client offers the special characters of that language as an on-screen bar, so a phone keyboard
 /// without "î" never blocks a word. It names a character set, not an answer; <c>null</c> = no bar.
+///
+/// <c>SetAnswer</c> (B-712): the answer is a solution set, entered in separate fields - as on the practice card.
 /// </summary>
 public record TestItem(int ItemIndex, string? Prompt, int Stage, string? Reveal, int? AnswerLength,
     IReadOnlyList<string>? Choices, string? AudioUrl, int? GapIndex = null, string? Passage = null,
     bool AnyOrder = false, string? Type = null, IReadOnlyList<string>? RevealAlternatives = null,
     string? AnswerPattern = null, IReadOnlyList<WordPair>? Decoding = null, IReadOnlyList<string>? LetterTiles = null,
     IReadOnlyList<string>? CueBox = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
-    string? KeyboardLang = null);
+    string? KeyboardLang = null, bool SetAnswer = false);
 
 /// <summary>
 /// Response of the test start. Class-test mode is strictly server-driven: <b>no</b> questions are sent

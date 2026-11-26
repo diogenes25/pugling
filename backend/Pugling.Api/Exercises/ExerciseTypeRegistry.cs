@@ -69,6 +69,7 @@ public static class ExerciseTypeServiceCollectionExtensions
         services.AddSingleton<IExerciseType, TranslationExerciseType>();
         services.AddSingleton<IExerciseType, ArithmeticExerciseType>();
         services.AddSingleton<IExerciseType, ArithmeticDrillExerciseType>();
+        services.AddSingleton<IExerciseType, QuadraticEquationExerciseType>();
         services.AddSingleton<IExerciseType, ListExerciseType>();
         services.AddSingleton<IExerciseType, BirkenbihlExerciseType>();
         services.AddSingleton<ExerciseTypeRegistry>();

@@ -159,6 +159,7 @@ public class ExerciseItemCountTests(PuglingWebAppFactory factory) : IClassFixtur
             ["Arithmetic"] = ("Aufgaben", "Aufgabe"),
             ["ArithmeticDrill"] = (null, null),
             ["List"] = ("Einträge", "Eintrag"),
+            ["QuadraticEquation"] = ("Gleichungen", "Gleichung"),
         };
         var registry = factory.Services.GetRequiredService<ExerciseTypeRegistry>();
         Assert.Equal(expected.Keys.OrderBy(k => k), registry.All.Select(t => t.Key).OrderBy(k => k));

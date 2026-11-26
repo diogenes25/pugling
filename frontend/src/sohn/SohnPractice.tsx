@@ -564,7 +564,7 @@ export function SohnPractice() {
         )}
         /* Der Tipp gehört VOR die Antwort (Entscheidung 8): unter dem Blatt gibt es den Knopf nicht mehr – ein schon
            aufgedeckter Tipp bleibt als Text stehen. */
-        hinweis={card.hint && typed && (
+        hinweis={card.hint && typed && !card.setAnswer && (
           hintShown
             ? <div className="sub">💡 {card.hint}</div>
             : phase !== "blatt" && <button type="button" className="btn ghost small" style={{ marginTop: 6 }} onClick={() => setHintShown(true)}>{t("practice.hint")}</button>

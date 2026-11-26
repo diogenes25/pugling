@@ -251,7 +251,8 @@ Response — `HTTP 200`:
     "canEase": true,
     "eased": false,
     "keyboardLang": null,
-    "solvedGaps": null
+    "solvedGaps": null,
+    "setAnswer": false
   },
   "done": false,
   "cursor": 0,
@@ -317,7 +318,8 @@ Response — `HTTP 200`:
     "canEase": true,
     "eased": false,
     "keyboardLang": null,
-    "solvedGaps": null
+    "solvedGaps": null,
+    "setAnswer": false
   },
   "done": false,
   "misspelled": true,
@@ -405,7 +407,8 @@ Response — `HTTP 200`:
     "canEase": false,
     "eased": false,
     "keyboardLang": null,
-    "solvedGaps": null
+    "solvedGaps": null,
+    "setAnswer": false
   },
   {
     "itemIndex": 1,
@@ -437,8 +440,7 @@ Response — `HTTP 200`:
     "revealAudioUrl": null,
     "canEase": false,
     "eased": false,
-    "keyboardLang": null,
-    "solvedGaps": nul
+    "keyboardLang": nul
 … (gekürzt)
 ```
 
@@ -520,7 +522,8 @@ Response — `HTTP 200`:
     "cueBox": null,
     "dictationSpokenAnswer": null,
     "dictationLang": null,
-    "keyboardLang": null
+    "keyboardLang": null,
+    "setAnswer": false
   },
   "done": false,
   "cursor": 0,

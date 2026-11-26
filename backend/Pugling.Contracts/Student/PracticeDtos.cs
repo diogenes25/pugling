@@ -122,6 +122,9 @@ public record HeartbeatDto(int Seconds, bool Active);
 /// word it typed there. Without them those gaps read "…" like the open ones, and a round resuming at the third gap
 /// looked as if it skipped the first two. Gives away nothing: every entry is a task the child has answered itself.
 /// <c>null</c> outside a remediation round on a cloze text.
+///
+/// <c>SetAnswer</c> (B-712): the answer is a solution set - the client shows separate number fields and a "no solution"
+/// switch and sends them as one text (<c>2;4</c>, <c>keine Lösung</c>). A form, not a solution; <c>false</c> on every other card.
 /// </summary>
 public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt,
     string? Hint, int? AnswerLength, string? Reveal, IReadOnlyList<string>? Choices, string? AudioUrl,
@@ -131,7 +134,8 @@ public record PracticeCard(int ItemIndex, int Stage, string Type, string? Prompt
     IReadOnlyList<string>? LetterTiles = null, bool Introduction = false, IReadOnlyList<string>? CueBox = null,
     string? SpeechLang = null, string? DictationSpokenAnswer = null, string? DictationLang = null,
     bool LearnCard = false, string? RevealSpeechLang = null, string? RevealAudioUrl = null,
-    bool CanEase = false, bool Eased = false, string? KeyboardLang = null, IReadOnlyList<SolvedGap>? SolvedGaps = null);
+    bool CanEase = false, bool Eased = false, string? KeyboardLang = null, IReadOnlyList<SolvedGap>? SolvedGaps = null,
+    bool SetAnswer = false);
 
 /// <summary>A gap of a cloze text solved earlier in a remediation, with the word that solved it.</summary>
 public record SolvedGap(int GapIndex, string Text);

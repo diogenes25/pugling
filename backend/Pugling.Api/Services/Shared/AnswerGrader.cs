@@ -13,12 +13,13 @@ public class AnswerGrader
     /// tolerance (<see cref="ContentItem.ArticleOptionalIn"/>) and, for a word-list entry, each single meaning of it
     /// (<see cref="ContentItem.MeaningsSeparable"/>). The one entry point for every place that grades an atom
     /// (practice, test, preview, set matching), so the rule cannot differ between practice and test.
-    /// A number atom (<see cref="ContentItem.Numeric"/>, B-639) is compared as a number instead, with its tolerance.
+    /// A number atom (<see cref="ContentItem.Numeric"/>, B-639) is compared as a number instead, with its tolerance, and a
+    /// set atom (<see cref="ContentItem.NumericSet"/>, B-710) as a solution set.
     /// </summary>
     public bool Matches(string? given, ContentItem item) =>
-        item.Numeric is { } number
-            ? NumericAnswer.Matches(given, number.Value, number.Tolerance)
-            : item.GradedAnswers().Any(a => Matches(given, a, item.ArticleOptionalIn));
+        item.NumericSet is { } set ? NumericAnswer.MatchesSet(given, set.Values, set.Tolerance)
+        : item.Numeric is { } number ? NumericAnswer.Matches(given, number.Value, number.Tolerance)
+        : item.GradedAnswers().Any(a => Matches(given, a, item.ArticleOptionalIn));
 
     /// <summary>
     /// Text answer against one expected solution. An empty input is never correct. With
@@ -52,7 +53,7 @@ public class AnswerGrader
     {
         var g = Comparable(given);
         // A wrong number is another number, not a spelling slip - "2,4" is one character off "2,5" (B-639).
-        if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
+        if (g.Length == 0 || item.IsNumber || Matches(given, item)) return false;
         var own = Spellings(item, item).ToHashSet();
         if (own.Count == 0) return false;
         var nearest = own.Min(a => Distance(g, a));
@@ -81,7 +82,7 @@ public class AnswerGrader
     public bool IsAccentSlip(string? given, ContentItem item)
     {
         var g = Comparable(given);
-        if (g.Length == 0 || item.Numeric is not null || Matches(given, item)) return false;
+        if (g.Length == 0 || item.IsNumber || Matches(given, item)) return false;
         var folded = WithoutDiacritics(g);
         return Spellings(item, item).Any(a => WithoutDiacritics(a) == folded);
     }

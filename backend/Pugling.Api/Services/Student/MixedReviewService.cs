@@ -422,6 +422,6 @@ public class MixedReviewService(PuglingDbContext db, PositionProgressService pro
         var rate = typed ? extras.CardRate(exercise, type, items, raw, card.Stage) : 0;
         return new ExtraCard(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal, f.RevealAlternatives,
             choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox, rate,
-            f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
+            f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise), f.SetAnswer);
     }
 }

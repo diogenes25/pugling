@@ -255,4 +255,6 @@ public static class ExerciseTypeKeys
     public const string List = "List";
     /// <summary>Key of the Birkenbihl word-for-word decoding.</summary>
     public const string Birkenbihl = "Birkenbihl";
+    /// <summary>Key of the quadratic equation whose solution set is asked (B-710).</summary>
+    public const string QuadraticEquation = "QuadraticEquation";
 }

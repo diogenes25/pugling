@@ -35,6 +35,18 @@ public enum MatchStage
     Distractors = 2,
 }
 
+/// <summary>
+/// Stage of "Gleichung lösen" (B-711): both ask the same solution set, once as a choice among computed wrong sets, once
+/// typed. Values as in <see cref="MatchStage"/>, so the two choice-or-type types read alike.
+/// </summary>
+public enum QuadraticEquationStage
+{
+    /// <summary>The set is typed (the default: a plan without a stage asks, it does not offer).</summary>
+    Direct = 1,
+    /// <summary>The set is picked among the right one and up to three typical wrong ones.</summary>
+    Distractors = 2,
+}
+
 /// <summary>Test stage of the vocabulary flashcard test (increasing difficulty).</summary>
 public enum TestStage
 {

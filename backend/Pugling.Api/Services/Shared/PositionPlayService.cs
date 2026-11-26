@@ -691,7 +691,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
         string? AudioUrl, string? ImageUrl, string? ImageAlt, int? GapIndex, string? Prompt, string? Passage,
         bool AnyOrder, IReadOnlyList<string>? RevealAlternatives, IReadOnlyList<WordPair>? Decoding,
         string? AnswerPattern, IReadOnlyList<string>? LetterTiles, IReadOnlyList<string>? CueBox,
-        string? DictationSpokenAnswer, string? DictationLang)
+        string? DictationSpokenAnswer, string? DictationLang, bool SetAnswer)
         CardFacets(string configJson, IReadOnlyList<ContentItem> items, ContentItem item, IExerciseType type,
             int stage, bool typed, int seed)
     {
@@ -760,7 +760,10 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
             // The prompt beside it stays: it is the German word, shown only where the device has no voice for the
             // language and the dictation falls back to free text.
             dictation ? item.Answer : null,
-            dictation ? item.DictationLang : null);
+            dictation ? item.DictationLang : null,
+            // B-712: the answer is a solution set, typed into separate fields with a "no solution" switch. A form, not a
+            // secret - only where the child types (a choice stage answers with a button).
+            typed && choices is null && item.NumericSet is not null);
     }
 
     // The options in an order of their own per card and session: an author's list (reading questions) usually starts with

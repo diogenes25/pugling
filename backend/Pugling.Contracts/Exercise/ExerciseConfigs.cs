@@ -196,6 +196,21 @@ public class ArithmeticConfig
 /// </summary>
 public record ArithmeticProblem(string Prompt, decimal Answer, decimal Tolerance = 0m);
 
+/// <summary>
+/// Quadratic equations to solve (B-710): the author enters only the coefficients, the server computes the solution set.
+/// There is deliberately no solution field - the set comes from the solver, so it cannot contradict the coefficients.
+/// </summary>
+public class QuadraticEquationConfig
+{
+    /// <summary>The equations - the graded content atoms of the exercise, one solution set each.</summary>
+    public List<QuadraticEquation> Equations { get; set; } = new();
+}
+/// <summary>
+/// One equation in normal form <c>A·x² + B·x + C = 0</c> with <c>A ≠ 0</c>. <see cref="Tolerance"/> is the leeway per
+/// element of the solution set (inclusive); it also sets how many decimals the shown solution carries.
+/// </summary>
+public record QuadraticEquation(decimal A, decimal B, decimal C, decimal Tolerance = 0.01m);
+
 /// <summary>Operation type of a generated problem.</summary>
 public enum ArithmeticOperation
 {

@@ -424,3 +424,131 @@ describe("Lückentext in der Nacharbeit", () => {
     expect(document.querySelector(".cloze-gap.asked")?.textContent).toBe("?");
   });
 });
+
+/*
+ * B-712 – die Mengen-Eingabe einer Gleichungs-Karte (`setAnswer`): getrennte Felder und „keine Lösung“ statt eines
+ * Textfelds. Je Fall steht die Änderung, die ihn rot macht.
+ */
+describe("Antwortfläche, Lösungsmenge (B-712)", () => {
+  const gleichung = (over: Partial<LektionsKarte> = {}) =>
+    karte({ type: "QuadraticEquation", prompt: "$x^2 - 6x + 8 = 0$", setAnswer: true, ...over });
+  const feld = (n: number) => screen.getByRole("textbox", { name: `Lösung ${n}` });
+  const keine = () => screen.getByRole("button", { name: "keine Lösung" });
+  const pruefen = () => screen.getByRole("button", { name: "Prüfen" });
+
+  // AK 1: rot, wenn die Felder auch ohne `setAnswer` erscheinen oder mit ihm das Textfeld bleibt.
+  it("zeigt mit setAnswer zwei Felder und den Umschalter, ohne das Textfeld", () => {
+    render(<Flaeche k={gleichung()} onAbschicken={() => {}} />);
+    expect(feld(1)).toBeTruthy();
+    expect(feld(2)).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: "Deine Antwort" })).toBeNull();
+    expect(keine().getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("zeigt ohne setAnswer das Textfeld und keine Mengen-Felder", () => {
+    render(<Flaeche k={gleichung({ setAnswer: false })} onAbschicken={() => {}} />);
+    expect(screen.getByRole("textbox", { name: "Deine Antwort" })).toBeTruthy();
+    expect(screen.queryByRole("textbox", { name: "Lösung 1" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "keine Lösung" })).toBeNull();
+  });
+
+  // AK 2 und 3: rot, wenn die Karte unsortiert sendet oder das Komma umschreibt.
+  it("sendet die Felder aufsteigend und Komma wie Punkt unverändert", () => {
+    const abschicken = vi.fn();
+    const { unmount } = render(<Flaeche k={gleichung()} onAbschicken={abschicken} />);
+    fireEvent.change(feld(1), { target: { value: "4" } });
+    fireEvent.change(feld(2), { target: { value: "2" } });
+    fireEvent.click(pruefen());
+    expect(abschicken).toHaveBeenLastCalledWith("2;4");
+    unmount();
+
+    render(<Flaeche k={gleichung()} onAbschicken={abschicken} />);
+    fireEvent.change(feld(1), { target: { value: "3.5" } });
+    fireEvent.change(feld(2), { target: { value: "2,5" } });
+    fireEvent.click(pruefen());
+    expect(abschicken).toHaveBeenLastCalledWith("2,5;3.5");
+  });
+
+  // AK 4: rot, wenn die Felder beim Umschalten ihren Wert behalten, offen bleiben, „0“ gesendet wird oder der zweite
+  // Druck nichts aufhebt.
+  it("„keine Lösung“ leert und sperrt die Felder, sendet den festen Text und lässt sich aufheben", () => {
+    const abschicken = vi.fn();
+    render(<Flaeche k={gleichung()} onAbschicken={abschicken} />);
+    fireEvent.change(feld(1), { target: { value: "2" } });
+    fireEvent.click(keine());
+    expect(keine().getAttribute("aria-pressed")).toBe("true");
+    expect((feld(1) as HTMLInputElement).value).toBe("");
+    expect((feld(1) as HTMLInputElement).readOnly).toBe(true);
+    fireEvent.click(pruefen());
+    expect(abschicken).toHaveBeenLastCalledWith("keine Lösung");
+
+    fireEvent.click(keine());
+    expect(keine().getAttribute("aria-pressed")).toBe("false");
+    expect((feld(1) as HTMLInputElement).readOnly).toBe(false);
+    expect((pruefen() as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  // AK 5: rot, wenn eine leere Menge abgeschickt werden kann (mit dem Knopf oder mit Enter).
+  it("sperrt „Prüfen“, solange alles leer ist", () => {
+    const abschicken = vi.fn();
+    render(<Flaeche k={gleichung()} onAbschicken={abschicken} />);
+    expect((pruefen() as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.keyDown(feld(2), { key: "Enter" });
+    expect(abschicken).not.toHaveBeenCalled();
+  });
+
+  // AK 6: rot, wenn die Fläche je Karte neu entsteht (neuer Knoten, Fokus auf `body`) oder die Werte der alten Karte
+  // stehen bleiben.
+  it("behält beim Kartenwechsel die Felder, leert sie und setzt den Fokus ins erste", () => {
+    const { rerender } = render(<Flaeche k={gleichung()} kartenId={1} onAbschicken={() => {}} />);
+    const erstes = feld(1);
+    fireEvent.change(feld(2), { target: { value: "4" } });
+    feld(2).focus();
+
+    rerender(<Flaeche k={gleichung({ itemIndex: 1, prompt: "$x^2 + 1 = 0$" })} kartenId={2} onAbschicken={() => {}} />);
+    expect(feld(1)).toBe(erstes);
+    expect((feld(2) as HTMLInputElement).value).toBe("");
+    expect(document.activeElement).toBe(erstes);
+  });
+
+  // AK 7: rot, wenn Enter im letzten Feld nicht abschickt (ein Formular mit zwei Feldern tut das von selbst nicht).
+  it("schickt mit Enter im letzten Feld ab", () => {
+    const abschicken = vi.fn();
+    render(<Flaeche k={gleichung()} onAbschicken={abschicken} />);
+    fireEvent.change(feld(1), { target: { value: "2" } });
+    fireEvent.change(feld(2), { target: { value: "4" } });
+    fireEvent.keyDown(feld(2), { key: "Enter" });
+    expect(abschicken).toHaveBeenCalledWith("2;4");
+  });
+
+  // AK 8: rot, wenn das Attribut fehlt oder `type="number"` das Komma verschluckte.
+  it("Felder tragen inputMode decimal und kein type number", () => {
+    render(<Flaeche k={gleichung()} onAbschicken={() => {}} />);
+    for (const n of [1, 2]) {
+      expect(feld(n).getAttribute("inputmode")).toBe("decimal");
+      expect(feld(n).getAttribute("type")).not.toBe("number");
+    }
+  });
+
+  // Entscheidung 2: „+“ bis vier Felder, dann ist Schluss; das neue Feld bekommt den Fokus. Rot, wenn die Obergrenze
+  // fehlt oder der Fokus beim „+“ bleibt (beim vierten Feld verschwindet der Knopf und nähme ihn mit).
+  it("legt per „+“ bis zu vier Felder an und fokussiert das neue", () => {
+    render(<Flaeche k={gleichung()} onAbschicken={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "+ weitere Lösung" }));
+    expect(document.activeElement).toBe(feld(3));
+    fireEvent.click(screen.getByRole("button", { name: "+ weitere Lösung" }));
+    expect(document.activeElement).toBe(feld(4));
+    expect(screen.queryByRole("button", { name: "+ weitere Lösung" })).toBeNull();
+  });
+
+  // Review: stand der Fokus im dritten Feld, fällt es beim Kartenwechsel weg. Rot, wenn der Fokus dann auf `body` landet
+  // statt im ersten Feld (am Handy klappte die Tastatur zu).
+  it("setzt den Fokus auch aus einem weggefallenen Feld ins erste", () => {
+    const { rerender } = render(<Flaeche k={gleichung()} kartenId={1} onAbschicken={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "+ weitere Lösung" }));
+    feld(3).focus();
+    rerender(<Flaeche k={gleichung({ itemIndex: 1 })} kartenId={2} onAbschicken={() => {}} />);
+    expect(screen.queryByRole("textbox", { name: "Lösung 3" })).toBeNull();
+    expect(document.activeElement).toBe(feld(1));
+  });
+});

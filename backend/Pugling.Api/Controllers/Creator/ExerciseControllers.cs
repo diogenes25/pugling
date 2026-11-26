@@ -711,6 +711,29 @@ public class ArithmeticController(PuglingDbContext db, ExerciseTypeRegistry regi
 }
 
 /// <summary>
+/// Quadratic equations (B-710): the author enters the coefficients, the server computes the solution set and
+/// <see cref="Check"/> grades an answer as that set.
+/// </summary>
+[Route(ExerciseRoutes.Base + "/quadratic-equation")]
+[Tags("Creator – Quadratic Equation")]
+public class QuadraticEquationController(PuglingDbContext db, ExerciseTypeRegistry registry)
+    : ExerciseControllerBase<QuadraticEquationConfig>(db, registry)
+{
+    /// <inheritdoc/>
+    protected override string TypeKey => ExerciseTypeKeys.QuadraticEquation;
+
+    /// <summary>Rejects a = 0, a negative tolerance and a tolerance wide enough to hit both solutions with one number.</summary>
+    protected override Task<RequestProblem?> ValidateConfigAsync(int seriesId, QuadraticEquationConfig config, CancellationToken ct = default) =>
+        Task.FromResult(QuadraticEquationExerciseType.Validate(config) is { } error ? RequestProblem.Invalid(error) : null);
+
+    /// <summary>Grades the child's solution sets against the computed ones (per element within the tolerance).</summary>
+    [HttpPost("{exerciseId:int}/check")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<ActionResult<CheckResult>> Check(int seriesId, int seriesUnitId, int exerciseId, CheckDto body, CancellationToken ct = default) =>
+        RunCheckAsync(seriesId, seriesUnitId, exerciseId, body, ct);
+}
+
+/// <summary>
 /// Random arithmetic problems: the rules (config) are stored, the concrete problems are delivered by
 /// <see cref="Generate"/> on demand. <see cref="Check"/> regenerates the set from the same seed
 /// and evaluates it – this keeps the check server-side. The controller inherits the CRUD of the rules.

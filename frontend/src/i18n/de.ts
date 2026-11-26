@@ -411,6 +411,9 @@ export const de = {
     },
     // Der Lektionsbildschirm (B-526): die Arbeitsanweisung je Antwortform.
     lektion: {
+      setField: "Lösung {{n}}",
+      setAdd: "+ weitere Lösung",
+      setNone: "keine Lösung",
       choose: "Wähle die richtige Antwort",
       order: "Ordne die Buchstaben",
       boxes: "Fülle die Kästchen",

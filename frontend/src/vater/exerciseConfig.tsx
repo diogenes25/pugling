@@ -41,6 +41,8 @@ interface VocabularyRow { front: string; back: string; hint: string }
 interface VocabularyExtra { direction: string; sourceLang: string; targetLang: string; articleRequired: boolean }
 
 interface ArithmeticRow { prompt: string; answer: string; tolerance: string }
+/** B-710: nur die Koeffizienten von a·x² + b·x + c = 0 und die Toleranz – die Lösungsmenge rechnet der Server. */
+interface QuadraticEquationRow { a: string; b: string; c: string; tolerance: string }
 interface ArithmeticDrillExtra {
   operations: ArithmeticOperation[]; minOperand: string; maxOperand: string; problemCount: string;
   allowNegativeResults: boolean; divisionMustBeWhole: boolean; seed: string;
@@ -81,7 +83,7 @@ interface BirkenbihlExtra { learningLang: string; nativeLang: string }
 /** Reihenfolge im Typ-Pulldown: erst die alltäglichen, dann die selteneren. */
 export const AUTHORABLE_TYPES: ExerciseTypeKey[] = [
   "Vocabulary", "Cloze", "Matching", "List", "Grammar", "Translation",
-  "Reading", "Listening", "Essay", "Arithmetic", "ArithmeticDrill", "Birkenbihl",
+  "Reading", "Listening", "Essay", "Arithmetic", "ArithmeticDrill", "QuadraticEquation", "Birkenbihl",
 ];
 
 /** Hat diese UI einen Editor für den Typ? `Exercise.type` ist zur Laufzeit ein beliebiger `string`. */
@@ -99,7 +101,7 @@ export function isKnownType(type: string): type is ExerciseTypeKey {
  */
 const CONTENT_EDITABLE: ExerciseTypeKey[] = [
   "Cloze", "Matching", "List", "Grammar", "Translation",
-  "Reading", "Listening", "Essay", "Arithmetic", "ArithmeticDrill",
+  "Reading", "Listening", "Essay", "Arithmetic", "ArithmeticDrill", "QuadraticEquation",
 ];
 export const isContentEditable = (type: ExerciseTypeKey): boolean => CONTENT_EDITABLE.includes(type);
 
@@ -166,12 +168,33 @@ export const choicesMissAnswer = (r: Row): boolean => {
 const numOr = (v: unknown, fallback: number): number => (v === "" || v == null ? fallback : Number(v));
 const numOrNull = (v: unknown): number | null => (v === "" || v == null ? null : Number(v));
 
+/** Ein Dezimalkomma liest der Editor wie einen Punkt (B-639 gilt auch für den Vater): „0,5" ist 0.5, nicht NaN. */
+export const decimalText = (v: unknown): string => String(v ?? "").trim().replace(",", ".");
+
+/**
+ * Die Gleichung, wie sie der Vater gerade eingibt – nur als Lesehilfe neben den Feldern. Die Karte des Kindes baut der
+ * Server (`QuadraticEquationSolver.Prompt`); hier steht dieselbe Normalform ohne LaTeX.
+ */
+export function equationPreview(r: QuadraticEquationRow): string {
+  const term = (value: number, variable: string, first: boolean): string => {
+    if (!value) return "";
+    const sign = value < 0 ? (first ? "−" : " − ") : first ? "" : " + ";
+    const magnitude = Math.abs(value);
+    const digits = magnitude === 1 && variable ? "" : String(magnitude).replace(".", ",");
+    return sign + digits + variable;
+  };
+  const [a, b, c] = [r.a, r.b, r.c].map((v) => Number(decimalText(v)) || 0);
+  const left = term(a, "x²", true) + term(b, "x", !a) + term(c, "", !a && !b);
+  return `${left || "0"} = 0`;
+}
+
 /** Leere Anfangszeile je Typ (die Felder, die der jeweilige Editor bearbeitet). */
 export function emptyRow(type: ExerciseTypeKey): Row {
   switch (type) {
     case "Vocabulary": return { front: "", back: "", hint: "" } satisfies VocabularyRow;
     case "Arithmetic": return { prompt: "", answer: "", tolerance: "0" } satisfies ArithmeticRow;
     case "ArithmeticDrill": return {};
+    case "QuadraticEquation": return { a: "1", b: "", c: "", tolerance: "0.01" } satisfies QuadraticEquationRow;
     case "Cloze": return { index: 1, answer: "", alternatives: [], vocabKey: null, form: "", distractors: [], prompt: "" } satisfies ClozeRow;
     case "Matching": return { left: "", right: "" } satisfies MatchingRow;
     case "List": return { value: "", alternatives: [] } satisfies ListRow;
@@ -231,6 +254,14 @@ export function buildTypeConfig(
     case "Arithmetic": {
       const items = rows as ArithmeticRow[];
       return { problems: items.map((r) => ({ prompt: r.prompt, answer: Number(r.answer), tolerance: Number(r.tolerance) || 0 })) };
+    }
+    case "QuadraticEquation": {
+      const items = rows as QuadraticEquationRow[];
+      // Leere Felder sind 0 (ein fehlendes Glied der Gleichung); die Toleranz fällt leer auf die Vorgabe 0,01 zurück.
+      return { equations: items.map((r) => ({
+        a: numOr(decimalText(r.a), 0), b: numOr(decimalText(r.b), 0), c: numOr(decimalText(r.c), 0),
+        tolerance: numOr(decimalText(r.tolerance), 0.01),
+      })) };
     }
     case "ArithmeticDrill": {
       const cfg = extra as ArithmeticDrillExtra;
@@ -376,6 +407,12 @@ export function configToEditorState(type: ExerciseTypeKey, config: unknown): { r
       return fallback(
         list(c.problems).map((p): ArithmeticRow => ({ prompt: p.prompt ?? "", answer: num(p.answer), tolerance: num(p.tolerance ?? 0) })),
         {});
+    case "QuadraticEquation":
+      return fallback(
+        list(c.equations).map((e): QuadraticEquationRow => ({
+          a: num(e.a), b: num(e.b), c: num(e.c), tolerance: num(e.tolerance ?? 0.01),
+        })),
+        {});
     case "ArithmeticDrill":
       return { rows: [], extra: {
         operations: (list(c.operations) as unknown as ArithmeticOperation[]).length > 0
@@ -450,6 +487,7 @@ const ROW_LABEL: Partial<Record<ExerciseTypeKey, string>> = {
   Reading: "+ Frage", Listening: "+ Frage", Essay: "+ Kriterium",
   Grammar: "+ Aufgabe", Translation: "+ Satz", Cloze: "+ Lücke",
   Matching: "+ Paar", List: "+ Eintrag", Arithmetic: "+ Aufgabe", Birkenbihl: "+ Satz",
+  QuadraticEquation: "+ Gleichung",
 };
 
 /**
@@ -674,6 +712,14 @@ export function ConfigEditor({ type, rows, extra, setExtra, patchRow, addRow, re
             <RowField label="Lösung" value={r.answer} onChange={(v) => patchRow(i, { answer: v })} type="number" width={90} />
             <RowField label="Toleranz" value={r.tolerance} onChange={(v) => patchRow(i, { tolerance: v })} type="number" width={90} optional />
           </>}
+          {type === "QuadraticEquation" && <>
+            {/* B-710: der Vater tippt nur die Koeffizienten; die Lösungsmenge rechnet der Server. */}
+            <RowField label="a (vor x²)" value={r.a} onChange={(v) => patchRow(i, { a: v })} inputMode="decimal" width={90} />
+            <RowField label="b (vor x)" value={r.b} onChange={(v) => patchRow(i, { b: v })} inputMode="decimal" width={90} />
+            <RowField label="c" value={r.c} onChange={(v) => patchRow(i, { c: v })} inputMode="decimal" width={90} />
+            <RowField label="Toleranz" value={r.tolerance} onChange={(v) => patchRow(i, { tolerance: v })} inputMode="decimal" width={90} optional />
+            <span className="sub" style={{ alignSelf: "center" }}>{equationPreview(r as QuadraticEquationRow)}</span>
+          </>}
           {type === "Cloze" && <>
             <RowField label="Lücke-Nr." value={r.index} onChange={(v) => patchRow(i, { index: v })} type="number" width={80} />
             {/* B-633: die Aufgabe, wie sie im Test stand – steht beim Kind offen über dem Text. */}
@@ -770,9 +816,11 @@ export function ArticleRequiredCheck({ checked, onChange }: { checked: boolean; 
   );
 }
 
-export function RowField({ label, value, onChange, type = "text", placeholder, optional, width, topic }: {
+export function RowField({ label, value, onChange, type = "text", placeholder, optional, width, topic, inputMode }: {
   label: string; value: unknown; onChange: (v: string) => void;
   type?: string; placeholder?: string; optional?: boolean; width?: number; topic?: HelpTopic;
+  /** Tastatur am Handy; `decimal` statt `type="number"`, damit ein Dezimalkomma nicht verschluckt wird. */
+  inputMode?: "decimal";
 }) {
   const uid = useId();
   return (
@@ -781,7 +829,7 @@ export function RowField({ label, value, onChange, type = "text", placeholder, o
         <label htmlFor={uid}>{label}{optional && <span className="muted"> (optional)</span>}</label>
         {topic && <InfoHint topic={topic} />}
       </span>
-      <input id={uid} type={type} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <input id={uid} type={type} inputMode={inputMode} value={String(value ?? "")} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -850,6 +898,18 @@ export function contentProblem(type: ExerciseTypeKey, rows: Row[], extra: Row, v
   switch (type) {
     case "Vocabulary": return vocabCount === 0 ? "Bitte mindestens eine Vokabel wählen." : null;
     case "Arithmetic": return !r.prompt || r.answer === "" ? "Bitte mindestens eine Aufgabe mit Lösung angeben." : null;
+    case "QuadraticEquation": {
+      if (rows.length === 0) return "Bitte mindestens eine Gleichung angeben.";
+      // Keine Zahl ginge als `null` hinaus und scheiterte am Server ohne lesbare Meldung – darum hier, je Feld.
+      const keineZahl = (v: unknown) => decimalText(v) !== "" && !Number.isFinite(Number(decimalText(v)));
+      for (const [i, row] of rows.entries()) {
+        const feld = (["a", "b", "c", "tolerance"] as const).find((k) => keineZahl(row[k]));
+        if (feld) return `Gleichung ${i + 1}: ${feld === "tolerance" ? "die Toleranz" : feld} ist keine Zahl.`;
+        if (!Number(decimalText(row.a))) return `Gleichung ${i + 1}: a darf nicht 0 sein – ohne x² ist es keine quadratische Gleichung.`;
+        if (Number(decimalText(row.tolerance)) < 0) return `Gleichung ${i + 1}: die Toleranz darf nicht negativ sein.`;
+      }
+      return null;
+    }
     case "ArithmeticDrill": {
       const ops = (extra.operations as string[] | undefined) ?? [];
       if (ops.length === 0) return "Bitte mindestens eine Rechenart wählen.";

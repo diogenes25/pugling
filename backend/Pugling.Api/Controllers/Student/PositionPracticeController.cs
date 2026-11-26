@@ -324,7 +324,7 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
             // An eased recall asks for the word: reading it aloud there would be the answer.
             learnCard, learnCard && !eased ? item.DictationLang : null, learnCard && !eased ? item.DictationAudioUrl : null,
             canEase, session.EasedStages?.ContainsKey(position) == true, PositionPlayService.KeyboardLangOf(exercise),
-            SolvedGapsOf(pos, type, session, introduced, items, index, f.GapIndex));
+            SolvedGapsOf(pos, type, session, introduced, items, index, f.GapIndex), f.SetAnswer);
     }
 
     // The other gaps of the text a remediation already ticked off, filled with their words - a round resumes at the first

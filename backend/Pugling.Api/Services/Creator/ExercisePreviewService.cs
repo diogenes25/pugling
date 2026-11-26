@@ -134,6 +134,6 @@ public class ExercisePreviewService(ExerciseContentResolver content, AnswerGrade
         // things out child-neutrally. An arbitrary image would mislead - it would not show what their child sees.
         return new PreviewItem(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal,
             f.Choices, f.AudioUrl, f.Passage, f.AnyOrder, f.RevealAlternatives, f.Decoding, f.AnswerPattern, f.LetterTiles,
-            f.CueBox, f.DictationSpokenAnswer, f.DictationLang);
+            f.CueBox, f.DictationSpokenAnswer, f.DictationLang, f.SetAnswer);
     }
 }

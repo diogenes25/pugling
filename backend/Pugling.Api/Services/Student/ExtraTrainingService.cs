@@ -457,7 +457,7 @@ public class ExtraTrainingService(PuglingDbContext db, PositionProgressService p
             var choices = f.Choices is { } c ? c.OrderBy(_ => rng.Next()).ToList() : null;
             return new ExtraCard(item.Index, f.Prompt, f.GapIndex, f.Hint, f.AnswerLength, f.Reveal, f.RevealAlternatives,
                 choices, f.AudioUrl, f.Passage, f.AnyOrder, f.Decoding, f.AnswerPattern, f.LetterTiles, f.CueBox,
-                rates[raw.Index], f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise));
+                rates[raw.Index], f.DictationSpokenAnswer, f.DictationLang, PositionPlayService.KeyboardLangOf(exercise), f.SetAnswer);
         }).ToList();
         return new ExtraRunResponse(run.Id, exercise.Id, exercise.Title, exercise.Type, run.Form, run.Stage, typed,
             CoinsPerHit(run.Form), cards, runPercent);

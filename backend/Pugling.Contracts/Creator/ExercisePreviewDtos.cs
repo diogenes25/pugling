@@ -24,12 +24,14 @@ namespace Pugling.Contracts.Creator;
 /// handed out before the answer</b> - a deliberate exception to the anti-cheat rule (B-597 decision 9), because without
 /// it no word of the stock could be dictated. The client never shows it as text; without a voice for the language it
 /// plays the card as free text from the German <c>Prompt</c>.
+///
+/// <c>SetAnswer</c> (B-712): the answer is a solution set, entered in separate fields - as on the child's card.
 /// </summary>
 public record PreviewItem(int ItemIndex, string? Prompt, int? GapIndex, string? Hint, int? AnswerLength, string? Reveal,
     IReadOnlyList<string>? Choices, string? AudioUrl, string? Passage = null, bool AnyOrder = false,
     IReadOnlyList<string>? RevealAlternatives = null, IReadOnlyList<WordPair>? Decoding = null,
     string? AnswerPattern = null, IReadOnlyList<string>? LetterTiles = null, IReadOnlyList<string>? CueBox = null,
-    string? DictationSpokenAnswer = null, string? DictationLang = null);
+    string? DictationSpokenAnswer = null, string? DictationLang = null, bool SetAnswer = false);
 
 /// <summary>
 /// The playable state of an exercise in test mode: type, chosen stage, whether typed, the problems and

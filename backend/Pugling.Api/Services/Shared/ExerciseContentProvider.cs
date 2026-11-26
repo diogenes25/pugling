@@ -63,8 +63,15 @@ public record ContentItem(
     bool RecognitionOnly = false,
     string? DictationAudioUrl = null,
     string? DictationLang = null,
-    NumericTarget? Numeric = null)
+    NumericTarget? Numeric = null,
+    NumericSetTarget? NumericSet = null)
 {
+    /// <summary>
+    /// Is this atom graded as a number or a set of numbers (B-639, B-710)? Such an answer is never a spelling or an
+    /// accent slip - a wrong number is another number.
+    /// </summary>
+    public bool IsNumber => Numeric is not null || NumericSet is not null;
+
     /// <summary>
     /// Everything a typed answer is compared against: the accepted answers, plus their single meanings where the
     /// atom is a word-list entry. The one list for grading and for keeping a right answer out of the distractors.
@@ -137,5 +144,6 @@ public class ExerciseContentProvider(ExerciseTypeRegistry registry)
             RecognitionOnly = false,
             // The reversed card asks the prompt; a number target kept here would grade it against the old number.
             Numeric = null,
+            NumericSet = null,
         };
 }

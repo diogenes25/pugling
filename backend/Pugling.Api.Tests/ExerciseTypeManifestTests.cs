@@ -65,6 +65,7 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
         {
             [ExerciseTypeKeys.Vocabulary] = typeof(TestStage),
             [ExerciseTypeKeys.Cloze] = typeof(ClozeStage),
+            [ExerciseTypeKeys.QuadraticEquation] = typeof(QuadraticEquationStage),
         };
 
         foreach (var (key, stageEnum) in stageEnums)
@@ -209,5 +210,8 @@ public class ExerciseTypeManifestTests(PuglingWebAppFactory factory) : IClassFix
 
         Assert.True(await Flag("Vocabulary"));
         Assert.False(await Flag("Matching"));
+        // B-711: both stages of "Gleichung lösen" are typed - a claim never passes its test. Red when a stage turns
+        // self-assessed.
+        Assert.False(await Flag("QuadraticEquation"));
     }
 }

@@ -198,7 +198,7 @@ export function SohnMischrunde() {
       >
         <Aufgabe
           karte={card} form={form} skin={skin} gedreht={!typed && revealed}
-          hinweis={card.hint && typed && <div className="sub" style={{ marginTop: 6 }}>💡 {card.hint}</div>}
+          hinweis={card.hint && typed && !card.setAnswer && <div className="sub" style={{ marginTop: 6 }}>💡 {card.hint}</div>}
           aufloesung={!typed && revealed && (
             <>
               <div className="rev">→ {card.reveal ?? t("test.revealedFallback")}</div>

@@ -4,6 +4,7 @@ import { Mascot } from "../components/Mascot";
 import { LearningDad } from "../components/LearningDad";
 import { LetterBoxes } from "../components/LetterBoxes";
 import { LetterTiles } from "../components/LetterTiles";
+import { Mengeneingabe } from "./Mengeneingabe";
 import { AudioButton } from "../components/AudioButton";
 import { SpeakButton } from "../components/SpeakButton";
 import { ClozePrompt } from "../components/ClozePrompt";
@@ -31,7 +32,7 @@ export type LektionsKarte = Pick<PracticeCard, "itemIndex" | "prompt" | "gapInde
   | "decoding" | "anyOrder" | "cueBox" | "choices" | "letterTiles" | "answerLength" | "answerPattern">
   // Die Testkarte nennt ihren Typ nur optional – und trägt keine Vorlese-Sprache (B-252: nur die Übungskarte).
   & { type?: string | null } & Partial<Pick<PracticeCard, "speechLang" | "dictationSpokenAnswer" | "dictationLang" | "keyboardLang"
-    | "solvedGaps">>;
+    | "solvedGaps" | "setAnswer">>;
 
 /**
  * Die in der Nacharbeit schon gelösten Lücken, ins Format von `ClozePrompt.filled`. Ohne sie stehen sie als „…“ da, und
@@ -186,6 +187,9 @@ export function Antwortflaeche({ karte, kartenId, wert, onWert, gesperrt, knopf,
             >{c}</button>
           ))}
         </div>
+      ) : karte.setAnswer ? (
+        // B-712: eine Lösungsmenge – getrennte Felder und „keine Lösung“ statt eines Textfelds mit Trenner-Regel.
+        <Mengeneingabe kartenId={kartenId} onWert={onWert} onAbschicken={abschicken} gesperrt={gesperrt} />
       ) : karte.letterTiles ? (
         <LetterTiles tiles={karte.letterTiles} value={wert} onChange={onWert} onSubmit={abschicken} gesperrt={gesperrt}
           pattern={karte.answerPattern} />

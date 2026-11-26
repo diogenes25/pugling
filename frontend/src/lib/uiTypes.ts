@@ -110,7 +110,7 @@ export interface VocabularySearchParams {
  */
 export type ExerciseTypeKey =
   | "Vocabulary" | "Arithmetic" | "ArithmeticDrill" | "Cloze" | "Matching" | "List" | "Birkenbihl"
-  | "Reading" | "Listening" | "Essay" | "Grammar" | "Translation";
+  | "Reading" | "Listening" | "Essay" | "Grammar" | "Translation" | "QuadraticEquation";
 
 /**
  * Gemeinsame Nutzlast zum Anlegen einer Übung (spiegelt `ExercisePayload<TConfig>` im Backend).

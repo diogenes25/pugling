@@ -389,6 +389,9 @@ export const en = {
       accentHint: "Almost – watch the accents",
     },
     lektion: {
+      setField: "Solution {{n}}",
+      setAdd: "+ another solution",
+      setNone: "no solution",
       choose: "Choose the right answer",
       order: "Put the letters in order",
       boxes: "Fill in the boxes",

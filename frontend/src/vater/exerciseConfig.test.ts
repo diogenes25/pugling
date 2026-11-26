@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTypeConfig, choicesMissAnswer, configToEditorState, contentProblem, emptyRow, normalizeAnswer } from "./exerciseConfig";
+import { buildTypeConfig, choicesMissAnswer, configToEditorState, contentProblem, emptyRow, equationPreview, normalizeAnswer } from "./exerciseConfig";
 import type { ExerciseTypeKey } from "../lib/types";
 
 /*
@@ -261,5 +261,58 @@ describe("Rundlauf Vokabel – Artikel verlangt", () => {
     expect(configToEditorState("Vocabulary", { articleRequired: true }).extra.articleRequired).toBe(true);
     expect(configToEditorState("Vocabulary", { articleRequired: false }).extra.articleRequired).toBe(false);
     expect(configToEditorState("Vocabulary", {}).extra.articleRequired).toBe(false);
+  });
+});
+
+// B-710 AK 8: der Editor schreibt nur Koeffizienten und Toleranz und liest sie zurück. Rot, wenn einer der beiden Wege ein
+// Feld vergisst, ein Dezimalkomma zu NaN wird oder eine leere Toleranz nicht auf die Vorgabe 0,01 fällt.
+describe("Gleichung lösen (B-710)", () => {
+  it("Koeffizienten und Toleranz überleben den Rundlauf, Komma wird Punkt", () => {
+    const { config, rows } = rundlauf("QuadraticEquation", [
+      { a: "1", b: "-6", c: "8", tolerance: "0,05" },
+      { a: "0,5", b: "", c: "1", tolerance: "" },
+    ]);
+    expect(config).toEqual({ equations: [
+      { a: 1, b: -6, c: 8, tolerance: 0.05 },
+      { a: 0.5, b: 0, c: 1, tolerance: 0.01 },
+    ] });
+    expect(rows).toEqual([
+      { a: "1", b: "-6", c: "8", tolerance: "0.05" },
+      { a: "0.5", b: "0", c: "1", tolerance: "0.01" },
+    ]);
+  });
+
+  // Kein Lösungsfeld im Vertrag (Entscheidung 7): der Server lehnt `answer` mit unknown_field ab. Rot, wenn der Editor
+  // ein Lösungsfeld mitschickt.
+  it("schickt kein Lösungsfeld", () => {
+    const config = buildTypeConfig("QuadraticEquation", [{ a: "1", b: "-6", c: "8", tolerance: "0.01" }], {}) as
+      { equations: Record<string, unknown>[] };
+    expect(Object.keys(config.equations[0]).sort()).toEqual(["a", "b", "c", "tolerance"]);
+  });
+
+  // Rot, wenn a = 0 (auch leer oder „0,0") als Gleichung durchgeht – der Server wiese sie erst nach dem Absenden ab.
+  it("a = 0 ist ein Inhaltsproblem", () => {
+    expect(contentProblem("QuadraticEquation", [{ a: "0,0", b: "1", c: "1", tolerance: "" }], {}, 0)).toMatch(/a darf nicht 0/);
+    expect(contentProblem("QuadraticEquation", [{ a: "", b: "1", c: "1", tolerance: "" }], {}, 0)).toMatch(/a darf nicht 0/);
+    expect(contentProblem("QuadraticEquation", [{ a: "1", b: "", c: "", tolerance: "" }], {}, 0)).toBeNull();
+    expect(emptyRow("QuadraticEquation")).toEqual({ a: "1", b: "", c: "", tolerance: "0.01" });
+  });
+
+  // Review: keine Zahl ginge als `null` an den Server (400 ohne lesbare Meldung). Rot, wenn nur a geprüft wird oder „abc“
+  // in a als „a = 0“ gemeldet wird.
+  it("Nicht-Zahlen und negative Toleranz sind Inhaltsprobleme", () => {
+    const zeile = (over: Record<string, string>) => [{ a: "1", b: "-6", c: "8", tolerance: "0.01", ...over }];
+    expect(contentProblem("QuadraticEquation", zeile({ b: "abc" }), {}, 0)).toMatch(/b ist keine Zahl/);
+    expect(contentProblem("QuadraticEquation", zeile({ a: "abc" }), {}, 0)).toMatch(/a ist keine Zahl/);
+    expect(contentProblem("QuadraticEquation", zeile({ c: "1,5,3" }), {}, 0)).toMatch(/c ist keine Zahl/);
+    expect(contentProblem("QuadraticEquation", zeile({ tolerance: "-1" }), {}, 0)).toMatch(/nicht negativ/);
+    expect(contentProblem("QuadraticEquation", zeile({ c: "1,5" }), {}, 0)).toBeNull();
+  });
+
+  // Die Lesehilfe neben den Feldern: Rot, wenn die 1 vor x stehen bleibt, ein Minus verdoppelt wird oder das Komma fehlt.
+  it("Vorschau setzt Vorzeichen und Komma", () => {
+    expect(equationPreview({ a: "1", b: "-6", c: "8", tolerance: "" })).toBe("x² − 6x + 8 = 0");
+    expect(equationPreview({ a: "-1", b: "1", c: "", tolerance: "" })).toBe("−x² + x = 0");
+    expect(equationPreview({ a: "0,5", b: "", c: "-1,5", tolerance: "" })).toBe("0,5x² − 1,5 = 0");
   });
 });
