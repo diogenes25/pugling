@@ -1,6 +1,7 @@
 using Godot;
 using Pugling.Contracts.Student;
 using PuglingTower.Net;
+using PuglingTower.World;
 
 namespace PuglingTower;
 
@@ -14,6 +15,7 @@ public partial class GameRoot : Control
     private Node? _screen;
     private Label _status = null!;
     private int _lastPosition;
+    private LevelDef _lastLevel = LevelDef.All[0];
 
     /// <inheritdoc />
     public override void _Ready() => ShowLogin();
@@ -159,7 +161,7 @@ public partial class GameRoot : Control
             box.AddChild(Text($"Spielzeit heute noch {minutesLeft} Min.  ·  Münzen heute {overview.CoinsToday}/{overview.DailyCoinCap} 🪙", 26));
             if (overview.Positions.Count == 0) _status.Text = "Kein aktiver Plan mit genug Wörtern.";
             foreach (var p in overview.Positions)
-                box.AddChild(Action($"{p.SubjectName} · {p.ExerciseTitle} ({p.WordCount})", () => _ = StartAsync(p.PlanPositionId)));
+                box.AddChild(Action($"{p.SubjectName} · {p.ExerciseTitle} ({p.WordCount})", () => ShowLevels(p.PlanPositionId)));
         }
         catch (ApiException ex)
         {
@@ -167,15 +169,28 @@ public partial class GameRoot : Control
         }
     }
 
-    private async Task StartAsync(int planPositionId)
+    private void ShowLevels(int planPositionId)
+    {
+        var box = Page("Welche Karte?");
+        foreach (var level in LevelDef.All)
+        {
+            box.AddChild(Action(level.Name, () => _ = StartAsync(planPositionId, level)));
+            box.AddChild(Text(level.Description, 22));
+        }
+        box.AddChild(Action("Andere Wörter", () => _ = ShowPositionsAsync()));
+        box.AddChild(_status);
+    }
+
+    private async Task StartAsync(int planPositionId, LevelDef map)
     {
         try
         {
             _status.Text = "Level wird gebaut …";
             var run = await _api.StartRunAsync(planPositionId);
             _lastPosition = planPositionId;
+            _lastLevel = map;
             var level = new Level();
-            level.Setup(_api, run);
+            level.Setup(_api, run, map);
             level.Finished += (runId, correct, total, timeUp) => _ = ShowResultAsync(runId, correct, total, timeUp);
             Replace(level);
         }
@@ -209,7 +224,8 @@ public partial class GameRoot : Control
             box.AddChild(Text(end.CoinsAwarded > 0
                 ? $"+{end.CoinsAwarded} 🪙  (heute {end.CoinsToday}/{end.DailyCoinCap})"
                 : end.Won ? $"Münzdeckel für heute erreicht ({end.CoinsToday}/{end.DailyCoinCap} 🪙)." : "Keine Münzen diesmal.", 30));
-        box.AddChild(Action("Noch ein Level", () => _ = StartAsync(_lastPosition)));
+        box.AddChild(Action("Noch einmal", () => _ = StartAsync(_lastPosition, _lastLevel)));
+        box.AddChild(Action("Andere Karte", () => ShowLevels(_lastPosition)));
         box.AddChild(Action("Andere Wörter", () => _ = ShowPositionsAsync()));
         box.AddChild(_status);
         if (error is not null) _status.Text = error;

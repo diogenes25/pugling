@@ -177,8 +177,35 @@ game/                     (Ordner in diesem Repo, Entscheidung 9)
   sich drehen, ohne neu zu bauen.
 - **Login**: PIN-Login des Kindes (`auth/child`) → JWT; Server-URL einstellbar (Heimnetz `:5200`, später
   öffentlich mit HTTPS). Der Login-Rate-Limiter gilt auch hier.
-- **Grafik**: freie 2D-Assets (z. B. CC0-Packs) oder eigene; **keine** Figuren, Namen oder Optik des
+- **Grafik**: freie Assets (CC0) oder eigene; **keine** Figuren, Namen oder Optik des
   Vorbild-Spiels übernehmen.
+
+### 3D-Umbau (2026-11-26)
+
+Der Prototyp läuft seit 2026-11-26 in **3D** mit schräg von oben schauender Kamera. Die Kamera folgt dem
+Helden und hält ihn immer in der Bildmitte. Die Karte ist größer als der Bildschirm, und der Held dreht sich
+in Laufrichtung. Steuerung und Kamera sind ein Genre-Prinzip, Figuren und Stil sind eigen.
+
+- **Modelle:** KayKit „Medieval Hexagon“, „Adventurers“ und „Skeletons“, alle CC0. Die Auswahl liegt mit
+  Lizenzdateien unter `game/assets/kaykit/`. Kenney-Pakete gibt kenney.nl nur über den Browser heraus.
+- **Karte:** ein Code-Gerüst aus `Scripts/World/` (`LevelDef`, `MapBuilder`). Hex-Gras und Fluss werden
+  als `MultiMesh` gezeichnet. Die Wege sind eigene Bänder entlang der Monsterpfade. Hinter dem Rand der
+  Karte steht dichter Wald, damit die mitlaufende Kamera nie ins Leere zeigt.
+- **Lesbarkeit:** Alles, was am Handy lesbar sein muss, wird flach über die Szene gezeichnet
+  (`Painter`). Das sind die Schilder der Türme mit Wort und Munitionsbalken, die Abzeichen am Rand für
+  Türme außerhalb des Bildes, die Wörter auf den Büchern und das HUD.
+- **Ablauf am Turm:** Kein Ja/Nein mehr. Wer mit einem Wort nah an einem Turm steht, sieht unten rechts
+  dauerhaft den Knopf „„dog“ geben“. Ein **falsches** Wort ist aus der Hand weg (es fällt später wieder)
+  und kostet den Turm **3 Schuss**. Das ist eine Nutzer-Entscheidung vom 2026-11-26, vorher war es 1.
+  Ein richtiges Wort bringt weiterhin +8 Schuss.
+- **Drei Karten:**
+  - *Lichtung:* drei Türme, zum Eingewöhnen
+  - *Flussfurt:* Fluss mit drei Brücken, fünf Türme
+  - *Burgberg:* zwei Eingänge, sechs Türme
+
+  Vor dem Start wählt man die Karte. Eine neue Karte ist ein neuer Eintrag in `LevelDef.All`.
+- **Renderer:** Vorerst bleibt es bei „Compatibility“, weil der Emulator damit läuft. Ob „Mobile“ am Handy
+  schöner und flüssig ist, wird dort geprüft.
 
 ### Netz & Betrieb
 
