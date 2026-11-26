@@ -661,6 +661,7 @@ Response — `HTTP 200`:
         "pointsGoalMet": 10,
         "introducedCount": 1,
         "penaltyCoins": 0,
+        "owesDuty": true,
         "seriesUnitId": 7,
         "seriesUnitLabel": "Unit 1",
         "seriesName": "Doku-Reihe",
