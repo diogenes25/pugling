@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/frontend, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/supervisor]
 aliases: []
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-25-o.md#sprint-191--ziel--umfang
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-1020 · Die Leitplanken-Maske verliert nach dem Speichern ihre Bestätigung, und kein Test prüft das Zurücklesen
@@ -54,3 +55,14 @@ Mock mit abweichendem Serverwert, Knopf „Leitplanken speichern“.
   - Verifikation nach der letzten Code-Änderung: Backend-Suite 2607/2607 (Release), `vitest` 1512/1512, `tsc -b` grün, E2E
     `lerntage-und-pause`, `sparziel`, `lob`, `gleichung-loesen`, `pfad`, `bonus-deckel`(+`-voll`), `uebungstypen` 8 passed
     (Ports 5244/5284, Wegwerf-DB).
+- **2026-11-26** — Sprint 192 (`docs/pm-sitzung-2026-11-26.md`): `frontend-reviewer` über `48550d7c` fand zwei Punkte, beide
+  behoben. (1) Die Gruppe hieß für Screenreader „Leitplanken Erklärung zu …“, weil die `id` an der ganzen Zeile samt ⓘ saß
+  (B-236) – jetzt am Wort; Test `LerntagePanels.test.tsx` „nennt die Gruppe nur ‚Leitplanken‘“, rote Probe von Hand mit dem
+  alten Markup → rot (die einzeilige Mutante mit doppelter `id` blieb grün, happy-dom nimmt die zweite – kein Beleg).
+  (2) Die E2E wartete auf die `GET`-Antwort, nicht auf den Render; jetzt zuerst auf „Leitplanken entfernen“, das erst mit dem
+  neu geladenen Kind erscheint – im selben Render, in dem ein Werte-Schlüssel den Banner mitnähme. Aufräum-Vorschläge
+  (eslint-disable, feste `id`, doppelter Titel) nicht gebaut.
+- **2026-11-26** — `in-arbeit` → `abgenommen` (Sprint 192, `docs/pm-sitzung-2026-11-26.md`). Verifikation am Endstand `4e70c583`: Backend-Suite 2609/2609 (Release), `vitest` 1514/1514, `tsc -b` grün, E2E
+  `lerntage-und-pause` + `pfad` 2 passed (Ports 5244/5284). Reviews: `pugling-reviewer` (zweimal, zuletzt ohne Fund),
+  `frontend-reviewer` (zwei Funde, behoben). Rollengang an einer Kopie der echten DB (`kopie-server.sh`, `:5201`, Server nach
+  der letzten Änderung gestartet): Kind-Hub-Reiter „Lerntage“ per E2E `lerntage-und-pause`: Banner bleibt stehen, Felder zeigen den Serverstand, Knopf per Name. Commits `48550d7c`, `4e70c583`.

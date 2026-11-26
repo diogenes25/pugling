@@ -12,6 +12,7 @@ quelle: docs/baobab-vergleich-plan.md#wo-baobab-weiter-ist
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-26"
 ---
 
 # B-377 · Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater
@@ -208,3 +209,4 @@ Migration nur anlegt und keine Bestandsdaten umformt.
   `seenAt`; Kontostand vorher = nachher (2070/186). Maschinell: `frontend/e2e/lob.spec.ts` (Vater → Sohn → Vater, „gelesen am“).
   Review-Funde eingearbeitet: Fokus-Falle des Dialogs (`useDialogFocus`), `useAction` im Overlay, `<Pflicht />` am Feld.
 - **2026-11-26** — `in-arbeit` → `abgenommen`: Commit `6a0257dd`; Rollengang an der Kopie der echten DB (Sohn Friedrich, Vater) und maschinell per Playwright, Creator Regressionszeuge; beide Reviews ohne Blocker. Offen nur ein Blick am Gerät (Overlay bzw. Streifen am Handy), kein Abnahmehindernis.
+- **2026-11-26** — nachgeschaut: Merge-Review der Läufe M/N/O (Commits `61a11f55`, `5446640c`), festgehalten in der Retrospektive von Sprint 192. Ohne Fund.

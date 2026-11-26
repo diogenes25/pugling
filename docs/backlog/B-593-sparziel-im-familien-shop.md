@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: Marktvergleich Belohnungs-Apps (Sitzung 2026-11-16, Quick-Win 2)
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-26"
 ---
 
 # B-593 · Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen
@@ -290,3 +291,4 @@ Nachgesehen am 2026-11-20:
   `Children` läuft außerhalb einer Transaktion), alle vier Kinder da, Ledger gleich; Rollengang dort als Sohn (Friedrich: Ziel setzen,
   ersetzen, Preis vom Vater angehoben → „noch 1930, etwa 5 Tage“, nachgerechnet 3368 Münzen in sieben Tagen; entfernen → 204) und als Vater (lesen).
 - **2026-11-26** — `in-arbeit` → `abgenommen`: Commit `6a0257dd`; Rollengang an der Kopie der echten DB (Sohn Friedrich, Vater) und maschinell per Playwright, Creator Regressionszeuge; beide Reviews ohne Blocker. Offen nur ein Blick am Gerät (Overlay bzw. Streifen am Handy), kein Abnahmehindernis.
+- **2026-11-26** — nachgeschaut: Merge-Review der Läufe M/N/O (Commits `61a11f55`, `5446640c`), festgehalten in der Retrospektive von Sprint 192. Fund: B-1026 (behoben in `5446640c`).

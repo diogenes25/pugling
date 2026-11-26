@@ -12,6 +12,7 @@ quelle: B-640
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: "2026-11-26"
 ---
 
 # B-711 · „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen
@@ -165,3 +166,4 @@ Je Kriterium die Änderung, die es rot macht.
   eingearbeitet. Rollengang aller drei Rollen an einer Kopie der echten DB (:5241) plus UI-Spec; offen für den Menschen nur
   der Geräte-Check (Zahlentastatur am Handy) und die Formel-Darstellung (B-638).
   Protokoll: [pm-sitzung-2026-11-25-m](../pm-sitzung-2026-11-25-m.md).
+- **2026-11-26** — nachgeschaut: Merge-Review der Läufe M/N/O (Commits `61a11f55`, `5446640c`), festgehalten in der Retrospektive von Sprint 192. Ohne Fund.

@@ -132,6 +132,9 @@ are only unique per branch: a branch that created stories after its base meets t
   condition, and ask the user. Your own reading of the diff is not "the review".
 - A finding that surfaces during verification becomes **its own story** if the sprint goal is met
   without it; say there that it was left out deliberately.
+- A finding that offers "change the behaviour *or* document the exception" is a decision, not a repair, when the
+  behaviour is visible to a role: document the as-is and file an `art: Frage` story. Sprint 192 changed it instead
+  (the son's deadline before the first play) and only `pfad.spec` caught that every new plan went silent.
 
 ## Step 6 — Rollengang: re-review and gate
 

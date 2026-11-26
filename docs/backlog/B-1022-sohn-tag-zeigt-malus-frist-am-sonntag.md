@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/student]
 aliases: []
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: S
@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-25-o.md#sprint-191--ziel--umfang
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-1022 · Die Arcade zeigt am Sonntag und in einer Pause „noch N Std. · −X Münzen“, obwohl der Server nichts abbucht
@@ -54,3 +55,13 @@ im E2E-Server, sonst wird sie sonntags rot.
   - Verifikation nach der letzten Code-Änderung: Backend-Suite 2607/2607 (Release), `vitest` 1512/1512, `tsc -b` grün, E2E
     `lerntage-und-pause`, `sparziel`, `lob`, `gleichung-loesen`, `pfad`, `bonus-deckel`(+`-voll`), `uebungstypen` 8 passed
     (Ports 5244/5284, Wegwerf-DB).
+- **2026-11-26** — Sprint 192 (`docs/pm-sitzung-2026-11-26.md`): `pugling-reviewer` fand eine Abweichung von der
+  Vertragsdoku: `OwesDutyOn` fehlt das Erst-Spiel-Tor der Abrechnung (B-535) – ein nie geöffneter Plan droht „−N Münzen“ an,
+  die nie gebucht werden. Gebaut und **zurückgenommen**: mit dem Tor zeigte `e2e/pfad.spec.ts` auf jedem frischen Plan keine
+  Frist mehr – das ist eine Produktentscheidung, keine Reparatur → Frage **B-1024**. Ausnahme jetzt in `OwesDutyOn` und in
+  der Vertragsdoku (`ProgressDtos.cs`) benannt. Neu belegt: `PlanDueForPeriod` in `owesDuty` →
+  `LerntageTests.Mitten_In_Der_Woche_Wieder_Eingeschaltet_Droht_Die_Woche_Nichts_An`, Mutante M2 → rot.
+- **2026-11-26** — `in-arbeit` → `abgenommen` (Sprint 192, `docs/pm-sitzung-2026-11-26.md`). Verifikation am Endstand `4e70c583`: Backend-Suite 2609/2609 (Release), `vitest` 1514/1514, `tsc -b` grün, E2E
+  `lerntage-und-pause` + `pfad` 2 passed (Ports 5244/5284). Reviews: `pugling-reviewer` (zweimal, zuletzt ohne Fund),
+  `frontend-reviewer` (zwei Funde, behoben). Rollengang an einer Kopie der echten DB (`kopie-server.sh`, `:5201`, Server nach
+  der letzten Änderung gestartet): `today` an der Kopie: Pausentag → `owesDuty: false` für alle Pflicht-Positionen, sonst `true`; Arcade per E2E `pfad` (Frist am Pflichttag). Die Drohung vor dem ersten Spiel ist bewusst offen (B-1024). Commits `f4df2984`, `4e70c583`.

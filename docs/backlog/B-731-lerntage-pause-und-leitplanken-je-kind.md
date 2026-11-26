@@ -1,8 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Lerntage, Sonntag frei, Pause je Kind, Leitplanken, Boden und Deckel, Etappe E0b]
-status: in-arbeit
-wartet_auf: Review-Funde B-1020 bis B-1022, Frage B-1023 und Rollengang (Lauf endete am Fehlerzähler)
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -12,6 +11,7 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 ---
 
 # B-731 · Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b)
@@ -193,3 +193,7 @@ und die Pause lesen.
   darum nicht behoben, sondern als Stories abgelegt.
 - **2026-11-25** — Migrationsprobe an einer Kopie der echten DB (siehe B-732): `LerntagePause` eingespielt, Zeilenzahlen gleich,
   `ChildPauses` leer, kein Kind mit Leitplanken. **Angehalten auf `in-arbeit`**, Rollengang nicht gelaufen.
+- **2026-11-26** — `in-arbeit` → `abgenommen` (Sprint 192, `docs/pm-sitzung-2026-11-26.md`). Verifikation am Endstand `4e70c583`: Backend-Suite 2609/2609 (Release), `vitest` 1514/1514, `tsc -b` grün, E2E
+  `lerntage-und-pause` + `pfad` 2 passed (Ports 5244/5284). Reviews: `pugling-reviewer` (zweimal, zuletzt ohne Fund),
+  `frontend-reviewer` (zwei Funde, behoben). Rollengang an einer Kopie der echten DB (`kopie-server.sh`, `:5201`, Server nach
+  der letzten Änderung gestartet): Vater (Konto 1) trägt für Friedrich eine Pause für heute ein → alle acht Pflicht-Positionen `owesDuty: false`, nach dem Löschen wieder `true`; Lehrer 403, fremder Vater 404, „bis vor von“ 400 `validation_error`. Oberfläche (Pause + fünf Leitplanken, build + read-back) per E2E `lerntage-und-pause`. Offen bleibt die Frage B-1023 (eigene Story). Commits `f4df2984`, `48550d7c`, `4e70c583`.

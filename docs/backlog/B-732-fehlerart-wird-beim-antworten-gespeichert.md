@@ -1,8 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/auswertung, bereich/training, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/auswertung, bereich/training, rolle/student]
 aliases: [Fehlerart, Akzentfehler, Tippfehler, Etappe E1a]
-status: in-arbeit
-wartet_auf: Rollengang an der Kopie (Lauf endete am Fehlerzähler)
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -12,6 +11,7 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 ---
 
 # B-732 · Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a)
@@ -204,3 +204,7 @@ kann parallel laufen. Vor [B-733](B-733-tagesauswertung-und-leistungsprofil.md).
   endete. Es fehlt der Rollengang: die Fehlerart hat keine Oberfläche; als Ersatz geplant war eine Live-Probe an der Kopie
   (Sohn tippt „ecole“, Zeile in `ItemReviewEvents` trägt `Accent`) – nicht mehr gelaufen. Nichts davon hängt an einer
   Entscheidung; der nächste Lauf kann die Probe fahren und abnehmen.
+- **2026-11-26** — `in-arbeit` → `abgenommen` (Sprint 192, `docs/pm-sitzung-2026-11-26.md`). Verifikation am Endstand `4e70c583`: Backend-Suite 2609/2609 (Release), `vitest` 1514/1514, `tsc -b` grün, E2E
+  `lerntage-und-pause` + `pfad` 2 passed (Ports 5244/5284). Reviews: `pugling-reviewer` (zweimal, zuletzt ohne Fund),
+  `frontend-reviewer` (zwei Funde, behoben). Rollengang an einer Kopie der echten DB (`kopie-server.sh`, `:5201`, Server nach
+  der letzten Änderung gestartet): Friedrich tippt im Üben falsch – `la rentree` für „la rentrée“ → `Accent` (27 Zeilen), `savoi`/`quix` → `Typo`, `eine Jahreszeitt` für „une saison“ → `WrongWord`; keine falsche getippte Antwort ohne Art. `BoxBefore` blieb in diesem Gang leer, weil keine der Antworten auf die Beherrschung zählte (Wiederholungen am Einführungstag) – AK 8 tragen die Tests. Commit `61a11f55` (Nachschärfung) und die Commits aus Lauf O.

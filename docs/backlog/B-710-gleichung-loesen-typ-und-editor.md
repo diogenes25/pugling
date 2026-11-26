@@ -12,6 +12,7 @@ quelle: B-640
 grund: ""
 ersetzt_durch: []
 wartet_auf: ""
+nachgeschaut: "2026-11-26"
 ---
 
 # B-710 · Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor
@@ -262,3 +263,4 @@ mit Config, Löser, Validierung, Controller und Wächter-Zeilen, dazu ein **neue
   eingearbeitet. Rollengang aller drei Rollen an einer Kopie der echten DB (:5241) plus UI-Spec; offen für den Menschen nur
   der Geräte-Check (Zahlentastatur am Handy) und die Formel-Darstellung (B-638).
   Protokoll: [pm-sitzung-2026-11-25-m](../pm-sitzung-2026-11-25-m.md).
+- **2026-11-26** — nachgeschaut: Merge-Review der Läufe M/N/O (Commits `61a11f55`, `5446640c`), festgehalten in der Retrospektive von Sprint 192. Kein Defekt; eine Testlücke (403 des Sohns auf den Katalog-Check) schloss `61a11f55`.

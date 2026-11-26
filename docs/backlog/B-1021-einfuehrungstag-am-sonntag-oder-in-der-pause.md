@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/student]
 aliases: []
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: XS
@@ -12,6 +12,7 @@ quelle: docs/pm-sitzung-2026-11-25-o.md#sprint-191--ziel--umfang
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-1021 · Der verschonte Einführungstag (B-432) kann auf den freien Sonntag oder in eine Pause fallen – der Montag danach kostet Malus
@@ -48,3 +49,10 @@ Sonntag angelegt, Einführung am Montag, kein Malus.
   - Verifikation nach der letzten Code-Änderung: Backend-Suite 2607/2607 (Release), `vitest` 1512/1512, `tsc -b` grün, E2E
     `lerntage-und-pause`, `sparziel`, `lob`, `gleichung-loesen`, `pfad`, `bonus-deckel`(+`-voll`), `uebungstypen` 8 passed
     (Ports 5244/5284, Wegwerf-DB).
+- **2026-11-26** — Sprint 192: `pugling-reviewer` über `f4df2984` ohne Korrektheitsfund; offen war Entscheidung 2 ohne Test.
+  Neu `LerntageTests.Einfuehrung_Am_Freien_Sonntag_Schont_Den_Montag` (Einführung am Sonntag, Montag nichts, Abrechnung
+  Dienstag). Mutante M3 (Zählfenster nur am Einführungstag) → rot an genau diesem Fall.
+- **2026-11-26** — `in-arbeit` → `abgenommen` (Sprint 192, `docs/pm-sitzung-2026-11-26.md`). Verifikation am Endstand `4e70c583`: Backend-Suite 2609/2609 (Release), `vitest` 1514/1514, `tsc -b` grün, E2E
+  `lerntage-und-pause` + `pfad` 2 passed (Ports 5244/5284). Reviews: `pugling-reviewer` (zweimal, zuletzt ohne Fund),
+  `frontend-reviewer` (zwei Funde, behoben). Rollengang an einer Kopie der echten DB (`kopie-server.sh`, `:5201`, Server nach
+  der letzten Änderung gestartet): Abrechnung an der Kopie unauffällig (kein Malus beim Login); die Fälle Sonntag/Pause/Einführung am freien Sonntag tragen `LerntageTests` (Mutante M3 → rot). Commits `f4df2984`, `4e70c583`.
