@@ -27,6 +27,9 @@ vi.mock("../lib/api", async (importOriginal) => {
       mySubjectLevels: () => Promise.resolve([]),
       // Die Klassenarbeit-Karte (B-750) ebenso: ohne Arbeit steht sie nicht da.
       upcomingClassTests: () => Promise.resolve([]),
+      // Sparziel (B-593) und Lob (B-377) sind hier kein Thema – leer, ohne Netz.
+      mySavingsGoal: () => Promise.resolve(undefined),
+      myPraise: () => Promise.resolve([]),
     },
   };
 });

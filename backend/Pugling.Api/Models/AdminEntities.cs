@@ -128,6 +128,19 @@ public class Child
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
+    /// The family shop listing the child pinned as its savings goal (B-593); <c>null</c> = no goal, or the listing was
+    /// deleted - then <see cref="SavingsGoalTitle"/> still names it. Only a pointer: the price is always read live from
+    /// the listing, so a price the supervisor changes moves the goal too.
+    /// </summary>
+    public int? SavingsGoalListingId { get; set; }
+
+    /// <summary>
+    /// Snapshot of the goal's display title, kept only for the loss case: listings are deleted hard, and without it a
+    /// deleted goal would look like "never set" instead of "no longer available" (B-593 decision 5).
+    /// </summary>
+    public string? SavingsGoalTitle { get; set; }
+
+    /// <summary>
     /// The child's currently equipped skin (character). Persisted server-side so that the choice applies
     /// across devices instead of hanging on one device's localStorage.
     /// </summary>

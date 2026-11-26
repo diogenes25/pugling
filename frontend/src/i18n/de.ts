@@ -439,6 +439,31 @@ export const de = {
       comboPlus: "Combo +{{count}} 🪙",
       speedPlus: "Tempo +{{count}} 🪙",
     },
+    // B-593: das Sparziel. „bei deinem Tempo etwa“ ist eine Prognose, nie eine Zusage von Pflicht-Tagen (Entscheidung 1).
+    sparziel: {
+      title: "Dein Sparziel",
+      missingCoins_one: "Noch {{count}} Münze",
+      missingCoins_other: "Noch {{count}} Münzen",
+      missingGems_one: "und {{count}} Gem",
+      missingGems_other: "und {{count}} Gems",
+      missingGemsOnly_one: "Noch {{count}} Gem",
+      missingGemsOnly_other: "Noch {{count}} Gems",
+      days_one: "bei deinem Tempo etwa {{count}} Tag",
+      days_other: "bei deinem Tempo etwa {{count}} Tage",
+      reached: "Genug gespart – ab in den Shop!",
+      gone: "Nicht mehr verfügbar",
+      soldOut: "Gerade ausverkauft – wieder da am {{when}}",
+      remove: "Ziel entfernen",
+      pin: "☆ Als Ziel",
+      pinned: "★ Mein Ziel",
+      pinLabel: "„{{title}}“ als Ziel",
+    },
+    // B-377: das Lob der Eltern. Der Lobtext reist als Platzhalter und wird nie übersetzt.
+    lob: {
+      title: "Lob von {{name}}",
+      titleMany: "Du wurdest gelobt!",
+      thanks: "Danke!",
+    },
     // B-629: Rückmeldung zur Karte – acht feste Gründe (B-623, Entscheidung 4), optional ein Text.
     feedback: {
       open: "Rückmeldung",

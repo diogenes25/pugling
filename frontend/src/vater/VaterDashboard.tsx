@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { StatusBanner } from "../components/StatusBanner";
@@ -7,6 +8,7 @@ import { useAsync } from "../lib/useAsync";
 import { unitAmount } from "../lib/shop";
 import { formatDate } from "../lib/datum";
 import { ChildrenTimeline } from "./ChildrenTimeline";
+import { LobPanel } from "./LobPanel";
 import { bestaetigeFreigabe, entscheideEinloesung } from "./einloesungen";
 import { useAuth } from "../lib/auth";
 import type { ActivationRequest, ChildDay, ChildrenDashboard, FeedbackEntry, Paged } from "../lib/types";
@@ -127,20 +129,28 @@ export function VaterDashboard() {
  * `goalsMet`/`goalsTotal` (B-749 Entscheidung 3).
  */
 function HeuteKind({ c }: { c: ChildDay }) {
+  const [loben, setLoben] = useState(false);
+  // B-377 Entscheidung 8: der Erfolg des Tages hebt die Zeile hervor und macht „Loben“ zum Hauptknopf; loben darf man
+  // auch fürs Dranbleiben, dort steht der Knopf zurückhaltend. Die Hervorhebung hängt an `dutyDone`, nicht an `practiced`.
+  const erfolg = c.dutyDone;
   return (
-    <li className="card">
+    <li className={`card${erfolg ? " heute-erfolg" : ""}`} data-erfolg={erfolg ? "true" : undefined}>
       <div className="row" style={{ alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <Link to={`/vater/kind/${c.childId}`}><strong>{c.name}</strong></Link>
         {c.goalsTotal === 0 ? <span className="pill">kein Tagesziel</span>
           : c.dutyDone ? <span className="pill lime">✓ Tagesziel geschafft</span>
           : c.practiced ? <span className="pill">dran</span>
           : <span className="pill mag">offen</span>}
+        <button type="button" className={`btn ${erfolg ? "lime" : "ghost"} inline-btn`} style={{ width: "auto", marginLeft: "auto" }}
+          aria-expanded={loben} aria-controls={`lob-panel-${c.childId}`} aria-label={`${c.name} loben`}
+          onClick={() => setLoben((o) => !o)}>👏 Loben</button>
       </div>
       <dl className="vater-heute-zahlen" style={ZAHLEN}>
         <div><dt className="muted" style={{ fontSize: 13 }}>Geübt heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.answersToday} {c.answersToday === 1 ? "Antwort" : "Antworten"}</dd></div>
         <div><dt className="muted" style={{ fontSize: 13 }}>Tagesziel</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.goalsTotal === 0 ? "–" : `${c.goalsMet} von ${c.goalsTotal}`}</dd></div>
         <div><dt className="muted" style={{ fontSize: 13 }}>Münzen heute</dt><dd style={{ margin: 0, fontWeight: 600 }}>{c.coinsToday}</dd></div>
       </dl>
+      {loben && <LobPanel id={`lob-panel-${c.childId}`} childId={c.childId} name={c.name} />}
     </li>
   );
 }

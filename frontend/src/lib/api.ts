@@ -16,7 +16,7 @@ import type {
   SkinState, SubjectResponse,
   TestAttemptResponse, TestNextResponse, TestAnswerAck, TestSubmitResponse,
   ExtraTrainingOverview, TowerGameOverview, ExtraRunResponse, ExtraAnswer, ExtraRunResult, MixedReviewOverview, MixedReviewRunResponse, MixedReviewAnswer, MixedReviewResult, DailyBoxOpened, UpdateKlassenarbeitDto, UpdatePlanDto, UpdateVocabularyDto,
-  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, WalletEntry, ChildPointsEntry, Currency,
+  VocabBatchResult, VocabularyResponse, VocabTagResponse, ChildTagResponse, Wallet, WalletBalance, WeekCoins, SavingsGoal, MyPraise, Praise, WalletEntry, ChildPointsEntry, Currency,
   Paged, VocabularySearchParams, VocabItemInput, VocabItemResponse, VocabLookupResponse,
   SeriesUnitProgress, ExerciseProgress, ItemHistoryEntry, ItemProgressResponse, SubjectProgress, WordMastery,
   SubjectLevel,
@@ -709,6 +709,13 @@ export const api = {
   // ---- Vater: kindübergreifender Tagesüberblick ----
   childrenDaily: (date?: string) =>
     http<ChildrenDashboard>(`${V1}/supervisor/children/daily-overview${date ? `?date=${date}` : ""}`),
+  // B-377: Lob an ein Kind; die Liste zeigt nur die eigenen, mit „gelesen am“.
+  sendPraise: (childId: number, text: string) =>
+    http<Praise>(`${V1}/supervisor/children/${childId}/praise`, "POST", { text }),
+  praiseSent: (childId: number, take = 5) =>
+    httpPaged<Praise>(`${V1}/supervisor/children/${childId}/praise?take=${take}`),
+  // B-593: das Sparziel des Kindes, nur lesend; ohne Ziel `undefined` (204).
+  childSavingsGoal: (childId: number) => http<SavingsGoal | undefined>(`${V1}/supervisor/children/${childId}/savings-goal`),
   // B-39: die Kinder über die Zeit – je Tag, Woche oder Monat, höchstens 92 Tage.
   childrenOverview: (q: { from: string; to: string; granularity: OverviewGranularity }) =>
     http<ChildrenOverview>(`${V1}/supervisor/children/overview?from=${q.from}&to=${q.to}&granularity=${q.granularity}`),
@@ -794,6 +801,14 @@ export const api = {
   // Kontostand (Salden) und Buchungsverlauf sind getrennt: Salden als Einzelwerte, Buchungen server-paginiert.
   wallet: () => http<WalletBalance>(`${V1}/student/me/points`),
   weekCoins: () => http<WeekCoins>(`${V1}/student/me/points/week`),
+
+  // ---- Sohn: Sparziel (B-593) und Lob (B-377) ----
+  // Ohne Ziel antwortet der Server 204 – `http` liefert dann `undefined`.
+  mySavingsGoal: () => http<SavingsGoal | undefined>(`${V1}/student/me/savings-goal`),
+  setMySavingsGoal: (listingId: number) => http<SavingsGoal>(`${V1}/student/me/savings-goal`, "PUT", { listingId }),
+  clearMySavingsGoal: () => http<void>(`${V1}/student/me/savings-goal`, "DELETE"),
+  myPraise: () => http<MyPraise[]>(`${V1}/student/me/praise`),
+  markPraiseSeen: (ids: number[]) => http<void>(`${V1}/student/me/praise/seen`, "POST", { ids }),
   walletEntries: (opts: { skip?: number; take?: number } = {}) => {
     const q = new URLSearchParams();
     appendPaging(q, opts);

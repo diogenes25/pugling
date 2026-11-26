@@ -441,7 +441,7 @@ public class ShopStockPerChildTests(PuglingWebAppFactory factory) : IClassFixtur
         await using var db = new PuglingDbContext(options);
         var shop = new ShopService(db, new WalletService(db, TestLearningDay.Utc), TestLearningDay.Utc);
 
-        var listings = await shop.ListingsForStudentAsync(a.Id, activeOnly: true, now, CancellationToken.None);
+        var listings = await shop.ListingsForStudentAsync(a.Id, activeOnly: true, persist: true, now, CancellationToken.None);
 
         Assert.True(winner.Fired);
         Assert.Equal(7, listings.Single(v => v.Listing.Id == listingId).CurrentStock);

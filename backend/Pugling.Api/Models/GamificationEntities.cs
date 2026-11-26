@@ -446,3 +446,23 @@ public class ActivationRequest
     /// </summary>
     public ActivationRequester RequestedBy { get; set; } = ActivationRequester.Child;
 }
+
+/// <summary>
+/// A short praise a supervisor sends a child (B-377): plain text without coins - the wallet stays untouched, a gift of
+/// coins keeps its own path. The child sees unread praise once, with the sender's name, the next time it opens the app;
+/// <see cref="SeenAt"/> is stamped when it closes the overlay, so "once" holds across devices.
+/// </summary>
+public class Praise
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>The sending supervisor; each supervisor lists only his own praise (decision 7).</summary>
+    public int SupervisorId { get; set; }
+    public Adult? Supervisor { get; set; }
+    /// <summary>Trimmed plain text, 1..<c>PraiseService.MaxTextLength</c> characters; rendered as text, never as markup.</summary>
+    public string Text { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+    /// <summary>When the child closed the overlay with "Thanks!"; <c>null</c> = unread. Set once, never overwritten.</summary>
+    public DateTime? SeenAt { get; set; }
+}

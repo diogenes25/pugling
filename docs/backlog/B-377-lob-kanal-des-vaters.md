@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Lob-Kanal, Lob schicken]
-status: geschaetzt
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -191,3 +191,20 @@ Migration nur anlegt und keine Bestandsdaten umformt.
   Erfolg = vorhandene `dutyDone`-Zeile, Erfolgs-Feed zurückgestellt; kein Push).
 - **2026-11-15** — Backlog-Lauf 2026-11-15: `geschaetzt` – M, beides, Migration ja (neue Tabelle, nur anlegen),
   kein Vertragsbruch.
+- **2026-11-25** — `geschaetzt` → `in-arbeit` (Nachtlauf N, Sprint 181, [Protokoll](../pm-sitzung-2026-11-25-n.md)). Gebaut: Tabelle
+  `Praises` + Migration `20261125214724_Praise`, `PraiseService`, `PraiseController`, zwei Actions im `MeController`, „👏 Loben“ mit
+  `LobPanel` in „Heute“, `LobOverlay` auf `SohnHome`. Je Fall der Test und die Mutante (gemessen mit `mutant-probe.py`):
+  - AK 1, anlegen/Ownership/Rolle → `PraiseTests.Lob_Wird_Angelegt_Und_Bucht_Nichts`; P1 (Ownership-Filter weg), P2 (Rollen-Gate gelockert) rot.
+  - AK 2, Trimmen und Grenze 140 → `Text_Wird_Getrimmt_Und_Auf_140_Zeichen_Begrenzt`; P3 (zählt vor dem Trimmen), P4 (keine Obergrenze) rot.
+  - AK 3, nur eigene, neueste zuerst, `X-Total-Count` → `Jeder_Sieht_Nur_Seine_Lobe`; P5 (fremder Betreuer sichtbar) rot.
+  - AK 4, ungelesen, höchstens 5, Reihenfolge, kein Geschwister → `Jeder_Sieht…` / `Gesehen_Stempelt…`; P6 (gelesene erscheinen), P7 (kein Deckel), P8 (Reihenfolge) rot.
+  - AK 5, nur eigene, Stempel einmal → `Gesehen_Stempelt_Nur_Eigene_Und_Nur_Einmal`; P9 (fremdes Lob gestempelt), P10 (Stempel überschrieben) rot.
+  - AK 6, keine Buchung → `Lob_Wird_Angelegt…` (Anzahl, Summe, Stamp); P11 (Ledger-Zeile am Lob-Pfad) rot.
+  - AK 7 → `VaterDashboard.test.tsx` „Loben aus Heute“ (drei Fälle); F1 (`practiced` statt `dutyDone`), F2 (Senden bei Leerzeichen), F3 (kein `maxLength`) rot.
+  - AK 8 → `sparzielLob.test.tsx` (fünf Fälle); F4 (Overlay bei leerer Liste), F5 (schließt ohne Stempel), F6 (bleibt nach gescheitertem Stempel offen), F7 (Text durch `t()`), F8 (Escape stempelt) rot.
+  - AK 9 → `SchemaGuardTests` grün mit den zwei abgezeichneten FK-Zeilen; Migrationsprobe an der Kopie der echten DB (s. u.).
+- **2026-11-26** — Verifikation wie bei [B-593](B-593-sparziel-im-familien-shop.md) (gemeinsamer Sprint). Rollengang an der Kopie der echten DB:
+  Papa lobt Friedrich (Text mit Randleerzeichen → getrimmt), Friedrich liest es mit „Papa“, „Danke!“ → Liste leer, Papa liest
+  `seenAt`; Kontostand vorher = nachher (2070/186). Maschinell: `frontend/e2e/lob.spec.ts` (Vater → Sohn → Vater, „gelesen am“).
+  Review-Funde eingearbeitet: Fokus-Falle des Dialogs (`useDialogFocus`), `useAction` im Overlay, `<Pflicht />` am Feld.
+- **2026-11-26** — `in-arbeit` → `abgenommen`: Commit `6a0257dd`; Rollengang an der Kopie der echten DB (Sohn Friedrich, Vater) und maschinell per Playwright, Creator Regressionszeuge; beide Reviews ohne Blocker. Offen nur ein Blick am Gerät (Overlay bzw. Streifen am Handy), kein Abnahmehindernis.

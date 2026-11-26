@@ -8,8 +8,9 @@ import { useAction } from "../lib/useAction";
 import { useGemerkterFehler } from "../lib/useGemerkterFehler";
 import { StatusBanner } from "../components/StatusBanner";
 import { ACTION_EMOJI, priceLabel } from "../lib/shop";
-import type { MyInventoryItem, MyActivation, MyShopPurchase, ShopAvailableListing, ShopView, UnitType } from "../lib/types";
+import type { MyInventoryItem, MyActivation, MyShopPurchase, SavingsGoal, ShopAvailableListing, ShopView, UnitType } from "../lib/types";
 import { useSohn } from "./SohnApp";
+import { SparzielStreifen } from "./Sparziel";
 
 type Tab = "buy" | "stuff" | "requests" | "history";
 
@@ -50,6 +51,8 @@ export function SohnShop() {
   const [tab, setTab] = useState<Tab>("buy");
   const [view, setView] = useState<ShopView | null>(null);
   const [activations, setActivations] = useState<MyActivation[]>([]);
+  // B-593: das eigene Sparziel; `undefined` = keins. Beiwerk – scheitert der Abruf, fehlt nur die gepinnte Karte.
+  const [goal, setGoal] = useState<SavingsGoal | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // `buy`/`requestActivation` teilen sich eine Instanz (B-49): beide sperren dieselbe Oberfläche, und ein
@@ -67,6 +70,11 @@ export function SohnShop() {
   // Kindes, die sie nach einem gescheiterten Request nicht belegen kann.
   const [historyError, setHistoryError] = useState<string | null>(null);
 
+  // Das Ziel liest den Kontostand mit: nach Laden und Kauf neu holen, nie nachrechnen.
+  const loadGoal = useCallback(async () => {
+    try { setGoal(await api.mySavingsGoal()); } catch { /* Beiwerk: ohne Ziel-Karte geht der Shop weiter */ }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -74,12 +82,13 @@ export function SohnShop() {
       const [v, a] = await Promise.all([api.shopView(), api.myActivations()]);
       setView(v);
       setActivations(a);
+      void loadGoal();
     } catch (e) {
       setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadGoal]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -144,8 +153,21 @@ export function SohnShop() {
       setHistoryLoaded(false);
       setHistoryError(null);
       refreshWallet(); // Münzstand im HUD real aktualisieren (nach Kauf niedriger)
+      void loadGoal(); // der Fehlbetrag des Sparziels folgt dem neuen Kontostand
       celebrate("medium", ACTION_EMOJI[listing.actionType], t("shop.boughtTitle"), listing.title);
     });
+  }
+
+  /** B-593: ein Angebot als Sparziel anheften (ersetzt ein früheres) bzw. das angeheftete wieder lösen. Bucht nichts. */
+  async function toggleGoal(listing: ShopAvailableListing) {
+    await action.run(async () => {
+      if (goal?.listingId === listing.id) { await api.clearMySavingsGoal(); setGoal(undefined); }
+      else setGoal(await api.setMySavingsGoal(listing.id));
+    });
+  }
+
+  async function removeGoal() {
+    await action.run(async () => { await api.clearMySavingsGoal(); setGoal(undefined); });
   }
 
   async function requestActivation(item: MyInventoryItem, quantity: number) {
@@ -174,6 +196,7 @@ export function SohnShop() {
         <span className="chip">💎<b className="tabnum">{gems}</b></span>
       </div>
       <p className="sub"><Trans i18nKey="shop.intro" components={{ b: <b /> }} /></p>
+      <SparzielStreifen goal={goal} imShop busy={action.busy} onRemove={removeGoal} />
 
       <div className="row" role="group" aria-label={t("shop.areas")} style={{ gap: 6 }}>
         <TabButton active={tab === "buy"} onClick={() => setTab("buy")}>{t("shop.tabBuy")}</TabButton>
@@ -189,7 +212,8 @@ export function SohnShop() {
       {loading ? <div className="loading">{t("shop.loading")}</div>
         : error ? <div className="banner err">{error}</div>
         : !view ? null
-        : tab === "buy" ? <BuyTab listings={view.available} busy={action.busy} onBuy={buy} />
+        : tab === "buy" ? <BuyTab listings={view.available} busy={action.busy} onBuy={buy}
+            goalListingId={goal?.listingId ?? null} onToggleGoal={toggleGoal} />
         : tab === "stuff" ? <StuffTab inventory={view.inventory} busy={action.busy} onActivate={requestActivation} />
         : tab === "requests" ? <RequestsTab activations={activations} />
         : <HistoryTab purchases={history} total={historyTotal} loading={historyLoading}
@@ -215,10 +239,13 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   );
 }
 
-function BuyTab({ listings, busy, onBuy }: {
+function BuyTab({ listings, busy, onBuy, goalListingId, onToggleGoal }: {
   listings: ShopAvailableListing[];
   busy: boolean;
   onBuy: (l: ShopAvailableListing) => void;
+  /** Das angeheftete Sparziel (B-593); die Karte trägt es am Listing, nicht an einem Flag des Angebots. */
+  goalListingId: number | null;
+  onToggleGoal: (l: ShopAvailableListing) => void;
 }) {
   const { t, amount, price, date } = useShopText();
   if (listings.length === 0)
@@ -228,28 +255,35 @@ function BuyTab({ listings, busy, onBuy }: {
       {listings.map((l) => {
         const soldOut = l.currentStock <= 0;
         const canBuy = l.affordable && !soldOut && !busy;
+        const istZiel = goalListingId === l.id;
         return (
-          <button
-            type="button"
-            key={l.id}
-            className={`skin${canBuy ? "" : " locked"}`}
-            onClick={() => onBuy(l)}
-            disabled={!canBuy}
-          >
-            <div className="face" style={{ background: "linear-gradient(180deg,#2a2f6b,#171a44)" }}>
-              {ACTION_EMOJI[l.actionType]}
-            </div>
-            <div className="nm">{l.title || l.articleTitle}</div>
-            <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>
-              {amount(l.unitsPerPurchase, l.unitType)}
-              {l.description ? ` · ${l.description}` : ""}
-            </div>
-            {soldOut ? <span className="pill red">{t("shop.soldOut")}</span>
-              : <span className={`pill ${l.affordable ? "gold" : "red"}`}>{price(l.coinPrice, l.gemPrice)}</span>}
-            {/* B-645: der eigene Bestand ist leer, aber der Server weiß, wann er wiederkommt – Sparen lohnt sich. */}
-            {soldOut && l.nextRefillAtUtc && (
-              <div className="sub" style={{ fontSize: 11 }}>{t("shop.backOn", { when: date(l.nextRefillAtUtc) })}</div>)}
-          </button>
+          // Ein Rahmen um zwei Knöpfe: der Kauf bleibt die ganze Karte, „Als Ziel“ steht darunter (kein Knopf im Knopf).
+          <div key={l.id} className={`shop-karte${istZiel ? " ziel" : ""}`}>
+            <button
+              type="button"
+              className={`skin${canBuy ? "" : " locked"}`}
+              onClick={() => onBuy(l)}
+              disabled={!canBuy}
+            >
+              <div className="face" style={{ background: "linear-gradient(180deg,#2a2f6b,#171a44)" }}>
+                {ACTION_EMOJI[l.actionType]}
+              </div>
+              <div className="nm">{l.title || l.articleTitle}</div>
+              <div className="sub" style={{ fontSize: 11, minHeight: 26 }}>
+                {amount(l.unitsPerPurchase, l.unitType)}
+                {l.description ? ` · ${l.description}` : ""}
+              </div>
+              {soldOut ? <span className="pill red">{t("shop.soldOut")}</span>
+                : <span className={`pill ${l.affordable ? "gold" : "red"}`}>{price(l.coinPrice, l.gemPrice)}</span>}
+              {/* B-645: der eigene Bestand ist leer, aber der Server weiß, wann er wiederkommt – Sparen lohnt sich. */}
+              {soldOut && l.nextRefillAtUtc && (
+                <div className="sub" style={{ fontSize: 11 }}>{t("shop.backOn", { when: date(l.nextRefillAtUtc) })}</div>)}
+            </button>
+            <button type="button" className={`btn small${istZiel ? " gold" : " ghost"}`} aria-pressed={istZiel ? "true" : "false"}
+              aria-label={t("sparziel.pinLabel", { title: l.title || l.articleTitle })} disabled={busy} onClick={() => onToggleGoal(l)}>
+              {istZiel ? t("sparziel.pinned") : t("sparziel.pin")}
+            </button>
+          </div>
         );
       })}
     </div>

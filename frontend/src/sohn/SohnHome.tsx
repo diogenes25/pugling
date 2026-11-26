@@ -26,6 +26,8 @@ import { notenstufeText } from "./notenstufe";
 import type { TruhenZiele } from "./pfad";
 import { MeldungsHinweis } from "./KartenMeldung";
 import { KlassenarbeitKarte } from "./KlassenarbeitKarte";
+import { SparzielStart } from "./Sparziel";
+import { LobOverlay } from "./LobOverlay";
 
 const TYPE_ICON: Record<string, string> = {
   Vocabulary: "🗣️", Cloze: "📝", Matching: "🔗", Arithmetic: "➗", ArithmeticDrill: "➗",
@@ -67,8 +69,10 @@ export function SohnHome() {
   if (today.positions.length === 0) {
     return (
       <div className="sohn-body">
+        <LobOverlay childId={childId} />
         <InterestIntroCard />
         <MeldungsHinweis childId={childId} />
+        <SparzielStart childId={childId} />
         <Mascot skin={skin} mood="sleepy" size={120} />
         <div className="card" style={{ textAlign: "center" }}>
           <div className="screen-title">{t("home.noMissionTitle")}</div>
@@ -95,6 +99,7 @@ export function SohnHome() {
 
   return (
     <div className="sohn-body">
+      <LobOverlay childId={childId} />
       <InterestIntroCard />
       <MeldungsHinweis childId={childId} />
 
@@ -136,6 +141,9 @@ export function SohnHome() {
 
       {/* B-750: wofür das Kind gerade lernt – über dem Pfad, aber nach der Tagespflicht. */}
       <KlassenarbeitKarte childId={childId} />
+
+      {/* B-593: wofür das Kind spart – ein Streifen über dem Pfad, nicht im Lernfluss (Entscheidung 4). */}
+      <SparzielStart childId={childId} />
 
       {/* B-606: je Fach ein Abschnitt mit seinem eigenen Pfad – als aufklappbarer Reiter, damit das zweite Fach nicht
           erst nach dem ganzen ersten kommt. Offen startet das Fach mit dem START – und ein einziges Fach immer. */}

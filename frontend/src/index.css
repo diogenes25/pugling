@@ -874,3 +874,14 @@ th.sortable[aria-sort="ascending"] .th-sort, th.sortable[aria-sort="descending"]
 .rueckmeldung textarea { width: 100%; box-sizing: border-box; background: var(--bg-2); color: var(--ink);
   border: 1px solid var(--stroke); border-radius: 10px; padding: 8px; font: inherit; }
 .meldungs-hinweis { border-color: var(--lime); }
+/* B-593: das Sparziel auf Startseite und im Shop; ein verschwundenes Angebot ist gedämpft, nicht weg. */
+.sparziel { border-color: var(--gold); }
+.sparziel.weg { border-color: var(--stroke); opacity: .85; }
+.shop-karte { display: flex; flex-direction: column; gap: 6px; }
+.shop-karte.ziel > .skin { border-color: var(--gold); }
+/* B-377: das Lob der Eltern als Overlay über der Startseite. */
+/* B-377 Entscheidung 8: der Erfolg des Tages hebt die Zeile in „Heute“ hervor. */
+.heute-erfolg { border-color: var(--lime); box-shadow: 0 0 0 2px rgba(60, 232, 92, .25); }
+.lob-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(5, 7, 30, .72); }
+.lob-karte { width: min(420px, 100%); border-color: var(--lime); }
+.lob-liste { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 10px; }
