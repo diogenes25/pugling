@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/frontend, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/frontend, rolle/student]
 aliases: [Mehrfeld-Eingabe Lösungsmenge, Knopf keine Lösung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -148,3 +148,25 @@ kippt die Größe Richtung L.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), keine Migration, kein Vertragsbruch
   (additives Karten-Feld); hängt an B-710. `wartet_auf` bleibt.
 - **2026-11-19** — Entscheidungen bestätigt, einschließlich des Kartenfelds `setAnswer`. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-25** — in-arbeit, Sprint 171 (Nachtlauf M). Risiko 1 nachgesehen: **eine** Projektion (`CardFacets`), fünf
+  Konstruktionsstellen (Üben, Test, Vorschau, Bonus, Mischrunde), alle mit `SetAnswer`; Risiko 3: `SohnTest` nutzt dieselbe
+  `Antwortflaeche`. Die Komponententests liegen in `Lektion.test.tsx` statt einer eigenen Datei (die Fläche ist der Prüfling).
+  Der Hinweis wird im Frontend auf `setAnswer`-Karten ausgeblendet (Entscheidung 4); Hinweis am Server und die
+  Vater-Vorschau mit Feldern → [B-1000](B-1000-gleichung-vorschau-und-hinweis.md).
+- AK 1, Felder nur mit `setAnswer` → `frontend/src/sohn/Lektion.test.tsx:440`, `:448`; F4 → rot.
+- AK 2, aufsteigend → `Lektion.test.tsx:456`, `frontend/src/lib/mengeAntwort.test.ts:7`; F1 → rot.
+- AK 3, Komma/Punkt unverändert → `Lektion.test.tsx:456`, `mengeAntwort.test.ts:13`; F2 → rot.
+- AK 4, Umschalter leert, sperrt, sendet `keine Lösung`, hebt auf → `Lektion.test.tsx:474`; F3, F5, F6 → rot.
+- AK 5, leer gesperrt → `Lektion.test.tsx:492`, `mengeAntwort.test.ts:19`.
+- AK 6, kein Neueinhängen, Fokus ins erste Feld → `Lektion.test.tsx:502`, aus einem weggefallenen Feld `:546`; F9, F10 → rot.
+- AK 7, Enter im letzten Feld → `Lektion.test.tsx:515`; F7 → rot.
+- AK 8, `inputMode="decimal"` → `Lektion.test.tsx:525`; F8 → rot.
+- AK 9, Feld nur auf der getippten Gleichungskarte (Üben, Test; nicht Auswahlstufe, nicht Rechenaufgabe) →
+  `backend/Pugling.Api.Tests/QuadraticEquationApiTests.cs:174`; M25 (überall), M26 (auch auf der Auswahl) → rot.
+- „+“ bis vier und Fokus aufs neue Feld → `Lektion.test.tsx:535`; F11, F12 → rot.
+- **2026-11-26** — abgenommen (Sprint 171, Nachtlauf M). Code `a961897b`. Backend 2542 passed (`dotnet test Pugling.sln
+  -c Release`), Vitest 1488 passed, `tsc -b` sauber, Playwright 4 passed (`gleichung-loesen`, `uebungstypen`, `lektion`,
+  `rechnen-mit-komma`); Mutanten 26/26 (Backend) und 16/16 (Frontend) rot. Review `pugling-reviewer` und `frontend-reviewer`
+  eingearbeitet. Rollengang aller drei Rollen an einer Kopie der echten DB (:5241) plus UI-Spec; offen für den Menschen nur
+  der Geräte-Check (Zahlentastatur am Handy) und die Formel-Darstellung (B-638).
+  Protokoll: [pm-sitzung-2026-11-25-m](../pm-sitzung-2026-11-25-m.md).
