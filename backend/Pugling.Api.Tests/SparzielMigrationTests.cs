@@ -61,14 +61,24 @@ public sealed class SparzielMigrationTests
                 await migrator.MigrateAsync(Target);
             }
 
-            await using (var db = new PuglingDbContext(options))
+            // Read with raw SQL: the schema stands at Target, while the entity model already carries columns of later
+            // migrations, so an entity query would select columns that do not exist yet.
+            await using (var raw = new SqliteConnection(connectionString))
             {
-                var child = await db.Children.AsNoTracking().SingleAsync(c => c.Id == childId);
-                Assert.Null(child.SavingsGoalListingId);
-                Assert.Null(child.SavingsGoalTitle);
-                Assert.Equal((6, stamp), (child.Grade, child.ConcurrencyStamp));
-                Assert.Equal(["default", "ninja"], child.OwnedSkins);
-                Assert.Equal(42, await db.ChildPointsEntries.Where(p => p.ChildId == childId).SumAsync(p => p.Amount));
+                await raw.OpenAsync();
+                await using var cmd = raw.CreateCommand();
+                cmd.CommandText =
+                    "SELECT SavingsGoalListingId, SavingsGoalTitle, Grade, ConcurrencyStamp, OwnedSkins, " +
+                    "(SELECT SUM(Amount) FROM ChildPointsEntries WHERE ChildId = $id) FROM Children WHERE Id = $id";
+                cmd.Parameters.AddWithValue("$id", childId);
+                await using var reader = await cmd.ExecuteReaderAsync();
+                Assert.True(await reader.ReadAsync());
+                Assert.True(reader.IsDBNull(0));
+                Assert.True(reader.IsDBNull(1));
+                Assert.Equal(6, reader.GetInt32(2));
+                Assert.Equal(stamp, reader.GetGuid(3));
+                Assert.Equal("[\"default\",\"ninja\"]", reader.GetString(4));
+                Assert.Equal(42, reader.GetInt32(5));
             }
         }
         finally
