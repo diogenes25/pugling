@@ -132,6 +132,28 @@ public class HausaufgabenTests(PuglingWebAppFactory factory) : IClassFixture<Pug
     }
 
     /// <summary>
+    /// B-1023 (decided by the supervisor): a homework due on a day inside the child's pause costs nothing; the same homework
+    /// due the day after the pause still does. Red when the settlement ignores the pause (first row books) or waives more than
+    /// the pause (second row stays empty).
+    /// </summary>
+    [Theory]
+    [InlineData(-2, 0)]
+    [InlineData(-1, 1)]
+    public async Task Faellig_In_Der_Pause_Kostet_Keinen_Malus(int dueOffset, int expectedPenalties)
+    {
+        var pin = dueOffset == -2 ? "7621" : "7622";
+        var (father, childId) = await FreshChildAsync(pin, new { homeworkPenaltyCoins = 5 });
+        var pause = await father.PostAsJsonAsync($"/api/v1/supervisor/children/{childId}/pauses",
+            new { from = Today.AddDays(-3), until = Today.AddDays(-2), note = "krank" });
+        Assert.Equal(HttpStatusCode.Created, pause.StatusCode);
+        await HomeworkAsync(father, childId, Today.AddDays(dueOffset), createdOn: Today.AddDays(-4));
+
+        await TestApi.ChildAsync(factory, childId, pin);
+
+        Assert.Equal(expectedPenalties, Penalties(childId));
+    }
+
+    /// <summary>
     /// AK 2, second half: a hand-in by the end of the due day averts the penalty, also when the supervisor gave it back for
     /// rework. Red when a rework note brings the penalty back or the settlement ignores hand-ins.
     /// </summary>

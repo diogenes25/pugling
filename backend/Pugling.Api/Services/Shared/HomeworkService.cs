@@ -25,7 +25,8 @@ public class HomeworkOptions
 /// (B-687 decision 2). Nothing here touches positions, so streak, daily box, missions and the bonus-training lock never see a
 /// homework (decision 1).
 /// </summary>
-public class HomeworkService(PuglingDbContext db, TimeProvider time, LearningDay learningDay, IOptions<HomeworkOptions> options)
+public class HomeworkService(PuglingDbContext db, TimeProvider time, LearningDay learningDay, DutyCalendar calendar,
+    IOptions<HomeworkOptions> options)
 {
     /// <summary>Upper bound of a homework's text - the length of its column.</summary>
     public const int MaxTextLength = 2000;
@@ -150,6 +151,8 @@ public class HomeworkService(PuglingDbContext db, TimeProvider time, LearningDay
     /// only for a homework set before its due day was over (the child could not have seen a later one in time). Called at the
     /// same seams as the duty's settlement (login, shop purchase), idempotent through the unique key in
     /// <see cref="HomeworkPenalty"/>. A later hand-in does not take a booked penalty back; that is the supervisor's manual gift.
+    /// A homework due on a day inside one of the child's pauses costs nothing (B-1023, decided by the supervisor): an ill child
+    /// is let off the school homework too. Only the pause counts - a homework due on a free Sunday is still the school's date.
     /// </summary>
     /// <returns>Sum of the coins deducted in this run.</returns>
     public async Task<int> SettleAsync(int childId, DateOnly today, CancellationToken ct)
@@ -163,6 +166,9 @@ public class HomeworkService(PuglingDbContext db, TimeProvider time, LearningDay
         // due day in the family's zone, not in UTC.
         var missed = due.Where(h => learningDay.DayOf(h.CreatedAt) <= h.DueOn
             && !h.Submissions.Any(s => InTime(h, s))).ToList();
+        if (missed.Count == 0) return 0;
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
+        missed.RemoveAll(h => dutyDays.InPause(h.DueOn));
         if (missed.Count == 0) return 0;
 
         var child = await db.Children.FirstAsync(c => c.Id == childId, ct);
