@@ -218,3 +218,5 @@ Nach [B-730](B-730-tagesbegriff-in-deutscher-zeit.md), [B-731](B-731-lerntage-pa
   eingespielt): Verlauf Friedrich 12 Tage, verpasste Pflicht ohne Übung als Zeile, Sonntag ohne Pflicht, Problemwort „une côte“
   2 falsch / 36 richtig, zuletzt „un côte“; Profil je Fach; erster Aufruf 2,2 s, danach 0,13 s; Lehrer und Sohn 403. Benannt offen:
   gefestigt/Tempo vor B-732 → B-1031, Fehlerart am Testweg → B-1030. Suite 2623/2623, Vitest 1518/1518, E2E 4 passed.
+- **2026-11-26** — B-1030 verworfen: dass die E2E am ersten Tag keine Fehlerart zeigt, ist die Regel aus B-732 (eine Auswahl trägt
+  keine Art), kein Loch. Kommentar der E2E entsprechend berichtigt.

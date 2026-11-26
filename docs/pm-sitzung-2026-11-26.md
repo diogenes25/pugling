@@ -265,3 +265,8 @@ nur ein Review.
 Siehe `docs/backlog/`. Aus diesem Sprint neu: B-1030 (P2, Fehlerart am Testweg), B-1031 (P2, Tempo vor B-732), B-1028 (P2, Antworten
 des Vaters im Lernstand), B-1029 (P3). Danach geht B-644 mit B-734 (Planer im Schattenmodus) weiter, das das Profil aus B-733 liest.
 Beim Vater liegen weiter die Fragen B-743 (AK 2), B-752 (Fairness am Gerät), B-780 (Münzen).
+
+**Nachtrag (2026-11-26):** B-1030 nachgestellt und **verworfen** – kein Defekt. Der Test fragt ein am selben Tag eingeführtes Wort
+auf der Auswahlstufe ab (auch mit `requireTypedTest`), und eine Auswahl trägt nach B-732 bewusst keine Fehlerart. Die E2E hatte per
+API Freitext an eine Auswahlkarte geschickt. Fehlerarten entstehen an Wiederholungstagen; die E2E zeigt am ersten Tag zu Recht „–“.
+Die Retro-Nachschau zu B-732 bleibt damit ohne Fund.

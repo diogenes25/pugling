@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/training, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/training, bereich/auswertung, rolle/supervisor]
 aliases: [Testantwort ohne Fehlerart]
-status: idee
+status: verworfen
 prio: P2
 art: Defekt
 groesse: ""
@@ -9,9 +9,9 @@ wo: backend
 migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-26.md#iteration-193--umgesetzt
-grund: ""
+grund: "Kein Defekt: der Test fragt ein am selben Tag eingeführtes Wort auf der Auswahlstufe (6) ab, auch mit requireTypedTest; eine Auswahl trägt nach B-732 bewusst keine Art (FehlerartTests.Richtig_Auswahl_Und_Selbsteinschaetzung_Tragen_Keine_Art). Die E2E hatte per API Freitext an eine Auswahlkarte geschickt. Gemessen an: Position über die Vater-API, Stufe 4, mit und ohne requireTypedTest, Einführung über Lernkarten, Abgabe im Ganzen."
 ersetzt_durch: []
-entgangen_bei: [B-732]
+entgangen_bei: []
 nachgeschaut: ""
 ---
 
@@ -31,3 +31,10 @@ Unterschied also im Aufbau (Richtung der Testkarte, Einführung über Lernkarten
 eingegrenzt. `AnswerErrorClassifier.ClassifyAsync` gibt `null` nur bei richtig, Zahl oder Auswahlstufe zurück.
 
 **Wirkung:** der Vater sieht in der Auswertung für Testfehler kein Warum; die Fehlerarten-Zähler des Profils fehlen für Tests.
+
+## Verlauf
+
+- **2026-11-26** — nachgestellt als Integrationstest (Weg wie oben): beide Testzeilen auf `StageValue = 6` (Auswahl), mit und ohne
+  `requireTypedTest`. `AnswerErrorClassifier` gibt für eine Auswahlstufe `null` zurück – so entschieden in B-732. `verworfen`;
+  der Nachstell-Test ist nicht übernommen (er hätte die falsche Regel festgeschrieben). Offen bleibt nur, dass eine Auswahl
+  in der Auswertung als Fehlantwort ohne Art steht – das ist die Regel, kein Fehler.

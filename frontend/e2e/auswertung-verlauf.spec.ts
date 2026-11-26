@@ -86,7 +86,8 @@ test("Der Vater liest Verlauf mit Lücke und das Problemwort mit der getippten A
   const zeile = woerter.getByRole("row").filter({ hasText: WOERTER[0][0] });
   await expect(zeile).toContainText("1 / 0");
   await expect(zeile).toContainText(`„${WOERTER[0][0]}x“`);
-  // Die Fehlerart fehlt hier, weil dieser Weg sie nicht speichert (B-1030); die Seite zeigt dann „–“ statt einer erfundenen Art.
-  // Die Darstellung der Arten tragen `VaterAuswertung.test.tsx` und die Zählung `TagesauswertungTests`.
+  // Keine Art: am ersten Tag fragt der Test ein neues Wort als Auswahl ab, und eine Auswahl trägt nach B-732 keine Fehlerart
+  // (B-1030, verworfen). Die Seite zeigt dann „–“ statt einer erfundenen Art. Arten entstehen erst an Wiederholungstagen, die
+  // eine E2E nicht vorspulen kann – ihre Darstellung tragen `VaterAuswertung.test.tsx`, ihre Zählung `TagesauswertungTests`.
   await expect(zeile.getByRole("cell").nth(3)).toHaveText("–");
 });

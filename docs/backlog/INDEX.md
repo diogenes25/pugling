@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (81)
+### Offen (80)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -30,7 +30,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | Antworten des Vaters (Vorschau, Nachtrag) landen im Lernstand und in der Auswertung des Kindes | Defekt | `idee` | P2 | — | backend | — |
-| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
@@ -764,9 +763,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (230)
+### Nach der Abnahme entgangen (229)
 
-**Nachgeschaut: 589 von 638 abgenommenen** — und in 201 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 589 von 638 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -774,7 +773,6 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text | [B-593] | `abgenommen` |
 | [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | [B-628] | `abgenommen` |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | Zwei Meldungen zu zwei verschiedenen Übungsantworten verschmelzen zu einer | [B-767] | `idee` |
-| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | [B-732] | `idee` |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `abgenommen` |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `abgenommen` |
 | [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `abgenommen` |
@@ -1077,7 +1075,6 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
-| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
@@ -1252,7 +1249,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (62)</summary>
+<summary>Verworfen (63)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1261,6 +1258,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-07](B-07-db-umbau-restetappen.md) | DB-Struktur-Umbau: der offene Betriebsschritt | gegenstandslos – Entscheidung des Nutzers am 2026-10-23: das Azure-Deployment wird später frisch neu gebaut, es gibt keine Alt-Datenbank, an der der Betriebsschritt nachzuholen wäre |
 | [B-1024](B-1024-drohung-vor-dem-ersten-spiel.md) | Soll ein noch nie geöffneter Plan dem Kind Frist und Malus androhen? | Vater entschieden 2026-11-26: ein noch nie geöffneter Plan droht weiter Frist und Malus an – die Drohung ist der Grund, ihn zu öffnen. Ist-Stand bleibt, nichts zu bauen. |
 | [B-103](B-103-idempotenzschluessel-und-etag.md) | Prüfauftrag: Brauchen `Idempotency-Key` und ETag/`If-Match` in dieser App einen Platz? | gemessen in der Arbeitsrunde 2026-08-04 — beim Idempotenz-Schlüssel bleibt ein betroffener Endpunkt von vier übrig und der Rückweg (POST children/{}/points) existiert als Produktverhalten; der ETag-Vorschlag ist gegen den Code unausführbar (StudyPlan/PlanPosition tragen keinen ConcurrencyStamp) und mit der Wallet-Invariante unverträglich. Kein Bau, Entscheidung dokumentiert in backend/Pugling.Api/CLAUDE.md. |
+| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | Kein Defekt: der Test fragt ein am selben Tag eingeführtes Wort auf der Auswahlstufe (6) ab, auch mit requireTypedTest; eine Auswahl trägt nach B-732 bewusst keine Art (FehlerartTests.Richtig_Auswahl_Und_Selbsteinschaetzung_Tragen_Keine_Art). Die E2E hatte per API Freitext an eine Auswahlkarte geschickt. Gemessen an: Position über die Vater-API, Stufe 4, mit und ohne requireTypedTest, Einführung über Lernkarten, Abgabe im Ganzen. |
 | [B-137](B-137-freitext-fach-unerreichbar.md) | Ein Freitext-Fach an der Reihe ist sichtbar, aber nicht wegzubekommen | geteilt — faktisch XL (sechs Akzeptanzkriterien, drei Controller, Backend und Frontend, dazu eine Flags-Enum-Mehrfachauswahl); Freigabe 3 des Nachtlaufs verlangt dafür Teilen statt Bauen → [B-142, B-143, B-144] |
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite |
