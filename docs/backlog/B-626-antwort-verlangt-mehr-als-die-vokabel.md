@@ -238,10 +238,11 @@ Maske), eine Regel im Agenten, eine Datenkorrektur. Kein Schema, kein neues Feld
 
   Grundlinie nach dem Zurückspielen jeweils grün. M12: `WordListPlaceholders.cs:24` „to“ als Platzhalter → rot an
   `Kern_Und_Echte_Woerter_Bleiben_Pflicht` und `Eintrag_Maske_Setzt_Beiwerk_Fest`.
+
 - **2026-11-25** — Rollengang an der DB-Kopie (Server nach der letzten Änderung gestartet): Vater-Vorschau von Übung 15
   (Theodors Part C) auf Freitext: „turn to“ → richtig, „turn up/down“ → richtig, „(to) turn sth. up/down“ → richtig,
-  „turn to smb“ und „turn smt. up/down“ → falsch (B-990). Kästchen-Vorschau: „(to) ____ __ sb.“,
-  „(to) ____ sth. __/____“. Theodors eigene Sitzung an Position 102 zeigte heute keine dieser Karten (Tagesdosis 9 Karten);
+  „turn to smb“ und „turn smt. up/down“ → falsch (B-990). Kästchen-Vorschau: `(to) ____ __ sb.`,
+  `(to) ____ sth. __/____`. Theodors eigene Sitzung an Position 102 zeigte heute keine dieser Karten (Tagesdosis 9 Karten);
   der Kindpfad ist über `PlatzhalterPfadTests` belegt. Wartet auf den Vater (`wartet_auf`).
 - **2026-11-25** — AK 7 vorbereitet: `scripts/vokabel-schraegstrich-2026-11-25.ps1` ändert genau die zwei benannten Einträge
   (Vorprüfung auf den alten Text, PIN verdeckt) – das ist die Handkorrektur aus Entscheidung 5, kein heuristischer Umbau.
