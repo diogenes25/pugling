@@ -116,6 +116,7 @@ are only unique per branch: a branch that created stories after its base meets t
   line that is green without the fix are no evidence, nor is a red from an injected delay not shown to hit
   (assert a counter, B-602). Size or contract claims: measured at the file,
   command in the line. Mutants build in `Debug` (the test gate holds `Release`), never while a reviewer builds.
+  Parallel runs share one scratchpad: keep the mutant file in a folder named after the run (Lauf N, 2026-11-25).
 - Error messages name the lock and no way out beyond it **that this reader may take** (owner, base stock,
   foreign); a surface they point at must exist and show the lock. Prefer naming only the step that **lifts this
   lock**; any other way out is proven by a test that **takes it** (runs the advised call) past every lock — advice

@@ -295,6 +295,13 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("SavingsGoalListingId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SavingsGoalTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SchoolType")
                         .HasColumnType("INTEGER");
 
@@ -307,6 +314,8 @@ namespace Pugling.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SavingsGoalListingId");
 
                     b.ToTable("Children");
                 });
@@ -2299,6 +2308,38 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("PracticeSessions");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.Praise", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SupervisorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupervisorId");
+
+                    b.HasIndex("ChildId", "SeenAt");
+
+                    b.ToTable("Praises");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Publisher", b =>
                 {
                     b.Property<int>("Id")
@@ -3441,6 +3482,14 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("ShopArticle");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.Child", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.ShopListing", null)
+                        .WithMany()
+                        .HasForeignKey("SavingsGoalListingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.ChildInterest", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4229,6 +4278,25 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("PlanPosition");
 
                     b.Navigation("StudyPlan");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.Praise", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Adult", "Supervisor")
+                        .WithMany()
+                        .HasForeignKey("SupervisorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Supervisor");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Remark", b =>

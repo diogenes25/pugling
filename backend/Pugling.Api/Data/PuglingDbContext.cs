@@ -109,6 +109,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // purchase history and activation requests
     public DbSet<ShopArticle> ShopArticles => Set<ShopArticle>();
     public DbSet<ShopListing> ShopListings => Set<ShopListing>();
+    public DbSet<Praise> Praises => Set<Praise>();
     public DbSet<ShopListingStock> ShopListingStocks => Set<ShopListingStock>();
     public DbSet<ShopListingAudience> ShopListingAudiences => Set<ShopListingAudience>();
     public DbSet<ShopPurchase> ShopPurchases => Set<ShopPurchase>();
@@ -212,6 +213,10 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.Property(c => c.AllowedContentRating).HasConversion<int>();
             // Concurrency token: protects skin purchase/equip against parallel double bookings.
             e.Property(c => c.ConcurrencyStamp).IsConcurrencyToken();
+            // The savings goal points at a listing (B-593). SetNull, because listings are deleted hard and an article takes
+            // its listings along: the goal must survive as "no longer available" (the title snapshot), not block the delete.
+            e.HasOne<ShopListing>().WithMany().HasForeignKey(c => c.SavingsGoalListingId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Textbook: belongs to a child (cascade - it disappears with the child). The optional catalog link to a
@@ -977,6 +982,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(a => new { a.AdultId, a.ArticleNumber }).IsUnique();
             e.HasOne(a => a.Adult).WithMany().HasForeignKey(a => a.AdultId).OnDelete(DeleteBehavior.Cascade);
         });
+        // Praise (B-377) dies with the child and with the sender; the unread lookup is "per child, SeenAt null".
+        modelBuilder.Entity<Praise>(e =>
+        {
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Supervisor).WithMany().HasForeignKey(p => p.SupervisorId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(p => new { p.ChildId, p.SeenAt });
+        });
+
         modelBuilder.Entity<ShopListing>(e =>
         {
             e.Property(l => l.ConcurrencyStamp).IsConcurrencyToken();

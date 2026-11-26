@@ -2518,6 +2518,74 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/savings-goal": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Shop"
+        ],
+        "summary": "The child\u0027s savings goal; 204 when it has none, 404 for a child you do not supervise.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoalResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/subject-levels": {
       "get": {
         "tags": [
@@ -5956,6 +6024,198 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/praise": {
+      "post": {
+        "tags": [
+          "Supervisor \u2013 Praise"
+        ],
+        "summary": "Sends a praise: plain text, 1..140 characters after trimming (400 \u0060validation_error\u0060 otherwise). Books no\ncoins. 404 for a child you do not supervise.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePraiseDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePraiseDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePraiseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PraiseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Praise"
+        ],
+        "summary": "Your own praise to this child, newest first, with \u0060seenAt\u0060; another supervisor\u0027s praise is not listed.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "description": "Id of the child.",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of entries skipped (paging).",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Maximum entries (1..500). Total count in the \u0060X-Total-Count\u0060 header.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PraiseResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -11294,6 +11554,253 @@
                   "$ref": "#/components/schemas/ShopViewResponse"
                 }
               }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/praise": {
+      "get": {
+        "tags": [
+          "Student \u2013 Praise"
+        ],
+        "summary": "Own unread praise from the supervisors (B-377), newest first, at most five, each with the sender\u0027s name. The\noverlay shows them once; the rest follow after \u0060praise/seen\u0060.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyPraiseResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/praise/seen": {
+      "post": {
+        "tags": [
+          "Student \u2013 Praise"
+        ],
+        "summary": "Stamps the praise the overlay showed as seen (\u0022Thanks!\u0022). Only own, still unread praise is stamped: a foreign id is\nignored, a second call keeps the first stamp.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkPraiseSeenDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkPraiseSeenDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkPraiseSeenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/me/savings-goal": {
+      "get": {
+        "tags": [
+          "Student \u2013 Shop"
+        ],
+        "summary": "Own savings goal (B-593): the pinned listing with the missing coins (from the real balance, debts included) and\na forecast \u0022at your pace, about N days\u0022. 204 when no goal is set. A goal whose listing was deactivated, deleted\nor left the child\u0027s shop stays readable with \u0060available: false\u0060.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoalResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Student \u2013 Shop"
+        ],
+        "summary": "Pins a listing of the own family shop as the savings goal; a second pin replaces the first. Books nothing.\n404 for a listing the own shop does not offer (another family\u0027s, outside the audience, inactive).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSavingsGoalDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSavingsGoalDto"
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSavingsGoalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsGoalResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Student \u2013 Shop"
+        ],
+        "summary": "Removes the own savings goal (also one that is no longer available). Books nothing.",
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": {}
             }
           },
           "403": {
@@ -34934,6 +35441,18 @@
         },
         "description": "Creating a position. Empty override fields inherit the exercise\u0027s suggestion (hybrid principle):\nstage/item count then stay \u0060null\u0060 and are resolved from the exercise defaults only when played;\nthe points/bonus fields are prefilled from the exercise\u0027s bonus suggestion."
       },
+      "CreatePraiseDto": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          }
+        },
+        "description": "A praise to send: plain text, 1..140 characters after trimming. No coins - gifts keep their own path."
+      },
       "CreatePublisherDto": {
         "required": [
           "name"
@@ -44500,6 +45019,26 @@
         },
         "description": "Hit per requested word incl. already existing store entries."
       },
+      "MarkPraiseSeenDto": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        },
+        "description": "The praise ids the child\u0027s overlay showed; only the child\u0027s own, still unread ones are stamped."
+      },
       "MasteryRollup": {
         "required": [
           "avgMasteryPercent",
@@ -45718,6 +46257,36 @@
           }
         },
         "description": "A single points ledger entry (credit positive, deduction negative) with category and its currency (derived from the kind, B-425)."
+      },
+      "MyPraiseResponse": {
+        "required": [
+          "createdAt",
+          "id",
+          "supervisorName",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "supervisorName": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "An unread praise as the child sees it, with the sending supervisor\u0027s name."
       },
       "MyShopPurchaseResponse": {
         "required": [
@@ -47077,6 +47646,48 @@
           }
         },
         "description": "Exercises relevant to a class test for targeted practice (days until the date, inclusive)."
+      },
+      "PraiseResponse": {
+        "required": [
+          "childId",
+          "createdAt",
+          "id",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "childId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seenAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "A praise as its sender sees it: \u0060SeenAt\u0060 is when the child closed it with \u0022Thanks!\u0022, \u0060null\u0060 = unread."
       },
       "PreviewAnswer": {
         "required": [
@@ -48517,6 +49128,110 @@
         },
         "description": "A grading criterion of an essay."
       },
+      "SavingsGoalResponse": {
+        "required": [
+          "available",
+          "coins",
+          "gems",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "coinPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gemPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "coins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "missingCoins": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "missingGems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "daysAtPace": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "currentStock": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nextRefillAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "The child\u0027s savings goal. \u0060ListingId\u0060 is \u0060null\u0060 when the listing was deleted - then only the\n\u0060Title\u0060 snapshot is left and \u0060Available\u0060 is false. Prices are read live from the listing (\u0060null\u0060\nwhen it is gone or no longer in the child\u0027s shop). \u0060MissingCoins\u0060 counts from the real balance, debts\nincluded. \u0060DaysAtPace\u0060 is a forecast \u0022at your pace, about N days\u0022: the missing coins divided by the average\nearned coins per calendar day of the seven full days before today; \u0060null\u0060 without a coin price, when the\ngoal is not available, when nothing was earned in those days or when the child\u0027s history is shorter than seven\ndays. \u0060CurrentStock\u0060/\u0060NextRefillAtUtc\u0060 are the child\u0027s own stock of the listing, as in the shop."
+      },
       "SchoolTypes": {
         "type": "string",
         "description": "School types for which an exercise is suitable. A \u0060[Flags]\u0060 enum so that an exercise\ncan be assigned to multiple school types (e.g. Realschule | Gymnasium).\nSchoolTypes.None means \u0022for all school types\u0022 (no filter exclusion).\n\nComma-separated combination of: None, Grundschule, Hauptschule, Realschule, Gymnasium, Gesamtschule, Berufsschule."
@@ -48915,6 +49630,23 @@
           }
         },
         "description": "Replaces the child\u0027s own interests entirely (empty list = remove all) \u2013 the guided process edits\nthe set as a whole, the same way the supervisor\u0027s editor does."
+      },
+      "SetSavingsGoalDto": {
+        "required": [
+          "listingId"
+        ],
+        "type": "object",
+        "properties": {
+          "listingId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Pins a listing of the child\u0027s own family shop as its savings goal; a second pin replaces the first."
       },
       "SetShopListingStockRequest": {
         "required": [
@@ -53970,6 +54702,9 @@
       "name": "Supervisor \u2013 Position Report"
     },
     {
+      "name": "Supervisor \u2013 Praise"
+    },
+    {
       "name": "Supervisor \u2013 Shop"
     },
     {
@@ -54031,6 +54766,9 @@
     },
     {
       "name": "Student \u2013 Position Tests"
+    },
+    {
+      "name": "Student \u2013 Praise"
     },
     {
       "name": "Student \u2013 Shop"

@@ -733,6 +733,12 @@ export type WalletBalance = S["WalletResponse"];
 
 /** Wochenvergleich des Sohns gegen die eigene Vorwoche (GET me/points/week, B-253). */
 export type WeekCoins = S["WeekCoinsResponse"];
+/** B-593: das Sparziel des Kindes mit Fehlbetrag und Tempo-Prognose. */
+export type SavingsGoal = S["SavingsGoalResponse"];
+/** B-377: ein ungelesenes Lob aus Kindsicht (mit Absendername). */
+export type MyPraise = S["MyPraiseResponse"];
+/** B-377: ein gesendetes Lob aus Sicht des Absenders (mit „gelesen am“). */
+export type Praise = S["PraiseResponse"];
 
 /** Kombinierte Konto-Sicht des Vaters (GET children/{id}/points): Salden + eingebettete Buchungen. */
 export type Wallet = S["ChildPointsResponse"];

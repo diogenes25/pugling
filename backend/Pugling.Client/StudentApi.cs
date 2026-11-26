@@ -101,6 +101,26 @@ public sealed class StudentApi(HttpClient http)
     public Task<MyInterestProfileResponse> GetMyInterestsAsync(CancellationToken ct = default) =>
         Http.GetAsync<MyInterestProfileResponse>($"{Root}/me/interests", ct);
 
+    /// <summary>The child's unread praise (B-377), newest first, at most five.</summary>
+    public Task<IReadOnlyList<MyPraiseResponse>> ListMyPraiseAsync(CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<MyPraiseResponse>>($"{Root}/me/praise", ct);
+
+    /// <summary>Stamps the shown praise as seen (B-377); foreign or already seen ids are ignored.</summary>
+    public Task MarkMyPraiseSeenAsync(MarkPraiseSeenDto dto, CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Post, $"{Root}/me/praise/seen", dto, ct);
+
+    /// <summary>The child's own savings goal (B-593), or <c>null</c> when none is pinned.</summary>
+    public Task<SavingsGoalResponse?> GetMySavingsGoalAsync(CancellationToken ct = default) =>
+        Http.GetOptionalAsync<SavingsGoalResponse>($"{Root}/me/savings-goal", ct);
+
+    /// <summary>Pins a listing of the own family shop as the savings goal, replacing an earlier one (B-593).</summary>
+    public Task<SavingsGoalResponse> SetMySavingsGoalAsync(SetSavingsGoalDto dto, CancellationToken ct = default) =>
+        Http.PutAsync<SavingsGoalResponse>($"{Root}/me/savings-goal", dto, ct);
+
+    /// <summary>Removes the own savings goal (B-593).</summary>
+    public Task ClearMySavingsGoalAsync(CancellationToken ct = default) =>
+        Http.SendAsync(HttpMethod.Delete, $"{Root}/me/savings-goal", null, ct);
+
     /// <summary>The child's earned coins this week against its own previous week up to now (B-253).</summary>
     public Task<WeekCoinsResponse> GetWeekCoinsAsync(CancellationToken ct = default) =>
         Http.GetAsync<WeekCoinsResponse>($"{Root}/me/points/week", ct);

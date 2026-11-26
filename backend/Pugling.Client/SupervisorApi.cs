@@ -308,4 +308,18 @@ public sealed class SupervisorApi(HttpClient http)
     /// <summary>Gives the hand-in back for rework with a note.</summary>
     public Task<HomeworkResponse> ReworkHomeworkAsync(int childId, int homeworkId, ReworkHomeworkDto dto, CancellationToken ct = default) =>
         Http.PostAsync<HomeworkResponse>($"{Root}/children/{childId}/homework/{homeworkId}/rework", dto, ct);
+
+    /// <summary>The savings goal a supervised child pinned (B-593), or <c>null</c> when it has none. Read only.</summary>
+    public Task<SavingsGoalResponse?> GetChildSavingsGoalAsync(int childId, CancellationToken ct = default) =>
+        Http.GetOptionalAsync<SavingsGoalResponse>($"{Root}/children/{childId}/savings-goal", ct);
+
+    /// <summary>Sends a supervised child a short plain-text praise (B-377); books no coins.</summary>
+    public Task<PraiseResponse> SendPraiseAsync(int childId, CreatePraiseDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<PraiseResponse>($"{Root}/children/{childId}/praise", dto, ct);
+
+    /// <summary>Your own praise to a child, newest first, with when it was seen (B-377).</summary>
+    public Task<PuglingPage<PraiseResponse>> ListPraiseAsync(int childId, int skip = 0, int take = 100,
+        CancellationToken ct = default) =>
+        Http.GetPageAsync<PraiseResponse>($"{Root}/children/{childId}/praise"
+            + PuglingHttp.Query(("skip", skip), ("take", take)), ct);
 }

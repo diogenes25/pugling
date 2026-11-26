@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/gamification, bereich/shop, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/shop, rolle/student]
 aliases: [Sparziel, Wunsch-Artikel anheften]
-status: geschaetzt
+status: in-arbeit
 prio: P2
 art: Wunsch
 groesse: M
@@ -265,3 +265,27 @@ Nachgesehen am 2026-11-20:
   die Ökonomie-Grenze, mit Empfehlung. Keine Entscheidung gefällt.
 - **2026-11-20** — gegrillt (Vorbereitungslauf, Sonnet, auf Anweisung des Nutzers „Entscheide die offenen Fragen nach deiner Empfehlung“; unbestätigt): Tempo = Münzen je Kalendertag der letzten sieben Tage (keine Pflicht-Tage); Ziel am Kind als FK mit Titel-Momentaufnahme, weil Angebote hart gelöscht werden; Ökonomie unberührt (keine Reservierung, Zinsen, Zuschuss). Akzeptanzkriterien final.
 - 2026-11-20 · geschaetzt (Vorbereitungslauf, Sonnet): M, beides (Backend zuerst), Migration ja (zwei Spalten, FK mit `SetNull`, Einträge in den zwei Schema-Toren), kein Vertragsbruch. Wallet-Invariante: das Ziel bucht nichts; Setzen über `ExecuteUpdateAsync`, damit weder Token noch Stamp berührt werden. Unabhängig von B-660 und B-218.
+- **2026-11-25** — `geschaetzt` → `in-arbeit` (Nachtlauf N, Sprint 181, [Protokoll](../pm-sitzung-2026-11-25-n.md)). Gebaut:
+  Spalten am Kind + Migration `20261125213333_SavingsGoal`, `SavingsGoalService`, `GET|PUT|DELETE student/me/savings-goal`,
+  `GET supervisor/children/{childId}/savings-goal` (nur lesen), Streifen auf `SohnHome`, gepinnte Karte und „☆ Als Ziel“ in
+  `SohnShop`, Zeile im Kind-Hub des Vaters. Der Titel der Story bleibt; die Anzeige sagt „bei deinem Tempo etwa“ (Entscheidung 1).
+  Je Fall (Pfad × Wert) der Test und die Mutante, die ihn rot macht (gemessen mit `mutant-probe.py` nach der letzten Änderung):
+  - AK 1, Angebot nur für das Geschwister bzw. inaktiv → 404 → `SparzielTests.Nur_Ein_Angebot_Aus_Dem_Eigenen_Shop_Wird_Ziel`; S1 (`activeOnly: false`) rot, S2 (Existenz statt Shop-Ansicht) rot.
+  - AK 2, Schulden → `Fehlbetrag_Zaehlt_Ab_Dem_Echten_Stand_Auch_Bei_Schulden`; S3 (Stand mit 0 als Boden) rot.
+  - AK 3, gleitende Spanne/heute/Tag davor/Kalenderwoche → `Tage_Beim_Tempo_Der_Sieben_Vollen_Tage_Vor_Heute`; S6 (heute zählt), S7 (Tag davor zählt), S8 (Kalenderwoche) rot.
+  - AK 3, kurzer Verlauf, Grenze genau sieben Tage, nichts verdient, reiner Gem-Preis → `Keine_Tage_Bei_Kurzem_Verlauf_Ohne_Verdienst_Und_Bei_Gem_Preis`; S4 (`>=`), S5 (Verlaufsprüfung weg), S11 (Gem-Preis umgerechnet) rot.
+  - AK 4, Geschenk und Malus-Korrektur → `Tage_Beim_Tempo…`; S9 (`Manual` zählt), S10 (positive `GoalPenalty` zählt) rot.
+  - AK 5, Preis heraufgesetzt → `Preis_Schlaegt_Durch_Und_Ein_Verschwundenes_Angebot_Bleibt_Sichtbar`. Keine Ein-Zeilen-Mutante „Preis am Kind kopiert“ möglich (es gibt keine Preisspalte am Kind); die Zusicherung 140 nach dem PATCH trägt den Fall.
+  - AK 6, deaktiviert / Angebot gelöscht / Artikel gelöscht → `Preis_Schlaegt…`; S12 (ohne Id gilt als „kein Ziel“) rot.
+  - AK 7 und 8, ersetzen, entfernen, Stamp/Ledger → `Ersetzen_Und_Entfernen_Buchen_Nichts`; S13 (Titel bleibt), S14 (Stamp gebumpt) rot.
+  - AK 9, Vater liest, kein Fremdzugriff, setzt nicht → `Betreuer_Liest_Das_Ziel_Setzt_Es_Aber_Nicht`; S15 (Ownership-Filter weg) rot. Das „setzt nicht“ ist **doppelt** gesichert (Rollen-Attribut am `MeController` und `User.ChildId()`-Prüfung): S16 (Inline-Prüfung weg) und S16b (Attribut gelockert) je **grün** gemessen – jede Schicht allein reicht, der Test unterscheidet sie nicht.
+  - Review-Fund (GET schreibt Bestandszeilen) → `Betreuer_Liest…` (keine `ShopListingStock`-Zeile nach Lesen); S17 (`persist: true`) rot.
+  - AK 10 → `frontend/src/sohn/sparzielLob.test.tsx` (vier Fälle + Gem-Preis); F9 („Pflicht-Tage“), F10 (Tage ohne Zahl), F11 (Streifen ohne Ziel), F12 (Gem-Preis mit „und“) rot.
+  - AK 11 → `SparzielMigrationTests` (Kind, Skins, Stamp, Ledger überleben den Tabellen-Neubau, Ziel leer).
+- **2026-11-26** — Verifikation: Backend 2481 Tests (2480 grün, 1 rot: das gepinnte Zählertor für ungepagte GETs, 34 → 35 nachgezogen; Nachlauf nach Review-Fixes siehe Protokoll),
+  Vitest 1482/1482, `tsc -b` sauber, Playwright `sparziel.spec.ts` + `lob.spec.ts` + `shop-verlauf` + `full-flow` 4 passed (Ports 5242/5282).
+  Reviews: `pugling-reviewer` ohne Blocker (eingearbeitet: GET ohne Schreib-Nebenwirkung über `persist`, Rennen beim Setzen → 404,
+  eine Uhr je Lesung); `frontend-reviewer` ohne Blocker (eingearbeitet: Gem-only-Text, Plural/`stale` im Kind-Hub, Label-in-Name, E2E-Spec).
+  Migrationsprobe an der Kopie der echten DB (`kopie-server.sh`, :5242): Kette läuft durch (Hinweis von EF: der FK-Neubau der Tabelle
+  `Children` läuft außerhalb einer Transaktion), alle vier Kinder da, Ledger gleich; Rollengang dort als Sohn (Friedrich: Ziel setzen,
+  ersetzen, Preis vom Vater angehoben → „noch 1930, etwa 5 Tage“, nachgerechnet 3368 Münzen in sieben Tagen; entfernen → 204) und als Vater (lesen).

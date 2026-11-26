@@ -15,7 +15,7 @@ import { confirmAction } from "../lib/ui";
 import { useAsync } from "../lib/useAsync";
 import type {
   ChildInterestResponse, ChildResponse, ContentRating, ExtraTrainingOverview, Gender, InterestFacet,
-  InterestTagResponse, SchoolType, SubjectResponse, TowerGameOverview, UpdateChildDto,
+  InterestTagResponse, SavingsGoal, SchoolType, SubjectResponse, TowerGameOverview, UpdateChildDto,
 } from "../lib/types";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { SectionPanel, SectionTabs, useActiveSection, type SectionTab } from "../components/SectionTabs";
@@ -75,6 +75,8 @@ export function VaterKind() {
         <Link to="/vater/kinder" className="btn ghost small"
           style={{ width: "auto", marginLeft: "auto", textDecoration: "none", textAlign: "center" }}>← Alle Kinder</Link>
       </div>
+
+      <SparzielZeile childId={childId} />
 
       <ChildNav child={me} />
 
@@ -618,4 +620,24 @@ function InterestList({ title, empty, rows, setRows, all }: {
       )}
     </div>
   );
+}
+
+/**
+ * Das Sparziel des Kindes (B-593), nur lesend: was es sich ausgesucht hat und wie weit es noch ist. Gesetzt wird es vom
+ * Kind; der Vater bewegt es über seinen Shop (Preis, Bestand, Angebot aus). Ohne Ziel steht nichts da.
+ */
+function SparzielZeile({ childId }: { childId: number }) {
+  const goal = useAsync<SavingsGoal | undefined>(() => api.childSavingsGoal(childId), [childId]);
+  const g = goal.data;
+  // `stale`: nach dem Wechsel zu einem anderen Kind stünde sonst kurz das Ziel des vorigen da (B-170).
+  if (!g || goal.stale) return null;
+  const coins = g.missingCoins ?? 0;
+  const gems = g.missingGems ?? 0;
+  const fehlt = !g.available ? "nicht mehr verfügbar"
+    : coins === 0 && gems === 0 ? "genug gespart"
+    : [coins > 0 ? `noch ${coins} ${coins === 1 ? "Münze" : "Münzen"}` : null,
+      gems > 0 ? `${coins > 0 ? "und" : "noch"} ${gems} ${gems === 1 ? "Gem" : "Gems"}` : null,
+      g.daysAtPace != null && coins > 0 ? `– bei seinem Tempo etwa ${g.daysAtPace} ${g.daysAtPace === 1 ? "Tag" : "Tage"}` : null]
+      .filter(Boolean).join(" ");
+  return <p className="sub" data-testid="sparziel-kind">🎯 Sparziel: <strong>{g.title}</strong> · {fehlt}</p>;
 }

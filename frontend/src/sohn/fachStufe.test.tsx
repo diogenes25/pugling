@@ -23,6 +23,9 @@ vi.mock("../lib/api", async (importOriginal) => {
       today: () => today(),
       mySubjectLevels: () => levels(),
       myInterests: () => Promise.resolve({ needsIntro: false }),
+      // Sparziel (B-593) und Lob (B-377) sind hier kein Thema – leer, ohne Netz.
+      mySavingsGoal: () => Promise.resolve(undefined),
+      myPraise: () => Promise.resolve([]),
     },
   };
 });

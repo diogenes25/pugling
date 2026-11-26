@@ -192,7 +192,9 @@ public class ConventionGuardTests
     // 34 since B-742 and B-750 (merged): the grade levels of one child, child and supervisor side - one row per vocabulary
     // subject of the child's active plans, so bounded by the subjects it learns; and the child's upcoming class tests
     // (only planned ones from today on - a handful per child).
-    private const int UnpaginatedArrayGetCount = 34;
+    // 35 since B-377: the child's unread praise - at most five by design (decision 5, `PraiseService.OverlayLimit`); the
+    // sender's list takes `take`.
+    private const int UnpaginatedArrayGetCount = 35;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

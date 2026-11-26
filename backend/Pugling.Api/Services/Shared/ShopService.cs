@@ -155,13 +155,15 @@ public class ShopService(PuglingDbContext db, WalletService wallet, LearningDay 
 
     /// <summary>
     /// Loads the listings of ALL supervisors of the student that are meant for it (audience empty or containing it),
-    /// with the child's own stock - created by the start rule when missing, refilled when due.
+    /// with the child's own stock - created by the start rule when missing, refilled when due. With
+    /// <paramref name="persist"/> false the stock is computed for display only and nothing is written: the savings goal
+    /// (B-593) reads the shop from a GET a supervisor may call too, and a GET has no write side effect.
     /// </summary>
     public async Task<IReadOnlyList<ChildListingView>> ListingsForStudentAsync(
-        int childId, bool activeOnly, DateTime nowUtc, CancellationToken ct)
+        int childId, bool activeOnly, bool persist, DateTime nowUtc, CancellationToken ct)
     {
-        var listings = await StudentListingsQuery(childId, activeOnly, tracked: true).ToListAsync(ct);
-        if (await MaterializeStocksAsync(listings, _ => [childId], nowUtc, ct) && !await TrySaveAsync(ct))
+        var listings = await StudentListingsQuery(childId, activeOnly, tracked: persist).ToListAsync(ct);
+        if (await MaterializeStocksAsync(listings, _ => [childId], nowUtc, ct) && persist && !await TrySaveAsync(ct))
         {
             // Re-read after a lost race: the unsaved copy would show a refill on top of the winner's (4 + 4 = 8 shown,
             // 4 stored) - B-645, risk 3.

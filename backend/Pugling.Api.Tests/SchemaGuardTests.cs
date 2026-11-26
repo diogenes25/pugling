@@ -204,6 +204,8 @@ public class SchemaGuardTests
             ["AchievementAward.AchievementId"] = DeleteBehavior.Cascade, // -> Achievement
             ["ActivationRequest.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ActivationRequest.ShopArticleId"] = DeleteBehavior.SetNull, // -> ShopArticle
+            // A deleted listing leaves the savings goal as "no longer available" (B-593), it does not take the child along.
+            ["Child.SavingsGoalListingId"] = DeleteBehavior.SetNull, // -> ShopListing
             ["ChildInterest.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["ChildInterest.InterestTagId"] = DeleteBehavior.Cascade, // -> InterestTag
             ["ChildInventory.ChildId"] = DeleteBehavior.Cascade, // -> Child
@@ -312,6 +314,8 @@ public class SchemaGuardTests
             ["PositionItemProgress.PlanPositionId"] = DeleteBehavior.Cascade, // -> PlanPosition
             // B-848: progress on a played prerequisite is the child's record; the delete is refused with a 409 first.
             ["PositionItemProgress.ExerciseId"] = DeleteBehavior.Restrict, // -> Exercise
+            ["Praise.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["Praise.SupervisorId"] = DeleteBehavior.Cascade, // -> Adult
             // SetNull, so that no second cascade path (plan → position → session/test) arises in SQLite next to
             // plan → session/test; both already hang on the plan.
             ["PracticeSession.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition

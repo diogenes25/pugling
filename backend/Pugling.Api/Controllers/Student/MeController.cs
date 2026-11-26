@@ -21,7 +21,7 @@ namespace Pugling.Api.Controllers.Student;
 [Authorize(Roles = Roles.Student)]
 public class MeController(PuglingDbContext db, GamificationService gamification,
     WalletService wallet, ShopService shop, PositionProgressService progress, TimeProvider time, LearningDay learningDay,
-    ClassTestPrepService classTestPrep, HomeworkService homework) : ControllerBase
+    ClassTestPrepService classTestPrep, HomeworkService homework, SavingsGoalService savingsGoal, PraiseService praise) : ControllerBase
 {
     /// <summary>Own wallet balance (coins + gems). The individual ledger entries live under <c>points/entries</c>.</summary>
     [HttpGet("points")]
@@ -277,6 +277,88 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
     }
 
     /// <summary>
+    /// Own unread praise from the supervisors (B-377), newest first, at most five, each with the sender's name. The
+    /// overlay shows them once; the rest follow after <c>praise/seen</c>.
+    /// </summary>
+    [HttpGet("praise")]
+    [Tags("Student – Praise")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<IReadOnlyList<MyPraiseResponse>>> Praise(CancellationToken ct)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        return await praise.UnreadAsync(cid.Value, ct);
+    }
+
+    /// <summary>
+    /// Stamps the praise the overlay showed as seen ("Thanks!"). Only own, still unread praise is stamped: a foreign id is
+    /// ignored, a second call keeps the first stamp.
+    /// </summary>
+    [HttpPost("praise/seen")]
+    [Tags("Student – Praise")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> MarkPraiseSeen(MarkPraiseSeenDto dto, CancellationToken ct)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        await praise.MarkSeenAsync(cid.Value, dto.Ids ?? [], time.GetUtcNow().UtcDateTime, ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Own savings goal (B-593): the pinned listing with the missing coins (from the real balance, debts included) and
+    /// a forecast "at your pace, about N days". 204 when no goal is set. A goal whose listing was deactivated, deleted
+    /// or left the child's shop stays readable with <c>available: false</c>.
+    /// </summary>
+    [HttpGet("savings-goal")]
+    [Tags("Student – Shop")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<SavingsGoalResponse>> SavingsGoal(CancellationToken ct)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        var goal = await savingsGoal.ReadAsync(cid.Value, time.GetUtcNow().UtcDateTime, ct);
+        return goal is null ? NoContent() : goal;
+    }
+
+    /// <summary>
+    /// Pins a listing of the own family shop as the savings goal; a second pin replaces the first. Books nothing.
+    /// 404 for a listing the own shop does not offer (another family's, outside the audience, inactive).
+    /// </summary>
+    [HttpPut("savings-goal")]
+    [Tags("Student – Shop")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SavingsGoalResponse>> SetSavingsGoal(SetSavingsGoalDto dto, CancellationToken ct)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        var now = time.GetUtcNow().UtcDateTime;
+        if (!await savingsGoal.SetAsync(cid.Value, dto.ListingId, now, ct)
+            || await savingsGoal.ReadAsync(cid.Value, now, ct) is not { } goal)
+            return this.ProblemWithCode(ApiErrors.NotFound, "Shop listing not found in your family shop.");
+        return goal;
+    }
+
+    /// <summary>Removes the own savings goal (also one that is no longer available). Books nothing.</summary>
+    [HttpDelete("savings-goal")]
+    [Tags("Student – Shop")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ClearSavingsGoal(CancellationToken ct)
+    {
+        var cid = User.ChildId();
+        if (cid is null) return Forbid();
+        await savingsGoal.ClearAsync(cid.Value, ct);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Buys a family shop listing: coins/gems are debited immediately, the child's aggregated inventory
     /// for the associated article is increased by <c>UnitsPerPurchase</c>.
     /// </summary>
@@ -407,7 +489,7 @@ public class MeController(PuglingDbContext db, GamificationService gamification,
         var now = time.GetUtcNow().UtcDateTime;
 
         // The child's shared shop view: listings of ALL its supervisors.
-        var listings = await shop.ListingsForStudentAsync(childId, activeOnly: true, now, ct);
+        var listings = await shop.ListingsForStudentAsync(childId, activeOnly: true, persist: true, now, ct);
         var available = listings
             .OrderBy(v => v.Listing.ShopArticle!.ArticleNumber).ThenBy(v => v.Listing.Id)
             .Select(v =>

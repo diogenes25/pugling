@@ -178,6 +178,8 @@ builder.Services.AddOptions<GradingOptions>().Bind(builder.Configuration.GetSect
     .ValidateOnStart();
 builder.Services.AddScoped<WalletService>();
 builder.Services.AddScoped<ShopService>();
+builder.Services.AddScoped<SavingsGoalService>();
+builder.Services.AddScoped<PraiseService>();
 builder.Services.AddScoped<MetricsService>();
 builder.Services.AddScoped<GamificationService>();
 // Daily reward box: the positive counterpart to the PenaltyCoins stick (B-105).

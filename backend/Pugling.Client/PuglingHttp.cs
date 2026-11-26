@@ -16,6 +16,15 @@ internal static class PuglingHttp
         return await ReadAsync<T>(response, ct);
     }
 
+    /// <summary>GET on a resource that may be absent: 204 means "none" and comes back as <c>null</c>.</summary>
+    internal static async Task<T?> GetOptionalAsync<T>(this HttpClient http, string uri, CancellationToken ct)
+        where T : class
+    {
+        using var response = await http.GetAsync(uri, ct);
+        if (response.StatusCode == HttpStatusCode.NoContent) return null;
+        return await ReadAsync<T>(response, ct);
+    }
+
     /// <summary>
     /// GET on a paginated list: the items plus the server's <c>X-Total-Count</c> header, so a caller can tell a full
     /// answer from a window cut at <c>take</c> instead of silently working on a slice.

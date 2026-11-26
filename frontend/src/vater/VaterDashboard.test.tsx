@@ -192,3 +192,62 @@ describe("Offene Rückmeldungen auf der Startseite (B-950)", () => {
     expect(screen.getByRole("heading", { name: "Rückmeldungen" })).toBeTruthy();
   });
 });
+
+/*
+ * B-377 AK 7 – „Loben“ aus der Zeile „Heute“: jede Zeile trägt den Knopf, eine Zeile mit geschafftem Tagesziel ist
+ * hervorgehoben und der Knopf dort Hauptknopf; das Panel bietet vier Sätze und ein Feld mit 140 Zeichen.
+ */
+describe("Loben aus „Heute“ (B-377)", () => {
+  beforeEach(() => {
+    vi.spyOn(api, "allActivations").mockResolvedValue({ items: [], total: 0 });
+    vi.spyOn(api, "praiseSent").mockResolvedValue({ items: [], total: 0 });
+  });
+
+  // Rot, wenn die Hervorhebung an `practiced` statt an `dutyDone` hängt (Friedrich hat geübt, aber nicht geschafft).
+  it("hebt nur die Zeile mit geschafftem Tagesziel hervor und macht dort Loben zum Hauptknopf", async () => {
+    await zeige();
+    const [friedrich, theodor] = within(screen.getByRole("list", { name: "Kinder heute" })).getAllByRole("listitem");
+    expect(theodor.getAttribute("data-erfolg")).toBe("true");
+    expect(friedrich.getAttribute("data-erfolg")).toBeNull();
+    expect(within(theodor).getByRole("button", { name: "Theodor loben" }).className).toContain("lime");
+    expect(within(friedrich).getByRole("button", { name: "Friedrich loben" }).className).toContain("ghost");
+  });
+
+  // Rot, wenn Senden bei leerem Feld freigegeben ist, das Feld keine 140er-Grenze trägt oder ein Satz nicht ins Feld kommt.
+  it("bietet vier Sätze, begrenzt auf 140 Zeichen und sperrt Senden bei leerem Feld", async () => {
+    const send = vi.spyOn(api, "sendPraise").mockResolvedValue({ id: 1, childId: 3, text: "x", createdAt: "2026-11-25T08:00:00Z", seenAt: null });
+    await zeige();
+    fireEvent.click(screen.getByRole("button", { name: "Theodor loben" }));
+    await act(async () => {});
+
+    const saetze = within(screen.getByRole("group", { name: "Fertige Sätze" })).getAllByRole("button");
+    expect(saetze).toHaveLength(4);
+    const feld = screen.getByLabelText(/^Dein Lob an Theodor/) as HTMLInputElement;
+    expect(feld.maxLength).toBe(140);
+    const senden = screen.getByRole("button", { name: "Senden" }) as HTMLButtonElement;
+    expect(senden.disabled).toBe(true);
+    fireEvent.change(feld, { target: { value: "   " } });
+    expect(senden.disabled).toBe(true);
+
+    fireEvent.click(saetze[2]);
+    expect(feld.value).toBe(saetze[2].textContent);
+    expect(senden.disabled).toBe(false);
+    fireEvent.click(senden);
+    await act(async () => {});
+    expect(send).toHaveBeenCalledWith(3, saetze[2].textContent);
+  });
+
+  // Entscheidung 7: die eigene Liste schließt den Kreis. Rot, wenn „gelesen am“ fehlt oder ein ungelesenes als gelesen gilt.
+  it("zeigt die eigenen letzten Lobe mit gelesen am", async () => {
+    vi.spyOn(api, "praiseSent").mockResolvedValue({ items: [
+      { id: 2, childId: 3, text: "Klasse!", createdAt: "2026-11-24T08:00:00Z", seenAt: "2026-11-24T15:00:00Z" },
+      { id: 1, childId: 3, text: "Weiter so!", createdAt: "2026-11-23T08:00:00Z", seenAt: null },
+    ], total: 2 });
+    await zeige();
+    fireEvent.click(screen.getByRole("button", { name: "Theodor loben" }));
+    await act(async () => {});
+    const [neu, alt] = within(screen.getByRole("list", { name: "Deine Lobe an Theodor" })).getAllByRole("listitem");
+    expect(neu.textContent).toContain("gelesen am 24.11.2026");
+    expect(alt.textContent).toContain("noch nicht gelesen");
+  });
+});

@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-25.md#runde-1--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-25
 ---
 
 # B-990 · Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“)
@@ -208,3 +209,4 @@ Vorschau von Übung 15.
   abgelegt.
 - **2026-11-25** — `in-arbeit` → `abgenommen`: Commit `fc3c37f4`; Suite 2469/2469, Mutanten 13/13, Review ohne 🔴, Rollengang an
   der Kopie (Sohn maschinell im Test des Testjungen, Vater in der Vorschau von Übung 15). Creator Regressionszeuge.
+- **2026-11-25** — nachgeschaut (Nachtlauf N, Retro Sprint 181): `AnswerGrader.Comparable`/`AnswerVariants.CanonicalSlots` aus `fc3c37f4` gelesen – alle Vergleichsstellen des Graders gehen durch dieselbe Form, die Art-Trennung hält (Gruppe `thing`), Wortgrenzen beidseitig; kein Befund.
