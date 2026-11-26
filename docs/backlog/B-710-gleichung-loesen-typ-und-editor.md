@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/creator, rolle/student]
 aliases: [Gleichung lösen Typ, Lösungsmenge, QuadraticEquation]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -230,3 +230,35 @@ mit Config, Löser, Validierung, Controller und Wächter-Zeilen, dazu ein **neue
   (additiv); hängt hart an B-639, weich an B-638. `wartet_auf` bleibt.
 - **2026-11-19** — Vom Nutzer bestätigt: zwei Stufen (Auswählen, Tippen) mit gleichem Soll; „Anzahl bestimmen“ und „Verfahren wählen“ bleiben zurückgestellt, keine Brüche. Die übrigen Entscheidungen warten weiter, darum bleibt `wartet_auf`.
 - **2026-11-19** — Entscheidungen bestätigt; „Anzahl bestimmen“ und „Verfahren wählen“ bleiben zurückgestellt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-25** — in-arbeit, Sprint 171 (Nachtlauf M, [Protokoll](../pm-sitzung-2026-11-25-m.md)). Abweichungen vom Plan:
+  Wertung über `ContentItem.NumericSet` + `NumericAnswer.MatchesSet` an der Senke `AnswerGrader.Matches` (nicht
+  `NumericTarget` erweitert – eine Menge ist ein eigenes Atom); Validierung im Review verschärft (|A| ≥ 0,001,
+  Toleranz 0 oder 10⁻⁶…1000, durch Rundung verschmolzene Wurzeln). B-638 ist ungebaut: die Karte zeigt den LaTeX-Prompt
+  als Quelltext (Entscheidung 5, bewusst).
+- AK 1, Antwort/Prompt aus dem Löser → `backend/Pugling.Api.Tests/QuadraticEquationExerciseTypeTests.cs:28`, `:44` (5 Sonderfälle);
+  Lösungsfeld → `backend/Pugling.Api.Tests/QuadraticEquationApiTests.cs:37` (`unknown_field`); Mutante M8 (`1x`) → rot.
+- AK 2, Menge in jeder Reihenfolge, Unvollständiges/Zusätzliches/Doppeltes/Komma falsch → `…TypeTests.cs:75` (beide Pfade:
+  `Check` und Atom), Katalog-Check `…ApiTests.cs:67`, Vorschau (`4;2`) ebd., Üben `…ApiTests.cs:91`, Test-Abgabe `…ApiTests.cs:174`;
+  Mutanten M1 (nicht sortiert), M2 (Zusatz erlaubt), M5 (Grader umgangen) → rot.
+- AK 3, leere Menge → `…TypeTests.cs:89`; M4 (leer = keine Lösung) → rot.
+- AK 4, Toleranz je Element (zweites Element an der Toleranz) → `…TypeTests.cs:105`; M3 (nur erstes) → rot.
+- AK 5, Doppellösung → `…TypeTests.cs:128`, Löser `:56`; M7 (Doppelwurzel spaltet) → rot.
+- AK 6, Validierung → `…TypeTests.cs:151` (11 Fälle), `:160`, API POST/PUT `…ApiTests.cs:49`; M14–M20 → rot (M15 erst
+  nach dem Fall `:160`, vorher fing die |A|-Grenze `A = 0` mit ab).
+- AK 7, Hinweis ohne Lösung → `…TypeTests.cs:167`, Karte `…ApiTests.cs:109`; M13 → rot.
+- AK 8, Editor Hin-/Rückweg → `frontend/src/vater/exerciseConfig.test.ts:270`–`:313`; F13–F16 → rot;
+  `e2e/uebungstypen.spec.ts` grün (Pulldown deckt das Manifest).
+- AK 9, keine Lösung vor der Antwort → `…ApiTests.cs:109` (Karte trägt weder `2;4` noch Reveal); die Config ist
+  Creator-gegated, ein Lösungsfeld gibt es nicht (AK 1). Die vorgesehene rote Probe am `ConventionGuardTests` entfällt: ein
+  Feld `Answer` im Config-DTO bliebe dort grün, weil `ExerciseResponse<T>` hinter `Roles.Creator` steht – der Wächter ist
+  hier nicht der Träger, `unknown_field` + Kartentest sind es.
+- AK 10, Sohn spielt → `…ApiTests.cs:91` und `frontend/e2e/gleichung-loesen.spec.ts` (Vater legt im Editor an, Sohn
+  löst im Test; seit B-712 über die Felder statt `2;4` im Textfeld – das Textfeld bleibt für Karten ohne `setAnswer`,
+  `frontend/src/sohn/Lektion.test.tsx:448`).
+- Weitere Mutanten: M6 (`IsNumber` ohne Menge, Tippfehler-Kategorie) → rot; alle Tabellen im Protokoll.
+- **2026-11-26** — abgenommen (Sprint 171, Nachtlauf M). Code `a961897b`. Backend 2542 passed (`dotnet test Pugling.sln
+  -c Release`), Vitest 1488 passed, `tsc -b` sauber, Playwright 4 passed (`gleichung-loesen`, `uebungstypen`, `lektion`,
+  `rechnen-mit-komma`); Mutanten 26/26 (Backend) und 16/16 (Frontend) rot. Review `pugling-reviewer` und `frontend-reviewer`
+  eingearbeitet. Rollengang aller drei Rollen an einer Kopie der echten DB (:5241) plus UI-Spec; offen für den Menschen nur
+  der Geräte-Check (Zahlentastatur am Handy) und die Formel-Darstellung (B-638).
+  Protokoll: [pm-sitzung-2026-11-25-m](../pm-sitzung-2026-11-25-m.md).

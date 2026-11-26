@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: docs/pm-sitzung-2026-11-25.md#runde-1--vorstellung--feedback
 grund: ""
 ersetzt_durch: []
+nachgeschaut: "2026-11-25"
 ---
 
 # B-990 · Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“)
