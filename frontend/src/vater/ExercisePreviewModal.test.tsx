@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError, api } from "../lib/api";
 import { ExercisePreviewModal } from "./ExercisePreviewModal";
@@ -60,5 +60,28 @@ describe("Testmodus – nur ansehen", () => {
 
     expect(text).toMatch(/durchspielen lässt sie sich darum nicht/);
     expect(text).not.toMatch(/zuweisen/);
+  });
+});
+
+// B-1000: eine Lösungsmenge spielt der Vater mit denselben getrennten Feldern wie das Kind (B-712), nicht in einem Textfeld
+// mit Trenner-Regel. Rot, wenn der Testmodus den `setAnswer`-Zweig verliert (dann gibt es kein Feld „Lösung 2“) oder die
+// Felder nicht als der eine Text gebunden schickt, den der Server wertet.
+describe("Testmodus – Lösungsmenge", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("nimmt die Menge in getrennten Feldern und schickt sie als einen Text", async () => {
+    vi.spyOn(api, "previewExercise").mockResolvedValue({
+      gradable: true, typed: true, stage: 0, stages: [], type: "QuadraticEquation",
+      items: [{ itemIndex: 0, prompt: "$x^2 - 6x + 8 = 0$", hint: null, setAnswer: true }],
+    } as never);
+    const pruefen = vi.spyOn(api, "checkPreviewExercise").mockResolvedValue({ correct: 1, total: 1, items: [] } as never);
+    render(<ExercisePreviewModal exerciseId={1} title="Gleichungen" onClose={() => {}} />);
+
+    fireEvent.change(await screen.findByLabelText("Lösung 1"), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText("Lösung 2"), { target: { value: "2" } });
+    fireEvent.keyDown(screen.getByLabelText("Lösung 2"), { key: "Enter" });
+
+    await vi.waitFor(() => expect(pruefen).toHaveBeenCalled());
+    expect(pruefen.mock.calls[0][1]).toEqual([{ itemIndex: 0, givenAnswer: "2;4" }]);
   });
 });

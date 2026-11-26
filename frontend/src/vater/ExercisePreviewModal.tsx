@@ -11,6 +11,7 @@ import { RevealAlternatives } from "../components/RevealAlternatives";
 import { BirkenbihlDecoding } from "../components/BirkenbihlDecoding";
 import { Modal } from "../components/Modal";
 import { CueBox } from "../components/CueBox";
+import { Mengeneingabe } from "../sohn/Mengeneingabe";
 import type { ExercisePreviewAnswer, ExercisePreviewData, ExercisePreviewResult } from "../lib/types";
 
 /**
@@ -225,7 +226,7 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                     {isSet ? <b>Antwort {it.itemIndex + 1}</b>
                       : isOrderedList ? <b>Eintrag {it.itemIndex + 1}</b>
                       : (it.prompt || isCloze) && <b>{isCloze ? `Lücke ${it.gapIndex}` : it.prompt}</b>}
-                    {it.hint && <span className="muted" style={{ fontSize: 13 }}>💡 {it.hint}</span>}
+                    {it.hint && !it.setAnswer && <span className="muted" style={{ fontSize: 13 }}>💡 {it.hint}</span>}
                   </div>
                   {/* Dieselbe Wort-für-Wort-Ansicht wie beim Kind: wer die Dekodierung pflegt, muss sie so
                       prüfen können, wie sie ankommt (B-78). */}
@@ -243,6 +244,13 @@ export function ExercisePreviewModal({ exerciseId, title, onClose }: {
                           aria-pressed={a?.givenAnswer === c}
                           onClick={() => (isCloze ? chooseCloze(it.itemIndex, c) : setText(it.itemIndex, c))}>{a?.givenAnswer === c ? "✓ " : ""}{c}</button>
                       ))}
+                    </div>
+                  ) : data.typed && it.setAnswer ? (
+                    // Lösungsmenge (B-712, B-1000): dieselben getrennten Felder und „keine Lösung“ wie beim Kind – der
+                    // Vater prüft, was das Kind eingibt, nicht die Trenner-Regel dahinter.
+                    <div style={{ marginTop: 8 }}>
+                      <Mengeneingabe kartenId={it.itemIndex} onWert={(v) => setText(it.itemIndex, v)}
+                        onAbschicken={() => { void submit(); }} gesperrt={false} />
                     </div>
                   ) : data.typed && it.letterTiles ? (
                     // Buchstaben ordnen (B-05): dieselbe Komponente wie in der Sohn-App.
