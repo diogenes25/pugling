@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, rolle/supervisor, rolle/student]
 aliases: [Lob-Kanal, Lob schicken]
-status: in-arbeit
+status: abgenommen
 prio: P3
 art: Wunsch
 groesse: M
@@ -207,3 +207,4 @@ Migration nur anlegt und keine Bestandsdaten umformt.
   Papa lobt Friedrich (Text mit Randleerzeichen → getrimmt), Friedrich liest es mit „Papa“, „Danke!“ → Liste leer, Papa liest
   `seenAt`; Kontostand vorher = nachher (2070/186). Maschinell: `frontend/e2e/lob.spec.ts` (Vater → Sohn → Vater, „gelesen am“).
   Review-Funde eingearbeitet: Fokus-Falle des Dialogs (`useDialogFocus`), `useAction` im Overlay, `<Pflicht />` am Feld.
+- **2026-11-26** — `in-arbeit` → `abgenommen`: Commit `6a0257dd`; Rollengang an der Kopie der echten DB (Sohn Friedrich, Vater) und maschinell per Playwright, Creator Regressionszeuge; beide Reviews ohne Blocker. Offen nur ein Blick am Gerät (Overlay bzw. Streifen am Handy), kein Abnahmehindernis.

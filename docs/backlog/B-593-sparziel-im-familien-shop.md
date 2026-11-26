@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/shop, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/shop, rolle/student]
 aliases: [Sparziel, Wunsch-Artikel anheften]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -289,3 +289,4 @@ Nachgesehen am 2026-11-20:
   Migrationsprobe an der Kopie der echten DB (`kopie-server.sh`, :5242): Kette läuft durch (Hinweis von EF: der FK-Neubau der Tabelle
   `Children` läuft außerhalb einer Transaktion), alle vier Kinder da, Ledger gleich; Rollengang dort als Sohn (Friedrich: Ziel setzen,
   ersetzen, Preis vom Vater angehoben → „noch 1930, etwa 5 Tage“, nachgerechnet 3368 Münzen in sieben Tagen; entfernen → 204) und als Vater (lesen).
+- **2026-11-26** — `in-arbeit` → `abgenommen`: Commit `6a0257dd`; Rollengang an der Kopie der echten DB (Sohn Friedrich, Vater) und maschinell per Playwright, Creator Regressionszeuge; beide Reviews ohne Blocker. Offen nur ein Blick am Gerät (Overlay bzw. Streifen am Handy), kein Abnahmehindernis.
