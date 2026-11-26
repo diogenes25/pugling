@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/training, bereich/auswertung, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/training, bereich/auswertung, rolle/supervisor]
 aliases: [Vater-Antworten im Lernstand]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Defekt
 groesse: M
@@ -107,3 +107,4 @@ Tests in `TagesauswertungTests` (Nachtrag über die echte API mit `day`), Mutant
 - **2026-11-26** — Verifikation: Suite 2631/2631 (Release, Exit 0), `dotnet format --verify-no-changes` sauber. Rollengang an
   frischer Kopie (Migration eingespielt, 3169 Zeilen gefüllt): Nachtrag des Vaters für Friedrichs schon gespeicherten 25.11.
   erscheint am 25. (Lernzeit 60 s), heute unverändert. Sohn und Creator Regressionszeugen (kein Pfad im Diff).
+- **2026-11-26** — **abgenommen** (Sprint 194, Commit `41da1a4e`): Vater abgenommen am Rollengang, Sohn und Creator Regressionszeugen.
