@@ -16,15 +16,18 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-1020](B-1020-leitplanken-maske-verliert-bestaetigung.md) | Die Leitplanken-Maske verliert nach dem Speichern ihre Bestätigung, und kein Test prüft das Zurücklesen | Defekt | `in-arbeit` | P1 | S | frontend | — |
+| [B-1021](B-1021-einfuehrungstag-am-sonntag-oder-in-der-pause.md) | Der verschonte Einführungstag (B-432) kann auf den freien Sonntag oder in eine Pause fallen – der Montag danach kostet Malus | Defekt | `in-arbeit` | P1 | XS | backend | — |
+| [B-1022](B-1022-sohn-tag-zeigt-malus-frist-am-sonntag.md) | Die Arcade zeigt am Sonntag und in einer Pause „noch N Std. · −X Münzen“, obwohl der Server nichts abbucht | Defekt | `in-arbeit` | P1 | S | beides | — |
 | [B-780](B-780-muenzen-je-uebung-nachmessen.md) | Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen | Frage | `ausformuliert` | P1 | — | — | — |
+| [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | Wunsch | `in-arbeit` | P1 | L | beides | Migration |
+| [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | Wunsch | `in-arbeit` | P1 | M | backend | Migration |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand | Wunsch | `geschaetzt` | P1 | L | backend | — |
 | [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | Wunsch | `geschaetzt` | P1 | M | backend | — |
-| [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
-| [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
 | [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-734](B-734-planer-kern-und-schattenmodus.md) | Der Planer erzeugt täglich einen eingefrorenen Tagesplan, im Schattenmodus ohne Wirkung (B-644, Etappe E2) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-735](B-735-stoffrahmen-ohne-termin.md) | Ein Stoffrahmen ohne Enddatum: `StudyPlan.EndDate` wird optional (B-644, Entscheidung 17) | Wunsch | `geschaetzt` | P1 | L | beides | Migration + Vertrag |
@@ -33,11 +36,11 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
+| [B-1023](B-1023-hausaufgaben-malus-in-der-pause.md) | Soll eine Hausaufgabe, die in einer Pause fällig wird, weiter Malus kosten? | Frage | `idee` | P2 | — | — | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
-| [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-604](B-604-sprachuebungen-fragen-nur-sprache.md) | Sprachübungen fragen nur Sprache ab: keine Sachfragen, keine Sätze als Antwort | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | Wunsch | `geschaetzt` | P2 | L | backend | Migration |
@@ -52,9 +55,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | Wunsch | `geschaetzt` | P2 | M | frontend | — |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | Wunsch | `geschaetzt` | P2 | M | backend | — |
 | [B-681](B-681-rollenschnitt-vater-belohnt-lehrer-unterrichtet.md) | Rollenschnitt: der Vater belohnt, der Lehrer(-Agent) unterrichtet | Wunsch | `geschaetzt` | P2 | S | backend | — |
-| [B-710](B-710-gleichung-loesen-typ-und-editor.md) | Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor | Wunsch | `geschaetzt` | P2 | L | beides | — |
-| [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen | Wunsch | `geschaetzt` | P2 | M | backend | — |
-| [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ | Wunsch | `geschaetzt` | P2 | M | beides | — |
 | [B-739](B-739-foerder-uebungen-und-zusammenfassung.md) | Der KI-Creator baut nachts Förder-Übungen und schreibt eine kurze Zusammenfassung (B-644, Etappe E5) | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | Wunsch | `geschaetzt` | P2 | M | backend | Migration? |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | Wunsch | `geschaetzt` | P2 | M | backend | Migration |
@@ -74,7 +74,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-784](B-784-tippfehler-im-ueben-bei-theodor.md) | Theodor meldet „zu streng“ bei Tippfehlern, die er nicht aus Unwissen macht | Frage | `idee` | P3 | — | — | — |
 | [B-970](B-970-urteil-an-richtig-gewerteter-antwort.md) | „Berechtigt“ an einer im Test richtig gewerteten Antwort: was soll es heißen? | Frage | `idee` | P3 | — | — | — |
 | [B-223](B-223-gestufte-hinweise-vor-der-antwort.md) | Gestufte Hinweise vor der Antwort, die Punkte kosten | Wunsch | `geschaetzt` | P3 | M | beides | Migration + Vertrag |
-| [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `geschaetzt` | P3 | M | beides | Migration |
 | [B-822](B-822-vokabel-tuerme-natives-spiel.md) | Vokabel-Türme: ein natives Tower-Defense-Spiel als eigener Übungsbereich | Wunsch | `gegrillt` | P3 | — | — | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-952](B-952-vokabel-tuerme-buchstaben-modus.md) | Vokabel-Türme: Buchstaben-Modus – Monster lassen Buchstaben fallen, der Turm wird buchstabiert | Wunsch | `ausformuliert` | P3 | — | — | — |
@@ -98,11 +97,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-991](B-991-besitz-platzhalter-sb-s-jds.md) | Der Besitz-Platzhalter „sb.'s“ / „jds.“ ist kein Platzhalter | Wunsch | `idee` | P3 | — | backend | — |
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | Der Buchstabensalat legt die Buchstaben eines Platzhalters mit | Wunsch | `idee` | P3 | — | backend | — |
 | [B-649](B-649-uebersetzungssaetze-im-vokabelspeicher.md) | Übersetzungssätze im Vokabelspeicher | Aufräumen | `ausformuliert` | P3 | — | — | — |
+| [B-1000](B-1000-gleichung-vorschau-und-hinweis.md) | „Gleichung lösen“: Vater-Vorschau mit Mengen-Feldern, Trenner-Hinweis am Server statt im Frontend | Aufräumen | `idee` | P3 | — | beides | — |
 | [B-944](B-944-vorbereitungs-pflicht-restpunkte.md) | Vorbereitungs-Pflicht: Restpunkte aus dem Review von B-752 und B-757 | Aufräumen | `idee` | P3 | — | beides | — |
 | [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (623)</summary>
+<summary>Abgenommen (628)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -386,6 +386,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-372](B-372-abbruch-log-und-guard-reihenfolge-im-login-pfad.md) | Ein Abbruch bei der Kontoprüfung landet als Fehler im Log, und zwei PIN-Prüfungen stehen hinter Änderungen | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-373](B-373-inventar-und-begruendung-aus-lauf-s.md) | Ein Inventar, das wieder zu kurz war, und eine Begründung, die sich selbst widerspricht | Defekt | `abgenommen` | P3 | XS | doku | — |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen | Wunsch | `abgenommen` | P2 | M | backend | — |
+| [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater | Wunsch | `abgenommen` | P3 | M | beides | Migration |
 | [B-379](B-379-name-vor-pin-vorrang-ungetestet.md) | Die Vorrangfolge „leerer Name vor zu kurzer PIN" an `auth/me` ist ungetestet | Defekt | `abgenommen` | P3 | XS | backend | — |
 | [B-380](B-380-pflichtfeld-sperre-in-den-uebrigen-formularen.md) | Die Hausregel „Pflichtfeld leer → Speichern gesperrt" gilt erst auf der Lehrwerke-Seite | Aufräumen | `abgenommen` | P3 | M | frontend | — |
 | [B-381](B-381-erfolgs-scroll-springt-aus-dem-formular.md) | Seit B-232 scrollt jede Bestätigung zum Meldungsplatz – auch die aus einem Formular mitten in der Tabelle | Defekt | `abgenommen` | P2 | S | frontend | — |
@@ -581,6 +582,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-589](B-589-import-setzt-buchseite.md) | Der Import löscht die gepflegte Buchseite nicht und setzt sie auf Wunsch | Defekt | `abgenommen` | P2 | XS | doku | — |
 | [B-59](B-59-status-strings-ohne-werteliste.md) | Zwei Antwortfelder tragen einen Status als nackten `string` | Aufräumen | `abgenommen` | P3 | S | beides | Vertrag |
 | [B-591](B-591-ungepruefte-antwort-loescht-fehler-merker.md) | Löscht eine ungeprüfte „gewusst"-Antwort den Fehler-Merker der milden Abstufung? | Frage | `abgenommen` | P3 | XS | backend | — |
+| [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen | Wunsch | `abgenommen` | P2 | M | beides | Migration |
 | [B-597](B-597-tippstufen-fragen-die-zielsprache-ab.md) | Getippt wird immer die Zielsprache | Wunsch | `abgenommen` | P1 | L | beides | — |
 | [B-598](B-598-kombi-lernkarte-aufdecken-abschreiben-erinnern.md) | Kombi-Lernkarte: aufdecken, einschätzen, abschreiben, aus dem Gedächtnis schreiben | Wunsch | `abgenommen` | P2 | L | beides | — |
 | [B-599](B-599-lueckentext-eingabearten-wie-vokabeln.md) | Lückentext: dieselben Eingabearten wie bei Vokabeln | Wunsch | `abgenommen` | P2 | M | beides | — |
@@ -641,6 +643,9 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung | Wunsch | `abgenommen` | P1 | M | backend | Migration |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe | Wunsch | `abgenommen` | P1 | S | backend | Migration |
 | [B-71](B-71-inline-vokabelliste-ohne-varianten.md) | Die Inline-Vokabelliste im Übungs-Editor kann keine gleichwertigen Übersetzungen anlegen | Wunsch | `abgenommen` | P3 | M | beides | — |
+| [B-710](B-710-gleichung-loesen-typ-und-editor.md) | Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor | Wunsch | `abgenommen` | P2 | L | beides | — |
+| [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen | Wunsch | `abgenommen` | P2 | M | backend | — |
+| [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ | Wunsch | `abgenommen` | P2 | M | beides | — |
 | [B-72](B-72-birkenbihl-dekodierung-paarfelder.md) | Die Birkenbihl-Dekodierung trägt zwei Trennzeichen in einem Feld | Defekt | `abgenommen` | P3 | S | frontend | — |
 | [B-73](B-73-auswahl-feld-ohne-wirkung.md) | Das Auswahl-Feld verspricht Multiple-Choice, das Kind bekommt Freitext | Defekt | `abgenommen` | P2 | S | beides | — |
 | [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) | Wunsch | `abgenommen` | P1 | M | beides | — |
@@ -732,7 +737,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (12)
+### Wartet auf Zutun von außen (14)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
@@ -747,6 +752,8 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
 | [B-655](B-655-webuntis-hausaufgaben-vater-web.md) | Vater-Web: WebUntis-Zugang je Kind einrichten, Hausaufgaben ansehen, Übung daraus erstellen | `geschaetzt` | B-654 (Endpunkt und DTO) |
 | [B-656](B-656-ki-creator-uebung-aus-hausaufgabe.md) | KI-Creator: Übung aus einer WebUntis-Hausaufgabe erzeugen (`homework`, `create --homework`) | `geschaetzt` | B-654 (Endpunkt `school-homework` und DTO) |
+| [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | `in-arbeit` | Review-Funde B-1020 bis B-1022, Frage B-1023 und Rollengang (Lauf endete am Fehlerzähler) |
+| [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | `in-arbeit` | Rollengang an der Kopie (Lauf endete am Fehlerzähler) |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | `in-arbeit` | Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert) |
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | `geschaetzt` | Nutzer-Entscheidung: Anker gegen den Tageslauf (Migration?), Kommanote → Stufe, ClearGrade |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
@@ -754,7 +761,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (225)
 
-**Nachgeschaut: 581 von 623 abgenommenen** — und in 198 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 42 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 582 von 628 abgenommenen** — und in 198 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 46 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -985,7 +992,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (42) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (46) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -994,6 +1001,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | --- | --- |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
+| [B-377](B-377-lob-kanal-des-vaters.md) | Ein Lob-Kanal: der Vater schickt Lob, und Erfolge des Kindes erreichen den Vater |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
 | [B-442](B-442-capture-wochenmission-haengt-am-wochentag.md) | Die Doku-Capture der Wochenmission hängt am Wochentag |
 | [B-446](B-446-vokabel-tipp-zeigt-den-artikel-des-fragewortes.md) | Der Vokabel-Tipp zeigt den Artikel des Frageworts, nicht einen Hinweis auf die Lösung |
@@ -1015,6 +1023,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-523](B-523-mutantenprobe-env-und-unittest.md) | `mutant-probe.py` misst weder E2E auf Ausweichports noch Pythons unittest |
 | [B-539](B-539-ein-aktiver-plan-je-fach.md) | Ein aktiver Plan je Fach statt je Kind |
 | [B-558](B-558-zeitachse-zeigt-abgeschaltete-plaene-nicht.md) | Die Zeitachse der Kinder vergisst einen Plan, sobald er abgeschaltet ist |
+| [B-593](B-593-sparziel-im-familien-shop.md) | Sparziel im Familien-Shop mit Fortschritt in Pflicht-Tagen |
 | [B-610](B-610-ki-assign-waehlt-plan-ohne-fach.md) | `ki-creator assign` legt Übungen in den ersten spielbaren Plan – mit einem Plan je Fach womöglich ins falsche Fach |
 | [B-620](B-620-friedrich-englisch-lehrwerk-und-plan.md) | Friedrich bekommt Englisch als zweites Fach: Lehrwerk laden und Plan neben Plan 8 |
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
@@ -1023,6 +1032,9 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
+| [B-710](B-710-gleichung-loesen-typ-und-editor.md) | Übungstyp „Gleichung lösen“: Koeffizienten, Löser, Mengen-Wertung, Vater-Editor |
+| [B-711](B-711-loesungsmenge-auswaehlen.md) | „Gleichung lösen“: Stufe „Lösungsmenge auswählen“ mit berechneten falschen Mengen |
+| [B-712](B-712-sohn-eingabe-loesungsmenge.md) | Sohn-Eingabe für Lösungsmengen: getrennte Felder und Knopf „keine Lösung“ |
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
@@ -1033,7 +1045,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-768](B-768-berechtigte-meldung-bucht-pflicht-und-malus-nach.md) | Eine berechtigte Meldung rechnet den Test neu und bucht Pflicht, Belohnung und Malus nach (Backend) |
 | [B-769](B-769-berechtigt-und-abgewiesen-im-vater-web-und-hinweis-fuers-kind.md) | Berechtigt und abgewiesen im Vater-Web, Hinweis für das Kind, Beschriftung der Gegenbuchung |
 | [B-840](B-840-aufbau-weg-im-uebungseditor.md) | Übungseditor: eine Übung als Vorstufe einer anderen derselben Unit markieren |
-| [B-990](B-990-eigene-platzhalter-kuerzel-des-kindes.md) | Theodor tippt den Platzhalter mit – in seinem eigenen Kürzel („smb“, „smt“) |
 
 </details>
 
@@ -1044,6 +1055,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 
 | Id | Stufe | Fehlt |
 | --- | --- | --- |
+| [B-1020](B-1020-leitplanken-maske-verliert-bestaetigung.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-1021](B-1021-einfuehrungstag-am-sonntag-oder-in-der-pause.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
+| [B-1022](B-1022-sohn-tag-zeigt-malus-frist-am-sonntag.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Schätzung" |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |

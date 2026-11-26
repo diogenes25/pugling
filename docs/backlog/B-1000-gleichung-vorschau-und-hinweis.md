@@ -25,3 +25,11 @@ Trenner-Hinweis – der Vater probiert also eine andere Eingabe aus, als sein Ki
 Karte mit `setAnswer` **jeden** Hinweis aus (`SohnPractice`, `SohnBonus`, `SohnMischrunde`), nicht nur den Trenner-Hinweis;
 heute trägt eine solche Karte keinen anderen, ein späterer echter Hinweis verschwände aber still. Sauberer: der Server lässt
 `SeparatorHint` weg, wo er `SetAnswer` setzt (wie schon auf der Auswahlstufe, `QuadraticEquationExerciseType.CardForStage`).
+
+## Verlauf
+
+- **2026-11-26** — Teil (1) behoben im Merge-Review von M/N/O (Branch `merge-1125`): der Testmodus zeigt bei `setAnswer`
+  dieselbe `Mengeneingabe` wie die Arcade und blendet dort den Hinweis aus wie die Arcade
+  (`frontend/src/vater/ExercisePreviewModal.test.tsx` „Lösungsmenge“, rote Probe Zweig entfernt → rot). Commit: `c725f0e1`.
+  Teil (2) bleibt offen und ist weiter nötig: der Server liefert `SeparatorHint` auf Karten mit `SetAnswer` noch aus, und
+  Arcade wie Testmodus blenden darum jeden Hinweis einer Mengen-Karte aus. Stufe bleibt `idee`.
