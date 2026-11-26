@@ -284,6 +284,11 @@ export type CreateTimetableEntryDto = S["CreateEntryDto"];
 export type TimetableEntry = S["EntryResponse"];
 /** B-731: eine Pause des Kindes von Datum bis Datum – kein Malus, die Serie steht. */
 export type ChildPause = S["ChildPauseResponse"];
+// Auswertung je Kind, Tag und Fach (B-733): Verlauf, Profil über 7/28 Tage, Problemwörter mit Fehlerart.
+export type DailyEvaluation = S["DailyEvaluationResponse"];
+export type EvaluationProfile = S["EvaluationProfileResponse"];
+export type ProfileWindow = S["ProfileWindow"];
+export type ProblemWord = S["ProblemWordResponse"];
 export type CreateChildPauseDto = S["CreateChildPauseDto"];
 
 /** Änderung eines Kindes; `clear…` leert ein Feld (ein `null` gilt im PATCH als „nicht angegeben"). */

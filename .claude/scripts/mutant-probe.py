@@ -137,14 +137,44 @@ def lock_held():
         return False
 
 
+def leftover_mutants():
+    """Mutants of the run named in a lock that still stand in the sources.
+
+    Why: a killed run cannot restore the line it was measuring. On 2026-11-26 (Sprint 193) an aborted probe left mutant C9
+    in DailyEvaluationService.cs; the stale lock blocked the next probe but said nothing about the line, and only a hand
+    check found it - every build and test until then would have measured the mutant as the real code.
+    """
+    try:
+        source = open(LOCK, encoding="utf-8").read().split(" ", 1)[1].strip()
+        _, mutants = load(source)
+    except (OSError, IndexError, ValueError, SystemExit):
+        return []
+    left = []
+    for m in mutants:
+        try:
+            _, _, _, lines = split_lines(m["f"])
+        except OSError:
+            continue
+        line = lines[m["l"] - 1] if 0 < m["l"] <= len(lines) else None
+        if line is not None and line == m["new"] and line != m["old"]:
+            left.append(f"  {m['id']}: {m['f']}:{m['l']} steht auf {m['new']!r}, gehört {m['old']!r}")
+    return left
+
+
 def main():
     if len(sys.argv) != 2:
         sys.exit(__doc__)
     sys.stdout.reconfigure(encoding="utf-8")  # the table goes into Markdown; the Windows console default mangles umlauts
     sys.stderr.reconfigure(encoding="utf-8")
+    # The lead names the mutated lines in both cases: the advice "delete the lock" alone would delete the only pointer to them.
+    left = leftover_mutants()
+    restore = ("\nVor dem Löschen der Sperre diese Zeilen auf 'old' zurücksetzen – sonst misst jede Probe, jeder Build und jeder "
+               "Test die Mutante als echten Code:\n" + "\n".join(left)) if left else ""
     if lock_held():
         sys.exit(f"Eine andere Probe läuft (Sperre {os.path.normpath(LOCK)}) – zwei Proben mutieren dieselben Quellen. "
-                 "Abbruch; ist sie verwaist (Lauf abgeschossen), die Datei löschen.")
+                 "Abbruch; ist sie verwaist (Lauf abgeschossen), die Datei löschen." + restore)
+    if left:
+        sys.exit(f"Ein abgebrochener Lauf hat Mutanten im Quelltext gelassen (Sperre {os.path.normpath(LOCK)})." + restore)
     open(LOCK, "w", encoding="utf-8").write(f"{os.getpid()} {sys.argv[1]}\n")
     try:
         probe()

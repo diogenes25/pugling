@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/auswertung, bereich/training, rolle/supervisor]
+tags: [typ/story, status/in-arbeit, bereich/auswertung, bereich/training, rolle/supervisor]
 aliases: [Tagesauswertung, Leistungsprofil, Problemwörter, Verlauf, Etappe E1b]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -152,3 +152,65 @@ Nach [B-730](B-730-tagesbegriff-in-deutscher-zeit.md), [B-731](B-731-lerntage-pa
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E1b) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 geerbt. Nachgesehen: Rohdaten vollständig, aber das Fach vor der Antwort fehlt (nach
   B-732 verlegt). Profil berechnet statt gespeichert (Schätz-Annahme). L, beides, Migration, kein Vertragsbruch.
+- **2026-11-26** — `in-arbeit` im Sprint 193 (PM-Sitzung 2026-11-26, Runde 3: der Vater sieht „une côte“ mit 0 % und kein Warum).
+  Gebaut: Tabelle `DailyEvaluations` plus Wasserstand `EvaluatedDays` (Migration `Tagesauswertung`, rein additiv), Dienst
+  `DailyEvaluationService`, drei Endpunkte `supervisor/children/{id}/evaluations`, `…/profile`, `…/problem-words`, Client,
+  Vater-Seite `/vater/kind/:id/auswertung` (Link „🔎 Auswertung“ im Kind-Hub). Abweichungen von den Schätz-Annahmen, bewusst:
+  (a) eine Zeile entsteht auch an einem Pflichttag **ohne** Übung (sonst wäre der ganz verpasste Tag unsichtbar – AK 1 sagt
+  „an dem das Kind geübt hat“, Entscheidung 1 verlangt aber die verpasste Pflicht im Verlauf); (b) gezählt wird nur die
+  **Tagespflicht** – eine Wochenpflicht ist an einem Wochentag noch nicht entschieden; (c) Fach einer Antwort = Fach der Reihe
+  ihrer Übung, sonst des Plans; (d) Problemwörter werden live aus den Antworten gelesen (die Tageszeile trägt Zahlen, keine
+  Wörter); (e) ein abgeschlossener Tag wird über einen eigenen Wasserstand je Kind und Tag genau einmal gerechnet, auch wenn er
+  keine Zeile ergibt.
+- **2026-11-26** — Review und Nachbau. `pugling-reviewer`: 🔴 angezeigte Kennenlern-Karten, Lernkarten und erleichterte Abrufe
+  zählten als falsch und als Problemwort → eine Regel `Counts` an beiden Lesern (Urteil = `BoxBefore`; Zeilen von vor B-732: getippt,
+  keine Lernkarte), Test über die echte Sohn-API; 🟡 „neu“ jetzt aus `PositionItemProgress.IntroducedAt`; 🟡 abgeschaltete Pläne
+  beim ersten Nachrechnen → als Grenze dokumentiert; 🟡 Antworten des Vaters → B-1028 (Schreibseite, älter). `frontend-reviewer`:
+  🔴 Fenster in UTC statt Lerntag → `verlaufFenster` mit `heuteImLerntag()`, Fenster an den Server, keine Zeile geht verloren.
+  Beim Bau der E2E gefunden: auf dem echten Testweg speichert der Server keine Fehlerart → B-1030 (`entgangen_bei: B-732`).
+  - AK 1, eine Zeile je Tag und Fach → `TagesauswertungTests.Eindeutiger_Index_je_Kind_Tag_und_Fach_auch_ohne_Fach`; zweites
+    Rechnen → `Abgeschlossene_Tage_werden_einmal_gespeichert_und_nie_neu_gerechnet`. Index-Mutante nicht gemessen (Migration);
+    C19 (Wasserstand übersprungen) bleibt grün, er spart nur Arbeit – der Index trägt die Einmaligkeit.
+  - AK 2, Zählregeln → `Tageszeilen_folgen_den_Zaehlregeln_und_freie_Tage_ohne_Uebung_sind_Luecken`: gefestigt C1, zurückgefallen C2,
+    Fehlerart C3, neu C4, Sekunden C5, nur Tagespflicht C6, nur geschuldete Pflicht C7 (`Nicht_geschuldete_Tagespflicht_…`), heute
+    nicht gespeichert C10, Zählregel R1/R3/R4/R5 → je rot.
+  - AK 3, Lesepfad rechnet nie neu → C11 rot.
+  - AK 4, Profil aus den Tageszeilen, Fenster 7/28 → `Profil_rechnet_aus_den_gespeicherten_Tagen_ueber_7_und_28_Tage`, C12 rot.
+  - AK 5, Gates und Zeitraum → `Pfade_pruefen_Rolle_Eigentum_und_Zeitraum`, C16/C17/C18 rot.
+  - AK 6, kein Student-Pfad → Kind-Token 403 im selben Test; `ConventionGuardTests.Auswertungstypen_Erreichen_Keinen_Studenten`,
+    C17 rot.
+  - AK 7, Lücke statt Null, Problemwort mit Art → Vitest `verlaufTage`, `verlaufFenster`, `fehlerartText`; Problemwörter
+    `Problemwoerter_tragen_Fehlerart_letzte_Antwort_und_Fach` (C14/C15/R2 rot), `Kennenlernkarte_ueber_die_Sohn_API_…` (R1/R2 rot);
+    Fach-Regel `Antwort_zaehlt_fuers_Fach_der_Reihe_Pflicht_fuers_Fach_des_Plans` (C8/C9 rot). E2E `auswertung-verlauf` (1 passed):
+    heute live mit offener Pflicht, gestern Lücke, Problemwort mit getippter Antwort – die Art kann dieser Weg wegen B-1030 nicht zeigen.
+  - AK 8, Migration leer und additiv → `SchemaGuardTests` (Pins, kein Drift, `ValueComparer`).
+
+  Mutanten am Stand vor der letzten Änderung (danach nur: toter Filter `d.Day < today` gestrichen, Fall C7 ergänzt; C7 und C10 am
+  Endstand nachgemessen):
+
+  | Mutante | Stelle | erwartet | gemessen |
+  |---|---|---|---|
+  | C1 gefestigt | `DailyEvaluationService.cs:216` | red | red |
+  | C2 zurückgefallen | `:222` | red | red |
+  | C3 Fehlerart | `:223` | red | red |
+  | C4 neu aus der Position | `:192` | red | red |
+  | C5 Sekunden | `:229` | red | red |
+  | C6 nur Tagespflicht | `:251` | red | red |
+  | C7 nur geschuldete Pflicht (Endstand) | `:252` | red | red |
+  | C8 Fach der Reihe vor Plan | `:287` | red | red |
+  | C9 Pflicht fürs Fach des Plans | `:253` | red | red |
+  | C10 heute nicht gespeichert (Endstand, `Range`) | `:56` | red | red |
+  | C11 Lesepfad rechnet neu | `:87` | red | red |
+  | C12 Fenster 7 | `:116` | red | red |
+  | C14 Problemwort-Reihenfolge | `:170` | red | red |
+  | C15 letzte getippte Antwort | `:167` | red | red |
+  | C16 Zeitraum | `ChildEvaluationsController.cs:71` | red | red |
+  | C17 Supervisor-Gate | `ChildEvaluationsController.cs:18` | red | red |
+  | C18 Eigentums-Filter | `ChildEvaluationsController.cs:19` | red | red |
+  | R1 Zählregel (Tag) weg | `:187` | red | red |
+  | R2 Zählregel (Problemwörter) weg | `:139` | red | red |
+  | R3 Altzeilen-Zweig weg | `:267` | red | red |
+  | R4 Altzeilen auch nach B-732 | `:267` | red | red |
+  | R5 Lernkarte zählt | `:267` | red | red |
+  | C19 Wasserstand (nur Arbeit) | `:55` | green | green |
+  | C20 Gate freier Tag (nur Arbeit) | `:244` | green | green |

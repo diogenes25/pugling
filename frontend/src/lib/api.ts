@@ -1,7 +1,7 @@
 import type {
   AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
-  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto, ChildPause, CreateChildPauseDto,
+  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto, ChildPause, CreateChildPauseDto, DailyEvaluation, EvaluationProfile, ProblemWord,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
   CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
@@ -427,6 +427,23 @@ export const api = {
     http<ChildPause>(`${V1}/supervisor/children/${childId}/pauses`, "POST", dto),
   removeChildPause: (childId: number, pauseId: number) =>
     http<void>(`${V1}/supervisor/children/${childId}/pauses/${pauseId}`, "DELETE"),
+  // Auswertung (B-733): abgeschlossene Tage gespeichert, heute live; ein Tag ohne Zeile ist eine Lücke.
+  childEvaluations: (childId: number, p: { from?: string; to?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (p.from) q.set("from", p.from);
+    if (p.to) q.set("to", p.to);
+    // 500 = die Obergrenze des Servers: 28 Tage mal die Fächer eines Kindes passen hinein, ein Blättern braucht es nicht.
+    q.set("take", "500");
+    return http<DailyEvaluation[]>(`${V1}/supervisor/children/${childId}/evaluations?${q}`);
+  },
+  childEvaluationProfile: (childId: number) =>
+    http<EvaluationProfile>(`${V1}/supervisor/children/${childId}/evaluations/profile`),
+  childProblemWords: (childId: number, p: { skip?: number; take?: number } = {}) => {
+    const q = new URLSearchParams();
+    appendPaging(q, p);
+    const qs = q.toString();
+    return httpPaged<ProblemWord>(`${V1}/supervisor/children/${childId}/evaluations/problem-words${qs ? `?${qs}` : ""}`);
+  },
   createChild: (dto: CreateChildDto) => http<ChildResponse>(`${V1}/supervisor/children`, "POST", dto),
   updateChild: (childId: number, dto: UpdateChildDto) =>
     http<ChildResponse>(`${V1}/supervisor/children/${childId}`, "PATCH", dto),

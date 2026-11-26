@@ -203,6 +203,8 @@ builder.Services.AddScoped<HomeworkService>();
 builder.Services.AddScoped<PositionProgressService>();
 // B-731: which days owe a duty (Monday to Saturday outside the child's pauses).
 builder.Services.AddScoped<DutyCalendar>();
+// B-733: the supervisor's evaluation per day and subject, stored once per closed day.
+builder.Services.AddScoped<DailyEvaluationService>();
 // The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.
 builder.Services.Configure<ClassTestPrepOptions>(builder.Configuration.GetSection(ClassTestPrepOptions.SectionName));
 builder.Services.AddScoped<ClassTestPrepService>();

@@ -109,7 +109,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
 
     /// <summary>
     /// The feedback of the given children for the supervisor, open first, newest report first, each with the card as it
-    /// is now and the child's most recent stored answer to it.
+    /// is now and the child's last stored answer to it up to the latest report (B-1027).
     /// </summary>
     public async Task<IReadOnlyList<FeedbackResponse>> ListAsync(IReadOnlyCollection<int> childIds, FeedbackStatus? status,
         int? take, CancellationToken ct)
@@ -144,8 +144,8 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
     }
 
     /// <summary>
-    /// The child's most recent stored answer to the card: from its tests on the position and, for a vocabulary item, from
-    /// its answer history. A practice answer to a non-vocabulary card is not stored anywhere, so it stays <c>null</c>.
+    /// The child's last stored answer to the card up to the latest report (B-1027): from its tests on the position and, for a
+    /// vocabulary item, from its answer history. A practice answer to a non-vocabulary card is not stored anywhere, so it stays <c>null</c>.
     /// </summary>
     private async Task<string?> ChildAnswerAsync(ExerciseFeedback f, CancellationToken ct)
     {
@@ -154,8 +154,11 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
         // card. A prerequisite is examined on its own level; the position's own exercise on the target level, or without
         // a level where the position had no build path then.
         int? prerequisiteLevel = f.PlanPosition is { } p && p.ExerciseId != f.ExerciseId ? f.Exercise?.BuildLevel : null;
+        // B-1027: only answers up to the report - a later answer is not the one the child complained about.
+        var reportedAt = f.LastReportedAt;
         var tested = f.PlanPositionId is { } positionId
             ? await AnsweredTestsOf(positionId, index, prerequisiteLevel)
+                .Where(t => t.CompletedAt <= reportedAt)
                 .Select(t => new
                 {
                     GivenAnswer = t.Results.Where(r => r.ItemIndex == index && r.GivenAnswer != null)
@@ -166,7 +169,7 @@ public class ExerciseFeedbackService(PuglingDbContext db, PositionPlayService pl
             : null;
         var practiced = f.ExerciseItemId is { } itemId
             ? await db.ItemReviewEvents.AsNoTracking()
-                .Where(e => e.ChildId == f.ChildId && e.ItemId == itemId && e.GivenAnswer != null)
+                .Where(e => e.ChildId == f.ChildId && e.ItemId == itemId && e.GivenAnswer != null && e.At <= reportedAt)
                 .OrderByDescending(e => e.At).ThenByDescending(e => e.Id)
                 .Select(e => new { e.GivenAnswer, e.At })
                 .FirstOrDefaultAsync(ct)

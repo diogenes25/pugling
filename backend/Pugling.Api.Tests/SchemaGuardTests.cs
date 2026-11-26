@@ -223,6 +223,9 @@ public class SchemaGuardTests
             ["CreatorProfile.SeriesId"] = DeleteBehavior.SetNull, // -> TextbookSeries
             ["CreatorProfile.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["DailyBoxClaim.ChildId"] = DeleteBehavior.Cascade, // -> Child
+            ["DailyEvaluation.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-733: the child's evaluated days)
+            ["DailyEvaluation.SubjectId"] = DeleteBehavior.Cascade, // -> Subject (derived statistics, like ChildSubjectLevel)
+            ["EvaluatedDay.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-733: marks a closed day as evaluated)
             ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
             // NoAction (B-700): the delete endpoint refuses a target with prerequisites; NO ACTION instead of
             // RESTRICT so a unit delete that cascades to target and prerequisite in one statement still passes.

@@ -1252,6 +1252,342 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/evaluations": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Evaluations"
+        ],
+        "summary": "The days of the child per subject, newest first, from from to to (default: the\nlast 28 days up to today). Closed days come from the stored evaluation and never change; today\u0027s rows are computed live\n(\u0060live: true\u0060). A day without a row is a gap - no practice and no duty owed (Sunday, pause), not a zero day.\nClosed days further back than 28 days are not evaluated and stay gaps.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailyEvaluationResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/evaluations/profile": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Evaluations"
+        ],
+        "summary": "The child\u0027s profile per subject over the last 7 and 28 closed days: mastery, tempo (consolidated words per learning\nday), the most frequent error kinds and resilience (share of duty days met). Computed from the stored days only.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/evaluations/problem-words": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Evaluations"
+        ],
+        "summary": "The words the child got wrong from from to to (default: the last 28 days), most\nwrong answers first, with the kinds of the wrong answers, the last wrong answer and the word\u0027s current box.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProblemWordResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/interests": {
       "get": {
         "tags": [
@@ -37315,6 +37651,133 @@
         },
         "description": "Today\u0027s daily reward chest (B-527): whether it was earned today, whether it is opened, and how many chests wait\nto be opened in total (none ever lapses). Read-only - the chest is earned only at the practice/test-completion\nwrite seams and booked only when the child opens it, never as a side effect of this view."
       },
+      "DailyEvaluationResponse": {
+        "required": [
+          "consolidatedWords",
+          "correctAnswers",
+          "day",
+          "dutiesMet",
+          "dutiesMissed",
+          "errorKinds",
+          "fellBackWords",
+          "live",
+          "newWords",
+          "practicedSeconds",
+          "subjectName",
+          "wrongAnswers"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "description": "The learning day (German time).",
+            "format": "date"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The subject; \u0060null\u0060 for exercises and plans without one.",
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string",
+            "description": "The subject\u0027s name, empty without a subject."
+          },
+          "newWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Words introduced for the first time on this day.",
+            "format": "int32"
+          },
+          "consolidatedWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Right answers that moved a word into the top box.",
+            "format": "int32"
+          },
+          "fellBackWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Wrong answers that dropped a word from above box 1.",
+            "format": "int32"
+          },
+          "correctAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Right answers of the day.",
+            "format": "int32"
+          },
+          "wrongAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Wrong answers of the day.",
+            "format": "int32"
+          },
+          "practicedSeconds": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Active practice seconds.",
+            "format": "int32"
+          },
+          "errorKinds": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "description": "Wrong typed answers per error kind (\u0060Accent\u0060, \u0060Typo\u0060, \u0060Synonym\u0060, \u0060WrongWord\u0060)."
+          },
+          "dutiesMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Daily duties owed this day and met.",
+            "format": "int32"
+          },
+          "dutiesMissed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Daily duties owed this day and left open (still open for a live day).",
+            "format": "int32"
+          },
+          "live": {
+            "type": "boolean",
+            "description": "Today\u0027s row, computed on reading and not stored."
+          }
+        },
+        "description": "One day and subject of a child (B-733). A closed day is stored once and never recomputed; Live marks\ntoday\u0027s row, computed on reading and not stored. A day without a row is a gap (no practice, no duty owed), not a zero."
+      },
       "Dashboard": {
         "required": [
           "children",
@@ -37585,6 +38048,27 @@
         },
         "description": "A timetable entry: subject on a weekday."
       },
+      "ErrorKindCount": {
+        "required": [
+          "count",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "An error kind with its count."
+      },
       "EssayConfig": {
         "required": [
           "prompt"
@@ -37627,6 +38111,28 @@
           }
         },
         "description": "Essay: writing prompt \u002B constraints."
+      },
+      "EvaluationProfileResponse": {
+        "required": [
+          "subjects",
+          "until"
+        ],
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "description": "The last closed day the windows end on (yesterday).",
+            "format": "date"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectProfile"
+            },
+            "description": "One entry per subject with a stored day in the last 28 days."
+          }
+        },
+        "description": "A child\u0027s learning profile per subject (B-733), computed from the stored days, never from raw answers."
       },
       "ExerciseBrief": {
         "required": [
@@ -44581,7 +45087,7 @@
               "null",
               "string"
             ],
-            "description": "The child\u0027s most recent stored answer to that card, or \u0060null\u0060 when none is stored."
+            "description": "The child\u0027s last stored answer to that card up to the latest report (B-1027), or \u0060null\u0060 when none\nis stored."
           },
           "reason": {
             "oneOf": [
@@ -44650,7 +45156,7 @@
               "integer",
               "string"
             ],
-            "description": "The test answer the report is about, frozen when it was sent (B-767), or \u0060null\u0060 - then it cannot be judged\njustified, and ChildAnswer is the child\u0027s most recent stored answer to the card instead.",
+            "description": "The test answer the report is about, frozen when it was sent (B-767), or \u0060null\u0060 - then it cannot be judged\njustified, and ChildAnswer is the child\u0027s last stored answer to the card up to the latest report instead.",
             "format": "int32"
           },
           "testAnswerCorrect": {
@@ -49516,6 +50022,115 @@
           }
         }
       },
+      "ProblemWordResponse": {
+        "required": [
+          "back",
+          "box",
+          "correctAnswers",
+          "errorKinds",
+          "front",
+          "lastWrongAt",
+          "masteryPercent",
+          "subjectName",
+          "vocabularyId",
+          "wrongAnswers"
+        ],
+        "type": "object",
+        "properties": {
+          "vocabularyId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The store word.",
+            "format": "int32"
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The subject of the exercise the word was answered in; \u0060null\u0060 without one.",
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string",
+            "description": "The subject\u0027s name, empty without a subject."
+          },
+          "front": {
+            "type": "string",
+            "description": "The word as the card shows it (store value)."
+          },
+          "back": {
+            "type": "string",
+            "description": "Its translation (store value)."
+          },
+          "wrongAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Wrong answers to the word in the period.",
+            "format": "int32"
+          },
+          "correctAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Right answers to the word in the period.",
+            "format": "int32"
+          },
+          "errorKinds": {
+            "type": "object",
+            "additionalProperties": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "description": "Wrong typed answers per error kind; answers stored before B-732 carry none."
+          },
+          "lastWrongAnswer": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The last wrong typed answer in the period, \u0060null\u0060 when none was typed."
+          },
+          "lastWrongAt": {
+            "type": "string",
+            "description": "When the last wrong answer in the period was given.",
+            "format": "date-time"
+          },
+          "box": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The word\u0027s current cross-plan box.",
+            "format": "int32"
+          },
+          "masteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The word\u0027s current mastery.",
+            "format": "int32"
+          }
+        },
+        "description": "A word the child got wrong in the period (B-733), with the kinds of its wrong answers - the \u0022why\u0022 behind a weak word."
+      },
       "ProfileRole": {
         "enum": [
           "Creator",
@@ -49524,6 +50139,132 @@
         ],
         "type": "string",
         "description": "The three domain tiers as a role \u2013 independent of login.\n\nAllowed values: Creator, Supervisor, Student."
+      },
+      "ProfileWindow": {
+        "required": [
+          "consolidatedWords",
+          "correctAnswers",
+          "days",
+          "dutyDays",
+          "dutyDaysMet",
+          "learningDays",
+          "masteryPercent",
+          "newWords",
+          "tempoPerLearningDay",
+          "topErrorKinds",
+          "wrongAnswers"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Length of the window in days (7 or 28).",
+            "format": "int32"
+          },
+          "learningDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Stored days in the window on which the child practised.",
+            "format": "int32"
+          },
+          "correctAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Right answers in the window.",
+            "format": "int32"
+          },
+          "wrongAnswers": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Wrong answers in the window.",
+            "format": "int32"
+          },
+          "masteryPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Right answers in percent of all answers (0 without answers).",
+            "format": "int32"
+          },
+          "newWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Words introduced in the window.",
+            "format": "int32"
+          },
+          "consolidatedWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Words moved into the top box in the window.",
+            "format": "int32"
+          },
+          "tempoPerLearningDay": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?(?:[eE][\u002B-]?\\d\u002B)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Consolidated words per learning day, one decimal.",
+            "format": "double"
+          },
+          "topErrorKinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorKindCount"
+            },
+            "description": "Error kinds by frequency, most frequent first."
+          },
+          "dutyDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Stored days in the window that owed a daily duty.",
+            "format": "int32"
+          },
+          "dutyDaysMet": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Of those, the days whose daily duties were all met.",
+            "format": "int32"
+          },
+          "resiliencePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Days whose daily duties were all met, in percent of the days that owed one; \u0060null\u0060\nwithout a day that owed a duty.",
+            "format": "int32"
+          }
+        },
+        "description": "The profile figures over one window. A window without stored days has zeros and LearningDays 0."
       },
       "ProgressDay": {
         "required": [
@@ -51804,6 +52545,35 @@
           }
         },
         "description": "The grade level of a child in one vocabulary subject (B-742): Level 1 (best) to 6 and the best\nlevel ever reached. The server sends the number for every level; the wording is the client\u0027s business - the child\napp names only levels 1 to 3 and otherwise shows the next goal (B-743). Never sent for several children at once."
+      },
+      "SubjectProfile": {
+        "required": [
+          "last28Days",
+          "last7Days",
+          "subjectName"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "last7Days": {
+            "$ref": "#/components/schemas/ProfileWindow"
+          },
+          "last28Days": {
+            "$ref": "#/components/schemas/ProfileWindow"
+          }
+        },
+        "description": "One subject of the profile, over the last 7 and 28 closed days."
       },
       "SubjectProgressResponse": {
         "required": [
@@ -56164,6 +56934,9 @@
     },
     {
       "name": "Supervisor \u2013 Class Tests"
+    },
+    {
+      "name": "Supervisor \u2013 Evaluations"
     },
     {
       "name": "Supervisor \u2013 Feedback"

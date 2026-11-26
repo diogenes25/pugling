@@ -720,6 +720,90 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("DailyBoxClaims");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.DailyEvaluation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ConsolidatedWords")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CorrectAnswers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DutiesMet")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DutiesMissed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ErrorKinds")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FellBackWords")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NewWords")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PracticedSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WrongAnswers")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("ChildId", "Day")
+                        .IsUnique()
+                        .HasFilter("[SubjectId] IS NULL");
+
+                    b.HasIndex("ChildId", "Day", "SubjectId")
+                        .IsUnique()
+                        .HasFilter("[SubjectId] IS NOT NULL");
+
+                    b.ToTable("DailyEvaluations");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("EvaluatedDays");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>
                 {
                     b.Property<int>("Id")
@@ -3679,6 +3763,35 @@ namespace Pugling.Api.Data.Migrations
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.DailyBoxClaim", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyEvaluation", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Child");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
                         .WithMany()

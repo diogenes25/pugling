@@ -14,7 +14,8 @@ namespace Pugling.Contracts.Supervisor;
 /// <param name="ItemIndex">The card, or <c>null</c> for the whole exercise.</param>
 /// <param name="Cue">The card's prompt as it is now, or <c>null</c> (whole exercise, or the card no longer exists).</param>
 /// <param name="Solution">The card's expected answer as it is now, or <c>null</c>.</param>
-/// <param name="ChildAnswer">The child's most recent stored answer to that card, or <c>null</c> when none is stored.</param>
+/// <param name="ChildAnswer">The child's last stored answer to that card up to the latest report (B-1027), or <c>null</c> when none
+/// is stored.</param>
 /// <param name="Reason">The reason, or <c>null</c> for a text-only feedback.</param>
 /// <param name="Reach">The reason's reach, or <c>null</c> without a reason.</param>
 /// <param name="Count">How often the child reported this reason on this card while it was open.</param>
@@ -25,7 +26,7 @@ namespace Pugling.Contracts.Supervisor;
 /// <param name="DoneAt">When it was marked done, or <c>null</c>.</param>
 /// <param name="TestItemResultId">
 /// The test answer the report is about, frozen when it was sent (B-767), or <c>null</c> - then it cannot be judged
-/// justified, and <paramref name="ChildAnswer"/> is the child's most recent stored answer to the card instead.
+/// justified, and <paramref name="ChildAnswer"/> is the child's last stored answer to the card up to the latest report instead.
 /// </param>
 /// <param name="TestAnswerCorrect">How the test graded that answer, or <c>null</c> without one.</param>
 /// <param name="Outcome">The supervisor's judgement, or <c>null</c> (open, or done without one).</param>

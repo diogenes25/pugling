@@ -395,6 +395,54 @@ public class ConventionGuardTests
     /// </summary>
     private static readonly HashSet<string> AnonymousRateLimitExceptions = [];
 
+    // ─────────────────────────────────────── (e2) the supervisor's evaluation never travels to a student (B-733)
+
+    /// <summary>
+    /// B-733 AK 6: the evaluation types (day rows, profile, problem words) carry error kinds and a child's statistics; no
+    /// action a student token can reach may return one anywhere in its payload graph - else a child reads its brother's
+    /// numbers through a shared read view. Red if such a type is returned by an action without a gate that hides it from
+    /// the student.
+    /// </summary>
+    [Fact]
+    public void Auswertungstypen_Erreichen_Keinen_Studenten()
+    {
+        Type[] secret = [typeof(DailyEvaluationResponse), typeof(EvaluationProfileResponse), typeof(ProblemWordResponse)];
+        var offenders = new List<string>();
+        var inScope = 0;
+        foreach (var controller in Controllers())
+        {
+            var classGated = HidesFromStudent(controller.GetCustomAttributes<AuthorizeAttribute>(inherit: true));
+            foreach (var action in ApiSurface.ActionsIncludingInherited(controller))
+            {
+                if (PayloadType(action.ReturnType) is not { } payload || !Graph(payload, []).Any(secret.Contains))
+                    continue;
+                inScope++;
+                var open = action.GetCustomAttributes<AllowAnonymousAttribute>(inherit: false).Any();
+                if (!open && (classGated || HidesFromStudent(action.GetCustomAttributes<AuthorizeAttribute>(inherit: false))))
+                    continue;
+                offenders.Add($"{ApiSurface.Key(controller, action)} ({RouteOf(controller, action)})");
+            }
+        }
+
+        Assert.True(inScope >= 3, $"Too few actions with an evaluation type found ({inScope}) - the reflection does not bite.");
+        Assert.True(offenders.Count == 0,
+            "An evaluation type must not reach a Student token - gate the action without Student:\n" + string.Join("\n", offenders));
+    }
+
+    // Every type reachable from a payload: generic arguments, array elements and public properties, each visited once.
+    private static IEnumerable<Type> Graph(Type type, HashSet<Type> seen)
+    {
+        if (!seen.Add(type)) yield break;
+        yield return type;
+        var next = type.IsArray && type.GetElementType() is { } element ? [element]
+            : type.IsGenericType ? type.GetGenericArguments()
+            : type.Assembly == typeof(PointKind).Assembly ? type.GetProperties().Select(p => p.PropertyType).ToArray()
+            : [];
+        foreach (var t in next)
+            foreach (var leaf in Graph(t, seen))
+                yield return leaf;
+    }
+
     // ─────────────────────────────────────────────────────── (e) a solution never travels to a student
 
     [Fact]

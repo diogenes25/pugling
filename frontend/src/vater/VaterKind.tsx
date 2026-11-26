@@ -155,6 +155,7 @@ export function VaterKind() {
 function ChildNav({ child }: { child: ChildResponse }) {
   const links: [string, string][] = [
     [`/vater/kind/${child.id}/lernstand`, "📈 Lernstand"],
+    [`/vater/kind/${child.id}/auswertung`, "🔎 Auswertung"],
     [`/vater/kind/${child.id}/ziele`, "🎯 Ziele"],
     [`/vater/plaene?childId=${child.id}`, "🗂️ Lehrpläne"],
     [`/vater/class-tests?childId=${child.id}`, "📝 Klassenarbeiten"],

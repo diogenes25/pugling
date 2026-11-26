@@ -140,3 +140,128 @@ an. B-1024 `verworfen` mit Grund.
 **Nachtrag 2 (2026-11-26):** Der Vater hat B-1023 entschieden – eine Hausaufgabe mit Fälligkeit in einer Pause kostet keinen
 Malus. Gebaut und abgenommen in `9cf14491` (Suite 2611/2611, Review ohne Fund, Rollengang mangels Hausaufgaben-UI durch den
 Integrationstest ersetzt). Keine Frage aus diesem Sprint ist mehr offen.
+
+## Runde 3 — Rollengang an der Kopie
+
+Neuer Gang an einer frischen Kopie (`kopie-server.sh`, `:5201`, Stand `3855ab9e`). Keine neue Anmerkung unter `docs/anmerkungen/`.
+Konten: Vater = Konto 1, Friedrich = Kind 3, Theodor = Kind 1.
+
+### Feedback Creator (O-Ton) — Baut sich gut / Fehlt-nervt / Top-3
+
+- Beobachtet: acht offene „zu streng“-Meldungen der Kinder seit dem 19.11., keine bearbeitet. Drei davon („turn smt. up/down“,
+  „turn to smb“) betreffen Platzhalter-Kürzel, die seit B-990 angenommen werden – die Kinder liefen auf dem älteren Heimnetz-Stand.
+- „Ich arbeite die Meldungen im Rückmeldungs-Eingang ab; das ist meine Sache, nicht die der App.“ Top-3: (1) Meldungen richtig
+  angezeigt bekommen (siehe Vater), (2) B-630 KI-Creator liest Rückmeldungen, (3) –.
+
+### Feedback Vater (O-Ton) — Gefällt / Stört-fehlt / Top-3
+
+- Stört (beobachtet, **Defekt**): „Theodor meldet ‚zu streng‘ bei *amazing*, und da steht Lösung *amazing*, Antwort *amazing*.“
+  Tatsächlich tippte er „amazong“ (21:40:12), meldete (21:40:17) und tippte danach richtig (21:40:56); der Eingang zeigt die
+  jüngste Antwort statt der gemeldeten → **B-1027**.
+- Stört: „Bei Friedrich steht *une côte* mit 0 % unter den schwachen Wörtern – er hat es 36 von 38 Mal gewusst, einmal ‚un côte‘.
+  Warum es hakt, sehe ich nirgends; ich sehe nur eine Prozentzahl.“ Die Fehlerart wird seit B-732 gespeichert, aber keine Fläche
+  zeigt sie → **B-733** (Tagesauswertung, Problemwörter mit Fehlerart).
+- Top-3: (1) B-1027, (2) B-733, (3) offene Entscheidungen B-743 (AK 2), B-752 (Fairness), B-780 (Münzen).
+
+### Feedback Sohn (O-Ton) — Mega / Nervt / Top-3
+
+- Friedrichs Tag an der Kopie: 7 offene Pflichten, keine Drohung an freien Tagen, nichts Neues am eigenen Weg.
+- Nervt (aus den Meldungen): „Ich hab ‚smt.‘ geschrieben wie in der Schule“ – erledigt durch B-990, sobald das Heimnetz neu startet.
+- Top-3: keine neue Story aus diesem Gang.
+
+## PM-Synthese & Priorisierung (Runde 3)
+
+| Prio | Fund | Größe | Wo | Entscheidung |
+|---|---|---|---|---|
+| P1 | Rückmeldung zeigt eine Antwort nach der Meldung (B-1027) | XS | backend | Sprint 193 |
+| P1 | Vater sieht nicht, warum ein Wort hakt; Tagesauswertung fehlt (B-733) | L | beides | Sprint 193 |
+| P2 | acht offene Meldungen | — | Bedienung | beim Vater, keine Story |
+| — | B-743, B-752, B-780 | — | — | Fragen an den Nutzer |
+
+**Roter Faden:** Der Vater urteilt über das, was das Kind wirklich getan hat – die gemeldete Antwort, die Fehlerart je Wort, der Tag.
+
+## Sprint 193 — Ziel & Umfang
+
+**Sprint-Ziel (Vatersicht):** Ich sehe je Kind, Fach und Tag, was gelernt wurde und welche Wörter mit welcher Fehlerart hakten, und
+eine Meldung zeigt mir genau die Antwort, über die sich mein Kind beschwert hat. Widerlegt, wenn der Eingang eine spätere Antwort
+zeigt, ein Pausentag als Null erscheint oder ein Problemwort ohne seine gespeicherte Art.
+
+**Umfang:** B-1027, B-733.
+
+**Entwickler-Brief:** *Quelle der Wahrheit* `ItemReviewEvent` (Antwort, Fehlerart, `BoxBefore`), `ItemProgress.IntroducedAt`,
+`PracticeSession.ActiveSeconds`, `PositionProgressService.ComputeDayAsync` (Pflicht), `DutyCalendar` (freie Tage). Abgeschlossene
+Tage werden einmal gespeichert (`DailyEvaluation`, Wasserstand am Kind), nie neu gerechnet. *Guards* Supervisor-Gate, Ownership-
+Filter, kein Student-Typ. *Migration* eine (Tabelle + Wasserstand). *Testweg* `ExerciseFeedbackTests` (+2), `TagesauswertungTests`,
+Vitest der Maske, E2E `auswertung-verlauf`.
+
+## Iteration 193 — umgesetzt
+
+- **B-1027 (Backend):** `ExerciseFeedbackService.ChildAnswerAsync` liest Test- und Übungsantworten nur bis `LastReportedAt`;
+  Vertragsdoku nachgezogen. Zwei Fälle in `ExerciseFeedbackTests`.
+- **B-733 (Backend):** Tabellen `DailyEvaluations` + `EvaluatedDays` (Migration `Tagesauswertung`, rein additiv), Dienst
+  `DailyEvaluationService` (ein abgeschlossener Tag wird einmal gerechnet und gespeichert, heute live), drei Endpunkte unter
+  `supervisor/children/{id}/evaluations`, Client, Reflexions-Tor `Auswertungstypen_Erreichen_Keinen_Studenten`.
+- **B-733 (Frontend):** Seite `/vater/kind/:id/auswertung` (Link „🔎 Auswertung“ im Kind-Hub): Profil je Fach (7/28 Tage),
+  Verlauf mit ausdrücklichen Lücken, Problemwörter mit Fehlerart und letzter getippter Antwort.
+- **Review-Funde eingearbeitet:** (🔴) angezeigte Kennenlern-Karten, Lernkarten und erleichterte Abrufe zählten als falsche
+  Antworten und Problemwörter – jetzt zählt nur eine Antwort mit Urteil (`BoxBefore`), für Zeilen von vor B-732 getippt und keine
+  Lernkarte; Test über die echte Sohn-API. (🟡) „neu“ aus dem Einführungstag der Position statt aus dem plan-übergreifenden
+  Stempel. (🔴 Frontend) das Fenster rechnete „heute“ in UTC – jetzt `heuteImLerntag()`, Fenster an den Server, keine Zeile geht
+  verloren. Dokumentiert statt gebaut: abgeschaltete Pläne fehlen beim ersten Nachrechnen.
+- **Bewusst ausgelassen (eigene Stories):** B-1028 (Antworten des Vaters landen im Lernstand des Kindes – Schreibseite, älter als
+  B-733) und B-1029 (zwei Meldungen zu zwei Übungsantworten verschmelzen).
+
+**Verifikation am Endstand:** Backend-Suite 2623/2623 (Release, 9 min 41 s; ein früherer Lauf brauchte 20 min, ohne dass ein
+einzelner Test hing – nicht dieser Änderung zuzuordnen, gemessen mit `--blame-hang`), Vitest 1518/1518, `tsc -b` grün, E2E
+`auswertung-verlauf`, `pfad`, `lerntage-und-pause`, `meldung-berechtigt` passed (Ports 5244/5284). Mutanten: B-1027 2/2 rot,
+B-733 22 rot wie erwartet + 2 erwartet grün (Tabellen in den Stories). Reviews: `pugling-reviewer` und `frontend-reviewer`, Funde
+eingearbeitet bzw. als B-1028, B-1029 abgelegt.
+
+## Runde 4 — Re-Review / Abnahme
+
+Kopie-Server nach der letzten Änderung frisch gestartet (`kopie-server.sh`, frische Kopie, Migration `Tagesauswertung` beim Start
+eingespielt – zugleich die Migrationsprobe an echten Daten).
+
+- **Vater — abgenommen.** „Theodors Meldung zu *amazing* zeigt jetzt ‚amazong‘ – genau das, was er getippt hat; ‚zu streng‘ war es
+  nicht.“ Auswertung für Friedrich: zwölf Tage mit Zeilen, Sonntag 22.11. geübt ohne Pflicht, 25./26.11. verpasste Pflicht ohne
+  Übung als Zeile, Tage vor dem Planstart als Lücke. Problemwörter: „une côte – 2 falsch / 36 richtig, zuletzt ‚un côte‘“ – „jetzt
+  sehe ich, dass es nur der Artikel ist“. Erster Aufruf 2,2 s, danach 0,13 s. Lehrer 403, Sohn 403. **Benannt offen:** gefestigt und
+  Tempo stehen an allen alten Tagen auf 0, weil die Historie vor B-732 keine Box trägt → B-1031; die Fehlerart fehlt an Testantworten
+  → B-1030. Die Oberfläche (Verlauf mit Lücke, Problemwort mit getippter Antwort) fährt die E2E `auswertung-verlauf`.
+- **Sohn — Regressionszeuge.** Kein Student-Pfad im Diff; sein Tag lädt an der Kopie (200), die Auswertungspfade antworten ihm 403;
+  `pfad`-E2E grün.
+- **Creator — Regressionszeuge.** Kein Creator-Pfad im Diff; Suite grün.
+
+Abgenommen: B-1027, B-733.
+
+## Retrospektive
+
+**Nachschau:** B-1023 (Commit `9cf14491`) und B-732 nachgesehen. B-1023: der zweite Leser (`HomeworkResponse.PenaltyCoins`) ist schon
+als Hinweis an B-763 vermerkt, keine Oberfläche zeigt ihn – kein neuer Defekt. B-732: an echten Wegen trägt eine getippte
+Testantwort keine Art → **B-1030** (`entgangen_bei: B-732`), dazu B-1027 (`entgangen_bei: B-628`, aus dem Gang). `nachgeschaut` an
+B-1023 und B-732. Index: 589 von 636.
+
+**Was durchrutschte bzw. gefangen wurde:**
+
+- Gefangen vom Review, nicht von den eigenen Tests: meine Tests säten Antwortzeilen von Hand und verfehlten, dass die Übung Zeilen
+  ohne Urteil schreibt (Kennenlern-Karte, Lernkarte). Erst der Leser-gegen-Schreiber-Abgleich des Reviewers fand es. Jetzt trägt ein
+  Fall den echten Schreibweg.
+- Gefangen vom Frontend-Review: „heute“ als UTC-Tag – trotz vorhandenem `heuteImLerntag()` mit genau dieser Warnung.
+- Gefangen von einem Tor: `leerfall.test.ts` (Leerfall am Bestand statt an der Seite).
+- **Durchgerutscht bis zur Handprüfung:** eine abgebrochene Mutanten-Probe ließ Mutante C9 im Quelltext stehen; die Sperrdatei
+  blockierte den nächsten Lauf, sagte aber nichts über die Zeile – und ihr eigener Rat („die Datei löschen“) hätte den einzigen
+  Hinweis darauf gelöscht.
+
+**Der eine Mechanismus (neues Tor):** `mutant-probe.py` liest beim Start die Mutantendatei aus einer vorhandenen Sperre und bricht ab,
+solange eine ihrer Mutanten noch im Quelltext steht; die Meldung nennt Datei, Zeile und Sollwert – auch in der Meldung „eine andere
+Probe läuft“, damit das Löschen der Sperre den Hinweis nicht mitnimmt. Von Hand rot (verwaist und frisch) und grün (zurückgesetzt)
+belegt. **Neues Tor → der Lauf hält hier**, der Nutzer sieht es zuerst.
+
+**Bewusst ungedeckt:** Ein Test, der den Lesern einer Historie nur von Hand gesäte Zeilen gibt, bleibt möglich; das fängt weiterhin
+nur ein Review.
+
+## Offene Roadmap (priorisiert)  ·  Konkreter Änderungsstand (für Review)
+
+Siehe `docs/backlog/`. Aus diesem Sprint neu: B-1030 (P2, Fehlerart am Testweg), B-1031 (P2, Tempo vor B-732), B-1028 (P2, Antworten
+des Vaters im Lernstand), B-1029 (P3). Danach geht B-644 mit B-734 (Planer im Schattenmodus) weiter, das das Profil aus B-733 liest.
+Beim Vater liegen weiter die Fragen B-743 (AK 2), B-752 (Fairness am Gerät), B-780 (Münzen).

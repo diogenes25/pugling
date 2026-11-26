@@ -33,6 +33,7 @@ import { VaterLehrwerke } from "./VaterLehrwerke";
 import { VaterFachlehrer } from "./VaterFachlehrer";
 import { VaterKind } from "./VaterKind";
 import { VaterProfil } from "./VaterProfil";
+import { VaterAuswertung } from "./VaterAuswertung";
 import { VaterLernstand } from "./VaterLernstand";
 import { VaterZiele } from "./VaterZiele";
 import { VaterAnmerkungen } from "./VaterAnmerkungen";
@@ -223,6 +224,7 @@ export function VaterApp() {
           <Route path="fachlehrer" element={<VaterFachlehrer />} />
           <Route path="kind/:childId" element={<VaterKind />} />
           <Route path="kind/:childId/lernstand" element={<VaterLernstand />} />
+          <Route path="kind/:childId/auswertung" element={<VaterAuswertung />} />
           <Route path="kind/:childId/ziele" element={<VaterZiele />} />
           <Route path="profil" element={<VaterProfil />} />
           <Route path="rewards" element={<VaterRewards />} />

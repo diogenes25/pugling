@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-26
 ---
 
 # B-732 · Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a)

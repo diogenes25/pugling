@@ -42,6 +42,18 @@ public sealed class SupervisorApi(HttpClient http)
     public Task DeletePauseAsync(int childId, int pauseId, CancellationToken ct = default) =>
         Http.SendAsync(HttpMethod.Delete, $"{Root}/children/{childId}/pauses/{pauseId}", null, ct);
 
+    /// <summary>The child's evaluated days per subject over the last 28 days, newest first (B-733); today's rows are live.</summary>
+    public Task<IReadOnlyList<DailyEvaluationResponse>> ListEvaluationsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<DailyEvaluationResponse>>($"{Root}/children/{childId}/evaluations", ct);
+
+    /// <summary>The child's learning profile per subject over 7 and 28 closed days (B-733).</summary>
+    public Task<EvaluationProfileResponse> GetEvaluationProfileAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<EvaluationProfileResponse>($"{Root}/children/{childId}/evaluations/profile", ct);
+
+    /// <summary>The words the child got wrong in the last 28 days, with the kinds of error (B-733).</summary>
+    public Task<IReadOnlyList<ProblemWordResponse>> ListProblemWordsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<ProblemWordResponse>>($"{Root}/children/{childId}/evaluations/problem-words", ct);
+
     /// <summary>
     /// The child's <b>weighted</b> interests – referenced against the shared taxonomy and thus
     /// machine-evaluable, unlike the free-form <c>ChildResponse.Interests</c> (which remains the language

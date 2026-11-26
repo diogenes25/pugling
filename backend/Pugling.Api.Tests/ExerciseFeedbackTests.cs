@@ -411,6 +411,58 @@ public class ExerciseFeedbackTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// B-1027 AK 1: a report after a practice answer shows that answer, even after the child answered the card again in
+    /// practice. Red if the answer history is read without the report time as upper bound (the later "halo" shows up).
+    /// </summary>
+    [Fact]
+    public async Task Meldung_zeigt_die_Uebungsantwort_vor_der_Meldung_nicht_eine_spaetere()
+    {
+        var k = await KidAsync();
+        // Correct first: a wrong answer would drop the card to an untyped stage and the later answer would carry no text.
+        var sessionId = await TestApi.StartPositionSessionAsync(k.Child, k.PlanId, k.PositionId);
+        (await TestApi.PositionReviewAsync(k.Child, k.PlanId, k.PositionId, sessionId, 0, givenAnswer: "hallo"))
+            .EnsureSuccessStatusCode();
+        var id = FirstId(await ReportAsync(k, "TooHard", 0));
+        // A later practice answer to the same card, one minute after the report (written directly: a typed card does not
+        // come back typed in the next session, and only the read path is under test).
+        WithDb(db =>
+        {
+            var first = db.ItemReviewEvents.AsNoTracking().Single(e => e.ChildId == k.ChildId && e.GivenAnswer == "hallo");
+            var reportedAt = db.ExerciseFeedbacks.AsNoTracking().Single(f => f.Id == id).LastReportedAt;
+            db.ItemReviewEvents.Add(new ItemReviewEvent
+            {
+                ChildId = first.ChildId, ItemId = first.ItemId, ExerciseId = first.ExerciseId, VocabularyId = first.VocabularyId,
+                PlanPositionId = first.PlanPositionId, Source = first.Source, StageValue = first.StageValue,
+                GivenAnswer = "halo", WasCorrect = false, At = reportedAt.AddMinutes(1),
+            });
+            return db.SaveChanges();
+        });
+
+        Assert.Equal("hallo", await ChildAnswerShownAsync(k, id));
+    }
+
+    /// <summary>
+    /// B-1027 AK 2: a report after a practice answer, followed by a test that answers the card anew, still shows the practice
+    /// answer. Red if the tests are read without the report time as upper bound (the test's "hallo" is newer and wins).
+    /// </summary>
+    [Fact]
+    public async Task Meldung_zeigt_keine_Testantwort_nach_der_Meldung()
+    {
+        var k = await KidAsync();
+        var sessionId = await TestApi.StartPositionSessionAsync(k.Child, k.PlanId, k.PositionId);
+        (await TestApi.PositionReviewAsync(k.Child, k.PlanId, k.PositionId, sessionId, 0, givenAnswer: "halo"))
+            .EnsureSuccessStatusCode();
+        var id = FirstId(await ReportAsync(k, "TooStrict", 0));
+        await TakeTestAsync(k, "hallo", "tschüss");
+
+        Assert.Equal("halo", await ChildAnswerShownAsync(k, id));
+    }
+
+    private async Task<string?> ChildAnswerShownAsync(Kid k, int id) =>
+        (await OkJsonAsync(await k.Father.GetAsync($"/api/v1/supervisor/feedback?childId={k.ChildId}")))
+            .EnumerateArray().Single(e => e.GetProperty("id").GetInt32() == id).GetProperty("childAnswer").GetString();
+
+    /// <summary>
     /// B-767 AK 2: the supervisor marks a report done as justified or rejected; done without an outcome stays possible
     /// (old feedback). A justified report needs a test answer (409 <c>feedback_without_test_answer</c>), an outcome needs
     /// the status Done (400), and a justified report is final - opening it again or rejecting it is refused (409

@@ -89,6 +89,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     // Timetable control
     public DbSet<TimetableEntry> TimetableEntries => Set<TimetableEntry>();
     public DbSet<ChildPause> ChildPauses => Set<ChildPause>();
+    public DbSet<DailyEvaluation> DailyEvaluations => Set<DailyEvaluation>();
+    public DbSet<EvaluatedDay> EvaluatedDays => Set<EvaluatedDay>();
 
     // Gamification: missions (time-bound goals) + awards (badges) per child, with an award log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -881,6 +883,27 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(p => new { p.ChildId, p.From });
             e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // B-733: one row per child, day and subject. Two FILTERED uniques because SQLite treats NULLs as distinct - a single
+        // unique over the nullable subject would allow any number of subject-less rows for the same day.
+        modelBuilder.Entity<DailyEvaluation>(e =>
+        {
+            e.HasIndex(d => new { d.ChildId, d.Day, d.SubjectId }).IsUnique().HasFilter("[SubjectId] IS NOT NULL");
+            e.HasIndex(d => new { d.ChildId, d.Day }).IsUnique().HasFilter("[SubjectId] IS NULL");
+            e.HasOne(d => d.Child).WithMany().HasForeignKey(d => d.ChildId).OnDelete(DeleteBehavior.Cascade);
+            // Derived statistics: a deleted subject takes its rows along. SetNull would fold several subjects of one day
+            // into the subject-less row and break its unique index.
+            e.HasOne(d => d.Subject).WithMany().HasForeignKey(d => d.SubjectId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(d => d.ErrorKinds).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<Dictionary<string, int>>(s, JsonOptions) ?? new Dictionary<string, int>())
+                .Metadata.SetValueComparer(JsonValueComparer.For<Dictionary<string, int>>());
+        });
+        modelBuilder.Entity<EvaluatedDay>(e =>
+        {
+            e.HasIndex(d => new { d.ChildId, d.Day }).IsUnique();
+            e.HasOne(d => d.Child).WithMany().HasForeignKey(d => d.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // A mission belongs to a child (cascade); every mission is rewarded at most once per period.

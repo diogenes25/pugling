@@ -8,7 +8,7 @@ unverifiziert: false
 quelle: docs/pm-sitzung-2026-11-25-o.md#sprint-191--ziel--umfang
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-26
 ---
 
 # B-1023 · Soll eine Hausaufgabe, die in einer Pause fällig wird, weiter Malus kosten?
