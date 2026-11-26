@@ -203,6 +203,10 @@ def probe():
             code, out = run(m["build"], m.get("env"))
             if code != 0:
                 got, note = "ungemessen", "kompiliert nicht"
+                # Sprint 171: sechs von 26 Mutanten fielen so aus – `if (false)` ist unter TreatWarningsAsErrors
+                # unerreichbarer Code (CS0162). Der Grund steht darum in der Tabelle, nicht nur im Build-Log.
+                if "CS0162" in out:
+                    note += " (CS0162: Bedingung unmöglich machen, z. B. `== 12345`, statt `false`)"
             else:
                 code, out = run(m["test"], m.get("env"))
                 got = verdict(code, out)
