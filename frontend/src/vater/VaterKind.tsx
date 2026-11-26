@@ -29,6 +29,7 @@ export const CHILD_TABS = [
   { key: "schule", label: "🎒 Schule" },
   { key: "interessen", label: "❤️ Interessen" },
   { key: "einstellungen", label: "⚙️ Einstellungen" },
+  { key: "lerntage", label: "📅 Lerntage" },
   { key: "betreuer", label: "👥 Betreuer" },
 ] as const satisfies readonly SectionTab[];
 
@@ -130,10 +131,14 @@ export function VaterKind() {
         {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
         <BonusSection key={me.id} child={me} onSaved={child.reload} />
         <TowerGameSection key={`tower-${me.id}`} child={me} onSaved={child.reload} />
+      </SectionPanel>
+
+      {/* Ein eigener Reiter (B-1020): unter „Einstellungen“ standen sonst drei „Speichern“ auf einer Fläche (B-534). */}
+      <SectionPanel section="lerntage" active={tab}>
         <PauseSection childId={childId} childName={me.name} />
-        {/* Der `key` trägt den Serverstand: nach dem Speichern setzt das Neuladen die Felder auf das Gelesene (B-731 AK 8). */}
-        <LeitplankenSection key={`limits-${me.id}-${me.dailyTasksMin}-${me.dailyTasksMax}-${me.dailyNewWordsMin}-${me.dailyNewWordsMax}-${me.penaltyCoinsPerMissedTask}`}
-          child={me} onSaved={child.reload} />
+        {/* `key` nur am Kind, wie beim Bonus: die Felder ziehen den Serverstand selbst nach, ein Neu-Einhängen nähme die
+            Bestätigung mit (B-1020). */}
+        <LeitplankenSection key={`limits-${me.id}`} child={me} onSaved={child.reload} />
       </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}

@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { api } from "../lib/api";
 import { AuthProvider } from "../lib/auth";
 import type { ChildPause, ChildResponse } from "../lib/types";
@@ -47,6 +48,53 @@ describe("Leitplanken (B-731 AK 6/8)", () => {
 
     await vi.waitFor(() => expect(neuLaden).toHaveBeenCalled());
     expect(speichern).toHaveBeenCalledWith(4, gesetzt);
+  });
+
+  // B-1020: nach dem Speichern lädt der Aufrufer das Kind neu und reicht den Serverstand herein – hier ein anderer Deckel
+  // (6) als getippt (5), etwa weil der Server zwischendurch von einem zweiten Gerät geändert wurde. Rot, wenn die Felder
+  // den neuen Stand nicht nachziehen (die Synchronisation fehlt: „5“ bliebe stehen) oder die Bestätigung dabei verschwindet.
+  // Dass der Kind-Hub die Maske dabei nicht neu einhängt (`key` nur am Kind), hält `e2e/lerntage-und-pause.spec.ts`.
+  it("zieht nach dem Speichern den Serverstand nach und behält die Bestätigung", async () => {
+    const server = { ...gesetzt, dailyTasksMax: 6 };
+    vi.spyOn(api, "updateChild").mockResolvedValue(kind(server));
+    function Hub() {
+      const [child, setChild] = useState(kind());
+      return <LeitplankenSection key={child.id} child={child} onSaved={() => setChild(kind(server))} />;
+    }
+    render(<Hub />);
+
+    const felder: [string, string][] = [
+      ["Pflichtaufgaben am Tag – mindestens", "2"], ["Pflichtaufgaben am Tag – höchstens", "5"],
+      ["Neue Wörter am Tag – mindestens", "3"], ["Neue Wörter am Tag – höchstens", "8"],
+      ["Malus je verpasster Pflichtaufgabe (🪙)", "4"],
+    ];
+    for (const [name, wert] of felder) fireEvent.change(screen.getByLabelText(name, { exact: true }), { target: { value: wert } });
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
+    await act(async () => {});
+
+    expect(screen.getByText("Leitplanken gespeichert.")).toBeTruthy();
+    expect((screen.getByLabelText("Pflichtaufgaben am Tag – höchstens", { exact: true }) as HTMLInputElement).value).toBe("6");
+    expect((screen.getByLabelText("Neue Wörter am Tag – höchstens", { exact: true }) as HTMLInputElement).value).toBe("8");
+  });
+
+  // Rot, wenn „Leitplanken entfernen“ ohne Rückfrage schickt: ein Fehlgriff löschte alle fünf Zahlen.
+  it("fragt vor dem Entfernen nach und schickt bei „Abbrechen“ nichts", () => {
+    const entfernen = vi.spyOn(api, "updateChild").mockResolvedValue(kind());
+    const frage = vi.fn(() => false);
+    vi.stubGlobal("confirm", frage);
+    onTestFinished(() => { vi.unstubAllGlobals(); });
+    render(<LeitplankenSection child={kind(gesetzt)} onSaved={() => {}} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Leitplanken entfernen" }));
+
+    expect(frage).toHaveBeenCalled();
+    expect(entfernen).not.toHaveBeenCalled();
+  });
+
+  // Eine Erklärung für die fünf Felder, nicht fünf gleiche ⓘ. Rot, wenn jedes Feld wieder sein eigenes `FieldLabel` trägt.
+  it("trägt genau einen Hinweis-Knopf über den fünf Feldern", () => {
+    render(<LeitplankenSection child={kind()} onSaved={() => {}} />);
+    expect(screen.getAllByRole("button", { name: /^Erklärung zu/ })).toHaveLength(1);
   });
 
   // AK 8: Rot, wenn die Maske ihren Startwert nicht vom Server liest (leere Felder trotz gespeicherter Leitplanken).

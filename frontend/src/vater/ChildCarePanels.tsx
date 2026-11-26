@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusBanner } from "../components/StatusBanner";
 import { api } from "../lib/api";
 import { SUPERVISOR_RELATIONS, WEEKDAYS, supervisorRelationLabel } from "../lib/labels";
@@ -11,7 +11,7 @@ import type {
 import { AddPanel } from "../components/AddPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
 import { formatDate, formatDateRange, heuteImLerntag } from "../lib/datum";
-import { FieldLabel } from "../components/InfoHint";
+import { InfoHint } from "../components/InfoHint";
 
 /*
  * Zwei Seiten des Kind-Profils, die bisher nur über die API erreichbar waren.
@@ -307,15 +307,23 @@ export function leitplankenFehler(values: Record<LimitKey, number>): string | nu
   return null;
 }
 
+const limitValues = (child: ChildResponse) => Object.fromEntries(
+  LIMIT_FIELDS.map((f) => [f.key, child[f.key]?.toString() ?? ""])) as Record<LimitKey, string>;
+
 /**
  * Die Leitplanken des Tagesplaners (B-731): je Kind Boden und Deckel für Pflichtaufgaben und neue Wörter am Tag und der
  * Malus je verpasster Pflichtaufgabe. Der Vater setzt den Rahmen, keine Tagesmengen. Die Zahlen wirken erst mit dem
  * Planer – die Maske sagt das, damit niemand nach dem Speichern eine Wirkung sucht. Angezeigt wird immer der Stand des
- * Servers: nach dem Speichern lädt die Seite das Kind neu, und der `key` des Aufrufers setzt die Felder darauf zurück.
+ * Servers: nach dem Speichern lädt die Seite das Kind neu, und die Felder ziehen den gelesenen Stand nach. Ohne
+ * Neu-Einhängen (B-1020): ein `key` aus den Werten nahm mit dem Formular auch die Bestätigung aus dem DOM.
  */
 export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
-  const [values, setValues] = useState<Record<LimitKey, string>>(() => Object.fromEntries(
-    LIMIT_FIELDS.map((f) => [f.key, child[f.key]?.toString() ?? ""])) as Record<LimitKey, string>);
+  const [values, setValues] = useState<Record<LimitKey, string>>(() => limitValues(child));
+  // Nur wenn sich der Serverstand der Leitplanken ändert – ein Neuladen des Kindes aus anderem Grund (Bonus, Turm)
+  // darf eine ungespeicherte Eingabe nicht überschreiben.
+  const serverStand = LIMIT_FIELDS.map((f) => child[f.key] ?? "").join("|");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setValues(limitValues(child)); }, [serverStand]);
   const action = useAction();
   const stored = LIMIT_FIELDS.some((f) => child[f.key] != null);
   const allFilled = LIMIT_FIELDS.every((f) => values[f.key].trim() !== "");
@@ -330,6 +338,7 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
   }
 
   async function clear() {
+    if (!confirmAction(`Alle fünf Leitplanken von ${child.name} entfernen? Der Tagesplaner hat dann keinen Rahmen mehr.`)) return;
     if (await action.run(() => api.updateChild(child.id, { clearPlannerLimits: true }), "Leitplanken entfernt.")) onSaved();
   }
 
@@ -342,14 +351,20 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
         erst, wenn der Tagesplaner kommt; heute ändern sie noch nichts an Pflicht und Malus.
       </p>
       <form onSubmit={save}>
-        <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
-          {LIMIT_FIELDS.map((f) => (
-            <div key={f.key} className="field" style={{ maxWidth: 230, marginBottom: 0 }}>
-              <FieldLabel htmlFor={f.id} topic="plannerLimits">{f.label}</FieldLabel>
-              <input id={f.id} type="number" min={f.min} max={f.max} step={1} inputMode="numeric"
-                value={values[f.key]} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
-            </div>
-          ))}
+        {/* Eine Erklärung für die Gruppe statt fünf gleicher ⓘ an jedem Feld: der Begriff ist derselbe. */}
+        <div role="group" aria-labelledby="limits-group">
+          <span id="limits-group" className="label-row group-label">
+            Leitplanken <InfoHint topic="plannerLimits" />
+          </span>
+          <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+            {LIMIT_FIELDS.map((f) => (
+              <div key={f.key} className="field" style={{ maxWidth: 230, marginBottom: 0 }}>
+                <label htmlFor={f.id}>{f.label}</label>
+                <input id={f.id} type="number" min={f.min} max={f.max} step={1} inputMode="numeric"
+                  value={values[f.key]} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+          </div>
         </div>
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
           <button type="submit" className="btn small" style={{ width: "auto" }} disabled={action.busy || fehler !== null}>Speichern</button>
