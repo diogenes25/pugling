@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/klassenarbeit, bereich/gamification, bereich/lehrplan, bereich/api, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/klassenarbeit, bereich/gamification, bereich/lehrplan, bereich/api, rolle/student, rolle/supervisor]
 aliases: [Verdichtungs-Pflicht, Zusatzpflicht vor der Klassenarbeit, Vorbereitungs-Pflicht]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: L
@@ -12,7 +12,7 @@ quelle: B-248
 unverifiziert: false
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer: Fairness der Last am Gerät"
+wartet_auf: ""
 ---
 
 # B-752 · Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel
@@ -217,3 +217,5 @@ wäre es XL gewesen, darum der Schnitt.
   - Mutanten-Probe am 2026-11-24 auf Wunsch des Nutzers (Lauf-I-Liste neu verortet, dazu `6162599c` und B-757; Tabelle und Auflösung der sechs zunächst belegfreien Zeilen in [pm-sitzung-2026-11-24.md](../pm-sitzung-2026-11-24.md), Runde 136); Backend-Suite danach 2310/2310 grün (Release).
   - Bleibt `in-arbeit`: AK 8 verlangt die Migration an einer **Kopie der echten DB** – der Migrationstest (`VorbereitungsPflichtMigrationTests`) ist grün, die Kopie ist Sache des Nutzers. Dazu die Gerät-Prüfung, ob die Last fair wirkt.
 - **2026-11-24** — AK 8 gemessen (Runde 138): Sicherung `pugling.db.bak-auto-20261124-061542` (vor der Migration) zweimal kopiert, eine bis `NotenstufeChildSubjectLevel`, eine bis `ClassTestPrepDuty` migriert. Alle 75 Tabellen auf den gemeinsamen Spalten zeilengleich, die drei neuen Spalten in allen 6 bzw. 208 Zeilen `NULL`, `foreign_key_check` leer. Die echte DB trägt die Migration seit dem Start um 06:15. Offen bleibt nur die Gerät-Prüfung (fair wirkende Last).
+- **2026-11-26** — Gerät-Prüfung durch den Vater: die tägliche Zusatzlast im Fenster vor der Klassenarbeit wirkt am Handy fair.
+  Die letzte Bedingung ist erfüllt: `abgenommen` mit den Commits `6162599c` (Kern) und `1b92cd02` (Defekte B-940–B-943).

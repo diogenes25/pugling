@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/gamification, bereich/frontend, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/gamification, bereich/frontend, rolle/student, rolle/supervisor]
 aliases: [Notenstufe anzeigen, Stand-Text]
-status: in-arbeit
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-682
 grund: ""
 ersetzt_durch: []
-wartet_auf: "Nutzer-Entscheidung AK 2: Stufenwort nach Abstieg auf 2/3 (a: wie gebaut, b: weglassen unter Bestwert)"
+wartet_auf: ""
 ---
 
 # B-743 · Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl
@@ -56,9 +56,10 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `frontend/src/`. Die Dateien
 
 1. Für Stufe 1, 2 und 3 steht der Stand-Text, für 4, 5 und 6 nur der Zielsatz. *Rot, wenn* ein Text für Stufe 4 bis 6 „Vierer",
    „Fünfer" oder „Sechser" enthält.
-2. Der Text trägt weder „abgestiegen" noch eine Notenbezeichnung der neuen Stufe, wenn die Stufe zwischen zwei Abrufen sinkt und
-   nennt den nächsten Schritt. *Rot, wenn* eines der Wörter erscheint (Vitest über die reine Text-Funktion, Zustand vorher und
-   nachher übergeben).
+2. Sinkt die Stufe zwischen zwei Abrufen, trägt der Text nie „abgestiegen“ und unter Stufe 3 kein Stufenwort; die Stufen 1 bis 3
+   tragen ihren Namen auch nach einem Abstieg („Zweier-Stand“), und der Text nennt den nächsten Schritt. *Rot, wenn* „abgestiegen“
+   oder unter Stufe 3 ein Stufenwort erscheint (Vitest über die reine Text-Funktion, Zustand vorher und nachher übergeben).
+   *(Umformuliert 2026-11-26 nach Entscheidung des Vaters, Variante a.)*
 3. Ein Fach, das der Server nicht liefert, hat keine Stufenzeile auf der Fachkarte. *Rot, wenn* die Karte eine leere oder
    erfundene Stufe zeigt.
 4. Der Vater sieht je Fach die Zahl und den Bestwert im Kind-Hub. *Rot, wenn* die Zahl dort fehlt oder nur Stand-Text trägt.
@@ -129,3 +130,7 @@ Gemessen am 2026-11-20 auf `main`; Pfade relativ zu `frontend/src/`. Die Dateien
   gelaufen: ein Kind auf Stufe 1–3 im Browser (braucht Box 5, also Wochen) – die Texte trägt der Vitest. Offen für einen
   Menschen: das sinnliche Urteil („fühlt sich der Zielsatz freundlich an“, Zeile am Handy). Code in Commit `4aae8d36`;
   bleibt `in-arbeit` mit `wartet_auf` bis zur Entscheidung über AK 2.
+- **2026-11-26** — Entscheidung des Vaters zu AK 2: Variante (a), wie gebaut – die Stufen 1 bis 3 tragen ihren Namen auch nach einem
+  Abstieg, nie das Wort „abgestiegen“, unter 3 kein Stufenwort. AK 2 entsprechend umformuliert; die Vitest-Fälle prüfen genau das.
+  Damit ist die letzte Bedingung erfüllt: `abgenommen` mit Commit `4aae8d36` (Rollengang maschinell `e2e/notenstufe.spec.ts`, Review
+  ohne 🔴, Suite am 2026-11-26 2623/2623). Offen für einen Menschen bleibt nur das Gefühl am Handy („wirkt der Zielsatz freundlich“).

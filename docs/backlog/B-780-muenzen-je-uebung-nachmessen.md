@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/ausformuliert, bereich/gamification, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/gamification, rolle/student, rolle/supervisor]
 aliases: [Münz-Verhältnis, Münzen zu wenig]
-status: ausformuliert
+status: verworfen
 prio: P1
 art: Frage
 groesse: ""
@@ -9,8 +9,8 @@ wo: ""
 migration: ""
 vertragsbruch: ""
 quelle: "Feedback der Söhne, vom Vater weitergegeben am 2026-11-21 (Sitzung)"
-grund: ""
-ersetzt_durch: []
+grund: "Beantwortet (Vater, 2026-11-26): die Menge bleibt – gemessen großzügig; der Hebel ist das Gefühl → B-1032. Theodors Truhe ist kein Defekt: an der Kopie zwei Truhen (21. und 22.11.), keine an Tagen mit offener Latein-Pflicht – die Regel alle Tagespflichten."
+ersetzt_durch: [B-1032]
 ---
 
 # B-780 · Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen
@@ -112,6 +112,18 @@ gibt es nur als Handmessung.
 
 ## Entscheidungen
 
+Vom Vater am 2026-11-26:
+
+1. **Gefühl, nicht Menge** (Offener Punkt 2): Sätze und Shop-Preise bleiben. Eine sichtbare Tagessumme und gebündelte kleine
+   Beträge kommen als eigene Story [B-1032](B-1032-muenzen-tagessumme-in-der-arcade.md); vorher werden die Söhne gefragt, wann es
+   sich nach wenig anfühlte.
+2. **Theodors Truhe erst prüfen** (Offener Punkt 3) – geprüft an einer Kopie der echten DB (Stand 2026-11-26): Theodor hat zwei
+   Truhen bekommen (21.11., 22.11.). Am 20. und 24.11. war Englisch voll erfüllt, Latein nicht – keine Truhe, wie die Regel „alle
+   Tagespflichten“ (B-606/B-611) es will. Latein war an 1 von 8 Pflichttagen erfüllt (Auswertung B-733). Kein Defekt; der Hebel ist
+   Latein, nicht die Truhe.
+3. Maßstab, Ungleichheit, Ort der Messung (Punkte 1, 4, 6): nicht entschieden, weil nichts nachgeregelt wird; die Messung liest
+   der Vater künftig in der Auswertung (B-733).
+
 1. **Vorerst wird nur festgehalten, dass die Söhne mit der Münzausbeute unzufrieden sind; es gibt keinen
    Zielwert.** (Vater, 2026-11-21, auf Punkt 1.) Begründung: Das Gefühl der Kinder ist der Befund, eine
    Kennzahl soll noch nicht festgelegt werden. Kosten: Ohne Maßstab lässt sich „zu wenig“ nicht prüfen. Eine
@@ -129,3 +141,4 @@ gibt es nur als Handmessung.
 - **2026-11-25** — AK 2 an einer Kopie geklärt (PM-Sitzung 2026-11-25, Runde 4): Theodor hat am 21. und 22.11. je eine Truhe
   bekommen, an beiden Tagen waren die Tagesziele aller Pläne erfüllt (4 von 6, offen nur Wochenziele). Kein Defekt, die Regel
   aus B-611 greift. Bleibt `ausformuliert`, die Punkte 2–6 warten auf den Vater.
+- **2026-11-26** — beantwortet und `verworfen` (Erfolg einer Frage): Entscheidungen oben, Folgestory B-1032.

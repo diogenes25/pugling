@@ -270,3 +270,12 @@ Beim Vater liegen weiter die Fragen B-743 (AK 2), B-752 (Fairness am Gerät), B-
 auf der Auswahlstufe ab (auch mit `requireTypedTest`), und eine Auswahl trägt nach B-732 bewusst keine Fehlerart. Die E2E hatte per
 API Freitext an eine Auswahlkarte geschickt. Fehlerarten entstehen an Wiederholungstagen; die E2E zeigt am ersten Tag zu Recht „–“.
 Die Retro-Nachschau zu B-732 bleibt damit ohne Fund.
+
+**Nachtrag 3 (2026-11-26) – Vater-Fragen entschieden:**
+
+- **B-743** (Notenstufe): Variante (a), wie gebaut – Stufen 1–3 tragen ihren Namen auch nach einem Abstieg, nie „abgestiegen“. AK 2
+  umformuliert, `abgenommen` (`4aae8d36`).
+- **B-752** (Vorbereitungs-Pflicht): die Zusatzlast wirkt am Handy fair – `abgenommen` (`6162599c`, `1b92cd02`).
+- **B-780** (Münzen): Gefühl statt Menge – Sätze und Preise bleiben, Tagessumme und gebündelte „+1“ als **B-1032**; vorher die Söhne
+  fragen. Theodors Truhe an der Kopie geprüft: kein Defekt (Truhen am 21./22.11., keine an Tagen mit offener Latein-Pflicht; Latein
+  an 1 von 8 Pflichttagen erfüllt). B-780 als beantwortete Frage `verworfen`.
