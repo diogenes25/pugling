@@ -201,6 +201,8 @@ builder.Services.AddScoped<FeedbackCorrectionService>();
 builder.Services.AddScoped<HomeworkService>();
 // Goal/points engine of the position model: the done rule per check mode + idempotent goal points.
 builder.Services.AddScoped<PositionProgressService>();
+// B-731: which days owe a duty (Monday to Saturday outside the child's pauses).
+builder.Services.AddScoped<DutyCalendar>();
 // The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.
 builder.Services.Configure<ClassTestPrepOptions>(builder.Configuration.GetSection(ClassTestPrepOptions.SectionName));
 builder.Services.AddScoped<ClassTestPrepService>();
@@ -243,6 +245,8 @@ builder.Services.AddScoped<ExerciseItemService>();
 builder.Services.AddScoped<WeakWordReviewService>();
 // Rolls the cross-plan learning state per (child, item) forward and records the answer history.
 builder.Services.AddScoped<ItemProgressService>();
+// B-732: why a typed answer was wrong, decided where it is graded (the synonym check reads the vocabulary store).
+builder.Services.AddScoped<AnswerErrorClassifier>();
 // Child-centric drill-down view on vocabulary progress along the catalog hierarchy (subject→series unit→exercise→item).
 builder.Services.AddScoped<ChildLearnProgressService>();
 // B-741: the grade level per child and vocabulary subject, evaluated lazily once per learning day.

@@ -265,6 +265,18 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("DailyNewWordsMax")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("DailyNewWordsMin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("DailyTasksMax")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("DailyTasksMin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -290,6 +302,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<string>("OwnedSkins")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("PenaltyCoinsPerMissedTask")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ProfileNotes")
                         .HasMaxLength(2000)
@@ -445,6 +460,35 @@ namespace Pugling.Api.Data.Migrations
                         {
                             t.HasCheckConstraint("CK_ChildMediaPick_SingleCarrier", "(CASE WHEN \"VocabularyId\" IS NULL THEN 0 ELSE 1 END\n + CASE WHEN \"ExerciseItemId\" IS NULL THEN 0 ELSE 1 END) = 1");
                         });
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ChildPause", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("From")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Until")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "From");
+
+                    b.ToTable("ChildPauses");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ChildPointsEntry", b =>
@@ -1357,8 +1401,14 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime>("At")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("BoxBefore")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("ChildId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ErrorKind")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ExerciseId")
                         .HasColumnType("INTEGER");
@@ -3016,6 +3066,9 @@ namespace Pugling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ErrorKind")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("GivenAnswer")
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
@@ -3558,6 +3611,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("MediaAsset");
 
                     b.Navigation("Vocabulary");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.ChildPause", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.ChildPointsEntry", b =>

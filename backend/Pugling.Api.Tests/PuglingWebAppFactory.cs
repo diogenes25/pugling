@@ -71,6 +71,10 @@ public abstract class PuglingWebAppFactoryBase : WebApplicationFactory<Program>
         // production zone they would disagree with the server for an hour or two every night. The zone rule itself is
         // tested by a factory that sets Europe/Berlin (TagesbegriffTests) - set here, BEFORE ConfigureFactory, so it can.
         builder.UseSetting("LearningDay:TimeZone", "UTC");
+        // B-731: the same reason for the free Sunday - a case forming "today" from the wall clock would owe a different
+        // penalty or streak depending on the weekday the suite runs on. Set here, before ConfigureFactory, so the factory of
+        // the Sunday rule's own tests (LerntageWebAppFactory) can switch it back on.
+        builder.UseSetting("LearningDay:SundayFree", "false");
         ConfigureFactory(builder);
 
         // Deliberately **last**: the later `UseSetting` wins, so a derived factory cannot displace these two

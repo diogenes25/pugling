@@ -282,6 +282,9 @@ export type Weekday = S["DayOfWeek"];
 export type CreateTimetableEntryDto = S["CreateEntryDto"];
 
 export type TimetableEntry = S["EntryResponse"];
+/** B-731: eine Pause des Kindes von Datum bis Datum – kein Malus, die Serie steht. */
+export type ChildPause = S["ChildPauseResponse"];
+export type CreateChildPauseDto = S["CreateChildPauseDto"];
 
 /** Änderung eines Kindes; `clear…` leert ein Feld (ein `null` gilt im PATCH als „nicht angegeben"). */
 export type UpdateChildDto = S["UpdateChildDto"];

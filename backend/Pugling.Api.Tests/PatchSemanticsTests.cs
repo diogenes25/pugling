@@ -228,10 +228,15 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/children",
                 new { name = Eindeutig("Kind"), birthYear = 2013, grade = 6, pin = "1111", bonusDailyCoinCap = 10, towerGameMinutesPerDay = 15,
                     homeworkCoins = 25, homeworkPenaltyCoins = 4 }));
+            // The planner limits (B-731) are set only by PATCH, not on creation.
+            (await c.PatchAsJsonAsync($"/api/v1/supervisor/children/{id}", new
+            {
+                dailyTasksMin = 1, dailyTasksMax = 3, dailyNewWordsMin = 2, dailyNewWordsMax = 6, penaltyCoinsPerMissedTask = 2,
+            })).EnsureSuccessStatusCode();
             return new Ziel(c, $"/api/v1/supervisor/children/{id}");
         }, [new("clearBirthYear", "birthYear"), new("clearGrade", "grade"), new("clearBonusDailyCoinCap", "bonusDailyCoinCap"),
             new("clearTowerGameMinutesPerDay", "towerGameMinutesPerDay"), new("clearHomeworkCoins", "homeworkCoins"),
-            new("clearHomeworkPenaltyCoins", "homeworkPenaltyCoins")]),
+            new("clearHomeworkPenaltyCoins", "homeworkPenaltyCoins"), new("clearPlannerLimits", "dailyTasksMin")]),
 
         new(typeof(UpdateTextbookDto), "title", "Access 7", async f =>
         {

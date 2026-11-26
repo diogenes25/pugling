@@ -9,7 +9,7 @@ namespace Pugling.Api.Services.Shared;
 /// (practice sessions, reviews, tests, daily rewards). A shared source for missions
 /// (time-slot related) and awards (lifetime or current streak). Read-only queries only.
 /// </summary>
-public class MetricsService(PuglingDbContext db, PositionProgressService progress)
+public class MetricsService(PuglingDbContext db, PositionProgressService progress, DutyCalendar calendar)
 {
     /// <summary>
     /// Value of a metric for a child within the half-open day window [<paramref name="from"/>, <paramref name="to"/>]
@@ -43,7 +43,8 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
             ProgressMetric.DaysComplete => (await CompleteDaysAsync(childId, today, ct))
                 .Count(d => d >= lo && d <= hi),
 
-            ProgressMetric.StreakDays => CurrentStreak(await CompleteDaysAsync(childId, today, ct), today),
+            ProgressMetric.StreakDays => CurrentStreak(await CompleteDaysAsync(childId, today, ct),
+                await calendar.ForChildAsync(childId, ct), today),
 
             _ => 0,
         };
@@ -85,18 +86,23 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
     private Task<IReadOnlySet<DateOnly>> CompleteDaysAsync(int childId, DateOnly until, CancellationToken ct) =>
         progress.CompleteChildDaysAsync(childId, until, ct);
 
-    /// <summary>Length of the current streak of complete days up to and including today or yesterday.</summary>
-    private static int CurrentStreak(IReadOnlySet<DateOnly> set, DateOnly today)
+    /// <summary>
+    /// Length of the current streak of complete days up to and including today or yesterday. A day without duty (Sunday,
+    /// a pause, B-731) is stepped over like in the child's own streak: it neither counts nor breaks.
+    /// </summary>
+    private static int CurrentStreak(IReadOnlySet<DateOnly> set, ChildDutyDays dutyDays, DateOnly today)
     {
         if (set.Count == 0) return 0;
+        var first = set.Min();
 
         // The streak may still be open today: count from today if today is already complete, otherwise from yesterday.
         var cursor = set.Contains(today) ? today : today.AddDays(-1);
         var streak = 0;
-        while (set.Contains(cursor))
+        for (; cursor >= first; cursor = cursor.AddDays(-1))
         {
+            if (!dutyDays.IsDutyDay(cursor)) continue;
+            if (!set.Contains(cursor)) break;
             streak++;
-            cursor = cursor.AddDays(-1);
         }
         return streak;
     }

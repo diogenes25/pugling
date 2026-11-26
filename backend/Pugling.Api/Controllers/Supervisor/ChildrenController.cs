@@ -39,6 +39,28 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
 
     private static bool HomeworkCoinsAcceptable(int? coins) => coins is null or (>= 0 and <= MaxHomeworkCoins);
 
+    // B-731: typo guards for the planner limits - a day of 500 tasks is no plan.
+    private const int MaxDailyTasks = 50;
+    private const int MaxDailyNewWords = 200;
+    private const int MaxPenaltyPerTask = 1000;
+
+    /// <summary>
+    /// The planner limits (B-731) as the child holds them after the change: each floor 1 to its maximum and not above its
+    /// ceiling, each ceiling at most its maximum, the penalty 0 to 1000. Checked on the merged values, so a PATCH that only
+    /// lowers a ceiling below the stored floor is refused too. <c>null</c> when they hold, else the message.
+    /// </summary>
+    private static string? PlannerLimitsProblem(int? tasksMin, int? tasksMax, int? wordsMin, int? wordsMax, int? penalty)
+    {
+        if (tasksMin is < 1 or > MaxDailyTasks || tasksMax is < 1 or > MaxDailyTasks)
+            return $"The daily tasks must be between 1 and {MaxDailyTasks}; the floor is never 0.";
+        if (wordsMin is < 1 or > MaxDailyNewWords || wordsMax is < 1 or > MaxDailyNewWords)
+            return $"The daily new words must be between 1 and {MaxDailyNewWords}; the floor is never 0.";
+        if (tasksMin > tasksMax) return "The floor of daily tasks is above their ceiling.";
+        if (wordsMin > wordsMax) return "The floor of daily new words is above their ceiling.";
+        if (penalty is < 0 or > MaxPenaltyPerTask) return $"The penalty per missed task must be between 0 and {MaxPenaltyPerTask}.";
+        return null;
+    }
+
     private const string SchoolTypeMessage = "A child attends exactly one school type; send a single value or None.";
 
     /// <summary>
@@ -60,7 +82,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
-                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins))
+                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins,
+                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask))
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of students supervised by the logged-in supervisor.</summary>
@@ -81,7 +104,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.CreatedAt,
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
-                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins))
+                c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins,
+                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask))
             .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
@@ -138,7 +162,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var response = new ChildResponse(child.Id, child.Name, child.BirthYear, child.Grade,
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
             child.AllowedContentRating, child.CreatedAt, 0, 0, child.BonusDailyCoinCap,
-            child.TowerGameMinutesPerDay, child.HomeworkCoins, child.HomeworkPenaltyCoins);
+            child.TowerGameMinutesPerDay, child.HomeworkCoins, child.HomeworkPenaltyCoins,
+            child.DailyTasksMin, child.DailyTasksMax, child.DailyNewWordsMin, child.DailyNewWordsMax, child.PenaltyCoinsPerMissedTask);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
@@ -155,6 +180,15 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (!HomeworkCoinsAcceptable(dto.HomeworkCoins) || !HomeworkCoinsAcceptable(dto.HomeworkPenaltyCoins))
             return this.ProblemWithCode(ApiErrors.ValidationError, HomeworkCoinsMessage);
         if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
+        // Value first, clear switch second - as for every other field.
+        int? Limit(int? sent, int? stored) => dto.ClearPlannerLimits ? null : sent ?? stored;
+        var tasksMin = Limit(dto.DailyTasksMin, child.DailyTasksMin);
+        var tasksMax = Limit(dto.DailyTasksMax, child.DailyTasksMax);
+        var wordsMin = Limit(dto.DailyNewWordsMin, child.DailyNewWordsMin);
+        var wordsMax = Limit(dto.DailyNewWordsMax, child.DailyNewWordsMax);
+        var penalty = Limit(dto.PenaltyCoinsPerMissedTask, child.PenaltyCoinsPerMissedTask);
+        if (PlannerLimitsProblem(tasksMin, tasksMax, wordsMin, wordsMax, penalty) is { } limitsProblem)
+            return this.ProblemWithCode(ApiErrors.ValidationError, limitsProblem);
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
         // Value first, clear switch second - "clear" wins if a client sends both.
@@ -176,6 +210,11 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (dto.ClearHomeworkCoins) child.HomeworkCoins = null;
         if (dto.HomeworkPenaltyCoins.HasValue) child.HomeworkPenaltyCoins = dto.HomeworkPenaltyCoins;
         if (dto.ClearHomeworkPenaltyCoins) child.HomeworkPenaltyCoins = null;
+        child.DailyTasksMin = tasksMin;
+        child.DailyTasksMax = tasksMax;
+        child.DailyNewWordsMin = wordsMin;
+        child.DailyNewWordsMax = wordsMax;
+        child.PenaltyCoinsPerMissedTask = penalty;
         // Mirror the name onto the login account - in the SAME commit, or a renamed child is still greeted with the
         // old name after the next login (the display name comes from the account). See AccountService.MirrorAsync.
         // The PIN lives on the account only (B-230).

@@ -24,7 +24,7 @@ namespace Pugling.Api.Controllers.Student;
 public class PositionPracticeController(PuglingDbContext db, PositionPlayService play, ScoringService scoring,
     PositionProgressService progress, GamificationService gamification, AnswerGrader grader,
     ItemProgressService itemProgress, MediaSelector selector, ILogger<PositionPracticeController> logger,
-    TimeProvider time, LearningDay learningDay, DailyBoxService dailyBox)
+    TimeProvider time, LearningDay learningDay, DailyBoxService dailyBox, AnswerErrorClassifier classifier)
     : ControllerBase
 {
     /// <summary>Upper bound of the seconds creditable per heartbeat (anti time cheat).</summary>
@@ -755,9 +755,14 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         // A review without a verdict (B-433) leaves no history entry: the introduction it answers was recorded already.
         if (creditedIndex is { } recorded && !noVerdict)
         {
+            // B-732: why a typed miss was wrong, against the card as asked - a self-assessment has no text to classify.
+            var errorKind = typed && !displayOnly
+                ? await classifier.ClassifyAsync(type, PositionPlayService.ConfigOf(played), staged, staged[recorded], stage, dto.GivenAnswer,
+                    wasCorrect, ct)
+                : null;
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), staged[recorded], wasCorrect && !displayOnly,
                 stage, typed ? dto.GivenAnswer : null, ItemReviewSource.Practice, positionId, session.Day, countsForMastery: scored,
-                accentSlip: accentSlip && scored, ct: ct);
+                accentSlip: accentSlip && scored, errorKind, ct: ct);
         }
 
         // Points only for graded cards (anti-farming), the box only on Leitner positions. Otherwise 0.
@@ -934,14 +939,21 @@ public class PositionPracticeController(PuglingDbContext db, PositionPlayService
         {
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, wasKnown,
                 (int)TestStage.SelfAssess, null, ItemReviewSource.Practice, pos.Id, session.Day, countsForMastery: false, accentSlip: false,
-                ct: ct);
+                errorKind: null, ct: ct);
         }
         // The recall's row carries the form it was answered in: an eased recall is no recall from memory.
         if (verdict)
         {
+            // B-732: the recall is written - given up is a word not known; an eased form may be a pick. An older client's bare
+            // "known" claim carries no text and no kind.
+            var errorKind = (dto.GaveUp || !string.IsNullOrWhiteSpace(dto.GivenAnswer))
+                && PositionPlayService.PlayedExercise(pos, session.Day) is { } played
+                ? await classifier.ClassifyAsync(type, PositionPlayService.ConfigOf(played), staged, item, easedStage ?? (int)TestStage.LearnCard,
+                    dto.GivenAnswer, recalled, ct)
+                : null;
             await itemProgress.RecordAsync(plan.ChildId, PositionPlayService.PlayedExerciseId(pos, session.Day), item, recalled, easedStage ?? (int)TestStage.LearnCard,
                 string.IsNullOrWhiteSpace(dto.GivenAnswer) ? null : dto.GivenAnswer, ItemReviewSource.Practice, pos.Id,
-                session.Day, countsForMastery: false, accentSlip: false, ct: ct);
+                session.Day, countsForMastery: false, accentSlip: false, errorKind, ct: ct);
         }
 
         // B-643 (decisions 4 and 8): given up, wrong or answered with help, the word comes back at the end of the round as a

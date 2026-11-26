@@ -194,7 +194,8 @@ public class ConventionGuardTests
     // (only planned ones from today on - a handful per child).
     // 35 since B-377: the child's unread praise - at most five by design (decision 5, `PraiseService.OverlayLimit`); the
     // sender's list takes `take`.
-    private const int UnpaginatedArrayGetCount = 35;
+    // 36 since B-731 (merged): the pauses of one child - entered by hand, a few a year.
+    private const int UnpaginatedArrayGetCount = 36;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()

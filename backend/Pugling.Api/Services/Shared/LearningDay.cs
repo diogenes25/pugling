@@ -13,6 +13,12 @@ public sealed class LearningDayOptions
     /// midnight - "by tonight" must not run until 1 or 2 a.m. because the server counts days in UTC.
     /// </summary>
     public string TimeZone { get; set; } = "Europe/Berlin";
+
+    /// <summary>
+    /// Sunday owes no duty (B-731, decision 1): no penalty, and the streak neither counts nor breaks on it. Off only in a
+    /// test suite whose cases form "today" from the wall clock, so they do not depend on the weekday they run on.
+    /// </summary>
+    public bool SundayFree { get; set; } = true;
 }
 
 /// <summary>

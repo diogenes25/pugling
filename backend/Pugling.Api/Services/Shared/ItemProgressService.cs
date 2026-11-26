@@ -26,17 +26,20 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
     /// position engine). No <c>SaveChanges</c> – see class doc.
     /// <paramref name="accentSlip"/> marks a miss that practice counted half (B-624); the learning progress still records
     /// it as the miss <paramref name="wasCorrect"/> says (decision 7), the flag only tells the report why.
+    /// <paramref name="errorKind"/> is why a typed answer was wrong (B-732), decided by the caller where it graded the
+    /// answer (<see cref="AnswerErrorClassifier"/>); <c>null</c> for a hit, a pick and a self-assessment. The box before
+    /// the answer is taken here, where the box moves, so no caller can store one that differs from it.
     /// </summary>
     public async Task RecordAsync(int childId, int exerciseId, ContentItem item, bool wasCorrect, int stageValue,
         string? givenAnswer, ItemReviewSource source, int? planPositionId, DateOnly today, bool countsForMastery,
-        bool accentSlip, CancellationToken ct = default)
+        bool accentSlip, AnswerErrorKind? errorKind, CancellationToken ct = default)
     {
         if (item.ItemId is not { } itemId || item.VocabularyId is not { } vocabId) return;
 
         var now = time.GetUtcNow().UtcDateTime;
 
         // The history records every answer - including ungraded repetitions (that is genuine history).
-        db.ItemReviewEvents.Add(new ItemReviewEvent
+        var review = new ItemReviewEvent
         {
             ChildId = childId,
             ItemId = itemId,
@@ -48,8 +51,10 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
             GivenAnswer = givenAnswer,
             WasCorrect = wasCorrect,
             AccentSlip = accentSlip,
+            ErrorKind = wasCorrect ? null : errorKind,
             At = now,
-        });
+        };
+        db.ItemReviewEvents.Add(review);
 
         if (!countsForMastery) return;
 
@@ -67,6 +72,7 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
         prog.ExerciseId = exerciseId;
         prog.VocabularyId = vocabId;
         prog.IntroducedAt ??= today;
+        review.BoxBefore = prog.Box;
         prog.SeenCount++;
         if (wasCorrect) prog.CorrectCount++;
         // Leitner step: correct → one box up (capped), wrong → back to box 1 (as in the position engine).

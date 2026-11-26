@@ -9,6 +9,23 @@ public enum ItemReviewSource
 }
 
 /// <summary>
+/// Why a typed answer was wrong (B-732) - fixed when the answer is given, so a later change to the solution or to the
+/// rules does not rewrite the past. Only a wrong answer the child typed carries one: a right answer, a pick from options
+/// and a self-assessment carry none. Determined by <see cref="Services.Shared.AnswerErrorClassifier"/>.
+/// </summary>
+public enum AnswerErrorKind
+{
+    /// <summary>Right but for its diacritics ("ecole" for "école").</summary>
+    Accent = 1,
+    /// <summary>The right word misspelled, by the distance rule of <see cref="Services.Shared.AnswerGrader.IsMisspelled"/>.</summary>
+    Typo = 2,
+    /// <summary>The learnt word of another store entry with the same meaning - a word the child knows, not the one asked.</summary>
+    Synonym = 3,
+    /// <summary>Not the word: another word, a neighbouring word of the exercise, or nothing at all.</summary>
+    WrongWord = 4,
+}
+
+/// <summary>
 /// A child's cross-plan learning state for a single exercise item (vocabulary pair). Unlike
 /// <see cref="PositionItemProgress"/> (Leitner review scheduling per plan position), this state hangs on the
 /// stable <see cref="ExerciseItem.Id"/> (the "ItemId") and carries the <see cref="VocabularyId"/>
@@ -90,6 +107,17 @@ public class ItemReviewEvent
     /// state still records a miss; the flag lets the supervisor see whether words or only accents are missing.
     /// </summary>
     public bool AccentSlip { get; set; }
+    /// <summary>
+    /// Why the typed answer was wrong, fixed at the answer (B-732); <c>null</c> for a right answer, a pick, a
+    /// self-assessment, a test question never answered (cursor not reached, left out of a bulk submission) and every
+    /// answer recorded before the column existed. A typed empty answer is a wrong word, not null.
+    /// </summary>
+    public AnswerErrorKind? ErrorKind { get; set; }
+    /// <summary>
+    /// The cross-plan box (<see cref="ItemProgress.Box"/>) before this answer moved it (B-732), so a day's evaluation can
+    /// tell a word that was consolidated from one that fell back. <c>null</c> when the answer does not count for mastery.
+    /// </summary>
+    public int? BoxBefore { get; set; }
 
     public DateTime At { get; set; } = DateTime.UtcNow;
 }

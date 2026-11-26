@@ -1,3 +1,5 @@
+using Pugling.Api.Models;
+
 namespace Pugling.Api.Services.Shared;
 
 /// <summary>
@@ -86,6 +88,18 @@ public class AnswerGrader
         var folded = WithoutDiacritics(g);
         return Spellings(item, item).Any(a => WithoutDiacritics(a) == folded);
     }
+
+    /// <summary>
+    /// The spelling side of an error kind (B-732): <see cref="AnswerErrorKind.Accent"/> before
+    /// <see cref="AnswerErrorKind.Typo"/>, because a missing accent is also one letter off and would otherwise always pass
+    /// as a typo. <c>null</c> when the wrong answer is neither - another word or none, which only the store can tell apart
+    /// (<see cref="AnswerErrorClassifier"/>). The two rules are the ones above, so the stored kind cannot drift from the
+    /// slip practice counts half and the "misspelled" the result screen shows.
+    /// </summary>
+    public AnswerErrorKind? SpellingSlip(string? given, ContentItem item, IReadOnlyList<ContentItem> siblings) =>
+        IsAccentSlip(given, item) ? AnswerErrorKind.Accent
+        : IsMisspelled(given, item, siblings) ? AnswerErrorKind.Typo
+        : null;
 
     // Canonical decomposition, then every combining mark dropped. Letters that do not decompose (ß, œ, æ, ø) are kept.
     private static string WithoutDiacritics(string s)

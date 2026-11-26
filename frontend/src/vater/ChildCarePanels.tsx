@@ -5,10 +5,13 @@ import { SUPERVISOR_RELATIONS, WEEKDAYS, supervisorRelationLabel } from "../lib/
 import { confirmAction } from "../lib/ui";
 import { useAction } from "../lib/useAction";
 import { useAsync } from "../lib/useAsync";
-import type { SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntry, Weekday } from "../lib/types";
+import type {
+  ChildPause, ChildResponse, SubjectResponse, SupervisorLink, SupervisorRelation, TimetableEntry, UpdateChildDto, Weekday,
+} from "../lib/types";
 import { AddPanel } from "../components/AddPanel";
 import { ListenAusfall } from "../components/ListenAusfall";
-import { formatDate } from "../lib/datum";
+import { formatDate, formatDateRange, heuteImLerntag } from "../lib/datum";
+import { FieldLabel } from "../components/InfoHint";
 
 /*
  * Zwei Seiten des Kind-Profils, die bisher nur über die API erreichbar waren.
@@ -197,6 +200,168 @@ export function TimetableSection({ childId, subjects }: { childId: number; subje
           </form>
         </AddPanel>
       )}
+      <StatusBanner message={action.message} />
+    </section>
+  );
+}
+
+/**
+ * Pausen des Kindes (B-731): von Datum bis Datum, auch rückwirkend für heute. In einer Pause kostet keine Pflicht
+ * Münzen und die Serie steht – sie zählt weder mit, noch reißt sie. Der Sonntag ist ohnehin frei. Ein schon gebuchter
+ * Malus wird nicht erstattet (Rückgabe von Hand über „Münzen“).
+ */
+export function PauseSection({ childId, childName }: { childId: number; childName: string }) {
+  const pauses = useAsync<ChildPause[]>(() => api.childPauses(childId), [childId]);
+  const today = heuteImLerntag();
+  const [from, setFrom] = useState(today);
+  const [until, setUntil] = useState(today);
+  const [note, setNote] = useState("");
+  const action = useAction();
+  const valid = from !== "" && until !== "" && from <= until;
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    if (!valid) { action.fail("„Bis“ darf nicht vor „Von“ liegen."); return; }
+    if (await action.run(() => api.addChildPause(childId, { from, until, note: note.trim() || null }), "Pause eingetragen.")) {
+      setNote("");
+      pauses.reload();
+    }
+  }
+
+  async function remove(pause: ChildPause) {
+    if (!confirmAction(`Pause ${formatDateRange(pause.from, pause.until)} löschen? Ab dann zählen diese Tage wieder.`)) return;
+    if (await action.run(() => api.removeChildPause(childId, pause.id), "Pause gelöscht.")) pauses.reload();
+  }
+
+  return (
+    <section>
+      <h3 className="h-section">Pausen</h3>
+      <p className="sub">
+        Krank, Ferien, Klassenfahrt: In einer Pause kostet {childName} keine Pflicht Münzen, und die Serie steht still.
+        Sonntags ist ohnehin frei. Ein schon abgebuchter Malus kommt nicht von selbst zurück – den gibst du unter „Münzen“
+        zurück.
+      </p>
+      <ListenAusfall was="Die Pausen" fehler={pauses.error} laedt={pauses.loading} onRetry={pauses.reload} schluessel={childId} />
+      {pauses.data && (pauses.data.length === 0
+        ? <p className="muted">Keine Pause eingetragen.</p>
+        : (
+          <ul aria-label="Eingetragene Pausen" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {pauses.data.map((p) => (
+              <li key={p.id} className="row" style={{ gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 600 }}>{formatDateRange(p.from, p.until)}</span>
+                {p.note && <span className="muted">{p.note}</span>}
+                <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy}
+                  aria-label={`Pause ${formatDateRange(p.from, p.until)} löschen`} onClick={() => remove(p)}>Löschen</button>
+              </li>
+            ))}
+          </ul>
+        ))}
+      {pauses.data && (
+        <AddPanel label="Neue Pause" defaultOpen={pauses.data.length === 0}>
+          <form className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }} onSubmit={add}>
+            <div className="field" style={{ maxWidth: 170 }}>
+              <label htmlFor="pause-from">Von</label>
+              <input id="pause-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </div>
+            <div className="field" style={{ maxWidth: 170 }}>
+              <label htmlFor="pause-until">Bis (einschließlich)</label>
+              <input id="pause-until" type="date" value={until} onChange={(e) => setUntil(e.target.value)}
+                aria-invalid={!valid || undefined} />
+            </div>
+            <div className="field" style={{ maxWidth: 240 }}>
+              <label htmlFor="pause-note">Notiz <span className="muted">(optional)</span></label>
+              <input id="pause-note" autoComplete="off" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)}
+                placeholder="z. B. krank" />
+            </div>
+            <button type="submit" className="btn inline-btn" style={{ width: "auto" }} disabled={action.busy || !valid}>
+              Pause eintragen
+            </button>
+          </form>
+          {!valid && <p className="sub">„Bis“ darf nicht vor „Von“ liegen.</p>}
+        </AddPanel>
+      )}
+      <StatusBanner message={action.message} />
+    </section>
+  );
+}
+
+/** Die fünf Leitplanken in der Reihenfolge der Maske, mit den Grenzen, die auch der Server prüft. */
+const LIMIT_FIELDS = [
+  { key: "dailyTasksMin", id: "limit-tasks-min", label: "Pflichtaufgaben am Tag – mindestens", min: 1, max: 50 },
+  { key: "dailyTasksMax", id: "limit-tasks-max", label: "Pflichtaufgaben am Tag – höchstens", min: 1, max: 50 },
+  { key: "dailyNewWordsMin", id: "limit-words-min", label: "Neue Wörter am Tag – mindestens", min: 1, max: 200 },
+  { key: "dailyNewWordsMax", id: "limit-words-max", label: "Neue Wörter am Tag – höchstens", min: 1, max: 200 },
+  { key: "penaltyCoinsPerMissedTask", id: "limit-penalty", label: "Malus je verpasster Pflichtaufgabe (🪙)", min: 0, max: 1000 },
+] as const;
+
+type LimitKey = (typeof LIMIT_FIELDS)[number]["key"];
+
+/** Was die Maske prüft, bevor sie schickt – dieselben Regeln, mit denen der Server ablehnt (B-731 AK 6). */
+export function leitplankenFehler(values: Record<LimitKey, number>): string | null {
+  for (const f of LIMIT_FIELDS) {
+    const v = values[f.key];
+    if (!Number.isInteger(v) || v < f.min || v > f.max) return `${f.label}: erlaubt sind ganze Zahlen von ${f.min} bis ${f.max}.`;
+  }
+  if (values.dailyTasksMin > values.dailyTasksMax) return "Bei den Pflichtaufgaben liegt „mindestens“ über „höchstens“.";
+  if (values.dailyNewWordsMin > values.dailyNewWordsMax) return "Bei den neuen Wörtern liegt „mindestens“ über „höchstens“.";
+  return null;
+}
+
+/**
+ * Die Leitplanken des Tagesplaners (B-731): je Kind Boden und Deckel für Pflichtaufgaben und neue Wörter am Tag und der
+ * Malus je verpasster Pflichtaufgabe. Der Vater setzt den Rahmen, keine Tagesmengen. Die Zahlen wirken erst mit dem
+ * Planer – die Maske sagt das, damit niemand nach dem Speichern eine Wirkung sucht. Angezeigt wird immer der Stand des
+ * Servers: nach dem Speichern lädt die Seite das Kind neu, und der `key` des Aufrufers setzt die Felder darauf zurück.
+ */
+export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; onSaved: () => void }) {
+  const [values, setValues] = useState<Record<LimitKey, string>>(() => Object.fromEntries(
+    LIMIT_FIELDS.map((f) => [f.key, child[f.key]?.toString() ?? ""])) as Record<LimitKey, string>);
+  const action = useAction();
+  const stored = LIMIT_FIELDS.some((f) => child[f.key] != null);
+  const allFilled = LIMIT_FIELDS.every((f) => values[f.key].trim() !== "");
+  const numbers = Object.fromEntries(LIMIT_FIELDS.map((f) => [f.key, Number(values[f.key])])) as Record<LimitKey, number>;
+  const fehler = allFilled ? leitplankenFehler(numbers) : "Bitte alle fünf Zahlen eintragen.";
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (fehler) { action.fail(fehler); return; }
+    const dto: UpdateChildDto = { ...numbers };
+    if (await action.run(() => api.updateChild(child.id, dto), "Leitplanken gespeichert.")) onSaved();
+  }
+
+  async function clear() {
+    if (await action.run(() => api.updateChild(child.id, { clearPlannerLimits: true }), "Leitplanken entfernt.")) onSaved();
+  }
+
+  return (
+    <section>
+      <h3 className="h-section">Leitplanken des Tagesplaners</h3>
+      <p className="sub">
+        Der Rahmen, in dem der Tagesplaner den Tag von {child.name} zusammenstellt: wie viele Pflichtaufgaben und neue
+        Wörter am Tag mindestens und höchstens anstehen, und was eine verpasste Pflichtaufgabe kostet. Die Zahlen wirken
+        erst, wenn der Tagesplaner kommt; heute ändern sie noch nichts an Pflicht und Malus.
+      </p>
+      <form onSubmit={save}>
+        <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+          {LIMIT_FIELDS.map((f) => (
+            <div key={f.key} className="field" style={{ maxWidth: 230, marginBottom: 0 }}>
+              <FieldLabel htmlFor={f.id} topic="plannerLimits">{f.label}</FieldLabel>
+              <input id={f.id} type="number" min={f.min} max={f.max} step={1} inputMode="numeric"
+                value={values[f.key]} onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))} />
+            </div>
+          ))}
+        </div>
+        <div className="row" style={{ gap: 8, marginTop: 8 }}>
+          <button type="submit" className="btn small" style={{ width: "auto" }} disabled={action.busy || fehler !== null}>Speichern</button>
+          {stored && (
+            <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={clear}>
+              Leitplanken entfernen
+            </button>
+          )}
+        </div>
+      </form>
+      {fehler && allFilled && <p className="sub">{fehler}</p>}
+      {!stored && <p className="muted">Noch keine Leitplanken gesetzt.</p>}
       <StatusBanner message={action.message} />
     </section>
   );

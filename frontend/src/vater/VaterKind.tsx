@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
 import { NotenstufenSection } from "./NotenstufenSection";
-import { SupervisorsSection, TimetableSection } from "./ChildCarePanels";
+import { LeitplankenSection, PauseSection, SupervisorsSection, TimetableSection } from "./ChildCarePanels";
 import { StatusBanner } from "../components/StatusBanner";
 import { Pflicht } from "../components/Pflicht";
 import { FieldLabel } from "../components/InfoHint";
@@ -130,6 +130,10 @@ export function VaterKind() {
         {/* `key`: das Feld hält seinen Wert lokal – beim Wechsel des Kindes darf es nicht den Wert des vorigen tragen. */}
         <BonusSection key={me.id} child={me} onSaved={child.reload} />
         <TowerGameSection key={`tower-${me.id}`} child={me} onSaved={child.reload} />
+        <PauseSection childId={childId} childName={me.name} />
+        {/* Der `key` trägt den Serverstand: nach dem Speichern setzt das Neuladen die Felder auf das Gelesene (B-731 AK 8). */}
+        <LeitplankenSection key={`limits-${me.id}-${me.dailyTasksMin}-${me.dailyTasksMax}-${me.dailyNewWordsMin}-${me.dailyNewWordsMax}-${me.penaltyCoinsPerMissedTask}`}
+          child={me} onSaved={child.reload} />
       </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}
