@@ -16,9 +16,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | Defekt | `in-arbeit` | P1 | XS | backend | — |
 | [B-780](B-780-muenzen-je-uebung-nachmessen.md) | Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen | Frage | `ausformuliert` | P1 | — | — | — |
-| [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) | Wunsch | `in-arbeit` | P1 | L | beides | Migration |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
@@ -32,6 +30,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | Antworten des Vaters (Vorschau, Nachtrag) landen im Lernstand und in der Auswertung des Kindes | Defekt | `idee` | P2 | — | backend | — |
+| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-743](B-743-notenstufe-anzeige-kind-und-vater.md) | Die Notenstufe zeigen: dem Kind mit Zielsatz, dem Vater als Zahl | Wunsch | `in-arbeit` | P2 | M | frontend | — |
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | Wunsch | `in-arbeit` | P2 | L | backend | Migration |
@@ -59,6 +58,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-249](B-249-probeklausur-mit-notenprognose.md) | Eine Probeklausur über das Bündel einer Klassenarbeit, mit Notenprognose | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-592](B-592-erinnerung-vor-pflicht-frist.md) | Erinnerung vor Ablauf der Pflicht-Frist – für Kind und Vater | Wunsch | `ausformuliert` | P2 | — | — | — |
 | [B-664](B-664-diktat-und-einfuegen-beim-vokabeltippen-erkennen.md) | Diktieren, Einfügen und Autovervollständigung beim Vokabeltippen erkennen | Wunsch | `ausformuliert` | P2 | — | frontend | — |
+| [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | Gefestigt und Tempo sind für Tage vor B-732 unbekannt, nicht null | Wunsch | `idee` | P2 | — | beides | — |
 | [B-773](B-773-dad-sequenz-vortag-verfehlt.md) | Learning Dad reagiert auf verfehlte Tagesziele vom Vortag (wütend → Monster → Kampfansage) | Wunsch | `idee` | P2 | — | — | — |
 | [B-779](B-779-mehr-zufall-und-arcade-mechaniken.md) | Mehr Arcade: Zufallsboxen und Bindungs-Mechaniken über die eine Tagestruhe hinaus | Wunsch | `idee` | P2 | — | — | — |
 | [B-781](B-781-lernzeit-anzeige-mit-aktivitaetsnachweis.md) | Lernzeit-Anzeige: wie viele Minuten das Kind heute aktiv geübt hat – ohne dass sich Zeit absitzen lässt | Wunsch | `idee` | P2 | — | — | — |
@@ -99,7 +99,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-955](B-955-muenzen-und-zielbonus-gleiche-worte.md) | Dieselben Worte für verschiedene Zahlen: „Münzen heute“ im Kind-Hub, 🏆 in der Sohn-App | Aufräumen | `idee` | P3 | — | frontend | — |
 
 <details>
-<summary>Abgenommen (636)</summary>
+<summary>Abgenommen (638)</summary>
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -118,6 +118,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-1023](B-1023-hausaufgaben-malus-in-der-pause.md) | Soll eine Hausaufgabe, die in einer Pause fällig wird, weiter Malus kosten? | Frage | `abgenommen` | P2 | — | — | — |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | „keine Lösung“ wurde nur in einer Schreibweise erkannt | Defekt | `abgenommen` | P2 | XS | backend | — |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text | Defekt | `abgenommen` | P2 | XS | beides | — |
+| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | Defekt | `abgenommen` | P1 | XS | backend | — |
 | [B-104](B-104-keyresult-dublette-zahlt-doppelt.md) | Derselbe Meilenstein zweimal: drei Schreibpfade laufen ungeprüft in einen Unique-Index, und dort hängt Geld | Defekt | `abgenommen` | P2 | S | backend | — |
 | [B-105](B-105-taegliche-belohnungsbox.md) | Tägliche Belohnungsbox: Loot-Box + Streak als positives Gegenstück zum Stick | Wunsch | `abgenommen` | P4 | S | backend | Migration |
 | [B-106](B-106-lehrwerkgetriebener-katalog.md) | Übungen hängen künftig am Lehrwerk, nicht am Kapitel | Wunsch | `abgenommen` | P1 | L | beides | — |
@@ -654,6 +655,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-730](B-730-tagesbegriff-in-deutscher-zeit.md) | „Heute" entsteht an einer Stelle in deutscher Zeit (B-644, Etappe E0a) | Wunsch | `abgenommen` | P1 | M | beides | — |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) | Wunsch | `abgenommen` | P1 | L | beides | Migration |
 | [B-732](B-732-fehlerart-wird-beim-antworten-gespeichert.md) | Die Fehlerart einer getippten Antwort wird beim Antworten bestimmt und gespeichert (B-644, Etappe E1a) | Wunsch | `abgenommen` | P1 | M | backend | Migration |
+| [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) | Wunsch | `abgenommen` | P1 | L | beides | Migration |
 | [B-74](B-74-editor-zeilen-typisieren.md) | Die Zeilen des Übungs-Editors sind `Record<string, any>` | Aufräumen | `abgenommen` | P3 | M | frontend | — |
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` | Wunsch | `abgenommen` | P2 | S | backend | — |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern | Wunsch | `abgenommen` | P2 | M | backend | Migration |
@@ -762,16 +764,17 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-752](B-752-vorbereitungs-pflicht-im-fenster.md) | Im Fenster vor der Klassenarbeit entsteht eine tägliche Pflicht über das Bündel | `in-arbeit` | Nutzer: Fairness der Last am Gerät |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (229)
+### Nach der Abnahme entgangen (230)
 
-**Nachgeschaut: 589 von 636 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 47 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 589 von 638 abgenommenen** — und in 201 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | „keine Lösung“ wurde nur in einer Schreibweise erkannt | [B-712] | `abgenommen` |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text | [B-593] | `abgenommen` |
-| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | [B-628] | `in-arbeit` |
+| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | [B-628] | `abgenommen` |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | Zwei Meldungen zu zwei verschiedenen Übungsantworten verschmelzen zu einer | [B-767] | `idee` |
+| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | [B-732] | `idee` |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `abgenommen` |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `abgenommen` |
 | [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `abgenommen` |
@@ -999,7 +1002,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (47) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (49) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1011,6 +1014,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-1022](B-1022-sohn-tag-zeigt-malus-frist-am-sonntag.md) | Die Arcade zeigt am Sonntag und in einer Pause „noch N Std. · −X Münzen“, obwohl der Server nichts abbucht |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | „keine Lösung“ wurde nur in einer Schreibweise erkannt |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text |
+| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
@@ -1043,6 +1047,7 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) |
+| [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) |
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
@@ -1069,9 +1074,11 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1023](B-1023-hausaufgaben-malus-in-der-pause.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung", Feld `groesse`, Feld `wo`, Feld `migration`, Feld `vertragsbruch` |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | `in-arbeit` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
+| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-1030](B-1030-testantwort-ohne-fehlerart.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |

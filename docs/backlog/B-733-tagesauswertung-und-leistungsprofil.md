@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/auswertung, bereich/training, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/auswertung, bereich/training, rolle/supervisor]
 aliases: [Tagesauswertung, Leistungsprofil, Problemwörter, Verlauf, Etappe E1b]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -214,3 +214,7 @@ Nach [B-730](B-730-tagesbegriff-in-deutscher-zeit.md), [B-731](B-731-lerntage-pa
   | R5 Lernkarte zählt | `:267` | red | red |
   | C19 Wasserstand (nur Arbeit) | `:55` | green | green |
   | C20 Gate freier Tag (nur Arbeit) | `:244` | green | green |
+- **2026-11-26** — `abgenommen` mit Commit `e18934f0`. Rollengang Vater an einer frischen Kopie der echten DB (Migration beim Start
+  eingespielt): Verlauf Friedrich 12 Tage, verpasste Pflicht ohne Übung als Zeile, Sonntag ohne Pflicht, Problemwort „une côte“
+  2 falsch / 36 richtig, zuletzt „un côte“; Profil je Fach; erster Aufruf 2,2 s, danach 0,13 s; Lehrer und Sohn 403. Benannt offen:
+  gefestigt/Tempo vor B-732 → B-1031, Fehlerart am Testweg → B-1030. Suite 2623/2623, Vitest 1518/1518, E2E 4 passed.

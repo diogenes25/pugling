@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Rückmeldung zeigt spätere Antwort]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Defekt
 groesse: XS
@@ -48,3 +48,4 @@ Zeitgrenze. Jede Antwort nach der Meldung verdrängt die gemeldete.
 
   Review (`pugling-reviewer`): Grenze richtig für Testmeldungen; für zusammengelegte Übungsmeldungen geht die erste Antwort
   verloren → eigene Story B-1029 (bewusst ausgelassen, das Sprint-Ziel hält ohne sie).
+- **2026-11-26** — `abgenommen` mit Commit `e18934f0`. Rollengang Vater an der Kopie: Meldung 9 zeigt „amazong“. Suite 2623/2623.
