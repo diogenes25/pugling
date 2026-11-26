@@ -347,7 +347,9 @@ public class FehlerartTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
 
             await using (var db = new PuglingDbContext(options))
             {
-                var row = await db.ItemReviewEvents.AsNoTracking().SingleAsync();
+                // Projected: the database stands at this migration, before later columns (B-1028's Day) existed.
+                var row = await db.ItemReviewEvents.AsNoTracking()
+                    .Select(e => new { e.GivenAnswer, e.WasCorrect, e.ErrorKind, e.BoxBefore }).SingleAsync();
                 Assert.Equal(("ecole", false), (row.GivenAnswer, row.WasCorrect));
                 Assert.Null(row.ErrorKind);
                 Assert.Null(row.BoxBefore);

@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: 2026-11-26
 ---
 
 # B-733 · Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b)
@@ -220,3 +222,4 @@ Nach [B-730](B-730-tagesbegriff-in-deutscher-zeit.md), [B-731](B-731-lerntage-pa
   gefestigt/Tempo vor B-732 → B-1031, Fehlerart am Testweg → B-1030. Suite 2623/2623, Vitest 1518/1518, E2E 4 passed.
 - **2026-11-26** — B-1030 verworfen: dass die E2E am ersten Tag keine Fehlerart zeigt, ist die Regel aus B-732 (eine Auswahl trägt
   keine Art), kein Loch. Kommentar der E2E entsprechend berichtigt.
+- **2026-11-26** — Nachschau (Sprint 194): der zurückdatierte Nachtrag (falscher Tag, eingefrorener Tag nie neu gerechnet) ist B-1028, vom Review bewusst ausgelagert – kein Durchrutscher. `EvaluatedDay.CreatedAt` kam aus der Systemuhr statt dem `TimeProvider` (ohne Wirkung im Betrieb), in B-1028 behoben.

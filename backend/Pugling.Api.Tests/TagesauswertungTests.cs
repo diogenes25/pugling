@@ -151,7 +151,7 @@ public class TagesauswertungTests : IClassFixture<LerntageWebAppFactory>
 
     private static void Answer(PuglingDbContext db, int childId, int exerciseId, int positionId, (int Id, int VocabularyId) item,
         DateOnly day, int hourUtc, bool correct, int? boxBefore, AnswerErrorKind? kind, string? given,
-        TestStage stage = TestStage.FreeText) =>
+        TestStage stage = TestStage.FreeText, DateTime? writtenAt = null) =>
         db.ItemReviewEvents.Add(new ItemReviewEvent
         {
             ChildId = childId,
@@ -165,7 +165,9 @@ public class TagesauswertungTests : IClassFixture<LerntageWebAppFactory>
             WasCorrect = correct,
             BoxBefore = boxBefore,
             ErrorKind = kind,
-            At = day.ToDateTime(new TimeOnly(hourUtc, 0), DateTimeKind.Utc),
+            Day = day,
+            // A catch-up is written later than the day it belongs to (B-1028).
+            At = writtenAt ?? day.ToDateTime(new TimeOnly(hourUtc, 0), DateTimeKind.Utc),
         });
 
     private void Write(Action<PuglingDbContext> change)
@@ -256,6 +258,175 @@ public class TagesauswertungTests : IClassFixture<LerntageWebAppFactory>
 
         Assert.Equal(Figures(first[Friday]), Figures(second[Friday]));
         Assert.Equal(stored, Read(db => db.DailyEvaluations.Count(d => d.ChildId == s.ChildId)));
+    }
+
+    // ---- B-1028: a supervisor's catch-up for a past day lands on that day ----
+
+    // Reads the evaluation (storing every closed day), then lets a minute pass, so anything written afterwards is newer
+    // than the stored days.
+    private async Task<Dictionary<DateOnly, JsonElement>> ReadAndLetTimePassAsync(Setup s)
+    {
+        var rows = ByDay(await OkJsonAsync(await s.Father.GetAsync(s.Url)));
+        factory.Clock.Advance(TimeSpan.FromMinutes(1));
+        return rows;
+    }
+
+    /// <summary>
+    /// B-1028 AK 1 and 2 over the real API: after Sunday was stored, the father catches up Sunday for the child (a round with
+    /// day = Sunday, one typed miss, 120 active seconds). Sunday's row is computed again and carries the miss and the seconds;
+    /// today's live row stays as it was. Red if the answer is stamped with today (Day from the clock) or counted by its
+    /// timestamp, or if a stored day is never computed again.
+    /// </summary>
+    [Fact]
+    public async Task Nachtrag_des_Vaters_fuer_gestern_steht_am_gestrigen_Tag_auch_wenn_er_schon_gespeichert_war()
+    {
+        var s = await SetupAsync();
+        var before = await ReadAndLetTimePassAsync(s);
+
+        var practice = $"/api/v1/student/study-plans/{s.PlanId}/positions/{s.PositionId}/practice-sessions";
+        var sessionId = await TestApi.IdAsync(await s.Father.PostAsJsonAsync(practice, new { day = Sunday }));
+        (await TestApi.PositionReviewAsync(s.Father, s.PlanId, s.PositionId, sessionId, 0, givenAnswer: "falsch"))
+            .EnsureSuccessStatusCode();
+        for (var i = 0; i < 2; i++)
+            (await s.Father.PostAsJsonAsync($"{practice}/{sessionId}/heartbeat", new { seconds = 60, active = true }))
+                .EnsureSuccessStatusCode();
+        // The setup holds: the catch-up wrote a counting answer for Sunday, at today's time.
+        Assert.Equal(1, Read(db => db.ItemReviewEvents.Count(e => e.ChildId == s.ChildId && e.Day == Sunday
+            && e.BoxBefore != null && !e.WasCorrect)));
+
+        var after = ByDay(await OkJsonAsync(await s.Father.GetAsync(s.Url)));
+        var (sun0, sun1) = (Figures(before[Sunday]), Figures(after[Sunday]));
+        Assert.Equal((sun0.Wrong + 1, sun0.Secs + 120), (sun1.Wrong, sun1.Secs));
+        Assert.Equal(Figures(before[Today]), Figures(after[Today]));
+    }
+
+    /// <summary>
+    /// B-1028 AK 2, one case per kind of late evidence for a stored day, each alone: an answer of that day written later
+    /// (no round), a round of that day started later, a round of that day started before but ended later, a test of that
+    /// day handed in later (Thursday's missed duty becomes met). Red per case if its condition is dropped from the reopening.
+    /// </summary>
+    [Fact]
+    public Task Spaete_Antwort_rechnet_den_gespeicherten_Tag_neu() => LateEvidenceReopensAsync("answer");
+
+    [Fact]
+    public Task Spaete_Karte_einer_Runde_rechnet_den_gespeicherten_Tag_neu() => LateEvidenceReopensAsync("card");
+
+    [Fact]
+    public Task Spaet_begonnene_Runde_rechnet_den_gespeicherten_Tag_neu() => LateEvidenceReopensAsync("roundStarted");
+
+    [Fact]
+    public Task Spaet_beendete_Runde_rechnet_den_gespeicherten_Tag_neu() => LateEvidenceReopensAsync("roundEnded");
+
+    [Fact]
+    public Task Spaet_abgegebener_Test_rechnet_den_gespeicherten_Tag_neu() => LateEvidenceReopensAsync("test");
+
+    private async Task LateEvidenceReopensAsync(string evidence)
+    {
+        var s = await SetupAsync();
+        var before = await ReadAndLetTimePassAsync(s);
+        var now = factory.Clock.GetUtcNow().UtcDateTime;
+
+        Write(db =>
+        {
+            var exerciseId = db.ItemReviewEvents.First(e => e.ChildId == s.ChildId).ExerciseId;
+            switch (evidence)
+            {
+                case "answer":
+                    Answer(db, s.ChildId, exerciseId, s.PositionId, s.B, Sunday, 0, false, 2, AnswerErrorKind.WrongWord, "bye",
+                        writtenAt: now);
+                    break;
+                case "roundStarted":
+                    db.PracticeSessions.Add(new PracticeSession
+                    {
+                        StudyPlanId = s.PlanId,
+                        PlanPositionId = s.PositionId,
+                        Day = Sunday,
+                        ActiveSeconds = 120,
+                        StartedAt = now,
+                    });
+                    break;
+                case "card":
+                    // A round of Sunday started and its time counted before the day was stored; a card answered later is the
+                    // only late evidence (another exercise type writes no item history).
+                    var round = new PracticeSession
+                    {
+                        StudyPlanId = s.PlanId,
+                        PlanPositionId = s.PositionId,
+                        Day = Sunday,
+                        ActiveSeconds = 120,
+                        StartedAt = now.AddMinutes(-10),
+                    };
+                    db.PracticeSessions.Add(round);
+                    db.ReviewEvents.Add(new ReviewEvent { PracticeSession = round, WasCorrect = true, At = now });
+                    break;
+                case "roundEnded":
+                    db.PracticeSessions.Add(new PracticeSession
+                    {
+                        StudyPlanId = s.PlanId,
+                        PlanPositionId = s.PositionId,
+                        Day = Sunday,
+                        ActiveSeconds = 120,
+                        StartedAt = now.AddMinutes(-10),
+                        EndedAt = now,
+                    });
+                    break;
+                case "test":
+                    db.TestAttempts.Add(new TestAttempt
+                    {
+                        StudyPlanId = s.PlanId,
+                        PlanPositionId = s.PositionId,
+                        Day = Thursday,
+                        StageValue = (int)TestStage.FreeText,
+                        Graded = true,
+                        StartedAt = now,
+                        CompletedAt = now,
+                        TotalItems = 2,
+                        CorrectItems = 2,
+                        ScorePercent = 100,
+                        Passed = true,
+                    });
+                    break;
+            }
+        });
+
+        var after = ByDay(await OkJsonAsync(await s.Father.GetAsync(s.Url)));
+        if (evidence == "test")
+        {
+            Assert.Equal((0, 1), (Figures(before[Thursday]).Met, Figures(before[Thursday]).Missed));
+            Assert.Equal((1, 0), (Figures(after[Thursday]).Met, Figures(after[Thursday]).Missed));
+        }
+        else if (evidence == "answer")
+            Assert.Equal(Figures(before[Sunday]).Wrong + 1, Figures(after[Sunday]).Wrong);
+        else
+            Assert.Equal(Figures(before[Sunday]).Secs + 120, Figures(after[Sunday]).Secs);
+        // One stored row set per day, also after reopening.
+        Assert.Equal(28, Read(db => db.EvaluatedDays.Count(d => d.ChildId == s.ChildId)));
+    }
+
+    /// <summary>
+    /// B-1028 AK 3: a problem word counts by the learning day of its answer. A catch-up for Friday written today shows in
+    /// Friday's range and not in today's. Red if the problem words are filtered by the answer's timestamp.
+    /// </summary>
+    [Fact]
+    public async Task Problemwoerter_ordnen_einen_Nachtrag_nach_seinem_Lerntag()
+    {
+        var s = await SetupAsync();
+        var now = factory.Clock.GetUtcNow().UtcDateTime;
+        Write(db =>
+        {
+            var exerciseId = db.ItemReviewEvents.First(e => e.ChildId == s.ChildId).ExerciseId;
+            // Word B: one miss on Friday already; a late catch-up miss for Friday is the second.
+            Answer(db, s.ChildId, exerciseId, s.PositionId, s.B, Friday, 0, false, 2, AnswerErrorKind.WrongWord, "bye",
+                writtenAt: now);
+        });
+
+        async Task<int> WrongOfB(DateOnly from, DateOnly to) =>
+            (await OkJsonAsync(await s.Father.GetAsync($"{s.Url}/problem-words?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}")))
+            .EnumerateArray().Where(w => w.GetProperty("vocabularyId").GetInt32() == s.B.VocabularyId)
+            .Select(w => w.GetProperty("wrongAnswers").GetInt32()).SingleOrDefault();
+
+        Assert.Equal(2, await WrongOfB(Friday, Friday));
+        Assert.Equal(0, await WrongOfB(Today, Today));
     }
 
     /// <summary>

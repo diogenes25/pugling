@@ -28,7 +28,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
-| [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | Antworten des Vaters (Vorschau, Nachtrag) landen im Lernstand und in der Auswertung des Kindes | Defekt | `idee` | P2 | — | backend | — |
+| [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | Antworten des Vaters (Vorschau, Nachtrag) landen im Lernstand und in der Auswertung des Kindes | Defekt | `geschaetzt` | P2 | M | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -763,7 +763,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (229)
 
-**Nachgeschaut: 589 von 640 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 51 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 591 von 640 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -998,7 +998,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (51) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (49) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1010,7 +1010,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-1022](B-1022-sohn-tag-zeigt-malus-frist-am-sonntag.md) | Die Arcade zeigt am Sonntag und in einer Pause „noch N Std. · −X Münzen“, obwohl der Server nichts abbucht |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | „keine Lösung“ wurde nur in einer Schreibweise erkannt |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text |
-| [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
@@ -1043,7 +1042,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) |
-| [B-733](B-733-tagesauswertung-und-leistungsprofil.md) | Tagesauswertung je Kind, Tag und Fach, Leistungsprofil und die Vater-Ansicht (B-644, Etappe E1b) |
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
@@ -1073,7 +1071,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
-| [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-1028](B-1028-vater-antworten-landen-im-lernstand-des-kindes.md) | `geschaetzt` | Abschnitt „Schätzung" |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1032](B-1032-muenzen-tagessumme-in-der-arcade.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |

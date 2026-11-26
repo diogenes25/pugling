@@ -279,3 +279,124 @@ Die Retro-Nachschau zu B-732 bleibt damit ohne Fund.
 - **B-780** (Münzen): Gefühl statt Menge – Sätze und Preise bleiben, Tagessumme und gebündelte „+1“ als **B-1032**; vorher die Söhne
   fragen. Theodors Truhe an der Kopie geprüft: kein Defekt (Truhen am 21./22.11., keine an Tagen mit offener Latein-Pflicht; Latein
   an 1 von 8 Pflichttagen erfüllt). B-780 als beantwortete Frage `verworfen`.
+
+## Runde 5 — Rollengang an der Kopie (Sprint-Findung 194)
+
+Kopie-Server frisch auf `:5201` (`kopie-server.sh`, Stand `2149d9c7`, keine ausstehende Migration). Kein neuer Befund unter
+`docs/anmerkungen/`. Schwerpunkt dieses Gangs war der offene Defekt B-1028 aus Sprint 193.
+
+### Feedback Creator (O-Ton) — Regressionszeuge
+
+- Katalog lädt (`creator/textbook-series` 200). Kein neuer Fund; keine Creator-Story ist für diesen Sprint reif.
+
+### Feedback Vater (O-Ton) — Gefällt / Stört-fehlt / Top-3
+
+- Gemessen an der Kopie: Probetest als Vater auf Friedrichs Position 119 (Plan 15) gestartet und ohne Antworten abgegeben →
+  Friedrichs `ItemProgress` für „Vive … !“ fällt von **Box 5 auf Box 1**, das zweite Wort von 3 auf 1; vier `Test`-Zeilen in
+  seinem Verlauf. Eine Übungsrunde als Vater schreibt Lernkarten-Zeilen ohne Urteil (`BoxBefore` leer, zählt in der Auswertung
+  nicht).
+- „Das ist kein Versehen im Code, sondern eine Entscheidung: **B-542** (abgenommen 2026-11-14) sagt, eine Vater-Runde in der
+  Position des Kindes **ist der Nachtrag und zählt**; Ausprobieren ohne Nebenwirkung läuft über die Vorschau.“ Der Kommentar an
+  `PositionPracticeController.cs:681-687` nennt sie, `VaterRundeZaehltFuersKindTests` hält sie fest. B-1028 stellt diese
+  Entscheidung infrage, ohne sie zu nennen.
+- Enger und unstrittig defekt: ein **zurückdatierter** Nachtrag schreibt `ItemReviewEvent.At = jetzt`; die Tagesauswertung
+  (`DailyEvaluationService.cs:135-136`, `:184-185`) ordnet nach `At` – die Antworten erscheinen am heutigen Tag, die Lernzeit
+  (Sitzung) am alten, und der alte Tag ist womöglich schon eingefroren.
+- Reichweite: das Vater-Web startet Runden immer ohne `day` (`api.ts:753`); an der echten DB gibt es **null** Vater-Testversuche.
+  Der Fall entsteht nur über die API bzw. einen Agenten.
+- Top-3: (1) B-1028 klären (Frage an den Nutzer, s. u.), (2) Fortsetzung B-644 (B-734, wartet auf Bestätigung der
+  stellvertretenden Entscheidungen 19, 21, 24), (3) B-1032 (Münzen des Tages, vorher die Söhne fragen).
+
+### Feedback Sohn (O-Ton) — Mega / Nervt / Top-3
+
+- Friedrichs Tag lädt an der Kopie (`student/children/3/today` 200). Kein neuer Fund aus diesem Gang; offene Sohn-Wünsche
+  (B-1032, B-821) brauchen erst seine Meinung.
+
+## PM-Synthese & Priorisierung (Runde 5)
+
+| Prio | Fund | Größe | Wo | Entscheidung |
+|---|---|---|---|---|
+| P2 | Vater-Antworten im Lernstand (B-1028) – widerspricht B-542 | — | backend | **Frage an den Nutzer** |
+| P2 | Zurückdatierter Nachtrag landet in der Auswertung am heutigen Tag (enger Teil von B-1028) | S | backend | nach Antwort |
+| P1 | Planer-Kern im Schattenmodus (B-734) | L | beides | wartet auf Bestätigung E19/E21/E24 |
+
+**Roter Faden:** Was im Lernstand des Kindes steht, muss sich einem Akteur und einem Tag zuordnen lassen.
+
+**Kein Sprint ohne Antwort:** Kein Kandidat ist ohne Nutzerentscheidung baubar – B-1028 berührt eine abgenommene Entscheidung,
+B-734 trägt drei unbestätigte stellvertretende Entscheidungen, B-621/622 warten auf B-644. Der Lauf hält hier an.
+
+**Entscheidung des Nutzers (Runde 5):** B-542 bleibt (Vater-Runde = Nachtrag, zählt); B-1028 wird auf die Tageszuordnung
+verengt und ist der Umfang von Sprint 194.
+
+## Sprint 194 — Ziel & Umfang
+
+**Sprint-Ziel (Vatersicht):** Trage ich für mein Kind einen vergangenen Tag nach, steht er in der Auswertung an diesem Tag –
+Antworten, Lernzeit und Pflicht –, auch wenn der Tag schon gespeichert war. Widerlegt, wenn ein Nachtrag am heutigen Tag
+erscheint oder ein gespeicherter Tag ihn nie aufnimmt.
+
+**Umfang:** B-1028 (verengt).
+
+**Entwickler-Brief:** *Quelle der Wahrheit* der Tag der Runde bzw. des Tests (`session.Day`, `attempt.Day`), den
+`ItemProgressService.RecordAsync` schon bekommt – Senke für das Schreiben; `DailyEvaluationService` – Senke für das Lesen.
+*Guards* kein Rollenfilter (B-542), Supervisor-Gate der Auswertung unverändert. *Migration* `ReviewEventDay` (Spalte + Index +
+Rückfüllung). *Testweg* `TagesauswertungTests` (Nachtrag über die echte API, je Belegart ein Fall, Problemwörter),
+`ReviewEventDayMigrationTests`, Migrationsprobe am Kopie-Server.
+
+## Iteration 194 — umgesetzt
+
+- **Backend:** `ItemReviewEvent.Day` (Lerntag der Antwort), gesetzt in `RecordAsync`; Migration `ReviewEventDay` füllt
+  Bestandszeilen mit dem deutschen Tag ihres Zeitpunkts. `DailyEvaluationService` zählt Tageszeilen und Problemwörter nach
+  `Day` und rechnet einen gespeicherten Tag neu, wenn danach Belege für ihn eingingen (Vokabelantwort, Karte einer Runde,
+  Runde begonnen/beendet, Test abgegeben) – geprüft an der Lesestelle, gerechnet außerhalb der Schreibtransaktion.
+- **Review (`pugling-reviewer`) eingearbeitet:** Schreibsperre über das Rechnen von bis zu 28 Tagen (vorgezogen), Karten
+  anderer Übungstypen als Beleg (`ReviewEvents`), BOMs, zwei veraltete `summary`-Sätze, Rollback mit `CancellationToken.None`.
+- **Nebenbei:** `EndpointCoverageGuard` 327 → 330 berührte Actions (die neuen Nachtrag-Fälle); `FehlerartTests`-Migrationstest
+  liest projiziert (die DB steht dort vor der neuen Spalte).
+- **Verifikation am Endstand:** Backend-Suite **2631/2631**, Release, Exit 0 (8 min 20 s, allein). Ein früherer Lauf fiel einmal
+  im Zeitvergleich `Login_mit_unbekannter_Id_kostet…` – er lief parallel zum Test-Tor-Lauf des Stop-Hooks; allein dreimal grün,
+  Auth nicht im Diff. `dotnet format --verify-no-changes` auf den geänderten Dateien sauber. Mutanten: 11/11 rot am erwarteten
+  Test, nach der letzten Änderung (Tabelle in B-1028).
+
+## Runde 6 — Re-Review / Abnahme
+
+Kopie-Server nach der letzten Änderung frisch gestartet (frische Kopie, Migration `ReviewEventDay` beim Start eingespielt): alle
+3169 Antwortzeilen haben einen Tag, keine steht auf dem Vorgabewert; 49 Antworten nach deutscher Mitternacht liegen am Folgetag.
+
+- **Vater — abgenommen.** „Friedrichs 25.11. stand schon gespeichert: verpasste Pflicht, keine Übung. Ich habe für den 25. eine
+  Runde nachgetragen – danach stehen dort 60 Sekunden, und der heutige Tag ist unverändert. Genau so.“ Die sechs Nachtrag-Zeilen
+  tragen den 25.11.; als Antworten zählt der 25. keine, weil es Kennenlern- und Lernkarten ohne Urteil waren (Zählregel B-733) –
+  den gewerteten Fall trägt `Nachtrag_des_Vaters_fuer_gestern…` über die echte API. **Benannt offen:** nichts.
+- **Sohn — Regressionszeuge.** Kein Student-Pfad im Diff; sein Tag lädt an der Kopie (200), die Auswertung antwortet ihm 403.
+- **Creator — Regressionszeuge.** Kein Creator-Pfad im Diff; Katalog 200, Suite grün.
+
+Abgenommen: B-1028 (verengt).
+
+## Retrospektive
+
+**Nachschau:** B-733 und B-1027 (Sprint 193, `e18934f0`) nachgesehen. B-1027 ohne neuen Fund (B-1029 lag schon vor). B-733: der
+Nachtrag am falschen Tag ist B-1028 selbst, vom Review bewusst ausgelagert – kein Durchrutscher; `EvaluatedDay.CreatedAt` aus der
+Systemuhr statt dem `TimeProvider` (ohne Wirkung im Betrieb) ist mit B-1028 behoben. `nachgeschaut` an beiden gesetzt.
+
+**Was durchrutschte bzw. gefangen wurde:**
+
+- Gefangen vom Review, nicht von den eigenen Tests: die Schreibsperre über 28 Tage Rechnen (Last, kein Test sieht sie) und die
+  fehlende Belegart „Karte einer Nicht-Vokabel-Runde“ (jetzt mit eigenem Fall und Mutant M11).
+- **Durchgerutscht bis zum Review bzw. zur Handprüfung:** drei Dateien mit BOM und zwei einzeilige Objekt-Initialisierer. Ursache:
+  ich habe `.cs`-Dateien per Skript über die Shell geändert; `after-cs-edit.sh` hängt nur an `Edit|Write|MultiEdit` und lief nie.
+  Erst CI hätte es gemeldet.
+- Fast als Beleg verbucht: ein Suite-Lauf ohne gefundene Ergebniszeile (der Filter griff nicht) – erneut mit Datei-Ausgabe
+  gelaufen; und ein roter Zeitvergleich, der von zwei gleichzeitigen Suite-Läufen kam (eigener Lauf + Stop-Hook).
+
+**Der eine Mechanismus (neues Tor):** Das Test-Tor (`.claude/hooks/test-gate.sh`) prüft vor der Suite
+`dotnet format whitespace --folder --verify-no-changes` auf den geänderten `.cs`-Dateien – unabhängig davon, mit welchem Werkzeug
+sie geändert wurden. Gemessen: sauberer Stand grün (12 Dateien, ~10 s), BOM rot (`CHARSET`), CRLF kein Fehlalarm; am Hook selbst
+rot belegt (Exit 2 vor der Suite). **Neues Tor → der Lauf hält hier**, der Nutzer sieht es zuerst.
+
+**Bewusst ungedeckt:** Format-Regeln jenseits von Leerraum (Analyzer-Stil) prüft weiter nur CI (`dotnet format` mit Analyzern
+~23 s); zwei gleichzeitige Suite-Läufe bleiben möglich, wenn ich selbst eine Suite starte und dann den Zug beende.
+
+## Offene Roadmap (priorisiert)  ·  Konkreter Änderungsstand (für Review)
+
+Siehe `docs/backlog/`. Weiter geht es mit B-734 (Planer-Kern im Schattenmodus), sobald die stellvertretenden Entscheidungen 19, 21,
+24 aus B-644 bestätigt sind; davor liegt nichts Baubares ohne Entscheidung. Änderungsstand: Migration `ReviewEventDay` (beim
+nächsten Heimnetz-Start eingespielt), `DailyEvaluationService`, `ItemProgressService`, Tests, Test-Tor-Hook.

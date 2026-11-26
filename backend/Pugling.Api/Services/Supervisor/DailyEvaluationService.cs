@@ -5,16 +5,17 @@ using Pugling.Api.Models;
 namespace Pugling.Api.Services.Supervisor;
 
 /// <summary>
-/// The supervisor's evaluation of a child's learning (B-733): one row per closed day and subject, written once and never
-/// recomputed, plus the profile over the stored days and the problem words. The evaluation reads only; it changes nothing
+/// The supervisor's evaluation of a child's learning (B-733): one row per closed day and subject, written once, plus the
+/// profile over the stored days and the problem words. The evaluation reads only; it changes nothing
 /// the child sees or is charged for.
 /// <para>
 /// There is no scheduler: the closed days of the last <see cref="WindowDays"/> days are evaluated lazily on the first read
-/// after they closed, each exactly once (<see cref="EvaluatedDay"/>). A day further back than the window stays a gap.
+/// after they closed (<see cref="EvaluatedDay"/>). A stored day is computed again only when evidence for it arrived after it
+/// was stored - a supervisor's catch-up for that day (B-1028). A day further back than the window stays a gap.
 /// </para>
 /// </summary>
 public class DailyEvaluationService(PuglingDbContext db, PositionProgressService progress, DutyCalendar calendar,
-    LearningDay learningDay)
+    LearningDay learningDay, TimeProvider time)
 {
     /// <summary>How far back closed days are evaluated, and the longer profile window.</summary>
     public const int WindowDays = 28;
@@ -22,8 +23,9 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
 
     /// <summary>
     /// Evaluates every closed day of the last <see cref="WindowDays"/> days that has not been evaluated yet, and stores its
-    /// rows. Idempotent: an evaluated day is never computed again, so its stored figures stay as they were read. Requests for
-    /// the same child wait for each other; a second process would lose on the unique index and keep the winner's rows.
+    /// rows. Idempotent: an evaluated day is not computed again unless new evidence for it arrived since (see
+    /// <see cref="ReopenedDaysAsync"/>), so its stored figures stay as they were read. Requests for the same child wait for
+    /// each other; a second process would lose on the unique index and keep the winner's rows.
     /// </summary>
     public async Task EnsureClosedDaysAsync(int childId, CancellationToken ct)
     {
@@ -52,30 +54,72 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
                 .Where(d => d.ChildId == childId && d.Day >= first)
                 .Select(d => d.Day).ToListAsync(ct))
             .ToHashSet();
+        var reopened = await ReopenedDaysAsync(childId, first, ct);
         // The closed days only: today is still running and is computed live on reading, never stored.
-        var missing = Enumerable.Range(0, WindowDays).Select(first.AddDays).Where(d => !done.Contains(d)).ToList();
+        var missing = Enumerable.Range(0, WindowDays).Select(first.AddDays)
+            .Where(d => !done.Contains(d) || reopened.Contains(d)).ToList();
         if (missing.Count == 0) return;
 
-        var now = DateTime.UtcNow;
-        foreach (var day in missing)
+        // Taken before computing: evidence written while the days are computed is newer and reopens them on the next read.
+        var now = time.GetUtcNow().UtcDateTime;
+        // Computed outside the transaction: SQLite takes its write lock at the transaction's start, and computing up to 28
+        // days under it would stall the child's answers.
+        var rows = new List<DailyEvaluation>();
+        foreach (var day in missing) rows.AddRange(await ComputeDayAsync(childId, day, ct));
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        if (reopened.Count > 0)
         {
-            db.DailyEvaluations.AddRange(await ComputeDayAsync(childId, day, ct));
-            db.EvaluatedDays.Add(new EvaluatedDay { ChildId = childId, Day = day, CreatedAt = now });
+            // The reopened days are replaced as a whole, in the same transaction as their new rows.
+            await db.DailyEvaluations.Where(d => d.ChildId == childId && reopened.Contains(d.Day)).ExecuteDeleteAsync(ct);
+            await db.EvaluatedDays.Where(d => d.ChildId == childId && reopened.Contains(d.Day)).ExecuteDeleteAsync(ct);
         }
+        db.DailyEvaluations.AddRange(rows);
+        db.EvaluatedDays.AddRange(missing.Select(day => new EvaluatedDay { ChildId = childId, Day = day, CreatedAt = now }));
         try
         {
             await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
         }
         catch (DbUpdateException)
         {
-            // Another process evaluated the same days first; its rows stand, ours are dropped.
+            // Another process evaluated the same days first; its rows stand, ours are dropped. A compensating step: a
+            // cancelled request must not decide whether it runs.
+            await tx.RollbackAsync(CancellationToken.None);
             db.ChangeTracker.Clear();
         }
     }
 
     /// <summary>
+    /// The stored days since <paramref name="first"/> for which evidence arrived after they were stored (B-1028): an answer of
+    /// that learning day written later (a vocabulary answer, or any card answered in a round of that day), a round of that day
+    /// started or ended later, or a test of that day handed in later.
+    /// That is a supervisor's catch-up for a past day; checked here, where every day is read, so no write path can miss it.
+    /// </summary>
+    private async Task<HashSet<DateOnly>> ReopenedDaysAsync(int childId, DateOnly first, CancellationToken ct)
+    {
+        var stored = db.EvaluatedDays.Where(d => d.ChildId == childId && d.Day >= first);
+        var byAnswer = await stored
+            .Where(d => db.ItemReviewEvents.Any(e => e.ChildId == childId && e.Day == d.Day && e.At > d.CreatedAt))
+            .Select(d => d.Day).ToListAsync(ct);
+        // Cards of other exercise types write no item history; their round's review rows carry the time instead.
+        var byCard = await stored
+            .Where(d => db.ReviewEvents.Any(r => r.PracticeSession!.StudyPlan!.ChildId == childId && r.PracticeSession.Day == d.Day
+                && r.At > d.CreatedAt))
+            .Select(d => d.Day).ToListAsync(ct);
+        var byRound = await stored
+            .Where(d => db.PracticeSessions.Any(s => s.StudyPlan!.ChildId == childId && s.Day == d.Day
+                && (s.StartedAt > d.CreatedAt || s.EndedAt > d.CreatedAt)))
+            .Select(d => d.Day).ToListAsync(ct);
+        var byTest = await stored
+            .Where(d => db.TestAttempts.Any(t => t.StudyPlan!.ChildId == childId && t.Day == d.Day && t.CompletedAt > d.CreatedAt))
+            .Select(d => d.Day).ToListAsync(ct);
+        return [.. byAnswer, .. byCard, .. byRound, .. byTest];
+    }
+
+    /// <summary>
     /// The stored days in [<paramref name="from"/>, <paramref name="to"/>], newest first, plus today's live row when today
-    /// lies in the range. Reads stored figures only - a closed day is never recomputed from the answers.
+    /// lies in the range. Reads stored figures only - a closed day is computed again only for late evidence (B-1028).
     /// </summary>
     public async Task<List<DailyEvaluationResponse>> ListAsync(int childId, DateOnly from, DateOnly to, int? subjectId,
         CancellationToken ct)
@@ -129,13 +173,23 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
     public async Task<List<ProblemWordResponse>> ProblemWordsAsync(int childId, DateOnly from, DateOnly to, int? subjectId,
         CancellationToken ct)
     {
-        var start = learningDay.StartUtc(from);
-        var end = learningDay.StartUtc(to.AddDays(1));
         var legacyUntil = await LegacyUntilAsync(childId, ct);
+        // By learning day, not timestamp (B-1028): a catch-up for a past day belongs to that day.
         var events = (await db.ItemReviewEvents.AsNoTracking()
-                .Where(e => e.ChildId == childId && e.At >= start && e.At < end)
-                .Select(e => new { e.VocabularyId, e.ItemId, e.ExerciseId, e.PlanPositionId, e.WasCorrect, e.GivenAnswer, e.ErrorKind,
-                    e.At, e.BoxBefore, e.StageValue })
+                .Where(e => e.ChildId == childId && e.Day >= from && e.Day <= to)
+                .Select(e => new
+                {
+                    e.VocabularyId,
+                    e.ItemId,
+                    e.ExerciseId,
+                    e.PlanPositionId,
+                    e.WasCorrect,
+                    e.GivenAnswer,
+                    e.ErrorKind,
+                    e.At,
+                    e.BoxBefore,
+                    e.StageValue
+                })
                 .ToListAsync(ct))
             .Where(e => Counts(e.At, e.BoxBefore, e.GivenAnswer, e.StageValue, legacyUntil))
             .ToList();
@@ -178,11 +232,10 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
     /// </summary>
     internal async Task<List<DailyEvaluation>> ComputeDayAsync(int childId, DateOnly day, CancellationToken ct)
     {
-        var start = learningDay.StartUtc(day);
-        var end = learningDay.StartUtc(day.AddDays(1));
         var legacyUntil = await LegacyUntilAsync(childId, ct);
+        // By learning day, not timestamp (B-1028): a catch-up for a past day belongs to that day.
         var answers = (await db.ItemReviewEvents.AsNoTracking()
-                .Where(e => e.ChildId == childId && e.At >= start && e.At < end)
+                .Where(e => e.ChildId == childId && e.Day == day)
                 .Select(e => new { e.ExerciseId, e.PlanPositionId, e.WasCorrect, e.ErrorKind, e.BoxBefore, e.At, e.GivenAnswer, e.StageValue })
                 .ToListAsync(ct))
             .Where(e => Counts(e.At, e.BoxBefore, e.GivenAnswer, e.StageValue, legacyUntil))

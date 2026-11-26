@@ -738,6 +738,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
         {
             e.HasIndex(x => new { x.ChildId, x.ItemId, x.At });
             e.HasIndex(x => new { x.ChildId, x.VocabularyId });
+            // The evaluation reads a child's answers by learning day (B-1028).
+            e.HasIndex(x => new { x.ChildId, x.Day });
             e.HasOne(x => x.Child).WithMany().HasForeignKey(x => x.ChildId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Item).WithMany().HasForeignKey(x => x.ItemId).OnDelete(DeleteBehavior.SetNull);
         });

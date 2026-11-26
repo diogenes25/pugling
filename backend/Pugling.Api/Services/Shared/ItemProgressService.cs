@@ -29,6 +29,8 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
     /// <paramref name="errorKind"/> is why a typed answer was wrong (B-732), decided by the caller where it graded the
     /// answer (<see cref="AnswerErrorClassifier"/>); <c>null</c> for a hit, a pick and a self-assessment. The box before
     /// the answer is taken here, where the box moves, so no caller can store one that differs from it.
+    /// <paramref name="today"/> is the learning day the answer belongs to (the round's or test's day), stored on the history
+    /// row (B-1028): a supervisor's catch-up for a past day belongs to that day, not to the moment it was entered.
     /// </summary>
     public async Task RecordAsync(int childId, int exerciseId, ContentItem item, bool wasCorrect, int stageValue,
         string? givenAnswer, ItemReviewSource source, int? planPositionId, DateOnly today, bool countsForMastery,
@@ -52,6 +54,7 @@ public class ItemProgressService(PuglingDbContext db, TimeProvider time)
             WasCorrect = wasCorrect,
             AccentSlip = accentSlip,
             ErrorKind = wasCorrect ? null : errorKind,
+            Day = today,
             At = now,
         };
         db.ItemReviewEvents.Add(review);

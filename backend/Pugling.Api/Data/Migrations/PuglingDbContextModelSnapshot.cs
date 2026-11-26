@@ -1491,6 +1491,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("ChildId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ErrorKind")
                         .HasColumnType("TEXT");
 
@@ -1523,6 +1526,8 @@ namespace Pugling.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
+
+                    b.HasIndex("ChildId", "Day");
 
                     b.HasIndex("ChildId", "VocabularyId");
 

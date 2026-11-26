@@ -119,5 +119,11 @@ public class ItemReviewEvent
     /// </summary>
     public int? BoxBefore { get; set; }
 
+    /// <summary>
+    /// The learning day the answer belongs to - the day of its round or test, not of <see cref="At"/> (B-1028). A supervisor's
+    /// catch-up for a past day is written now but belongs to that day; the evaluation counts answers by this day.
+    /// </summary>
+    public DateOnly Day { get; set; }
+
     public DateTime At { get; set; } = DateTime.UtcNow;
 }

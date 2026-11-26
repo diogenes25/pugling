@@ -2,8 +2,9 @@ namespace Pugling.Api.Models;
 
 /// <summary>
 /// What a child learnt on one closed day in one subject (B-733): counts from the answers, the introduced words, the practice
-/// time and the day's daily duties. Written once when the day is evaluated and never recomputed, so a later rule change or a
-/// corrected answer does not rewrite the history the supervisor has already read. A day the child neither practised nor owed a
+/// time and the day's daily duties. Written once when the day is evaluated, so a later rule change or a corrected answer does
+/// not rewrite the history the supervisor has already read. Only evidence for the day written after it was stored - a
+/// supervisor's catch-up (B-1028) - computes it again. A day the child neither practised nor owed a
 /// duty has no row - the supervisor's curve shows a gap there, not a zero.
 /// </summary>
 public class DailyEvaluation

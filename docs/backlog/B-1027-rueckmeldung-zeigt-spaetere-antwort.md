@@ -12,7 +12,7 @@ quelle: docs/pm-sitzung-2026-11-26.md#runde-3--rollengang-an-der-kopie
 grund: ""
 ersetzt_durch: []
 entgangen_bei: [B-628]
-nachgeschaut: ""
+nachgeschaut: 2026-11-26
 ---
 
 # B-1027 · Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat

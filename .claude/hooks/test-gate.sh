@@ -53,6 +53,19 @@ fingerprint=$(
 state="$root/.claude/.test-gate-state"
 [ -f "$state" ] && [ "$(cat "$state" 2>/dev/null)" = "$fingerprint" ] && exit 0
 
+# Format of the changed files first (Sprint 194): after-cs-edit.sh only runs on the Edit/Write tools, so a .cs file changed
+# through the shell (a script, sed) reaches CI with a BOM or an unformatted initializer and nothing local says so. Whitespace
+# mode needs no build (~10 s); measured: a BOM is red, CRLF line ends are not.
+# shellcheck disable=SC2086 # the list is word-split on purpose; repo paths carry no spaces
+if ! fmt=$(dotnet format whitespace --folder --verify-no-changes --include $changed 2>&1); then
+  {
+    echo "❌ Test gate red: changed .cs files are not formatted (dotnet format whitespace)."
+    printf '%s\n' "$fmt" | grep -E "error [A-Z]+:" | head -10
+    echo "Fix: dotnet format whitespace --folder --include <file> (CI runs dotnet format --verify-no-changes)."
+  } >&2
+  exit 2
+fi
+
 # **`-c Release` ist Absicht, nicht Kosmetik.** Läuft parallel ein Dev-Server (`dotnet run` gegen
 # localhost:5200 – laut CLAUDE.md der Normalfall beim Prüfen), hält er `bin/Debug/.../Pugling.Contracts.dll`
 # gesperrt und ein Debug-Build der Solution scheitert mit MSB3021, bevor ein einziger Test läuft. Release
