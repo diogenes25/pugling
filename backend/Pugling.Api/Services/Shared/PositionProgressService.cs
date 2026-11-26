@@ -444,13 +444,16 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>
     /// Does the period of <paramref name="cadence"/> around <paramref name="day"/> owe its duty (B-1022)? The same gates
     /// the settlement applies before it books a penalty - plan due, duty days (Sunday, pause, a week touched by a pause),
-    /// the duty's end - so the child is never shown a price that is never charged.
+    /// the duty's end - so the child is never shown a price that is never charged. One gate stays out on purpose: the
+    /// settlement starts at the child's first play in the plan (B-535), yet an unopened plan still shows its price - the
+    /// threat is what is meant to open it (whether it should is an open question to the supervisor, B-1024).
     /// </summary>
     private static bool OwesDutyOn(PlanPosition pos, StudyPlan plan, GoalCadence cadence, DateOnly day, ChildDutyDays dutyDays)
     {
         if (cadence == GoalCadence.None) return false;
         var (from, to) = PeriodRange(cadence, day);
         return PlanDueForPeriod(plan, from, to) && dutyDays.OwesDuty(from, to)
+            // Mirrors the settlement; DutyCadenceOn already ends the duty after DutyUntil, so this only guards a future caller.
             && !(pos.DutyUntil is { } until && from > until);
     }
 

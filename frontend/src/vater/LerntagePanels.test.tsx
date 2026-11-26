@@ -97,6 +97,12 @@ describe("Leitplanken (B-731 AK 6/8)", () => {
     expect(screen.getAllByRole("button", { name: /^Erklärung zu/ })).toHaveLength(1);
   });
 
+  // Rot, wenn die Gruppen-id wieder an der ganzen Zeile sitzt: der Gruppenname schlüge dann den ⓘ-Namen mit ein.
+  it("nennt die Gruppe nur „Leitplanken“", () => {
+    render(<LeitplankenSection child={kind()} onSaved={() => {}} />);
+    expect(screen.getByRole("group", { name: "Leitplanken" })).toBeTruthy();
+  });
+
   // AK 8: Rot, wenn die Maske ihren Startwert nicht vom Server liest (leere Felder trotz gespeicherter Leitplanken).
   it("zeigt den gelesenen Stand", () => {
     render(<LeitplankenSection child={kind(gesetzt)} onSaved={() => {}} />);

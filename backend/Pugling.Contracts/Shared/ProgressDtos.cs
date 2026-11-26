@@ -21,7 +21,9 @@ namespace Pugling.Contracts.Shared;
 /// <c>OwesDuty</c> (B-1022) says whether the current period - today for a daily goal, this week for a weekly one - owes
 /// its duty at all: false on a Sunday, on a paused day, in a week touched by a pause, past the duty's end and outside the
 /// plan's due window. A client shows a deadline and a penalty only when it is true, or it would threaten a booking the
-/// settlement never makes. Same rule as the settlement (<c>DutyCalendar</c>), not a forecast of the goal.
+/// settlement never makes. Same rule as the settlement (<c>DutyCalendar</c>), not a forecast of the goal. One exception:
+/// a plan the child has never played is true here although the settlement only starts at the first play (B-535) - its
+/// price is shown as the reason to open it (open question B-1024).
 /// <c>SeriesUnitId</c>/<c>SeriesUnitLabel</c> name the textbook unit of the exercise, so a client can group
 /// consecutive positions into the sections the child knows from the book.
 /// <c>SeriesName</c>/<c>BookPages</c> (B-588) add the series and the printed page reference (<c>null</c> = none), so

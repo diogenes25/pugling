@@ -353,8 +353,9 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
       <form onSubmit={save}>
         {/* Eine Erklärung für die Gruppe statt fünf gleicher ⓘ an jedem Feld: der Begriff ist derselbe. */}
         <div role="group" aria-labelledby="limits-group">
-          <span id="limits-group" className="label-row group-label">
-            Leitplanken <InfoHint topic="plannerLimits" />
+          {/* Die id sitzt am Wort, nicht an der Zeile: sonst hieße die Gruppe auch „Erklärung zu …“ (B-236). */}
+          <span className="label-row group-label">
+            <span id="limits-group">Leitplanken</span> <InfoHint topic="plannerLimits" />
           </span>
           <div className="row" style={{ gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
             {LIMIT_FIELDS.map((f) => (

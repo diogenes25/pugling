@@ -48,6 +48,9 @@ test("Der Vater trägt eine Pause und die Leitplanken ein und liest sie zurück"
     && new URL(r.url()).pathname === `/api/v1/supervisor/children/${childId}`);
   await page.getByRole("button", { name: "Speichern", exact: true }).click();
   await neuGeladen;
+  // „entfernen“ erscheint erst mit dem neu geladenen Kind – im selben Render, in dem ein Werte-Schlüssel die Maske neu
+  // einhängen und den Banner mitnehmen würde. Erst danach trägt die Banner-Zusicherung.
+  await expect(page.getByRole("button", { name: "Leitplanken entfernen" })).toBeVisible();
   await expect(page.getByText("Leitplanken gespeichert.")).toBeVisible();
   for (const [feld, wert] of felder) await expect(page.getByLabel(feld, { exact: true })).toHaveValue(wert);
 

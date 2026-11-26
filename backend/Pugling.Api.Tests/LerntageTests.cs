@@ -286,7 +286,44 @@ public class LerntageTests : IClassFixture<LerntageWebAppFactory>
         Assert.Empty(PenaltyPeriods(s.PositionId));
     }
 
+    /// <summary>
+    /// B-1021, decision 2: the portion counts from the position's first due day - words introduced on the free Sunday
+    /// spare the Monday the child did not play. Red when only introductions on the introduction day itself count (Monday
+    /// is booked).
+    /// </summary>
+    [Fact]
+    public async Task Einfuehrung_Am_Freien_Sonntag_Schont_Den_Montag()
+    {
+        var s = await SetupAsync(GoalCadence.Daily, Sunday, [], penalty: 5);
+        IntroduceAllOn(s.PositionId, Sunday);
+
+        await SettleAsync(s.ChildId, Today.AddDays(1));
+
+        Assert.Empty(PenaltyPeriods(s.PositionId));
+    }
+
     // ---- B-1022: the child sees a price only where the settlement books one ----
+
+    private async Task<JsonElement> TodayPositionAsync(Setup s)
+    {
+        var today = await s.Father.GetFromJsonAsync<JsonElement>($"/api/v1/student/children/{s.ChildId}/today");
+        return today.GetProperty("positions").EnumerateArray().Single(p => p.GetProperty("positionId").GetInt32() == s.PositionId);
+    }
+
+    /// <summary>
+    /// B-1022 with B-613: a plan switched back on mid-week owes nothing for that week (the child could not play its first
+    /// days), so the weekly duty shows no price. Wednesday, the plan reactivated on Tuesday. Red when <c>owesDuty</c> skips
+    /// <c>PlanDueForPeriod</c>.
+    /// </summary>
+    [Fact]
+    public async Task Mitten_In_Der_Woche_Wieder_Eingeschaltet_Droht_Die_Woche_Nichts_An()
+    {
+        var s = await SetupAsync(GoalCadence.Weekly, Thursday, [], penalty: 5);
+        Write(db => db.StudyPlans.Single(p => p.Id == s.PlanId).ActivatedAt = Today.AddDays(1));
+        factory.Clock.FreezeAt(new DateTimeOffset(2026, 12, 2, 12, 0, 0, TimeSpan.Zero));
+
+        Assert.False((await TodayPositionAsync(s)).GetProperty("owesDuty").GetBoolean());
+    }
 
     /// <summary>
     /// B-1022: <c>owesDuty</c> on the child's day view follows the settlement - a daily duty owes on a plain Monday, not on
