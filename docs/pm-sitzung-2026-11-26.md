@@ -400,3 +400,9 @@ rot belegt (Exit 2 vor der Suite). **Neues Tor → der Lauf hält hier**, der Nu
 Siehe `docs/backlog/`. Weiter geht es mit B-734 (Planer-Kern im Schattenmodus), sobald die stellvertretenden Entscheidungen 19, 21,
 24 aus B-644 bestätigt sind; davor liegt nichts Baubares ohne Entscheidung. Änderungsstand: Migration `ReviewEventDay` (beim
 nächsten Heimnetz-Start eingespielt), `DailyEvaluationService`, `ItemProgressService`, Tests, Test-Tor-Hook.
+
+## Runde 7 — Entscheidungen für B-734
+
+Der Nutzer bestätigt die stellvertretenden Entscheidungen 19 (Tag ohne Server = Pause plus Meldung), 21 (fester Planer in C#,
+kein Sprachmodell) und 24 (Plan ab 6 Uhr eingefroren, Malus nur für Gesehenes) aus B-644 unverändert. B-734 ist damit baubar und
+der nächste Sprint-Kandidat.

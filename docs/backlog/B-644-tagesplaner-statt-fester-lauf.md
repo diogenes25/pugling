@@ -462,6 +462,8 @@ Reihenfolge: B-730, B-731, B-732 (parallel zu B-730/B-731), B-733, B-734, danach
 
 ## Verlauf
 
+- **2026-11-26** — Der Nutzer bestätigt die Entscheidungen 19, 21 und 24 unverändert (PM-Sitzung 2026-11-26); 15 bis 18, 20, 22, 23, 25, 26 bleiben stellvertretend.
+
 - **2026-11-17** — angelegt aus dem Wunsch des Vaters im Chat, mit Entwurf, Etappen und offenen Punkten.
   Ist-Stand nur als Teilbefund; `unverifiziert` bleibt bis zum Ausformulieren.
 - **2026-11-17** — **Grill-Runde mit dem Vater im Dialog:** 14 Entscheidungen (siehe `## Entscheidungen`), alle zehn offenen Punkte erledigt. B-618, B-619, B-621 und B-622 angehalten (`wartet_auf`). Die Stufe bleibt `idee`: Der Ist-Stand ist noch nicht Zeile für Zeile belegt, und mehrere Entscheidungen nennen Prüfpunkte am Code (freier Sonntag in Serie und Malus, Fehlerart je Übungstyp, Münz-Verlauf nach dem Reset, UTC-Umstellung). Nächster Schritt: ausformulieren, dann als Karte schneiden.

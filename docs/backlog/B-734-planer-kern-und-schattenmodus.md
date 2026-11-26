@@ -23,7 +23,7 @@ Leitplanken ([B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md)) und dem P
 Pläne, sie wirken auf Pflicht, Malus und Sohn-App nicht.
 
 **Stand:** Eintrittsbedingung `gegrillt` aus B-644 und B-680 geerbt. Entscheidungen 9, 10, 14 stammen vom Vater, 19, 21, 24
-sind stellvertretend und unbestätigt.
+hat der Nutzer am 2026-11-26 bestätigt.
 
 ## User Story
 
@@ -163,6 +163,8 @@ Nach [B-733](B-733-tagesauswertung-und-leistungsprofil.md) (Profil) und [B-731](
 (siehe dort); [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) schaltet scharf.
 
 ## Verlauf
+
+- **2026-11-26** — Der Nutzer bestätigt die stellvertretenden Entscheidungen 19, 21 und 24 aus B-644 unverändert (PM-Sitzung 2026-11-26). Damit ist B-734 baubar.
 
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E2) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 und B-680 geerbt. Nachgesehen: kein Zeitgeber, keine Tagesaufgabe im Modell; Modus als
