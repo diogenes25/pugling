@@ -105,7 +105,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
                 var duties = new List<PositionProgressService.PlanDutyState>();
                 foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
                 {
-                    var d = await progress.ComputeDayAsync(plan, day, ct);
+                    var d = await progress.ComputeDayAsync(plan, day, dutyDays, ct);
                     goalsMet += d.GoalsMet;
                     var active = PositionProgressService.ActiveOn(plan, day);
                     // An inactive plan's goals only enter the total on a day it was used (a goal met or its goal bonus

@@ -464,7 +464,7 @@ public class RemediationPositionTests(PuglingWebAppFactory factory) : IClassFixt
     {
         static PositionStatus Status(int id, GoalCadence cadence, bool met) =>
             new(id, 1, "x", "Cloze", "cloze", 0, cadence, ExerciseCheckMode.StudyPlanTest, false, true, met, met ? 1 : 0,
-                0, 3, 20, 0, 0, 1, "", "", null, 1, "", "", 0);
+                0, 3, 20, 0, 0, true, 1, "", "", null, 1, "", "", 0);
 
         var gating = PositionProgressService.RewardObligations(
             [Status(1, GoalCadence.UntilDone, met: false), Status(2, GoalCadence.Weekly, met: true)]);

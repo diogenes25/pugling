@@ -9,7 +9,7 @@ import { abschnitte, frist, hauptweg, istTagespflicht, kennenlernAnteil, naechst
 const pos = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5, owesDuty: true,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
@@ -117,6 +117,14 @@ describe("Die Frist", () => {
     // Rot, wenn ein erfülltes Ziel oder eine freie Position weiter eine Frist zeigte.
     expect(frist(pos({ goalMet: true }), mittwoch)).toBeNull();
     expect(frist(pos({ cadence: "None", goalMet: false }), mittwoch)).toBeNull();
+  });
+
+  it("gibt es nicht, wo die Periode nichts schuldet – Sonntag, Pause, Pausenwoche (B-1022)", () => {
+    // Rot, wenn `frist` `owesDuty` überliest: dann stünde „noch N Std. · sonst −5 Münzen“ an einem Tag, an dem der
+    // Server nichts bucht. Die zweite Zeile hält die Gegenprobe – dieselbe Position mit Schuld zeigt ihre Frist.
+    expect(frist(pos({ cadence: "Daily", owesDuty: false }), mittwoch)).toBeNull();
+    expect(frist(pos({ cadence: "Weekly", owesDuty: false }), mittwoch)).toBeNull();
+    expect(frist(pos({ cadence: "Daily", owesDuty: true }), mittwoch)).toEqual({ art: "stunden", stunden: 2 });
   });
 });
 

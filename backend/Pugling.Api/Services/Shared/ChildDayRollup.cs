@@ -2,7 +2,7 @@ using Pugling.Api.Models;
 
 namespace Pugling.Api.Services.Shared;
 
-/// <summary>One active plan of the child with its day rollup (<see cref="PositionProgressService.ComputeDayAsync"/>).</summary>
+/// <summary>One active plan of the child with its day rollup (<see cref="PositionProgressService.ComputeDayAsync(Models.StudyPlan, DateOnly, CancellationToken)"/>).</summary>
 public sealed record ChildPlanDay(StudyPlan Plan, DayOverview Overview);
 
 /// <summary>

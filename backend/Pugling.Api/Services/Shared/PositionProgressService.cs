@@ -370,7 +370,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .SumAsync(r => (int?)r.Points, ct) ?? 0;
 
     /// <summary>Computes a plan's daily status across its positions (without awarding points).</summary>
-    public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default)
+    public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day, CancellationToken ct = default) =>
+        await ComputeDayAsync(plan, day, await calendar.ForChildAsync(plan.ChildId, ct), ct);
+
+    /// <summary>
+    /// Like <see cref="ComputeDayAsync(StudyPlan, DateOnly, CancellationToken)"/>, with the child's duty days loaded once
+    /// by a caller that walks many days or plans.
+    /// </summary>
+    public async Task<DayOverview> ComputeDayAsync(StudyPlan plan, DateOnly day, ChildDutyDays dutyDays, CancellationToken ct)
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var statuses = new List<PositionStatus>(positions.Count);
@@ -412,6 +419,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize),
                 // A free position is never charged, so it must not advertise a price either.
                 cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
+                OwesDutyOn(pos, plan, cadence, day, dutyDays),
                 played?.SeriesUnitId ?? 0, played?.SeriesUnit?.Label ?? "",
                 played?.SeriesUnit?.Series?.Name ?? "", played?.BookPages,
                 plan.Id, plan.Title, planSubject ?? SeriesSubjectNameOf(pos),
@@ -431,6 +439,19 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         return new DayOverview(day, dutyDone, obligations.Count, met,
             await PointsAwardedAsync(plan.Id, day, ct), outstanding, statuses,
             rewardObligations.Count > 0 && rewardObligations.All(s => s.GoalMet));
+    }
+
+    /// <summary>
+    /// Does the period of <paramref name="cadence"/> around <paramref name="day"/> owe its duty (B-1022)? The same gates
+    /// the settlement applies before it books a penalty - plan due, duty days (Sunday, pause, a week touched by a pause),
+    /// the duty's end - so the child is never shown a price that is never charged.
+    /// </summary>
+    private static bool OwesDutyOn(PlanPosition pos, StudyPlan plan, GoalCadence cadence, DateOnly day, ChildDutyDays dutyDays)
+    {
+        if (cadence == GoalCadence.None) return false;
+        var (from, to) = PeriodRange(cadence, day);
+        return PlanDueForPeriod(plan, from, to) && dutyDays.OwesDuty(from, to)
+            && !(pos.DutyUntil is { } until && from > until);
     }
 
     /// <summary>
@@ -485,7 +506,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// the daily goals of all plans as soon as any plan has one, else every goal. Plan borders are the father's filing,
     /// not a reward rule: a plan of weekly goals must not lock the chest on a day whose daily goals are all met. The
     /// reward figures (<see cref="ChildDayRollup.RewardGoalsTotal"/> and siblings, B-612) come from the same list, so no
-    /// client recounts them. With a single active plan every figure equals that plan's <see cref="ComputeDayAsync"/>.
+    /// client recounts them. With a single active plan every figure equals that plan's
+    /// <see cref="ComputeDayAsync(StudyPlan, DateOnly, CancellationToken)"/>.
     /// </para>
     /// </summary>
     public async Task<ChildDayRollup> ComputeChildDayAsync(int childId, DateOnly day, CancellationToken ct)
@@ -496,8 +518,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .ToListAsync(ct);
 
         var planDays = new List<ChildPlanDay>(plans.Count);
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
         foreach (var plan in plans)
-            planDays.Add(new ChildPlanDay(plan, await ComputeDayAsync(plan, day, ct)));
+            planDays.Add(new ChildPlanDay(plan, await ComputeDayAsync(plan, day, dutyDays, ct)));
 
         var goalsTotal = planDays.Sum(p => p.Overview.GoalsTotal);
         var goalsMet = planDays.Sum(p => p.Overview.GoalsMet);
@@ -538,8 +561,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     internal readonly record struct PlanDutyState(bool Active, bool HasDuty, bool Done);
 
     /// <summary>
-    /// The duty part of <see cref="ComputeDayAsync"/> alone (<see cref="DayOverview.DutyDone"/> and whether there is a
-    /// duty at all), stopping at the first open goal. A streak runs this once per plan and day, so it must not pay for
+    /// The duty part of <see cref="ComputeDayAsync(StudyPlan, DateOnly, CancellationToken)"/> alone
+    /// (<see cref="DayOverview.DutyDone"/> and whether there is a duty at all), stopping at the first open goal. A streak runs this once per plan and day, so it must not pay for
     /// the pool and due counts the day view shows.
     /// </summary>
     private async Task<PlanDutyState> DutyStateAsync(StudyPlan plan, IReadOnlyList<PlanPosition> positions, DateOnly day,
@@ -618,7 +641,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// <summary>
     /// Evaluates the day and credits the goal points once for every position with a reached goal
     /// (idempotent per period via <see cref="PositionGoalReward"/>). Returns nothing: the hand-in path never reads a day
-    /// view here, and whoever needs one afterwards calls <see cref="ComputeDayAsync"/> (B-609).
+    /// view here, and whoever needs one afterwards calls <see cref="ComputeDayAsync(StudyPlan, DateOnly, CancellationToken)"/> (B-609).
     /// <para>
     /// The existence check below is only the fast pre-check; the <b>guarantee</b> lives in the unique index on
     /// <c>(PlanPositionId, Cadence, PeriodStart)</c> - per cadence only, see <see cref="SamePeriodCadences"/>. Exactly as with the penalty
@@ -829,19 +852,23 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// goal open), which is why it lives here and not in <see cref="IsGoalMetAsync"/>: introducing deliberately earns
     /// nothing. The introduction day is the first day the position owes anything: its first due day,
     /// <c>max(learning day of CreatedAt, plan.StartDate)</c>, or the child's first play day in the plan when that is later
-    /// (B-535 - before it nothing is settled, so a fixed earlier day would never be spared). Both are fixed once reached,
-    /// so skipping cannot push the exception to tomorrow. Daily cadence only - a weekly goal leaves
-    /// days to practise. The portion is the whole pool, or <c>min(dose, pool)</c> under a daily dose (whose positions
+    /// (B-535 - before it nothing is settled, so a fixed earlier day would never be spared) - moved on to the first duty
+    /// day from there (B-1021): a Sunday or a paused day is never settled, so an exception resting on it would be lost, and
+    /// the portion counts what was introduced from the first due day up to the introduction day, so words met on the free
+    /// Sunday still count. Both are fixed once reached, so skipping cannot push the exception to tomorrow. Daily cadence
+    /// only - a weekly goal leaves days to practise. The portion is the whole pool, or <c>min(dose, pool)</c> under a daily dose (whose positions
     /// introduce every day, hence the fixed day). A position without an introducible pool keeps the old rule. Already
     /// booked penalties stay: this check only runs for periods not yet settled.
     /// </para>
     /// </summary>
     private async Task<bool> IsIntroductionDaySparedAsync(PlanPosition pos, StudyPlan plan, DateOnly firstPlay,
-        DateOnly day, CancellationToken ct)
+        DateOnly day, ChildDutyDays dutyDays, CancellationToken ct)
     {
         if (pos.Cadence != GoalCadence.Daily) return false;
         var firstDue = FirstDueDay(pos, plan);
         var introductionDay = firstPlay > firstDue ? firstPlay : firstDue;
+        // Bounded by the settled day: past it the answer is "not this day" anyway, however long a pause runs.
+        while (introductionDay < day && !dutyDays.IsDutyDay(introductionDay)) introductionDay = introductionDay.AddDays(1);
         if (day != introductionDay) return false;
 
         var pool = play.PoolSize(pos, day, (await play.ItemsOfAsync(pos, day, ct: ct)).Count);
@@ -849,7 +876,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var portion = play.DailyDose(pos, day) is > 0 and var dose ? Math.Min(dose, pool) : pool;
         var exerciseId = PositionPlayService.PlayedExerciseId(pos, day);
         var introduced = await db.PositionItemProgress.CountAsync(
-            p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId && p.IntroducedAt == introductionDay, ct);
+            p => p.PlanPositionId == pos.Id && p.ExerciseId == exerciseId
+                && p.IntroducedAt >= firstDue && p.IntroducedAt <= introductionDay, ct);
         return introduced >= portion;
     }
 
@@ -916,7 +944,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 // goal can still be met): punish only when the period was actually missed.
                 if (await IsGoalMetAsync(pos, plan, to, ct)) continue;
                 // Spared, not met: no penalty, but no reward either - the reward path never sees this rule (B-432).
-                if (await IsIntroductionDaySparedAsync(pos, plan, firstPlay, from, ct)) continue;
+                if (await IsIntroductionDaySparedAsync(pos, plan, firstPlay, from, dutyDays, ct)) continue;
 
                 db.PositionGoalPenalties.Add(new PositionGoalPenalty
                 {
@@ -990,9 +1018,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         CancellationToken ct = default)
     {
         var days = new List<ProgressDay>();
+        var dutyDays = await calendar.ForChildAsync(plan.ChildId, ct);
         for (var d = plan.StartDate; d <= plan.EndDate && d <= until; d = d.AddDays(1))
         {
-            var o = await ComputeDayAsync(plan, d, ct);
+            var o = await ComputeDayAsync(plan, d, dutyDays, ct);
             days.Add(new ProgressDay(d, o.DutyDone, o.GoalsTotal, o.GoalsMet, o.PointsAwarded));
         }
         return days;

@@ -119,12 +119,18 @@ public class LerntageTests : IClassFixture<LerntageWebAppFactory>
             .ChildStreakAsync(childId, Today, int.MaxValue, CancellationToken.None);
     }
 
-    private async Task SettleAsync(int childId)
+    private async Task SettleAsync(int childId, DateOnly? today = null)
     {
         using var scope = factory.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<PositionProgressService>()
-            .SettleClosedPeriodsAsync(childId, Today, CancellationToken.None);
+            .SettleClosedPeriodsAsync(childId, today ?? Today, CancellationToken.None);
     }
+
+    // Every item of the position introduced on `day` - the portion of a position without a daily dose.
+    private void IntroduceAllOn(int positionId, DateOnly day) => Write(db =>
+    {
+        foreach (var p in db.PositionItemProgress.Where(p => p.PlanPositionId == positionId)) p.IntroducedAt = day;
+    });
 
     private List<DateOnly> PenaltyPeriods(int positionId) => Read(db => db.PositionGoalPenalties
         .Where(p => p.PlanPositionId == positionId).Select(p => p.PeriodStart).OrderBy(d => d).ToList());
@@ -244,6 +250,67 @@ public class LerntageTests : IClassFixture<LerntageWebAppFactory>
         await SettleAsync(s.ChildId);
 
         Assert.Empty(PenaltyPeriods(s.PositionId));
+    }
+
+    // ---- B-1021: the spared introduction day is a duty day ----
+
+    /// <summary>
+    /// B-1021: a position created on a Sunday, its words introduced on Monday, settled on Tuesday - Monday is the
+    /// introduction day and spared, as on any other first day. Red when the introduction day stays on the free Sunday
+    /// (Monday is booked).
+    /// </summary>
+    [Fact]
+    public async Task Einfuehrungstag_Am_Sonntag_Rueckt_Auf_Den_Montag()
+    {
+        var s = await SetupAsync(GoalCadence.Daily, Sunday, [], penalty: 5);
+        IntroduceAllOn(s.PositionId, Today);
+
+        await SettleAsync(s.ChildId, Today.AddDays(1));
+
+        Assert.Empty(PenaltyPeriods(s.PositionId));
+    }
+
+    /// <summary>
+    /// B-1021 with a pause: created Thursday, Thursday and Friday paused, the words introduced on Saturday - Saturday is
+    /// the introduction day and spared. Red when the introduction day stays inside the pause (Saturday is booked).
+    /// </summary>
+    [Fact]
+    public async Task Einfuehrungstag_In_Der_Pause_Rueckt_Hinter_Die_Pause()
+    {
+        var s = await SetupAsync(GoalCadence.Daily, Thursday, [], penalty: 5);
+        await PauseAsync(s, Thursday, Friday);
+        IntroduceAllOn(s.PositionId, Saturday);
+
+        await SettleAsync(s.ChildId);
+
+        Assert.Empty(PenaltyPeriods(s.PositionId));
+    }
+
+    // ---- B-1022: the child sees a price only where the settlement books one ----
+
+    /// <summary>
+    /// B-1022: <c>owesDuty</c> on the child's day view follows the settlement - a daily duty owes on a plain Monday, not on
+    /// a Sunday and not on a paused day; a weekly duty owes in a plain week, not in a week touched by a pause. Red when the
+    /// field only reads the cadence (the false rows turn true), or when it ignores the week rule (the weekly pause row).
+    /// </summary>
+    [Theory]
+    [InlineData(GoalCadence.Daily, null, false, true)]
+    [InlineData(GoalCadence.Daily, 0, false, false)]
+    [InlineData(GoalCadence.Daily, null, true, false)]
+    [InlineData(GoalCadence.Weekly, null, false, true)]
+    [InlineData(GoalCadence.Weekly, 2, false, false)]
+    public async Task Heute_Sagt_Ob_Die_Pflicht_Etwas_Kostet(GoalCadence cadence, int? pauseDaysAfterMonday, bool onSunday,
+        bool expected)
+    {
+        var s = await SetupAsync(cadence, Thursday, [], penalty: 5);
+        if (pauseDaysAfterMonday is { } offset) await PauseAsync(s, Today.AddDays(offset), Today.AddDays(offset));
+        if (onSunday) factory.Clock.FreezeAt(new DateTimeOffset(2026, 11, 29, 12, 0, 0, TimeSpan.Zero));
+
+        var today = await s.Father.GetFromJsonAsync<JsonElement>($"/api/v1/student/children/{s.ChildId}/today");
+        var position = today.GetProperty("positions").EnumerateArray().Single(p => p.GetProperty("positionId").GetInt32() == s.PositionId);
+
+        Assert.Equal(5, position.GetProperty("penaltyCoins").GetInt32());
+        Assert.Equal(expected, position.GetProperty("owesDuty").GetBoolean());
     }
 
     // ---- Shared readers of the duty days ----

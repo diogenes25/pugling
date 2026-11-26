@@ -98,6 +98,9 @@ export default defineConfig({
         // hätte sonst einen späteren Spec mit „Login fehlgeschlagen" umgeworfen, scheinbar grundlos.
         // Dasselbe Zugeständnis macht der In-Process-TestServer im Backend.
         RateLimiting__LoginEnabled: "false",
+        // Sonntag ohne Pflicht aus (wie im In-Process-TestServer): seit B-1022 zeigt die Arcade an einem pflichtfreien
+        // Tag keine Frist, und `pfad.spec.ts` prüft sie – sonntags wäre die Suite sonst rot, je nach Wochentag des Laufs.
+        LearningDay__SundayFree: "false",
       },
     },
     {

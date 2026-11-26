@@ -87,10 +87,11 @@ export type Frist = { art: "stunden"; stunden: number } | { art: "sonntag" };
 /**
  * Die Frist eines offenen Pflichtziels nach **Server-Uhr** (siehe `lib/datum.ts`): die Anzeige soll zur Buchung
  * passen, nicht zur Ortszeit. Am letzten Tag der Woche zeigt auch ein Wochenziel Stunden. `null` für Positionen
- * ohne offene Pflicht.
+ * ohne offene Pflicht – und für eine Periode, die gar nichts schuldet (`owesDuty`, B-1022: Sonntag, Pausentag,
+ * eine von einer Pause berührte Woche): dort bucht der Server keinen Malus, also droht die Anzeige auch keinen an.
  */
 export function frist(pos: PositionStatus, jetzt: Date): Frist | null {
-  if (!pflichtOffen(pos)) return null;
+  if (!pflichtOffen(pos) || !pos.owesDuty) return null;
   if (pos.cadence === "Weekly" && !istServerSonntag(jetzt)) return { art: "sonntag" };
   return { art: "stunden", stunden: stundenBisServerTagesende(jetzt) };
 }

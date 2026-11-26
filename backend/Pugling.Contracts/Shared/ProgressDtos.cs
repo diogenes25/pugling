@@ -18,6 +18,10 @@ namespace Pugling.Contracts.Shared;
 /// (B-525): a price that only appears as a booking the next morning cannot steer anything. It is the configured
 /// amount, not a forecast - it is only booked for a closed daily/weekly period of a plan that was due, and it is
 /// always 0 for a free position (<c>Cadence = None</c>), which is never charged.
+/// <c>OwesDuty</c> (B-1022) says whether the current period - today for a daily goal, this week for a weekly one - owes
+/// its duty at all: false on a Sunday, on a paused day, in a week touched by a pause, past the duty's end and outside the
+/// plan's due window. A client shows a deadline and a penalty only when it is true, or it would threaten a booking the
+/// settlement never makes. Same rule as the settlement (<c>DutyCalendar</c>), not a forecast of the goal.
 /// <c>SeriesUnitId</c>/<c>SeriesUnitLabel</c> name the textbook unit of the exercise, so a client can group
 /// consecutive positions into the sections the child knows from the book.
 /// <c>SeriesName</c>/<c>BookPages</c> (B-588) add the series and the printed page reference (<c>null</c> = none), so
@@ -51,7 +55,7 @@ public record PositionStatus(
     int PositionId, int ExerciseId, string ExerciseTitle, string ExerciseType, string Renderer,
     int Order, GoalCadence Cadence, ExerciseCheckMode CheckMode, bool UseLeitner, bool Testable,
     bool GoalMet, double GoalProgress, int DueCount, int PoolSize, int PointsGoalMet, int IntroducedCount,
-    int PenaltyCoins, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
+    int PenaltyCoins, bool OwesDuty, int SeriesUnitId, string SeriesUnitLabel, string SeriesName = "", string? BookPages = null,
     int PlanId = 0, string PlanTitle = "", string SubjectName = "", int ImprintedCount = 0, BuildPath? Build = null);
 
 /// <summary>

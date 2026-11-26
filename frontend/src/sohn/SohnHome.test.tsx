@@ -21,7 +21,7 @@ type TruhenZiele = import("./SohnHome").TruhenZiele;
 const position = (over: Partial<PositionStatus>): PositionStatus => ({
   positionId: 1, exerciseId: 1, exerciseTitle: "Wörter 1", exerciseType: "Vocabulary", renderer: "flashcards",
   order: 1, cadence: "Daily", checkMode: "PositionTest", useLeitner: true, testable: true, goalMet: false,
-  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5,
+  goalProgress: 0, dueCount: 3, poolSize: 10, pointsGoalMet: 20, introducedCount: 4, imprintedCount: 4, penaltyCoins: 5, owesDuty: true,
   seriesUnitId: 1, seriesUnitLabel: "Unit 1", ...over,
 } as PositionStatus);
 
