@@ -1,3 +1,5 @@
+import { flushSync } from "react-dom";
+
 /**
  * B-661: die Sonderzeichen, die eine Handy-Tastatur nicht immer hat. Die Leiste bietet sie je getippter Sprache an
  * (`keyboardLang` der Karte, die Lernsprache der Reihe), damit kein Wort an einer fehlenden Taste hängt.
@@ -37,8 +39,11 @@ export const ohneDiakritika = (s: string) => s.normalize("NFD").replace(/\p{M}/g
 export function einsetzen(feld: HTMLInputElement | null, wert: string, zeichen: string, onWert: (wert: string) => void) {
   const von = feld?.selectionStart ?? wert.length;
   const bis = feld?.selectionEnd ?? von;
-  onWert(wert.slice(0, von) + zeichen + wert.slice(bis));
+  // flushSync: the new value is in the field before this function returns, so the caret can be placed right away. A
+  // caret deferred to the next frame raced fast typing – keystrokes landed first, then the late caret jumped back
+  // behind the inserted character and the following letters came out scrambled ("dîern", flaky E2E sonderzeichen).
+  flushSync(() => onWert(wert.slice(0, von) + zeichen + wert.slice(bis)));
   const marke = von + zeichen.length;
-  // Nach dem Rendern, sonst setzt React den Wert und schiebt die Marke ans Ende.
-  requestAnimationFrame(() => { feld?.focus(); feld?.setSelectionRange(marke, marke); });
+  feld?.focus();
+  feld?.setSelectionRange(marke, marke);
 }

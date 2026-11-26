@@ -55,6 +55,21 @@ describe("einsetzen", () => {
     expect(onWert).toHaveBeenLastCalledWith("dîner");
   });
 
+  // Rot, wenn die Marke erst später (z. B. im nächsten Frame) gesetzt wird: dann steht sie direkt nach dem Aufruf am
+  // Ende, und schnell nachgetippte Buchstaben landen vor einer Marke, die danach noch zurückspringt („dîern“).
+  it("setzt die Schreibmarke sofort hinter das Zeichen", () => {
+    const feld = document.createElement("input");
+    document.body.append(feld);
+    feld.value = "dner";
+    feld.setSelectionRange(1, 1);
+    // Wie ein kontrolliertes Feld: der gemeldete Wert steht danach im Feld (die Marke wandert dabei ans Ende).
+    einsetzen(feld, "dner", "î", (v) => { feld.value = v; });
+    expect(feld.value).toBe("dîner");
+    expect(feld.selectionStart).toBe(2);
+    expect(feld.selectionEnd).toBe(2);
+    feld.remove();
+  });
+
   it("hängt ohne Feld ans Ende an", () => {
     const onWert = vi.fn();
     einsetzen(null, "ma", "ï", onWert);
