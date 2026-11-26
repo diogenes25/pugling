@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/katalog, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/katalog, rolle/student]
 aliases: [Lösungsmenge auswählen, Distraktoren Gleichung]
-status: geschaetzt
+status: abgenommen
 prio: P2
 art: Wunsch
 groesse: M
@@ -148,3 +148,20 @@ Je Kriterium die Änderung, die es rot macht.
 - **2026-11-19** — geschaetzt (Vorbereitungslauf, Sonnet): M, backend, keine Migration, kein Vertragsbruch; hängt an B-710.
   `wartet_auf` bleibt.
 - **2026-11-19** — Entscheidungen bestätigt. Stellvertretend auf Anweisung des Nutzers („nimm für alle Fragen deine Empfehlung“): die Empfehlung der Sonnet-Entscheidungen wurde übernommen.
+- **2026-11-25** — in-arbeit, Sprint 171 (Nachtlauf M). Stufenwerte wie `MatchStage` (`Direct = 1`, `Distractors = 2`);
+  Auffüller über die Fehlermodelle hinaus: Radikand mit falschem Vorzeichen, dessen Einzelwerte, Scheitel, Lösung ±1, leere
+  Menge. Die Auswahlkarte trägt den Trenner-Hinweis nicht (`CardForStage`).
+- AK 1, richtige einmal, falsche verschieden, `Direct` ohne Optionen → `backend/Pugling.Api.Tests/QuadraticEquationChoicesTests.cs:38` (6 Gleichungen),
+  `:77` (zweiter richtiger Knopf in der Toleranz); M22 (Optionen auf `Direct`), M23 (nur Textvergleich) → rot.
+- AK 2, feste Reihenfolge → `…ChoicesTests.cs:53` (probabilistische Probe, 1:24 bei `Random`).
+- AK 3, je Fehlermodell → `…ChoicesTests.cs:65`, ohne Lösung `:88`, Doppellösung/Null `:102`; M9, M10, M11, M12 → rot.
+- AK 4, Option gewertet wie getippt → `…ChoicesTests.cs:117`, API `backend/Pugling.Api.Tests/QuadraticEquationApiTests.cs:149`.
+- AK 5, fremde Stufe abgelehnt → `…ApiTests.cs:128`; Manifest-Pinning `ExerciseTypeManifestTests` (Stufen-Enum).
+- AK 6 (Absichtserklärung), Vorgabe `Direct` → `…ChoicesTests.cs:127`; M24 → rot; `SelfAssessedTest = false` im
+  Manifest-Test.
+- **2026-11-26** — abgenommen (Sprint 171, Nachtlauf M). Code `a961897b`. Backend 2542 passed (`dotnet test Pugling.sln
+  -c Release`), Vitest 1488 passed, `tsc -b` sauber, Playwright 4 passed (`gleichung-loesen`, `uebungstypen`, `lektion`,
+  `rechnen-mit-komma`); Mutanten 26/26 (Backend) und 16/16 (Frontend) rot. Review `pugling-reviewer` und `frontend-reviewer`
+  eingearbeitet. Rollengang aller drei Rollen an einer Kopie der echten DB (:5241) plus UI-Spec; offen für den Menschen nur
+  der Geräte-Check (Zahlentastatur am Handy) und die Formel-Darstellung (B-638).
+  Protokoll: [pm-sitzung-2026-11-25-m](../pm-sitzung-2026-11-25-m.md).
