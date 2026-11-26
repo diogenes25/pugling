@@ -1,12 +1,12 @@
 ---
-tags: [typ/story, status/idee, bereich/gamification, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/gamification, rolle/supervisor]
 aliases: []
-status: idee
+status: verworfen
 prio: P2
 art: Frage
 unverifiziert: false
 quelle: docs/pm-sitzung-2026-11-26.md#sprint-192--ziel--umfang
-grund: ""
+grund: "Vater entschieden 2026-11-26: ein noch nie geöffneter Plan droht weiter Frist und Malus an – die Drohung ist der Grund, ihn zu öffnen. Ist-Stand bleibt, nichts zu bauen."
 ersetzt_durch: []
 ---
 
@@ -35,3 +35,5 @@ Kosten beider Antworten:
 
 - **2026-11-26** — angelegt im Sprint 192 (PM-Sitzung 2026-11-26); `OwesDutyOn` trägt die Ausnahme im Kommentar, die
   Vertragsdoku (`ProgressDtos.cs`) nennt sie.
+- **2026-11-26** — Antwort des Vaters: **ja, weiter androhen**. `verworfen` (nichts zu bauen); Code-Kommentar in `OwesDutyOn` und
+  Vertragsdoku in `ProgressDtos.cs` nennen die Ausnahme jetzt als entschieden.
