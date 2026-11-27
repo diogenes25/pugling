@@ -9,6 +9,10 @@
     <RootNamespace>PuglingTower</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The xUnit project for the engine-free rules has its own csproj; Godot must not compile it into the game. -->
+    <Compile Remove="Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
     <!--
       Pugling.Contracts targets net10.0 and cannot be referenced as a project; its sources are compiled in
       instead, which keeps one source of truth for the DTOs (B-850, decision 9 of B-822).
