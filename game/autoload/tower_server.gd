@@ -23,6 +23,12 @@ func login(server: String, child: int, pin: String) -> ApiResult
 func overview() -> ApiResult
 
 
+## The child's day for the start screen: the data holds "wallet", "today" (dictionaries) and "missions" (an array),
+## each empty when its call failed. Fails only when none of them answered.
+@abstract
+func home() -> ApiResult
+
+
 ## Starts a run from one plan position.
 @abstract
 func start_run(plan_position_id: int) -> ApiResult

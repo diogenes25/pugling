@@ -23,6 +23,15 @@ func overview() -> ApiResult:
 	return await _send(HTTPClient.METHOD_GET, _game())
 
 
+func home() -> ApiResult:
+	var wallet := await _send(HTTPClient.METHOD_GET, "student/me/points")
+	var today := await _send(HTTPClient.METHOD_GET, "student/children/%d/today" % child_id)
+	var missions := await _send(HTTPClient.METHOD_GET, "student/me/missions")
+	if not wallet.ok and not today.ok and not missions.ok:
+		return wallet
+	return ApiResult.success({"wallet": wallet.data, "today": today.data, "missions": missions.data.get("items", [])})
+
+
 func start_run(plan_position_id: int) -> ApiResult:
 	return await _send(HTTPClient.METHOD_POST, _game() + "/runs", {"planPositionId": plan_position_id})
 
@@ -74,6 +83,9 @@ func _send(method: HTTPClient.Method, path: String, body: Dictionary = {}) -> Ap
 	var json: Variant = JSON.parse_string(text)
 	if json is Dictionary:
 		return ApiResult.success(json as Dictionary)
+	# A list endpoint answers with a bare array; it travels as "items".
+	if json is Array:
+		return ApiResult.success({"items": json})
 	return ApiResult.failure("Unerwartete Antwort vom Server.")
 
 

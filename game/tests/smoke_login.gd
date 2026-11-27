@@ -7,6 +7,9 @@ const MAIN: PackedScene = preload("res://Main.tscn")
 
 
 func _ready() -> void:
+	# Its own device memory, emptied first: the run must not log in with (or overwrite) what a player stored.
+	Settings.file = "user://settings-smoke.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Settings.file))
 	var main: Control = MAIN.instantiate()
 	add_child(main)
 	await get_tree().process_frame

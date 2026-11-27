@@ -22,6 +22,13 @@ func _ready() -> void:
 	var positions: Array = overview.data.get("positions", [])
 	_note("overview", overview.ok and not positions.is_empty() and overview.data.has("limitSeconds"),
 			"%d Positionen %s" % [positions.size(), overview.error])
+	var day := await Api.home()
+	var wallet: Dictionary = day.data.get("wallet", {})
+	var today: Dictionary = day.data.get("today", {})
+	_note("home", day.ok and wallet.has("coins") and wallet.has("gems") and today.has("goalsTotal") and today.has("currentStreak")
+			and today.has("dailyBox") and day.data.get("missions") is Array,
+			"Münzen %s, Gems %s, Ziele %s/%s, Serie %s, %d Missionen %s" % [wallet.get("coins"), wallet.get("gems"),
+			today.get("goalsMet"), today.get("goalsTotal"), today.get("currentStreak"), (day.data.get("missions", []) as Array).size(), day.error])
 	if positions.is_empty():
 		get_tree().quit(1)
 		return

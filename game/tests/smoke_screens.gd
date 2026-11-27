@@ -1,12 +1,15 @@
 extends Node
 ## Smoke run of the whole screen flow on a [FakeApi]: presses what a player presses, including the Android back
-## button on every screen, and logs what each screen says. Exit code 0 only when every expectation held and the back
-## button on the login closed the app.
+## button on every screen, and logs what each screen says. It starts on a device that remembers nothing (settings
+## with the login), then checks the start screen, the choices that are remembered, a run with its result, a restart
+## that logs in by itself, a session that expired, and a stored PIN that no longer fits. Exit code 0 only when every
+## expectation held and the back button on the login closed the app.
 ## Run: godot --headless --path . res://tests/smoke_screens.tscn
 ## With a window and "-- --shots=<folder>" it also saves a picture of every screen.
 
 const MAIN: PackedScene = preload("res://Main.tscn")
 const WATCHDOG_SECONDS: float = 120.0
+const SETTINGS_FILE: String = "user://settings-smoke.cfg"
 
 var _main: Control
 var _fake := FakeApi.new()
@@ -15,14 +18,16 @@ var _failed: int = 0
 
 func _ready() -> void:
 	get_tree().create_timer(WATCHDOG_SECONDS, true, false, true).timeout.connect(_give_up)
+	Settings.file = SETTINGS_FILE
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_FILE))
 	add_child(_fake)
 	_fake.failing_ends = 1
-	_main = MAIN.instantiate()
-	_main.set("server", _fake)
-	add_child(_main)
-	await _frames(2)
+	await _restart()
 
-	_expect("login", ["Vokabel-Türme", "[Emulator]", "[Heimnetz]", "[Anmelden]", "[⌫]"])
+	# A device that remembers nothing opens the settings with the login.
+	_expect("login", ["Vokabel-Türme", "[Emulator]", "[Heimnetz]", "[Anmelden]", "[⌫]", "[Ton: an]"])
+	_check(UiDriver.find_button(_main, "Abmelden") == null and UiDriver.find_button(_main, "Zurück") == null,
+			"ohne Anmeldung kein Abmelden und kein Zurück")
 	_expect_field("Child", "3")
 	_expect_field("Server", "http://127.0.0.1:5280" if OS.has_feature("x86_64") else "http://192.168.178.55:5200")
 	_check((_main.find_child("Pin", true, false) as LineEdit).virtual_keyboard_enabled == false, "PIN-Feld ohne Bildschirmtastatur")
@@ -44,64 +49,117 @@ func _ready() -> void:
 	_press("Anmelden")
 	await _frames(4)
 	_expect("login falsche PIN", ["PIN falsch oder Anmeldung abgelaufen."])
+	_check(Settings.pin() == "", "eine falsche PIN wird nicht gespeichert")
 	_press("C")
 	_type("4711")
 	_press("Anmelden")
-	await _frames(6)
+	await _frames(8)
 
+	_expect("startseite", ["Testkind", "[SPIELEN]", "Tagesaufgaben", "○ Lernziele heute  1/4", "offen: Unit 1 · Wörter Part A",
+		"○ 20 Vokabeln richtig  8/20  +25", "✔ Fertig-Mission  5/5  +10", "1 Truhe wartet – öffne sie im Lern-Teil!",
+		"Spielzeit heute noch 28 Min.", "Spiel-Münzen heute 0/10", "Serie 3   ·   Münzen 120   ·   Gems 7   ·   Rekord",
+		"[Wörter\nEnglisch · Unit 1 · Wörter  ▸]", "[Karte\nLichtung  ▸]", "[Einstellungen]"])
+	_check(Settings.pin() == "4711" and Settings.server() == "http://127.0.0.1:5280" and Settings.child() == 3,
+			"die Anmeldung ist auf dem Gerät gespeichert")
+	var texts := " | ".join(UiDriver.texts(_main))
+	_check(texts.find("○ 20 Vokabeln") < texts.find("✔ Fertig-Mission"), "offene Aufgaben stehen vor erledigten")
+	await UiDriver.shot(get_tree(), "2-startseite")
+
+	# The map card steps through the maps and the choice is remembered.
+	_press("Karte")
+	_expect("karte 2", ["[Karte\nFlussfurt  ▸]"])
+	_check(Settings.map() == 1, "die Karte ist gemerkt")
+	_press("Karte")
+	_press("Karte")
+	_expect("karte wieder 1", ["[Karte\nLichtung  ▸]"])
+
+	# The words card opens the list; back leads to the start screen, a pick is remembered.
+	_press("Wörter")
+	await _frames(6)
 	_expect("wortwahl", ["Hallo Testkind! Welche Wörter?", "Spielzeit heute noch 28 Min.  ·  Münzen heute 0/10 🪙",
-		"[Englisch · Unit 1 · Wörter (12)]", "[ · Ohne Fach (12)]", "[Abmelden]", "[Spiel beenden]"])
-	await UiDriver.shot(get_tree(), "2-wortwahl")
+		"[Englisch · Unit 1 · Wörter (12)]", "[ · Ohne Fach (12)]", "[Zurück]"])
+	await UiDriver.shot(get_tree(), "3-wortwahl")
 	await _back("wortwahl")
-	_expect("zurück von wortwahl", ["Vokabel-Türme", "[Anmelden]"])
-	(_main.find_child("Pin", true, false) as LineEdit).grab_focus()
-	_type("4711")
-	_press("Anmelden")
+	_expect("zurück von wortwahl", ["[SPIELEN]", "[Wörter\nEnglisch · Unit 1 · Wörter  ▸]"])
+	_press("Wörter")
 	await _frames(6)
-	_press("Englisch · Unit 1")
-	await _frames(2)
+	_press("Ohne Fach")
+	await _frames(8)
+	_expect("wörter gewählt", ["[SPIELEN]", "[Wörter\nOhne Fach  ▸]"])
+	_check(Settings.position() == 2, "die Wörter sind gemerkt")
 
-	_expect("kartenwahl", ["Welche Karte?", "[Lichtung]", "Ein langer Weg, drei Türme nah beieinander – zum Eingewöhnen.",
-		"[Flussfurt]", "Ein Fluss teilt die Karte. Nur über die Brücken kommst du auf die andere Seite.",
-		"[Burgberg]", "Zwei Eingänge, ein Weg zur Burg. Sechs Türme wollen versorgt werden.", "[Andere Wörter]"])
-	await UiDriver.shot(get_tree(), "3-kartenwahl")
-	await _back("kartenwahl")
-	_expect("zurück von kartenwahl", ["Hallo Testkind! Welche Wörter?"])
-	_press("Englisch · Unit 1")
-	await _frames(2)
-	_press("Andere Wörter")
+	# The settings from the start screen: the sound switch, and the way back.
+	_press("Einstellungen")
 	await _frames(4)
-	_expect("andere wörter", ["Hallo Testkind! Welche Wörter?"])
-	_press("Englisch · Unit 1")
-	await _frames(2)
-	_press("Lichtung")
-	await _play_until_result()
+	_expect("einstellungen", ["Einstellungen", "[Anmelden]", "[Ton: an]", "[Abmelden]", "[Zurück]"])
+	_press("Ton: an")
+	_expect("ton aus", ["[Ton: aus]"])
+	_check(AudioServer.is_bus_mute(0) and not Settings.sound(), "Ton aus schaltet stumm und ist gemerkt")
+	_press("Ton: aus")
+	_check(not AudioServer.is_bus_mute(0) and Settings.sound(), "Ton an schaltet wieder ein")
+	await UiDriver.shot(get_tree(), "4-einstellungen")
+	await _back("einstellungen")
+	_expect("zurück von einstellungen", ["[SPIELEN]"])
 
+	# One tap starts a run on the chosen map with the chosen words.
+	_press("SPIELEN")
+	await _play_until_result()
 	# The first end call fails (failing_ends): the result is not known yet and can be sent again.
 	_expect("ergebnis ungespeichert", ["Ergebnis noch nicht gespeichert.", "[Ergebnis nochmal senden]", "[Noch einmal]",
-		"[Andere Karte]", "[Andere Wörter]", "Server nicht erreichbar (keine Verbindung)."])
-	await UiDriver.shot(get_tree(), "5-ergebnis-ungespeichert")
+		"[Startseite]", "Server nicht erreichbar (keine Verbindung)."])
+	await UiDriver.shot(get_tree(), "6-ergebnis-ungespeichert")
 	_press("Ergebnis nochmal senden")
 	await _frames(6)
 	_expect("ergebnis", ["Spiel beendet.", "Welle 0  ·  0 Punkte", "Monster besiegt: 0  →  0 Punkte", "0 von 0 Vokabeln richtig",
-			"Münzen gibt es ab 3 richtigen Vokabeln.", "[Noch einmal]", "[Andere Karte]",
-		"[Andere Wörter]"])
+		"Münzen gibt es ab 3 richtigen Vokabeln.", "[Noch einmal]", "[Startseite]"])
 	_check(UiDriver.find_button(_main, "Ergebnis nochmal senden") == null, "kein Nochmal-senden nach gespeichertem Ergebnis")
-	await UiDriver.shot(get_tree(), "6-ergebnis")
-	_press("Andere Karte")
-	await _frames(2)
-	_expect("andere karte", ["Welche Karte?"])
-	_press("Flussfurt")
-	await _play_until_result()
-	_expect("ergebnis 2", ["Spiel beendet."])
+	await UiDriver.shot(get_tree(), "7-ergebnis")
 	_press("Noch einmal")
 	await _play_until_result()
 	_expect("noch einmal", ["Spiel beendet."])
 	await _back("ergebnis")
-	_expect("zurück von ergebnis", ["Hallo Testkind! Welche Wörter?"])
+	_expect("zurück von ergebnis", ["[SPIELEN]"])
+	_press("SPIELEN")
+	await _play_until_result()
+	_press("Startseite")
+	await _frames(8)
+	_expect("startseite nach dem lauf", ["[SPIELEN]", "Tagesaufgaben"])
+
+	# A restart logs in by itself and lands on the start screen with the remembered choices.
+	var logins := _fake.logins
+	await _restart()
+	await _frames(8)
+	_expect("neustart", ["Testkind", "[SPIELEN]", "[Wörter\nOhne Fach  ▸]"])
+	_check(_fake.logins == logins + 1 and UiDriver.find_button(_main, "Anmelden") == null, "Neustart meldet selbst an, ohne Login-Bildschirm")
+
+	# A session that ran out is renewed once with the stored PIN, without bothering the player.
+	_fake.expired_overviews = 1
+	logins = _fake.logins
+	_press("Einstellungen")
+	await _frames(4)
+	_press("Zurück")
+	await _frames(14)
+	_expect("abgelaufene sitzung", ["[SPIELEN]", "Tagesaufgaben"])
+	_check(_fake.logins == logins + 1, "abgelaufene Sitzung: genau eine neue Anmeldung")
+
+	# A stored PIN that no longer fits opens the settings and says why.
+	Settings.save_login(Settings.server(), 3, "9999")
+	await _restart()
+	await _frames(8)
+	_expect("gespeicherte PIN passt nicht mehr", ["Vokabel-Türme", "[Anmelden]", "PIN falsch oder Anmeldung abgelaufen."])
+	(_main.find_child("Pin", true, false) as LineEdit).grab_focus()
+	_type("4711")
+	_press("Anmelden")
+	await _frames(8)
+	_expect("wieder angemeldet", ["[SPIELEN]"])
+
+	# "Abmelden" forgets the PIN; the next start would ask again.
+	_press("Einstellungen")
+	await _frames(4)
 	_press("Abmelden")
-	await _frames(2)
+	await _frames(4)
 	_expect("abmelden", ["Vokabel-Türme", "[Anmelden]"])
+	_check(Settings.pin() == "" and UiDriver.find_button(_main, "Zurück") == null, "Abmelden vergisst die PIN")
 
 	Log.line("bild fertig, %d Abweichungen; Zurück auf dem Login beendet die App" % _failed)
 	if _failed > 0:
@@ -112,22 +170,39 @@ func _ready() -> void:
 	_main.notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 
 
+## Starts the app anew on the same server and the same device memory.
+func _restart() -> void:
+	if _main != null:
+		_main.queue_free()
+		await _frames(2)
+	_main = MAIN.instantiate()
+	_main.set("server", _fake)
+	add_child(_main)
+	await _frames(2)
+
+
 ## From the pressed map to the result screen. In a level it opens the pause menu with the back button and stops.
 func _play_until_result() -> void:
 	await _frames(6)
 	var level := _main.find_child("Level", true, false)
 	if level != null:
 		await get_tree().create_timer(1.0).timeout
-		await UiDriver.shot(get_tree(), "4-level")
+		await UiDriver.shot(get_tree(), "5-level")
 		await _back("level")
 		_expect("pause", ["Pause", "[Weiter]", "[Aufhören]"])
-		await UiDriver.shot(get_tree(), "4-pause")
+		await UiDriver.shot(get_tree(), "5-pause")
 		_press("Aufhören")
 		await get_tree().create_timer(0.8).timeout
 	await _frames(6)
 
 
 func _back(from: String) -> void:
+	# After a deviation the app may be on another screen than expected - on the login, back would close the app with
+	# exit code 0 and the run would look green. So a run that already deviated stops here.
+	if _failed > 0:
+		Log.line("bild ABBRUCH vor der Zurück-Taste auf %s: %d Abweichungen" % [from, _failed])
+		get_tree().quit(1)
+		await get_tree().create_timer(5.0).timeout
 	# Longer than the debounce, or the press would be swallowed as a repeat.
 	await get_tree().create_timer(0.5).timeout
 	Log.line("bild Zurück-Taste auf %s" % from)

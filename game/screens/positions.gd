@@ -5,11 +5,8 @@ extends Page
 ## A position was picked.
 signal chosen(plan_position_id: int)
 
-## "Abmelden" was pressed.
-signal logout
-
-## "Spiel beenden" was pressed.
-signal quit_game
+## "Zurück" was pressed.
+signal back
 
 ## The server the overview comes from; set before the screen enters the tree.
 var server: TowerServer
@@ -26,8 +23,7 @@ func _ready() -> void:
 		_list(result.data)
 	else:
 		status.text = result.error
-	add_action("Abmelden", logout.emit)
-	add_action("Spiel beenden", quit_game.emit)
+	add_action("Zurück", back.emit)
 
 
 func _list(overview: Dictionary) -> void:

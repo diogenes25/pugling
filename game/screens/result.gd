@@ -6,11 +6,8 @@ extends Page
 ## "Noch einmal": the same words on the same map.
 signal again
 
-## "Andere Karte" was pressed.
-signal other_map
-
-## "Andere Wörter" was pressed.
-signal other_words
+## "Startseite" was pressed.
+signal home
 
 ## "Ergebnis nochmal senden" was pressed.
 signal resend
@@ -55,8 +52,7 @@ func _ready() -> void:
 	else:
 		add_action("Ergebnis nochmal senden", resend.emit)
 	add_action("Noch einmal", again.emit)
-	add_action("Andere Karte", other_map.emit)
-	add_action("Andere Wörter", other_words.emit)
+	add_action("Startseite", home.emit)
 	add_status()
 	status.text = end.error
 

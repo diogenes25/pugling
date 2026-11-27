@@ -18,6 +18,12 @@ var closed_at_assign: int = 0
 ## This many calls of [method end_run] fail before one answers.
 var failing_ends: int = 0
 
+## This many calls of [method overview] fail as an expired session before one answers.
+var expired_overviews: int = 0
+
+## Logins that worked.
+var logins: int = 0
+
 ## Coins a won level pays, up to the daily cap.
 var coins_per_win: int = 5
 
@@ -34,11 +40,15 @@ func login(_server: String, child: int, pin: String) -> ApiResult:
 		return ApiResult.failure("PIN falsch oder Anmeldung abgelaufen.")
 	child_id = child
 	child_name = "Testkind"
+	logins += 1
 	return ApiResult.success({"token": "fake", "role": "Student", "id": child, "name": child_name})
 
 
 func overview() -> ApiResult:
 	await _hop()
+	if expired_overviews > 0:
+		expired_overviews -= 1
+		return ApiResult.failure("PIN falsch oder Anmeldung abgelaufen.")
 	return ApiResult.success({
 		"positions": [
 			{"planPositionId": 1.0, "planTitle": "Testplan", "subjectName": "Englisch", "exerciseTitle": "Unit 1 · Wörter", "wordCount": float(word_count)},
@@ -48,6 +58,22 @@ func overview() -> ApiResult:
 		"limitSeconds": 1800.0,
 		"coinsToday": float(_coins_today),
 		"dailyCoinCap": 10.0,
+	})
+
+
+func home() -> ApiResult:
+	await _hop()
+	return ApiResult.success({
+		"wallet": {"childId": float(child_id), "coins": 120.0, "gems": 7.0},
+		"today": {
+			"goalsTotal": 4.0, "goalsMet": 1.0, "currentStreak": 3.0, "dutyDone": false,
+			"outstanding": ["Unit 1 · Wörter Part A", "Unité 5 · Vokabeln", "Grammatik: simple past"],
+			"dailyBox": {"claimedToday": false, "openedToday": false, "waiting": 1.0, "streakAtClaim": 0.0},
+		},
+		"missions": [
+			{"id": 1.0, "title": "Fertig-Mission", "target": 5.0, "current": 5.0, "completed": true, "rewardPoints": 10.0},
+			{"id": 2.0, "title": "20 Vokabeln richtig", "target": 20.0, "current": 8.0, "completed": false, "rewardPoints": 25.0},
+		],
 	})
 
 

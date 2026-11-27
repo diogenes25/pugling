@@ -43,18 +43,32 @@ Zusätzlich entschieden (im Sinne des Auftrags, zum Umstoßen):
 Geprüft: 36 Regeltests mit roter Probe, Level-Lauf mit 212 Prüfungen (auch im exportierten Paket), Server-Tests.
 **Nicht geprüft:** eine Runde auf dem Handy und das Spielgefühl der Balance – die Zahlen sind ein erster Wurf.
 
-## Etappe 2 – Startbildschirm, einmal anmelden, Einstellungen (offen)
+## Etappe 2 – Startbildschirm, einmal anmelden, Einstellungen (gebaut 2026-11-27)
 
-- **Einmal anmelden:** Server-Adresse, Kind und Sitzung bleiben auf dem Gerät; die App startet direkt im
-  Startbildschirm. Offen ist, wie: der heutige Login gibt ein Token mit Ablaufzeit. Entweder merkt sich die App die
-  PIN (einfach, aber die PIN liegt dann auf dem Gerät) oder der Server bekommt ein langlebiges Geräte-Token
-  (sauberer, braucht einen neuen Endpunkt). **Entscheidung des Vaters nötig.**
-- **Einstellungen:** Server (Heimnetz/Emulator/eigene Adresse), Kind, Abmelden, Ton an/aus.
-- **Startbildschirm** im Stil eines Arena-Spiels: Held in der Mitte, großer Spielen-Knopf unten rechts, Kartenwahl
-  daneben, oben Münzen, Gems und Trophäen, links die Tagesaufgaben, rechts die Truhe. Eigenes Aussehen – kein Nachbau
-  eines bestimmten Spiels.
-- Wortwahl: die Liste der Plan-Positionen bleibt, rückt aber hinter einen Knopf „Wörter wählen“; Vorgabe ist die
-  zuletzt gespielte Position.
+- **Einmal anmelden:** Entschieden vom Vater: die App merkt sich die PIN. Server-Adresse, Kind und PIN liegen in
+  `user://settings.cfg`, verschlüsselt mit einem Schlüssel aus der Geräte-Kennung (`data/settings.gd`). Das schützt
+  nicht vor jemandem, der das Gerät in der Hand hat, aber die PIN steht in keinem Dateimanager und in keiner
+  Sicherung im Klartext. Beim Start meldet sich die App selbst an und öffnet die Startseite. Läuft die Sitzung ab,
+  meldet sie sich einmal still neu an. Passt die gespeicherte PIN nicht mehr oder ist der Server weg, öffnen sich
+  die Einstellungen mit dem Grund.
+- **Einstellungen** (der frühere Login-Bildschirm): Server (Heimnetz, Emulator oder eigene Adresse), Kind-Nr., PIN,
+  Ton an/aus, Abmelden (vergisst die PIN).
+- **Startseite** (`screens/home.gd`): der Ritter in der Mitte, unten rechts der große Spielen-Knopf, daneben die
+  Karte (ein Tipp wechselt sie) und die Wörter (öffnet die Liste). Oben Serie, Münzen, Gems und der Rekord. Links
+  die Tagesaufgaben: die Lernziele des Tages mit den offenen Positionen und die Missionen mit Fortschritt und
+  Belohnung. Rechts die Truhe, die Spielzeit und die Spiel-Münzen des Tages. Karte und Wörter bleiben gemerkt.
+- Alles auf der Startseite kommt vom Server (`me/points`, `children/{id}/today`, `me/missions`, nur lesend). Die App
+  hakt keine Aufgabe selbst ab.
+- Die Kartenwahl als eigener Bildschirm ist entfallen; das Ergebnis führt zurück zur Startseite oder direkt in den
+  nächsten Lauf.
+
+Geprüft: Bildschirm-Lauf (Anmelden, Startseite, gemerkte Wahl, Neustart ohne Login, abgelaufene Sitzung,
+unpassende PIN, Abmelden), auch im exportierten Paket; der Aufruf der Startseite gegen die Wegwerf-API auf einer
+DB-Kopie. **Nicht geprüft:** das Aussehen auf dem Handy (nur am PC bei 1600×720 fotografiert).
+
+Noch offen aus dieser Etappe: die Truhe lässt sich im Spiel nur ansehen, nicht öffnen; Trophäen fehlen in der
+Kopfzeile (Etappe 3). Die Optik ist schlicht – Hintergrund, Symbole statt Wörtern („Münzen“, „Gems“) und
+Animationen der Knöpfe sind ein eigener Schritt.
 
 ## Etappe 3 – Trophäen, Tagesaufgaben, Truhen (offen, Server zuerst)
 
@@ -77,7 +91,7 @@ Geprüft: 36 Regeltests mit roter Probe, Level-Lauf mit 212 Prüfungen (auch im 
 ## Offene Fragen an den Vater
 
 1. **Spielzeit:** Bleibt das Tageslimit (Vorgabe 20 Minuten) trotz „so lange wie möglich“? Dieser Plan nimmt ja an.
-2. **Anmeldung:** PIN auf dem Gerät merken oder ein Geräte-Token am Server (Etappe 2)?
+2. ~~Anmeldung~~ – entschieden am 2026-11-27: die PIN wird auf dem Gerät gemerkt.
 3. **Münzen:** Soll das Endlos-Spiel mehr zahlen als einmal 10 Münzen je Lauf – etwa je 10 richtige Vokabeln,
    weiter unter dem Tagesdeckel?
 4. **Druckmittel:** Wie weit sollen die Bindungs-Mechaniken gehen? Serien, die verfallen, und Truhen mit

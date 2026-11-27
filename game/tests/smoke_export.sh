@@ -28,6 +28,8 @@ for scene in smoke_screens smoke_level; do
 	code=$?
 	echo "$scene: exit $code, $(grep -c '^TURM' "$scene.log") log lines, $(grep -c 'ABWEICHUNG\|SCRIPT ERROR' "$scene.log") deviations or script errors"
 	[ "$code" -ne 0 ] && failed=1
+	# The exit code alone is not proof: a run that closed the app early ends with 0 too. Only the closing line counts.
+	grep -q 'fertig, 0 Abweichungen' "$scene.log" || { echo "$scene: no closing line with 0 deviations"; failed=1; }
 	grep -q 'SCRIPT ERROR' "$scene.log" && failed=1
 done
 exit $failed

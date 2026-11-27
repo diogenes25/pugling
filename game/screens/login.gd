@@ -1,16 +1,24 @@
 class_name LoginScreen
 extends Page
+## The settings: where the server is and who plays, with the login. A login that works is remembered on the device
+## ([Settings]), so the app starts on the start screen from then on; "Abmelden" forgets the PIN again.
 ## Login with the child's number and PIN. Digits come only from the on-screen keypad, as in the web login: the phone's
 ## keyboard would pop up over the form and hide the keypad. A hardware keyboard still types into the focused field.
 
 ## The child is logged in on [member server].
 signal logged_in
 
+## "Zurück" was pressed (only offered while a child is logged in).
+signal back
+
+## "Abmelden" was pressed and the PIN is forgotten.
+signal logged_out
+
 ## Servers to pick with one tap: the emulator reaches the throwaway API via "adb reverse", the phone the home server
 ## in the WLAN.
 const SERVERS: Dictionary[String, String] = {
-	"Emulator": "http://127.0.0.1:5280",
-	"Heimnetz": "http://192.168.178.55:5200",
+	"Emulator": Settings.EMULATOR_SERVER,
+	"Heimnetz": Settings.HOME_SERVER,
 }
 const KEYS: Array[String] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "C"]
 const DIMMED := Color(1, 1, 1, 0.55)
@@ -18,8 +26,15 @@ const DIMMED := Color(1, 1, 1, 0.55)
 ## The server the login goes to; set before the screen enters the tree.
 var server: TowerServer
 
+## A child is logged in already: the screen was opened from the start screen and offers the way back.
+var logged_in_already: bool = false
+
+## A message to show right away (why the automatic login failed).
+var notice: String = ""
+
 ## The field the keypad writes into.
 var _target: LineEdit
+var _sound: Button
 
 @onready var _form: VBoxContainer = %Form
 @onready var _server: LineEdit = %Server
@@ -31,9 +46,9 @@ var _target: LineEdit
 
 
 func _ready() -> void:
-	set_title("Vokabel-Türme")
-	# The emulator is the only x86_64 target; a real phone (arm64) starts on the home server.
-	_server.text = SERVERS["Emulator" if OS.has_feature("x86_64") else "Heimnetz"]
+	set_title("Einstellungen" if logged_in_already else "Vokabel-Türme")
+	_server.text = Settings.server()
+	_child.text = str(Settings.child())
 	for label: String in SERVERS:
 		var preset := UiKit.action(label)
 		preset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -48,7 +63,27 @@ func _ready() -> void:
 	_pin.focus_entered.connect(_select.bind(_pin))
 	_submit.pressed.connect(_log_in)
 	_form.add_child(status)
+	status.text = notice
+	_sound = add_action("", _toggle_sound)
+	_show_sound()
+	if logged_in_already:
+		add_action("Abmelden", _log_out)
+		add_action("Zurück", back.emit)
 	_select(_pin)
+
+
+func _toggle_sound() -> void:
+	Settings.set_sound(not Settings.sound())
+	_show_sound()
+
+
+func _show_sound() -> void:
+	_sound.text = "Ton: an" if Settings.sound() else "Ton: aus"
+
+
+func _log_out() -> void:
+	Settings.forget_pin()
+	logged_out.emit()
 
 
 func _use_server(url: String) -> void:
@@ -82,6 +117,7 @@ func _log_in() -> void:
 	if not is_inside_tree():
 		return
 	if result.ok:
+		Settings.save_login(_server.text, _child.text.to_int(), _pin.text)
 		logged_in.emit()
 	else:
 		status.text = result.error
