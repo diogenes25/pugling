@@ -14,6 +14,7 @@ public partial class GameRoot : Control
 {
     private readonly PuglingApi _api = new();
     private Node? _screen;
+    private ulong _lastBack;
     private Label _status = null!;
     private int _lastPosition;
     private LevelDef _lastLevel = LevelDef.All[0];
@@ -39,8 +40,6 @@ public partial class GameRoot : Control
         _lastBack = Time.GetTicksMsec();
         _back();
     }
-
-    private ulong _lastBack;
 
     private void Replace(Node screen)
     {

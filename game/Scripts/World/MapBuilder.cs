@@ -2,29 +2,6 @@ using Godot;
 
 namespace PuglingTower.World;
 
-/// <summary>What the level needs to know about the built map: where the hero may stand.</summary>
-public sealed class MapInfo(LevelDef def)
-{
-    /// <summary>Half the width of the river band that blocks the hero.</summary>
-    public const float RiverHalfWidth = 2.1f, BridgeReach = 2.3f;
-
-    /// <summary>The level the map was built from.</summary>
-    public LevelDef Def { get; } = def;
-
-    /// <summary>Round blockers on the ground: towers, the castle, trees, rocks, mountains.</summary>
-    public List<(Vector2 Pos, float Radius)> Obstacles { get; } = [];
-
-    /// <summary>River water without a bridge.</summary>
-    public bool IsWater(Vector2 p) =>
-        Def.River.Length > 1 && Geo.DistToPolyline(p, Def.River) < RiverHalfWidth
-        && !Def.Bridges.Any(b => b.DistanceTo(p) < BridgeReach);
-
-    /// <summary>Whether a body of <paramref name="radius"/> may stand at <paramref name="p"/>.</summary>
-    public bool Walkable(Vector2 p, float radius) =>
-        p.X >= radius && p.Y >= radius && p.X <= Def.Size.X - radius && p.Y <= Def.Size.Y - radius
-        && !IsWater(p) && !Obstacles.Any(o => o.Pos.DistanceTo(p) < o.Radius + radius);
-}
-
 /// <summary>
 /// Builds a level's scenery from KayKit hex tiles: grass and river cells, a dirt road along every monster path, the
 /// castle, scattered trees and rocks inside, and a dense forest beyond the edge so the following camera never shows
@@ -94,7 +71,7 @@ public static class MapBuilder
 
         bool Clear(Vector2 at, float roadGap) =>
             def.Paths.All(p => Geo.DistToPolyline(at, p) > roadGap)
-            && (def.River.Length < 2 || Geo.DistToPolyline(at, def.River) > RiverHalfWidth + 0.8f)
+            && (def.River.Length < 2 || Geo.DistToPolyline(at, def.River) > MapInfo.RiverHalfWidth + 0.8f)
             && blocked.All(b => b.Pos.DistanceTo(at) > b.Radius);
 
         // Inside: loose trees and rocks the hero walks around.
@@ -130,7 +107,6 @@ public static class MapBuilder
 
     // Cells whose centre is this close to the river line become water (a little wider than the blocking band).
     private const float RiverHalfCells = 2.2f;
-    private const float RiverHalfWidth = MapInfo.RiverHalfWidth;
 
     private static (float Dist, Vector2 Dir) NearestDir(Vector2[] path, Vector2 p)
     {
