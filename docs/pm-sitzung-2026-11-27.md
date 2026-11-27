@@ -135,3 +135,7 @@ fehlt. Der Konstruktor-Test prüft nur `DailyPlanner`.
 ## Offene Roadmap (Stand nach Sprint 197)
 
 Siehe `docs/backlog/`. Beim Vater liegt B-1034. Danach B-736 (Pflicht aus der Tagesaufgabe, mit Entscheidung 5 aus B-1033) und B-737.
+
+**Nachtrag Runde 5 (2026-11-27):** Der Nutzer entscheidet B-1034: **Kein Druck ohne Stoff.** Eine Klassenarbeit ohne Übungen und Tags
+ordnet nur, hebt kein Budget und meldet nichts. Gebaut und abgenommen (`ExamPresses`, Mutanten T1 bis T4 rot); die Frage ist `verworfen`.
+Beim Vater liegt keine Frage mehr aus diesem Sprint.

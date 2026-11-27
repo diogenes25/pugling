@@ -304,3 +304,7 @@ Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Vorau
     das nähere Datum. **Fund:** Eine Arbeit ohne Übungen setzt das ganze Fach unter Druck – „120 neue Wörter pro Lerntag, der Deckel
     erlaubt 8, bis dahin fehlen etwa 672 Wörter“. Das ist als Frage [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md)
     abgelegt, nicht hier geändert (sichtbar für den Vater). Offen für den Nutzer: nichts am Gerät.
+- **2026-11-27** — Nachtrag zu B-1034 (Nutzer: „Kein Druck ohne Stoff“): Das Bündel einer Arbeit entscheidet, ob sie ein Tempo setzt. Eine Arbeit ohne
+  Übungen und Tags ordnet nur und steht in der Begründung (`PlannerCandidate.ExamPresses`). Die Kriterien 2, 4, 9 und 11 gelten damit für
+  Arbeiten mit Bündel. Mutanten T1 bis T4 rot, 90 betroffene Fälle grün; Rollengang an der Kopie nicht wiederholt (Regeländerung
+  ohne neue Oberfläche, die Fälle laufen über die echte API).

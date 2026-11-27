@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (75)
+### Offen (74)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -26,7 +26,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md) | Darf eine Klassenarbeit ohne Übungen und Tags das ganze Fach unter Druck setzen? | Frage | `idee` | P2 | — | backend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -764,7 +763,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (229)
 
-**Nachgeschaut: 593 von 644 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 51 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 594 von 644 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 50 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -999,7 +998,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (51) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (50) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1044,7 +1043,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
 | [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) | Lerntage Montag bis Samstag, Pause je Kind und die Leitplanken des Vaters (B-644, Etappe E0b) |
-| [B-735](B-735-stoffrahmen-ohne-termin.md) | Ein Stoffrahmen ohne Enddatum: `StudyPlan.EndDate` wird optional (B-644, Entscheidung 17) |
 | [B-740](B-740-notenschluessel-percenttograde.md) | Ein Notenschlüssel für die ganze App: `PercentToGrade` |
 | [B-741](B-741-notenstufe-berechnen-und-speichern.md) | Die Notenstufe je Kind und Fach berechnen und speichern |
 | [B-742](B-742-notenstufe-lesen-student-und-supervisor.md) | Die Notenstufe lesen: ein Endpunkt fürs Kind, einer für den Vater |
@@ -1079,7 +1077,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1032](B-1032-muenzen-tagessumme-in-der-arcade.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | `verworfen` | Abschnitt „Verlauf" |
-| [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md) | `verworfen` | Abschnitt „Verlauf" |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
@@ -1253,7 +1251,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (65)</summary>
+<summary>Verworfen (66)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1264,6 +1262,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-103](B-103-idempotenzschluessel-und-etag.md) | Prüfauftrag: Brauchen `Idempotency-Key` und ETag/`If-Match` in dieser App einen Platz? | gemessen in der Arbeitsrunde 2026-08-04 — beim Idempotenz-Schlüssel bleibt ein betroffener Endpunkt von vier übrig und der Rückweg (POST children/{}/points) existiert als Produktverhalten; der ETag-Vorschlag ist gegen den Code unausführbar (StudyPlan/PlanPosition tragen keinen ConcurrencyStamp) und mit der Wallet-Invariante unverträglich. Kein Bau, Entscheidung dokumentiert in backend/Pugling.Api/CLAUDE.md. |
 | [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | Kein Defekt: der Test fragt ein am selben Tag eingeführtes Wort auf der Auswahlstufe (6) ab, auch mit requireTypedTest; eine Auswahl trägt nach B-732 bewusst keine Art (FehlerartTests.Richtig_Auswahl_Und_Selbsteinschaetzung_Tragen_Keine_Art). Die E2E hatte per API Freitext an eine Auswahlkarte geschickt. Gemessen an: Position über die Vater-API, Stufe 4, mit und ohne requireTypedTest, Einführung über Lernkarten, Abgabe im Ganzen. |
 | [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | Darf der Tagesplaner eine Kür-Position zur Aufgabe machen? | Beantwortet am 2026-11-27: der Planer wählt nur Positionen mit Pflicht, Kür bleibt Kür (Option 1). Gebaut als Teil von B-736. |
+| [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md) | Darf eine Klassenarbeit ohne Übungen und Tags das ganze Fach unter Druck setzen? | Beantwortet am 2026-11-27: Kein Druck ohne Stoff (Option 1). Gebaut direkt im Anschluss an Sprint 197. |
 | [B-137](B-137-freitext-fach-unerreichbar.md) | Ein Freitext-Fach an der Reihe ist sichtbar, aber nicht wegzubekommen | geteilt — faktisch XL (sechs Akzeptanzkriterien, drei Controller, Backend und Frontend, dazu eine Flags-Enum-Mehrfachauswahl); Freigabe 3 des Nachtlaufs verlangt dafür Teilen statt Bauen → [B-142, B-143, B-144] |
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite |

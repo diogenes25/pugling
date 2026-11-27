@@ -22,12 +22,15 @@ namespace Pugling.Api.Services.Supervisor;
 /// test; 0 without one.</param>
 /// <param name="LessonSoon">The position's subject has a timetable lesson on the planned day or the next day.</param>
 /// <param name="Weakness">The subject's share of wrong answers over the last four weeks, 0 to 1; 0 without answers.</param>
+/// <param name="ExamPresses">The test names material (exercises or tags) that includes this position, so it sets a pace; a
+/// test without any only orders the position by its date (B-1034: without material there is nothing to count back from).</param>
 public sealed record PlannerCandidate(int PositionId, int ExerciseId, string ExerciseTitle, int? SubjectId, int Order,
     int DueReviews, int NewAvailable, int WrongYesterday, int CorrectYesterday, bool FailedTestYesterday, int DayStage,
-    int? EasierStage, DateOnly? ExamDate = null, int ExamLearningDays = 0, bool LessonSoon = false, double Weakness = 0)
+    int? EasierStage, DateOnly? ExamDate = null, int ExamLearningDays = 0, bool LessonSoon = false, double Weakness = 0,
+    bool ExamPresses = true)
 {
     /// <summary>New words per learning day this position needs to have all its pool introduced before its test.</summary>
-    public int NewWordsNeededPerDay => ExamDate is null || NewAvailable == 0
+    public int NewWordsNeededPerDay => ExamDate is null || !ExamPresses || NewAvailable == 0
         ? 0
         : (int)Math.Ceiling(NewAvailable / (double)Math.Max(1, ExamLearningDays));
 

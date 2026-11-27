@@ -10,9 +10,9 @@ public class PlanerTerminRegelnTests
     private static readonly DateOnly Exam = new(2026, 12, 3);
 
     private static PlannerCandidate C(int id, int order, int newAvailable = 0, int due = 0, int? subject = 1,
-        DateOnly? exam = null, int examDays = 0, bool lesson = false, double weakness = 0) =>
+        DateOnly? exam = null, int examDays = 0, bool lesson = false, double weakness = 0, bool presses = true) =>
         new(id, ExerciseId: 100 + id, $"Übung {id}", subject, order, due, newAvailable, 0, 0, false, 4, 3, exam, examDays,
-            lesson, weakness);
+            lesson, weakness, presses);
 
     private static int[] Ids(PlannerResult r) => [.. r.Tasks.Select(t => t.Candidate.PositionId)];
 
@@ -29,6 +29,20 @@ public class PlanerTerminRegelnTests
         Assert.Equal(4, near.NewWordsBudget);
         Assert.Equal(2, far.NewWordsBudget);
         Assert.Equal(4, near.Tasks.Single().NewWords);
+    }
+
+    /// <summary>
+    /// B-1034: a test that names no material orders its position by date but sets no pace - no budget lift, no warning. Red if
+    /// `ExamPresses` is ignored.
+    /// </summary>
+    [Fact]
+    public void Klassenarbeit_ohne_Stoff_hebt_das_Budget_nicht_und_meldet_nichts()
+    {
+        var r = DailyPlanRules.Compose([C(1, 1, newAvailable: 100, exam: Exam, examDays: 3, presses: false)], Wide, tempo: null);
+
+        Assert.Equal(2, r.NewWordsBudget);
+        Assert.Empty(r.Warnings);
+        Assert.Contains("Klassenarbeit am 03.12.", r.Tasks.Single().Reason);
     }
 
     /// <summary>AK 3: without a test the plan is not empty and the new words sit at the floor. Red if the floor is not applied.</summary>

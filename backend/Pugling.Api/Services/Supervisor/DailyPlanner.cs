@@ -178,11 +178,14 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
                         && !t.BySupervisor && !(t.PassedAfterCorrection ?? t.Passed), ct);
                 var stage = PositionPlayService.StageForDay(pos, plan, day, type);
                 var subjectId = plan.SubjectId ?? played.SeriesUnit?.Series?.SubjectId;
-                var examDate = exams.Where(e => e.Covers(played.Id, subjectId)).Select(e => (DateOnly?)e.On).Min();
+                // A test that names this exercise sets the pace; one without material only orders the position by its date (B-1034).
+                var named = exams.Where(e => e.Names(played.Id)).Select(e => (DateOnly?)e.On).Min();
+                var wholeSubject = exams.Where(e => e.WholeSubject(subjectId)).Select(e => (DateOnly?)e.On).Min();
+                var examDate = named ?? wholeSubject;
                 candidates.Add(new PlannerCandidate(pos.Id, played.Id, played.Title, subjectId, order, due, newAvailable,
                     answers.Where(a => !a.Key).Sum(a => a.Count), answers.Where(a => a.Key).Sum(a => a.Count), failedTest,
                     stage, EasierStage(type, stage), examDate, examDate is { } ed ? LearningDaysUntil(day, ed, dutyDays) : 0,
-                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0));
+                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0, named is not null));
             }
         }
         return candidates;
@@ -191,8 +194,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
     /// <summary>An upcoming class test with the exercises its bundle covers (B-751): none = the whole subject.</summary>
     private sealed record Exam(DateOnly On, int? SubjectId, HashSet<int> Exercises)
     {
-        public bool Covers(int exerciseId, int? subjectId) =>
-            Exercises.Count > 0 ? Exercises.Contains(exerciseId) : SubjectId is not null && SubjectId == subjectId;
+        public bool Names(int exerciseId) => Exercises.Contains(exerciseId);
+
+        public bool WholeSubject(int? subjectId) => Exercises.Count == 0 && SubjectId is not null && SubjectId == subjectId;
     }
 
     // The child's class tests not yet written, from the planned day on. A test on the planned day itself still counts: the day is

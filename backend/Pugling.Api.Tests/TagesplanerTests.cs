@@ -136,8 +136,10 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
     }
 
     // A class test of the child in the subject of position C, on `date`; no preparation duty (B-752), so the plan's positions stay.
-    private async Task AddExamAsync(Setup s, DateOnly date, int[]? exerciseIds = null, string? status = null)
+    private async Task AddExamAsync(Setup s, DateOnly date, int[]? exerciseIds = null, string? status = null, bool wholeSubject = false)
     {
+        // By default the test names C's exercise, so it sets a pace; a test without material only orders (B-1034).
+        if (!wholeSubject) exerciseIds ??= [Read(db => TestApi.ExerciseOf(db, s.C))];
         var subjectId = Read(db => db.PlanPositions.Where(p => p.Id == s.C).Select(p => p.StudyPlan!.SubjectId ?? p.Exercise!.SeriesUnit!.Series!.SubjectId).Single());
         var res = await s.Father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
         {
@@ -202,7 +204,7 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
     public async Task Teilpruefung_datiert_nur_ihre_Uebung_die_Klausur_den_Rest()
     {
         var s = await SetupAsync(switchOn: false);
-        await AddExamAsync(s, Today.AddDays(2));
+        await AddExamAsync(s, Today.AddDays(2), wholeSubject: true);
         await AddExamAsync(s, Today.AddDays(1), [Read(db => TestApi.ExerciseOf(db, s.C))]);
         await SwitchAsync(s, "Shadow");
 
@@ -310,6 +312,23 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
 
         Assert.Equal(2, (await TodayPlanAsync(cancelled)).GetProperty("newWordsBudget").GetInt32());
         Assert.Equal(2, (await TodayPlanAsync(foreign)).GetProperty("newWordsBudget").GetInt32());
+    }
+
+    /// <summary>
+    /// B-1034 (answered: no pressure without material): a test without exercises and tags orders by its date and shows in the
+    /// reason, but lifts no budget and raises no warning. Red if a test without material counts back from the whole subject.
+    /// </summary>
+    [Fact]
+    public async Task Klassenarbeit_ohne_Uebungen_ordnet_nur_und_setzt_keinen_Druck()
+    {
+        var s = await SetupAsync(switchOn: false);
+        await AddExamAsync(s, Today.AddDays(1), wholeSubject: true);
+        await SwitchAsync(s, "Shadow");
+
+        var plan = await TodayPlanAsync(s);
+        Assert.Equal(2, plan.GetProperty("newWordsBudget").GetInt32());
+        Assert.Contains("Klassenarbeit am 01.12.", ReasonOf(plan, s.C));
+        Assert.DoesNotContain(plan.GetProperty("warnings").EnumerateArray(), w => w.GetString()!.Contains("Klassenarbeit"));
     }
 
     private static async Task SwitchAsync(Setup s, string mode)

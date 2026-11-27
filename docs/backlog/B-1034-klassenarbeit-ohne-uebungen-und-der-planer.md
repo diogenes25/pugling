@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/idee, bereich/lehrplan, bereich/klassenarbeit, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/lehrplan, bereich/klassenarbeit, rolle/supervisor]
 aliases: [Klassenarbeit ohne Übungen, Fachweite Klassenarbeit im Planer]
-status: idee
+status: verworfen
 prio: P2
 art: Frage
 groesse: ""
@@ -9,7 +9,7 @@ wo: backend
 migration: ""
 vertragsbruch: ""
 quelle: docs/pm-sitzung-2026-11-27.md#sprint-197--ziel--umfang
-grund: ""
+grund: "Beantwortet am 2026-11-27: Kein Druck ohne Stoff (Option 1). Gebaut direkt im Anschluss an Sprint 197."
 ersetzt_durch: []
 entgangen_bei: []
 nachgeschaut: ""
@@ -38,3 +38,10 @@ Soll eine Klassenarbeit ohne Übungen und Tags
 3. verlangen, dass der Vater ein Bündel angibt, bevor der Planer sie liest?
 
 Bis zur Entscheidung gilt Option 2 (wie gebaut).
+
+## Antwort
+
+**2026-11-27 (Nutzer):** Option 1 – eine Klassenarbeit ohne Übungen und Tags setzt den Planer nicht unter Druck: Sie ordnet ihre Positionen
+höchstens nach ihrem Datum und steht in der Begründung, hebt aber kein Budget und löst keine Meldung aus. Gebaut als `ExamPresses` am
+Kandidaten (`DailyPlanner`: nur eine Arbeit, die die Übung nennt, setzt das Tempo). Mutanten T1 bis T4 rot; Fälle
+`Klassenarbeit_ohne_Uebungen_ordnet_nur_und_setzt_keinen_Druck` und `Klassenarbeit_ohne_Stoff_hebt_das_Budget_nicht_und_meldet_nichts`.
