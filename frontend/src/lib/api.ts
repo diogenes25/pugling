@@ -1,7 +1,7 @@
 import type {
   AchievementDef, UpdateAchievementDto, AchievementStatus, AnswerDto, CategoryResponse, ChildResponse, CreateAchievementDto,
   CreateChildDto, CreateExercisePayload, CreateKlassenarbeitDto, CreateMissionDto, CreatePlanDto, CreateVocabularyDto,
-  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto, ChildPause, CreateChildPauseDto, DailyEvaluation, EvaluationProfile, ProblemWord,
+  UpdateChildDto, SupervisorLink, SupervisorRelation, TimetableEntry, CreateTimetableEntryDto, ChildPause, CreateChildPauseDto, DailyEvaluation, DailyPlan, EvaluationProfile, ProblemWord,
   ClozeResponse, CreateClozeDto, UpdateClozeDto,
   ExerciseGrant, ExerciseRating, GrantPermission,
   CreateFeedbackDto, ExerciseFeedbackSummary, FeedbackEntry, FeedbackNotice, FeedbackReceipt,
@@ -436,6 +436,11 @@ export const api = {
     q.set("take", "500");
     return http<DailyEvaluation[]>(`${V1}/supervisor/children/${childId}/evaluations?${q}`);
   },
+  // Tagesplaner (B-734): die eingefrorenen Pläne der letzten 14 Tage und die Lerntage ohne Plan (Server aus).
+  childDailyPlans: (childId: number) =>
+    http<DailyPlan[]>(`${V1}/supervisor/children/${childId}/daily-plans`),
+  childMissingDailyPlans: (childId: number) =>
+    http<string[]>(`${V1}/supervisor/children/${childId}/daily-plans/missing`),
   childEvaluationProfile: (childId: number) =>
     http<EvaluationProfile>(`${V1}/supervisor/children/${childId}/evaluations/profile`),
   childProblemWords: (childId: number, p: { skip?: number; take?: number } = {}) => {

@@ -260,6 +260,11 @@ Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Vorau
 
 ## Verlauf
 
+- **2026-11-27** — Befund aus dem Rollengang von B-734 (Sprint 195, Kopie der echten DB): Der Schattenplan für Friedrich trägt
+  132 fällige Wiederholungen an einem Tag, davon 58 in einer Position. Wiederholungen zählen nach B-734 bewusst nicht gegen den
+  Wörter-Deckel, und der Aufgaben-Deckel begrenzt nur die Zahl der Aufgaben, nicht ihren Umfang. Die Begrenzung des Rückstands
+  gehört zu dieser Story (B-734, Entscheidung 8).
+
 - **2026-11-19** — angelegt aus dem Leitbild-Gespräch mit dem Vater ([Leitbild](../leitbild-privatlehrer.md)).
 - **2026-11-19** — `idee` → `ausformuliert` (Vorbereitungslauf, Sonnet): Ist-Stand am Code belegt. Kern: Die Story
   überschneidet sich weitgehend mit der schon gegrillten B-644; neu sind nur das Ziel „Notenstufe“ und die Frage, ob ein

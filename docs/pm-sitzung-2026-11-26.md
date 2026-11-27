@@ -406,3 +406,67 @@ nächsten Heimnetz-Start eingespielt), `DailyEvaluationService`, `ItemProgressSe
 Der Nutzer bestätigt die stellvertretenden Entscheidungen 19 (Tag ohne Server = Pause plus Meldung), 21 (fester Planer in C#,
 kein Sprachmodell) und 24 (Plan ab 6 Uhr eingefroren, Malus nur für Gesehenes) aus B-644 unverändert. B-734 ist damit baubar und
 der nächste Sprint-Kandidat.
+
+## Sprint 195 — Ziel & Umfang
+
+**Sprint-Ziel:** Der Vater schaltet den Planer für ein Kind ein und sieht ab dann jeden Lerntag ab 6 Uhr einen eingefrorenen
+Tagesplan mit Begründung je Aufgabe, dazu eine Meldung für Tage ohne Plan; der Sohn merkt davon nichts (Schattenmodus).
+**Umfang:** B-734.
+**Entwickler-Brief:**
+
+- **Quelle der Wahrheit:** `DailyPlan` (eindeutig je Kind und Lerntag) mit `DailyTask`s; einmal geschrieben, nie beim Lesen neu
+  gerechnet. Die Regeln liegen als reine Funktion `DailyPlanRules.Compose` (kein Zufall, keine Uhr, kein Chat-Client); der Dienst
+  `DailyPlanner` sammelt nur die Eingänge (Positionen der aktiven Pläne, fällige Wiederholungen, neue Wörter im Pool, Gestern,
+  Tempo aus der Auswertung B-733, Leitplanken B-731) und speichert.
+- **Senke:** `DailyPlanner.EnsureTodayAsync` – Zeitgeber, Kind-Login, Sohn-`today` und Vater-Liste rufen dieselbe Methode;
+  Index-Verlierer liest den Gewinner.
+- **Abweichung von Schätz-Annahme 1:** Der Modus liegt **am Kind** (`PlannerMode` Off/Shadow, `PlannerSince`) statt in einer
+  Ein-Zeilen-Tabelle – Eigentum läuft über `ChildOwnershipFilter`, kein globaler Schalter, den jeder Vater jeder Familie
+  umlegt; B-737 kann Reset und Modus weiter in einer Transaktion kippen. Vorgabe `Off`: Nach dem Deploy entsteht nichts, bis der
+  Vater einschaltet (Reihenfolge-Entscheidung vom 20.11.). Einschalten verlangt alle vier Leitplanken.
+- **Guards:** Lesen nur `Roles.Supervisor` plus `ChildOwnershipFilter`; die Plan-Typen kommen in das Auswertungs-Tor
+  (`ConventionGuardTests`); Pause und Sonntag erzeugen keinen Plan; keine Menge aus dem Request.
+- **Migration:** zwei Tabellen, zwei Spalten am Kind (Bestand per `UPDATE` auf `Off`). Spalten für Streichen, Herkunft und Bonus
+  kommen mit B-738, die Wortauswahl je Aufgabe mit B-736 (dort wird sie gespielt).
+- **Testweg:** `TagesplanerRegelnTests` (rein), `TagesplanerTests` (Integration mit `TestClock`), Migrationstest, Vitest und
+  E2E für die Vater-Ansicht.
+
+## Iteration 195 — umgesetzt
+
+- **Backend (API-First):** `DailyPlan`/`DailyTask` (eindeutig je Kind und Tag, Migration `Tagesplaner`, Bestandskinder per
+  `UPDATE` auf `Off`), `Child.PlannerMode`/`PlannerSince` über `PATCH supervisor/children/{id}` (Einschalten nur mit allen vier
+  Leitplanken), reine Regeln `DailyPlanRules.Compose`, Dienst `DailyPlanner` als Senke (Zeitgeber `DailyPlanTimer` alle 15
+  Minuten, Kind-Login, Sohn-`today`, Vater-Liste), `GET …/daily-plans` und `…/daily-plans/missing`, Client-Methoden.
+- **Frontend:** Kind-Hub → Reiter „Lerntage“ → Abschnitt „Tagesplaner“ (Schalter, Plan je Tag mit Begründung je Aufgabe und dem
+  Hinweis „Schattenplan – wirkt nicht …“, Tage ohne Plan); „Leitplanken entfernen“ gesperrt, solange der Planer läuft.
+- **Review:** sieben Korrekturen eingearbeitet (Liste in B-734), Kür-Positionen als Frage [B-1033](backlog/B-1033-kuer-positionen-im-tagesplan.md).
+- **Verifikation:**
+  - Backend-Suite 2662/2662, Release, Exit 0 (21 min 43 s).
+  - Frontend `tsc -b` sauber, Vitest 1524/1524. Ein erster Lauf unter Last hatte einen Fall in einer fremden Datei
+    (Hinzufügen-Panel) in einer Zeitüberschreitung; der volle Nachlauf war grün.
+  - E2E `tagesplan-schatten` grün um 23:22, nach dem Review-Fix vor 6 Uhr bewusst übersprungen; `lerntage-und-pause` grün.
+  - Mutanten: 38 in vier Läufen, 37 rot am erwarteten Test, einer grün wie erwartet. Die Tabelle steht in B-734.
+  - Format sauber.
+  - Die langen Laufzeiten fielen in eine Zeit, in der ein fremder Android-Emulator (`qemu`, seit 23:22) etwa zweieinhalb Kerne
+    belegte. Ob der Planer selbst die Suite verlangsamt, ist damit nicht gemessen.
+
+## Runde 8 — Abnahme (Rollengang an der Kopie)
+
+Kopie-Server auf :5201 mit `LearningDay:TimeZone=Asia/Tokyo` gestartet: In Deutschland war es kurz nach 2 Uhr. In Tokio war es
+derselbe Kalendertag, aber nach 6 Uhr. Die Migration `Tagesplaner` lief beim Start auf der Kopie durch.
+
+- **Vater: abgenommen, mit offener Gerätesicht.**
+  - Theodor und Friedrich hatten keine Leitplanken. Gesetzt wurden 2–5 Aufgaben und 4–8 Wörter; der Schattenmodus ist seit
+    27.11. eingeschaltet.
+  - **Theodor:** 5 Aufgaben über Englisch und Latein, jede mit Begründung, etwa „17 fällige Wiederholungen“ oder
+    „4 fällige Wiederholungen; 4 neue Wörter (Boden 4, Tempo 1,2 pro Lerntag)“.
+  - **Friedrich:** 5 Aufgaben mit der Warnung „1 weitere Aufgaben fielen über den Deckel von 5.“
+  - Ein zweites Lesen lieferte bei beiden denselben Plan. Tage ohne Plan gab es keine (der Planer lief seit heute).
+  - O-Ton: „Ich sehe, was er vorhat und warum. Aber 132 Wiederholungen an einem Tag für Friedrich, davon 58 in einer Position,
+    schafft er nicht. Genau dafür ist die Woche im Schatten da.“
+  - Der Rückstand ist laut Zuschnitt Sache von B-680; der Befund steht dort.
+  - **Offen:** die Oberfläche nach dem Review-Fix am Gerät ansehen (ab 6 Uhr, oder E2E `tagesplan-schatten` nach 6 Uhr laufen
+    lassen).
+- **Sohn: Regressionszeuge.** Login und `today` für Theodor und Friedrich liefern an der Kopie vor und nach dem Einschalten
+  dasselbe Byte für Byte. Kein Plan-Typ erreicht eine Student-Route (Tor).
+- **Creator: Regressionszeuge.** Kein Creator-Pfad im Diff; `creator/exercise-types` 200, Suite grün.

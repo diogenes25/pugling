@@ -312,8 +312,9 @@ const limitValues = (child: ChildResponse) => Object.fromEntries(
 
 /**
  * Die Leitplanken des Tagesplaners (B-731): je Kind Boden und Deckel für Pflichtaufgaben und neue Wörter am Tag und der
- * Malus je verpasster Pflichtaufgabe. Der Vater setzt den Rahmen, keine Tagesmengen. Die Zahlen wirken erst mit dem
- * Planer – die Maske sagt das, damit niemand nach dem Speichern eine Wirkung sucht. Angezeigt wird immer der Stand des
+ * Malus je verpasster Pflichtaufgabe. Der Vater setzt den Rahmen, keine Tagesmengen. Der Tagesplaner (B-734) rechnet mit
+ * ihnen, im Schattenmodus aber ohne Wirkung auf Pflicht und Malus – die Maske sagt das, damit niemand nach dem Speichern
+ * eine Wirkung sucht. Solange der Planer läuft, lassen sie sich nicht entfernen (der Server lehnt das ab). Angezeigt wird immer der Stand des
  * Servers: nach dem Speichern lädt die Seite das Kind neu, und die Felder ziehen den gelesenen Stand nach. Ohne
  * Neu-Einhängen (B-1020): ein `key` aus den Werten nahm mit dem Formular auch die Bestätigung aus dem DOM.
  */
@@ -347,8 +348,8 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
       <h3 className="h-section">Leitplanken des Tagesplaners</h3>
       <p className="sub">
         Der Rahmen, in dem der Tagesplaner den Tag von {child.name} zusammenstellt: wie viele Pflichtaufgaben und neue
-        Wörter am Tag mindestens und höchstens anstehen, und was eine verpasste Pflichtaufgabe kostet. Die Zahlen wirken
-        erst, wenn der Tagesplaner kommt; heute ändern sie noch nichts an Pflicht und Malus.
+        Wörter am Tag mindestens und höchstens anstehen, und was eine verpasste Pflichtaufgabe kostet. Der Tagesplaner
+        rechnet mit diesen Zahlen; im Schattenmodus ändern sie noch nichts an Pflicht und Malus.
       </p>
       <form onSubmit={save}>
         {/* Eine Erklärung für die Gruppe statt fünf gleicher ⓘ an jedem Feld: der Begriff ist derselbe. */}
@@ -370,7 +371,8 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
         <div className="row" style={{ gap: 8, marginTop: 8 }}>
           <button type="submit" className="btn small" style={{ width: "auto" }} disabled={action.busy || fehler !== null}>Speichern</button>
           {stored && (
-            <button type="button" className="btn ghost small" style={{ width: "auto" }} disabled={action.busy} onClick={clear}>
+            <button type="button" className="btn ghost small" style={{ width: "auto" }}
+              disabled={action.busy || child.plannerMode !== "Off"} onClick={clear}>
               Leitplanken entfernen
             </button>
           )}
@@ -378,6 +380,9 @@ export function LeitplankenSection({ child, onSaved }: { child: ChildResponse; o
       </form>
       {fehler && allFilled && <p className="sub">{fehler}</p>}
       {!stored && <p className="muted">Noch keine Leitplanken gesetzt.</p>}
+      {stored && child.plannerMode !== "Off" && (
+        <p className="sub">Solange der Tagesplaner läuft, bleiben die Leitplanken stehen – erst den Planer ausschalten.</p>
+      )}
       <StatusBanner message={action.message} />
     </section>
   );

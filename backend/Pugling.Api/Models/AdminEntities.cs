@@ -127,6 +127,14 @@ public class Child
     /// <summary>Coins a missed duty task costs (0 = no penalty); booked by the planner's duty (B-736), not yet here.</summary>
     public int? PenaltyCoinsPerMissedTask { get; set; }
 
+    /// <summary>Whether the day planner makes daily plans for the child (B-734); off until the supervisor switches it on.</summary>
+    public PlannerMode PlannerMode { get; set; } = PlannerMode.Off;
+    /// <summary>
+    /// The learning day the planner was last switched on (B-734); <c>null</c> while it is off. A duty day from here on without a
+    /// plan is reported to the supervisor as a day the server never ran - a day before it is not.
+    /// </summary>
+    public DateOnly? PlannerSince { get; set; }
+
     /// <summary>
     /// Weighted interests from the controlled taxonomy (including dislikes at a negative weight).
     /// Complements the free-form <see cref="Interests"/>, it does not replace it: free text is the language

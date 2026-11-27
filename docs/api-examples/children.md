@@ -37,7 +37,9 @@ Response — `HTTP 200`:
     "dailyTasksMax": null,
     "dailyNewWordsMin": null,
     "dailyNewWordsMax": null,
-    "penaltyCoinsPerMissedTask": null
+    "penaltyCoinsPerMissedTask": null,
+    "plannerMode": "Off",
+    "plannerSince": null
   }
 ]
 ```
@@ -81,7 +83,9 @@ Response — `HTTP 201`:
   "dailyTasksMax": null,
   "dailyNewWordsMin": null,
   "dailyNewWordsMax": null,
-  "penaltyCoinsPerMissedTask": null
+  "penaltyCoinsPerMissedTask": null,
+  "plannerMode": "Off",
+  "plannerSince": null
 }
 ```
 
@@ -143,7 +147,9 @@ Response — `HTTP 200`:
   "dailyTasksMax": null,
   "dailyNewWordsMin": null,
   "dailyNewWordsMax": null,
-  "penaltyCoinsPerMissedTask": null
+  "penaltyCoinsPerMissedTask": null,
+  "plannerMode": "Off",
+  "plannerSince": null
 }
 ```
 
@@ -185,7 +191,9 @@ Response — `HTTP 200`:
   "dailyTasksMax": null,
   "dailyNewWordsMin": null,
   "dailyNewWordsMax": null,
-  "penaltyCoinsPerMissedTask": null
+  "penaltyCoinsPerMissedTask": null,
+  "plannerMode": "Off",
+  "plannerSince": null
 }
 ```
 

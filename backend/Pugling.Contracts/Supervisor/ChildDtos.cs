@@ -13,13 +13,15 @@ namespace Pugling.Contracts.Supervisor;
 /// its due day costs (B-760); <c>null</c> = the server default for each. <c>DailyTasksMin</c>/<c>DailyTasksMax</c>,
 /// <c>DailyNewWordsMin</c>/<c>DailyNewWordsMax</c> and <c>PenaltyCoinsPerMissedTask</c> are the supervisor's limits for the
 /// day planner (B-731): floor and ceiling of duty tasks and new words a day, and the penalty per missed task; all
-/// <c>null</c> = the planner is not set up.
+/// <c>null</c> = the planner is not set up. <c>PlannerMode</c> says whether the planner makes daily plans for the child (B-734),
+/// <c>PlannerSince</c> the learning day it was last switched on (<c>null</c> while it is off).
 /// </summary>
 public record ChildResponse(int Id, string Name, int? BirthYear, int? Grade,
     SchoolTypes SchoolType, Gender Gender, IReadOnlyList<string> Interests, string? ProfileNotes,
     ContentRating AllowedContentRating, DateTime CreatedAt, int Coins, int Gems, int? BonusDailyCoinCap,
     int? TowerGameMinutesPerDay, int? HomeworkCoins, int? HomeworkPenaltyCoins,
-    int? DailyTasksMin, int? DailyTasksMax, int? DailyNewWordsMin, int? DailyNewWordsMax, int? PenaltyCoinsPerMissedTask);
+    int? DailyTasksMin, int? DailyTasksMax, int? DailyNewWordsMin, int? DailyNewWordsMax, int? PenaltyCoinsPerMissedTask,
+    PlannerMode PlannerMode, DateOnly? PlannerSince);
 
 /// <summary>
 /// Input for creating a child. <c>SchoolType</c> is a single value or <c>None</c> ("not specified"): a child attends one
@@ -40,6 +42,8 @@ public record CreateChildDto(string Name, int? BirthYear, int? Grade, SchoolType
 /// combination from before that rule survives a PATCH that does not send the field.
 /// The planner limits (B-731) are checked on the values the child has after the change: a floor is at least 1 and not above
 /// its ceiling, the penalty at least 0, otherwise <c>validation_error</c>. <c>ClearPlannerLimits</c> removes all five.
+/// <c>PlannerMode</c> switches the day planner (B-734); a mode other than <c>Off</c> needs all four limits of tasks and new
+/// words after the change, else <c>validation_error</c> - also when a PATCH clears the limits of a running planner.
 /// </summary>
 public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTypes? SchoolType, string? Pin,
     Gender? Gender = null, List<string>? Interests = null, string? ProfileNotes = null,
@@ -49,7 +53,7 @@ public record UpdateChildDto(string? Name, int? BirthYear, int? Grade, SchoolTyp
     int? HomeworkCoins = null, bool ClearHomeworkCoins = false, int? HomeworkPenaltyCoins = null,
     bool ClearHomeworkPenaltyCoins = false,
     int? DailyTasksMin = null, int? DailyTasksMax = null, int? DailyNewWordsMin = null, int? DailyNewWordsMax = null,
-    int? PenaltyCoinsPerMissedTask = null, bool ClearPlannerLimits = false);
+    int? PenaltyCoinsPerMissedTask = null, bool ClearPlannerLimits = false, PlannerMode? PlannerMode = null);
 
 /// <summary>A supervision relationship: which supervisor supervises the student since when.</summary>
 public record SupervisorLinkResponse(int SupervisorId, string SupervisorName, SupervisorRelation Relation, DateTime CreatedAt);

@@ -91,6 +91,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ChildPause> ChildPauses => Set<ChildPause>();
     public DbSet<DailyEvaluation> DailyEvaluations => Set<DailyEvaluation>();
     public DbSet<EvaluatedDay> EvaluatedDays => Set<EvaluatedDay>();
+    public DbSet<DailyPlan> DailyPlans => Set<DailyPlan>();
+    public DbSet<DailyTask> DailyTasks => Set<DailyTask>();
 
     // Gamification: missions (time-bound goals) + awards (badges) per child, with an award log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -901,6 +903,23 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
                 v => JsonSerializer.Serialize(v, JsonOptions),
                 s => JsonSerializer.Deserialize<Dictionary<string, int>>(s, JsonOptions) ?? new Dictionary<string, int>())
                 .Metadata.SetValueComparer(JsonValueComparer.For<Dictionary<string, int>>());
+        });
+        modelBuilder.Entity<DailyPlan>(e =>
+        {
+            // One plan per child and day: the timer and the first request may race, the loser reads the winner (B-734).
+            e.HasIndex(p => new { p.ChildId, p.Day }).IsUnique();
+            e.HasOne(p => p.Child).WithMany().HasForeignKey(p => p.ChildId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(p => p.Warnings).HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                s => JsonSerializer.Deserialize<List<string>>(s, JsonOptions) ?? new List<string>())
+                .Metadata.SetValueComparer(JsonValueComparer.For<List<string>>());
+        });
+        modelBuilder.Entity<DailyTask>(e =>
+        {
+            e.HasOne(t => t.DailyPlan).WithMany(p => p.Tasks).HasForeignKey(t => t.DailyPlanId).OnDelete(DeleteBehavior.Cascade);
+            // The plan is a record of what the supervisor was shown: a deleted position or subject leaves the task standing.
+            e.HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.SetNull);
         });
         modelBuilder.Entity<EvaluatedDay>(e =>
         {

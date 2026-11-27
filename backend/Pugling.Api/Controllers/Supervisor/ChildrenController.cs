@@ -19,7 +19,8 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Produces("application/json")]
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts, TimeProvider time) : ControllerBase
+public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts, TimeProvider time,
+    LearningDay learningDay) : ControllerBase
 {
     /// <summary>Upper bound of a child's bonus cap: a typo of an extra zero must not open the family shop wide.</summary>
     private const int MaxBonusDailyCoinCap = 1000;
@@ -83,7 +84,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins,
-                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask))
+                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask,
+                c.PlannerMode, c.PlannerSince))
             .FirstOrDefaultAsync(ct);
 
     /// <summary>List of students supervised by the logged-in supervisor.</summary>
@@ -105,7 +107,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
                 c.PointsEntries.Where(p => PointKindCurrency.CoinKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.PointsEntries.Where(p => PointKindCurrency.GemKinds.Contains(p.Kind)).Sum(p => (int?)p.Amount) ?? 0,
                 c.BonusDailyCoinCap, c.TowerGameMinutesPerDay, c.HomeworkCoins, c.HomeworkPenaltyCoins,
-                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask))
+                c.DailyTasksMin, c.DailyTasksMax, c.DailyNewWordsMin, c.DailyNewWordsMax, c.PenaltyCoinsPerMissedTask,
+                c.PlannerMode, c.PlannerSince))
             .ToOptionallyPagedListAsync(Response, skip, take, ct);
     }
 
@@ -163,7 +166,8 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
             child.SchoolType, child.Gender, child.Interests, child.ProfileNotes,
             child.AllowedContentRating, child.CreatedAt, 0, 0, child.BonusDailyCoinCap,
             child.TowerGameMinutesPerDay, child.HomeworkCoins, child.HomeworkPenaltyCoins,
-            child.DailyTasksMin, child.DailyTasksMax, child.DailyNewWordsMin, child.DailyNewWordsMax, child.PenaltyCoinsPerMissedTask);
+            child.DailyTasksMin, child.DailyTasksMax, child.DailyNewWordsMin, child.DailyNewWordsMax, child.PenaltyCoinsPerMissedTask,
+            child.PlannerMode, child.PlannerSince);
         return CreatedAtAction(nameof(Get), new { childId = child.Id }, response);
     }
 
@@ -180,6 +184,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         if (!HomeworkCoinsAcceptable(dto.HomeworkCoins) || !HomeworkCoinsAcceptable(dto.HomeworkPenaltyCoins))
             return this.ProblemWithCode(ApiErrors.ValidationError, HomeworkCoinsMessage);
         if (!SchoolTypeAcceptable(dto.SchoolType)) return this.ProblemWithCode(ApiErrors.ValidationError, SchoolTypeMessage);
+        // The string-enum converter also takes numbers; an undefined mode would switch the planner on as an unknown kind.
+        if (dto.PlannerMode is { } sentMode && !Enum.IsDefined(sentMode))
+            return this.ProblemWithCode(ApiErrors.ValidationError, "Unknown planner mode; send Off or Shadow.");
         // Value first, clear switch second - as for every other field.
         int? Limit(int? sent, int? stored) => dto.ClearPlannerLimits ? null : sent ?? stored;
         var tasksMin = Limit(dto.DailyTasksMin, child.DailyTasksMin);
@@ -189,6 +196,12 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var penalty = Limit(dto.PenaltyCoinsPerMissedTask, child.PenaltyCoinsPerMissedTask);
         if (PlannerLimitsProblem(tasksMin, tasksMax, wordsMin, wordsMax, penalty) is { } limitsProblem)
             return this.ProblemWithCode(ApiErrors.ValidationError, limitsProblem);
+        // B-734: the planner composes within the limits, so it runs only while all four are set - also after this change.
+        var mode = dto.PlannerMode ?? child.PlannerMode;
+        if (mode != PlannerMode.Off && (tasksMin is null || tasksMax is null || wordsMin is null || wordsMax is null))
+            return this.ProblemWithCode(ApiErrors.ValidationError, child.PlannerMode == PlannerMode.Off
+                ? "The day planner needs the floor and ceiling of daily tasks and new words; set them before switching it on."
+                : "The day planner is on and plans within these limits; switch it off before removing them.");
 
         if (dto.Name is not null) child.Name = dto.Name.Trim();
         // Value first, clear switch second - "clear" wins if a client sends both.
@@ -215,6 +228,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         child.DailyNewWordsMin = wordsMin;
         child.DailyNewWordsMax = wordsMax;
         child.PenaltyCoinsPerMissedTask = penalty;
+        // The day it was switched on: days before it are no missing plans (B-734, decision 5).
+        if (mode != child.PlannerMode) child.PlannerSince = mode == PlannerMode.Off ? null : learningDay.Today;
+        child.PlannerMode = mode;
         // Mirror the name onto the login account - in the SAME commit, or a renamed child is still greeted with the
         // old name after the next login (the display name comes from the account). See AccountService.MirrorAsync.
         // The PIN lives on the account only (B-230).

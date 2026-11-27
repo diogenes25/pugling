@@ -306,6 +306,13 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int?>("PenaltyCoinsPerMissedTask")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("PlannerMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly?>("PlannerSince")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ProfileNotes")
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
@@ -779,6 +786,91 @@ namespace Pugling.Api.Data.Migrations
                         .HasFilter("[SubjectId] IS NOT NULL");
 
                     b.ToTable("DailyEvaluations");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("NewWordsBudget")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Warnings")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("DailyPlans");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DailyPlanId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DueReviews")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ExerciseTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("NewWords")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PlanPositionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Stage")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DailyPlanId");
+
+                    b.HasIndex("PlanPositionId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("DailyTasks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
@@ -3796,6 +3888,42 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.DailyPlan", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyTask", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.DailyPlan", "DailyPlan")
+                        .WithMany("Tasks")
+                        .HasForeignKey("DailyPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.PlanPosition", "PlanPosition")
+                        .WithMany()
+                        .HasForeignKey("PlanPositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Pugling.Api.Models.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DailyPlan");
+
+                    b.Navigation("PlanPosition");
+
+                    b.Navigation("Subject");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4938,6 +5066,11 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("SupervisorLinks");
 
                     b.Navigation("Textbooks");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyPlan", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.Exercise", b =>

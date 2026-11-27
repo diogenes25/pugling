@@ -195,7 +195,8 @@ public class ConventionGuardTests
     // 35 since B-377: the child's unread praise - at most five by design (decision 5, `PraiseService.OverlayLimit`); the
     // sender's list takes `take`.
     // 36 since B-731 (merged): the pauses of one child - entered by hand, a few a year.
-    private const int UnpaginatedArrayGetCount = 36;
+    // 37 since B-734: the days without a daily plan - at most one per day of the period, and only since the planner is on.
+    private const int UnpaginatedArrayGetCount = 37;
 
     [Fact]
     public void Unpaginierte_Array_GETs_Sind_Gepinnt()
@@ -400,13 +401,14 @@ public class ConventionGuardTests
     /// <summary>
     /// B-733 AK 6: the evaluation types (day rows, profile, problem words) carry error kinds and a child's statistics; no
     /// action a student token can reach may return one anywhere in its payload graph - else a child reads its brother's
-    /// numbers through a shared read view. Red if such a type is returned by an action without a gate that hides it from
-    /// the student.
+    /// numbers through a shared read view. B-734 AK 7 adds the daily plan: in shadow mode it has no effect, so the child must
+    /// not see it. Red if such a type is returned by an action without a gate that hides it from the student.
     /// </summary>
     [Fact]
     public void Auswertungstypen_Erreichen_Keinen_Studenten()
     {
-        Type[] secret = [typeof(DailyEvaluationResponse), typeof(EvaluationProfileResponse), typeof(ProblemWordResponse)];
+        Type[] secret = [typeof(DailyEvaluationResponse), typeof(EvaluationProfileResponse), typeof(ProblemWordResponse),
+            typeof(DailyPlanResponse), typeof(DailyTaskResponse)];
         var offenders = new List<string>();
         var inScope = 0;
         foreach (var controller in Controllers())

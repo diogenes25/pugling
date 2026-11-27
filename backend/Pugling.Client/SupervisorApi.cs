@@ -54,6 +54,14 @@ public sealed class SupervisorApi(HttpClient http)
     public Task<IReadOnlyList<ProblemWordResponse>> ListProblemWordsAsync(int childId, CancellationToken ct = default) =>
         Http.GetAsync<IReadOnlyList<ProblemWordResponse>>($"{Root}/children/{childId}/evaluations/problem-words", ct);
 
+    /// <summary>The child's daily plans of the last 14 days, newest first, with tasks and reasons (B-734).</summary>
+    public Task<IReadOnlyList<DailyPlanResponse>> ListDailyPlansAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<DailyPlanResponse>>($"{Root}/children/{childId}/daily-plans", ct);
+
+    /// <summary>The duty days of the last 14 days on which the planner was on but made no plan (B-734).</summary>
+    public Task<IReadOnlyList<DateOnly>> ListMissingDailyPlansAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<IReadOnlyList<DateOnly>>($"{Root}/children/{childId}/daily-plans/missing", ct);
+
     /// <summary>
     /// The child's <b>weighted</b> interests – referenced against the shared taxonomy and thus
     /// machine-evaluable, unlike the free-form <c>ChildResponse.Interests</c> (which remains the language

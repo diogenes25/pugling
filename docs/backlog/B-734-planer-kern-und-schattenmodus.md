@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Planer-Kern, Tagesplan, Schattenmodus, 6-Uhr-Lauf, Etappe E2]
-status: geschaetzt
+status: in-arbeit
 prio: P1
 art: Wunsch
 groesse: L
@@ -164,6 +164,70 @@ Nach [B-733](B-733-tagesauswertung-und-leistungsprofil.md) (Profil) und [B-731](
 
 ## Verlauf
 
+- **2026-11-27** — gebaut (Sprint 195). Abweichungen vom Schätz-Stand, bewusst:
+  - **Modus am Kind** (`Child.PlannerMode` Off/Shadow, `PlannerSince`) statt Ein-Zeilen-Tabelle `PlannerSettings` (Schätz-Annahme
+    1): Eigentum läuft über `ChildOwnershipFilter`, kein globaler Schalter über Familiengrenzen; Vorgabe `Off`, Einschalten
+    verlangt alle vier Leitplanken. Der Stichtag gehört zu B-737.
+  - **Spalten nur für diesen Zuschnitt:** Streichzeit, Herkunft und Art (Pflicht/Bonus) kommen mit B-738, die Wortauswahl je
+    Aufgabe mit B-736 (erst dort wird sie gespielt). Der Plan trägt Zahlen (fällige Wiederholungen, neue Wörter, Stufe) und die
+    Begründung.
+  - **„Gestern“ für Regel 2** ist der letzte Pflichttag (Samstag vor Montag), nicht der Kalendertag.
+  - **Tempo** = gefestigte Wörter je Lerntag der letzten sieben Tage aus B-733, über alle Fächer; ohne Lerntag gilt der Boden.
+  - **Neue Wörter** nur bei Typen, die Karten einführen (Vokabel); ein Lückentext bringt keine.
+  - **Die Fehlliste (AK 8)** nennt nur abgeschlossene Tage: heute legt jeder Zugriff den Plan an, ein laufender Server kann ihn nicht
+    verpasst haben.
+  - **Malus und Serie (AK 8)** sind im Schattenmodus strukturell unberührt (der Planer bucht nichts); die echte Probe gehört zu
+    B-736, wenn aus der Tagesaufgabe Pflicht wird.
+- **2026-11-27** — Belege je AK-Fall (Tests unter `backend/Pugling.Api.Tests/`, Mutanten mit `.claude/scripts/mutant-probe.py`
+  nach der letzten Code-Änderung):
+
+  | AK, Fall | Test | Mutante → rot |
+  |---|---|---|
+  | 1, erst ab 6 Uhr, einmal | `TagesplanerTests.Plan_entsteht_ab_sechs_Uhr_einmal_und_bleibt_eingefroren` | P1 |
+  | 1, Index-Verlierer liest Gewinner | `…Verlierer_des_Wettlaufs_liest_den_Gewinner` | P7 (Fang), P8 (Index) |
+  | 1, gleichzeitige Auslöser | `…Gleichzeitige_Ausloeser_legen_einen_Plan_an` | – (Wettlauf nicht deterministisch; P7/P8 tragen) |
+  | 2, Boden Aufgaben / nie leer | `TagesplanerRegelnTests.Boden_der_Aufgaben_fuellt_auf`, `…Lerntag_ohne_Anlass_ist_nie_leer` | R6 |
+  | 2, Deckel Aufgaben | `…Deckel_der_Aufgaben_schneidet_die_niedrigsten_ab` | R7 |
+  | 2, Deckel Wörter / Wiederholungen zählen nicht | `…Deckel_der_neuen_Woerter_ohne_die_Wiederholungen` | R8, R10 |
+  | 2, Boden Wörter | `…Boden_der_neuen_Woerter_ohne_oder_unter_dem_Tempo` | R9 |
+  | 2, nur Vokabel bringt neue Wörter | `TagesplanerTests.Lueckentext_bringt_keine_neuen_Woerter` | P5 |
+  | 2/3, echte Eingänge (fällig, Samstag, Pool) | `…Plan_folgt_den_Regeln_aus_den_echten_Daten` | P4, P6, R3 |
+  | 3, fällige zuerst | `TagesplanerRegelnTests.Faellige_Wiederholungen_kommen_zuerst_die_meisten_vorn` | R1 |
+  | 3, Gescheitertes nach fälligen, vor neuen | `…Gescheitertes_folgt_den_faelligen_und_steht_vor_neuen_Woertern` | R2 |
+  | 3, eine Stufe leichter / nur bei Scheitern | `…Gescheitertes_kommt_eine_Stufe_leichter_wieder` | R3, R4 |
+  | 3, nicht bestandener Test | `…Nicht_bestandener_Test_zaehlt_als_gescheitert` | R5 |
+  | 4, Begründung aus den Daten | `…Begruendung_folgt_den_Daten` | R3 (Text), F4 (Anzeige) |
+  | 5, gleiche Daten, gleicher Plan | `…Gleiche_Daten_ergeben_denselben_Plan` | R11 |
+  | 5, kein Chat-Client, kein Zufall | `…Planer_haengt_an_keinem_Sprachmodell_und_keinem_Zufall` | – (Absichtserklärung, Konstruktor-Prüfung) |
+  | 6, eingefroren | `TagesplanerTests.Plan_entsteht_ab_sechs_Uhr…` | P15 grün erwartet und gemessen: doppelt gesichert (Rückgabe des gespeicherten Plans und eindeutiger Index), einzeln entfernt bleibt der Plan stehen; P8 nimmt den Index |
+  | 7, Sohn sieht nichts, keine Buchung | `…Schattenplan_bleibt_dem_Sohn_verborgen_und_bucht_nichts`, `ConventionGuardTests.Auswertungstypen_Erreichen_Keinen_Studenten`, E2E `tagesplan-schatten` | – (Tor über Typen, wie B-733) |
+  | 7, Planer-Fehler kippt den Sohn nicht | `…Fehler_im_Planer_laesst_Login_und_Tag_des_Sohns_stehen` | P12, P13 |
+  | 8, Meldung nur Pflichttage seit Einschalten | `…Tag_ohne_Plan_wird_gemeldet_und_kostet_nichts` | P9, P10 |
+  | 8, heute nie | `…Heute_fehlt_nie` | P11 |
+  | 9, Pause/Sonntag/aus | `…Pause_Sonntag_und_ausgeschalteter_Planer_ergeben_keinen_Plan` | P2, P3 |
+  | 9, keine Menge aus dem Request | `…Kein_Planer_Endpunkt_nimmt_eine_Menge_an` | – (Absichtserklärung) |
+  | 10, 403/404 | `…Pfade_pruefen_Rolle_Eigentum_und_Zeitraum` | G1, G2 |
+  | 11, Begründung je Aufgabe, Schatten nie wirksam | `frontend/src/vater/Tagesplaene.test.tsx` | F2, F4 |
+  | 11, Schalter nur mit Leitplanken | `Tagesplaene.test.tsx` „schaltet mit Leitplanken…“ | F3 |
+  | 11, nach Einschalten kein falsches „Noch kein Plan“ | `Tagesplaene.test.tsx` „sagt nach dem Einschalten nicht…“ | F1 |
+  | Schalter: Leitplanken nötig, Stempel | `TagesplanerTests.Einschalten_verlangt_die_Leitplanken_und_stempelt_den_Tag` | C2, C3 |
+  | Schalter: undefinierte Zahl | `…Undefinierter_Modus_wird_abgelehnt` | C1 |
+  | Leitplanken entfernen gesperrt | `Tagesplaene.test.tsx` „sperrt das Entfernen…“ | F5 |
+  | Zeitgeber legt an, im Test-Host aus | `…Zeitgeber_legt_den_Plan_an_und_ist_im_Test_Host_aus` | T1 |
+  | Zeitgeber überspringt ein scheiterndes Kind | `…Zeitgeber_ueberspringt_ein_scheiterndes_Kind` | P14 |
+  | Migration: Bestand auf `Off` | `TagesplanerMigrationTests.Bestandskinder_starten_mit_ausgeschaltetem_Planer` | M1 |
+
+  Gemessen 2026-11-27 00:50 bis 01:40 in vier Läufen, Stand `c4bfe767 + Arbeitsbaum`: 38 Mutanten, 37 rot am erwarteten Test, P15
+  grün wie erwartet. Zwei Funde der Probe selbst: M1 war im ersten Lauf **grün** – EF liest einen leeren Enum-Text still als
+  `Off`, der Migrationstest prüft seither den Rohwert; F1 war grün, weil der tragende Teil `null` statt `[]` ist und nicht
+  `stale` – der überflüssige Teil ist entfernt.
+- **2026-11-27** — Review (`pugling-reviewer`, `frontend-reviewer`) eingearbeitet: Planer-Fehler auf den Wegen des Sohns
+  geloggt statt 500 (`TryEnsureTodayAsync`), nur ein echter Unique-Verstoß zählt als verlorener Wettlauf, Zeitgeber je Kind in
+  eigenem Scope, undefinierte Modus-Zahl abgelehnt, neue Wörter nur bei Vokabeltypen, Fehler gestern nur auf der gespielten
+  Übung, Begründung „keine leichtere Stufe verfügbar“ statt einer falschen „leichtesten Stufe“, Meldung beim Entfernen der
+  Leitplanken nennt die Sperre; im Frontend kein „Noch kein Plan“ aus dem ausgeschalteten Stand, Lade-Platzhalter, Beschriftung
+  erschöpfend über den Modus. Als Frage ausgelagert: [B-1033](B-1033-kuer-positionen-im-tagesplan.md) (Kür-Positionen im
+  Tagesplan). Bewusst offen für B-736: eine nach dem Plan eingetragene Pause lässt den eingefrorenen Plan stehen.
 - **2026-11-26** — Der Nutzer bestätigt die stellvertretenden Entscheidungen 19, 21 und 24 aus B-644 unverändert (PM-Sitzung 2026-11-26). Damit ist B-734 baubar.
 
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E2) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):

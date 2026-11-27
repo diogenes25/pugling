@@ -1252,6 +1252,223 @@
         }
       }
     },
+    "/api/v1/supervisor/children/{childId}/daily-plans": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Daily plans"
+        ],
+        "summary": "The child\u0027s daily plans from from to to (default: the last 14 days up to today),\nnewest first, with their tasks and reasons. Today\u0027s plan is made first if it is due (from 6 a.m., planner on, a duty\nday) - the supervisor\u0027s look counts as the first access like the child\u0027s. A stored plan never changes.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total row count before paging (skip/take).",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DailyPlanResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/supervisor/children/{childId}/daily-plans/missing": {
+      "get": {
+        "tags": [
+          "Supervisor \u2013 Daily plans"
+        ],
+        "summary": "The closed duty days from from to to (default: the last 14 days) on which the\nplanner was on but no plan was made - the server did not run (B-644, decision 19). Such a day counts like a pause: no\npenalty, the streak stands. Newest first; today, days before the planner was switched on and days without duty (Sunday,\npause) never appear.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/supervisor/children/{childId}/evaluations": {
       "get": {
         "tags": [
@@ -35067,6 +35284,7 @@
           "id",
           "interests",
           "name",
+          "plannerMode",
           "schoolType"
         ],
         "type": "object",
@@ -35221,9 +35439,19 @@
               "string"
             ],
             "format": "int32"
+          },
+          "plannerMode": {
+            "$ref": "#/components/schemas/PlannerMode"
+          },
+          "plannerSince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         },
-        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off),\n\u0060HomeworkCoins\u0060 what an accepted homework books and \u0060HomeworkPenaltyCoins\u0060 what a homework without a hand-in by\nits due day costs (B-760); \u0060null\u0060 = the server default for each. \u0060DailyTasksMin\u0060/\u0060DailyTasksMax\u0060,\n\u0060DailyNewWordsMin\u0060/\u0060DailyNewWordsMax\u0060 and \u0060PenaltyCoinsPerMissedTask\u0060 are the supervisor\u0027s limits for the\nday planner (B-731): floor and ceiling of duty tasks and new words a day, and the penalty per missed task; all\n\u0060null\u0060 = the planner is not set up."
+        "description": "A supervised child with profile and balance of both currencies. \u0060Interests\u0060 is the **free-form**\npart of the profile (language for the AI creator); the weighted, referenced interests used for\nimage selection live under \u0060children/{id}/interests\u0060. \u0060AllowedContentRating\u0060 is the\nupper bound of image suitability \u2013 only the supervisor may raise it. \u0060BonusDailyCoinCap\u0060 is the child\u0027s own\ndaily cap of bonus-training coins, \u0060TowerGameMinutesPerDay\u0060 its play minutes per day in the tower game (0 = off),\n\u0060HomeworkCoins\u0060 what an accepted homework books and \u0060HomeworkPenaltyCoins\u0060 what a homework without a hand-in by\nits due day costs (B-760); \u0060null\u0060 = the server default for each. \u0060DailyTasksMin\u0060/\u0060DailyTasksMax\u0060,\n\u0060DailyNewWordsMin\u0060/\u0060DailyNewWordsMax\u0060 and \u0060PenaltyCoinsPerMissedTask\u0060 are the supervisor\u0027s limits for the\nday planner (B-731): floor and ceiling of duty tasks and new words a day, and the penalty per missed task; all\n\u0060null\u0060 = the planner is not set up. \u0060PlannerMode\u0060 says whether the planner makes daily plans for the child (B-734),\n\u0060PlannerSince\u0060 the learning day it was last switched on (\u0060null\u0060 while it is off)."
       },
       "ChildTimeline": {
         "required": [
@@ -37777,6 +38005,150 @@
           }
         },
         "description": "One day and subject of a child (B-733). A closed day is stored once and never recomputed; Live marks\ntoday\u0027s row, computed on reading and not stored. A day without a row is a gap (no practice, no duty owed), not a zero."
+      },
+      "DailyPlanResponse": {
+        "required": [
+          "createdAt",
+          "day",
+          "mode",
+          "newWordsBudget",
+          "tasks",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "description": "The learning day the plan is for.",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the plan was composed (UTC).",
+            "format": "date-time"
+          },
+          "mode": {
+            "description": "The planner mode the plan was composed in; a \u0060Shadow\u0060 plan has no effect.",
+            "$ref": "#/components/schemas/PlannerMode"
+          },
+          "newWordsBudget": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "New words the planner allowed for the day: the child\u0027s tempo, held between the supervisor\u0027s\nfloor and ceiling.",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What kept the plan from meeting a limit, e.g. fewer positions than the floor of tasks."
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyTaskResponse"
+            },
+            "description": "The day\u0027s tasks in the order the planner ranked them."
+          }
+        },
+        "description": "One daily plan of a child (B-734): composed once at the first access from 6 a.m. on its learning day and frozen since - a\nlater read returns the same tasks, however the child\u0027s progress changed."
+      },
+      "DailyTaskResponse": {
+        "required": [
+          "dueReviews",
+          "exerciseId",
+          "exerciseTitle",
+          "newWords",
+          "order",
+          "reason",
+          "subjectName"
+        ],
+        "type": "object",
+        "properties": {
+          "planPositionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The position the task plays; \u0060null\u0060 when the position was deleted since.",
+            "format": "int32"
+          },
+          "exerciseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The exercise the position played when the plan was composed.",
+            "format": "int32"
+          },
+          "exerciseTitle": {
+            "type": "string",
+            "description": "Its title at that time."
+          },
+          "subjectId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The subject of the task (plan subject, else the exercise\u0027s series subject).",
+            "format": "int32"
+          },
+          "subjectName": {
+            "type": "string",
+            "description": "The subject\u0027s name, empty without a subject."
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Rank in the plan, from 1.",
+            "format": "int32"
+          },
+          "dueReviews": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Words due for review at the position; they do not count against the new-word ceiling.",
+            "format": "int32"
+          },
+          "newWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "New words the task introduces.",
+            "format": "int32"
+          },
+          "stage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The stage the planner suggests, one easier after a failure the day before; \u0060null\u0060 = the\nposition\u0027s own stage.",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the task is in the plan, built from the inputs (due reviews, yesterday\u0027s errors, tempo)."
+          }
+        },
+        "description": "One task of a daily plan: a position of an active plan with what the planner asks of it and why."
       },
       "Dashboard": {
         "required": [
@@ -48509,6 +48881,14 @@
         "type": "string",
         "description": "Part of speech of a store vocabulary item. Determines which additional details make sense\n(NounInfo for nouns, VerbInfo for verbs) and is a filter criterion\nin the vocabulary store. PartOfSpeech.Other is the default when the author specifies nothing.\n\nAllowed values: Noun, Verb, Adjective, Adverb, Pronoun, Preposition, Conjunction, Article, Numeral, Interjection, Phrase, Other."
       },
+      "PlannerMode": {
+        "enum": [
+          "Off",
+          "Shadow"
+        ],
+        "type": "string",
+        "description": "Whether the day planner runs for a child (B-734). \u0060Off\u0060: no daily plans are made. \u0060Shadow\u0060: a plan is made every\nlearning day and shown to the supervisor, but it has no effect - no duty, no penalty, nothing in the child\u0027s app.\n\nAllowed values: Off, Shadow."
+      },
       "PlanResponse": {
         "required": [
           "active",
@@ -54364,9 +54744,19 @@
           "clearPlannerLimits": {
             "type": "boolean",
             "default": false
+          },
+          "plannerMode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlannerMode"
+              }
+            ]
           }
         },
-        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap, \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes and \u0060ClearHomeworkCoins\u0060 /\n\u0060ClearHomeworkPenaltyCoins\u0060 the homework amounts to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field.\nThe planner limits (B-731) are checked on the values the child has after the change: a floor is at least 1 and not above\nits ceiling, the penalty at least 0, otherwise \u0060validation_error\u0060. \u0060ClearPlannerLimits\u0060 removes all five."
+        "description": "Partial change to a child; omitted fields stay unchanged. \u0060null\u0060 means \u0022not specified\u0022\nand therefore cannot **clear** anything \u2013 that is what the \u0060Clear\u2026\u0060 switches are for (cf.\n\u0060ClearGrade\u0060 on the class test): \u0060ClearBirthYear\u0060 removes the birth year,\n\u0060ClearGrade\u0060 the grade level (the child then drops out of grade filters), \u0060ClearBonusDailyCoinCap\u0060 returns\nthe bonus cap, \u0060ClearTowerGameMinutesPerDay\u0060 the tower-game minutes and \u0060ClearHomeworkCoins\u0060 /\n\u0060ClearHomeworkPenaltyCoins\u0060 the homework amounts to the server default. A sent \u0060SchoolType\u0060 must be a single value or \u0060None\u0060 (B-152); a stored\ncombination from before that rule survives a PATCH that does not send the field.\nThe planner limits (B-731) are checked on the values the child has after the change: a floor is at least 1 and not above\nits ceiling, the penalty at least 0, otherwise \u0060validation_error\u0060. \u0060ClearPlannerLimits\u0060 removes all five.\n\u0060PlannerMode\u0060 switches the day planner (B-734); a mode other than \u0060Off\u0060 needs all four limits of tasks and new\nwords after the change, else \u0060validation_error\u0060 - also when a PATCH clears the limits of a running planner."
       },
       "UpdateClassTestDto": {
         "type": "object",
@@ -56934,6 +57324,9 @@
     },
     {
       "name": "Supervisor \u2013 Class Tests"
+    },
+    {
+      "name": "Supervisor \u2013 Daily plans"
     },
     {
       "name": "Supervisor \u2013 Evaluations"

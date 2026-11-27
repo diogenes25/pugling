@@ -15,6 +15,7 @@ const kind = (limits: Partial<ChildResponse> = {}): ChildResponse => ({
   profileNotes: null, allowedContentRating: "Everyone", createdAt: "2026-11-01T00:00:00Z", coins: 0, gems: 0,
   bonusDailyCoinCap: null, towerGameMinutesPerDay: null, homeworkCoins: null, homeworkPenaltyCoins: null,
   dailyTasksMin: null, dailyTasksMax: null, dailyNewWordsMin: null, dailyNewWordsMax: null, penaltyCoinsPerMissedTask: null,
+  plannerMode: "Off", plannerSince: null,
   ...limits,
 } as ChildResponse);
 

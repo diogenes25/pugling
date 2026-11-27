@@ -205,6 +205,10 @@ builder.Services.AddScoped<PositionProgressService>();
 builder.Services.AddScoped<DutyCalendar>();
 // B-733: the supervisor's evaluation per day and subject, stored once per closed day.
 builder.Services.AddScoped<DailyEvaluationService>();
+builder.Services.AddScoped<DailyPlanner>();
+// B-734: the day planner's timer; off in the test hosts, where it would run in every integration test.
+if (builder.Configuration.GetValue("Planner:BackgroundEnabled", true))
+    builder.Services.AddHostedService<DailyPlanTimer>();
 // The preparation duty before a class test (B-752): reconciled on the child's login, right before the penalty settlement.
 builder.Services.Configure<ClassTestPrepOptions>(builder.Configuration.GetSection(ClassTestPrepOptions.SectionName));
 builder.Services.AddScoped<ClassTestPrepService>();

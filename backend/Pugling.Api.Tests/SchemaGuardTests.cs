@@ -225,6 +225,11 @@ public class SchemaGuardTests
             ["DailyBoxClaim.ChildId"] = DeleteBehavior.Cascade, // -> Child
             ["DailyEvaluation.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-733: the child's evaluated days)
             ["DailyEvaluation.SubjectId"] = DeleteBehavior.Cascade, // -> Subject (derived statistics, like ChildSubjectLevel)
+            ["DailyPlan.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-734: the child's daily plans)
+            ["DailyTask.DailyPlanId"] = DeleteBehavior.Cascade, // -> DailyPlan
+            // The plan records what the supervisor was shown: a deleted position or subject leaves the task standing.
+            ["DailyTask.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
+            ["DailyTask.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
             ["EvaluatedDay.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-733: marks a closed day as evaluated)
             ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
             // NoAction (B-700): the delete endpoint refuses a target with prerequisites; NO ACTION instead of

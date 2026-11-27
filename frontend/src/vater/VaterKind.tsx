@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ChildMaterialSection } from "./ChildMaterialSection";
 import { NotenstufenSection } from "./NotenstufenSection";
 import { LeitplankenSection, PauseSection, SupervisorsSection, TimetableSection } from "./ChildCarePanels";
+import { TagesplanerSection } from "./Tagesplaene";
 import { StatusBanner } from "../components/StatusBanner";
 import { Pflicht } from "../components/Pflicht";
 import { FieldLabel } from "../components/InfoHint";
@@ -139,6 +140,8 @@ export function VaterKind() {
         {/* `key` nur am Kind, wie beim Bonus: die Felder ziehen den Serverstand selbst nach, ein Neu-Einhängen nähme die
             Bestätigung mit (B-1020). */}
         <LeitplankenSection key={`limits-${me.id}`} child={me} onSaved={child.reload} />
+        {/* B-734: der Planer rechnet mit den Leitplanken darüber; im Schattenmodus sieht nur der Vater seine Pläne. */}
+        <TagesplanerSection key={`planner-${me.id}`} child={me} onSaved={child.reload} />
       </SectionPanel>
 
       {/* Wer betreut das Kind – mit gemeinsamem Wallet. */}

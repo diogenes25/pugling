@@ -19,7 +19,8 @@ namespace Pugling.Api.Controllers;
 public class AuthController(PuglingDbContext db, TokenService tokens, AccountService accounts,
     Services.Shared.PositionProgressService progress, Services.Shared.ObjectiveRewardService objectiveRewards, LearningDay learningDay,
     Services.Student.SubjectLevelService subjectLevels,
-    Services.Shared.ClassTestPrepService classTestPrep, Services.Shared.HomeworkService homework) : ControllerBase
+    Services.Shared.ClassTestPrepService classTestPrep, Services.Shared.HomeworkService homework,
+    Services.Supervisor.DailyPlanner planner) : ControllerBase
 {
     /// <summary>
     /// The <b>primary tier</b> for UI routing – where the user belongs after logging in.
@@ -94,6 +95,8 @@ public class AuthController(PuglingDbContext db, TokenService tokens, AccountSer
         await objectiveRewards.SettleAsync(child.Id, today, ct);
         // The daily evaluation of the grade level (B-741) - first access of the day, no scheduler; idempotent per day.
         await subjectLevels.EvaluateAsync(child.Id, today, ct);
+        // B-734: the child's first access from 6 a.m. makes today's plan if the timer has not yet (shadow: no effect).
+        await planner.TryEnsureTodayAsync(child.Id, ct);
         var (token, expires) = tokens.IssueForAccount(account, account.Profiles);
         return new LoginResponse(token, Roles.Student, child.Id, child.Name, expires);
     }

@@ -346,7 +346,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
 
     // Unit and series ride along in the same query: the day rollup reads their names and runs once per day of a
     // history, so a lookup per position would multiply with both.
-    private Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
+    internal Task<List<PlanPosition>> LoadPositionsAsync(int planId, CancellationToken ct) =>
         db.PlanPositions.Include(p => p.Exercise).ThenInclude(e => e!.SeriesUnit).ThenInclude(u => u!.Series)
             .ThenInclude(s => s!.Subject)
             // B-848: the child sees unit and pages of the prerequisite it plays.

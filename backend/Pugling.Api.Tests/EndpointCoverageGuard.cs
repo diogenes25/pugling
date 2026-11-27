@@ -22,12 +22,12 @@ namespace Pugling.Api.Tests;
 public sealed class EndpointCoverageGuard : IAsyncDisposable
 {
     /// <summary>
-    /// Actions successfully touched in a complete run (measured 2026-11-26, Sprint 194 with the catch-up cases of B-1028: 330). Serves as
+    /// Actions successfully touched in a complete run (measured 2026-11-26, Sprint 195 with the two daily-plan reads of B-734: 332). Serves as
     /// <b>partial-run detection</b>, not a ratio: the actual check is the list of untouched
     /// actions against <see cref="Exceptions"/>. If coverage increases, the countermeasure below
     /// requires updating this value accordingly.
     /// </summary>
-    private const int FullRunTouchedActions = 330;
+    private const int FullRunTouchedActions = 332;
 
     /// <summary>
     /// From what percentage of the full inventory the guard judges at all.

@@ -16,8 +16,8 @@ namespace Pugling.Api.Controllers.Student;
 [Produces("application/json")]
 [Authorize]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
-public class ChildTodayController(PositionProgressService progress, DailyBoxService dailyBox, LearningDay learningDay)
-    : ControllerBase
+public class ChildTodayController(PositionProgressService progress, DailyBoxService dailyBox, LearningDay learningDay,
+    DailyPlanner planner) : ControllerBase
 {
     /// <summary>
     /// Today's duties of all active, running plans of the child: goals met and open, whether the day's rewards are
@@ -30,6 +30,8 @@ public class ChildTodayController(PositionProgressService progress, DailyBoxServ
     public async Task<ActionResult<TodayResponse>> Get(int childId, CancellationToken ct)
     {
         var today = learningDay.Today;
+        // B-734: the first access from 6 a.m. makes today's plan; in shadow mode the response does not carry it.
+        await planner.TryEnsureTodayAsync(childId, ct);
         var day = await progress.ComputeChildDayAsync(childId, today, ct);
         var streak = await progress.ChildStreakAsync(childId, today, int.MaxValue, ct);
         var box = await dailyBox.StatusAsync(childId, today, ct);

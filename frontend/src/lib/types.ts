@@ -286,6 +286,9 @@ export type TimetableEntry = S["EntryResponse"];
 export type ChildPause = S["ChildPauseResponse"];
 // Auswertung je Kind, Tag und Fach (B-733): Verlauf, Profil über 7/28 Tage, Problemwörter mit Fehlerart.
 export type DailyEvaluation = S["DailyEvaluationResponse"];
+export type DailyPlan = S["DailyPlanResponse"];
+export type DailyTask = S["DailyTaskResponse"];
+export type PlannerMode = S["PlannerMode"];
 export type EvaluationProfile = S["EvaluationProfileResponse"];
 export type ProfileWindow = S["ProfileWindow"];
 export type ProblemWord = S["ProblemWordResponse"];
