@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/klassenarbeit, rolle/creator, rolle/student]
 aliases: [Täglicher Lehrplan, Just-in-time-Plan, Privatlehrer-Plan]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,6 +11,8 @@ vertragsbruch: nein
 quelle: docs/leitbild-privatlehrer.md
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-680 · Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand
@@ -273,3 +275,32 @@ Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Vorau
 - **2026-11-20** — `ausformuliert` → `gegrillt` (Vorbereitungslauf, Sonnet, stellvertretend auf Anweisung des Nutzers, unbestätigt): Alle elf Punkte entschieden. Kern: B-680 ist die Produktseite von B-644 (E3/E4), der Planer entscheidet mit festen Regeln im Server, der Vater behält Leitplanken und Notbremse, Notenstufe ist kein Eingang des ersten Baus, `StudyPlan.EndDate` wird optional.
 - **2026-11-20** — `gegrillt` → `geschaetzt` (Vorbereitungslauf, Sonnet, stellvertretend, unbestätigt): nach der Teilung von B-644 trägt B-680 die Planer-Regeln für Termin, Stundenplan und Fächerverteilung (E4a) als Aufsatz auf B-734. L, backend, keine Migration, kein Vertragsbruch; Zuordnung der zehn Kriterien auf B-734, B-735, B-736 und diese Story, vier Kriterien ergänzt. Eintrittsbedingung `gegrillt` erfüllt (elf Punkte entschieden).
 - **2026-11-20** — Reihenfolge entschieden (stellvertretend auf Anweisung des Nutzers, unbestätigt): Die Schattenwoche startet erst, wenn B-735 und die Planer-Regeln dieser Story (Termin, Stundenplan, Fächerverteilung) gebaut sind, damit der Vater den vollständigen Planer prüft und nicht nur einen Teil. B-734 wird vorher gebaut, der Schattenmodus bleibt bis dahin ausgeschaltet. Kosten: Der Planer läuft später an; der Vorteil ist, dass die Schattenwoche die Regeln misst, die später Münzen kosten.
+- **2026-11-27** — `geschaetzt` → `abgenommen` (Sprint 197). Der Nutzer gibt B-680 als Sprint 197 frei. Gebaut als Regeln im Planer-Kern aus
+  B-734 (`DailyPlanRules`, Eingänge in `DailyPlanner`), ohne Migration und ohne Vertragsänderung:
+  - **Eingänge:** die noch nicht geschriebenen Klassenarbeiten des Kindes (Termin ab heute; Bündel über `ClassTestBundle`, eine Arbeit
+    ohne Übungen und Tags gilt für das ganze Fach), der Stundenplan von heute und morgen, die Fehlerquote je Fach über 28 Tage aus
+    den Auswertungszeilen (B-733).
+  - **Regeln:** nötige neue Wörter je Position = aufgerundet (noch nie gezeigte Wörter ÷ Pflichttage von heute bis zum Tag vor dem
+    Termin, mindestens 1). Das Budget ist das Tempo des Kindes oder, wenn eine Arbeit mehr braucht, deren Summe – zwischen Boden und
+    Deckel. Übersteigt die Summe den Deckel, steht in `Warnings` die fehlende Menge. Jede gedrückte Position bekommt zuerst ihr
+    eigenes Tempo, der Rest geht nach Rang. Rangfolge im Rest: nähere Arbeit, Stunde heute oder morgen, schwächeres Fach, Plan.
+    Fällige Wiederholungen und Gescheitertes bleiben davor. Die Begründung nennt Termin und Lerntage, Stundenplan und Fehlerquote.
+  - **Kriterien:** 2, 3, 9, 11, 12, 13 in `PlanerTerminRegelnTests` (rein) und `TagesplanerTests` (echte Daten); 4/14 (Nachtrag ändert den
+    Folgetag, nie den eingefrorenen Plan) in `Nachgetragene_Klassenarbeit_aendert_den_Folgetag…`; 8 in der Begründung; 10 als
+    Absichtserklärung `Der_Tagesplaner_haengt_nicht_von_einer_Notenstufe_ab` (prüft den Konstruktor von `DailyPlanner`).
+  - **Mutanten** (`mutant-probe.py`, Debug, 2026-11-27 11:00 und danach): 16 Mutanten, alle rot – Budget ohne Arbeit, Warnung, Termin-Rang,
+    Stundenplan-Rang und -Text, Schwäche-Rang, Termin ab heute, Status, Bündel, Pflichttage, Wochentage, 28-Tage-Fenster, Quote,
+    Zuteilung je Position, Auswahl gedrückter Positionen, Quelle der Begründung. Eine Mutante (`if (false)`) kompilierte nicht und ist
+    mit `== 12345` wiederholt; die Auswahl-Mutante war im ersten Wurf grün – der Fall „fällige Position braucht das ganze Budget“
+    fehlte und steht jetzt in `PlanerTerminRegelnTests`.
+  - **Review (`pugling-reviewer`):** eingearbeitet: der Reviewer fand die Zuteilung (die erste Position nahm die Summe mehrerer Tempi),
+    die falsche Quelle in der Begründung, einen verrutschten Doku-Block und fünf Testlücken (abgesagte und fremde Arbeit, Rang gegen
+    Fälliges, mehrere Arbeiten, Quelle). Nicht gebaut: eine Mindestzahl an Antworten für die Schwäche, die Bündel je Arbeit in einer
+    Abfrage (N+1 bei wenigen Arbeiten je Kind).
+  - **Verifikation:** Backend-Suite 2695/2695 grün (Release, 11 min 29 s, vor den Review-Korrekturen); danach die 101 betroffenen Fälle grün,
+    Format sauber. E2E `tagesplan-schatten` und `lerntage-und-pause` 2 passed.
+  - **Rollengang** an einer frischen Kopie der echten DB: Für Friedrich Leitplanken gesetzt, eine Klassenarbeit nur mit Fach in drei
+    Tagen angelegt, Schattenplan gelesen: Begründungen nennen „Klassenarbeit am 04.12., noch 6 Lerntage“ und bei zwei Arbeiten je Position
+    das nähere Datum. **Fund:** Eine Arbeit ohne Übungen setzt das ganze Fach unter Druck – „120 neue Wörter pro Lerntag, der Deckel
+    erlaubt 8, bis dahin fehlen etwa 672 Wörter“. Das ist als Frage [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md)
+    abgelegt, nicht hier geändert (sichtbar für den Vater). Offen für den Nutzer: nichts am Gerät.

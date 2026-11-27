@@ -570,6 +570,24 @@ public class ConventionGuardTests
     };
 
     /// <summary>
+    /// B-680, acceptance 10 (a declaration of intent, not a measurement of behaviour): the day planner takes no grade-level
+    /// service before B-682 is built and confirmed - the plan is computed from test date, material and mastery only. Red if a
+    /// constructor parameter of the planner names a grade level (the rules are a static function and take none).
+    /// </summary>
+    [Fact]
+    public void Der_Tagesplaner_haengt_nicht_von_einer_Notenstufe_ab()
+    {
+        var offenders = new[] { typeof(DailyPlanner) }
+            .SelectMany(t => t.GetConstructors())
+            .SelectMany(c => c.GetParameters())
+            .Where(p => Regex.IsMatch(p.ParameterType.Name, "Grade|Notenstufe|Level", RegexOptions.IgnoreCase))
+            .Select(p => $"{p.Member.DeclaringType!.Name}({p.ParameterType.Name} {p.Name})")
+            .ToList();
+
+        Assert.True(offenders.Count == 0, "The planner must not depend on a grade level yet (B-680, B-682): " + string.Join(", ", offenders));
+    }
+
+    /// <summary>
     /// Does an attribute set restrict access to roles that exclude <see cref="Roles.Student"/>? A bare
     /// <c>[Authorize]</c> does not: it only asks for *any* logged-in user, and a child is one.
     /// </summary>

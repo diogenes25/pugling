@@ -142,6 +142,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         CancellationToken ct)
     {
         var lastLearningDay = LastDutyDayBefore(day, dutyDays);
+        var exams = await ExamsAsync(childId, day, ct);
+        var lessonSubjects = await LessonSubjectsAsync(childId, day, ct);
+        var weakness = await WeaknessAsync(childId, day, ct);
         var plans = await db.StudyPlans.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
@@ -174,13 +177,64 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
                     .AnyAsync(t => t.PlanPositionId == pos.Id && t.Day == yt && t.CompletedAt != null && t.Graded
                         && !t.BySupervisor && !(t.PassedAfterCorrection ?? t.Passed), ct);
                 var stage = PositionPlayService.StageForDay(pos, plan, day, type);
-                candidates.Add(new PlannerCandidate(pos.Id, played.Id, played.Title,
-                    plan.SubjectId ?? played.SeriesUnit?.Series?.SubjectId, order, due, newAvailable,
+                var subjectId = plan.SubjectId ?? played.SeriesUnit?.Series?.SubjectId;
+                var examDate = exams.Where(e => e.Covers(played.Id, subjectId)).Select(e => (DateOnly?)e.On).Min();
+                candidates.Add(new PlannerCandidate(pos.Id, played.Id, played.Title, subjectId, order, due, newAvailable,
                     answers.Where(a => !a.Key).Sum(a => a.Count), answers.Where(a => a.Key).Sum(a => a.Count), failedTest,
-                    stage, EasierStage(type, stage)));
+                    stage, EasierStage(type, stage), examDate, examDate is { } ed ? LearningDaysUntil(day, ed, dutyDays) : 0,
+                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0));
             }
         }
         return candidates;
+    }
+
+    /// <summary>An upcoming class test with the exercises its bundle covers (B-751): none = the whole subject.</summary>
+    private sealed record Exam(DateOnly On, int? SubjectId, HashSet<int> Exercises)
+    {
+        public bool Covers(int exerciseId, int? subjectId) =>
+            Exercises.Count > 0 ? Exercises.Contains(exerciseId) : SubjectId is not null && SubjectId == subjectId;
+    }
+
+    // The child's class tests not yet written, from the planned day on. A test on the planned day itself still counts: the day is
+    // its last chance. Several per subject are all read, so a near partial test pulls its exercises before the later one.
+    private async Task<List<Exam>> ExamsAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var tests = await db.Klassenarbeiten.AsNoTracking()
+            .Where(k => k.ChildId == childId && k.Status == KlassenarbeitStatus.Planned && k.ScheduledDate >= day)
+            .Select(k => new { k.Id, k.ScheduledDate, k.SubjectId }).ToListAsync(ct);
+        var exams = new List<Exam>(tests.Count);
+        foreach (var t in tests)
+            exams.Add(new Exam(t.ScheduledDate, t.SubjectId, [.. await ClassTestBundle.ExerciseIdsAsync(db, [t.Id], ct)]));
+        return exams;
+    }
+
+    // Learning days from the planned day up to the day before the test, at least 1: the test day itself learns nothing new.
+    private static int LearningDaysUntil(DateOnly day, DateOnly exam, ChildDutyDays dutyDays)
+    {
+        var days = 0;
+        for (var d = day; d < exam; d = d.AddDays(1))
+            if (dutyDays.IsDutyDay(d)) days++;
+        return Math.Max(1, days);
+    }
+
+    // Subjects with a timetable lesson on the planned day or the day after (the day before a lesson is its preparation).
+    private async Task<HashSet<int>> LessonSubjectsAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var weekdays = new[] { day.DayOfWeek, day.AddDays(1).DayOfWeek };
+        return [.. await db.TimetableEntries.AsNoTracking()
+            .Where(t => t.ChildId == childId && weekdays.Contains(t.DayOfWeek)).Select(t => t.SubjectId).Distinct().ToListAsync(ct)];
+    }
+
+    // The subject's share of wrong answers over the last 28 days before the planned day (B-733 evaluation rows); no answers = 0 (no signal).
+    private async Task<Dictionary<int, double>> WeaknessAsync(int childId, DateOnly day, CancellationToken ct)
+    {
+        var from = day.AddDays(-28);
+        var rows = await db.DailyEvaluations.AsNoTracking()
+            .Where(d => d.ChildId == childId && d.SubjectId != null && d.Day >= from && d.Day < day)
+            .GroupBy(d => d.SubjectId!.Value)
+            .Select(g => new { Subject = g.Key, Right = g.Sum(d => d.CorrectAnswers), Wrong = g.Sum(d => d.WrongAnswers) })
+            .ToListAsync(ct);
+        return rows.Where(x => x.Right + x.Wrong > 0).ToDictionary(x => x.Subject, x => x.Wrong / (double)(x.Right + x.Wrong));
     }
 
     // The next rung down the type's ease ladder; a stage off the ladder or at its end has no easier form.

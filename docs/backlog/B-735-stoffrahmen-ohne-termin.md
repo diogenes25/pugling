@@ -12,7 +12,7 @@ quelle: B-644
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-27
 ---
 
 # B-735 · Ein Stoffrahmen ohne Enddatum: `StudyPlan.EndDate` wird optional (B-644, Entscheidung 17)

@@ -92,6 +92,8 @@ function called elsewhere gets the inputs the sink builds** (a sink method build
 **Changing a shared helper (a moved boundary, new state, a filter at a sink) is decided per caller:** grep its callers – for a filter, every other reader of its source, guards included – and re-read each: exceptions keyed on the old boundary move too (Sprint 73), a mere claim (self-report) must not move the state (Sprint 81), an "is it empty?" guard on the unfiltered source froze a test (Sprint 135); a loosening for some callers is a parameter
 without default (Sprint 162).
 
+**A new rule over data the supervisor enters (exams, timetable, pauses) gets a dry run on the copy's real rows before its tests** (B-1034: only the Rollengang showed that an exam without exercises presses a whole subject).
+
 Sequential is the default. Fan out to subagents only when stories touch disjoint files, and then at
 every fan-in: merge, run the full suite plus guard tests, confirm the sprint goal still holds. Two
 traps: hooks measure `$CLAUDE_PROJECT_DIR`, so a worktree's build/test hits the main worktree; and

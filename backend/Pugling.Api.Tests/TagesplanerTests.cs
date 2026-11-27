@@ -135,6 +135,183 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
         Assert.Equal([s.A, s.B, s.C], tasks.Select(t => t.GetProperty("planPositionId").GetInt32()));
     }
 
+    // A class test of the child in the subject of position C, on `date`; no preparation duty (B-752), so the plan's positions stay.
+    private async Task AddExamAsync(Setup s, DateOnly date, int[]? exerciseIds = null, string? status = null)
+    {
+        var subjectId = Read(db => db.PlanPositions.Where(p => p.Id == s.C).Select(p => p.StudyPlan!.SubjectId ?? p.Exercise!.SeriesUnit!.Series!.SubjectId).Single());
+        var res = await s.Father.PostAsJsonAsync("/api/v1/supervisor/class-tests", new
+        {
+            childId = s.ChildId,
+            title = "Arbeit",
+            subjectId,
+            scheduledDate = date.ToString("yyyy-MM-dd"),
+            prepWindowDays = 0,
+            exerciseIds,
+            status,
+        });
+        Assert.True(res.IsSuccessStatusCode, await res.Content.ReadAsStringAsync());
+    }
+
+    private async Task<JsonElement> PlanOfAsync(Setup s, DateOnly day) =>
+        (await OkJsonAsync(await s.Father.GetAsync(s.Url))).EnumerateArray().Single(p => p.GetProperty("day").GetString() == day.ToString("yyyy-MM-dd"));
+
+    private static string ReasonOf(JsonElement plan, int positionId) =>
+        plan.GetProperty("tasks").EnumerateArray().Single(t => t.GetProperty("planPositionId").GetInt32() == positionId)
+            .GetProperty("reason").GetString()!;
+
+    /// <summary>
+    /// B-680 AK 2 and 8 over the real data: a test tomorrow leaves one learning day for C's five unseen words, so the budget rises
+    /// from the floor of two to five and the reason names the test. Red if the planner does not read the class tests.
+    /// </summary>
+    [Fact]
+    public async Task Klassenarbeit_morgen_hebt_die_neuen_Woerter_und_steht_in_der_Begruendung()
+    {
+        var s = await SetupAsync(switchOn: false);
+        await AddExamAsync(s, Today.AddDays(1));
+        await SwitchAsync(s, "Shadow");
+
+        var plan = await TodayPlanAsync(s);
+        Assert.Equal(5, plan.GetProperty("newWordsBudget").GetInt32());
+        Assert.Contains("5 neue Wörter", ReasonOf(plan, s.C));
+        Assert.Contains("Klassenarbeit am 01.12., noch 1 Lerntag", ReasonOf(plan, s.C));
+    }
+
+    /// <summary>
+    /// B-680 AK 4 and 14: a test entered after the day's plan was made does not touch that frozen plan, and the next day's plan
+    /// reads it. Red if a read composes today's plan again (budget 5) or the next day ignores the test (budget 2).
+    /// </summary>
+    [Fact]
+    public async Task Nachgetragene_Klassenarbeit_aendert_den_Folgetag_und_nie_den_eingefrorenen_Plan()
+    {
+        var s = await SetupAsync();
+        var before = (await TodayPlanAsync(s)).GetRawText();
+        Assert.Equal(2, (await TodayPlanAsync(s)).GetProperty("newWordsBudget").GetInt32());
+
+        await AddExamAsync(s, Today.AddDays(2));
+
+        Assert.Equal(before, (await TodayPlanAsync(s)).GetRawText());
+        factory.Clock.FreezeAt(At(Today.AddDays(1), 7));
+        Assert.Equal(5, (await PlanOfAsync(s, Today.AddDays(1))).GetProperty("newWordsBudget").GetInt32());
+    }
+
+    /// <summary>
+    /// B-680 AK 11 over the real data: a near partial test (bundle: C's exercise) dates C, a later subject-wide test dates the
+    /// others. Red if only one test counts, or a bundle test is read as subject-wide.
+    /// </summary>
+    [Fact]
+    public async Task Teilpruefung_datiert_nur_ihre_Uebung_die_Klausur_den_Rest()
+    {
+        var s = await SetupAsync(switchOn: false);
+        await AddExamAsync(s, Today.AddDays(2));
+        await AddExamAsync(s, Today.AddDays(1), [Read(db => TestApi.ExerciseOf(db, s.C))]);
+        await SwitchAsync(s, "Shadow");
+
+        var plan = await TodayPlanAsync(s);
+        Assert.Contains("Klassenarbeit am 01.12.", ReasonOf(plan, s.C));
+        Assert.Contains("Klassenarbeit am 02.12.", ReasonOf(plan, s.A));
+    }
+
+    /// <summary>
+    /// B-680 AK 12 over the real data: a timetable entry for tomorrow's weekday marks the subject's tasks, a child without one
+    /// has no such mark. Red if the timetable is not read, or read for the wrong weekdays.
+    /// </summary>
+    [Fact]
+    public async Task Stundenplan_von_heute_und_morgen_steht_in_der_Begruendung()
+    {
+        var with = await SetupAsync(switchOn: false);
+        var subjectId = Read(db => db.PlanPositions.Where(p => p.Id == with.C).Select(p => p.StudyPlan!.SubjectId ?? p.Exercise!.SeriesUnit!.Series!.SubjectId).Single());
+        var entry = await with.Father.PostAsJsonAsync($"/api/v1/supervisor/children/{with.ChildId}/timetable",
+            new { subjectId, dayOfWeek = Today.AddDays(1).DayOfWeek.ToString() });
+        Assert.True(entry.IsSuccessStatusCode, await entry.Content.ReadAsStringAsync());
+        await SwitchAsync(with, "Shadow");
+        var without = await SetupAsync();
+
+        Assert.Contains("Fach laut Stundenplan heute oder morgen", ReasonOf(await TodayPlanAsync(with), with.C));
+        Assert.DoesNotContain("Stundenplan", ReasonOf(await TodayPlanAsync(without), without.C));
+
+        // Wednesday is neither today (Monday) nor tomorrow: an entry there marks nothing.
+        var other = await SetupAsync(switchOn: false);
+        (await other.Father.PostAsJsonAsync($"/api/v1/supervisor/children/{other.ChildId}/timetable",
+            new { subjectId, dayOfWeek = Today.AddDays(2).DayOfWeek.ToString() })).EnsureSuccessStatusCode();
+        await SwitchAsync(other, "Shadow");
+        Assert.DoesNotContain("Stundenplan", ReasonOf(await TodayPlanAsync(other), other.C));
+    }
+
+    /// <summary>
+    /// B-680 AK 13 over the real data: the subject's share of wrong answers over the last weeks (3 of 4 = 75 %) shows in the
+    /// reason. Red if the evaluation is not read, or the share is computed over the wrong window.
+    /// </summary>
+    [Fact]
+    public async Task Schwaeche_des_Fachs_stammt_aus_der_Auswertung()
+    {
+        var s = await SetupAsync(switchOn: false);
+        var subjectId = Read(db => db.PlanPositions.Where(p => p.Id == s.C).Select(p => p.StudyPlan!.SubjectId ?? p.Exercise!.SeriesUnit!.Series!.SubjectId).Single());
+        Write(db => db.DailyEvaluations.Add(new DailyEvaluation
+        {
+            ChildId = s.ChildId,
+            Day = Wednesday,
+            SubjectId = subjectId,
+            CorrectAnswers = 1,
+            WrongAnswers = 3,
+        }));
+        await SwitchAsync(s, "Shadow");
+
+        Assert.Contains("75 % falsche Antworten im Fach", ReasonOf(await TodayPlanAsync(s), s.C));
+    }
+
+    /// <summary>
+    /// B-680: a test on the planned day itself is the day's last chance and counts (one learning day left); a test already written
+    /// does not. Red if today's date is read as past (budget 2) or a written test still presses (budget 5).
+    /// </summary>
+    [Fact]
+    public async Task Heutige_Klassenarbeit_zaehlt_eine_geschriebene_nicht()
+    {
+        var today = await SetupAsync(switchOn: false);
+        await AddExamAsync(today, Today);
+        await SwitchAsync(today, "Shadow");
+        var written = await SetupAsync(switchOn: false);
+        await AddExamAsync(written, Today.AddDays(1), status: "Written");
+        await SwitchAsync(written, "Shadow");
+
+        Assert.Equal(5, (await TodayPlanAsync(today)).GetProperty("newWordsBudget").GetInt32());
+        Assert.Equal(2, (await TodayPlanAsync(written)).GetProperty("newWordsBudget").GetInt32());
+    }
+
+    /// <summary>
+    /// B-680: paused days are no learning days on the way to the test - Tuesday to Thursday paused, test on Friday: only today is
+    /// left, so all five words are due today. Red if the days up to the test are counted on the calendar instead of the duty days.
+    /// </summary>
+    [Fact]
+    public async Task Pausentage_zaehlen_nicht_als_Lerntage_bis_zur_Klassenarbeit()
+    {
+        var s = await SetupAsync(switchOn: false);
+        (await s.Father.PostAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}/pauses",
+            new { from = Today.AddDays(1), until = Today.AddDays(3) })).EnsureSuccessStatusCode();
+        await AddExamAsync(s, Today.AddDays(4));
+        await SwitchAsync(s, "Shadow");
+
+        Assert.Equal(5, (await TodayPlanAsync(s)).GetProperty("newWordsBudget").GetInt32());
+    }
+
+    /// <summary>
+    /// B-680 review: a cancelled test and another child's test press nobody - the budget stays at the floor of two. Red if the
+    /// status filter drops Cancelled, or the exam query is not bound to the child.
+    /// </summary>
+    [Fact]
+    public async Task Abgesagte_und_fremde_Klassenarbeiten_druecken_nicht()
+    {
+        var cancelled = await SetupAsync(switchOn: false);
+        await AddExamAsync(cancelled, Today.AddDays(1), status: "Cancelled");
+        await SwitchAsync(cancelled, "Shadow");
+        var foreign = await SetupAsync(switchOn: false);
+        var other = await SetupAsync(switchOn: false);
+        await AddExamAsync(other, Today.AddDays(1));
+        await SwitchAsync(foreign, "Shadow");
+
+        Assert.Equal(2, (await TodayPlanAsync(cancelled)).GetProperty("newWordsBudget").GetInt32());
+        Assert.Equal(2, (await TodayPlanAsync(foreign)).GetProperty("newWordsBudget").GetInt32());
+    }
+
     private static async Task SwitchAsync(Setup s, string mode)
     {
         var res = await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}", new { plannerMode = mode });

@@ -33,7 +33,7 @@ public record TodayResponse(int ChildId, DateOnly Day, bool DutyDone, int GoalsT
     IReadOnlyList<string> Outstanding, bool RewardsUnlocked, int CurrentStreak, IReadOnlyList<PositionStatus> Positions,
     DailyBoxStatus DailyBox, int RewardGoalsTotal, int RewardGoalsMet, GoalCadence RewardCadence);
 
-/// <summary>Day-by-day progress over the entire run (completed days, goals reached, points). An open plan (<c>EndDate</c> <c>null</c>, B-735) is read up to today, so <c>TotalDays</c> counts the days run so far and grows each day.</summary>
+/// <summary>Day-by-day progress over the entire run (completed days, goals reached, points). An open plan (no end date, B-735) is read up to today, so <c>TotalDays</c> counts the days run so far and grows each day.</summary>
 public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly? EndDate, int DaysComplete,
     int TotalDays, int TotalPoints, int CurrentStreak, IReadOnlyList<ProgressDay> Days);
 
