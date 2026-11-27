@@ -53,6 +53,16 @@ fingerprint=$(
 state="$root/.claude/.test-gate-state"
 [ -f "$state" ] && [ "$(cat "$state" 2>/dev/null)" = "$fingerprint" ] && exit 0
 
+# A test run already in progress (a reviewer, a background suite, a second session) holds the Release output: a run now
+# fails with MSB3027 before any test starts, which reads as a red gate without a defect (Sprint 195, three times). Skip
+# loudly and stamp no fingerprint, so the next stop measures this state once the other run is done. Decided by the user
+# on 2026-11-27.
+if { command -v tasklist >/dev/null 2>&1 && tasklist //NH //FI "IMAGENAME eq Pugling.Api.Tests.exe" 2>/dev/null | grep -qi "Pugling.Api.Tests"; } \
+  || { command -v pgrep >/dev/null 2>&1 && pgrep -f "Pugling.Api.Tests" >/dev/null 2>&1; }; then
+  echo "Test gate skipped: a Pugling.Api.Tests run is already in progress – this state is measured on the next stop after it ends." >&2
+  exit 0
+fi
+
 # Format of the changed files first (Sprint 194): after-cs-edit.sh only runs on the Edit/Write tools, so a .cs file changed
 # through the shell (a script, sed) reaches CI with a BOM or an unformatted initializer and nothing local says so. Whitespace
 # mode needs no build (~10 s); measured: a BOM is red, CRLF line ends are not.
