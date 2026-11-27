@@ -17,19 +17,21 @@ extends Resource
 @export var paths: Array[PackedVector2Array] = []
 
 ## Where towers stand; each run fills them in order.
-@export var tower_spots: PackedVector2Array = []
+## (The default is written as PackedVector2Array(), not []: an exported packed array whose default is an array
+## literal comes out empty in an exported build - see tests/test_export_pitfalls.gd.)
+@export var tower_spots: PackedVector2Array = PackedVector2Array()
 
 ## Where the hero starts.
 @export var player_start: Vector2 = Vector2.ZERO
 
 ## A river as a polyline (empty: none); it blocks the hero except at the bridges.
-@export var river: PackedVector2Array = []
+@export var river: PackedVector2Array = PackedVector2Array()
 
 ## Points on the river where a bridge lets the hero (and a path) cross.
-@export var bridges: PackedVector2Array = []
+@export var bridges: PackedVector2Array = PackedVector2Array()
 
 ## Spots for large mountains inside the map; they block the hero.
-@export var mountains: PackedVector2Array = []
+@export var mountains: PackedVector2Array = PackedVector2Array()
 
 ## Seed for the scattered scenery, so a map looks the same every time.
 @export var map_seed: int = 0

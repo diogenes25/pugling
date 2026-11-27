@@ -12,7 +12,7 @@ var all: Array[Enemy] = []
 
 var _def: LevelDef
 var _schedule: SpawnSchedule
-var _path_lengths: PackedFloat32Array = []
+var _path_lengths: PackedFloat32Array = PackedFloat32Array()
 
 
 ## Binds the enemies to a map; call before the first frame.

@@ -4,7 +4,7 @@ extends RefCounted
 ## Run all of them with: godot --headless --path . --script res://tests/run_tests.gd
 
 ## What went wrong in the case that is running; the runner reads and clears it.
-var failures: PackedStringArray = []
+var failures: PackedStringArray = PackedStringArray()
 
 
 ## Fails the case unless [param condition] holds.

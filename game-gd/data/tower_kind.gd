@@ -7,7 +7,7 @@ extends Resource
 @export var id: String = ""
 
 ## Model variants from the scenery pack; towers of one kind take turns through them.
-@export var models: PackedStringArray = []
+@export var models: PackedStringArray = PackedStringArray()
 
 ## Model scale.
 @export var model_scale: float = 1.0

@@ -27,6 +27,7 @@ test_every_token_drops_once_until_it_comes_back|core/token_pool.gd|s/^\t_out\[id
 test_a_consumed_token_never_drops_again|core/token_pool.gd|/^func consume/,$ s/^\t_out.erase(id)$/\t_out[id] = true/
 test_returning_a_token_twice_does_not_double_it|core/token_pool.gd|s/if _out.erase(id):/if _out.erase(id) or true:/
 test_a_started_cooldown_holds_until_its_time_has_passed|core/cooldown.gd|s/_left = seconds/_left = seconds * 0.0/
+test_no_exported_packed_array_defaults_to_an_array_literal|data/tower_kind.gd|s/PackedStringArray = PackedStringArray()/PackedStringArray = []/
 '
 
 run_tests() {
