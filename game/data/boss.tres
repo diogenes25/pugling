@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnemyKind" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemy_kind.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+model = "Skeleton_Warrior.glb"
+mesh_prefix = "Skeleton_Warrior_"
+model_scale = 1.45
+hp = 30
+speed_factor = 0.55
+hp_per_wave = 3.0
+points = 300
+drops = 3

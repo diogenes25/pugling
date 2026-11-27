@@ -48,6 +48,48 @@ public class TowerGameTests(PuglingWebAppFactory factory) : IClassFixture<Puglin
         Assert.Contains(overview!.Positions, p => p.PlanPositionId == positionId && p.WordCount == Words.Length);
     }
 
+    [Theory]
+    [InlineData(null, 3)]
+    [InlineData(1, 3)]
+    [InlineData(2, 3)]
+    [InlineData(3, 2)]
+    [InlineData(4, 1)]
+    [InlineData(5, 1)]
+    public void WordValue_NeuesWortZaehltMehrAlsGutGelerntes(int? box, int expected) =>
+        Assert.Equal(expected, TowerGameService.WordValue(box));
+
+    [Fact]
+    public async Task Run_GibtJedemTurmDenWertSeinesWortesNachLernstand()
+    {
+        var father = await TestApi.AdultAsync(factory);
+        var exerciseId = await TestApi.CreateVocabExerciseAsync(father, Words);
+        var (_, positionId) = TestApi.SeedLeitnerPosition(factory, exerciseId, stage: 1);
+        var child = await TestApi.ChildAsync(factory);
+        // "Hund" is well learned (top box), every other word was never met.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+            var item = await db.ExerciseItems.Where(i => i.ExerciseId == exerciseId)
+                .Join(db.Vocabularies, i => i.VocabularyId, v => v.Id, (i, v) => new { ItemId = i.Id, VocabularyId = v.Id, v.Translation })
+                .FirstAsync(x => x.Translation == "Hund");
+            db.ItemProgress.Add(new ItemProgress
+            {
+                ChildId = 1,
+                ItemId = item.ItemId,
+                ExerciseId = exerciseId,
+                VocabularyId = item.VocabularyId,
+                Box = ItemProgress.MaxBox,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var run = (await (await child.PostAsJsonAsync($"{Base()}/runs", new StartTowerRunDto(positionId)))
+            .Content.ReadFromJsonAsync<TowerRunResponse>())!;
+
+        Assert.Equal(1, run.Towers.Single(t => t.Prompt == "Hund").Value);
+        Assert.All(run.Towers.Where(t => t.Prompt != "Hund"), t => Assert.Equal(3, t.Value));
+    }
+
     [Fact]
     public async Task Assign_BewertetRichtigUndFalsch_UndSchreibtLernstandMitQuelleGame()
     {

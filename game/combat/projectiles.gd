@@ -30,10 +30,11 @@ func _init() -> void:
 	_sphere.rings = 4
 
 
-## Launches a projectile from a point at a target.
-func fire(kind: ProjectileKind, shooter: Projectile.Shooter, from: Vector3, target: Enemy) -> Projectile:
+## Launches a projectile from a point at a target; [param damage_bonus] is added to the kind's damage.
+func fire(kind: ProjectileKind, shooter: Projectile.Shooter, from: Vector3, target: Enemy, damage_bonus: int = 0) -> Projectile:
 	var projectile := Projectile.new()
 	projectile.kind = kind
+	projectile.damage = kind.damage + damage_bonus
 	projectile.from = shooter
 	projectile.target = target
 	projectile.track = from
@@ -72,7 +73,7 @@ func move(dt: float) -> Array[Hit]:
 		_flying.remove_at(i)
 		if not alive:
 			continue
-		target.hp -= projectile.kind.damage
+		target.hp -= projectile.damage
 		var hit := Hit.new()
 		hit.projectile = projectile
 		hit.at = dest

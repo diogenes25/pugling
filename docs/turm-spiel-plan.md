@@ -21,6 +21,11 @@ schreibt den Lernstand fort — das Spiel ist ein **weiterer Übungsbereich** de
 
 ## Spielablauf (Kern-Loop)
 
+> **Seit 2026-11-27 ist ein Lauf endlos:** Die Gegner kommen in Wellen, kleine bringen Punkte, größere die Wörter,
+> Türme steigen mit dem Wert ihrer Vokabeln in Stufen auf, und am Ende steht eine Punkte-Zusammenfassung. Die Regeln
+> und die weiteren Etappen (Startbildschirm, Trophäen, Tagesaufgaben, Truhen) stehen in
+> [turm-spiel-ausbau-plan.md](turm-spiel-ausbau-plan.md). Die Schritte unten beschreiben den Kern, der geblieben ist.
+
 1. **Level-Start**: Karte mit z. B. 5 Türmen. Jeder Turm zeigt eine Übersetzung (z. B. „laufen") und hat
    einen kleinen Start-Munitionsvorrat.
 2. **Welle**: Monster laufen Pfade entlang auf die Türme zu. Türme schießen automatisch, solange sie
@@ -231,7 +236,8 @@ game/
               level_def.gd + lichtung/flussfurt/burgberg.tres, tower_kind.gd + bolt_tower/catapult.tres,
               projectile_kind.gd + 5 .tres, enemy_kind.gd + minion/warrior.tres,
               tower_run.gd, tower_target.gd, tower_token.gd (was der Server zu einem Lauf schickt)
-  core/       reine Regeln, einzeln getestet: tower_ammo, run_tally, spawn_schedule, token_pool, cooldown
+  core/       reine Regeln, einzeln getestet: tower_ammo, tower_level, run_tally, run_score, wave_plan,
+              token_pool, cooldown
   screens/    main.gd (Bildschirmfluss, Zurück-Taste), page.tscn (Rahmen aller Menüs),
               login, positions, maps, result (je .tscn + .gd)
   level/      level.tscn + level.gd (dünner Koordinator), game_events.gd (Signale), run_session.gd (Bedeutungen,
@@ -276,8 +282,9 @@ Spielstand.
     `LevelDef` ein Feld dafür.
 - **… eine Karte:** eine neue `.tres` neben `data/lichtung.tres` und ein Eintrag in `Catalog.LEVELS`.
 - **… einen Gegner:** eine neue `.tres` neben `data/minion.tres`, ein Eintrag in `Catalog` und eine Regel in
-  `core/spawn_schedule.gd`. Heute ist jeder vierte Gegner ein Krieger (`Balance.WARRIOR_EVERY`). Für Wellen je
-  Karte bekommt `LevelDef` eine Gegner-Mischung, die `SpawnSchedule` liest.
+  `core/wave_plan.gd` (`troop`), wann er in einer Welle mitmarschiert. Die `.tres` sagt, was er aushält, wie
+  viele Punkte er bringt (`points`) und wie viele Wörter er fallen lässt (`drops`). Für eine eigene Mischung je
+  Karte bekommt `LevelDef` ein Feld, das `WavePlan` liest.
 - **… ein UI-Element:** Gezeichnetes kommt als Block in `ui/overlay.gd` (`_draw`), Bedienbares in
   `ui/controls.gd` mit einem eigenen Signal.
 - **… einen Bildschirm:** eine Szene, die `screens/page.tscn` erbt, mit Signalen für ihre Knöpfe.
@@ -294,7 +301,7 @@ Alle Befehle laufen aus `game/`. `$GODOT` ist die Konsolen-Ausgabe des Editors
 
 | Was | Befehl | Grün heißt |
 | --- | --- | --- |
-| Regeltests (19 Fälle) | `$GODOT --headless --path . --script res://tests/run_tests.gd` | Exit-Code 0 |
+| Regeltests (36 Fälle) | `$GODOT --headless --path . --script res://tests/run_tests.gd` | Exit-Code 0 |
 | Rote Probe je Regeltest | `GODOT=… tests/rote_probe.sh` | jeder Fall wird am benannten Test rot |
 | Bildschirmfluss mit Attrappe | `$GODOT --headless --path . res://tests/smoke_screens.tscn` | Exit-Code 0 |
 | Level auf allen drei Karten | `$GODOT --headless --path . res://tests/smoke_level.tscn` | „0 Abweichungen“ |

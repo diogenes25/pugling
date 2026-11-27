@@ -26,6 +26,9 @@ var remaining: float = 0.0
 ## Hit points left.
 var hp: int = 0
 
+## Hit points it entered the map with (its kind's, grown with the wave).
+var max_hp: int = 1
+
 ## Defeated and playing its death clip; no longer a target.
 var dying: bool = false
 

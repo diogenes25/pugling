@@ -9,3 +9,6 @@ mesh_prefix = "Skeleton_Warrior_"
 model_scale = 0.85
 hp = 4
 speed_factor = 0.8
+hp_per_wave = 1.0
+points = 30
+drops = 1

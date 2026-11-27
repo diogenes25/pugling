@@ -9,11 +9,14 @@ const BAD := Color(1.0, 0.25, 0.2)
 
 var _scene: Node3D
 var _controls: LevelControls
+var _towers: Towers
 
 
-## Connects the reactions: [param scene] holds the bursts, [param controls] shows the feedback line.
-func setup(events: GameEvents, scene: Node3D, controls: LevelControls) -> void:
+## Connects the reactions: [param scene] holds the bursts, [param controls] shows the feedback line and the
+## banners, [param towers] cheer along when a wave is cleared.
+func setup(events: GameEvents, scene: Node3D, controls: LevelControls, towers: Towers) -> void:
 	_scene = scene
+	_towers = towers
 	_controls = controls
 	events.projectile_hit.connect(_on_projectile_hit)
 	events.tower_fired.connect(_on_tower_fired)
@@ -22,6 +25,9 @@ func setup(events: GameEvents, scene: Node3D, controls: LevelControls) -> void:
 	events.word_assigned.connect(_on_word_assigned)
 	events.server_message.connect(_on_server_message)
 	events.time_up.connect(_on_time_up)
+	events.wave_started.connect(_on_wave_started)
+	events.wave_cleared.connect(_on_wave_cleared)
+	events.level_ended.connect(_on_level_ended)
 
 
 func _on_projectile_hit(projectile: Projectile, at: Vector3) -> void:
@@ -53,10 +59,31 @@ func _on_word_assigned(graded: GameEvents.Assignment) -> void:
 	Fx.burst(_scene, Geo.to3(graded.tower.pos, 3.2), GOOD if graded.correct else BAD, 40)
 	if not graded.correct:
 		_controls.say("Falsch – „%s“ heißt „%s“  −%d Schuss" % [graded.target.prompt, graded.expected, Balance.WRONG_PENALTY], Color.SALMON)
+	elif graded.leveled:
+		Fx.burst(_scene, Geo.to3(graded.tower.pos, 4.4), UiKit.GOLD, 70, 1.4)
+		_controls.say("Turm steigt auf Stufe %d!  +%d Schaden" % [graded.tower.level.level, graded.tower.level.damage_bonus()], UiKit.GOLD)
 	elif graded.became_strong:
 		_controls.say("Richtig! Der Turm schießt jetzt %s ★" % graded.tower.kind.strong_shot_name, Color.LIGHT_GREEN)
 	else:
-		_controls.say("Richtig! „%s“ = „%s“  +%d Schuss" % [graded.word.word, graded.target.prompt, Balance.REFILL_AMMO], Color.LIGHT_GREEN)
+		_controls.say("Richtig! „%s“ = „%s“  +%d Schuss  +%d Kraft" % [graded.word.word, graded.target.prompt, Balance.REFILL_AMMO, graded.value], Color.LIGHT_GREEN)
+
+
+func _on_wave_started(number: int) -> void:
+	_controls.announce("Welle %d" % number, "Boss-Welle!" if number % Balance.BOSS_EVERY == 0 else "Die Skelette kommen!", Color.WHITE)
+
+
+func _on_wave_cleared(number: int, bonus: int, flawless: bool) -> void:
+	if flawless:
+		_controls.announce("Welle %d geschafft!" % number, "+%d Punkte  ·  Burg repariert" % bonus, UiKit.GOLD)
+	else:
+		_controls.announce("Welle %d überstanden" % number, "+%d Punkte" % bonus, Color.WHITE)
+	for tower: Tower in _towers.all:
+		Fx.burst(_scene, Geo.to3(tower.pos, 4.2), UiKit.GOLD, 24, 0.9)
+
+
+func _on_level_ended(_reason: LevelEnd.Reason, record: bool) -> void:
+	if record:
+		_controls.announce("Neuer Rekord!", "", UiKit.GOLD)
 
 
 func _on_server_message(text: String) -> void:

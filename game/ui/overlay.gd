@@ -20,12 +20,14 @@ var _towers: Towers
 var _hero: Hero
 var _tally: RunTally
 var _stick: TouchStick
+var _score: RunScore
 var _boxes: Dictionary[String, StyleBoxFlat] = {}
 var _font: Font = ThemeDB.fallback_font
 
 
 ## Hands the overlay what it draws.
-func setup(camera: Camera3D, words: WordBooks, enemies: Enemies, towers: Towers, hero: Hero, tally: RunTally, stick: TouchStick) -> void:
+func setup(camera: Camera3D, words: WordBooks, enemies: Enemies, towers: Towers, hero: Hero, tally: RunTally, stick: TouchStick,
+		score: RunScore) -> void:
 	_camera = camera
 	_words = words
 	_enemies = enemies
@@ -33,6 +35,7 @@ func setup(camera: Camera3D, words: WordBooks, enemies: Enemies, towers: Towers,
 	_hero = hero
 	_tally = tally
 	_stick = stick
+	_score = score
 
 
 func _draw() -> void:
@@ -51,8 +54,8 @@ func _draw() -> void:
 			continue
 		var bar := Rect2(at - Vector2(26, 5), Vector2(52, 10))
 		_box(bar.grow(2), Color(0, 0, 0, 0.6), Color.TRANSPARENT, 0, 5)
-		var healthy := enemy.hp * 2 > enemy.kind.hp
-		_box(Rect2(bar.position, Vector2(bar.size.x * enemy.hp / enemy.kind.hp, bar.size.y)),
+		var healthy := enemy.hp * 2 > enemy.max_hp
+		_box(Rect2(bar.position, Vector2(bar.size.x * enemy.hp / enemy.max_hp, bar.size.y)),
 				Color(0.4, 0.9, 0.3) if healthy else Color(0.95, 0.35, 0.25), Color.TRANSPARENT, 0, 4)
 
 	for tower: Tower in _towers.all:
@@ -72,16 +75,20 @@ func _draw() -> void:
 	draw_circle(center + _stick.vector * TouchStick.REACH, 40, Color(1, 1, 1, 0.45))
 
 
-## Hits towards the goal and the castle's lives.
+## The wave, the points, the castle's lives and the correct words.
 func _draw_hud() -> void:
-	var hud := Rect2(16, 14, 330, 64)
+	var hud := Rect2(16, 14, 520, 64)
 	_box(hud, UiKit.NIGHT, Color(1, 1, 1, 0.25), 2, 18)
-	_text(Vector2(hud.position.x + 82, hud.get_center().y), "%d/%d" % [_tally.correct, _tally.goal], 30, UiKit.GOLD)
-	_text(Vector2(hud.position.x + 82, hud.get_center().y + 25), "Treffer", 14, Color.WHITE, 0)
+	_text(Vector2(hud.position.x + 52, hud.get_center().y - 4), str(maxi(1, _enemies.waves.wave)), 30, Color.WHITE)
+	_text(Vector2(hud.position.x + 52, hud.get_center().y + 25), "Welle", 14, Color.WHITE, 0)
+	_text(Vector2(hud.position.x + 170, hud.get_center().y - 4), str(_score.total()), 30, UiKit.GOLD)
+	_text(Vector2(hud.position.x + 170, hud.get_center().y + 25), "Punkte", 14, Color.WHITE, 0)
 	for i: int in Balance.CASTLE_LIVES:
-		_box(Rect2(hud.position.x + 160 + i * 16, hud.get_center().y - 9, 12, 18),
+		_box(Rect2(hud.position.x + 270 + i * 16, hud.get_center().y - 13, 12, 18),
 				Color(0.95, 0.3, 0.35) if i < _tally.lives else Color(1, 1, 1, 0.15), Color.TRANSPARENT, 0, 4)
-	_text(Vector2(hud.position.x + 238, hud.get_center().y + 25), "Burg", 14, Color.WHITE, 0)
+	_text(Vector2(hud.position.x + 348, hud.get_center().y + 25), "Burg", 14, Color.WHITE, 0)
+	_text(Vector2(hud.position.x + 474, hud.get_center().y - 4), str(_tally.correct), 30, Color.LIGHT_GREEN)
+	_text(Vector2(hud.position.x + 474, hud.get_center().y + 25), "Wörter", 14, Color.WHITE, 0)
 
 
 func _draw_tower(tower: Tower, screen: Vector2) -> void:
@@ -108,6 +115,11 @@ func _draw_tower(tower: Tower, screen: Vector2) -> void:
 		_text(Vector2(panel.get_center().x, panel.position.y + 22), label, 26, Color.WHITE if asking else Color(1, 1, 1, 0.6))
 		if not asking:
 			return
+		# The level badge on the panel's corner, with a ring that fills towards the next level.
+		var badge := panel.position + Vector2(-6, -6)
+		draw_circle(badge, 21, Color(0.1, 0.1, 0.2, 0.95))
+		draw_arc(badge, 21, -PI / 2, -PI / 2 + TAU * tower.level.progress(), 24, UiKit.GOLD, 5, true)
+		_text(badge, str(tower.level.level), 24, UiKit.GOLD, 4)
 		var bar := Rect2(panel.position.x + 14, panel.end.y - 22, panel.size.x - 64, 12)
 		_box(bar, Color(0, 0, 0, 0.55), Color.TRANSPARENT, 0, 6)
 		var fill := clampf(float(ammo.count) / FULL_AMMO_BAR, 0.0, 1.0)

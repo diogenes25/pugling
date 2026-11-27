@@ -18,14 +18,31 @@ test_three_shots_or_fewer_count_as_low|core/tower_ammo.gd|s/count <= Balance.WRO
 test_only_correct_words_count_towards_the_goal|core/run_tally.gd|s/if was_correct:/if was_correct or true:/
 test_the_castle_falls_with_the_tenth_skeleton|core/run_tally.gd|s/return lives <= 0/return lives <= 1/
 test_the_summary_keeps_the_words_the_run_reports_are_read_by|core/run_tally.gd|s/Heldentreffer %d/Treffer des Helden %d/
-test_the_first_skeleton_comes_after_two_seconds|data/balance.gd|s/FIRST_SPAWN_DELAY: float = 2.0/FIRST_SPAWN_DELAY: float = 1.0/
-test_every_fourth_skeleton_is_a_slower_warrior|data/balance.gd|s/WARRIOR_EVERY: int = 4/WARRIOR_EVERY: int = 3/
-test_several_paths_take_turns|core/spawn_schedule.gd|s/spawn.path = spawned % _paths/spawn.path = 0/
-test_the_interval_shrinks_with_play_time_down_to_its_floor|data/balance.gd|s/SPAWN_INTERVAL_FLOOR: float = 0.55/SPAWN_INTERVAL_FLOOR: float = 0.5/
-test_skeletons_speed_up_by_at_most_point_eight|data/balance.gd|s/MAX_SPEED_RAMP: float = 0.8/MAX_SPEED_RAMP: float = 1.0/
+test_a_repair_gives_lives_back_but_never_more_than_ten|core/run_tally.gd|s/lives = mini(Balance.CASTLE_LIVES, lives + amount)/lives = lives + amount/
+test_the_first_wave_starts_after_two_seconds|data/balance.gd|s/FIRST_SPAWN_DELAY: float = 2.0/FIRST_SPAWN_DELAY: float = 1.0/
+test_a_wave_grows_by_two_minions_and_a_carrier_every_second_wave|data/balance.gd|s/WAVE_MINIONS_GROWTH: int = 2/WAVE_MINIONS_GROWTH: int = 3/
+test_carriers_march_spread_among_the_minions|core/wave_plan.gd|s/(result.size() + 1) % every == 0/(result.size() + 1) % (every * 100) == 0/
+test_every_fifth_wave_ends_with_a_boss|data/balance.gd|s/BOSS_EVERY: int = 5/BOSS_EVERY: int = 4/
+test_the_next_wave_waits_until_the_field_is_clear_and_rests_five_seconds|data/balance.gd|s/WAVE_REST: float = 5.0/WAVE_REST: float = 4.0/
+test_enemies_follow_closer_from_wave_to_wave_down_to_a_floor|data/balance.gd|s/WAVE_INTERVAL_FLOOR: float = 0.25/WAVE_INTERVAL_FLOOR: float = 0.2/
+test_enemies_get_faster_and_tougher_with_the_wave|data/balance.gd|s/MAX_SPEED_RAMP: float = 0.8/MAX_SPEED_RAMP: float = 1.0/
+test_several_paths_take_turns|core/wave_plan.gd|s/spawn.path = spawned % _paths/spawn.path = 0/
+test_a_tower_gains_its_second_level_at_four_value_points|data/balance.gd|s/LEVEL_STEP: int = 4/LEVEL_STEP: int = 3/
+test_every_level_costs_one_step_more_than_the_one_before|core/tower_level.gd|s|current \* (current + 1) / 2|current|
+test_a_new_word_lifts_a_tower_faster_than_a_well_learned_one|core/tower_level.gd|s/^\tpower += value$/\tpower += 1 + value * 0/
+test_one_big_word_can_lift_a_tower_two_levels_and_reports_it_once|core/tower_level.gd|s/^\twhile power >= needed(level):$/\tif power >= needed(level):/
+test_every_level_adds_one_damage|core/tower_level.gd|s/^\treturn level - 1$/\treturn level/
+test_the_progress_runs_from_the_last_threshold_to_the_next|core/tower_level.gd|s/var from := 0 if level == 1 else needed(level - 1)/var from := 0 * level/
+test_a_kill_pays_what_the_enemy_is_worth|core/run_score.gd|s/_kill_points += kind.points/_kill_points += 10 + kind.points * 0/
+test_a_new_word_pays_three_times_a_well_learned_one|core/run_score.gd|s/_word_points += Balance.WORD_POINTS \* value/_word_points += Balance.WORD_POINTS + value * 0/
+test_a_tower_level_pays_a_hundred_times_the_level|core/run_score.gd|s/_level_points += Balance.LEVEL_POINTS \* level/_level_points += Balance.LEVEL_POINTS + level * 0/
+test_a_cleared_wave_pays_a_hundred_times_its_number_and_reports_the_bonus|core/run_score.gd|s/var bonus := Balance.WAVE_POINTS \* number/var bonus := Balance.WAVE_POINTS + number * 0/
+test_the_summary_lines_add_up_to_the_total|core/run_score.gd|s/Line.new("Turm-Aufstiege", tower_levels, _level_points)/Line.new("Turm-Aufstiege", tower_levels, 0 * _level_points)/
 test_every_token_drops_once_until_it_comes_back|core/token_pool.gd|s/^\t_out\[id\] = true$/\tpass/
-test_a_consumed_token_never_drops_again|core/token_pool.gd|/^func consume/,$ s/^\t_out.erase(id)$/\t_out[id] = true/
-test_returning_a_token_twice_does_not_double_it|core/token_pool.gd|s/if _out.erase(id):/if _out.erase(id) or true:/
+test_returning_a_token_twice_does_not_double_it|core/token_pool.gd|/^func give_back/,/^func consume/ s/if not _out.erase(id):/if not _out.erase(id) and false:/
+test_drops_come_from_the_first_eight_of_the_queue|data/balance.gd|s/DROP_WINDOW: int = 8/DROP_WINDOW: int = 40/
+test_a_wrongly_given_token_goes_back_to_its_old_place|core/token_pool.gd|s/_rank\[_queue\[at\]\] < _rank\[id\]/false/
+test_a_correctly_given_token_queues_up_again_behind_all_others|core/token_pool.gd|/^func consume/,$ s/^\t_rank\[id\] = _next_rank$/\tpass/
 test_a_started_cooldown_holds_until_its_time_has_passed|core/cooldown.gd|s/_left = seconds/_left = seconds * 0.0/
 test_no_exported_packed_array_defaults_to_an_array_literal|data/tower_kind.gd|s/PackedStringArray = PackedStringArray()/PackedStringArray = []/
 '

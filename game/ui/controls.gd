@@ -1,7 +1,7 @@
 class_name LevelControls
 extends Control
 ## The level's controls on screen: the list of words to pick up, the give and lay-down buttons, the pause button
-## with its menu, and the feedback line. It reports presses as signals; the rules stay in the level.
+## with its menu, the feedback line and the big banner. It reports presses as signals; the rules stay in the level.
 
 ## The give button was pressed.
 signal give_pressed
@@ -25,6 +25,8 @@ var _give: Button = UiKit.button("", UiKit.GO, 34)
 var _drop: Button = UiKit.button("", Color(0.3, 0.4, 0.6), 26)
 var _pause: Button = UiKit.button("II", UiKit.NIGHT, 30)
 var _feedback: Label = Label.new()
+var _banner: Label = Label.new()
+var _banner_note: Label = Label.new()
 var _pause_menu: PauseMenu = PAUSE_MENU.instantiate()
 # The pick list is rebuilt only when the books in reach change, so a finger on a button is not cut off.
 var _pick_signature: String = ""
@@ -54,6 +56,16 @@ func _ready() -> void:
 	_feedback.add_theme_color_override("font_outline_color", Color.BLACK)
 	_feedback.add_theme_constant_override("outline_size", 10)
 	add_child(_feedback)
+
+	for label: Label in [_banner, _banner_note]:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.modulate = Color.TRANSPARENT
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 16)
+		add_child(label)
+	_banner.add_theme_font_size_override("font_size", 92)
+	_banner_note.add_theme_font_size_override("font_size", 40)
 
 	_pause_menu.resume.connect(pause_pressed.emit)
 	_pause_menu.give_up.connect(give_up_pressed.emit)
@@ -125,6 +137,28 @@ func say(text: String, color: Color) -> void:
 	tween.tween_property(_feedback, "modulate", Color.TRANSPARENT, 0.5)
 
 
+## The big banner across the screen for the moments to cheer (a wave starts, a wave is cleared, a record): the
+## headline pops in, stays a moment and fades; [param note] is the smaller line below it.
+func announce(headline: String, note: String, color: Color) -> void:
+	_banner.text = headline
+	_banner_note.text = note
+	_banner.add_theme_color_override("font_color", color)
+	_banner_note.add_theme_color_override("font_color", Color.WHITE)
+	for label: Label in [_banner, _banner_note]:
+		label.modulate = Color.WHITE
+		label.pivot_offset = label.size / 2
+		label.scale = Vector2.ONE * 0.3
+		var tween := label.create_tween()
+		tween.tween_property(label, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_interval(1.8)
+		tween.tween_property(label, "modulate", Color.TRANSPARENT, 0.6)
+
+
+## The banner's headline while it shows, "" otherwise.
+func banner() -> String:
+	return _banner.text if _banner.modulate.a > 0.0 else ""
+
+
 ## Places the controls for the current screen size; call every frame.
 func layout(screen: Vector2) -> void:
 	_pick_panel.position = Vector2(screen.x - _pick_panel.size.x - 28, 110)
@@ -133,6 +167,10 @@ func layout(screen: Vector2) -> void:
 	_pause.position = Vector2(screen.x - _pause.size.x - 20, 14)
 	_feedback.size = Vector2(screen.x, 60)
 	_feedback.position = Vector2(0, screen.y * 0.16)
+	_banner.size = Vector2(screen.x, 120)
+	_banner.position = Vector2(0, screen.y * 0.3)
+	_banner_note.size = Vector2(screen.x, 56)
+	_banner_note.position = Vector2(0, screen.y * 0.3 + 124)
 
 
 func _clear_picks() -> void:

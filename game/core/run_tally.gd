@@ -3,7 +3,7 @@ extends RefCounted
 ## The client's count of one run: words given, the castle's lives, the hero's shots. Only for the screen and the log -
 ## whether the level is won is the server's own count (B-851).
 
-## Correct words needed for the level.
+## Correct words the server pays the run for (it counts them itself).
 var goal: int
 
 ## Correct assignments so far.
@@ -39,6 +39,11 @@ func assigned(was_correct: bool) -> void:
 	total += 1
 	if was_correct:
 		correct += 1
+
+
+## Repairs the castle by some lives, never above the full count.
+func repair(amount: int) -> void:
+	lives = mini(Balance.CASTLE_LIVES, lives + amount)
 
 
 ## A skeleton reached the castle; returns whether the castle has fallen.

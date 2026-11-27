@@ -27,8 +27,14 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
     public const int TowerSlots = 5;
     /// <summary>A run needs at least as many words as towers on the field, or there is nothing to tell apart.</summary>
     public const int MinWords = TowerSlots;
-    /// <summary>Upper bound of towers per run: the goal plus two spare. The client drops tokens at random (it cannot know the mapping), so a small pool keeps the share of tokens that fit a tower on the field high.</summary>
-    private const int MaxTowers = 12;
+    /// <summary>Upper bound of towers per run. A run is endless (waves), so it carries far more words than the goal.</summary>
+    private const int MaxTowers = 40;
+    /// <summary>
+    /// Tokens are shuffled only within groups of this size along the tower order. The client cannot know which token
+    /// fits which tower, so it drops from the front of the token list; the grouping keeps the share of dropped words
+    /// that fit a tower on the field high without giving the pairing away.
+    /// </summary>
+    private const int TokenGroup = 6;
 
     private readonly IDataProtector protector = protection.CreateProtector("Pugling.TowerGame.v1");
     private readonly TowerGameOptions opts = options.Value;
@@ -106,7 +112,7 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
             .Take(MaxTowers)
             .OrderBy(_ => Random.Shared.Next())
             .ToList();
-        var tokenOrder = towerOrder.OrderBy(_ => Random.Shared.Next()).ToList();
+        var tokenOrder = towerOrder.Chunk(TokenGroup).SelectMany(g => g.OrderBy(_ => Random.Shared.Next())).ToList();
 
         var now = time.GetUtcNow().UtcDateTime;
         var run = new TowerGameRun
@@ -122,7 +128,8 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         await db.SaveChangesAsync(ct);
 
         return new TowerRunResponse(run.Id, planPositionId, Math.Min(Goal, towerOrder.Count), TowerSlots,
-            [.. towerOrder.Select(w => new TowerTarget(Seal(childId, run.Id, w.ItemId, 'T'), w.Meaning))],
+            [.. towerOrder.Select(w => new TowerTarget(Seal(childId, run.Id, w.ItemId, 'T'), w.Meaning,
+                WordValue(boxes.TryGetValue(w.ItemId, out var box) ? box : null)))],
             [.. tokenOrder.Select(w => new TowerToken(Seal(childId, run.Id, w.ItemId, 'K'), w.Foreign))]);
     }
 
@@ -248,6 +255,17 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         return new TowerRunEndResult(run.Won, solved, goal, run.CoinsAwarded, coinsBefore + run.CoinsAwarded,
             opts.DailyCoinCap);
     }
+
+    /// <summary>
+    /// What a word is worth for its tower, by the child's Leitner box across plans: a word never met or still in the
+    /// lower boxes pays most, a well learned one least - the reward follows the need to practise.
+    /// </summary>
+    public static int WordValue(int? box) => box switch
+    {
+        null or <= 2 => 3,
+        3 => 2,
+        _ => 1,
+    };
 
     private void Beat(TowerGameRun run)
     {

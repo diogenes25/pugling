@@ -1,35 +1,56 @@
 class_name TokenPool
 extends RefCounted
-## Bookkeeping of a run's vocabulary tokens: which are still in the pool, lying on the field or carried, and which
-## are used up by a correct assignment. A wrongly assigned token goes back into the pool and drops again later
-## (B-822 E2). The client cannot know which token fits which tower - the server keeps that - so drops are random.
+## Bookkeeping of a run's vocabulary tokens: which are waiting in the queue, lying on the field or carried. The
+## client cannot know which token fits which tower - the server keeps that - but the server sends the tokens roughly
+## in the order of its towers, so drops come from the front of the queue: among many words the ones the towers ask
+## for now stay likely. A wrongly assigned token goes back to its old place (B-822 E2); a correctly assigned one goes
+## to the very end, because an endless run asks for every word again once all are through.
 
-var _pool: Array[String] = []
+var _queue: Array[String] = []
+var _rank: Dictionary[String, int] = {}
 var _out: Dictionary[String, bool] = {}
+var _next_rank: int = 0
 var _random: RandomNumberGenerator
 
 
-## [param token_ids] are the run's tokens; a seeded [param random] makes the draws repeatable.
+## [param token_ids] are the run's tokens in the server's order; a seeded [param random] makes the draws repeatable.
 func _init(token_ids: Array[String], random: RandomNumberGenerator = null) -> void:
-	_pool.assign(token_ids)
+	for id: String in token_ids:
+		_queue.append(id)
+		_rank[id] = _next_rank
+		_next_rank += 1
 	_random = random if random != null else RandomNumberGenerator.new()
 
 
-## Takes a random token out of the pool for a drop, or "" when every token is out or used.
+## Takes a random token from the front [constant Balance.DROP_WINDOW] of the queue for a drop, or "" when every
+## token is out.
 func draw() -> String:
-	if _pool.is_empty():
+	if _queue.is_empty():
 		return ""
-	var id: String = _pool.pop_at(_random.randi_range(0, _pool.size() - 1))
+	var id: String = _queue.pop_at(_random.randi_range(0, mini(Balance.DROP_WINDOW, _queue.size()) - 1))
 	_out[id] = true
 	return id
 
 
-## Puts a token back (it expired on the field, or was assigned wrongly).
+## Puts a token back where it stood (it expired on the field, or was assigned wrongly).
 func give_back(id: String) -> void:
-	if _out.erase(id):
-		_pool.append(id)
+	if not _out.erase(id):
+		return
+	var at := 0
+	while at < _queue.size() and _rank[_queue[at]] < _rank[id]:
+		at += 1
+	_queue.insert(at, id)
 
 
-## Marks a token as used up by a correct assignment; it never drops again.
+## A correct assignment used the token: it queues up again behind all others.
 func consume(id: String) -> void:
-	_out.erase(id)
+	if not _out.erase(id):
+		return
+	_rank[id] = _next_rank
+	_next_rank += 1
+	_queue.append(id)
+
+
+## The waiting tokens, front first.
+func order() -> Array[String]:
+	return _queue.duplicate()

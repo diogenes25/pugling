@@ -3,7 +3,7 @@ extends Object
 ## Why a level ended; the server alone decides whether it counts as won.
 
 enum Reason {
-	## The goal of correct words is reached.
+	## The goal of correct words is reached (levels before the endless waves; kept for the log's vocabulary).
 	GOAL_REACHED,
 	## Too many skeletons reached the castle.
 	CASTLE_FALLEN,

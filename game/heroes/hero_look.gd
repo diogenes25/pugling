@@ -19,7 +19,9 @@ enum Action {
 	CORRECT,
 	## The server graded his word as wrong.
 	WRONG,
-	## The level is won.
+	## A wave is cleared: a cheer in the middle of the run.
+	CHEER,
+	## The run is over and ended well.
 	VICTORY,
 	## The castle fell or the time is up.
 	DEFEAT,

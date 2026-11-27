@@ -48,7 +48,7 @@ func shoot(dt: float, enemies: Enemies, projectiles: Projectiles) -> Array[Shot]
 		var shot := Shot.new()
 		shot.tower = tower
 		shot.projectile = projectiles.fire(tower.kind.strong_shot if tower.ammo.use() else tower.kind.shot,
-				Projectile.Shooter.TOWER, Geo.to3(tower.pos, tower.kind.muzzle_height), enemy)
+				Projectile.Shooter.TOWER, Geo.to3(tower.pos, tower.kind.muzzle_height), enemy, tower.level.damage_bonus())
 		shots.append(shot)
 	return shots
 

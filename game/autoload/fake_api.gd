@@ -59,7 +59,7 @@ func start_run(plan_position_id: int) -> ApiResult:
 	var towers: Array[Dictionary] = []
 	var tokens: Array[Dictionary] = []
 	for i: int in range(1, word_count + 1):
-		towers.append({"towerId": "T%d" % i, "prompt": "Bedeutung %d" % i})
+		towers.append({"towerId": "T%d" % i, "prompt": "Bedeutung %d" % i, "value": float(i % 3 + 1)})
 		tokens.append({"tokenId": "t%d" % i, "word": "word%d" % i})
 	return ApiResult.success({
 		"runId": 1.0, "planPositionId": float(plan_position_id), "goal": float(goal), "towerSlots": 6.0,

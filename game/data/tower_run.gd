@@ -25,7 +25,8 @@ static func from_json(json: Dictionary) -> TowerRun:
 	run.plan_position_id = int(json.get("planPositionId", 0))
 	run.goal = int(json.get("goal", 0))
 	for tower: Dictionary in json.get("towers", []):
-		run.towers.append(TowerTarget.new(str(tower.get("towerId", "")), str(tower.get("prompt", ""))))
+		run.towers.append(TowerTarget.new(str(tower.get("towerId", "")), str(tower.get("prompt", "")),
+				int(tower.get("value", Balance.DEFAULT_WORD_VALUE))))
 	for token: Dictionary in json.get("tokens", []):
 		run.tokens.append(TowerToken.new(str(token.get("tokenId", "")), str(token.get("word", ""))))
 	return run

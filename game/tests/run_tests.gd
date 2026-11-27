@@ -1,21 +1,41 @@
 extends SceneTree
 ## The rule tests' runner: godot --headless --path . --script res://tests/run_tests.gd
 ## Runs every test_* method of every suite and exits with 0 when all pass, 1 otherwise. A suite that does not load
-## counts as a failure, so a broken rule file can never look green.
+## counts as a failure, and so does a case during which the engine logs an error: a script error aborts the case
+## before its checks, which would otherwise look like a case without complaints.
 
 const SUITES: Array[String] = [
 	"res://tests/test_tower_ammo.gd",
 	"res://tests/test_run_tally.gd",
-	"res://tests/test_spawn_schedule.gd",
+	"res://tests/test_wave_plan.gd",
+	"res://tests/test_tower_level.gd",
+	"res://tests/test_run_score.gd",
 	"res://tests/test_token_pool.gd",
 	"res://tests/test_cooldown.gd",
 	"res://tests/test_export_pitfalls.gd",
 ]
 
 
+## Counts the errors the engine logs (script errors included).
+class ErrorCount:
+	extends Logger
+
+	## Errors logged so far.
+	var errors: int = 0
+
+	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String, _editor_notify: bool,
+			_error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+		errors += 1
+
+	func _log_message(_message: String, _error: bool) -> void:
+		pass
+
+
 func _initialize() -> void:
 	var cases := 0
 	var failed := 0
+	var log := ErrorCount.new()
+	OS.add_logger(log)
 	for path: String in SUITES:
 		var script := load(path) as GDScript
 		if script == null or not script.can_instantiate():
@@ -29,7 +49,10 @@ func _initialize() -> void:
 				continue
 			cases += 1
 			suite.failures.clear()
+			var errors_before := log.errors
 			suite.call(case)
+			if log.errors > errors_before:
+				suite.failures.append("the engine logged an error")
 			if suite.failures.is_empty():
 				print("ok    %s" % case)
 			else:

@@ -18,6 +18,7 @@ var _last_back: int = 0
 var _back: Callable = _nothing
 var _last_position: int = 0
 var _last_level: LevelDef = Catalog.LEVELS[0]
+var _summary: Level.Summary = Level.Summary.new()
 
 
 func _ready() -> void:
@@ -105,12 +106,21 @@ func _play(run: TowerRun, map: LevelDef) -> void:
 
 func _show_result(run_id: int, correct: int, total: int, reason: LevelEnd.Reason) -> void:
 	_back = _show_positions
+	# The level is still on screen when it reports: its score goes along to the result (and to a resend).
+	var level := _screen as Level
+	if level != null:
+		_summary = level.summary()
 	@warning_ignore("redundant_await")
 	var end := await server.end_run(run_id)
 	var result: ResultScreen = RESULT.instantiate()
 	result.correct = correct
 	result.total = total
 	result.reason = reason
+	result.score = _summary.score
+	result.wave = _summary.wave
+	result.top_tower_level = _summary.top_tower_level
+	result.record = _summary.record
+	result.best = _summary.best
 	result.end = end
 	result.resend.connect(_show_result.bind(run_id, correct, total, reason))
 	result.again.connect(_again)

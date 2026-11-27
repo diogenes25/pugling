@@ -8,7 +8,7 @@ extends Node
 const LEVEL: PackedScene = preload("res://level/level.tscn")
 const WATCHDOG_SECONDS: float = 600.0
 const ALL_SOUNDS: Array[String] = ["arrow", "fire_arrow", "cannon", "punch", "bones", "castle_hit", "pickup", "drop",
-	"correct", "wrong", "victory", "defeat"]
+	"correct", "wrong", "victory", "defeat", "wave_start", "wave_clear", "level_up"]
 
 var _level: Level
 var _fake: FakeApi
@@ -28,13 +28,17 @@ var _boulders_landed: int = 0
 var _last_hero_shot: float = -1.0
 var _shortest_hero_gap: float = INF
 var _fired: Dictionary[Tower, int] = {}
+var _banners: Array[String] = []
+var _hardest_hit: int = 0
 
 
 func _ready() -> void:
 	get_tree().create_timer(WATCHDOG_SECONDS, true, false, true).timeout.connect(_give_up)
 	Engine.time_scale = 3.0 if UiDriver.arg("shots") != "" else 5.0
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Records.FILE))
 	for index: int in Catalog.LEVELS.size():
 		await _play_to_goal(index)
+	await _waves()
 	await _time_up()
 	await _run_closed()
 	await _castle_falls()
@@ -49,6 +53,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if _level == null or _ended:
 		return
+	var banner := _level.controls.banner()
+	if banner != "" and not _banners.has(banner):
+		_banners.append(banner)
 	for a: WordBook in _level.words.all:
 		if not a.placed and a.age > Balance.TOKEN_LIFETIME - Balance.TOKEN_BLINK_WARNING and not a.node.visible:
 			_blinked = true
@@ -91,7 +98,7 @@ func _play_to_goal(index: int) -> void:
 	_check("%s: Pause-Knopf oben rechts ist da" % def.title, UiDriver.find_button(_level, "II") != null)
 
 	var gives := 0
-	while not _ended and not _level.tally.goal_reached():
+	while not _ended and _level.tally.correct < 3:
 		var book := await _wait_for_book()
 		if book == null:
 			break
@@ -120,6 +127,10 @@ func _play_to_goal(index: int) -> void:
 		if gives == 3 and index == 0:
 			# One refill short of strong: this correct word must turn the tower and say so.
 			tower.ammo.count = 27
+			tower.level.power = 0
+		if gives == 3 and index == 1:
+			# One value point short of the second level: this correct word must lift the tower and say so.
+			tower.level.power = 3
 		await _stand_at(tower.pos + Vector2(0, 2.0))
 		await _frames(2)
 		if gives == 0:
@@ -127,11 +138,24 @@ func _play_to_goal(index: int) -> void:
 		_check("%s: grüner Geben-Knopf am Turm" % def.title, UiDriver.find_button(_level, "geben") != null)
 		await _give_and_check(tower, def.title)
 		gives += 1
+	await _seconds(1.0)
+	_check("%s: das Wortziel beendet den Level nicht mehr (endlos)" % def.title, not _ended and _level.tally.goal_reached())
+	var points := _level.score.total()
+	var lines := 0
+	for line: RunScore.Line in _level.score.lines():
+		lines += line.points
+	_check("%s: Punkte aus Monstern, Wörtern und Turm-Aufstiegen (%d), Zeilen ergeben die Summe" % [def.title, points],
+			points >= 3 * Balance.WORD_POINTS and lines == points and _level.score.words == 3)
+	_level.toggle_pause()
+	await _frames(2)
+	UiDriver.press(_level, "Aufhören")
 	await _until_finished()
-	_check("%s: Ziel erreicht beendet den Level (%d Richtige)" % [def.title, _level.tally.correct],
-			_end_reason == LevelEnd.Reason.GOAL_REACHED and _level.tally.correct == 3 and _level.tally.total == 6)
-	_check("%s: Ritter jubelt am Ziel (Cheer)" % def.title, _clip() == "Cheer")
-	_check("%s: Pause und Weiter gemeldet" % def.title, _pauses == ([true, false] as Array[bool]))
+	_check("%s: Aufhören beendet den Lauf (%d Richtige von %d)" % [def.title, _level.tally.correct, _level.tally.total],
+			_end_reason == LevelEnd.Reason.GAVE_UP and _level.tally.correct == 3 and _level.tally.total == 6)
+	_check("%s: erster Lauf auf der Karte ist ein Rekord (%d), Ritter jubelt (Cheer)" % [def.title, Records.best(def.title)],
+			_level.record and Records.best(def.title) == _level.score.total() and _clip() == "Cheer"
+			and _level.summary().best == _level.score.total())
+	_check("%s: Pause, Weiter und Pause gemeldet" % def.title, _pauses == ([true, false, true] as Array[bool]))
 	_check("%s: Heartbeat etwa alle 15 s (%d in %.0f s)" % [def.title, _fake.beats(), _level.tally.elapsed],
 			absi(_fake.beats() - int(_level.tally.elapsed / 15.0)) <= 1)
 	_check_enemies(def)
@@ -177,8 +201,11 @@ func _castle_falls() -> void:
 	# Far from the road, so the hero's own shot does not hold the skeletons.
 	_level.hero.ground = Vector2(2, 24)
 	await _until_finished()
-	_check("Burg: nach 10 Skeletten fällt sie (Leben %d)" % _level.tally.lives,
-			_end_reason == LevelEnd.Reason.CASTLE_FALLEN and _level.tally.lives == 0)
+	_check("Burg: nach 10 Skeletten fällt sie (Leben %d, Welle %d)" % [_level.tally.lives, _level.enemies.waves.wave],
+			_end_reason == LevelEnd.Reason.CASTLE_FALLEN and _level.tally.lives == 0 and _level.enemies.waves.wave == 2)
+	_check("Burg: eine Welle mit Durchbruch ist nur überstanden und repariert nichts", _banners.has("Welle 1 überstanden")
+			and not _banners.has("Welle 1 geschafft!"))
+	_check("Burg: kein Rekord, der Lauf endet als Niederlage", not _level.record)
 	_check("Burg: Rückmeldezeile", _messages.has("Ein Skelett hat die Burg erreicht!"))
 	_check("Burg: Ritter fällt (Death_A)", _clip() == "Death_A")
 	_check("Burg: leere Türme schießen nicht", not _shots.has("bolt") and not _shots.has("boulder"))
@@ -267,6 +294,53 @@ func _catapult_and_fire() -> void:
 	_check("Wenig Munition: drei Schuss oder weniger gelten als knapp (rot)", towers[0].ammo.is_low())
 	# The tower at the far end of the map is off screen from here: its badge sits on the edge.
 	await UiDriver.shot(get_tree(), "level-randmarker")
+	_level.toggle_pause()
+	await _frames(2)
+	UiDriver.press(_level, "Aufhören")
+	await _until_finished()
+	await _stop()
+
+
+## Well stocked towers clear the first wave without a breach: banner, jingle, bonus, repair, then the second wave
+## comes with a bigger troop.
+func _waves() -> void:
+	await _start(Catalog.LEVELS[0])
+	for tower: Tower in _level.towers.all:
+		tower.ammo.count = 500
+		tower.level.add(TowerLevel.needed(3))
+	_level.tally.lives = 8
+	# Far from the road: the towers do the work, and no word is picked up.
+	_level.hero.ground = Vector2(2, 24)
+	var cleared: Array[int] = []
+	var bonuses: Array[int] = []
+	_level.events.wave_cleared.connect(func(number: int, bonus: int, _flawless: bool) -> void:
+		cleared.append(number)
+		bonuses.append(bonus))
+	var started: Array[int] = []
+	_level.events.wave_started.connect(func(number: int) -> void: started.append(number))
+	await _seconds(2.5)
+	_check("Wellen: die erste Welle wird groß angekündigt", _banners.has("Welle 1") and started == ([1] as Array[int]))
+	while cleared.is_empty() and not _ended:
+		await get_tree().process_frame
+	var kills := _level.score.kills
+	_check("Wellen: Welle 1 geschafft nach %d besiegten Monstern, Bonus %d" % [kills, bonuses[0]],
+			cleared == ([1] as Array[int]) and kills == 8 and bonuses[0] == 100 and _level.score.waves == 1)
+	_check("Wellen: Punkte = 5 kleine × 10 + 3 Krieger × 30 + 100 Bonus (%d)" % _level.score.total(), _level.score.total() == 240)
+	_check("Wellen: eine Welle ohne Durchbruch repariert die Burg um 1 (Leben %d)" % _level.tally.lives, _level.tally.lives == 9)
+	await _frames(3)
+	_check("Wellen: Banner „Welle 1 geschafft!“ und der Ritter jubelt mitten im Lauf", _banners.has("Welle 1 geschafft!") and _clip() == "Cheer")
+	await UiDriver.shot(get_tree(), "level-welle-geschafft")
+	var words_dropped := _level.words.all.size()
+	_check("Wellen: drei Krieger haben drei Wörter fallen lassen (%d)" % words_dropped, words_dropped == 3)
+	var before := _spawned.size()
+	await _seconds(Balance.WAVE_REST - 1.0)
+	_check("Wellen: während der Pause von 5 s kommt niemand", _spawned.size() == before and _level.enemies.waves.wave == 1)
+	await _seconds(2.0)
+	_check("Wellen: danach beginnt Welle 2", started == ([1, 2] as Array[int]) and _level.enemies.waves.wave == 2
+			and _banners.has("Welle 2"))
+	_check("Wellen: stärkere Türme treffen härter (Stufe %d, +%d Schaden)" % [_level.towers.all[0].level.level, _level.towers.all[0].level.damage_bonus()],
+			_level.towers.all[0].level.level == 4 and _level.towers.all[0].level.damage_bonus() == 3
+			and _hardest_hit == _level.towers.all[0].kind.strong_shot.damage + 3)
 	_level.toggle_pause()
 	await _frames(2)
 	UiDriver.press(_level, "Aufhören")
@@ -375,6 +449,8 @@ func _give_and_check(tower: Tower, map: String) -> void:
 	var target := tower.target
 	var ammo := tower.ammo.count
 	var strong := tower.ammo.is_strong()
+	var power := tower.level.power
+	var level := tower.level.level
 	var shots_before := _shot_count_of(tower)
 	_level.controls.give_pressed.emit()
 	while _level.hero.carried == word and not _ended:
@@ -385,11 +461,17 @@ func _give_and_check(tower: Tower, map: String) -> void:
 	if graded_right:
 		_check("%s: richtig gibt +8 Schuss und die nächste Bedeutung" % map,
 				tower.ammo.count == ammo + 8 - spent and tower.target != target)
-		if not strong and tower.ammo.is_strong():
+		_check("%s: der Turm bekommt den Wert des Wortes (%d) als Kraft" % [map, target.value],
+				tower.level.power == power + target.value and target.value >= 1 and target.value <= 3)
+		if tower.level.level > level:
+			_check("%s: der Turm steigt auf Stufe %d, meldet es und schießt mit +%d Schaden" % [map, tower.level.level, tower.level.damage_bonus()],
+					tower.level.level == 2 and tower.level.damage_bonus() == 1
+					and _messages.has("Turm steigt auf Stufe 2!  +1 Schaden") and _level.score.tower_levels == 1)
+		elif not strong and tower.ammo.is_strong():
 			_check("%s: mehr als 30 Schuss machen den Turm stark (★ im Schild)" % map, tower.ammo.count > 30)
 		else:
 			_check("%s: Rückmeldezeile richtig" % map,
-					_messages.has("Richtig! „%s“ = „%s“  +8 Schuss" % [word.word, target.prompt]))
+					_messages.has("Richtig! „%s“ = „%s“  +8 Schuss  +%d Kraft" % [word.word, target.prompt, target.value]))
 	else:
 		_check("%s: falsch kostet 3 Schuss, die Bedeutung bleibt" % map,
 				tower.ammo.count == maxi(0, ammo - spent - 3) and tower.target == target)
@@ -399,19 +481,18 @@ func _give_and_check(tower: Tower, map: String) -> void:
 
 
 func _check_enemies(def: LevelDef) -> void:
-	var warriors := 0
+	var troop := _level.enemies.waves.troop(1)
 	var wrong_kind := 0
-	for i: int in _spawned.size():
-		var is_warrior := _spawned[i].kind == Catalog.WARRIOR
-		warriors += int(is_warrior)
-		if is_warrior != ((i + 1) % Balance.WARRIOR_EVERY == 0):
+	for i: int in mini(troop.size(), _spawned.size()):
+		if _spawned[i].kind != troop[i]:
 			wrong_kind += 1
-	_check("%s: jedes vierte Skelett ist ein Krieger (%d von %d, 4 HP, langsamer)" % [def.title, warriors, _spawned.size()],
-			wrong_kind == 0 and warriors > 0 and Catalog.WARRIOR.hp == 4 and Catalog.MINION.hp == 2
-			and _spawned[3].speed < _spawned[2].speed)
-	var minions := _spawned.filter(func(enemy: Enemy) -> bool: return enemy.kind == Catalog.MINION)
-	_check("%s: Tempo steigt mit der Spielzeit (%.2f → %.2f)" % [def.title, minions[0].speed, minions[minions.size() - 1].speed],
-			minions[minions.size() - 1].speed > minions[0].speed and minions[0].speed >= def.monster_speed)
+	_check("%s: die erste Welle marschiert wie geplant (5 kleine, 3 Krieger mit 4 HP, langsamer; %d gekommen)" % [def.title, _spawned.size()],
+			wrong_kind == 0 and _spawned.size() >= 4 and troop.count(Catalog.MINION) == 5 and troop.count(Catalog.WARRIOR) == 3
+			and Catalog.WARRIOR.hp == 4 and Catalog.MINION.hp == 2 and _spawned[1].speed < _spawned[0].speed
+			and is_equal_approx(_spawned[0].speed, def.monster_speed))
+	_check("%s: nur die Krieger tragen Wörter, die kleinen bringen Punkte" % def.title,
+			Catalog.MINION.drops == 0 and Catalog.WARRIOR.drops == 1 and Catalog.BOSS.drops == 3
+			and Catalog.MINION.points < Catalog.WARRIOR.points and Catalog.WARRIOR.points < Catalog.BOSS.points)
 	var paths: Dictionary[int, bool] = {}
 	for enemy: Enemy in _spawned:
 		paths[enemy.path] = true
@@ -454,6 +535,8 @@ func _start(def: LevelDef, prepare: Callable = Callable()) -> void:
 	_last_hero_shot = -1.0
 	_shortest_hero_gap = INF
 	_fired.clear()
+	_banners.clear()
+	_hardest_hit = 0
 	_level = LEVEL.instantiate()
 	_level.setup(_fake, TowerRun.from_json(started.data), def)
 	_level.finished.connect(_on_finished)
@@ -462,6 +545,9 @@ func _start(def: LevelDef, prepare: Callable = Callable()) -> void:
 	var events := _level.events
 	events.enemy_spawned.connect(func(enemy: Enemy) -> void: _spawned.append(enemy))
 	events.shot_fired.connect(_on_shot)
+	events.projectile_hit.connect(func(projectile: Projectile, _at: Vector3) -> void:
+		if projectile.kind.id == "fire-arrow":
+			_hardest_hit = maxi(_hardest_hit, projectile.damage))
 	events.tower_fired.connect(_on_tower_fired)
 	events.pause_changed.connect(func(paused: bool) -> void: _pauses.append(paused))
 	events.server_message.connect(func(text: String) -> void: _messages.append(text))

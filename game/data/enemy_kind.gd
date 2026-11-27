@@ -17,3 +17,12 @@ extends Resource
 
 ## Multiplies the map's skeleton speed.
 @export var speed_factor: float = 1.0
+
+## Hit points it gains per wave after the first (the fraction adds up over the waves).
+@export var hp_per_wave: float = 0.0
+
+## Points for defeating it.
+@export var points: int = 10
+
+## Books it drops when defeated: small enemies bring points, the bigger ones bring words.
+@export var drops: int = 0

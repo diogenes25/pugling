@@ -8,7 +8,11 @@ var tower_id: String
 ## The meaning shown on the tower.
 var prompt: String
 
+## What the word is worth for the tower: 3 for a new word down to 1 for a well learned one.
+var value: int
 
-func _init(id: String, meaning: String) -> void:
+
+func _init(id: String, meaning: String, worth: int = Balance.DEFAULT_WORD_VALUE) -> void:
 	tower_id = id
 	prompt = meaning
+	value = worth

@@ -21,9 +21,14 @@ func _init(server: TowerServer, started: TowerRun) -> void:
 	_targets.assign(started.towers)
 
 
-## The next meaning a tower asks for, or null when all are handed out.
+## The next meaning a tower asks for. The run is endless: a meaning that was handed out queues up again at the end,
+## so every word comes back once all are through. Null only for a run without towers.
 func next_target() -> TowerTarget:
-	return _targets.pop_front() if not _targets.is_empty() else null
+	if _targets.is_empty():
+		return null
+	var target: TowerTarget = _targets.pop_front()
+	_targets.append(target)
+	return target
 
 
 ## Lets the server grade a word at a tower.

@@ -3,13 +3,35 @@ extends Node3D
 ## One level of "Vokabel-Türme" in 3D (B-853): skeletons walk fixed roads towards the castle, towers shoot them
 ## while they have ammo, a defeated skeleton drops a vocabulary book. The hero walks the map - larger than the
 ## screen, the camera keeps the hero in the centre - picks up a word and hands it to a tower; the server grades it.
-## A correct word refills the tower and gives it the next meaning, a wrong one is gone and costs the tower three
-## shots. Won after the run's goal of correct words, lost when the castle falls. The hero shoots too - weaker than a
-## tower but without ammo - so a run with empty towers still has a way back; words he lays down stay where they are.
+## A correct word refills the tower, adds its value to the tower's level and gives it the next meaning; a wrong one
+## is gone and costs the tower three shots. The run is endless: the skeletons come in waves that grow, small ones
+## bring points and the bigger ones drop the words, and it ends when the castle falls, the day's play time is up or
+## the player stops. The hero shoots too - weaker than a tower but without ammo - so a run with empty towers still
+## has a way back; words he lays down stay where they are.
 ##
 ## The level only coordinates: each part is its own node of level.tscn (hero, enemies, towers, projectiles, word
 ## books, controls, overlay), the rules run here in one frame order, and everything worth a sound or an effect is
 ## emitted on [member events] afterwards.
+
+## What the result screen shows of a finished run.
+class Summary:
+	extends RefCounted
+
+	## The run's points.
+	var score: RunScore = RunScore.new()
+
+	## The last wave the run reached.
+	var wave: int = 0
+
+	## The highest level a tower reached.
+	var top_tower_level: int = 1
+
+	## The run beat the map's best score.
+	var record: bool = false
+
+	## The map's best score (this run included).
+	var best: int = 0
+
 
 ## Emitted once when the level ends: run id, correct and total assignments, and why it ended.
 signal finished(run_id: int, correct: int, total: int, reason: LevelEnd.Reason)
@@ -25,6 +47,12 @@ var events: GameEvents = GameEvents.new()
 ## The client's count of the run.
 var tally: RunTally
 
+## The run's points.
+var score: RunScore = RunScore.new()
+
+## The run beat the map's best score (known once the level is over).
+var record: bool = false
+
 var _session: RunSession
 var _def: LevelDef
 var _map: MapInfo
@@ -34,6 +62,7 @@ var _clock: float = 0.0
 var _busy: bool = false
 var _over: bool = false
 var _paused: bool = false
+var _breaches: int = 0
 
 @onready var hero: Hero = %Hero
 @onready var enemies: Enemies = %Enemies
@@ -67,14 +96,14 @@ func _ready() -> void:
 	_camera.make_current()
 	_follow_hero()
 
-	_overlay.setup(_camera, words, enemies, towers, hero, tally, _stick)
+	_overlay.setup(_camera, words, enemies, towers, hero, tally, _stick, score)
 	controls.give_pressed.connect(_assign)
 	controls.drop_pressed.connect(_lay_down)
 	controls.pause_pressed.connect(toggle_pause)
 	controls.give_up_pressed.connect(_end.bind(LevelEnd.Reason.GAVE_UP))
 	controls.book_picked.connect(_pick_up)
 	_session.time_up.connect(_on_time_up)
-	_feedback.setup(events, self, controls)
+	_feedback.setup(events, self, controls, towers)
 	sounds.setup(events)
 
 
@@ -130,13 +159,28 @@ func _follow_hero() -> void:
 
 
 func _spawn_enemies(dt: float) -> void:
-	var enemy := enemies.spawn(dt, tally.elapsed)
+	var enemy := enemies.spawn(dt)
+	var cleared := enemies.waves.take_cleared()
+	if cleared > 0:
+		# Only a wave that never reached the castle repairs it.
+		var flawless := _breaches == 0
+		if flawless:
+			tally.repair(Balance.WAVE_REPAIR)
+		_breaches = 0
+		var bonus := score.wave(cleared)
+		Log.line("welle %d %s, Punkte %d" % [cleared, "geschafft" if flawless else "überstanden", score.total()])
+		hero.look.play(HeroLook.Action.CHEER)
+		events.wave_cleared.emit(cleared, bonus, flawless)
+	var started := enemies.waves.take_started()
+	if started > 0:
+		events.wave_started.emit(started)
 	if enemy != null:
 		events.enemy_spawned.emit(enemy)
 
 
 func _move_enemies(dt: float) -> void:
 	for i: int in enemies.move(dt):
+		_breaches += 1
 		events.castle_hit.emit(Geo.to3(_def.castle(), 2.5))
 		if tally.castle_hit():
 			_end(LevelEnd.Reason.CASTLE_FALLEN)
@@ -169,11 +213,14 @@ func _move_projectiles(dt: float) -> void:
 		var enemy := hit.projectile.target
 		if hit.projectile.from == Projectile.Shooter.HERO:
 			tally.hero_kill()
+		score.kill(enemy.kind)
 		events.enemy_defeated.emit(enemy, hit.projectile.from)
+		# Small enemies bring points only; the bigger ones carry the words.
 		var fell := enemies.path_point(enemy)
-		var book := words.drop_beside(fell.pos, fell.dir)
-		if book != null:
-			events.word_appeared.emit(book)
+		for i: int in enemy.kind.drops:
+			var book := words.drop_beside(fell.pos, fell.dir)
+			if book != null:
+				events.word_appeared.emit(book)
 
 
 func _update_context() -> void:
@@ -242,7 +289,13 @@ func _assign() -> void:
 		"richtig" if graded.correct else "falsch, erwartet " + graded.expected])
 	if graded.correct:
 		words.pool.consume(token.token_id)
+		graded.value = target.value
 		graded.became_strong = tower.ammo.refill()
+		graded.leveled = tower.level.add(target.value)
+		score.word(target.value)
+		if graded.leveled:
+			score.tower_level(tower.level.level)
+			Log.line("turm '%s' Stufe %d" % [tower.kind.id, tower.level.level])
 		tower.target = _session.next_target()
 	else:
 		# The word is gone from the hand; it goes back into the pool and drops again later.
@@ -250,8 +303,18 @@ func _assign() -> void:
 		tower.ammo.penalize()
 	hero.look.play(HeroLook.Action.CORRECT if graded.correct else HeroLook.Action.WRONG)
 	events.word_assigned.emit(graded)
-	if graded.correct and tally.goal_reached():
-		_end(LevelEnd.Reason.GOAL_REACHED)
+
+
+## The run for the result screen.
+func summary() -> Summary:
+	var result := Summary.new()
+	result.score = score
+	result.wave = enemies.waves.wave
+	for tower: Tower in towers.all:
+		result.top_tower_level = maxi(result.top_tower_level, tower.level.level)
+	result.record = record
+	result.best = Records.best(_def.title)
+	return result
 
 
 func _on_time_up() -> void:
@@ -259,16 +322,17 @@ func _on_time_up() -> void:
 	_end(LevelEnd.Reason.TIME_UP)
 
 
-## The server decides whether the level is won (its own count of solved towers); the client only says it is over.
+## The server pays by its own count of solved towers; the client only says the run is over and keeps the score.
 func _end(reason: LevelEnd.Reason) -> void:
 	if _over:
 		return
 	_over = true
 	_paused = false
 	controls.close()
-	hero.look.play(HeroLook.Action.VICTORY if tally.goal_reached() else HeroLook.Action.DEFEAT)
-	Log.line(tally.summary(LevelEnd.LOG_NAMES[reason]))
-	events.level_ended.emit(reason, tally.goal_reached())
+	record = score.total() > 0 and Records.submit(_def.title, score.total())
+	hero.look.play(HeroLook.Action.DEFEAT if reason == LevelEnd.Reason.CASTLE_FALLEN else HeroLook.Action.VICTORY)
+	Log.line("%s, Welle %d, Punkte %d" % [tally.summary(LevelEnd.LOG_NAMES[reason]), enemies.waves.wave, score.total()])
+	events.level_ended.emit(reason, record)
 	# A short moment to see the hero cheer (or fall) before the result screen.
 	await get_tree().create_timer(0.3 if reason == LevelEnd.Reason.GAVE_UP else 1.6).timeout
 	finished.emit(_session.run.run_id, tally.correct, tally.total, reason)

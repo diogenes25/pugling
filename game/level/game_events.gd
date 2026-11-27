@@ -27,6 +27,21 @@ class Assignment:
 	## The refill just turned the tower strong.
 	var became_strong: bool
 
+	## What the word was worth for the tower (0 for a wrong one).
+	var value: int
+
+	## The word just lifted the tower to a new level.
+	var leveled: bool
+
+
+## A wave of enemies starts.
+@warning_ignore("unused_signal")
+signal wave_started(number: int)
+
+## The last enemy of a wave is gone; the bonus is what the wave paid in points, and a flawless wave (no enemy
+## reached the castle) repaired the castle.
+@warning_ignore("unused_signal")
+signal wave_cleared(number: int, bonus: int, flawless: bool)
 
 ## A skeleton entered the map.
 @warning_ignore("unused_signal")
@@ -88,6 +103,6 @@ signal time_up
 @warning_ignore("unused_signal")
 signal pause_changed(paused: bool)
 
-## The level ended; the flag says whether the goal of correct words was reached.
+## The level ended; the flag says whether the run set a new high score.
 @warning_ignore("unused_signal")
-signal level_ended(reason: LevelEnd.Reason, goal_reached: bool)
+signal level_ended(reason: LevelEnd.Reason, record: bool)

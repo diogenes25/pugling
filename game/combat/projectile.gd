@@ -13,6 +13,9 @@ enum Shooter {
 ## What it is.
 var kind: ProjectileKind
 
+## Hit points its hit takes: the kind's damage plus the shooting tower's level bonus.
+var damage: int = 1
+
 ## Who fired it.
 var from: Shooter
 

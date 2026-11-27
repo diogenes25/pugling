@@ -54329,12 +54329,13 @@
             }
           }
         },
-        "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal solved towers win the level.\nTokens are shuffled and hold the words of all towers, so a token whose tower is not on the field\nyet acts as a distractor. The app sends a heartbeat about every 15 seconds while the level is in the foreground."
+        "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal solved towers win the level\n(and pay its coins), but the run goes on for as long as the castle stands. Tokens hold the words\nof all towers; they follow the order of the towers only roughly (shuffled within small groups), so the client can\ndrop words the towers on the field are likely to ask for without learning which token fits which tower. A token\nwhose tower is not on the field yet acts as a distractor. The app sends a heartbeat about every 15 seconds while the\nlevel is in the foreground."
       },
       "TowerTarget": {
         "required": [
           "prompt",
-          "towerId"
+          "towerId",
+          "value"
         ],
         "type": "object",
         "properties": {
@@ -54343,9 +54344,17 @@
           },
           "prompt": {
             "type": "string"
+          },
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A tower: an opaque id and the meaning (German) it asks for."
+        "description": "A tower: an opaque id and the meaning (German) it asks for. Value is what the word is worth for\nthe tower in the game, by the child\u0027s learning state: 3 for a new or weak word, 2 for one on its way, 1 for a well\nlearned one - the game pays more for the words that need the practice."
       },
       "TowerToken": {
         "required": [

@@ -21,6 +21,21 @@ var correct: int = 0
 ## All graded assignments of the level.
 var total: int = 0
 
+## The run's points, line by line.
+var score: RunScore = RunScore.new()
+
+## The last wave the run reached.
+var wave: int = 0
+
+## The highest level a tower reached.
+var top_tower_level: int = 1
+
+## The run beat the map's best score.
+var record: bool = false
+
+## The map's best score (this run included).
+var best: int = 0
+
 ## Why the level ended.
 var reason: LevelEnd.Reason = LevelEnd.Reason.GAVE_UP
 
@@ -30,7 +45,11 @@ var end: ApiResult
 
 func _ready() -> void:
 	set_title(_headline())
-	add_text("%d von %d Zuweisungen richtig." % [correct, total], 30)
+	add_text("Welle %d  ·  %d Punkte%s" % [wave, score.total(),
+			"  ·  NEUER REKORD!" if record else "  ·  Rekord %d" % best], 34)
+	for line: RunScore.Line in score.lines():
+		add_text("%s: %d  →  %d Punkte" % [line.label, line.count, line.points], 24)
+	add_text("%d von %d Vokabeln richtig  ·  bester Turm Stufe %d" % [correct, total, top_tower_level], 24)
 	if end.ok:
 		add_text(_coins(), 30)
 	else:
@@ -45,14 +64,14 @@ func _ready() -> void:
 func _headline() -> String:
 	if not end.ok:
 		return "Ergebnis noch nicht gespeichert."
-	if end.data.get("won", false):
-		return "Level geschafft!"
+	if record:
+		return "Neuer Rekord!"
 	match reason:
 		LevelEnd.Reason.TIME_UP:
 			return "Spielzeit für heute ist um."
 		LevelEnd.Reason.GAVE_UP:
 			return "Spiel beendet."
-	return "Die Monster sind durchgebrochen."
+	return "Die Burg ist gefallen."
 
 
 func _coins() -> String:
@@ -63,4 +82,4 @@ func _coins() -> String:
 		return "+%d 🪙  (heute %d/%d)" % [awarded, today, cap]
 	if end.data.get("won", false):
 		return "Münzdeckel für heute erreicht (%d/%d 🪙)." % [today, cap]
-	return "Keine Münzen diesmal."
+	return "Münzen gibt es ab %d richtigen Vokabeln." % int(end.data.get("goal", 0))

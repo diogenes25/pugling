@@ -1,6 +1,6 @@
 class_name Enemies
 extends Node3D
-## All enemies of a level: spawns them by the [SpawnSchedule], walks them along the paths, and answers the towers'
+## All enemies of a level: spawns them by the [WavePlan], walks them along the paths, and answers the towers'
 ## and the hero's question "whom do I shoot at".
 
 const DEATH_SECONDS: float = 1.3
@@ -11,28 +11,30 @@ const DEATH_CLIPS: Array[String] = ["Death_A", "Death_B"]
 var all: Array[Enemy] = []
 
 var _def: LevelDef
-var _schedule: SpawnSchedule
+## The waves of the run.
+var waves: WavePlan
 var _path_lengths: PackedFloat32Array = PackedFloat32Array()
 
 
 ## Binds the enemies to a map; call before the first frame.
 func setup(def: LevelDef) -> void:
 	_def = def
-	_schedule = SpawnSchedule.new(def.spawn_interval, def.monster_speed, def.paths.size(), Catalog.MINION, Catalog.WARRIOR)
+	waves = WavePlan.new(def.spawn_interval, def.monster_speed, def.paths.size(), Catalog.MINION, Catalog.WARRIOR, Catalog.BOSS)
 	for path: PackedVector2Array in def.paths:
 		_path_lengths.append(Geo.length(path))
 
 
-## Lets the schedule decide whether an enemy comes now; returns the new one, or null.
-func spawn(dt: float, elapsed: float) -> Enemy:
-	var next := _schedule.tick(dt, elapsed)
+## Lets the wave plan decide whether an enemy comes now; returns the new one, or null.
+func spawn(dt: float) -> Enemy:
+	var next := waves.tick(dt, alive())
 	if next == null:
 		return null
 	var enemy := Enemy.new()
 	enemy.kind = next.kind
 	enemy.path = next.path
 	enemy.speed = next.speed
-	enemy.hp = next.kind.hp
+	enemy.hp = next.hp
+	enemy.max_hp = next.hp
 	enemy.node = Models.character(next.kind.model).instantiate() as Node3D
 	enemy.node.scale = Vector3.ONE * next.kind.model_scale
 	Models.keep_only(enemy.node, [next.kind.mesh_prefix])
@@ -42,6 +44,15 @@ func spawn(dt: float, elapsed: float) -> Enemy:
 	all.append(enemy)
 	_place(enemy)
 	return enemy
+
+
+## Enemies still walking (the dying ones do not count).
+func alive() -> int:
+	var count := 0
+	for enemy: Enemy in all:
+		if not enemy.dying:
+			count += 1
+	return count
 
 
 ## Walks every enemy; returns how many reached the castle this frame (they are gone afterwards).

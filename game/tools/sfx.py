@@ -105,6 +105,22 @@ save("victory", np.concatenate([(tone(f, d, "square") * 0.4 + tone(f * 2, d, "tr
 # Defeat: slow falling line.
 save("defeat", np.concatenate([tone(f, 0.28, "tri") * env(int(SR * 0.28), 0.01, 0.22) for f in [392, 349.23, 311.13, 261.63]]), 0.6)
 
+# A wave starts: a low war horn, two swelling notes.
+horn = [(146.83, 0.45), (196.0, 0.7)]
+save("wave_start", np.concatenate([(tone(f, d, "tri") + tone(f * 1.5, d, "sine") * 0.4 + tone(f / 2, d, "square") * 0.25)
+                                   * np.sin(np.pi * np.clip(t(d) / d, 0, 1)) ** 0.6 for f, d in horn]), 0.6)
+
+# A wave is cleared: a bright, quick fanfare that climbs an octave and rings out.
+clear = [(659.25, 0.1), (783.99, 0.1), (1046.5, 0.1), (1318.5, 0.1), (1046.5, 0.1), (1318.5, 0.14), (1568.0, 0.7)]
+save("wave_clear", np.concatenate([(tone(f, d, "square") * 0.35 + tone(f * 2, d, "tri") * 0.3 + tone(f / 2, d, "tri") * 0.3)
+                                   * env(int(SR * d), 0.004, d * 0.9) for f, d in clear]), 0.75)
+
+# A tower gains a level: a fast rising sweep with a sparkle on top.
+x = t(0.55)
+sweep = tone(330 * 2 ** (x / 0.55 * 2), 0.55, "tri") * env(len(x), 0.01, 0.4)
+sparkle = sum(np.roll(tone(f, 0.55) * env(len(x), 0.002, 0.08), int(SR * d)) for f, d in [(2093, 0.3), (2637, 0.36), (3136, 0.42)])
+save("level_up", sweep + sparkle * 0.6, 0.7)
+
 # UI tap.
 save("tap", tone(1000, 0.04) * env(int(SR * 0.04), 0.001, 0.015), 0.4)
 print("ok")

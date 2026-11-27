@@ -83,7 +83,8 @@ func _ready() -> void:
 	await UiDriver.shot(get_tree(), "5-ergebnis-ungespeichert")
 	_press("Ergebnis nochmal senden")
 	await _frames(6)
-	_expect("ergebnis", ["Spiel beendet.", "Zuweisungen richtig.", "Keine Münzen diesmal.", "[Noch einmal]", "[Andere Karte]",
+	_expect("ergebnis", ["Spiel beendet.", "Welle 0  ·  0 Punkte", "Monster besiegt: 0  →  0 Punkte", "0 von 0 Vokabeln richtig",
+			"Münzen gibt es ab 3 richtigen Vokabeln.", "[Noch einmal]", "[Andere Karte]",
 		"[Andere Wörter]"])
 	_check(UiDriver.find_button(_main, "Ergebnis nochmal senden") == null, "kein Nochmal-senden nach gespeichertem Ergebnis")
 	await UiDriver.shot(get_tree(), "6-ergebnis")

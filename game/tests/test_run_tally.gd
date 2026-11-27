@@ -19,6 +19,16 @@ func test_the_castle_falls_with_the_tenth_skeleton() -> void:
 	check(tally.castle_hit(), "the castle to fall with the tenth skeleton")
 
 
+func test_a_repair_gives_lives_back_but_never_more_than_ten() -> void:
+	var tally := RunTally.new(10)
+	tally.castle_hit()
+	tally.castle_hit()
+	tally.repair(1)
+	equal(9, tally.lives)
+	tally.repair(5)
+	equal(10, tally.lives)
+
+
 func test_the_summary_keeps_the_words_the_run_reports_are_read_by() -> void:
 	var tally := RunTally.new(10)
 	tally.elapsed = 97.4

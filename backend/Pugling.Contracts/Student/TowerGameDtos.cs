@@ -23,15 +23,22 @@ public record StartTowerRunDto(int PlanPositionId);
 
 /// <summary>
 /// A tower-game run. The client shows <paramref name="TowerSlots"/> towers at a time in the order of <paramref
-/// name="Towers"/> and refills a slot after a correct assignment; <paramref name="Goal"/> solved towers win the level.
-/// <paramref name="Tokens"/> are shuffled and hold the words of all towers, so a token whose tower is not on the field
-/// yet acts as a distractor. The app sends a heartbeat about every 15 seconds while the level is in the foreground.
+/// name="Towers"/> and refills a slot after a correct assignment; <paramref name="Goal"/> solved towers win the level
+/// (and pay its coins), but the run goes on for as long as the castle stands. <paramref name="Tokens"/> hold the words
+/// of all towers; they follow the order of the towers only roughly (shuffled within small groups), so the client can
+/// drop words the towers on the field are likely to ask for without learning which token fits which tower. A token
+/// whose tower is not on the field yet acts as a distractor. The app sends a heartbeat about every 15 seconds while the
+/// level is in the foreground.
 /// </summary>
 public record TowerRunResponse(int RunId, int PlanPositionId, int Goal, int TowerSlots, IReadOnlyList<TowerTarget> Towers,
     IReadOnlyList<TowerToken> Tokens);
 
-/// <summary>A tower: an opaque id and the meaning (German) it asks for.</summary>
-public record TowerTarget(string TowerId, string Prompt);
+/// <summary>
+/// A tower: an opaque id and the meaning (German) it asks for. <paramref name="Value"/> is what the word is worth for
+/// the tower in the game, by the child's learning state: 3 for a new or weak word, 2 for one on its way, 1 for a well
+/// learned one - the game pays more for the words that need the practice.
+/// </summary>
+public record TowerTarget(string TowerId, string Prompt, int Value);
 
 /// <summary>A dropped vocabulary token: an opaque id and the foreign word it carries.</summary>
 public record TowerToken(string TokenId, string Word);

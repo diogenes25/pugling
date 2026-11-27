@@ -45,6 +45,8 @@ func setup(events: GameEvents) -> void:
 	events.word_laid_down.connect(_on_word_laid_down)
 	events.word_assigned.connect(_on_word_assigned)
 	events.level_ended.connect(_on_level_ended)
+	events.wave_started.connect(_on_wave_started)
+	events.wave_cleared.connect(_on_wave_cleared)
 
 
 ## The sound of a shot, by what was fired.
@@ -81,10 +83,21 @@ func _on_word_laid_down(_token: TowerToken) -> void:
 
 func _on_word_assigned(graded: GameEvents.Assignment) -> void:
 	_play_flat(_flat, "correct" if graded.correct else "wrong", -2.0)
+	if graded.leveled:
+		_play_flat(_fanfare, "level_up", 0.0)
 
 
-func _on_level_ended(_reason: LevelEnd.Reason, goal_reached: bool) -> void:
-	_play_flat(_fanfare, "victory" if goal_reached else "defeat", 0.0)
+func _on_wave_started(_number: int) -> void:
+	_play_flat(_fanfare, "wave_start", -3.0)
+
+
+func _on_wave_cleared(_number: int, _bonus: int, _flawless: bool) -> void:
+	_play_flat(_fanfare, "wave_clear", 0.0)
+
+
+## A fallen castle sounds like a defeat - unless the run still set a record.
+func _on_level_ended(reason: LevelEnd.Reason, record: bool) -> void:
+	_play_flat(_fanfare, "defeat" if reason == LevelEnd.Reason.CASTLE_FALLEN and not record else "victory", 0.0)
 
 
 func _at(sound: String, at: Vector3, volume_db: float) -> void:

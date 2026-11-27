@@ -14,6 +14,9 @@ var target: TowerTarget
 ## Its ammunition.
 var ammo: TowerAmmo = TowerAmmo.new()
 
+## Its level, grown by the value of the words it got.
+var level: TowerLevel = TowerLevel.new()
+
 ## Its reload timer.
 var reload: Cooldown = Cooldown.new()
 

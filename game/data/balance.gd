@@ -42,19 +42,51 @@ const TOKEN_LIFETIME: float = 30.0
 ## A book blinks during its last seconds on the field.
 const TOKEN_BLINK_WARNING: float = 5.0
 
-## Seconds before the first skeleton.
+## Seconds before the first wave.
 const FIRST_SPAWN_DELAY: float = 2.0
 
-## The spawn interval shrinks by this many seconds per played second, but never below the floor factor.
-const SPAWN_INTERVAL_RAMP: float = 0.012
-const SPAWN_INTERVAL_FLOOR: float = 0.55
+## Seconds between a cleared wave and the next one.
+const WAVE_REST: float = 5.0
 
-## Skeletons get faster by this per played second, by at most MAX_SPEED_RAMP.
-const SPEED_RAMP: float = 0.004
+## Small enemies of the first wave, and how many more each further wave brings, up to MAX_MINIONS.
+const WAVE_MINIONS: int = 5
+const WAVE_MINIONS_GROWTH: int = 2
+const MAX_MINIONS: int = 30
+
+## Word carriers of the first wave; every second wave brings one more, up to MAX_CARRIERS.
+const WAVE_CARRIERS: int = 3
+const MAX_CARRIERS: int = 9
+
+## Every n-th wave ends with a boss.
+const BOSS_EVERY: int = 5
+
+## Within a wave the enemies follow each other at the map's interval times WAVE_INTERVAL_START, shrinking by
+## WAVE_INTERVAL_RAMP per wave down to the floor factor.
+const WAVE_INTERVAL_START: float = 0.6
+const WAVE_INTERVAL_RAMP: float = 0.03
+const WAVE_INTERVAL_FLOOR: float = 0.25
+
+## Enemies get faster by this per wave, by at most MAX_SPEED_RAMP.
+const WAVE_SPEED_RAMP: float = 0.06
 const MAX_SPEED_RAMP: float = 0.8
 
-## Every n-th skeleton is a warrior.
-const WARRIOR_EVERY: int = 4
+## Drops come from this many tokens at the front of the pool's queue.
+const DROP_WINDOW: int = 8
+
+## The summed word value a tower needs for its second level; see [method TowerLevel.needed].
+const LEVEL_STEP: int = 4
+
+## The value of a word the server did not rate (an older server): the middle of 1 (well learned) to 3 (new).
+const DEFAULT_WORD_VALUE: int = 2
+
+## Points: per value point of a correct word, per level a tower reaches (times the level), per cleared wave (times
+## its number).
+const WORD_POINTS: int = 50
+const LEVEL_POINTS: int = 100
+const WAVE_POINTS: int = 100
+
+## A cleared wave repairs this many of the castle's lives.
+const WAVE_REPAIR: int = 1
 
 ## The app reports the foreground play time about this often (B-851: the server clamps each beat).
 const BEAT_INTERVAL: float = 15.0

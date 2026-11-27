@@ -30,6 +30,8 @@ func play(action: Action) -> void:
 			_act(0.4, ["PickUp", "Interact"])
 		Action.GIVE:
 			_act(0.6, ["Interact", "PickUp"])
+		Action.CHEER:
+			_act(1.6, ["Cheer"])
 		Action.VICTORY:
 			Models.play(_anim, false, ["Cheer"])
 		Action.DEFEAT:
