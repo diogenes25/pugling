@@ -27,6 +27,9 @@ public sealed class GameEvents
     /// <summary>A tower or the hero fired.</summary>
     public event Action<Projectile>? ShotFired;
 
+    /// <summary>A tower fired (in addition to <see cref="ShotFired"/>): for the tower's own launch effects.</summary>
+    public event Action<TowerShot>? TowerFired;
+
     /// <summary>A projectile reached its living target, at the given point.</summary>
     public event Action<Projectile, Vector3>? ProjectileHit;
 
@@ -71,6 +74,9 @@ public sealed class GameEvents
 
     /// <summary>Raises <see cref="ShotFired"/>.</summary>
     public void RaiseShotFired(Projectile projectile) => ShotFired?.Invoke(projectile);
+
+    /// <summary>Raises <see cref="TowerFired"/>.</summary>
+    public void RaiseTowerFired(TowerShot shot) => TowerFired?.Invoke(shot);
 
     /// <summary>Raises <see cref="ProjectileHit"/>.</summary>
     public void RaiseProjectileHit(Projectile projectile, Vector3 at) => ProjectileHit?.Invoke(projectile, at);

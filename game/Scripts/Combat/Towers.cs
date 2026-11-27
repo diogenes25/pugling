@@ -22,6 +22,9 @@ public sealed class Tower
 
     /// <summary>Its reload timer.</summary>
     public Cooldown Reload { get; } = new();
+
+    /// <summary>Its scene model (for recoil and effects).</summary>
+    public required Node3D Model { get; init; }
 }
 
 /// <summary>A shot a tower just fired.</summary>
@@ -34,19 +37,20 @@ public sealed class Towers
 {
     private readonly List<Tower> _all = [];
 
-    /// <summary>Builds a tower of <paramref name="kind"/> on every spot of the map; each gets the next target.</summary>
-    public Towers(Node3D parent, LevelDef def, MapInfo map, TowerKind kind, Func<TowerTarget?> nextTarget)
+    /// <summary>Builds a tower on every spot of the map, the kinds taken in turn; each gets the next target.</summary>
+    public Towers(Node3D parent, LevelDef def, MapInfo map, TowerKind[] kinds, Func<TowerTarget?> nextTarget)
     {
         for (var i = 0; i < def.TowerSpots.Length; i++)
         {
             var spot = def.TowerSpots[i];
+            var kind = kinds[i % kinds.Length];
             var model = Models.Scenery(kind.Models[i % kind.Models.Length]).Instantiate<Node3D>();
             model.Position = spot.To3();
             model.Scale = Vector3.One * kind.ModelScale;
             parent.AddChild(model);
             parent.AddChild(Fx.Ring(spot.To3(0.06f), kind.Range, new Color(1, 1, 1, 0.13f)));
             map.Obstacles.Add((spot, kind.Footprint));
-            _all.Add(new Tower { Kind = kind, Pos = spot, Target = nextTarget() });
+            _all.Add(new Tower { Kind = kind, Pos = spot, Target = nextTarget(), Model = model });
         }
     }
 

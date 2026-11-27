@@ -263,6 +263,30 @@ game/
   gehören, stehen bei dessen Definition (`TowerKind`, `EnemyKind`, `ProjectileKind`, `LevelDef`).
   Prüfen mit `dotnet test` in `game/Tests`.
 
+### Learning Dad, Sound, Katapult (2026-11-27)
+
+Die drei Erweiterungen nach dem Umbau, jeweils an der vorgesehenen Nahtstelle:
+
+- **Held bleibt der Ritter.**
+  - Ausprobiert wurde Learning Dad als flache Figur in der 3D-Welt, die immer zur Kamera schaut. Die Bilder
+    stammten aus den App-Clips.
+  - Der Vater fand den Ritter besser. Es gab keinen Laufzyklus, und aus der Draufsicht wirkte die Figur flach.
+  - Der Versuch ist darum wieder ausgebaut. Ein eigener, voll animierter 3D-Dad ist als
+    [B-1035](backlog/B-1035-turmspiel-eigener-animierter-dad.md) im Backlog.
+- **Sound** (`Play/GameSounds.cs`) hängt an `GameEvents`.
+  - Schüsse, Knochen und Burg klingen dort, wo sie passieren, und werden vom Kamerastandort aus gehört. Ein
+    Turm außerhalb des Bildes ist deshalb leiser.
+  - Klänge, die zu den Wörtern und zum Spielende gehören, laufen flach in voller Lautstärke.
+  - Derselbe Klang spielt höchstens alle 0,09 s, sonst wird Dauerfeuer zu Lärm.
+  - Die 13 Effekte sind selbst erzeugt (`game/tools/sfx.py`), ohne Download und ohne fremde Lizenz.
+- **Katapult-Turm** (`TowerKind.Catapult`): Er wirft Steinbrocken im Bogen (`ProjectileKind.Arc`, Modell
+  `projectile_catapult`).
+  - Werte: Reichweite 8,5, ein Wurf alle 1,5 s, Schaden 2.
+  - Ein starker Turm wirft „Feuerkugeln“ (Schaden 3, mit Funkenschweif).
+  - Beim Abschuss gibt es Mündungsfeuer, Rauch und einen Rückstoß des Turmmodells (`Fx.Blast`, `Fx.Recoil`,
+    über das Ereignis `TowerFired`).
+  - Die Karten nehmen `TowerKind.Mix` reihum: Bolzenturm, Katapult, Bolzenturm, …
+
 ### Netz & Betrieb
 
 Heute läuft die echte App im Heimnetz (`scripts/heimnetz.ps1`, Port 5200). Für das Handy reicht das im

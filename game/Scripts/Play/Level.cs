@@ -93,12 +93,15 @@ public partial class Level : Node3D
         });
         AddChild(new DirectionalLight3D
         {
-            RotationDegrees = new Vector3(-58, -35, 0), LightEnergy = 1.0f, ShadowEnabled = true,
-            DirectionalShadowMode = DirectionalLight3D.ShadowMode.Orthogonal, DirectionalShadowMaxDistance = 40,
+            RotationDegrees = new Vector3(-58, -35, 0),
+            LightEnergy = 1.0f,
+            ShadowEnabled = true,
+            DirectionalShadowMode = DirectionalLight3D.ShadowMode.Orthogonal,
+            DirectionalShadowMaxDistance = 40,
         });
 
         _map = MapBuilder.Build(_def, this);
-        _towers = new Towers(this, _def, _map, TowerKind.Bolt, _session.NextTarget);
+        _towers = new Towers(this, _def, _map, TowerKind.Mix, _session.NextTarget);
         // The hero's look is the one line to change for another figure (see IHeroLook).
         _hero = new Hero(this, _map, new KnightLook(), _def.PlayerStart);
         _enemies = new Enemies(this, _def);
@@ -120,6 +123,7 @@ public partial class Level : Node3D
         _controls = new LevelControls(ui, () => _ = AssignAsync(), LayDown, TogglePause, () => End(LevelEnd.GaveUp));
 
         LevelFeedback.Attach(Events, this, _controls.Say);
+        AddChild(new GameSounds(Events));
     }
 
     /// <summary>Opens or closes the pause menu (pause button, Android back button).</summary>
@@ -193,7 +197,11 @@ public partial class Level : Node3D
 
     private void ShootTowers(float dt)
     {
-        foreach (var shot in _towers.Shoot(dt, _enemies, _projectiles)) Events.RaiseShotFired(shot.Projectile);
+        foreach (var shot in _towers.Shoot(dt, _enemies, _projectiles))
+        {
+            Events.RaiseShotFired(shot.Projectile);
+            Events.RaiseTowerFired(shot);
+        }
     }
 
     // Plan B: the hero shoots the nearest skeleton in reach by himself; no ammo, so empty towers never end a run alone.

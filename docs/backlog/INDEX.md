@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (74)
+### Offen (75)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -67,6 +67,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-822](B-822-vokabel-tuerme-natives-spiel.md) | Vokabel-Türme: ein natives Tower-Defense-Spiel als eigener Übungsbereich | Wunsch | `gegrillt` | P3 | — | — | — |
 | [B-09](B-09-lehrer-hausaufgaben.md) | Lehrer erteilt Hausaufgaben: zuweisen mit Frist, ohne Betreuungsauftrag | Wunsch | `ausformuliert` | P3 | L | backend | Migration |
 | [B-952](B-952-vokabel-tuerme-buchstaben-modus.md) | Vokabel-Türme: Buchstaben-Modus – Monster lassen Buchstaben fallen, der Turm wird buchstabiert | Wunsch | `ausformuliert` | P3 | — | — | — |
+| [B-1035](B-1035-turmspiel-eigener-animierter-dad.md) | Turmspiel: ein eigener, komplett animierter Learning Dad als Held | Wunsch | `idee` | P3 | — | game | — |
 | [B-221](B-221-level-leiter-fuer-auszeichnungen.md) | Eine Level-Leiter für Auszeichnungen statt einzelner Badges | Wunsch | `idee` | P3 | — | — | — |
 | [B-369](B-369-lesefehler-in-ternaer-form.md) | Lesefehler in Ternär-Form und unter nacktem Namen bieten noch keinen erneuten Versuch | Wunsch | `idee` | P3 | — | frontend | — |
 | [B-587](B-587-einstufungstest-vor-der-vokabel-position.md) | Ein Einstufungstest vor einer Vokabel-Position lässt sicher gewusste Wörter die Einführung überspringen | Wunsch | `idee` | P3 | — | — | — |
