@@ -115,7 +115,7 @@ public sealed record AssignOutcome(
     {
         var lines = new List<string>
         {
-            $"Kind {Request.ChildId}, Plan {Plan.Id} „{Plan.Title}“ ({Plan.StartDate:yyyy-MM-dd} bis {Plan.EndDate:yyyy-MM-dd}"
+            $"Kind {Request.ChildId}, Plan {Plan.Id} „{Plan.Title}“ ({Plan.StartDate:yyyy-MM-dd} bis {(Plan.EndDate is { } end ? end.ToString("yyyy-MM-dd") : "offen")}"
             + (Plan.IsPlayable ? ", spielbar)" : ", nicht spielbar)"),
             "Vorgaben: " + Overrides(),
         };

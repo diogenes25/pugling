@@ -3058,7 +3058,7 @@ namespace Pugling.Api.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("EndDate")
+                    b.Property<DateOnly?>("EndDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SeriesUnitId")

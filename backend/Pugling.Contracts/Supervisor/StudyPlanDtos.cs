@@ -14,14 +14,14 @@ namespace Pugling.Contracts.Supervisor;
 /// <c>null</c> only for a legacy plan or one whose subject was deleted; the next edit must give it one.
 /// </param>
 /// <param name="StartDate">First day of the run.</param>
-/// <param name="EndDate">Last day of the run.</param>
+/// <param name="EndDate">Last day of the run; <c>null</c> = open plan without an exam date (B-735), which runs until today.</param>
 /// <param name="Active">Whether the plan is switched on.</param>
 /// <param name="PositionCount">Number of positions in the plan.</param>
 /// <param name="Description">Free note for the supervisor.</param>
 /// <param name="SeriesUnitId">Optional unit of a textbook series the plan works through; <c>null</c> = none.</param>
 /// <param name="SeriesUnitLabel">Label of that unit, so a list is readable without a second round trip.</param>
 public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
-    DateOnly StartDate, DateOnly EndDate, bool Active, int PositionCount, string? Description,
+    DateOnly StartDate, DateOnly? EndDate, bool Active, int PositionCount, string? Description,
     int? SeriesUnitId = null, string? SeriesUnitLabel = null)
 {
     /// <summary>
@@ -41,7 +41,7 @@ public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
 /// supplies it; a subject that differs from the unit's is rejected (<c>validation_error</c>).
 /// </param>
 /// <param name="StartDate">First day of the run; <c>null</c> = today.</param>
-/// <param name="DurationDays">Length of the run in days; <c>&lt;= 0</c> = 10.</param>
+/// <param name="DurationDays">Length of the run in days; <c>&lt;= 0</c> = 10. Ignored with <paramref name="WithoutEnd"/>.</param>
 /// <param name="Description">Free note for the supervisor.</param>
 /// <param name="Active">
 /// Whether the plan starts out active. <c>true</c> (the default): the new plan becomes the child's playable plan of
@@ -51,8 +51,10 @@ public record PlanResponse(int Id, int ChildId, string Title, int? SubjectId,
 /// unchecked content would start costing penalty coins the same night.
 /// </param>
 /// <param name="SeriesUnitId">Optional unit of a textbook series the plan works through.</param>
+/// <param name="WithoutEnd">Creates an open plan with no end date (B-735): the exam date is not known yet and is added later.
+/// A separate switch, because <c>durationDays &lt;= 0</c> has always meant 10.</param>
 public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly? StartDate, int DurationDays,
-    string? Description = null, bool Active = true, int? SeriesUnitId = null);
+    string? Description = null, bool Active = true, int? SeriesUnitId = null, bool WithoutEnd = false);
 
 /// <summary>
 /// Partial change to the container (PATCH: <c>null</c> = unchanged). <see cref="ChildId"/> reassigns the plan to
@@ -62,7 +64,7 @@ public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly?
 /// <param name="Title">New name.</param>
 /// <param name="SubjectId">New subject; must match the unit's series if the plan has (or gets) a unit.</param>
 /// <param name="StartDate">New first day of the run.</param>
-/// <param name="EndDate">New last day of the run.</param>
+/// <param name="EndDate">New last day of the run. Sent together with <paramref name="ClearEndDate"/>, clearing wins.</param>
 /// <param name="Active">Switches the plan on or off; switching on turns off the active plan of the same subject.</param>
 /// <param name="Description">New free note; empty removes it.</param>
 /// <param name="ChildId">Moves the plan to another of the caller's own children.</param>
@@ -71,8 +73,10 @@ public record CreatePlanDto(int ChildId, string Title, int? SubjectId, DateOnly?
 /// Removes the plan's unit (the subject stays). Needed because <c>null</c> means "not specified". Wins over
 /// <c>seriesUnitId</c> if both arrive together.
 /// </param>
+/// <param name="ClearEndDate">Removes the end date and makes the plan open (B-735). Needed because <c>null</c> means "not specified".</param>
 public record UpdatePlanDto(string? Title, int? SubjectId, DateOnly? StartDate, DateOnly? EndDate, bool? Active,
-    string? Description = null, int? ChildId = null, int? SeriesUnitId = null, bool ClearSeriesUnit = false);
+    string? Description = null, int? ChildId = null, int? SeriesUnitId = null, bool ClearSeriesUnit = false,
+    bool ClearEndDate = false);
 
 /// <summary>A position in the study plan: the referenced exercise together with its own goal, points, stage, and Leitner settings.</summary>
 /// <param name="Id">Id of the position.</param>

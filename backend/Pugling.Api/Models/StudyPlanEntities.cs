@@ -100,7 +100,8 @@ public class StudyPlan
     public int? SeriesUnitId { get; set; }
     public SeriesUnit? SeriesUnit { get; set; }
     public DateOnly StartDate { get; set; }
-    public DateOnly EndDate { get; set; }
+    /// <summary>Last day of the run; <c>null</c> = open (no exam date known yet, B-735): the plan runs until today.</summary>
+    public DateOnly? EndDate { get; set; }
     public bool Active { get; set; } = true;
     /// <summary>
     /// The UTC day the plan was last switched on (B-613): <see cref="StartDate"/> on creation, today on a switch from

@@ -262,7 +262,7 @@ public class PositionPlayService(PuglingDbContext db, ExerciseContentResolver co
     /// point farming (anti-cheating). The supervisor is exempt from this (preview/backfill).
     /// </summary>
     public static bool PlanPlayableForChild(StudyPlan plan, DateOnly today) =>
-        plan.Active && plan.StartDate <= today && today <= plan.EndDate;
+        plan.Active && plan.StartDate <= today && (plan.EndDate is null || today <= plan.EndDate);
 
     /// <summary>
     /// Test stage of the position applicable for a given day: study plan (if set) → position override →

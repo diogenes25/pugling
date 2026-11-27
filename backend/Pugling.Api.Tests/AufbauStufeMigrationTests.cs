@@ -62,7 +62,7 @@ public sealed class AufbauStufeMigrationTests
                 var childId = await LegacyChildRow.InsertAsync(db, "Kind");
                 var item = new ExerciseItem { ExerciseId = exerciseId, OrderIndex = 0, VocabularyId = vocab.Id };
                 var grant = new ExerciseGrant { ExerciseId = exerciseId, CreatorId = adult.Id, Permission = GrantPermission.Owner, GrantedByAdultId = adult.Id };
-                var plan = new StudyPlan { ChildId = childId, Title = "Plan" };
+                var plan = new StudyPlan { ChildId = childId, Title = "Plan", EndDate = new DateOnly(2026, 12, 31) };
                 db.AddRange(item, grant, plan);
                 await db.SaveChangesAsync();
                 var progress = new ItemProgress { ChildId = childId, ItemId = item.Id, ExerciseId = exerciseId, VocabularyId = vocab.Id, Box = 3 };

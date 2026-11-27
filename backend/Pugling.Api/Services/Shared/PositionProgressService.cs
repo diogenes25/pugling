@@ -516,7 +516,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public async Task<ChildDayRollup> ComputeChildDayAsync(int childId, DateOnly day, CancellationToken ct)
     {
         var plans = await db.StudyPlans.AsNoTracking().Include(p => p.Subject)
-            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && p.EndDate >= day)
+            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
             .ToListAsync(ct);
 
@@ -603,7 +603,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         {
             if (!dutyDays.IsDutyDay(day)) continue;
             var states = new List<PlanDutyState>();
-            foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
+            foreach (var plan in plans.Where(p => p.StartDate <= day && (p.EndDate == null || p.EndDate >= day)))
             {
                 if (!positions.TryGetValue(plan.Id, out var list))
                     positions[plan.Id] = list = await LoadPositionsAsync(plan.Id, ct);
@@ -632,7 +632,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         foreach (var plan in plans)
         {
             var positions = await LoadPositionsAsync(plan.Id, ct);
-            for (var d = plan.StartDate; d <= plan.EndDate && d <= until; d = d.AddDays(1))
+            for (var d = plan.StartDate; (plan.EndDate is null || d <= plan.EndDate) && d <= until; d = d.AddDays(1))
             {
                 if (!byDay.TryGetValue(d, out var states)) byDay[d] = states = [];
                 states.Add(await DutyStateAsync(plan, positions, d, ct));
@@ -813,7 +813,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </remarks>
     private static bool PlanDueForPeriod(StudyPlan plan, DateOnly from, DateOnly to) =>
         plan.Active && (plan.ActivatedAt <= plan.StartDate || from >= plan.ActivatedAt)
-        && from <= plan.EndDate && to >= plan.StartDate;
+        && (plan.EndDate is null || from <= plan.EndDate) && to >= plan.StartDate;
 
     /// <summary>
     /// All already <b>closed</b> periods of a cadence within the window [<paramref name="windowStart"/>, today).
@@ -1022,7 +1022,7 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var days = new List<ProgressDay>();
         var dutyDays = await calendar.ForChildAsync(plan.ChildId, ct);
-        for (var d = plan.StartDate; d <= plan.EndDate && d <= until; d = d.AddDays(1))
+        for (var d = plan.StartDate; (plan.EndDate is null || d <= plan.EndDate) && d <= until; d = d.AddDays(1))
         {
             var o = await ComputeDayAsync(plan, d, dutyDays, ct);
             days.Add(new ProgressDay(d, o.DutyDone, o.GoalsTotal, o.GoalsMet, o.PointsAwarded));
@@ -1055,8 +1055,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public async Task<ProgressView> ProgressViewAsync(StudyPlan plan, DateOnly today,
         DateOnly? from, DateOnly? to, bool? dutyDone, string? sort, CancellationToken ct = default)
     {
-        var days = await ProgressAsync(plan, plan.EndDate, ct);
-        var totalDays = plan.EndDate.DayNumber - plan.StartDate.DayNumber + 1;
+        // An open plan (no end date, B-735) is read up to today: its length so far is the days it has run.
+        var runUntil = plan.EndDate ?? today;
+        var days = await ProgressAsync(plan, runUntil, ct);
+        var totalDays = Math.Max(0, runUntil.DayNumber - plan.StartDate.DayNumber + 1);
 
         IEnumerable<ProgressDay> filtered = days;
         if (from is not null) filtered = filtered.Where(d => d.Day >= from);

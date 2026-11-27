@@ -13,6 +13,8 @@ Die Regel „**die Kette wird nur verlängert**" und ihre Begründung stehen im 
 dahinter. `SchemaGuardTests` hält beides mechanisch: kein Modell-Drift (`HasPendingModelChanges`) und die
 Live-Basis `20261110142003_InitialCreate` als erstes Glied (G1b – neu falten ändert ihren Zeitstempel).
 
+- **Eine Spalte nullable machen** (B-735): jede Lesestelle bekommt einen eigenen Fall, gemessen mit einer Mutante, die nur ihren Null-Zweig abschaltet – ein Lese-/Anlege-Paar deckte 8 von 19 Stellen, zehn Mutanten blieben grün. Ältere Migrationstests, die die Entität ohne den Wert anlegen, schreiben nun `NULL` in das alte `NOT NULL`-Schema (rot erst in der vollen Suite).
+
 - Nach `migrations add` muss der `git diff` am `PuglingDbContextModelSnapshot.cs` **genau die beabsichtigte
   Änderung** zeigen, und die neue Migration wird **gelesen**: Umbenennungen erzeugt EF gern als
   Drop+Add (Datenverlust), SQLite-Typwechsel als Tabellen-Neubau. Neue Pflichtspalten brauchen einen Wert für

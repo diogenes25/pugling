@@ -297,7 +297,7 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
         var dutyDays = await calendar.ForChildAsync(childId, ct);
         if (!dutyDays.IsDutyDay(day)) return;
         var plans = await db.StudyPlans.AsNoTracking()
-            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && p.EndDate >= day)
+            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .ToListAsync(ct);
         foreach (var plan in plans)
         {

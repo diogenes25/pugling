@@ -117,6 +117,24 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
             At = day.ToDateTime(new TimeOnly(15, 0), DateTimeKind.Utc),
         });
 
+    /// <summary>
+    /// B-735: the planner reads the positions of an open plan (no end date) like those of a running one. Red when the candidate
+    /// query drops a plan without an end (no tasks).
+    /// </summary>
+    [Fact]
+    public async Task Offener_Plan_liefert_dieselben_Aufgaben()
+    {
+        var s = await SetupAsync(switchOn: false);
+        Write(db =>
+        {
+            foreach (var plan in db.StudyPlans.Where(p => p.ChildId == s.ChildId)) plan.EndDate = null;
+        });
+        await SwitchAsync(s, "Shadow");
+
+        var tasks = (await TodayPlanAsync(s)).GetProperty("tasks").EnumerateArray().ToList();
+        Assert.Equal([s.A, s.B, s.C], tasks.Select(t => t.GetProperty("planPositionId").GetInt32()));
+    }
+
     private static async Task SwitchAsync(Setup s, string mode)
     {
         var res = await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}", new { plannerMode = mode });

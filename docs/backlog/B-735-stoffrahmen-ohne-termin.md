@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, rolle/supervisor, rolle/student]
 aliases: [Stoffrahmen ohne Termin, EndDate optional, Plan ohne Enddatum, Etappe E3 Vorbereitung]
-status: geschaetzt
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -11,6 +11,8 @@ vertragsbruch: ja
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+entgangen_bei: []
+nachgeschaut: ""
 ---
 
 # B-735 · Ein Stoffrahmen ohne Enddatum: `StudyPlan.EndDate` wird optional (B-644, Entscheidung 17)
@@ -144,3 +146,33 @@ darum früher baubar; die Reihenfolge folgt dem Bedarf, nicht einer Sperre.
   im Vorbereitungslauf (Sonnet): Eintrittsbedingung `gegrillt` aus B-644 und B-680 geerbt. Nachgesehen: 29 Fundstellen bestätigt
   (Api 23, Contracts 6), dazu Schleifen und Prozentrechnung am Ende, `DurationDays` als Anlegeweg. L, beides, Migration, brechender
   Vertrag.
+- **2026-11-27** — `geschaetzt` → `abgenommen` (Sprint 196). Der Nutzer bestätigt Entscheidung 17 (PM-Sitzung 2026-11-27). Gebaut:
+  `StudyPlan.EndDate` nullable (Migration `OffenerPlan`, reiner `AlterColumn`, Bestandspläne der Kopie behalten ihr Datum), 19
+  Lesestellen auf „kein Ende = läuft bis heute“, `CreatePlanDto.WithoutEnd`, `UpdatePlanDto.ClearEndDate` (Wert zuerst, dann der
+  Schalter – Löschen gewinnt, wie `PatchSemanticsTests` es verlangt, statt der in der Schätzung erwogenen 400), `Pugling.Client`
+  und Agent-Meldung („offen“), Vater-Web (Haken „Kein Termin (offen)“, Ende leeren, „kein Termin“ statt eines Datums).
+  Tests: `OffenerPlanTests` (13 Fälle), `OffenerPlanMigrationTests`, je ein Fall in `TagesplanerTests` und `TagesauswertungTests`,
+  `PatchSemanticsTests` (neuer Schalter), Vitest `offenerPlan.test.tsx`, E2E `stoffrahmen-ohne-termin`.
+
+  | Stelle (Mutante: Null-Fall ausgeschaltet) | rot am Fall |
+  |---|---|
+  | Planliste Kind/Vater/Student, `IsPlayable` (`StudentPlansController:42`, `StudyPlansController:31,41,60`) | `Offener_Plan_Wird_Von_Vater_Und_Kind_Ohne_Datum_Gelesen` |
+  | Tagessicht `:519`, Spielbarkeit `PositionPlayService:265` | `…Erscheint_Im_Tag…`, `Kind_Darf_Einen_Offenen_Plan_Spielen` |
+  | Abrechnung `PlanDueForPeriod:816`, B-783-Lücke `:261` | `…Rechnet_Die_Malus_Bis_Heute_Ab`, `Wiedereroeffnen_…` |
+  | Fortschritt `:1025`, `:1059` | `…Erscheint_Im_Tag_Und_Zaehlt_Die_Gelaufenen_Tage` |
+  | Serie `:606`, vollständige Tage `:635` | `…Zaehlt_Serie_Und_Vollstaendige_Tage` |
+  | Medienbedarf, Turmspiel (2), Verlaufsübersicht (2), Auswertung, Planer | je ein `Offener_Plan_…`-Fall |
+
+  Gemessen 2026-11-27 08:44 und 09:07 mit `mutant-probe.py` (`Debug`), Stand `a324ffe8 + Arbeitsbaum`: 19 Mutanten; im ersten Lauf
+  waren zehn **grün** (Serie, vollständige Tage, Fortschritts-Tage, Medienbedarf, Turmspiel, Verlauf, Auswertung, Planer – das
+  Anlegen- und Lesetest-Paar deckte sie nicht), danach mit je einem Fall alle 19 rot. Kein Mutant für Create/PATCH-Zeilen
+  (`StudyPlansController:117,237,238`): ihre Fälle prüfen den Wert und sind durch ihre Zusicherungen belegt, nicht gemessen.
+  Volle Suite 2677 von 2678 grün, ein Test rot (`AufbauStufeMigrationTests` legte einen Plan ohne Enddatum an, was im alten
+  Schema NOT NULL verletzt – Test setzt jetzt ein Datum); danach die betroffenen 47 Fälle grün. Vitest 1524 + 4, `tsc -b` grün,
+  E2E `stoffrahmen-ohne-termin`, `zwei-faecher`, `ziel-vier-wochen`, `lerntage-und-pause` 4 passed.
+  Reviews: `pugling-reviewer` keine übersehene Lesestelle, ein Vertragstext war veraltet (nach dem Lauf neu erzeugt),
+  `TotalDays`-Doku ergänzt; `frontend-reviewer` kein Blocker, drei Hinweise nicht gebaut (Ende-Feld ohne Hinweis „leeren = offen“,
+  `formatDateRange` fängt auch den leeren Text, Kommentare großzügiger als die Zusicherung).
+  **Rollengang** an einer frischen Kopie der echten DB (Migration beim Start eingespielt): alle 15 Bestandspläne mit ihrem Datum;
+  Plan 19 (Friedrich) Termin geleert → `endDate: null`, spielbar; Termin gesetzt → `2026-12-20`; Friedrichs Tag lädt (44
+  Positionen, 8 Ziele), Übersicht 200. Offen für den Nutzer: nichts am Gerät – kein Klang, keine Haptik.

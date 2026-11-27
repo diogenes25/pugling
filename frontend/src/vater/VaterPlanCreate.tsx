@@ -37,6 +37,8 @@ export function VaterPlanCreate() {
   // stets das *erste* Kind – wer für Kind 2 einen Plan anlegte, baute ihn stillschweigend für Kind 1.
   const [childId, setChildId] = useState<number | "">(Number(params.get("childId")) || "");
   const [durationDays, setDurationDays] = useState(10);
+  // B-735: der Klausurtermin steht oft noch nicht fest – dann bleibt der Plan offen und der Termin kommt später.
+  const [ohneTermin, setOhneTermin] = useState(false);
   const [startDate, setStartDate] = useState(todayIso());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,7 +56,7 @@ export function VaterPlanCreate() {
     if (subjectId === "") return;
     setBusy(true);
     const dto: CreatePlanDto = {
-      childId: Number(childId), title: title.trim(), description: description.trim() || null, durationDays, startDate,
+      childId: Number(childId), title: title.trim(), description: description.trim() || null, durationDays, startDate, withoutEnd: ohneTermin,
       subjectId, seriesUnitId: seriesUnitId === "" ? null : seriesUnitId,
     };
     try {
@@ -98,7 +100,8 @@ export function VaterPlanCreate() {
             <PlanUnitSelect id="plan-unit" subjectId={subjectId} value={seriesUnitId} onChange={setSeriesUnitId} />
           </div>
           <div className="field"><label htmlFor="plan-start">Start</label><input id="plan-start" title="Startdatum" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-          <div className="field"><FieldLabel htmlFor="plan-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+          <div className="field"><FieldLabel htmlFor="plan-duration" topic="planDuration">Dauer (Tage)</FieldLabel><input id="plan-duration" title="Dauer in Tagen" type="number" min={1} value={durationDays} disabled={ohneTermin} onChange={(e) => setDurationDays(Number(e.target.value))} /></div>
+          <div className="field"><label htmlFor="plan-open"><input id="plan-open" type="checkbox" checked={ohneTermin} onChange={(e) => setOhneTermin(e.target.checked)} /> Kein Termin (offen)</label></div>
         </div>
         <div className="field" style={{ marginTop: 10 }}>
           <label htmlFor="plan-description">Beschreibung <span className="muted">(optional)</span></label>

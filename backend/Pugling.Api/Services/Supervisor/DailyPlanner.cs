@@ -143,7 +143,7 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
     {
         var lastLearningDay = LastDutyDayBefore(day, dutyDays);
         var plans = await db.StudyPlans.AsNoTracking()
-            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && p.EndDate >= day)
+            .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
             .ToListAsync(ct);
         var candidates = new List<PlannerCandidate>();

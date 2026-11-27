@@ -203,6 +203,21 @@ public class TagesauswertungTests : IClassFixture<LerntageWebAppFactory>
         string.Join(",", kinds.EnumerateObject().OrderBy(k => k.Name, StringComparer.Ordinal)
             .Select(k => $"{k.Name}:{k.Value.GetInt32()}"));
 
+    /// <summary>
+    /// B-735: an open plan (no end date) is evaluated like a running one - the same rows and duties. Red when the duty query
+    /// drops a plan without an end (no duty, no Thursday miss).
+    /// </summary>
+    [Fact]
+    public async Task Offener_Plan_wird_wie_ein_laufender_ausgewertet()
+    {
+        var s = await SetupAsync();
+        Write(db => db.StudyPlans.Single(p => p.Id == s.PlanId).EndDate = null);
+        var days = ByDay(await OkJsonAsync(await s.Father.GetAsync(s.Url)));
+
+        Assert.Equal((0, 0, 0, 0, 0, 0, "", 0, 1, false), Figures(days[Thursday]));
+        Assert.Equal((1, 1, 1, 2, 4, 300, "Accent:1,Typo:1", 1, 0, false), Figures(days[Friday]));
+    }
+
     private static Dictionary<DateOnly, JsonElement> ByDay(JsonElement list) =>
         list.EnumerateArray().ToDictionary(r => DateOnly.Parse(r.GetProperty("day").GetString()!));
 

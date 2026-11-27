@@ -92,7 +92,9 @@ export function formatDateTime(value: string): string {
 }
 
 /** Ein Zeitraum als „08.11.2026 – 21.11.2026". */
-export function formatDateRange(from: string, to: string): string {
+export function formatDateRange(from: string, to: string | null | undefined): string {
+  // Ein offener Plan (B-735) hat keinen Termin – nie ein Platzhalterdatum zeigen.
+  if (!to) return `${formatDate(from)} – kein Termin`;
   return `${formatDate(from)} – ${formatDate(to)}`;
 }
 

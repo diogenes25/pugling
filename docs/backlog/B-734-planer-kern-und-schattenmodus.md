@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-644
 grund: ""
 ersetzt_durch: []
+nachgeschaut: 2026-11-27
 ---
 
 # B-734 · Der Planer erzeugt täglich einen eingefrorenen Tagesplan, im Schattenmodus ohne Wirkung (B-644, Etappe E2)

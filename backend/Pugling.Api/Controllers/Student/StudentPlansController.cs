@@ -39,7 +39,7 @@ public class StudentPlansController(PuglingDbContext db, LearningDay learningDay
 
         var today = learningDay.Today;
         return Ok(await db.StudyPlans.AsNoTracking()
-            .Where(p => p.ChildId == cid.Value && p.Active && p.StartDate <= today && p.EndDate >= today)
+            .Where(p => p.ChildId == cid.Value && p.Active && p.StartDate <= today && (p.EndDate == null || p.EndDate >= today))
             .OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id)
             .Select(StudyPlansController.ToResponse(today))
             .ToOptionallyPagedListAsync(Response, skip, take, ct));

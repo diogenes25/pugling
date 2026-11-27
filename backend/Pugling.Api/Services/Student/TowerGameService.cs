@@ -54,7 +54,7 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         var today = learningDay.Today;
         var rows = await db.PlanPositions.AsNoTracking()
             .Where(p => p.StudyPlan!.ChildId == childId && p.StudyPlan.Active
-                && p.StudyPlan.StartDate <= today && today <= p.StudyPlan.EndDate)
+                && p.StudyPlan.StartDate <= today && (p.StudyPlan.EndDate == null || today <= p.StudyPlan.EndDate))
             .Select(p => new
             {
                 p.Id,
@@ -287,7 +287,7 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         var today = learningDay.Today;
         return await db.PlanPositions.AsNoTracking().AnyAsync(p => p.Id == planPositionId
             && p.StudyPlan!.ChildId == childId && p.StudyPlan.Active
-            && p.StudyPlan.StartDate <= today && today <= p.StudyPlan.EndDate, ct);
+            && p.StudyPlan.StartDate <= today && (p.StudyPlan.EndDate == null || today <= p.StudyPlan.EndDate), ct);
     }
 
     private async Task<List<Word>> WordsAsync(int planPositionId, CancellationToken ct)

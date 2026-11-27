@@ -36655,7 +36655,7 @@
               "integer",
               "string"
             ],
-            "description": "Length of the run in days; \u0060\u0026lt;= 0\u0060 = 10.",
+            "description": "Length of the run in days; \u0060\u0026lt;= 0\u0060 = 10. Ignored with WithoutEnd.",
             "format": "int32"
           },
           "description": {
@@ -36679,6 +36679,11 @@
             ],
             "description": "Optional unit of a textbook series the plan works through.",
             "format": "int32"
+          },
+          "withoutEnd": {
+            "type": "boolean",
+            "description": "Creates an open plan with no end date (B-735): the exam date is not known yet and is added later.\nA separate switch, because \u0060durationDays \u0026lt;= 0\u0060 has always meant 10.",
+            "default": false
           }
         },
         "description": "Input for creating an empty study plan container."
@@ -48816,7 +48821,6 @@
           "active",
           "currentStreak",
           "dailyBox",
-          "endDate",
           "planId",
           "startDate",
           "title",
@@ -48840,7 +48844,10 @@
             "format": "date"
           },
           "endDate": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date"
           },
           "active": {
@@ -48893,7 +48900,6 @@
         "required": [
           "active",
           "childId",
-          "endDate",
           "id",
           "isPlayable",
           "positionCount",
@@ -48940,8 +48946,11 @@
             "format": "date"
           },
           "endDate": {
-            "type": "string",
-            "description": "Last day of the run.",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Last day of the run; \u0060null\u0060 = open plan without an exam date (B-735), which runs until today.",
             "format": "date"
           },
           "active": {
@@ -50707,7 +50716,6 @@
           "currentStreak",
           "days",
           "daysComplete",
-          "endDate",
           "planId",
           "startDate",
           "totalDays",
@@ -50728,7 +50736,10 @@
             "format": "date"
           },
           "endDate": {
-            "type": "string",
+            "type": [
+              "null",
+              "string"
+            ],
             "format": "date"
           },
           "daysComplete": {
@@ -50770,7 +50781,7 @@
             }
           }
         },
-        "description": "Day-by-day progress over the entire run (completed days, goals reached, points)."
+        "description": "Day-by-day progress over the entire run (completed days, goals reached, points). An open plan (\u0060EndDate\u0060\u0060null\u0060, B-735) is read up to today, so \u0060TotalDays\u0060 counts the days run so far and grows each day."
       },
       "PublisherResponse": {
         "required": [
@@ -55455,7 +55466,7 @@
               "null",
               "string"
             ],
-            "description": "New last day of the run.",
+            "description": "New last day of the run. Sent together with ClearEndDate, clearing wins.",
             "format": "date"
           },
           "active": {
@@ -55495,6 +55506,11 @@
           "clearSeriesUnit": {
             "type": "boolean",
             "description": "Removes the plan\u0027s unit (the subject stays). Needed because \u0060null\u0060 means \u0022not specified\u0022. Wins over\n\u0060seriesUnitId\u0060 if both arrive together.",
+            "default": false
+          },
+          "clearEndDate": {
+            "type": "boolean",
+            "description": "Removes the end date and makes the plan open (B-735). Needed because \u0060null\u0060 means \u0022not specified\u0022.",
             "default": false
           }
         },

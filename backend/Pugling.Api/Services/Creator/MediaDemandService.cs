@@ -45,7 +45,7 @@ public class MediaDemandService(PuglingDbContext db, LearningDay learningDay)
         // The same rule as PositionPlayService.PlanPlayableForChild: only what the child can play today needs images now.
         var exerciseIds = db.PlanPositions
             .Where(p => p.StudyPlan!.ChildId == childId && p.StudyPlan.Active
-                && p.StudyPlan.StartDate <= today && today <= p.StudyPlan.EndDate)
+                && p.StudyPlan.StartDate <= today && (p.StudyPlan.EndDate == null || today <= p.StudyPlan.EndDate))
             .Select(p => p.ExerciseId);
         var vocabularyIds = await db.ExerciseItems.AsNoTracking()
             .Where(i => exerciseIds.Contains(i.ExerciseId))

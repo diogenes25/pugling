@@ -138,7 +138,7 @@ export function PlanEditForm({ plan, childName, busy, onSave }: {
   const subjects = useAsync<SubjectResponse[]>(() => api.subjects(), []);
   const [form, setForm] = useState({
     title: plan.title, description: plan.description ?? "",
-    startDate: plan.startDate, endDate: plan.endDate, childId: plan.childId,
+    startDate: plan.startDate, endDate: plan.endDate ?? "", childId: plan.childId,
     subjectId: (plan.subjectId ?? "") as number | "", seriesUnitId: (plan.seriesUnitId ?? "") as number | "",
   });
 
@@ -157,7 +157,11 @@ export function PlanEditForm({ plan, childName, busy, onSave }: {
     // Geändert → mitschicken, auch leer: `""` leert am Server, `null` hieße beim PATCH „unverändert" (B-791).
     if ((form.description ?? "") !== (plan.description ?? "")) dto.description = form.description.trim();
     if (form.startDate && form.startDate !== plan.startDate) dto.startDate = form.startDate;
-    if (form.endDate && form.endDate !== plan.endDate) dto.endDate = form.endDate;
+    // Gesetzt schickt den Termin, geleert braucht den Schalter – `null` hieße „nicht angegeben“ (B-735).
+    if (form.endDate !== (plan.endDate ?? "")) {
+      if (form.endDate === "") dto.clearEndDate = true;
+      else dto.endDate = form.endDate;
+    }
     if (form.childId !== plan.childId) dto.childId = form.childId;
     onSave(dto);
   }

@@ -6,7 +6,7 @@ namespace Pugling.Contracts.Student;
 // plus the cross-plan vocabulary progress (per item, per word, with answer history).
 
 /// <summary>Daily mission: the plan overview plus today's rollup over its positions.</summary>
-public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, DateOnly EndDate, bool Active,
+public record OverviewResponse(int PlanId, string Title, DateOnly StartDate, DateOnly? EndDate, bool Active,
     int CurrentStreak, DayOverview Today, DailyBoxStatus DailyBox);
 
 /// <summary>
@@ -33,8 +33,8 @@ public record TodayResponse(int ChildId, DateOnly Day, bool DutyDone, int GoalsT
     IReadOnlyList<string> Outstanding, bool RewardsUnlocked, int CurrentStreak, IReadOnlyList<PositionStatus> Positions,
     DailyBoxStatus DailyBox, int RewardGoalsTotal, int RewardGoalsMet, GoalCadence RewardCadence);
 
-/// <summary>Day-by-day progress over the entire run (completed days, goals reached, points).</summary>
-public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly EndDate, int DaysComplete,
+/// <summary>Day-by-day progress over the entire run (completed days, goals reached, points). An open plan (<c>EndDate</c> <c>null</c>, B-735) is read up to today, so <c>TotalDays</c> counts the days run so far and grows each day.</summary>
+public record ProgressResponse(int PlanId, DateOnly StartDate, DateOnly? EndDate, int DaysComplete,
     int TotalDays, int TotalPoints, int CurrentStreak, IReadOnlyList<ProgressDay> Days);
 
 /// <summary>Learning progress of a child on an item (front/back from the store, canonically word → translation).</summary>

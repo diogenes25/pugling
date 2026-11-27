@@ -93,7 +93,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             // weeks before it. A plan off on a day (off now, or switched on only later - B-613) counts in the child's favour.
             // The subject rides along: the day rollup would otherwise look it up once per day (B-614).
             var plans = await db.StudyPlans.AsNoTracking().Include(p => p.Subject)
-                .Where(p => p.ChildId == child.Id && p.StartDate <= to && p.EndDate >= from)
+                .Where(p => p.ChildId == child.Id && p.StartDate <= to && (p.EndDate == null || p.EndDate >= from))
                 .ToListAsync(ct);
             // Earned coins come from the ledger and belong to the child's day, whatever became of its plans (B-954).
             var coinsByDay = await wallet.EarnedCoinsByDayAsync(child.Id, from, to, ct);
@@ -103,7 +103,7 @@ public class ChildrenDashboardService(PuglingDbContext db, PositionProgressServi
             {
                 int goalsTotal = 0, goalsMet = 0;
                 var duties = new List<PositionProgressService.PlanDutyState>();
-                foreach (var plan in plans.Where(p => p.StartDate <= day && p.EndDate >= day))
+                foreach (var plan in plans.Where(p => p.StartDate <= day && (p.EndDate == null || p.EndDate >= day)))
                 {
                     var d = await progress.ComputeDayAsync(plan, day, dutyDays, ct);
                     goalsMet += d.GoalsMet;

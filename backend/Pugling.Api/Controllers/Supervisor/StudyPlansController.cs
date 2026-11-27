@@ -28,7 +28,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
         new(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, positionCount, p.Description,
             p.SeriesUnitId, unitLabel)
         {
-            IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
+            IsPlayable = p.Active && p.StartDate <= today && (p.EndDate == null || p.EndDate >= today),
         };
 
     /// <summary>DB projection incl. position count: EF translates <c>p.Positions.Count</c> into a COUNT subquery,
@@ -38,7 +38,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
         p => new PlanResponse(p.Id, p.ChildId, p.Title, p.SubjectId, p.StartDate, p.EndDate, p.Active, p.Positions.Count, p.Description,
             p.SeriesUnitId, p.SeriesUnit == null ? null : p.SeriesUnit.Label)
         {
-            IsPlayable = p.Active && p.StartDate <= today && p.EndDate >= today,
+            IsPlayable = p.Active && p.StartDate <= today && (p.EndDate == null || p.EndDate >= today),
         };
 
     /// <summary>List study plans. Child sees only its own, father only those of his children.</summary>
@@ -57,7 +57,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
         {
             // The child only sees its playable plans (active + within their runtime, at most one per subject);
             // inactive/expired ones stay hidden so it cannot pick an easy plan to farm points.
-            scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && p.EndDate >= today);
+            scoped = scoped.Where(p => p.ChildId == User.ChildId() && p.Active && p.StartDate <= today && (p.EndDate == null || p.EndDate >= today));
         }
         else
         {
@@ -113,7 +113,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
             SubjectId = subjectId,
             SeriesUnitId = unit?.Id,
             StartDate = start,
-            EndDate = start.AddDays(duration - 1),
+            // B-735: an open plan has no end; the exam date is added later.
+            EndDate = dto.WithoutEnd ? null : start.AddDays(duration - 1),
             Active = dto.Active,
             // B-613: a plan counts as switched on since its start - a backdated plan keeps its past rounds (the positions
             // carry their own lower bound), and a plan created inactive gets today once it is switched on.
@@ -234,6 +235,7 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
         plan.SeriesUnitId = unit?.Id;
         if (dto.StartDate is not null) plan.StartDate = dto.StartDate.Value;
         if (dto.EndDate is not null) plan.EndDate = dto.EndDate.Value;
+        if (dto.ClearEndDate) plan.EndDate = null;
         var today = learningDay.Today;
         // B-613: only the switch from off to on moves the date; a repeated "active: true" must not shift it.
         if (dto.Active == true && !plan.Active) plan.ActivatedAt = today;
@@ -255,7 +257,8 @@ public class StudyPlansController(PuglingDbContext db, AuthAccess access, Learni
         // B-783: an expired plan extended later was not playable between its old end and today. Like a switch back on,
         // it then counts from today; an end of yesterday leaves no such gap and changes nothing. An end first moved into the
         // past and then extended again frees the days in between as well - only in the child's favour, and only by the father.
-        if (plan.Active && plan.EndDate > oldEnd && oldEnd.AddDays(1) < today)
+        // An open end (B-735) extends the run without limit, so reopening an expired plan frees its gap the same way.
+        if (plan.Active && oldEnd is { } expiredOn && (plan.EndDate is null || plan.EndDate > expiredOn) && expiredOn.AddDays(1) < today)
             plan.ActivatedAt = today;
         await db.SaveChangesAsync(ct);
         // After activating, moving to another child or changing the subject, restore "one active plan per subject".

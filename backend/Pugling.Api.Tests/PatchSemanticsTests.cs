@@ -295,7 +295,7 @@ public class PatchSemanticsTests(PuglingWebAppFactory factory) : IClassFixture<P
             var id = await TestApi.IdAsync(await c.PostAsJsonAsync("/api/v1/supervisor/study-plans",
                 new { childId, title = "Plan", seriesUnitId, durationDays = 5 }));
             return new Ziel(c, $"/api/v1/supervisor/study-plans/{id}");
-        }, [new("clearSeriesUnit", "seriesUnitId")]),
+        }, [new("clearSeriesUnit", "seriesUnitId"), new("clearEndDate", "endDate")]),
 
         new(typeof(UpdatePositionDto), "stage", 3, async f =>
         {
