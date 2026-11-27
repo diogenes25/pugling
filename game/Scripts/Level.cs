@@ -104,7 +104,7 @@ public partial class Level : Node3D
     private TowerToken? _carried;
     private int _correct, _total, _lives = BaseLives, _spawned;
     private float _spawnTimer = 2f, _elapsed, _clock, _heroCooldown;
-    private int _heroShots;
+    private int _heroShots, _heroKills;
     private bool _busy, _over, _beating, _paused;
     private double _sinceBeat;
 
@@ -140,9 +140,16 @@ public partial class Level : Node3D
         _heroPos = def.PlayerStart;
     }
 
+    /// <summary>
+    /// One line in the game log with the local time. project.godot turns on file logging, so the lines survive in
+    /// user://logs on the phone - its logcat buffer is overwritten within minutes.
+    /// </summary>
+    private static void Log(string line) => GD.Print($"TURM {Time.GetTimeStringFromSystem()} {line}");
+
     /// <inheritdoc />
     public override void _Ready()
     {
+        Log($"start Lauf {_run.RunId} Karte {_def.Name}, Ziel {_run.Goal}");
         AddChild(new WorldEnvironment
         {
             Environment = new Godot.Environment
@@ -270,6 +277,7 @@ public partial class Level : Node3D
         if (_over) return;
         _paused = !_paused;
         _pauseMenu.Visible = _paused;
+        Log(_paused ? "pause" : "weiter");
         _stickFinger = -1;
         _stickVector = Vector2.Zero;
     }
@@ -493,7 +501,9 @@ public partial class Level : Node3D
             _bolts.RemoveAt(i);
             if (!alive) continue;
             Burst(dest, new Color(1f, 0.95f, 0.8f), 10, 0.4f);
-            if ((bolt.Target.Hp -= bolt.Damage) <= 0) Defeat(bolt.Target);
+            if ((bolt.Target.Hp -= bolt.Damage) > 0) continue;
+            if (bolt.Node.MaterialOverride == HeroBoltMaterial) _heroKills++;
+            Defeat(bolt.Target);
         }
     }
 
@@ -592,6 +602,7 @@ public partial class Level : Node3D
     {
         if (_over || _busy || _carried is null) return;
         DropToken(_carried, FreeSpot(_heroPos), placed: true);
+        Log($"abgelegt '{_carried.Word}'");
         _carried = null;
         _carriedBook.Visible = false;
         _actionTime = 0.4f;
@@ -646,7 +657,7 @@ public partial class Level : Node3D
             _total++;
             _carried = null;
             _carriedBook.Visible = false;
-            GD.Print($"TURM assign '{token.Word}' -> '{target.Prompt}': {(result.Correct ? "richtig" : "falsch, erwartet " + result.Expected)}");
+            Log($"assign '{token.Word}' -> '{target.Prompt}': {(result.Correct ? "richtig" : "falsch, erwartet " + result.Expected)}");
             if (result.Correct)
             {
                 _correct++;
@@ -745,7 +756,7 @@ public partial class Level : Node3D
         _dropButton.Visible = false;
         foreach (var child in _pickPanel.GetChildren()) child.QueueFree();
         Models.Play(_heroAnim, false, _correct >= _run.Goal ? "Cheer" : "Death_A");
-        GD.Print($"TURM ende {reason} {_correct}/{_total}, Heldenschüsse {_heroShots}");
+        Log($"ende {reason} {_correct}/{_total} richtig, {_elapsed:0}s, Burg {_lives}/{BaseLives}, Heldenschüsse {_heroShots}, Heldentreffer {_heroKills}");
         // A short moment to see the hero cheer (or fall) before the result screen.
         GetTree().CreateTimer(reason == LevelEnd.GaveUp ? 0.3 : 1.6).Timeout += () => Finished?.Invoke(_run.RunId, _correct, _total, reason);
     }
