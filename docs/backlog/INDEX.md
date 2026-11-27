@@ -12,19 +12,23 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (75)
+### Offen (79)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) | Umschalten zwischen Schatten und scharf: was gilt am Umschalttag und für die angebrochene Woche? | Frage | `idee` | P1 | — | backend | — |
+| [B-1036](B-1036-pflicht-quelle-tagesaufgabe.md) | Im scharfen Modus kommt die Pflicht des Tages aus den Tagesaufgaben (Quellenumschaltung) | Wunsch | `in-arbeit` | P1 | M | beides | — |
+| [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md) | Malus je verpasster Tagesaufgabe und Rückstand am nächsten Lerntag | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
+| [B-1038](B-1038-dosis-aus-der-tagesaufgabe.md) | Im scharfen Modus nennt die Tagesaufgabe die Zahl der neuen Wörter | Wunsch | `geschaetzt` | P1 | S | backend | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
 | [B-622](B-622-stundenplan-pflicht-vater-web-und-sohn-app.md) | Die Stundenplan-Pflicht im Vater-Web einstellen und in der Sohn-App begründen | Wunsch | `geschaetzt` | P1 | M | frontend | — |
 | [B-630](B-630-rueckmeldung-im-ki-creator.md) | Der KI-Creator berücksichtigt die Rückmeldungen beim Erstellen neuer Übungen | Wunsch | `geschaetzt` | P1 | M | backend | — |
 | [B-703](B-703-ki-creator-erzeugt-vorstufen.md) | Der KI-Creator erzeugt zu einer Ziel-Übung leichtere Vorstufen | Wunsch | `geschaetzt` | P1 | M | backend | — |
-| [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) | Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a) | Wunsch | `geschaetzt` | P1 | L | backend | Migration |
 | [B-737](B-737-reset-zum-stichtag.md) | Stichtag: Reset von Lernstand und Plänen und Umschalten auf den scharfen Planer (B-644, Etappe E3b) | Wunsch | `geschaetzt` | P1 | M | beides | — |
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
+| [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md) | Zwei Positionen derselben Übung zählen ihre Wörter im Termin-Druck doppelt | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -762,9 +766,9 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-745](B-745-klausurnote-wirkt-auf-die-notenstufe.md) | Die eingetragene Klausurnote hebt oder senkt die Notenstufe | `geschaetzt` | Nutzer-Entscheidung: Anker gegen den Tageslauf (Migration?), Kommanote → Stufe, ClearGrade |
 | [B-761](B-761-hausaufgaben-foto-ablage-mit-anmeldung-und-loeschfrist.md) | Hausaufgaben-Foto: authentifizierte Ablage, Upload des Kindes und Löschfrist (Backend) | `geschaetzt` | Ablageweg der Foto-Dateien (Entscheidung mit B-684, steht aus) |
 
-### Nach der Abnahme entgangen (229)
+### Nach der Abnahme entgangen (230)
 
-**Nachgeschaut: 594 von 644 abgenommenen** — und in 200 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 50 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 595 von 644 abgenommenen** — und in 201 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -772,6 +776,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text | [B-593] | `abgenommen` |
 | [B-1027](B-1027-rueckmeldung-zeigt-spaetere-antwort.md) | Der Rückmeldungs-Eingang zeigt eine Antwort, die das Kind erst nach der Meldung gegeben hat | [B-628] | `abgenommen` |
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | Zwei Meldungen zu zwei verschiedenen Übungsantworten verschmelzen zu einer | [B-767] | `idee` |
+| [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md) | Zwei Positionen derselben Übung zählen ihre Wörter im Termin-Druck doppelt | [B-680] | `idee` |
 | [B-110](B-110-kaufverlauf-ueberspringt-zeilen.md) | Der Kaufverlauf überspringt Zeilen und verpasst den eigenen Kauf | [B-99] | `abgenommen` |
 | [B-111](B-111-verlauf-luegt-im-fehlerfall.md) | Scheitert das Laden des Verlaufs, sagt die App „Noch nichts gekauft" | [B-99] | `abgenommen` |
 | [B-114](B-114-showboth-position-unspielbar.md) | Eine Kennenlern-Position hatte für das Kind keinen einzigen Knopf — und kostete Münzen | [B-96] | `abgenommen` |
@@ -999,7 +1004,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (50) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (49) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1039,7 +1044,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-652](B-652-abschlussbonus-feld-nachschliff.md) | Das Abschlussbonus-Feld und die beendete Nacharbeit glätten |
 | [B-657](B-657-kuer-uebungen-zahlen-muenzen.md) | Jede Übung gibt Münzen – auch die Zusatzübungen ohne Pflicht |
 | [B-658](B-658-positionstest-abgabe-500-unique.md) | Positions-Test abgeben scheitert mit 500 (UNIQUE PositionItemProgress) |
-| [B-680](B-680-taeglicher-lehrplan-je-fach-just-in-time.md) | Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand |
 | [B-686](B-686-direkt-starten-ohne-kenn-ich-frage.md) | Eine Übung startet mit dem Tipp auf den Knoten, und die Lernkarte fragt nicht mehr „Kanntest du das Wort schon?“ |
 | [B-700](B-700-aufbau-stufe-am-katalog.md) | Katalog: eine Übung kennt ihre Aufbau-Stufe und ihre Ziel-Übung |
 | [B-702](B-702-abstieg-und-pflichtziel-der-aufbau-stufe.md) | Gestufte Position: Abstieg ohne Malus und Pflichtziel auf der aktuellen Stufe |
@@ -1079,6 +1083,9 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1032](B-1032-muenzen-tagessumme-in-der-arcade.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | `verworfen` | Abschnitt „Verlauf" |
 | [B-1034](B-1034-klassenarbeit-ohne-uebungen-und-der-planer.md) | `verworfen` | Abschnitt „Verlauf" |
+| [B-1038](B-1038-dosis-aus-der-tagesaufgabe.md) | `geschaetzt` | Abschnitt „User Story" |
+| [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) | `idee` | `unverifiziert: true` |
+| [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md) | `idee` | `unverifiziert: true` |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
@@ -1252,7 +1259,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (66)</summary>
+<summary>Verworfen (67)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1315,6 +1322,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-687](B-687-hausaufgabe-mit-foto-nachweis.md) | Hausaufgabe als Pflicht mit Foto-Nachweis: der Sohn fotografiert sein Heft, der Vater nimmt ab | geteilt, zu groß für eine Stufe (faktisch XL) → [B-760, B-761, B-762, B-763] |
 | [B-701](B-701-position-spielt-die-aufbau-stufe.md) | Eine Position spielt ihre aktuelle Aufbau-Stufe und steigt nach dem bestandenen Test auf | geteilt → [B-848, B-849] |
 | [B-704](B-704-aufbau-weg-in-der-oberflaeche.md) | Oberfläche: Vorstufen im Übungseditor, Ziel-Level im Positionsformular, Stufenband beim Kind | geteilt → [B-840, B-841] |
+| [B-736](B-736-pflicht-aus-der-tagesaufgabe.md) | Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a) | geteilt → [B-1036, B-1037, B-1038] |
 | [B-780](B-780-muenzen-je-uebung-nachmessen.md) | Die Söhne finden, es gibt zu wenig Münzen: Verhältnis Übung zu Münzen nachmessen | Beantwortet (Vater, 2026-11-26): die Menge bleibt – gemessen großzügig; der Hebel ist das Gefühl → B-1032. Theodors Truhe ist kein Defekt: an der Kopie zwei Truhen (21. und 22.11.), keine an Tagen mit offener Latein-Pflicht – die Regel alle Tagespflichten. → [B-1032] |
 | [B-85](B-85-i18n-infrastruktur-sohn-arcade-englisch.md) | i18n-Infrastruktur + Sohn-Arcade auf Englisch (erste Teilstufe der Mehrsprachigkeit) | geteilt (NP-11 Schritt 0, Lauf E Teil 8): Infrastruktur + Startbildschirm → B-294, Rest des Korpus → B-295 → [B-294, B-295] |
 | [B-86](B-86-uebungstyp-manifest-anzeigenamen-schluessel.md) | Das Übungstyp-Manifest liefert Anzeigenamen als Daten, nicht als Schlüssel | gegenstandslos im Backend – das Manifest trägt mit `type` (= IExerciseType.Key, ExerciseTypeManifest.cs:33,43) bereits einen stabilen, sprachneutralen Schlüssel; `Label` ist der deutsche Anzeigename daneben. Der Rest – eine Frontend-Übersetzungstabelle mit `type` als Schlüssel – gehört in B-85 |

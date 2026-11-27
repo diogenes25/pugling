@@ -111,6 +111,27 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     public bool IsObligationOn(PlanPosition pos, DateOnly day) => HasDutyOn(pos, day) && day >= DutyBegins(pos);
 
     /// <summary>
+    /// The cadence of the position's duty on <paramref name="day"/> - the one question "is this the day's duty, and by which
+    /// period is it met?" for the day view, the streak and the timeline (B-1036). On a day judged by the day planner's tasks
+    /// (<see cref="ChildDutyDays.TaskPositionsOn"/>) the position owes a daily duty exactly when the day's plan holds a task
+    /// for it, whatever its own cadence: the old model falls away (B-736, decision 5). Otherwise its own duty
+    /// (<see cref="IsObligationOn"/>). <see cref="GoalCadence.None"/> = no duty that day.
+    /// </summary>
+    public GoalCadence CadenceOn(PlanPosition pos, DateOnly day, ChildDutyDays dutyDays) =>
+        dutyDays.TaskPositionsOn(day) is { } tasks ? TaskCadence(pos, day, tasks)
+        : IsObligationOn(pos, day) ? DutyCadenceOn(pos, day)
+        : GoalCadence.None;
+
+    /// <summary>
+    /// A task is met on its day (B-1036): a weekly goal must not count a round from earlier in the week. A remediation keeps its
+    /// own day rule (one round through the open tasks), which is a day as well.
+    /// </summary>
+    private static GoalCadence TaskCadence(PlanPosition pos, DateOnly day, IReadOnlySet<int> tasks) =>
+        !tasks.Contains(pos.Id) ? GoalCadence.None
+        : DutyCadenceOn(pos, day) == GoalCadence.UntilDone ? GoalCadence.UntilDone
+        : GoalCadence.Daily;
+
+    /// <summary>
     /// Was the plan switched on on <paramref name="day"/> (B-613)? Active now and the day not before its last switch-on
     /// (<see cref="StudyPlan.ActivatedAt"/>): on an earlier day the child could not play it, so it counts like an
     /// inactive plan - only in the child's favour.
@@ -228,9 +249,17 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// evaluated day carries a real stage keeps requiring the test.
     /// </para>
     /// </summary>
-    public async Task<bool> IsGoalMetAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct = default)
+    public Task<bool> IsGoalMetAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct = default) =>
+        IsGoalMetInAsync(pos, plan, day, DutyCadenceOn(pos, day), ct);
+
+    /// <summary>
+    /// <see cref="IsGoalMetAsync(PlanPosition, StudyPlan, DateOnly, CancellationToken)"/> in the period of
+    /// <paramref name="cadence"/> - the cadence <see cref="CadenceOn"/> gave for that day, which on a day judged by tasks is not
+    /// the position's own (B-1036).
+    /// </summary>
+    private async Task<bool> IsGoalMetInAsync(PlanPosition pos, StudyPlan plan, DateOnly day, GoalCadence cadence,
+        CancellationToken ct)
     {
-        var cadence = DutyCadenceOn(pos, day);
         if (cadence == GoalCadence.UntilDone) return await RemediationDayMetAsync(pos, day, ct);
         var (from, to) = PeriodRange(cadence, day);
         if (CheckModeOf(pos, day) == ExerciseCheckMode.None || IsDisplayOnlyDay(pos, plan, day))
@@ -323,9 +352,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// a failed attempt is not part of a pass - so it stays 0. Kept apart from <see cref="IsGoalMetAsync"/> so the
     /// rule that books points and penalties does not depend on a display value.
     /// </summary>
-    private async Task<double> OpenGoalProgressAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct)
+    private async Task<double> OpenGoalProgressAsync(PlanPosition pos, StudyPlan plan, DateOnly day, GoalCadence cadence,
+        CancellationToken ct)
     {
-        var cadence = DutyCadenceOn(pos, day);
         var untilDone = cadence == GoalCadence.UntilDone;
         if (!untilDone && CheckModeOf(pos, day) != ExerciseCheckMode.None && !IsDisplayOnlyDay(pos, plan, day)) return 0;
         var (from, to) = PeriodRange(cadence, day);
@@ -401,13 +430,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             var type = played is { } ex ? registry.ByKey(ex.Type) : null;
             var manifest = type?.Manifest;
             var checkMode = CheckModeOf(pos, day);
-            // B-613: before the position became a duty it is a free position on that day - no open goal, no price.
-            var cadence = day >= DutyBegins(pos) ? DutyCadenceOn(pos, day) : GoalCadence.None;
+            // B-613: before the position became a duty it is a free position on that day - no open goal, no price. On a day
+            // judged by the planner's tasks only a task is a duty (B-1036).
+            var cadence = CadenceOn(pos, day, dutyDays);
             var items = await play.ItemsOfAsync(pos, day, ct: ct);
             var poolSize = play.PoolSize(pos, day, items.Count);
             var dueCount = pos.UseLeitner ? (await play.DueItemIndicesAsync(pos, day, ct: ct)).Count : 0;
-            var goalMet = cadence == GoalCadence.None || await IsGoalMetAsync(pos, plan, day, ct);
-            var goalProgress = goalMet ? 1 : await OpenGoalProgressAsync(pos, plan, day, ct);
+            var goalMet = cadence == GoalCadence.None || await IsGoalMetInAsync(pos, plan, day, cadence, ct);
+            var goalProgress = goalMet ? 1 : await OpenGoalProgressAsync(pos, plan, day, cadence, ct);
             // Testable is about TODAY, not just about the type: on a free display stage (B-96) the exam
             // answers 400, so a client that offered its test button would send the child into a dead end.
             var testable = IsTestable(pos, plan, day);
@@ -417,8 +447,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 manifest?.Renderer ?? "", pos.Order, cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, goalProgress, dueCount, poolSize, pos.PointsGoalMet,
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize),
-                // A free position is never charged, so it must not advertise a price either.
-                cadence == GoalCadence.None ? 0 : pos.PenaltyCoins,
+                // A free position is never charged, so it must not advertise a price either; nor a task until its penalty is
+                // booked (B-1037) - the position's own penalty is not charged on such a day.
+                cadence == GoalCadence.None || dutyDays.TaskPositionsOn(day) is not null ? 0 : pos.PenaltyCoins,
                 OwesDutyOn(pos, plan, cadence, day, dutyDays),
                 played?.SeriesUnitId ?? 0, played?.SeriesUnit?.Label ?? "",
                 played?.SeriesUnit?.Series?.Name ?? "", played?.BookPages,
@@ -569,13 +600,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// the pool and due counts the day view shows.
     /// </summary>
     private async Task<PlanDutyState> DutyStateAsync(StudyPlan plan, IReadOnlyList<PlanPosition> positions, DateOnly day,
-        CancellationToken ct)
+        ChildDutyDays dutyDays, CancellationToken ct)
     {
         var active = ActiveOn(plan, day);
-        var obligations = positions.Where(p => IsObligationOn(p, day)).ToList();
+        var obligations = positions.Select(p => (Pos: p, Cadence: CadenceOn(p, day, dutyDays)))
+            .Where(o => o.Cadence != GoalCadence.None).ToList();
         if (obligations.Count == 0) return new PlanDutyState(active, false, false);
-        foreach (var pos in obligations)
-            if (!await IsGoalMetAsync(pos, plan, day, ct))
+        foreach (var (pos, cadence) in obligations)
+            if (!await IsGoalMetInAsync(pos, plan, day, cadence, ct))
                 return new PlanDutyState(active, true, false);
         return new PlanDutyState(active, true, true);
     }
@@ -601,13 +633,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         var streak = 0;
         for (var day = today; streak < maxDays && day >= firstDay; day = day.AddDays(-1))
         {
-            if (!dutyDays.IsDutyDay(day)) continue;
+            // A Sunday, a pause and a day judged by tasks that holds none (no plan made) neither count nor break (B-1036).
+            if (!dutyDays.DayOwesDuty(day)) continue;
             var states = new List<PlanDutyState>();
             foreach (var plan in plans.Where(p => p.StartDate <= day && (p.EndDate == null || p.EndDate >= day)))
             {
                 if (!positions.TryGetValue(plan.Id, out var list))
                     positions[plan.Id] = list = await LoadPositionsAsync(plan.Id, ct);
-                var state = await DutyStateAsync(plan, list, day, ct);
+                var state = await DutyStateAsync(plan, list, day, dutyDays, ct);
                 states.Add(state);
                 // An open duty of an active plan already decides the day; an inactive one can only add to it.
                 if (state is { Active: true, HasDuty: true, Done: false }) break;
@@ -629,13 +662,14 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .ToListAsync(ct);
 
         var byDay = new Dictionary<DateOnly, List<PlanDutyState>>();
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
         foreach (var plan in plans)
         {
             var positions = await LoadPositionsAsync(plan.Id, ct);
             for (var d = plan.StartDate; (plan.EndDate is null || d <= plan.EndDate) && d <= until; d = d.AddDays(1))
             {
                 if (!byDay.TryGetValue(d, out var states)) byDay[d] = states = [];
-                states.Add(await DutyStateAsync(plan, positions, d, ct));
+                states.Add(await DutyStateAsync(plan, positions, d, dutyDays, ct));
             }
         }
         return byDay.Where(kv => IsCompleteDay(kv.Value)).Select(kv => kv.Key).ToHashSet();
@@ -655,7 +689,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var positions = await LoadPositionsAsync(plan.Id, ct);
         var now = time.GetUtcNow().UtcDateTime;
-        foreach (var pos in positions) await AddGoalRewardIfDueAsync(pos, plan, day, now, ct);
+        var dutyDays = await calendar.ForChildAsync(plan.ChildId, ct);
+        foreach (var pos in positions) await AddGoalRewardIfDueAsync(pos, plan, day, now, dutyDays, ct);
 
         try
         {
@@ -680,11 +715,20 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// </summary>
     /// <returns>Whether a reward was added.</returns>
     public async Task<bool> AddGoalRewardIfDueAsync(PlanPosition pos, StudyPlan plan, DateOnly day, DateTime now,
-        CancellationToken ct)
+        CancellationToken ct) =>
+        await AddGoalRewardIfDueAsync(pos, plan, day, now, await calendar.ForChildAsync(plan.ChildId, ct), ct);
+
+    private async Task<bool> AddGoalRewardIfDueAsync(PlanPosition pos, StudyPlan plan, DateOnly day, DateTime now,
+        ChildDutyDays dutyDays, CancellationToken ct)
     {
-        if (!HasDutyOn(pos, day) || pos.PointsGoalMet <= 0 || !await IsGoalMetAsync(pos, plan, day, ct)) return false;
-        // The cadence of that day, not today's (B-659): a weekly goal freed after it paid must find its own week's row.
-        var cadence = DutyCadenceOn(pos, day);
+        // The cadence of that day, not today's (B-659): a weekly goal freed after it paid must find its own week's row. On a
+        // day judged by the planner's tasks only a task pays, as a daily goal (B-680, decision 6). Not CadenceOn: a reward
+        // before the duty began goes in the child's favour (B-613).
+        var cadence = dutyDays.TaskPositionsOn(day) is { } tasks ? TaskCadence(pos, day, tasks)
+            : HasDutyOn(pos, day) ? DutyCadenceOn(pos, day)
+            : GoalCadence.None;
+        if (cadence == GoalCadence.None || pos.PointsGoalMet <= 0 || !await IsGoalMetInAsync(pos, plan, day, cadence, ct))
+            return false;
         var periodStart = PeriodStart(cadence, day);
         var samePeriod = SamePeriodCadences(cadence);
         if (await db.PositionGoalRewards.AnyAsync(r => r.PlanPositionId == pos.Id
@@ -932,6 +976,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             foreach (var (from, to) in ClosedPeriods(cadence, windowStart, today))
             {
                 if (!PlanDueForPeriod(plan, from, to)) continue;
+                // A day judged by the planner's tasks is settled per task, not per position (B-1036, B-1037): no parallel model. A
+                // week touching such a day owes nothing by the position - like a week touched by a pause (B-731).
+                if (dutyDays.JudgedByTasks(from, to)) continue;
                 // B-731: Sunday and a pause owe nothing; a week owes its goal unless a pause touches it.
                 if (!dutyDays.OwesDuty(from, to)) continue;
                 // A duty with an end while its cadence stays (B-752: the preparation before a class test ends the day before

@@ -48891,10 +48891,11 @@
       "PlannerMode": {
         "enum": [
           "Off",
-          "Shadow"
+          "Shadow",
+          "Enforced"
         ],
         "type": "string",
-        "description": "Whether the day planner runs for a child (B-734). \u0060Off\u0060: no daily plans are made. \u0060Shadow\u0060: a plan is made every\nlearning day and shown to the supervisor, but it has no effect - no duty, no penalty, nothing in the child\u0027s app.\n\nAllowed values: Off, Shadow."
+        "description": "Whether the day planner runs for a child (B-734). \u0060Off\u0060: no daily plans are made. \u0060Shadow\u0060: a plan is made every\nlearning day and shown to the supervisor, but it has no effect - no duty, no penalty, nothing in the child\u0027s app.\n\u0060Enforced\u0060: the plan\u0027s tasks are the day\u0027s duty (B-1036); not settable through the API before the cutoff-day reset (B-737).\n\nAllowed values: Off, Shadow, Enforced."
       },
       "PlanResponse": {
         "required": [

@@ -153,9 +153,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         var order = 0;
         foreach (var plan in plans)
         {
-            // A remediation that ended has left the plan's day (B-636); the planner sees what the child's day shows.
-            foreach (var pos in (await progress.LoadPositionsAsync(plan.Id, ct))
-                         .Where(p => p.Cadence != GoalCadence.UntilDone || PositionProgressService.HasDutyOn(p, day)))
+            // Only a duty becomes a task: a free position stays free, also one whose duty ended (DutyUntil) or has not begun, and a
+            // remediation that ended has left the plan's day (B-636; answer to B-1033, B-1036 criterion 9).
+            foreach (var pos in (await progress.LoadPositionsAsync(plan.Id, ct)).Where(p => progress.IsObligationOn(p, day)))
             {
                 order++;
                 if (PositionPlayService.PlayedExercise(pos, day) is not { } played || play.TypeOf(played) is not { } type)

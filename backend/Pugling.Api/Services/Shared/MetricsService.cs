@@ -100,7 +100,7 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
         var streak = 0;
         for (; cursor >= first; cursor = cursor.AddDays(-1))
         {
-            if (!dutyDays.IsDutyDay(cursor)) continue;
+            if (!dutyDays.DayOwesDuty(cursor)) continue;
             if (!set.Contains(cursor)) break;
             streak++;
         }

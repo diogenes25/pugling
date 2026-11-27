@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/geschaetzt, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/student, rolle/supervisor]
+tags: [typ/story, status/verworfen, bereich/lehrplan, bereich/training, bereich/auswertung, rolle/student, rolle/supervisor]
 aliases: [Pflicht aus der Tagesaufgabe, Malus je Aufgabe, scharfer Planer, Etappe E3a]
-status: geschaetzt
+status: verworfen
 prio: P1
 art: Wunsch
 groesse: L
@@ -9,8 +9,8 @@ wo: backend
 migration: ja
 vertragsbruch: nein
 quelle: B-644
-grund: ""
-ersetzt_durch: []
+grund: geteilt
+ersetzt_durch: [B-1036, B-1037, B-1038]
 ---
 
 # B-736 · Die Pflicht kommt aus der Tagesaufgabe: Malus je Aufgabe, Serie, Rückstand (B-644, Etappe E3a)
@@ -150,7 +150,7 @@ Nach [B-734](B-734-planer-kern-und-schattenmodus.md), [B-735](B-735-stoffrahmen-
 [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md). Ohne [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) (Malus-Betrag,
 Lerntage) nicht baubar.
 
-5. **Kein Malus für Kür (Antwort auf B-1033, Nutzer, 2026-11-27):** Der Planer wählt nur aus Positionen mit Pflicht; eine Kür-Position (Taktung „keine“ oder nach `DutyUntil`) wird nie Tagesaufgabe. Zu bauen als Kandidatenfilter in `DailyPlanner.CandidatesAsync`, mit einem Fall je Kür-Art.
+- **Entscheidung 5 (Nachtrag) – kein Malus für Kür (Antwort auf B-1033, Nutzer, 2026-11-27):** Der Planer wählt nur aus Positionen mit Pflicht; eine Kür-Position (Taktung „keine“ oder nach `DutyUntil`) wird nie Tagesaufgabe. Zu bauen als Kandidatenfilter in `DailyPlanner.CandidatesAsync`, mit einem Fall je Kür-Art.
 
 ## Verlauf
 
@@ -158,3 +158,8 @@ Lerntage) nicht baubar.
   Eintrittsbedingung `gegrillt` aus B-644 und B-680 geerbt. Nachgesehen: Die Dosis hat eine Stelle (`DailyDose`), der Malus eine
   (`SettleClosedPeriodsAsync`), der Pflichtzustand fünf Leser. Spalten der Position bleiben (Schätz-Annahme). L am oberen Rand, backend,
   Migration, kein Vertragsbruch.
+- **2026-11-27** — **geteilt** (Nachtlauf P), wie die Schätzung es für den Fall vorsieht, dass die Story die L-Marke reißt: der Code zeigt
+  fünf Leser der Pflicht, die Dosis mit eigener 0-Bedeutung und eine Abrechnung mit Migration. [B-1036](B-1036-pflicht-quelle-tagesaufgabe.md)
+  Lesequelle (Kriterien 1, 2, 5 ohne Malus, 8, 10 und Entscheidung 5 der Nachträge), [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md)
+  Abrechnung und Rückstand (3, 4, 5 Malus, 7, 11), [B-1038](B-1038-dosis-aus-der-tagesaufgabe.md) Dosis (9). Kriterium 6 setzt das Streichen
+  voraus und liegt bei [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) (dort Kriterium 5).
