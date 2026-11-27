@@ -230,6 +230,8 @@ public class SchemaGuardTests
             // The plan records what the supervisor was shown: a deleted position or subject leaves the task standing.
             ["DailyTask.PlanPositionId"] = DeleteBehavior.SetNull, // -> PlanPosition
             ["DailyTask.SubjectId"] = DeleteBehavior.SetNull, // -> Subject
+            ["DailyTaskPenalty.DailyTaskId"] = DeleteBehavior.Cascade, // -> DailyTask
+            ["DailyTaskPenalty.RefundedByFeedbackId"] = DeleteBehavior.SetNull, // -> ExerciseFeedback
             ["EvaluatedDay.ChildId"] = DeleteBehavior.Cascade, // -> Child (B-733: marks a closed day as evaluated)
             ["Exercise.AuthorAdultId"] = DeleteBehavior.SetNull, // -> Adult
             // NoAction (B-700): the delete endpoint refuses a target with prerequisites; NO ACTION instead of

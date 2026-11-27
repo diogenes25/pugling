@@ -32,12 +32,13 @@ public sealed class DailyPlanTimer(IServiceScopeFactory scopes, TimeProvider tim
     /// </summary>
     public async Task RunOnceAsync(CancellationToken ct)
     {
-        List<int> children;
+        List<(int Id, PlannerMode Mode)> children;
         try
         {
             await using var scope = scopes.CreateAsyncScope();
-            children = await scope.ServiceProvider.GetRequiredService<PuglingDbContext>().Children.AsNoTracking()
-                .Where(c => c.PlannerMode != PlannerMode.Off).Select(c => c.Id).ToListAsync(ct);
+            var rows = await scope.ServiceProvider.GetRequiredService<PuglingDbContext>().Children.AsNoTracking()
+                .Where(c => c.PlannerMode != PlannerMode.Off).Select(c => new { c.Id, c.PlannerMode }).ToListAsync(ct);
+            children = [.. rows.Select(c => (c.Id, c.PlannerMode))];
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -45,12 +46,18 @@ public sealed class DailyPlanTimer(IServiceScopeFactory scopes, TimeProvider tim
             logger.LogError(ex, "Tagesplaner-Durchlauf fehlgeschlagen; der nächste Durchlauf versucht es erneut.");
             return;
         }
-        foreach (var childId in children)
+        foreach (var (childId, mode) in children)
         {
             try
             {
                 await using var scope = scopes.CreateAsyncScope();
                 await scope.ServiceProvider.GetRequiredService<DailyPlanner>().EnsureTodayAsync(childId, ct);
+                // An enforced child's missed tasks are settled here too (B-1037), so the penalty does not wait for a login - but
+                // only from the plan's hour on: a round begun before midnight still counts for its day when it ends after it.
+                var day = scope.ServiceProvider.GetRequiredService<LearningDay>();
+                if (mode == PlannerMode.Enforced && day.LocalNow.Hour >= DailyPlanner.ReadyHour)
+                    await scope.ServiceProvider.GetRequiredService<PositionProgressService>().SettleClosedPeriodsAsync(childId,
+                        day.Today, ct);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

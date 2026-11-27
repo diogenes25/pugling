@@ -145,6 +145,13 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         var exams = await ExamsAsync(childId, day, ct);
         var lessonSubjects = await LessonSubjectsAsync(childId, day, ct);
         var weakness = await WeaknessAsync(childId, day, ct);
+        // Tasks of the last learning day left open come back first (B-1037), in either mode: the shadow plan shows what would apply.
+        // Unstamped is only the candidate: a goal met on a path that books no stamp (a round never closed) is judged below.
+        var missed = lastLearningDay is { } md
+            ? (await db.DailyTasks.AsNoTracking()
+                .Where(t => t.DailyPlan!.ChildId == childId && t.DailyPlan.Day == md && t.DoneAt == null && t.PlanPositionId != null)
+                .Select(t => t.PlanPositionId!.Value).ToListAsync(ct)).ToHashSet()
+            : [];
         var plans = await db.StudyPlans.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
@@ -185,7 +192,8 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
                 candidates.Add(new PlannerCandidate(pos.Id, played.Id, played.Title, subjectId, order, due, newAvailable,
                     answers.Where(a => !a.Key).Sum(a => a.Count), answers.Where(a => a.Key).Sum(a => a.Count), failedTest,
                     stage, EasierStage(type, stage), examDate, examDate is { } ed ? LearningDaysUntil(day, ed, dutyDays) : 0,
-                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0, named is not null));
+                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0, named is not null,
+                    missed.Contains(pos.Id) && !await progress.IsTaskMetAsync(pos, plan, lastLearningDay!.Value, ct)));
             }
         }
         return candidates;

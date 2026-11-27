@@ -127,9 +127,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     /// own day rule (one round through the open tasks), which is a day as well.
     /// </summary>
     private static GoalCadence TaskCadence(PlanPosition pos, DateOnly day, IReadOnlySet<int> tasks) =>
-        !tasks.Contains(pos.Id) ? GoalCadence.None
-        : DutyCadenceOn(pos, day) == GoalCadence.UntilDone ? GoalCadence.UntilDone
-        : GoalCadence.Daily;
+        !tasks.Contains(pos.Id) ? GoalCadence.None : TaskCadence(pos, day);
+
+    private static GoalCadence TaskCadence(PlanPosition pos, DateOnly day) =>
+        DutyCadenceOn(pos, day) == GoalCadence.UntilDone ? GoalCadence.UntilDone : GoalCadence.Daily;
 
     /// <summary>
     /// Was the plan switched on on <paramref name="day"/> (B-613)? Active now and the day not before its last switch-on
@@ -447,9 +448,9 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
                 manifest?.Renderer ?? "", pos.Order, cadence, checkMode, pos.UseLeitner,
                 testable, goalMet, goalProgress, dueCount, poolSize, pos.PointsGoalMet,
                 introducedByPosition[pos.Id].Count(p => p.ItemIndex < poolSize),
-                // A free position is never charged, so it must not advertise a price either; nor a task until its penalty is
-                // booked (B-1037) - the position's own penalty is not charged on such a day.
-                cadence == GoalCadence.None || dutyDays.TaskPositionsOn(day) is not null ? 0 : pos.PenaltyCoins,
+                // A free position is never charged, so it must not advertise a price either. A task shows the child's amount per
+                // missed task, the one the settlement books (B-1037); the position's own penalty is not charged on such a day.
+                cadence == GoalCadence.None ? 0 : dutyDays.TaskPositionsOn(day) is not null ? dutyDays.TaskPenaltyCoins : pos.PenaltyCoins,
                 OwesDutyOn(pos, plan, cadence, day, dutyDays),
                 played?.SeriesUnitId ?? 0, played?.SeriesUnit?.Label ?? "",
                 played?.SeriesUnit?.Series?.Name ?? "", played?.BookPages,
@@ -706,6 +707,29 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             // not stumble over it again; whatever reads the day afterwards reads it fresh from the database.
             db.ChangeTracker.Clear();
         }
+        await StampDoneTasksAsync(plan, positions, day, ct);
+    }
+
+    /// <summary>
+    /// Stamps <see cref="DailyTask.DoneAt"/> on the day's tasks of this plan whose goal is met (B-1037) - the same rule the day view
+    /// and the streak read for a task. Every mode: a shadow plan shows the supervisor which tasks the child met. A stamp is never
+    /// taken back; the settlement reads it before it judges the goal again.
+    /// </summary>
+    private async Task StampDoneTasksAsync(StudyPlan plan, IReadOnlyList<PlanPosition> positions, DateOnly day, CancellationToken ct)
+    {
+        var ids = positions.Select(p => p.Id).ToList();
+        var open = await db.DailyTasks
+            .Where(t => t.DailyPlan!.ChildId == plan.ChildId && t.DailyPlan.Day == day && t.DoneAt == null
+                && t.PlanPositionId != null && ids.Contains(t.PlanPositionId.Value))
+            .ToListAsync(ct);
+        if (open.Count == 0) return;
+        var now = time.GetUtcNow().UtcDateTime;
+        foreach (var task in open)
+        {
+            var pos = positions.First(p => p.Id == task.PlanPositionId);
+            if (await IsGoalMetInAsync(pos, plan, day, TaskCadence(pos, day), ct)) task.DoneAt = now;
+        }
+        await db.SaveChangesAsync(ct);
     }
 
     /// <summary>
@@ -754,6 +778,18 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
         });
         return true;
     }
+
+    /// <summary>
+    /// The penalty booked for the position's task on <paramref name="day"/> and not taken back yet, or <c>null</c> (B-1037) - the
+    /// task counterpart of <see cref="OpenPenaltyAroundAsync"/>.
+    /// </summary>
+    public Task<DailyTaskPenalty?> OpenTaskPenaltyAsync(int positionId, DateOnly day, CancellationToken ct) =>
+        db.DailyTaskPenalties.FirstOrDefaultAsync(p => p.RefundedAt == null && p.DailyTask!.PlanPositionId == positionId
+            && p.DailyTask.DailyPlan!.Day == day, ct);
+
+    /// <summary>Is the position's task met on <paramref name="day"/> - the rule the settlement charges by (B-1037)?</summary>
+    public Task<bool> IsTaskMetAsync(PlanPosition pos, StudyPlan plan, DateOnly day, CancellationToken ct) =>
+        IsGoalMetInAsync(pos, plan, day, TaskCadence(pos, day), ct);
 
     /// <summary>
     /// The penalty booked for the position's period around <paramref name="day"/> and not taken back yet, whatever the
@@ -942,6 +978,10 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
     {
         var child = await db.Children.FirstOrDefaultAsync(c => c.Id == childId, ct);
         if (child is null) return 0;
+        var now = time.GetUtcNow().UtcDateTime;
+        var dutyDays = await calendar.ForChildAsync(childId, ct);
+        var appliedCoins = await AddMissedTaskPenaltiesAsync(child, today, dutyDays, now, ct);
+        var changed = appliedCoins > 0;
 
         // Only punishable positions: a real obligation (daily/weekly) with a penalty set, from the child's plans. The raw
         // cadence on purpose, not DutyCadenceOn (decision 5 of B-659): freeing a duty waives its unsettled periods.
@@ -949,14 +989,8 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             .Include(p => p.StudyPlan)
             .Where(p => p.StudyPlan!.ChildId == childId && p.Cadence != GoalCadence.None && p.PenaltyCoins > 0)
             .ToListAsync(ct);
-        if (positions.Count == 0) return 0;
 
         var lookbackFloor = today.AddDays(-MaxSettleLookbackDays);
-        var now = time.GetUtcNow().UtcDateTime;
-        var dutyDays = await calendar.ForChildAsync(childId, ct);
-        var appliedCoins = 0;
-        var changed = false;
-
         var firstPlayDays = await FirstPlayDaysAsync(positions.Select(p => p.StudyPlanId).Distinct().ToList(), ct);
 
         foreach (var pos in positions)
@@ -1035,6 +1069,49 @@ public class PositionProgressService(PuglingDbContext db, PositionPlayService pl
             return 0;
         }
         return appliedCoins;
+    }
+
+    /// <summary>
+    /// Adds - unsaved - a penalty for every task of an enforced plan left open at the end of its day (B-1037): the child's amount per
+    /// missed task, once per task (<see cref="DailyTaskPenalty"/>, unique). Only closed days of the look-back, only a day that still
+    /// owes a duty (a pause entered afterwards frees it), only a task the child could play - its position still there and its plan
+    /// switched on that day. A day without a plan has no task to miss (B-644, decision 19). The caller bumps the stamp and saves.
+    /// </summary>
+    /// <returns>The coins added.</returns>
+    private async Task<int> AddMissedTaskPenaltiesAsync(Child child, DateOnly today, ChildDutyDays dutyDays, DateTime now,
+        CancellationToken ct)
+    {
+        if (dutyDays.TaskPenaltyCoins <= 0) return 0;
+        var floor = today.AddDays(-MaxSettleLookbackDays);
+        var tasks = await db.DailyTasks
+            .Include(t => t.DailyPlan)
+            .Include(t => t.PlanPosition).ThenInclude(p => p!.StudyPlan)
+            .Include(t => t.PlanPosition).ThenInclude(p => p!.Exercise).ThenInclude(e => e!.Prerequisites)
+            .Where(t => t.DailyPlan!.ChildId == child.Id && t.DailyPlan.Mode == PlannerMode.Enforced
+                && t.DailyPlan.Day >= floor && t.DailyPlan.Day < today && t.DoneAt == null && t.PlanPositionId != null
+                && !db.DailyTaskPenalties.Any(p => p.DailyTaskId == t.Id))
+            .ToListAsync(ct);
+        var coins = 0;
+        foreach (var task in tasks)
+        {
+            var day = task.DailyPlan!.Day;
+            var pos = task.PlanPosition!;
+            var plan = pos.StudyPlan!;
+            if (!dutyDays.DayOwesDuty(day) || !PlanDueForPeriod(plan, day, day)) continue;
+            // The stamp may be missing where a path met the goal without booking it; the rule decides, as for a position.
+            if (await IsGoalMetInAsync(pos, plan, day, TaskCadence(pos, day), ct)) continue;
+            db.DailyTaskPenalties.Add(new DailyTaskPenalty { DailyTaskId = task.Id, Points = dutyDays.TaskPenaltyCoins, AppliedAt = now });
+            db.ChildPointsEntries.Add(new ChildPointsEntry
+            {
+                ChildId = child.Id,
+                Kind = PointKind.GoalPenalty,
+                Amount = -dutyDays.TaskPenaltyCoins,
+                Reason = $"[Tagesplan · {task.ExerciseTitle}] {MissedPeriodLabel(GoalCadence.Daily, day, day)} verpasst",
+                CreatedAt = now,
+            });
+            coins += dutyDays.TaskPenaltyCoins;
+        }
+        return coins;
     }
 
     /// <summary>

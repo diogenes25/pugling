@@ -223,6 +223,50 @@ public class MeldungBuchtNachTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     /// <summary>
+    /// B-1037: the penalty of a day planner's task is taken back the same way - yesterday's enforced task, missed only by the
+    /// failed test, charged by the settlement; the justified feedback books the counter-entry, marks the row and a second
+    /// settlement books nothing. The position itself carries no penalty. Red when the correction ignores task penalties.
+    /// </summary>
+    [Fact]
+    public async Task Aufgaben_Malus_wird_durch_berechtigte_Meldung_zurueckgenommen()
+    {
+        var k = await KidAsync(penaltyCoins: 0);
+        WithDb(db =>
+        {
+            var child = db.Children.Single(c => c.Id == k.ChildId);
+            child.PlannerMode = PlannerMode.Enforced;
+            child.PlannerSince = k.Today.AddDays(-5);
+            child.PenaltyCoinsPerMissedTask = Penalty;
+            db.DailyPlans.Add(new DailyPlan
+            {
+                ChildId = k.ChildId,
+                Day = k.Yesterday,
+                Mode = PlannerMode.Enforced,
+                CreatedAt = k.Yesterday.ToDateTime(new TimeOnly(6, 0), DateTimeKind.Utc),
+                Tasks =
+                [
+                    new DailyTask
+                    {
+                        PlanPositionId = k.PositionId, ExerciseId = db.PlanPositions.Single(p => p.Id == k.PositionId).ExerciseId,
+                        ExerciseTitle = "Aufgabe", Order = 1, Reason = "Test",
+                    },
+                ],
+            });
+            return db.SaveChanges();
+        });
+        SeedAttempt(k, k.Yesterday, (0, "halo", false), (1, "tschüss", true));
+        Assert.Equal(Penalty, await SettleAsync(k));
+
+        var feedbackId = await ReportAsync(k, 0);
+        await JustifyAsync(k, feedbackId);
+
+        Assert.Equal([-Penalty, Penalty], Ledger(k, PointKind.GoalPenalty).Select(e => e.Amount).Order());
+        Assert.Equal(feedbackId, WithDb(db => db.DailyTaskPenalties.AsNoTracking()
+            .Single(p => p.DailyTask!.PlanPositionId == k.PositionId).RefundedByFeedbackId));
+        Assert.Equal(0, await SettleAsync(k));
+    }
+
+    /// <summary>
     /// AK 4, AK 9: when the period stays missed after the correction (both answers wrong, one justified: 50 %), the
     /// penalty stays and nothing is booked - but the trail is written and the stamp still moves (every justified path
     /// bumps). Red if the correction lifts the penalty blindly, or if this path leaves the stamp alone.

@@ -61,6 +61,21 @@ public class FeedbackCorrectionService(PuglingDbContext db, ExerciseFeedbackServ
                     CreatedAt = now,
                 });
             }
+            // The same for a task of the day planner (B-1037): its day must be met by the task's rule, not only the period.
+            if (await progress.OpenTaskPenaltyAsync(pos.Id, attempt.Day, ct) is { } taskPenalty
+                && await progress.IsTaskMetAsync(pos, plan, attempt.Day, ct))
+            {
+                taskPenalty.RefundedAt = now;
+                taskPenalty.RefundedByFeedbackId = entry.Id;
+                db.ChildPointsEntries.Add(new ChildPointsEntry
+                {
+                    ChildId = entry.ChildId,
+                    Kind = PointKind.GoalPenalty,
+                    Amount = taskPenalty.Points,
+                    Reason = $"[Tagesplan · {pos.Exercise?.Title}] Malus zurückgenommen (berechtigte Meldung #{entry.Id})",
+                    CreatedAt = now,
+                });
+            }
             await progress.AddGoalRewardIfDueAsync(pos, plan, attempt.Day, now, ct);
             // The stamp was bumped above, in this transaction: it holds SQLite's write lock throughout, so no
             // purchase slips in between - one bump serializes every booking of this confirmation.

@@ -19,16 +19,17 @@ public class DutyCalendar(PuglingDbContext db, IOptions<LearningDayOptions> opti
     {
         var pauses = await db.ChildPauses.AsNoTracking().Where(p => p.ChildId == childId)
             .Select(p => new PauseSpan(p.From, p.Until)).ToListAsync(ct);
-        var enforcedSince = await db.Children.AsNoTracking()
-            .Where(c => c.Id == childId && c.PlannerMode == PlannerMode.Enforced)
-            .Select(c => c.PlannerSince).FirstOrDefaultAsync(ct);
+        var child = await db.Children.AsNoTracking().Where(c => c.Id == childId)
+            .Select(c => new { c.PlannerMode, c.PlannerSince, c.PenaltyCoinsPerMissedTask }).FirstOrDefaultAsync(ct);
+        var enforcedSince = child is { PlannerMode: PlannerMode.Enforced } ? child.PlannerSince : null;
         // The plan's mode is a snapshot: a day planned enforced stays judged by its tasks after the planner is switched back.
         var plans = await db.DailyPlans.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Mode == PlannerMode.Enforced)
             .Select(p => new { p.Day, Positions = p.Tasks.Where(t => t.PlanPositionId != null).Select(t => t.PlanPositionId!.Value).ToList() })
             .ToListAsync(ct);
         return new(options.Value.SundayFree, pauses,
-            new EnforcedDuty(enforcedSince, plans.ToDictionary(p => p.Day, p => (IReadOnlySet<int>)p.Positions.ToHashSet())));
+            new EnforcedDuty(enforcedSince, plans.ToDictionary(p => p.Day, p => (IReadOnlySet<int>)p.Positions.ToHashSet()),
+                child?.PenaltyCoinsPerMissedTask ?? 0));
     }
 }
 
@@ -38,10 +39,11 @@ public class DutyCalendar(PuglingDbContext db, IOptions<LearningDayOptions> opti
 /// </summary>
 /// <param name="Since">The learning day the child's planner was switched to enforced; <c>null</c> while it is not.</param>
 /// <param name="TasksByDay">The positions with a task, per day of an enforced plan.</param>
-public sealed record EnforcedDuty(DateOnly? Since, IReadOnlyDictionary<DateOnly, IReadOnlySet<int>> TasksByDay)
+/// <param name="PenaltyCoins">What a missed task costs the child (B-1037), the amount the day view shows and the settlement books.</param>
+public sealed record EnforcedDuty(DateOnly? Since, IReadOnlyDictionary<DateOnly, IReadOnlySet<int>> TasksByDay, int PenaltyCoins)
 {
     /// <summary>No enforced day at all: every day is judged by the positions.</summary>
-    public static readonly EnforcedDuty None = new(null, new Dictionary<DateOnly, IReadOnlySet<int>>());
+    public static readonly EnforcedDuty None = new(null, new Dictionary<DateOnly, IReadOnlySet<int>>(), 0);
 }
 
 /// <summary>One pause, both days included.</summary>
@@ -64,6 +66,9 @@ public sealed class ChildDutyDays(bool sundayFree, IReadOnlyList<PauseSpan> paus
         enforced.TasksByDay.TryGetValue(day, out var tasks) ? tasks
         : enforced.Since is { } since && since <= day ? NoTasks
         : null;
+
+    /// <summary>What a missed task costs the child (B-1037); 0 = no penalty.</summary>
+    public int TaskPenaltyCoins => enforced.PenaltyCoins;
 
     /// <summary>Is any day of [<paramref name="from"/>, <paramref name="to"/>] judged by the planner's tasks?</summary>
     public bool JudgedByTasks(DateOnly from, DateOnly to)

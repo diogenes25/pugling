@@ -93,6 +93,7 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<EvaluatedDay> EvaluatedDays => Set<EvaluatedDay>();
     public DbSet<DailyPlan> DailyPlans => Set<DailyPlan>();
     public DbSet<DailyTask> DailyTasks => Set<DailyTask>();
+    public DbSet<DailyTaskPenalty> DailyTaskPenalties => Set<DailyTaskPenalty>();
 
     // Gamification: missions (time-bound goals) + awards (badges) per child, with an award log
     public DbSet<Mission> Missions => Set<Mission>();
@@ -920,6 +921,14 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             // The plan is a record of what the supervisor was shown: a deleted position or subject leaves the task standing.
             e.HasOne(t => t.PlanPosition).WithMany().HasForeignKey(t => t.PlanPositionId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(t => t.Subject).WithMany().HasForeignKey(t => t.SubjectId).OnDelete(DeleteBehavior.SetNull);
+        });
+        modelBuilder.Entity<DailyTaskPenalty>(e =>
+        {
+            // One penalty per task (B-1037): the settlement's loser of a race runs into this index and books nothing.
+            e.HasIndex(p => p.DailyTaskId).IsUnique();
+            e.HasOne(p => p.DailyTask).WithMany().HasForeignKey(p => p.DailyTaskId).OnDelete(DeleteBehavior.Cascade);
+            // Like the position penalty: the refunding feedback may fade, the refund mark stays.
+            e.HasOne(p => p.RefundedByFeedback).WithMany().HasForeignKey(p => p.RefundedByFeedbackId).OnDelete(DeleteBehavior.SetNull);
         });
         modelBuilder.Entity<EvaluatedDay>(e =>
         {

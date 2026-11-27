@@ -11,7 +11,7 @@ vertragsbruch: nein
 quelle: B-736
 grund: ""
 ersetzt_durch: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-27
 ---
 
 # B-1036 · Im scharfen Modus kommt die Pflicht des Tages aus den Tagesaufgaben (Quellenumschaltung)
@@ -154,3 +154,4 @@ liegt als Text), kein Vertragsbruch (ein Enum-Wert dazu).
   Zählung: Kommentar zur Woche, die einen scharfen Tag berührt; `ChildrenDashboardService:119` bleibt bei `IsDutyDay` (gleiches Ergebnis,
   S20 hält es).
 - **2026-11-27** — **abgenommen** (`463d95ad`): Rollengang an der Kopie (Vater: Schatten unverändert 8 Pflichten, scharf genau die 4 Aufgaben), Sohn und Creator als Regressionszeugen; siehe `docs/pm-sitzung-2026-11-27-p.md`, Runde 2.
+- **2026-11-27** — **Nachschau** (Sprint 199): `DutyCalendar.ForChildAsync` liest `enforcedSince` jetzt aus einer gemeinsamen Kind-Abfrage; gegen die alte gefilterte Abfrage gelesen, gleichwertig (Kind nicht scharf → `null`). Kein Befund.

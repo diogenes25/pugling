@@ -74,11 +74,12 @@ public class TagespflichtScharfTests : IClassFixture<LerntageWebAppFactory>
         return new Setup(father, childId, planId, d, w, f, e);
     }
 
-    private void Enforce(Setup s, DateOnly since) => Write(db =>
+    private void Enforce(Setup s, DateOnly since, int penalty = 0) => Write(db =>
     {
         var child = db.Children.Single(c => c.Id == s.ChildId);
         child.PlannerMode = PlannerMode.Enforced;
         child.PlannerSince = since;
+        child.PenaltyCoinsPerMissedTask = penalty;
     });
 
     private void DayPlan(Setup s, DateOnly day, PlannerMode mode, params int[] positions) => Write(db =>
@@ -497,5 +498,235 @@ public class TagespflichtScharfTests : IClassFixture<LerntageWebAppFactory>
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
         Assert.Equal("validation_error", (await res.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
         Assert.Equal(PlannerMode.Off, Read(db => db.Children.Single(c => c.Id == s.ChildId).PlannerMode));
+    }
+
+    // ---- B-1037: the penalty per missed task ----
+
+    private Task SettleAsync(Setup s) =>
+        ServiceAsync<PositionProgressService, int>(p => p.SettleClosedPeriodsAsync(s.ChildId, Today, CancellationToken.None));
+
+    private List<DateOnly> TaskPenaltyDays(Setup s) => Read(db => db.DailyTaskPenalties
+        .Where(p => p.DailyTask!.DailyPlan!.ChildId == s.ChildId).Select(p => p.DailyTask!.DailyPlan!.Day).OrderBy(d => d).ToList());
+
+    private List<(int Amount, string Reason)> PenaltyLedger(Setup s) => Read(db => db.ChildPointsEntries
+        .Where(e => e.ChildId == s.ChildId && e.Kind == PointKind.GoalPenalty).OrderBy(e => e.Id)
+        .Select(e => new { e.Amount, e.Reason }).ToList().Select(e => (e.Amount, e.Reason)).ToList());
+
+    /// <summary>
+    /// B-736 AK 3: Friday's tasks are D (open) and W (met). Settled twice, the child pays the amount 3 once, for D's task, with the
+    /// day in the ledger text; the met task costs nothing, and the old position penalty stays off. Red when a met task is charged,
+    /// a second run charges again, or the amount is not the child's.
+    /// </summary>
+    [Fact]
+    public async Task Offene_Aufgabe_Kostet_Einmal_Den_Betrag_Des_Kindes()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Friday, PlannerMode.Enforced, s.D, s.W);
+        Test(s, s.W, Friday);
+
+        await SettleAsync(s);
+        await SettleAsync(s);
+
+        Assert.Equal([Friday], TaskPenaltyDays(s));
+        Assert.Equal(3, Read(db => db.DailyTaskPenalties.Single(p => p.DailyTask!.DailyPlan!.ChildId == s.ChildId).Points));
+        var entry = Assert.Single(PenaltyLedger(s));
+        Assert.Equal(-3, entry.Amount);
+        Assert.Equal("[Tagesplan · Aufgabe] Tagesziel vom Fr 27.11. verpasst", entry.Reason);
+    }
+
+    /// <summary>
+    /// B-736 AK 3: a task stamped done costs nothing, even without a met goal in the trail - the stamp is read first. Red when the
+    /// settlement ignores <c>DoneAt</c>.
+    /// </summary>
+    [Fact]
+    public async Task Erledigt_Gestempelte_Aufgabe_Kostet_Nichts()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Friday, PlannerMode.Enforced, s.D);
+        Write(db =>
+        {
+            foreach (var t in db.DailyTasks.Where(t => t.DailyPlan!.ChildId == s.ChildId)) t.DoneAt = new DateTime(2026, 11, 27, 15, 0, 0, DateTimeKind.Utc);
+        });
+
+        await SettleAsync(s);
+
+        Assert.Empty(TaskPenaltyDays(s));
+    }
+
+    /// <summary>
+    /// B-1037: the path that books the goal stamps the task - today's D met, W open: after the evaluation D carries <c>DoneAt</c>,
+    /// W does not. Red when the stamp is missing or stamps an open task.
+    /// </summary>
+    [Fact]
+    public async Task Zielpfad_Stempelt_Die_Erledigte_Aufgabe()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Today, PlannerMode.Enforced, s.D, s.W);
+        Test(s, s.D, Today);
+
+        await ServiceAsync<PositionProgressService, bool>(async p =>
+        {
+            await p.EvaluateAndAwardAsync(Read(db => db.StudyPlans.AsNoTracking().Single(x => x.Id == s.PlanId)), Today,
+                CancellationToken.None);
+            return true;
+        });
+
+        var done = Read(db => db.DailyTasks.Where(t => t.DailyPlan!.ChildId == s.ChildId)
+            .Select(t => new { t.PlanPositionId, t.DoneAt }).ToList());
+        Assert.NotNull(done.Single(t => t.PlanPositionId == s.D).DoneAt);
+        Assert.Null(done.Single(t => t.PlanPositionId == s.W).DoneAt);
+    }
+
+    /// <summary>
+    /// B-736 AK 4: a booked task penalty bumps the child's concurrency stamp, the wallet's serialization point. Red when the bump
+    /// is missing on this path.
+    /// </summary>
+    [Fact]
+    public async Task Aufgaben_Malus_Bumpt_Den_Stamp()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Friday, PlannerMode.Enforced, s.D);
+        var before = Read(db => db.Children.Single(c => c.Id == s.ChildId).ConcurrencyStamp);
+
+        await SettleAsync(s);
+
+        Assert.NotEqual(before, Read(db => db.Children.Single(c => c.Id == s.ChildId).ConcurrencyStamp));
+        Assert.Equal([Friday], TaskPenaltyDays(s));
+    }
+
+    /// <summary>
+    /// B-736 AK 5: Thursday's task open costs; Friday enforced without a plan, Saturday's task open but paused afterwards, and today
+    /// (not closed yet) cost nothing. Red when a day without a plan, a paused day or today is charged.
+    /// </summary>
+    [Fact]
+    public async Task Tag_Ohne_Plan_Pause_Und_Heute_Kosten_Nichts()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Thursday, PlannerMode.Enforced, s.D);
+        DayPlan(s, Saturday, PlannerMode.Enforced, s.D);
+        DayPlan(s, Today, PlannerMode.Enforced, s.D);
+        var pause = await s.Father.PostAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}/pauses",
+            new { from = Saturday, until = Saturday, note = "krank" });
+        Assert.True(pause.IsSuccessStatusCode, await pause.Content.ReadAsStringAsync());
+
+        await SettleAsync(s);
+
+        Assert.Equal([Thursday], TaskPenaltyDays(s));
+    }
+
+    /// <summary>
+    /// B-1037: a task the child could not play costs nothing - its plan switched off, or its position deleted. Red when the
+    /// settlement charges either.
+    /// </summary>
+    [Fact]
+    public async Task Abgeschalteter_Plan_Und_Geloeschte_Position_Kosten_Nichts()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Thursday, PlannerMode.Enforced, s.D);
+        DayPlan(s, Friday, PlannerMode.Enforced, s.F);
+        Write(db => db.StudyPlans.Single(p => p.Id == s.PlanId).Active = false);
+        Write(db => db.PlanPositions.Remove(db.PlanPositions.Single(p => p.Id == s.F)));
+
+        await SettleAsync(s);
+
+        Assert.Empty(TaskPenaltyDays(s));
+    }
+
+    /// <summary>
+    /// B-1037: the day view shows a task's price as the child's amount per missed task - what the settlement books. Red when the
+    /// task shows 0 or the position's own penalty.
+    /// </summary>
+    [Fact]
+    public async Task Aufgabe_Zeigt_Den_Betrag_Des_Kindes()
+    {
+        var s = await SetupAsync();
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Today, PlannerMode.Enforced, s.W);
+
+        Assert.Equal(3, Position(await TodayAsync(s), s.W).GetProperty("penaltyCoins").GetInt32());
+    }
+
+    /// <summary>
+    /// B-1037: the timer settles an enforced child's missed tasks from the plan's hour on, so the penalty does not wait for a
+    /// login; at half past midnight it leaves them, a round begun before midnight may still end. Red when the timer
+    /// leaves them at noon or charges them at night.
+    /// </summary>
+    [Theory]
+    [InlineData(12, true)]
+    [InlineData(0, false)]
+    public async Task Zeitgeber_Rechnet_Verpasste_Aufgaben_Ab(int hour, bool charged)
+    {
+        var s = await SetupAsync();
+        // The suite's learning day is the UTC day: at 00:30 today is Monday, Friday is closed, the plan's hour is not reached.
+        factory.Clock.FreezeAt(new DateTimeOffset(Today.ToDateTime(new TimeOnly(hour, 30)), TimeSpan.Zero));
+        Enforce(s, Thursday, penalty: 3);
+        DayPlan(s, Friday, PlannerMode.Enforced, s.D);
+
+        await ActivatorUtilities.CreateInstance<Pugling.Api.Services.Supervisor.DailyPlanTimer>(factory.Services)
+            .RunOnceAsync(CancellationToken.None);
+
+        Assert.Equal(charged ? [Friday] : [], TaskPenaltyDays(s));
+    }
+
+    /// <summary>
+    /// B-736 AK 7: Saturday's shadow plan left W open; today's shadow plan brings W back and says why, D (met by its test, never
+    /// stamped) does not. Red when the planner does not read yesterday's open tasks, or takes a missing stamp for a missed task.
+    /// </summary>
+    [Fact]
+    public async Task Offene_Aufgabe_Kommt_Am_Naechsten_Lerntag_Wieder()
+    {
+        var s = await SetupAsync();
+        var res = await s.Father.PatchAsJsonAsync($"/api/v1/supervisor/children/{s.ChildId}", new
+        {
+            dailyTasksMin = 2,
+            dailyTasksMax = 5,
+            dailyNewWordsMin = 1,
+            dailyNewWordsMax = 4,
+            plannerMode = "Shadow",
+        });
+        Assert.True(res.IsSuccessStatusCode, await res.Content.ReadAsStringAsync());
+        DayPlan(s, Saturday, PlannerMode.Shadow, s.D, s.W);
+        // D was met on Saturday without a stamp (a round never closed): the rule decides, not the missing stamp.
+        Test(s, s.D, Saturday);
+
+        var plans = await s.Father.GetFromJsonAsync<JsonElement>($"/api/v1/supervisor/children/{s.ChildId}/daily-plans");
+        var tasks = plans.EnumerateArray().Single(p => p.GetProperty("day").GetString() == "2026-11-30").GetProperty("tasks")
+            .EnumerateArray().ToDictionary(t => t.GetProperty("planPositionId").GetInt32(), t => t.GetProperty("reason").GetString()!);
+
+        Assert.Contains("am letzten Lerntag offen geblieben", tasks[s.W]);
+        Assert.DoesNotContain("offen geblieben", tasks[s.D]);
+    }
+
+    /// <summary>
+    /// B-1037: without an amount (0) and in a shadow plan an open task costs nothing, and a task older than the look-back of 14 days
+    /// is not settled any more. Red when the settlement books a 0-coin row (beside Thursday's old position penalty in the same run),
+    /// charges a shadow task, or reaches past the look-back.
+    /// </summary>
+    [Theory]
+    [InlineData("ohne Betrag")]
+    [InlineData("Schattenplan")]
+    [InlineData("zu alt")]
+    public async Task Ohne_Betrag_Im_Schatten_Und_Zu_Alt_Kostet_Nichts(string fall)
+    {
+        var s = await SetupAsync();
+        var day = fall == "zu alt" ? Today.AddDays(-16) : Friday;
+        // The plan runs before the day (else the plan's own start would keep it free), and an old position penalty on Thursday
+        // makes the run save: a 0-coin task row would ride along with it.
+        Write(db => db.StudyPlans.Single(p => p.Id == s.PlanId).StartDate = day.AddDays(-7));
+        Enforce(s, fall == "ohne Betrag" ? Friday : day.AddDays(-1), penalty: fall == "ohne Betrag" ? 0 : 3);
+        if (fall == "ohne Betrag") Test(s, s.D, Thursday, passed: false);
+        DayPlan(s, day, fall == "Schattenplan" ? PlannerMode.Shadow : PlannerMode.Enforced, s.D);
+        if (fall == "Schattenplan") Write(db => db.Children.Single(c => c.Id == s.ChildId).PlannerMode = PlannerMode.Shadow);
+
+        await SettleAsync(s);
+
+        Assert.Empty(TaskPenaltyDays(s));
+        Assert.DoesNotContain(PenaltyLedger(s), e => e.Reason.StartsWith("[Tagesplan", StringComparison.Ordinal));
     }
 }

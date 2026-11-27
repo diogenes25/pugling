@@ -91,3 +91,52 @@ bleibt ein Urteil).
 **Bewusst ungedeckt:** `OpenGoalProgressAsync` mit Aufgaben-Taktung (nur bei Typen ohne Prüfmodus sichtbar).
 
 **Zähler Sprint 198:** 3 (S1-Fall, Zeitachse, Momentaufnahme) – unter 5, kein Halt. Neues Tor: keines.
+
+## Offene Roadmap (Stand nach Sprint 198)
+
+Siehe `docs/backlog/`. Weiter B-1037 (Abrechnung), dann B-1038 und B-1040; vor B-737 B-1039 beantworten.
+
+## Sprint 199 — Ziel & Umfang
+
+**Sprint-Ziel (Vatersicht):** Lässt mein (scharf gestelltes) Kind eine Tagesaufgabe offen, kostet sie am nächsten Morgen genau einmal meinen
+Malus-Betrag, eine erledigte nichts, und die Aufgabe steht am nächsten Lerntag wieder im Plan. Widerlegt, wenn doppelt, an einem Tag ohne Plan,
+in der Pause, im Schattenmodus oder für eine erledigte Aufgabe gebucht wird, oder der Rückstand den Deckel sprengt.
+**Umfang:** B-1037.
+**Entwickler-Brief:** *Quelle der Wahrheit* `SettleClosedPeriodsAsync` bleibt die eine Senke jeder Malus-Buchung (Login, Kauf, Zeitgeber), mit
+dem Stamp-Bump; die Aufgaben-Abrechnung hängt sich davor. *Guards* eindeutiger Index je Aufgabe, Verlierer liest den Gewinner; nur geschlossene
+scharfe Tage, Rückblick 14 Tage. *Migration* `TagesaufgabeMalus` (Spalte `DoneAt`, Tabelle `DailyTaskPenalties`), additiv. *Testweg*
+`TagespflichtScharfTests` (Abschnitt B-1037), `PlanerRueckstandRegelnTests`, `MeldungBuchtNachTests`, Mutanten.
+
+## Iteration 199 — umgesetzt
+
+Siehe `## Verlauf` in [B-1037](backlog/B-1037-malus-je-tagesaufgabe-und-rueckstand.md): Abrechnung je Aufgabe, Erledigt-Stempel im Zielpfad,
+Preis der Aufgabe = Betrag des Kindes, Erstattung über eine berechtigte Meldung, Zeitgeber rechnet scharfe Kinder ab (ab 6 Uhr), Rückstand
+als Planer-Regel.
+
+## Halt des Nachtlaufs (Freigabe 3)
+
+Der Fünfer-Zähler von Sprint 199 lief über: (1) Fall „ohne Betrag“ maß den Riegel nicht (Probe T7 grün), (2) Fall „zu alt“ maß den
+Rückblick nicht (T10 grün), (3) die Erstattung einer berechtigten Meldung fehlte für Aufgaben-Malus (eigener Fund), (4) „verpasst“ hatte drei
+Quellen – der Planer las nur den Stempel (Review 🟡), (5) der Zeitgeber buchte kurz nach Mitternacht, bevor eine Runde vom Vortag fertig sein
+konnte (Review 🟡), **(6)** ein Teilfall von AK 5 trägt nichts (Review 🟡). Mit (6) endet der Lauf: (1) bis (5) sind behoben und gemessen,
+(6) und der Preis-Fund (Review 🟡 4) stehen ungebaut in [B-1041](backlog/B-1041-restpunkte-review-b-1037.md), mit den 🟢-Hinweisen.
+**B-1037 bleibt `in-arbeit`** (`wartet_auf`: Nutzer) – kein Rollengang, keine Abnahme in diesem Lauf. Kein Sprint 200.
+
+## Retrospektive (Sprint 199)
+
+**Nachschau:** B-1036 (Sprint 198, `463d95ad`) nach dem Umbau von `DutyCalendar.ForChildAsync` in Sprint 199 nachgelesen: `enforcedSince` kommt
+jetzt aus einer gemeinsamen Kind-Abfrage (`child is { PlannerMode: Enforced } ? PlannerSince : null`) – gleichwertig zur alten gefilterten
+Abfrage; S1/S3 laufen in der Schlussprobe von Sprint 199 mit (Klasse `TagespflichtScharfTests`). Kein Befund. `nachgeschaut: 2026-11-27` an B-1036.
+
+**Was die eigenen Tore durchließen und wer es fand:**
+
+- **Mutantenprobe:** zwei meiner neuen Fälle maßen nicht, was ihr Name sagt (Planstart nach dem „zu alten“ Tag; Betrag 0 ohne zweite Buchung).
+- **Eigener Fund beim Warten:** die Erstattung aus B-768 kannte den neuen Malus nicht – ein zweiter Schreiber auf „Malus“ ohne Leserliste.
+- **Review:** der neue Stempel `DoneAt` und die Regel „Ziel erfüllt“ liefen auseinander (Planer las nur den Stempel); der neue Zeitgeber-Aufruf
+  verschob den Buchungszeitpunkt in die Nacht.
+
+**Vorschlag (nur vorgeschlagen):** pm-loop Step 4 sagt schon „a rule about what an answer does has a second sink, the stored state: grep every
+*writer*“. Ergänzen um die Gegenrichtung: **ein neuer gespeicherter Stand neben einer Regel (Stempel, Cache) bekommt im Brief die Liste seiner
+*Leser*, und jeder Leser entscheidet: Stempel, Regel oder beides.** Hätte (3) und (4) vor dem Bau gezeigt. Prosa, kein Tor.
+
+**Bewusst ungedeckt:** siehe B-1041.

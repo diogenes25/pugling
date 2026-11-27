@@ -12,12 +12,12 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (78)
+### Offen (79)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) | Umschalten zwischen Schatten und scharf: was gilt am Umschalttag und für die angebrochene Woche? | Frage | `idee` | P1 | — | backend | — |
-| [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md) | Malus je verpasster Tagesaufgabe und Rückstand am nächsten Lerntag | Wunsch | `geschaetzt` | P1 | M | backend | Migration |
+| [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md) | Malus je verpasster Tagesaufgabe und Rückstand am nächsten Lerntag | Wunsch | `in-arbeit` | P1 | M | backend | Migration |
 | [B-1038](B-1038-dosis-aus-der-tagesaufgabe.md) | Im scharfen Modus nennt die Tagesaufgabe die Zahl der neuen Wörter | Wunsch | `geschaetzt` | P1 | S | backend | — |
 | [B-580](B-580-plan-aus-unit.md) | Plan aus Unit: ein Kapitel wird in einem Schritt zum Vier-Wochen-Plan | Wunsch | `geschaetzt` | P1 | L | beides | — |
 | [B-621](B-621-stundenplan-pflicht-backend.md) | Der Stundenplan erzeugt eine Pflicht: Taktung „Stundenplan“ und Obergrenze je Tag (Backend) | Wunsch | `geschaetzt` | P1 | L | backend | Migration + Vertrag |
@@ -28,6 +28,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md) | Zwei Positionen derselben Übung zählen ihre Wörter im Termin-Druck doppelt | Defekt | `idee` | P2 | — | backend | — |
+| [B-1041](B-1041-restpunkte-review-b-1037.md) | Restpunkte aus dem Review von B-1037 (Malus je Tagesaufgabe) | Defekt | `idee` | P2 | — | backend | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
@@ -748,13 +749,14 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 
 </details>
 
-### Wartet auf Zutun von außen (10)
+### Wartet auf Zutun von außen (11)
 
 Diese Stories kommen **im Repo nicht weiter** — es fehlt ein Schritt, den nur ein Mensch
 oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird gerade gebaut".
 
 | Id | Story | Stufe | Wartet auf |
 | --- | --- | --- | --- |
+| [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md) | Malus je verpasster Tagesaufgabe und Rückstand am nächsten Lerntag | `in-arbeit` | Nutzer: Rollengang und Abnahme; Nachtlauf P endete am Fünfer-Zähler (B-1041) |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | `geschaetzt` | ein echtes Handy — Klang und Haptik sind nicht maschinell zu beurteilen |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | `geschaetzt` | Z3 (Absender Lehrer-Agent, Rollenschnitt) offen; Z1 und Z2 mit Empfehlung entschieden |
 | [B-618](B-618-faecher-verteilung-backend.md) | Die Fächer eines Kindes teilen ein Tagesbudget neuer Wörter in Prozent (Backend) | `geschaetzt` | B-644 (Tagesplaner) – nicht bauen, bis B-644 gegrillt ist |
@@ -768,7 +770,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 
 ### Nach der Abnahme entgangen (230)
 
-**Nachgeschaut: 595 von 645 abgenommenen** — und in 201 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 50 sind **unbeobachtet**, nicht sauber.
+**Nachgeschaut: 596 von 645 abgenommenen** — und in 201 davon steckte ein Defekt, der bei der Abnahme durchgekommen war. Der Nenner ist die Zahl der *geprüften*, nicht der abgenommenen Stories; die übrigen 49 sind **unbeobachtet**, nicht sauber.
 
 | Defekt | Titel | Entgangen bei | Stufe |
 | --- | --- | --- | --- |
@@ -1004,7 +1006,7 @@ oder ein Werkzeug außerhalb tun kann. Nicht „in Arbeit" im Sinne von „wird 
 | [B-993](B-993-leerzeichen-um-den-schraegstrich.md) | Ein Leerzeichen am Schrägstrich kostet die Karte | [B-626] | `abgenommen` |
 
 <details>
-<summary>Nie nachgeschaut (50) — Arbeitsvorrat der Nachschau</summary>
+<summary>Nie nachgeschaut (49) — Arbeitsvorrat der Nachschau</summary>
 
 Abgenommen, aber nach der Abnahme nie wieder angesehen. Wer hier einen Blick tut, setzt
 danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst zählt der Blick nicht.
@@ -1016,7 +1018,6 @@ danach `nachgeschaut: <Datum>` — **auch wenn er nichts gefunden hat**, sonst z
 | [B-1022](B-1022-sohn-tag-zeigt-malus-frist-am-sonntag.md) | Die Arcade zeigt am Sonntag und in einer Pause „noch N Std. · −X Münzen“, obwohl der Server nichts abbucht |
 | [B-1025](B-1025-keine-loesung-schreibweisen.md) | „keine Lösung“ wurde nur in einer Schreibweise erkannt |
 | [B-1026](B-1026-sparziel-fang-und-vorlesename.md) | Sparziel: zu weiter Fang machte Serverfehler zum 404, Vorlesename ohne den sichtbaren Text |
-| [B-1036](B-1036-pflicht-quelle-tagesaufgabe.md) | Im scharfen Modus kommt die Pflicht des Tages aus den Tagesaufgaben (Quellenumschaltung) |
 | [B-207](B-207-kind-auswahlliste-ist-unkuratiert.md) | Die Auswahlliste des Kindes zeigt jedes Schlagwort, das je irgendwer getippt hat |
 | [B-375](B-375-heftseite-wird-uebungsentwurf.md) | Fotografierte Buchseiten werden zu Stoffnotizen einer Unit, aus denen eigene Übungen entstehen |
 | [B-430](B-430-nach-test-diese-woerter-ueben.md) | Nach einem nicht bestandenen Test gibt es nur „Nochmal versuchen" – keinen Weg zum Üben |
@@ -1087,6 +1088,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1038](B-1038-dosis-aus-der-tagesaufgabe.md) | `geschaetzt` | Abschnitt „User Story" |
 | [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) | `idee` | `unverifiziert: true` |
 | [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md) | `idee` | `unverifiziert: true` |
+| [B-1041](B-1041-restpunkte-review-b-1037.md) | `idee` | `unverifiziert: true` |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
