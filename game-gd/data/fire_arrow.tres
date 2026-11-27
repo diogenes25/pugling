@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProjectileKind" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/projectile_kind.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fire-arrow"
+color = Color(1, 0.45, 0.1, 1)
+size = 1.6
+speed = 20
+damage = 2
+model = ""
+arc = 0
+burning = false

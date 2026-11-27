@@ -8,3 +8,18 @@ const LEVELS: Array[LevelDef] = [
 	preload("res://data/flussfurt.tres"),
 	preload("res://data/burgberg.tres"),
 ]
+
+## The tower types a map's tower spots take in turn.
+const TOWER_MIX: Array[TowerKind] = [
+	preload("res://data/bolt_tower.tres"),
+	preload("res://data/catapult.tres"),
+]
+
+## The hero's own shot: a quick blue bolt, weaker than a tower's.
+const HERO_BOLT: ProjectileKind = preload("res://data/hero_bolt.tres")
+
+## The common skeleton: quick and weak.
+const MINION: EnemyKind = preload("res://data/minion.tres")
+
+## The armoured skeleton: slower, takes twice the hits.
+const WARRIOR: EnemyKind = preload("res://data/warrior.tres")

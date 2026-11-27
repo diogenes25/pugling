@@ -6,6 +6,7 @@ const LOGIN: PackedScene = preload("res://screens/login.tscn")
 const POSITIONS: PackedScene = preload("res://screens/positions.tscn")
 const MAPS: PackedScene = preload("res://screens/maps.tscn")
 const RESULT: PackedScene = preload("res://screens/result.tscn")
+const LEVEL: PackedScene = preload("res://level/level.tscn")
 const BACK_DEBOUNCE_MSEC: int = 400
 
 ## The server every screen talks to; a test sets a [FakeApi] before the node enters the tree.
@@ -94,9 +95,12 @@ func _start(map: LevelDef, plan_position_id: int) -> void:
 	_play(TowerRun.from_json(started.data), map)
 
 
-func _play(run: TowerRun, _map: LevelDef) -> void:
-	# The level scene follows in phase 4; until then a started run goes straight to its result.
-	_show_result(run.run_id, 0, 0, LevelEnd.Reason.GAVE_UP)
+func _play(run: TowerRun, map: LevelDef) -> void:
+	var level: Level = LEVEL.instantiate()
+	level.setup(server, run, map)
+	level.finished.connect(_show_result)
+	_replace(level)
+	_back = level.toggle_pause
 
 
 func _show_result(run_id: int, correct: int, total: int, reason: LevelEnd.Reason) -> void:

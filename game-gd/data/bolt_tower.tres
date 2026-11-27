@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TowerKind" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://data/tower_kind.gd" id="1"]
+[ext_resource type="Resource" path="res://data/bolt.tres" id="2"]
+[ext_resource type="Resource" path="res://data/fire_arrow.tres" id="3"]
+
+[resource]
+script = ExtResource("1")
+id = "bolt-tower"
+models = PackedStringArray("building_tower_A_blue", "building_tower_B_blue")
+model_scale = 1.6
+attack_range = 7.5
+shot_interval = 0.8
+muzzle_height = 3.6
+shot = ExtResource("2")
+strong_shot = ExtResource("3")
+footprint = 1.0
+strong_shot_name = "Feuerpfeile"
+blast = false

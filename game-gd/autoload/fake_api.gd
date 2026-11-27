@@ -102,6 +102,11 @@ func end_run(_run_id: int) -> ApiResult:
 	})
 
 
+## Heartbeats the current run has received.
+func beats() -> int:
+	return _beats
+
+
 ## An answer never arrives in the frame that asked for it.
 func _hop() -> void:
 	await Engine.get_main_loop().process_frame

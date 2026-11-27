@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/kaykit/chars/Knight.glb" id="1"]
+[ext_resource type="Script" path="res://heroes/knight_look.gd" id="2"]
+
+[node name="KnightLook" instance=ExtResource("1")]
+script = ExtResource("2")

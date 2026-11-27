@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ProjectileKind" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/projectile_kind.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fire-boulder"
+color = Color(1, 0.5, 0.15, 1)
+size = 1.7
+speed = 13
+damage = 3
+model = "projectile_catapult"
+arc = 3.5
+burning = true
