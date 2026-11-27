@@ -143,6 +143,19 @@ Repo.**
 3. **Weiter nur, wenn die Debug-APK unter 50 MB liegt.** Sonst anhalten und dem Nutzer berichten, woran es
    liegt.
 
+**Ergebnis (2026-11-27):** Kein Download nötig. Der installierte Editor `Godot_v4.7.2-stable_mono_win64`
+exportiert ein Projekt ohne C# mit den vorhandenen `mono`-Vorlagen, und die .NET-Laufzeit bleibt dabei draußen:
+In der APK liegen weder `libmonosgen*` noch `.dll`-Dateien. Gemessen am Wegwerf-Projekt mit allen heutigen
+`assets/` und einer Szene mit dem Ritter:
+
+| Build | C# (vorher) | ohne C# |
+|---|---|---|
+| Debug, arm64 | 110,4 MB | 34,4 MB |
+| Release, arm64 | – | 32,5 MB |
+
+Den Rest füllt fast allein `libgodot_android.so` (76 MB unkomprimiert). Die Schwelle von 50 MB ist klar
+unterschritten, es geht weiter.
+
 ### Phase 1: Gerüst
 
 - Neues GDScript-Projekt im Ordner `game-gd/` mit Ordnerstruktur, `project.godot` (Einstellungen siehe oben),
