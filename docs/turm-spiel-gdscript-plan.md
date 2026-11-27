@@ -8,7 +8,7 @@ Stand 2026-11-27. Entschieden vom Vater: Das Spiel wechselt von Godot/C# auf God
 gleich eine saubere, Godot-typische Struktur. Dieser Plan ist so geschrieben, dass eine **frische Sitzung ohne
 Vorwissen** ihn ausführen kann.
 
-> **Umgesetzt am 2026-11-27** bis auf die Runde auf dem Handy. Was nachgewiesen ist, was abweicht und was offen
+> **Umgesetzt am 2026-11-27**, die Runde auf dem Handy eingeschlossen. Was nachgewiesen ist, was abweicht und was offen
 > bleibt, steht unter [Paritätsliste](#paritätsliste-abnahme) und
 > [Ergebnis der Umsetzung](#ergebnis-der-umsetzung-2026-11-27). Die Phasen unten beschreiben den Weg; wo dort
 > `game-gd/` steht, ist heute `game/` gemeint.
@@ -273,14 +273,19 @@ Wegwerf-API. Der Level- und der Bildschirm-Lauf sind auch im **exportierten** St
 - [x] Sound an denselben Ereignissen wie in `GameSounds.cs`.
   - Level-Lauf zählt jeden gestarteten Klang: alle zwölf angeschlossenen Effekte spielen. `tap.wav` war schon in
     C# an kein Ereignis gebunden.
-- [ ] Logdatei `user://logs/godot.log` mit Zeilen `TURM hh:mm:ss start/assign/abgelegt/pause/weiter/ende …`.
+- [x] Logdatei `user://logs/godot.log` mit Zeilen `TURM hh:mm:ss start/assign/abgelegt/pause/weiter/ende …`.
   - Am PC nachgewiesen (`logdatei-user-logs-godot.log`). Die Zeilenformen stimmen mit dem C#-Stand überein:
     `turm-vergleich.txt` (Referenzlauf am PC) und `turm-vergleich-handy.txt` (67 echte Zeilen vom Handy).
-  - **Offen:** dieselbe Datei auf dem Handy mit der GDScript-APK.
+  - Auf dem Handy mit der GDScript-APK: `handy-gdscript-godot.log` mit `start`, `assign` (falsch und richtig),
+    `pause`, `weiter` und `ende GaveUp …`. Nur `abgelegt` kam in dieser Runde nicht vor.
 - [x] Die 18 Regeltests sind grün, jeder mit roter Probe.
   - `regeltests.log` (19 Fälle, einer neu) und `rote_probe.log` (19 von 19 werden am benannten Test rot).
-- [ ] **Offen:** eine Runde auf dem Handy gegen die Wegwerf-API, mit Bildschirmfoto und Logzeilen (siehe
-      „Ergebnis der Umsetzung“).
+- [x] Eine Runde auf dem Handy gegen die Wegwerf-API, mit Bildschirmfoto und Logzeilen.
+  - Lauf 14 auf der Lichtung am 2026-11-27 um 20:08, per `adb` ferngesteuert, mit der korrigierten APK: Türme
+    stehen, Wörter fallen, ein Wort falsch und eins richtig gegeben (+8 Schuss, nächste Bedeutung), Pause, Weiter,
+    Aufhören, Ergebnis. Fotos `handy-02-…` bis `handy-08-…`, darunter Randmarker (auch rot bei 0 Schuss) und die
+    Aufheben-Liste. Die Wegwerf-API hat Anmeldung, Start, beide Zuweisungen, zehn Heartbeats und das Ende mit
+    200 beantwortet.
 
 ## Ergebnis der Umsetzung (2026-11-27)
 
@@ -315,13 +320,14 @@ Fluss, Brücken, Berge, Turm-Modelle). Behoben, mit Wächtertest und einem Lauf 
 - **C#-Referenzlogs:** Die Logdateien des C#-Referenzlaufs am PC sind durch die neuen Läufe aus der Rotation
   gefallen (derselbe Ordner, höchstens 20 Dateien). Verglichen wurde mit den vorher mitgeschnittenen Zeilen und
   mit den C#-Logs vom Handy.
-- **Phase 6 vor der Handy-Runde.** Das Handy war nicht mehr verfügbar, die Runde steht noch aus.
+- **Phase 6 vor der Handy-Runde.** Das Handy war zwischendurch nicht verfügbar; die Runde ist am selben Abend
+  nachgeholt worden.
 
 **Offen:**
 
-- **Handy-Runde.** Auf dem Handy liegt noch die erste GDScript-APK **ohne Türme**. Vor dem nächsten Spielen
-  gehört die korrigierte APK darauf (`game/build/pugling-tower.apk`, per `tools/handy-installieren.ps1`). Danach
-  eine Runde gegen die Wegwerf-API, mit Bildschirmfoto und den `TURM`-Zeilen aus der Logdatei.
+- **Die Handy-Runde war kurz und ferngesteuert:** zwei Zuweisungen, aufgehört nach 153 s. Ziel erreicht, Burg
+  gefallen, Zeit um, Katapult und starke Türme sind auf dem Handy nicht gesehen worden, nur im Level-Lauf am PC
+  und im exportierten Paket.
 - **Rückweg:** Die letzte C#-APK liegt als `game/build/csharp-stand/pugling-tower-csharp-debug.apk` bereit, falls
   die GDScript-APK auf dem Handy weitere Überraschungen zeigt.
 - **Emulator-Preset** (x86_64) ist übernommen, aber nicht gebaut und nicht geprüft: Der Emulator war tabu.
