@@ -144,6 +144,10 @@ Neue Tabellen (Migration **anhängen**, nie falten): `TowerGameRun` (Kind, Level
 
 ## Technik der App
 
+> **Umstieg beschlossen (2026-11-27):** Das Spiel wechselt von C# auf GDScript. Ausführbarer Plan:
+> [turm-spiel-gdscript-plan.md](turm-spiel-gdscript-plan.md). Grund: Von 110 MB APK sind etwa 70 MB
+> .NET-Laufzeit, der Nutzen von C# ist klein.
+
 ### Empfehlung: Godot 4 mit C# als Sprache
 
 | Option | Für | Gegen |
