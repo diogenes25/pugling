@@ -6,21 +6,42 @@ using PuglingTower.World;
 
 namespace PuglingTower;
 
+/// <summary>Why a level ended; the server alone decides whether it counts as won.</summary>
+public enum LevelEnd
+{
+    /// <summary>The goal of correct words is reached.</summary>
+    GoalReached,
+
+    /// <summary>Too many skeletons reached the castle.</summary>
+    CastleFallen,
+
+    /// <summary>Today's play time is used up.</summary>
+    TimeUp,
+
+    /// <summary>The player stopped from the pause menu.</summary>
+    GaveUp,
+}
+
 /// <summary>
 /// One level of "Vokabel-Türme" in 3D (B-853): skeletons walk fixed roads towards the castle, towers shoot them while
 /// they have ammo, a defeated skeleton drops a vocabulary book. The hero walks the map - larger than the screen, the
 /// camera keeps the hero in the centre - picks up a word and hands it to a tower; the server grades it. A correct word
 /// refills the tower and gives it the next meaning, a wrong one is gone and costs the tower three shots. Won after
-/// <see cref="TowerRunResponse.Goal"/> correct words, lost when the castle falls.
+/// <see cref="TowerRunResponse.Goal"/> correct words, lost when the castle falls. The hero shoots too - weaker than a
+/// tower but without ammo - so a run with empty towers still has a way back; words he lays down stay where they are.
 /// </summary>
 public partial class Level : Node3D
 {
-    /// <summary>Raised once when the level ends: run id, correct and total assignments, whether the play time ran out.</summary>
-    public event Action<int, int, int, bool>? Finished;
+    /// <summary>Raised once when the level ends: run id, correct and total assignments, and why it ended.</summary>
+    public event Action<int, int, int, LevelEnd>? Finished;
 
     private const float TowerRange = 7.5f, ShotInterval = 0.8f, BoltSpeed = 20f;
     private const float PickupRadius = 2.6f, TowerReach = 3.6f, HeroSpeed = 6.5f, HeroRadius = 0.45f, TokenLifetime = 30f;
     private const int StartAmmo = 10, RefillAmmo = 8, WrongPenalty = 3, BaseLives = 10, FullAmmoBar = 20;
+    /// <summary>The hero's own shot: shorter range, slower and only ever one damage - the towers stay the main defence.</summary>
+    private const float HeroRange = 5.5f, HeroShotInterval = 1.0f;
+    /// <summary>A tower well stocked (more than this many shots) or refilled this often shoots double-damage arrows.</summary>
+    private const int StrongAmmo = 30, MasterRefills = 5, StrongDamage = 2;
     /// <summary>The app reports the foreground play time about this often (B-851: the server clamps each beat).</summary>
     private const double BeatInterval = 15;
     private static readonly Vector3 CameraOffset = new(0, 15, 9.5f);
@@ -30,8 +51,9 @@ public partial class Level : Node3D
     {
         public Vector2 Pos;
         public TowerTarget? Target;
-        public int Ammo = StartAmmo;
+        public int Ammo = StartAmmo, Refills;
         public float Cooldown;
+        public bool Strong => Ammo > StrongAmmo || Refills >= MasterRefills;
     }
 
     private sealed class Monster
@@ -49,6 +71,8 @@ public partial class Level : Node3D
         public required TowerToken Data;
         public Vector2 Pos;
         public float Age;
+        /// <summary>Laid down by the hero: it stays until picked up again instead of expiring.</summary>
+        public bool Placed;
         public Node3D Node = null!;
     }
 
@@ -56,6 +80,7 @@ public partial class Level : Node3D
     {
         public Monster Target = null!;
         public MeshInstance3D Node = null!;
+        public int Damage = 1;
     }
 
     private PuglingApi _api = null!;
@@ -78,8 +103,9 @@ public partial class Level : Node3D
     private float _heroYaw, _actionTime;
     private TowerToken? _carried;
     private int _correct, _total, _lives = BaseLives, _spawned;
-    private float _spawnTimer = 2f, _elapsed, _clock;
-    private bool _busy, _over, _beating;
+    private float _spawnTimer = 2f, _elapsed, _clock, _heroCooldown;
+    private int _heroShots;
+    private bool _busy, _over, _beating, _paused;
     private double _sinceBeat;
 
     // Left thumb: a floating joystick wherever it lands on the left part of the screen.
@@ -88,16 +114,18 @@ public partial class Level : Node3D
 
     private Painter _painter = null!;
     private VBoxContainer _pickPanel = null!;
-    private Button _giveButton = null!;
+    private Button _giveButton = null!, _dropButton = null!, _pauseButton = null!;
+    private Control _pauseMenu = null!;
     private Label _feedback = null!;
     private Tower? _giveTower;
     private string _pickSignature = "";
 
     private static readonly SphereMesh BoltMesh = new() { Radius = 0.16f, Height = 0.32f, RadialSegments = 8, Rings = 4 };
-    private static readonly StandardMaterial3D BoltMaterial = new()
-    {
-        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, AlbedoColor = new Color(1f, 0.9f, 0.4f),
-    };
+    private static readonly StandardMaterial3D BoltMaterial = Unshaded(new Color(1f, 0.9f, 0.4f)),
+        StrongBoltMaterial = Unshaded(new Color(1f, 0.45f, 0.1f)), HeroBoltMaterial = Unshaded(new Color(0.55f, 0.85f, 1f));
+
+    private static StandardMaterial3D Unshaded(Color color) =>
+        new() { ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, AlbedoColor = color };
 
     /// <summary>Wires the level to a run and a map; call before adding it to the tree.</summary>
     public void Setup(PuglingApi api, TowerRunResponse run, LevelDef def)
@@ -199,11 +227,51 @@ public partial class Level : Node3D
         _giveButton.Visible = false;
         ui.AddChild(_giveButton);
 
+        _dropButton = UiButton("", new Color(0.3f, 0.4f, 0.6f), DropCarried, 26);
+        _dropButton.CustomMinimumSize = new Vector2(240, 70);
+        _dropButton.Visible = false;
+        ui.AddChild(_dropButton);
+
+        _pauseButton = UiButton("II", Night, TogglePause, 30);
+        _pauseButton.CustomMinimumSize = new Vector2(84, 72);
+        ui.AddChild(_pauseButton);
+
         _feedback = new Label { HorizontalAlignment = HorizontalAlignment.Center, Modulate = Colors.Transparent };
         _feedback.AddThemeFontSizeOverride("font_size", 36);
         _feedback.AddThemeColorOverride("font_outline_color", Colors.Black);
         _feedback.AddThemeConstantOverride("outline_size", 10);
         ui.AddChild(_feedback);
+
+        // The pause menu dims the level and stops it: carry on, or stop here and see the result.
+        _pauseMenu = new ColorRect { Color = new Color(0, 0, 0, 0.6f), Visible = false };
+        _pauseMenu.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        var menu = new VBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        menu.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        menu.AddThemeConstantOverride("separation", 22);
+        var title = Caption("Pause");
+        title.AddThemeFontSizeOverride("font_size", 44);
+        menu.AddChild(title);
+        foreach (var button in new[]
+        {
+            UiButton("Weiter", new Color(0.18f, 0.62f, 0.32f), TogglePause),
+            UiButton("Aufhören", new Color(0.7f, 0.25f, 0.2f), () => End(LevelEnd.GaveUp)),
+        })
+        {
+            button.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
+            menu.AddChild(button);
+        }
+        _pauseMenu.AddChild(menu);
+        ui.AddChild(_pauseMenu);
+    }
+
+    /// <summary>Opens or closes the pause menu (pause button, Android back button).</summary>
+    public void TogglePause()
+    {
+        if (_over) return;
+        _paused = !_paused;
+        _pauseMenu.Visible = _paused;
+        _stickFinger = -1;
+        _stickVector = Vector2.Zero;
     }
 
     /// <summary>A big rounded touch button in the game's style.</summary>
@@ -234,6 +302,7 @@ public partial class Level : Node3D
     public override void _Input(InputEvent e)
     {
         // The joystick lives on the left part of the screen; the right belongs to the buttons (two-thumb layout).
+        if (_paused) return;
         if (e is InputEventScreenTouch touch)
         {
             if (touch.Pressed && _stickFinger < 0 && touch.Position.X < GetViewport().GetVisibleRect().Size.X * 0.45f)
@@ -260,6 +329,11 @@ public partial class Level : Node3D
     {
         var dt = (float)delta;
         _clock += dt;
+        if (_paused)
+        {
+            _painter.QueueRedraw();
+            return;
+        }
         if (!_over)
         {
             _elapsed += dt;
@@ -269,6 +343,7 @@ public partial class Level : Node3D
             SpawnMonsters(dt);
             MoveMonsters(dt);
             ShootTowers(dt);
+            ShootHero(dt);
             UpdateContext();
         }
         MoveBolts(dt);
@@ -357,7 +432,7 @@ public partial class Level : Node3D
             _monsters.RemoveAt(i);
             Burst(_def.Base.To3(2.5f), new Color(1, 0.3f, 0.2f), 30);
             Flash("Ein Skelett hat die Burg erreicht!", Colors.Salmon);
-            if (--_lives <= 0) End(timeUp: false);
+            if (--_lives <= 0) End(LevelEnd.CastleFallen);
         }
     }
 
@@ -370,11 +445,33 @@ public partial class Level : Node3D
                 .OrderBy(m => m.Remaining).FirstOrDefault();
             if (target is null) continue;
             tower.Cooldown = ShotInterval;
+            var strong = tower.Strong;
             tower.Ammo--;
-            var bolt = new MeshInstance3D { Mesh = BoltMesh, MaterialOverride = BoltMaterial, Position = tower.Pos.To3(3.6f), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-            AddChild(bolt);
-            _bolts.Add(new Bolt { Target = target, Node = bolt });
+            Fire(tower.Pos.To3(3.6f), target, strong ? StrongDamage : 1, strong ? StrongBoltMaterial : BoltMaterial, strong ? 1.6f : 1f);
         }
+    }
+
+    // Plan B: the hero shoots the nearest skeleton in reach by himself; no ammo, so empty towers never end a run alone.
+    private void ShootHero(float dt)
+    {
+        if ((_heroCooldown -= dt) > 0) return;
+        var target = _monsters.Where(m => !m.Dying && m.Node.Position.Flat().DistanceTo(_heroPos) <= HeroRange)
+            .OrderBy(m => m.Node.Position.Flat().DistanceTo(_heroPos)).FirstOrDefault();
+        if (target is null) return;
+        _heroCooldown = HeroShotInterval;
+        _heroShots++;
+        Fire(_heroPos.To3(1.4f), target, 1, HeroBoltMaterial, 0.8f);
+    }
+
+    private void Fire(Vector3 from, Monster target, int damage, Material material, float size)
+    {
+        var bolt = new MeshInstance3D
+        {
+            Mesh = BoltMesh, MaterialOverride = material, Position = from, Scale = Vector3.One * size,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        };
+        AddChild(bolt);
+        _bolts.Add(new Bolt { Target = target, Node = bolt, Damage = damage });
     }
 
     private void MoveBolts(float dt)
@@ -396,7 +493,7 @@ public partial class Level : Node3D
             _bolts.RemoveAt(i);
             if (!alive) continue;
             Burst(dest, new Color(1f, 0.95f, 0.8f), 10, 0.4f);
-            if (--bolt.Target.Hp <= 0) Defeat(bolt.Target);
+            if ((bolt.Target.Hp -= bolt.Damage) <= 0) Defeat(bolt.Target);
         }
     }
 
@@ -409,18 +506,39 @@ public partial class Level : Node3D
         // The book lands beside the road, inside the map, where the hero can reach it.
         var (pos, dir) = Geo.PointAt(_def.Paths[m.Path], m.Distance);
         var side = dir.Orthogonal() * (GD.Randf() < 0.5f ? 1.6f : -1.6f);
-        var spot = (pos + side).Clamp(new Vector2(1, 1), _def.Size - new Vector2(1, 1));
-        if (!_map.Walkable(spot, 0.2f)) spot = (pos - side).Clamp(new Vector2(1, 1), _def.Size - new Vector2(1, 1));
-        DropToken(_tokenById[id], spot);
+        DropToken(_tokenById[id], FreeSpot(pos + side), placed: false);
     }
 
-    private void DropToken(TowerToken data, Vector2 at)
+    /// <summary>
+    /// The nearest walkable spot to <paramref name="near"/> that keeps a little distance to every other book, so words
+    /// never pile up into one unreadable heap. Searches outwards in rings.
+    /// </summary>
+    private Vector2 FreeSpot(Vector2 near)
+    {
+        const float Gap = 2.4f;
+        var lo = new Vector2(1, 1);
+        var hi = _def.Size - new Vector2(1, 1);
+        for (var ring = 0; ring <= 6; ring++)
+        {
+            var steps = ring == 0 ? 1 : ring * 8;
+            for (var k = 0; k < steps; k++)
+            {
+                var angle = Mathf.Tau * k / steps;
+                var spot = (near + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * ring * 1.1f).Clamp(lo, hi);
+                if (_map.Walkable(spot, 0.3f) && _tokens.All(t => t.Pos.DistanceTo(spot) >= Gap)) return spot;
+            }
+        }
+        return near.Clamp(lo, hi);
+    }
+
+    private void DropToken(TowerToken data, Vector2 at, bool placed)
     {
         var node = Models.Character("spellbook_closed.gltf").Instantiate<Node3D>();
         node.Scale = Vector3.One * 1.6f;
         AddChild(node);
-        node.AddChild(Ring(new Vector3(0, -0.3f, 0), 0.55f, new Color(Gold, 0.7f)));
-        _tokens.Add(new Token { Data = data, Pos = at, Node = node });
+        // A white ring marks a word the hero laid down himself: it stays.
+        node.AddChild(Ring(new Vector3(0, -0.3f, 0), 0.55f, placed ? new Color(1, 1, 1, 0.85f) : new Color(Gold, 0.7f)));
+        _tokens.Add(new Token { Data = data, Pos = at, Node = node, Placed = placed });
         Burst(at.To3(0.8f), Gold, 14, 0.5f);
     }
 
@@ -430,14 +548,14 @@ public partial class Level : Node3D
         {
             var token = _tokens[i];
             // Expired books go back to the pool, so the field never fills up with words nobody picks.
-            if (!_over && (token.Age += dt) >= TokenLifetime)
+            if (!_over && !token.Placed && (token.Age += dt) >= TokenLifetime)
             {
                 _pool.Return(token.Data.TokenId);
                 token.Node.QueueFree();
                 _tokens.RemoveAt(i);
                 continue;
             }
-            var blink = token.Age > TokenLifetime - 5 && Mathf.PosMod(_clock, 0.5f) < 0.2f;
+            var blink = !token.Placed && token.Age > TokenLifetime - 5 && Mathf.PosMod(_clock, 0.5f) < 0.2f;
             token.Node.Visible = !blink;
             token.Node.Position = token.Pos.To3(0.6f + 0.15f * Mathf.Sin(_clock * 3 + i));
             token.Node.Rotation = new Vector3(0, _clock * 1.2f + i, 0);
@@ -465,6 +583,20 @@ public partial class Level : Node3D
                 .OrderBy(t => t.Pos.DistanceTo(_heroPos)).FirstOrDefault();
         _giveButton.Visible = _giveTower is not null;
         if (_giveTower is not null) _giveButton.Text = $"„{_carried!.Word}“\ngeben";
+        _dropButton.Visible = _carried is not null && !_busy;
+        if (_carried is not null) _dropButton.Text = $"„{_carried.Word}“ ablegen";
+    }
+
+    // Sorting words: the carried word goes down next to the hero and stays there for later.
+    private void DropCarried()
+    {
+        if (_over || _busy || _carried is null) return;
+        DropToken(_carried, FreeSpot(_heroPos), placed: true);
+        _carried = null;
+        _carriedBook.Visible = false;
+        _actionTime = 0.4f;
+        Models.Play(_heroAnim, false, "PickUp", "Interact");
+        _pickSignature = "";
     }
 
     private static Label Caption(string text)
@@ -481,6 +613,9 @@ public partial class Level : Node3D
         var screen = GetViewport().GetVisibleRect().Size;
         _pickPanel.Position = new Vector2(screen.X - _pickPanel.Size.X - 28, 110);
         _giveButton.Position = screen - _giveButton.Size - new Vector2(28, 28);
+        _dropButton.Position = new Vector2(screen.X - _dropButton.Size.X - 28,
+            (_giveButton.Visible ? _giveButton.Position.Y : screen.Y) - _dropButton.Size.Y - 18);
+        _pauseButton.Position = new Vector2(screen.X - _pauseButton.Size.X - 20, 14);
         _feedback.Size = new Vector2(screen.X, 60);
         _feedback.Position = new Vector2(0, screen.Y * 0.16f);
     }
@@ -490,7 +625,7 @@ public partial class Level : Node3D
         if (_over || !_tokens.Remove(token)) return;
         token.Node.QueueFree();
         // One word at a time (B-822): picking another one puts the carried one down here.
-        if (_carried is not null) DropToken(_carried, _heroPos + new Vector2(0.9f, 0.9f));
+        if (_carried is not null) DropToken(_carried, FreeSpot(_heroPos), placed: true);
         _carried = token.Data;
         _carriedBook.Visible = true;
         _actionTime = 0.5f;
@@ -516,11 +651,15 @@ public partial class Level : Node3D
             {
                 _correct++;
                 _pool.Consume(token.TokenId);
+                var wasStrong = tower.Strong;
                 tower.Ammo += RefillAmmo;
+                tower.Refills++;
                 tower.Target = _nextTargets.Count > 0 ? _nextTargets.Dequeue() : null;
                 Burst(tower.Pos.To3(3.2f), new Color(0.4f, 1f, 0.5f), 40);
-                Flash($"Richtig! „{token.Word}“ = „{target.Prompt}“  +{RefillAmmo} Schuss", Colors.LightGreen);
-                if (_correct >= _run.Goal) End(timeUp: false);
+                Flash(!wasStrong && tower.Strong
+                    ? "Richtig! Der Turm schießt jetzt Feuerpfeile ★"
+                    : $"Richtig! „{token.Word}“ = „{target.Prompt}“  +{RefillAmmo} Schuss", Colors.LightGreen);
+                if (_correct >= _run.Goal) End(LevelEnd.GoalReached);
             }
             else
             {
@@ -534,7 +673,7 @@ public partial class Level : Node3D
         catch (ApiException ex)
         {
             Flash(ex.Message, Colors.Orange);
-            if (ex.RunClosed) End(timeUp: true);
+            if (ex.RunClosed) End(LevelEnd.TimeUp);
         }
         finally
         {
@@ -581,7 +720,7 @@ public partial class Level : Node3D
             if (beat.TimeUp)
             {
                 Flash("Die Spielzeit für heute ist um.", Colors.Orange);
-                End(timeUp: true);
+                End(LevelEnd.TimeUp);
             }
         }
         catch (ApiException)
@@ -595,16 +734,20 @@ public partial class Level : Node3D
     }
 
     // The server decides whether the level is won (its own count of solved towers); the client only says it is over.
-    private void End(bool timeUp)
+    private void End(LevelEnd reason)
     {
         if (_over) return;
         _over = true;
+        _paused = false;
+        _pauseMenu.Visible = false;
+        _pauseButton.Visible = false;
         _giveButton.Visible = false;
+        _dropButton.Visible = false;
         foreach (var child in _pickPanel.GetChildren()) child.QueueFree();
         Models.Play(_heroAnim, false, _correct >= _run.Goal ? "Cheer" : "Death_A");
-        GD.Print($"TURM ende {(timeUp ? "zeit um" : "")} {_correct}/{_total}");
+        GD.Print($"TURM ende {reason} {_correct}/{_total}, Heldenschüsse {_heroShots}");
         // A short moment to see the hero cheer (or fall) before the result screen.
-        GetTree().CreateTimer(1.6).Timeout += () => Finished?.Invoke(_run.RunId, _correct, _total, timeUp);
+        GetTree().CreateTimer(reason == LevelEnd.GaveUp ? 0.3 : 1.6).Timeout += () => Finished?.Invoke(_run.RunId, _correct, _total, reason);
     }
 
     // ---- 2D overlay: everything that must stay readable on a phone is drawn flat on top of the 3D scene. ----
@@ -653,14 +796,15 @@ public partial class Level : Node3D
         var low = tower.Target is not null && tower.Ammo <= WrongPenalty;
         var chosen = tower == _giveTower;
         var border = chosen ? Gold : low ? new Color(1f, 0.3f, 0.25f) : new Color(1, 1, 1, 0.3f);
-        var label = tower.Target?.Prompt ?? "fertig";
+        var label = tower.Target is null ? "fertig" : tower.Strong ? "★ " + tower.Target.Prompt : tower.Target.Prompt;
         if (OnScreen(tower.Pos.To3(4.6f), screen, 40, out var at))
         {
             var width = Mathf.Max(150, ThemeDB.FallbackFont.GetStringSize(label, fontSize: 26).X + 34);
             var panel = new Rect2(at - new Vector2(width / 2, 40), new Vector2(width, 66));
             var pulse = chosen ? 1 + 0.06f * Mathf.Sin(_clock * 8) : 1;
             panel = panel.Grow((pulse - 1) * 40);
-            p.Box(panel, tower.Target is null ? new Color(0.2f, 0.2f, 0.2f, 0.7f) : Night, border, chosen ? 5 : 2, 16);
+            var fillColor = tower.Target is null ? new Color(0.2f, 0.2f, 0.2f, 0.7f) : tower.Strong ? new Color(0.45f, 0.18f, 0.05f, 0.88f) : Night;
+            p.Box(panel, fillColor, border, chosen ? 5 : 2, 16);
             p.Text(new Vector2(panel.GetCenter().X, panel.Position.Y + 22), label, 26, tower.Target is null ? new Color(1, 1, 1, 0.6f) : Colors.White);
             if (tower.Target is null) return;
             var bar = new Rect2(panel.Position.X + 14, panel.End.Y - 22, panel.Size.X - 64, 12);

@@ -16,6 +16,8 @@ public partial class GameRoot : Control
     private Label _status = null!;
     private int _lastPosition;
     private LevelDef _lastLevel = LevelDef.All[0];
+    /// <summary>What the Android back button does on the current screen.</summary>
+    private System.Action _back = () => { };
 
     /// <inheritdoc />
     public override void _Ready() => ShowLogin();
@@ -26,6 +28,18 @@ public partial class GameRoot : Control
         if (disposing) _api.Dispose();
         base.Dispose(disposing);
     }
+
+    /// <inheritdoc />
+    public override void _Notification(int what)
+    {
+        // project.godot keeps the app open on "back" (quit_on_go_back=false); each screen decides where back leads.
+        // One press arrives more than once on Android; without the debounce it would skip a screen.
+        if (what != NotificationWMGoBackRequest || Time.GetTicksMsec() - _lastBack < 400) return;
+        _lastBack = Time.GetTicksMsec();
+        _back();
+    }
+
+    private ulong _lastBack;
 
     private void Replace(Node screen)
     {
@@ -83,10 +97,12 @@ public partial class GameRoot : Control
         var server = Field(Servers[OS.HasFeature("x86_64") ? 0 : 1].Url, "Server");
         var child = Field("3", "Kind-Nr.");
         var pin = Field("", "PIN", secret: true);
+        _back = () => GetTree().Quit();
 
-        // The Android soft keyboard does not open for a Godot LineEdit in this setup (focus yes, IME no), so the login
-        // never depends on it: servers are presets and digits come from an on-screen keypad. The fields stay editable
-        // for a hardware keyboard.
+        // Digits come only from the on-screen keypad, as in the web login: the phone's keyboard would pop up over the
+        // form and hide the keypad. A hardware keyboard still types into the focused field.
+        child.VirtualKeyboardEnabled = false;
+        pin.VirtualKeyboardEnabled = false;
         var presets = new HBoxContainer();
         presets.AddThemeConstantOverride("separation", 12);
         foreach (var (label, url) in Servers)
@@ -97,8 +113,16 @@ public partial class GameRoot : Control
         }
 
         var target = pin;
-        child.FocusEntered += () => target = child;
-        pin.FocusEntered += () => target = pin;
+        void Select(LineEdit field)
+        {
+            target = field;
+            // The field the keypad writes into is the bright one.
+            child.Modulate = field == child ? Colors.White : new Color(1, 1, 1, 0.55f);
+            pin.Modulate = field == pin ? Colors.White : new Color(1, 1, 1, 0.55f);
+        }
+        child.FocusEntered += () => Select(child);
+        pin.FocusEntered += () => Select(pin);
+        Select(pin);
 
         var form = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         form.AddThemeConstantOverride("separation", 14);
@@ -154,6 +178,7 @@ public partial class GameRoot : Control
     private async Task ShowPositionsAsync()
     {
         var box = Page($"Hallo {_api.Name}! Welche Wörter?");
+        _back = ShowLogin;
         box.AddChild(_status);
         try
         {
@@ -168,11 +193,14 @@ public partial class GameRoot : Control
         {
             _status.Text = ex.Message;
         }
+        box.AddChild(Action("Abmelden", ShowLogin));
+        box.AddChild(Action("Spiel beenden", () => GetTree().Quit()));
     }
 
     private void ShowLevels(int planPositionId)
     {
         var box = Page("Welche Karte?");
+        _back = () => _ = ShowPositionsAsync();
         foreach (var level in LevelDef.All)
         {
             box.AddChild(Action(level.Name, () => _ = StartAsync(planPositionId, level)));
@@ -192,8 +220,9 @@ public partial class GameRoot : Control
             _lastLevel = map;
             var level = new Level();
             level.Setup(_api, run, map);
-            level.Finished += (runId, correct, total, timeUp) => _ = ShowResultAsync(runId, correct, total, timeUp);
+            level.Finished += (runId, correct, total, reason) => _ = ShowResultAsync(runId, correct, total, reason);
             Replace(level);
+            _back = level.TogglePause;
         }
         catch (ApiException ex)
         {
@@ -201,8 +230,9 @@ public partial class GameRoot : Control
         }
     }
 
-    private async Task ShowResultAsync(int runId, int correct, int total, bool timeUp)
+    private async Task ShowResultAsync(int runId, int correct, int total, LevelEnd reason)
     {
+        _back = () => _ = ShowPositionsAsync();
         TowerRunEndResult? end = null;
         string? error = null;
         try
@@ -216,11 +246,16 @@ public partial class GameRoot : Control
         // Without the server's answer nobody knows whether the level is won: say so and offer the end call again
         // (it is idempotent), instead of showing a won level as lost and never booking its coins.
         var title = end is null ? "Ergebnis noch nicht gespeichert."
-            : end.Won ? "Level geschafft!" : timeUp ? "Spielzeit für heute ist um." : "Die Monster sind durchgebrochen.";
+            : end.Won ? "Level geschafft!" : reason switch
+            {
+                LevelEnd.TimeUp => "Spielzeit für heute ist um.",
+                LevelEnd.GaveUp => "Spiel beendet.",
+                _ => "Die Monster sind durchgebrochen.",
+            };
         var box = Page(title);
         box.AddChild(Text($"{correct} von {total} Zuweisungen richtig.", 30));
         if (end is null)
-            box.AddChild(Action("Ergebnis nochmal senden", () => _ = ShowResultAsync(runId, correct, total, timeUp)));
+            box.AddChild(Action("Ergebnis nochmal senden", () => _ = ShowResultAsync(runId, correct, total, reason)));
         if (end is not null)
             box.AddChild(Text(end.CoinsAwarded > 0
                 ? $"+{end.CoinsAwarded} 🪙  (heute {end.CoinsToday}/{end.DailyCoinCap})"
