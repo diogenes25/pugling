@@ -67,7 +67,8 @@ func home() -> ApiResult:
 		"wallet": {"childId": float(child_id), "coins": 120.0, "gems": 7.0},
 		"today": {
 			"goalsTotal": 4.0, "goalsMet": 1.0, "currentStreak": 3.0, "dutyDone": false,
-			"outstanding": ["Unit 1 · Wörter Part A", "Unité 5 · Vokabeln", "Grammatik: simple past"],
+			"outstanding": ["Unit 1 · Wörter Part A (Tagesziel) offen", "Unité 5 · Vokabeln (Wochenziel) offen",
+				"Grammatik: simple past (Tagesziel) offen"],
 			"dailyBox": {"claimedToday": false, "openedToday": false, "waiting": 1.0, "streakAtClaim": 0.0},
 		},
 		"missions": [

@@ -55,7 +55,7 @@ func _ready() -> void:
 	_press("Anmelden")
 	await _frames(8)
 
-	_expect("startseite", ["Testkind", "[SPIELEN]", "Tagesaufgaben", "○ Lernziele heute  1/4", "offen: Unit 1 · Wörter Part A",
+	_expect("startseite", ["Testkind", "[SPIELEN]", "Tagesaufgaben", "○ Lernziele heute  1/4", "  Unit 1 · Wörter Part A (Tagesziel) offen",
 		"○ 20 Vokabeln richtig  8/20  +25", "✔ Fertig-Mission  5/5  +10", "1 Truhe wartet – öffne sie im Lern-Teil!",
 		"Spielzeit heute noch 28 Min.", "Spiel-Münzen heute 0/10", "Serie 3   ·   Münzen 120   ·   Gems 7   ·   Rekord",
 		"[Wörter\nEnglisch · Unit 1 · Wörter  ▸]", "[Karte\nLichtung  ▸]", "[Einstellungen]"])

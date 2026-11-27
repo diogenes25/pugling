@@ -41,7 +41,10 @@ Zusätzlich entschieden (im Sinne des Auftrags, zum Umstoßen):
 - Der Rekord je Karte liegt nur auf dem Gerät (`user://records.cfg`).
 
 Geprüft: 36 Regeltests mit roter Probe, Level-Lauf mit 212 Prüfungen (auch im exportierten Paket), Server-Tests.
-**Nicht geprüft:** eine Runde auf dem Handy und das Spielgefühl der Balance – die Zahlen sind ein erster Wurf.
+**Auf dem Handy** (2026-11-27, gegen die Wegwerf-API auf einer DB-Kopie): Welle 1 geschafft, Welle 2 begonnen,
+Zusammenfassung mit Rekord. **Befund zur Balance:** Nach Welle 1 hatten die drei Türme noch 3, 2 und 0 Schuss, und
+es waren nur drei Wörter gefallen – die Munition ist zu knapp für ein Spiel, das lange laufen soll. Die Zahlen sind
+ein erster Wurf und brauchen Spielrunden der Kinder.
 
 ## Etappe 2 – Startbildschirm, einmal anmelden, Einstellungen (gebaut 2026-11-27)
 
@@ -64,7 +67,9 @@ Geprüft: 36 Regeltests mit roter Probe, Level-Lauf mit 212 Prüfungen (auch im 
 
 Geprüft: Bildschirm-Lauf (Anmelden, Startseite, gemerkte Wahl, Neustart ohne Login, abgelaufene Sitzung,
 unpassende PIN, Abmelden), auch im exportierten Paket; der Aufruf der Startseite gegen die Wegwerf-API auf einer
-DB-Kopie. **Nicht geprüft:** das Aussehen auf dem Handy (nur am PC bei 1600×720 fotografiert).
+DB-Kopie. Auf dem Handy gesehen: Anmelden, Startseite mit den echten Lernzielen der Kopie, Spielen, Ergebnis,
+Einstellungen, Abmelden (Fotos `handy-10-…` bis `handy-13-…`). Der Titel der Wörter-Karte wird bei langen Namen
+abgeschnitten.
 
 Noch offen aus dieser Etappe: die Truhe lässt sich im Spiel nur ansehen, nicht öffnen; Trophäen fehlen in der
 Kopfzeile (Etappe 3). Die Optik ist schlicht – Hintergrund, Symbole statt Wörtern („Münzen“, „Gems“) und

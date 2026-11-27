@@ -231,7 +231,8 @@ func _show_day(info: HomeInfo) -> void:
 	if info.goals_total > 0:
 		_task("Lernziele heute", info.goals_met, info.goals_total, info.goals_met >= info.goals_total, "")
 		for title: String in info.outstanding.slice(0, 3):
-			var open := UiKit.text_line("  offen: " + title, 20)
+			# The server words each open goal itself ("... (Tagesziel) offen").
+			var open := UiKit.text_line("  " + title, 20)
 			open.modulate = Color(1, 1, 1, 0.75)
 			_tasks.add_child(open)
 	for mission: HomeInfo.Mission in info.missions.slice(0, 4):
