@@ -1,0 +1,64 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://screens/page.tscn" id="1"]
+[ext_resource type="Script" path="res://screens/login.gd" id="2"]
+
+[node name="Login" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Row" type="HBoxContainer" parent="Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="Form" type="VBoxContainer" parent="Margin/Box/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="Server" type="LineEdit" parent="Margin/Box/Row/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+placeholder_text = "Server"
+
+[node name="Presets" type="HBoxContainer" parent="Margin/Box/Row/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Hint" type="Label" parent="Margin/Box/Row/Form"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Kind-Nr. und PIN antippen, dann mit den Ziffern rechts eingeben."
+autowrap_mode = 3
+
+[node name="Child" type="LineEdit" parent="Margin/Box/Row/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "3"
+placeholder_text = "Kind-Nr."
+virtual_keyboard_enabled = false
+
+[node name="Pin" type="LineEdit" parent="Margin/Box/Row/Form"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+placeholder_text = "PIN"
+virtual_keyboard_enabled = false
+secret = true
+
+[node name="Submit" type="Button" parent="Margin/Box/Row/Form"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Anmelden"
+
+[node name="Keypad" type="GridContainer" parent="Margin/Box/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
