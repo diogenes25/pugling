@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/level_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+title = "Lichtung"
+description = "Ein langer Weg, drei Türme nah beieinander – zum Eingewöhnen."
+size = Vector2(36, 26)
+paths = Array[PackedVector2Array]([PackedVector2Array(40, 4, 25, 4, 25, 12, 9, 12, 9, 21, 29, 21)])
+tower_spots = PackedVector2Array(17, 7.5, 16, 16.5, 31, 13)
+player_start = Vector2(19, 16)
+river = PackedVector2Array()
+bridges = PackedVector2Array()
+mountains = PackedVector2Array(3, 3, 33, 24.5)
+map_seed = 11
+monster_speed = 1.6
+spawn_interval = 5

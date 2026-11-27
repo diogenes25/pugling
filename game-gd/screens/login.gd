@@ -1,3 +1,4 @@
+class_name LoginScreen
 extends Page
 ## Login with the child's number and PIN. Digits come only from the on-screen keypad, as in the web login: the phone's
 ## keyboard would pop up over the form and hide the keypad. A hardware keyboard still types into the focused field.
@@ -76,6 +77,7 @@ func _log_in() -> void:
 		status.text = "Kind-Nr. muss eine Zahl sein."
 		return
 	status.text = "Anmelden …"
+	@warning_ignore("redundant_await")
 	var result := await server.login(_server.text, _child.text.to_int(), _pin.text)
 	if not is_inside_tree():
 		return

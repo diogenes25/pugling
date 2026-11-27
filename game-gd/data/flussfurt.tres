@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/level_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+title = "Flussfurt"
+description = "Ein Fluss teilt die Karte. Nur über die Brücken kommst du auf die andere Seite."
+size = Vector2(50, 34)
+paths = Array[PackedVector2Array]([PackedVector2Array(54, 6, 14, 6, 14, 17, 39, 17, 39, 28, 8, 28)])
+tower_spots = PackedVector2Array(45, 11.5, 31, 11.5, 18, 11.5, 20, 23, 33, 23)
+player_start = Vector2(33, 14.5)
+river = PackedVector2Array(24.5, -16, 23.5, 6, 25.5, 17, 26.5, 28, 25.5, 50)
+bridges = PackedVector2Array(23.5, 6, 25.5, 17, 26.5, 28)
+mountains = PackedVector2Array(4, 3, 46, 31, 4, 20)
+map_seed = 23
+monster_speed = 1.8
+spawn_interval = 4.5

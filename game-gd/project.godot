@@ -24,7 +24,6 @@ gdscript/warnings/unused_parameter=2
 gdscript/warnings/shadowed_variable=2
 gdscript/warnings/shadowed_variable_base_class=2
 gdscript/warnings/unreachable_code=2
-gdscript/warnings/missing_await=2
 
 [display]
 
