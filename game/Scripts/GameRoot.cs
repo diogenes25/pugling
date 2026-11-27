@@ -1,6 +1,7 @@
 using Godot;
 using Pugling.Contracts.Student;
 using PuglingTower.Net;
+using PuglingTower.Play;
 using PuglingTower.World;
 
 namespace PuglingTower;

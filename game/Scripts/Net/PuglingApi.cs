@@ -10,7 +10,7 @@ namespace PuglingTower.Net;
 /// The game's thin HTTP layer against the Pugling API: child login and the tower-game endpoints (B-851). Uses the
 /// shared contract types; every failure surfaces as an <see cref="ApiException"/> with a German message for the screen.
 /// </summary>
-public sealed class PuglingApi : IDisposable
+public sealed class PuglingApi : ITowerRunServer, IDisposable
 {
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private string _root = "";
@@ -98,6 +98,19 @@ public sealed class PuglingApi : IDisposable
             }
         }
     }
+}
+
+/// <summary>
+/// The two calls a running level makes. <see cref="PuglingApi"/> is the real one; a stand-in lets a level run without a
+/// server (offline practice, a smoke run).
+/// </summary>
+public interface ITowerRunServer
+{
+    /// <summary>Lets the server grade a token-to-tower assignment.</summary>
+    Task<TowerAssignResult> AssignAsync(int runId, string tokenId, string towerId);
+
+    /// <summary>Reports that the level is still in the foreground; the server counts the play time.</summary>
+    Task<TowerHeartbeatResult> HeartbeatAsync(int runId);
 }
 
 /// <summary>A failed API call with a message ready for the screen; <see cref="RunClosed"/> means the level is over.</summary>

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace PuglingTower;
+namespace PuglingTower.Ui;
 
 /// <summary>A full-screen, click-through canvas whose drawing is done by its owner (the level's 2D overlay).</summary>
 public partial class Painter : Control
