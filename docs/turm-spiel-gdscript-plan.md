@@ -8,6 +8,11 @@ Stand 2026-11-27. Entschieden vom Vater: Das Spiel wechselt von Godot/C# auf God
 gleich eine saubere, Godot-typische Struktur. Dieser Plan ist so geschrieben, dass eine **frische Sitzung ohne
 Vorwissen** ihn ausführen kann.
 
+> **Umgesetzt am 2026-11-27** bis auf die Runde auf dem Handy. Was nachgewiesen ist, was abweicht und was offen
+> bleibt, steht unter [Paritätsliste](#paritätsliste-abnahme) und
+> [Ergebnis der Umsetzung](#ergebnis-der-umsetzung-2026-11-27). Die Phasen unten beschreiben den Weg; wo dort
+> `game-gd/` steht, ist heute `game/` gemeint.
+
 ## Auftrag für die ausführende Sitzung
 
 > Setze `docs/turm-spiel-gdscript-plan.md` um: Portiere das Godot-Spiel „Vokabel-Türme“ (`game/`) von C# nach
@@ -215,38 +220,112 @@ unterschritten, es geht weiter.
 
 ## Paritätsliste (Abnahme)
 
-- [ ] Login: Ziffernfeld ohne Tastatur, Kind-Nr. vorbelegt 3, Server-Vorgabe nach Gerät, Fehlertexte.
-- [ ] Wortwahl, Kartenwahl, Ergebnis mit allen Knöpfen; Zurück-Taste je Bildschirm (Login → App beenden).
-- [ ] Drei Karten wie `Scripts/World/LevelDef.cs`: Lichtung, Flussfurt (Fluss, 3 Brücken), Burgberg (2 Wege).
-- [ ] Kamera folgt dem Helden (Abstand (0, 15, 9,5), Sichtwinkel 42). Joystick links frei aufsetzbar,
+Stand 2026-11-27. Abgehakt ist, was nachgewiesen ist. Die Nachweise liegen unter `game/build/nachweis/` (nicht in
+git): Logs der Läufe und Bildschirmfotos unter `fotos/`. „Level-Lauf“ heißt `tests/smoke_level.tscn` (183
+Prüfungen), „Bildschirm-Lauf“ `tests/smoke_screens.tscn`, „API-Lauf“ `tests/smoke_api.tscn` gegen die
+Wegwerf-API. Der Level- und der Bildschirm-Lauf sind auch im **exportierten** Stand grün
+(`tests/smoke_export.sh`).
+
+- [x] Login: Ziffernfeld ohne Tastatur, Kind-Nr. vorbelegt 3, Server-Vorgabe nach Gerät, Fehlertexte.
+  - Bildschirm-Lauf: Ziffernfeld schreibt ins gewählte Feld, beide Felder ohne Bildschirmtastatur, Kind-Nr. 3,
+    Vorgabe „Emulator“ auf x86_64. Foto `1-login.png`.
+  - Handy-Foto `handy-01-start-gdscript.png`: Vorgabe „Heimnetz“ auf arm64.
+  - API-Lauf: 401, 404, 409 Zeitlimit, 409 Lauf geschlossen, 429 und „Server nicht erreichbar“ lauten wie in der
+    Tabelle oben. Nicht ausgelöst wurde nur der allgemeine 409-Text.
+- [x] Wortwahl, Kartenwahl, Ergebnis mit allen Knöpfen; Zurück-Taste je Bildschirm (Login → App beenden).
+  - Bildschirm-Lauf, Fotos `2-wortwahl.png`, `3-kartenwahl.png`, `5-ergebnis-ungespeichert.png`, `6-ergebnis.png`.
+    Der Lauf endet erst mit Exit-Code 0, wenn die Zurück-Taste auf dem Login die App beendet.
+- [x] Drei Karten: Lichtung, Flussfurt (Fluss, 3 Brücken), Burgberg (2 Wege).
+  - Level-Lauf (Turmzahl je Karte, Fluss sperrt, Brücke trägt, beide Wege enden an der Burg), Fotos
+    `level-start-*.png`. Die Karten entstehen mit demselben Seed und derselben Würfelfolge wie in C#.
+- [x] Kamera folgt dem Helden (Abstand (0, 15, 9,5), Sichtwinkel 42). Joystick links frei aufsetzbar,
       Tastatur-Pfeile als Ersatz. Gleiten an Hindernissen.
-- [ ] Ritter-Modell mit Animationen (Idle, Running_A, PickUp, Interact, Cheer, Death_A) und schwebendem Buch.
-- [ ] Skelette:
-  - laufen die Wege, jedes vierte ist ein Krieger (4 HP, langsamer)
-  - Takt und Tempo steigen
-  - 10 Burg-Leben
-- [ ] Türme (Bolzenturm und Katapult reihum):
-  - [ ] je eine Bedeutung, Munition, Panel mit Balken und Zahl
-  - [ ] Randmarker außerhalb des Bildes, rot bei wenig Munition
-  - [ ] stark ab mehr als 30 Schuss oder nach 5 Aufladungen (★, Feuerpfeile/Feuerkugeln)
-  - [ ] Katapult wirft im Bogen, mit Mündungsfeuer, Rauch und Rückstoß
-- [ ] Held schießt selbst (Reichweite 5,5, alle 1,0 s, 1 Schaden).
-- [ ] Wörter:
-  - fallen bei besiegten Skeletten neben den Weg und verfallen nach 30 s (blinken die letzten 5 s)
-  - abgelegte bleiben liegen (weißer Ring)
-  - Bücher halten Abstand 2,4
-- [ ] Aufheben: rechte Liste mit bis zu 5 Wörtern in Reichweite. Ein neues Wort tauscht gegen das getragene.
+  - Level-Lauf, Prüfungen „Laufen: …“ und „Kamera folgt …“, Foto `level-0-joystick.png`.
+- [x] Ritter-Modell mit Animationen (Idle, Running_A, PickUp, Interact, Cheer, Death_A) und schwebendem Buch.
+  - Level-Lauf, Prüfungen „Ritter: …“ (Clips vorhanden, Running_A beim Laufen, Idle im Stehen, PickUp beim
+    Aufheben, Cheer am Ziel, Death_A bei gefallener Burg, Buch über dem Kopf).
+- [x] Skelette: laufen die Wege, jedes vierte ist ein Krieger (4 HP, langsamer), Takt und Tempo steigen,
+      10 Burg-Leben.
+  - Level-Lauf (Krieger-Folge, Tempo, alle Wege, Burg fällt beim zehnten) und die Regeltests zu `SpawnSchedule`
+    und `RunTally`.
+- [x] Türme (Bolzenturm und Katapult reihum):
+  - [x] je eine Bedeutung, Munition, Panel mit Balken und Zahl → Level-Lauf, Foto `level-0-geben.png`
+  - [x] Randmarker außerhalb des Bildes, rot bei wenig Munition → Fotos `level-0-geben.png` und
+        `level-randmarker.png`. Die Zeichnung selbst prüft kein Lauf, nur das Foto.
+  - [x] stark ab mehr als 30 Schuss oder nach 5 Aufladungen (★, Feuerpfeile/Feuerkugeln) → Regeltests,
+        Level-Lauf („Stark: …“), Foto `level-stark.png`
+  - [x] Katapult wirft im Bogen, mit Mündungsfeuer, Rauch und Rückstoß → Level-Lauf („Katapult: …“), Foto
+        `level-katapult.png`
+- [x] Held schießt selbst (Reichweite 5,5, alle 1,0 s, 1 Schaden) → Level-Lauf („Heldenschuss …“).
+- [x] Wörter: fallen neben den Weg, verfallen nach 30 s (blinken die letzten 5 s), abgelegte bleiben liegen
+      (weißer Ring), Bücher halten Abstand 2,4.
+  - Level-Lauf („Wörter: …“), Foto `level-aufheben-liste.png` (weiße Ringe).
+- [x] Aufheben: rechte Liste mit bis zu 5 Wörtern in Reichweite. Ein neues Wort tauscht gegen das getragene.
       Knopf „„Wort“ ablegen“.
-- [ ] Geben: grüner Knopf am Turm.
-  - richtig: +8 Schuss und nächste Bedeutung
-  - falsch: −3 Schuss, das Wort geht zurück in den Pool
-  - Rückmeldezeile und Funken
-- [ ] Ziel erreicht → Ende. Heartbeat alle 15 s; Zeit um → Ende.
-- [ ] Pause: Knopf oben rechts und Zurück-Taste; „Weiter“ / „Aufhören“.
-- [ ] Sound: alle 13 Effekte an denselben Ereignissen wie in `Scripts/Play/GameSounds.cs`.
+  - Level-Lauf („Aufheben-Liste …“, „Tauschen: …“, „Knopf … ablegen“), Foto `level-aufheben-liste.png`.
+- [x] Geben: grüner Knopf am Turm; richtig +8 Schuss und nächste Bedeutung; falsch −3 Schuss, das Wort geht
+      zurück in den Pool; Rückmeldezeile und Funken.
+  - Level-Lauf auf allen drei Karten, je sechsmal. Die Funken prüft nur das Foto `level-katapult.png`.
+- [x] Ziel erreicht → Ende. Heartbeat alle 15 s; Zeit um → Ende.
+  - Level-Lauf („Ziel erreicht …“, „Heartbeat …“, „Zeit um: …“, „Lauf geschlossen: …“).
+- [x] Pause: Knopf oben rechts und Zurück-Taste; „Weiter“ / „Aufhören“.
+  - Level-Lauf und Bildschirm-Lauf, Fotos `4-pause.png`, `level-*-pause.png`.
+- [x] Sound an denselben Ereignissen wie in `GameSounds.cs`.
+  - Level-Lauf zählt jeden gestarteten Klang: alle zwölf angeschlossenen Effekte spielen. `tap.wav` war schon in
+    C# an kein Ereignis gebunden.
 - [ ] Logdatei `user://logs/godot.log` mit Zeilen `TURM hh:mm:ss start/assign/abgelegt/pause/weiter/ende …`.
-      Die Endzeile nennt richtig/gesamt, Dauer, Burg, Heldenschüsse und Heldentreffer.
-- [ ] Die 18 Regeltests sind grün, jeder mit roter Probe.
+  - Am PC nachgewiesen (`logdatei-user-logs-godot.log`). Die Zeilenformen stimmen mit dem C#-Stand überein:
+    `turm-vergleich.txt` (Referenzlauf am PC) und `turm-vergleich-handy.txt` (67 echte Zeilen vom Handy).
+  - **Offen:** dieselbe Datei auf dem Handy mit der GDScript-APK.
+- [x] Die 18 Regeltests sind grün, jeder mit roter Probe.
+  - `regeltests.log` (19 Fälle, einer neu) und `rote_probe.log` (19 von 19 werden am benannten Test rot).
+- [ ] **Offen:** eine Runde auf dem Handy gegen die Wegwerf-API, mit Bildschirmfoto und Logzeilen (siehe
+      „Ergebnis der Umsetzung“).
+
+## Ergebnis der Umsetzung (2026-11-27)
+
+Umgesetzt auf dem Branch `turmspiel-gdscript`, ein Commit je Phase. `game-gd/` heißt seit Phase 6 `game/`, der
+C#-Stand ist aus dem Arbeitsbaum entfernt und bleibt in der Historie (letzter Stand: Commit `99283817`).
+
+**Größe (arm64):** Debug 110,4 MB → 34,5 MB, Release 108,6 MB → 32,7 MB. In der APK liegt keine .NET-Laufzeit.
+
+**Fund auf dem Handy:** Die erste GDScript-APK zeigte keine Türme, während alle Läufe am PC grün waren. Ursache:
+Ein exportiertes Feld `@export var x: PackedVector2Array = []` kommt im exportierten Stand leer an (Turmplätze,
+Fluss, Brücken, Berge, Turm-Modelle). Behoben, mit Wächtertest und einem Lauf gegen den exportierten Stand
+(`tests/smoke_export.sh`). Einzelheiten stehen in `turm-spiel-plan.md` unter „Prüfen“.
+
+**Abweichungen vom Plan:**
+
+- **Kein Download.** Der installierte .NET-Editor exportiert das Projekt ohne C# mit seinen eigenen Vorlagen.
+- **Wegwerf-API auf Port 5281.** Auf 5280 lief schon eine Instanz vom Vortag, die unberührt blieb. Das Handy
+  erreicht 5281 über `adb reverse tcp:5280 tcp:5281`.
+- **Mehr Dateien als in der Zielstruktur:** `autoload/tower_server.gd`, `api_result.gd`, `fake_api.gd`,
+  `data/catalog.gd`, `tower_run.gd`, `tower_target.gd`, `tower_token.gd`, `level/level_end.gd`,
+  `heroes/hero_look.gd`, `screens/page.tscn` sowie je eine eigene Datei für `Enemy`, `Tower`, `Projectile` und
+  `WordBook`. Jede Klasse hat damit ihre Datei, wie in GDScript üblich.
+- **Warnungen als Fehler:** fehlende Typen, unbenutzte Variablen und Parameter, verdeckte Namen und
+  unerreichbarer Code. `missing_await` und `redundant_await` bleiben Warnungen: Knopf-Handler starten ihre
+  Server-Aufrufe absichtlich ohne zu warten, und der Analyzer hält `await` auf die abstrakte Server-Klasse für
+  überflüssig.
+- **19 statt 18 Regeltests.** Der neue Fall hält den Export-Fallstrick.
+- **Nähte für die Läufe:** `LevelSounds` meldet jeden gestarteten Klang als Signal, und `Level` zeigt seine
+  Teilknoten (`hero`, `towers`, `words` …) offen. Im Spiel hört darauf niemand.
+- **Export:** `tests/` bleibt aus der APK draußen. Das dritte Preset „Testpaket“ packt das Spiel samt Tests nur
+  für den Paket-Lauf.
+- **C#-Referenzlogs:** Die Logdateien des C#-Referenzlaufs am PC sind durch die neuen Läufe aus der Rotation
+  gefallen (derselbe Ordner, höchstens 20 Dateien). Verglichen wurde mit den vorher mitgeschnittenen Zeilen und
+  mit den C#-Logs vom Handy.
+- **Phase 6 vor der Handy-Runde.** Das Handy war nicht mehr verfügbar, die Runde steht noch aus.
+
+**Offen:**
+
+- **Handy-Runde.** Auf dem Handy liegt noch die erste GDScript-APK **ohne Türme**. Vor dem nächsten Spielen
+  gehört die korrigierte APK darauf (`game/build/pugling-tower.apk`, per `tools/handy-installieren.ps1`). Danach
+  eine Runde gegen die Wegwerf-API, mit Bildschirmfoto und den `TURM`-Zeilen aus der Logdatei.
+- **Rückweg:** Die letzte C#-APK liegt als `game/build/csharp-stand/pugling-tower-csharp-debug.apk` bereit, falls
+  die GDScript-APK auf dem Handy weitere Überraschungen zeigt.
+- **Emulator-Preset** (x86_64) ist übernommen, aber nicht gebaut und nicht geprüft: Der Emulator war tabu.
+- Der allgemeine 409-Text („Gerade kam etwas dazwischen – bitte nochmal.“) ist nicht ausgelöst worden.
 
 ## Betrieb, Prüfen, Fallstricke
 

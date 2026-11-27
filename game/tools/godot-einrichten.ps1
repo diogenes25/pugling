@@ -2,6 +2,9 @@
 # Java/Android SDK paths in the editor settings. Without them `--export-debug` stops with "No export template found"
 # and "A valid Java SDK path is required".
 #
+# The game is pure GDScript, but the installed editor is the .NET build and exports with its own ("mono") templates.
+# That is fine: without C# in the project no .NET runtime ends up in the APK (measured 2026-11-27).
+#
 # The templates are taken from game/build/godot-setup (gitignored) when they are there; otherwise download
 # Godot_v4.7.2-stable_mono_export_templates.tpz from godotengine.org and install them via the editor
 # (Editor > Manage Export Templates).

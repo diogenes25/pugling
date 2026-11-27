@@ -24,6 +24,9 @@ var _pauses: Array[bool] = []
 var _min_book_gap: float = INF
 var _highest_boulder: float = 0.0
 var _blinked: bool = false
+var _boulders_landed: int = 0
+var _last_hero_shot: float = -1.0
+var _shortest_hero_gap: float = INF
 var _fired: Dictionary[Tower, int] = {}
 
 
@@ -96,6 +99,10 @@ func _play_to_goal(index: int) -> void:
 		_check_pick_list()
 		_level.controls.book_picked.emit(book)
 		await _frames(2)
+		if gives == 0 and index == 0:
+			var floating := hero.get("_book") as Node3D
+			_check("Ritter: PickUp beim Aufheben, das Buch schwebt über ihm (Höhe %.1f)" % floating.position.y,
+					_clip() == "PickUp" and floating.visible and floating.position.y > 2.3)
 		if gives % 2 == 1:
 			# Sorting: lay the word down, see that it stays as a placed book, and take it again.
 			var word := hero.carried
@@ -123,6 +130,7 @@ func _play_to_goal(index: int) -> void:
 	await _until_finished()
 	_check("%s: Ziel erreicht beendet den Level (%d Richtige)" % [def.title, _level.tally.correct],
 			_end_reason == LevelEnd.Reason.GOAL_REACHED and _level.tally.correct == 3 and _level.tally.total == 6)
+	_check("%s: Ritter jubelt am Ziel (Cheer)" % def.title, _clip() == "Cheer")
 	_check("%s: Pause und Weiter gemeldet" % def.title, _pauses == ([true, false] as Array[bool]))
 	_check("%s: Heartbeat etwa alle 15 s (%d in %.0f s)" % [def.title, _fake.beats(), _level.tally.elapsed],
 			absi(_fake.beats() - int(_level.tally.elapsed / 15.0)) <= 1)
@@ -130,6 +138,9 @@ func _play_to_goal(index: int) -> void:
 	if index == 0:
 		_check("Lichtung: Held schießt selbst (%d Schüsse, alle hero-bolt als punch)" % _level.tally.hero_shots,
 				_level.tally.hero_shots > 0 and _shots.has("hero-bolt"))
+		_check("Lichtung: Heldenschuss mit Reichweite 5,5, Takt 1,0 s (kürzester Abstand %.2f s) und 1 Schaden" % _shortest_hero_gap,
+				Balance.HERO_RANGE == 5.5 and Balance.HERO_SHOT_INTERVAL == 1.0 and Catalog.HERO_BOLT.damage == 1
+				and _shortest_hero_gap >= 1.0 and _shortest_hero_gap < 100.0)
 		_check("Lichtung: starker Turm meldet sich und schießt Feuer (%s)" % ", ".join(_unique(_shots)),
 				_messages.has("Richtig! Der Turm schießt jetzt Feuerpfeile ★") or _messages.has("Richtig! Der Turm schießt jetzt Feuerkugeln ★"))
 	await _stop()
@@ -169,6 +180,7 @@ func _castle_falls() -> void:
 	_check("Burg: nach 10 Skeletten fällt sie (Leben %d)" % _level.tally.lives,
 			_end_reason == LevelEnd.Reason.CASTLE_FALLEN and _level.tally.lives == 0)
 	_check("Burg: Rückmeldezeile", _messages.has("Ein Skelett hat die Burg erreicht!"))
+	_check("Burg: Ritter fällt (Death_A)", _clip() == "Death_A")
 	_check("Burg: leere Türme schießen nicht", not _shots.has("bolt") and not _shots.has("boulder"))
 	await _stop()
 
@@ -235,7 +247,8 @@ func _catapult_and_fire() -> void:
 	towers[2].ammo.count = 0
 	# Next to the catapult, away from the road: the hero must not finish the skeletons before the stone lands.
 	_level.hero.ground = Vector2(16, 19.5)
-	while _blasts == 0 and not _ended:
+	# Measured once a stone has landed: its bow peaks halfway, long after the launch effects.
+	while (_blasts == 0 or _boulders_landed == 0) and not _ended:
 		await get_tree().process_frame
 	_check("Katapult: wirft im Bogen (höchster Punkt %.1f über Mündung 3,4) mit Feuer, Rauch und Rückstoß" % _highest_boulder,
 			_highest_boulder > 4.5 and _blasts > 0 and _shots.has("boulder"))
@@ -272,11 +285,20 @@ func _camera_follows() -> bool:
 func _check_walking(def: LevelDef) -> void:
 	var hero := _level.hero
 	var start := hero.ground
+	var player := Models.animator(hero.look)
+	var has_clips := true
+	for clip: String in ["Idle", "Running_A", "PickUp", "Interact", "Cheer", "Death_A"]:
+		has_clips = has_clips and player != null and player.has_animation(clip)
+	_check("Ritter: Modell mit den Clips Idle, Running_A, PickUp, Interact, Cheer, Death_A", has_clips)
 	Input.action_press("ui_right")
 	await _seconds(0.4)
+	var running := _clip()
 	Input.action_release("ui_right")
 	_check("Laufen: Pfeiltaste rechts bewegt den Helden nach rechts", hero.ground.x > start.x + 1.0 and is_equal_approx(hero.ground.y, start.y))
 	_check("Laufen: Kamera bleibt beim Helden", _camera_follows())
+	await _seconds(0.3)
+	_check("Ritter: läuft mit Running_A, steht mit Idle, schaut in Laufrichtung (%.2f rad)" % hero.look.rotation.y,
+			running == "Running_A" and _clip() == "Idle" and hero.look.rotation.y > 1.0)
 
 	# The left thumb lands anywhere on the left part of the screen and drags up.
 	var from := hero.ground
@@ -428,6 +450,9 @@ func _start(def: LevelDef, prepare: Callable = Callable()) -> void:
 	_min_book_gap = INF
 	_highest_boulder = 0.0
 	_blinked = false
+	_boulders_landed = 0
+	_last_hero_shot = -1.0
+	_shortest_hero_gap = INF
 	_fired.clear()
 	_level = LEVEL.instantiate()
 	_level.setup(_fake, TowerRun.from_json(started.data), def)
@@ -444,8 +469,18 @@ func _start(def: LevelDef, prepare: Callable = Callable()) -> void:
 	await UiDriver.shot(get_tree(), "level-start-%s" % def.title)
 
 
+## The clip the knight plays (or played last).
+func _clip() -> String:
+	var player := Models.animator(_level.hero.look)
+	return player.assigned_animation if player != null else ""
+
+
 func _on_shot(projectile: Projectile) -> void:
 	_shots.append(projectile.kind.id)
+	if projectile.from == Projectile.Shooter.HERO:
+		if _last_hero_shot >= 0.0:
+			_shortest_hero_gap = minf(_shortest_hero_gap, _level.tally.elapsed - _last_hero_shot)
+		_last_hero_shot = _level.tally.elapsed
 	_check_sound_matches(projectile)
 	if projectile.kind.arc > 0.0:
 		_follow_boulder(projectile)
@@ -462,6 +497,7 @@ func _follow_boulder(projectile: Projectile) -> void:
 	while is_instance_valid(projectile.node):
 		_highest_boulder = maxf(_highest_boulder, projectile.node.position.y)
 		await get_tree().process_frame
+	_boulders_landed += 1
 
 
 ## A catapult's launch must leave fire, smoke and a squashed model behind.
