@@ -163,18 +163,14 @@ Laufzeit — alles grün. Das Spiel zielt auf `net9.0` und kompiliert die Quelle
 
 ### Client-Architektur
 
-```text
-game/                     (Ordner in diesem Repo, Entscheidung 9)
-  Scenes/                 Map, Tower, Monster, Player, Hud
-  Scripts/Core/           reine Spiellogik (Wellen, Schaden, Munition) – engine-frei, unit-getestet
-  Scripts/Net/            ApiClient: Login (PIN → JWT), Runs, Assign; Token sicher speichern
-  Scripts/Input/          Zwei-Daumen-Steuerung (Joystick links, Kontextknopf rechts)
-```
+Der ursprüngliche Entwurf (Szenen-Dateien, `Scripts/Input/`, Level als JSON) ist überholt: alles wird in
+Code gebaut, Karten und Typen sind C#-Daten. Die gültige Struktur steht unten unter
+[Code-Struktur und Erweitern](#code-struktur-und-erweitern-umbau-2026-11-27).
 
-- **Spiellogik engine-frei halten** (Wellen, Schaden, Munitionszähler als reine C#-Klassen) → testbar
-  ohne Godot und balancierbar über Tabellen.
-- **Level als Daten** (JSON: Türme, Pfade, Wellen, Monster-HP/Tempo) statt Code — Schwierigkeit lässt
-  sich drehen, ohne neu zu bauen.
+- **Spiellogik engine-frei halten** (Munition, Zähler, Spawn-Takt als reine C#-Klassen unter
+  `Scripts/Core/`) → testbar ohne Godot (`game/Tests/`) und an einer Stelle abstimmbar (`Balance`).
+- **Level als Daten** (`LevelDef`, `TowerKind`, `EnemyKind`, `ProjectileKind`) statt verstreuter
+  Sonderfälle — Schwierigkeit lässt sich drehen, ohne Logik anzufassen.
 - **Login**: PIN-Login des Kindes (`auth/child`) → JWT; Server-URL einstellbar (Heimnetz `:5200`, später
   öffentlich mit HTTPS). Der Login-Rate-Limiter gilt auch hier.
 - **Grafik**: freie Assets (CC0) oder eigene; **keine** Figuren, Namen oder Optik des
@@ -206,6 +202,66 @@ in Laufrichtung. Steuerung und Kamera sind ein Genre-Prinzip, Figuren und Stil s
   Vor dem Start wählt man die Karte. Eine neue Karte ist ein neuer Eintrag in `LevelDef.All`.
 - **Renderer:** Vorerst bleibt es bei „Compatibility“, weil der Emulator damit läuft. Ob „Mobile“ am Handy
   schöner und flüssig ist, wird dort geprüft.
+
+### Code-Struktur und Erweitern (Umbau 2026-11-27)
+
+Vor den nächsten Erweiterungen (Learning-Dad-Figur, Sound, Kanone) ist das frühere Gott-Objekt `Level.cs`
+in Teilsysteme zerlegt worden. Das Spielverhalten ist dabei unverändert geblieben: Der Level wurde headless
+mit einem Fake-Server auf allen drei Karten durchgespielt, und die `TURM`-Logzeilen lauten wie vorher.
+
+```text
+game/
+  Scripts/GameRoot.cs     Bildschirmfluss: Login, Wortwahl, Kartenwahl, Ergebnis, Zurück-Taste
+  Scripts/Play/           Level (dünner Koordinator, Frame-Reihenfolge, Regeln beim Geben),
+                          GameEvents (Ereignis-Bus), LevelFeedback (Funken + Rückmeldezeile),
+                          RunSession (Turm-Bedeutungen, assign, Heartbeat, Log „TURM hh:mm:ss …“)
+  Scripts/Core/           engine-frei, unit-getestet: Balance (Stellschrauben), TowerAmmo, RunTally,
+                          SpawnSchedule, EnemyKind, TokenPool, Cooldown
+  Scripts/Heroes/         Hero (Position, Laufen, getragenes Wort), IHeroLook + KnightLook (Darstellung)
+  Scripts/Combat/         Towers/Tower, Enemies/Enemy, Projectiles; Kinds.cs = TowerKind + ProjectileKind
+  Scripts/Words/          WordBooks: Bücher auf dem Feld, Abwurf, Ablegen, Verfall, freie Plätze
+  Scripts/Ui/             LevelOverlay (2D über der Szene), LevelControls (Knöpfe, Rückmeldung),
+                          PauseMenu, TouchStick, UiKit/Palette, Painter
+  Scripts/World/          LevelDef (Karten), MapBuilder, MapInfo, Models (KayKit), Geo, Fx
+  Scripts/Net/            PuglingApi; ITowerRunServer = die zwei Aufrufe eines laufenden Levels
+  Tests/                  xUnit für Scripts/Core (kompiliert die Quellen mit, kein Godot nötig)
+```
+
+**Regel:** Die Spielregeln laufen im `Level` in fester Reihenfolge. Danach meldet er, was passiert ist, auf
+`Level.Events`. Wer auf die Ereignisse hört (Effekte, Sound), stellt nur dar und ändert keinen Spielstand.
+
+**Wie ergänze ich …**
+
+- **… einen Helden** (z. B. Learning Dad als Billboard): eine Klasse, die `IHeroLook` erfüllt.
+  - `Root` ist der Knoten, zum Beispiel ein `Sprite3D` mit `Billboard`.
+  - `Update(dt, moving, yaw)` schaltet zwischen Stehen und Laufen um. Ein flaches Bild spiegelt sich dabei
+    höchstens nach `yaw`.
+  - `Play(HeroAction)` spielt die Momente PickUp, LayDown, Give, Shoot, Correct, Wrong, Victory und Defeat.
+    Für Learning Dad passen etwa thumbs-up zu Correct, facepalm zu Wrong und boxing-win zu Victory.
+  - Danach in `Level._Ready` `new KnightLook()` ersetzen. Position, Tragen und Kamera bleiben in `Hero`.
+- **… Sound:** eine Klasse nach dem Muster von `LevelFeedback.Attach`, die sich an `GameEvents` hängt
+  (`ShotFired`, `ProjectileHit`, `EnemyDefeated`, `WordPickedUp`, `WordAssigned`, `CastleHit`,
+  `LevelEnded` …) und `AudioStreamPlayer` abspielt. Sie wird in `Level._Ready` neben `LevelFeedback`
+  angehängt. `ShotFired` liefert das `Projectile` mit `Kind` und `From` (Turm oder Held), daran entscheidet
+  sich der Klang.
+- **… einen Turmtyp** (Kanone): eine neue Instanz in `Combat/Kinds.cs`.
+  - `TowerKind` mit Modell (`building_tower_catapult_blue` liegt schon in den Assets), Reichweite, Takt und
+    Mündungshöhe.
+  - Dazu ein `ProjectileKind` für die Kugel.
+  - Mündungsfeuer und Rauch hängen sich an `ShotFired`, der Einschlag an `ProjectileHit`.
+  - Eine Kugel mit Bogen oder ein eigenes Modell statt der Kugel ist ein neues Feld an `ProjectileKind` und
+    ein Zweig in `Projectiles.Move`.
+  - Heute bekommt jeder Turm einer Karte `TowerKind.Bolt`. Für gemischte Türme braucht `LevelDef` je
+    Turmplatz einen Typ.
+- **… eine Karte:** ein Eintrag in `LevelDef.All`.
+- **… einen Gegner:** eine Instanz in `EnemyKind` und eine Regel in `SpawnSchedule.Tick`. Heute ist jeder
+  vierte Gegner ein Krieger (`Balance.WarriorEvery`). Für Wellen je Karte bekommt `LevelDef` eine
+  Gegner-Mischung, die `SpawnSchedule` liest.
+- **… ein UI-Element:** Gezeichnetes kommt als Block in `LevelOverlay.Paint`, Bedienbares in
+  `LevelControls`.
+- **… eine Stellschraube:** Regeln des ganzen Spiels stehen in `Core/Balance.cs`. Werte, die zu einem Typ
+  gehören, stehen bei dessen Definition (`TowerKind`, `EnemyKind`, `ProjectileKind`, `LevelDef`).
+  Prüfen mit `dotnet test` in `game/Tests`.
 
 ### Netz & Betrieb
 
