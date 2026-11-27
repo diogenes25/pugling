@@ -470,3 +470,51 @@ derselbe Kalendertag, aber nach 6 Uhr. Die Migration `Tagesplaner` lief beim Sta
 - **Sohn: Regressionszeuge.** Login und `today` für Theodor und Friedrich liefern an der Kopie vor und nach dem Einschalten
   dasselbe Byte für Byte. Kein Plan-Typ erreicht eine Student-Route (Tor).
 - **Creator: Regressionszeuge.** Kein Creator-Pfad im Diff; `creator/exercise-types` 200, Suite grün.
+
+## Retrospektive (Sprint 195)
+
+**Nachschau:** B-1028 (Sprint 194, `41da1a4e`) nachgesehen. Alle Aufrufer von `RecordAsync` geben den Tag ihrer Runde bzw.
+ihres Tests mit, und der Planer liest `ItemReviewEvent.Day` auf dieselbe Weise. Kein neuer Fund; `nachgeschaut: 2026-11-27`
+gesetzt. Index: 592 von 642.
+
+**Was die eigenen Tore durchließen und wer es fand:**
+
+- **Mutantenprobe (zwei Tests trugen nicht):**
+  - **M1:** Der Migrationstest las den neuen Modus übers Modell, und EF liest einen leeren Enum-Text still als `Off`. Eine
+    fehlende Rückfüllung wäre grün gewesen, und in der echten DB hätte `''` gestanden.
+  - **F1:** Der neue Frontend-Test zielte auf den nicht tragenden Teil der Reparatur.
+  - Beide sind umgeschrieben und gemessen rot.
+- **Review (pugling-reviewer), kein eigenes Tor:** Ein Fehler im Schattenplaner hätte Login und Tag des Sohns mit 500 gekippt.
+  Dazu: ein Kind, das scheitert, stoppte den Zeitgeber für alle; neue Wörter wurden auch bei Lückentexten gezählt; eine
+  undefinierte Enum-Zahl schaltete den Planer an.
+- **Format-Tor aus Sprint 194, zweimal ausgelöst:**
+  - Einmal echt: ein einzeiliger Objekt-Initialisierer in einem per Skript eingefügten Test.
+  - Einmal ein **Windows-Fall**: Mein Python-Skript las CRLF-Dateien und schrieb sie als LF zurück. `dotnet format` meldet
+    dann unter Windows Zeilen um Kommentare. CI unter Linux hätte das vermutlich nicht gemeldet; die Zeilenenden waren aber
+    tatsächlich durch meine Edits gekippt.
+- **Test-Tor dreimal rot ohne Befund:** Jedes Mal war es die Sperre eines noch laufenden Testlaufs (mein eigener im
+  Hintergrund, einmal der des Reviewers). Kein Defekt, aber ein Tor, das immer „nur die Sperre“ meldet, gewöhnt ans Überlesen
+  von Rot.
+- **Laufzeit:** Die Suiten dauerten 14 bis 30 statt 8 bis 10 Minuten. Gleichzeitig belegte ein fremder Android-Emulator etwa
+  zweieinhalb Kerne. Eine Verlangsamung durch den Planer ist damit weder belegt noch ausgeschlossen.
+
+**Der eine Mechanismus:** In [backend/Pugling.Api/CLAUDE.md](../backend/Pugling.Api/CLAUDE.md) steht unter „Schema &
+Migrationen“ jetzt: Der Test einer Rückfüllung liest den Rohwert per SQL, weil EF unbekannte Enum-Texte still als ersten Wert
+liest.
+- Prosa statt Tor, weil ein mechanischer Nachweis (jede neue Enum-Pflichtspalte hat ein `UPDATE`) die Migrationen parsen müsste.
+- Für den einen Fall pro Quartal ist das zu teuer; der Satz steht dort, wo eine Migration geschrieben wird.
+
+**Vorschlag, nicht umgesetzt:** Das Test-Tor (`.claude/hooks/test-gate.sh`) könnte laut überspringen, solange ein Prozess
+`Pugling.Api.Tests.exe` läuft. Gemessen: Ein laufender Lauf ist nach drei Abfragen von `tasklist` sichtbar; der Fingerprint
+bliebe ungestempelt, der nächste Stopp misst. Das schwächt ein Tor ab, darum entscheidet der Nutzer (Rückfrage im Abschluss).
+
+**Bewusst ungedeckt:**
+- Eine Kür-Position kann Planer-Aufgabe werden ([B-1033](backlog/B-1033-kuer-positionen-im-tagesplan.md), Frage).
+- Eine nach dem Plan eingetragene Pause lässt den eingefrorenen Plan stehen (für B-736).
+- Die E2E des Tagesplans überspringt vor 6 Uhr.
+
+## Offene Roadmap (Stand nach Sprint 195)
+
+Siehe `docs/backlog/`. Die Schattenwoche läuft ab dem Einschalten am Gerät; sie misst, ob die Regeln plausibel planen. Der
+erste Befund (Rückstand von 132 Wiederholungen) steht in B-680. Danach in dieser Reihenfolge: B-735 und B-680 (Eingänge für
+den Planer), dann B-736 (scharf schalten). B-1033 braucht vorher eine Antwort des Vaters.

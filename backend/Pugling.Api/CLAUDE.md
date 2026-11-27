@@ -16,7 +16,10 @@ Live-Basis `20261110142003_InitialCreate` als erstes Glied (G1b – neu falten �
 - Nach `migrations add` muss der `git diff` am `PuglingDbContextModelSnapshot.cs` **genau die beabsichtigte
   Änderung** zeigen, und die neue Migration wird **gelesen**: Umbenennungen erzeugt EF gern als
   Drop+Add (Datenverlust), SQLite-Typwechsel als Tabellen-Neubau. Neue Pflichtspalten brauchen einen Wert für
-  Bestandszeilen (`migrationBuilder.Sql("UPDATE …")` in der Migration, kein DB-Default – siehe G9).
+  Bestandszeilen (`migrationBuilder.Sql("UPDATE …")` in der Migration, kein DB-Default – siehe G9). **Der Test dieser
+  Rückfüllung liest den Rohwert per SQL, nicht über das Modell:** EF liest einen leeren oder unbekannten Enum-Text still als
+  ersten Enum-Wert. Ohne `UPDATE` stünde in der echten DB `''`, und ein Test übers Modell sähe `Off` (Sprint 195, nur die
+  Mutantenprobe fand es).
 - Vor dem ersten Start mit einer neuen Migration gegen die echte DB: Probe gegen eine **Kopie**
   (`scripts/heimnetz.ps1 -Database <kopie> -Port <anderer>`); das Startskript legt zusätzlich bei jedem Start
   eine Sicherung `pugling.db.bak-auto-<Zeitstempel>` an (die letzten 20 bleiben).

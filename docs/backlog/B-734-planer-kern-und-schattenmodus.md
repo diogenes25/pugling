@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/training, rolle/supervisor, rolle/student]
 aliases: [Planer-Kern, Tagesplan, Schattenmodus, 6-Uhr-Lauf, Etappe E2]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: L
@@ -164,6 +164,11 @@ Nach [B-733](B-733-tagesauswertung-und-leistungsprofil.md) (Profil) und [B-731](
 
 ## Verlauf
 
+- **2026-11-27** — `in-arbeit` → `abgenommen` (Commit `f5e37689`). Rollengang an der Kopie der echten DB (Zone Tokio, damit es
+  nach 6 Uhr war): Vater sieht für Theodor und Friedrich je 5 Aufgaben mit Begründung, ein zweites Lesen liefert denselben Plan,
+  der Tag beider Söhne bleibt Byte für Byte gleich. Offen benannt: die Oberfläche nach dem Review-Fix am Gerät (ab 6 Uhr) bzw.
+  E2E `tagesplan-schatten` nach 6 Uhr – vor 6 Uhr überspringt die Spec bewusst. Befund des Rollengangs (132 fällige
+  Wiederholungen an einem Tag) an B-680 übergeben. Suite 2662/2662 (Release, Exit 0), Vitest 1524/1524.
 - **2026-11-27** — gebaut (Sprint 195). Abweichungen vom Schätz-Stand, bewusst:
   - **Modus am Kind** (`Child.PlannerMode` Off/Shadow, `PlannerSince`) statt Ein-Zeilen-Tabelle `PlannerSettings` (Schätz-Annahme
     1): Eigentum läuft über `ChildOwnershipFilter`, kein globaler Schalter über Familiengrenzen; Vorgabe `Off`, Einschalten

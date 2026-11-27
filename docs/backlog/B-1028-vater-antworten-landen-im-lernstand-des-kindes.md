@@ -12,7 +12,7 @@ quelle: docs/pm-sitzung-2026-11-26.md#iteration-193--umgesetzt
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-27
 ---
 
 # B-1028 · Antworten des Vaters (Vorschau, Nachtrag) landen im Lernstand und in der Auswertung des Kindes
