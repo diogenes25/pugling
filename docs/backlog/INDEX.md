@@ -12,7 +12,7 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 <!-- backlog-index:start -->
 <!-- Erzeugt von .claude/scripts/backlog-index.sh — nicht von Hand pflegen. -->
 
-### Offen (76)
+### Offen (75)
 
 | Id | Story | Art | Stufe | Prio | Größe | Wo | Kostet |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,6 @@ Generiert aus dem Frontmatter der Story-Dateien. Regeln, Stufen und Felder: [REA
 | [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md) | Eingriffe des Vaters, Bonusaufgaben und die Begründung in der Sohn-App (B-644, Etappe E4b) | Wunsch | `geschaetzt` | P1 | L | beides | Migration |
 | [B-748](B-748-vater-morgenuebersicht-tagesmission-lernstand-klausurchance.md) | Vater-Übersicht: Tagesmission geschafft? Lernstand? Chance auf die nächste Klausur? | Wunsch | `idee` | P1 | — | — | — |
 | [B-31](B-31-geraete-vorbehalt-klang.md) | Geräte-Vorbehalt: Klang und Haptik am echten Handy gegenhören | Frage | `geschaetzt` | P2 | XS | frontend | — |
-| [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | Darf der Tagesplaner eine Kür-Position zur Aufgabe machen? | Frage | `idee` | P2 | — | backend | — |
 | [B-220](B-220-learning-queue-im-sohn-dashboard.md) | Eine Learning Queue in der Sohn-Arcade: heute, diese Woche, überfällig | Wunsch | `geschaetzt` | P2 | L | beides | — |
 | [B-586](B-586-kind-fragt-den-betreuer-zur-aufgabe.md) | Das Kind stellt zur aktuellen Aufgabe eine Frage an seine Betreuer und bekommt die Antwort in der App | Wunsch | `geschaetzt` | P2 | M | beides | Migration |
 | [B-596](B-596-vokabeluebung-hoechstens-zehn-vokabeln.md) | Eine Vokabelübung hat 5 bis 10 Vokabeln | Wunsch | `geschaetzt` | P2 | L | beides | — |
@@ -1077,7 +1076,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1029](B-1029-zwei-uebungsmeldungen-verschmelzen.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1031](B-1031-tempo-vor-b732-unbekannt-nicht-null.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
 | [B-1032](B-1032-muenzen-tagessumme-in-der-arcade.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
-| [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | `idee` | `unverifiziert: true`, Abschnitt „Verlauf" |
+| [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | `verworfen` | Abschnitt „Verlauf" |
 | [B-139](B-139-e2e-nachtlauf-login-bricht-ab-test-2.md) | `abgenommen` | Abschnitt „Ist-Stand…", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
 | [B-146](B-146-anlegeformular-schickt-toten-fachnamen.md) | `abgenommen` | Abschnitt „Entscheidungen" |
 | [B-153](B-153-bilder-spec-flackert-im-vollen-lauf.md) | `abgenommen` | Abschnitt „User Story", Abschnitt „Ist-Stand…", Abschnitt „Akzeptanzkriterien", Abschnitt „Entscheidungen", Abschnitt „Schätzung" |
@@ -1251,7 +1250,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-992](B-992-buchstabensalat-legt-platzhalter.md) | `idee` | `unverifiziert: true` |
 
 <details>
-<summary>Verworfen (64)</summary>
+<summary>Verworfen (65)</summary>
 
 | Id | Story | Grund |
 | --- | --- | --- |
@@ -1261,6 +1260,7 @@ vollständig steht. Entweder nachtragen oder die Stufe zurücknehmen.
 | [B-1024](B-1024-drohung-vor-dem-ersten-spiel.md) | Soll ein noch nie geöffneter Plan dem Kind Frist und Malus androhen? | Vater entschieden 2026-11-26: ein noch nie geöffneter Plan droht weiter Frist und Malus an – die Drohung ist der Grund, ihn zu öffnen. Ist-Stand bleibt, nichts zu bauen. |
 | [B-103](B-103-idempotenzschluessel-und-etag.md) | Prüfauftrag: Brauchen `Idempotency-Key` und ETag/`If-Match` in dieser App einen Platz? | gemessen in der Arbeitsrunde 2026-08-04 — beim Idempotenz-Schlüssel bleibt ein betroffener Endpunkt von vier übrig und der Rückweg (POST children/{}/points) existiert als Produktverhalten; der ETag-Vorschlag ist gegen den Code unausführbar (StudyPlan/PlanPosition tragen keinen ConcurrencyStamp) und mit der Wallet-Invariante unverträglich. Kein Bau, Entscheidung dokumentiert in backend/Pugling.Api/CLAUDE.md. |
 | [B-1030](B-1030-testantwort-ohne-fehlerart.md) | Eine falsch getippte Testantwort trägt auf dem echten Weg keine Fehlerart | Kein Defekt: der Test fragt ein am selben Tag eingeführtes Wort auf der Auswahlstufe (6) ab, auch mit requireTypedTest; eine Auswahl trägt nach B-732 bewusst keine Art (FehlerartTests.Richtig_Auswahl_Und_Selbsteinschaetzung_Tragen_Keine_Art). Die E2E hatte per API Freitext an eine Auswahlkarte geschickt. Gemessen an: Position über die Vater-API, Stufe 4, mit und ohne requireTypedTest, Einführung über Lernkarten, Abgabe im Ganzen. |
+| [B-1033](B-1033-kuer-positionen-im-tagesplan.md) | Darf der Tagesplaner eine Kür-Position zur Aufgabe machen? | Beantwortet am 2026-11-27: der Planer wählt nur Positionen mit Pflicht, Kür bleibt Kür (Option 1). Gebaut als Teil von B-736. |
 | [B-137](B-137-freitext-fach-unerreichbar.md) | Ein Freitext-Fach an der Reihe ist sichtbar, aber nicht wegzubekommen | geteilt — faktisch XL (sechs Akzeptanzkriterien, drei Controller, Backend und Frontend, dazu eine Flags-Enum-Mehrfachauswahl); Freigabe 3 des Nachtlaufs verlangt dafür Teilen statt Bauen → [B-142, B-143, B-144] |
 | [B-14](B-14-learngoal-belohnung.md) | Idempotente Belohnung, wenn ein Lernziel erreicht ist — **gegenstandslos** | erfüllt durch KeyResult/ObjectiveRewardService (DB-Umbau E13) |
 | [B-186](B-186-assistent-und-planseite-setzen-zielpunkte-verschieden.md) | Assistent und Plan-Seite setzen die Zielpunkte nach verschiedenen Regeln | bleibt wie es ist – Entscheidung des Nutzers am 2026-10-23 (G-1): im Assistenten gewinnt die gewählte Intensität, weil sie eine ausdrückliche, angezeigte und in der Zusammenfassung bestätigte Aussage des Vaters ist; die Creator-Empfehlung gilt nur auf der Plan-Seite |

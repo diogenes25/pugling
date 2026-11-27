@@ -150,6 +150,8 @@ Nach [B-734](B-734-planer-kern-und-schattenmodus.md), [B-735](B-735-stoffrahmen-
 [B-738](B-738-eingriffe-bonus-und-sohn-begruendung.md). Ohne [B-731](B-731-lerntage-pause-und-leitplanken-je-kind.md) (Malus-Betrag,
 Lerntage) nicht baubar.
 
+5. **Kein Malus für Kür (Antwort auf B-1033, Nutzer, 2026-11-27):** Der Planer wählt nur aus Positionen mit Pflicht; eine Kür-Position (Taktung „keine“ oder nach `DutyUntil`) wird nie Tagesaufgabe. Zu bauen als Kandidatenfilter in `DailyPlanner.CandidatesAsync`, mit einem Fall je Kür-Art.
+
 ## Verlauf
 
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E3a) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
