@@ -79,7 +79,8 @@ public partial class GameRoot : Control
     private void ShowLogin()
     {
         var box = Page("Vokabel-Türme");
-        var server = Field(Servers[0].Url, "Server");
+        // The emulator is the only x86_64 target; a real phone (arm64) starts on the home server.
+        var server = Field(Servers[OS.HasFeature("x86_64") ? 0 : 1].Url, "Server");
         var child = Field("3", "Kind-Nr.");
         var pin = Field("", "PIN", secret: true);
 
