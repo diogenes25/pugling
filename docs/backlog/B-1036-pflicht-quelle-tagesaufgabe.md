@@ -1,7 +1,7 @@
 ---
-tags: [typ/story, status/in-arbeit, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
+tags: [typ/story, status/abgenommen, bereich/lehrplan, bereich/training, rolle/student, rolle/supervisor]
 aliases: [Pflichtquelle Tagesaufgabe, scharfer Tag, Quellenumschaltung]
-status: in-arbeit
+status: abgenommen
 prio: P1
 art: Wunsch
 groesse: M
@@ -11,6 +11,7 @@ vertragsbruch: nein
 quelle: B-736
 grund: ""
 ersetzt_durch: []
+nachgeschaut: ""
 ---
 
 # B-1036 · Im scharfen Modus kommt die Pflicht des Tages aus den Tagesaufgaben (Quellenumschaltung)
@@ -152,3 +153,4 @@ liegt als Text), kein Vertragsbruch (ein Enum-Wert dazu).
   Entscheidung: Umschalttag und angebrochene Woche → [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) (Frage). 🟢 ohne
   Zählung: Kommentar zur Woche, die einen scharfen Tag berührt; `ChildrenDashboardService:119` bleibt bei `IsDutyDay` (gleiches Ergebnis,
   S20 hält es).
+- **2026-11-27** — **abgenommen** (`463d95ad`): Rollengang an der Kopie (Vater: Schatten unverändert 8 Pflichten, scharf genau die 4 Aufgaben), Sohn und Creator als Regressionszeugen; siehe `docs/pm-sitzung-2026-11-27-p.md`, Runde 2.
