@@ -76,8 +76,8 @@ func _play_to_goal(index: int) -> void:
 	_check("%s: %d Türme, Bolzenturm und Katapult reihum" % [def.title, towers.all.size()],
 			towers.all.size() == def.tower_spots.size() and towers.all[0].kind.id == "bolt-tower" and towers.all[1].kind.id == "catapult"
 			and towers.all[2].kind.id == "bolt-tower")
-	_check("%s: jeder Turm startet mit 10 Schuss und einer Bedeutung" % def.title,
-			towers.all.all(func(t: Tower) -> bool: return t.ammo.count == 10 and t.target != null))
+	_check("%s: jeder Turm startet mit 16 Schuss und einer Bedeutung" % def.title,
+			towers.all.all(func(t: Tower) -> bool: return t.ammo.count == Balance.START_AMMO and Balance.START_AMMO == 16 and t.target != null))
 	_check("%s: Kamera folgt dem Helden, Abstand (0, 15, 9,5), Sichtwinkel 42" % def.title, _camera_follows())
 	if index == 0:
 		await _check_walking(def)
@@ -324,14 +324,14 @@ func _waves() -> void:
 		await get_tree().process_frame
 	var kills := _level.score.kills
 	_check("Wellen: Welle 1 geschafft nach %d besiegten Monstern, Bonus %d" % [kills, bonuses[0]],
-			cleared == ([1] as Array[int]) and kills == 8 and bonuses[0] == 100 and _level.score.waves == 1)
-	_check("Wellen: Punkte = 5 kleine × 10 + 3 Krieger × 30 + 100 Bonus (%d)" % _level.score.total(), _level.score.total() == 240)
+			cleared == ([1] as Array[int]) and kills == 9 and bonuses[0] == 100 and _level.score.waves == 1)
+	_check("Wellen: Punkte = 5 kleine × 10 + 4 Krieger × 30 + 100 Bonus (%d)" % _level.score.total(), _level.score.total() == 270)
 	_check("Wellen: eine Welle ohne Durchbruch repariert die Burg um 1 (Leben %d)" % _level.tally.lives, _level.tally.lives == 9)
 	await _frames(3)
 	_check("Wellen: Banner „Welle 1 geschafft!“ und der Ritter jubelt mitten im Lauf", _banners.has("Welle 1 geschafft!") and _clip() == "Cheer")
 	await UiDriver.shot(get_tree(), "level-welle-geschafft")
 	var words_dropped := _level.words.all.size()
-	_check("Wellen: drei Krieger haben drei Wörter fallen lassen (%d)" % words_dropped, words_dropped == 3)
+	_check("Wellen: vier Krieger haben vier Wörter fallen lassen (%d)" % words_dropped, words_dropped == 4)
 	var before := _spawned.size()
 	await _seconds(Balance.WAVE_REST - 1.0)
 	_check("Wellen: während der Pause von 5 s kommt niemand", _spawned.size() == before and _level.enemies.waves.wave == 1)
@@ -459,8 +459,10 @@ func _give_and_check(tower: Tower, map: String) -> void:
 	var spent := _shot_count_of(tower) - shots_before
 	var graded_right := _level.tally.correct * 2 == _level.tally.total
 	if graded_right:
-		_check("%s: richtig gibt +8 Schuss und die nächste Bedeutung" % map,
-				tower.ammo.count == ammo + 8 - spent and tower.target != target)
+		# A word's value decides the refill: 10, 12 or 14 shots.
+		var refill := 8 + 2 * target.value
+		_check("%s: richtig gibt +%d Schuss (Wert %d) und die nächste Bedeutung" % [map, refill, target.value],
+				tower.ammo.count == ammo + refill - spent and tower.target != target)
 		_check("%s: der Turm bekommt den Wert des Wortes (%d) als Kraft" % [map, target.value],
 				tower.level.power == power + target.value and target.value >= 1 and target.value <= 3)
 		if tower.level.level > level:
@@ -471,7 +473,7 @@ func _give_and_check(tower: Tower, map: String) -> void:
 			_check("%s: mehr als 30 Schuss machen den Turm stark (★ im Schild)" % map, tower.ammo.count > 30)
 		else:
 			_check("%s: Rückmeldezeile richtig" % map,
-					_messages.has("Richtig! „%s“ = „%s“  +8 Schuss  +%d Kraft" % [word.word, target.prompt, target.value]))
+					_messages.has("Richtig! „%s“ = „%s“  +%d Schuss  +%d Kraft" % [word.word, target.prompt, 8 + 2 * target.value, target.value]))
 	else:
 		_check("%s: falsch kostet 3 Schuss, die Bedeutung bleibt" % map,
 				tower.ammo.count == maxi(0, ammo - spent - 3) and tower.target == target)
@@ -486,8 +488,8 @@ func _check_enemies(def: LevelDef) -> void:
 	for i: int in mini(troop.size(), _spawned.size()):
 		if _spawned[i].kind != troop[i]:
 			wrong_kind += 1
-	_check("%s: die erste Welle marschiert wie geplant (5 kleine, 3 Krieger mit 4 HP, langsamer; %d gekommen)" % [def.title, _spawned.size()],
-			wrong_kind == 0 and _spawned.size() >= 4 and troop.count(Catalog.MINION) == 5 and troop.count(Catalog.WARRIOR) == 3
+	_check("%s: die erste Welle marschiert wie geplant (5 kleine, 4 Krieger mit 4 HP, langsamer; %d gekommen)" % [def.title, _spawned.size()],
+			wrong_kind == 0 and _spawned.size() >= 4 and troop.count(Catalog.MINION) == 5 and troop.count(Catalog.WARRIOR) == 4
 			and Catalog.WARRIOR.hp == 4 and Catalog.MINION.hp == 2 and _spawned[1].speed < _spawned[0].speed
 			and is_equal_approx(_spawned[0].speed, def.monster_speed))
 	_check("%s: nur die Krieger tragen Wörter, die kleinen bringen Punkte" % def.title,

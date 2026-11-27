@@ -65,7 +65,7 @@ func _on_word_assigned(graded: GameEvents.Assignment) -> void:
 	elif graded.became_strong:
 		_controls.say("Richtig! Der Turm schießt jetzt %s ★" % graded.tower.kind.strong_shot_name, Color.LIGHT_GREEN)
 	else:
-		_controls.say("Richtig! „%s“ = „%s“  +%d Schuss  +%d Kraft" % [graded.word.word, graded.target.prompt, Balance.REFILL_AMMO, graded.value], Color.LIGHT_GREEN)
+		_controls.say("Richtig! „%s“ = „%s“  +%d Schuss  +%d Kraft" % [graded.word.word, graded.target.prompt, TowerAmmo.refill_size(graded.value), graded.value], Color.LIGHT_GREEN)
 
 
 func _on_wave_started(number: int) -> void:

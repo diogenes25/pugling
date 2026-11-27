@@ -150,9 +150,10 @@ func _build_bottom() -> void:
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(status)
-	_words_card.custom_minimum_size = Vector2(360, 110)
+	# A long exercise title wraps inside the card and the card grows upwards; it is never cut off.
+	_words_card.custom_minimum_size = Vector2(420, 110)
 	_words_card.size_flags_vertical = Control.SIZE_SHRINK_END
-	_words_card.clip_text = true
+	_words_card.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_words_card.pressed.connect(pick_words.emit)
 	row.add_child(_words_card)
 	_map_card.custom_minimum_size = Vector2(230, 110)

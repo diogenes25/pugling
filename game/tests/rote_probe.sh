@@ -9,7 +9,11 @@ cd "$(dirname "$0")/.."
 # case | file | sed expression that falsifies the rule. The falsified file must still compile: with warnings as
 # errors an unused variable stops the whole suite from loading, which is red in the wrong place.
 PROBES='
-test_a_correct_word_adds_eight_shots_and_a_wrong_one_costs_three|core/tower_ammo.gd|s/count += Balance.REFILL_AMMO/count += 7/
+test_a_tower_starts_with_sixteen_shots_and_a_wrong_word_costs_three|data/balance.gd|s/START_AMMO: int = 16/START_AMMO: int = 15/
+test_a_correct_word_adds_eight_shots_plus_two_per_value_point|core/tower_ammo.gd|s/Balance.REFILL_PER_VALUE \* value/Balance.REFILL_PER_VALUE/
+test_a_run_fed_with_every_word_keeps_its_towers_stocked_for_twenty_waves|data/balance.gd|s/REFILL_AMMO: int = 8/REFILL_AMMO: int = 2/
+test_a_run_without_words_clears_the_first_wave_and_runs_dry_in_the_second|data/balance.gd|s/START_AMMO: int = 16/START_AMMO: int = 30/
+test_the_words_of_the_first_wave_outweigh_the_shots_of_the_second|data/balance.gd|s/REFILL_PER_VALUE: int = 2/REFILL_PER_VALUE: int = 0/
 test_a_penalty_never_drives_the_ammo_below_zero|core/tower_ammo.gd|s/count = maxi(0, count - Balance.WRONG_PENALTY)/count = count - Balance.WRONG_PENALTY/
 test_more_than_thirty_shots_make_a_tower_strong_and_the_turn_is_reported_once|core/tower_ammo.gd|s/return not was_strong and is_strong()/return was_strong or is_strong()/
 test_five_refills_keep_a_tower_strong_even_when_its_ammo_runs_low|core/tower_ammo.gd|s/ or refills >= Balance.MASTER_REFILLS//

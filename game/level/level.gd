@@ -290,7 +290,7 @@ func _assign() -> void:
 	if graded.correct:
 		words.pool.consume(token.token_id)
 		graded.value = target.value
-		graded.became_strong = tower.ammo.refill()
+		graded.became_strong = tower.ammo.refill(target.value)
 		graded.leveled = tower.level.add(target.value)
 		score.word(target.value)
 		if graded.leveled:

@@ -87,6 +87,22 @@ func _ready() -> void:
 	await _frames(8)
 	_expect("wörter gewählt", ["[SPIELEN]", "[Wörter\nOhne Fach  ▸]"])
 	_check(Settings.position() == 2, "die Wörter sind gemerkt")
+	# A long title wraps inside the card instead of being cut off (seen on the phone on 2026-11-27).
+	_press("Wörter")
+	await _frames(6)
+	_press("Französisch")
+	await _frames(8)
+	_expect("langer titel", ["[Wörter\nFranzösisch · Unité 5 · Vocabulaire Volet 2 – Texte A und B  ▸]"])
+	var card := UiDriver.find_button(_main, "Wörter")
+	var needed := card.get_theme_font("font").get_multiline_string_size(card.text, HORIZONTAL_ALIGNMENT_CENTER,
+			card.size.x - 32, card.get_theme_font_size("font_size")).y
+	_check(not card.clip_text and card.autowrap_mode != TextServer.AUTOWRAP_OFF and needed <= card.size.y,
+			"der lange Titel passt umbrochen in die Wörter-Karte (braucht %d von %d Höhe)" % [needed, card.size.y])
+	await UiDriver.shot(get_tree(), "2b-langer-titel")
+	_press("Wörter")
+	await _frames(6)
+	_press("Ohne Fach")
+	await _frames(8)
 
 	# The settings from the start screen: the sound switch, and the way back.
 	_press("Einstellungen")

@@ -53,6 +53,7 @@ func overview() -> ApiResult:
 		"positions": [
 			{"planPositionId": 1.0, "planTitle": "Testplan", "subjectName": "Englisch", "exerciseTitle": "Unit 1 · Wörter", "wordCount": float(word_count)},
 			{"planPositionId": 2.0, "planTitle": "Testplan", "subjectName": null, "exerciseTitle": "Ohne Fach", "wordCount": float(word_count)},
+			{"planPositionId": 3.0, "planTitle": "Testplan", "subjectName": "Französisch", "exerciseTitle": "Unité 5 · Vocabulaire Volet 2 – Texte A und B", "wordCount": float(word_count)},
 		],
 		"playedSecondsToday": float(_played_seconds),
 		"limitSeconds": 1800.0,

@@ -27,10 +27,15 @@ func use() -> bool:
 	return strong
 
 
-## A correct word: adds [constant Balance.REFILL_AMMO]; returns whether the tower just turned strong.
-func refill() -> bool:
+## Shots a correct word of the given value adds.
+static func refill_size(value: int) -> int:
+	return Balance.REFILL_AMMO + Balance.REFILL_PER_VALUE * value
+
+
+## A correct word of the given value: adds [method refill_size] shots; returns whether the tower just turned strong.
+func refill(value: int) -> bool:
 	var was_strong := is_strong()
-	count += Balance.REFILL_AMMO
+	count += refill_size(value)
 	refills += 1
 	return not was_strong and is_strong()
 

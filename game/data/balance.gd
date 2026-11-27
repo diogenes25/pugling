@@ -20,11 +20,13 @@ const TOWER_REACH: float = 3.6
 const HERO_RANGE: float = 5.5
 const HERO_SHOT_INTERVAL: float = 1.0
 
-## Shots a tower starts with.
-const START_AMMO: int = 10
+## Shots a tower starts with: enough for the first wave, not for the second - without words a run tips soon.
+const START_AMMO: int = 16
 
-## Shots a correct word adds.
+## Shots a correct word adds, plus REFILL_PER_VALUE for every value point of the word: a new or weak word (value 3)
+## stocks a tower better than a well learned one (value 1).
 const REFILL_AMMO: int = 8
+const REFILL_PER_VALUE: int = 2
 
 ## Shots a wrong word costs (user decision of 2026-11-26; it was 1 before).
 const WRONG_PENALTY: int = 3
@@ -53,9 +55,10 @@ const WAVE_MINIONS: int = 5
 const WAVE_MINIONS_GROWTH: int = 2
 const MAX_MINIONS: int = 30
 
-## Word carriers of the first wave; every second wave brings one more, up to MAX_CARRIERS.
-const WAVE_CARRIERS: int = 3
-const MAX_CARRIERS: int = 9
+## Word carriers of the first wave; every second wave brings one more, up to MAX_CARRIERS. Each drops a word, so
+## they are what a run lives on: their words have to outweigh the shots the wave costs.
+const WAVE_CARRIERS: int = 4
+const MAX_CARRIERS: int = 10
 
 ## Every n-th wave ends with a boss.
 const BOSS_EVERY: int = 5

@@ -36,13 +36,13 @@ func test_the_first_wave_starts_after_two_seconds() -> void:
 func test_a_wave_grows_by_two_minions_and_a_carrier_every_second_wave() -> void:
 	var plan := _plan(5.0, 2.0, 1)
 	equal(5, _count(plan.troop(1), MINION))
-	equal(3, _count(plan.troop(1), WARRIOR))
+	equal(4, _count(plan.troop(1), WARRIOR))
 	equal(7, _count(plan.troop(2), MINION))
-	equal(3, _count(plan.troop(2), WARRIOR))
+	equal(4, _count(plan.troop(2), WARRIOR))
 	equal(9, _count(plan.troop(3), MINION))
-	equal(4, _count(plan.troop(3), WARRIOR))
+	equal(5, _count(plan.troop(3), WARRIOR))
 	equal(30, _count(plan.troop(40), MINION))
-	equal(9, _count(plan.troop(40), WARRIOR))
+	equal(10, _count(plan.troop(40), WARRIOR))
 
 
 func test_carriers_march_spread_among_the_minions() -> void:
@@ -51,7 +51,7 @@ func test_carriers_march_spread_among_the_minions() -> void:
 	for i: int in troop.size():
 		if troop[i] == WARRIOR:
 			places.append(i)
-	equal([1, 3, 5] as Array[int], places)
+	equal([1, 3, 5, 7] as Array[int], places)
 
 
 func test_every_fifth_wave_ends_with_a_boss() -> void:
@@ -65,7 +65,7 @@ func test_every_fifth_wave_ends_with_a_boss() -> void:
 func test_the_next_wave_waits_until_the_field_is_clear_and_rests_five_seconds() -> void:
 	var plan := _plan(5.0, 2.0, 1)
 	plan.tick(2.0, 0)
-	equal(7, _drain(plan).size())
+	equal(8, _drain(plan).size())
 	check(plan.tick(100.0, 1) == null, "no new wave while an enemy is alive")
 	equal(0, plan.take_cleared())
 	check(plan.tick(0.1, 0) == null, "the cleared wave to be noticed first")
