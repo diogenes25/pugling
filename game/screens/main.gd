@@ -174,7 +174,7 @@ func _show_result(run_id: int, correct: int, total: int, reason: LevelEnd.Reason
 	if level != null:
 		_summary = level.summary()
 	@warning_ignore("redundant_await")
-	var end := await server.end_run(run_id)
+	var end := await server.end_run(run_id, _summary.wave)
 	var result: ResultScreen = RESULT.instantiate()
 	result.correct = correct
 	result.total = total

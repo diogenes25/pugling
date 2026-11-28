@@ -27,6 +27,20 @@ var logins: int = 0
 ## Coins a won level pays, up to the daily cap.
 var coins_per_win: int = 5
 
+## Daily chests waiting to be opened.
+var chests_waiting: int = 1
+
+## Correct words in the game today, as the game chest and the game streak count them.
+var words_today: int = 15
+
+## Lifetime trophies.
+var trophies: int = 48
+
+## The wave the last ended run reported.
+var reported_wave: int = -1
+
+var _game_chest_opened: bool = false
+var _gems: int = 7
 var _assigns: int = 0
 var _beats: int = 0
 var _solved: int = 0
@@ -59,18 +73,28 @@ func overview() -> ApiResult:
 		"limitSeconds": 1800.0,
 		"coinsToday": float(_coins_today),
 		"dailyCoinCap": 10.0,
+		"progress": {
+			"trophies": float(trophies),
+			"trophyPath": [
+				{"trophies": 20.0, "gems": 1.0, "reached": trophies >= 20},
+				{"trophies": 60.0, "gems": 2.0, "reached": trophies >= 60},
+				{"trophies": 120.0, "gems": 3.0, "reached": trophies >= 120},
+			],
+			"streak": 2.0, "wordsToday": float(words_today), "streakWords": 10.0,
+			"chest": _game_chest(),
+		},
 	})
 
 
 func home() -> ApiResult:
 	await _hop()
 	return ApiResult.success({
-		"wallet": {"childId": float(child_id), "coins": 120.0, "gems": 7.0},
+		"wallet": {"childId": float(child_id), "coins": 120.0, "gems": float(_gems)},
 		"today": {
 			"goalsTotal": 4.0, "goalsMet": 1.0, "currentStreak": 3.0, "dutyDone": false,
 			"outstanding": ["Unit 1 · Wörter Part A (Tagesziel) offen", "Unité 5 · Vokabeln (Wochenziel) offen",
 				"Grammatik: simple past (Tagesziel) offen"],
-			"dailyBox": {"claimedToday": false, "openedToday": false, "waiting": 1.0, "streakAtClaim": 0.0},
+			"dailyBox": {"claimedToday": false, "openedToday": false, "waiting": float(chests_waiting), "streakAtClaim": 0.0},
 		},
 		"missions": [
 			{"id": 1.0, "title": "Fertig-Mission", "target": 5.0, "current": 5.0, "completed": true, "rewardPoints": 10.0},
@@ -116,18 +140,48 @@ func heartbeat(_run_id: int) -> ApiResult:
 	})
 
 
-func end_run(_run_id: int) -> ApiResult:
+func end_run(_run_id: int, wave: int) -> ApiResult:
 	await _hop()
 	if failing_ends > 0:
 		failing_ends -= 1
 		return ApiResult.failure("Server nicht erreichbar (keine Verbindung).")
+	reported_wave = wave
 	var won := _solved >= goal
 	var awarded := mini(coins_per_win, 10 - _coins_today) if won else 0
 	_coins_today += awarded
+	# Like the server: three trophies per solved word and one per cleared wave, never more waves than words.
+	var earned := 3 * _solved + mini(maxi(0, wave - 1), _solved)
+	var gems := 2 if trophies < 60 and trophies + earned >= 60 else 0
+	trophies += earned
+	_gems += gems
 	return ApiResult.success({
 		"won": won, "solved": float(_solved), "goal": float(goal), "coinsAwarded": float(awarded),
 		"coinsToday": float(_coins_today), "dailyCoinCap": 10.0,
+		"wave": float(wave), "trophiesAwarded": float(earned), "trophies": float(trophies), "gemsAwarded": float(gems),
 	})
+
+
+func open_daily_chest() -> ApiResult:
+	await _hop()
+	if chests_waiting <= 0:
+		return ApiResult.failure("Hier ist gerade keine Truhe zu öffnen.")
+	chests_waiting -= 1
+	_gems += 1
+	return ApiResult.success({"coins": 20.0, "gems": 1.0, "streakAtClaim": 3.0, "day": "2026-11-27", "waitingAfter": float(chests_waiting)})
+
+
+func open_game_chest() -> ApiResult:
+	await _hop()
+	if _game_chest_opened or words_today < 15:
+		return ApiResult.failure("Hier ist gerade keine Truhe zu öffnen.")
+	_game_chest_opened = true
+	_gems += 2
+	return ApiResult.success({"gemsAwarded": 2.0, "chest": _game_chest()})
+
+
+func _game_chest() -> Dictionary:
+	return {"words": float(mini(words_today, 15)), "wordsNeeded": 15.0,
+		"ready": words_today >= 15 and not _game_chest_opened, "openedToday": _game_chest_opened}
 
 
 ## Heartbeats the current run has received.

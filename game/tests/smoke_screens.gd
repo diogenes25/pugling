@@ -55,44 +55,62 @@ func _ready() -> void:
 	_press("Anmelden")
 	await _frames(8)
 
-	_expect("startseite", ["Testkind", "[SPIELEN]", "Tagesaufgaben", "○ Lernziele heute  1/4", "  Unit 1 · Wörter Part A (Tagesziel) offen",
-		"○ 20 Vokabeln richtig  8/20  +25", "✔ Fertig-Mission  5/5  +10", "1 Truhe wartet – öffne sie im Lern-Teil!",
-		"Spielzeit heute noch 28 Min.", "Spiel-Münzen heute 0/10", "Serie 3   ·   Münzen 120   ·   Gems 7   ·   Rekord",
-		"[Wörter\nEnglisch · Unit 1 · Wörter  ▸]", "[Karte\nLichtung  ▸]", "[Einstellungen]"])
+	_expect("startseite", ["Testkind", "[SPIELEN]", "Tagesaufgaben", "(offen) | Lernziele heute  1/4", "  Unit 1 · Wörter Part A (Tagesziel) offen",
+		"(offen) | 20 Vokabeln richtig  8/20 | +25 | (Gems)", "(erledigt) | Fertig-Mission  5/5 | +10 | (Gems)",
+		"Spielzeit heute noch 28 Min.", "Spiel-Münzen heute 0/10",
+		"(Serie) | 3 | (Trophäen) | 48 | (Münzen) | 120 | (Gems) | 7 | (Rekord)",
+		"[Wörter
+Englisch · Unit 1 · Wörter  ›]", "[Karte
+Lichtung  ›]", "[Einstellungen]"])
 	_check(Settings.pin() == "4711" and Settings.server() == "http://127.0.0.1:5280" and Settings.child() == 3,
 			"die Anmeldung ist auf dem Gerät gespeichert")
 	var texts := " | ".join(UiDriver.texts(_main))
-	_check(texts.find("○ 20 Vokabeln") < texts.find("✔ Fertig-Mission"), "offene Aufgaben stehen vor erledigten")
+	_check(texts.find("20 Vokabeln richtig") < texts.find("Fertig-Mission"), "offene Aufgaben stehen vor erledigten")
+	# What the child collected, by the server's count: trophies with the way to the next step, the game streak.
+	_expect("gesammelt", ["Truhen & Trophäen", "(Trophäen) | noch 12 bis +2 Gems", "(Serie) | Spiel-Serie 2  ·  heute 10/10 Vokabeln"])
 	await UiDriver.shot(get_tree(), "2-startseite")
+
+	# Both chests are opened on the start screen; the server books what they hold and the wallet follows.
+	_press("Truhe öffnen")
+	await _frames(10)
+	_expect("truhe geöffnet", ["In der Truhe: +20 Münzen und +1 Gem!", "(Truhe) | Schaffe deine Lernziele, dann gibt es eine Truhe.",
+		"(Gems) | 8 | (Rekord)"])
+	_check(UiDriver.find_button(_main, "Truhe öffnen") != null and UiDriver.find_button(_main, "Truhe öffnen").text == "Spiel-Truhe öffnen",
+			"nach dem Öffnen wartet keine Tagestruhe mehr")
+	_press("Spiel-Truhe öffnen")
+	await _frames(10)
+	_expect("spiel-truhe geöffnet", ["In der Truhe: +2 Gems!", "(Truhe) | Spiel-Truhe für heute geöffnet.", "(Gems) | 10 | (Rekord)"])
+	_check(UiDriver.find_button(_main, "Truhe öffnen") == null, "eine geöffnete Spiel-Truhe lässt sich nicht noch einmal öffnen")
+	await UiDriver.shot(get_tree(), "2a-truhen")
 
 	# The map card steps through the maps and the choice is remembered.
 	_press("Karte")
-	_expect("karte 2", ["[Karte\nFlussfurt  ▸]"])
+	_expect("karte 2", ["[Karte\nFlussfurt  ›]"])
 	_check(Settings.map() == 1, "die Karte ist gemerkt")
 	_press("Karte")
 	_press("Karte")
-	_expect("karte wieder 1", ["[Karte\nLichtung  ▸]"])
+	_expect("karte wieder 1", ["[Karte\nLichtung  ›]"])
 
 	# The words card opens the list; back leads to the start screen, a pick is remembered.
 	_press("Wörter")
 	await _frames(6)
-	_expect("wortwahl", ["Hallo Testkind! Welche Wörter?", "Spielzeit heute noch 28 Min.  ·  Münzen heute 0/10 🪙",
+	_expect("wortwahl", ["Hallo Testkind! Welche Wörter?", "Spielzeit heute noch 28 Min.  ·  Spiel-Münzen heute 0/10",
 		"[Englisch · Unit 1 · Wörter (12)]", "[ · Ohne Fach (12)]", "[Zurück]"])
 	await UiDriver.shot(get_tree(), "3-wortwahl")
 	await _back("wortwahl")
-	_expect("zurück von wortwahl", ["[SPIELEN]", "[Wörter\nEnglisch · Unit 1 · Wörter  ▸]"])
+	_expect("zurück von wortwahl", ["[SPIELEN]", "[Wörter\nEnglisch · Unit 1 · Wörter  ›]"])
 	_press("Wörter")
 	await _frames(6)
 	_press("Ohne Fach")
 	await _frames(8)
-	_expect("wörter gewählt", ["[SPIELEN]", "[Wörter\nOhne Fach  ▸]"])
+	_expect("wörter gewählt", ["[SPIELEN]", "[Wörter\nOhne Fach  ›]"])
 	_check(Settings.position() == 2, "die Wörter sind gemerkt")
 	# A long title wraps inside the card instead of being cut off (seen on the phone on 2026-11-27).
 	_press("Wörter")
 	await _frames(6)
 	_press("Französisch")
 	await _frames(8)
-	_expect("langer titel", ["[Wörter\nFranzösisch · Unité 5 · Vocabulaire Volet 2 – Texte A und B  ▸]"])
+	_expect("langer titel", ["[Wörter\nFranzösisch · Unité 5 · Vocabulaire Volet 2 – Texte A und B  ›]"])
 	var card := UiDriver.find_button(_main, "Wörter")
 	var needed := card.get_theme_font("font").get_multiline_string_size(card.text, HORIZONTAL_ALIGNMENT_CENTER,
 			card.size.x - 32, card.get_theme_font_size("font_size")).y
@@ -127,7 +145,8 @@ func _ready() -> void:
 	_press("Ergebnis nochmal senden")
 	await _frames(6)
 	_expect("ergebnis", ["Spiel beendet.", "Welle 0  ·  0 Punkte", "Monster besiegt: 0  →  0 Punkte", "0 von 0 Vokabeln richtig",
-		"Münzen gibt es ab 3 richtigen Vokabeln.", "[Noch einmal]", "[Startseite]"])
+		"Münzen gibt es ab 3 richtigen Vokabeln.", "Trophäen gibt es für richtige Vokabeln.  (gesamt 48)", "[Noch einmal]", "[Startseite]"])
+	_check(_fake.reported_wave == 0, "das Ende meldet dem Server die erreichte Welle (%d)" % _fake.reported_wave)
 	_check(UiDriver.find_button(_main, "Ergebnis nochmal senden") == null, "kein Nochmal-senden nach gespeichertem Ergebnis")
 	await UiDriver.shot(get_tree(), "7-ergebnis")
 	_press("Noch einmal")
@@ -145,7 +164,7 @@ func _ready() -> void:
 	var logins := _fake.logins
 	await _restart()
 	await _frames(8)
-	_expect("neustart", ["Testkind", "[SPIELEN]", "[Wörter\nOhne Fach  ▸]"])
+	_expect("neustart", ["Testkind", "[SPIELEN]", "[Wörter\nOhne Fach  ›]"])
 	_check(_fake.logins == logins + 1 and UiDriver.find_button(_main, "Anmelden") == null, "Neustart meldet selbst an, ohne Login-Bildschirm")
 
 	# A session that ran out is renewed once with the stored PIN, without bothering the player.

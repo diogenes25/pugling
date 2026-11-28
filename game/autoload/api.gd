@@ -45,8 +45,16 @@ func heartbeat(run_id: int) -> ApiResult:
 	return await _send(HTTPClient.METHOD_POST, "%s/runs/%d/heartbeat" % [_game(), run_id])
 
 
-func end_run(run_id: int) -> ApiResult:
-	return await _send(HTTPClient.METHOD_POST, "%s/runs/%d/end" % [_game(), run_id])
+func end_run(run_id: int, wave: int) -> ApiResult:
+	return await _send(HTTPClient.METHOD_POST, "%s/runs/%d/end" % [_game(), run_id], {"wave": wave})
+
+
+func open_daily_chest() -> ApiResult:
+	return await _send(HTTPClient.METHOD_POST, "student/children/%d/daily-box/open" % child_id)
+
+
+func open_game_chest() -> ApiResult:
+	return await _send(HTTPClient.METHOD_POST, _game() + "/chest/open")
 
 
 func _game() -> String:
@@ -102,6 +110,8 @@ static func _problem(status: int, text: String) -> ApiResult:
 				return ApiResult.failure("Deine Spielzeit für heute ist um. Morgen geht's weiter!")
 			if closed:
 				return ApiResult.failure("Das Level ist vorbei.", true)
+			if text.contains("daily_box_none") or text.contains("tower_game_chest_none"):
+				return ApiResult.failure("Hier ist gerade keine Truhe zu öffnen.")
 			return ApiResult.failure("Gerade kam etwas dazwischen – bitte nochmal.")
 		429:
 			return ApiResult.failure("Zu viele Versuche, kurz warten.")

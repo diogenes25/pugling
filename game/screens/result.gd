@@ -49,6 +49,8 @@ func _ready() -> void:
 	add_text("%d von %d Vokabeln richtig  ·  bester Turm Stufe %d" % [correct, total, top_tower_level], 24)
 	if end.ok:
 		add_text(_coins(), 30)
+		if end.data.has("trophies"):
+			add_text(_trophies(), 30)
 	else:
 		add_action("Ergebnis nochmal senden", resend.emit)
 	add_action("Noch einmal", again.emit)
@@ -70,12 +72,24 @@ func _headline() -> String:
 	return "Die Burg ist gefallen."
 
 
+## The run's trophies by the server's count, with the gems of a trophy-path step it reached.
+func _trophies() -> String:
+	var earned := int(end.data.get("trophiesAwarded", 0))
+	var gems := int(end.data.get("gemsAwarded", 0))
+	var line := "+%d Trophäen  (gesamt %d)" % [earned, int(end.data.get("trophies", 0))]
+	if gems > 0:
+		line += "  ·  Trophäen-Stufe erreicht: +%d Gem%s" % [gems, "" if gems == 1 else "s"]
+	elif earned == 0:
+		line = "Trophäen gibt es für richtige Vokabeln.  (gesamt %d)" % int(end.data.get("trophies", 0))
+	return line
+
+
 func _coins() -> String:
 	var awarded := int(end.data.get("coinsAwarded", 0))
 	var today := int(end.data.get("coinsToday", 0))
 	var cap := int(end.data.get("dailyCoinCap", 0))
 	if awarded > 0:
-		return "+%d 🪙  (heute %d/%d)" % [awarded, today, cap]
+		return "+%d Münzen  (heute %d/%d)" % [awarded, today, cap]
 	if end.data.get("won", false):
-		return "Münzdeckel für heute erreicht (%d/%d 🪙)." % [today, cap]
+		return "Münzdeckel für heute erreicht (%d/%d)." % [today, cap]
 	return "Münzen gibt es ab %d richtigen Vokabeln." % int(end.data.get("goal", 0))

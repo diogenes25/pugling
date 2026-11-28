@@ -47,6 +47,9 @@ test_returning_a_token_twice_does_not_double_it|core/token_pool.gd|/^func give_b
 test_drops_come_from_the_first_eight_of_the_queue|data/balance.gd|s/DROP_WINDOW: int = 8/DROP_WINDOW: int = 40/
 test_a_wrongly_given_token_goes_back_to_its_old_place|core/token_pool.gd|s/_rank\[_queue\[at\]\] < _rank\[id\]/false/
 test_a_correctly_given_token_queues_up_again_behind_all_others|core/token_pool.gd|/^func consume/,$ s/^\t_rank\[id\] = _next_rank$/\tpass/
+test_the_next_step_is_the_first_one_not_reached_yet|core/trophy_path.gd|s/if total < step.trophies:/if total <= step.trophies:/
+test_reached_counts_the_steps_at_or_below_the_total|core/trophy_path.gd|s/if total >= step.trophies:/if total > step.trophies:/
+test_the_progress_runs_from_the_last_reached_step_to_the_next|core/trophy_path.gd|s/var from := 0 if done == 0 else steps\[done - 1\].trophies/var from := 0 * done/
 test_a_started_cooldown_holds_until_its_time_has_passed|core/cooldown.gd|s/_left = seconds/_left = seconds * 0.0/
 test_no_exported_packed_array_defaults_to_an_array_literal|data/tower_kind.gd|s/PackedStringArray = PackedStringArray()/PackedStringArray = []/
 '

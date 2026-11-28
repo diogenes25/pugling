@@ -1,5 +1,5 @@
 extends Node
-## Contract check of all six calls against a real (throwaway) API - the server rejects unknown fields, so a wrong
+## Contract check of all calls against a real (throwaway) API - the server rejects unknown fields, so a wrong
 ## field name shows up here as a 400. Never point it at the home server: it starts and ends a real run.
 ## Run: godot --headless --path . res://tests/smoke_api.tscn -- --server=http://127.0.0.1:5281 --child=3 --pin=4711
 ## Add --rate-limit to also run into the login limiter (blocks logins for a minute), or --time-limit when the
@@ -55,8 +55,21 @@ func _ready() -> void:
 	_note("assign", verdicts[true] == 1, "%d falsch, %d richtig" % [verdicts[false], verdicts[true]])
 	var beat := await Api.heartbeat(run.run_id)
 	_note("heartbeat", beat.ok and beat.data.has("timeUp"), str(beat.data) + beat.error)
-	var end := await Api.end_run(run.run_id)
-	_note("end_run", end.ok and end.data.has("won") and end.data.has("coinsAwarded"), str(end.data) + end.error)
+	var end := await Api.end_run(run.run_id, 7)
+	# One correct word and a few seconds of play: the reported wave 7 must come back cut to what the time covers.
+	_note("end_run", end.ok and end.data.has("won") and end.data.has("coinsAwarded") and end.data.has("trophies")
+			and int(end.data.get("trophiesAwarded", 0)) >= 1 and int(end.data.get("wave", 9)) <= 2, str(end.data) + end.error)
+	var after := GameProgress.from_json((await Api.overview()).data)
+	_note("overview progress", after.known and after.trophies == int(end.data.get("trophies", -1)) and not after.path.steps.is_empty()
+			and after.streak_words > 0 and after.chest_needed > 0,
+			"Trophäen %d, %d Pfad-Stufen, Serie %d, heute %d/%d, Truhe %d/%d" % [after.trophies, after.path.steps.size(), after.streak,
+			after.words_today, after.streak_words, after.chest_words, after.chest_needed])
+	var chest := await Api.open_game_chest()
+	_note("open_game_chest", chest.ok == after.chest_ready and (chest.ok or chest.error == "Hier ist gerade keine Truhe zu öffnen."),
+			str(chest.data) + chest.error)
+	var box := await Api.open_daily_chest()
+	_note("open_daily_chest", (box.ok and box.data.has("coins") and box.data.has("gems"))
+			or box.error == "Hier ist gerade keine Truhe zu öffnen.", str(box.data) + box.error)
 	var late := await Api.assign(run.run_id, run.tokens[0].token_id, run.towers[0].tower_id)
 	_note("assign nach dem Ende", not late.ok and late.run_closed and late.error == "Das Level ist vorbei.", late.error)
 	var missing := await Api.start_run(999999)

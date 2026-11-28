@@ -44,6 +44,17 @@ func assign(run_id: int, token_id: String, tower_id: String) -> ApiResult
 func heartbeat(run_id: int) -> ApiResult
 
 
-## Ends the level; the server decides by its own count whether it is won and pays the coins.
+## Ends the level and reports the wave it reached; the server decides by its own count whether it is won, pays the
+## coins and books the trophies.
 @abstract
-func end_run(run_id: int) -> ApiResult
+func end_run(run_id: int, wave: int) -> ApiResult
+
+
+## Opens the oldest waiting daily chest (earned in the learning part); the answer holds its coins and gems.
+@abstract
+func open_daily_chest() -> ApiResult
+
+
+## Opens today's game chest once it is full; the answer holds its gems and the chest afterwards.
+@abstract
+func open_game_chest() -> ApiResult

@@ -7,7 +7,8 @@ extends RefCounted
 static func find_button(root: Node, text: String) -> Button:
 	for node: Node in root.find_children("*", "Button", true, false):
 		var button := node as Button
-		if button.is_visible_in_tree() and button.text.contains(text):
+		# A button that shows only a symbol is found by its tooltip.
+		if button.is_visible_in_tree() and (button.text.contains(text) or (button.text == "" and button.tooltip_text.contains(text))):
 			return button
 	return null
 
@@ -32,6 +33,11 @@ static func texts(root: Node) -> PackedStringArray:
 			found.append((control as Label).text)
 		elif control is Button and (control as Button).text != "":
 			found.append("[%s]" % (control as Button).text)
+		elif control is Button and control.tooltip_text != "":
+			found.append("[%s]" % control.tooltip_text)
+		elif control is Icon and not control.get_parent() is Button:
+			# A symbol stands for a word; the run reads the word.
+			found.append("(%s)" % (control as Icon).caption)
 	return found
 
 
