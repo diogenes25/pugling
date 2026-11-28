@@ -15572,7 +15572,7 @@
         "tags": [
           "Student \u2013 Tower Game"
         ],
-        "summary": "Ends the level. The server decides by its own count of solved towers whether it is won and pays the coins, cut\nto today\u0027s tower-game cap; ending twice returns the same result.",
+        "summary": "Ends the level. The server decides by its own count of solved towers whether it is won and pays the coins, cut\nto today\u0027s tower-game cap, and books the run\u0027s trophies; ending twice returns the same result. The body is\noptional: without it the run ends with no wave reported, which earns the words\u0027 trophies only.",
         "parameters": [
           {
             "name": "childId",
@@ -15595,6 +15595,46 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EndTowerRunDto"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EndTowerRunDto"
+                  }
+                ]
+              }
+            },
+            "application/*\u002Bjson": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EndTowerRunDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -15602,6 +15642,78 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TowerRunEndResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/chest/open": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Opens today\u0027s game chest and books its gems. Opening is the child\u0027s own moment, so only the child itself opens\nit. \u0060409 tower_game_chest_none\u0060 when the chest is not full yet or already opened today.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerGameChestOpened"
                 }
               }
             }
@@ -38376,6 +38488,23 @@
         },
         "description": "\u0022Make this card easier\u0022 (B-635): ItemIndex names the card the client shows - the server eases only\nthe round\u0027s current card, one rung down its type\u0027s ease ladder, never back up."
       },
+      "EndTowerRunDto": {
+        "required": [
+          "wave"
+        ],
+        "type": "object",
+        "properties": {
+          "wave": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Ends a run. Wave is the wave the app reached - the one thing of a run only the app knows. The\nserver accepts it only as far as the run\u0027s counted play time makes it plausible."
+      },
       "EntryResponse": {
         "required": [
           "childId",
@@ -49060,10 +49189,12 @@
           "ExtraTrainingCoins",
           "RemediationBonus",
           "TowerGameCoins",
-          "HomeworkCoins"
+          "HomeworkCoins",
+          "TowerTrophyGems",
+          "TowerChestGems"
         ],
         "type": "string",
-        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus, TowerGameCoins, HomeworkCoins."
+        "description": "Category of a points ledger entry \u2013 makes bonuses evaluable/cappable (e.g. \u0022how many points\ncame from combo vs. time of day?\u0022). PointKind.Base is the default for legacy entries.\n\nAllowed values: Base, Manual, Combo, Speed, Mission, Achievement, SkinPurchase, Goal, ShopCoins, ShopGems, ManualGems, GoalPenalty, ObjectiveCoins, ObjectiveGems, DailyBoxCoins, DailyBoxGems, ExtraTrainingCoins, RemediationBonus, TowerGameCoins, HomeworkCoins, TowerTrophyGems, TowerChestGems."
       },
       "PointsEntryDto": {
         "required": [
@@ -50395,6 +50526,7 @@
               "test_already_submitted",
               "test_attempts_exhausted",
               "timetable_slot_taken",
+              "tower_game_chest_none",
               "tower_game_run_closed",
               "tower_game_time_limit",
               "typed_test_unreachable",
@@ -50706,10 +50838,13 @@
           "TestsPassed",
           "MinutesPracticed",
           "DaysComplete",
-          "StreakDays"
+          "StreakDays",
+          "TowerWordsCorrect",
+          "TowerBestWave",
+          "TowerNewWordsCorrect"
         ],
         "type": "string",
-        "description": "Measurable quantity of a child\u0027s learning activity \u2013 shared basis for missions and awards.\nAll values are computed server-side from the existing tables (no client trust).\n\nAllowed values: NewWords, CorrectReviews, TestsPassed, MinutesPracticed, DaysComplete, StreakDays."
+        "description": "Measurable quantity of a child\u0027s learning activity \u2013 shared basis for missions and awards.\nAll values are computed server-side from the existing tables (no client trust).\n\nAllowed values: NewWords, CorrectReviews, TestsPassed, MinutesPracticed, DaysComplete, StreakDays, TowerWordsCorrect, TowerBestWave, TowerNewWordsCorrect."
       },
       "ProgressResponse": {
         "required": [
@@ -54095,13 +54230,69 @@
         },
         "description": "The graded assignment. Expected is the word the tower asked for (revealed after the answer)."
       },
+      "TowerGameChestOpened": {
+        "required": [
+          "chest",
+          "gemsAwarded"
+        ],
+        "type": "object",
+        "properties": {
+          "gemsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chest": {
+            "$ref": "#/components/schemas/TowerGameChestState"
+          }
+        },
+        "description": "The opened game chest: the gems it paid and today\u0027s chest afterwards."
+      },
+      "TowerGameChestState": {
+        "required": [
+          "openedToday",
+          "ready",
+          "words",
+          "wordsNeeded"
+        ],
+        "type": "object",
+        "properties": {
+          "words": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "wordsNeeded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "openedToday": {
+            "type": "boolean"
+          }
+        },
+        "description": "Today\u0027s game chest: it fills with correct assignments (Words of WordsNeeded)\nand can be opened once per day when full (Ready). A day without a chest costs nothing."
+      },
       "TowerGameOverview": {
         "required": [
           "coinsToday",
           "dailyCoinCap",
           "limitSeconds",
           "playedSecondsToday",
-          "positions"
+          "positions",
+          "progress"
         ],
         "type": "object",
         "properties": {
@@ -54142,9 +54333,12 @@
               "string"
             ],
             "format": "int32"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/TowerGameProgress"
           }
         },
-        "description": "The child\u0027s tower game: the plan positions whose vocabulary a run can be built from, today\u0027s play time against the\nlimit (LimitSeconds 0 = the game is off) and today\u0027s tower-game coins against their own cap."
+        "description": "The child\u0027s tower game: the plan positions whose vocabulary a run can be built from, today\u0027s play time against the\nlimit (LimitSeconds 0 = the game is off), today\u0027s tower-game coins against their own cap and\nwhat the child has collected in the game (Progress)."
       },
       "TowerGamePosition": {
         "required": [
@@ -54186,6 +54380,61 @@
         },
         "description": "A vocabulary position of a playable plan. WordCount is the number of words in the exercise; a run\nneeds at least five."
       },
+      "TowerGameProgress": {
+        "required": [
+          "chest",
+          "streak",
+          "streakWords",
+          "trophies",
+          "trophyPath",
+          "wordsToday"
+        ],
+        "type": "object",
+        "properties": {
+          "trophies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "trophyPath": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TowerTrophyStep"
+            }
+          },
+          "streak": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "wordsToday": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "streakWords": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "chest": {
+            "$ref": "#/components/schemas/TowerGameChestState"
+          }
+        },
+        "description": "What the child collected in the tower game, all by the server\u0027s own count of correct assignments.\nTrophies is the lifetime total, a count that is never spent; TrophyPath are\nthe steps that pay gems once. Streak counts the days in a row with at least\nStreakWords correct assignments; today counts as soon as WordsToday reaches\nthat mark, and a streak met yesterday stays open today. A missed day ends the streak and costs nothing else."
+      },
       "TowerHeartbeatResult": {
         "required": [
           "limitSeconds",
@@ -54221,8 +54470,12 @@
           "coinsAwarded",
           "coinsToday",
           "dailyCoinCap",
+          "gemsAwarded",
           "goal",
           "solved",
+          "trophies",
+          "trophiesAwarded",
+          "wave",
           "won"
         ],
         "type": "object",
@@ -54269,9 +54522,41 @@
               "string"
             ],
             "format": "int32"
+          },
+          "wave": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "trophiesAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "trophies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gemsAwarded": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
-        "description": "The ended level, by the server\u0027s own count. CoinsAwarded is cut to what is left of today\u0027s cap;\nending a run twice returns the same result and pays nothing more."
+        "description": "The ended level, by the server\u0027s own count. CoinsAwarded is cut to what is left of today\u0027s cap;\nending a run twice returns the same result and pays nothing more. Wave is the reported wave as\nfar as the server accepted it. TrophiesAwarded are the run\u0027s trophies: the value of every word\nsolved in it plus one per cleared wave, but never more waves than solved words - waves without words pay nothing.\nTrophies is the child\u0027s total afterwards, GemsAwarded what trophy-path steps\nreached with this run paid."
       },
       "TowerRunResponse": {
         "required": [
@@ -54371,6 +54656,36 @@
           }
         },
         "description": "A dropped vocabulary token: an opaque id and the foreign word it carries."
+      },
+      "TowerTrophyStep": {
+        "required": [
+          "gems",
+          "reached",
+          "trophies"
+        ],
+        "type": "object",
+        "properties": {
+          "trophies": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "gems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "reached": {
+            "type": "boolean"
+          }
+        },
+        "description": "One step of the trophy path: reaching Trophies pays Gems once."
       },
       "TranslationConfig": {
         "required": [

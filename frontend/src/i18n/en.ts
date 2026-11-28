@@ -186,6 +186,8 @@ export const en = {
       RemediationBonus: "Catch-up finished",
       TowerGameCoins: "Vocab Towers",
       HomeworkCoins: "Homework accepted",
+      TowerTrophyGems: "Vokabel-Türme: trophy step",
+      TowerChestGems: "Vokabel-Türme: game chest",
     },
     bonus: {
       title: "Bonus training",

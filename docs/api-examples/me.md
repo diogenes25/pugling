@@ -127,8 +127,33 @@ Response — `HTTP 200`:
     "completed": false,
     "rewardPoints": 40,
     "daysLeft": "<days-left>"
-  }
-]
+  },
+  {
+    "id": 5,
+    "title": "Vokabel-T\u00FCrme: 20 Vokabeln richtig",
+    "metric": "TowerWordsCorrect",
+    "period": "Daily",
+    "target": 20,
+    "current": 0,
+    "completed": false,
+    "rewardPoints": 10,
+    "daysLeft": "<days-left>"
+  },
+  {
+    "id": 6,
+    "title": "Vokabel-T\u00FCrme: Welle 5 erreichen",
+    "metric": "TowerBestWave",
+    "period": "Daily",
+    "target": 5,
+    "current": 0,
+    "completed": false,
+    "rewardPoints": 10,
+    "daysLeft": "<days-left>"
+  },
+  {
+    "id": 7,
+    "title": "Vokabel-T\u00FCrme: 3 neue
+… (gekürzt)
 ```
 
 ## Einzelne Mission

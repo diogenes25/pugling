@@ -24,7 +24,8 @@ public static class PointKindCurrency
             or PointKind.HomeworkCoins => Currency.Coins,
         PointKind.Combo or PointKind.Speed or PointKind.Mission
             or PointKind.Achievement or PointKind.SkinPurchase or PointKind.ShopGems
-            or PointKind.ManualGems or PointKind.ObjectiveGems or PointKind.DailyBoxGems => Currency.Gems,
+            or PointKind.ManualGems or PointKind.ObjectiveGems or PointKind.DailyBoxGems
+            or PointKind.TowerTrophyGems or PointKind.TowerChestGems => Currency.Gems,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "PointKind ohne Währungs-Zuordnung"),
     };
 

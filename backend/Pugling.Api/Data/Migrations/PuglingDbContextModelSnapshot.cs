@@ -3429,6 +3429,32 @@ namespace Pugling.Api.Data.Migrations
                     b.ToTable("TimetableEntries");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameChest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Gems")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("TowerGameChests");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.TowerGameRun", b =>
                 {
                     b.Property<int>("Id")
@@ -3458,6 +3484,12 @@ namespace Pugling.Api.Data.Migrations
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Trophies")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Wave")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("Won")
                         .HasColumnType("INTEGER");
@@ -3489,6 +3521,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<DateTime?>("SolvedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Value")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ExerciseItemId");
@@ -3497,6 +3532,32 @@ namespace Pugling.Api.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("TowerGameRunItems");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.TowerTrophyReward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AwardedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ChildId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Gems")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Trophies")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildId", "Trophies")
+                        .IsUnique();
+
+                    b.ToTable("TowerTrophyRewards");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.VocabTag", b =>
@@ -4961,6 +5022,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("Pugling.Api.Models.TowerGameChest", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
+                });
+
             modelBuilder.Entity("Pugling.Api.Models.TowerGameRun", b =>
                 {
                     b.HasOne("Pugling.Api.Models.Child", "Child")
@@ -4997,6 +5069,17 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("ExerciseItem");
 
                     b.Navigation("Run");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.TowerTrophyReward", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.Child", "Child")
+                        .WithMany()
+                        .HasForeignKey("ChildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Child");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.VocabTagLink", b =>

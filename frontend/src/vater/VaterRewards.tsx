@@ -19,6 +19,9 @@ const METRICS: { value: ProgressMetric; label: string }[] = [
   { value: "MinutesPracticed", label: "Übungsminuten" },
   { value: "DaysComplete", label: "Komplette Tage" },
   { value: "StreakDays", label: "Streak-Tage" },
+  { value: "TowerWordsCorrect", label: "Vokabel-Türme: richtige Vokabeln" },
+  { value: "TowerBestWave", label: "Vokabel-Türme: erreichte Welle" },
+  { value: "TowerNewWordsCorrect", label: "Vokabel-Türme: neue Wörter richtig" },
 ];
 const metricLabel = (m: ProgressMetric) => METRICS.find((x) => x.value === m)?.label ?? m;
 

@@ -255,6 +255,8 @@ public static class ApiErrors
     public static readonly ApiError TowerGameTimeLimit = new("tower_game_time_limit", 409, "Tower game time used up for today.");
     /// <summary>The tower-game run has ended, or its grace time after the daily limit is over: it takes no more assignments (409).</summary>
     public static readonly ApiError TowerGameRunClosed = new("tower_game_run_closed", 409, "Tower game run is closed.");
+    /// <summary>The tower game's chest cannot be opened: it is not full yet, or today's chest is already opened (409).</summary>
+    public static readonly ApiError TowerGameChestNone = new("tower_game_chest_none", 409, "No game chest to open.");
     /// <summary>The homework is accepted and its coins are booked (B-760): it takes no further hand-in or verdict (409).</summary>
     public static readonly ApiError HomeworkAccepted = new("homework_accepted", 409, "Homework already accepted.");
     /// <summary>

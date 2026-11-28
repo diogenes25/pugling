@@ -175,6 +175,10 @@ public class TowerGameRun
     /// <summary>Whether the server counted enough solved towers when the run ended.</summary>
     public bool Won { get; set; }
     public int CoinsAwarded { get; set; }
+    /// <summary>The wave the app reported at the end, cut to what the counted play time makes plausible; 0 while the run is open.</summary>
+    public int Wave { get; set; }
+    /// <summary>Trophies the run earned, booked at the end by the server's count; the child's total is the sum over its runs.</summary>
+    public int Trophies { get; set; }
     public List<TowerGameRunItem> Items { get; set; } = [];
 }
 
@@ -188,6 +192,40 @@ public class TowerGameRunItem
     public ExerciseItem? ExerciseItem { get; set; }
     public int Order { get; set; }
     public DateTime? SolvedAt { get; set; }
+    /// <summary>
+    /// What the word was worth when the run started (<c>TowerGameService.WordValue</c>, 1 to 3), frozen here so the
+    /// trophies of the run follow the learning state at its start and not the boxes the run itself moved.
+    /// </summary>
+    public int Value { get; set; }
+}
+
+/// <summary>
+/// A step of the tower game's trophy path the child reached: the gems are booked once, and the unique index on
+/// <c>(ChildId, Trophies)</c> keeps two parallel run ends from paying the same step twice.
+/// </summary>
+public class TowerTrophyReward
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    /// <summary>The step's threshold in lifetime trophies - a snapshot, so a later change of the path re-pays nothing.</summary>
+    public int Trophies { get; set; }
+    public int Gems { get; set; }
+    public DateTime AwardedAt { get; set; }
+}
+
+/// <summary>
+/// The tower game's chest of one day, opened by the child once it was full. The unique index on <c>(ChildId, Day)</c>
+/// makes it one chest per day; a day without a row simply had no chest opened.
+/// </summary>
+public class TowerGameChest
+{
+    public int Id { get; set; }
+    public int ChildId { get; set; }
+    public Child? Child { get; set; }
+    public DateOnly Day { get; set; }
+    public int Gems { get; set; }
+    public DateTime OpenedAt { get; set; }
 }
 
 /// <summary>

@@ -19,4 +19,31 @@ public class TowerGameOptions
     public int GraceMinutes { get; set; } = 5;
     /// <summary>Most seconds one heartbeat adds. The app beats every ~15 s; a longer gap is a paused or backgrounded app.</summary>
     public int MaxSecondsPerBeat { get; set; } = 20;
+    /// <summary>
+    /// Play seconds a wave takes at least. The reported wave of a run counts only as far as its counted play time
+    /// covers it, so a forged wave number buys nothing.
+    /// </summary>
+    public int MinSecondsPerWave { get; set; } = 20;
+    /// <summary>Correct assignments per day that keep the game streak and count the day.</summary>
+    public int StreakWords { get; set; } = 10;
+    /// <summary>Correct assignments per day that fill the game chest.</summary>
+    public int ChestWords { get; set; } = 15;
+    /// <summary>Fewest gems the game chest pays.</summary>
+    public int ChestMinGems { get; set; } = 3;
+    /// <summary>Most gems the game chest pays.</summary>
+    public int ChestMaxGems { get; set; } = 8;
+    /// <summary>
+    /// The trophy path: lifetime trophies and the gems reaching them pays once. Empty by default and set in the
+    /// configuration - a list default would be appended to, not replaced, by the configuration binder.
+    /// </summary>
+    public List<TowerTrophyPathStep> TrophyPath { get; set; } = [];
+}
+
+/// <summary>One configured step of the trophy path.</summary>
+public class TowerTrophyPathStep
+{
+    /// <summary>Lifetime trophies that reach the step.</summary>
+    public int Trophies { get; set; }
+    /// <summary>Gems the step pays once.</summary>
+    public int Gems { get; set; }
 }

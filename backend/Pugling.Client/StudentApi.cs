@@ -154,9 +154,16 @@ public sealed class StudentApi(HttpClient http)
     public Task<TowerHeartbeatResult> TowerHeartbeatAsync(int childId, int runId, CancellationToken ct = default) =>
         Http.PostAsync<TowerHeartbeatResult>($"{Root}/children/{childId}/tower-game/runs/{runId}/heartbeat", null, ct);
 
-    /// <summary>Ends a tower-game level; the server decides whether it is won and pays the coins.</summary>
-    public Task<TowerRunEndResult> EndTowerRunAsync(int childId, int runId, CancellationToken ct = default) =>
-        Http.PostAsync<TowerRunEndResult>($"{Root}/children/{childId}/tower-game/runs/{runId}/end", null, ct);
+    /// <summary>
+    /// Ends a tower-game level with the wave the app reached; the server decides whether it is won, pays the coins and
+    /// books the trophies.
+    /// </summary>
+    public Task<TowerRunEndResult> EndTowerRunAsync(int childId, int runId, EndTowerRunDto dto, CancellationToken ct = default) =>
+        Http.PostAsync<TowerRunEndResult>($"{Root}/children/{childId}/tower-game/runs/{runId}/end", dto, ct);
+
+    /// <summary>Opens today's tower-game chest and books its gems - the child's own seat only.</summary>
+    public Task<TowerGameChestOpened> OpenTowerGameChestAsync(int childId, CancellationToken ct = default) =>
+        Http.PostAsync<TowerGameChestOpened>($"{Root}/children/{childId}/tower-game/chest/open", null, ct);
 
     /// <summary>Today's bonus training of the child: open or locked, bonus coins against the cap, the exercise pool.</summary>
     public Task<ExtraTrainingOverview> GetExtraTrainingAsync(int childId, CancellationToken ct = default) =>

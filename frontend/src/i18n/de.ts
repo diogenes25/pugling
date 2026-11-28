@@ -200,6 +200,8 @@ export const de = {
       RemediationBonus: "Nacharbeit geschafft",
       TowerGameCoins: "Vokabel-Türme",
       HomeworkCoins: "Hausaufgabe angenommen",
+      TowerTrophyGems: "Vokabel-Türme: Trophäen-Stufe",
+      TowerChestGems: "Vokabel-Türme: Spiel-Truhe",
     },
     // Bonus-Training: Extra-Übungen zum aktuellen Thema, offen nach der Tagespflicht.
     bonus: {

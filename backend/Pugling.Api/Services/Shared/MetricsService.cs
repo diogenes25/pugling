@@ -46,6 +46,22 @@ public class MetricsService(PuglingDbContext db, PositionProgressService progres
             ProgressMetric.StreakDays => CurrentStreak(await CompleteDaysAsync(childId, today, ct),
                 await calendar.ForChildAsync(childId, ct), today),
 
+            ProgressMetric.TowerWordsCorrect => await db.ItemReviewEvents
+                .Where(e => e.ChildId == childId && e.Source == ItemReviewSource.Game && e.WasCorrect
+                    && e.Day >= lo && e.Day <= hi)
+                .CountAsync(ct),
+
+            // The wave is on record only once a run ended, cut to what its play time covers.
+            ProgressMetric.TowerBestWave => await db.TowerGameRuns
+                .Where(r => r.ChildId == childId && r.Day >= lo && r.Day <= hi)
+                .MaxAsync(r => (int?)r.Wave, ct) ?? 0,
+
+            // A word counts once per window, however many runs solved it.
+            ProgressMetric.TowerNewWordsCorrect => await db.TowerGameRunItems
+                .Where(i => i.Run!.ChildId == childId && i.Run.Day >= lo && i.Run.Day <= hi
+                    && i.SolvedAt != null && i.Value == TowerGameService.NewWordValue)
+                .Select(i => i.ExerciseItemId).Distinct().CountAsync(ct),
+
             _ => 0,
         };
     }

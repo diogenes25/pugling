@@ -85,4 +85,8 @@ public enum PointKind
     /// counterpart, the penalty for a homework handed in nothing by its due day, is a <see cref="GoalPenalty"/>.
     /// </summary>
     HomeworkCoins = 19,
+    /// <summary>Gems for a step of the tower game's trophy path, booked once per step when a run's trophies reach it.</summary>
+    TowerTrophyGems = 20,
+    /// <summary>Gems from the tower game's own chest, which fills with correct assignments and opens once per day.</summary>
+    TowerChestGems = 21,
 }

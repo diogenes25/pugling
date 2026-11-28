@@ -17,10 +17,22 @@ namespace Pugling.Api.Services.Student;
 /// item, role, nonce): the client cannot read which token belongs to which tower, cannot reuse an id for another child
 /// or run, and the same item gets unrelated ids as tower and as token.
 /// </para>
+/// <para>
+/// What a child collects in the game follows the same rule: trophies, the trophy path, the game chest and the game
+/// streak are all counted from the server's own record of correct assignments. The one number taken from the app is
+/// the wave a run reached, and it counts only as far as the run's play time covers it. Nothing here takes anything
+/// away for a day without play - the duty and its penalty live in the learning part.
+/// </para>
 /// </summary>
 public class TowerGameService(PuglingDbContext db, IDataProtectionProvider protection, ItemProgressService progress,
-    LearningDay learningDay, IOptions<TowerGameOptions> options, TimeProvider time)
+    LearningDay learningDay, IOptions<TowerGameOptions> options, TimeProvider time, GamificationService gamification,
+    DutyCalendar calendar)
 {
+    /// <summary>The tower value of a new or weak word (<see cref="WordValue"/>) - what "a new word" means in the game.</summary>
+    public const int NewWordValue = 3;
+    /// <summary>How far back the game streak is counted; a longer streak shows as this many days.</summary>
+    private const int StreakLookbackDays = 120;
+
     /// <summary>Solved towers that win a level (B-822).</summary>
     public const int Goal = 10;
     /// <summary>Towers on the field at the same time (B-853: one map, five towers).</summary>
@@ -79,8 +91,124 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
             .OrderBy(r => r.SubjectName).ThenBy(r => r.StudyPlanId).ThenBy(r => r.Order)
             .Select(r => new TowerGamePosition(r.Id, r.PlanTitle, r.SubjectName, r.ExerciseTitle, r.Words))],
             await PlayedSecondsAsync(childId, today, ct), await LimitSecondsAsync(childId, ct),
-            await CoinsTodayAsync(childId, today, ct), opts.DailyCoinCap);
+            await CoinsTodayAsync(childId, today, ct), opts.DailyCoinCap, await ProgressAsync(childId, today, ct));
     }
+
+    /// <summary>Trophies, trophy path, game streak and today's game chest of the child - a pure read.</summary>
+    private async Task<TowerGameProgress> ProgressAsync(int childId, DateOnly today, CancellationToken ct)
+    {
+        var paid = await db.TowerTrophyRewards.AsNoTracking().Where(r => r.ChildId == childId)
+            .Select(r => r.Trophies).ToListAsync(ct);
+        var perDay = await CorrectPerDayAsync(childId, today.AddDays(-StreakLookbackDays), today, ct);
+        var wordsToday = perDay.GetValueOrDefault(today);
+        return new TowerGameProgress(await TrophiesAsync(childId, ct),
+            [.. opts.TrophyPath.OrderBy(s => s.Trophies).Select(s => new TowerTrophyStep(s.Trophies, s.Gems, paid.Contains(s.Trophies)))],
+            Streak(perDay, await calendar.ForChildAsync(childId, ct), today, opts.StreakWords, StreakLookbackDays),
+            wordsToday, opts.StreakWords, await ChestStateAsync(childId, today, wordsToday, ct));
+    }
+
+    /// <summary>
+    /// Days in a row, back from <paramref name="today"/>, with at least <paramref name="needed"/> correct assignments.
+    /// Today is still open: it counts once it is met and breaks nothing before. A day without duty (Sunday, a pause)
+    /// counts when it is met and is stepped over when not, like in the learning streak.
+    /// </summary>
+    public static int Streak(IReadOnlyDictionary<DateOnly, int> correctPerDay, ChildDutyDays dutyDays, DateOnly today,
+        int needed, int lookbackDays)
+    {
+        var streak = 0;
+        for (var day = today; day > today.AddDays(-lookbackDays); day = day.AddDays(-1))
+        {
+            if (correctPerDay.GetValueOrDefault(day) >= needed)
+            {
+                streak++;
+                continue;
+            }
+            if (day == today || !dutyDays.IsDutyDay(day)) continue;
+            break;
+        }
+        return streak;
+    }
+
+    /// <summary>
+    /// What a run earns in trophies: the value of every solved word plus one per cleared wave. The waves are capped
+    /// twice: by the play time the server counted (a forged wave number buys nothing) and by the number of solved
+    /// words (waves cleared without learning pay nothing).
+    /// </summary>
+    public static int RunTrophies(IEnumerable<int> solvedValues, int acceptedWave)
+    {
+        var values = solvedValues.ToList();
+        return values.Sum() + Math.Min(Math.Max(0, acceptedWave - 1), values.Count);
+    }
+
+    /// <summary>The reported wave as far as the counted play time covers it: one wave per <see cref="TowerGameOptions.MinSecondsPerWave"/>, the running one included.</summary>
+    public static int AcceptedWave(int reportedWave, int playedSeconds, int minSecondsPerWave) =>
+        Math.Clamp(reportedWave, 0, 1 + playedSeconds / Math.Max(1, minSecondsPerWave));
+
+    /// <summary>
+    /// Opens today's game chest: full after <see cref="TowerGameOptions.ChestWords"/> correct assignments, once per
+    /// day, paid in gems. Fails with <c>tower_game_chest_none</c> when it is not full or already opened - also for the
+    /// loser of two parallel taps, which the unique index on (child, day) stops.
+    /// </summary>
+    public async Task<Outcome<TowerGameChestOpened>> OpenChestAsync(int childId, CancellationToken ct)
+    {
+        var today = learningDay.Today;
+        var words = (await CorrectPerDayAsync(childId, today, today, ct)).GetValueOrDefault(today);
+        if (!(await ChestStateAsync(childId, today, words, ct)).Ready) return NoChest();
+
+        var child = await db.Children.FirstAsync(c => c.Id == childId, ct);
+        var now = time.GetUtcNow().UtcDateTime;
+        var gems = Random.Shared.Next(Math.Max(0, opts.ChestMinGems), Math.Max(opts.ChestMinGems, opts.ChestMaxGems) + 1);
+        db.TowerGameChests.Add(new TowerGameChest { ChildId = childId, Day = today, Gems = gems, OpenedAt = now });
+        if (gems > 0)
+            db.ChildPointsEntries.Add(new ChildPointsEntry
+            {
+                ChildId = childId,
+                Kind = PointKind.TowerChestGems,
+                Amount = gems,
+                Reason = "Vokabel-Türme: Spiel-Truhe",
+                CreatedAt = now,
+            });
+        child.ConcurrencyStamp = Guid.NewGuid();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            db.ChangeTracker.Clear();
+            return Outcome<TowerGameChestOpened>.Fail(ApiErrors.ConcurrencyConflict,
+                "Another booking was saved at the same time. Please try again.");
+        }
+        catch (DbUpdateException)
+        {
+            // Only the parallel tap is benign: the chest of today is there now. Anything else is a real error.
+            db.ChangeTracker.Clear();
+            if (!await db.TowerGameChests.AnyAsync(c => c.ChildId == childId && c.Day == today, ct)) throw;
+            return NoChest();
+        }
+        return new TowerGameChestOpened(gems, new TowerGameChestState(words, opts.ChestWords, false, true));
+    }
+
+    private static Outcome<TowerGameChestOpened> NoChest() => Outcome<TowerGameChestOpened>.Fail(
+        ApiErrors.TowerGameChestNone, "The game chest is not full yet, or today's chest is already opened.");
+
+    private async Task<TowerGameChestState> ChestStateAsync(int childId, DateOnly today, int wordsToday, CancellationToken ct)
+    {
+        var opened = await db.TowerGameChests.AsNoTracking().AnyAsync(c => c.ChildId == childId && c.Day == today, ct);
+        return new TowerGameChestState(Math.Min(wordsToday, opts.ChestWords), opts.ChestWords,
+            !opened && wordsToday >= opts.ChestWords, opened);
+    }
+
+    /// <summary>Correct tower-game assignments per learning day within [<paramref name="from"/>, <paramref name="to"/>].</summary>
+    private async Task<Dictionary<DateOnly, int>> CorrectPerDayAsync(int childId, DateOnly from, DateOnly to, CancellationToken ct) =>
+        await db.ItemReviewEvents.AsNoTracking()
+            .Where(e => e.ChildId == childId && e.Source == ItemReviewSource.Game && e.WasCorrect && e.Day >= from && e.Day <= to)
+            .GroupBy(e => e.Day)
+            .Select(g => new { Day = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Day, g => g.Count, ct);
+
+    private Task<int> TrophiesAsync(int childId, CancellationToken ct) =>
+        db.TowerGameRuns.Where(r => r.ChildId == childId).SumAsync(r => r.Trophies, ct);
 
     /// <summary>
     /// A new run from the position's words. Fails with <c>not_found</c> when the position is not a playable vocabulary
@@ -122,7 +250,12 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
             Day = today,
             StartedAt = now,
             LastBeatAt = now,
-            Items = [.. towerOrder.Select((w, i) => new TowerGameRunItem { ExerciseItemId = w.ItemId, Order = i })],
+            Items = [.. towerOrder.Select((w, i) => new TowerGameRunItem
+            {
+                ExerciseItemId = w.ItemId,
+                Order = i,
+                Value = WordValue(boxes.TryGetValue(w.ItemId, out var box) ? box : null),
+            })],
         };
         db.TowerGameRuns.Add(run);
         await db.SaveChangesAsync(ct);
@@ -208,10 +341,12 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
 
     /// <summary>
     /// Ends the run and pays a won level (enough solved towers by the server's count) in coins, cut to what is left of
-    /// today's cap. Ending twice returns the stored result. The booking bumps the child's concurrency stamp like every
-    /// wallet path, so two parallel ends cannot both pass the cap; the loser gets <c>concurrency_conflict</c>.
+    /// today's cap. It also books the run's trophies (<see cref="RunTrophies"/>) and the gems of every trophy-path step
+    /// the child's total reaches with them, and lets the missions see the run. Ending twice returns the stored result.
+    /// The booking bumps the child's concurrency stamp like every wallet path, so two parallel ends can neither both
+    /// pass the cap nor both pay a path step; the loser gets <c>concurrency_conflict</c>.
     /// </summary>
-    public async Task<Outcome<TowerRunEndResult>> EndAsync(int childId, int runId, CancellationToken ct)
+    public async Task<Outcome<TowerRunEndResult>> EndAsync(int childId, int runId, int reportedWave, CancellationToken ct)
     {
         var run = await db.TowerGameRuns.Include(r => r.Items)
             .FirstOrDefaultAsync(r => r.Id == runId && r.ChildId == childId, ct);
@@ -220,17 +355,39 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
         var today = learningDay.Today;
         var solved = run.Items.Count(i => i.SolvedAt is not null);
         var goal = Math.Min(Goal, run.Items.Count);
-        if (run.EndedAt is not null)
+        if (run.EndedAt is { } endedAt)
             return new TowerRunEndResult(run.Won, solved, goal, run.CoinsAwarded, await CoinsTodayAsync(childId, today, ct),
-                opts.DailyCoinCap);
+                opts.DailyCoinCap, run.Wave, run.Trophies, await TrophiesAsync(childId, ct),
+                // The steps this run reached carry its end as their time stamp.
+                await db.TowerTrophyRewards.Where(r => r.ChildId == childId && r.AwardedAt == endedAt).SumAsync(r => r.Gems, ct));
 
         var child = await db.Children.FirstAsync(c => c.Id == childId, ct);
         var coinsBefore = await CoinsTodayAsync(childId, today, ct);
+        var trophiesBefore = await TrophiesAsync(childId, ct);
         var now = time.GetUtcNow().UtcDateTime;
         Beat(run);
         run.EndedAt = now;
         run.Won = solved >= goal;
         run.CoinsAwarded = run.Won ? Math.Clamp(opts.DailyCoinCap - coinsBefore, 0, opts.CoinsPerWin) : 0;
+        run.Wave = AcceptedWave(reportedWave, run.PlayedSeconds, opts.MinSecondsPerWave);
+        run.Trophies = RunTrophies(run.Items.Where(i => i.SolvedAt is not null).Select(i => i.Value), run.Wave);
+        var trophies = trophiesBefore + run.Trophies;
+        var paid = await db.TowerTrophyRewards.Where(r => r.ChildId == childId).Select(r => r.Trophies).ToListAsync(ct);
+        var gems = 0;
+        foreach (var step in opts.TrophyPath.Where(s => s.Trophies <= trophies && !paid.Contains(s.Trophies)))
+        {
+            gems += step.Gems;
+            db.TowerTrophyRewards.Add(new TowerTrophyReward { ChildId = childId, Trophies = step.Trophies, Gems = step.Gems, AwardedAt = now });
+            if (step.Gems > 0)
+                db.ChildPointsEntries.Add(new ChildPointsEntry
+                {
+                    ChildId = childId,
+                    Kind = PointKind.TowerTrophyGems,
+                    Amount = step.Gems,
+                    Reason = $"Vokabel-Türme: {step.Trophies} Trophäen erreicht",
+                    CreatedAt = now,
+                });
+        }
         if (run.CoinsAwarded > 0)
             db.ChildPointsEntries.Add(new ChildPointsEntry
             {
@@ -252,8 +409,10 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
             return Outcome<TowerRunEndResult>.Fail(ApiErrors.ConcurrencyConflict,
                 "Another booking was saved at the same time. Please try again.");
         }
+        // The run is on record now: missions on tower metrics (words, wave, new words) are checked at this seam.
+        await gamification.EvaluateAndAwardAsync(childId, today, ct);
         return new TowerRunEndResult(run.Won, solved, goal, run.CoinsAwarded, coinsBefore + run.CoinsAwarded,
-            opts.DailyCoinCap);
+            opts.DailyCoinCap, run.Wave, run.Trophies, trophies, gems);
     }
 
     /// <summary>

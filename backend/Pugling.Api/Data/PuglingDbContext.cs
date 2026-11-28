@@ -107,6 +107,8 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
     public DbSet<ChildSubjectLevel> ChildSubjectLevels => Set<ChildSubjectLevel>();
     public DbSet<TowerGameRun> TowerGameRuns => Set<TowerGameRun>();
     public DbSet<TowerGameRunItem> TowerGameRunItems => Set<TowerGameRunItem>();
+    public DbSet<TowerTrophyReward> TowerTrophyRewards => Set<TowerTrophyReward>();
+    public DbSet<TowerGameChest> TowerGameChests => Set<TowerGameChest>();
     public DbSet<MixedReviewRun> MixedReviewRuns => Set<MixedReviewRun>();
     public DbSet<MixedReviewCard> MixedReviewCards => Set<MixedReviewCard>();
 
@@ -1005,6 +1007,18 @@ public class PuglingDbContext(DbContextOptions<PuglingDbContext> options) : DbCo
             e.HasIndex(i => new { i.RunId, i.ExerciseItemId }).IsUnique();
             e.HasOne(i => i.Run).WithMany(r => r.Items).HasForeignKey(i => i.RunId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(i => i.ExerciseItem).WithMany().HasForeignKey(i => i.ExerciseItemId).OnDelete(DeleteBehavior.Cascade);
+        });
+        // What the game paid beyond a run: one row per reached trophy step and per opened chest of a day. The unique
+        // indexes are the guards against a double payout; both die with the child, the gems stay in the ledger.
+        modelBuilder.Entity<TowerTrophyReward>(e =>
+        {
+            e.HasIndex(r => new { r.ChildId, r.Trophies }).IsUnique();
+            e.HasOne(r => r.Child).WithMany().HasForeignKey(r => r.ChildId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<TowerGameChest>(e =>
+        {
+            e.HasIndex(c => new { c.ChildId, c.Day }).IsUnique();
+            e.HasOne(c => c.Child).WithMany().HasForeignKey(c => c.ChildId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Mixed review rounds (B-764): one open round per child (filtered unique index, a double tap resumes it), the

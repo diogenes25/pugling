@@ -6,10 +6,33 @@ namespace Pugling.Contracts.Student;
 
 /// <summary>
 /// The child's tower game: the plan positions whose vocabulary a run can be built from, today's play time against the
-/// limit (<paramref name="LimitSeconds"/> 0 = the game is off) and today's tower-game coins against their own cap.
+/// limit (<paramref name="LimitSeconds"/> 0 = the game is off), today's tower-game coins against their own cap and
+/// what the child has collected in the game (<paramref name="Progress"/>).
 /// </summary>
 public record TowerGameOverview(IReadOnlyList<TowerGamePosition> Positions, int PlayedSecondsToday, int LimitSeconds,
-    int CoinsToday, int DailyCoinCap);
+    int CoinsToday, int DailyCoinCap, TowerGameProgress Progress);
+
+/// <summary>
+/// What the child collected in the tower game, all by the server's own count of correct assignments.
+/// <paramref name="Trophies"/> is the lifetime total, a count that is never spent; <paramref name="TrophyPath"/> are
+/// the steps that pay gems once. <paramref name="Streak"/> counts the days in a row with at least
+/// <paramref name="StreakWords"/> correct assignments; today counts as soon as <paramref name="WordsToday"/> reaches
+/// that mark, and a streak met yesterday stays open today. A missed day ends the streak and costs nothing else.
+/// </summary>
+public record TowerGameProgress(int Trophies, IReadOnlyList<TowerTrophyStep> TrophyPath, int Streak, int WordsToday,
+    int StreakWords, TowerGameChestState Chest);
+
+/// <summary>One step of the trophy path: reaching <paramref name="Trophies"/> pays <paramref name="Gems"/> once.</summary>
+public record TowerTrophyStep(int Trophies, int Gems, bool Reached);
+
+/// <summary>
+/// Today's game chest: it fills with correct assignments (<paramref name="Words"/> of <paramref name="WordsNeeded"/>)
+/// and can be opened once per day when full (<paramref name="Ready"/>). A day without a chest costs nothing.
+/// </summary>
+public record TowerGameChestState(int Words, int WordsNeeded, bool Ready, bool OpenedToday);
+
+/// <summary>The opened game chest: the gems it paid and today's chest afterwards.</summary>
+public record TowerGameChestOpened(int GemsAwarded, TowerGameChestState Chest);
 
 /// <summary>
 /// A vocabulary position of a playable plan. <paramref name="WordCount"/> is the number of words in the exercise; a run
@@ -56,7 +79,18 @@ public record TowerAssignResult(bool Correct, string Expected);
 public record TowerHeartbeatResult(int PlayedSecondsToday, int LimitSeconds, bool TimeUp);
 
 /// <summary>
-/// The ended level, by the server's own count. <paramref name="CoinsAwarded"/> is cut to what is left of today's cap;
-/// ending a run twice returns the same result and pays nothing more.
+/// Ends a run. <paramref name="Wave"/> is the wave the app reached - the one thing of a run only the app knows. The
+/// server accepts it only as far as the run's counted play time makes it plausible.
 /// </summary>
-public record TowerRunEndResult(bool Won, int Solved, int Goal, int CoinsAwarded, int CoinsToday, int DailyCoinCap);
+public record EndTowerRunDto(int Wave);
+
+/// <summary>
+/// The ended level, by the server's own count. <paramref name="CoinsAwarded"/> is cut to what is left of today's cap;
+/// ending a run twice returns the same result and pays nothing more. <paramref name="Wave"/> is the reported wave as
+/// far as the server accepted it. <paramref name="TrophiesAwarded"/> are the run's trophies: the value of every word
+/// solved in it plus one per cleared wave, but never more waves than solved words - waves without words pay nothing.
+/// <paramref name="Trophies"/> is the child's total afterwards, <paramref name="GemsAwarded"/> what trophy-path steps
+/// reached with this run paid.
+/// </summary>
+public record TowerRunEndResult(bool Won, int Solved, int Goal, int CoinsAwarded, int CoinsToday, int DailyCoinCap,
+    int Wave, int TrophiesAwarded, int Trophies, int GemsAwarded);

@@ -78,17 +78,36 @@ public class TowerGameController(TowerGameService game) : ControllerBase
 
     /// <summary>
     /// Ends the level. The server decides by its own count of solved towers whether it is won and pays the coins, cut
-    /// to today's tower-game cap; ending twice returns the same result.
+    /// to today's tower-game cap, and books the run's trophies; ending twice returns the same result. The body is
+    /// optional: without it the run ends with no wave reported, which earns the words' trophies only.
     /// </summary>
     [HttpPost("runs/{runId:int}/end")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TowerRunEndResult>> End(int childId, int runId, CancellationToken ct)
+    public async Task<ActionResult<TowerRunEndResult>> End(int childId, int runId, [FromBody] EndTowerRunDto? dto,
+        CancellationToken ct)
     {
         if (!User.IsStudent()) return Forbid();
-        var outcome = await game.EndAsync(childId, runId, ct);
+        var outcome = await game.EndAsync(childId, runId, dto?.Wave ?? 0, ct);
         return outcome.Value is { } result ? result : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
+    }
+
+    /// <summary>
+    /// Opens today's game chest and books its gems. Opening is the child's own moment, so only the child itself opens
+    /// it. <c>409 tower_game_chest_none</c> when the chest is not full yet or already opened today.
+    /// </summary>
+    [HttpPost("chest/open")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TowerGameChestOpened>> OpenChest(int childId, CancellationToken ct)
+    {
+        // The child itself, not just any student (see DailyBoxController.Open).
+        if (!User.IsStudent() || User.ChildId() != childId) return Forbid();
+        var outcome = await game.OpenChestAsync(childId, ct);
+        return outcome.Value is { } opened ? opened : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
     }
 }

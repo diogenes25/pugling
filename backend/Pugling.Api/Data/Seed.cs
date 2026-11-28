@@ -848,7 +848,11 @@ public static class Seed
                 new Mission { ChildId = child.Id, Title = "Tagesziel: 10 richtige Antworten", Metric = ProgressMetric.CorrectReviews, Target = 10, Period = MissionPeriod.Daily, RewardPoints = 15 },
                 new Mission { ChildId = child.Id, Title = "Tagesziel: 15 Minuten üben", Metric = ProgressMetric.MinutesPracticed, Target = 15, Period = MissionPeriod.Daily, RewardPoints = 10 },
                 new Mission { ChildId = child.Id, Title = "Wochenziel: 3 Tests bestehen", Metric = ProgressMetric.TestsPassed, Target = 3, Period = MissionPeriod.Weekly, RewardPoints = 30 },
-                new Mission { ChildId = child.Id, Title = "Wochenziel: 25 neue Wörter", Metric = ProgressMetric.NewWords, Target = 25, Period = MissionPeriod.Weekly, RewardPoints = 40 });
+                new Mission { ChildId = child.Id, Title = "Wochenziel: 25 neue Wörter", Metric = ProgressMetric.NewWords, Target = 25, Period = MissionPeriod.Weekly, RewardPoints = 40 },
+                // The tower game's daily tasks - the same three the migration TowerGameCollect gives every existing child.
+                new Mission { ChildId = child.Id, Title = "Vokabel-Türme: 20 Vokabeln richtig", Metric = ProgressMetric.TowerWordsCorrect, Target = 20, Period = MissionPeriod.Daily, RewardPoints = 10 },
+                new Mission { ChildId = child.Id, Title = "Vokabel-Türme: Welle 5 erreichen", Metric = ProgressMetric.TowerBestWave, Target = 5, Period = MissionPeriod.Daily, RewardPoints = 10 },
+                new Mission { ChildId = child.Id, Title = "Vokabel-Türme: 3 neue Wörter richtig", Metric = ProgressMetric.TowerNewWordsCorrect, Target = 3, Period = MissionPeriod.Daily, RewardPoints = 10 });
 
             db.Achievements.AddRange(
                 new Achievement { ChildId = child.Id, Title = "Erste Schritte", Icon = "🌱", Metric = ProgressMetric.CorrectReviews, Threshold = 50, RewardPoints = 20 },

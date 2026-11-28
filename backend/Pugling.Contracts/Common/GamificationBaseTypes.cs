@@ -18,6 +18,12 @@ public enum ProgressMetric
     DaysComplete = 4,
     /// <summary>Current streak of consecutive complete days (only meaningful for awards).</summary>
     StreakDays = 5,
+    /// <summary>Correct assignments in the tower game "Vokabel-Türme" (item review events of source <c>Game</c>).</summary>
+    TowerWordsCorrect = 6,
+    /// <summary>The highest wave a tower-game run reached, as far as the server accepted the reported wave.</summary>
+    TowerBestWave = 7,
+    /// <summary>Words solved in the tower game that were new or weak when their run started (tower value 3).</summary>
+    TowerNewWordsCorrect = 8,
 }
 
 /// <summary>Period over which a mission counts and renews.</summary>

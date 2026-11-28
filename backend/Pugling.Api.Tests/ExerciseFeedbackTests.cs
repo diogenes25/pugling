@@ -431,9 +431,16 @@ public class ExerciseFeedbackTests(PuglingWebAppFactory factory) : IClassFixture
             var reportedAt = db.ExerciseFeedbacks.AsNoTracking().Single(f => f.Id == id).LastReportedAt;
             db.ItemReviewEvents.Add(new ItemReviewEvent
             {
-                ChildId = first.ChildId, ItemId = first.ItemId, ExerciseId = first.ExerciseId, VocabularyId = first.VocabularyId,
-                PlanPositionId = first.PlanPositionId, Source = first.Source, StageValue = first.StageValue,
-                GivenAnswer = "halo", WasCorrect = false, At = reportedAt.AddMinutes(1),
+                ChildId = first.ChildId,
+                ItemId = first.ItemId,
+                ExerciseId = first.ExerciseId,
+                VocabularyId = first.VocabularyId,
+                PlanPositionId = first.PlanPositionId,
+                Source = first.Source,
+                StageValue = first.StageValue,
+                GivenAnswer = "halo",
+                WasCorrect = false,
+                At = reportedAt.AddMinutes(1),
             });
             return db.SaveChanges();
         });
