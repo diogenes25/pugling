@@ -1257,7 +1257,7 @@
         "tags": [
           "Supervisor \u2013 Daily plans"
         ],
-        "summary": "The child\u0027s daily plans from from to to (default: the last 14 days up to today),\nnewest first, with their tasks and reasons. Today\u0027s plan is made first if it is due (from 6 a.m., planner on, a duty\nday) - the supervisor\u0027s look counts as the first access like the child\u0027s. A stored plan never changes.",
+        "summary": "The child\u0027s daily plans from from to to (default: the last 14 days up to today),\nnewest first, with their tasks and reasons. Today\u0027s plan is made first if it is due (from 6 a.m., planner on, a duty\nday) - the supervisor\u0027s look counts as the first access like the child\u0027s. A stored plan never changes. If today\u0027s plan\ncannot be made, the stored plans are still listed: one failing day must not hide the history.",
         "parameters": [
           {
             "name": "childId",

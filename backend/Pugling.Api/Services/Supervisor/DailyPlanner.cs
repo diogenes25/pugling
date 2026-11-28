@@ -64,8 +64,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
     }
 
     /// <summary>
-    /// <see cref="EnsureTodayAsync"/> for the child's own paths (login, day view): a failure is logged and swallowed. In shadow
-    /// mode the plan has no effect, so it must never cost the child the app; the timer or the next access tries again.
+    /// <see cref="EnsureTodayAsync"/> for the request paths (the child's login and day view, the supervisor's list): a failure is
+    /// logged and swallowed. A plan that cannot be made must never cost the child the app or hide the supervisor's stored plans;
+    /// the timer or the next access tries again.
     /// </summary>
     public async Task TryEnsureTodayAsync(int childId, CancellationToken ct)
     {
@@ -76,6 +77,23 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Tagesplan für Kind {ChildId} ließ sich nicht anlegen; der nächste Zugriff versucht es erneut.", childId);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates the child's closed days ahead of the first plan: the evaluation the planner reads its tempo from covers up to
+    /// four weeks the first time, which would otherwise land on the child's next login. Called when the supervisor switches the
+    /// planner on; a failure is logged and swallowed - the switch is already saved, and the first plan evaluates on its own.
+    /// </summary>
+    public async Task WarmUpAsync(int childId, CancellationToken ct)
+    {
+        try
+        {
+            await evaluations.EnsureClosedDaysAsync(childId, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Auswertung für Kind {ChildId} ließ sich beim Einschalten des Planers nicht vorbereiten.", childId);
         }
     }
 
@@ -97,6 +115,15 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
             db.ChangeTracker.Clear();
             return await LoadAsync(plan.ChildId, plan.Day, ct)
                 ?? throw new InvalidOperationException($"Tagesplan für Kind {plan.ChildId} am {plan.Day} ließ sich nicht speichern.");
+        }
+        catch
+        {
+            // Any other failure leaves the plan unsaved. TryEnsureTodayAsync swallows it on the child's paths, so the plan and
+            // its tasks must not stay queued: the request's next SaveChanges would insert them again and fail the child's write.
+            // A copy: detaching a task fixes up the plan's navigation and would change the list mid-loop.
+            foreach (var task in plan.Tasks.ToList()) db.Entry(task).State = EntityState.Detached;
+            db.Entry(plan).State = EntityState.Detached;
+            throw;
         }
     }
 

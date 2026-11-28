@@ -20,7 +20,7 @@ namespace Pugling.Api.Controllers.Supervisor;
 [Authorize(Roles = Roles.Supervisor)]
 [ServiceFilter(typeof(ChildOwnershipFilter))]
 public class ChildrenController(PuglingDbContext db, WalletService wallet, AccountService accounts, TimeProvider time,
-    LearningDay learningDay) : ControllerBase
+    LearningDay learningDay, DailyPlanner planner) : ControllerBase
 {
     /// <summary>Upper bound of a child's bonus cap: a typo of an extra zero must not open the family shop wide.</summary>
     private const int MaxBonusDailyCoinCap = 1000;
@@ -234,6 +234,7 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         child.PenaltyCoinsPerMissedTask = penalty;
         // The day it was switched on: days before it are no missing plans (B-734, decision 5).
         if (mode != child.PlannerMode) child.PlannerSince = mode == PlannerMode.Off ? null : learningDay.Today;
+        var switchedOn = child.PlannerMode == PlannerMode.Off && mode != PlannerMode.Off;
         child.PlannerMode = mode;
         // Mirror the name onto the login account - in the SAME commit, or a renamed child is still greeted with the
         // old name after the next login (the display name comes from the account). See AccountService.MirrorAsync.
@@ -241,6 +242,9 @@ public class ChildrenController(PuglingDbContext db, WalletService wallet, Accou
         var account = await accounts.MirrorAsync(child, ct);
         if (dto.Pin is not null) AccountService.SetPin(account, dto.Pin);
         await db.SaveChangesAsync(ct);
+        // The planner reads the child's tempo from the evaluated days; the first evaluation covers four weeks. The supervisor's
+        // switch pays for it here, so the child's next login does not.
+        if (switchedOn) await planner.WarmUpAsync(childId, ct);
 
         return (await ProjectOne(childId, ct))!;
     }
