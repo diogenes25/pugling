@@ -4,7 +4,7 @@ tags: [bereich/turmspiel, typ/plan]
 
 # Vokabel-Türme: Ausbau zum Endlos-Spiel mit Sammelanreizen
 
-Stand 2026-11-27. Auftrag des Vaters: Das Turmspiel soll so lange fesseln wie ein gutes Handyspiel – mit dem Effekt,
+Stand 2026-11-28 (Etappen 1 bis 4 gebaut, die Handy-Runde zu Etappe 3/4 steht noch aus). Auftrag des Vaters: Das Turmspiel soll so lange fesseln wie ein gutes Handyspiel – mit dem Effekt,
 dass das Kind die Vokabeln seines Unterrichtsstoffs lernt. Dieser Plan teilt den Auftrag in Etappen. Technik und
 Code-Struktur stehen in [turm-spiel-plan.md](turm-spiel-plan.md), die Portierung nach GDScript in
 [turm-spiel-gdscript-plan.md](turm-spiel-gdscript-plan.md).
@@ -46,6 +46,19 @@ Zusammenfassung mit Rekord. **Befund zur Balance:** Nach Welle 1 hatten die drei
 es waren nur drei Wörter gefallen – die Munition ist zu knapp für ein Spiel, das lange laufen soll. Die Zahlen sind
 ein erster Wurf und brauchen Spielrunden der Kinder.
 
+### Balance nach dem Handy-Befund (2026-11-28)
+
+| Stellschraube | vorher | jetzt | Grund |
+|---|---|---|---|
+| Schuss je Turm am Start | 10 | 16 | Welle 1 kostet rund 25 Schuss; drei Türme halten sie jetzt sicher, die zweite ohne Wörter nicht mehr. |
+| Schuss je richtigem Wort | 8 | 8 + 2 je Wertpunkt (10/12/14) | Ein neues oder schwaches Wort füllt am meisten – dieselbe Leitlinie wie bei der Turm-Kraft. |
+| Wortträger in Welle 1 | 3 | 4 (höchstens 10 statt 9) | Die Wörter einer Welle decken die Schüsse der nächsten. |
+
+Nachgewiesen als Rechnung in `tests/test_balance.gd` (kleinste Karte, drei Türme, vorsichtig gerechnet): mit jedem
+gefallenen Wort bleiben die Türme 20 Wellen lang versorgt, ohne Wörter sind sie in Welle 2 leer – auch mit den
+Spezialgegnern aus Etappe 4. Der Titel der Wörter-Karte bricht um, statt abgeschnitten zu werden. Offen bleibt, was
+nur Spielrunden der Kinder zeigen: ob das Tempo beim Tragen der Wörter reicht.
+
 ## Etappe 2 – Startbildschirm, einmal anmelden, Einstellungen (gebaut 2026-11-27)
 
 - **Einmal anmelden:** Entschieden vom Vater: die App merkt sich die PIN. Server-Adresse, Kind und PIN liegen in
@@ -75,23 +88,76 @@ Noch offen aus dieser Etappe: die Truhe lässt sich im Spiel nur ansehen, nicht 
 Kopfzeile (Etappe 3). Die Optik ist schlicht – Hintergrund, Symbole statt Wörtern („Münzen“, „Gems“) und
 Animationen der Knöpfe sind ein eigener Schritt.
 
-## Etappe 3 – Trophäen, Tagesaufgaben, Truhen (offen, Server zuerst)
+## Etappe 3 – Trophäen, Tagesaufgaben, Truhen, Serie (gebaut 2026-11-28, Server zuerst)
 
-- **Trophäen** als dritte, nicht ausgebbare Zählgröße: der Server vergibt sie am Laufende aus *seiner* Zählung
-  (richtige Vokabeln nach Wert, dazu die gemeldete Welle mit Plausibilitätsgrenze aus der Spielzeit). Trophäen-Pfad
-  mit Stufen und Belohnungen. Braucht eine Migration (Spalten am Lauf, Trophäen-Stand am Kind).
-- **Tagesaufgaben im Spiel:** die vorhandenen Missionen des Kindes anzeigen und um Spiel-Aufgaben ergänzen
-  („20 Vokabeln richtig im Turmspiel“, „Welle 5 erreichen“, „3 neue Wörter richtig“). Abrechnung über den
-  bestehenden `GamificationService`.
-- **Truhen:** die vorhandene Tagestruhe im Startbildschirm öffnen; dazu eine Spiel-Truhe, die sich mit richtigen
-  Vokabeln füllt.
-- **Serie:** Tage in Folge mit mindestens n richtigen Vokabeln, sichtbar im Startbildschirm.
+Alles zählt der Server aus seinen eigenen Aufzeichnungen richtiger Zuordnungen; die App meldet nur die erreichte
+Welle. Die Münz-Auszahlung des Spiels ist unverändert (einmal je Lauf ab 10 richtigen Vokabeln, unter dem
+Tagesdeckel), das Tageslimit an Spielminuten ebenso. Nichts kostet etwas, wenn ein Tag ausfällt.
 
-## Etappe 4 – Dauerhafte Fortschritte und Abwechslung (offen)
+| Baustein | Umsetzung |
+|---|---|
+| Trophäen | Am Laufende: Wert jedes gelösten Wortes (3/2/1, am Lauf eingefroren) plus 1 je geschaffter Welle – höchstens so viele Wellen wie gelöste Wörter, und die gemeldete Welle zählt nur, soweit die gezählte Spielzeit sie trägt (eine Welle je 20 s). Wellen ohne Vokabeln bringen nichts. |
+| Trophäen-Pfad | Stufen bei 20/60/120/250/500/1000/2000 Trophäen zahlen einmal 5/10/15/25/40/60/100 Gems (`Gamification:TowerGame:TrophyPath`). |
+| Spiel-Aufgaben | Drei neue Missions-Metriken; jedes Kind bekommt drei Tagesaufgaben zu je 10 Gems: „20 Vokabeln richtig“, „Welle 5 erreichen“, „3 neue Wörter richtig“. Abgerechnet am Laufende über den `GamificationService`; der Vater kann sie im Vater-Web ändern oder löschen wie jede Mission. |
+| Tagestruhe | Wird auf der Startseite geöffnet (vorhandener Endpunkt `daily-box/open`). |
+| Spiel-Truhe | Füllt sich mit richtigen Zuordnungen des Tages, ab 15 einmal am Tag zu öffnen, 3–8 Gems. |
+| Serien | Die Lern-Serie steht oben; die Spiel-Serie zählt Tage in Folge mit mindestens 10 richtigen Zuordnungen. Sonntag und Pause brechen sie nicht; heute zählt, sobald die 10 erreicht sind. |
+| Anzeige | Startseite: Trophäen oben, rechts Truhen-Knöpfe, Weg zur nächsten Pfad-Stufe und Spiel-Serie. Ergebnis: Trophäen des Laufs, Gems einer erreichten Stufe. |
 
-- Helden-Stufe und freischaltbare Helden/Skins (Gems), dauerhafte Turm-Verbesserungen.
-- Weitere Monster mit eigenem Verhalten (schnelle Läufer, Schildträger, Heiler), weitere Karten, Wochen-Ereignisse.
-- Bestenliste in der Familie (Theodor gegen Friedrich) – nur wenn der Vater den Vergleich will.
+**Aussehen der Startseite:** gezeichnete Symbole statt der Wörter (Münze, Gem, Trophäe, Flamme, Truhe, Uhr,
+Zahnrad, Buch, Karte, Stern) – auch statt der Zeichen ✔ ○ ▸ 🪙, die der Android-Schrift fehlen können. Der Ritter
+steht vor Burg, zwei Türmen, Wald und Abendhimmel mit ziehenden Wolken. Knöpfe geben unter dem Daumen nach, der
+Spielen-Knopf und eine offene Truhe pulsieren, eine Zahl, die sich ändert, hüpft. Eigenes Aussehen aus den
+vorhandenen KayKit-Modellen, kein Nachbau eines bestimmten Spiels.
+
+Geprüft: Server – zwölf Testfälle in `TowerGameCollectTests` (zwei davon als Tabelle), der Migrationstest, Mutantenprobe 11/11 rot
+am benannten Test, volle Suite 2729 grün; Vater-Web typgeprüft, 1530 Tests grün. Spiel – `core/trophy_path.gd` mit
+Test und roter Probe, Bildschirm-Lauf (Truhen öffnen, Geldbörse zieht nach, Welle wird gemeldet) auch im
+exportierten Paket, Vertrags-Lauf gegen die Wegwerf-API auf einer DB-Kopie.
+
+**Migration `TowerGameCollect`** (nur angehängt, an einer DB-Kopie geprobt: 1340 Buchungen und 224 Lernstände
+unverändert): zwei Tabellen (`TowerTrophyRewards`, `TowerGameChests`), Spalten `Wave` und `Trophies` am Lauf,
+`Value` am Lauf-Wort (Bestand: 2), dazu die drei Spiel-Aufgaben für jedes vorhandene Kind.
+
+Abweichungen vom Plan, mit Grund:
+
+- **Kein Trophäen-Stand am Kind.** Der Stand ist die Summe über die Läufe, wie ein Kontostand die Summe des
+  Buchs ist – eine zweite Zahl könnte davon abweichen.
+- **Belohnungen in Gems, nicht in Münzen.** Münzen bleiben der Hebel des Vaters; Missionen und Boni zahlen in der
+  App ohnehin Gems.
+- **Schritte 2b und 3 des Auftrags in einem Commit:** die Startseite wurde für die neuen Anzeigen ohnehin neu
+  aufgebaut, das gleich im neuen Aussehen.
+
+## Etappe 4 – Dauerhafte Fortschritte und Abwechslung (gebaut 2026-11-28, soweit es trägt)
+
+| Baustein | Umsetzung |
+|---|---|
+| Helden-Stufe | Folgt den Trophäen (Stufe 2 ab 30, 3 ab 90, 4 ab 180 …, `core/hero_level.gd`). Je Stufe schießt der Held 5 % schneller (bis 0,5 s), alle vier Stufen mit +1 Schaden. Er bleibt Plan B neben den Türmen. Startseite zeigt die Stufe, das Ergebnis meldet den Aufstieg. |
+| Skins für Gems | Ritter (frei), Roter Ritter 150, Goldritter 400, Schattenritter 900 Gems. Preise und Besitz kennt der Server (`tower-game/skins`), Aussehen und Namen das Spiel; getragen wird, was das Gerät sich merkt. Keine neue Migration: der Besitz liegt in `Child.OwnedSkins` neben den Skins des Lern-Teils. |
+| Läufer | Ab Welle 3 jeder dritte kleine Gegner: fast doppelt so schnell, ein Treffer genügt. Prüft, ob die Türme noch Schuss haben. |
+| Schildträger | Ab Welle 4 jeder dritte Wortträger: die Rüstung nimmt 1 von jedem Treffer (mindestens 1 bleibt). Belohnt aufgestiegene Türme, trägt weiter ein Wort. |
+| Heiler | Ab Welle 6 einer in der Mitte der Welle (höchstens drei): heilt alle 1,5 s Verletzte in seinem Kreis um 1, nie über deren Start-Lebenspunkte. |
+| Karte | „Schlucht“: ein enger Zickzack-Weg mit vier Türmen. |
+
+Geprüft: 55 Regeltests mit roter Probe (jede am benannten Fall rot), Level-Lauf mit den Szenen „Spezialgegner“ und
+„Held Stufe 5 im roten Skin“, Bildschirm-Lauf mit Skin-Kauf und Helden-Aufstieg, beide auch im exportierten Paket;
+Server-Test für den Skin-Kauf mit zwei Mutanten; Vertrags-Lauf gegen die Wegwerf-API.
+
+Bewusst nicht gebaut (trägt noch nicht oder braucht eine Entscheidung):
+
+- **Dauerhafte Turm-Verbesserungen:** würden die frisch eingestellte Balance verschieben; erst nach Spielrunden.
+- **Wochen-Ereignisse:** brauchen einen Kalender am Server und Inhalte; eigener Schritt.
+- **Bestenliste in der Familie:** nur wenn der Vater den Vergleich will (Frage unten).
+- **Weitere Helden als eigene Figuren:** im Paket liegen nur Ritter und Skelette als Modelle; neue Figuren hieße
+  etwas herunterladen. Die Skins färben darum den Ritter.
+
+Die Handy-Runde mit der neuen APK gegen die Wegwerf-API: siehe Abschnitt „Handy-Runde“ am Ende.
+
+## Handy-Runde zu Etappe 3 und 4
+
+Die APK vom 2026-11-28 (34,6 MB) ist per `adb push` + `pm install` auf dem Xiaomi installiert, die Wegwerf-API
+läuft auf der DB-Kopie (Port 5281, am Handy über `adb reverse tcp:5280 tcp:5281`). **Die Runde selbst steht aus:**
+das Handy war gesperrt, und ferngesteuert wird es nur entsperrt.
 
 ## Offene Fragen an den Vater
 
@@ -102,3 +168,6 @@ Animationen der Knöpfe sind ein eigener Schritt.
 4. **Druckmittel:** Wie weit sollen die Bindungs-Mechaniken gehen? Serien, die verfallen, und Truhen mit
    Wartezeit wirken stark, auch gegen den Willen des Kindes. Dieser Plan sieht Serie und Tagestruhe vor, aber keine
    Mechanik, die bestraft, wenn das Kind einen Tag nicht spielt – die Pflicht samt Malus liegt im Lern-Teil.
+5. **Gems aus dem Spiel:** Die Spiel-Aufgaben (3 × 10 Gems am Tag), die Spiel-Truhe (3–8) und der Trophäen-Pfad
+   zahlen Gems; ein Skin kostet 150 bis 900. Passt die Größenordnung zu den Gems aus dem Lern-Teil (Combo rund 10)?
+6. **Bestenliste:** Soll es den Vergleich Theodor gegen Friedrich geben?

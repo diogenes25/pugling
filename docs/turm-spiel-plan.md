@@ -180,7 +180,8 @@ Von den 110 MB waren etwa 70 MB .NET-Laufzeit. Den Rest füllt heute fast allein
 Projekt ohne C# mit ihren eigenen Vorlagen, und die .NET-Laufzeit bleibt dabei draußen. Ein zweiter Editor ohne
 .NET ist nicht nötig.
 
-**Server-Vertrag:** Das Spiel spricht die sechs Aufrufe direkt als JSON (`autoload/api.gd`). Der Server lehnt
+**Server-Vertrag:** Das Spiel spricht seine Aufrufe (Anmelden, Übersicht, Tag, Lauf starten/zuweisen/Heartbeat/Ende,
+beide Truhen, Skins) direkt als JSON (`autoload/api.gd`). Der Server lehnt
 unbekannte Felder mit `400 unknown_field` ab, die Feldnamen müssen also genau treffen. Das prüft
 `tests/smoke_api.tscn` gegen eine Wegwerf-API.
 
@@ -230,16 +231,18 @@ Kamera sind ein Genre-Prinzip, Figuren und Stil sind eigen.
 ```text
 game/
   project.godot, export_presets.cfg, Main.tscn
-  autoload/   log.gd (Log.line → „TURM hh:mm:ss …“), api.gd (die sechs Aufrufe), tower_server.gd (was das
+  autoload/   log.gd (Log.line → „TURM hh:mm:ss …“), api.gd (alle Server-Aufrufe), tower_server.gd (was das
               Spiel von einem Server verlangt), fake_api.gd (Attrappe für Läufe ohne Server), api_result.gd
   data/       balance.gd (Stellschrauben), catalog.gd (Listen: Karten, Turm-Mix, Gegner),
-              level_def.gd + lichtung/flussfurt/burgberg.tres, tower_kind.gd + bolt_tower/catapult.tres,
-              projectile_kind.gd + 5 .tres, enemy_kind.gd + minion/warrior.tres,
+              level_def.gd + lichtung/flussfurt/burgberg/schlucht.tres, tower_kind.gd + bolt_tower/catapult.tres,
+              projectile_kind.gd + 5 .tres, enemy_kind.gd + minion/warrior/boss/runner/shield/healer.tres,
+              hero_skin.gd + skin_*.tres, game_progress.gd (Trophäen, Serie, Spiel-Truhe vom Server), home_info.gd,
               tower_run.gd, tower_target.gd, tower_token.gd (was der Server zu einem Lauf schickt)
   core/       reine Regeln, einzeln getestet: tower_ammo, tower_level, run_tally, run_score, wave_plan,
+              trophy_path, hero_level, enemy_rules,
               token_pool, cooldown
   screens/    main.gd (Bildschirmfluss, Zurück-Taste), page.tscn (Rahmen aller Menüs),
-              login, positions, maps, result (je .tscn + .gd)
+              login, home (+ home_stage.gd, die Bühne dahinter), positions, skins, result (je .tscn + .gd)
   level/      level.tscn + level.gd (dünner Koordinator), game_events.gd (Signale), run_session.gd (Bedeutungen,
               assign, Heartbeat), feedback.gd (Funken, Rückmeldezeile), sounds.gd, level_end.gd (Ende-Gründe)
   world/      map_builder.gd, map_info.gd (wo der Held gehen darf), models.gd (KayKit), geo.gd, fx.gd
@@ -248,7 +251,7 @@ game/
               knight_look.tscn + knight_look.gd
   words/      word_books.gd + word_book.gd (Abwurf, Ablegen, Verfall, freie Plätze)
   ui/         overlay.gd (2D über der Szene), controls.gd (Knöpfe, Rückmeldezeile), pause_menu.tscn,
-              touch_stick.gd, ui_kit.gd
+              touch_stick.gd, ui_kit.gd, icon.gd (gezeichnete Symbole), chip.gd (Symbol + Zahl)
   tests/      Regeltests, rote Probe, Headless-Läufe (siehe „Prüfen“)
   tools/      Einrichten, Installieren, sfx.py
   assets/     KayKit-Modelle und die erzeugten Sounds
@@ -281,8 +284,15 @@ Spielstand.
   - Die Turmplätze einer Karte nehmen die Typen aus `TOWER_MIX` reihum. Für feste Typen je Platz braucht
     `LevelDef` ein Feld dafür.
 - **… eine Karte:** eine neue `.tres` neben `data/lichtung.tres` und ein Eintrag in `Catalog.LEVELS`.
+- **… einen Skin:** eine neue `data/skin_*.tres` (Id, Name, Farbton), ein Eintrag in `Catalog.SKINS` und derselbe
+  Id mit Preis in `Gamification:TowerGame:Skins` (appsettings.json des Servers). Ein Skin, den der Server anbietet,
+  die App aber nicht kennt, wird nicht gezeigt.
+- **… ein Symbol:** ein Wert in `Icon.Kind`, sein Wort in `Icon.CAPTIONS` und sein Bild in `Icon._draw`
+  (`ui/icon.gd`). Die Smoke-Läufe lesen das Wort.
 - **… einen Gegner:** eine neue `.tres` neben `data/minion.tres`, ein Eintrag in `Catalog` und eine Regel in
-  `core/wave_plan.gd` (`troop`), wann er in einer Welle mitmarschiert. Die `.tres` sagt, was er aushält, wie
+  `core/wave_plan.gd` (`troop` bzw. `_send_specials`), wann er in einer Welle mitmarschiert. Rüstung (`armor`),
+  Heilung (`heal_*`) und Farbton (`tint`) sind Felder der `.tres`; die Rechenregeln dazu stehen in
+  `core/enemy_rules.gd`. Die `.tres` sagt, was er aushält, wie
   viele Punkte er bringt (`points`) und wie viele Wörter er fallen lässt (`drops`). Für eine eigene Mischung je
   Karte bekommt `LevelDef` ein Feld, das `WavePlan` liest.
 - **… ein UI-Element:** Gezeichnetes kommt als Block in `ui/overlay.gd` (`_draw`), Bedienbares in
@@ -301,7 +311,7 @@ Alle Befehle laufen aus `game/`. `$GODOT` ist die Konsolen-Ausgabe des Editors
 
 | Was | Befehl | Grün heißt |
 | --- | --- | --- |
-| Regeltests (36 Fälle) | `$GODOT --headless --path . --script res://tests/run_tests.gd` | Exit-Code 0 |
+| Regeltests (55 Fälle) | `$GODOT --headless --path . --script res://tests/run_tests.gd` | Exit-Code 0 |
 | Rote Probe je Regeltest | `GODOT=… tests/rote_probe.sh` | jeder Fall wird am benannten Test rot |
 | Bildschirmfluss mit Attrappe | `$GODOT --headless --path . res://tests/smoke_screens.tscn` | Exit-Code 0 |
 | Level auf allen drei Karten | `$GODOT --headless --path . res://tests/smoke_level.tscn` | „0 Abweichungen“ |
