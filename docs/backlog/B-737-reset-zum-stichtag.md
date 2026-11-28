@@ -142,3 +142,4 @@ und [B-739](B-739-foerder-uebungen-und-zusammenfassung.md), die den scharfen Pla
 - **2026-11-20** — angelegt durch Teilung von B-644 (Etappe E3b) und `gegrillt` → `geschaetzt` im Vorbereitungslauf (Sonnet):
   Eintrittsbedingung `gegrillt` aus B-644 geerbt. Nachgesehen: Das Kassenbuch ist frei von Positionsverweisen, `ExerciseFeedback` und `Remark`
   verweisen nullable. Ein Reset-Weg existiert nicht. M, beides, keine Migration, kein Vertragsbruch.
+- **2026-11-27** — Nachtlauf P: [B-1039](B-1039-umschalten-scharf-umschalttag-und-wochenziel.md) (Umschalttag, angebrochene Woche) vor dem Bau beantworten; [B-1037](B-1037-malus-je-tagesaufgabe-und-rueckstand.md) muss vor dieser Story stehen, sonst gilt der scharfe Modus ohne Malus.

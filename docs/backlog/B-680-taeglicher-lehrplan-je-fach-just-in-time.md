@@ -12,7 +12,7 @@ quelle: docs/leitbild-privatlehrer.md
 grund: ""
 ersetzt_durch: []
 entgangen_bei: []
-nachgeschaut: ""
+nachgeschaut: 2026-11-27
 ---
 
 # B-680 · Der Lehrer-Agent erzeugt jeden Tag den Plan je Fach aus Klausur, Stoff und Lernstand
@@ -308,3 +308,4 @@ Die Notenstufe ([B-682](B-682-notenstufe-je-fach-statt-liga.md)) ist keine Vorau
   Übungen und Tags ordnet nur und steht in der Begründung (`PlannerCandidate.ExamPresses`). Die Kriterien 2, 4, 9 und 11 gelten damit für
   Arbeiten mit Bündel. Mutanten T1 bis T4 rot, 90 betroffene Fälle grün; Rollengang an der Kopie nicht wiederholt (Regeländerung
   ohne neue Oberfläche, die Fälle laufen über die echte API).
+- **2026-11-27** — **Nachschau** (Nachtlauf P): Termin-Druck an der Kopie der echten DB nachgerechnet – Friedrichs Klassenarbeit 04.12. meldet „99 neue Wörter pro Lerntag“; Positionen 133/218 (Übung 78) und 134/219 (Übung 79) zählen dieselben Wörter je Position, die Wochenpositionen mit 0 eingeführten. Defekt → [B-1040](B-1040-termin-druck-zaehlt-woerter-doppelt.md). Geprüft und ohne Befund: `ExamsAsync` filtert `Status == Planned` und `ChildId` (abgesagter/fremder Termin), `ExamPresses` (B-1034) nur bei benannter Übung.

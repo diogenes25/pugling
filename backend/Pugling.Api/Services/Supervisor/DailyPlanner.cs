@@ -64,8 +64,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
     }
 
     /// <summary>
-    /// <see cref="EnsureTodayAsync"/> for the child's own paths (login, day view): a failure is logged and swallowed. In shadow
-    /// mode the plan has no effect, so it must never cost the child the app; the timer or the next access tries again.
+    /// <see cref="EnsureTodayAsync"/> for the request paths (the child's login and day view, the supervisor's list): a failure is
+    /// logged and swallowed. A plan that cannot be made must never cost the child the app or hide the supervisor's stored plans;
+    /// the timer or the next access tries again.
     /// </summary>
     public async Task TryEnsureTodayAsync(int childId, CancellationToken ct)
     {
@@ -76,6 +77,23 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Tagesplan für Kind {ChildId} ließ sich nicht anlegen; der nächste Zugriff versucht es erneut.", childId);
+        }
+    }
+
+    /// <summary>
+    /// Evaluates the child's closed days ahead of the first plan: the evaluation the planner reads its tempo from covers up to
+    /// four weeks the first time, which would otherwise land on the child's next login. Called when the supervisor switches the
+    /// planner on; a failure is logged and swallowed - the switch is already saved, and the first plan evaluates on its own.
+    /// </summary>
+    public async Task WarmUpAsync(int childId, CancellationToken ct)
+    {
+        try
+        {
+            await evaluations.EnsureClosedDaysAsync(childId, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Auswertung für Kind {ChildId} ließ sich beim Einschalten des Planers nicht vorbereiten.", childId);
         }
     }
 
@@ -91,15 +109,21 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
             await db.SaveChangesAsync(ct);
             return plan;
         }
-        catch (DbUpdateException e)
+        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
         {
-            // The failed plan must not stay tracked: the child's paths swallow the failure, and the request's next save
-            // would try to insert it again.
+            // Only a lost race lands here; any other failure (a position deleted meanwhile) is no plan to read back.
             db.ChangeTracker.Clear();
-            // Only a lost race has a plan to read back; any other failure (a position deleted meanwhile) has none.
-            if (e.InnerException is not SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation }) throw;
             return await LoadAsync(plan.ChildId, plan.Day, ct)
                 ?? throw new InvalidOperationException($"Tagesplan für Kind {plan.ChildId} am {plan.Day} ließ sich nicht speichern.");
+        }
+        catch
+        {
+            // Any other failure leaves the plan unsaved. TryEnsureTodayAsync swallows it on the child's paths, so the plan and
+            // its tasks must not stay queued: the request's next SaveChanges would insert them again and fail the child's write.
+            // A copy: detaching a task fixes up the plan's navigation and would change the list mid-loop.
+            foreach (var task in plan.Tasks.ToList()) db.Entry(task).State = EntityState.Detached;
+            db.Entry(plan).State = EntityState.Detached;
+            throw;
         }
     }
 
@@ -148,6 +172,13 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         var exams = await ExamsAsync(childId, day, ct);
         var lessonSubjects = await LessonSubjectsAsync(childId, day, ct);
         var weakness = await WeaknessAsync(childId, day, ct);
+        // Tasks of the last learning day left open come back first (B-1037), in either mode: the shadow plan shows what would apply.
+        // Unstamped is only the candidate: a goal met on a path that books no stamp (a round never closed) is judged below.
+        var missed = lastLearningDay is { } md
+            ? (await db.DailyTasks.AsNoTracking()
+                .Where(t => t.DailyPlan!.ChildId == childId && t.DailyPlan.Day == md && t.DoneAt == null && t.PlanPositionId != null)
+                .Select(t => t.PlanPositionId!.Value).ToListAsync(ct)).ToHashSet()
+            : [];
         var plans = await db.StudyPlans.AsNoTracking()
             .Where(p => p.ChildId == childId && p.Active && p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
             .OrderBy(p => p.StartDate).ThenBy(p => p.Id)
@@ -156,9 +187,9 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
         var order = 0;
         foreach (var plan in plans)
         {
-            // A remediation that ended has left the plan's day (B-636); the planner sees what the child's day shows.
-            foreach (var pos in (await progress.LoadPositionsAsync(plan.Id, ct))
-                         .Where(p => p.Cadence != GoalCadence.UntilDone || PositionProgressService.HasDutyOn(p, day)))
+            // Only a duty becomes a task: a free position stays free, also one whose duty ended (DutyUntil) or has not begun, and a
+            // remediation that ended has left the plan's day (B-636; answer to B-1033, B-1036 criterion 9).
+            foreach (var pos in (await progress.LoadPositionsAsync(plan.Id, ct)).Where(p => progress.IsObligationOn(p, day)))
             {
                 order++;
                 if (PositionPlayService.PlayedExercise(pos, day) is not { } played || play.TypeOf(played) is not { } type)
@@ -191,7 +222,8 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
                 candidates.Add(new PlannerCandidate(pos.Id, played.Id, played.Title, subjectId, order, due, newAvailable,
                     answers.Where(a => !a.Key).Sum(a => a.Count), answers.Where(a => a.Key).Sum(a => a.Count), failedTest,
                     stage, EasierStage(type, stage), examDate, examDate is { } ed ? LearningDaysUntil(day, ed, dutyDays) : 0,
-                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0, named is not null));
+                    subjectId is { } sid && lessonSubjects.Contains(sid), subjectId is { } wid ? weakness.GetValueOrDefault(wid) : 0, named is not null,
+                    missed.Contains(pos.Id) && !await progress.IsTaskMetAsync(pos, plan, lastLearningDay!.Value, ct)));
             }
         }
         return candidates;

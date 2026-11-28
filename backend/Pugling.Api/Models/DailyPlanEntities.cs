@@ -54,4 +54,31 @@ public class DailyTask
     public int? Stage { get; set; }
     /// <summary>Why the task is in the plan, built from the inputs.</summary>
     public string Reason { get; set; } = "";
+    /// <summary>
+    /// When the task's goal was first met on its day (B-1037), stamped by the path that books the goal; <c>null</c> = not met
+    /// (yet). A goal once met stays met for the settlement, like the reward lock of a position.
+    /// </summary>
+    public DateTime? DoneAt { get; set; }
+}
+
+/// <summary>
+/// The penalty booked for an enforced task left open at the end of its day (B-1037). At most one per task - the unique index is
+/// what keeps the lazy settlement at login and the timer, racing each other, from charging a task twice.
+/// </summary>
+public class DailyTaskPenalty
+{
+    public int Id { get; set; }
+    public int DailyTaskId { get; set; }
+    public DailyTask? DailyTask { get; set; }
+    /// <summary>Coins deducted (a positive value; the ledger entry is negative): the child's amount at settlement.</summary>
+    public int Points { get; set; }
+    public DateTime AppliedAt { get; set; }
+    /// <summary>
+    /// When a justified feedback made the task's day met and took the penalty back (B-768 for tasks, B-1037). The row stays, or
+    /// the settlement would book the penalty again.
+    /// </summary>
+    public DateTime? RefundedAt { get; set; }
+    /// <summary>The feedback whose confirmation took the penalty back; may fade.</summary>
+    public int? RefundedByFeedbackId { get; set; }
+    public ExerciseFeedback? RefundedByFeedback { get; set; }
 }

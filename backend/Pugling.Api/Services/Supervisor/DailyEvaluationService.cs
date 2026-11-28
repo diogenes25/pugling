@@ -74,8 +74,9 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
             await db.DailyEvaluations.Where(d => d.ChildId == childId && reopened.Contains(d.Day)).ExecuteDeleteAsync(ct);
             await db.EvaluatedDays.Where(d => d.ChildId == childId && reopened.Contains(d.Day)).ExecuteDeleteAsync(ct);
         }
+        var evaluated = missing.Select(day => new EvaluatedDay { ChildId = childId, Day = day, CreatedAt = now }).ToList();
         db.DailyEvaluations.AddRange(rows);
-        db.EvaluatedDays.AddRange(missing.Select(day => new EvaluatedDay { ChildId = childId, Day = day, CreatedAt = now }));
+        db.EvaluatedDays.AddRange(evaluated);
         try
         {
             await db.SaveChangesAsync(ct);
@@ -88,6 +89,19 @@ public class DailyEvaluationService(PuglingDbContext db, PositionProgressService
             await tx.RollbackAsync(CancellationToken.None);
             db.ChangeTracker.Clear();
         }
+        catch
+        {
+            // Any other failure (a cancelled request included) leaves the rows unsaved. They must not stay queued in the
+            // request's context, or the caller's next SaveChanges would insert them behind its back.
+            Detach(rows);
+            Detach(evaluated);
+            throw;
+        }
+    }
+
+    private void Detach(IEnumerable<object> entities)
+    {
+        foreach (var entity in entities) db.Entry(entity).State = EntityState.Detached;
     }
 
     /// <summary>

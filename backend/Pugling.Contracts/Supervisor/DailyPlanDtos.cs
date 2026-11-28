@@ -5,6 +5,7 @@ namespace Pugling.Contracts.Supervisor;
 /// <summary>
 /// Whether the day planner runs for a child (B-734). <c>Off</c>: no daily plans are made. <c>Shadow</c>: a plan is made every
 /// learning day and shown to the supervisor, but it has no effect - no duty, no penalty, nothing in the child's app.
+/// <c>Enforced</c>: the plan's tasks are the day's duty (B-1036); not settable through the API before the cutoff-day reset (B-737).
 /// </summary>
 public enum PlannerMode
 {
@@ -12,6 +13,8 @@ public enum PlannerMode
     Off,
     /// <summary>The planner makes daily plans the supervisor sees; they cost and pay nothing.</summary>
     Shadow,
+    /// <summary>The day's tasks are the child's duty: streak, chest and goal points follow them, not the positions' cadence.</summary>
+    Enforced,
 }
 
 /// <summary>

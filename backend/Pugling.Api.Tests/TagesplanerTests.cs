@@ -445,34 +445,6 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
     }
 
     /// <summary>
-    /// A plan that cannot be stored for another reason than the lost race fails loudly and leaves nothing tracked, so the
-    /// request's next save does not try to insert it again. Red if the failed plan stays in the change tracker.
-    /// </summary>
-    [Fact]
-    public async Task Gescheiterter_Plan_bleibt_nicht_im_Kontext()
-    {
-        var s = await SetupAsync();
-        Write(db => db.DailyPlans.Where(p => p.ChildId == s.ChildId).ExecuteDelete());
-
-        using var scope = factory.Services.CreateScope();
-        var planner = scope.ServiceProvider.GetRequiredService<DailyPlanner>();
-        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
-        await Assert.ThrowsAsync<DbUpdateException>(() => planner.SaveOrLoadAsync(new DailyPlan
-        {
-            ChildId = s.ChildId,
-            Day = Today,
-            Mode = PlannerMode.Shadow,
-            CreatedAt = DateTime.UtcNow,
-            // A subject that does not exist: the foreign key rejects the task.
-            Tasks = [new DailyTask { ExerciseId = 1, ExerciseTitle = "x", SubjectId = int.MaxValue, Order = 1 }],
-        }, CancellationToken.None));
-
-        Assert.Empty(db.ChangeTracker.Entries());
-        Assert.Equal(0, await db.SaveChangesAsync());
-        Assert.Equal(0, Read(d => d.DailyPlans.Count(p => p.ChildId == s.ChildId)));
-    }
-
-    /// <summary>
     /// Tower-game answers are no failure of the last learning day: the game counts every miss but only the first hit per
     /// word and day. Red if the planner's tally of that day reads rows of source <c>Game</c> (B comes back one stage easier).
     /// </summary>
@@ -764,6 +736,75 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
 
         Assert.Equal(0, Read(db => db.DailyPlans.Count(p => p.ChildId == failing.ChildId)));
         Assert.Equal(1, Read(db => db.DailyPlans.Count(p => p.ChildId == fine.ChildId)));
+    }
+
+    /// <summary>
+    /// Review finding: a failing plan for today does not hide the supervisor's stored plans. Red if the list awaits the planner
+    /// unguarded - the failing planner then answers 500 and Saturday's plan is never shown.
+    /// </summary>
+    [Fact]
+    public async Task Fehler_im_heutigen_Plan_laesst_die_Liste_des_Vaters_stehen()
+    {
+        var s = await SetupAsync();
+        Write(db => db.DailyPlans.Add(new DailyPlan
+        {
+            ChildId = s.ChildId,
+            Day = Saturday,
+            Mode = PlannerMode.Shadow,
+            NewWordsBudget = 2,
+            CreatedAt = At(Saturday, 7).UtcDateTime,
+        }));
+        using var host = factory.WithWebHostBuilder(b => b.ConfigureServices(services =>
+            services.AddScoped<DailyPlanner>(sp => ActivatorUtilities.CreateInstance<FailingPlanner>(sp, s.ChildId))));
+        var father = host.CreateClient();
+        father.DefaultRequestHeaders.Authorization = s.Father.DefaultRequestHeaders.Authorization;
+
+        var plans = await OkJsonAsync(await father.GetAsync(s.Url));
+
+        Assert.Equal(["2026-11-28"], plans.EnumerateArray().Select(p => p.GetProperty("day").GetString()));
+    }
+
+    /// <summary>
+    /// Review finding: a plan whose save fails for a reason other than the lost race leaves nothing queued in the context.
+    /// Red if the failed plan stays Added - the next SaveChanges of the same request would insert it again and fail.
+    /// </summary>
+    [Fact]
+    public async Task Gescheitertes_Speichern_laesst_nichts_im_Kontext_liegen()
+    {
+        var s = await SetupAsync(switchOn: false);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        var planner = scope.ServiceProvider.GetRequiredService<DailyPlanner>();
+        var plan = new DailyPlan
+        {
+            ChildId = s.ChildId,
+            Day = Friday,
+            Mode = PlannerMode.Shadow,
+            CreatedAt = At(Friday, 7).UtcDateTime,
+            // A position that does not exist (deleted meanwhile): the foreign key fails, not the unique index.
+            Tasks = [new DailyTask { PlanPositionId = int.MaxValue, ExerciseId = 1, ExerciseTitle = "weg", Order = 1, Reason = "Test" }],
+        };
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => planner.SaveOrLoadAsync(plan, CancellationToken.None));
+
+        Assert.Empty(db.ChangeTracker.Entries<DailyPlan>());
+        Assert.Empty(db.ChangeTracker.Entries<DailyTask>());
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Review finding: switching the planner on evaluates the closed days right away, so the four weeks of the first
+    /// evaluation land on the supervisor's switch, not on the child's next login. Red if the switch only saves the mode.
+    /// </summary>
+    [Fact]
+    public async Task Einschalten_wertet_die_abgeschlossenen_Tage_aus()
+    {
+        var s = await SetupAsync(switchOn: false);
+        Assert.Equal(0, Read(db => db.EvaluatedDays.Count(d => d.ChildId == s.ChildId)));
+
+        await SwitchAsync(s, "Shadow");
+
+        Assert.Equal(DailyEvaluationService.WindowDays, Read(db => db.EvaluatedDays.Count(d => d.ChildId == s.ChildId)));
     }
 
     /// <summary>The string-enum converter takes numbers too: an undefined mode is refused. Red if the check is missing.</summary>

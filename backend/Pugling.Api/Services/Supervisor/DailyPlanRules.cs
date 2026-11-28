@@ -24,10 +24,12 @@ namespace Pugling.Api.Services.Supervisor;
 /// <param name="Weakness">The subject's share of wrong answers over the last four weeks, 0 to 1; 0 without answers.</param>
 /// <param name="ExamPresses">The test names material (exercises or tags) that includes this position, so it sets a pace; a
 /// test without any only orders the position by its date (B-1034: without material there is nothing to count back from).</param>
+/// <param name="MissedYesterday">The position's task of the last learning day before was left open (B-1037): the missed material
+/// comes back the next learning day, within the ceiling of tasks.</param>
 public sealed record PlannerCandidate(int PositionId, int ExerciseId, string ExerciseTitle, int? SubjectId, int Order,
     int DueReviews, int NewAvailable, int WrongYesterday, int CorrectYesterday, bool FailedTestYesterday, int DayStage,
     int? EasierStage, DateOnly? ExamDate = null, int ExamLearningDays = 0, bool LessonSoon = false, double Weakness = 0,
-    bool ExamPresses = true)
+    bool ExamPresses = true, bool MissedYesterday = false)
 {
     /// <summary>New words per learning day this position needs to have all its pool introduced before its test.</summary>
     public int NewWordsNeededPerDay => ExamDate is null || !ExamPresses || NewAvailable == 0
@@ -85,9 +87,9 @@ public static class DailyPlanRules
             .ThenByDescending(c => c.Weakness).ThenBy(c => c.Order).ThenBy(c => c.PositionId).ToList();
         var ranked = byPlan.Where(c => c.DueReviews > 0).OrderByDescending(c => c.DueReviews).ThenBy(c => c.Order)
             .ThenBy(c => c.PositionId)
-            .Concat(byPlan.Where(c => c.DueReviews == 0 && c.Failed))
-            .Concat(byPlan.Where(c => c.DueReviews == 0 && !c.Failed && c.NewAvailable > 0))
-            .Concat(byPlan.Where(c => c.DueReviews == 0 && !c.Failed && c.NewAvailable == 0))
+            .Concat(byPlan.Where(c => c.DueReviews == 0 && (c.Failed || c.MissedYesterday)))
+            .Concat(byPlan.Where(c => c.DueReviews == 0 && !c.Failed && !c.MissedYesterday && c.NewAvailable > 0))
+            .Concat(byPlan.Where(c => c.DueReviews == 0 && !c.Failed && !c.MissedYesterday && c.NewAvailable == 0))
             .ToList();
 
         // What the day needs: every due review and failure, and positions until the new-word budget is placed; then the floor.
@@ -96,7 +98,8 @@ public static class DailyPlanRules
         foreach (var c in ranked)
         {
             // A position a class test presses is always in: its own pace is part of the budget, not what is left over.
-            var needed = c.DueReviews > 0 || c.Failed || c.NewWordsNeededPerDay > 0 || (placed < budget && c.NewAvailable > 0);
+            var needed = c.DueReviews > 0 || c.Failed || c.MissedYesterday || c.NewWordsNeededPerDay > 0
+                || (placed < budget && c.NewAvailable > 0);
             if (!needed) continue;
             chosen.Add(c);
             placed += c.NewWordsNeededPerDay > 0
@@ -163,6 +166,8 @@ public static class DailyPlanRules
                 ? $"{what} – eine Stufe leichter (Stufe {s} statt {c.DayStage})"
                 : $"{what} – keine leichtere Stufe verfügbar");
         }
+        if (c.MissedYesterday)
+            parts.Add("am letzten Lerntag offen geblieben");
         if (newWords > 0)
             parts.Add($"{newWords} neue {(newWords == 1 ? "Wort" : "Wörter")} ({BudgetSource(budget, tempo, limits, examNeed)})");
         if (c.ExamDate is { } exam)

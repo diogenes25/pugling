@@ -28,6 +28,7 @@ export function planerSchalterHinweis(child: ChildResponse): string | null {
 export function planWirkung(plan: DailyPlan, childName: string): string {
   switch (plan.mode) {
     case "Shadow": return `Schattenplan – wirkt nicht auf Pflicht, Malus und die App von ${childName}.`;
+    case "Enforced": return `Wirksamer Plan – seine Aufgaben sind die Pflicht des Tages von ${childName}.`;
     case "Off": return "Plan ohne Wirkung.";
     default: { const unbekannt: never = plan.mode; return unbekannt; }
   }
@@ -38,6 +39,7 @@ function planerStatus(mode: ChildResponse["plannerMode"]): string {
   switch (mode) {
     case "Off": return "aus";
     case "Shadow": return "im Schattenmodus";
+    case "Enforced": return "wirksam";
     default: { const unbekannt: never = mode; return unbekannt; }
   }
 }

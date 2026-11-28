@@ -26,7 +26,8 @@ public class ChildDailyPlansController(DailyPlanner planner, LearningDay learnin
     /// <summary>
     /// The child's daily plans from <paramref name="from"/> to <paramref name="to"/> (default: the last 14 days up to today),
     /// newest first, with their tasks and reasons. Today's plan is made first if it is due (from 6 a.m., planner on, a duty
-    /// day) - the supervisor's look counts as the first access like the child's. A stored plan never changes.
+    /// day) - the supervisor's look counts as the first access like the child's. A stored plan never changes. If today's plan
+    /// cannot be made, the stored plans are still listed: one failing day must not hide the history.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -37,7 +38,7 @@ public class ChildDailyPlansController(DailyPlanner planner, LearningDay learnin
     {
         var (start, end, problem) = Range(from, to);
         if (problem is not null) return problem;
-        await planner.EnsureTodayAsync(childId, ct);
+        await planner.TryEnsureTodayAsync(childId, ct);
         var plans = await planner.ListAsync(childId, start, end, ct);
         return plans.Select(Map).ToPagedList(Response, skip, take);
     }

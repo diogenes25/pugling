@@ -831,6 +831,9 @@ namespace Pugling.Api.Data.Migrations
                     b.Property<int>("DailyPlanId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("DoneAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("DueReviews")
                         .HasColumnType("INTEGER");
 
@@ -871,6 +874,37 @@ namespace Pugling.Api.Data.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("DailyTasks");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyTaskPenalty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AppliedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DailyTaskId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RefundedByFeedbackId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DailyTaskId")
+                        .IsUnique();
+
+                    b.HasIndex("RefundedByFeedbackId");
+
+                    b.ToTable("DailyTaskPenalties");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
@@ -3983,6 +4017,24 @@ namespace Pugling.Api.Data.Migrations
                     b.Navigation("PlanPosition");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Pugling.Api.Models.DailyTaskPenalty", b =>
+                {
+                    b.HasOne("Pugling.Api.Models.DailyTask", "DailyTask")
+                        .WithMany()
+                        .HasForeignKey("DailyTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Pugling.Api.Models.ExerciseFeedback", "RefundedByFeedback")
+                        .WithMany()
+                        .HasForeignKey("RefundedByFeedbackId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DailyTask");
+
+                    b.Navigation("RefundedByFeedback");
                 });
 
             modelBuilder.Entity("Pugling.Api.Models.EvaluatedDay", b =>
