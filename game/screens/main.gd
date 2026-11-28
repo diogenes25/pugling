@@ -27,6 +27,8 @@ var _summary: Level.Summary = Level.Summary.new()
 var _renewed: bool = false
 ## The trophies the start screen last read from the server: the hero's level of the next run.
 var _trophies: int = 0
+## A run is being started on the server.
+var _starting: bool = false
 
 
 func _ready() -> void:
@@ -160,9 +162,14 @@ func _on_words_chosen(plan_position_id: int) -> void:
 
 
 func _start(map: LevelDef, plan_position_id: int) -> void:
+	# A second tap while the server builds the run would start a second run and leave the first one open.
+	if _starting:
+		return
+	_starting = true
 	_say("Level wird gebaut …")
 	@warning_ignore("redundant_await")
 	var started := await server.start_run(plan_position_id)
+	_starting = false
 	if not started.ok:
 		_say(started.error)
 		return

@@ -445,6 +445,55 @@ public class TagesplanerTests : IClassFixture<LerntageWebAppFactory>
     }
 
     /// <summary>
+    /// A plan that cannot be stored for another reason than the lost race fails loudly and leaves nothing tracked, so the
+    /// request's next save does not try to insert it again. Red if the failed plan stays in the change tracker.
+    /// </summary>
+    [Fact]
+    public async Task Gescheiterter_Plan_bleibt_nicht_im_Kontext()
+    {
+        var s = await SetupAsync();
+        Write(db => db.DailyPlans.Where(p => p.ChildId == s.ChildId).ExecuteDelete());
+
+        using var scope = factory.Services.CreateScope();
+        var planner = scope.ServiceProvider.GetRequiredService<DailyPlanner>();
+        var db = scope.ServiceProvider.GetRequiredService<PuglingDbContext>();
+        await Assert.ThrowsAsync<DbUpdateException>(() => planner.SaveOrLoadAsync(new DailyPlan
+        {
+            ChildId = s.ChildId,
+            Day = Today,
+            Mode = PlannerMode.Shadow,
+            CreatedAt = DateTime.UtcNow,
+            // A subject that does not exist: the foreign key rejects the task.
+            Tasks = [new DailyTask { ExerciseId = 1, ExerciseTitle = "x", SubjectId = int.MaxValue, Order = 1 }],
+        }, CancellationToken.None));
+
+        Assert.Empty(db.ChangeTracker.Entries());
+        Assert.Equal(0, await db.SaveChangesAsync());
+        Assert.Equal(0, Read(d => d.DailyPlans.Count(p => p.ChildId == s.ChildId)));
+    }
+
+    /// <summary>
+    /// Tower-game answers are no failure of the last learning day: the game counts every miss but only the first hit per
+    /// word and day. Red if the planner's tally of that day reads rows of source <c>Game</c> (B comes back one stage easier).
+    /// </summary>
+    [Fact]
+    public async Task Spiel_Antworten_sind_kein_Fehlschlag_des_Vortags()
+    {
+        var s = await SetupAsync(switchOn: false);
+        Write(db =>
+        {
+            foreach (var e in db.ItemReviewEvents.Where(e => e.PlanPositionId == s.B)) e.Source = ItemReviewSource.Game;
+        });
+        await SwitchAsync(s, "Shadow");
+
+        var tasks = (await TodayPlanAsync(s)).GetProperty("tasks").EnumerateArray().ToList();
+
+        Assert.Contains(tasks, t => t.GetProperty("planPositionId").GetInt32() == s.A);
+        Assert.All(tasks, t => Assert.Equal(JsonValueKind.Null, t.GetProperty("stage").ValueKind));
+        Assert.DoesNotContain(tasks, t => t.GetProperty("reason").GetString()!.Contains("am letzten Lerntag"));
+    }
+
+    /// <summary>
     /// AK 1: many callers at once - the child's login and day view and the supervisor's list - leave one plan. Red if a
     /// parallel caller fails at the index instead of returning the stored plan.
     /// </summary>

@@ -244,7 +244,8 @@ func _update_context() -> void:
 
 
 func _pick_up(book: WordBook) -> void:
-	if _over or not words.take(book):
+	# Not while a word is with the server: the answer books the word in the hand, and that must still be the graded one.
+	if _over or _busy or not words.take(book):
 		return
 	# One word at a time (B-822): picking another one puts the carried one down here.
 	var previous := hero.release()

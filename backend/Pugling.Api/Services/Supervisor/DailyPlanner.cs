@@ -91,10 +91,13 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
             await db.SaveChangesAsync(ct);
             return plan;
         }
-        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation })
+        catch (DbUpdateException e)
         {
-            // Only a lost race lands here; any other failure (a position deleted meanwhile) is no plan to read back.
+            // The failed plan must not stay tracked: the child's paths swallow the failure, and the request's next save
+            // would try to insert it again.
             db.ChangeTracker.Clear();
+            // Only a lost race has a plan to read back; any other failure (a position deleted meanwhile) has none.
+            if (e.InnerException is not SqliteException { SqliteExtendedErrorCode: SqliteUniqueViolation }) throw;
             return await LoadAsync(plan.ChildId, plan.Day, ct)
                 ?? throw new InvalidOperationException($"Tagesplan für Kind {plan.ChildId} am {plan.Day} ließ sich nicht speichern.");
         }
@@ -170,7 +173,10 @@ public class DailyPlanner(PuglingDbContext db, LearningDay learningDay, DutyCale
                 var newAvailable = PositionPlayService.IntroductionStage(type) is null ? 0 : pool - introduced.Count;
                 var answers = lastLearningDay is { } y
                     ? await db.ItemReviewEvents.AsNoTracking()
-                        .Where(e => e.PlanPositionId == pos.Id && e.ExerciseId == played.Id && e.Day == y && e.BoxBefore != null)
+                        // Practice and tests only: the tower game counts every miss but only the first hit per word and
+                        // day, so its rows would read as a failure the child did not have.
+                        .Where(e => e.PlanPositionId == pos.Id && e.ExerciseId == played.Id && e.Day == y && e.BoxBefore != null
+                            && e.Source != ItemReviewSource.Game)
                         .GroupBy(e => e.WasCorrect).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct)
                     : [];
                 var failedTest = lastLearningDay is { } yt && await db.TestAttempts.AsNoTracking()
