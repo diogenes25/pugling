@@ -20,6 +20,13 @@ const TOWER_REACH: float = 3.6
 const HERO_RANGE: float = 5.5
 const HERO_SHOT_INTERVAL: float = 1.0
 
+## The hero's lasting level: the trophies its second level needs (see [method HeroLevel.needed]), the share of his
+## reload time each level takes off down to the floor, and how many levels add one damage to his shot.
+const HERO_LEVEL_STEP: int = 30
+const HERO_RELOAD_GAIN: float = 0.05
+const HERO_RELOAD_FLOOR: float = 0.5
+const HERO_DAMAGE_EVERY: int = 4
+
 ## Shots a tower starts with: enough for the first wave, not for the second - without words a run tips soon.
 const START_AMMO: int = 16
 
@@ -59,6 +66,17 @@ const MAX_MINIONS: int = 30
 ## they are what a run lives on: their words have to outweigh the shots the wave costs.
 const WAVE_CARRIERS: int = 4
 const MAX_CARRIERS: int = 10
+
+## The special enemies join later, so the first waves stay simple. From RUNNER_FROM on every RUNNER_EVERY-th small
+## enemy is a runner, from SHIELD_FROM on every SHIELD_EVERY-th carrier bears a shield, and from HEALER_FROM on a
+## healer marches in the middle - one more every HEALER_MORE_EVERY waves, at most MAX_HEALERS.
+const RUNNER_FROM: int = 3
+const RUNNER_EVERY: int = 3
+const SHIELD_FROM: int = 4
+const SHIELD_EVERY: int = 3
+const HEALER_FROM: int = 6
+const HEALER_MORE_EVERY: int = 6
+const MAX_HEALERS: int = 3
 
 ## Every n-th wave ends with a boss.
 const BOSS_EVERY: int = 5

@@ -20,6 +20,9 @@ var _path_lengths: PackedFloat32Array = PackedFloat32Array()
 func setup(def: LevelDef) -> void:
 	_def = def
 	waves = WavePlan.new(def.spawn_interval, def.monster_speed, def.paths.size(), Catalog.MINION, Catalog.WARRIOR, Catalog.BOSS)
+	waves.runner = Catalog.RUNNER
+	waves.shield = Catalog.SHIELD
+	waves.healer = Catalog.HEALER
 	for path: PackedVector2Array in def.paths:
 		_path_lengths.append(Geo.length(path))
 
@@ -38,6 +41,9 @@ func spawn(dt: float) -> Enemy:
 	enemy.node = Models.character(next.kind.model).instantiate() as Node3D
 	enemy.node.scale = Vector3.ONE * next.kind.model_scale
 	Models.keep_only(enemy.node, [next.kind.mesh_prefix])
+	if next.kind.tint != Color.WHITE:
+		Models.tint(enemy.node, next.kind.tint)
+	enemy.heal.start(next.kind.heal_interval)
 	enemy.anim = Models.animator(enemy.node)
 	add_child(enemy.node)
 	Models.play(enemy.anim, true, WALK_CLIPS)
@@ -75,6 +81,24 @@ func move(dt: float) -> int:
 		all.remove_at(i)
 		arrived += 1
 	return arrived
+
+
+## Lets every healer on the map pulse when its time has come: each other living enemy within its radius that is
+## hurt gets hit points back, never more than it came with. Returns the mended enemies of this frame.
+func heal(dt: float) -> Array[Enemy]:
+	var mended: Array[Enemy] = []
+	for healer: Enemy in all:
+		if healer.dying or healer.kind.heal_amount <= 0 or not healer.heal.tick(dt):
+			continue
+		healer.heal.start(healer.kind.heal_interval)
+		for other: Enemy in all:
+			if other == healer or other.dying or other.hp >= other.max_hp:
+				continue
+			if other.ground().distance_to(healer.ground()) > healer.kind.heal_radius:
+				continue
+			other.hp = EnemyRules.healed(other.hp, other.max_hp, healer.kind.heal_amount)
+			mended.append(other)
+	return mended
 
 
 ## Marks an enemy as defeated: it plays its death clip and is removed a moment later.

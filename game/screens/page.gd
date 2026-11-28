@@ -30,6 +30,11 @@ func add_text(text: String, font_size: int) -> Label:
 	return label
 
 
+## Appends any control to the column.
+func add_node(node: Control) -> void:
+	_box.add_child(node)
+
+
 ## Appends the status line at the current end of the column.
 func add_status() -> void:
 	_box.add_child(status)

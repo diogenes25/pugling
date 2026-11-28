@@ -37,6 +37,20 @@ public class TowerGameOptions
     /// configuration - a list default would be appended to, not replaced, by the configuration binder.
     /// </summary>
     public List<TowerTrophyPathStep> TrophyPath { get; set; } = [];
+    /// <summary>
+    /// The hero skins and their prices in gems; a price of 0 is owned by every child. Empty by default and set in
+    /// the configuration, like <see cref="TrophyPath"/>. The ids are what the app knows its looks by.
+    /// </summary>
+    public List<TowerSkinPrice> Skins { get; set; } = [];
+}
+
+/// <summary>One configured hero skin.</summary>
+public class TowerSkinPrice
+{
+    /// <summary>The skin's id, shared with the app.</summary>
+    public string Id { get; set; } = "";
+    /// <summary>Its price in gems; 0 = free.</summary>
+    public int Gems { get; set; }
 }
 
 /// <summary>One configured step of the trophy path.</summary>

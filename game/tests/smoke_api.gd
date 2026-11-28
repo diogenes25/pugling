@@ -70,6 +70,16 @@ func _ready() -> void:
 	var box := await Api.open_daily_chest()
 	_note("open_daily_chest", (box.ok and box.data.has("coins") and box.data.has("gems"))
 			or box.error == "Hier ist gerade keine Truhe zu öffnen.", str(box.data) + box.error)
+	var wardrobe := await Api.skins()
+	var offers: Array = wardrobe.data.get("skins", [])
+	var known := 0
+	for offer: Variant in offers:
+		if offer is Dictionary and Catalog.skin(str((offer as Dictionary).get("id", ""))).id == str((offer as Dictionary).get("id", "")):
+			known += 1
+	_note("skins", wardrobe.ok and wardrobe.data.has("gems") and known == Catalog.SKINS.size(),
+			"%d Skins, %d davon kennt die App, %s Gems %s" % [offers.size(), known, wardrobe.data.get("gems"), wardrobe.error])
+	var free := await Api.buy_skin(Catalog.SKINS[0].id)
+	_note("buy_skin freier Ritter", not free.ok and free.error == "Diesen Skin hast du schon.", free.error)
 	var late := await Api.assign(run.run_id, run.tokens[0].token_id, run.towers[0].tower_id)
 	_note("assign nach dem Ende", not late.ok and late.run_closed and late.error == "Das Level ist vorbei.", late.error)
 	var missing := await Api.start_run(999999)

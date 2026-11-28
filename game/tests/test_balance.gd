@@ -11,9 +11,14 @@ const TOWERS: int = 3
 
 
 ## Plays [param waves] waves; returns the first wave in which the towers ran dry, or 0. With [param fed] every
-## dropped word reaches a tower as a correct word of middle value, in turn.
-func _first_dry_wave(waves: int, fed: bool) -> int:
+## dropped word reaches a tower as a correct word of middle value, in turn. With [param specials] the runners, shield
+## bearers and healers march along; a healer's mending is counted as one more hit on every other enemy of its wave.
+func _first_dry_wave(waves: int, fed: bool, specials: bool = false) -> int:
 	var plan := WavePlan.new(5.0, 1.6, 1, MINION, WARRIOR, BOSS)
+	if specials:
+		plan.runner = Catalog.RUNNER
+		plan.shield = Catalog.SHIELD
+		plan.healer = Catalog.HEALER
 	var ammo: Array[TowerAmmo] = []
 	var level: Array[TowerLevel] = []
 	for i: int in TOWERS:
@@ -23,14 +28,14 @@ func _first_dry_wave(waves: int, fed: bool) -> int:
 	for number: int in range(1, waves + 1):
 		var words := 0
 		for kind: EnemyKind in plan.troop(number):
-			var hp := kind.hp + int(kind.hp_per_wave * (number - 1))
+			var hp := kind.hp + int(kind.hp_per_wave * (number - 1)) + plan.troop(number).count(Catalog.HEALER)
 			while hp > 0:
 				var tower := next % TOWERS
 				next += 1
 				if ammo[tower].count <= 0:
 					return number
 				ammo[tower].use()
-				hp -= 1 + level[tower].damage_bonus()
+				hp -= EnemyRules.damage_taken(1 + level[tower].damage_bonus(), kind.armor)
 			words += kind.drops
 		# A tenth of a wave's shots hits an enemy that is already falling.
 		var wasted := plan.troop(number).size() / 10 + 1
@@ -49,6 +54,11 @@ func test_a_run_fed_with_every_word_keeps_its_towers_stocked_for_twenty_waves() 
 
 func test_a_run_without_words_clears_the_first_wave_and_runs_dry_in_the_second() -> void:
 	equal(2, _first_dry_wave(20, false))
+
+
+func test_the_special_enemies_do_not_starve_a_fed_run() -> void:
+	equal(0, _first_dry_wave(20, true, true))
+	equal(2, _first_dry_wave(20, false, true))
 
 
 func test_the_words_of_the_first_wave_outweigh_the_shots_of_the_second() -> void:

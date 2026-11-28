@@ -57,6 +57,14 @@ func open_game_chest() -> ApiResult:
 	return await _send(HTTPClient.METHOD_POST, _game() + "/chest/open")
 
 
+func skins() -> ApiResult:
+	return await _send(HTTPClient.METHOD_GET, _game() + "/skins")
+
+
+func buy_skin(skin_id: String) -> ApiResult:
+	return await _send(HTTPClient.METHOD_POST, "%s/skins/%s/purchase" % [_game(), skin_id.uri_encode()])
+
+
 func _game() -> String:
 	return "student/children/%d/tower-game" % child_id
 
@@ -101,6 +109,9 @@ func _send(method: HTTPClient.Method, path: String, body: Dictionary = {}) -> Ap
 static func _problem(status: int, text: String) -> ApiResult:
 	var closed := text.contains("tower_game_run_closed")
 	match status:
+		400:
+			if text.contains("insufficient_gems"):
+				return ApiResult.failure("Dafür reichen deine Gems noch nicht.")
 		401:
 			return ApiResult.failure("PIN falsch oder Anmeldung abgelaufen.")
 		404:
@@ -110,6 +121,8 @@ static func _problem(status: int, text: String) -> ApiResult:
 				return ApiResult.failure("Deine Spielzeit für heute ist um. Morgen geht's weiter!")
 			if closed:
 				return ApiResult.failure("Das Level ist vorbei.", true)
+			if text.contains("skin_already_unlocked"):
+				return ApiResult.failure("Diesen Skin hast du schon.")
 			if text.contains("daily_box_none") or text.contains("tower_game_chest_none"):
 				return ApiResult.failure("Hier ist gerade keine Truhe zu öffnen.")
 			return ApiResult.failure("Gerade kam etwas dazwischen – bitte nochmal.")

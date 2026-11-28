@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="HeroSkin" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/hero_skin.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tower-red"
+title = "Roter Ritter"
+tint = Color(1, 0.7, 0.66, 1)

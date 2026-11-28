@@ -39,6 +39,9 @@ var reason: LevelEnd.Reason = LevelEnd.Reason.GAVE_UP
 ## The server's answer to the end call.
 var end: ApiResult
 
+## The child's trophies before this run: a hero level reached with the run is announced.
+var trophies_before: int = 0
+
 
 func _ready() -> void:
 	set_title(_headline())
@@ -51,6 +54,9 @@ func _ready() -> void:
 		add_text(_coins(), 30)
 		if end.data.has("trophies"):
 			add_text(_trophies(), 30)
+			var level := HeroLevel.of(int(end.data.get("trophies", 0)))
+			if level > HeroLevel.of(trophies_before):
+				add_text("Dein Held steigt auf Stufe %d!" % level, 30).add_theme_color_override("font_color", UiKit.GOLD)
 	else:
 		add_action("Ergebnis nochmal senden", resend.emit)
 	add_action("Noch einmal", again.emit)

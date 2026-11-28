@@ -31,6 +31,15 @@ public record TowerTrophyStep(int Trophies, int Gems, bool Reached);
 /// </summary>
 public record TowerGameChestState(int Words, int WordsNeeded, bool Ready, bool OpenedToday);
 
+/// <summary>
+/// The hero skins of the tower game: the child's gem balance and every skin with its price and whether the child owns
+/// it. Which skin the hero wears is remembered by the app; the server keeps what was bought.
+/// </summary>
+public record TowerSkinState(int Gems, IReadOnlyList<TowerSkinOffer> Skins);
+
+/// <summary>A hero skin: its id, its price in gems (0 = free for everyone) and whether the child owns it.</summary>
+public record TowerSkinOffer(string Id, int Cost, bool Owned);
+
 /// <summary>The opened game chest: the gems it paid and today's chest afterwards.</summary>
 public record TowerGameChestOpened(int GemsAwarded, TowerGameChestState Chest);
 

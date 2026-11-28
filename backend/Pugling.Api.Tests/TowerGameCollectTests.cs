@@ -336,6 +336,59 @@ public class TowerGameCollectTests(PuglingWebAppFactory factory) : IClassFixture
     }
 
     [Fact]
+    public async Task Skins_KostenGems_GehoerenDannDemKind_UndNurDasKindKauft()
+    {
+        Reset();
+        // The child starts this test with exactly 200 gems and no tower skin.
+        Db(db =>
+        {
+            var child = db.Children.Single(c => c.Id == 1);
+            child.OwnedSkins = [.. child.OwnedSkins.Where(s => !s.StartsWith("tower-"))];
+            db.ChildPointsEntries.Where(e => e.ChildId == 1 && e.Kind == PointKind.ManualGems).ExecuteDelete();
+            db.SaveChanges();
+            var gems = db.ChildPointsEntries.Where(e => e.ChildId == 1).ToList()
+                .Where(e => PointKindCurrency.Of(e.Kind) == Currency.Gems).Sum(e => e.Amount);
+            db.ChildPointsEntries.Add(new ChildPointsEntry { ChildId = 1, Kind = PointKind.ManualGems, Amount = 200 - gems, Reason = "Test" });
+            return db.SaveChanges();
+        });
+        var child = await TestApi.ChildAsync(factory);
+
+        var before = (await child.GetFromJsonAsync<TowerSkinState>($"{Base()}/skins"))!;
+        Assert.Equal(200, before.Gems);
+        Assert.Equal([("tower-knight", 0, true), ("tower-red", 150, false), ("tower-gold", 400, false), ("tower-shadow", 900, false)],
+            before.Skins.Select(s => (s.Id, s.Cost, s.Owned)));
+
+        // Red if the price were not checked: the gold knight would be bought with 200 gems.
+        var tooDear = await child.PostAsync($"{Base()}/skins/tower-gold/purchase", null);
+        Assert.Equal(HttpStatusCode.BadRequest, tooDear.StatusCode);
+        Assert.Contains("insufficient_gems", await tooDear.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await child.PostAsync($"{Base()}/skins/tower-nobody/purchase", null)).StatusCode);
+        // The free knight is everyone's already.
+        Assert.Equal(HttpStatusCode.Conflict, (await child.PostAsync($"{Base()}/skins/tower-knight/purchase", null)).StatusCode);
+        // The father reads the list but does not spend the child's gems.
+        var father = await TestApi.AdultAsync(factory);
+        Assert.Equal(HttpStatusCode.OK, (await father.GetAsync($"{Base()}/skins")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await father.PostAsync($"{Base()}/skins/tower-red/purchase", null)).StatusCode);
+        Assert.Equal(0, Ledger(PointKind.SkinPurchase) - LedgerBefore());
+
+        var bought = await (await child.PostAsync($"{Base()}/skins/tower-red/purchase", null)).Content.ReadFromJsonAsync<TowerSkinState>();
+        Assert.Equal(50, bought!.Gems);
+        Assert.True(bought.Skins.Single(s => s.Id == "tower-red").Owned);
+        Assert.Contains("tower-red", Db(db => db.Children.Single(c => c.Id == 1).OwnedSkins));
+        // The web mascot is untouched: a tower skin is never equipped as the child's selected skin.
+        Assert.DoesNotContain("tower-", Db(db => db.Children.Single(c => c.Id == 1).SelectedSkin));
+
+        // Red if a skin could be bought twice: 150 more gems would go.
+        var again = await child.PostAsync($"{Base()}/skins/tower-red/purchase", null);
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+        Assert.Contains("skin_already_unlocked", await again.Content.ReadAsStringAsync());
+        Assert.Equal(50, (await child.GetFromJsonAsync<TowerSkinState>($"{Base()}/skins"))!.Gems);
+
+        int LedgerBefore() => Db(db => db.ChildPointsEntries.Where(e => e.ChildId == 1 && e.Kind == PointKind.SkinPurchase
+            && !e.Reason.StartsWith("Vokabel-Türme")).Sum(e => e.Amount));
+    }
+
+    [Fact]
     public async Task Run_FriertDenWertJedesWortesEin()
     {
         Reset();

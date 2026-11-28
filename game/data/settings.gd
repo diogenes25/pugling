@@ -43,6 +43,16 @@ static func map() -> int:
 	return int(_read("map", 0))
 
 
+## The id of the hero's skin worn last.
+static func skin() -> String:
+	return str(_read("skin", ""))
+
+
+## Remembers the hero's skin.
+static func set_skin(id: String) -> void:
+	_write({"skin": id})
+
+
 ## Remembers a login that just worked.
 static func save_login(address: String, child_number: int, secret: String) -> void:
 	_write({"server": address, "child": child_number, "pin": secret})

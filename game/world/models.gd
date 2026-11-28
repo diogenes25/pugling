@@ -74,6 +74,21 @@ static func keep_only(root: Node, keep: Array[String]) -> void:
 		mesh.visible = shown
 
 
+## Colours a model: every surface gets its own copy of its material, multiplied by [param color].
+static func tint(root: Node, color: Color) -> void:
+	for node: Node in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		if mesh.mesh == null:
+			continue
+		for surface: int in mesh.mesh.get_surface_count():
+			var material := mesh.get_active_material(surface) as BaseMaterial3D
+			if material == null:
+				continue
+			var own := material.duplicate() as BaseMaterial3D
+			own.albedo_color = material.albedo_color * color
+			mesh.set_surface_override_material(surface, own)
+
+
 static func _load(path: String) -> PackedScene:
 	if not _scenes.has(path):
 		_scenes[path] = load(path) as PackedScene

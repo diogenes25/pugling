@@ -30,6 +30,9 @@ var _shortest_hero_gap: float = INF
 var _fired: Dictionary[Tower, int] = {}
 var _banners: Array[String] = []
 var _hardest_hit: int = 0
+var _hero_damage: int = 0
+var _next_hero_level: int = 1
+var _next_skin: HeroSkin
 
 
 func _ready() -> void:
@@ -44,6 +47,8 @@ func _ready() -> void:
 	await _castle_falls()
 	await _words_expire()
 	await _catapult_and_fire()
+	await _special_enemies()
+	await _hero_level_and_skin()
 	for sound: String in ALL_SOUNDS:
 		_check("Sound %s gespielt (%d×)" % [sound, _sounds.get(sound, 0)], _sounds.get(sound, 0) > 0)
 	Log.line("check fertig, %d Abweichungen" % _failed)
@@ -348,6 +353,106 @@ func _waves() -> void:
 	await _stop()
 
 
+## Wave 6 brings all three special kinds: runners are quick and fall to one hit, a shield takes one off every hit, a
+## healer mends the hurt ones around it but never beyond what they came with.
+func _special_enemies() -> void:
+	await _start(Catalog.LEVELS[0])
+	for tower: Tower in _level.towers.all:
+		tower.ammo.count = 0
+	_level.hero.ground = Vector2(2, 24)
+	_level.tally.lives = 10
+	_level.enemies.waves.wave = 5
+	var healed: Array[Enemy] = []
+	_level.events.enemy_healed.connect(func(enemy: Enemy) -> void: healed.append(enemy))
+	var troop := _level.enemies.waves.troop(6)
+	_check("Spezial: Welle 6 bringt Läufer, Schildträger und einen Heiler (%d/%d/%d)" % [troop.count(Catalog.RUNNER),
+			troop.count(Catalog.SHIELD), troop.count(Catalog.HEALER)],
+			troop.count(Catalog.RUNNER) == 5 and troop.count(Catalog.SHIELD) == 2 and troop.count(Catalog.HEALER) == 1)
+	_check("Spezial: jede neue Art wird einmal angekündigt", LevelFeedback.wave_note(3) == "Neu: flinke Läufer!"
+			and LevelFeedback.wave_note(4).begins_with("Neu: Schildträger") and LevelFeedback.wave_note(6).begins_with("Neu: ein Heiler")
+			and LevelFeedback.wave_note(5) == "Boss-Welle!" and LevelFeedback.wave_note(2) == "Die Skelette kommen!")
+	var kinds: Dictionary[EnemyKind, Enemy] = {}
+	while not (kinds.has(Catalog.RUNNER) and kinds.has(Catalog.SHIELD) and kinds.has(Catalog.HEALER) and kinds.has(Catalog.MINION)) and not _ended:
+		for enemy: Enemy in _spawned:
+			if not kinds.has(enemy.kind) and is_instance_valid(enemy.node):
+				kinds[enemy.kind] = enemy
+		_level.tally.lives = 10
+		await get_tree().process_frame
+	_check("Spezial: Banner von Welle 6 kündigt den Heiler an", _banners.has("Welle 6"))
+	var runner := kinds[Catalog.RUNNER]
+	var shield := kinds[Catalog.SHIELD]
+	var healer := kinds[Catalog.HEALER]
+	_check("Spezial: der Läufer ist fast doppelt so schnell wie ein kleines Skelett (%.1f gegen %.1f) und hält einen Treffer aus" % [runner.speed, kinds[Catalog.MINION].speed],
+			runner.speed > kinds[Catalog.MINION].speed * 1.8 and Catalog.RUNNER.hp == 1)
+	_check("Spezial: die Arten sind eingefärbt, damit man sie unterscheidet",
+			Catalog.RUNNER.tint != Color.WHITE and Catalog.SHIELD.tint != Color.WHITE and Catalog.HEALER.tint != Color.WHITE
+			and (runner.node.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_surface_override_material(0) != null)
+	_check("Spezial: der Schildträger trägt ein Wort wie ein Krieger", Catalog.SHIELD.drops == 1 and Catalog.SHIELD.armor == 1)
+	# A shot of three damage takes two from the shield bearer; a shot of one still takes one.
+	var before := shield.hp
+	_level.projectiles.fire(Catalog.HERO_BOLT, Projectile.Shooter.TOWER, shield.node.position + Vector3(0, 2, 0), shield, 2)
+	while shield.hp == before and not _ended:
+		await get_tree().process_frame
+	_check("Spezial: der Schild nimmt 1 von jedem Treffer (3 Schaden kosten %d)" % (before - shield.hp), before - shield.hp == 2)
+	before = shield.hp
+	_level.projectiles.fire(Catalog.HERO_BOLT, Projectile.Shooter.TOWER, shield.node.position + Vector3(0, 2, 0), shield)
+	while shield.hp == before and not _ended:
+		await get_tree().process_frame
+	_check("Spezial: ein Treffer nimmt immer mindestens 1 (%d)" % (before - shield.hp), before - shield.hp == 1)
+	# The healer mends the hurt shield bearer next to it, one point per pulse, and stops at what it came with.
+	_level.toggle_pause()
+	shield.node.position = healer.node.position
+	var hurt := shield.hp
+	healed.clear()
+	_level.enemies.heal(Catalog.HEALER.heal_interval + 0.1)
+	_check("Spezial: der Heiler heilt Verletzte in seiner Nähe um 1 (%d → %d)" % [hurt, shield.hp], shield.hp == hurt + 1)
+	for i: int in 10:
+		_level.enemies.heal(Catalog.HEALER.heal_interval + 0.1)
+	_check("Spezial: nie über die Lebenspunkte hinaus, mit denen der Gegner kam (%d von %d)" % [shield.hp, shield.max_hp],
+			shield.hp == shield.max_hp)
+	shield.node.position = healer.node.position + Vector3(Catalog.HEALER.heal_radius + 1.0, 0, 0)
+	shield.hp = 1
+	_level.enemies.heal(Catalog.HEALER.heal_interval + 0.1)
+	_check("Spezial: außerhalb seines Kreises heilt er nicht", shield.hp == 1)
+	await UiDriver.shot(get_tree(), "level-spezialgegner")
+	UiDriver.press(_level, "Aufhören")
+	await _until_finished()
+	await _stop()
+
+
+## A hero of level 5 in the red skin: he shoots every 0.8 s instead of every second and with one more damage.
+func _hero_level_and_skin() -> void:
+	_next_hero_level = 5
+	_next_skin = Catalog.skin("tower-red")
+	await _start(Catalog.LEVELS[0])
+	_next_hero_level = 1
+	_next_skin = null
+	for tower: Tower in _level.towers.all:
+		tower.ammo.count = 0
+	# On the road, where the skeletons pass: only the hero shoots.
+	_level.hero.ground = Vector2(25, 8)
+	while _level.tally.hero_shots < 5 and not _ended:
+		_level.tally.lives = 10
+		await get_tree().process_frame
+	_check("Held Stufe 5: schießt alle 0,8 s statt jede Sekunde (kürzester Abstand %.2f s)" % _shortest_hero_gap,
+			_shortest_hero_gap >= 0.8 and _shortest_hero_gap < 0.95)
+	_check("Held Stufe 5: sein Schuss trifft mit 2 statt 1 (%d)" % _hero_damage, _hero_damage == 2)
+	var tinted := 0
+	for node: Node in _level.hero.look.find_children("*", "MeshInstance3D", true, false):
+		var material := (node as MeshInstance3D).get_surface_override_material(0) as BaseMaterial3D
+		if material != null and material.albedo_color.g < 0.9:
+			tinted += 1
+	_check("Skin: der Rote Ritter ist eingefärbt (%d Teile)" % tinted, tinted > 0)
+	_check("Skin: unbekannte Id fällt auf den freien Ritter zurück", Catalog.skin("gibt-es-nicht") == Catalog.SKINS[0]
+			and Catalog.skin("tower-gold").title == "Goldritter")
+	await UiDriver.shot(get_tree(), "level-held-stufe-5")
+	_level.toggle_pause()
+	await _frames(2)
+	UiDriver.press(_level, "Aufhören")
+	await _until_finished()
+	await _stop()
+
+
 # --- checks ------------------------------------------------------------------------------------------------------
 
 func _camera_follows() -> bool:
@@ -540,7 +645,8 @@ func _start(def: LevelDef, prepare: Callable = Callable()) -> void:
 	_banners.clear()
 	_hardest_hit = 0
 	_level = LEVEL.instantiate()
-	_level.setup(_fake, TowerRun.from_json(started.data), def)
+	_level.setup(_fake, TowerRun.from_json(started.data), def, _next_hero_level, _next_skin)
+	_hero_damage = 0
 	_level.finished.connect(_on_finished)
 	add_child(_level)
 	_level.sounds.played.connect(func(sound: String) -> void: _sounds[sound] = _sounds.get(sound, 0) + 1)
@@ -566,6 +672,7 @@ func _clip() -> String:
 func _on_shot(projectile: Projectile) -> void:
 	_shots.append(projectile.kind.id)
 	if projectile.from == Projectile.Shooter.HERO:
+		_hero_damage = projectile.damage
 		if _last_hero_shot >= 0.0:
 			_shortest_hero_gap = minf(_shortest_hero_gap, _level.tally.elapsed - _last_hero_shot)
 		_last_hero_shot = _level.tally.elapsed

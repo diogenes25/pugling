@@ -83,12 +83,37 @@ Lichtung  ›]", "[Einstellungen]"])
 	_check(UiDriver.find_button(_main, "Truhe öffnen") == null, "eine geöffnete Spiel-Truhe lässt sich nicht noch einmal öffnen")
 	await UiDriver.shot(get_tree(), "2a-truhen")
 
+	# The hero's button shows his lasting level (48 trophies: level 2) and opens his wardrobe.
+	_expect("held", ["[Ritter  ·  Stufe 2]"])
+	_press("Stufe 2")
+	await _frames(6)
+	_expect("skins", ["Dein Held", "Du hast 10 Gems.", "[Ritter – angelegt]", "[Roter Ritter kaufen – 8 Gems]",
+		"[Goldritter kaufen – 400 Gems]", "[Zurück]"])
+	_check(not " | ".join(UiDriver.texts(_main)).contains("future"), "ein Skin, den diese App nicht kennt, wird nicht angeboten")
+	_press("Goldritter kaufen")
+	await _frames(4)
+	_expect("skin zu teuer", ["Dafür reichen deine Gems noch nicht.", "Du hast 10 Gems.", "[Goldritter kaufen – 400 Gems]"])
+	_press("Roter Ritter kaufen")
+	await _frames(6)
+	_expect("skin gekauft", ["Roter Ritter gehört jetzt dir!", "Du hast 2 Gems.", "[Roter Ritter – angelegt]", "[Ritter anlegen]"])
+	_check(Settings.skin() == "tower-red" and _fake.owned_skins == (["tower-red"] as Array[String]), "der gekaufte Skin ist angelegt und gemerkt")
+	await UiDriver.shot(get_tree(), "2c-skins")
+	await _back("skins")
+	_expect("zurück von skins", ["[SPIELEN]", "[Roter Ritter  ·  Stufe 2]", "(Gems) | 2 | (Rekord)"])
+	await UiDriver.shot(get_tree(), "2d-roter-ritter")
+	_press("Stufe 2")
+	await _frames(6)
+	_press("Ritter anlegen")
+	await _frames(8)
+	_expect("skin gewechselt", ["[SPIELEN]", "[Ritter  ·  Stufe 2]"])
+	_check(Settings.skin() == "tower-knight", "ein Skin, der einem gehört, wird ohne Kauf angelegt")
+
 	# The map card steps through the maps and the choice is remembered.
 	_press("Karte")
 	_expect("karte 2", ["[Karte\nFlussfurt  ›]"])
 	_check(Settings.map() == 1, "die Karte ist gemerkt")
-	_press("Karte")
-	_press("Karte")
+	for i: int in Catalog.LEVELS.size() - 1:
+		_press("Karte")
 	_expect("karte wieder 1", ["[Karte\nLichtung  ›]"])
 
 	# The words card opens the list; back leads to the start screen, a pick is remembered.
@@ -154,11 +179,15 @@ Lichtung  ›]", "[Einstellungen]"])
 	_expect("noch einmal", ["Spiel beendet."])
 	await _back("ergebnis")
 	_expect("zurück von ergebnis", ["[SPIELEN]"])
+	# A run that lifts the trophies from 48 to 98 passes a path step and the hero's third level (90 trophies).
+	_fake.bonus_trophies = 50
 	_press("SPIELEN")
 	await _play_until_result()
+	_expect("ergebnis mit aufstieg", ["+50 Trophäen  (gesamt 98)  ·  Trophäen-Stufe erreicht: +2 Gems", "Dein Held steigt auf Stufe 3!"])
+	await UiDriver.shot(get_tree(), "7a-ergebnis-aufstieg")
 	_press("Startseite")
 	await _frames(8)
-	_expect("startseite nach dem lauf", ["[SPIELEN]", "Tagesaufgaben"])
+	_expect("startseite nach dem lauf", ["[SPIELEN]", "Tagesaufgaben", "(Trophäen) | 98", "[Ritter  ·  Stufe 3]"])
 
 	# A restart logs in by itself and lands on the start screen with the remembered choices.
 	var logins := _fake.logins

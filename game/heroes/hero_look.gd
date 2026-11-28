@@ -37,3 +37,8 @@ func update(dt: float, moving: bool, yaw: float) -> void
 ## Plays the gesture for a moment.
 @abstract
 func play(action: Action) -> void
+
+
+## Puts a skin on the figure. A look that cannot change simply stays as it is.
+func wear(_skin: HeroSkin) -> void:
+	pass

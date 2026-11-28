@@ -63,6 +63,10 @@ signal projectile_hit(projectile: Projectile, at: Vector3)
 @warning_ignore("unused_signal")
 signal enemy_defeated(enemy: Enemy, by: Projectile.Shooter)
 
+## A healer mended this enemy.
+@warning_ignore("unused_signal")
+signal enemy_healed(enemy: Enemy)
+
 ## A skeleton reached the castle at the given point.
 @warning_ignore("unused_signal")
 signal castle_hit(at: Vector3)

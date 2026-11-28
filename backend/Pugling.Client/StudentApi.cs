@@ -161,6 +161,14 @@ public sealed class StudentApi(HttpClient http)
     public Task<TowerRunEndResult> EndTowerRunAsync(int childId, int runId, EndTowerRunDto dto, CancellationToken ct = default) =>
         Http.PostAsync<TowerRunEndResult>($"{Root}/children/{childId}/tower-game/runs/{runId}/end", dto, ct);
 
+    /// <summary>The tower game's hero skins with their prices and what the child owns.</summary>
+    public Task<TowerSkinState> GetTowerSkinsAsync(int childId, CancellationToken ct = default) =>
+        Http.GetAsync<TowerSkinState>($"{Root}/children/{childId}/tower-game/skins", ct);
+
+    /// <summary>Buys a tower-game hero skin for gems - the child's own seat only.</summary>
+    public Task<TowerSkinState> BuyTowerSkinAsync(int childId, string skinId, CancellationToken ct = default) =>
+        Http.PostAsync<TowerSkinState>($"{Root}/children/{childId}/tower-game/skins/{skinId}/purchase", null, ct);
+
     /// <summary>Opens today's tower-game chest and books its gems - the child's own seat only.</summary>
     public Task<TowerGameChestOpened> OpenTowerGameChestAsync(int childId, CancellationToken ct = default) =>
         Http.PostAsync<TowerGameChestOpened>($"{Root}/children/{childId}/tower-game/chest/open", null, ct);

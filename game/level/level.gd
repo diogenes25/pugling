@@ -63,6 +63,8 @@ var _busy: bool = false
 var _over: bool = false
 var _paused: bool = false
 var _breaches: int = 0
+var _hero_level: int = 1
+var _skin: HeroSkin = Catalog.SKINS[0]
 
 @onready var hero: Hero = %Hero
 @onready var enemies: Enemies = %Enemies
@@ -77,18 +79,24 @@ var _breaches: int = 0
 @onready var _feedback: LevelFeedback = %Feedback
 
 
-## Wires the level to a run and a map; call before adding it to the tree.
-func setup(server: TowerServer, run: TowerRun, def: LevelDef) -> void:
+## Wires the level to a run and a map; call before adding it to the tree. [param hero_level] is the hero's lasting
+## level (see [HeroLevel]), [param skin] how he looks.
+func setup(server: TowerServer, run: TowerRun, def: LevelDef, hero_level: int = 1, skin: HeroSkin = null) -> void:
 	_session = RunSession.new(server, run)
 	_def = def
+	_hero_level = hero_level
+	if skin != null:
+		_skin = skin
 	tally = RunTally.new(run.goal)
 
 
 func _ready() -> void:
-	Log.line("start Lauf %d Karte %s, Ziel %d" % [_session.run.run_id, _def.title, _session.run.goal])
+	Log.line("start Lauf %d Karte %s, Ziel %d, Held Stufe %d (%s)" % [_session.run.run_id, _def.title, _session.run.goal,
+		_hero_level, _skin.title])
 	_map = MapBuilder.build(_def, _world)
 	towers.setup(_def, _map, Catalog.TOWER_MIX, _session.next_target)
 	hero.setup(_map, HERO_LOOK.instantiate() as HeroLook, _def.player_start)
+	hero.look.wear(_skin)
 	enemies.setup(_def)
 	words.setup(_def, _map, _session.run.tokens)
 
@@ -179,6 +187,8 @@ func _spawn_enemies(dt: float) -> void:
 
 
 func _move_enemies(dt: float) -> void:
+	for mended: Enemy in enemies.heal(dt):
+		events.enemy_healed.emit(mended)
 	for i: int in enemies.move(dt):
 		_breaches += 1
 		events.castle_hit.emit(Geo.to3(_def.castle(), 2.5))
@@ -199,10 +209,11 @@ func _shoot_hero(dt: float) -> void:
 	var target := enemies.nearest(hero.ground, Balance.HERO_RANGE)
 	if target == null:
 		return
-	hero.reload.start(Balance.HERO_SHOT_INTERVAL)
+	hero.reload.start(HeroLevel.shot_interval(_hero_level))
 	tally.hero_shot()
 	hero.look.play(HeroLook.Action.SHOOT)
-	events.shot_fired.emit(projectiles.fire(Catalog.HERO_BOLT, Projectile.Shooter.HERO, Geo.to3(hero.ground, 1.4), target))
+	events.shot_fired.emit(projectiles.fire(Catalog.HERO_BOLT, Projectile.Shooter.HERO, Geo.to3(hero.ground, 1.4), target,
+			HeroLevel.damage_bonus(_hero_level)))
 
 
 func _move_projectiles(dt: float) -> void:

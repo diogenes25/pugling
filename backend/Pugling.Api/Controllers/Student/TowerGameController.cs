@@ -94,6 +94,31 @@ public class TowerGameController(TowerGameService game) : ControllerBase
         return outcome.Value is { } result ? result : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
     }
 
+    /// <summary>The hero skins of the game with their prices in gems and what the child owns.</summary>
+    [HttpGet("skins")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TowerSkinState>> Skins(int childId, CancellationToken ct) =>
+        await game.SkinsAsync(childId, ct);
+
+    /// <summary>
+    /// Buys a hero skin for gems - the child itself only, like every purchase from its wallet. <c>404</c> for an
+    /// unknown skin, <c>409 skin_already_unlocked</c> for one the child owns, <c>400 insufficient_gems</c> when the
+    /// balance does not cover the price, <c>409 concurrency_conflict</c> when another wallet write collided.
+    /// </summary>
+    [HttpPost("skins/{skinId}/purchase")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TowerSkinState>> BuySkin(int childId, string skinId, CancellationToken ct)
+    {
+        if (!User.IsStudent() || User.ChildId() != childId) return Forbid();
+        var outcome = await game.BuySkinAsync(childId, skinId, ct);
+        return outcome.Value is { } state ? state : this.ProblemWithCode(outcome.Error!.Value, outcome.Detail!);
+    }
+
     /// <summary>
     /// Opens today's game chest and books its gems. Opening is the child's own moment, so only the child itself opens
     /// it. <c>409 tower_game_chest_none</c> when the chest is not full yet or already opened today.

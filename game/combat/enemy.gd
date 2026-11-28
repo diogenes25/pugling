@@ -35,6 +35,9 @@ var dying: bool = false
 ## Seconds until the dying enemy is removed.
 var dying_time: float = 0.0
 
+## A healer's timer to its next pulse.
+var heal: Cooldown = Cooldown.new()
+
 
 ## Its place on the ground.
 func ground() -> Vector2:

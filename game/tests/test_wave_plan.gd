@@ -112,3 +112,52 @@ func test_several_paths_take_turns() -> void:
 	for spawn: WavePlan.Spawn in _drain(plan).slice(0, 3):
 		paths.append(spawn.path)
 	equal([1, 0, 1, 0] as Array[int], paths)
+
+
+const RUNNER: EnemyKind = preload("res://data/runner.tres")
+const SHIELD: EnemyKind = preload("res://data/shield.tres")
+const HEALER: EnemyKind = preload("res://data/healer.tres")
+
+
+func _special_plan() -> WavePlan:
+	var plan := _plan(5.0, 2.0, 1)
+	plan.runner = RUNNER
+	plan.shield = SHIELD
+	plan.healer = HEALER
+	return plan
+
+
+func test_runners_take_every_third_small_place_from_the_third_wave_on() -> void:
+	var plan := _special_plan()
+	equal(0, _count(plan.troop(2), RUNNER))
+	# Wave 3 has nine small enemies: three of them run.
+	equal(3, _count(plan.troop(3), RUNNER))
+	equal(6, _count(plan.troop(3), MINION))
+
+
+func test_every_third_carrier_bears_a_shield_from_the_fourth_wave_on_and_still_carries_a_word() -> void:
+	var plan := _special_plan()
+	equal(0, _count(plan.troop(3), SHIELD))
+	# Wave 4 has five carriers: one of them bears a shield.
+	equal(1, _count(plan.troop(4), SHIELD))
+	equal(4, _count(plan.troop(4), WARRIOR))
+	var words := 0
+	for kind: EnemyKind in plan.troop(4):
+		words += kind.drops
+	equal(5, words)
+
+
+func test_a_healer_marches_in_the_middle_from_the_sixth_wave_on_up_to_three() -> void:
+	var plan := _special_plan()
+	equal(0, _count(plan.troop(5), HEALER))
+	var sixth := plan.troop(6)
+	equal(1, _count(sixth, HEALER))
+	var place := sixth.find(HEALER)
+	check(place > 2 and place < sixth.size() - 3, "the healer in the middle of the troop (place %d of %d)" % [place, sixth.size()])
+	equal(2, _count(plan.troop(12), HEALER))
+	equal(3, _count(plan.troop(60), HEALER))
+
+
+func test_a_plan_without_special_kinds_sends_none() -> void:
+	var troop := _plan(5.0, 2.0, 1).troop(12)
+	equal(troop.size(), _count(troop, MINION) + _count(troop, WARRIOR))

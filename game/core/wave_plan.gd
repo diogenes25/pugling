@@ -28,6 +28,11 @@ var wave: int = 0
 ## Enemies spawned so far, over all waves.
 var spawned: int = 0
 
+## The special kinds; a plan without one of them simply never sends it.
+var runner: EnemyKind
+var shield: EnemyKind
+var healer: EnemyKind
+
 var _interval: float
 var _speed: float
 var _paths: int
@@ -70,9 +75,32 @@ func troop(number: int) -> Array[EnemyKind]:
 		else:
 			result.append(_minion)
 			minions_left -= 1
+	_send_specials(result, number)
 	if number % Balance.BOSS_EVERY == 0:
 		result.append(_boss)
 	return result
+
+
+## Swaps some of a troop's enemies for the special kinds and puts the healers in its middle; the troop keeps its
+## number of small enemies and of word carriers.
+@warning_ignore("integer_division")
+func _send_specials(result: Array[EnemyKind], number: int) -> void:
+	var minions_seen := 0
+	var carriers_seen := 0
+	for i: int in result.size():
+		if result[i] == _minion:
+			minions_seen += 1
+			if runner != null and number >= Balance.RUNNER_FROM and minions_seen % Balance.RUNNER_EVERY == 0:
+				result[i] = runner
+		elif result[i] == _carrier:
+			carriers_seen += 1
+			if shield != null and number >= Balance.SHIELD_FROM and carriers_seen % Balance.SHIELD_EVERY == 0:
+				result[i] = shield
+	if healer == null or number < Balance.HEALER_FROM:
+		return
+	var healers := mini(Balance.MAX_HEALERS, 1 + (number - Balance.HEALER_FROM) / Balance.HEALER_MORE_EVERY)
+	for i: int in healers:
+		result.insert(result.size() / 2, healer)
 
 
 ## Advances the plan by [param dt]; [param alive] is the number of enemies still on the map. Returns the enemy to

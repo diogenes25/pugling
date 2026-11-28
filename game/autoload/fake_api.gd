@@ -39,6 +39,12 @@ var trophies: int = 48
 ## The wave the last ended run reported.
 var reported_wave: int = -1
 
+## Trophies the next ended run earns on top of its words (stages a hero level-up).
+var bonus_trophies: int = 0
+
+## The skins the child owns besides the free knight.
+var owned_skins: Array[String] = []
+
 var _game_chest_opened: bool = false
 var _gems: int = 7
 var _assigns: int = 0
@@ -150,7 +156,8 @@ func end_run(_run_id: int, wave: int) -> ApiResult:
 	var awarded := mini(coins_per_win, 10 - _coins_today) if won else 0
 	_coins_today += awarded
 	# Like the server: three trophies per solved word and one per cleared wave, never more waves than words.
-	var earned := 3 * _solved + mini(maxi(0, wave - 1), _solved)
+	var earned := 3 * _solved + mini(maxi(0, wave - 1), _solved) + bonus_trophies
+	bonus_trophies = 0
 	var gems := 2 if trophies < 60 and trophies + earned >= 60 else 0
 	trophies += earned
 	_gems += gems
@@ -177,6 +184,26 @@ func open_game_chest() -> ApiResult:
 	_game_chest_opened = true
 	_gems += 2
 	return ApiResult.success({"gemsAwarded": 2.0, "chest": _game_chest()})
+
+
+func skins() -> ApiResult:
+	await _hop()
+	var offers: Array[Dictionary] = []
+	var prices: Dictionary[String, int] = {"tower-knight": 0, "tower-red": 8, "tower-gold": 400, "tower-future": 5}
+	for id: String in prices:
+		offers.append({"id": id, "cost": float(prices[id]), "owned": prices[id] == 0 or owned_skins.has(id)})
+	return ApiResult.success({"gems": float(_gems), "skins": offers})
+
+
+func buy_skin(skin_id: String) -> ApiResult:
+	await _hop()
+	var price := 8 if skin_id == "tower-red" else 400
+	if _gems < price:
+		return ApiResult.failure("Dafür reichen deine Gems noch nicht.")
+	_gems -= price
+	owned_skins.append(skin_id)
+	@warning_ignore("redundant_await")
+	return await skins()
 
 
 func _game_chest() -> Dictionary:

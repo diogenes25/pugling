@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnemyKind" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemy_kind.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+model = "Skeleton_Minion.glb"
+mesh_prefix = "Skeleton_Minion_"
+model_scale = 0.9
+hp = 5
+speed_factor = 0.75
+hp_per_wave = 0.8
+points = 60
+drops = 0
+armor = 0
+heal_amount = 1
+heal_interval = 1.5
+heal_radius = 4.5
+tint = Color(0.9, 0.55, 1, 1)
+title = "Heiler"

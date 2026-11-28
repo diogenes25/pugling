@@ -73,7 +73,7 @@ func move(dt: float) -> Array[Hit]:
 		_flying.remove_at(i)
 		if not alive:
 			continue
-		target.hp -= projectile.damage
+		target.hp -= EnemyRules.damage_taken(projectile.damage, target.kind.armor)
 		var hit := Hit.new()
 		hit.projectile = projectile
 		hit.at = dest

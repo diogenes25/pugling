@@ -15,6 +15,12 @@ signal pick_words
 ## The settings button was pressed.
 signal open_settings
 
+## The hero's button was pressed: his wardrobe.
+signal open_hero
+
+## The server said how many trophies the child has.
+signal trophies_known(total: int)
+
 ## The server did not answer; the text is ready for the screen. Main tries a fresh login once.
 signal load_failed(error: String)
 
@@ -41,6 +47,7 @@ var _trophies: Chip = Chip.make(Icon.Kind.TROPHY, "0")
 var _coins: Chip = Chip.make(Icon.Kind.COIN, "0")
 var _gems: Chip = Chip.make(Icon.Kind.GEM, "0")
 var _record: Chip = Chip.make(Icon.Kind.STAR, "0")
+var _hero: Button = UiKit.card(Icon.Kind.TOWER, Color(0.36, 0.26, 0.55), 22)
 var _tasks: VBoxContainer = VBoxContainer.new()
 var _collect: VBoxContainer = VBoxContainer.new()
 var _game_day: VBoxContainer = VBoxContainer.new()
@@ -56,11 +63,14 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_map_index = clampi(Settings.map(), 0, Catalog.LEVELS.size() - 1)
 	add_child(_stage)
-	_stage.show_hero(HERO_LOOK.instantiate() as HeroLook)
+	var look := HERO_LOOK.instantiate() as HeroLook
+	_stage.show_hero(look)
+	look.wear(Catalog.skin(Settings.skin()))
 	_build_top()
 	_build_left()
 	_build_right()
 	_build_bottom()
+	_show_hero_level()
 	_show_choice()
 	_load()
 
@@ -72,9 +82,17 @@ func _build_top() -> void:
 	add_child(bar)
 	var player := UiKit.caption(server.child_name)
 	player.add_theme_font_size_override("font_size", 38)
-	player.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	player.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	bar.add_child(player)
+	# The hero's own button: his skin and lasting level, and the way to his wardrobe.
+	_hero.custom_minimum_size = Vector2(0, 56)
+	_hero.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_hero.tooltip_text = "Held"
+	_hero.pressed.connect(open_hero.emit)
+	bar.add_child(_hero)
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.add_child(gap)
 	for chip: Chip in [_streak, _trophies, _coins, _gems, _record]:
 		bar.add_child(chip)
 	var settings := UiKit.icon_button(Icon.Kind.GEAR, UiKit.NIGHT, 60)
@@ -128,6 +146,10 @@ func _build_bottom() -> void:
 	UiKit.pulse(_play)
 
 
+func _show_hero_level() -> void:
+	_hero.text = "%s  ·  Stufe %d" % [Catalog.skin(Settings.skin()).title, HeroLevel.of(game.trophies)]
+
+
 ## Pins a control to the screen: the anchors as fractions of the screen, the offsets in pixels from them.
 static func _place(control: Control, left: float, top: float, right: float, bottom: float,
 		from_left: float, from_top: float, from_right: float, from_bottom: float) -> void:
@@ -172,6 +194,8 @@ func _load() -> void:
 		return
 	_positions = overview.data.get("positions", [])
 	game = GameProgress.from_json(overview.data)
+	trophies_known.emit(game.trophies)
+	_show_hero_level()
 	_show_choice()
 	@warning_ignore("redundant_await")
 	var day := await server.home()

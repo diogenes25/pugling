@@ -26,7 +26,7 @@ namespace Pugling.Api.Services.Student;
 /// </summary>
 public class TowerGameService(PuglingDbContext db, IDataProtectionProvider protection, ItemProgressService progress,
     LearningDay learningDay, IOptions<TowerGameOptions> options, TimeProvider time, GamificationService gamification,
-    DutyCalendar calendar)
+    DutyCalendar calendar, WalletService wallet)
 {
     /// <summary>The tower value of a new or weak word (<see cref="WordValue"/>) - what "a new word" means in the game.</summary>
     public const int NewWordValue = 3;
@@ -187,6 +187,55 @@ public class TowerGameService(PuglingDbContext db, IDataProtectionProvider prote
             return NoChest();
         }
         return new TowerGameChestOpened(gems, new TowerGameChestState(words, opts.ChestWords, false, true));
+    }
+
+    /// <summary>The hero skins with their prices, what the child owns of them, and its gem balance - a pure read.</summary>
+    public async Task<TowerSkinState> SkinsAsync(int childId, CancellationToken ct)
+    {
+        var owned = await db.Children.AsNoTracking().Where(c => c.Id == childId).Select(c => c.OwnedSkins).FirstAsync(ct);
+        return new TowerSkinState(await wallet.GemsAsync(childId, ct),
+            [.. opts.Skins.Select(s => new TowerSkinOffer(s.Id, s.Gems, s.Gems == 0 || owned.Contains(s.Id)))]);
+    }
+
+    /// <summary>
+    /// Buys a hero skin for gems. Price and ownership are the server's: fails with <c>not_found</c> for an unknown id,
+    /// <c>skin_already_unlocked</c> for a skin the child owns (a free one included) and <c>insufficient_gems</c> when
+    /// the balance does not cover it. The debit bumps the child's concurrency stamp, so two parallel purchases cannot
+    /// both pass the balance check; the loser gets <c>concurrency_conflict</c>.
+    /// </summary>
+    public async Task<Outcome<TowerSkinState>> BuySkinAsync(int childId, string skinId, CancellationToken ct)
+    {
+        var skin = opts.Skins.FirstOrDefault(s => s.Id == skinId);
+        if (skin is null) return Outcome<TowerSkinState>.Fail(ApiErrors.NotFound, $"Unknown tower-game skin '{skinId}'.");
+        var child = await db.Children.FirstAsync(c => c.Id == childId, ct);
+        if (skin.Gems == 0 || child.OwnedSkins.Contains(skinId))
+            return Outcome<TowerSkinState>.Fail(ApiErrors.SkinAlreadyUnlocked, "This skin is already unlocked.");
+        var gems = await wallet.GemsAsync(childId, ct);
+        if (gems < skin.Gems)
+            return Outcome<TowerSkinState>.Fail(ApiErrors.InsufficientGems, $"Not enough gems: {gems}/{skin.Gems} for '{skinId}'.");
+
+        db.ChildPointsEntries.Add(new ChildPointsEntry
+        {
+            ChildId = childId,
+            Amount = -skin.Gems,
+            Kind = PointKind.SkinPurchase,
+            Reason = $"Vokabel-Türme: Skin freigeschaltet ({skinId})",
+            CreatedAt = time.GetUtcNow().UtcDateTime,
+        });
+        // Reassigned, not mutated in place: the list is a JSON column.
+        child.OwnedSkins = [.. child.OwnedSkins, skinId];
+        child.ConcurrencyStamp = Guid.NewGuid();
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            db.ChangeTracker.Clear();
+            return Outcome<TowerSkinState>.Fail(ApiErrors.ConcurrencyConflict,
+                "Another booking was saved at the same time. Please try again.");
+        }
+        return await SkinsAsync(childId, ct);
     }
 
     private static Outcome<TowerGameChestOpened> NoChest() => Outcome<TowerGameChestOpened>.Fail(

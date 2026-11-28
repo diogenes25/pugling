@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/level_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+title = "Schlucht"
+description = "Ein enger Weg im Zickzack, vier Türme. Hier wird es schnell eng."
+size = Vector2(48, 34)
+paths = Array[PackedVector2Array]([PackedVector2Array(52, 28, 36, 28, 36, 17, 22, 17, 22, 7, 9, 7, 9, 25)])
+tower_spots = PackedVector2Array(41, 23, 30, 22, 27, 12, 15, 12)
+player_start = Vector2(16, 19)
+river = PackedVector2Array()
+bridges = PackedVector2Array()
+mountains = PackedVector2Array(44, 7, 3, 31, 30, 31, 44, 14)
+map_seed = 53
+monster_speed = 2.0
+spawn_interval = 4.0

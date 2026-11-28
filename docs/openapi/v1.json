@@ -15689,6 +15689,148 @@
         }
       }
     },
+    "/api/v1/student/children/{childId}/tower-game/skins": {
+      "get": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "The hero skins of the game with their prices in gems and what the child owns.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerSkinState"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/children/{childId}/tower-game/skins/{skinId}/purchase": {
+      "post": {
+        "tags": [
+          "Student \u2013 Tower Game"
+        ],
+        "summary": "Buys a hero skin for gems - the child itself only, like every purchase from its wallet. \u0060404\u0060 for an\nunknown skin, \u0060409 skin_already_unlocked\u0060 for one the child owns, \u0060400 insufficient_gems\u0060 when the\nbalance does not cover the price, \u0060409 concurrency_conflict\u0060 when another wallet write collided.",
+        "parameters": [
+          {
+            "name": "childId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "skinId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TowerSkinState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/children/{childId}/tower-game/chest/open": {
       "post": {
         "tags": [
@@ -54615,6 +54757,55 @@
           }
         },
         "description": "A tower-game run. The client shows TowerSlots towers at a time in the order of Towers and refills a slot after a correct assignment; Goal solved towers win the level\n(and pay its coins), but the run goes on for as long as the castle stands. Tokens hold the words\nof all towers; they follow the order of the towers only roughly (shuffled within small groups), so the client can\ndrop words the towers on the field are likely to ask for without learning which token fits which tower. A token\nwhose tower is not on the field yet acts as a distractor. The app sends a heartbeat about every 15 seconds while the\nlevel is in the foreground."
+      },
+      "TowerSkinOffer": {
+        "required": [
+          "cost",
+          "id",
+          "owned"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "cost": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "owned": {
+            "type": "boolean"
+          }
+        },
+        "description": "A hero skin: its id, its price in gems (0 = free for everyone) and whether the child owns it."
+      },
+      "TowerSkinState": {
+        "required": [
+          "gems",
+          "skins"
+        ],
+        "type": "object",
+        "properties": {
+          "gems": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "skins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TowerSkinOffer"
+            }
+          }
+        },
+        "description": "The hero skins of the tower game: the child\u0027s gem balance and every skin with its price and whether the child owns\nit. Which skin the hero wears is remembered by the app; the server keeps what was bought."
       },
       "TowerTarget": {
         "required": [

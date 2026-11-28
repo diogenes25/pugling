@@ -58,3 +58,13 @@ func open_daily_chest() -> ApiResult
 ## Opens today's game chest once it is full; the answer holds its gems and the chest afterwards.
 @abstract
 func open_game_chest() -> ApiResult
+
+
+## The hero skins with their prices in gems and what the child owns, plus its gem balance.
+@abstract
+func skins() -> ApiResult
+
+
+## Buys a hero skin for gems; the answer is the list of [method skins] afterwards.
+@abstract
+func buy_skin(skin_id: String) -> ApiResult

@@ -15,6 +15,11 @@ func _ready() -> void:
 	_anim = Models.animator(self)
 
 
+func wear(skin: HeroSkin) -> void:
+	if skin.tint != Color.WHITE:
+		Models.tint(self, skin.tint)
+
+
 func update(dt: float, moving: bool, yaw: float) -> void:
 	_action_time -= dt
 	if _action_time <= 0.0:

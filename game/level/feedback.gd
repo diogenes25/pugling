@@ -22,6 +22,7 @@ func setup(events: GameEvents, scene: Node3D, controls: LevelControls, towers: T
 	events.tower_fired.connect(_on_tower_fired)
 	events.word_appeared.connect(_on_word_appeared)
 	events.castle_hit.connect(_on_castle_hit)
+	events.enemy_healed.connect(_on_enemy_healed)
 	events.word_assigned.connect(_on_word_assigned)
 	events.server_message.connect(_on_server_message)
 	events.time_up.connect(_on_time_up)
@@ -50,6 +51,10 @@ func _on_word_appeared(book: WordBook) -> void:
 	Fx.burst(_scene, Geo.to3(book.pos, 0.8), UiKit.GOLD, 14, 0.5)
 
 
+func _on_enemy_healed(enemy: Enemy) -> void:
+	Fx.burst(_scene, enemy.node.position + Vector3(0, 1.2, 0), Color(0.75, 0.4, 1.0), 8, 0.4)
+
+
 func _on_castle_hit(at: Vector3) -> void:
 	Fx.burst(_scene, at, Color(1, 0.3, 0.2), 30)
 	_controls.say("Ein Skelett hat die Burg erreicht!", Color.SALMON)
@@ -69,7 +74,21 @@ func _on_word_assigned(graded: GameEvents.Assignment) -> void:
 
 
 func _on_wave_started(number: int) -> void:
-	_controls.announce("Welle %d" % number, "Boss-Welle!" if number % Balance.BOSS_EVERY == 0 else "Die Skelette kommen!", Color.WHITE)
+	_controls.announce("Welle %d" % number, wave_note(number), Color.WHITE)
+
+
+## The line under a wave's banner: a new kind of enemy is introduced once, in the wave that first brings it.
+static func wave_note(number: int) -> String:
+	if number % Balance.BOSS_EVERY == 0:
+		return "Boss-Welle!"
+	match number:
+		Balance.RUNNER_FROM:
+			return "Neu: flinke Läufer!"
+		Balance.SHIELD_FROM:
+			return "Neu: Schildträger – nur starke Türme brechen den Schild!"
+		Balance.HEALER_FROM:
+			return "Neu: ein Heiler – triff ihn zuerst!"
+	return "Die Skelette kommen!"
 
 
 func _on_wave_cleared(number: int, bonus: int, flawless: bool) -> void:

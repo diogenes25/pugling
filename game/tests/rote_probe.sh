@@ -50,6 +50,18 @@ test_a_correctly_given_token_queues_up_again_behind_all_others|core/token_pool.g
 test_the_next_step_is_the_first_one_not_reached_yet|core/trophy_path.gd|s/if total < step.trophies:/if total <= step.trophies:/
 test_reached_counts_the_steps_at_or_below_the_total|core/trophy_path.gd|s/if total >= step.trophies:/if total > step.trophies:/
 test_the_progress_runs_from_the_last_reached_step_to_the_next|core/trophy_path.gd|s/var from := 0 if done == 0 else steps\[done - 1\].trophies/var from := 0 * done/
+test_every_hero_level_costs_one_step_more_than_the_one_before|data/balance.gd|s/HERO_LEVEL_STEP: int = 30/HERO_LEVEL_STEP: int = 25/
+test_the_level_follows_the_trophies|core/hero_level.gd|s/while trophies >= needed(level + 1):/while trophies > needed(level + 1):/
+test_the_way_to_the_next_level_runs_from_zero_to_one|core/hero_level.gd|s/return float(trophies - needed(level)) \//return float(trophies) \//
+test_a_higher_level_shoots_a_little_quicker_down_to_a_floor|data/balance.gd|s/HERO_RELOAD_FLOOR: float = 0.5/HERO_RELOAD_FLOOR: float = 0.4/
+test_every_fourth_level_adds_one_damage_to_the_heros_shot|data/balance.gd|s/HERO_DAMAGE_EVERY: int = 4/HERO_DAMAGE_EVERY: int = 3/
+test_armour_swallows_its_share_of_every_hit_but_never_all_of_it|core/enemy_rules.gd|s/return maxi(1, damage - armor)/return maxi(0, damage - armor)/
+test_a_healer_never_mends_beyond_the_hit_points_an_enemy_came_with|core/enemy_rules.gd|s/return mini(max_hp, hp + amount)/return hp + amount/
+test_runners_take_every_third_small_place_from_the_third_wave_on|data/balance.gd|s/RUNNER_FROM: int = 3/RUNNER_FROM: int = 2/
+test_every_third_carrier_bears_a_shield_from_the_fourth_wave_on_and_still_carries_a_word|data/shield.tres|s/^drops = 1/drops = 0/
+test_a_healer_marches_in_the_middle_from_the_sixth_wave_on_up_to_three|core/wave_plan.gd|s|result.insert(result.size() / 2, healer)|result.insert(0, healer)|
+test_a_plan_without_special_kinds_sends_none|core/wave_plan.gd|s/if runner != null and number >= Balance.RUNNER_FROM/if number >= Balance.RUNNER_FROM/
+test_the_special_enemies_do_not_starve_a_fed_run|data/shield.tres|s/^armor = 1/armor = 9/
 test_a_started_cooldown_holds_until_its_time_has_passed|core/cooldown.gd|s/_left = seconds/_left = seconds * 0.0/
 test_no_exported_packed_array_defaults_to_an_array_literal|data/tower_kind.gd|s/PackedStringArray = PackedStringArray()/PackedStringArray = []/
 '

@@ -8,6 +8,7 @@ const LOGIN: PackedScene = preload("res://screens/login.tscn")
 const HOME: PackedScene = preload("res://screens/home.tscn")
 const POSITIONS: PackedScene = preload("res://screens/positions.tscn")
 const RESULT: PackedScene = preload("res://screens/result.tscn")
+const SKINS: PackedScene = preload("res://screens/skins.tscn")
 const LEVEL: PackedScene = preload("res://level/level.tscn")
 const PAGE: PackedScene = preload("res://screens/page.tscn")
 const BACK_DEBOUNCE_MSEC: int = 400
@@ -24,6 +25,8 @@ var _last_level: LevelDef = Catalog.LEVELS[0]
 var _summary: Level.Summary = Level.Summary.new()
 ## A session that expired is renewed once with the stored PIN before the settings open.
 var _renewed: bool = false
+## The trophies the start screen last read from the server: the hero's level of the next run.
+var _trophies: int = 0
 
 
 func _ready() -> void:
@@ -116,6 +119,8 @@ func _show_home() -> void:
 	home.play.connect(_start)
 	home.pick_words.connect(_show_positions)
 	home.open_settings.connect(_show_settings.bind(""))
+	home.open_hero.connect(_show_skins)
+	home.trophies_known.connect(func(total: int) -> void: _trophies = total)
 	home.load_failed.connect(_on_home_failed)
 	_replace(home)
 	_back = _quit
@@ -129,6 +134,14 @@ func _on_home_failed(error: String) -> void:
 		return
 	_renewed = true
 	_auto_login()
+
+
+func _show_skins() -> void:
+	var skins: SkinsScreen = SKINS.instantiate()
+	skins.server = server
+	skins.back.connect(_show_home)
+	_replace(skins)
+	_back = _show_home
 
 
 func _show_positions() -> void:
@@ -161,7 +174,7 @@ func _start(map: LevelDef, plan_position_id: int) -> void:
 
 func _play(run: TowerRun, map: LevelDef) -> void:
 	var level: Level = LEVEL.instantiate()
-	level.setup(server, run, map)
+	level.setup(server, run, map, HeroLevel.of(_trophies), Catalog.skin(Settings.skin()))
 	level.finished.connect(_show_result)
 	_replace(level)
 	_back = level.toggle_pause
@@ -185,6 +198,9 @@ func _show_result(run_id: int, correct: int, total: int, reason: LevelEnd.Reason
 	result.record = _summary.record
 	result.best = _summary.best
 	result.end = end
+	result.trophies_before = _trophies
+	if end.ok and end.data.has("trophies"):
+		_trophies = int(end.data["trophies"])
 	result.resend.connect(_show_result.bind(run_id, correct, total, reason))
 	result.again.connect(_again)
 	result.home.connect(_show_home)
