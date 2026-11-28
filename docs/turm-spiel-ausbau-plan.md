@@ -4,7 +4,7 @@ tags: [bereich/turmspiel, typ/plan]
 
 # Vokabel-Türme: Ausbau zum Endlos-Spiel mit Sammelanreizen
 
-Stand 2026-11-28 (Etappen 1 bis 4 gebaut, die Handy-Runde zu Etappe 3/4 steht noch aus). Auftrag des Vaters: Das Turmspiel soll so lange fesseln wie ein gutes Handyspiel – mit dem Effekt,
+Stand 2026-11-28 (Etappen 1 bis 4 gebaut, eine Handy-Runde mit der neuen APK gespielt). Auftrag des Vaters: Das Turmspiel soll so lange fesseln wie ein gutes Handyspiel – mit dem Effekt,
 dass das Kind die Vokabeln seines Unterrichtsstoffs lernt. Dieser Plan teilt den Auftrag in Etappen. Technik und
 Code-Struktur stehen in [turm-spiel-plan.md](turm-spiel-plan.md), die Portierung nach GDScript in
 [turm-spiel-gdscript-plan.md](turm-spiel-gdscript-plan.md).
@@ -151,13 +151,41 @@ Bewusst nicht gebaut (trägt noch nicht oder braucht eine Entscheidung):
 - **Weitere Helden als eigene Figuren:** im Paket liegen nur Ritter und Skelette als Modelle; neue Figuren hieße
   etwas herunterladen. Die Skins färben darum den Ritter.
 
-Die Handy-Runde mit der neuen APK gegen die Wegwerf-API: siehe Abschnitt „Handy-Runde“ am Ende.
+Die Handy-Runde mit der neuen APK gegen die Wegwerf-API steht im Abschnitt „Handy-Runde“ weiter unten.
 
-## Handy-Runde zu Etappe 3 und 4
+## Handy-Runde zu Etappe 3 und 4 (2026-11-28)
 
-Die APK vom 2026-11-28 (34,6 MB) ist per `adb push` + `pm install` auf dem Xiaomi installiert, die Wegwerf-API
-läuft auf der DB-Kopie (Port 5281, am Handy über `adb reverse tcp:5280 tcp:5281`). **Die Runde selbst steht aus:**
-das Handy war gesperrt, und ferngesteuert wird es nur entsperrt.
+Die APK vom 2026-11-28 (34,6 MB) per `adb push` + `pm install` auf dem Xiaomi, die Wegwerf-API auf der DB-Kopie
+(Port 5281, am Handy über `adb reverse tcp:5280 tcp:5281`), angemeldet als Testkind 4 mit einer Test-PIN, per adb
+ferngesteuert. Fotos und Log liegen unter `game/build/nachweis/` (`handy-20-…` bis `handy-24-…`,
+`handy-etappe4-godot.log`).
+
+- **Startseite:** neue Optik mit Burg und Symbolen, die Zahlen der Kopie (Trophäen 4, Münzen 3036, Gems 191),
+  die drei Spiel-Aufgaben mit Fortschritt, Spiel-Truhe 2/15, „noch 16 bis +5 Gems“, Spiel-Serie 0 · heute 2/10. Der
+  lange Titel der Wörter-Karte bricht um.
+- **Lauf:** Lichtung, Welle 1 und 2 geschafft, Welle 3 begonnen, Burg 10/10. Ein Wort aufgehoben und einem Turm
+  gegeben; der Server hat es als falsch bewertet und die richtige Lösung genannt.
+- **Ergebnis:** Welle 3, 660 Punkte, neuer Rekord, „Trophäen gibt es für richtige Vokabeln. (gesamt 4)“. Der Server
+  hat den Lauf mit 111 s Spielzeit, Welle 3 und 0 Trophäen gebucht – Wellen ohne Vokabeln zahlen nichts.
+
+```text
+TURM 08:11:37 start Lauf 3 Karte Lichtung, Ziel 10, Held Stufe 1 (Ritter)
+TURM 08:12:23 welle 1 geschafft, Punkte 270
+TURM 08:12:49 assign 'statistics (pl)' -> 'Erstens …': falsch, erwartet Firstly, …
+TURM 08:13:09 welle 2 geschafft, Punkte 660
+TURM 08:13:31 ende GaveUp 0/1 richtig, 99s, Burg 10/10, Heldenschüsse 31, Heldentreffer 9, Welle 3, Punkte 660
+```
+
+Danach abgemeldet, die Daten der App auf dem Handy geleert (Server steht wieder auf „Heimnetz“, keine PIN), die
+Umleitung entfernt.
+
+**Nicht am Handy gesehen:** eine richtige Zuordnung mit Trophäen, das Öffnen einer Truhe, der Skin-Kauf und die
+Spezialgegner ab Welle 3 – die Fernsteuerung reichte für eine kurze Runde. Diese Teile sind durch die Läufe im
+exportierten Paket und den Vertrags-Lauf gegen die Wegwerf-API belegt, nicht durch das Gerät.
+
+**Befund zur Balance:** Die Türme verbrauchen ungleich. Der Turm, an dem die Gegner zuerst vorbeikommen, war in
+Welle 1 leer, während die beiden anderen noch 13 und 15 Schuss hatten; der Lauf blieb trotzdem ohne Durchbruch. Ob
+das als Aufgabe („verteile die Wörter klug“) gut ist oder der vordere Turm mehr braucht, zeigen Spielrunden.
 
 ## Offene Fragen an den Vater
 
